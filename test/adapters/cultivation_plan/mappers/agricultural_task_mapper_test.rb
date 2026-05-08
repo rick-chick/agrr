@@ -83,15 +83,4 @@ class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSup
                          { crops: [ existing_crop.id ],
                            agricultural_tasks: user.agricultural_tasks.where.not(source_agricultural_task_id: nil).pluck(:id) }
   end
-
-  test "requires_gdd? delegates to true" do
-    user = unique_test_user
-    ctx = build_plan_save_context(
-      user: user,
-      session_data: {},
-      result: plan_save_result
-    )
-    mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
-    assert mapper.requires_gdd?(nil)
-  end
 end

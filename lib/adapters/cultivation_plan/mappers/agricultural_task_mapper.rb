@@ -89,10 +89,6 @@ module Adapters
           user_agricultural_task_id_for(reference_task_id)
         end
 
-        def requires_gdd?(_reference_item)
-          true
-        end
-
         private
 
         def copy_agricultural_task_crop_relationships(reference_task, new_task, crop_mapper)
