@@ -196,19 +196,9 @@ module Domain
           raise NotImplementedError, "Subclasses must implement merge_edit_crop_params_for_html_form!"
         end
 
-        # マスター HTML/API: 非参照作物に属する CropStage を取得（子が無い場合は RecordNotFound）。
-        def find_masters_crop_stage_in_crop_for_user!(user, crop_id, crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_masters_crop_stage_in_crop_for_user!"
-        end
-
         # マスター: 作物と CropStage を一度の作物読み込みで束ねる（before_action 二重取得の回避）。
         def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
           raise NotImplementedError, "Subclasses must implement find_masters_crop_with_crop_stage_bundle!"
-        end
-
-        # マスター API: 非参照作物に属する CropTaskTemplate を取得。
-        def find_masters_crop_task_template_in_crop_for_user!(user, crop_id, template_id)
-          raise NotImplementedError, "Subclasses must implement find_masters_crop_task_template_in_crop_for_user!"
         end
 
         # マスター: 作物と CropTaskTemplate を一度の作物読み込みで束ねる。
@@ -219,11 +209,6 @@ module Domain
         # マスター API: 作物と農業タスクの関連付けを作成。
         def create_masters_crop_task_template_association(user, input_dto)
           raise NotImplementedError, "Subclasses must implement create_masters_crop_task_template_association"
-        end
-
-        # 認可済み作物に属する CropStage を取得（for_edit に応じて view/edit 認可）。
-        def find_authorized_crop_stage_in_crop!(user, crop_id, crop_stage_id, for_edit:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_crop_stage_in_crop!"
         end
 
         # 認可済み作物と CropStage を一度の作物読み込みで束ねる。

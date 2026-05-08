@@ -145,10 +145,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
-        def find_masters_crop_stage_in_crop_for_user!(user, crop_id, crop_stage_id)
-          find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
-        end
-
         def find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id)
           tpl = crop.crop_task_templates.find(template_id)
@@ -158,10 +154,6 @@ module Adapters
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
-        end
-
-        def find_masters_crop_task_template_in_crop_for_user!(user, crop_id, template_id)
-          find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
         end
 
         def create_masters_crop_task_template_association(user, input_dto)
@@ -246,10 +238,6 @@ module Adapters
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
-        end
-
-        def find_authorized_crop_stage_in_crop!(user, crop_id, crop_stage_id, for_edit:)
-          find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit: for_edit)
         end
 
         # 親は view 認可（set_crop と整合）。PATCH/DELETE の編集権限は update/delete 用メソッド側で評価する。
