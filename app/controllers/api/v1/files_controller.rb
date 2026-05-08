@@ -9,7 +9,7 @@ module Api
         presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobListInteractor.new(
           output_port: presenter,
-          gateway: CompositionRoot.api_file_blob_gateway
+          gateway: CompositionRoot.file_blob_gateway
         ).call
       end
 
@@ -17,7 +17,7 @@ module Api
         presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobShowInteractor.new(
           output_port: presenter,
-          gateway: CompositionRoot.api_file_blob_gateway
+          gateway: CompositionRoot.file_blob_gateway
         ).call(blob_id: params[:id])
       end
 
@@ -25,7 +25,7 @@ module Api
         presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobCreateInteractor.new(
           output_port: presenter,
-          gateway: CompositionRoot.api_file_blob_gateway
+          gateway: CompositionRoot.file_blob_gateway
         ).call(
           io: params[:file],
           filename: params[:file]&.original_filename,
@@ -37,7 +37,7 @@ module Api
         presenter = Presenters::Api::Files::ApiV1FilesJsonPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobDestroyInteractor.new(
           output_port: presenter,
-          gateway: CompositionRoot.api_file_blob_gateway
+          gateway: CompositionRoot.file_blob_gateway
         ).call(blob_id: params[:id])
       end
     end

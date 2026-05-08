@@ -3,7 +3,7 @@
 module Domain
   module FileBlob
     module Gateways
-      class ApiFileBlobGateway
+      class FileBlobGateway
         def list_rows_ordered_desc
           raise NotImplementedError
         end

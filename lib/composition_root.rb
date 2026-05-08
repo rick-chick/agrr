@@ -325,8 +325,8 @@ module CompositionRoot
       @user_api_key_rotation_gateway ||= Adapters::ApiKeys::Gateways::UserApiKeyRotationActiveRecordGateway.new
     end
 
-    def api_file_blob_gateway
-      @api_file_blob_gateway ||= Adapters::StoredBlobs::Gateways::ApiFileBlobActiveRecordGateway.new(
+    def file_blob_gateway
+      @file_blob_gateway ||= Adapters::StoredBlobs::Gateways::FileBlobActiveRecordGateway.new(
         rails_blob_url_generator: lambda do |blob|
           Rails.application.routes.url_helpers.rails_blob_url(blob, only_path: false)
         end

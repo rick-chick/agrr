@@ -3,7 +3,7 @@
 module Adapters
   module StoredBlobs
     module Gateways
-      class ApiFileBlobActiveRecordGateway < Domain::FileBlob::Gateways::ApiFileBlobGateway
+      class FileBlobActiveRecordGateway < Domain::FileBlob::Gateways::FileBlobGateway
         def initialize(rails_blob_url_generator:)
           @rails_blob_url_generator = rails_blob_url_generator
         end
