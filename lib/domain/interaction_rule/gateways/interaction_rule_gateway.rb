@@ -7,11 +7,6 @@ module Domain
       # Adapter 実装は lib/adapters/interaction_rule/gateways/ に存在する。
       # 実装の生成は CompositionRoot のみ。
       class InteractionRuleGateway
-        # @param query [Domain::Shared::Dtos::QueryDto, nil] クエリ条件。nil の場合は全件
-        def list(query = nil)
-          raise NotImplementedError, "Subclasses must implement list"
-        end
-
         def find_by_id(rule_id)
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end

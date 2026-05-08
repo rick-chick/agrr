@@ -95,7 +95,7 @@ module Adapters
         test "should list all records and return entities" do
           record1 = create(:interaction_rule, :reference, region: "jp")
           record2 = create(:interaction_rule, :reference, region: "us")
-          entities = @gateway.list
+          entities = ::InteractionRule.all.map { |r| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(r) }
           assert_equal 2, entities.size
           assert entities.all? { |e| e.is_a?(Domain::InteractionRule::Entities::InteractionRuleEntity) }
           ids = entities.map(&:id)
@@ -107,7 +107,7 @@ module Adapters
           record1 = create(:interaction_rule, :reference, region: "jp")
           record2 = create(:interaction_rule, :reference, region: "us")
           scope = ::InteractionRule.where(region: "jp")
-          entities = @gateway.list(scope)
+          entities = scope.map { |r| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(r) }
           assert_equal 1, entities.size
           assert_equal record1.id, entities.first.id
           assert entities.all? { |e| e.is_a?(Domain::InteractionRule::Entities::InteractionRuleEntity) }

@@ -11,11 +11,6 @@ module Adapters
           @translator = translator
         end
 
-        def list(scope = nil)
-          query = scope || ::InteractionRule.all
-          query.map { |record| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(record) }
-        end
-
         def find_by_id(rule_id)
           rule = ::InteractionRule.find(rule_id)
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
@@ -92,7 +87,7 @@ module Adapters
         end
 
         def list_index_for_user(user)
-          list(index_scope_for_user(user))
+          index_scope_for_user(user).map { |record| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(record) }
         end
 
         private
