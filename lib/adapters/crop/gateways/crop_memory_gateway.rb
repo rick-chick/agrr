@@ -4,7 +4,7 @@ module Adapters
   module Crop
     module Gateways
       class CropMemoryGateway < Domain::Crop::Gateways::CropGateway
-        def initialize(deletion_undo_gateway:, translator:)
+        def initialize(deletion_undo_gateway:)
           @deletion_undo_gateway = deletion_undo_gateway
         end
 

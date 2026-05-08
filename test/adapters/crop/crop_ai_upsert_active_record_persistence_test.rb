@@ -90,8 +90,7 @@ module Adapters
         }
 
         gateway = Adapters::Crop::Gateways::CropMemoryGateway.new(
-          deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
-          translator: CompositionRoot.translator
+          deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
         )
         create_interactor = Adapters::Crop::CropCreateForAiAdapter.new(
           user_id: @user.id,

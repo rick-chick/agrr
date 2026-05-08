@@ -80,8 +80,7 @@ module CompositionRoot
 
     def crop_gateway
       @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new(
-        deletion_undo_gateway: deletion_undo_gateway,
-        translator: translator
+        deletion_undo_gateway: deletion_undo_gateway
       )
     end
 
