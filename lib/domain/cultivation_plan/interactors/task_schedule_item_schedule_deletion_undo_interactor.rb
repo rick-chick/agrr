@@ -5,8 +5,8 @@ module Domain
     module Interactors
       # 作業予定削除の Undo スケジュール（ゲートウェイでスコープ検証し、DeletionUndo に委譲）
       class TaskScheduleItemScheduleDeletionUndoInteractor
-        def initialize(json_output_port:, mutation_gateway:, deletion_undo_interactor:, translator:)
-          @json_output_port = json_output_port
+        def initialize(mutation_output_port:, mutation_gateway:, deletion_undo_interactor:, translator:)
+          @mutation_output_port = mutation_output_port
           @mutation_gateway = mutation_gateway
           @deletion_undo_interactor = deletion_undo_interactor
           @translator = translator
@@ -23,7 +23,7 @@ module Domain
           )
           @deletion_undo_interactor.call(input)
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @json_output_port.on_not_found
+          @mutation_output_port.on_not_found
         end
       end
     end

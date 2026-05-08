@@ -2,7 +2,7 @@
 
 module Presenters
   module Plans
-    class TaskScheduleItemJsonPresenter < Domain::CultivationPlan::Ports::TaskScheduleItemJsonOutputPort
+    class TaskScheduleItemMutationPresenter < Domain::CultivationPlan::Ports::TaskScheduleItemMutationOutputPort
       def initialize(view:)
         @view = view
       end

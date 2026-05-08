@@ -164,7 +164,7 @@ module Domain
         end
 
         # 公開プラン結果フロー用の読み取りスナップショット（存在しなければ nil）
-        # @return [Domain::CultivationPlan::Dtos::PublicPlanResultsPageReadModel, nil]
+        # @return [Domain::CultivationPlan::Dtos::PublicPlanResultsReadModel, nil]
         def public_plan_results_read_model(plan_id:)
           raise NotImplementedError, "Subclasses must implement public_plan_results_read_model"
         end

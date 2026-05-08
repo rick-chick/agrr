@@ -4,34 +4,40 @@
 
 ## 洗い出し一覧（機械探索・2026-05-08）
 
-根拠: `ARCHITECTURE.md` **Prohibited practices → Interactors** 項 **4**（チャネル／画面形状を interactor・gateway の**名前・メソッド名**、およびポートを跨ぐ **DTO/型名** に載せない）。**`rg` の一致のみを違反認定にしない**—本一覧は探索ログ。除外は意味読みで各イテレーションに記録する。
+根拠: `ARCHITECTURE.md` **Prohibited practices → Interactors** 項 **4**（チャネル／画面形状を interactor・gateway の**名前・メソッド名**、およびポートを跨ぐ **DTO/型名** に載せない）。`rg` の一致のみを違反認定にしない—本一覧は探索ログ。除外は意味読みで各イテレーションに記録する。
 
 ### A. `lib/domain` — 型名に `Html` / `Json` / `Page`（ポート・DTO）
 
-| 語 | ファイル |
-|----|-----------|
-| `Html` | `cultivation_plan/ports/public_plan_results_html_output_port.rb` |
-| `Html` | `cultivation_plan/dtos/task_schedule_html_shell_plan.rb` |
-| `Json` | `cultivation_plan/ports/task_schedule_item_json_output_port.rb` |
-| `Page` | `cultivation_plan/dtos/public_plan_results_page_read_model.rb` |
+
+| 語      | ファイル（2026-05-08 解消後の現行パス） |
+| ------ | ---------------------------------------- |
+| （解消） | `cultivation_plan/ports/public_plan_results_output_port.rb` |
+| （解消） | `cultivation_plan/dtos/task_schedule_timeline_shell_plan.rb` |
+| （解消） | `cultivation_plan/ports/task_schedule_item_mutation_output_port.rb` |
+| （解消） | `cultivation_plan/dtos/public_plan_results_read_model.rb` |
+
 
 ### B. `lib/composition_root.rb` と `lib/adapters/cultivation_plan/` — 私有計画まわりの `html`
 
-| 識別子 | 所在 |
-|--------|------|
-| `private_plan_html_post_create_job_chain` | `CompositionRoot` |
-| `PrivatePlanHtmlPostCreateJobChain` | `lib/adapters/cultivation_plan/private_plan_html_post_create_job_chain.rb` |
-| `private_plan_select_crop_html_context_runner` | `CompositionRoot` |
+
+| 識別子                                            | 所在                                                                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------- |
+| `private_plan_html_post_create_job_chain`      | `CompositionRoot`                                                          |
+| `PrivatePlanHtmlPostCreateJobChain`            | `lib/adapters/cultivation_plan/private_plan_html_post_create_job_chain.rb` |
+| `private_plan_select_crop_html_context_runner` | `CompositionRoot`                                                          |
+
 
 ### C. `lib/adapters` — 表現由来パラメータ
 
-| パターン | ファイル |
-|----------|----------|
+
+| パターン               | ファイル                                       |
+| ------------------ | ------------------------------------------ |
 | `for_html_detail:` | `lib/adapters/farm/mappers/farm_mapper.rb` |
+
 
 ### D. `lib/domain` — 型名に `Api` / `ApiV1`（チャネル想起の**要レビュー**）
 
-`Domain::ApiWeather`（`lib/domain/api_weather/**`）および一部 `api_keys` は **BC／製品名**として `Api` が付く可能性があり、**機械一致＝違反としない**。それ以外の grep ヒット例（抜粋・重複あり）:
+`Domain::ApiWeather`（`lib/domain/api_weather/`**）および一部 `api_keys` は **BC／製品名**として `Api` が付く可能性があり、**機械一致＝違反としない**。それ以外の grep ヒット例（抜粋・重複あり）:
 
 - `file_blob/interactors/api_v1_files_*.rb`（index/show/create/destroy）
 - `cultivation_plan/interactors/api_v1_private_plan_*.rb`, `public_plan_api_save_plan_interactor.rb`
@@ -46,15 +52,13 @@
 
 ### E. `lib/presenters/html/**` — `*HtmlPresenter`
 
-慣習命名。**禁止4の主戦場はドメイン側ポート**（例: A の `PublicPlanResultsHtmlOutputPort`）。プレゼンタの `Html` 接尾辞は本バックログでは**任意の後段**（ドメインリネームと同時に触るかはイテレーションで決める）。
+慣習命名。**禁止4の主戦場はドメイン側ポート**（例: A の ~~`PublicPlanResultsHtmlOutputPort`~~ → `PublicPlanResultsOutputPort` に解消）。プレゼンタの `Html` 接尾辞は本バックログでは**任意の後段**（ドメインリネームと同時に触るかはイテレーションで決める）。
 
 ---
 
 ## 修正単位
 
-- [ ] **cultivation_plan: ポート／DTO から Html・Json・Page チャネル語を除去** — ARCHITECTURE.md 禁止 **4** @ Interactors（型名・ポート契約）
-  - 主なファイル: `lib/domain/cultivation_plan/ports/public_plan_results_html_output_port.rb`, `lib/domain/cultivation_plan/ports/task_schedule_item_json_output_port.rb`, `lib/domain/cultivation_plan/dtos/public_plan_results_page_read_model.rb`, `lib/domain/cultivation_plan/dtos/task_schedule_html_shell_plan.rb`、および参照する Interactor / HTML Presenter / Gateway / テスト
-  - 補足: `Presenters::Html::PublicPlans::PublicPlanResultsHtmlPresenter` はドメイン `*Html*` ポートに依存するため、**同一修正単位**で参照を切らない
+- **解消済み（2026-05-08）**: **cultivation_plan: ポート／DTO から Html・Json・Page チャネル語を除去** — `PublicPlanResultsHtmlOutputPort`→`PublicPlanResultsOutputPort`、`PublicPlanResultsPageReadModel`→`PublicPlanResultsReadModel`、`TaskScheduleHtmlShellPlan`→`TaskScheduleTimelineShellPlan`、`TaskScheduleItemJsonOutputPort`→`TaskScheduleItemMutationOutputPort`；`TaskScheduleItemJsonPresenter`→`TaskScheduleItemMutationPresenter`；`TaskScheduleItemScheduleDeletionUndoInteractor` の `json_output_port`→`mutation_output_port`。Interactors 禁止 **4**。
 
 - [ ] **私有計画: `CompositionRoot` / Adapter の `html` 命名（ジョブチェーン・select_crop runner）** — 禁止 **4** @ Application edge（配線名）および `lib/adapters`
   - 主なファイル: `lib/composition_root.rb`, `lib/adapters/cultivation_plan/private_plan_html_post_create_job_chain.rb`, `app/controllers/plans_controller.rb`、`grep private_plan_html_post_create_job_chain` / `private_plan_select_crop_html` の全参照
@@ -65,7 +69,6 @@
 - [ ] **`lib/domain` の `Api` / `ApiV1` 型名の横断棚卸し（`ApiWeather` BC を除く）** — 禁止 **4** @ Interactors・ports・dtos
   - 主なファイル: 洗い出し **D** の束。**1 イテレーションではサブバッチに分割**（例: `file_blob` の `ApiV1*` のみ、のように先頭サブバッチを backlog 行内で明示してから着手）
   - 補足: `Domain::ApiWeather::*` は除外方針を意味読みで固定してからリネーム有無を判断
-
 - **解消済み（2026-05-07）**: **HTML** `Crops::AgriculturalTasksController` の `index` / `new` / `create` / `update` / `destroy` から AR 直叩き・コントローラ内業務分岐を除去。`CropMastersTaskTemplateIndex/Create/Update/DestroyInteractor` を API マスタと共有、`CropNestedCropTaskTemplatesNewInteractor` と `CropGateway#selectable_agricultural_task_picklist_rows_for_nested_templates` を追加。`create` で `agricultural_task_id` が空のときの `redirect_to` のみコントローラに残置（DTO 成立前のガード）。Application edge 禁止 3・4。
 - **解消済み（2026-05-07・セクション0）**: バックログ先頭の「HTML/API マスタで参照・admin 早期分岐の再サンプリング」— 列挙済みマスタに同パターンの残りなし。上記 `Crops::AgriculturalTasksController` は別種のエッジ肥大（AR）として扱い解消。
 - **解消済み（2026-05-06）**: `Api::V1::Masters::Crops::AgriculturalTasksController` の `index` / `update` / `destroy` を Interactor + Presenter 経路に統一（Application edge 禁止 3・4）。ゲートウェイ IF は変更なし。
@@ -82,9 +85,9 @@
 - **解消済み（2026-05-07・セクション0）**: フロント `adapters/**/*.ts` の **意味読み点検**（辞書順で `agricultural-tasks`〜`public-plans` を Read、404→`null` 等の境界変換・複合プレゼンタを確認、`grep` で `usecase/` import がゲートウェイ／出力ポート／DTO に限定されることを確認）。ゲートウェイは HTTP・クエリ組み立て・境界変換に収まり、`PrivatePlanCreateApiGateway#fetchFarm` の `totalArea` は API レスポンスの正規化。プレゼンターは DTO→view・flash／undo／Router／i18n のみ。**ARCHITECTURE.md「Frontend: Angular layers」および Gateway boundary（表現非依存）に照らす新規違反なし**。補足: `PublicPlanResultsPresenter` は `LoadPublicPlanResultsOutputPort` と `SavePublicPlanOutputPort` の両実装のため `present` がユニオン分岐になるが、成功／失敗の判断は各 UseCase 内。
 - **解消済み（2026-05-07・セクション0）**: **HTML** `Plans::TaskSchedulesController` の `before_action :set_cultivation_plan`（`current_user.cultivation_plans.plan_type_private.find`）を除去。認可・読込は既存の `CultivationPlanActiveRecordGateway#task_schedule_timeline_read_model`（`PlanPolicy.private_scope`）に一本化。ページヘッダ用の農場名・総面積は `TaskScheduleTimelineReadModel::PlanRead` に追加し、`TaskScheduleHtmlShellPlan` を HTML プレゼンタが組み立てて `@cultivation_plan` に渡す（AR 非依存）。ルートヘルパは id 明示に変更。Application edge 禁止 **4**。
 - **解消済み（2026-05-07）**: **HTML** `CropsController` の `new` / `edit` / `after_crop_create_failure` / `after_crop_update_failure` にあった **ActiveRecord の直接生成・ネスト補助・assign_attributes** をやめ、`CropGateway` の `build_blank_crop_for_master_form` / `prepare_crop_record_for_edit_master_form!` / `build_new_crop_with_attributes_for_master_form` / `merge_edit_crop_params_for_master_form!` に集約（`Adapters::Crop::Gateways::CropMemoryGateway`）。コントローラはゲートウェイ呼び出しと `@crop.valid?` のみ。Application edge 禁止 **4**。
-- **解消済み（2026-05-07）**: **`CropsController#destroy` の format.json** — `DeletionUndo::HtmlMasterScheduleInvoker` に AR を渡さず `resource_type` / `resource_id` のみ（`DeletionUndoScheduleInputDto` と整合）。`toast_message: nil` で Undo ゲートウェイの `default_toast_message` を利用（文言キーは `crops.undo.toast` から `deletion_undo.toast_message` 側に寄る）。`destroy` を `set_crop` から外し、JSON/HTML とも削除時に事前の作物読込を不要化。Application edge 禁止 **4**。
-- **解消済み（2026-05-07）**: **`DeletionUndo::HtmlMasterScheduleInvoker` の `record:` 依存除去** — HTML `destroy` の **JSON** 枝で、`AgriculturalTasksController` / `PestsController` / `PesticidesController` / `FertilizesController` が作物削除と同様に `resource_type` / `resource_id` のみを渡すよう統一。存在しない ID の HTML 削除では、`soft_destroy_with_undo` の `rescue StandardError` が `Domain::Shared::Exceptions::RecordNotFound` を飲み込まないよう各ゲートウェイで再送出し、DestroyInteractor は `translator.t("*.flash.not_found")` で flash を揃える。
-- **解消済み（2026-05-07）**: **`Farms::WeatherDataController`** — AR 直叩き・`WeatherDataGatewayFactory`・予測分岐の主スイッチを除去。`FarmWeatherDataAccessInteractor` + `FarmWeatherDataAccessPresenter`（Interactor／DTO／ポート名に Json を含めず禁止 **4** 準拠）、`FarmGateway` の所有農場／管理者 id 解決（分岐は Interactor）、`PredictWeatherStandaloneEnqueueActiveJobAdapter` で `ActiveJob::EnqueueError` を modeled 結果へ、`FarmWeatherPredictionPayloadParseAdapter` で時刻・日付境界。`index` の Hash 行はシンボルキー参照に修正。Application edge 禁止 **3**・**4**。`lib/domain` の期間算術は `Date#<<` と秒差（禁止 **4** の duration 回避）。
+- **解消済み（2026-05-07）**: `**CropsController#destroy` の format.json** — `DeletionUndo::HtmlMasterScheduleInvoker` に AR を渡さず `resource_type` / `resource_id` のみ（`DeletionUndoScheduleInputDto` と整合）。`toast_message: nil` で Undo ゲートウェイの `default_toast_message` を利用（文言キーは `crops.undo.toast` から `deletion_undo.toast_message` 側に寄る）。`destroy` を `set_crop` から外し、JSON/HTML とも削除時に事前の作物読込を不要化。Application edge 禁止 **4**。
+- **解消済み（2026-05-07）**: `**DeletionUndo::HtmlMasterScheduleInvoker` の `record:` 依存除去** — HTML `destroy` の **JSON** 枝で、`AgriculturalTasksController` / `PestsController` / `PesticidesController` / `FertilizesController` が作物削除と同様に `resource_type` / `resource_id` のみを渡すよう統一。存在しない ID の HTML 削除では、`soft_destroy_with_undo` の `rescue StandardError` が `Domain::Shared::Exceptions::RecordNotFound` を飲み込まないよう各ゲートウェイで再送出し、DestroyInteractor は `translator.t("*.flash.not_found")` で flash を揃える。
+- **解消済み（2026-05-07）**: `**Farms::WeatherDataController`** — AR 直叩き・`WeatherDataGatewayFactory`・予測分岐の主スイッチを除去。`FarmWeatherDataAccessInteractor` + `FarmWeatherDataAccessPresenter`（Interactor／DTO／ポート名に Json を含めず禁止 **4** 準拠）、`FarmGateway` の所有農場／管理者 id 解決（分岐は Interactor）、`PredictWeatherStandaloneEnqueueActiveJobAdapter` で `ActiveJob::EnqueueError` を modeled 結果へ、`FarmWeatherPredictionPayloadParseAdapter` で時刻・日付境界。`index` の Hash 行はシンボルキー参照に修正。Application edge 禁止 **3**・**4**。`lib/domain` の期間算術は `Date#<<` と秒差（禁止 **4** の duration 回避）。
 - **解消済み（2026-05-07）**: **HTML `ApiKeysController`** の `generate` / `regenerate` — `@user.generate_api_key!` / `regenerate_api_key!` とコントローラ内成功／失敗分岐を除去。`Domain::ApiKeys::Interactors::ApiUserApiKeyRotateInteractor`（API と同一）+ `Presenters::Html::ApiKeys::UserApiKeyRotateHtmlPresenter` + `CompositionRoot.user_api_key_rotation_gateway`。`show` は表示用 `@user = current_user` のみ。Application edge 禁止 **4**。
 - **解消済み（2026-05-07）**: **HTML `AgriculturalTasksController`** の `#new` / 作成失敗フォーム再構築 / 更新失敗スナップショット / 編集時作物リスト用プレビュー — `AgriculturalTask.new`、`build`、`assign_attributes`、`dup`＋参照フラグ試行を `AgriculturalTaskGateway`（`build_blank_agricultural_task_for_master_form`、`build_after_create_failure_agricultural_task_for_master_form!`、`merge_update_form_snapshot_for_master_form!`、`preview_agricultural_task_for_edit_crop_selection`）と `AgriculturalTaskActiveRecordGateway` に集約。Application edge 禁止 **4**。
 - **解消済み（2026-05-07）**: **HTML `FieldsController#new`** の `@farm.fields.build` を `FieldGateway#build_blank_field_for_master_form!(persisted_farm:)` に寄せる（認可済み農場は従来どおり `set_farm`）。Application edge 禁止 **4**。
@@ -93,44 +96,46 @@
 - **解消済み（2026-05-08）**: **HTML `PlanningSchedulesController`** の `CultivationPlan` / `Farm` 直叩き・期間生成・作付集約を `CultivationPlanGateway` / `FarmGateway`、`PlanningScheduleFieldsSelectionInteractor` / `PlanningScheduleMatrixInteractor`、HTML プレゼンタに移行。セッション書き込みはマトリクス成功プレゼンタ、時刻は `Time.zone` 注入。Application edge 禁止 **3**・**4**。
 - **解消済み（2026-05-08）**: **HTML `Plans::TaskScheduleItemsController`** の `before_action` による `CultivationPlan` / `TaskScheduleItem` の AR 読込と、`destroy` の `@task_schedule_item` 依存を除去。`TaskScheduleItemMutationGateway#deletion_undo_schedule_row_for_item!` と `TaskScheduleItemScheduleDeletionUndoInteractor`（Undo へ委譲、`translator` で toast）、`CompositionRoot.task_schedule_item_schedule_deletion_undo_interactor` で配線。Application edge 禁止 **3**・**4**。
 - **解消済み（2026-05-08）**: **HTML `PublicPlansController`** の `results` での `task_schedules` / `task_schedule_items` 走査、`save_plan` JSON 枝の `CultivationPlan.find_by`・手組み session_data、セーブ用圃場スナップショットのコントローラ内 AR map を除去。`CultivationPlanGateway#public_plan_results_schedule_warning?` / `#public_plan_wizard_save_session_payload`、`PublicPlanApiSavePlanInteractor`（API コントローラと同経路）に集約。
-- **解消済み（2026-05-08）**: **HTML `PublicPlansController`** の **`results` / HTML `save_plan`** から `ManageablePublicPlanLookup` による AR 返却（`find_cultivation_plan` オーバーライド）と `@cultivation_plan` を除去。`PublicPlanResultsPageReadModel`・`CultivationPlanGateway#public_plan_results_read_model` / `#public_plan_wizard_plan_exists?`、`PublicPlanResultsInteractor`、`PublicPlanResultsHtmlPresenter`、結果テンプレは `gantt_embed` / read model ベース。スケジュール警告判定はゲートウェイ内で read model と `public_plan_results_schedule_warning?` と共有。Application edge 禁止 **4**。
+- **解消済み（2026-05-08）**: **HTML `PublicPlansController`** の `**results` / HTML `save_plan**` から `ManageablePublicPlanLookup` による AR 返却（`find_cultivation_plan` オーバーライド）と `@cultivation_plan` を除去。`PublicPlanResultsPageReadModel`・`CultivationPlanGateway#public_plan_results_read_model` / `#public_plan_wizard_plan_exists?`、`PublicPlanResultsInteractor`、`PublicPlanResultsHtmlPresenter`、結果テンプレは `gantt_embed` / read model ベース。スケジュール警告判定はゲートウェイ内で read model と `public_plan_results_schedule_warning?` と共有。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `FertilizesController#new`** の `Fertilize.new` を `FertilizeGateway#build_blank_fertilize_for_master_form` と `FertilizeActiveRecordGateway` に集約（アダプター層テストで未保存 `Fertilize` を検証）。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `PesticidesController`** の `Pesticide.new` / nested `build` / `assign_attributes`、および `PesticideAssociationPolicy` 直参照を `PesticideGateway`（`build_blank_pesticide_for_master_form` 等）と `PesticideActiveRecordGateway` に集約。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `PlansController#create`** — セッション起点の農場／作物／既存計画・`initialize_plan_from_selection`・最適化ジョブチェーン（`PrivatePlanOptimizationJobChainBuilder` と API 共有、`PrivatePlanHtmlPostCreateJobChain` で `JobChainAsyncDispatcher`）を `PrivatePlanCreateFromSessionInteractor`（当時は `PrivatePlanHtmlCreateInteractor`）と HTML プレゼンタ／アダプターに移行。コントローラの `CultivationPlan.find`・`current_user.farms` / `cultivation_plans`・`RecordInvalid` 主スイッチを除去。Application edge 禁止 **3**・**4**。
-- **解消済み（2026-05-08・空 backlog 裏取り）**: **`PrivatePlanHtmlCreate*` 型名のチャネル語** — Interactor / 入力 DTO / Output Port / HTML Presenter / `CompositionRoot#private_plan_*_interactor` を **`PrivatePlanCreateFromSession*`** / **`private_plan_create_from_session_interactor`** に統一（`PlansController#create` の振る舞い不変）。Interactors 禁止 **4**。
+- **解消済み（2026-05-08・空 backlog 裏取り）**: `**PrivatePlanHtmlCreate*` 型名のチャネル語** — Interactor / 入力 DTO / Output Port / HTML Presenter / `CompositionRoot#private_plan_*_interactor` を `**PrivatePlanCreateFromSession*`** / `**private_plan_create_from_session_interactor**` に統一（`PlansController#create` の振る舞い不変）。Interactors 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `PlansController#optimize` / `#show`** — `optimize` の `status_optimizing?` 分岐と `before_action :set_plan`（optimize 用）を除去。`CultivationPlanGateway#private_plan_optimization_redirect_snapshot`・`PrivatePlanOptimizationRedirectInteractor`・`PrivatePlanOptimizationRedirectHtmlPresenter`・`CompositionRoot#private_plan_optimization_redirect_interactor` で集約（Interactor／DTO／ゲートウェイにチャネル名 `Html` を載せず Interactors 禁止 **4** に整合）。`show` は `PrivatePlanShowHtmlPresenter#on_success` で `dto.optimizing?` 時に `optimizing_plan_path` へリダイレクト。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `PlansController#optimizing` / `PublicPlansController#optimizing`** — 完了／失敗時の `redirect_to` をコントローラから除去し、`PrivatePlanOptimizingHtmlPresenter` / `PublicPlanOptimizingHtmlPresenter` の `on_success` で DTO の `completed?` / `failed?` に応じて HTTP へ写像（Application edge 禁止 **4**）。契約 `docs/contracts/private-plan-optimizing-html-contract.md` を整合。
 - **解消済み（2026-05-08）**: **HTML `PublicPlansController#save_plan`（HTML 枝）** — 計画存在・ペイロード・匿名時セッション退避／認証時 `PublicPlanSaveFromSessionInteractor` 委譲を `PublicPlanWizardSaveDispatchInteractor` + `PublicPlanWizardSaveDispatchHtmlPresenter` に集約。`logged_in?` 主分岐と `save_plan_to_user_account` / `save_plan_data_to_session` のコントローラオーケストレーションを除去（匿名ユーザーは `current_user.anonymous?`）。Application edge 禁止 **4**。
-- **解消済み（2026-05-08）**: **`CultivationPlanHtmlBaseController#find_cultivation_plan`** および **`ManageablePrivatePlanLookup`** — リポジトリ全体に呼び出しがなく到達不能だった AR `includes` / `scope.find` 経路を削除。`PlansController` / `PublicPlansController` の `find_cultivation_plan_scope` フックも削除。HTML 公開／私有フローは既存のゲートウェイ＋Interactor 経路のみ。Application edge 禁止 **4**（死んだコントローラ内ユースケース相当の AR 残置の除去）。
-- **解消済み（2026-05-08）**: **`AuthController#logout`** / **`Api::V1::AuthController#logout`** / **`AuthTestController#mock_logout`** — `current_user.sessions.destroy_all` をやめ、`Domain::Auth::Interactors::AuthUserLogoutInteractor` + `UserSessionRevocationActiveRecordGateway`（`Session.where(user_id:).delete_all`）+ HTML／API／テスト用 HTML プレゼンタに集約。`logged_in?` で匿名を除外。`clear_session_cookie` は HTML／API で `public` 化しプレゼンタから呼び出し。Application edge 禁止 **4**。
-- **解消済み（2026-05-08）**: **`AuthTestController` モックログイン** — `User.find_or_create_by` / `Session.create_for_user` / リダイレクト分岐を `AuthTestMockLoginInteractor` + `AuthTestLoginActiveRecordGateway` + `AuthTestMockLoginHtmlPresenter` に移行。コントローラは OmniAuth モックから `AuthTestMockLoginInputDto` を組み立て、`return_to` 許可は既存 `allowed_return_to?`。セッション Cookie は `auth_test_assign_session_cookie!` フック（Rails 8 の private `cookies` 回避）。Application edge 禁止 **4**。
+- **解消済み（2026-05-08）**: `**CultivationPlanHtmlBaseController#find_cultivation_plan`** および `**ManageablePrivatePlanLookup**` — リポジトリ全体に呼び出しがなく到達不能だった AR `includes` / `scope.find` 経路を削除。`PlansController` / `PublicPlansController` の `find_cultivation_plan_scope` フックも削除。HTML 公開／私有フローは既存のゲートウェイ＋Interactor 経路のみ。Application edge 禁止 **4**（死んだコントローラ内ユースケース相当の AR 残置の除去）。
+- **解消済み（2026-05-08）**: `**AuthController#logout`** / `**Api::V1::AuthController#logout**` / `**AuthTestController#mock_logout**` — `current_user.sessions.destroy_all` をやめ、`Domain::Auth::Interactors::AuthUserLogoutInteractor` + `UserSessionRevocationActiveRecordGateway`（`Session.where(user_id:).delete_all`）+ HTML／API／テスト用 HTML プレゼンタに集約。`logged_in?` で匿名を除外。`clear_session_cookie` は HTML／API で `public` 化しプレゼンタから呼び出し。Application edge 禁止 **4**。
+- **解消済み（2026-05-08）**: `**AuthTestController` モックログイン** — `User.find_or_create_by` / `Session.create_for_user` / リダイレクト分岐を `AuthTestMockLoginInteractor` + `AuthTestLoginActiveRecordGateway` + `AuthTestMockLoginHtmlPresenter` に移行。コントローラは OmniAuth モックから `AuthTestMockLoginInputDto` を組み立て、`return_to` 許可は既存 `allowed_return_to?`。セッション Cookie は `auth_test_assign_session_cookie!` フック（Rails 8 の private `cookies` 回避）。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `Crops::PestsController#edit`** — `@pest.pest_control_methods.build` を除去。`PestGateway#prepare_crop_nested_pest_for_edit_form!`・`CropsNestedPestsLoadPestInteractor`（`for_edit_form:`）でゲートウェイに集約。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `PlansController#copy`** — 無効化リダイレクトのみのため `before_action :set_plan` と `PlanPolicy.find_private_owned!` を除去。Application edge 禁止 **4**。
-- **解消済み（2026-05-08）**: **`ApplicationController#current_user`** の `Session` / `User` 直参照を `Adapters::Shared::Gateways::SessionCookieUserActiveRecordGateway` に集約。`CompositionRoot#session_cookie_user_gateway` を追加し、`MastersApiSessionResolveGateway` は同一リゾルバを注入してセッション解決を共有。アダプター層テスト `session_cookie_user_active_record_gateway_test.rb` を追加。Application edge 禁止 **4**。
-- **解消済み（2026-05-08・セクション0 機械点検）**: **`app/controllers` の HTML系（`api/` 配下除外）全 `*_controller.rb`** を辞書順で 1 件ずつ、`Session` / `User` / 主要ドメイン `Model.(find|where|create|new|build|find_by)` 相当のコントローラ直参照 grep。**該当ヒットなし**（`ApplicationController#current_user` は先行コミットでゲートウェイ化済み）。`SitemapsController` は `Dir.glob` のみ。`HealthController` の DB `rescue` は backlog「残置」既知。`AuthController#google_oauth2_callback` の `case` は OmniAuth ゲートウェイ戻り値の HTTP 写像。
-- **解消済み（2026-05-08）**: **API マスタ** `Api::V1::Masters::Crops::CropStages::*RequirementsController` の `@crop_stage.*_requirement` および AR の `save` / `update` / `destroy` を除去。`CropGateway` に各要件の `destroy_*` を追加、`CropMemoryGateway` で永続化、`Masters*Requirement*`Interactor と `Masters*RequirementApiPresenter` に集約。ルート未使用だった **`CropStagesMastersController`** を削除（`/masters/crops/:id/crop_stages` は既存の `crops/crop_stages` が担当）。Application edge 禁止 **4**。
+- **解消済み（2026-05-08）**: `**ApplicationController#current_user`** の `Session` / `User` 直参照を `Adapters::Shared::Gateways::SessionCookieUserActiveRecordGateway` に集約。`CompositionRoot#session_cookie_user_gateway` を追加し、`MastersApiSessionResolveGateway` は同一リゾルバを注入してセッション解決を共有。アダプター層テスト `session_cookie_user_active_record_gateway_test.rb` を追加。Application edge 禁止 **4**。
+- **解消済み（2026-05-08・セクション0 機械点検）**: `**app/controllers` の HTML系（`api/` 配下除外）全 `*_controller.rb`** を辞書順で 1 件ずつ、`Session` / `User` / 主要ドメイン `Model.(find|where|create|new|build|find_by)` 相当のコントローラ直参照 grep。**該当ヒットなし**（`ApplicationController#current_user` は先行コミットでゲートウェイ化済み）。`SitemapsController` は `Dir.glob` のみ。`HealthController` の DB `rescue` は backlog「残置」既知。`AuthController#google_oauth2_callback` の `case` は OmniAuth ゲートウェイ戻り値の HTTP 写像。
+- **解消済み（2026-05-08）**: **API マスタ** `Api::V1::Masters::Crops::CropStages::*RequirementsController` の `@crop_stage.*_requirement` および AR の `save` / `update` / `destroy` を除去。`CropGateway` に各要件の `destroy_*` を追加、`CropMemoryGateway` で永続化、`Masters*Requirement*`Interactor と `Masters*RequirementApiPresenter` に集約。ルート未使用だった `**CropStagesMastersController`** を削除（`/masters/crops/:id/crop_stages` は既存の `crops/crop_stages` が担当）。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `AgriculturalTasksController`** の `load_crop_selection_data` / `prepare_crop_cards*` / `selected_crop_ids_from_params` にあった作物一覧・プレビュー・カード組み立てのユースケース論理を `AgriculturalTaskEditFormCropSelectionLoadInteractor` + `AgriculturalTaskEditFormCropSelectionLoadHtmlPresenter` + `CompositionRoot#agricultural_task_edit_form_crop_selection_load_interactor` に移行。DTO／ポート名にチャネル名 `Html` を載せない（Interactors 禁止 **4**）。`apply_agricultural_task_update_form_snapshot` のカード再構築は `EditFormCropSelectionCards`。Application edge 禁止 **4**。
-- **解消済み（2026-05-08）**: **`AgriculturalTasksController#index`** の **`resolve_filter`**（管理者／非管理者の一覧フィルタ正規化）を `AgriculturalTaskListInputDto` の `initialize` に集約。`index` は生の `params[:filter]` を DTO に渡すのみ。Application edge 禁止 **4**。
-- **解消済み（2026-05-08）**: **`FarmsController#index`** の HTML / JSON で **`FarmListInteractor` と `FarmListRowsBundleInteractor` が二重化**していた問題を解消。両形式とも **`FarmListRowsBundleInteractor`** + `FarmListRowsBundleOutputPort`（`FarmListHtmlPresenter` / `FarmListJsonPresenter`）。`FarmListRowDto` に `created_at` / `updated_at` を追加し JSON 契約を維持。Application edge 禁止 **4**・Presenter 契約（同一ユースケース同一 Interactor）に整合。`docs/contracts/farm-list-rows-bundle-contract.md` 更新。
+- **解消済み（2026-05-08）**: `**AgriculturalTasksController#index`** の `**resolve_filter**`（管理者／非管理者の一覧フィルタ正規化）を `AgriculturalTaskListInputDto` の `initialize` に集約。`index` は生の `params[:filter]` を DTO に渡すのみ。Application edge 禁止 **4**。
+- **解消済み（2026-05-08）**: `**FarmsController#index`** の HTML / JSON で `**FarmListInteractor` と `FarmListRowsBundleInteractor` が二重化**していた問題を解消。両形式とも `**FarmListRowsBundleInteractor`** + `FarmListRowsBundleOutputPort`（`FarmListHtmlPresenter` / `FarmListJsonPresenter`）。`FarmListRowDto` に `created_at` / `updated_at` を追加し JSON 契約を維持。Application edge 禁止 **4**・Presenter 契約（同一ユースケース同一 Interactor）に整合。`docs/contracts/farm-list-rows-bundle-contract.md` 更新。
 - **解消済み（2026-05-08）**: **HTML `PestsController#edit`** の `@pest.pest_control_methods.build` を `PestGateway#prepare_top_level_pest_for_edit_form!`（`PestMemoryGateway` で `prepare_crop_nested_pest_for_edit_form!` と共通の `ensure_pest_control_method_row_for_form!`）に集約。Application edge 禁止 **4**。
 - **解消済み（2026-05-08）**: **HTML `Plans::TaskScheduleItemsController#complete`** — `Date.parse` / `Date.current` / `Time.current` をコントローラから除去。`TaskScheduleItemCompleteInputDto`（Strong params＋注入 `clock`）と `TaskScheduleItemCompleteInteractor`、`CompositionRoot` で `clock: Time.zone` を注入。不正日付は `RecordInvalid`→JSON 422。Application edge 禁止 **4**。
-- **解消済み（2026-05-08）**: **`PlanningSchedulesController#get_crop_color_for_schedule`** — 表示専用の色決定を `PlanningSchedulesHelper` に移し、パレットを `CROP_SCHEDULE_DISPLAY_COLOR_PALETTE` に集約。コントローラの `helper_method` 定義を削除。Application edge 禁止 **4**（表示ロジックのコントローラ残置の除去）。
-- **解消済み（2026-05-08・ADR）**: Gateway メソッド命名の方針を [`docs/adr/0009-gateway-interface-naming-presentation-agnostic.md`](docs/adr/0009-gateway-interface-naming-presentation-agnostic.md) に記録（プレゼン非依存の IF 名、`master_form` / ウィザード語の意図）。
-- **解消済み（2026-05-08・CA 対応計画）**: **Gateway メソッド名の画面由来語** — `CultivationPlanGateway` の `public_plan_html_save_session_payload` → `public_plan_wizard_save_session_payload`、`public_plan_results_page_read_model` → `public_plan_results_read_model`。マスタ HTML CRUD 用の `*_for_html_form` / `*_pesticide_html_*` を **`*_for_master_form`** に統一（crop / farm / field / fertilize / agricultural_task / pesticide の IF・`CropMemoryGateway`・各 AR ゲートウェイ・コントローラ・テスト）。**Gateway boundary（presentation-agnostic）**・**Interactors 禁止 4（チャネル名のエンコード）** に整合。
-- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**cultivation_plan: ポート／DTO から Html・Json・Page…**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
+- **解消済み（2026-05-08）**: `**PlanningSchedulesController#get_crop_color_for_schedule`** — 表示専用の色決定を `PlanningSchedulesHelper` に移し、パレットを `CROP_SCHEDULE_DISPLAY_COLOR_PALETTE` に集約。コントローラの `helper_method` 定義を削除。Application edge 禁止 **4**（表示ロジックのコントローラ残置の除去）。
+- **解消済み（2026-05-08・ADR）**: Gateway メソッド命名の方針を `[docs/adr/0009-gateway-interface-naming-presentation-agnostic.md](docs/adr/0009-gateway-interface-naming-presentation-agnostic.md)` に記録（プレゼン非依存の IF 名、`master_form` / ウィザード語の意図）。
+- **解消済み（2026-05-08・CA 対応計画）**: **Gateway メソッド名の画面由来語** — `CultivationPlanGateway` の `public_plan_html_save_session_payload` → `public_plan_wizard_save_session_payload`、`public_plan_results_page_read_model` → `public_plan_results_read_model`。マスタ HTML CRUD 用の `*_for_html_form` / `*_pesticide_html_*` を `***_for_master_form`** に統一（crop / farm / field / fertilize / agricultural_task / pesticide の IF・`CropMemoryGateway`・各 AR ゲートウェイ・コントローラ・テスト）。**Gateway boundary（presentation-agnostic）**・**Interactors 禁止 4（チャネル名のエンコード）** に整合。
+- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**私有計画: CompositionRoot / Adapter の `html` 命名**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
 `ARCHITECTURE.md` 本文を手動再読しつつ、次を **Glob / Grep / 代表ファイル Read** で照合（1 パス全捕捉ではない。外側ループの再訪を前提）。
 
-| 観点 | 結果（当該イテレーション） |
-|------|---------------------------|
-| `lib/domain` の `Rails.` / `CompositionRoot` / `Adapters::` **実コード参照** | 検出なし（コメント・ポート説明のみ） |
-| `lib/presenters` の `CompositionRoot` / ゲートウェイ再取得 | 検出なし |
-| `app/controllers/api/v1` の `rescue` / `rescue_from` | 該当なし |
-| `frontend` `components/**/*.component.ts` の `adapters/` 直 import | 該当なし |
-| HTML `Plans::TaskSchedulesController` の `before_action` AR 読込 | **解消**（2026-05-07・上記修正単位） |
-| 既知の意図的 `rescue`（天気・Health・Auth） | 下記「残置」のまま |
+
+| 観点                                                                    | 結果（当該イテレーション）             |
+| --------------------------------------------------------------------- | ------------------------- |
+| `lib/domain` の `Rails.` / `CompositionRoot` / `Adapters::` **実コード参照** | 検出なし（コメント・ポート説明のみ）        |
+| `lib/presenters` の `CompositionRoot` / ゲートウェイ再取得                      | 検出なし                      |
+| `app/controllers/api/v1` の `rescue` / `rescue_from`                   | 該当なし                      |
+| `frontend` `components/**/*.component.ts` の `adapters/` 直 import      | 該当なし                      |
+| HTML `Plans::TaskSchedulesController` の `before_action` AR 読込         | **解消**（2026-05-07・上記修正単位） |
+| 既知の意図的 `rescue`（天気・Health・Auth）                                       | 下記「残置」のまま                 |
+
 
 ## スキャン補足
 
@@ -157,3 +162,4 @@
 - `Farms::WeatherDataController` の `PredictWeatherDataJob.perform_later` 周りの `rescue ActiveJob::EnqueueError`（キュー投入失敗のユーザー向けレスポンス）。
 - `HealthController` の DB 例外のみを拾う `rescue *HEALTH_DB_EXCEPTIONS`（ファイル内コメントのとおり意図的）。
 - `AuthController#allowed_return_to?` 等の `URI::InvalidURIError` rescue（URL 検証の局所ガード）。
+

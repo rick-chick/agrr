@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Ports
-      class TaskScheduleItemJsonOutputPort
+      class TaskScheduleItemMutationOutputPort
         def on_created(item_payload)
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end

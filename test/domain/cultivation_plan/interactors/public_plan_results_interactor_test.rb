@@ -4,7 +4,7 @@ require "test_helper"
 
 class PublicPlanResultsInteractorTest < ActiveSupport::TestCase
   test "call passes read model to on_success when completed" do
-    read_model = Domain::CultivationPlan::Dtos::PublicPlanResultsPageReadModel.new(
+    read_model = Domain::CultivationPlan::Dtos::PublicPlanResultsReadModel.new(
       plan_id: 5,
       status_completed: true,
       planning_start_date: Date.new(2026, 1, 1),
@@ -73,7 +73,7 @@ class PublicPlanResultsInteractorTest < ActiveSupport::TestCase
   end
 
   test "call invokes redirect_to_optimizing when not completed" do
-    read_model = Domain::CultivationPlan::Dtos::PublicPlanResultsPageReadModel.new(
+    read_model = Domain::CultivationPlan::Dtos::PublicPlanResultsReadModel.new(
       plan_id: 3,
       status_completed: false,
       planning_start_date: nil,

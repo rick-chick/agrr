@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # 公開ウィザード「結果」HTML 用の読み取りスナップショット（View / AR 非依存）
-      class PublicPlanResultsPageReadModel
+      # 公開ウィザード「結果」の読み取りスナップショット（View / AR 非依存）
+      class PublicPlanResultsReadModel
         attr_reader :plan_id, :status_completed, :planning_start_date, :planning_end_date,
                     :farm_name, :total_area, :field_cultivations_count,
                     :total_cost, :total_revenue, :total_profit,

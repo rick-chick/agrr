@@ -770,7 +770,7 @@ module Adapters
           end
           crop_palette_embed = { used_crop_ids: used_crop_ids, crops: crop_rows }
 
-          Domain::CultivationPlan::Dtos::PublicPlanResultsPageReadModel.new(
+          Domain::CultivationPlan::Dtos::PublicPlanResultsReadModel.new(
             plan_id: plan.id,
             status_completed: plan.status_completed?,
             planning_start_date: plan.planning_start_date,

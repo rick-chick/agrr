@@ -3,7 +3,7 @@
 module Presenters
   module Html
     module PublicPlans
-      class PublicPlanResultsHtmlPresenter < Domain::CultivationPlan::Ports::PublicPlanResultsHtmlOutputPort
+      class PublicPlanResultsHtmlPresenter < Domain::CultivationPlan::Ports::PublicPlanResultsOutputPort
         def initialize(view:)
           @view = view
         end

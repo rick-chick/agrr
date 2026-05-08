@@ -7,11 +7,11 @@ module Plans
     def create
       raw = params[:task_schedule_item]
       unless raw.is_a?(ActionController::Parameters)
-        task_schedule_item_json_presenter.on_parameter_missing
+        task_schedule_item_mutation_presenter.on_parameter_missing
         return
       end
       if raw.to_unsafe_h.blank?
-        task_schedule_item_json_presenter.on_parameter_missing
+        task_schedule_item_mutation_presenter.on_parameter_missing
         return
       end
 
@@ -32,7 +32,7 @@ module Plans
         :amount,
         :amount_unit
       )
-      CompositionRoot.task_schedule_item_create_interactor(output_port: task_schedule_item_json_presenter).call(
+      CompositionRoot.task_schedule_item_create_interactor(output_port: task_schedule_item_mutation_presenter).call(
         user_id: current_user.id,
         plan_id: task_schedule_route_plan_id,
         attributes: permitted.to_unsafe_h
@@ -42,11 +42,11 @@ module Plans
     def update
       raw = params[:task_schedule_item]
       unless raw.is_a?(ActionController::Parameters)
-        task_schedule_item_json_presenter.on_parameter_missing
+        task_schedule_item_mutation_presenter.on_parameter_missing
         return
       end
       if raw.to_unsafe_h.blank?
-        task_schedule_item_json_presenter.on_parameter_missing
+        task_schedule_item_mutation_presenter.on_parameter_missing
         return
       end
 
@@ -59,7 +59,7 @@ module Plans
         :amount_unit,
         :time_per_sqm
       )
-      CompositionRoot.task_schedule_item_update_interactor(output_port: task_schedule_item_json_presenter).call(
+      CompositionRoot.task_schedule_item_update_interactor(output_port: task_schedule_item_mutation_presenter).call(
         user_id: current_user.id,
         plan_id: task_schedule_route_plan_id,
         item_id: params[:id],
@@ -75,7 +75,7 @@ module Plans
         fallback_location: fallback_location
       )
       CompositionRoot.task_schedule_item_schedule_deletion_undo_interactor(
-        json_output_port: task_schedule_item_json_presenter,
+        mutation_output_port: task_schedule_item_mutation_presenter,
         undo_output_port: presenter,
         translator: CompositionRoot.translator
       ).call(
@@ -88,13 +88,13 @@ module Plans
     def complete
       raw = params[:completion]
       unless raw.is_a?(ActionController::Parameters)
-        task_schedule_item_json_presenter.on_parameter_missing
+        task_schedule_item_mutation_presenter.on_parameter_missing
         return
       end
 
       permitted = raw.permit(:actual_date, :notes)
 
-      CompositionRoot.task_schedule_item_complete_interactor(output_port: task_schedule_item_json_presenter).call(
+      CompositionRoot.task_schedule_item_complete_interactor(output_port: task_schedule_item_mutation_presenter).call(
         user_id: current_user.id,
         plan_id: task_schedule_route_plan_id,
         item_id: params[:id],
@@ -104,8 +104,8 @@ module Plans
 
     private
 
-    def task_schedule_item_json_presenter
-      Presenters::Plans::TaskScheduleItemJsonPresenter.new(view: self)
+    def task_schedule_item_mutation_presenter
+      Presenters::Plans::TaskScheduleItemMutationPresenter.new(view: self)
     end
 
     def task_schedule_route_plan_id

@@ -7,12 +7,12 @@ module Domain
     module Interactors
       class TaskScheduleItemScheduleDeletionUndoInteractorTest < ActiveSupport::TestCase
         setup do
-          @json_output_port = mock("json_output_port")
+          @mutation_output_port = mock("mutation_output_port")
           @mutation_gateway = mock("mutation_gateway")
           @deletion_undo_interactor = mock("deletion_undo_interactor")
           @translator = Adapters::Translators::RailsTranslator.new
           @interactor = TaskScheduleItemScheduleDeletionUndoInteractor.new(
-            json_output_port: @json_output_port,
+            mutation_output_port: @mutation_output_port,
             mutation_gateway: @mutation_gateway,
             deletion_undo_interactor: @deletion_undo_interactor,
             translator: @translator
@@ -40,12 +40,12 @@ module Domain
           @interactor.call(user_id: 10, plan_id: 20, item_id: 30)
         end
 
-        test "delegates RecordNotFound to json output port" do
+        test "delegates RecordNotFound to mutation output port" do
           @mutation_gateway.expects(:deletion_undo_schedule_row_for_item!).with(1, 2, 3).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )
           @deletion_undo_interactor.expects(:call).never
-          @json_output_port.expects(:on_not_found)
+          @mutation_output_port.expects(:on_not_found)
 
           @interactor.call(user_id: 1, plan_id: 2, item_id: 3)
         end

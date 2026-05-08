@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # HTML 作業予定ページのヘッダー・パス生成用（AR をビューに渡さない）
-      class TaskScheduleHtmlShellPlan
+      # 作業予定タイムラインのヘッダー・パス生成用シェル（AR をビューに渡さない）
+      class TaskScheduleTimelineShellPlan
         attr_reader :id, :display_name, :total_area, :farm
 
         def initialize(id:, display_name:, total_area:, farm_display_name:)

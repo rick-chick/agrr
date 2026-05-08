@@ -713,9 +713,9 @@ module CompositionRoot
       )
     end
 
-    def task_schedule_item_schedule_deletion_undo_interactor(json_output_port:, undo_output_port:, translator:)
+    def task_schedule_item_schedule_deletion_undo_interactor(mutation_output_port:, undo_output_port:, translator:)
       Domain::CultivationPlan::Interactors::TaskScheduleItemScheduleDeletionUndoInteractor.new(
-        json_output_port: json_output_port,
+        mutation_output_port: mutation_output_port,
         mutation_gateway: task_schedule_item_mutation_gateway,
         deletion_undo_interactor: deletion_undo_schedule_interactor(output_port: undo_output_port),
         translator: translator
