@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-# 他ユーザーの作物の show / destroy での認可拒否は CropDetailInteractor / CropDestroyInteractor の単体に寄せ、
-# ここでは HTTP 契約（成功レスポンス・JSON 形・使用中削除 422）を優先する。
+# 他ユーザーの作物の show / update / destroy での認可拒否は各 Interactor の単体と API Crop Presenter の policy 失敗に寄せ、
+# ここでは HTTP 契約（成功レスポンス・JSON 形・参照フラグ・使用中削除 422）を優先する。
 
 module Api
   module V1
@@ -180,27 +180,6 @@ module Api
 
           crop.reload
           assert_equal "更新された名前", crop.name
-        end
-
-        test "should not update other user's crop" do
-          other_user = create(:user)
-          other_crop = create(:crop, :user_owned, user: other_user, name: "他のユーザーの作物")
-
-          patch api_v1_masters_crop_path(other_crop),
-                params: {
-                  crop: {
-                    name: "変更しようとした名前"
-                  }
-                },
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-          assert_response :forbidden
-
-          other_crop.reload
-          assert_equal "他のユーザーの作物", other_crop.name
         end
 
         test "should destroy crop" do
