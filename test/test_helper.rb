@@ -89,10 +89,7 @@ module ActiveSupport
     # 有効化: PARALLEL_TESTS=1 rails test
     # parallelize(workers: :number_of_processors) # parallel_test_config.rbで管理
 
-    # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
-    # フィクスチャの外部キー制約違反を避けるため、コメントアウト
-    # FactoryBotを使用してテストデータを作成
-    # fixtures :all
+    # テストデータは FactoryBot 等で都度作成（Minitest fixtures は未使用）
 
     # テスト開始前にアノニマスユーザーを作成
     setup do
