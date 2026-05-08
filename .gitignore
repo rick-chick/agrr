@@ -113,6 +113,10 @@ db/cache_schema.rb.tmp
 /tmp/debug/*
 !/tmp/debug/.keep
 
+# Automation tooling outputs (regenerated locally; keep directory)
+/automation/output/*
+!/automation/output/.keep
+
 # AGRR binary backups (auto-generated)
 /lib/core/agrr.backup*
 /lib/core/_internal.backup*
