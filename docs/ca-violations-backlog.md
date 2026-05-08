@@ -31,9 +31,9 @@
 ### C. `lib/adapters` — 表現由来パラメータ
 
 
-| パターン               | ファイル                                       |
-| ------------------ | ------------------------------------------ |
-| `for_html_detail:` | `lib/adapters/farm/mappers/farm_mapper.rb` |
+| パターン                        | ファイル                                       |
+| --------------------------- | ------------------------------------------ |
+| `include_weather_data_fields:` | `lib/adapters/farm/mappers/farm_mapper.rb`（旧 `for_html_detail` は解消） |
 
 
 ### D. `lib/domain` — 型名に `Api` / `ApiV1`（チャネル想起の**要レビュー**）
@@ -63,8 +63,7 @@
 
 - **解消済み（2026-05-08）**: **私有計画: `CompositionRoot` / Adapter の `html` 命名（ジョブチェーン・select_crop runner）** — `PrivatePlanHtmlPostCreateJobChain`→`PrivatePlanPostCreateJobChain`、`private_plan_html_post_create_job_chain`→`private_plan_post_create_job_chain`、`PrivatePlanSelectCropHtmlContextRunner`→`PrivatePlanSelectCropContextRunner`、`private_plan_select_crop_html_context_runner`→`private_plan_select_crop_context_runner`（ファイル名同様）。Interactors 禁止 **4** @ Application edge / `lib/adapters`。
 
-- [ ] **FarmMapper の `for_html_detail` を表現非依存パラメータへ** — 禁止 **4** / Gateway boundary @ `lib/adapters`
-  - 主なファイル: `lib/adapters/farm/mappers/farm_mapper.rb` と `farm_entity_from_record` / `for_html_detail` 呼び出し元
+- **解消済み（2026-05-08）**: **FarmMapper の `for_html_detail` を `include_weather_data_fields` へ** — 農場エンティティへの気象同期メタの付与をチャネル語から分離。禁止 **4** / Gateway boundary @ `lib/adapters`。
 
 - [ ] **`lib/domain` の `Api` / `ApiV1` 型名の横断棚卸し（`ApiWeather` BC を除く）** — 禁止 **4** @ Interactors・ports・dtos
   - 主なファイル: 洗い出し **D** の束。**1 イテレーションではサブバッチに分割**（例: `file_blob` の `ApiV1*` のみ、のように先頭サブバッチを backlog 行内で明示してから着手）
@@ -120,7 +119,7 @@
 - **解消済み（2026-05-08）**: `**PlanningSchedulesController#get_crop_color_for_schedule`** — 表示専用の色決定を `PlanningSchedulesHelper` に移し、パレットを `CROP_SCHEDULE_DISPLAY_COLOR_PALETTE` に集約。コントローラの `helper_method` 定義を削除。Application edge 禁止 **4**（表示ロジックのコントローラ残置の除去）。
 - **解消済み（2026-05-08・ADR）**: Gateway メソッド命名の方針を `[docs/adr/0009-gateway-interface-naming-presentation-agnostic.md](docs/adr/0009-gateway-interface-naming-presentation-agnostic.md)` に記録（プレゼン非依存の IF 名、`master_form` / ウィザード語の意図）。
 - **解消済み（2026-05-08・CA 対応計画）**: **Gateway メソッド名の画面由来語** — `CultivationPlanGateway` の `public_plan_html_save_session_payload` → `public_plan_wizard_save_session_payload`、`public_plan_results_page_read_model` → `public_plan_results_read_model`。マスタ HTML CRUD 用の `*_for_html_form` / `*_pesticide_html_*` を `***_for_master_form`** に統一（crop / farm / field / fertilize / agricultural_task / pesticide の IF・`CropMemoryGateway`・各 AR ゲートウェイ・コントローラ・テスト）。**Gateway boundary（presentation-agnostic）**・**Interactors 禁止 4（チャネル名のエンコード）** に整合。
-- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**FarmMapper の `for_html_detail`**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
+- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**`lib/domain` の `Api` / `ApiV1` 型名**）をワークフロー セクション0 のスコープに固定する。バックログ **D** のとおり **1 イテレーションではサブバッチ 1 件**（本ラウンド先頭サブバッチ: **`file_blob` の `ApiV1Files*` interactors のみ**）に限定して着手する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 

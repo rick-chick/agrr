@@ -5,9 +5,9 @@ module Adapters
     module Mappers
       # Maps persistence records to domain farm DTO/entities. Interactors do not use AR.
       class FarmMapper
-        def self.farm_entity_from_record(record, for_html_detail: false)
+        def self.farm_entity_from_record(record, include_weather_data_fields: false)
           weather_kwargs =
-            if for_html_detail
+            if include_weather_data_fields
               {
                 weather_data_status: record.weather_data_status,
                 weather_data_fetched_years: record.weather_data_fetched_years,
@@ -47,7 +47,7 @@ module Adapters
         end
 
         def self.detail_dto_from_farm_record(farm)
-          farm_entity = farm_entity_from_record(farm, for_html_detail: true)
+          farm_entity = farm_entity_from_record(farm, include_weather_data_fields: true)
           field_entities = farm.fields.map { |f| field_entity_from_record(f) }
           Domain::Farm::Dtos::FarmDetailOutputDto.new(farm: farm_entity, fields: field_entities)
         end
