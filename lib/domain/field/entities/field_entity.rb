@@ -24,11 +24,6 @@ module Domain
         def display_name
           name.presence || "Field #{id}"
         end
-
-        # ハッシュからの変換（テスト用）
-        def self.from_hash(hash)
-          new(**hash)
-        end
       end
     end
   end
