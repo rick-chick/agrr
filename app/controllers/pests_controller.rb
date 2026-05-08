@@ -8,7 +8,7 @@ class PestsController < ApplicationController
     presenter = Presenters::Html::Pest::PestListHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestListInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call
+      translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pests/:id
@@ -16,7 +16,7 @@ class PestsController < ApplicationController
     presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
+      translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   # GET /pests/new
@@ -39,7 +39,7 @@ class PestsController < ApplicationController
     presenter = Presenters::Html::Pest::PestCreateHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestCreateInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger,       user_lookup: CompositionRoot.user_lookup).call(input_dto)
+      translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # PATCH/PUT /pests/:id
@@ -53,7 +53,7 @@ class PestsController < ApplicationController
     )
     Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger,       user_lookup: CompositionRoot.user_lookup).call(input_dto)
+      translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # DELETE /pests/:id

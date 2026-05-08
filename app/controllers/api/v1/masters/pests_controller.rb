@@ -14,7 +14,7 @@ module Api
         def index
           presenter = Presenters::Api::Pest::PestListPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestListInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.pest_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call
         end
 
@@ -24,7 +24,7 @@ module Api
           presenter = Presenters::Api::Pest::PestDetailPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
@@ -38,7 +38,7 @@ module Api
           presenter = Presenters::Api::Pest::PestCreatePresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestCreateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 

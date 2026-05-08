@@ -529,7 +529,6 @@ module CompositionRoot
         create_interactor: Adapters::Pest::PestCreateForAiAdapter.new(
           user_id: user_id,
           gateway: gw,
-          logger: log,
           translator: tr,
           user_lookup: ul
         ),
