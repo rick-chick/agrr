@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module Files
-      class ApiV1FilesJsonPresenter
+      class FileBlobJsonPresenter
         def initialize(view:, translator:)
           @view = view
           @translator = translator
