@@ -57,7 +57,6 @@ module Adapters
 
           @cultivation_plan_gateway.within_transaction do
             farm = farm_mapper.create_or_get_user_farm
-            ctx.current_farm_region = farm.region
 
             fields = Mappers::FieldMapper.new(ctx).create_user_fields(farm)
             crops = Mappers::CropMapper.new(ctx).create_user_crops_from_plan

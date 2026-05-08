@@ -119,7 +119,6 @@ class Adapters::CultivationPlan::PlanCopyGatewayTest < ActiveSupport::TestCase
       result: result
     )
     user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
-    ctx.current_farm_region = user_farm.region
     crops = Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
     tasks = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(user_farm.region)
     user_task = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
