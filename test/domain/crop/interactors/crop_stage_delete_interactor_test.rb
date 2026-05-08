@@ -14,7 +14,7 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
-          interactor = CropStageDeleteInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = CropStageDeleteInteractor.new(output_port: output_port, gateway: gateway)
           input_dto = Domain::Crop::Dtos::CropStageDeleteInputDto.new(
             crop_id: 1,
             stage_id: 1
@@ -32,7 +32,7 @@ module Domain
 
           output_port = Minitest::Mock.new
 
-          interactor = CropStageDeleteInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = CropStageDeleteInteractor.new(output_port: output_port, gateway: gateway)
           input_dto = Domain::Crop::Dtos::CropStageDeleteInputDto.new(
             crop_id: 1,
             stage_id: 1

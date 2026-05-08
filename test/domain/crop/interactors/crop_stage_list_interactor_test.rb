@@ -24,7 +24,7 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
-          interactor = CropStageListInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = CropStageListInteractor.new(output_port: output_port, gateway: gateway)
           input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: 1)
           interactor.call(input_dto)
 
@@ -39,7 +39,7 @@ module Domain
 
           output_port = Minitest::Mock.new
 
-          interactor = CropStageListInteractor.new(output_port: output_port, gateway: gateway, logger: Adapters::Logger::Gateways::RailsLoggerGateway.new)
+          interactor = CropStageListInteractor.new(output_port: output_port, gateway: gateway)
           input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: 1)
           err = assert_raises(StandardError) do
             interactor.call(input_dto)

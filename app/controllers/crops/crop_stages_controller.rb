@@ -93,23 +93,23 @@ module Crops
     end
 
     def interactor
-      @interactor ||= Domain::Crop::Interactors::CropStageCreateInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      @interactor ||= Domain::Crop::Interactors::CropStageCreateInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway)
     end
 
     def list_interactor
-      @list_interactor ||= Domain::Crop::Interactors::CropStageListInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      @list_interactor ||= Domain::Crop::Interactors::CropStageListInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway)
     end
 
     def detail_interactor
-      @detail_interactor ||= Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      @detail_interactor ||= Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway)
     end
 
     def update_interactor
-      @update_interactor ||= Domain::Crop::Interactors::CropStageUpdateInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      @update_interactor ||= Domain::Crop::Interactors::CropStageUpdateInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway)
     end
 
     def destroy_interactor
-      @destroy_interactor ||= Domain::Crop::Interactors::CropStageDeleteInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      @destroy_interactor ||= Domain::Crop::Interactors::CropStageDeleteInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway)
     end
 
     def presenter

@@ -12,7 +12,6 @@ module Domain
           @interactor = CropStageCreateInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new
           )
         end
 

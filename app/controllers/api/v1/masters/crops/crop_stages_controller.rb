@@ -15,14 +15,14 @@ module Api::V1::Masters::Crops
     def index
       input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: @crop.id)
 
-      interactor = Domain::Crop::Interactors::CropStageListInteractor.new(output_port: list_presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      interactor = Domain::Crop::Interactors::CropStageListInteractor.new(output_port: list_presenter, gateway: CompositionRoot.crop_gateway)
       interactor.call(input_dto)
     end
 
     def show
       input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
-      interactor = Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: detail_presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      interactor = Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: detail_presenter, gateway: CompositionRoot.crop_gateway)
       interactor.call(input_dto)
     end
 
@@ -36,7 +36,7 @@ module Api::V1::Masters::Crops
         payload: crop_stage_params.to_h
       )
 
-      interactor = Domain::Crop::Interactors::CropStageCreateInteractor.new(output_port: create_presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      interactor = Domain::Crop::Interactors::CropStageCreateInteractor.new(output_port: create_presenter, gateway: CompositionRoot.crop_gateway)
       interactor.call(input_dto)
     end
 
@@ -51,7 +51,7 @@ module Api::V1::Masters::Crops
         payload: crop_stage_params.to_h
       )
 
-      interactor = Domain::Crop::Interactors::CropStageUpdateInteractor.new(output_port: update_presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      interactor = Domain::Crop::Interactors::CropStageUpdateInteractor.new(output_port: update_presenter, gateway: CompositionRoot.crop_gateway)
       interactor.call(input_dto)
     end
 
@@ -61,7 +61,7 @@ module Api::V1::Masters::Crops
         stage_id: @crop_stage.id
       )
 
-      interactor = Domain::Crop::Interactors::CropStageDeleteInteractor.new(output_port: delete_presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger)
+      interactor = Domain::Crop::Interactors::CropStageDeleteInteractor.new(output_port: delete_presenter, gateway: CompositionRoot.crop_gateway)
       interactor.call(input_dto)
     end
 
