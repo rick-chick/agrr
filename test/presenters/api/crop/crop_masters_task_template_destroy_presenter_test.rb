@@ -21,7 +21,7 @@ class CropMastersTaskTemplateDestroyPresenterTest < ActiveSupport::TestCase
       view: view_mock,
       translator: translator_stub
     )
-    failure_dto = Domain::Crop::Dtos::MastersCropTaskTemplateMastersApiFailureDto.new(
+    failure_dto = Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailureDto.new(
       reason: :association_not_found
     )
 

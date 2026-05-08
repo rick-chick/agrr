@@ -22,7 +22,7 @@ class CropMastersTaskTemplateIndexPresenterTest < ActiveSupport::TestCase
       view: view_mock,
       translator: translator_stub
     )
-    failure_dto = Domain::Crop::Dtos::MastersCropTaskTemplateMastersApiFailureDto.new(reason: :crop_not_found)
+    failure_dto = Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailureDto.new(reason: :crop_not_found)
 
     view_mock.expects(:render_response).with(
       json: { error: I18n.t("api.errors.crop_not_found") },

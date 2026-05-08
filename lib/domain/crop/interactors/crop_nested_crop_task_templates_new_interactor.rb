@@ -19,7 +19,7 @@ module Domain
           @output_port.on_success(rows)
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(
-            Domain::Crop::Dtos::MastersCropTaskTemplateMastersApiFailureDto.new(reason: :crop_not_found)
+            Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailureDto.new(reason: :crop_not_found)
           )
         end
       end

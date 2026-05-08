@@ -20,7 +20,7 @@ module Domain
           @output_port.on_success
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(
-            Domain::Crop::Dtos::MastersCropTaskTemplateMastersApiFailureDto.new(reason: :association_not_found)
+            Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailureDto.new(reason: :association_not_found)
           )
         end
       end
