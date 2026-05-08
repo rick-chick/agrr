@@ -9,7 +9,7 @@ module Api
       # POST /api/v1/crops/ai_create
       # AIで作物情報を取得して保存
       def ai_create
-        result = CompositionRoot.crop_api_ai_create_interactor(current_user: current_user).call(
+        result = CompositionRoot.crop_ai_create_interactor(current_user: current_user).call(
           crop_name: params[:name],
           variety: params[:variety]
         )

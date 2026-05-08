@@ -46,7 +46,7 @@
 - `crop/ports/masters_*_requirement_api_output_port.rb`（temperature / thermal / sunshine / nutrient）
 - （解消・2026-05-08）`field_cultivation/interactors/field_cultivation_api_*`（Interactor のみ）— `FieldCultivationShowInteractor` / `FieldCultivationUpdateInteractor`
 - （解消・2026-05-08）`cultivation_plan/interactors/public_plan_api_save_plan_interactor.rb` — `PublicPlanSaveByPlanIdInteractor`
-- `crop|fertilize|pest/interactors/*_api_ai_*_interactor.rb`
+- （解消・2026-05-08）`crop/interactors/crop_api_ai_create_interactor.rb` — `CropAiCreateInteractor`（`CompositionRoot#crop_ai_create_interactor`）
 - `shared/dtos/api_json_result.rb`
 - `public_plan/dtos/entry_schedule_api_failure_dto.rb`
 - `crop/dtos/masters_crop_task_template_masters_api_failure_dto.rb`
@@ -68,8 +68,10 @@
 - **解消済み（2026-05-08）**: **`PublicPlanApiSavePlanInteractor` → `PublicPlanSaveByPlanIdInteractor`** — チャネル語 `Api` をクラス名から除去（`Api::V1::PublicPlansController` / `PublicPlansController` の `save_plan` 経路）。Interactors 禁止 **4**。
 - **解消済み（2026-05-08）**: **`field_cultivation` の `FieldCultivationApi*` Interactors 除去** — `FieldCultivationApiShowInteractor`→`FieldCultivationShowInteractor`、`FieldCultivationApiUpdateInteractor`→`FieldCultivationUpdateInteractor`（API コントローラ 2 系統＋ドメイン層テスト）。DTO／ゲートウェイの `Api` 語は本サブバッチ対象外。Interactors 禁止 **4**。
 
+- **解消済み（2026-05-08）**: **`CropApiAiCreateInteractor` → `CropAiCreateInteractor`** — `CompositionRoot#crop_ai_create_interactor`（旧 `crop_api_ai_create_interactor`）、`Api::V1::CropsController` 追従。Interactors 禁止 **4**。
+
 - [ ] **`lib/domain` の `Api` / `ApiV1` 型名の横断棚卸し（`ApiWeather` BC を除く）— 残サブバッチ** — 禁止 **4** @ Interactors・ports・dtos
-  - **次サブバッチ（先頭固定）**: `lib/domain/crop/interactors/crop_api_ai_create_interactor.rb` のみ（単一ファイル・単一クラス）
+  - **次サブバッチ（先頭固定）**: `lib/domain/pest/interactors/pest_api_ai_create_interactor.rb` と `pest_api_ai_update_interactor.rb` の **2 ファイルのみ**
   - 補足: `Domain::ApiWeather::*` は除外方針を意味読みで固定してからリネーム有無を判断
 - **解消済み（2026-05-07）**: **HTML** `Crops::AgriculturalTasksController` の `index` / `new` / `create` / `update` / `destroy` から AR 直叩き・コントローラ内業務分岐を除去。`CropMastersTaskTemplateIndex/Create/Update/DestroyInteractor` を API マスタと共有、`CropNestedCropTaskTemplatesNewInteractor` と `CropGateway#selectable_agricultural_task_picklist_rows_for_nested_templates` を追加。`create` で `agricultural_task_id` が空のときの `redirect_to` のみコントローラに残置（DTO 成立前のガード）。Application edge 禁止 3・4。
 - **解消済み（2026-05-07・セクション0）**: バックログ先頭の「HTML/API マスタで参照・admin 早期分岐の再サンプリング」— 列挙済みマスタに同パターンの残りなし。上記 `Crops::AgriculturalTasksController` は別種のエッジ肥大（AR）として扱い解消。
@@ -122,7 +124,7 @@
 - **解消済み（2026-05-08）**: `**PlanningSchedulesController#get_crop_color_for_schedule`** — 表示専用の色決定を `PlanningSchedulesHelper` に移し、パレットを `CROP_SCHEDULE_DISPLAY_COLOR_PALETTE` に集約。コントローラの `helper_method` 定義を削除。Application edge 禁止 **4**（表示ロジックのコントローラ残置の除去）。
 - **解消済み（2026-05-08・ADR）**: Gateway メソッド命名の方針を `[docs/adr/0009-gateway-interface-naming-presentation-agnostic.md](docs/adr/0009-gateway-interface-naming-presentation-agnostic.md)` に記録（プレゼン非依存の IF 名、`master_form` / ウィザード語の意図）。
 - **解消済み（2026-05-08・CA 対応計画）**: **Gateway メソッド名の画面由来語** — `CultivationPlanGateway` の `public_plan_html_save_session_payload` → `public_plan_wizard_save_session_payload`、`public_plan_results_page_read_model` → `public_plan_results_read_model`。マスタ HTML CRUD 用の `*_for_html_form` / `*_pesticide_html_*` を `***_for_master_form`** に統一（crop / farm / field / fertilize / agricultural_task / pesticide の IF・`CropMemoryGateway`・各 AR ゲートウェイ・コントローラ・テスト）。**Gateway boundary（presentation-agnostic）**・**Interactors 禁止 4（チャネル名のエンコード）** に整合。
-- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（`**crop_api_ai_create_interactor` サブバッチ**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
+- **次に先頭で固定する修正単位（未着手）**: 上記 `[ ]` の **先頭**（**`pest` の `PestApiAi*` Interactors 2 件**）をワークフロー セクション0 のスコープに固定する。`[ ]` が尽きたあとにのみ、空 backlog の通し走査を再実行する。
 
 ## セクション0 通し走査メモ（2026-05-06 継続）
 
@@ -149,7 +151,7 @@
 - 2026-05-06: **Angular 農業タスク詳細・編集** — detail / edit コンポーネントの adapters 直 import を廃止し、`agricultural-task-detail.providers.ts` / `agricultural-task-edit.providers.ts` に集約（edit の spec は Presenter import を providers 経由に変更）。
 - 2026-05-06: **Angular 農業タスク新規** — `agricultural-task-create.component.ts` の adapters 直 import を廃止し、`agricultural-task-create.providers.ts` に集約。
 - 2026-05-06: **Angular 農業タスク一覧** — `agricultural-task-list.component.ts` の adapters 直 import を廃止し、`usecase/agricultural-tasks/agricultural-task-list.providers.ts` に DI 配線を集約（Presenter の型用再エクスポートは usecase ファイルのみ）。
-- 2026-05-06: **API 作物 AI** — `CropAiUpsertService` を廃止し、`CropApiAiCreateInteractor` + `Adapters::Crop::CropAiUpsertActiveRecordPersistence`（ポート `CropAiUpsertPersistencePort`）に分割。`ApiJsonResult#success?` を追加。匿名ユーザーは害虫・肥料 AI と同様に 401（テスト追加）。
+- 2026-05-06: **API 作物 AI** — `CropAiUpsertService` を廃止し、`CropAiCreateInteractor` + `Adapters::Crop::CropAiUpsertActiveRecordPersistence`（ポート `CropAiUpsertPersistencePort`）に分割。`ApiJsonResult#success?` を追加。匿名ユーザーは害虫・肥料 AI と同様に 401（テスト追加）。
 - 2026-05-06: **Frontend（Angular）サンプリング（経過）** — 当初サンプルでは `components/` から `adapters/` への直 import が残っていたが、配線は `usecase/**/*.providers.ts` へ集約済み。**2026-05-06 再確認**: `frontend/src/app/components/**/*.ts` からの `adapters/` 直 import は検出されず。レイヤ境界の維持は引き続き契約テスト・通し走査で確認する。
 - 2026-05-06: **API 害虫・肥料 AI** — `PestsController` / `FertilizesController` の `ai_create` / `ai_update` を `PestApiAiCreateInteractor` / `PestApiAiUpdateInteractor` / `FertilizeApiAiCreateInteractor` / `FertilizeApiAiUpdateInteractor` に集約。agrr 応答の解釈は `PestAiDaemonResponseInterpreter`、肥料ペイロード正規化は `FertilizeAiAgrrPayloadNormalizer`。匿名ユーザー判定は `UserDto#anonymous?`（Mapper で `User` から付与）。作物関連付けは `CompositionRoot` が注入する runner で AR `User` を閉じ込める。
 - 2026-05-06: **Application edge 禁止4（API）** — `app/controllers/api/v1` の AR / ActiveStorage / User 直叩きをゲートウェイ・Interactor・Presenter に寄せた（Plans 一覧・詳細、PublicPlans `save_plan`、Wizard `crops`、公開 cultivation_plans `get_crop_for_add_crop`、マスタ Base のセッション/APIキー解決、作物×農業タスク API、作物×害虫 destroy、API キー生成、Files CRUD、Backdoor users/db_stats、作物 AI の既存検索は Pest/Fertilize ゲートウェイへ）。

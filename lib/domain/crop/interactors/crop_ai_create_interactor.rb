@@ -3,8 +3,8 @@
 module Domain
   module Crop
     module Interactors
-      # POST /api/v1/crops/ai_create — agrr 取得〜 upsert まで。
-      class CropApiAiCreateInteractor
+      # agrr から作物情報を取得し、永続化（upsert）まで行う。
+      class CropAiCreateInteractor
         def initialize(
           user_id:,
           user_lookup:,

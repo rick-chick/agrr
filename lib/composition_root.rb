@@ -502,9 +502,9 @@ module CompositionRoot
       )
     end
 
-    def crop_api_ai_create_interactor(current_user:)
+    def crop_ai_create_interactor(current_user:)
       uid = current_user.id
-      Domain::Crop::Interactors::CropApiAiCreateInteractor.new(
+      Domain::Crop::Interactors::CropAiCreateInteractor.new(
         user_id: uid,
         user_lookup: user_lookup,
         translator: translator,

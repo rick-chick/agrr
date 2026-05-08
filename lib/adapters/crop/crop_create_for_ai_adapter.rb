@@ -2,7 +2,7 @@
 
 module Adapters
   module Crop
-    # CropApiAiCreateInteractor / CropAiUpsertActiveRecordPersistence が期待する call(attrs) -> result を提供。
+    # CropAiCreateInteractor / CropAiUpsertActiveRecordPersistence が期待する call(attrs) -> result を提供。
     # 内部で CropCreateInteractor を使用する。
     # gateway / user_lookup はエッジ（Controller 等）から DI する。
     class CropCreateForAiAdapter
