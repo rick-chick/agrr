@@ -3,7 +3,7 @@
 module Domain
   module FieldCultivation
     module Interactors
-      class FieldCultivationApiUpdateInteractor
+      class FieldCultivationUpdateInteractor
         def initialize(output_port:, gateway:)
           @output_port = output_port
           @gateway = gateway
