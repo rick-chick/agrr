@@ -25,4 +25,30 @@ class PesticideApiPresentersPolicyTest < ActiveSupport::TestCase
       view.verify
     end
   end
+
+  test "create presenter on_failure renders forbidden json for reference_only_admin ErrorDto" do
+    view = Minitest::Mock.new
+    msg = I18n.t("pesticides.flash.reference_only_admin")
+    view.expect(:render_response, nil) do |json:, status:|
+      assert_equal :forbidden, status
+      assert_equal({ error: msg }, json)
+    end
+
+    presenter = Presenters::Api::Pesticide::PesticideCreatePresenter.new(view: view)
+    presenter.on_failure(Domain::Shared::Dtos::ErrorDto.new(msg))
+    view.verify
+  end
+
+  test "update presenter on_failure renders forbidden json for reference_flag_admin_only ErrorDto" do
+    view = Minitest::Mock.new
+    msg = I18n.t("pesticides.flash.reference_flag_admin_only")
+    view.expect(:render_response, nil) do |json:, status:|
+      assert_equal :forbidden, status
+      assert_equal({ error: msg }, json)
+    end
+
+    presenter = Presenters::Api::Pesticide::PesticideUpdatePresenter.new(view: view)
+    presenter.on_failure(Domain::Shared::Dtos::ErrorDto.new(msg))
+    view.verify
+  end
 end

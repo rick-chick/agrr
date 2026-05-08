@@ -2,6 +2,9 @@
 
 require "test_helper"
 
+# 他ユーザーの update / destroy での認可拒否は AgriculturalTask*Interactor の単体に寄せ、
+# ここでは認証付きの成功レスポンスと JSON 形（一覧のスコープ含む）を優先する。
+
 module Api
   module V1
     module Masters
@@ -102,27 +105,6 @@ module Api
           assert_equal "更新された名前", json_response["name"]
         end
 
-        test "should not update other user's agricultural_task" do
-          other_user = create(:user)
-          other_task = create(:agricultural_task, :user_owned, user: other_user, name: "他のユーザーのタスク")
-
-          patch api_v1_masters_agricultural_task_path(other_task),
-                params: {
-                  agricultural_task: {
-                    name: "変更しようとした名前"
-                  }
-                },
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-          assert_response :forbidden
-
-          other_task.reload
-          assert_equal "他のユーザーのタスク", other_task.name
-        end
-
         test "should destroy agricultural_task" do
           task = create(:agricultural_task, :user_owned, user: @user)
 
@@ -139,21 +121,6 @@ module Api
           assert json_response.key?("undo_token")
           assert json_response.key?("toast_message")
           assert json_response.key?("undo_path")
-        end
-
-        test "should not destroy other user's agricultural_task" do
-          other_user = create(:user)
-          other_task = create(:agricultural_task, :user_owned, user: other_user)
-
-          assert_no_difference("AgriculturalTask.count") do
-            delete api_v1_masters_agricultural_task_path(other_task),
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-          end
-
-          assert_response :forbidden
         end
       end
     end

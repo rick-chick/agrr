@@ -2,6 +2,9 @@
 
 require "test_helper"
 
+# 参照フラグ・他ユーザー update/destroy の拒否は Pesticide*Interactor と API Presenter の単体に寄せ、
+# ここでは認証付きの成功レスポンスと JSON 形（一覧のスコープ含む）を優先する。
+
 module Api
   module V1
     module Masters
@@ -88,50 +91,6 @@ module Api
           assert_equal false, json_response["is_reference"]
         end
 
-        test "should not create reference pesticide as non-admin" do
-          assert_no_difference("@user.pesticides.count") do
-            post api_v1_masters_pesticides_path,
-                 params: {
-                   pesticide: {
-                     name: "参照農薬",
-                     active_ingredient: "X",
-                     crop_id: @crop.id,
-                     pest_id: @pest.id,
-                     is_reference: true
-                   }
-                 },
-                 headers: {
-                   "Accept" => "application/json",
-                   "X-API-Key" => @api_key
-                 }
-          end
-
-          assert_response :forbidden
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("pesticides.flash.reference_only_admin"), json_response["error"]
-        end
-
-        test "should not toggle is_reference as non-admin via API" do
-          pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, is_reference: false)
-
-          patch api_v1_masters_pesticide_path(pesticide),
-                params: {
-                  pesticide: {
-                    is_reference: true
-                  }
-                },
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-          assert_response :forbidden
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("pesticides.flash.reference_flag_admin_only"), json_response["error"]
-          pesticide.reload
-          assert_equal false, pesticide.is_reference?
-        end
-
         test "should update pesticide" do
           pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "元の名前")
 
@@ -151,29 +110,6 @@ module Api
           assert_equal "更新された名前", json_response["name"]
         end
 
-        test "should not update other user's pesticide" do
-          other_user = create(:user)
-          other_crop = create(:crop, :user_owned, user: other_user)
-          other_pest = create(:pest, :user_owned, user: other_user)
-          other_pesticide = create(:pesticide, :user_owned, user: other_user, crop: other_crop, pest: other_pest, name: "他のユーザーの農薬")
-
-          patch api_v1_masters_pesticide_path(other_pesticide),
-                params: {
-                  pesticide: {
-                    name: "変更しようとした名前"
-                  }
-                },
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-          assert_response :forbidden
-
-          other_pesticide.reload
-          assert_equal "他のユーザーの農薬", other_pesticide.name
-        end
-
         test "should destroy pesticide" do
           pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
 
@@ -190,23 +126,6 @@ module Api
           assert json_response.key?("undo_token")
           assert json_response.key?("toast_message")
           assert json_response.key?("undo_path")
-        end
-
-        test "should not destroy other user's pesticide" do
-          other_user = create(:user)
-          other_crop = create(:crop, :user_owned, user: other_user)
-          other_pest = create(:pest, :user_owned, user: other_user)
-          other_pesticide = create(:pesticide, :user_owned, user: other_user, crop: other_crop, pest: other_pest)
-
-          assert_no_difference("Pesticide.count") do
-            delete api_v1_masters_pesticide_path(other_pesticide),
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-          end
-
-          assert_response :forbidden
         end
       end
     end
