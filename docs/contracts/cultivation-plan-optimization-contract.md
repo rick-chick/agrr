@@ -30,4 +30,4 @@
 
 ## Status
 
-- [x] T-031: `app/services/cultivation_plan_{creator,optimizer}.rb` 削除、`lib/domain` + allocation adapter へ移行
+- [x] T-031: `app/services/cultivation_plan_{creator,optimizer}.rb` 削除、`lib/domain` + allocation adapter へ移行。**現行**: [`cultivation_plan_initialize_interactor.rb`](../../lib/domain/cultivation_plan/interactors/cultivation_plan_initialize_interactor.rb) / [`cultivation_plan_optimize_interactor.rb`](../../lib/domain/cultivation_plan/interactors/cultivation_plan_optimize_interactor.rb)（本契約 Scope と一致）。

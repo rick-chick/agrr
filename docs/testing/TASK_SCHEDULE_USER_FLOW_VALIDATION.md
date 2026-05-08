@@ -105,8 +105,7 @@
 ---
 
 ## 参考
-- 修正内容: `app/services/task_schedule_generator_service.rb`（開始日以降で天気データをフィルタ）
-- テスト: `test/services/task_schedule_generator_service_test.rb`
+- 修正内容: `lib/domain/agricultural_task/interactors/task_schedule_generate_interactor.rb`（開始日以降で天気データをフィルタするロジックは当インタラクタ側）
+- テスト: `test/domain/agricultural_task/interactors/task_schedule_generate_interactor_test.rb`
 
-以上の手順で、誰でも公開→コピー→UI の流れを再現できます。*** End Patch
-
+以上の手順で、誰でも公開→コピー→UI の流れを再現できます。

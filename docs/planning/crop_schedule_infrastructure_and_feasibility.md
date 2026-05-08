@@ -160,7 +160,7 @@
 
 ### INV-05: 予測の長さ・更新
 
-| 事実 | `WeatherPredictionService#normalize_target_end_date` のデフォルトは **`Date.current + 6.months`**（[`weather_prediction_service.rb`](../../app/services/weather_prediction_service.rb)）。栽培計画側は `calculated_planning_end_date` 等を渡せる。訓練データは最大約20年分を要求。キャッシュは `WeatherLocation` / `Farm` / `CultivationPlan` の `predicted_weather_data` で、**`target_end_date` をカバーしていなければ再取得**。 |
+| 事実 | `Domain::WeatherData::Interactors::WeatherPredictionInteractor` の `normalize_target_end_date` は、未指定時に anchors の **`default_target_end_date`**（実装コメント上は参照日 + 6.months 相当）を使う（[`weather_prediction_interactor.rb`](../../lib/domain/weather_data/interactors/weather_prediction_interactor.rb)）。栽培計画側は `calculated_planning_end_date` 等を渡せる。訓練データは最大約20年分を要求。キャッシュは `WeatherLocation` / `Farm` / `CultivationPlan` の `predicted_weather_data` で、**`target_end_date` をカバーしていなければ再取得**。 |
 |------|------|
 
 **決定案（最適）**

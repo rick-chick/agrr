@@ -1,15 +1,17 @@
 # Public Plans 保存機能 実装設計書
 
+> **配置メモ（2026-05）**: 旧モノリスの **PlanSaveService**（`app/services/plan_save_service.rb`）は削除済み。現行は `PublicPlansController#process_saved_plan` が **`Domain::CultivationPlan::Interactors::PublicPlanSaveFromSessionInteractor`** を呼び出し、永続化・コピーは **`CompositionRoot.public_plan_save_gateway`** → [`PlanSaveSession`](../../lib/adapters/cultivation_plan/sessions/plan_save_session.rb) 経由。以下の図・コードは概念説明（一部は歴史的）。実装はコントローラ・Interactor を正とする。
+
 ## アーキテクチャ概要
 
 ### 1. コンポーネント構成
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Controller    │    │    Service      │    │     Model       │
-│                 │    │                 │    │                 │
-│ PublicPlansCtrl │───▶│ PlanSaveService │───▶│ CultivationPlan │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌─────────────────────────────┐    ┌─────────────────┐
+│   Controller    │    │ PlanSaveSession / Interactor │    │     Model       │
+│                 │    │                             │    │                 │
+│ PublicPlansCtrl │───▶│ PublicPlanSaveFromSession…   │───▶│ CultivationPlan │
+│                 │    │                             │    │                 │
+└─────────────────┘    └─────────────────────────────┘    └─────────────────┘
          │                       │                       │
          │                       │                       │
          ▼                       ▼                       ▼
@@ -27,7 +29,7 @@
    ↓
 2. 未ログインの場合、セッションにデータ保存してログイン画面へ
    ↓
-3. ログイン・サインイン成功後、PlanSaveServiceを呼び出し
+3. ログイン・サインイン成功後、`PublicPlanSaveFromSessionInteractor` / `PlanSaveSession` を実行
    ↓
 4. マスタデータの作成・取得（Farm, Crop, Field, InteractionRule）
    ↓
@@ -83,7 +85,7 @@ class PublicPlansController < ApplicationController
     return unless session[:public_plan_save_data]
     
     begin
-      result = PlanSaveService.new(
+      result = PlanSaveSession.new( # 概念例（現行は gateway.save_from_session 等）
         user: current_user,
         session_data: session[:public_plan_save_data]
       ).call
@@ -147,11 +149,12 @@ class AuthController < ApplicationController
 end
 ```
 
-### 2. Service層
+### 2. アプリケーション層（保存オーケストレーション）
 
-#### 2.1 PlanSaveService
+#### 2.1 PlanSaveSession（旧モノリスの PlanSaveService に相当）
+
 ```ruby
-# app/services/plan_save_service.rb
+# 概念モデル。実装は lib/adapters/cultivation_plan/sessions/plan_save_session.rb + Mapper / Gateway に分割。
 class PlanSaveService
   include ActiveModel::Model
   
@@ -185,7 +188,7 @@ class PlanSaveService
     
     @result
   rescue => e
-    Rails.logger.error "PlanSaveService error: #{e.message}"
+    Rails.logger.error "Plan save error: #{e.message}"
     @result.error_message = e.message
     @result
   end

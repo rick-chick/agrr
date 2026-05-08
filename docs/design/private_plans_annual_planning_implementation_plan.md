@@ -148,7 +148,7 @@ end
 ```
 
 #### 関連ファイル
-- `app/services/plan_save_service.rb`
+- `lib/adapters/cultivation_plan/sessions/plan_save_session.rb`（旧 `plan_save_service.rb` の責務を引き継ぐ）
 
 ---
 

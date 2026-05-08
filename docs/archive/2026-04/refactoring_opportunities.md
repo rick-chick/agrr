@@ -5,7 +5,7 @@
 
 ## 調査対象
 - `app/views/planning_schedules/schedule.html.erb`
-- `app/services/schedule_table_field_arranger.rb`
+- `lib/presenters/html/plans/schedule_table_field_arranger.rb`（旧 `app/services/schedule_table_field_arranger.rb` は presenter へ移管済み）
 - `app/helpers/planning_schedules_helper.rb`
 
 ## 発見された改善点

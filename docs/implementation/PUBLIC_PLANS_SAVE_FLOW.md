@@ -1,5 +1,7 @@
 # Public Plans Save機能 - データフローとコンポーネント間の移送
 
+> **配置メモ（2026-05）**: 旧 **PlanSaveService**（`app/services/plan_save_service.rb`）は削除済み。保存は **`PublicPlanSaveFromSessionInteractor`** と **`PlanSaveSession`**（[`lib/adapters/cultivation_plan/sessions/plan_save_session.rb`](../../lib/adapters/cultivation_plan/sessions/plan_save_session.rb)）が担う。フロー図中の「PlanSaveService」は当時の名称。
+
 ## 📋 概要
 
 本ドキュメントでは、Public Plans Save機能のデータフローとコンポーネント間の移送を詳しく説明します。
@@ -23,8 +25,8 @@ Public Plans Save機能は、ユーザーが公開計画を自分のアカウン
 [PublicPlansController#save_plan]
     ↓ (logged_in? = true)
 [save_plan_to_user_account]
-    ↓ [PlanSaveService.new.call]
-[PlanSaveService#call]
+    ↓ [PublicPlanSaveFromSessionInteractor / PlanSaveSession]
+[保存処理（セッション→私有計画）]
     ├─ [create_or_get_user_farm] → UserFarm作成/取得
     ├─ [create_user_crops_from_plan] → 参照計画からUserCrops新規作成
     ├─ [copy_cultivation_plan] → CultivationPlanコピー
@@ -49,8 +51,8 @@ Public Plans Save機能は、ユーザーが公開計画を自分のアカウン
 [process_saved_plan_public_plans_path へリダイレクト]
     ↓
 [PublicPlansController#process_saved_plan]
-    ↓ [PlanSaveService.new.call]
-[PlanSaveService#call]
+    ↓ [PublicPlanSaveFromSessionInteractor / PlanSaveSession]
+[保存処理（セッション→私有計画）]
     ├─ [create_or_get_user_farm] → UserFarm作成/取得
     ├─ [create_user_crops_from_plan] → 参照計画からUserCrops新規作成
     ├─ [copy_cultivation_plan] → CultivationPlanコピー
@@ -104,11 +106,8 @@ def save_plan_to_user_account
     crop_ids: session_data[:crop_ids]
   }
   
-  # PlanSaveServiceを呼び出し
-  result = PlanSaveService.new(
-    user: current_user,
-    session_data: save_data
-  ).call
+  # 現行は Presenter + PublicPlanSaveFromSessionInteractor（ここでは保存結果オブジェクトを概念例示）
+  result = PlanSaveSession.new(user: current_user, session_data: save_data).call
   
   if result.success
     redirect_to plans_path, notice: I18n.t('public_plans.save.success')
@@ -175,11 +174,11 @@ end
 
 ---
 
-### 4. PlanSaveService 内部の処理
+### 4. PlanSaveSession / Interactor 内部の処理（概念）
 
-#### ファイル: `app/services/plan_save_service.rb`
+#### 実装の入口: [`lib/adapters/cultivation_plan/sessions/plan_save_session.rb`](../../lib/adapters/cultivation_plan/sessions/plan_save_session.rb)、`PublicPlanSaveFromSessionInteractor`
 
-##### 4.1 初期化
+##### 4.1 初期化（歴史的 PlanSaveService の対応概念）
 
 ```ruby
 def initialize(user:, session_data:)
@@ -217,7 +216,7 @@ def call
   
   @result
 rescue => e
-  Rails.logger.error "PlanSaveService error: #{e.message}"
+  Rails.logger.error "Plan save error: #{e.message}"
   @result.error_message = e.message
   @result
 end
@@ -496,7 +495,7 @@ Public Plans Save機能は、以下の流れで動作します：
 2. **認証チェック**: ログイン状態を確認
 3. **セッション管理**: 未ログインの場合はセッションに保存データを格納
 4. **認証**: 未ログインの場合はGoogle OAuthでログイン
-5. **データコピー**: PlanSaveServiceで計画データをコピー
+5. **データコピー**: `PlanSaveSession`（旧 PlanSaveService 相当）で計画データをコピー
 6. **完了**: plans画面へリダイレクト
 
 各コンポーネント間のデータ移送は、HTTPリクエスト、セッション、サービスメソッドを通じて行われます。

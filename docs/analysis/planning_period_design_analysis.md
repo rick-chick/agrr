@@ -1,5 +1,7 @@
 # 計画期間設計に関する分析と改善方針
 
+> **配置メモ（2026-05）**: 本文の `app/services/*.rb` は分析当時の参照であり **リポジトリには存在しない**。計画保存・最適化・天気・作業予定生成はそれぞれ `lib/adapters/cultivation_plan/sessions/plan_save_session.rb`、`lib/domain/cultivation_plan/interactors/cultivation_plan_optimize_interactor.rb`、`lib/domain/weather_data/interactors/weather_prediction_interactor.rb`、`lib/domain/agricultural_task/interactors/task_schedule_generate_interactor.rb`、`lib/domain/cultivation_plan/interactors/cultivation_plan_initialize_interactor.rb` 等に分散。**以下のコードフェンスやファイル一覧は歴史的記録として読み替えること。**
+
 ## 概要
 
 本ドキュメントでは、計画期間（`planning_start_date`と`planning_end_date`）の設計について分析し、**表示範囲のみを使用する設計**への移行方針を提案する。
@@ -64,7 +66,8 @@ planning_end_date: Date.current.end_of_year
 実際のコードを見ると、計画期間は作付計画の期間から計算されている：
 
 ```ruby
-# app/services/plan_save_service.rb:1080-1098
+# 分析当時は単一の plan_save_service に類する処理で field_cultivations から計画期間を導出していた。
+# 現行は PlanSaveSession / CultivationPlan まわりの Interactor・Gateway に分散（上記配置メモ参照）。
 start_dates = field_cultivations.pluck(:start_date).compact
 end_dates = field_cultivations.pluck(:completion_date).compact
 
@@ -1087,12 +1090,15 @@ end
 **モデル:**
 - `app/models/cultivation_plan.rb`: 計算メソッドの追加、バリデーションの変更
 
-**サービス:**
-- `app/services/cultivation_plan_optimizer.rb`: 計算メソッドの使用
-- `app/services/weather_prediction_service.rb`: 計算メソッドの使用
-- `app/services/task_schedule_generator_service.rb`: 計算メソッドの使用
-- `app/services/cultivation_plan_creator.rb`: 計画期間カラムの設定を削除
-- `app/services/plan_save_service.rb`: 計画期間の計算ロジックを削除（計算メソッドに移行）
+**ドメイン／アダプタ（現行・当時の「サービス」相当の責務）:**
+- `lib/domain/cultivation_plan/interactors/cultivation_plan_optimize_interactor.rb`: 最適化が計画期間を参照する場合の境界
+- `lib/domain/weather_data/interactors/weather_prediction_interactor.rb`: 予測終端・計算メソッド
+- `lib/domain/agricultural_task/interactors/task_schedule_generate_interactor.rb`: 作業予定生成
+- `lib/domain/cultivation_plan/interactors/cultivation_plan_initialize_interactor.rb`: 計画作成初期化（当時の cultivation_plan_creator 相当）
+- `lib/adapters/cultivation_plan/sessions/plan_save_session.rb`: 保存フローのオーケストレーション（当時の plan_save_service の一部責務）
+
+**歴史的参照（削除済みの app/services 名）:**
+- ~~`app/services/cultivation_plan_optimizer.rb`~~ / ~~`weather_prediction_service.rb`~~ / ~~`task_schedule_generator_service.rb`~~ / ~~`cultivation_plan_creator.rb`~~ / ~~`plan_save_service.rb`~~
 
 **コントローラー:**
 - `app/controllers/plans_controller.rb`: 計画作成時の期間設定を削除
@@ -1181,12 +1187,13 @@ end
 ### モデル
 - `app/models/cultivation_plan.rb`: 計画期間の定義とバリデーション
 
-### サービス
-- `app/services/cultivation_plan_optimizer.rb`: 最適化での使用（要確認）
-- `app/services/weather_prediction_service.rb`: 天気予測での使用
-- `app/services/plan_save_service.rb`: 計画期間の計算ロジック（重要な参考）
-- `app/services/cultivation_plan_creator.rb`: 計画作成サービス
-- `app/services/task_schedule_generator_service.rb`: 作業予定生成での使用
+### サービス（現行は lib/domain・lib/adapters へ移行済み）
+
+- `lib/domain/cultivation_plan/interactors/cultivation_plan_optimize_interactor.rb`: 最適化での使用（要確認）
+- `lib/domain/weather_data/interactors/weather_prediction_interactor.rb`: 天気予測での使用
+- `lib/adapters/cultivation_plan/sessions/plan_save_session.rb`: 計画保存・期間まわりのオーケストレーション（重要な参考）
+- `lib/domain/cultivation_plan/interactors/cultivation_plan_initialize_interactor.rb`: 計画作成
+- `lib/domain/agricultural_task/interactors/task_schedule_generate_interactor.rb`: 作業予定生成での使用
 
 ### コントローラー
 - `app/controllers/plans_controller.rb`: 計画作成時の期間設定

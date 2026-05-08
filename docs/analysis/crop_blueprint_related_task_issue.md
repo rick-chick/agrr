@@ -18,7 +18,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ CropTaskScheduleBlueprintCreateService#regenerate!              │
+│ Adapters::Crop::TaskScheduleBlueprintGenerator（旧 CreateService#regenerate!） │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -187,7 +187,7 @@ CropTaskScheduleBlueprint
 
 ### 2. Blueprint生成サービス
 
-```16:49:app/services/crop_task_schedule_blueprint_create_service.rb
+```16:49:lib/adapters/crop/task_schedule_blueprint_generator.rb（歴史的コード対応は旧 crop_task_schedule_blueprint_create_service）
   def regenerate!(crop:)
     templates = crop.crop_task_templates.includes(:agricultural_task).order(:id)
 
@@ -226,7 +226,7 @@ CropTaskScheduleBlueprint
 
 ### 3. 一般作業Blueprint生成（収穫などが表示される場合）
 
-```31:53:app/services/crop_task_schedule_blueprint_generator.rb
+```31:53:lib/adapters/crop/task_schedule_blueprint_generator.rb
   def build_general_blueprint(task)
     task_id = integer_value(task['task_id'])
     template = template_for_task(task_id)
@@ -260,7 +260,7 @@ CropTaskScheduleBlueprint
 
 ### 4. 肥料Blueprint生成（常にagricultural_task_idがnil）
 
-```55:77:app/services/crop_task_schedule_blueprint_generator.rb
+```55:77:lib/adapters/crop/task_schedule_blueprint_generator.rb
   def build_fertilizer_blueprint(entry, index)
     task_type = entry['task_type'] ||
       (index.zero? ? TaskScheduleItem::BASAL_FERTILIZATION_TYPE : TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE)
@@ -293,7 +293,7 @@ CropTaskScheduleBlueprint
 
 ### 5. テンプレート検索ロジック
 
-```79:95:app/services/crop_task_schedule_blueprint_generator.rb
+```79:95:lib/adapters/crop/task_schedule_blueprint_generator.rb
   def template_lookup
     @template_lookup ||= templates.each_with_object({}) do |template, memo|
       keys = []

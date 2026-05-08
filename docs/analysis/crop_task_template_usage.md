@@ -1,5 +1,7 @@
 # CropTaskTemplate の利用方法
 
+> **配置メモ（2026-05）**: 本文の `app/services/*.rb` は歴史的参照。ブループリント生成は [`Adapters::Crop::TaskScheduleBlueprintGenerator`](../../lib/adapters/crop/task_schedule_blueprint_generator.rb)、作業予定生成は [`TaskScheduleGenerateInteractor`](../../lib/domain/agricultural_task/interactors/task_schedule_generate_interactor.rb)、計画保存は [`PlanSaveSession`](../../lib/adapters/cultivation_plan/sessions/plan_save_session.rb) を参照。
+
 ## 概要
 `CropTaskTemplate`は、作物（Crop）と農業タスク（AgriculturalTask）の関連付けを管理する中間テーブルです。`AgriculturalTaskCrop`の後継として、作物ごとにカスタマイズされた作業テンプレート情報を保持します。
 
@@ -149,13 +151,13 @@ def find_task_template(template_id)
 end
 ```
 
-### 2. サービスでの利用
+### 2. Interactor / アダプタでの利用（現行）
 
-#### CropTaskScheduleBlueprintCreateService
+#### `Adapters::Crop::TaskScheduleBlueprintGenerator`（旧 CropTaskScheduleBlueprintCreateService 相当）
 **用途**: 作物の作業スケジュールブループリントを生成する際に、テンプレートから作業情報を取得
 
 ```ruby
-# app/services/crop_task_schedule_blueprint_create_service.rb
+# lib/adapters/crop/task_schedule_blueprint_generator.rb（概念）
 
 def regenerate!(crop:)
   templates = crop.crop_task_templates.includes(:agricultural_task).order(:id)
@@ -170,22 +172,22 @@ def regenerate!(crop:)
 end
 ```
 
-#### TaskScheduleGeneratorService
+#### `Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor`（旧 TaskScheduleGeneratorService 相当）
 **用途**: 作業スケジュールを生成する際に、テンプレートから作業情報を取得
 
 ```ruby
-# app/services/task_schedule_generator_service.rb
+# lib/domain/agricultural_task/interactors/task_schedule_generate_interactor.rb（抜粋）
 
 crop.crop_task_templates.includes(:agricultural_task).each do |template|
   # テンプレートから作業情報を取得してスケジュールを生成
 end
 ```
 
-#### PlanSaveService
+#### `PlanSaveSession`（旧 PlanSaveService の一部責務）
 **用途**: 参照計画を保存する際に、参照作業のテンプレートをコピー
 
 ```ruby
-# app/services/plan_save_service.rb
+# lib/adapters/cultivation_plan/sessions/plan_save_session.rb（概念）
 
 def copy_reference_agricultural_tasks
   reference_task.crop_task_templates.each do |template|

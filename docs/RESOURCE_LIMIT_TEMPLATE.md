@@ -158,18 +158,19 @@ class [Resource]LimitIntegrationTest < ActiveSupport::TestCase
 end
 ```
 
-### Step 4: Service Object Integration
+### Step 4: Orchestration Layer Integration（リソース上限エラーをユーザーフィードバックへ）
 
 ```ruby
-# app/services/plan_save_service.rb
-class PlanSaveService
+# lib/adapters/cultivation_plan/sessions/plan_save_session.rb 等のオーケストレーション内で
+# モデルのバリデーションエラー（件数上限）をログ・レスポンスに載せる例（疑似コード）
+class PlanSaveOrchestrationExample
   def call
     # ... existing code ...
     
     # Create new [resource] if needed
     unless new_[resource].save
       error_message = new_[resource].errors.full_messages.join(', ')
-      Rails.logger.error "❌ [PlanSaveService] [Resource] creation failed: #{error_message}"
+      Rails.logger.error "❌ [PlanSave] [Resource] creation failed: #{error_message}"
       
       # Handle [resource] limit error specifically
       if new_[resource].errors[:user].any? { |msg| msg.include?("作成できる[Resource]は[LIMIT]件までです") }

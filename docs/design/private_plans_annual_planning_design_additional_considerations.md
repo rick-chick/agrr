@@ -1,5 +1,7 @@
 # Private Plans 通年計画設計書 追加考慮事項
 
+> **配置メモ（2026-05）**: 旧 `app/services/plan_save_service.rb` は削除済み。計画保存・複製のオーケストレーションは [`lib/adapters/cultivation_plan/sessions/plan_save_session.rb`](../../lib/adapters/cultivation_plan/sessions/plan_save_session.rb) と関連 Mapper に分散。本章の **PlanSaveService** は歴史的クラス名として読む。
+
 ## 📋 概要
 
 設計書 `private_plans_annual_planning_design.md` と検証レポート `private_plans_annual_planning_design_verification.md` を確認し、さらに考慮すべき点をまとめました。
@@ -27,8 +29,9 @@
 
 **重要度: 高**
 
-```198:201:app/services/plan_save_service.rb
-  def find_existing_private_plan(farm)
+```ruby
+# 旧 plan_save_service に相当する検索（現行は PlanSaveSession / Farm マッパー経由で同等を実施）
+def find_existing_private_plan(farm)
     current_year = Date.current.year
     @user.cultivation_plans.where(plan_type: 'private', plan_year: current_year, farm: farm).first
   end
@@ -52,8 +55,9 @@ end
 
 **重要度: 中**
 
-```979:1013:app/services/plan_save_service.rb
-  def calculate_plan_year_from_cultivations(reference_plan)
+```ruby
+# 旧 plan_save_service 抜粋（現行は session / mapper に分割）。通年計画では plan_year 検索は不適切。
+def calculate_plan_year_from_cultivations(reference_plan)
     field_cultivations = reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil)
     
     # 作付けが存在しない場合は現在の年度を返す

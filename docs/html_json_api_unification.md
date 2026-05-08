@@ -2,7 +2,8 @@
 
 > **注記（2026-05）**  
 > **`HtmlCrudResponder` / `ApiCrudResponder` はコードベースから撤去済み**です。マスタ系 HTML / JSON は Interactor + Presenter（Clean Architecture）で統一されています。  
-> 下記に当該 Concern 名が残る箇所は **旧計画・歴史的記録**として読み替えてください。
+> 下記に当該 Concern 名が残る箇所は **旧計画・歴史的記録**として読み替えてください。  
+> **`app/services` に置く `*Service` クラス案**も旧ロードマップ由来。**現行**: 害虫×作物は `PestCropAssociationPolicy` + `CompositionRoot.pest_gateway`（`Adapters::Pest::Gateways::PestMemoryGateway`）と `Domain::Pest::Interactors::*`；AI upsert は `CropAiCreateInteractor` / `CompositionRoot.fertilize_ai_create_interactor` / `CompositionRoot.pest_ai_create_interactor` と各アダプタ・永続化ブリッジ（`lib/domain`・`lib/adapters`）。
 
 ## 1. 目的・スコープ
 
@@ -172,8 +173,8 @@
   - `PesticidesController` の一覧で、
     - `Crop` / `Pest` の選択候補を参照＋ユーザーデータから組み立てている。
 - 方針
-  - 関連単位でポリシー/サービスを設ける:
-    - `PestCropAssociationPolicy` / `PestCropAssociationService`
+  - 関連単位でポリシーとゲートウェイ（Interactor 経由の永続化）を設ける:
+    - `PestCropAssociationPolicy` + `CompositionRoot.pest_gateway`（旧 `PestCropAssociationService` は削除済み）
     - `PesticideAssociationPolicy`
   - 責務例:
     - 「この pest と crop を関連付けてよいか?」
@@ -212,7 +213,7 @@
   - 「同名レコードがあれば更新、なければ作成」的な upsert ロジック。
   - `is_reference: false` / `user_id` の付与ルールは **通常のCRUDと同じポリシーに従うべき**。
 - 方針
-  - 各モデル用の `AiUpsertService` をばらばらに作るのではなく、
+  - 各モデル用に fat な `*AiUpsertService` をばらばらに作るのではなく、
     - 「通常の Policy を利用して作成/更新し、その上でAI特有の差分だけ載せる」設計に寄せる。
   - 可能であれば「名前から既存検索→policyを通して更新/作成」を共通化する。
 
@@ -501,24 +502,19 @@
         - `Crops::AgriculturalTasksController`
         - `Api::V1::Masters::AgriculturalTasksController`
 
-- **クロスモデル関連付けサービス**
-  - `PestCropAssociationService`
-    - `PestCropAssociationPolicy` を利用して、害虫と作物の関連付け/更新を行う。
-    - 主な呼び出し元候補:
-      - `PestsController`（`associate_crops`, `update_crop_associations`）
-      - `Crops::PestsController`（作物配下の害虫関連付け）
-      - `PesticidesController`（作物候補取得部分の一元化も検討対象）
-  - `PesticideAssociationService`
-    - pesticide と crop/pest の関連付け/更新を担当する。
+- **クロスモデル関連付け（現行の置き場所）**
+  - `PestCropAssociationPolicy` + `CompositionRoot.pest_gateway`（`update_pest_crop_associations` / `normalize_crop_ids_for_pest_form` 等）。HTML は `PestCreateInteractor` / `PestUpdateInteractor` がユースケース境界。
+    - 主な呼び出し元: `PestsController`、`Crops::PestsController`、`PesticidesController`（候補スコープ）、API は Policy + Gateway。
+  - **歴史**: `PestCropAssociationService`（`app/services`）は削除済み。
+  - `PesticideAssociationPolicy`（「Service」クラスは置かず Policy がスコープを提供）
     - 主な呼び出し元候補:
       - `PesticidesController`
       - `Api::V1::Masters::PesticidesController`
       - `Api::V1::Masters::Crops::PesticidesController`
 
-- **AI向けUpsertサービス**
-  - `CropAiUpsertService`
-  - `PestAiUpsertService`
-  - `FertilizeAiUpsertService`
+- **AI向け upsert（現行）**
+  - Crops: `Domain::Crop::Interactors::CropAiCreateInteractor` + `Adapters::Crop::CropAiUpsertActiveRecordPersistence` / `CropCreateForAiAdapter`。
+  - Fertilizes / Pests: `CompositionRoot.fertilize_ai_create_interactor` / `pest_ai_create_interactor`（内部は Interactor + アダプタ）。**`app/services` の `*AiUpsertService` は採用しない**。
   - 共通責務:
     - 名前等で既存レコードを検索し、見つかれば Policy 経由で更新、なければ Policy 経由で作成。
     - `is_reference: false` や `user_id` の扱いは通常の Policy に委譲する。
@@ -650,22 +646,10 @@
       - 新規作成時の `assert_difference "Fertilize.count", +1` / `assert_difference "Pest.count", +1`
       - 作成/更新後の `user_id` / `is_reference` の検証
       を追加し、AI upsert の所有者・参照フラグのふるまいを明示的に固定。
-  - Service 化（Crops）:
-    - `CropAiUpsertService` を `app/services` に追加し、`Api::V1::CropsController#ai_create` からは
-      - AGRR 応答の取得（`fetch_crop_info_from_agrr`）と
-      - `CropAiUpsertService` の呼び出し
-      だけを行う形に整理。
-    - `CropAiUpsertService` 側で
-      - 件数制限の事前バリデーション（`CropPolicy.build_for_create`）
-      - 既存作物の更新 / 新規作成（`@create_interactor` 経由）
-      - 生育ステージ関連モデル（`CropStage` / `TemperatureRequirement` / `SunshineRequirement` / `ThermalRequirement` / `NutrientRequirement`）の保存
-      を一括して担当。
-    - `test/services/crop_ai_upsert_service_test.rb` を追加し、
-      - AGRR 応答相当の `crop_info` を直接与えた場合の新規作成パス・既存更新パス
-      - Interactor に渡される属性（`name` / `variety` / `area_per_unit` / `revenue_per_area` / `groups` / `user_id` / `is_reference`）
-      を単体テストで固定。
-    - `docker compose run --rm test bundle exec rails test test/services/crop_ai_upsert_service_test.rb test/controllers/api/v1/crops_controller_test.rb` で
-      サービス単体＋コントローラの組み合わせテストを実行し、いずれも成功（SimpleCov の閾値 10% 未満による終了コード 2 は、全体テストを走らせていないことに起因する既存設定）。
+  - **Interactor + アダプタ（Crops・現行）**（当時のメモでは「Service 化」と記載）:
+    - `Api::V1::CropsController#ai_create` は `CompositionRoot.crop_ai_create_interactor`（`Domain::Crop::Interactors::CropAiCreateInteractor`）を呼び出し、永続化は `Adapters::Crop::CropAiUpsertActiveRecordPersistence` / `CropCreateForAiAdapter` が担当。
+    - 件数制限・Policy・生育ステージ関連は Interactor/Gateway 境界に集約。
+    - アダプタ／永続化の振る舞いは `test/adapters/crop/crop_ai_upsert_active_record_persistence_test.rb` と API コントローラテストで固定。
 - **Farm / Field / Plan 系の Policy 導入（HTML / Masters API / Plans API）**
   - 対象Policy:
     - `FarmPolicy`: `user_owned_scope(user)`, `find_owned!(user, id)`, `build_for_create(user, attrs)`
@@ -713,26 +697,22 @@
     - `Api::V1::Plans::FieldCultivationsControllerTest` に `show` と `update` のテストを追加。
     - `Api::V1::PublicPlans::FieldCultivationsControllerTest` を新規作成（認証不要の public plan アクセス制御をテスト）。
     - `Api::V1::PublicPlans::CultivationPlansControllerTest` を新規作成（public plan の取得をテスト）。
-- **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化**
-  - 対象Policy/Service:
+- **Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy + Gateway 化**
+  - 対象Policy / ゲートウェイ:
     - `PestCropAssociationPolicy`: 害虫と作物の関連付け可否を判定するPolicy
       - `accessible_crops_scope(pest, user:)`: 害虫に対して選択可能な作物のスコープを返す
       - `crop_accessible_for_pest?(crop, pest, user:)`: 特定の作物が害虫と関連付け可能か判定
       - ルール: region一致、参照害虫は参照作物のみ、ユーザー害虫はそのユーザーの非参照作物のみ
-    - `PestCropAssociationService`: 害虫と作物の関連付け・更新を実行するService
-      - `associate_crops(pest, crop_ids, user:)`: 害虫と作物を関連付ける
-      - `update_crop_associations(pest, crop_ids, user:)`: 関連付けを更新（差分更新）
-      - `normalize_crop_ids(pest, raw_ids, user:)`: 作物IDを正規化（選択可能な作物IDのみを抽出）
+    - **`CompositionRoot.pest_gateway`**（`Adapters::Pest::Gateways::PestMemoryGateway`）: 関連付けの更新・フォーム用 ID 正規化（旧 `PestCropAssociationService` は削除済み）
     - `PesticideAssociationPolicy`: 農薬に対して選択可能な作物・害虫のスコープを提供するPolicy
       - `accessible_crops_scope(user)`: 農薬に対して選択可能な作物のスコープを返す
       - `accessible_pests_scope(user)`: 農薬に対して選択可能な害虫のスコープを返す
       - ルール: 管理者=参照データ+自分のデータ、一般ユーザー=自分の非参照データのみ
   - HTMLコントローラへの適用:
     - `PestsController`:
-      - `associate_crops`: `PestCropAssociationService.associate_crops` 経由
-      - `update_crop_associations`: `PestCropAssociationService.update_crop_associations` 経由
+      - 作成・更新: `PestCreateInteractor` / `PestUpdateInteractor` + `pest_gateway`
       - `prepare_crop_selection_for`: `PestCropAssociationPolicy.accessible_crops_scope` 経由
-      - `normalize_crop_ids_for`: `PestCropAssociationService.normalize_crop_ids` 経由
+      - `normalize_crop_ids_for`: `pest_gateway.normalize_crop_ids_for_pest_form` 経由
     - `PesticidesController`:
       - `load_crops_and_pests`: `PesticideAssociationPolicy.accessible_crops_scope` / `accessible_pests_scope` 経由
     - `Crops::PestsController`:
@@ -754,7 +734,7 @@
     - すべてのコントローラで `where("is_reference = ? OR user_id = ?", true, current_user.id)` を削除し、Policyメソッドを使用
   - テスト:
     - `PestCropAssociationPolicy` のテストを追加
-    - `PestCropAssociationService` のテストを追加
+    - ゲートウェイ: `test/adapters/pest/gateways/pest_memory_gateway_crop_association_test.rb` 等
     - `PesticideAssociationPolicy` のテストを追加
     - 既存のコントローラテストがすべて通過（966 runs, 5822 assertions, 0 failures）
 
@@ -768,23 +748,15 @@
 - **参照まわり以外のJSON APIロジック**
   - 参照マスタ系 JSON API については、index/show/create/update のOwnership・PermissionまわりはPolicy化済み。
   - それ以外のJSON API（AI upsert系、Farms/Fields/Plans系など）では、まだ `current_user` 起点の所有権チェックや upsert ロジックがコントローラ側に残っているため、今後Policy/Serviceに寄せていく。
-  - 進捗（AI upsert 系）:
+  - 進捗（AI upsert 系・現行）:
     - Crops:
-      - `Api::V1::CropsController#ai_create` の upsert ロジックを `CropAiUpsertService` に切り出し完了。
-      - コントローラは AGRR 応答の取得とサービス呼び出しのみを担当し、ユースケース本体はサービス側に集約。
-      - `test/services/crop_ai_upsert_service_test.rb` を追加し、サービス単体で新規作成／既存更新の両パスと属性組み立てをテスト済み。
-      - `docker compose run --rm test bundle exec rails test test/services/crop_ai_upsert_service_test.rb test/controllers/api/v1/crops_controller_test.rb` を実行し、機能テストは成功（この時点での line coverage は約 2.3%）。
+      - `Api::V1::CropsController#ai_create` は `CropAiCreateInteractor` + `CropAiUpsertActiveRecordPersistence`（`CompositionRoot.crop_ai_create_interactor`）。
     - Fertilizes / Pests:
-      - 依然として `Api::V1::FertilizesController#ai_create/#ai_update` と `Api::V1::PestsController#ai_create/#ai_update` に upsert ロジックが残っている。
-      - 次のステップで `FertilizeAiUpsertService` / `PestAiUpsertService` を導入し、Crops と同様に
-        - コントローラは AGRR 応答取得＋サービス呼び出し
-        - サービス側で Policy＋Interactor＋関連モデル保存のオーケストレーション
-        - サービス単体テスト＋コントローラテストの組み合わせ実行とカバレッジ測定
-        を行う予定。
+      - `CompositionRoot.fertilize_ai_create_interactor` / `pest_ai_create_interactor`（および更新系）で AI 応答から upsert。旧計画の `FertilizeAiUpsertService` / `PestAiUpsertService`（`app/services`）は未採用。
 - **Pest–Crop / Pesticide–Crop/Pest 関連付けロジック**
-  - 上記 7.1 のとおり、`PestCropAssociationPolicy` / `PestCropAssociationService` / `PesticideAssociationPolicy` を実装し、すべてのコントローラでPolicy/Service経由に統一済み。
+  - 上記 7.1 のとおり、`PestCropAssociationPolicy` + `pest_gateway` / Interactor と `PesticideAssociationPolicy` で統一済み。
   - 直接SQLを書いていた箇所（`where("is_reference = ? OR user_id = ?", true, current_user.id)`）をすべて削除し、Policyメソッド（`visible_scope`, `selectable_scope`）を使用。
-  - このため、「Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化」は完了している。
+  - このため、「Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Gateway 化」は完了している。
 - **Farm / Field / Plan 系の所有権チェック（一部残存）**
   - 2025-11 時点の実装状況:
     - `FarmPolicy` / `FieldPolicy` / `PlanPolicy` を実装済み。
@@ -810,23 +782,10 @@
 - **CRUDレスポンス Concern（`HtmlCrudResponder` / `ApiCrudResponder`）**（**履歴**）
   - 当時の詳細仕様の記録は上記と同様、**現状は撤去済み**。マスタ系は Interactor + Presenter に一本化。
 
-### 7.4 今後の具体的なステップ（優先度順）
+### 7.4 今後の具体的なステップ（優先度順）（**2026-05 更新**: AI upsert は Interactor 経由で実装済みのため、以下は**旧ドラフト**。残タスクは DualFormatResponder 等のみ参照）
 
-1. **AI向け upsert サービスの残り実装（Fertilizes / Pests）**
-   - **目標**:
-     - Crops と同様に、AI upsert ロジックをサービス層に集約し、JSON API コントローラからユースケース本体を排除する。
-   - **対象**:
-     - `Api::V1::FertilizesController#ai_create` / `#ai_update`
-     - `Api::V1::PestsController#ai_create` / `#ai_update`
-   - **実装方針**:
-     - `FertilizeAiUpsertService` / `PestAiUpsertService` を `app/services` に追加。
-     - 既存の Policy（`FertilizePolicy` / `PestPolicy`）と Interactor を利用して、
-       所有権・参照フラグ・関連モデルの作成／更新をサービス側で一括実行。
-   - **テスト戦略**:
-     - 先にサービス単体テストを追加し、その後、既存の API コントローラテストを
-       サービス利用版に対応させる（振る舞いが変わらないことを重視）。
-     - `docker compose run --rm test bundle exec rails test` で、対象サービステスト＋コントローラテストの組み合わせを優先的に実行し、
-       カバレッジの実測値を必ず記録する。
+1. ~~**AI向け upsert サービスの残り実装（Fertilizes / Pests）**~~ **→ 完了（Interactor + CompositionRoot）**
+   - **現行**: `fertilize_ai_create_interactor` / `pest_ai_create_interactor`（`lib/domain` + `lib/adapters`）。`app/services` の追加は行わない。
 
 2. **HTML/JSON両対応アクションのテンプレート化（`DualFormatResponder`）**
    - **目標**:

@@ -1,5 +1,7 @@
 # 作物スケジュール（エントリ）— 気象初期化の実装メモ
 
+> **配置メモ（2026-05）**: 旧 `WeatherPredictionService` / `app/services/crop_schedule/window_service.rb` は削除済み。予測は **`Domain::WeatherData::Interactors::WeatherPredictionInteractor`**（`CompositionRoot.weather_prediction_interactor`）、帯計算は **`Domain::CultivationPlan::Interactors::EntrySchedule::WindowService`**（[`window_service.rb`](../../lib/domain/cultivation_plan/interactors/entry_schedule/window_service.rb)）。HTTP 境界は `Api::V1::PublicPlans::EntryScheduleController` が各 **`CompositionRoot.entry_schedule_*_interactor`** に委譲。
+
 **ステータス**: 実装準拠（コードと同期すること）  
 **関連契約**: [docs/contracts/entry-schedule-contract.md](../contracts/entry-schedule-contract.md)
 
@@ -11,15 +13,15 @@
 2. **`farm.reference?`** が真であること（参照農場以外は 404）。
 3. **`farm.weather_location` が nil でないこと**  
    - `weather_location_id` が未設定の参照農場は、エントリ API では**予測不能**として扱う。  
-   - この時点で **`WeatherPredictionService` を new しない**。  
+   - この時点で **`WeatherPredictionInteractor` を組み立てない**。  
    - レスポンス: **422**（`api.entry_schedule.errors.weather_location_required`）。
 
-実装: `Api::V1::PublicPlans::EntryScheduleController#find_reference_farm!` → `#load_or_predict_weather!` 先頭で `WeatherLocationMissingError`。
+実装: `EntryScheduleController` → `CompositionRoot.entry_schedule_*_interactor`（参照農場解決・気象は Interactor/Gateway 内）。旧メソッド名 `find_reference_farm!` は現行コードと異なる場合があるため **コントローラ実装を正**とする。
 
-## 2. WeatherPredictionService の初期化（固定形）
+## 2. WeatherPredictionInteractor の組み立て（固定形）
 
 ```ruby
-service = WeatherPredictionService.new(
+interactor = CompositionRoot.weather_prediction_interactor(
   weather_location: farm.weather_location,
   farm: farm
 )
@@ -37,9 +39,9 @@ service = WeatherPredictionService.new(
 
 ## 4. 既存キャッシュ優先 → 不足時のみ予測実行
 
-1. `service.get_existing_prediction(target_end_date: target_end)` を呼ぶ。
-2. 戻り値に **`cached[:data]` が Hash** かつ、その中身が `predicted_weather_data` 相当（少なくとも `'data'` 配列を持つ）なら、**それを `CropSchedule::WindowService` へ渡すペイロード**として使用する。
-3. 無ければ **`service.predict_for_farm(target_end_date: target_end)`** を実行し、**`farm.reload` 後の `farm.predicted_weather_data`** をペイロードとする。
+1. `interactor.get_existing_prediction(...)` またはドメインゲートウェイ経由の同等処理でキャッシュを読む（実装は [`weather_prediction_interactor.rb`](../../lib/domain/weather_data/interactors/weather_prediction_interactor.rb) を参照）。
+2. 戻り値に **`cached[:data]` が Hash** かつ、その中身が `predicted_weather_data` 相当（少なくとも `'data'` 配列を持つ）なら、**それを `Domain::CultivationPlan::Interactors::EntrySchedule::WindowService` へ渡すペイロード**として使用する。
+3. 無ければ **`interactor.predict_for_farm(...)`** を実行し、**`farm.reload` 後の `farm.predicted_weather_data`** をペイロードとする。
 
 ## 5. ペイロード検証
 
@@ -48,12 +50,12 @@ service = WeatherPredictionService.new(
 
 ## 6. 予測例外
 
-`WeatherPredictionService::WeatherDataNotFoundError` および `InsufficientPredictionDataError` は **`WeatherPredictionFailedError` にラップし 503**（学習データ不足・外部要件未充足など）。
+`WeatherPredictionInteractor` / ゲートウェイが送出する予測データ欠損系は、エントリ境界で **`WeatherPredictionFailedError` 等として 503** にマッピング（詳細はエントリ Interactor/Gateway を参照）。
 
 ## 7. 参照ファイル
 
 | 項目 | パス |
 |------|------|
 | エントリ API | `app/controllers/api/v1/public_plans/entry_schedule_controller.rb` |
-| 予測サービス | `app/services/weather_prediction_service.rb` |
-| 帯計算 | `app/services/crop_schedule/window_service.rb` |
+| 予測・キャッシュ | [`lib/domain/weather_data/interactors/weather_prediction_interactor.rb`](../../lib/domain/weather_data/interactors/weather_prediction_interactor.rb)（`CompositionRoot.weather_prediction_interactor`） |
+| 帯計算 | [`lib/domain/cultivation_plan/interactors/entry_schedule/window_service.rb`](../../lib/domain/cultivation_plan/interactors/entry_schedule/window_service.rb) |

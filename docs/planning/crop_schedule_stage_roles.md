@@ -5,7 +5,7 @@
 
 ## 方針（案B 最小版）
 
-DB に「播種」「定植」ラベルがないため、コード [`CropSchedule::StageRoleResolver`](../../app/services/crop_schedule/stage_role_resolver.rb) で次の規約を採用する。
+DB に「播種」「定植」ラベルがないため、コード [`Domain::CultivationPlan::Interactors::EntrySchedule::StageRoleResolver`](../../lib/domain/cultivation_plan/interactors/entry_schedule/stage_role_resolver.rb) で次の規約を採用する。
 
 ### まき（sowing）に相当するステージ
 
