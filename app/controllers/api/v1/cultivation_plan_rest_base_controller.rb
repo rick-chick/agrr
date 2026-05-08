@@ -31,7 +31,7 @@ module Api
       # 新しい圃場を追加
       def add_field
         Domain::CultivationPlan::Interactors::AddFieldInteractor.new(
-          output: Presenters::Api::CultivationPlan::ApiAddFieldPresenter.new(
+          output: Presenters::Api::CultivationPlan::AddFieldPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
