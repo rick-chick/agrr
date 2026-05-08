@@ -1,11 +1,4 @@
 us:
-  api:
-    errors:
-      backdoor:
-        not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
-        missing_token: "Missing authentication token"
-        invalid_token: "Invalid authentication token"
-us:
   controllers:
     plans:
       task_schedule_items:
@@ -60,6 +53,10 @@ us:
   # API error messages
   api:
     errors:
+      backdoor:
+        not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
+        missing_token: "Missing authentication token"
+        invalid_token: "Invalid authentication token"
       crop_not_found: "Crop information not found"
       no_weather_data: "No weather data available"
       no_cultivation_period: "Cultivation period not set"
