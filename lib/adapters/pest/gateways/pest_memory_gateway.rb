@@ -8,17 +8,8 @@ module Adapters
           @deletion_undo_gateway = deletion_undo_gateway
         end
 
-        def list(query = nil)
-          if query.is_a?(Domain::Shared::Dtos::QueryDto)
-            scope = build_scope_from_query(query)
-          else
-            scope = query || ::Pest.all
-          end
-          scope.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
-        end
-
         def list_index_for_user(user)
-          list(index_scope_for_user(user))
+          index_scope_for_user(user).map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
         def selectable_pest_ids(user)
@@ -441,12 +432,6 @@ module Adapters
           ::Pest.find(id)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def build_scope_from_query(query)
-          return ::Pest.all unless query.present?
-
-          ::Pest.all
         end
       end
     end
