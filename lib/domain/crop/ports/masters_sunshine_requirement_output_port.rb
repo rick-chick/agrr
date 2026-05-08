@@ -3,7 +3,7 @@
 module Domain
   module Crop
     module Ports
-      class MastersTemperatureRequirementApiOutputPort
+      class MastersSunshineRequirementOutputPort
         def on_show_success(requirement_entity)
           raise NotImplementedError, "Subclasses must implement on_show_success"
         end

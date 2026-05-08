@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module Crop
-      class MastersTemperatureRequirementApiPresenter < Domain::Crop::Ports::MastersTemperatureRequirementApiOutputPort
+      class MastersTemperatureRequirementPresenter < Domain::Crop::Ports::MastersTemperatureRequirementOutputPort
         def initialize(view:)
           @view = view
         end

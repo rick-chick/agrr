@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module Crop
-      class MastersNutrientRequirementApiPresenter < Domain::Crop::Ports::MastersNutrientRequirementApiOutputPort
+      class MastersThermalRequirementPresenter < Domain::Crop::Ports::MastersThermalRequirementOutputPort
         def initialize(view:)
           @view = view
         end
@@ -21,11 +21,11 @@ module Presenters
         end
 
         def on_not_found
-          @view.render_response(json: { error: "NutrientRequirement not found" }, status: :not_found)
+          @view.render_response(json: { error: "ThermalRequirement not found" }, status: :not_found)
         end
 
         def on_already_exists
-          @view.render_response(json: { error: "NutrientRequirement already exists" }, status: :unprocessable_entity)
+          @view.render_response(json: { error: "ThermalRequirement already exists" }, status: :unprocessable_entity)
         end
 
         def on_validation_errors(error_messages)
@@ -42,10 +42,7 @@ module Presenters
           {
             id: requirement.id,
             crop_stage_id: requirement.crop_stage_id,
-            daily_uptake_n: requirement.daily_uptake_n,
-            daily_uptake_p: requirement.daily_uptake_p,
-            daily_uptake_k: requirement.daily_uptake_k,
-            region: requirement.region
+            required_gdd: requirement.required_gdd
           }
         end
       end

@@ -13,7 +13,7 @@ module Api
               input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementShowInteractor.new(
-                output_port: nutrient_requirement_api_presenter,
+                output_port: nutrient_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -27,7 +27,7 @@ module Api
               )
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementCreateInteractor.new(
-                output_port: nutrient_requirement_api_presenter,
+                output_port: nutrient_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -41,7 +41,7 @@ module Api
               )
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementUpdateInteractor.new(
-                output_port: nutrient_requirement_api_presenter,
+                output_port: nutrient_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -51,7 +51,7 @@ module Api
               input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementDestroyInteractor.new(
-                output_port: nutrient_requirement_api_presenter,
+                output_port: nutrient_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -86,8 +86,8 @@ module Api
               params.require(:nutrient_requirement).permit(:daily_uptake_n, :daily_uptake_p, :daily_uptake_k, :region)
             end
 
-            def nutrient_requirement_api_presenter
-              @nutrient_requirement_api_presenter ||= Presenters::Api::Crop::MastersNutrientRequirementApiPresenter.new(view: self)
+            def nutrient_requirement_presenter
+              @nutrient_requirement_presenter ||= Presenters::Api::Crop::MastersNutrientRequirementPresenter.new(view: self)
             end
           end
         end

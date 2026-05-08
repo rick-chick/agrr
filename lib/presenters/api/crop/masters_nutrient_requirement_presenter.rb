@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module Crop
-      class MastersSunshineRequirementApiPresenter < Domain::Crop::Ports::MastersSunshineRequirementApiOutputPort
+      class MastersNutrientRequirementPresenter < Domain::Crop::Ports::MastersNutrientRequirementOutputPort
         def initialize(view:)
           @view = view
         end
@@ -21,11 +21,11 @@ module Presenters
         end
 
         def on_not_found
-          @view.render_response(json: { error: "SunshineRequirement not found" }, status: :not_found)
+          @view.render_response(json: { error: "NutrientRequirement not found" }, status: :not_found)
         end
 
         def on_already_exists
-          @view.render_response(json: { error: "SunshineRequirement already exists" }, status: :unprocessable_entity)
+          @view.render_response(json: { error: "NutrientRequirement already exists" }, status: :unprocessable_entity)
         end
 
         def on_validation_errors(error_messages)
@@ -42,8 +42,10 @@ module Presenters
           {
             id: requirement.id,
             crop_stage_id: requirement.crop_stage_id,
-            minimum_sunshine_hours: requirement.minimum_sunshine_hours,
-            target_sunshine_hours: requirement.target_sunshine_hours
+            daily_uptake_n: requirement.daily_uptake_n,
+            daily_uptake_p: requirement.daily_uptake_p,
+            daily_uptake_k: requirement.daily_uptake_k,
+            region: requirement.region
           }
         end
       end

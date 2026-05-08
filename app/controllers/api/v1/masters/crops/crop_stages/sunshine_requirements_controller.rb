@@ -13,7 +13,7 @@ module Api
               input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersSunshineRequirementShowInteractor.new(
-                output_port: sunshine_requirement_api_presenter,
+                output_port: sunshine_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -27,7 +27,7 @@ module Api
               )
 
               interactor = Domain::Crop::Interactors::MastersSunshineRequirementCreateInteractor.new(
-                output_port: sunshine_requirement_api_presenter,
+                output_port: sunshine_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -41,7 +41,7 @@ module Api
               )
 
               interactor = Domain::Crop::Interactors::MastersSunshineRequirementUpdateInteractor.new(
-                output_port: sunshine_requirement_api_presenter,
+                output_port: sunshine_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -51,7 +51,7 @@ module Api
               input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersSunshineRequirementDestroyInteractor.new(
-                output_port: sunshine_requirement_api_presenter,
+                output_port: sunshine_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -86,8 +86,8 @@ module Api
               params.require(:sunshine_requirement).permit(:minimum_sunshine_hours, :target_sunshine_hours)
             end
 
-            def sunshine_requirement_api_presenter
-              @sunshine_requirement_api_presenter ||= Presenters::Api::Crop::MastersSunshineRequirementApiPresenter.new(view: self)
+            def sunshine_requirement_presenter
+              @sunshine_requirement_presenter ||= Presenters::Api::Crop::MastersSunshineRequirementPresenter.new(view: self)
             end
           end
         end

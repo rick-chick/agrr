@@ -3,7 +3,7 @@
 module Presenters
   module Api
     module Crop
-      class MastersThermalRequirementApiPresenter < Domain::Crop::Ports::MastersThermalRequirementApiOutputPort
+      class MastersSunshineRequirementPresenter < Domain::Crop::Ports::MastersSunshineRequirementOutputPort
         def initialize(view:)
           @view = view
         end
@@ -21,11 +21,11 @@ module Presenters
         end
 
         def on_not_found
-          @view.render_response(json: { error: "ThermalRequirement not found" }, status: :not_found)
+          @view.render_response(json: { error: "SunshineRequirement not found" }, status: :not_found)
         end
 
         def on_already_exists
-          @view.render_response(json: { error: "ThermalRequirement already exists" }, status: :unprocessable_entity)
+          @view.render_response(json: { error: "SunshineRequirement already exists" }, status: :unprocessable_entity)
         end
 
         def on_validation_errors(error_messages)
@@ -42,7 +42,8 @@ module Presenters
           {
             id: requirement.id,
             crop_stage_id: requirement.crop_stage_id,
-            required_gdd: requirement.required_gdd
+            minimum_sunshine_hours: requirement.minimum_sunshine_hours,
+            target_sunshine_hours: requirement.target_sunshine_hours
           }
         end
       end

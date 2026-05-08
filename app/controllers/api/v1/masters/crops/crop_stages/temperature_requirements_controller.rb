@@ -20,7 +20,7 @@ module Api
               input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersTemperatureRequirementShowInteractor.new(
-                output_port: temperature_requirement_api_presenter,
+                output_port: temperature_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -34,7 +34,7 @@ module Api
               )
 
               interactor = Domain::Crop::Interactors::MastersTemperatureRequirementCreateInteractor.new(
-                output_port: temperature_requirement_api_presenter,
+                output_port: temperature_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -48,7 +48,7 @@ module Api
               )
 
               interactor = Domain::Crop::Interactors::MastersTemperatureRequirementUpdateInteractor.new(
-                output_port: temperature_requirement_api_presenter,
+                output_port: temperature_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -58,7 +58,7 @@ module Api
               input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersTemperatureRequirementDestroyInteractor.new(
-                output_port: temperature_requirement_api_presenter,
+                output_port: temperature_requirement_presenter,
                 gateway: CompositionRoot.crop_gateway
               )
               interactor.call(input_dto)
@@ -97,8 +97,8 @@ module Api
               )
             end
 
-            def temperature_requirement_api_presenter
-              @temperature_requirement_api_presenter ||= Presenters::Api::Crop::MastersTemperatureRequirementApiPresenter.new(view: self)
+            def temperature_requirement_presenter
+              @temperature_requirement_presenter ||= Presenters::Api::Crop::MastersTemperatureRequirementPresenter.new(view: self)
             end
           end
         end
