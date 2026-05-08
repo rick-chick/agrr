@@ -11,10 +11,6 @@ module Adapters
           @translator = translator
         end
 
-        def list
-          ::Fertilize.all.map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
-        end
-
         def find_by_id(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)

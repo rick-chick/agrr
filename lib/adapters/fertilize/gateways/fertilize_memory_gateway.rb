@@ -3,17 +3,8 @@
 module Adapters
   module Fertilize
     module Gateways
-      # AI 作成フロー等で使う。永続化は DB（ActiveRecord）だが list のみ従来仕様を維持。
+      # AI 作成フロー等で使う。永続化は DB（ActiveRecord）で、一覧は親の list_index を利用する。
       class FertilizeMemoryGateway < FertilizeActiveRecordGateway
-        # Entity 変換で name 必須のため、一覧 API では空名を除外（従来仕様）
-        def list_index_for_user(user)
-          fertilize_visible_scope(user).where.not(name: [ nil, "" ]).map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
-        end
-
-        def list
-          ::Fertilize.where.not(name: [ nil, "" ]).map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
-        end
-
         def find_by_id(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)

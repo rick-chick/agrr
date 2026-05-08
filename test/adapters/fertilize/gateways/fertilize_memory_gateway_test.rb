@@ -134,13 +134,4 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
           assert_nil entity.p
         end
 
-        test "should list all fertilizes" do
-          create(:fertilize, name: "尿素1", is_reference: true)
-          create(:fertilize, name: "尿素2", is_reference: true)
-          create(:fertilize, :user_owned, name: "尿素3")
-
-          entities = @gateway.list
-
-          assert_equal 3, entities.length
-        end
 end
