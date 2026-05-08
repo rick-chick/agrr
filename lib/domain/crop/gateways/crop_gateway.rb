@@ -123,10 +123,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_non_reference_crops_for_user_id_ordered"
         end
 
-        def list_user_owned_non_reference_crops_by_ids(user, ids)
-          raise NotImplementedError, "Subclasses must implement list_user_owned_non_reference_crops_by_ids"
-        end
-
         # マスター系 HTML/API: 自ユーザーの非参照作物を id で取得（失敗時 RecordNotFound）
         def find_user_non_reference_crop_for_masters!(user, crop_id)
           raise NotImplementedError, "Subclasses must implement find_user_non_reference_crop_for_masters!"
@@ -233,12 +229,6 @@ module Domain
 
         def destroy_masters_crop_task_template_for_api!(user:, crop_id:, template_id:)
           raise NotImplementedError, "Subclasses must implement destroy_masters_crop_task_template_for_api!"
-        end
-
-        # 認可済み作物に属する CropTaskScheduleBlueprint を取得。
-        # 親作物は view 認可（set_crop と整合）。変更系は update/delete 用ゲートウェイが find_authorized_model_for_edit で統一する。
-        def find_authorized_crop_task_schedule_blueprint_in_crop!(user, crop_id, blueprint_id)
-          raise NotImplementedError, "Subclasses must implement find_authorized_crop_task_schedule_blueprint_in_crop!"
         end
 
         # 認可済み作物に属する CropTaskTemplate を取得。

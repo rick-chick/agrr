@@ -29,12 +29,6 @@ module Adapters
           scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
-        def list_user_owned_non_reference_crops_by_ids(user, ids)
-          return [] if ids.blank?
-
-          user_owned_non_reference_scope(user).where(id: ids).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
-        end
-
         def find_user_non_reference_crop_for_masters!(user, crop_id)
           user_owned_non_reference_scope(user).find(crop_id)
         rescue ActiveRecord::RecordNotFound => e
@@ -238,18 +232,6 @@ module Adapters
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
-        end
-
-        # 親は view 認可（set_crop と整合）。PATCH/DELETE の編集権限は update/delete 用メソッド側で評価する。
-        def find_authorized_crop_task_schedule_blueprint_in_crop!(user, crop_id, blueprint_id)
-          crop = find_authorized_model_for_view(user, crop_id)
-          bp = crop.crop_task_schedule_blueprints.find(blueprint_id)
-          Domain::Crop::Dtos::AuthorizedCropTaskScheduleBlueprintInCropContextDto.new(
-            persisted_crop: crop,
-            persisted_blueprint: bp
-          )
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound
         end
 
         def find_authorized_crop_task_template_in_crop!(user, crop_id, template_id, for_edit:)
