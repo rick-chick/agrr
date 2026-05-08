@@ -9,12 +9,6 @@ module Domain
         def initialize(stages:)
           @stages = stages
         end
-
-        def self.from_hash(hash)
-          new(
-            stages: hash[:stages] || []
-          )
-        end
       end
     end
   end

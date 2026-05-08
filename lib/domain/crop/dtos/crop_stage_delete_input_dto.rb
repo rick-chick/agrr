@@ -10,13 +10,6 @@ module Domain
           @crop_id = crop_id
           @stage_id = stage_id
         end
-
-        def self.from_hash(hash)
-          new(
-            crop_id: hash[:crop_id],
-            stage_id: hash[:stage_id]
-          )
-        end
       end
     end
   end
