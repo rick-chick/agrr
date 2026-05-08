@@ -65,7 +65,7 @@ module Api
           presenter = Presenters::Api::Farm::FarmDeletePresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 
