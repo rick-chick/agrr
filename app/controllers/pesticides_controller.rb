@@ -7,14 +7,14 @@ class PesticidesController < ApplicationController
   def index
     presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideListInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pesticides/:id
   def show
     presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(params[:id])
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   # GET /pesticides/new
@@ -40,7 +40,7 @@ class PesticidesController < ApplicationController
     )
 
     Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # PATCH/PUT /pesticides/:id
@@ -55,7 +55,7 @@ class PesticidesController < ApplicationController
     )
 
     Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, logger: CompositionRoot.logger, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # DELETE /pesticides/:id
