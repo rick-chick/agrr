@@ -28,14 +28,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_index_for_user"
         end
 
-        def selectable_pesticide_ids(user)
-          raise NotImplementedError, "Subclasses must implement selectable_pesticide_ids"
-        end
-
-        def pesticide_selectable_by_user?(user, pesticide_id)
-          raise NotImplementedError, "Subclasses must implement pesticide_selectable_by_user?"
-        end
-
         def find_authorized_for_view(user, id)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end

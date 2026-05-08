@@ -12,10 +12,6 @@ module Adapters
           @translator = translator
         end
 
-        def list_by_farm(farm_id, user_id)
-          authorized_farm_fields_list(farm_id, user_id).fields
-        end
-
         def authorized_farm_fields_list(farm_id, user_id)
           farm_entity, fields = farm_entity_and_field_entities_for_farm_list!(farm_id, user_id)
           Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: fields)

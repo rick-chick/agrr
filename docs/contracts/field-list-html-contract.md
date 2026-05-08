@@ -21,8 +21,7 @@
 
 ## Gateway
 
-- **`authorized_farm_fields_list(farm_id, user_id)`** → `FarmFieldsList`（認可済み農場 + スコープ上の圃場 entities）
-- **`list_by_farm`**: 上記の **`.fields`**（API 等の既存呼び出し向け）
+- **`authorized_farm_fields_list(farm_id, user_id)`** → `FarmFieldsList`（認可済み農場 + スコープ上の圃場 entities）。Interactor・API はこの結果から `fields` を利用する。
 
 ## テンプレが参照する属性
 

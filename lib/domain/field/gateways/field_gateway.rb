@@ -4,10 +4,6 @@ module Domain
   module Field
     module Gateways
       class FieldGateway
-        def list_by_farm(farm_id, user_id)
-          raise NotImplementedError, "Subclasses must implement list_by_farm"
-        end
-
         def authorized_farm_fields_list(farm_id, user_id)
           raise NotImplementedError, "Subclasses must implement authorized_farm_fields_list"
         end

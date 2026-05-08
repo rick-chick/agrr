@@ -69,14 +69,6 @@ module Adapters
           visible_scope(user).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
-        def selectable_pesticide_ids(user)
-          selectable_scope(user).pluck(:id)
-        end
-
-        def pesticide_selectable_by_user?(user, pesticide_id)
-          selectable_scope(user).exists?(id: pesticide_id)
-        end
-
         def find_authorized_model_for_view(user, id)
           pesticide = find_pesticide_model!(id)
           unless Domain::Shared::Policies::PesticidePolicy.view_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
