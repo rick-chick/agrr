@@ -296,22 +296,6 @@ class Presenters::Html::Plans::ScheduleTableFieldArranger
     end
   end
 
-  # 各期間ごとにこの期間に表示される作付を取得
-  # @param arranged_cultivations [Array<Hash>] arrangeメソッドで配置された作付情報の配列
-  # @param periods [Array<Hash>] すべての期間の配列（降順）
-  # @param period_index [Integer] 現在の期間のインデックス
-  # @return [Array<Hash>] この期間に表示される作付情報の配列（slot_index順）
-  def self.cultivations_for_period(arranged_cultivations:, periods:, period_index:)
-    current_period = periods[period_index]
-    cultivations_in_period = cultivations_for_period_in_sorted(
-      sorted_cultivations: arranged_cultivations,
-      period: current_period
-    )
-
-    # slot_index順にソート（slot_index=0を先に、slot_index=1を後に）
-    cultivations_in_period.sort_by { |c| c[:slot_index] || 0 }
-  end
-
   # 期間に表示される作付を取得（内部メソッド）
   # @param sorted_cultivations [Array<Hash>] 配置された作付情報の配列
   # @param period [Hash] 期間情報
