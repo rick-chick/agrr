@@ -30,6 +30,28 @@ module Domain
           @interactor.call(input_dto)
         end
 
+        test "calls on_failure with ErrorDto when gateway raises RecordInvalid" do
+          input_dto = Domain::Crop::Dtos::CropStageCreateInputDto.new(
+            crop_id: 1,
+            payload: { name: "", order: 1 }
+          )
+
+          @mock_gateway.expects(:create_crop_stage).with(input_dto).raises(
+            Domain::Shared::Exceptions::RecordInvalid.new("Name can't be blank")
+          )
+
+          received_failure = nil
+          output_port = Object.new
+          output_port.define_singleton_method(:on_success) { |_| raise "must not call on_success" }
+          output_port.define_singleton_method(:on_failure) { |dto| received_failure = dto }
+
+          interactor = CropStageCreateInteractor.new(output_port: output_port, gateway: @mock_gateway)
+          interactor.call(input_dto)
+
+          assert_instance_of Domain::Shared::Dtos::ErrorDto, received_failure
+          assert_equal "Name can't be blank", received_failure.message
+        end
+
         test "propagates StandardError when gateway raises" do
           input_dto = Domain::Crop::Dtos::CropStageCreateInputDto.new(
             crop_id: 1,

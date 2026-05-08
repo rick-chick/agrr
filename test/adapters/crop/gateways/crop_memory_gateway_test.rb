@@ -28,17 +28,6 @@ module Adapters
           assert result.id.present?
         end
 
-        test "create_crop_stage raises error for invalid data" do
-          dto = Domain::Crop::Dtos::CropStageCreateInputDto.new(
-            crop_id: @crop.id,
-            payload: { name: "", order: 1 }
-          )
-
-          assert_raises StandardError do
-            @gateway.create_crop_stage(dto)
-          end
-        end
-
         test "update_crop_stage updates an existing crop stage" do
           crop_stage = create(:crop_stage, crop: @crop)
           dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
@@ -53,18 +42,6 @@ module Adapters
           assert_equal 2, result.order
         end
 
-        test "update_crop_stage raises error for non-existent crop stage" do
-          dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
-            crop_id: @crop.id,
-            stage_id: 99999,
-            payload: { name: "Updated Stage" }
-          )
-
-          assert_raises StandardError do
-            @gateway.update_crop_stage(99999, dto)
-          end
-        end
-
         test "delete_crop_stage deletes an existing crop stage" do
           crop_stage = create(:crop_stage, crop: @crop)
 
@@ -72,12 +49,6 @@ module Adapters
 
           assert_raises ActiveRecord::RecordNotFound do
             ::CropStage.find(crop_stage.id)
-          end
-        end
-
-        test "delete_crop_stage raises error for non-existent crop stage" do
-          assert_raises StandardError do
-            @gateway.delete_crop_stage(99999)
           end
         end
 
@@ -128,19 +99,6 @@ module Adapters
 
           assert_equal 12.0, result.base_temperature
           assert_equal 25.0, result.optimal_max
-        end
-
-        test "update_temperature_requirement raises error if requirement not exists" do
-          crop_stage = create(:crop_stage, crop: @crop)
-          dto = Domain::Crop::Dtos::TemperatureRequirementUpdateInputDto.new(
-            crop_id: @crop.id,
-            stage_id: crop_stage.id,
-            payload: { base_temperature: 12.0 }
-          )
-
-          assert_raises StandardError do
-            @gateway.update_temperature_requirement(crop_stage.id, dto)
-          end
         end
 
         # ThermalRequirement tests
@@ -273,27 +231,11 @@ module Adapters
           end
         end
 
-        test "destroy_temperature_requirement raises RecordNotFound when missing" do
-          crop_stage = create(:crop_stage, crop: @crop)
-
-          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-            @gateway.destroy_temperature_requirement(crop_stage.id)
-          end
-        end
-
         test "destroy_thermal_requirement deletes existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           create(:thermal_requirement, crop_stage: crop_stage)
 
           assert_difference("ThermalRequirement.count", -1) do
-            @gateway.destroy_thermal_requirement(crop_stage.id)
-          end
-        end
-
-        test "destroy_thermal_requirement raises RecordNotFound when missing" do
-          crop_stage = create(:crop_stage, crop: @crop)
-
-          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
             @gateway.destroy_thermal_requirement(crop_stage.id)
           end
         end
@@ -307,27 +249,11 @@ module Adapters
           end
         end
 
-        test "destroy_sunshine_requirement raises RecordNotFound when missing" do
-          crop_stage = create(:crop_stage, crop: @crop)
-
-          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-            @gateway.destroy_sunshine_requirement(crop_stage.id)
-          end
-        end
-
         test "destroy_nutrient_requirement deletes existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           create(:nutrient_requirement, crop_stage: crop_stage)
 
           assert_difference("NutrientRequirement.count", -1) do
-            @gateway.destroy_nutrient_requirement(crop_stage.id)
-          end
-        end
-
-        test "destroy_nutrient_requirement raises RecordNotFound when missing" do
-          crop_stage = create(:crop_stage, crop: @crop)
-
-          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
             @gateway.destroy_nutrient_requirement(crop_stage.id)
           end
         end

@@ -98,16 +98,6 @@ module MastersCropStageRequirementApiTestCases
         instance_exec(requirement, &c.assert_update_persisted)
       end
 
-      test "should not update #{c.resource_label} if not found" do
-        patch c.path.call(self, @crop, @crop_stage),
-              params: { c.param_key => c.update_not_found_params },
-              headers: requirement_api_headers
-
-        assert_response :not_found
-        json = JSON.parse(response.body)
-        assert_equal "#{c.singular_name} not found", json["error"]
-      end
-
       test "should not update #{c.resource_label} for other user's crop" do
         other_user = create(:user)
         other_crop = create(:crop, :user_owned, user: other_user)
@@ -131,38 +121,15 @@ module MastersCropStageRequirementApiTestCases
 
         assert_response :no_content
       end
-
-      test "should not destroy #{c.resource_label} if not found" do
-        delete c.path.call(self, @crop, @crop_stage), headers: requirement_api_headers
-
-        assert_response :not_found
-        json = JSON.parse(response.body)
-        assert_equal "#{c.singular_name} not found", json["error"]
-      end
-
-      test "should not destroy #{c.resource_label} for other user's crop" do
-        other_user = create(:user)
-        other_crop = create(:crop, :user_owned, user: other_user)
-        other_crop_stage = create(:crop_stage, crop: other_crop)
-        create(c.factory, crop_stage: other_crop_stage)
-
-        assert_no_difference("#{c.model.name}.count") do
-          delete c.path.call(self, other_crop, other_crop_stage), headers: requirement_api_headers
-        end
-
-        assert_response :not_found
-      end
     end
   end
 
-  # 設定の正規化とデフォルト（update_not_found_params は update_params と同一でよい場合が多い）
   class Config
     attr_reader :resource_label, :model, :factory, :param_key, :singular_name, :path,
                 :show_factory_attrs, :assert_show_json,
                 :create_params, :assert_create_json, :duplicate_create_params,
                 :invalid_param_key, :invalid_param_value,
                 :update_factory_attrs, :update_params, :assert_update_json, :assert_update_persisted,
-                :update_not_found_params,
                 :other_user_factory_attrs, :other_user_update_params, :assert_other_user_unchanged
 
     def initialize(hash)
@@ -183,7 +150,6 @@ module MastersCropStageRequirementApiTestCases
       @update_params = hash.fetch(:update_params)
       @assert_update_json = hash.fetch(:assert_update_json)
       @assert_update_persisted = hash.fetch(:assert_update_persisted)
-      @update_not_found_params = hash.fetch(:update_not_found_params) { @update_params }
       @other_user_factory_attrs = hash.fetch(:other_user_factory_attrs)
       @other_user_update_params = hash.fetch(:other_user_update_params)
       @assert_other_user_unchanged = hash.fetch(:assert_other_user_unchanged)

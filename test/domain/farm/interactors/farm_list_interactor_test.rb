@@ -19,21 +19,8 @@ module Domain
           )
         end
 
-        test "should call gateway.list with input_dto and output_port.on_success on success for regular user" do
-          filtered_farms = [
-            Domain::Farm::Entities::FarmEntity.from_hash(
-              id: 2,
-              name: "User Farm",
-              latitude: 36.0,
-              longitude: 136.0,
-              region: "Kyoto",
-              user_id: @user_id,
-              created_at: Time.current,
-              updated_at: Time.current,
-              is_reference: false
-            )
-          ]
-
+        test "calls gateway.list and on_success with reference_farms for regular user" do
+          filtered_farms = [ Object.new ]
           input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
           @mock_gateway.expects(:user_id=).with(@user_id)
           @mock_gateway.expects(:list).with(input_dto).returns(filtered_farms)
@@ -43,59 +30,22 @@ module Domain
           @interactor.call(input_dto)
         end
 
-        test "should include reference farms for admin user" do
+        test "passes reference_farms from gateway to on_success for admin" do
           admin_user = create(:user, admin: true)
-          admin_user_id = admin_user.id
           admin_interactor = FarmListInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
-            user_id: admin_user_id,
+            user_id: admin_user.id,
             translator: Adapters::Translators::RailsTranslator.new
           )
 
-          all_farms = [
-            Domain::Farm::Entities::FarmEntity.from_hash(
-              id: 1,
-              name: "Reference Farm",
-              latitude: 35.0,
-              longitude: 135.0,
-              region: "Kyoto",
-              user_id: nil,
-              created_at: Time.current,
-              updated_at: Time.current,
-              is_reference: true
-            ),
-            Domain::Farm::Entities::FarmEntity.from_hash(
-              id: 2,
-              name: "User Farm",
-              latitude: 36.0,
-              longitude: 136.0,
-              region: "Kyoto",
-              user_id: admin_user_id,
-              created_at: Time.current,
-              updated_at: Time.current,
-              is_reference: false
-            )
-          ]
-
+          list_rows = [ Object.new ]
+          ref_rows = [ Object.new ]
           input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
-          ref_only = [
-            Domain::Farm::Entities::FarmEntity.from_hash(
-              id: 99,
-              name: "Ref Only",
-              latitude: 35.0,
-              longitude: 135.0,
-              region: "Kyoto",
-              user_id: nil,
-              created_at: Time.current,
-              updated_at: Time.current,
-              is_reference: true
-            )
-          ]
-          @mock_gateway.expects(:user_id=).with(admin_user_id)
-          @mock_gateway.expects(:list).with(input_dto).returns(all_farms)
-          @mock_gateway.expects(:reference_farms_for_admin_list).with(is_admin: true).returns(ref_only)
-          @mock_output_port.expects(:on_success).with(all_farms, reference_farms: ref_only)
+          @mock_gateway.expects(:user_id=).with(admin_user.id)
+          @mock_gateway.expects(:list).with(input_dto).returns(list_rows)
+          @mock_gateway.expects(:reference_farms_for_admin_list).with(is_admin: true).returns(ref_rows)
+          @mock_output_port.expects(:on_success).with(list_rows, reference_farms: ref_rows)
 
           admin_interactor.call(input_dto)
         end

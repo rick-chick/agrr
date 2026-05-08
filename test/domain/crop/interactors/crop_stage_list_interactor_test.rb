@@ -33,6 +33,26 @@ module Domain
           output_port.verify
         end
 
+        test "calls on_failure with ErrorDto when gateway raises RecordInvalid" do
+          gateway = Minitest::Mock.new
+          gateway.expect(:list_crop_stages_by_crop_id, nil) do |_crop_id|
+            raise Domain::Shared::Exceptions::RecordInvalid.new("crop inaccessible")
+          end
+
+          received_failure = nil
+          output_port = Object.new
+          output_port.define_singleton_method(:on_success) { |_| raise "must not call on_success" }
+          output_port.define_singleton_method(:on_failure) { |dto| received_failure = dto }
+
+          interactor = CropStageListInteractor.new(output_port: output_port, gateway: gateway)
+          input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: 1)
+          interactor.call(input_dto)
+
+          assert_instance_of Domain::Shared::Dtos::ErrorDto, received_failure
+          assert_equal "crop inaccessible", received_failure.message
+          gateway.verify
+        end
+
         test "propagates StandardError when gateway raises" do
           gateway = Minitest::Mock.new
           gateway.expect(:list_crop_stages_by_crop_id, nil) { raise StandardError, "database error" }

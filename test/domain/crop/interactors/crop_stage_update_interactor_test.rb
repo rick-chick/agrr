@@ -36,6 +36,33 @@ module Domain
           output_port.verify
         end
 
+        test "calls on_failure with ErrorDto when gateway raises RecordInvalid" do
+          gateway = Minitest::Mock.new
+          payload = { name: "", order: 2 }
+          input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
+            crop_id: 1,
+            stage_id: 1,
+            payload: payload
+          )
+          gateway.expect(:update_crop_stage, nil) do |id, dto|
+            assert_equal 1, id
+            assert_equal input_dto, dto
+            raise Domain::Shared::Exceptions::RecordInvalid.new("Name can't be blank")
+          end
+
+          received_failure = nil
+          output_port = Object.new
+          output_port.define_singleton_method(:on_success) { |_| raise "must not call on_success" }
+          output_port.define_singleton_method(:on_failure) { |dto| received_failure = dto }
+
+          interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway)
+          interactor.call(input_dto)
+
+          assert_instance_of Domain::Shared::Dtos::ErrorDto, received_failure
+          assert_equal "Name can't be blank", received_failure.message
+          gateway.verify
+        end
+
         test "propagates StandardError when gateway raises" do
           gateway = Minitest::Mock.new
           payload = { name: "発芽", order: 2 }
