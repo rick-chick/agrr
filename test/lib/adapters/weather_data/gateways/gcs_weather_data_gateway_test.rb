@@ -102,21 +102,6 @@ class GcsWeatherDataGatewayTest < ActiveSupport::TestCase
     assert_kind_of Hash, result
   end
 
-  test "extract_weather_data_by_period extracts and converts to DTO" do
-    payload = {
-      "data" => [
-        { "time" => "2023-01-01", "temperature_2m_max" => 10.0, "temperature_2m_min" => 5.0 }
-      ]
-    }
-    dtos = @gateway.extract_weather_data_by_period(
-      raw_weather_payload: payload,
-      start_date: Date.new(2023, 1, 1),
-      end_date: Date.new(2023, 1, 1)
-    )
-    assert_equal 1, dtos.size
-    assert_equal 7.5, dtos.first.temperature_mean
-  end
-
   test "format_for_agrr formats DTOs to AGRR hash" do
     dto = Domain::WeatherData::Dtos::WeatherDataDto.new(date: Date.new(2023, 1, 1), temperature_max: 10.0)
     location = OpenStruct.new(latitude: 35.0, longitude: 139.0, elevation: 0.0, timezone: "UTC")

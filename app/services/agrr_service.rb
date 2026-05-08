@@ -381,13 +381,9 @@ class AgrrService
 
   # 気象データのフォーマットを正規化（古いネスト形式を解消）
   def self.normalize_weather_data(data)
-    return nil if data.blank?
-
-    if data["data"].is_a?(Hash) && data["data"]["data"].is_a?(Array)
+    if Domain::WeatherData::Services::OpenMeteoWeatherPayload.legacy_nested_open_meteo_payload?(data)
       Rails.logger.warn "⚠️ [AgrrService] Old nested weather format detected, extracting inner data"
-      data["data"]
-    else
-      data
     end
+    Domain::WeatherData::Services::OpenMeteoWeatherPayload.normalize_raw_payload(data)
   end
 end

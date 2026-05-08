@@ -16,10 +16,6 @@ module Domain
           raise NotImplementedError
         end
 
-        def extract_weather_data_by_period(raw_weather_payload:, start_date:, end_date:)
-          raise NotImplementedError
-        end
-
         def format_for_agrr(weather_data_dtos:, weather_location:)
           raise NotImplementedError
         end
