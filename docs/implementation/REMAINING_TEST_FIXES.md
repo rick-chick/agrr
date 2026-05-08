@@ -100,7 +100,7 @@
 
 - [x] **Domain::CultivationPlan::CultivationPlanCreateInteractorTest**— 解消済み
 
-- [x] **AgrrServiceTest**— 解消済み
+- [x] **`test/gateways/agrr/daemon_client_test.rb`**（旧 AgrrServiceTest）— 解消済み
 
 ---
 

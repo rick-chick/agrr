@@ -1,5 +1,7 @@
 # Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化 - 実装状況
 
+> **配置メモ（2026-05）**: 本文の `PestCropAssociationService`（`app/services/pest_crop_association_service.rb`）およびテストパスは旧構成。現行は `CompositionRoot.pest_gateway`（`lib/adapters/pest/gateways/pest_memory_gateway.rb`）と `Domain::Pest::Interactors::PestUpdateInteractor` が作物関連付けの境界を担う。Policy 類は引き続き `app/policies/`。
+
 ## ドキュメント方針との比較
 
 ### ドキュメントの方針（`docs/html_json_api_unification.md` 3.2.2節）
@@ -39,23 +41,25 @@
   - 管理者: 参照害虫 + 自分の害虫
   - 一般ユーザー: 自分の非参照害虫のみ
 
-#### 2. Service の実装
+#### 2. 関連付けの実装（現行）
 
-**`PestCropAssociationService`** (`app/services/pest_crop_association_service.rb`)
-- ✅ `associate_crops(pest, crop_ids, user:)`: 害虫と作物を関連付ける
-  - Policy を利用して関連付け可否を判定し、許可されたもののみ関連付ける
-- ✅ `update_crop_associations(pest, crop_ids, user:)`: 関連付けを更新（差分更新）
-- ✅ `normalize_crop_ids(pest, raw_ids, user:)`: 作物IDを正規化（選択可能な作物IDのみを抽出）
-- ✅ `accessible_crops_scope(pest, user:)`: Policy への委譲
+**ゲートウェイ（永続化・更新）**
+- `Adapters::Pest::Gateways::PestMemoryGateway`（`lib/adapters/pest/gateways/pest_memory_gateway.rb`）
+  - `update_pest_crop_associations`、`normalize_crop_ids_for_pest_form` 等
+
+**ユースケース**
+- `Domain::Pest::Interactors::PestUpdateInteractor` — 害虫更新フローで作物関連付けを調整
+
+**旧 Service 相当（削除済み）**
+- ~~`PestCropAssociationService`~~（`app/services/pest_crop_association_service.rb`）— 上記ゲートウェイ＋インタラクタへ移行
 
 #### 3. コントローラへの適用
 
 **HTML コントローラ:**
 - ✅ `PestsController` (`app/controllers/pests_controller.rb`)
-  - `associate_crops`: `PestCropAssociationService.associate_crops` 経由
-  - `update_crop_associations`: `PestCropAssociationService.update_crop_associations` 経由
+  - 作成・更新: `Domain::Pest::Interactors::PestCreateInteractor` / `PestUpdateInteractor` + `CompositionRoot.pest_gateway`
   - `prepare_crop_selection_for`: `PestCropAssociationPolicy.accessible_crops_scope` 経由
-  - `normalize_crop_ids_for`: `PestCropAssociationService.normalize_crop_ids` 経由
+  - `normalize_crop_ids_for`: `CompositionRoot.pest_gateway.normalize_crop_ids_for_pest_form` 経由
 - ✅ `PesticidesController` (`app/controllers/pesticides_controller.rb`)
   - `load_crops_and_pests`: `PesticideAssociationPolicy.accessible_crops_scope` / `accessible_pests_scope` 経由
 - ✅ `Crops::PestsController` (`app/controllers/crops/pests_controller.rb`)
@@ -74,7 +78,7 @@
 #### 4. テスト
 
 - ✅ `PestCropAssociationPolicy` のテスト (`test/policies/pest_crop_association_policy_test.rb`)
-- ✅ `PestCropAssociationService` のテスト (`test/services/pest_crop_association_service_test.rb`)
+- ✅ `PestCropAssociationService` のテスト（移行先: `test/adapters/pest/gateways/pest_memory_gateway_crop_association_test.rb` 等）
 - ✅ `PesticideAssociationPolicy` のテスト (`test/policies/pesticide_association_policy_test.rb`)
 - ✅ 既存のコントローラテストがすべて通過
 
@@ -84,9 +88,9 @@
 
 ### ✅ 完全に一致
 
-1. **Policy/Service の作成**: ✅ 完了
-   - `PestCropAssociationPolicy` / `PestCropAssociationService` を作成
-   - `PesticideAssociationPolicy` を作成
+1. **Policy と関連付け境界の整備**: ✅ 完了
+   - `PestCropAssociationPolicy` / `PesticideAssociationPolicy`
+   - 作物関連付けの永続化は `pest_gateway`（`PestMemoryGateway`）および `PestCreateInteractor` / `PestUpdateInteractor` に集約
 
 2. **責務の実装**: ✅ 完了
    - 「この pest と crop を関連付けてよいか?」→ `PestCropAssociationPolicy.crop_accessible_for_pest?`

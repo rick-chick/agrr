@@ -6,7 +6,7 @@
 
 ## 実装箇所
 
-**対象ファイル**: `app/services/agrr_service.rb`
+**対象ファイル**: `app/gateways/agrr/daemon_client.rb`（クラス `Agrr::DaemonClient`。本文の「AgrrService」は歴史的名称）
 **対象メソッド**: `execute_command` (173-214行目)
 
 ## 現在の処理フロー
@@ -251,7 +251,7 @@ end
 ## 関連ファイル
 
 ### 修正対象
-- `app/services/agrr_service.rb` - メイン実装箇所
+- `app/gateways/agrr/daemon_client.rb` - メイン実装箇所
 
 ### テストファイル
 - `test/services/agrr_service_test.rb` - 単体テスト

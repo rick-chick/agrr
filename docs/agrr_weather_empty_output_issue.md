@@ -53,7 +53,7 @@ agrr weather \
 
 ## 関連ファイル
 
-- `app/services/agrr_service.rb` (58-59行目): 空ファイル検出でエラーを発生
+- `app/gateways/agrr/daemon_client.rb`: 空出力ファイル検出でエラーを発生（該当ロジックはこのクラスに集約）
 - `app/gateways/agrr/base_gateway_v2.rb`: コマンド実行処理
 - `app/jobs/fetch_weather_data_job.rb`: 天気データ取得ジョブ
 

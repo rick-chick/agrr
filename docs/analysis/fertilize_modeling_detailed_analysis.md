@@ -138,7 +138,7 @@ end
 #### 現在の実装状況
 
 - `FertilizeGateway`に`recommend`メソッドは存在（```app/gateways/agrr/fertilize_gateway.rb```）
-- `AgrrService`に`fertilize_recommend`メソッドは存在（```app/services/agrr_service.rb```）
+- `Agrr::DaemonClient` に `fertilize_recommend` メソッドは存在（```app/gateways/agrr/daemon_client.rb```）
 - しかし、コントローラーやサービスで`fertilize_recommend`を使用している箇所は見当たらない
 - **結論**: 現時点では実装されていない機能
 

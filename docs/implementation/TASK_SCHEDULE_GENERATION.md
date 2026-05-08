@@ -5,6 +5,7 @@
 - これまで `TaskScheduleGeneratorService` は AGRR CLI のレスポンスに直接依存していた。
 - GDD トリガーやタスク定義を CLI から都度取得すると、参照データの変更が予測困難で回帰リスクが高い。
 - 新テーブル `crop_task_schedule_blueprints` に作業テンプレートを保持し、CLI はテンプレート生成時のみ利用する設計に変更した。
+- 生成ユースケースは `Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor`（旧サービス相当）に集約されている。
 
 ## コンポーネント概要
 
@@ -12,16 +13,17 @@
   - 作業テンプレートの永続化用モデル。
   - `task_type` は `field_work / basal_fertilization / topdress_fertilization` のいずれか。
   - `gdd_trigger`・`gdd_tolerance` など、`TaskScheduleItem` と同等の情報を保持する。
-- `TaskScheduleGeneratorService`
+- `Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor`
   - テンプレートを優先的に読み込み、`CropTaskScheduleBlueprint` から `TaskScheduleItem` を生成する。
   - テンプレートが存在しない場合は `TemplateMissingError` を送出して停止する。
 - `bin/generate_crop_task_schedule_blueprints.rb`
   - AGRR CLI (`schedule`, `fertilize plan`) を通じて参照作物のテンプレート JSON を取得し、データマイグレーションを出力するスクリプト。
   - CLI 呼び出し時には `AgriculturalTask.to_agrr_format_array` を使用し、`task_id` が既存 ID になるよう保証する。
+- ブループリント属性の組み立て（CLI 応答 → DB 属性）は `Adapters::Crop::TaskScheduleBlueprintGenerator`（`lib/adapters/crop/task_schedule_blueprint_generator.rb`）。
 
 ## 生成フロー
 
-1. `TaskScheduleGeneratorService#generate!(cultivation_plan_id:)` を呼び出す。
+1. `TaskScheduleGenerateInteractor#generate!(cultivation_plan_id:)` を呼び出す。
    - `CultivationPlan` に `predicted_weather_data` が無い場合は `WeatherDataMissingError`。
 2. 栽培計画に紐づく各 `field_cultivation` を処理。
    1. 対象作物の作業テンプレート (`crop_task_schedule_blueprints`) を取得し、存在しなければ `TemplateMissingError`。
@@ -69,10 +71,10 @@ bin/generate_crop_task_schedule_blueprints.rb --region jp [--crop-id 42 | --crop
 
 ## テスト
 
-- `test/services/task_schedule_generator_service_test.rb`
+- `test/domain/agricultural_task/interactors/task_schedule_generate_interactor_test.rb`
   - テンプレート経路のスケジュール生成・例外送出を検証。
   - 進捗データのフィルタリングや GDD 日付マッピングを確認。
-- `test/services/crop_task_schedule_blueprint_generator_test.rb`
+- `test/adapters/crop/task_schedule_blueprint_generator_test.rb` / `test/adapters/crop/task_schedule_blueprint_generator_fertilize_test.rb`
   - CLI レスポンスからテンプレート属性へ変換するロジックを検証。
 - `test/models/crop_task_schedule_blueprint_test.rb`
   - バリデーションとユニーク制約の確認。
@@ -82,4 +84,3 @@ bin/generate_crop_task_schedule_blueprints.rb --region jp [--crop-id 42 | --crop
 - テンプレートの管理 UI（編集・再生成・履歴管理）。
 - `crops#show` 以外でのテンプレート活用（プラン作成画面など）を検討。
 - CLI 停止時のリカバリ手順整備（スクリプトのリトライ戦略など）。
-

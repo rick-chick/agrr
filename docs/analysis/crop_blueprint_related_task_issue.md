@@ -1,5 +1,7 @@
 # 作物のblueprint図で関連作業が未設定になる問題の分析
 
+> **配置メモ（2026-05）**: 本文中の `app/services/crop_task_schedule_blueprint_*.rb` へのコード参照は旧配置。ブループリント生成の現行実装は `lib/adapters/crop/task_schedule_blueprint_generator.rb` の `Adapters::Crop::TaskScheduleBlueprintGenerator`。
+
 ## 概要
 
 作物詳細ページのblueprint図で、一部の作業が「関連作業未設定」として表示される場合がある。この問題の原因と、項目間のデータ移送を調査した結果をまとめる。
