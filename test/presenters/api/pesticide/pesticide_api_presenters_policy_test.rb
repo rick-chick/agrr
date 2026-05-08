@@ -3,22 +3,27 @@
 require "test_helper"
 
 class PesticideApiPresentersPolicyTest < ActiveSupport::TestCase
-  %w[List Detail Create Update Delete].each do |action|
-    define_method("test_#{action.downcase}_presenter_on_failure_renders_forbidden_for_policy") do
+  # List / Detail / Create / Update / Delete は on_failure の policy 分岐が同一のため、
+  # 契約は 1 本で表明し、Interactor 側の policy 拒否と二重に列を増やさない。
+  PESTICIDE_API_PRESENTERS_POLICY_BRANCH = [
+    Presenters::Api::Pesticide::PesticideListPresenter,
+    Presenters::Api::Pesticide::PesticideDetailPresenter,
+    Presenters::Api::Pesticide::PesticideCreatePresenter,
+    Presenters::Api::Pesticide::PesticideUpdatePresenter,
+    Presenters::Api::Pesticide::PesticideDeletePresenter
+  ].freeze
+
+  test "pesticide API presenters render forbidden with no_permission for policy denial" do
+    expected = { error: I18n.t("pesticides.flash.no_permission") }
+    error_dto = Domain::Shared::Policies::PolicyPermissionDenied.new
+
+    PESTICIDE_API_PRESENTERS_POLICY_BRANCH.each do |klass|
       view = Minitest::Mock.new
-      klass = case action
-              when "List" then Presenters::Api::Pesticide::PesticideListPresenter
-              when "Detail" then Presenters::Api::Pesticide::PesticideDetailPresenter
-              when "Create" then Presenters::Api::Pesticide::PesticideCreatePresenter
-              when "Update" then Presenters::Api::Pesticide::PesticideUpdatePresenter
-              when "Delete" then Presenters::Api::Pesticide::PesticideDeletePresenter
-              end
       presenter = klass.new(view: view)
-      error_dto = Domain::Shared::Policies::PolicyPermissionDenied.new
 
       view.expect(:render_response, nil) do |json:, status:|
         assert_equal :forbidden, status
-        assert_equal({ error: I18n.t("pesticides.flash.no_permission") }, json)
+        assert_equal(expected, json)
       end
 
       presenter.on_failure(error_dto)
