@@ -18,7 +18,7 @@ module Domain
           gateway.expects(:list_for_index).with(
             user: user,
             is_admin: false,
-            filter: nil,
+            filter: "user",
             query: nil
           ).returns(tasks)
           gateway.expects(:reference_tasks_for_index).with(is_admin: false).returns(refs)

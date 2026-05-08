@@ -6,10 +6,9 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks
   def index
-    filter = resolve_filter(params[:filter])
     input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskListInputDto.from_hash({
       is_admin: admin_user?,
-      filter: filter,
+      filter: params[:filter],
       query: params[:query].to_s.strip
     })
 
@@ -145,15 +144,6 @@ class AgriculturalTasksController < ApplicationController
     attributes[:required_tools] = normalize_required_tools(raw_required_tools)
 
     attributes
-  end
-
-  def resolve_filter(filter_param)
-    allowed_filters = %w[user reference all]
-    filter = filter_param.to_s.presence
-
-    return filter if admin_user? && allowed_filters.include?(filter)
-
-    admin_user? ? "all" : "user"
   end
 
   def normalize_required_tools(value)

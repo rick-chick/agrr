@@ -8,7 +8,7 @@ module Domain
 
         def initialize(is_admin: false, filter: nil, query: nil)
           @is_admin = is_admin
-          @filter = filter
+          @filter = self.class.send(:normalize_list_filter, is_admin: is_admin, raw_filter: filter)
           @query = query
         end
 
@@ -19,6 +19,15 @@ module Domain
             query: hash[:query]
           )
         end
+
+        def self.normalize_list_filter(is_admin:, raw_filter:)
+          allowed_filters = %w[user reference all]
+          filter = raw_filter.to_s.presence
+          return filter if is_admin && allowed_filters.include?(filter)
+
+          is_admin ? "all" : "user"
+        end
+        private_class_method :normalize_list_filter
       end
     end
   end
