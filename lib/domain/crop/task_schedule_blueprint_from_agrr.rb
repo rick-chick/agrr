@@ -53,20 +53,11 @@ module Domain
         end
 
         def decimal_value(value)
-          return nil if value.nil? || (value.respond_to?(:empty?) && value.empty?)
-          return value if value.is_a?(BigDecimal)
-
-          BigDecimal(value.to_s)
+          Domain::Shared::TypeConverters::BigDecimalConverter.cast(value)
         end
 
         def integer_value(value)
-          return value if value.is_a?(Integer)
-          return nil if value.nil?
-
-          str = value.to_s
-          return nil unless str.match?(/\A-?\d+\z/)
-
-          str.to_i
+          Domain::Shared::TypeConverters::IntegerConverter.cast(value)
         end
 
         private

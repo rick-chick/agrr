@@ -244,9 +244,7 @@ module Domain
         end
 
         def decimal_value(value)
-          return nil if value.nil?
-
-          BigDecimal(value.to_s)
+          Domain::Shared::TypeConverters::BigDecimalConverter.cast(value)
         end
 
         def safe_parse_date(value)

@@ -24,6 +24,29 @@ module Domain
           !!value
         end
       end
+
+      # agrr 等の外部数値（文字列・欠損）を整数に正規化する（Rails 非依存）
+      class IntegerConverter
+        def self.cast(value)
+          return value if value.is_a?(Integer)
+          return nil if value.nil?
+
+          str = value.to_s
+          return nil unless str.match?(/\A-?\d+\z/)
+
+          str.to_i
+        end
+      end
+
+      # agrr 等の外部数値を BigDecimal に正規化する（Rails 非依存）
+      class BigDecimalConverter
+        def self.cast(value)
+          return nil if value.nil? || (value.respond_to?(:empty?) && value.empty?)
+          return value if value.is_a?(BigDecimal)
+
+          BigDecimal(value.to_s)
+        end
+      end
     end
   end
 end
