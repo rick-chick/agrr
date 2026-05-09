@@ -32,56 +32,34 @@ module Adapters
       attr_reader :crop, :templates
 
       def build_general_blueprint(task)
-        task_id = integer_value(task["task_id"])
+        task_id = Domain::Crop::TaskScheduleBlueprintFromAgrr.integer_value(task["task_id"])
         template = template_for_task(task_id)
-        agricultural_task = template&.agricultural_task || ::AgriculturalTask.find_by(id: task_id)
+        agricultural_task_id = agricultural_task_id_for(task_id, template)
 
-        agrr_task_name = task["name"] || task["description"]
-
-        {
+        Domain::Crop::TaskScheduleBlueprintFromAgrr.general_row(
           crop_id: crop.id,
-          agricultural_task_id: agricultural_task&.id,
-          stage_order: integer_value(task["stage_order"]),
-          stage_name: task["stage_name"],
-          gdd_trigger: decimal_value(task["gdd_trigger"]),
-          gdd_tolerance: decimal_value(task["gdd_tolerance"]),
-          task_type: ::TaskScheduleItem::FIELD_WORK_TYPE,
-          source: "agrr_schedule",
-          priority: integer_value(task["priority"]),
-          description: agrr_task_name || template&.description,
-          amount: nil,
-          amount_unit: nil,
-          weather_dependency: task["weather_dependency"] || template&.weather_dependency,
-          time_per_sqm: decimal_value(task["time_per_sqm"]) || template&.time_per_sqm
-        }
+          task: task,
+          agricultural_task_id: agricultural_task_id,
+          template_description: template&.description,
+          template_weather_dependency: template&.weather_dependency,
+          template_time_per_sqm: template&.time_per_sqm
+        )
       end
 
       def build_fertilizer_blueprint(entry, index)
-        task_type = entry["task_type"] ||
-          (index.zero? ? ::TaskScheduleItem::BASAL_FERTILIZATION_TYPE : ::TaskScheduleItem::TOPDRESS_FERTILIZATION_TYPE)
-        task_id = integer_value(entry["task_id"])
+        task_id = Domain::Crop::TaskScheduleBlueprintFromAgrr.integer_value(entry["task_id"])
         template = template_for_task(task_id)
-        agricultural_task = template&.agricultural_task || ::AgriculturalTask.find_by(id: task_id)
+        agricultural_task_id = agricultural_task_id_for(task_id, template)
 
-        fixed_stage_name = index.zero? ? "基肥" : "追肥"
-        agrr_task_name = fixed_stage_name
-
-        {
+        Domain::Crop::TaskScheduleBlueprintFromAgrr.fertilizer_row(
           crop_id: crop.id,
-          agricultural_task_id: agricultural_task&.id,
-          stage_order: integer_value(entry["stage_order"]),
-          stage_name: fixed_stage_name,
-          gdd_trigger: decimal_value(entry["gdd_trigger"]),
-          gdd_tolerance: decimal_value(entry["gdd_tolerance"]),
-          task_type: task_type,
-          source: "agrr_fertilize_plan",
-          priority: integer_value(entry["priority"]),
-          description: agrr_task_name || template&.description,
-          amount: decimal_value(entry["amount_g_per_m2"]),
-          amount_unit: entry["amount_unit"] || (entry["amount_g_per_m2"].present? ? "g/m2" : nil),
-          weather_dependency: entry["weather_dependency"] || template&.weather_dependency,
-          time_per_sqm: decimal_value(entry["time_per_sqm"]) || template&.time_per_sqm
-        }
+          entry: entry,
+          index: index,
+          agricultural_task_id: agricultural_task_id,
+          template_description: template&.description,
+          template_weather_dependency: template&.weather_dependency,
+          template_time_per_sqm: template&.time_per_sqm
+        )
       end
 
       def template_lookup
@@ -99,21 +77,9 @@ module Adapters
         template_lookup[task_id] || template_lookup[task_id.to_s]
       end
 
-      def decimal_value(value)
-        return nil if value.nil? || (value.respond_to?(:empty?) && value.empty?)
-        return value if value.is_a?(BigDecimal)
-
-        BigDecimal(value.to_s)
-      end
-
-      def integer_value(value)
-        return value if value.is_a?(Integer)
-        return nil if value.nil?
-
-        str = value.to_s
-        return nil unless str.match?(/\A-?\d+\z/)
-
-        str.to_i
+      def agricultural_task_id_for(task_id, template)
+        agricultural_task = template&.agricultural_task || ::AgriculturalTask.find_by(id: task_id)
+        agricultural_task&.id
       end
     end
   end

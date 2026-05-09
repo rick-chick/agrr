@@ -78,7 +78,7 @@
 
 7 ドメイン (各 2 メソッド = 計 14 サイト):
 
-- `pest_memory_gateway.rb`: 2
+- `pest_active_record_gateway.rb`: 2
 - `pesticide_active_record_gateway.rb`: 2
 - `fertilize_active_record_gateway.rb`: 2
 - `agricultural_task_active_record_gateway.rb`: 2

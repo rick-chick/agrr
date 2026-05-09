@@ -5,14 +5,14 @@ require "test_helper"
 module Adapters
   module Pest
     module Gateways
-      class PestMemoryGatewayCropAssociationTest < ActiveSupport::TestCase
+      class PestActiveRecordGatewayCropAssociationTest < ActiveSupport::TestCase
         setup do
           @user = create(:user)
           @pest = create(:pest, is_reference: false, user: @user)
           @crop1 = create(:crop, is_reference: false, user: @user)
           @crop2 = create(:crop, is_reference: false, user: @user)
           @other_user_crop = create(:crop, is_reference: false, user: create(:user))
-          @gw = PestMemoryGateway.new(deletion_undo_gateway: CompositionRoot.deletion_undo_gateway)
+          @gw = PestActiveRecordGateway.new(deletion_undo_gateway: CompositionRoot.deletion_undo_gateway)
         end
 
         test "associate_crops_with_pest_id associates accessible crops" do

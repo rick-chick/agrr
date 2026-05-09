@@ -3,7 +3,7 @@
 > **注記（2026-05）**  
 > **`HtmlCrudResponder` / `ApiCrudResponder` はコードベースから撤去済み**です。マスタ系 HTML / JSON は Interactor + Presenter（Clean Architecture）で統一されています。  
 > 下記に当該 Concern 名が残る箇所は **旧計画・歴史的記録**として読み替えてください。  
-> **`app/services` に置く `*Service` クラス案**も旧ロードマップ由来。**現行**: 害虫×作物は `PestCropAssociationPolicy` + `CompositionRoot.pest_gateway`（`Adapters::Pest::Gateways::PestMemoryGateway`）と `Domain::Pest::Interactors::*`；AI upsert は `CropAiCreateInteractor` / `CompositionRoot.fertilize_ai_create_interactor` / `CompositionRoot.pest_ai_create_interactor` と各アダプタ・永続化ブリッジ（`lib/domain`・`lib/adapters`）。
+> **`app/services` に置く `*Service` クラス案**も旧ロードマップ由来。**現行**: 害虫×作物は `PestCropAssociationPolicy` + `CompositionRoot.pest_gateway`（`Adapters::Pest::Gateways::PestActiveRecordGateway`）と `Domain::Pest::Interactors::*`；AI upsert は `CropAiCreateInteractor` / `CompositionRoot.fertilize_ai_create_interactor` / `CompositionRoot.pest_ai_create_interactor` と各アダプタ・永続化ブリッジ（`lib/domain`・`lib/adapters`）。
 
 ## 1. 目的・スコープ
 
@@ -703,7 +703,7 @@
       - `accessible_crops_scope(pest, user:)`: 害虫に対して選択可能な作物のスコープを返す
       - `crop_accessible_for_pest?(crop, pest, user:)`: 特定の作物が害虫と関連付け可能か判定
       - ルール: region一致、参照害虫は参照作物のみ、ユーザー害虫はそのユーザーの非参照作物のみ
-    - **`CompositionRoot.pest_gateway`**（`Adapters::Pest::Gateways::PestMemoryGateway`）: 関連付けの更新・フォーム用 ID 正規化（旧 `PestCropAssociationService` は削除済み）
+    - **`CompositionRoot.pest_gateway`**（`Adapters::Pest::Gateways::PestActiveRecordGateway`）: 関連付けの更新・フォーム用 ID 正規化（旧 `PestCropAssociationService` は削除済み）
     - `PesticideAssociationPolicy`: 農薬に対して選択可能な作物・害虫のスコープを提供するPolicy
       - `accessible_crops_scope(user)`: 農薬に対して選択可能な作物のスコープを返す
       - `accessible_pests_scope(user)`: 農薬に対して選択可能な害虫のスコープを返す
@@ -734,7 +734,7 @@
     - すべてのコントローラで `where("is_reference = ? OR user_id = ?", true, current_user.id)` を削除し、Policyメソッドを使用
   - テスト:
     - `PestCropAssociationPolicy` のテストを追加
-    - ゲートウェイ: `test/adapters/pest/gateways/pest_memory_gateway_crop_association_test.rb` 等
+    - ゲートウェイ: `test/adapters/pest/gateways/pest_active_record_gateway_crop_association_test.rb` 等
     - `PesticideAssociationPolicy` のテストを追加
     - 既存のコントローラテストがすべて通過（966 runs, 5822 assertions, 0 failures）
 

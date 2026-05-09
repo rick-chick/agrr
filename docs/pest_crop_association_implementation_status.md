@@ -1,6 +1,6 @@
 # Pest–Crop / Pesticide–Crop/Pest 関連付けの Policy/Service 化 - 実装状況
 
-> **配置メモ（2026-05）**: 本文の `PestCropAssociationService`（`app/services/pest_crop_association_service.rb`）およびテストパスは旧構成。現行は `CompositionRoot.pest_gateway`（`lib/adapters/pest/gateways/pest_memory_gateway.rb`）と `Domain::Pest::Interactors::PestUpdateInteractor` が作物関連付けの境界を担う。Policy 類は引き続き `app/policies/`。
+> **配置メモ（2026-05）**: 本文の `PestCropAssociationService`（`app/services/pest_crop_association_service.rb`）およびテストパスは旧構成。現行は `CompositionRoot.pest_gateway`（`lib/adapters/pest/gateways/pest_active_record_gateway.rb`）と `Domain::Pest::Interactors::PestUpdateInteractor` が作物関連付けの境界を担う。Policy 類は引き続き `app/policies/`。
 
 ## ドキュメント方針との比較
 
@@ -44,7 +44,7 @@
 #### 2. 関連付けの実装（現行）
 
 **ゲートウェイ（永続化・更新）**
-- `Adapters::Pest::Gateways::PestMemoryGateway`（`lib/adapters/pest/gateways/pest_memory_gateway.rb`）
+- `Adapters::Pest::Gateways::PestActiveRecordGateway`（`lib/adapters/pest/gateways/pest_active_record_gateway.rb`）
   - `update_pest_crop_associations`、`normalize_crop_ids_for_pest_form` 等
 
 **ユースケース**
@@ -78,7 +78,7 @@
 #### 4. テスト
 
 - ✅ `PestCropAssociationPolicy` のテスト (`test/policies/pest_crop_association_policy_test.rb`)
-- ✅ `PestCropAssociationService` のテスト（移行先: `test/adapters/pest/gateways/pest_memory_gateway_crop_association_test.rb` 等）
+- ✅ `PestCropAssociationService` のテスト（移行先: `test/adapters/pest/gateways/pest_active_record_gateway_crop_association_test.rb` 等）
 - ✅ `PesticideAssociationPolicy` のテスト (`test/policies/pesticide_association_policy_test.rb`)
 - ✅ 既存のコントローラテストがすべて通過
 
@@ -90,7 +90,7 @@
 
 1. **Policy と関連付け境界の整備**: ✅ 完了
    - `PestCropAssociationPolicy` / `PesticideAssociationPolicy`
-   - 作物関連付けの永続化は `pest_gateway`（`PestMemoryGateway`）および `PestCreateInteractor` / `PestUpdateInteractor` に集約
+   - 作物関連付けの永続化は `pest_gateway`（`PestActiveRecordGateway`）および `PestCreateInteractor` / `PestUpdateInteractor` に集約
 
 2. **責務の実装**: ✅ 完了
    - 「この pest と crop を関連付けてよいか?」→ `PestCropAssociationPolicy.crop_accessible_for_pest?`
