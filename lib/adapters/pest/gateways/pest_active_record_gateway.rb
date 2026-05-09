@@ -8,8 +8,8 @@ module Adapters
           @deletion_undo_gateway = deletion_undo_gateway
         end
 
-        def list_index_for_user(user)
-          index_scope_for_user(user).map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
+        def list_index_for_filter(filter)
+          index_relation_for_filter(filter).map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
         def selectable_pest_ids(user)
@@ -52,10 +52,6 @@ module Adapters
           pest
         end
 
-        def find_authorized_for_view(user, id)
-          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_view(user, id))
-        end
-
         def authorized_pest_detail_output(user, id)
           pest = ::Pest.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods, :crops).find(id)
           unless Domain::Shared::Policies::PestPolicy.view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
@@ -77,7 +73,7 @@ module Adapters
                  else
                    find_authorized_model_for_view(user, id)
                  end
-          Domain::Pest::Dtos::AuthorizedPestLoadedDto.new(
+          Domain::Pest::Ports::PestHtmlAuthorizedPestLoad.new(
             pest_entity: Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest),
             persisted_pest: pest
           )
@@ -453,11 +449,14 @@ module Adapters
           end
         end
 
-        def index_scope_for_user(user)
-          if user.admin?
-            ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
+        def index_relation_for_filter(filter)
+          case filter.mode
+          when :reference_or_owned
+            ::Pest.where("is_reference = ? OR user_id = ?", true, filter.user_id)
+          when :owned_non_reference
+            ::Pest.where(user_id: filter.user_id, is_reference: false)
           else
-            ::Pest.where(user_id: user.id, is_reference: false)
+            raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
           end
         end
 

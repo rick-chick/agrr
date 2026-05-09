@@ -16,8 +16,9 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def list_index_for_user(user)
-          raise NotImplementedError, "Subclasses must implement list_index_for_user"
+        # @param filter [Domain::Shared::ValueObjects::ReferenceIndexListFilter]
+        def list_index_for_filter(filter)
+          raise NotImplementedError, "Subclasses must implement list_index_for_filter"
         end
 
         def selectable_pest_ids(user)
@@ -30,10 +31,6 @@ module Domain
 
         def list_selectable_pest_entities_recent_first(user)
           raise NotImplementedError, "Subclasses must implement list_selectable_pest_entities_recent_first"
-        end
-
-        def find_authorized_for_view(user, id)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end
 
         def authorized_pest_detail_output(user, id)
@@ -52,7 +49,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
         end
 
-        # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（Interactor が port に載せる DTO）。
+        # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（HTML フォーム用。契約は {Domain::Pest::Ports::PestHtmlAuthorizedPestLoad}）。
         def find_authorized_pest_loaded_bundle!(user, id, for_edit:)
           raise NotImplementedError, "Subclasses must implement find_authorized_pest_loaded_bundle!"
         end
