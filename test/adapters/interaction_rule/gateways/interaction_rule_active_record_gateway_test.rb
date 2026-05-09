@@ -113,13 +113,28 @@ module Adapters
           assert entities.all? { |e| e.is_a?(Domain::InteractionRule::Entities::InteractionRuleEntity) }
         end
 
-        test "list_index_for_user returns scoped entities for non-admin" do
+        test "list_index_for_filter returns scoped entities for non-admin" do
           user = create(:user, admin: false)
           my_rule = create(:interaction_rule, user: user, is_reference: false, region: "jp")
           create(:interaction_rule, :reference, region: "jp")
-          entities = @gateway.list_index_for_user(user)
+          filter = Domain::Shared::Policies::InteractionRulePolicy.index_list_filter(user)
+          entities = @gateway.list_index_for_filter(filter)
           assert_equal 1, entities.size
           assert_equal my_rule.id, entities.first.id
+        end
+
+        test "list_index_for_filter for admin includes reference and own rows" do
+          admin = create(:user, admin: true)
+          ref = create(:interaction_rule, :reference, region: "jp")
+          own = create(:interaction_rule, user: admin, is_reference: false, region: "jp")
+          other = create(:user)
+          create(:interaction_rule, user: other, is_reference: false, region: "jp")
+
+          filter = Domain::Shared::Policies::InteractionRulePolicy.index_list_filter(admin)
+          ids = @gateway.list_index_for_filter(filter).map(&:id)
+
+          assert_includes ids, ref.id
+          assert_includes ids, own.id
         end
       end
     end

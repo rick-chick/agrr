@@ -8,7 +8,7 @@ module Domain
         attr_reader :message, :reload_bundle
 
         # @param message [String]
-        # @param reload_bundle [Domain::Pest::Dtos::AuthorizedPestLoadedDto, nil]
+        # @param reload_bundle [Domain::Pest::Ports::PestHtmlAuthorizedPestLoad, nil]
         def initialize(message:, reload_bundle: nil)
           @message = message
           @reload_bundle = reload_bundle

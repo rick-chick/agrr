@@ -13,7 +13,8 @@ module Domain
 
         def call(input_dto = nil)
           user = @user_lookup.find(@user_id)
-          filtered_fertilizes = @gateway.list_index_for_user(user)
+          filter = Domain::Shared::Policies::FertilizePolicy.index_list_filter(user)
+          filtered_fertilizes = @gateway.list_index_for_filter(filter)
           @output_port.on_success(filtered_fertilizes)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

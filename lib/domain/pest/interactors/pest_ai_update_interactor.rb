@@ -35,15 +35,15 @@ module Domain
             )
           end
 
-          pest_record = load_authorized_pest(user, pest_id)
-          unless pest_record
+          pest_entity = load_authorized_pest_entity(user, pest_id)
+          unless pest_entity
             return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :not_found,
               body: { error: @translator.t("api.errors.pests.not_found", default: "害虫が見つかりません") }
             )
           end
 
-          @logger.info "🤖 [AI Pest] Querying pest info for update: #{pn} (ID: #{pest_record.id})"
+          @logger.info "🤖 [AI Pest] Querying pest info for update: #{pn} (ID: #{pest_entity.id})"
           pest_info = @pest_ai_query_gateway.fetch_pest_json(pn, [])
 
           interpreted = Domain::Pest::Services::PestAiDaemonResponseInterpreter.interpret(
@@ -55,7 +55,7 @@ module Domain
 
           pest_data = interpreted.pest_data
 
-          @logger.info "🔄 [AI Pest] Updating pest##{pest_record.id} with latest data from agrr"
+          @logger.info "🔄 [AI Pest] Updating pest##{pest_entity.id} with latest data from agrr"
 
           attrs = {
             name: pest_data["name"],
@@ -69,7 +69,7 @@ module Domain
             control_methods: pest_data["control_methods"] || []
           }
 
-          result = @update_interactor.call(pest_record.id, attrs.symbolize_keys)
+          result = @update_interactor.call(pest_entity.id, attrs.symbolize_keys)
 
           unless result.success?
             @logger.error "❌ [AI Pest] Failed to update: #{result.error}"
@@ -98,9 +98,8 @@ module Domain
 
         private
 
-        def load_authorized_pest(user, pest_id)
-          bundle = @pest_gateway.find_authorized_pest_loaded_bundle!(user, pest_id.to_i, for_edit: true)
-          bundle.persisted_pest
+        def load_authorized_pest_entity(user, pest_id)
+          @pest_gateway.find_authorized_for_edit(user, pest_id.to_i)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           nil
         end

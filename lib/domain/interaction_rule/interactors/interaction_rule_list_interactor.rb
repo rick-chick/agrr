@@ -13,7 +13,8 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          rules = @gateway.list_index_for_user(user)
+          filter = Domain::Shared::Policies::InteractionRulePolicy.index_list_filter(user)
+          rules = @gateway.list_index_for_filter(filter)
           reference_rules = rules.select(&:is_reference)
           interaction_rules = rules.reject(&:is_reference)
           @output_port.on_success(interaction_rules: interaction_rules, reference_rules: reference_rules)

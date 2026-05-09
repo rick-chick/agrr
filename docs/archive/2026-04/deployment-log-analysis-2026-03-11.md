@@ -122,7 +122,7 @@ Worker / Dispatcher が `database is locked` でクラッシュすると、Solid
 
 ### 5.3 コールドスタート 240 秒対策（優先度中）
 
-- 現状コールドスタートは 14〜22 秒程度に改善済み（`docs/cold-start-analysis-2026-03-11.md`）
+- 現状コールドスタートは 14〜22 秒程度に改善済み（[`cold-start-analysis-2026-03-11.md`](./cold-start-analysis-2026-03-11.md)）
 - 240 秒は Cloud Run のリクエストタイムアウトや、スケール 0 時の初回インスタンス起動待ちの可能性
 - `MIN_INSTANCES=1` にするとコールドスタートは回避できるが、常時課金となる
 

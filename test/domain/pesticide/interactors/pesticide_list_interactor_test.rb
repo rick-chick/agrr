@@ -9,12 +9,14 @@ module Domain
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           user = Object.new
+          def user.id; 10; end
+          def user.admin?; false; end
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = Object.new
-          gateway.define_singleton_method(:list_index_for_user) { |_u| raise Domain::Shared::Policies::PolicyPermissionDenied }
+          gateway.define_singleton_method(:list_index_for_filter) { |_f| raise Domain::Shared::Policies::PolicyPermissionDenied }
 
           received = nil
           output_port = Minitest::Mock.new

@@ -2,6 +2,8 @@
 
 フロント（Angular）とサーバー（Rails）間の API 契約。`docs/contracts/{feature}-contract.md` に配置。
 
+**バックログ（CA）**: 害虫 HTML 編集は `lib/domain/pest/ports/pest_html_authorized_pest_load.rb` のとおり `persisted_pest` を暫定同梱している。ERB / strong params を DTO 前提へ移し当フィールドを廃止する（農薬の同型も同様）。
+
 **実装ステータス**: 契約 MD **25 件**の目視ベース概況（詳細は各契約のチェックリスト参照）。
 
 

@@ -29,7 +29,7 @@ module Domain
           input_dto = Domain::Pest::Dtos::PestUpdateInputDto.new(pest_id: 1, name: "x")
           pest_entity = mock
           persisted = mock
-          bundle = Domain::Pest::Dtos::AuthorizedPestLoadedDto.new(pest_entity: pest_entity, persisted_pest: persisted)
+          bundle = Domain::Pest::Ports::PestHtmlAuthorizedPestLoad.new(pest_entity: pest_entity, persisted_pest: persisted)
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))

@@ -299,8 +299,8 @@
 
 ## 📚 参考資料
 
-- [デザイントークン定義](app/assets/stylesheets/core/variables.css)
-- [ボタンコンポーネント](app/assets/stylesheets/components/buttons.css)
-- [フォームコンポーネント](app/assets/stylesheets/components/forms.css)
-- [カードコンポーネント](app/assets/stylesheets/components/cards.css)
+- [デザイントークン定義](../../app/assets/stylesheets/core/variables.css)
+- [ボタンコンポーネント](../../app/assets/stylesheets/components/buttons.css)
+- [フォームコンポーネント](../../app/assets/stylesheets/components/forms.css)
+- [カードコンポーネント](../../app/assets/stylesheets/components/cards.css)
 

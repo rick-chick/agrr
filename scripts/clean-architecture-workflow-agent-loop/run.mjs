@@ -129,11 +129,11 @@ function buildPrompt(repoRoot) {
 1. セクション0: docs/ca-violations-backlog.md を読む。項目があるなら **先頭の修正単位** にスコープを固定する（ユーザーに順番を聞かない）。
    backlog が無い／中身から判断して「修正単位」が空なら、SKILL の「スキャン」を **ARCHITECTURE.md の「What we require」と禁止 1〜30 の通し走査** で実施し、結果を backlog に書くか、違反ゼロなら backlog を削除して外側ループ終了とする（agent-operational-canonical.md の Backlog ファイル運用）。
 2. セクション1〜5: 固定した修正単位を実装し、レビュー、アーキテクチャゲート（1 回目・2 回目）、振る舞いチェック（lib/domain・gateway・CompositionRoot 変更時は test-common 経由で Rails テスト）まで行う。
-3. セクション6: 意図したスコープだけ git commit する。docs/ca-violations-backlog.md を更新する（解消した単位の削除・新規違反の追記）。残件がなくなったら通し走査で再スキャンし、違反ゼロなら **backlog ファイルを削除** して外側ループ完了とする。
+3. セクション6: 意図したスコープだけ git commit する（ユーザーがコミット禁止を明示したときのみ省略）。**通し走査**（`## What we require` と禁止 1〜30）を実行し、その結果で `docs/ca-violations-backlog.md` を再同期する（解消の反映・新規逸脱の追記）。逸脱ゼロなら **backlog ファイルを削除** して外側ループ完了とする。残件があれば先頭の修正単位へ戻りセクション1 へ。詳細は agent-operational-canonical.md の Backlog ファイル運用。
 
 **禁止**: 「続けますか」などユーザー発話待ちで止めること（ワークフロー SKILL セクション6）。規約上の障害で中断する場合は理由を明記する。
 
-終了時点の目標: 残課題がないこと（backlog 欠如、または修正単位が空で全量裏取り済み）。`;
+終了時点の目標: 残課題がないこと（**通し走査で逸脱ゼロを確認したうえで** backlog を削除した状態、または修正単位が空で同条件を満たしていること）。`;
 }
 
 async function main() {

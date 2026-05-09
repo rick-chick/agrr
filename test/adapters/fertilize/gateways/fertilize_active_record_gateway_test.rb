@@ -17,7 +17,7 @@ class Adapters::Fertilize::Gateways::FertilizeActiveRecordGatewayTest < ActiveSu
     assert fertilize.new_record?
   end
 
-  test "list_index_for_user returns only named user-owned non-reference fertilizes for regular user" do
+  test "list_index_for_filter returns only named user-owned non-reference fertilizes for regular user" do
     user = create(:user)
     other = create(:user)
     a = create(:fertilize, :user_owned, user: user, name: "Owned A")
@@ -27,17 +27,19 @@ class Adapters::Fertilize::Gateways::FertilizeActiveRecordGatewayTest < ActiveSu
     blank_name = create(:fertilize, :user_owned, user: user, name: "Temp")
     blank_name.update_column(:name, "")
 
-    ids = @gateway.list_index_for_user(user).map(&:id).sort
+    filter = Domain::Shared::Policies::FertilizePolicy.index_list_filter(user)
+    ids = @gateway.list_index_for_filter(filter).map(&:id).sort
 
     assert_equal [ a.id, b.id ].sort, ids
   end
 
-  test "list_index_for_user for admin includes reference and own user-owned rows" do
+  test "list_index_for_filter for admin includes reference and own user-owned rows" do
     admin = create(:user, admin: true)
     ref = create(:fertilize, :reference, name: "Ref row")
     own = create(:fertilize, :user_owned, user: admin, name: "Admin own")
 
-    ids = @gateway.list_index_for_user(admin).map(&:id)
+    filter = Domain::Shared::Policies::FertilizePolicy.index_list_filter(admin)
+    ids = @gateway.list_index_for_filter(filter).map(&:id)
 
     assert_includes ids, ref.id
     assert_includes ids, own.id

@@ -1,7 +1,7 @@
 # 作物スケジュール（エントリ）MVP — 受入チェックリスト
 
 **作成日**: 2026-04-15  
-**関連**: [entry-schedule-contract.md](../contracts/entry-schedule-contract.md)
+**関連**: [entry-schedule-contract.md](../../contracts/entry-schedule-contract.md)
 
 ## 主要画面（アスキー）
 

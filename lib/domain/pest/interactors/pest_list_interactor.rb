@@ -14,7 +14,8 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          pests = @gateway.list_index_for_user(user)
+          filter = Domain::Shared::Policies::PestPolicy.index_list_filter(user)
+          pests = @gateway.list_index_for_filter(filter)
           @output_port.on_success(pests)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

@@ -13,7 +13,8 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          filtered_pesticides = @gateway.list_index_for_user(user)
+          filter = Domain::Shared::Policies::PesticidePolicy.index_list_filter(user)
+          filtered_pesticides = @gateway.list_index_for_filter(filter)
           @output_port.on_success(filtered_pesticides)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

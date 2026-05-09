@@ -43,6 +43,10 @@
   box-shadow: var(--shadow-card);
 }
 
+.page-main > .section-card {
+  align-self: stretch;
+}
+
 /* 編集・詳細画面でのみ幅制限（一覧は幅制限なしで card-list の 1〜3 列を活かす） */
 .page-main--narrow .section-card {
   max-width: var(--form-card-max-width);

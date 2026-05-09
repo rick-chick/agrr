@@ -153,4 +153,4 @@ end
 - ユーザーへの通知改善
 
 ## 参照
-- [実装設計書](./PUBLIC_PLANS_SAVE_IMPLEMENTATION_DESIGN.md)
+- [実装設計書](../design/PUBLIC_PLANS_SAVE_IMPLEMENTATION_DESIGN.md)

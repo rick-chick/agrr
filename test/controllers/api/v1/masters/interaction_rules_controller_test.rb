@@ -47,7 +47,7 @@ module Api
 
         test "should return forbidden on index when gateway denies policy" do
           fake_gw = Object.new
-          def fake_gw.list_index_for_user(_user)
+          def fake_gw.list_index_for_filter(_filter)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 

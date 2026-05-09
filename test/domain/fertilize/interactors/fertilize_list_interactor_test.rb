@@ -4,15 +4,18 @@ require "test_helper"
 
 class FertilizeListInteractorTest < ActiveSupport::TestCase
   test "call passes fertilize entities to output port" do
-    user = mock
+    user = Object.new
+    def user.id; 42; end
+    def user.admin?; false; end
     e1 = mock
     e2 = mock
 
     user_lookup = mock
     user_lookup.expects(:find).with(42).returns(user)
 
+    expected_filter = Domain::Shared::Policies::FertilizePolicy.index_list_filter(user)
     gateway = mock
-    gateway.expects(:list_index_for_user).with(user).returns([ e1, e2 ])
+    gateway.expects(:list_index_for_filter).with(expected_filter).returns([ e1, e2 ])
 
     output = mock
     output.expects(:on_success).with([ e1, e2 ])
@@ -27,14 +30,17 @@ class FertilizeListInteractorTest < ActiveSupport::TestCase
   end
 
   test "call forwards policy permission denied to on_failure as exception" do
-    user = mock
+    user = Object.new
+    def user.id; 42; end
+    def user.admin?; false; end
     err = Domain::Shared::Policies::PolicyPermissionDenied.new
 
     user_lookup = mock
     user_lookup.expects(:find).with(42).returns(user)
 
+    expected_filter = Domain::Shared::Policies::FertilizePolicy.index_list_filter(user)
     gateway = mock
-    gateway.expects(:list_index_for_user).with(user).raises(err)
+    gateway.expects(:list_index_for_filter).with(expected_filter).raises(err)
 
     output = mock
     output.expects(:on_failure).with(err)
@@ -49,11 +55,15 @@ class FertilizeListInteractorTest < ActiveSupport::TestCase
   end
 
   test "propagates unexpected StandardError from gateway" do
+    user = Object.new
+    def user.id; 42; end
+    def user.admin?; false; end
     user_lookup = mock
-    user_lookup.expects(:find).with(42).returns(mock)
+    user_lookup.expects(:find).with(42).returns(user)
 
+    expected_filter = Domain::Shared::Policies::FertilizePolicy.index_list_filter(user)
     gateway = mock
-    gateway.expects(:list_index_for_user).raises(StandardError.new("boom"))
+    gateway.expects(:list_index_for_filter).with(expected_filter).raises(StandardError.new("boom"))
 
     output = mock
 

@@ -18,7 +18,7 @@ alwaysApply: false
 
 ## CA 規律（新規機能でも）
 
-範囲・手順は [`agent-conventions.mdc`](agent-conventions.mdc) 用語表「実装後の Clean Architecture チェック」と [ワークフロー SKILL](../skills/clean-architecture-violation-fix-workflow/SKILL.md)、新規差分の補足は [`greenfield-closure.md`](../skills/clean-architecture-violation-fix-workflow/references/greenfield-closure.md)。
+範囲・手順は [`agent-conventions.mdc`](agent-conventions.mdc) 用語表「実装後の Clean Architecture チェック」と [ワークフロー SKILL](../skills/clean-architecture-violation-fix-workflow/SKILL.md)（新規・単発も同一の外側・内側ループ）。
 
 - Phase 2 開始前: 新規実装の実装前の確認＋委譲プロンプトに **「新規でも ARCHITECTURE 違反を増やさない」** を含める。
 - **いつセクション4 ゲートに入るか**: Phase 2 のみで区切るなら **その時点の diff**、Phase 3 まで進めるなら **累積 diff**。

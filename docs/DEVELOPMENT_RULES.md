@@ -57,7 +57,7 @@
 
 ## テスト
 
-⚠️ **重要**: テスト作成時は必ず [docs/TESTING_GUIDELINES.md](docs/TESTING_GUIDELINES.md) を参照してください。
+⚠️ **重要**: テスト作成時は必ず [TESTING_GUIDELINES.md](TESTING_GUIDELINES.md) を参照してください。
 
 ### テスト要件（必須）
 - ✅ **モデルレベルのバリデーションテスト**（必須）- 直接データベース操作での制限テスト
@@ -80,7 +80,7 @@ docker compose run --rm test bundle exec rails test test/models/farm_test.rb
 docker compose run --rm test bundle exec rails test test/models/farm_test.rb -n test_should_prevent_creating_5th_farm
 ```
 
-詳細: [docs/TESTING_GUIDELINES.md](docs/TESTING_GUIDELINES.md)
+詳細: [TESTING_GUIDELINES.md](TESTING_GUIDELINES.md)
 
 ## タスク開始前の必須手順
 

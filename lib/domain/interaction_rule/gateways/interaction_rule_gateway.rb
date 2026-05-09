@@ -28,8 +28,9 @@ module Domain
           raise NotImplementedError, "Subclasses must implement agrr_rules_for_cultivation_plan_id"
         end
 
-        def list_index_for_user(user)
-          raise NotImplementedError, "Subclasses must implement list_index_for_user"
+        # @param filter [Domain::Shared::ValueObjects::ReferenceIndexListFilter]
+        def list_index_for_filter(filter)
+          raise NotImplementedError, "Subclasses must implement list_index_for_filter"
         end
 
         def find_authorized_for_view(user, id)

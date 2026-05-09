@@ -4,6 +4,12 @@ module Domain
   module Shared
     module Policies
       class PestPolicy
+        # @return [Domain::Shared::ValueObjects::ReferenceIndexListFilter]
+        def self.index_list_filter(user)
+          mode = user.admin? ? :reference_or_owned : :owned_non_reference
+          Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: mode, user_id: user.id)
+        end
+
         def self.view_allowed?(user, is_reference:, user_id:)
           is_reference || user_id == user.id
         end

@@ -113,4 +113,4 @@ save:
 
 ## 参照
 - [Rails I18n ドキュメント](https://guides.rubyonrails.org/i18n.html)
-- [実装設計書](./PUBLIC_PLANS_SAVE_IMPLEMENTATION_DESIGN.md)
+- [実装設計書](../design/PUBLIC_PLANS_SAVE_IMPLEMENTATION_DESIGN.md)

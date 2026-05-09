@@ -1,5 +1,11 @@
 @import '../masters/_master-layout.css';
 
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .plan-list-error {
   color: var(--color-error);
 }

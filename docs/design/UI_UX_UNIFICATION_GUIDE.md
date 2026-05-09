@@ -363,7 +363,7 @@ CSS変数で定義されたブレークポイントを使用：
 
 ## 参考資料
 
-- [デザイントークン定義](../app/assets/stylesheets/core/variables.css)
-- [共通コンポーネント](../app/views/shared/)
-- [ヘルパーメソッド](../app/helpers/application_helper.rb)
+- [デザイントークン定義](../../app/assets/stylesheets/core/variables.css)
+- [共通コンポーネント](../../app/views/shared/)
+- [ヘルパーメソッド](../../app/helpers/application_helper.rb)
 

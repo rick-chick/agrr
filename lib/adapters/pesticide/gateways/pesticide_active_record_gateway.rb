@@ -61,8 +61,8 @@ module Adapters
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("pesticides.flash.cannot_delete_in_use")
         end
 
-        def list_index_for_user(user)
-          visible_scope(user).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
+        def list_index_for_filter(filter)
+          index_relation_for_filter(filter).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
         def find_authorized_model_for_view(user, id)
@@ -198,11 +198,14 @@ module Adapters
 
         private
 
-        def visible_scope(user)
-          if user.admin?
-            ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
+        def index_relation_for_filter(filter)
+          case filter.mode
+          when :reference_or_owned
+            ::Pesticide.where("is_reference = ? OR user_id = ?", true, filter.user_id)
+          when :owned_non_reference
+            ::Pesticide.where(user_id: filter.user_id, is_reference: false)
           else
-            ::Pesticide.where(user_id: user.id, is_reference: false)
+            raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
           end
         end
 

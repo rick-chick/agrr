@@ -18,7 +18,7 @@
 
 ## Gateway
 
-- **`list_index_for_user(user)`** → entity の配列（Interactor が呼び出し、HTML 専用メソッドは増やさない）
+- **`list_index_for_filter(filter)`**（`filter` は Policy が組み立てる参照スコープ用値オブジェクト）→ entity の配列（Interactor が呼び出し、HTML 専用メソッドは増やさない）
 
 ## Controller
 

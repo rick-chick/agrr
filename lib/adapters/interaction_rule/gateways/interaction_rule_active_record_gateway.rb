@@ -86,17 +86,20 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def list_index_for_user(user)
-          index_scope_for_user(user).map { |record| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(record) }
+        def list_index_for_filter(filter)
+          index_relation_for_filter(filter).map { |record| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(record) }
         end
 
         private
 
-        def index_scope_for_user(user)
-          if user.admin?
-            ::InteractionRule.where("is_reference = ? OR user_id = ?", true, user.id)
+        def index_relation_for_filter(filter)
+          case filter.mode
+          when :reference_or_owned
+            ::InteractionRule.where("is_reference = ? OR user_id = ?", true, filter.user_id)
+          when :owned_non_reference
+            ::InteractionRule.where(user_id: filter.user_id, is_reference: false)
           else
-            ::InteractionRule.where(user_id: user.id, is_reference: false)
+            raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
           end
         end
 

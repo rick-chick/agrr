@@ -194,7 +194,7 @@ element.classList.toggle('text-primary');
 
 ## 参考資料
 
-- [デザイントークン定義](../app/assets/stylesheets/core/variables.css)
-- [ユーティリティクラス](../app/assets/stylesheets/utilities.css)
-- [コンポーネントスタイル](../app/assets/stylesheets/components/)
+- [デザイントークン定義](../../app/assets/stylesheets/core/variables.css)
+- [ユーティリティクラス](../../app/assets/stylesheets/utilities.css)
+- [コンポーネントスタイル](../../app/assets/stylesheets/components/)
 
