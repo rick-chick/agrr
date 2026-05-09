@@ -2,6 +2,9 @@
 
 require "test_helper"
 
+# 他ユーザーの update / destroy での認可拒否は InteractionRuleUpdateInteractorTest /
+# InteractionRuleDestroyInteractorTest に寄せ、ここでは show の 403 と本文で HTTP 契約を代表する。
+
 module Api
   module V1
     module Masters
@@ -182,27 +185,6 @@ module Api
           assert_equal "更新されたグループ", json_response["source_group"]
         end
 
-        test "should not update other user's interaction_rule" do
-          other_user = create(:user)
-          other_rule = create(:interaction_rule, :user_owned, user: other_user, source_group: "他のユーザーのルール")
-
-          patch api_v1_masters_interaction_rule_path(other_rule),
-                params: {
-                  interaction_rule: {
-                    source_group: "変更しようとしたグループ"
-                  }
-                },
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-          assert_response :forbidden
-
-          other_rule.reload
-          assert_equal "他のユーザーのルール", other_rule.source_group
-        end
-
         test "should destroy interaction_rule" do
           rule = create(:interaction_rule, :user_owned, user: @user)
 
@@ -221,20 +203,6 @@ module Api
           assert json_response.key?("undo_path")
         end
 
-        test "should not destroy other user's interaction_rule" do
-          other_user = create(:user)
-          other_rule = create(:interaction_rule, :user_owned, user: other_user)
-
-          assert_no_difference("InteractionRule.count") do
-            delete api_v1_masters_interaction_rule_path(other_rule),
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-          end
-
-          assert_response :forbidden
-        end
       end
     end
   end
