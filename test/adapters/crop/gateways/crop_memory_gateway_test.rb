@@ -430,6 +430,34 @@ module Adapters
             @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(user: user, crop_id: other_crop.id)
           end
         end
+
+        test "list_index_for_filter owned_non_reference returns only that user's non-reference crops" do
+          user = create(:user)
+          other = create(:user)
+          owned = create(:crop, :user_owned, user: user)
+          create(:crop, :reference)
+          create(:crop, :user_owned, user: other)
+
+          filter = Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: :owned_non_reference, user_id: user.id)
+          ids = @gateway.list_index_for_filter(filter).map(&:id)
+
+          assert_equal [ owned.id ], ids
+        end
+
+        test "list_index_for_filter reference_or_owned returns reference rows and rows owned by user_id" do
+          admin = create(:user, admin: true)
+          ref = create(:crop, :reference)
+          own = create(:crop, :user_owned, user: admin)
+          other = create(:user)
+          other_crop = create(:crop, :user_owned, user: other)
+
+          filter = Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: :reference_or_owned, user_id: admin.id)
+          ids = @gateway.list_index_for_filter(filter).map(&:id)
+
+          assert_includes ids, ref.id
+          assert_includes ids, own.id
+          assert_not_includes ids, other_crop.id
+        end
       end
     end
   end
