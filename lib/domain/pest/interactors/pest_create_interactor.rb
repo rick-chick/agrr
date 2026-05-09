@@ -37,6 +37,7 @@ module Domain
           attrs[:pest_thermal_requirement_attributes] = input_dto.pest_thermal_requirement_attributes if input_dto.pest_thermal_requirement_attributes
           attrs[:pest_control_methods_attributes] = input_dto.pest_control_methods_attributes if input_dto.pest_control_methods_attributes
 
+          attrs = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_create(user, attrs)
           pest_entity = @gateway.create_for_user(user, attrs)
 
           if Domain::Shared::ValidationHelpers.present?(input_dto.crop_ids)

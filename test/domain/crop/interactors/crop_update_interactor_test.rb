@@ -16,8 +16,14 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = Minitest::Mock.new
-          gateway.expect(:update_for_user, crop_entity, [ user, crop_id, { name: "更新された名前" } ])
+          current_entity = Object.new
+          def current_entity.reference?
+            false
+          end
+
+          gateway = mock
+          gateway.expects(:find_authorized_for_edit).with(user, crop_id).returns(current_entity)
+          gateway.expects(:update_for_user).with(user, crop_id, instance_of(Hash)).returns(crop_entity)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -35,7 +41,6 @@ module Domain
 
           assert_same crop_entity, received
           user_lookup.verify
-          gateway.verify
           output_port.verify
         end
 
@@ -49,6 +54,11 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = Object.new
+          current_entity = Object.new
+          def current_entity.reference?
+            false
+          end
+          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id| current_entity }
           gateway.define_singleton_method(:update_for_user) do |_u, _fid, _attrs|
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end

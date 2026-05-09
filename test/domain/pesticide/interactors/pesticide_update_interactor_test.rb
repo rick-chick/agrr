@@ -14,8 +14,12 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
+          current = Object.new
+          current.define_singleton_method(:is_reference) { false }
+
           gateway = Object.new
-          gateway.define_singleton_method(:update_for_user) { |_u, _id, _attrs| raise Domain::Shared::Policies::PolicyPermissionDenied }
+          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id| current }
+          gateway.define_singleton_method(:update_for_user) { |*_args| raise Domain::Shared::Policies::PolicyPermissionDenied }
 
           received = nil
           output_port = Minitest::Mock.new

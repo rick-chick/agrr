@@ -14,12 +14,12 @@ module Domain
 
         def call(update_input_dto)
           user = @user_lookup.find(@user_id)
+          current = @gateway.find_authorized_for_edit(user, update_input_dto.id)
 
           unless update_input_dto.is_reference.nil?
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(update_input_dto.is_reference)
             requested = false if requested.nil?
-            current_entity = @gateway.find_authorized_for_edit(user, update_input_dto.id)
-            if requested != current_entity.reference? && !user.admin?
+            if requested != current.reference? && !user.admin?
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("agricultural_tasks.flash.reference_flag_admin_only"))
             end
           end
@@ -39,7 +39,12 @@ module Domain
           end
 
           sync_ids = update_input_dto.selected_crop_ids
-          task_entity = @gateway.update_for_user(user, update_input_dto.id, attrs, sync_ids)
+          normalized = Domain::Shared::Policies::AgriculturalTaskPolicy.normalize_attrs_for_update(
+            user,
+            { is_reference: current.reference? },
+            attrs
+          )
+          task_entity = @gateway.update_for_user(user, update_input_dto.id, normalized, sync_ids)
 
           @output_port.on_success(task_entity)
           true

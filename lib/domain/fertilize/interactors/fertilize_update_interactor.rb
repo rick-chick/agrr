@@ -13,16 +13,15 @@ module Domain
         end
 
         def call(input_dto)
-          user = nil
           user = @user_lookup.find(@user_id)
+          current = @gateway.find_authorized_for_edit(user, input_dto.fertilize_id)
 
           attrs = {}
 
           # is_referenceをbooleanに変換してチェック
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
-            current_entity = @gateway.find_authorized_for_edit(user, input_dto.fertilize_id)
-            if is_reference != current_entity.is_reference && !user.admin?
+            if is_reference != current.is_reference && !user.admin?
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("fertilizes.flash.reference_flag_admin_only"))
             end
             attrs[:is_reference] = is_reference
@@ -36,7 +35,12 @@ module Domain
           attrs[:package_size] = input_dto.package_size if !input_dto.package_size.nil?
           attrs[:region] = input_dto.region if !input_dto.region.nil?
 
-          fertilize_entity = @gateway.update_for_user(user, input_dto.fertilize_id, attrs)
+          normalized = Domain::Shared::Policies::FertilizePolicy.normalize_attrs_for_update(
+            user,
+            { is_reference: !!current.is_reference },
+            attrs
+          )
+          fertilize_entity = @gateway.update_for_user(user, input_dto.fertilize_id, normalized)
 
           @output_port.on_success(fertilize_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

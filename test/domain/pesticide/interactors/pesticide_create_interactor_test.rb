@@ -9,6 +9,8 @@ module Domain
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           user = Object.new
+          user.define_singleton_method(:admin?) { false }
+          user.define_singleton_method(:id) { user_id }
           input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.new(name: "X", crop_id: 1, pest_id: 2)
 
           user_lookup = Minitest::Mock.new

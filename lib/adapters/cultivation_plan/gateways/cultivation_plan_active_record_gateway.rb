@@ -182,7 +182,7 @@ module Adapters
         # @return [DeletionUndoEvent] ::DeletionUndo::Manager.schedule が返すイベント
         # @raise [Domain::Shared::Exceptions::RecordNotFound, AssociationInUse, ::DeletionUndo::Error] 等
         def private_owned_plan_display_name(user:, plan_id:)
-          plan_model = PlanPolicy.find_private_owned!(user, plan_id)
+          plan_model = Domain::CultivationPlan::Policies::PlanAccess.find_private_owned!(user, plan_id)
           plan_model.display_name
         rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
           raise
@@ -191,7 +191,7 @@ module Adapters
         end
 
         def destroy(plan_id, user, toast_message:)
-          plan_model = PlanPolicy.find_private_owned!(user, plan_id)
+          plan_model = Domain::CultivationPlan::Policies::PlanAccess.find_private_owned!(user, plan_id)
 
           ::DeletionUndo::Manager.schedule(
             record: plan_model,
@@ -340,7 +340,7 @@ module Adapters
         end
 
         def private_plan_optimization_redirect_snapshot(user:, plan_id:)
-          row = PlanPolicy.private_scope(user).where(id: plan_id).pick(:id, :status)
+          row = Domain::CultivationPlan::Policies::PlanAccess.private_scope(user).where(id: plan_id).pick(:id, :status)
           raise Domain::Shared::Exceptions::RecordNotFound if row.nil?
 
           picked_id, status = row
@@ -351,7 +351,7 @@ module Adapters
         end
 
         def private_plan_optimizing_read_model(plan_id:, user:)
-          plan = PlanPolicy.private_scope(user).includes(:farm, :cultivation_plan_crops).find(plan_id)
+          plan = Domain::CultivationPlan::Policies::PlanAccess.private_scope(user).includes(:farm, :cultivation_plan_crops).find(plan_id)
           Domain::CultivationPlan::Dtos::PrivatePlanOptimizingReadModel.new(
             id: plan.id,
             plan_year: plan.plan_year,
@@ -380,7 +380,7 @@ module Adapters
 
         def find_private_cultivation_plan_detail(user:, plan_id:)
           Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
-            plan = PlanPolicy.private_scope(user)
+            plan = Domain::CultivationPlan::Policies::PlanAccess.private_scope(user)
                       .includes(
                         :farm,
                         field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ],
@@ -449,7 +449,7 @@ module Adapters
         end
 
         def task_schedule_timeline_read_model(user:, plan_id:)
-          plan = PlanPolicy.private_scope(user).find(plan_id)
+          plan = Domain::CultivationPlan::Policies::PlanAccess.private_scope(user).find(plan_id)
           schedules = TaskSchedule.where(cultivation_plan_id: plan.id)
                                   .includes(
                                     { task_schedule_items: :agricultural_task },

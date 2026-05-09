@@ -26,7 +26,7 @@ module Adapters
 
         def find_by_id_and_user(field_id, user_id)
           user = ::User.find(user_id)
-          record = FieldPolicy.find_owned!(user, field_id)
+          record = Domain::Field::Policies::FieldAccess.find_owned!(user, field_id)
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
@@ -42,7 +42,7 @@ module Adapters
             daily_fixed_cost: create_input_dto.daily_fixed_cost,
             region: create_input_dto.region
           }
-          field = FieldPolicy.build_for_create(user, farm, attrs)
+          field = Domain::Field::Policies::FieldAccess.build_for_create(user, farm, attrs)
           raise Domain::Shared::Exceptions::RecordInvalid, field.errors.full_messages.join(", ") unless field.save
 
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field)
@@ -52,7 +52,7 @@ module Adapters
 
         def update(field_id, update_input_dto, user_id)
           user = ::User.find(user_id)
-          field = FieldPolicy.find_owned!(user, field_id)
+          field = Domain::Field::Policies::FieldAccess.find_owned!(user, field_id)
           attrs = {}
           attrs[:name] = update_input_dto.name if update_input_dto.name.present?
           attrs[:area] = update_input_dto.area if !update_input_dto.area.nil?
@@ -67,7 +67,7 @@ module Adapters
 
         def destroy(field_id, user_id)
           user = ::User.find(user_id)
-          field = FieldPolicy.find_owned!(user, field_id)
+          field = Domain::Field::Policies::FieldAccess.find_owned!(user, field_id)
           ::DeletionUndo::Manager.schedule(
             record: field,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(user),
@@ -114,10 +114,10 @@ module Adapters
 
         def create_for_user(user, farm_id, attrs)
           farm = find_farm_model!(farm_id)
-          unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-          field = FieldPolicy.build_for_create(user, farm, attrs.to_h.symbolize_keys)
+          field = Domain::Field::Policies::FieldAccess.build_for_create(user, farm, attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, field.errors.full_messages.join(", ") unless field.save
 
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field)
@@ -171,7 +171,7 @@ module Adapters
           user = find_user!(user_id)
           farm_entity = @farm_gateway.find_authorized_for_edit(user, farm_id)
           farm = ::Farm.find(farm_id)
-          scope = FieldPolicy.scope_for_farm(user, farm)
+          scope = Domain::Field::Policies::FieldAccess.scope_for_farm(user, farm)
           fields = scope.map { |record| Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record) }
           [ farm_entity, fields ]
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied
@@ -200,12 +200,12 @@ module Adapters
 
         def field_view_allowed?(user, field)
           farm = field.farm
-          Domain::Shared::Policies::FarmPolicy.view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          Domain::Shared::ReferenceMasterAuthorization.farm_view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
         end
 
         def field_edit_allowed?(user, field)
           farm = field.farm
-          Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
         end
       end
     end

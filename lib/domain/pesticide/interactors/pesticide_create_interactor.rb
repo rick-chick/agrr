@@ -19,7 +19,7 @@ module Domain
             raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pesticides.flash.reference_only_admin"))
           end
 
-          pesticide_entity = @gateway.create_for_user(user, {
+          attrs = {
             name: input_dto.name,
             active_ingredient: input_dto.active_ingredient,
             description: input_dto.description,
@@ -27,7 +27,9 @@ module Domain
             pest_id: input_dto.pest_id,
             region: input_dto.region,
             is_reference: is_reference
-          }.compact)
+          }.compact
+          attrs = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_create(user, attrs)
+          pesticide_entity = @gateway.create_for_user(user, attrs)
 
           @output_port.on_success(pesticide_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

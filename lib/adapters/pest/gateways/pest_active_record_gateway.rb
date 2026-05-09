@@ -38,7 +38,7 @@ module Adapters
 
         def find_authorized_model_for_view(user, id)
           pest = find_pest_model!(id)
-          unless Domain::Shared::Policies::PestPolicy.view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pest_view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           pest
@@ -46,7 +46,7 @@ module Adapters
 
         def find_authorized_model_for_edit(user, id)
           pest = find_pest_model!(id)
-          unless Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pest_edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           pest
@@ -54,7 +54,7 @@ module Adapters
 
         def authorized_pest_detail_output(user, id)
           pest = ::Pest.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods, :crops).find(id)
-          unless Domain::Shared::Policies::PestPolicy.view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pest_view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -80,8 +80,7 @@ module Adapters
         end
 
         def create_for_user(user, attrs)
-          h = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_create(user, attrs)
-          pest = ::Pest.new(h)
+          pest = ::Pest.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, pest.errors.full_messages.join(", ") unless pest.save
 
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest)
@@ -89,16 +88,11 @@ module Adapters
 
         def update_for_user(user, id, attrs)
           pest = find_pest_model!(id)
-          unless Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pest_edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
-          normalized = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_update(
-            user,
-            pest.attributes.symbolize_keys,
-            attrs
-          )
-          success = pest.update(normalized)
+          success = pest.update(attrs.to_h.symbolize_keys)
           if success
             success = pest.pest_temperature_profile&.valid? != false &&
                      pest.pest_thermal_requirement&.valid? != false &&
@@ -111,7 +105,7 @@ module Adapters
 
         def soft_destroy_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:)
           pest = find_pest_model!(pest_id)
-          unless Domain::Shared::Policies::PestPolicy.edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pest_edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           if pest.pesticides.any?
@@ -226,7 +220,7 @@ module Adapters
         end
 
         def normalize_crop_ids_for_pest_form(pest_model:, raw_crop_ids:, user:)
-          allowed_ids = PestCropAssociationPolicy.accessible_crops_scope(pest_model, user: user).pluck(:id)
+          allowed_ids = Domain::Shared::PestCropAssociationAccess.accessible_crops_scope(pest_model, user: user).pluck(:id)
           Array(raw_crop_ids).compact.reject(&:blank?).map(&:to_i).uniq & allowed_ids
         end
 
@@ -377,7 +371,7 @@ module Adapters
           Array(crop_ids).each do |crop_id|
             crop = ::Crop.find_by(id: crop_id)
             next unless crop
-            next unless PestCropAssociationPolicy.crop_accessible_for_pest?(crop, pest, user: user)
+            next unless Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest, user: user)
             next if pest.crops.include?(crop)
 
             pest.crops << crop
@@ -445,7 +439,7 @@ module Adapters
           elsif user.nil? || (user.respond_to?(:anonymous?) && user.anonymous?)
             false
           else
-            PestCropAssociationPolicy.crop_accessible_for_pest?(crop, pest, user: user)
+            Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest, user: user)
           end
         end
 

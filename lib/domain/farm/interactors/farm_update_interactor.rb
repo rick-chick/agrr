@@ -20,7 +20,8 @@ module Domain
           attrs[:latitude] = input_dto.latitude if !input_dto.latitude.nil?
           attrs[:longitude] = input_dto.longitude if !input_dto.longitude.nil?
 
-          farm_entity = @gateway.update_for_user(user, input_dto.farm_id, attrs)
+          normalized = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_update(user, {}, attrs)
+          farm_entity = @gateway.update_for_user(user, input_dto.farm_id, normalized)
 
           @output_port.on_success(farm_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

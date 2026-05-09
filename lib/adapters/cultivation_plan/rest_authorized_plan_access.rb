@@ -29,9 +29,9 @@ module Adapters
         pid = plan_id.to_i
         if auth.private?
           user = ::User.find(auth.user_id)
-          ::PlanPolicy.private_scope(user).preload(PRIVATE_PRELOAD).find(pid)
+          Domain::CultivationPlan::Policies::PlanAccess.private_scope(user).preload(PRIVATE_PRELOAD).find(pid)
         else
-          ::PlanPolicy.public_scope.includes(PUBLIC_INCLUDES).find(pid)
+          Domain::CultivationPlan::Policies::PlanAccess.public_scope.includes(PUBLIC_INCLUDES).find(pid)
         end
       end
     end

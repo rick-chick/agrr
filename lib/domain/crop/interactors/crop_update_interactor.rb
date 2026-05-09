@@ -14,11 +14,11 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
+          current_entity = @gateway.find_authorized_for_edit(user, input_dto.crop_id)
 
           unless input_dto.is_reference.nil?
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
             requested = false if requested.nil?
-            current_entity = @gateway.find_authorized_for_edit(user, input_dto.crop_id)
             if requested != current_entity.reference? && !user.admin?
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("crops.flash.reference_flag_admin_only"))
             end
@@ -34,7 +34,12 @@ module Domain
           attrs[:is_reference] = input_dto.is_reference if !input_dto.is_reference.nil?
           attrs[:crop_stages_attributes] = input_dto.crop_stages_attributes if Domain::Shared::ValidationHelpers.present?(input_dto.crop_stages_attributes)
 
-          crop_entity = @gateway.update_for_user(user, input_dto.crop_id, attrs)
+          normalized = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_update(
+            user,
+            { is_reference: current_entity.reference? },
+            attrs
+          )
+          crop_entity = @gateway.update_for_user(user, input_dto.crop_id, normalized)
 
           @output_port.on_success(crop_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

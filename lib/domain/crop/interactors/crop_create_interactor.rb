@@ -19,7 +19,7 @@ module Domain
             raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("crops.flash.reference_only_admin"))
           end
 
-          crop_entity = @gateway.create_for_user(user, {
+          attrs = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(user, {
             name: input_dto.name,
             variety: input_dto.variety,
             area_per_unit: input_dto.area_per_unit,
@@ -28,6 +28,7 @@ module Domain
             groups: input_dto.groups || [],
             is_reference: is_reference
           })
+          crop_entity = @gateway.create_for_user(user, attrs)
 
           @output_port.on_success(crop_entity)
         rescue Domain::Shared::Exceptions::RecordNotFound => e

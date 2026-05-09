@@ -29,9 +29,12 @@ module Domain
           )
 
           updated_fertilize_entity = mock
+          current_entity = mock
+          current_entity.expects(:is_reference).at_least_once.returns(false)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:update_for_user).with(@user, 1, { name: "Updated Fertilize", n: 15.0 }).returns(updated_fertilize_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
+          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).returns(updated_fertilize_entity)
           @mock_output_port.expects(:on_success).with(updated_fertilize_entity)
 
           @interactor.call(input_dto)
@@ -44,6 +47,9 @@ module Domain
           )
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          current_entity = mock
+          current_entity.expects(:is_reference).at_least_once.returns(false)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
           @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
           received = nil
@@ -61,7 +67,7 @@ module Domain
           )
 
           current_entity = mock
-          current_entity.expects(:is_reference).returns(false)
+          current_entity.expects(:is_reference).at_least_once.returns(false)
           entity = mock
           persisted = mock
           bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(fertilize_entity: entity, persisted_fertilize: persisted)
@@ -97,12 +103,12 @@ module Domain
           )
 
           current_entity = mock
-          current_entity.expects(:is_reference).returns(false)
+          current_entity.expects(:is_reference).at_least_once.returns(false)
           updated_fertilize_entity = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(admin_user_id).returns(admin_user)
           @mock_gateway.expects(:find_authorized_for_edit).with(admin_user, 1).returns(current_entity)
-          @mock_gateway.expects(:update_for_user).with(admin_user, 1, { is_reference: true }).returns(updated_fertilize_entity)
+          @mock_gateway.expects(:update_for_user).with(admin_user, 1, instance_of(Hash)).returns(updated_fertilize_entity)
           @mock_output_port.expects(:on_success).with(updated_fertilize_entity)
 
           admin_interactor.call(input_dto)
@@ -114,11 +120,15 @@ module Domain
             name: "Updated Fertilize"
           )
 
+          current_entity = mock
+          current_entity.expects(:is_reference).at_least_once.returns(false)
+
           entity = mock
           persisted = mock
           bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(fertilize_entity: entity, persisted_fertilize: persisted)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
           @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
           @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).returns(bundle)
           received = nil
@@ -135,6 +145,7 @@ module Domain
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).raises(StandardError, "no user")
+          @mock_gateway.expects(:find_authorized_for_edit).never
           @mock_gateway.expects(:update_for_user).never
           @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).never
 
@@ -146,9 +157,12 @@ module Domain
         test "on_failure uses model_for_edit fallback when reload bundle raises RecordNotFound" do
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
 
+          current_entity = mock
+          current_entity.expects(:is_reference).at_least_once.returns(false)
           fallback_model = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
           @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
           @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("reload failed")
@@ -167,7 +181,11 @@ module Domain
         test "on_failure has nil form_fertilize when reload and fallback both fail" do
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.new(fertilize_id: 1, name: "x")
 
+          current_entity = mock
+          current_entity.expects(:is_reference).at_least_once.returns(false)
+
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
           @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
           @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("reload failed")

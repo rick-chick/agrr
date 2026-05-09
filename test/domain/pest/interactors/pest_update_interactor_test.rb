@@ -32,6 +32,9 @@ module Domain
           bundle = Domain::Pest::Ports::PestHtmlAuthorizedPestLoad.new(pest_entity: pest_entity, persisted_pest: persisted)
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
+          current_pest = mock
+          current_pest.expects(:reference?).at_least_once.returns(false)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_pest)
           @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
           @mock_gateway.expects(:find_authorized_pest_loaded_bundle!).with(@user, 1, for_edit: true).returns(bundle)
           received = nil
@@ -48,6 +51,7 @@ module Domain
           input_dto = Domain::Pest::Dtos::PestUpdateInputDto.new(pest_id: 1, name: "x")
 
           @mock_user_lookup.expects(:find).with(@user_id).raises(StandardError, "no user")
+          @mock_gateway.expects(:find_authorized_for_edit).never
           @mock_gateway.expects(:update_for_user).never
           @mock_gateway.expects(:find_authorized_pest_loaded_bundle!).never
 
@@ -60,6 +64,9 @@ module Domain
           input_dto = Domain::Pest::Dtos::PestUpdateInputDto.new(pest_id: 1, name: "x")
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
+          current_pest = mock
+          current_pest.expects(:reference?).at_least_once.returns(false)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_pest)
           @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
           @mock_gateway.expects(:find_authorized_pest_loaded_bundle!).with(@user, 1, for_edit: true).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("reload failed")

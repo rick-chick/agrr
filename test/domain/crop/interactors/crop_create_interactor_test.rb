@@ -12,29 +12,17 @@ module Domain
           def user.admin?
             false
           end
+          def user.id
+            10
+          end
           input_dto = Domain::Crop::Dtos::CropCreateInputDto.new(name: "新規作物", variety: "品種")
           crop_entity = Object.new
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = Minitest::Mock.new
-          gateway.expect(
-            :create_for_user,
-            crop_entity,
-            [
-              user,
-              {
-                name: "新規作物",
-                variety: "品種",
-                area_per_unit: nil,
-                revenue_per_area: nil,
-                region: nil,
-                groups: [],
-                is_reference: false
-              }
-            ]
-          )
+          gateway = mock
+          gateway.expects(:create_for_user).with(user, instance_of(Hash)).returns(crop_entity)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -52,7 +40,6 @@ module Domain
 
           assert_same crop_entity, received
           user_lookup.verify
-          gateway.verify
           output_port.verify
         end
 

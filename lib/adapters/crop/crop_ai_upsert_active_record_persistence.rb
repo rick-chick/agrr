@@ -16,7 +16,7 @@ module Adapters
       # @param user_dto [Domain::Shared::Dtos::UserDto]
       # @param crop_info [Hash] agrr 応答（パース済み）
       def upsert(user_dto:, crop_name:, variety:, crop_info:)
-        dummy_attrs = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(user_dto, { name: "dummy" })
+        dummy_attrs = Domain::Crop::CropAiUpsertNormalization.normalize_attrs_for_create(user_dto, { name: "dummy" })
         dummy_crop = ::Crop.new(dummy_attrs)
         unless dummy_crop.valid?
           validation_error = dummy_crop.errors[:user].first || dummy_crop.errors[:base].first
@@ -144,7 +144,7 @@ module Adapters
         saved_stages = 0
 
         ActiveRecord::Base.transaction do
-          attrs_for_create = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(user_dto, base_attrs)
+          attrs_for_create = Domain::Crop::CropAiUpsertNormalization.normalize_attrs_for_create(user_dto, base_attrs)
 
           result = @create_interactor.call(attrs_for_create)
 

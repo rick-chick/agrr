@@ -4,7 +4,7 @@
 
 **バックログ（CA）**: 害虫 HTML 編集は `lib/domain/pest/ports/pest_html_authorized_pest_load.rb` のとおり `persisted_pest` を暫定同梱している。ERB / strong params を DTO 前提へ移し当フィールドを廃止する（農薬の同型も同様）。
 
-**実装ステータス**: 契約 MD **25 件**の目視ベース概況（詳細は各契約のチェックリスト参照）。
+**実装ステータス**: 契約 MD **26 件**の目視ベース概況（詳細は各契約のチェックリスト参照）。うち 1 件はレイヤ境界（[gateway-adapter-policy-boundary-contract.md](gateway-adapter-policy-boundary-contract.md)）。
 
 
 | #   | 契約                       | ファイル                                                                                                       | ステータス |
@@ -34,6 +34,7 @@
 | 23  | 私有プラン作成                  | [private-plan-create-contract.md](private-plan-create-contract.md)                                         | 実装済み  |
 | 24  | 栽培計画初期化・多圃場最適化（allocate） | [cultivation-plan-optimization-contract.md](cultivation-plan-optimization-contract.md)                     | 実装済み  |
 | 25  | 農場一覧（行 DTO 束）            | [farm-list-rows-bundle-contract.md](farm-list-rows-bundle-contract.md)                                     | 実装済み  |
+| 26  | Gateway とポリシー境界（横断）     | [gateway-adapter-policy-boundary-contract.md](gateway-adapter-policy-boundary-contract.md)                 | 実装済み  |
 
 
 ## 順次対応の進め方

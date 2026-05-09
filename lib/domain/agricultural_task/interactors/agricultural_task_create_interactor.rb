@@ -19,7 +19,7 @@ module Domain
             raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("agricultural_tasks.flash.reference_only_admin"))
           end
 
-          task_entity = @gateway.create_for_user(user, {
+          attrs = Domain::Shared::Policies::AgriculturalTaskPolicy.normalize_attrs_for_create(user, {
             name: create_input_dto.name,
             description: create_input_dto.description,
             time_per_sqm: create_input_dto.time_per_sqm,
@@ -30,6 +30,7 @@ module Domain
             task_type: create_input_dto.task_type,
             is_reference: is_reference
           })
+          task_entity = @gateway.create_for_user(user, attrs)
 
           @output_port.on_success(task_entity)
         rescue Domain::Shared::Exceptions::RecordNotFound => e

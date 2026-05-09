@@ -71,7 +71,7 @@ module Adapters
 
         def find_authorized_model_for_view(user, id)
           crop = find_crop_model!(id)
-          unless Domain::Shared::Policies::CropPolicy.view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.crop_view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           crop
@@ -79,7 +79,7 @@ module Adapters
 
         def find_authorized_model_for_edit(user, id)
           crop = find_crop_model!(id)
-          unless Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.crop_edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           crop
@@ -152,7 +152,7 @@ module Adapters
             return build_task_template_create_result(reason: :agricultural_task_not_found)
           end
 
-          unless Domain::Shared::Policies::AgriculturalTaskPolicy.masters_crop_task_template_associate_allowed?(
+          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_masters_crop_task_template_associate_allowed?(
             user,
             is_reference: agricultural_task.is_reference,
             user_id: agricultural_task.user_id
@@ -366,8 +366,7 @@ module Adapters
         end
 
         def create_for_user(user, attrs)
-          h = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_create(user, attrs)
-          crop = ::Crop.new(h)
+          crop = ::Crop.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") unless crop.save
 
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
@@ -375,23 +374,18 @@ module Adapters
 
         def update_for_user(user, id, attrs)
           crop = find_crop_model!(id)
-          unless Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.crop_edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
-          normalized = Domain::Shared::Policies::CropPolicy.normalize_attrs_for_update(
-            user,
-            crop.attributes.symbolize_keys,
-            attrs
-          )
-          raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") unless crop.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") unless crop.update(attrs.to_h.symbolize_keys)
 
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         end
 
         def soft_destroy_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:)
           crop = find_crop_model!(crop_id)
-          unless Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.crop_edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           if crop.cultivation_plan_crops.any?
@@ -842,7 +836,11 @@ module Adapters
 
         def authorized_crop_record_with_association_preloads!(user, id, for_edit:)
           crop = ::Crop.includes(CROP_ASSOCIATION_PRELOAD_INCLUDES).find(id)
-          allowed = for_edit ? Domain::Shared::Policies::CropPolicy.edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id) : Domain::Shared::Policies::CropPolicy.view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          allowed = if for_edit
+                      Domain::Shared::ReferenceMasterAuthorization.crop_edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+                    else
+                      Domain::Shared::ReferenceMasterAuthorization.crop_view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+                    end
           raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
 
           crop

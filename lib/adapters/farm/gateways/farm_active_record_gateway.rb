@@ -178,7 +178,7 @@ module Adapters
 
         def find_authorized_model_for_view(user, id)
           farm = find_farm_model!(id)
-          unless Domain::Shared::Policies::FarmPolicy.view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.farm_view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           farm
@@ -186,7 +186,7 @@ module Adapters
 
         def find_authorized_model_for_edit(user, id)
           farm = find_farm_model!(id)
-          unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           farm
@@ -213,8 +213,7 @@ module Adapters
         end
 
         def create_for_user(user, attrs)
-          h = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_create(user, attrs)
-          farm = ::Farm.new(h)
+          farm = ::Farm.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.save
 
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
@@ -228,23 +227,18 @@ module Adapters
 
         def update_for_user(user, id, attrs)
           farm = find_farm_model!(id)
-          unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
-          normalized = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_update(
-            user,
-            farm.attributes.symbolize_keys,
-            attrs
-          )
-          raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.update(attrs.to_h.symbolize_keys)
 
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
         end
 
         def detail_for_authorized_view(user, id)
           farm = find_farm_with_fields!(id)
-          unless Domain::Shared::Policies::FarmPolicy.view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.farm_view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -253,7 +247,7 @@ module Adapters
 
         def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:)
           farm = find_farm_model!(farm_id)
-          unless Domain::Shared::Policies::FarmPolicy.edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           if farm.free_crop_plans.any?

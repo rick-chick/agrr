@@ -107,7 +107,7 @@ module Adapters
 
         def find_authorized_model_for_view(user, id)
           rule = find_interaction_rule_model!(id)
-          unless Domain::Shared::Policies::InteractionRulePolicy.view_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.interaction_rule_view_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           rule
@@ -115,7 +115,7 @@ module Adapters
 
         def find_authorized_model_for_edit(user, id)
           rule = find_interaction_rule_model!(id)
-          unless Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.interaction_rule_edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           rule
@@ -130,8 +130,7 @@ module Adapters
         end
 
         def create_for_user(user, attrs)
-          h = Domain::Shared::Policies::InteractionRulePolicy.normalize_attrs_for_create(user, attrs)
-          rule = ::InteractionRule.new(h)
+          rule = ::InteractionRule.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") unless rule.save
 
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
@@ -139,23 +138,18 @@ module Adapters
 
         def update_for_user(user, id, attrs)
           rule = find_interaction_rule_model!(id)
-          unless Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.interaction_rule_edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
-          normalized = Domain::Shared::Policies::InteractionRulePolicy.normalize_attrs_for_update(
-            user,
-            rule.attributes.symbolize_keys,
-            attrs
-          )
-          raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") unless rule.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") unless rule.update(attrs.to_h.symbolize_keys)
 
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
         end
 
         def soft_destroy_with_undo(user:, rule_id:, auto_hide_after: 5000, translator:)
           rule = find_interaction_rule_model!(rule_id)
-          unless Domain::Shared::Policies::InteractionRulePolicy.edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.interaction_rule_edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           toast_message = translator.t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)

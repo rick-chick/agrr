@@ -222,17 +222,17 @@ module Adapters
           end
           plan = field_cultivation.cultivation_plan
           if plan.plan_type_public?
-            PlanPolicy.find_public!(plan.id)
+            Domain::CultivationPlan::Policies::PlanAccess.find_public!(plan.id)
           else
-            PlanPolicy.find_private_owned!(@current_user, plan.id)
+            Domain::CultivationPlan::Policies::PlanAccess.find_private_owned!(@current_user, plan.id)
           end
           field_cultivation
         end
 
-        # PlanPolicy の拒否をドメインの RecordNotFound に正規化（Controller で rescue しない）
+        # Domain::CultivationPlan::Policies::PlanAccess の拒否をドメインの RecordNotFound に正規化（Controller で rescue しない）
         def authorized_field_cultivation(field_cultivation_id)
           find_authorized_field_cultivation(field_cultivation_id)
-        rescue PolicyPermissionDenied
+        rescue PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
           raise Domain::Shared::Exceptions::RecordNotFound
         end
 

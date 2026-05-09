@@ -38,7 +38,7 @@ module Adapters
 
         def authorized_agricultural_task_detail_output(user, id)
           task = ::AgriculturalTask.includes(:crops).find(id)
-          unless Domain::Shared::Policies::AgriculturalTaskPolicy.view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -76,8 +76,7 @@ module Adapters
         end
 
         def create_for_user(user, attrs)
-          h = Domain::Shared::Policies::AgriculturalTaskPolicy.normalize_attrs_for_create(user, attrs)
-          task = ::AgriculturalTask.new(h)
+          task = ::AgriculturalTask.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.save
 
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
@@ -87,16 +86,11 @@ module Adapters
         def update_for_user(user, id, attrs, selected_crop_ids = nil)
           ::ActiveRecord::Base.transaction do
             task = find_agricultural_task_model!(id)
-            unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+            unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
               raise Domain::Shared::Policies::PolicyPermissionDenied
             end
 
-            normalized = Domain::Shared::Policies::AgriculturalTaskPolicy.normalize_attrs_for_update(
-              user,
-              task.attributes.symbolize_keys,
-              attrs
-            )
-            raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.update(normalized)
+            raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.update(attrs.to_h.symbolize_keys)
 
             task.reload
             sync_crop_task_templates_for_task!(task, selected_crop_ids) unless selected_crop_ids.nil?
@@ -107,7 +101,7 @@ module Adapters
 
         def soft_destroy_with_undo(user:, task_id:, auto_hide_after: 5000, translator:)
           task = find_agricultural_task_model!(task_id)
-          unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           name = task.name
@@ -186,7 +180,7 @@ module Adapters
 
         def find_authorized_task_model_for_view(user, id)
           task = find_agricultural_task_model!(id)
-          unless Domain::Shared::Policies::AgriculturalTaskPolicy.view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           task
@@ -194,7 +188,7 @@ module Adapters
 
         def find_authorized_task_model_for_edit(user, id)
           task = find_agricultural_task_model!(id)
-          unless Domain::Shared::Policies::AgriculturalTaskPolicy.edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           task

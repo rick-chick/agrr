@@ -67,7 +67,7 @@ module Adapters
 
         def find_authorized_model_for_view(user, id)
           pesticide = find_pesticide_model!(id)
-          unless Domain::Shared::Policies::PesticidePolicy.view_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pesticide_view_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           pesticide
@@ -75,7 +75,7 @@ module Adapters
 
         def find_authorized_model_for_edit(user, id)
           pesticide = find_pesticide_model!(id)
-          unless Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pesticide_edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           pesticide
@@ -87,7 +87,7 @@ module Adapters
 
         def authorized_pesticide_detail_output(user, id)
           pesticide = ::Pesticide.includes(:crop, :pest, :pesticide_usage_constraint, :pesticide_application_detail).find(id)
-          unless Domain::Shared::Policies::PesticidePolicy.view_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pesticide_view_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -113,8 +113,7 @@ module Adapters
         end
 
         def create_for_user(user, attrs)
-          h = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_create(user, attrs)
-          pesticide = ::Pesticide.new(h)
+          pesticide = ::Pesticide.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.save
 
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
@@ -122,16 +121,11 @@ module Adapters
 
         def update_for_user(user, id, attrs)
           pesticide = find_pesticide_model!(id)
-          unless Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pesticide_edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
-          normalized = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_update(
-            user,
-            pesticide.attributes.symbolize_keys,
-            attrs
-          )
-          raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.update(normalized)
+          raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.update(attrs.to_h.symbolize_keys)
 
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide.reload)
         end
@@ -165,16 +159,16 @@ module Adapters
         end
 
         def accessible_crops_scope_for_pesticide_master_form(user:)
-          PesticideAssociationPolicy.accessible_crops_scope(user)
+          Domain::Shared::PesticideAssociationAccess.accessible_crops_scope(user)
         end
 
         def accessible_pests_scope_for_pesticide_master_form(user:)
-          PesticideAssociationPolicy.accessible_pests_scope(user)
+          Domain::Shared::PesticideAssociationAccess.accessible_pests_scope(user)
         end
 
         def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:)
           pesticide = find_pesticide_model!(pesticide_id)
-          unless Domain::Shared::Policies::PesticidePolicy.edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
+          unless Domain::Shared::ReferenceMasterAuthorization.pesticide_edit_allowed?(user, is_reference: pesticide.is_reference, user_id: pesticide.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           name = pesticide.name

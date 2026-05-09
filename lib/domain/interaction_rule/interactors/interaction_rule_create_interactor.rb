@@ -19,7 +19,7 @@ module Domain
             raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("interaction_rules.flash.reference_only_admin"))
           end
 
-          rule_entity = @gateway.create_for_user(user, {
+          attrs = Domain::Shared::Policies::InteractionRulePolicy.normalize_attrs_for_create(user, {
             rule_type: create_input_dto.rule_type,
             source_group: create_input_dto.source_group,
             target_group: create_input_dto.target_group,
@@ -29,6 +29,7 @@ module Domain
             region: create_input_dto.region,
             is_reference: is_reference
           })
+          rule_entity = @gateway.create_for_user(user, attrs)
 
           @output_port.on_success(rule_entity)
         rescue Domain::Shared::Exceptions::RecordInvalid => e

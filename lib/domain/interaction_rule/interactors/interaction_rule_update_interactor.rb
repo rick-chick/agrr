@@ -14,12 +14,12 @@ module Domain
 
         def call(update_input_dto)
           user = @user_lookup.find(@user_id)
+          current = @gateway.find_authorized_for_edit(user, update_input_dto.id)
 
           unless update_input_dto.is_reference.nil?
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(update_input_dto.is_reference)
             requested = false if requested.nil?
-            current_entity = @gateway.find_authorized_for_edit(user, update_input_dto.id)
-            if requested != current_entity.reference? && !user.admin?
+            if requested != current.reference? && !user.admin?
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("interaction_rules.flash.reference_flag_admin_only"))
             end
           end
@@ -34,7 +34,12 @@ module Domain
           attrs[:region] = update_input_dto.region if !update_input_dto.region.nil?
           attrs[:is_reference] = update_input_dto.is_reference if !update_input_dto.is_reference.nil?
 
-          rule_entity = @gateway.update_for_user(user, update_input_dto.id, attrs)
+          normalized = Domain::Shared::Policies::InteractionRulePolicy.normalize_attrs_for_update(
+            user,
+            { is_reference: current.reference? },
+            attrs
+          )
+          rule_entity = @gateway.update_for_user(user, update_input_dto.id, normalized)
 
           @output_port.on_success(rule_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

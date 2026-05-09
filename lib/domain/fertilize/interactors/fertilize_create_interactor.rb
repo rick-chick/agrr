@@ -21,7 +21,7 @@ module Domain
             raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("fertilizes.flash.reference_only_admin"))
           end
 
-          fertilize_entity = @gateway.create_for_user(user, {
+          attrs = Domain::Shared::Policies::FertilizePolicy.normalize_attrs_for_create(user, {
             name: input_dto.name,
             n: input_dto.n,
             p: input_dto.p,
@@ -31,6 +31,7 @@ module Domain
             region: input_dto.region,
             is_reference: is_reference
           })
+          fertilize_entity = @gateway.create_for_user(user, attrs)
 
           @output_port.on_success(fertilize_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

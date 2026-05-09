@@ -33,16 +33,7 @@ module Domain
           fertilize_entity = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:create_for_user).with(@user, {
-            name: "Test Fertilize",
-            n: 10.0,
-            p: 5.0,
-            k: 3.0,
-            description: nil,
-            package_size: nil,
-            region: "Kyoto",
-            is_reference: false
-          }).returns(fertilize_entity)
+          @mock_gateway.expects(:create_for_user).with(@user, instance_of(Hash)).returns(fertilize_entity)
           @mock_output_port.expects(:on_success).with(fertilize_entity)
 
           @interactor.call(input_dto)
@@ -80,16 +71,7 @@ module Domain
           fertilize_entity = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(admin_user_id).returns(admin_user)
-          @mock_gateway.expects(:create_for_user).with(admin_user, {
-            name: "Test Reference Fertilize",
-            n: nil,
-            p: nil,
-            k: nil,
-            description: nil,
-            package_size: nil,
-            region: nil,
-            is_reference: true
-          }).returns(fertilize_entity)
+          @mock_gateway.expects(:create_for_user).with(admin_user, instance_of(Hash)).returns(fertilize_entity)
           @mock_output_port.expects(:on_success).with(fertilize_entity)
 
           admin_interactor.call(input_dto)

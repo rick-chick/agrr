@@ -20,8 +20,9 @@ module Domain
         end
 
         def call(input_dto)
-          user = nil
           user = @user_lookup.find(@user_id)
+          current = @gateway.find_authorized_for_edit(user, input_dto.pest_id)
+
           attrs = {}
           attrs[:name] = input_dto.name unless input_dto.name.nil?
           attrs[:name_scientific] = input_dto.name_scientific if !input_dto.name_scientific.nil?
@@ -39,13 +40,18 @@ module Domain
           # is_referenceのチェック
           if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
-            if is_reference != @gateway.find_authorized_for_edit(user, input_dto.pest_id).is_reference && !user.admin?
+            if is_reference != current.reference? && !user.admin?
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pests.flash.reference_flag_admin_only"))
             end
             attrs[:is_reference] = is_reference
           end
 
-          pest_entity = @gateway.update_for_user(user, input_dto.pest_id, attrs)
+          normalized = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_update(
+            user,
+            { is_reference: current.reference? },
+            attrs
+          )
+          pest_entity = @gateway.update_for_user(user, input_dto.pest_id, normalized)
 
           unless input_dto.crop_ids.nil?
             @gateway.update_pest_crop_associations(pest_id: pest_entity.id, crop_ids: input_dto.crop_ids, user: user)

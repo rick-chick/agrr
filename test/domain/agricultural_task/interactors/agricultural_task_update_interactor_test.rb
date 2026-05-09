@@ -18,7 +18,11 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
+          current = Object.new
+          current.define_singleton_method(:reference?) { false }
+
           gateway = Minitest::Mock.new
+          gateway.expect(:find_authorized_for_edit, current, [ user, 5 ])
           gateway.expect(:update_for_user, task_entity, [ user, 5, { name: "剪定" }, nil ])
 
           received = nil
@@ -50,7 +54,11 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
+          current = Object.new
+          current.define_singleton_method(:reference?) { false }
+
           gateway = Object.new
+          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id| current }
           gateway.define_singleton_method(:update_for_user) do |_u, _id, _attrs, _selected = nil|
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end

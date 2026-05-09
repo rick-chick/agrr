@@ -15,7 +15,7 @@ module Adapters
           cultivation_plan = ::CultivationPlan.find(cultivation_plan_id)
           farm = cultivation_plan.farm
 
-          full_weather_range = Domain::WeatherData::Policies::WeatherDataFetchWindowPolicy.fetch_range(
+          full_weather_range = Domain::WeatherData::OptimizationJobChainWeatherComputation.weather_window(
             latest_weather_date: farm.weather_location&.latest_weather_date,
             clock: Time.zone
           )
@@ -25,7 +25,7 @@ module Adapters
           weather_params = full_weather_range.except(:range_adjusted)
 
           end_date = weather_params[:end_date]
-          predict_days = Domain::WeatherData::Policies::WeatherPredictionHorizonPolicy.predict_days_to_next_year_end(
+          predict_days = Domain::WeatherData::OptimizationJobChainWeatherComputation.predict_days_to_next_year_end(
             end_date: end_date,
             clock: Time.zone
           )

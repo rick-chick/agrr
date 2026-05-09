@@ -14,12 +14,12 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
+          current = @gateway.find_authorized_for_edit(user, input_dto.pesticide_id)
 
           unless input_dto.is_reference.nil?
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
             requested = false if requested.nil?
-            current_entity = @gateway.find_authorized_for_edit(user, input_dto.pesticide_id)
-            if requested != !!current_entity.is_reference && !user.admin?
+            if requested != !!current.is_reference && !user.admin?
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pesticides.flash.reference_flag_admin_only"))
             end
           end
@@ -33,7 +33,12 @@ module Domain
           attrs[:region] = input_dto.region if !input_dto.region.nil?
           attrs[:is_reference] = input_dto.is_reference if !input_dto.is_reference.nil?
 
-          pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, attrs)
+          normalized = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_update(
+            user,
+            { is_reference: !!current.is_reference },
+            attrs
+          )
+          pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, normalized)
 
           @output_port.on_success(pesticide_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
