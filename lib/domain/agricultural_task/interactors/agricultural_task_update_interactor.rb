@@ -14,7 +14,8 @@ module Domain
 
         def call(update_input_dto)
           user = @user_lookup.find(@user_id)
-          current = @gateway.find_authorized_for_edit(user, update_input_dto.id)
+          access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
+          current = @gateway.find_authorized_for_edit(user, update_input_dto.id, access_filter: access_filter)
 
           unless update_input_dto.is_reference.nil?
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(update_input_dto.is_reference)
@@ -44,7 +45,13 @@ module Domain
             { is_reference: current.reference? },
             attrs
           )
-          task_entity = @gateway.update_for_user(user, update_input_dto.id, normalized, sync_ids)
+          task_entity = @gateway.update_for_user(
+            user,
+            update_input_dto.id,
+            normalized,
+            access_filter: access_filter,
+            selected_crop_ids: sync_ids
+          )
 
           @output_port.on_success(task_entity)
           true

@@ -17,6 +17,10 @@ module Domain
           user.admin? || (!is_reference && user_id == user.id)
         end
 
+        def self.record_access_filter(user)
+          Domain::Shared::ReferenceRecordAccessFilter.new(user: user, policy_module: self)
+        end
+
         def self.normalize_attrs_for_create(user, attrs)
           h = attrs.to_h.symbolize_keys
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(h[:is_reference]) || false

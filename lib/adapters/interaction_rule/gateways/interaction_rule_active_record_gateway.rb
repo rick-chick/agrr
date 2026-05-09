@@ -105,28 +105,28 @@ module Adapters
 
         public
 
-        def find_authorized_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
           rule = find_interaction_rule_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.interaction_rule_view_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+          unless access_filter.view_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           rule
         end
 
-        def find_authorized_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
           rule = find_interaction_rule_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.interaction_rule_edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+          unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           rule
         end
 
-        def find_authorized_for_view(user, id)
-          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_view(user, id))
+        def find_authorized_for_view(user, id, access_filter:)
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_for_edit(user, id)
-          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_edit(user, id))
+        def find_authorized_for_edit(user, id, access_filter:)
+          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
         end
 
         def create_for_user(user, attrs)
@@ -136,9 +136,9 @@ module Adapters
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, access_filter:)
           rule = find_interaction_rule_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.interaction_rule_edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+          unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -147,9 +147,9 @@ module Adapters
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
         end
 
-        def soft_destroy_with_undo(user:, rule_id:, auto_hide_after: 5000, translator:)
+        def soft_destroy_with_undo(user:, rule_id:, auto_hide_after: 5000, translator:, access_filter:)
           rule = find_interaction_rule_model!(rule_id)
-          unless Domain::Shared::ReferenceMasterAuthorization.interaction_rule_edit_allowed?(user, is_reference: rule.is_reference, user_id: rule.user_id)
+          unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           toast_message = translator.t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)

@@ -12,9 +12,11 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(input_dto.user_id)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           rows = @gateway.masters_crop_agricultural_task_templates_index_rows(
             user: user,
-            crop_id: input_dto.crop_id
+            crop_id: input_dto.crop_id,
+            access_filter: access_filter
           )
           @output_port.on_success(rows)
         rescue Domain::Shared::Exceptions::RecordNotFound

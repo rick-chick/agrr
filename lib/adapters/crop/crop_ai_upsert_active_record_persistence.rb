@@ -15,7 +15,7 @@ module Adapters
 
       # @param user_dto [Domain::Shared::Dtos::UserDto]
       # @param crop_info [Hash] agrr 応答（パース済み）
-      def upsert(user_dto:, crop_name:, variety:, crop_info:)
+      def upsert(user_dto:, crop_name:, variety:, crop_info:, crop_access_filter:)
         dummy_attrs = Domain::Crop::CropAiUpsertNormalization.normalize_attrs_for_create(user_dto, { name: "dummy" })
         dummy_crop = ::Crop.new(dummy_attrs)
         unless dummy_crop.valid?
@@ -49,7 +49,7 @@ module Adapters
         crop_id = crop_data["crop_id"]
         @logger.info "📊 [AI Crop] Retrieved data: crop_id=#{crop_id}, area=#{crop_data['area_per_unit']}, revenue=#{crop_data['revenue_per_area']}, stages=#{stage_requirements&.size || 0}"
 
-        existing_crop = find_existing_crop_for_update(user_dto, crop_id)
+        existing_crop = find_existing_crop_for_update(user_dto, crop_id, crop_access_filter)
 
         if existing_crop
           update_existing_crop(existing_crop, crop_data, variety, stage_requirements)
@@ -67,11 +67,11 @@ module Adapters
 
       private
 
-      def find_existing_crop_for_update(user_dto, crop_id)
+      def find_existing_crop_for_update(user_dto, crop_id, crop_access_filter)
         return nil if crop_id.nil? || crop_id.to_s.strip.empty?
 
         begin
-          @crop_gateway.find_authorized_for_edit(user_dto, crop_id)
+          @crop_gateway.find_authorized_for_edit(user_dto, crop_id, access_filter: crop_access_filter)
           ::Crop.find(crop_id)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
           nil

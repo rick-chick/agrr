@@ -15,8 +15,12 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_crop_show_detail, crop_detail_dto, [ user, crop_id ])
+          gateway = mock
+          gateway.expects(:find_authorized_crop_show_detail).with(
+            user,
+            crop_id,
+            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).returns(crop_detail_dto)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -33,7 +37,6 @@ module Domain
 
           assert_equal crop_detail_dto, received
           user_lookup.verify
-          gateway.verify
           output_port.verify
         end
 
@@ -45,10 +48,12 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = Object.new
-          gateway.define_singleton_method(:find_authorized_crop_show_detail) do |u, cid|
-            raise Domain::Shared::Policies::PolicyPermissionDenied if u == user && cid == crop_id
-          end
+          gateway = mock
+          gateway.expects(:find_authorized_crop_show_detail).with(
+            user,
+            crop_id,
+            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
           received = nil
           output_port = Minitest::Mock.new

@@ -35,8 +35,9 @@ module Domain
               @bundle = bundle
             end
 
-            def find_authorized_crop_loaded_bundle!(user, id, for_edit:)
+            def find_authorized_crop_loaded_bundle!(user, id, for_edit:, access_filter:)
               raise ArgumentError unless user == :user_stub && id == 42
+              raise ArgumentError unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
 
               @captured_for_edit = for_edit
               @bundle

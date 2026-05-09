@@ -23,6 +23,7 @@ module Adapters
       setup do
         @user = create(:user)
         @user_dto = Adapters::Shared::Mappers::UserMapper.user_dto_from_record(@user)
+        @crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user_dto)
       end
 
       test "creates new crop when no existing crop and agrr returns valid data" do
@@ -50,7 +51,13 @@ module Adapters
           translator: CompositionRoot.translator
         )
 
-        result = persistence.upsert(user_dto: @user_dto, crop_name: "ブロッコリー", variety: "スプラウト", crop_info: crop_info)
+        result = persistence.upsert(
+          user_dto: @user_dto,
+          crop_name: "ブロッコリー",
+          variety: "スプラウト",
+          crop_info: crop_info,
+          crop_access_filter: @crop_access_filter
+        )
 
         assert result.success?
         assert_equal :created, result.status
@@ -108,7 +115,13 @@ module Adapters
 
         result = nil
         assert_no_difference [ "::Crop.count", "::CropStage.count" ] do
-          result = persistence.upsert(user_dto: @user_dto, crop_name: "キャベツ", variety: "春系", crop_info: crop_info)
+          result = persistence.upsert(
+            user_dto: @user_dto,
+            crop_name: "キャベツ",
+            variety: "春系",
+            crop_info: crop_info,
+            crop_access_filter: @crop_access_filter
+          )
         end
 
         assert_not result.success?
@@ -147,7 +160,13 @@ module Adapters
           translator: CompositionRoot.translator
         )
 
-        result = persistence.upsert(user_dto: @user_dto, crop_name: "ブロッコリー", variety: "上書き品種", crop_info: crop_info)
+        result = persistence.upsert(
+          user_dto: @user_dto,
+          crop_name: "ブロッコリー",
+          variety: "上書き品種",
+          crop_info: crop_info,
+          crop_access_filter: @crop_access_filter
+        )
 
         assert result.success?
         assert_equal :ok, result.status
@@ -200,7 +219,13 @@ module Adapters
           translator: CompositionRoot.translator
         )
 
-        result = persistence.upsert(user_dto: @user_dto, crop_name: "トマト", variety: "更新品種", crop_info: crop_info)
+        result = persistence.upsert(
+          user_dto: @user_dto,
+          crop_name: "トマト",
+          variety: "更新品種",
+          crop_info: crop_info,
+          crop_access_filter: @crop_access_filter
+        )
 
         assert_not result.success?
         assert_equal :internal_server_error, result.status

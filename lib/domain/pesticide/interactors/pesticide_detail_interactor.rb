@@ -13,7 +13,8 @@ module Domain
 
         def call(pesticide_id)
           user = @user_lookup.find(@user_id)
-          dto = @gateway.authorized_pesticide_detail_output(user, pesticide_id)
+          access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
+          dto = @gateway.authorized_pesticide_detail_output(user, pesticide_id, access_filter: access_filter)
           @output_port.on_success(dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

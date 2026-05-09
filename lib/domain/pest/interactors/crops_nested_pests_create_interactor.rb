@@ -14,12 +14,16 @@ module Domain
         # @param crop_id [Integer]
         # @param link_pest_id [String,nil] params[:pest_id]
         # @param pest_attrs [Hash] Pest.new に渡す属性（permited）
-        # @param admin [Boolean]
-        def call(crop_id:, link_pest_id:, pest_attrs:, admin:)
+        def call(crop_id:, link_pest_id:, pest_attrs:)
           user = @user_lookup.find(@user_id)
+          crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
 
           if link_pest_id.present?
-            status = @pest_gateway.link_pest_to_crop_id(crop_id: crop_id, pest_id: link_pest_id)
+            status = @pest_gateway.link_pest_to_crop(
+              crop_id: crop_id,
+              pest_id: link_pest_id,
+              crop_access_filter: crop_access_filter
+            )
             case status
             when :already_linked then return @output_port.on_already_linked(crop_id: crop_id)
             when :linked         then return @output_port.on_linked(crop_id: crop_id)
@@ -27,15 +31,21 @@ module Domain
             end
           end
 
+          raw = pest_attrs.to_h.symbolize_keys
+          wants_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(raw[:is_reference]) || false
+          if wants_reference && !user.admin?
+            return @output_port.on_reference_only_admin(crop_id: crop_id)
+          end
+
+          normalized_attrs = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_create(user, pest_attrs)
+
           result = @pest_gateway.create_pest_for_crop(
             user: user,
             crop_id: crop_id,
-            pest_attrs: pest_attrs,
-            admin: admin
+            pest_attrs: normalized_attrs,
+            crop_access_filter: crop_access_filter
           )
           case result[:status]
-          when :reference_only_admin
-            @output_port.on_reference_only_admin(crop_id: crop_id)
           when :created
             @output_port.on_created(crop_id: crop_id, pest: result[:pest_record])
           when :invalid

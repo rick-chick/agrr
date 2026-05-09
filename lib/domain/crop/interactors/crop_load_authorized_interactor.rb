@@ -18,7 +18,8 @@ module Domain
         # @return [Domain::Crop::Dtos::AuthorizedCropLoadedDto, nil]
         def call(crop_id, for_edit:)
           user = @user_lookup.find(@user_id)
-          @gateway.find_authorized_crop_loaded_bundle!(user, crop_id.to_i, for_edit: for_edit)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          @gateway.find_authorized_crop_loaded_bundle!(user, crop_id.to_i, for_edit: for_edit, access_filter: access_filter)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @failure_presenter.on_permission_denied
           nil

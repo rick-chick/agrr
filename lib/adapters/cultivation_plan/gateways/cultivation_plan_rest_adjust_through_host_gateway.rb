@@ -10,7 +10,7 @@ module Adapters
         end
 
         def execute(auth:, plan_id:, moves:)
-          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedPlanAccess.find!(auth, plan_id)
+          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
 
           cultivation_plan.cultivation_plan_crops.each do |plan_crop|
             crop = plan_crop.crop

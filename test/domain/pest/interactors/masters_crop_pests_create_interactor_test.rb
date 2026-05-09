@@ -48,7 +48,11 @@ module Domain
           @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_pest_gateway.expects(:pest_selectable_by_user?).with(@user, @pest_id).returns(true)
-          @mock_pest_gateway.expects(:link_pest_to_crop_id).with(crop_id: @crop_id, pest_id: @pest_id).returns(:linked)
+          @mock_pest_gateway.expects(:link_pest_to_crop).with(
+            crop_id: @crop_id,
+            pest_id: @pest_id,
+            crop_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).returns(:linked)
           @mock_output_port.expects(:on_success).with(crop_id: @crop_id, pest_id: @pest_id)
 
           @interactor.call(@crop_id, @pest_id)

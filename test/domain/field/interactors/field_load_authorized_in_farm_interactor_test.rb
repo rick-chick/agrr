@@ -36,8 +36,9 @@ module Domain
               @bundle = bundle
             end
 
-            def find_authorized_field_loaded_in_farm!(user, farm_id, field_id)
+            def find_authorized_field_loaded_in_farm!(user, farm_id, field_id, farm_access_filter:)
               raise ArgumentError unless user == :user_stub && farm_id == 3 && field_id == 7
+              raise ArgumentError unless farm_access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
 
               @captured_farm_id = farm_id
               @captured_field_id = field_id

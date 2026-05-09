@@ -33,17 +33,21 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          ag_gateway = Minitest::Mock.new
-          ag_gateway.expect(:find_authorized_model_for_edit, base_task, [ user, task_id ])
-          ag_gateway.expect(
-            :preview_agricultural_task_for_edit_crop_selection,
-            preview_task,
-            [],
-            base_task: base_task,
-            user: user,
-            agricultural_task_params: { "name" => "edited" }
-          )
-          ag_gateway.expect(:linked_crop_ids_for_task_templates, [ 2 ], [ task_id ])
+          ag_gateway = Object.new
+          ag_gateway.define_singleton_method(:find_authorized_model_for_edit) do |u, tid, access_filter:|
+            raise unless u == user && tid == task_id
+            raise unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
+
+            base_task
+          end
+          ag_gateway.define_singleton_method(:preview_agricultural_task_for_edit_crop_selection) do |base_task:, user:, agricultural_task_params:|
+            preview_task
+          end
+          ag_gateway.define_singleton_method(:linked_crop_ids_for_task_templates) do |tid|
+            raise unless tid == task_id
+
+            [ 2 ]
+          end
 
           crop_gateway = Minitest::Mock.new
           crop_gateway.expect(:list_reference_crop_entities, crops, [], region: "r1")
@@ -79,7 +83,6 @@ module Domain
           assert_nil received.crop_cards
 
           user_lookup.verify
-          ag_gateway.verify
           crop_gateway.verify
           output_port.verify
         end
@@ -111,9 +114,18 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          ag_gateway = Minitest::Mock.new
-          ag_gateway.expect(:find_authorized_model_for_edit, base_task, [ user, task_id ])
-          ag_gateway.expect(:linked_crop_ids_for_task_templates, [ 1 ], [ task_id ])
+          ag_gateway = Object.new
+          ag_gateway.define_singleton_method(:find_authorized_model_for_edit) do |u, tid, access_filter:|
+            raise unless u == user && tid == task_id
+            raise unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
+
+            base_task
+          end
+          ag_gateway.define_singleton_method(:linked_crop_ids_for_task_templates) do |tid|
+            raise unless tid == task_id
+
+            [ 1 ]
+          end
 
           crop_gateway = Minitest::Mock.new
           crop_gateway.expect(:list_non_reference_crops_for_user_id_ordered, crops, [ user_id, nil ])
@@ -153,7 +165,6 @@ module Domain
           assert_equal false, received.crop_cards[1][:selected]
 
           user_lookup.verify
-          ag_gateway.verify
           crop_gateway.verify
           output_port.verify
         end

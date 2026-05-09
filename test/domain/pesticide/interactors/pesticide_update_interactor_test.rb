@@ -17,9 +17,18 @@ module Domain
           current = Object.new
           current.define_singleton_method(:is_reference) { false }
 
-          gateway = Object.new
-          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id| current }
-          gateway.define_singleton_method(:update_for_user) { |*_args| raise Domain::Shared::Policies::PolicyPermissionDenied }
+          gateway = mock
+          gateway.expects(:find_authorized_for_edit).with(
+            user,
+            5,
+            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).returns(current)
+          gateway.expects(:update_for_user).with(
+            user,
+            5,
+            instance_of(Hash),
+            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -52,8 +61,12 @@ module Domain
           current_entity = Object.new
           current_entity.define_singleton_method(:is_reference) { false }
 
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_for_edit, current_entity, [ user, 5 ])
+          gateway = mock
+          gateway.expects(:find_authorized_for_edit).with(
+            user,
+            5,
+            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).returns(current_entity)
 
           translator = Minitest::Mock.new
           translator.expect(:t, "flag admin only", [ "pesticides.flash.reference_flag_admin_only" ])
@@ -75,7 +88,6 @@ module Domain
           assert_instance_of Domain::Shared::Dtos::ErrorDto, received
           assert_equal "flag admin only", received.message
           user_lookup.verify
-          gateway.verify
           translator.verify
           output_port.verify
         end

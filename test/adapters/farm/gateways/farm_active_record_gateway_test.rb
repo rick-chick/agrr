@@ -190,7 +190,12 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
       translator: CompositionRoot.translator
     )
 
-    result = gateway.soft_destroy_with_undo(user: @user, farm_id: farm.id, toast_message: "toast")
+    result = gateway.soft_destroy_with_undo(
+      user: @user,
+      farm_id: farm.id,
+      toast_message: "toast",
+      access_filter: Domain::Shared::Policies::FarmPolicy.record_access_filter(@user)
+    )
     assert_equal false, result[:success]
     assert result[:error_dto].message.present?
   end

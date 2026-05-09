@@ -2,9 +2,9 @@
 
 module Adapters
   module CultivationPlan
-    # REST 用: private / public それぞれのスコープで CultivationPlan を1件取得（認可はスコープに委譲）。
-    # 戻りは永続モデル（フロー専用 Gateway 実装内でのみ使用し、Interactor へは渡さない）。
-    module RestAuthorizedPlanAccess
+    # REST 用: private / public それぞれの Relation で CultivationPlan を1件取得する。
+    # 条件は `Domain::CultivationPlan::Policies::PlanAccess.private_scope` / `public_scope` と同義（本モジュールは `PlanAccess` を参照しない）。
+    module RestAuthorizedCultivationPlanLoader
       module_function
 
       CROP_WITH_STAGES = { crop: :crop_stages }.freeze
@@ -23,15 +23,15 @@ module Adapters
       ].freeze
 
       # @param auth [Domain::CultivationPlan::Dtos::CultivationPlanRestAuth]
-      # @return [CultivationPlan]
+      # @return [::CultivationPlan]
       # @raise [ActiveRecord::RecordNotFound]
       def find!(auth, plan_id)
         pid = plan_id.to_i
         if auth.private?
           user = ::User.find(auth.user_id)
-          Domain::CultivationPlan::Policies::PlanAccess.private_scope(user).preload(PRIVATE_PRELOAD).find(pid)
+          ::CultivationPlan.plan_type_private.by_user(user).preload(PRIVATE_PRELOAD).find(pid)
         else
-          Domain::CultivationPlan::Policies::PlanAccess.public_scope.includes(PUBLIC_INCLUDES).find(pid)
+          ::CultivationPlan.plan_type_public.includes(PUBLIC_INCLUDES).find(pid)
         end
       end
     end

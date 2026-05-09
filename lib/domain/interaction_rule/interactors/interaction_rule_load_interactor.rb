@@ -14,11 +14,12 @@ module Domain
 
         def call(rule_id:, for_edit:)
           user = @user_lookup.find(@user_id)
+          access_filter = Domain::Shared::Policies::InteractionRulePolicy.record_access_filter(user)
           rule_entity =
             if for_edit
-              @gateway.find_authorized_for_edit(user, rule_id)
+              @gateway.find_authorized_for_edit(user, rule_id, access_filter: access_filter)
             else
-              @gateway.find_authorized_for_view(user, rule_id)
+              @gateway.find_authorized_for_view(user, rule_id, access_filter: access_filter)
             end
           @output_port.on_success(rule_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied

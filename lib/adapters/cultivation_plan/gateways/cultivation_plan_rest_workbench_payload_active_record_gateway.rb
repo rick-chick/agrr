@@ -10,7 +10,7 @@ module Adapters
         end
 
         def build(auth:, plan_id:)
-          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedPlanAccess.find!(auth, plan_id)
+          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
           available_crop_rows = available_crop_rows_gateway.rows(
             auth: auth,
             farm_region: cultivation_plan.farm&.region

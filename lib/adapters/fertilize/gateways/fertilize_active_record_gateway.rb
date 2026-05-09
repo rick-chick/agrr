@@ -73,35 +73,35 @@ module Adapters
             .map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
-        def find_authorized_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
           fertilize = find_fertilize_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.fertilize_view_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
+          unless access_filter.view_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           fertilize
         end
 
-        def find_authorized_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
           fertilize = find_fertilize_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.fertilize_edit_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
+          unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           fertilize
         end
 
-        def find_authorized_for_view(user, id)
-          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_view(user, id))
+        def find_authorized_for_view(user, id, access_filter:)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_for_edit(user, id)
-          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_edit(user, id))
+        def find_authorized_for_edit(user, id, access_filter:)
+          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_fertilize_loaded_bundle!(user, id, for_edit:)
+        def find_authorized_fertilize_loaded_bundle!(user, id, for_edit:, access_filter:)
           fertilize = if for_edit
-                        find_authorized_model_for_edit(user, id)
+                        find_authorized_model_for_edit(user, id, access_filter: access_filter)
                       else
-                        find_authorized_model_for_view(user, id)
+                        find_authorized_model_for_view(user, id, access_filter: access_filter)
                       end
           Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(
             fertilize_entity: Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize),
@@ -116,9 +116,9 @@ module Adapters
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, access_filter:)
           fertilize = find_fertilize_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.fertilize_edit_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
+          unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -127,9 +127,9 @@ module Adapters
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize.reload)
         end
 
-        def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator:)
+        def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator:, access_filter:)
           fertilize = find_fertilize_model!(fertilize_id)
-          unless Domain::Shared::ReferenceMasterAuthorization.fertilize_edit_allowed?(user, is_reference: fertilize.is_reference, user_id: fertilize.user_id)
+          unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           name = fertilize.name

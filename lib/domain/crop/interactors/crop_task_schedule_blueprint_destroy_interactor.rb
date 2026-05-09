@@ -12,10 +12,12 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(input_dto.user_id)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           result = @gateway.delete_task_schedule_blueprint_bundle_in_crop!(
             user,
             input_dto.crop_id,
-            input_dto.blueprint_id
+            input_dto.blueprint_id,
+            access_filter: access_filter
           )
 
           if result[:not_found]

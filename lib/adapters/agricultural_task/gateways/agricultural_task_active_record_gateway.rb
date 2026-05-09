@@ -36,9 +36,9 @@ module Adapters
           ::AgriculturalTask.where(is_reference: true).map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
 
-        def authorized_agricultural_task_detail_output(user, id)
+        def authorized_agricultural_task_detail_output(user, id, access_filter:)
           task = ::AgriculturalTask.includes(:crops).find(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+          unless access_filter.view_allows?(is_reference: task.is_reference, record_user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -47,23 +47,23 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def find_authorized_for_edit(user, id)
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_task_model_for_edit(user, id))
+        def find_authorized_for_edit(user, id, access_filter:)
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_authorized_task_model_for_edit(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_model_for_view(user, id)
-          find_authorized_task_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
+          find_authorized_task_model_for_view(user, id, access_filter: access_filter)
         end
 
-        def find_authorized_model_for_edit(user, id)
-          find_authorized_task_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
+          find_authorized_task_model_for_edit(user, id, access_filter: access_filter)
         end
 
-        def find_authorized_agricultural_task_loaded_bundle!(user, id, for_edit:)
+        def find_authorized_agricultural_task_loaded_bundle!(user, id, for_edit:, access_filter:)
           task = if for_edit
-                   find_authorized_model_for_edit(user, id)
+                   find_authorized_model_for_edit(user, id, access_filter: access_filter)
                  else
-                   find_authorized_model_for_view(user, id)
+                   find_authorized_model_for_view(user, id, access_filter: access_filter)
                  end
           Domain::AgriculturalTask::Dtos::AuthorizedAgriculturalTaskLoadedDto.new(
             agricultural_task_entity: Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task),
@@ -83,10 +83,10 @@ module Adapters
         end
 
         # @param selected_crop_ids [Array<Integer>, nil] nil なら CropTaskTemplate の同期をスキップ
-        def update_for_user(user, id, attrs, selected_crop_ids = nil)
+        def update_for_user(user, id, attrs, access_filter:, selected_crop_ids: nil)
           ::ActiveRecord::Base.transaction do
             task = find_agricultural_task_model!(id)
-            unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+            unless access_filter.edit_allows?(is_reference: task.is_reference, record_user_id: task.user_id)
               raise Domain::Shared::Policies::PolicyPermissionDenied
             end
 
@@ -99,9 +99,9 @@ module Adapters
           end
         end
 
-        def soft_destroy_with_undo(user:, task_id:, auto_hide_after: 5000, translator:)
+        def soft_destroy_with_undo(user:, task_id:, auto_hide_after: 5000, translator:, access_filter:)
           task = find_agricultural_task_model!(task_id)
-          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+          unless access_filter.edit_allows?(is_reference: task.is_reference, record_user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           name = task.name
@@ -149,8 +149,8 @@ module Adapters
           task
         end
 
-        def merge_update_form_snapshot_for_master_form!(user:, task_id:, dto:, task_attributes:)
-          task = find_authorized_task_model_for_edit(user, task_id.to_i)
+        def merge_update_form_snapshot_for_master_form!(user:, task_id:, dto:, task_attributes:, access_filter:)
+          task = find_authorized_task_model_for_edit(user, task_id.to_i, access_filter: access_filter)
           ta = task_attributes.respond_to?(:symbolize_keys) ? task_attributes.symbolize_keys : task_attributes.to_h.symbolize_keys
           task.assign_attributes(
             name: dto.name || ta[:name],
@@ -178,17 +178,17 @@ module Adapters
 
         private
 
-        def find_authorized_task_model_for_view(user, id)
+        def find_authorized_task_model_for_view(user, id, access_filter:)
           task = find_agricultural_task_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_view_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+          unless access_filter.view_allows?(is_reference: task.is_reference, record_user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           task
         end
 
-        def find_authorized_task_model_for_edit(user, id)
+        def find_authorized_task_model_for_edit(user, id, access_filter:)
           task = find_agricultural_task_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_edit_allowed?(user, is_reference: task.is_reference, user_id: task.user_id)
+          unless access_filter.edit_allows?(is_reference: task.is_reference, record_user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           task

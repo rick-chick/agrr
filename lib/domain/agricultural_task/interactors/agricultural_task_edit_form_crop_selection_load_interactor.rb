@@ -22,9 +22,11 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(input_dto.user_id)
+          access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
           base_task = @agricultural_task_gateway.find_authorized_model_for_edit(
             user,
-            input_dto.agricultural_task_id
+            input_dto.agricultural_task_id,
+            access_filter: access_filter
           )
           preview_task =
             if input_dto.controller_action.to_s == "update"

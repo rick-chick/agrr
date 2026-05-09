@@ -40,8 +40,7 @@ module Crops
         user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(
         crop_id: @crop.id,
         link_pest_id: params[:pest_id],
-        pest_attrs: pest_attrs,
-        admin: admin_user?
+        pest_attrs: pest_attrs
       )
     end
 
@@ -54,11 +53,15 @@ module Crops
         else
           {}
         end
-      Domain::Pest::Interactors::CropsNestedPestsUpdateInteractor.new(output_port: presenter, pest_gateway: CompositionRoot.pest_gateway).call(
+      Domain::Pest::Interactors::CropsNestedPestsUpdateInteractor.new(
+        output_port: presenter,
+        pest_gateway: CompositionRoot.pest_gateway,
+        user_id: current_user.id,
+        user_lookup: CompositionRoot.user_lookup
+      ).call(
         crop_id: @crop.id,
         pest_id: @pest.id,
-        pest_attrs: pest_attrs,
-        admin: admin_user?
+        pest_attrs: pest_attrs
       )
     end
 
@@ -72,9 +75,13 @@ module Crops
 
     def load_nested_pest
       presenter = Presenters::Html::Crop::CropPestsLoadPestHtmlPresenter.new(view: self)
-      Domain::Pest::Interactors::CropsNestedPestsLoadPestInteractor.new(output_port: presenter,
-        pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id, pest_id: params[:id],
-          for_edit_form: action_name == "edit")
+      Domain::Pest::Interactors::CropsNestedPestsLoadPestInteractor.new(
+        output_port: presenter,
+        user_id: current_user.id,
+        user_lookup: CompositionRoot.user_lookup,
+        pest_gateway: CompositionRoot.pest_gateway
+      ).call(crop_id: @crop.id, pest_id: params[:id],
+        for_edit_form: action_name == "edit")
     end
 
     def pest_params

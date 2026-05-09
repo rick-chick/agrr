@@ -22,8 +22,8 @@ module Domain
           end
 
           gateway = mock
-          gateway.expects(:find_authorized_for_edit).with(user, crop_id).returns(current_entity)
-          gateway.expects(:update_for_user).with(user, crop_id, instance_of(Hash)).returns(crop_entity)
+          gateway.expects(:find_authorized_for_edit).with(user, crop_id, access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(current_entity)
+          gateway.expects(:update_for_user).with(user, crop_id, instance_of(Hash), access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(crop_entity)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -58,8 +58,8 @@ module Domain
           def current_entity.reference?
             false
           end
-          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id| current_entity }
-          gateway.define_singleton_method(:update_for_user) do |_u, _fid, _attrs|
+          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id, **_kw| current_entity }
+          gateway.define_singleton_method(:update_for_user) do |_u, _fid, _attrs, **_kw|
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -100,8 +100,8 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_for_edit, current_entity, [ user, crop_id ])
+          gateway = Object.new
+          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id, **_kw| current_entity }
 
           translator = Minitest::Mock.new
           translator.expect(:t, msg, [ "crops.flash.reference_flag_admin_only" ])
@@ -123,7 +123,6 @@ module Domain
           assert_instance_of Domain::Shared::Dtos::ErrorDto, received
           assert_equal msg, received.message
           user_lookup.verify
-          gateway.verify
           translator.verify
           output_port.verify
         end

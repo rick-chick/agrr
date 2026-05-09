@@ -33,8 +33,8 @@ module Domain
           current_entity.expects(:is_reference).at_least_once.returns(false)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
-          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).returns(updated_fertilize_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_entity)
+          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash), access_filter: anything).returns(updated_fertilize_entity)
           @mock_output_port.expects(:on_success).with(updated_fertilize_entity)
 
           @interactor.call(input_dto)
@@ -49,7 +49,7 @@ module Domain
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
           current_entity = mock
           current_entity.expects(:is_reference).at_least_once.returns(false)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_entity)
           @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
           received = nil
@@ -73,9 +73,9 @@ module Domain
           bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(fertilize_entity: entity, persisted_fertilize: persisted)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_entity)
           @mock_translator.expects(:t).with("fertilizes.flash.reference_flag_admin_only").returns("admin only")
-          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).returns(bundle)
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true, access_filter: anything).returns(bundle)
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 
@@ -107,8 +107,8 @@ module Domain
           updated_fertilize_entity = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(admin_user_id).returns(admin_user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(admin_user, 1).returns(current_entity)
-          @mock_gateway.expects(:update_for_user).with(admin_user, 1, instance_of(Hash)).returns(updated_fertilize_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(admin_user, 1, access_filter: anything).returns(current_entity)
+          @mock_gateway.expects(:update_for_user).with(admin_user, 1, instance_of(Hash), access_filter: anything).returns(updated_fertilize_entity)
           @mock_output_port.expects(:on_success).with(updated_fertilize_entity)
 
           admin_interactor.call(input_dto)
@@ -128,9 +128,9 @@ module Domain
           bundle = Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(fertilize_entity: entity, persisted_fertilize: persisted)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_entity)
           @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
-          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).returns(bundle)
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true, access_filter: anything).returns(bundle)
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 
@@ -162,12 +162,12 @@ module Domain
           fallback_model = mock
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_entity)
           @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
-          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true, access_filter: anything).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("reload failed")
           )
-          @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1).returns(fallback_model)
+          @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1, access_filter: anything).returns(fallback_model)
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 
@@ -185,12 +185,12 @@ module Domain
           current_entity.expects(:is_reference).at_least_once.returns(false)
 
           Adapters::Shared::Gateways::UserActiveRecordGateway.any_instance.expects(:find).with(@user_id).returns(@user)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_entity)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_entity)
           @mock_gateway.expects(:update_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("Update failed"))
-          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true).raises(
+          @mock_gateway.expects(:find_authorized_fertilize_loaded_bundle!).with(@user, 1, for_edit: true, access_filter: anything).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("reload failed")
           )
-          @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1).raises(
+          @mock_gateway.expects(:find_authorized_model_for_edit).with(@user, 1, access_filter: anything).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("edit failed")
           )
           received = nil

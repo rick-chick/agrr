@@ -21,8 +21,9 @@ module Domain
               @bundle = bundle
             end
 
-            def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:)
+            def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:, access_filter:)
               raise ArgumentError unless user == :user_stub && crop_id == 1 && crop_stage_id == 2
+              raise ArgumentError unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
 
               @captured_for_edit = for_edit
               @bundle
@@ -65,8 +66,10 @@ module Domain
               @bundle = bundle
             end
 
-            def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:)
+            def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:, access_filter:)
               @captured_for_edit = for_edit
+              raise ArgumentError unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
+
               @bundle
             end
           end.new(dto)

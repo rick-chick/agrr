@@ -10,7 +10,7 @@ class CropToggleTaskTemplateInteractorTest < ActiveSupport::TestCase
 
     crop = mock
     crop_gateway = mock
-    crop_gateway.expects(:find_authorized_model_for_edit).with(user, 9).returns(crop)
+    crop_gateway.expects(:find_authorized_model_for_edit).with(user, 9, access_filter: anything).returns(crop)
 
     agricultural_task = mock
     task_gateway = mock

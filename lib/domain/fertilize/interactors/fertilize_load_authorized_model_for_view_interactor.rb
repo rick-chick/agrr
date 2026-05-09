@@ -13,7 +13,8 @@ module Domain
 
         def call(fertilize_id)
           user = @user_lookup.find(@user_id)
-          bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, fertilize_id.to_i, for_edit: false)
+          access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
+          bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, fertilize_id.to_i, for_edit: false, access_filter: access_filter)
           @output_port.on_success(bundle)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_permission_denied

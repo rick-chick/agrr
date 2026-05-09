@@ -30,7 +30,12 @@ module Domain
             return @output_port.on_forbidden
           end
 
-          status = @pest_gateway.link_pest_to_crop_id(crop_id: crop_id, pest_id: pest_entity.id)
+          crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          status = @pest_gateway.link_pest_to_crop(
+            crop_id: crop_id,
+            pest_id: pest_entity.id,
+            crop_access_filter: crop_access_filter
+          )
           case status
           when :missing
             @output_port.on_pest_not_found

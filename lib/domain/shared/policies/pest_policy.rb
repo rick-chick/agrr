@@ -10,6 +10,10 @@ module Domain
           Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: mode, user_id: user.id)
         end
 
+        def self.record_access_filter(user)
+          Domain::Shared::ReferenceRecordAccessFilter.new(user: user, policy_module: self)
+        end
+
         def self.view_allowed?(user, is_reference:, user_id:)
           is_reference || user_id == user.id
         end

@@ -14,8 +14,12 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     )
     result = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [ field_entity ])
 
+    user = stub(id: 20)
+    user_lookup = mock
+    user_lookup.expects(:find).with(20).returns(user)
+
     gateway = mock
-    gateway.expects(:authorized_farm_fields_list).with(10, 20).returns(result)
+    gateway.expects(:authorized_farm_fields_list).with(10, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(result)
 
     output = mock
     output.expects(:on_success).with do |arg|
@@ -27,12 +31,17 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     interactor = Domain::Field::Interactors::FieldListInteractor.new(
       output_port: output,
       user_id: 20,
-      gateway: gateway
+      gateway: gateway,
+      user_lookup: user_lookup
     )
     interactor.call(10)
   end
 
   test "call forwards RecordNotFound to on_failure as ErrorDto" do
+    user = stub(id: 20)
+    user_lookup = mock
+    user_lookup.expects(:find).with(20).returns(user)
+
     gateway = mock
     gateway.expects(:authorized_farm_fields_list).raises(Domain::Shared::Exceptions::RecordNotFound.new("Farm not found"))
 
@@ -46,15 +55,20 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     interactor = Domain::Field::Interactors::FieldListInteractor.new(
       output_port: output,
       user_id: 20,
-      gateway: gateway
+      gateway: gateway,
+      user_lookup: user_lookup
     )
     interactor.call(10)
   end
 
   test "call forwards policy permission denied to on_failure as exception" do
     err = Domain::Shared::Policies::PolicyPermissionDenied.new
+    user = stub(id: 20)
+    user_lookup = mock
+    user_lookup.expects(:find).with(20).returns(user)
+
     gateway = mock
-    gateway.expects(:authorized_farm_fields_list).with(10, 20).raises(err)
+    gateway.expects(:authorized_farm_fields_list).with(10, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).raises(err)
 
     output = mock
     output.expects(:on_failure).with(err)
@@ -62,7 +76,8 @@ class FieldListInteractorTest < ActiveSupport::TestCase
     interactor = Domain::Field::Interactors::FieldListInteractor.new(
       output_port: output,
       user_id: 20,
-      gateway: gateway
+      gateway: gateway,
+      user_lookup: user_lookup
     )
     interactor.call(10)
   end

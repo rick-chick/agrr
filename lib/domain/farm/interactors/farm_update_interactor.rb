@@ -21,7 +21,8 @@ module Domain
           attrs[:longitude] = input_dto.longitude if !input_dto.longitude.nil?
 
           normalized = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_update(user, {}, attrs)
-          farm_entity = @gateway.update_for_user(user, input_dto.farm_id, normalized)
+          access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
+          farm_entity = @gateway.update_for_user(user, input_dto.farm_id, normalized, access_filter: access_filter)
 
           @output_port.on_success(farm_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

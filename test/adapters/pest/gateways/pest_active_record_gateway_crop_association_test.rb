@@ -77,6 +77,30 @@ module Adapters
           assert_includes normalized, @crop1.id
           assert_includes normalized, @crop2.id
         end
+
+        test "link_pest_to_crop returns missing when crop is not authorized by crop_access_filter" do
+          filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
+          status = @gw.link_pest_to_crop(
+            crop_id: @other_user_crop.id,
+            pest_id: @pest.id,
+            crop_access_filter: filter
+          )
+
+          assert_equal :missing, status
+        end
+
+        test "link_pest_to_crop links when crop is authorized" do
+          filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
+          ref_pest = create(:pest, is_reference: true, user_id: nil)
+          status = @gw.link_pest_to_crop(
+            crop_id: @crop1.id,
+            pest_id: ref_pest.id,
+            crop_access_filter: filter
+          )
+
+          assert_equal :linked, status
+          assert_includes @crop1.reload.pests, ref_pest
+        end
       end
     end
   end

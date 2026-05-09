@@ -13,7 +13,7 @@ module Adapters
         def run(auth:, plan_id:, crop_id:, field_id:, display_range:, crop_resolver:)
           optimization_host = @optimization_host
 
-          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedPlanAccess.find!(auth, plan_id)
+          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
 
           optimization_host.attach_plan_for_candidates(cultivation_plan)
 

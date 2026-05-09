@@ -23,7 +23,7 @@ module Domain
           rows = [ { id: 9, name: "Task A" } ]
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:selectable_agricultural_task_picklist_rows_for_nested_templates).with(user: user, crop_id: 2).returns(rows)
+          @gateway.expects(:selectable_agricultural_task_picklist_rows_for_nested_templates).with(user: user, crop_id: 2, access_filter: anything).returns(rows)
           @output_port.expects(:on_success).with(rows)
 
           @interactor.call(input_dto)
@@ -34,7 +34,7 @@ module Domain
           user = mock
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:selectable_agricultural_task_picklist_rows_for_nested_templates).with(user: user, crop_id: 2).raises(
+          @gateway.expects(:selectable_agricultural_task_picklist_rows_for_nested_templates).with(user: user, crop_id: 2, access_filter: anything).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )
           @output_port.expects(:on_failure).with do |failure_dto|

@@ -14,10 +14,12 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = Object.new
-          gateway.define_singleton_method(:authorized_pesticide_detail_output) do |_u, _pid|
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
+          gateway = mock
+          gateway.expects(:authorized_pesticide_detail_output).with(
+            user,
+            pesticide_id,
+            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
           received = nil
           output_port = Minitest::Mock.new

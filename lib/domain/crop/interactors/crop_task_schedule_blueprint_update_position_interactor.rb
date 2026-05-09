@@ -20,12 +20,14 @@ module Domain
           end
 
           user = @user_lookup.find(input_dto.user_id)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           out = @gateway.update_task_schedule_blueprint_position_for_user(
             user: user,
             crop_id: input_dto.crop_id,
             blueprint_id: input_dto.blueprint_id,
             gdd_trigger: input_dto.gdd_trigger,
-            priority: input_dto.priority
+            priority: input_dto.priority,
+            access_filter: access_filter
           )
 
           if out[:ok]

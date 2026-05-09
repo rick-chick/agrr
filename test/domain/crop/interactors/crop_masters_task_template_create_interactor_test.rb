@@ -28,7 +28,7 @@ module Domain
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(template: template_dto)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto).returns(result)
+          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto, access_filter: anything).returns(result)
           @output_port.expects(:on_success).with(template_dto)
 
           @interactor.call(input_dto)
@@ -64,7 +64,7 @@ module Domain
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(failure: failure)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto).returns(result)
+          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto, access_filter: anything).returns(result)
           @output_port.expects(:on_failure).with(failure)
 
           @interactor.call(input_dto)
@@ -83,7 +83,7 @@ module Domain
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(failure: failure)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto).returns(result)
+          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto, access_filter: anything).returns(result)
           @output_port.expects(:on_failure).with(failure)
 
           @interactor.call(input_dto)
@@ -102,7 +102,7 @@ module Domain
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateResultDto.new(failure: failure)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto).returns(result)
+          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto, access_filter: anything).returns(result)
           @output_port.expects(:on_failure).with(failure)
 
           @interactor.call(input_dto)
@@ -121,7 +121,7 @@ module Domain
           )
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto).raises(record_invalid)
+          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto, access_filter: anything).raises(record_invalid)
           @output_port.expects(:on_failure).with do |failure_dto|
             assert_equal :validation_failed, failure_dto.reason
             assert_equal [ "Name can't be blank" ], failure_dto.errors

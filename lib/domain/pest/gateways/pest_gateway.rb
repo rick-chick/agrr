@@ -33,24 +33,24 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_selectable_pest_entities_recent_first"
         end
 
-        def authorized_pest_detail_output(user, id)
+        def authorized_pest_detail_output(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement authorized_pest_detail_output"
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_for_edit(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        def find_authorized_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
         end
 
-        def find_authorized_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
         end
 
         # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（HTML フォーム用。契約は {Domain::Pest::Ports::PestHtmlAuthorizedPestLoad}）。
-        def find_authorized_pest_loaded_bundle!(user, id, for_edit:)
+        def find_authorized_pest_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_pest_loaded_bundle!"
         end
 
@@ -58,37 +58,37 @@ module Domain
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, access_filter:)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_destroy_with_undo(user:, pest_id:, auto_hide_after:, translator:)
+        def soft_destroy_with_undo(user:, pest_id:, auto_hide_after:, translator:, access_filter:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
 
         # AR を Domain に持ち込まないためのマスタ系操作。
 
-        # 既存の Pest を crop に紐付ける（id ベース）。
+        # 既存の Pest を crop に紐付ける（id ベース）。crop は crop_access_filter で編集可否を検証する。
         # @return [Symbol] :linked / :already_linked / :missing
-        def link_pest_to_crop_id(crop_id:, pest_id:)
-          raise NotImplementedError, "Subclasses must implement link_pest_to_crop_id"
+        def link_pest_to_crop(crop_id:, pest_id:, crop_access_filter:)
+          raise NotImplementedError, "Subclasses must implement link_pest_to_crop"
         end
 
-        # 新規作成 + crop への紐付け（HTML/Masters 共用）。
+        # 新規作成 + crop への紐付け（HTML/Masters 共用）。pest_attrs は Interactor で PestPolicy 正規化済み。
         # @return [Hash] { status: :created|:invalid, pest_record:, unassociated_pest_entities: [...] }
-        def create_pest_for_crop(user:, crop_id:, pest_attrs:, admin:)
+        def create_pest_for_crop(user:, crop_id:, pest_attrs:, crop_access_filter:)
           raise NotImplementedError, "Subclasses must implement create_pest_for_crop"
         end
 
-        # crop 配下の Pest を更新する。
-        # @return [Hash] { status: :updated|:invalid|:reference_flag_denied, pest_record: }
-        def update_pest_for_crop(crop_id:, pest_id:, pest_attrs:, admin:)
+        # crop 配下の Pest を更新する。pest_attrs は Interactor で正規化済み。
+        # @return [Hash] { status: :updated|:invalid|:crop_missing|:pest_missing, pest_record: }
+        def update_pest_for_crop(user:, crop_id:, pest_id:, pest_attrs:, crop_access_filter:)
           raise NotImplementedError, "Subclasses must implement update_pest_for_crop"
         end
 
         # crop 配下の Pest を取得する（HTML 編集等向け）。
         # @return [Hash] { status: :found|:not_found, pest_record: }
-        def find_pest_in_crop(crop_id:, pest_id:)
+        def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter:)
           raise NotImplementedError, "Subclasses must implement find_pest_in_crop"
         end
 

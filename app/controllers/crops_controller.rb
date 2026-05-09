@@ -126,10 +126,12 @@ class CropsController < ApplicationController
 
   def after_crop_update_failure
     user = CompositionRoot.user_lookup.find(current_user.id)
+    access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
     @crop = CompositionRoot.crop_gateway.merge_edit_crop_params_for_master_form!(
       user: user,
       crop_id: params[:id].to_i,
-      attributes: crop_params.to_h.symbolize_keys
+      attributes: crop_params.to_h.symbolize_keys,
+      access_filter: access_filter
     )
     @crop.valid?
   end

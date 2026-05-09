@@ -34,9 +34,9 @@ module Domain
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           current_pest = mock
           current_pest.expects(:reference?).at_least_once.returns(false)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_pest)
-          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
-          @mock_gateway.expects(:find_authorized_pest_loaded_bundle!).with(@user, 1, for_edit: true).returns(bundle)
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_pest)
+          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash), access_filter: anything).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
+          @mock_gateway.expects(:find_authorized_pest_loaded_bundle!).with(@user, 1, for_edit: true, access_filter: anything).returns(bundle)
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 
@@ -66,9 +66,9 @@ module Domain
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           current_pest = mock
           current_pest.expects(:reference?).at_least_once.returns(false)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1).returns(current_pest)
-          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
-          @mock_gateway.expects(:find_authorized_pest_loaded_bundle!).with(@user, 1, for_edit: true).raises(
+          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_pest)
+          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash), access_filter: anything).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
+          @mock_gateway.expects(:find_authorized_pest_loaded_bundle!).with(@user, 1, for_edit: true, access_filter: anything).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("reload failed")
           )
           received = nil

@@ -35,7 +35,7 @@ class PrivatePlanSelectCropContextInteractorTest < ActiveSupport::TestCase
     crop_entities = [ mock, mock ]
 
     field_gateway = mock
-    field_gateway.expects(:authorized_farm_fields_list).with(1, 7).returns(farm_fields)
+    field_gateway.expects(:authorized_farm_fields_list).with(1, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(farm_fields)
 
     crop_gateway = mock
     crop_gateway.expects(:list_user_owned_non_reference_crops_ordered_by_name).with(user).returns(crop_entities)

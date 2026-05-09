@@ -13,7 +13,8 @@ module Domain
 
         def call(task_id)
           user = @user_lookup.find(@user_id)
-          task_detail_dto = @gateway.authorized_agricultural_task_detail_output(user, task_id)
+          access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
+          task_detail_dto = @gateway.authorized_agricultural_task_detail_output(user, task_id, access_filter: access_filter)
           @output_port.on_success(task_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

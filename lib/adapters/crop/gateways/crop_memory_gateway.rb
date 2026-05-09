@@ -69,32 +69,32 @@ module Adapters
           crop_task_schedule_blueprints: [ :agricultural_task ]
         }.freeze
 
-        def find_authorized_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
           crop = find_crop_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.crop_view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          unless access_filter.view_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           crop
         end
 
-        def find_authorized_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
           crop = find_crop_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.crop_edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          unless access_filter.edit_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           crop
         end
 
-        def find_authorized_for_view(user, id)
-          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_authorized_model_for_view(user, id))
+        def find_authorized_for_view(user, id, access_filter:)
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_for_edit(user, id)
-          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_authorized_model_for_edit(user, id))
+        def find_authorized_for_edit(user, id, access_filter:)
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_crop_loaded_bundle!(user, id, for_edit:)
-          crop = authorized_crop_record_with_association_preloads!(user, id, for_edit: for_edit)
+        def find_authorized_crop_loaded_bundle!(user, id, for_edit:, access_filter:)
+          crop = authorized_crop_record_with_association_preloads!(user, id, for_edit: for_edit, access_filter: access_filter)
 
           Domain::Crop::Dtos::AuthorizedCropLoadedDto.new(
             crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
@@ -116,14 +116,14 @@ module Adapters
           end
         end
 
-        def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:)
-          bundle = find_authorized_crop_loaded_bundle!(user, crop_id, for_edit: true)
+        def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:, access_filter:)
+          bundle = find_authorized_crop_loaded_bundle!(user, crop_id, for_edit: true, access_filter: access_filter)
           crop = bundle.persisted_crop
           crop.assign_attributes(attributes)
           crop
         end
 
-        def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
+        def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, access_filter:)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id)
           stage = crop.crop_stages.find(crop_stage_id)
           Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
@@ -134,7 +134,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
-        def find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
+        def find_masters_crop_with_task_template_bundle!(user, crop_id, template_id, access_filter:)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id)
           tpl = crop.crop_task_templates.find(template_id)
           Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto.new(
@@ -145,17 +145,16 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
         end
 
-        def create_masters_crop_task_template_association(user, input_dto)
+        def create_masters_crop_task_template_association(user, input_dto, access_filter:)
           crop = find_user_non_reference_crop_for_masters!(user, input_dto.crop_id.to_i)
           agricultural_task = ::AgriculturalTask.find_by(id: input_dto.agricultural_task_id)
           unless agricultural_task
             return build_task_template_create_result(reason: :agricultural_task_not_found)
           end
 
-          unless Domain::Shared::ReferenceMasterAuthorization.agricultural_task_masters_crop_task_template_associate_allowed?(
-            user,
+          unless access_filter.agricultural_task_template_associate_allows?(
             is_reference: agricultural_task.is_reference,
-            user_id: agricultural_task.user_id
+            record_user_id: agricultural_task.user_id
           )
             return build_task_template_create_result(reason: :forbidden)
           end
@@ -185,12 +184,12 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: Domain::Shared::ValidationErrors.from_errors_like(e.record.errors))
         end
 
-        def masters_crop_agricultural_task_templates_index_rows(user:, crop_id:)
+        def masters_crop_agricultural_task_templates_index_rows(user:, crop_id:, access_filter:)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
           crop.crop_task_templates.includes(:agricultural_task).map { |t| masters_crop_task_template_api_row(t) }
         end
 
-        def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:)
+        def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:, access_filter:)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
           scope = ::AgriculturalTask.where("is_reference = ? OR user_id = ?", true, user.id)
           existing_task_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact
@@ -198,8 +197,8 @@ module Adapters
           scope.recent.map { |t| { id: t.id, name: t.name } }
         end
 
-        def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:)
-          bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i)
+        def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:, access_filter:)
+          bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i, access_filter: access_filter)
           tpl = bundle.persisted_crop_task_template
           if tpl.update(attributes)
             { ok: true, row: masters_crop_task_template_api_row(tpl.reload) }
@@ -208,17 +207,17 @@ module Adapters
           end
         end
 
-        def destroy_masters_crop_task_template_for_api!(user:, crop_id:, template_id:)
-          bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i)
+        def destroy_masters_crop_task_template_for_api!(user:, crop_id:, template_id:, access_filter:)
+          bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i, access_filter: access_filter)
           bundle.persisted_crop_task_template.destroy!
           :ok
         end
 
-        def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:)
+        def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:, access_filter:)
           crop = if for_edit
-                   find_authorized_model_for_edit(user, crop_id)
+                   find_authorized_model_for_edit(user, crop_id, access_filter: access_filter)
                  else
-                   find_authorized_model_for_view(user, crop_id)
+                   find_authorized_model_for_view(user, crop_id, access_filter: access_filter)
                  end
           stage = crop.crop_stages.find(crop_stage_id)
           Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
@@ -229,11 +228,11 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
-        def find_authorized_crop_task_template_in_crop!(user, crop_id, template_id, for_edit:)
+        def find_authorized_crop_task_template_in_crop!(user, crop_id, template_id, for_edit:, access_filter:)
           crop = if for_edit
-                   find_authorized_model_for_edit(user, crop_id)
+                   find_authorized_model_for_edit(user, crop_id, access_filter: access_filter)
                  else
-                   find_authorized_model_for_view(user, crop_id)
+                   find_authorized_model_for_view(user, crop_id, access_filter: access_filter)
                  end
           tpl = crop.crop_task_templates.find(template_id)
           Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto.new(
@@ -244,8 +243,8 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound
         end
 
-        def delete_task_schedule_blueprint_bundle_in_crop!(user, crop_id, blueprint_id)
-          crop = find_authorized_model_for_edit(user, crop_id)
+        def delete_task_schedule_blueprint_bundle_in_crop!(user, crop_id, blueprint_id, access_filter:)
+          crop = find_authorized_model_for_edit(user, crop_id, access_filter: access_filter)
           bp = crop.crop_task_schedule_blueprints.find(blueprint_id)
           blueprint_id_for_response = bp.id
           result = ::Adapters::Crop::TaskScheduleBlueprintDeletion.new(crop: crop, blueprint: bp).call
@@ -292,8 +291,8 @@ module Adapters
           { ok: false, status: :internal_server_error, error: I18n.t("crops.flash.blueprint_update_failed") }
         end
 
-        def update_task_schedule_blueprint_position_for_user(user:, crop_id:, blueprint_id:, gdd_trigger:, priority:)
-          crop = find_authorized_model_for_edit(user, crop_id.to_i)
+        def update_task_schedule_blueprint_position_for_user(user:, crop_id:, blueprint_id:, gdd_trigger:, priority:, access_filter:)
+          crop = find_authorized_model_for_edit(user, crop_id.to_i, access_filter: access_filter)
           bp = crop.crop_task_schedule_blueprints.find(blueprint_id.to_i)
           update_task_schedule_blueprint_position_mutation(crop: crop, blueprint: bp, gdd_trigger: gdd_trigger, priority: priority)
         rescue ActiveRecord::RecordNotFound
@@ -323,8 +322,8 @@ module Adapters
           { ok: false, blueprint_id_for_response: blueprint_id_for_response }
         end
 
-        def find_authorized_crop_show_detail(user, crop_id)
-          crop = authorized_crop_record_with_association_preloads!(user, crop_id, for_edit: false)
+        def find_authorized_crop_show_detail(user, crop_id, access_filter:)
+          crop = authorized_crop_record_with_association_preloads!(user, crop_id, for_edit: false, access_filter: access_filter)
           task_schedule_blueprints = crop.crop_task_schedule_blueprints
                                           .includes(:agricultural_task)
                                           .ordered
@@ -372,9 +371,9 @@ module Adapters
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, access_filter:)
           crop = find_crop_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.crop_edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          unless access_filter.edit_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -383,9 +382,9 @@ module Adapters
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         end
 
-        def soft_destroy_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:)
+        def soft_destroy_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:, access_filter:)
           crop = find_crop_model!(crop_id)
-          unless Domain::Shared::ReferenceMasterAuthorization.crop_edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+          unless access_filter.edit_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           if crop.cultivation_plan_crops.any?
@@ -834,12 +833,12 @@ module Adapters
           }.compact
         end
 
-        def authorized_crop_record_with_association_preloads!(user, id, for_edit:)
+        def authorized_crop_record_with_association_preloads!(user, id, for_edit:, access_filter:)
           crop = ::Crop.includes(CROP_ASSOCIATION_PRELOAD_INCLUDES).find(id)
           allowed = if for_edit
-                      Domain::Shared::ReferenceMasterAuthorization.crop_edit_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+                      access_filter.edit_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
                     else
-                      Domain::Shared::ReferenceMasterAuthorization.crop_view_allowed?(user, is_reference: crop.is_reference, user_id: crop.user_id)
+                      access_filter.view_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
                     end
           raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
 

@@ -12,29 +12,30 @@ module Adapters
           @translator = translator
         end
 
-        def authorized_farm_fields_list(farm_id, user_id)
-          farm_entity, fields = farm_entity_and_field_entities_for_farm_list!(farm_id, user_id)
+        def authorized_farm_fields_list(farm_id, farm_access_filter:)
+          farm_entity, fields = farm_entity_and_field_entities_for_farm_list!(farm_id, farm_access_filter)
           Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: fields)
         end
 
-        def field_with_farm_for_user(field_id, user_id)
-          field_entity = find_by_id_and_user(field_id, user_id)
-          user = find_user!(user_id)
-          farm_entity = @farm_gateway.find_authorized_for_edit(user, field_entity.farm_id)
+        def field_with_farm_for_user(field_id, farm_access_filter:)
+          user = farm_access_filter.user
+          field_entity = find_by_id_and_user(field_id, user.id)
+          farm_entity = @farm_gateway.find_authorized_for_edit(user, field_entity.farm_id, access_filter: farm_access_filter)
           Domain::Field::Results::FieldWithFarm.new(farm: farm_entity, field: field_entity)
         end
 
         def find_by_id_and_user(field_id, user_id)
           user = ::User.find(user_id)
-          record = Domain::Field::Policies::FieldAccess.find_owned!(user, field_id)
+          record = find_field_model!(field_id)
+          assert_field_owned_by_user!(user, record)
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied, ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
         end
 
-        def create(create_input_dto, farm_id, user_id)
-          user = ::User.find(user_id)
-          @farm_gateway.find_authorized_for_edit(user, farm_id)
+        def create(create_input_dto, farm_id, farm_access_filter:)
+          user = farm_access_filter.user
+          @farm_gateway.find_authorized_for_edit(user, farm_id, access_filter: farm_access_filter)
           farm = ::Farm.find(farm_id)
           attrs = {
             name: create_input_dto.name,
@@ -42,7 +43,7 @@ module Adapters
             daily_fixed_cost: create_input_dto.daily_fixed_cost,
             region: create_input_dto.region
           }
-          field = Domain::Field::Policies::FieldAccess.build_for_create(user, farm, attrs)
+          field = build_field_for_create(user, farm, attrs)
           raise Domain::Shared::Exceptions::RecordInvalid, field.errors.full_messages.join(", ") unless field.save
 
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field)
@@ -50,9 +51,10 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Farm not found"
         end
 
-        def update(field_id, update_input_dto, user_id)
-          user = ::User.find(user_id)
-          field = Domain::Field::Policies::FieldAccess.find_owned!(user, field_id)
+        def update(field_id, update_input_dto, farm_access_filter:)
+          user = farm_access_filter.user
+          field = find_field_model!(field_id)
+          assert_field_owned_by_user!(user, field)
           attrs = {}
           attrs[:name] = update_input_dto.name if update_input_dto.name.present?
           attrs[:area] = update_input_dto.area if !update_input_dto.area.nil?
@@ -65,9 +67,10 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
         end
 
-        def destroy(field_id, user_id)
-          user = ::User.find(user_id)
-          field = Domain::Field::Policies::FieldAccess.find_owned!(user, field_id)
+        def destroy(field_id, farm_access_filter:)
+          user = farm_access_filter.user
+          field = find_field_model!(field_id)
+          assert_field_owned_by_user!(user, field)
           ::DeletionUndo::Manager.schedule(
             record: field,
             actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(user),
@@ -82,24 +85,24 @@ module Adapters
           raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fields.flash.cannot_delete_in_use")
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_for_view(user, id, farm_access_filter:)
           field = find_field_model!(id)
-          unless field_view_allowed?(user, field)
+          unless field_view_allowed?(farm_access_filter, field)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field)
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_for_edit(user, id, farm_access_filter:)
           field = find_field_model!(id)
-          unless field_edit_allowed?(user, field)
+          unless field_edit_allowed?(farm_access_filter, field)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field)
         end
 
-        def find_authorized_field_loaded_in_farm!(user, farm_id, field_id)
-          bundle = @farm_gateway.find_authorized_farm_loaded_bundle!(user, farm_id, for_edit: true)
+        def find_authorized_field_loaded_in_farm!(user, farm_id, field_id, farm_access_filter:)
+          bundle = @farm_gateway.find_authorized_farm_loaded_bundle!(user, farm_id, for_edit: true, access_filter: farm_access_filter)
           farm = bundle.persisted_farm
           field = begin
             farm.fields.find(field_id)
@@ -112,20 +115,20 @@ module Adapters
           )
         end
 
-        def create_for_user(user, farm_id, attrs)
+        def create_for_user(user, farm_id, attrs, farm_access_filter:)
           farm = find_farm_model!(farm_id)
-          unless Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless farm_access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-          field = Domain::Field::Policies::FieldAccess.build_for_create(user, farm, attrs.to_h.symbolize_keys)
+          field = build_field_for_create(user, farm, attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, field.errors.full_messages.join(", ") unless field.save
 
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field)
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, farm_access_filter:)
           field = find_field_model!(id)
-          unless field_edit_allowed?(user, field)
+          unless field_edit_allowed?(farm_access_filter, field)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           normalized = attrs.to_h.symbolize_keys.slice(:name, :area, :daily_fixed_cost, :region)
@@ -134,9 +137,9 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field.reload)
         end
 
-        def soft_destroy_with_undo(user:, field_id:, auto_hide_after: 5000, translator:)
+        def soft_destroy_with_undo(user:, field_id:, auto_hide_after: 5000, translator:, farm_access_filter:)
           field = find_field_model!(field_id)
-          unless field_edit_allowed?(user, field)
+          unless field_edit_allowed?(farm_access_filter, field)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           name = field.display_name
@@ -167,11 +170,11 @@ module Adapters
 
         private
 
-        def farm_entity_and_field_entities_for_farm_list!(farm_id, user_id)
-          user = find_user!(user_id)
-          farm_entity = @farm_gateway.find_authorized_for_edit(user, farm_id)
+        def farm_entity_and_field_entities_for_farm_list!(farm_id, farm_access_filter)
+          user = farm_access_filter.user
+          farm_entity = @farm_gateway.find_authorized_for_edit(user, farm_id, access_filter: farm_access_filter)
           farm = ::Farm.find(farm_id)
-          scope = Domain::Field::Policies::FieldAccess.scope_for_farm(user, farm)
+          scope = fields_scope_for_authorized_farm!(user, farm)
           fields = scope.map { |record| Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(record) }
           [ farm_entity, fields ]
         rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied
@@ -198,14 +201,37 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def field_view_allowed?(user, field)
-          farm = field.farm
-          Domain::Shared::ReferenceMasterAuthorization.farm_view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+        # Domain::Field::Policies::FieldAccess と同一条件（Adapter は FieldAccess を参照しない）
+        def assert_field_owned_by_user!(user, field)
+          allowed = user.admin? || field.farm.user_id == user.id
+          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
+
+          field
         end
 
-        def field_edit_allowed?(user, field)
+        def fields_scope_for_authorized_farm!(user, farm)
+          unless farm.user_id == user.id || user.admin?
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          farm.fields
+        end
+
+        def build_field_for_create(user, farm, attrs)
+          attributes = attrs.to_h.symbolize_keys
+          attributes[:user_id] ||= user.id
+          attributes[:farm_id] = farm.id
+          ::Field.new(attributes)
+        end
+
+        def field_view_allowed?(farm_access_filter, field)
           farm = field.farm
-          Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          farm_access_filter.view_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
+        end
+
+        def field_edit_allowed?(farm_access_filter, field)
+          farm = field.farm
+          farm_access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
         end
       end
     end

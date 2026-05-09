@@ -16,6 +16,10 @@ module Presenters
           @view.redirect_to @view.crop_pest_path(crop_id, pest), notice: I18n.t("crops.pests.flash.updated")
         end
 
+        def on_not_found(crop_id:)
+          @view.redirect_to @view.crop_pests_path(crop_id), alert: I18n.t("crops.pests.flash.not_found")
+        end
+
         def on_invalid(crop_id:, pest:)
           @view.instance_variable_set(:@pest, pest)
           @view.render :edit, status: :unprocessable_entity

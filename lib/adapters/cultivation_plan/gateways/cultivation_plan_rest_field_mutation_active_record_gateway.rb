@@ -10,7 +10,7 @@ module Adapters
         end
 
         def add_field(auth:, plan_id:, field_name:, field_area:, daily_fixed_cost:)
-          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedPlanAccess.find!(auth, plan_id)
+          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
           field_area_f = field_area&.to_f
           return { kind: :invalid_field_params } if field_area_f <= 0
           return { kind: :max_fields_limit } if cultivation_plan.cultivation_plan_fields.count >= 5
@@ -46,7 +46,7 @@ module Adapters
         end
 
         def remove_field(auth:, plan_id:, field_id_param:)
-          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedPlanAccess.find!(auth, plan_id)
+          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
 
           field_id = field_id_param.to_i
           plan_field = cultivation_plan.cultivation_plan_fields.find_by(id: field_id)

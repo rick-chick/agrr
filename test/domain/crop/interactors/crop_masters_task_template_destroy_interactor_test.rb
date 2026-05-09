@@ -29,7 +29,8 @@ module Domain
           @gateway.expects(:destroy_masters_crop_task_template_for_api!).with(
             user: user,
             crop_id: 2,
-            template_id: 3
+            template_id: 3,
+            access_filter: anything
           ).returns(:ok)
           @output_port.expects(:on_success)
 
@@ -45,7 +46,12 @@ module Domain
           user = mock
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:destroy_masters_crop_task_template_for_api!).raises(
+          @gateway.expects(:destroy_masters_crop_task_template_for_api!).with(
+            user: user,
+            crop_id: 2,
+            template_id: 3,
+            access_filter: anything
+          ).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )
           @output_port.expects(:on_failure).with do |failure_dto|

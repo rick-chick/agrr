@@ -36,25 +36,25 @@ module Adapters
           ordered.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
-        def find_authorized_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
           pest = find_pest_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.pest_view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless access_filter.view_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           pest
         end
 
-        def find_authorized_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
           pest = find_pest_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.pest_edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless access_filter.edit_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           pest
         end
 
-        def authorized_pest_detail_output(user, id)
+        def authorized_pest_detail_output(user, id, access_filter:)
           pest = ::Pest.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods, :crops).find(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.pest_view_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless access_filter.view_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -63,15 +63,15 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def find_authorized_for_edit(user, id)
-          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_edit(user, id))
+        def find_authorized_for_edit(user, id, access_filter:)
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_pest_loaded_bundle!(user, id, for_edit:)
+        def find_authorized_pest_loaded_bundle!(user, id, for_edit:, access_filter:)
           pest = if for_edit
-                   find_authorized_model_for_edit(user, id)
+                   find_authorized_model_for_edit(user, id, access_filter: access_filter)
                  else
-                   find_authorized_model_for_view(user, id)
+                   find_authorized_model_for_view(user, id, access_filter: access_filter)
                  end
           Domain::Pest::Ports::PestHtmlAuthorizedPestLoad.new(
             pest_entity: Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest),
@@ -86,9 +86,9 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest)
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, access_filter:)
           pest = find_pest_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.pest_edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless access_filter.edit_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -103,9 +103,9 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
         end
 
-        def soft_destroy_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:)
+        def soft_destroy_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:, access_filter:)
           pest = find_pest_model!(pest_id)
-          unless Domain::Shared::ReferenceMasterAuthorization.pest_edit_allowed?(user, is_reference: pest.is_reference, user_id: pest.user_id)
+          unless access_filter.edit_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           if pest.pesticides.any?
@@ -144,8 +144,8 @@ module Adapters
           pest
         end
 
-        def link_pest_to_crop_id(crop_id:, pest_id:)
-          crop = ::Crop.find_by(id: crop_id)
+        def link_pest_to_crop(crop_id:, pest_id:, crop_access_filter:)
+          crop = crop_authorized_for_nested_edit(crop_id, crop_access_filter)
           pest = ::Pest.find_by(id: pest_id)
           return :missing unless crop && pest
           return :already_linked if crop.pests.include?(pest)
@@ -154,46 +154,34 @@ module Adapters
           :linked
         end
 
-        def create_pest_for_crop(user:, crop_id:, pest_attrs:, admin:)
+        def create_pest_for_crop(user:, crop_id:, pest_attrs:, crop_access_filter:)
+          crop = crop_authorized_for_nested_edit(crop_id, crop_access_filter)
           attrs = pest_attrs.to_h.symbolize_keys
-          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attrs[:is_reference]) || false
-          if is_reference && !admin
-            return { status: :reference_only_admin, pest_record: nil, unassociated_pest_entities: [] }
-          end
-
           pest = ::Pest.new(attrs)
-          unless admin
-            pest.is_reference = false
-            pest.user_id = user.id
+
+          unless crop
+            return { status: :invalid, pest_record: pest, unassociated_pest_entities: [] }
           end
 
           if pest.save
-            crop = ::Crop.find_by(id: crop_id)
-            crop.pests << pest if crop && !crop.pests.include?(pest)
+            crop.pests << pest unless crop.pests.include?(pest)
             return { status: :created, pest_record: pest, unassociated_pest_entities: [] }
           end
 
           available_entities = list_selectable_pest_entities_recent_first(user)
-          crop_pests_ids = crop_id ? (::Crop.find_by(id: crop_id)&.pest_ids || []) : []
+          crop_pests_ids = crop.pest_ids
           unassociated = available_entities.reject { |e| crop_pests_ids.include?(e.id) }
           { status: :invalid, pest_record: pest, unassociated_pest_entities: unassociated }
         end
 
-        def update_pest_for_crop(crop_id:, pest_id:, pest_attrs:, admin:)
-          crop = ::Crop.find_by(id: crop_id)
+        def update_pest_for_crop(user:, crop_id:, pest_id:, pest_attrs:, crop_access_filter:)
+          crop = crop_authorized_for_nested_edit(crop_id, crop_access_filter)
           return { status: :crop_missing, pest_record: nil } unless crop
 
           pest = crop.pests.find_by(id: pest_id)
           return { status: :pest_missing, pest_record: nil } unless pest
 
           attrs = pest_attrs.to_h.symbolize_keys
-          if attrs.key?(:is_reference) && !admin
-            is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attrs[:is_reference]) || false
-            if is_reference != pest.is_reference
-              return { status: :reference_flag_denied, pest_record: pest }
-            end
-          end
-
           if pest.update(attrs)
             { status: :updated, pest_record: pest }
           else
@@ -201,9 +189,9 @@ module Adapters
           end
         end
 
-        def find_pest_in_crop(crop_id:, pest_id:)
-          crop = ::Crop.find_by(id: crop_id)
-          return { status: :crop_missing, pest_record: nil } unless crop
+        def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter:)
+          crop = crop_authorized_for_nested_edit(crop_id, crop_access_filter)
+          return { status: :not_found, pest_record: nil } unless crop
 
           pest = crop.pests.find_by(id: pest_id)
           return { status: :not_found, pest_record: nil } unless pest
@@ -365,6 +353,16 @@ module Adapters
         end
 
         private
+
+        def crop_authorized_for_nested_edit(crop_id, crop_access_filter)
+          crop = ::Crop.find_by(id: crop_id)
+          return nil unless crop
+          # 参照作物は `CropLoadAuthorizedForCropPestsInteractor` と同条件（誰でもネスト害虫画面・関連付け可）
+          return crop if crop.is_reference
+          return nil unless crop_access_filter.edit_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
+
+          crop
+        end
 
         def associate_crops_for_pest_record(pest, crop_ids, user:)
           associated_count = 0

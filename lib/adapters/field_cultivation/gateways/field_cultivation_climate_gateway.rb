@@ -221,15 +221,12 @@ module Adapters
             raise Domain::Shared::Exceptions::RecordNotFound
           end
           plan = field_cultivation.cultivation_plan
-          if plan.plan_type_public?
-            Domain::CultivationPlan::Policies::PlanAccess.find_public!(plan.id)
-          else
-            Domain::CultivationPlan::Policies::PlanAccess.find_private_owned!(@current_user, plan.id)
-          end
+          allowed = plan.plan_type_public? || (plan.plan_type_private? && plan.user_id == @current_user.id)
+          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
           field_cultivation
         end
 
-        # Domain::CultivationPlan::Policies::PlanAccess の拒否をドメインの RecordNotFound に正規化（Controller で rescue しない）
+        # 計画の公開／私有と所有者条件を満たさない場合は PolicyPermissionDenied（下で RecordNotFound に正規化）
         def authorized_field_cultivation(field_cultivation_id)
           find_authorized_field_cultivation(field_cultivation_id)
         rescue PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied

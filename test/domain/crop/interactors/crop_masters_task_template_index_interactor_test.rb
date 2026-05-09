@@ -23,7 +23,7 @@ module Domain
           rows = [ { "id" => 1 } ]
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:masters_crop_agricultural_task_templates_index_rows).with(user: user, crop_id: 2).returns(rows)
+          @gateway.expects(:masters_crop_agricultural_task_templates_index_rows).with(user: user, crop_id: 2, access_filter: anything).returns(rows)
           @output_port.expects(:on_success).with(rows)
 
           @interactor.call(input_dto)
@@ -34,7 +34,7 @@ module Domain
           user = mock
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:masters_crop_agricultural_task_templates_index_rows).with(user: user, crop_id: 2).raises(
+          @gateway.expects(:masters_crop_agricultural_task_templates_index_rows).with(user: user, crop_id: 2, access_filter: anything).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )
           @output_port.expects(:on_failure).with do |failure_dto|

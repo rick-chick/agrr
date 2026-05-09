@@ -13,7 +13,8 @@ module Domain
 
         def call(farm_id)
           user = @user_lookup.find(@user_id)
-          bundle = @gateway.find_authorized_farm_loaded_bundle!(user, farm_id.to_i, for_edit: true)
+          access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
+          bundle = @gateway.find_authorized_farm_loaded_bundle!(user, farm_id.to_i, for_edit: true, access_filter: access_filter)
           @output_port.on_success(bundle)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure

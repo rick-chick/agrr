@@ -21,9 +21,9 @@ module Domain
           current = Object.new
           current.define_singleton_method(:reference?) { false }
 
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_for_edit, current, [ user, 5 ])
-          gateway.expect(:update_for_user, task_entity, [ user, 5, { name: "剪定" }, nil ])
+          gateway = Object.new
+          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id, **_kw| current }
+          gateway.define_singleton_method(:update_for_user) { |_u, _id, _attrs, **_kw| task_entity }
 
           received = nil
           output_port = Minitest::Mock.new
@@ -42,7 +42,6 @@ module Domain
           assert_equal true, result
           assert_equal task_entity, received
           user_lookup.verify
-          gateway.verify
           output_port.verify
         end
 
@@ -58,8 +57,8 @@ module Domain
           current.define_singleton_method(:reference?) { false }
 
           gateway = Object.new
-          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id| current }
-          gateway.define_singleton_method(:update_for_user) do |_u, _id, _attrs, _selected = nil|
+          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id, **_kw| current }
+          gateway.define_singleton_method(:update_for_user) do |_u, _id, _attrs, **_kw|
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 

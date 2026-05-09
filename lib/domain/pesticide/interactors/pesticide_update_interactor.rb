@@ -14,7 +14,8 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
-          current = @gateway.find_authorized_for_edit(user, input_dto.pesticide_id)
+          access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
+          current = @gateway.find_authorized_for_edit(user, input_dto.pesticide_id, access_filter: access_filter)
 
           unless input_dto.is_reference.nil?
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
@@ -38,7 +39,7 @@ module Domain
             { is_reference: !!current.is_reference },
             attrs
           )
-          pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, normalized)
+          pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, normalized, access_filter: access_filter)
 
           @output_port.on_success(pesticide_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

@@ -12,7 +12,7 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(42).returns(user)
 
     gateway = mock
-    gateway.expects(:find_authorized_for_view).with(user, "99").returns(entity)
+    gateway.expects(:find_authorized_for_view).with(user, "99", access_filter: anything).returns(entity)
 
     output = mock
     output.expects(:on_success).with do |dto|
@@ -37,7 +37,7 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(42).returns(mock)
 
     gateway = mock
-    gateway.expects(:find_authorized_for_view).raises(StandardError.new("boom"))
+    gateway.expects(:find_authorized_for_view).with(anything, anything, access_filter: anything).raises(StandardError.new("boom"))
 
     output = mock
 
@@ -61,7 +61,7 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(42).returns(mock)
 
     gateway = mock
-    gateway.expects(:find_authorized_for_view).raises(Domain::Shared::Exceptions::RecordNotFound.new("internal"))
+    gateway.expects(:find_authorized_for_view).with(anything, anything, access_filter: anything).raises(Domain::Shared::Exceptions::RecordNotFound.new("internal"))
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -86,7 +86,7 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(42).returns(mock)
 
     gateway = mock
-    gateway.expects(:find_authorized_for_view).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+    gateway.expects(:find_authorized_for_view).with(anything, anything, access_filter: anything).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
     received = nil
     output = mock

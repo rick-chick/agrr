@@ -25,28 +25,28 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_index_for_filter"
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_for_view(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end
 
         # 認可済み農薬の HTML/API 詳細用 DTO（1 回の読み込みで関連名・制約を含む）
-        def authorized_pesticide_detail_output(user, id)
+        def authorized_pesticide_detail_output(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement authorized_pesticide_detail_output"
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_for_edit(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        def find_authorized_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
         end
 
-        def find_authorized_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
         end
 
-        def find_authorized_pesticide_loaded_bundle!(user, id, for_edit:)
+        def find_authorized_pesticide_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_pesticide_loaded_bundle!"
         end
 
@@ -54,11 +54,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, access_filter:)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after:, translator:)
+        def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after:, translator:, access_filter:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
 

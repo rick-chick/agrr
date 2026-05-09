@@ -20,7 +20,8 @@ module Domain
           end
 
           user = @user_lookup.find(input_dto.user_id)
-          result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          result = @gateway.create_masters_crop_task_template_association(user, input_dto, access_filter: access_filter)
 
           if result.failure?
             @output_port.on_failure(result.failure)

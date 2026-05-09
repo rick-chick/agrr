@@ -14,8 +14,13 @@ module Domain
             persisted_crop_stage: stage
           )
 
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_masters_crop_with_crop_stage_bundle!, dto, [ :u, 1, 2 ])
+          gateway = mock
+          gateway.expects(:find_masters_crop_with_crop_stage_bundle!).with(
+            :u,
+            1,
+            2,
+            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).returns(dto)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, :u, [ 9 ])
@@ -35,15 +40,17 @@ module Domain
 
           out = interactor.call(1, 2)
           assert_same dto, out
-          gateway.verify
           user_lookup.verify
         end
 
         test "calls failure presenter on record not found" do
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_masters_crop_with_crop_stage_bundle!, nil) do
-            raise Domain::Shared::Exceptions::RecordNotFound, "x"
-          end
+          gateway = mock
+          gateway.expects(:find_masters_crop_with_crop_stage_bundle!).with(
+            :u,
+            1,
+            99,
+            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
+          ).raises(Domain::Shared::Exceptions::RecordNotFound, "x")
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, :u, [ 9 ])
@@ -59,7 +66,6 @@ module Domain
           )
 
           assert_nil interactor.call(1, 99)
-          gateway.verify
           user_lookup.verify
           failure.verify
         end

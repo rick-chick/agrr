@@ -224,7 +224,8 @@ class AgriculturalTasksController < ApplicationController
       user: current_user,
       task_id: params[:id],
       dto: dto,
-      task_attributes: task_attributes
+      task_attributes: task_attributes,
+      access_filter: Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(current_user)
     )
     return unless defined?(@accessible_crops)
 

@@ -65,24 +65,25 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_reference_farms_for_region"
         end
 
-        def find_authorized_for_view(user, id)
+        # @param access_filter [Domain::Shared::ReferenceRecordAccessFilter] FarmPolicy.record_access_filter(user)
+        def find_authorized_for_view(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_for_edit(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
         # HTML/Presenter 用: 認可後に1回の取得で AR を返す（Controller の二重 find を避ける）
-        def find_authorized_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
         end
 
-        def find_authorized_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
         end
 
-        def find_authorized_farm_loaded_bundle!(user, id, for_edit:)
+        def find_authorized_farm_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_farm_loaded_bundle!"
         end
 
@@ -96,17 +97,17 @@ module Domain
           raise NotImplementedError, "Subclasses must implement build_blank_farm_for_master_form!"
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, access_filter:)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
         # 認可済み農場と圃場一覧を Entity/DTO で返す（Interactor 用）
-        def detail_for_authorized_view(user, id)
+        def detail_for_authorized_view(user, id, access_filter:)
           raise NotImplementedError, "Subclasses must implement detail_for_authorized_view"
         end
 
         # 認可・DeletionUndo スケジュールをアダプタ内で完結。Interactor に AR を渡さない。
-        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after:, toast_message:)
+        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after:, toast_message:, access_filter:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
 

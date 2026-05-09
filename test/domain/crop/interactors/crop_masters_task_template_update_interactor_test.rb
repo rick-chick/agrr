@@ -32,7 +32,8 @@ module Domain
             user: user,
             crop_id: 2,
             template_id: 3,
-            attributes: { "name" => "x" }
+            attributes: { "name" => "x" },
+            access_filter: anything
           ).returns({ ok: true, row: row })
           @output_port.expects(:on_success).with(row)
 
@@ -49,7 +50,13 @@ module Domain
           user = mock
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:update_masters_crop_task_template_for_api).returns(
+          @gateway.expects(:update_masters_crop_task_template_for_api).with(
+            user: user,
+            crop_id: 2,
+            template_id: 3,
+            attributes: {},
+            access_filter: anything
+          ).returns(
             { ok: false, errors: [ "Name can't be blank" ] }
           )
           @output_port.expects(:on_failure).with do |failure_dto|
@@ -71,7 +78,13 @@ module Domain
           user = mock
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:update_masters_crop_task_template_for_api).raises(
+          @gateway.expects(:update_masters_crop_task_template_for_api).with(
+            user: user,
+            crop_id: 2,
+            template_id: 3,
+            attributes: {},
+            access_filter: anything
+          ).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )
           @output_port.expects(:on_failure).with do |failure_dto|

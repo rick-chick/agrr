@@ -49,7 +49,14 @@ module Domain
             )
           end
 
-          @persistence.upsert(user_dto: user, crop_name: cn, variety: v, crop_info: crop_info)
+          crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          @persistence.upsert(
+            user_dto: user,
+            crop_name: cn,
+            variety: v,
+            crop_info: crop_info,
+            crop_access_filter: crop_access_filter
+          )
         end
       end
     end

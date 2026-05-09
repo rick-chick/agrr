@@ -99,7 +99,8 @@ module Domain
         private
 
         def load_authorized_pest_entity(user, pest_id)
-          @pest_gateway.find_authorized_for_edit(user, pest_id.to_i)
+          access_filter = Domain::Shared::Policies::PestPolicy.record_access_filter(user)
+          @pest_gateway.find_authorized_for_edit(user, pest_id.to_i, access_filter: access_filter)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           nil
         end

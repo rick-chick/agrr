@@ -4,11 +4,12 @@ module Domain
   module Field
     module Gateways
       class FieldGateway
-        def authorized_farm_fields_list(farm_id, user_id)
+        # @param farm_access_filter [Domain::Shared::ReferenceRecordAccessFilter] FarmPolicy.record_access_filter(user)
+        def authorized_farm_fields_list(farm_id, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement authorized_farm_fields_list"
         end
 
-        def field_with_farm_for_user(field_id, user_id)
+        def field_with_farm_for_user(field_id, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement field_with_farm_for_user"
         end
 
@@ -16,39 +17,39 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_by_id_and_user"
         end
 
-        def create(create_input_dto, farm_id, user_id)
+        def create(create_input_dto, farm_id, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement create"
         end
 
-        def update(field_id, update_input_dto, user_id)
+        def update(field_id, update_input_dto, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def destroy(field_id, user_id)
+        def destroy(field_id, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 
-        def find_authorized_for_view(user, id)
+        def find_authorized_for_view(user, id, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
         end
 
-        def find_authorized_for_edit(user, id)
+        def find_authorized_for_edit(user, id, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        def find_authorized_field_loaded_in_farm!(user, farm_id, field_id)
+        def find_authorized_field_loaded_in_farm!(user, farm_id, field_id, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_field_loaded_in_farm!"
         end
 
-        def create_for_user(user, farm_id, attrs)
+        def create_for_user(user, farm_id, attrs, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_destroy_with_undo(user:, field_id:, auto_hide_after:, translator:)
+        def soft_destroy_with_undo(user:, field_id:, auto_hide_after:, translator:, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
         end
 

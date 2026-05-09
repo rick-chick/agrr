@@ -14,7 +14,8 @@ module Domain
 
         def call(input_dto)
           user = @user_lookup.find(@user_id)
-          current_entity = @gateway.find_authorized_for_edit(user, input_dto.crop_id)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          current_entity = @gateway.find_authorized_for_edit(user, input_dto.crop_id, access_filter: access_filter)
 
           unless input_dto.is_reference.nil?
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
@@ -39,7 +40,7 @@ module Domain
             { is_reference: current_entity.reference? },
             attrs
           )
-          crop_entity = @gateway.update_for_user(user, input_dto.crop_id, normalized)
+          crop_entity = @gateway.update_for_user(user, input_dto.crop_id, normalized, access_filter: access_filter)
 
           @output_port.on_success(crop_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

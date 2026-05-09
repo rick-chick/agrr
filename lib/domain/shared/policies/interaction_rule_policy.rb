@@ -18,6 +18,10 @@ module Domain
           Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: mode, user_id: user.id)
         end
 
+        def self.record_access_filter(user)
+          Domain::Shared::ReferenceRecordAccessFilter.new(user: user, policy_module: self)
+        end
+
         def self.normalize_attrs_for_create(user, params)
           attributes = params.to_h.symbolize_keys
           attributes.delete(:region) unless user.admin?

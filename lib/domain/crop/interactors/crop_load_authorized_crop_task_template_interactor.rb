@@ -15,7 +15,14 @@ module Domain
         # @return [Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto, nil]
         def call(crop_id, template_id)
           user = @user_lookup.find(@user_id)
-          @gateway.find_authorized_crop_task_template_in_crop!(user, crop_id.to_i, template_id.to_i, for_edit: @for_edit)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          @gateway.find_authorized_crop_task_template_in_crop!(
+            user,
+            crop_id.to_i,
+            template_id.to_i,
+            for_edit: @for_edit,
+            access_filter: access_filter
+          )
         rescue Domain::Shared::Exceptions::RecordNotFound
           @failure_presenter.on_not_found
           nil

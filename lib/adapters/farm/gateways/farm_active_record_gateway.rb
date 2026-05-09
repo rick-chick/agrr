@@ -176,35 +176,35 @@ module Adapters
           end
         end
 
-        def find_authorized_model_for_view(user, id)
+        def find_authorized_model_for_view(user, id, access_filter:)
           farm = find_farm_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.farm_view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless access_filter.view_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           farm
         end
 
-        def find_authorized_model_for_edit(user, id)
+        def find_authorized_model_for_edit(user, id, access_filter:)
           farm = find_farm_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           farm
         end
 
-        def find_authorized_for_view(user, id)
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_view(user, id))
+        def find_authorized_for_view(user, id, access_filter:)
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_for_edit(user, id)
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_edit(user, id))
+        def find_authorized_for_edit(user, id, access_filter:)
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_farm_loaded_bundle!(user, id, for_edit:)
+        def find_authorized_farm_loaded_bundle!(user, id, for_edit:, access_filter:)
           farm = if for_edit
-                   find_authorized_model_for_edit(user, id)
+                   find_authorized_model_for_edit(user, id, access_filter: access_filter)
                  else
-                   find_authorized_model_for_view(user, id)
+                   find_authorized_model_for_view(user, id, access_filter: access_filter)
                  end
           Domain::Farm::Dtos::AuthorizedFarmLoadedDto.new(
             farm_entity: Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm),
@@ -225,9 +225,9 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def update_for_user(user, id, attrs)
+        def update_for_user(user, id, attrs, access_filter:)
           farm = find_farm_model!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
@@ -236,18 +236,18 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
         end
 
-        def detail_for_authorized_view(user, id)
+        def detail_for_authorized_view(user, id, access_filter:)
           farm = find_farm_with_fields!(id)
-          unless Domain::Shared::ReferenceMasterAuthorization.farm_view_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless access_filter.view_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 
           Adapters::Farm::Mappers::FarmMapper.detail_dto_from_farm_record(farm)
         end
 
-        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:)
+        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:, access_filter:)
           farm = find_farm_model!(farm_id)
-          unless Domain::Shared::ReferenceMasterAuthorization.farm_edit_allowed?(user, is_reference: farm.is_reference, user_id: farm.user_id)
+          unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
           if farm.free_crop_plans.any?

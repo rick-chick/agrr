@@ -103,7 +103,13 @@ module Domain
         private
 
         def load_authorized_fertilize(user, fertilize_id)
-          bundle = @fertilize_gateway.find_authorized_fertilize_loaded_bundle!(user, fertilize_id.to_i, for_edit: true)
+          access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
+          bundle = @fertilize_gateway.find_authorized_fertilize_loaded_bundle!(
+            user,
+            fertilize_id.to_i,
+            for_edit: true,
+            access_filter: access_filter
+          )
           bundle.persisted_fertilize
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           nil
