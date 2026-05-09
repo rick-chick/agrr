@@ -4,10 +4,6 @@ module Domain
   module CultivationPlan
     module Gateways
       class CultivationPlanGateway
-        def create(create_dto)
-          raise NotImplementedError, "Subclasses must implement create"
-        end
-
         def find_existing(farm, user)
           raise NotImplementedError, "Subclasses must implement find_existing"
         end

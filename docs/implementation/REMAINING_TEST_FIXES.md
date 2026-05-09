@@ -98,8 +98,6 @@
 
 - [x] **PlanFinalizeJobTest#test_finalizes_plan_by_setting_status_completed_and_broadcasting_completed_phase**— 解消済み
 
-- [x] **Domain::CultivationPlan::CultivationPlanCreateInteractorTest**— 解消済み
-
 - [x] **`test/gateways/agrr/daemon_client_test.rb`**（旧 AgrrServiceTest）— 解消済み
 
 ---

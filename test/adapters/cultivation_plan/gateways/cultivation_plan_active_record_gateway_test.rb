@@ -7,29 +7,6 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
   end
 
-  test "should create cultivation plan" do
-    user = create(:user)
-    farm = create(:farm, user: user)
-    crop = create(:crop, user: user, is_reference: false)
-
-    create_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateGatewayDto.new(
-      farm: farm,
-      crops: [ crop ],
-      user: user,
-      plan_name: "Test Plan",
-      total_area: 100.0
-    )
-
-    result = @gateway.create(create_dto)
-
-    assert result.success?
-    assert_not_nil result.cultivation_plan
-    assert_equal "Test Plan", result.cultivation_plan.plan_name
-    assert_equal user.id, result.cultivation_plan.user_id
-    assert_equal farm.id, result.cultivation_plan.farm_id
-    assert_equal "private", result.cultivation_plan.plan_type
-  end
-
   test "should find existing cultivation plan" do
     user = create(:user)
     farm = create(:farm, user: user)
@@ -93,27 +70,6 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     found_crops = @gateway.find_crops([ 9999 ], user)
 
     assert_empty found_crops
-  end
-
-  test "should raise error when create fails" do
-    user = create(:user)
-    farm = create(:farm, user: user)
-    crop = create(:crop, user: user, is_reference: false)
-
-    # 同じfarm×userの計画が既に存在する場合
-    create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
-
-    create_dto = Domain::CultivationPlan::Dtos::CultivationPlanCreateGatewayDto.new(
-      farm: farm,
-      crops: [ crop ],
-      user: user,
-      plan_name: "Test Plan",
-      total_area: 100.0
-    )
-
-    assert_raises(StandardError) do
-      @gateway.create(create_dto)
-    end
   end
 
   test "private_plan_optimizing_read_model returns read model for owned private plan" do

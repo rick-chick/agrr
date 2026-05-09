@@ -6,24 +6,6 @@ module Adapters
       class CultivationPlanActiveRecordGateway < Domain::CultivationPlan::Gateways::CultivationPlanGateway
         include Adapters::Shared::Concerns::ActiveRecordTransactional
 
-        def create(create_dto)
-          result = initialize_plan_from_selection(
-            farm: create_dto.farm,
-            total_area: create_dto.total_area,
-            crops: create_dto.crops,
-            user: create_dto.user,
-            plan_type: "private",
-            plan_name: create_dto.plan_name,
-            planning_start_date: Date.current.beginning_of_year,
-            planning_end_date: Date.new(Date.current.year + 1, 12, 31)
-          )
-          unless result.success?
-            raise Domain::Shared::Exceptions::RecordInvalid, result.errors.join(", ")
-          end
-
-          result
-        end
-
         def find_with_field_cultivations_for_task_schedule(plan_id)
           plan = ::CultivationPlan.includes(
             field_cultivations: {
