@@ -34,6 +34,7 @@
 }
 
 .section-card {
+  box-sizing: border-box;
   width: 100%;
   background: var(--color-surface);
   border-radius: var(--radius-lg);
@@ -41,6 +42,10 @@
   margin-bottom: var(--space-4);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-card);
+  /* ヘッダー行 + .card-list を縦に積み、子の高さで枠が伸びる（min-height:100% 由来の欠陥を防ぐ） */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .page-main > .section-card {
@@ -74,6 +79,7 @@
   align-items: center;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+  flex-shrink: 0;
 }
 
 /* ===== 2. 一覧（カードリスト） ===== */
@@ -84,6 +90,10 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  /* stretch だと行高さと min-height:% の相互作用で枠が潰れることがある */
+  align-items: start;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 @media (min-width: 768px) {
@@ -133,7 +143,8 @@ article.item-card {
   align-items: stretch;
   flex: 1 1 auto;
   width: 100%;
-  min-height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   gap: var(--space-3);
   padding: var(--space-4);
   background: var(--color-surface);

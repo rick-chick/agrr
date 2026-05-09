@@ -12,6 +12,12 @@ module Domain
           user.admin? || (!is_reference && user_id == user.id)
         end
 
+        # @return [Domain::Shared::ValueObjects::ReferenceIndexListFilter]
+        def self.index_list_filter(user)
+          mode = user.admin? ? :reference_or_owned : :owned_non_reference
+          Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: mode, user_id: user.id)
+        end
+
         def self.normalize_attrs_for_create(user, attrs)
           h = attrs.to_h.symbolize_keys
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(h[:is_reference]) || false

@@ -107,14 +107,7 @@ const initialControl: ApiKeyViewState = {
       }
     </div>
   `,
-  styles: [`
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    pre {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    }
-  `]
+  styleUrls: ['./api-key.component.css']
 })
 export class ApiKeyComponent implements ApiKeyView, OnInit {
   private readonly loadUseCase = inject(LoadApiKeyUseCase);

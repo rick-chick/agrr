@@ -13,7 +13,8 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          crops = @gateway.list_index_for_user(user)
+          filter = Domain::Shared::Policies::CropPolicy.index_list_filter(user)
+          crops = @gateway.list_index_for_filter(filter)
           @output_port.on_success(crops)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))

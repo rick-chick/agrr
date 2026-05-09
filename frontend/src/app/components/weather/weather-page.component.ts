@@ -8,10 +8,12 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   imports: [CommonModule, TemperatureChartComponent, TranslateModule],
   template: `
-    <section class="page">
-      <h2>{{ 'weather.page.heading' | translate }}</h2>
-      <app-temperature-chart />
-    </section>
+    <main class="page-main">
+      <section class="page">
+        <h2>{{ 'weather.page.heading' | translate }}</h2>
+        <app-temperature-chart />
+      </section>
+    </main>
   `,
   styleUrls: ['./weather-page.component.css']
 })

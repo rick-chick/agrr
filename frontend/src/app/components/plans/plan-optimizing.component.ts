@@ -18,22 +18,15 @@ const initialControl: PlanOptimizingViewState = {
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...PLAN_OPTIMIZING_PROVIDERS],
   template: `
-    <section class="page">
-      <a [routerLink]="['/plans', planId]">{{ 'plans.optimizing_live.back_to_plan' | translate }}</a>
-      <h2>{{ 'plans.optimizing_live.heading' | translate }}</h2>
-      <p>{{ 'plans.optimizing_live.progress_label' | translate: { progress: control.progress } }}</p>
-    </section>
+    <main class="page-main">
+      <section class="page">
+        <a [routerLink]="['/plans', planId]">{{ 'plans.optimizing_live.back_to_plan' | translate }}</a>
+        <h2>{{ 'plans.optimizing_live.heading' | translate }}</h2>
+        <p>{{ 'plans.optimizing_live.progress_label' | translate: { progress: control.progress } }}</p>
+      </section>
+    </main>
   `,
-  styles: [
-    `
-      .page {
-        background: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid #e3e5e8;
-      }
-    `
-  ]
+  styleUrls: ['./plan-optimizing.component.css']
 })
 export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);

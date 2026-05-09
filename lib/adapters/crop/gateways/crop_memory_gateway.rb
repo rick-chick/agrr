@@ -8,9 +8,8 @@ module Adapters
           @deletion_undo_gateway = deletion_undo_gateway
         end
 
-        def list_index_for_user(user)
-          query = index_scope_for_user(user)
-          query.map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
+        def list_index_for_filter(filter)
+          index_relation_for_filter(filter).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
         def list_user_owned_non_reference_crops_ordered_by_name(user)
@@ -715,11 +714,14 @@ module Adapters
           ::AgriculturalTask.none
         end
 
-        def index_scope_for_user(user)
-          if user.admin?
-            ::Crop.where("is_reference = ? OR user_id = ?", true, user.id)
+        def index_relation_for_filter(filter)
+          case filter.mode
+          when :reference_or_owned
+            ::Crop.where("is_reference = ? OR user_id = ?", true, filter.user_id)
+          when :owned_non_reference
+            ::Crop.where(user_id: filter.user_id, is_reference: false)
           else
-            ::Crop.where(user_id: user.id, is_reference: false)
+            raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
           end
         end
 

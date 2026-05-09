@@ -244,9 +244,15 @@ interface VisibleRange {
                             stroke-width="2.5"
                             class="bar-bg"
                             style="cursor: grab;" />
-                      <text [attr.x]="params.x + params.width / 2" 
-                            [attr.y]="config.barPadding + config.barHeight / 2 + 5" 
-                            class="bar-label" text-anchor="middle" font-size="12" font-weight="600" fill="#1F2937" style="pointer-events: none;">
+                      <text
+                            [attr.x]="params.x + (params.width - 24) / 2"
+                            [attr.y]="config.barPadding + config.barHeight / 2 + 5"
+                            class="bar-label"
+                            text-anchor="middle"
+                            font-size="12"
+                            font-weight="600"
+                            fill="#1F2937"
+                            style="pointer-events: none;">
                         {{ cultivation.crop_name }}
                       </text>
                       <g
@@ -530,9 +536,11 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         if (!rect) return;
         const x = parseFloat(rect.getAttribute('x') || '0');
         const width = parseFloat(rect.getAttribute('width') || '0');
+        const reserve = 24;
+        const labelCenterX = x + Math.max(0, (width - reserve) / 2);
         const y = parseFloat(rect.getAttribute('y') || this.config.barPadding.toString());
         const height = parseFloat(rect.getAttribute('height') || this.config.barHeight.toString());
-        t.setAttribute('x', (x + (width / 2)).toString());
+        t.setAttribute('x', labelCenterX.toString());
         t.setAttribute('y', (y + (height / 2) + 5).toString());
       });
     } catch (e) {

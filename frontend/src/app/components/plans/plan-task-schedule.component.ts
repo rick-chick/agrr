@@ -19,19 +19,21 @@ const initialControl: PlanTaskScheduleViewState = {
   imports: [CommonModule, RouterLink, TaskScheduleTimelineComponent, TranslateModule],
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
-    <section class="page">
-      <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedule.back_to_plan' | translate }}</a>
-      @if (control.loading) {
-        <p class="master-loading">{{ 'common.loading' | translate }}</p>
-      } @else if (control.error) {
-        <div class="page-alert-error" role="alert">
-          <p>{{ control.error | translate }}</p>
-        </div>
-      } @else if (control.schedule) {
-        <h2>{{ 'plans.task_schedule.title' | translate: { name: control.schedule.plan.name } }}</h2>
-        <app-task-schedule-timeline [fields]="control.schedule.fields" />
-      }
-    </section>
+    <main class="page-main">
+      <section class="page">
+        <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedule.back_to_plan' | translate }}</a>
+        @if (control.loading) {
+          <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <div class="page-alert-error" role="alert">
+            <p>{{ control.error | translate }}</p>
+          </div>
+        } @else if (control.schedule) {
+          <h2>{{ 'plans.task_schedule.title' | translate: { name: control.schedule.plan.name } }}</h2>
+          <app-task-schedule-timeline [fields]="control.schedule.fields" />
+        }
+      </section>
+    </main>
   `,
   styleUrls: ['./plan-task-schedule.component.css']
 })

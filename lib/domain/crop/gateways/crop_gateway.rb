@@ -94,8 +94,9 @@ module Domain
         end
 
         # Policy 連携（永続化は Adapter）。一覧は Entity 配列のみ公開
-        def list_index_for_user(user)
-          raise NotImplementedError, "Subclasses must implement list_index_for_user"
+        # @param filter [Domain::Shared::ValueObjects::ReferenceIndexListFilter]
+        def list_index_for_filter(filter)
+          raise NotImplementedError, "Subclasses must implement list_index_for_filter"
         end
 
         def list_user_owned_non_reference_crops_ordered_by_name(user)
