@@ -176,35 +176,23 @@ module Adapters
           end
         end
 
-        def find_authorized_model_for_view(user, id, access_filter:)
-          farm = find_farm_model!(id)
-          unless access_filter.view_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          farm
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          farm = find_farm_model!(id)
-          unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          farm
-        end
-
         def find_authorized_for_view(user, id, access_filter:)
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(
+            authorized_farm_record_for_view!(user, id, access_filter: access_filter)
+          )
         end
 
         def find_authorized_for_edit(user, id, access_filter:)
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(
+            authorized_farm_record_for_edit!(user, id, access_filter: access_filter)
+          )
         end
 
         def find_authorized_farm_loaded_bundle!(user, id, for_edit:, access_filter:)
           farm = if for_edit
-                   find_authorized_model_for_edit(user, id, access_filter: access_filter)
+                   authorized_farm_record_for_edit!(user, id, access_filter: access_filter)
                  else
-                   find_authorized_model_for_view(user, id, access_filter: access_filter)
+                   authorized_farm_record_for_view!(user, id, access_filter: access_filter)
                  end
           Domain::Farm::Dtos::AuthorizedFarmLoadedDto.new(
             farm_entity: Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm),
@@ -294,6 +282,22 @@ module Adapters
         end
 
         private
+
+        def authorized_farm_record_for_view!(user, id, access_filter:)
+          farm = find_farm_model!(id)
+          unless access_filter.view_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          farm
+        end
+
+        def authorized_farm_record_for_edit!(user, id, access_filter:)
+          farm = find_farm_model!(id)
+          unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          farm
+        end
 
         def farm_weather_data_access_context_from_record(record)
           return nil unless record

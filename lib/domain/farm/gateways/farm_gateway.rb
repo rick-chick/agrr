@@ -74,15 +74,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        # HTML/Presenter 用: 認可後に1回の取得で AR を返す（Controller の二重 find を避ける）
-        def find_authorized_model_for_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
-        end
-
         def find_authorized_farm_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_farm_loaded_bundle!"
         end
