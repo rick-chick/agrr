@@ -110,7 +110,7 @@ module Crops
       bundle = interactor.call(params[:crop_id], for_edit: false)
       return if bundle.nil?
 
-      @crop = bundle.persisted_crop
+      @crop = Forms::CropMasterForm.from_snapshot(bundle.master_form_snapshot)
     end
 
     def set_template
@@ -125,7 +125,7 @@ module Crops
       bundle = interactor.call(@crop.id, params[:id])
       return if bundle.nil?
 
-      @template = bundle.persisted_crop_task_template
+      @template = Forms::CropTaskTemplateEditForm.from_dto(bundle.crop_task_template_dto)
     end
 
     def crop_task_template_update_attributes

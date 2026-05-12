@@ -82,7 +82,7 @@ module Adapters
 
           Domain::Crop::Dtos::AuthorizedCropLoadedDto.new(
             crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
-            persisted_crop: crop
+            master_form_snapshot: Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop)
           )
         end
 
@@ -101,18 +101,19 @@ module Adapters
         end
 
         def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:, access_filter:)
-          bundle = find_authorized_crop_loaded_bundle!(user, crop_id, for_edit: true, access_filter: access_filter)
-          crop = bundle.persisted_crop
+          crop = find_authorized_model_for_edit(user, crop_id, access_filter: access_filter)
           crop.assign_attributes(attributes)
-          crop
+          crop.valid?
+          snapshot = Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop, error_messages: crop.errors.full_messages)
+          Forms::CropMasterForm.from_snapshot(snapshot)
         end
 
         def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, access_filter:)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id)
           stage = crop.crop_stages.find(crop_stage_id)
           Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
-            persisted_crop: crop,
-            persisted_crop_stage: stage
+            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
+            crop_stage_entity: crop_stage_entity_from_record(stage)
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
@@ -122,8 +123,8 @@ module Adapters
           crop = find_user_non_reference_crop_for_masters!(user, crop_id)
           tpl = crop.crop_task_templates.find(template_id)
           Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto.new(
-            persisted_crop: crop,
-            persisted_crop_task_template: tpl
+            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
+            crop_task_template_dto: masters_crop_task_template_dto_from_record(tpl, agricultural_task_snapshot_from_record(tpl.agricultural_task))
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
@@ -182,19 +183,24 @@ module Adapters
         end
 
         def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:, access_filter:)
-          bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i, access_filter: access_filter)
-          tpl = bundle.persisted_crop_task_template
+          crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
+          tpl = crop.crop_task_templates.find(template_id.to_i)
           if tpl.update(attributes)
             { ok: true, row: masters_crop_task_template_api_row(tpl.reload) }
           else
             { ok: false, errors: tpl.errors.full_messages }
           end
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
         end
 
         def destroy_masters_crop_task_template_for_api!(user:, crop_id:, template_id:, access_filter:)
-          bundle = find_masters_crop_with_task_template_bundle!(user, crop_id.to_i, template_id.to_i, access_filter: access_filter)
-          bundle.persisted_crop_task_template.destroy!
+          crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
+          tpl = crop.crop_task_templates.find(template_id.to_i)
+          tpl.destroy!
           :ok
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
         end
 
         def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:, access_filter:)
@@ -205,8 +211,8 @@ module Adapters
                  end
           stage = crop.crop_stages.find(crop_stage_id)
           Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
-            persisted_crop: crop,
-            persisted_crop_stage: stage
+            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
+            crop_stage_entity: crop_stage_entity_from_record(stage)
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
@@ -220,8 +226,8 @@ module Adapters
                  end
           tpl = crop.crop_task_templates.find(template_id)
           Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto.new(
-            persisted_crop: crop,
-            persisted_crop_task_template: tpl
+            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
+            crop_task_template_dto: masters_crop_task_template_dto_from_record(tpl, agricultural_task_snapshot_from_record(tpl.agricultural_task))
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound
@@ -316,7 +322,6 @@ module Adapters
 
           Domain::Crop::Dtos::CropDetailOutputDto.new(
             crop: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
-            persisted_crop: crop,
             task_schedule_blueprints: task_schedule_blueprints,
             available_agricultural_tasks: available_tasks,
             selected_task_ids: selected_task_ids

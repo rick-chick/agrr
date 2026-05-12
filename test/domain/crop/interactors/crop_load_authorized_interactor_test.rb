@@ -25,8 +25,8 @@ module Domain
         end
 
         test "returns bundle when gateway succeeds" do
-          persisted = Object.new # 同一オブジェクト_identity を検証
-          dto = Domain::Crop::Dtos::AuthorizedCropLoadedDto.new(crop_entity: @entity, persisted_crop: persisted)
+          snapshot = Domain::Crop::Dtos::CropMasterFormSnapshot.for_unsaved_blank_form
+          dto = Domain::Crop::Dtos::AuthorizedCropLoadedDto.new(crop_entity: @entity, master_form_snapshot: snapshot)
 
           gw = Class.new do
             attr_accessor :captured_for_edit
@@ -67,7 +67,7 @@ module Domain
           bundle = interactor.call("42", for_edit: false)
 
           assert_equal @entity, bundle.crop_entity
-          assert_same persisted, bundle.persisted_crop
+          assert_same snapshot, bundle.master_form_snapshot
           assert_equal false, gw.captured_for_edit
           user_lookup.verify
         end

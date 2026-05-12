@@ -7,11 +7,11 @@ module Domain
     module Interactors
       class CropLoadMastersAuthorizedCropStageInteractorTest < ActiveSupport::TestCase
         test "returns dto when gateway succeeds" do
-          crop = Object.new
-          stage = Object.new
+          crop_entity = Domain::Crop::Entities::CropEntity.new(id: 1, user_id: 1, name: "x", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
+          crop_stage_entity = Domain::Crop::Entities::CropStageEntity.new(id: 2, crop_id: 1, name: "s", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
           dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
-            persisted_crop: crop,
-            persisted_crop_stage: stage
+            crop_entity: crop_entity,
+            crop_stage_entity: crop_stage_entity
           )
 
           gateway = mock

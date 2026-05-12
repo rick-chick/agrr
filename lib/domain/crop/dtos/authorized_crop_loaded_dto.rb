@@ -4,13 +4,12 @@ module Domain
   module Crop
     module Dtos
       # Gateway が一度読み込んだ作物について、CropEntity と永続モデル（連鎖プリロード済み）を束ねる。
-      # エッジ（Controller）は +persisted_crop+ を代入し、別クエリでの再取得をしない。
       class AuthorizedCropLoadedDto
-        attr_reader :crop_entity, :persisted_crop
+        attr_reader :crop_entity, :master_form_snapshot
 
-        def initialize(crop_entity:, persisted_crop:)
+        def initialize(crop_entity:, master_form_snapshot:)
           @crop_entity = crop_entity
-          @persisted_crop = persisted_crop
+          @master_form_snapshot = master_form_snapshot
         end
       end
     end

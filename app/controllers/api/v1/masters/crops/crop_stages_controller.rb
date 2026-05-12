@@ -106,7 +106,7 @@ module Api::V1::Masters::Crops
       bundle = interactor.call(params[:crop_id], for_edit: for_edit)
       return if bundle.nil?
 
-      @crop = bundle.persisted_crop
+      @crop = bundle.crop_entity
     end
 
     def load_authorized_crop_and_crop_stage
@@ -122,8 +122,8 @@ module Api::V1::Masters::Crops
       bundle = interactor.call(params[:crop_id], params[:id])
       return if bundle.nil?
 
-      @crop = bundle.persisted_crop
-      @crop_stage = bundle.persisted_crop_stage
+      @crop = bundle.crop_entity
+      @crop_stage = bundle.crop_stage_entity
     end
 
     def list_presenter

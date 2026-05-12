@@ -3,13 +3,12 @@
 module Domain
   module Crop
     module Dtos
-      # 認可済み作物の子として CropStage を一度に束ねる（Controller の二重取得・rescue 回避用）。
       class AuthorizedCropStageInCropContextDto
-        attr_reader :persisted_crop, :persisted_crop_stage
+        attr_reader :crop_entity, :crop_stage_entity
 
-        def initialize(persisted_crop:, persisted_crop_stage:)
-          @persisted_crop = persisted_crop
-          @persisted_crop_stage = persisted_crop_stage
+        def initialize(crop_entity:, crop_stage_entity:)
+          @crop_entity = crop_entity
+          @crop_stage_entity = crop_stage_entity
         end
       end
     end

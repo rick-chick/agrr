@@ -29,7 +29,6 @@ class CropsController < ApplicationController
 
   # GET /crops/:id/edit
   def edit
-    CompositionRoot.crop_gateway.prepare_crop_record_for_edit_master_form!(@crop)
   end
 
   # POST /crops
@@ -151,7 +150,7 @@ class CropsController < ApplicationController
     bundle = interactor.call(params[:id], for_edit: for_edit)
     return if bundle.nil?
 
-    @crop = bundle.persisted_crop
+    @crop = Forms::CropMasterForm.from_snapshot(bundle.master_form_snapshot)
   end
 
   def crop_params

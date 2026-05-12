@@ -7,11 +7,11 @@ module Domain
     module Interactors
       class CropLoadAuthorizedCropStageInteractorTest < ActiveSupport::TestCase
         test "returns bundle when gateway succeeds" do
-          crop = Object.new
-          stage = Object.new
+          crop_entity = Domain::Crop::Entities::CropEntity.new(id: 1, user_id: 1, name: "x", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
+          crop_stage_entity = Domain::Crop::Entities::CropStageEntity.new(id: 2, crop_id: 1, name: "s", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
           dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
-            persisted_crop: crop,
-            persisted_crop_stage: stage
+            crop_entity: crop_entity,
+            crop_stage_entity: crop_stage_entity
           )
 
           gw = Class.new do
@@ -54,9 +54,11 @@ module Domain
         end
 
         test "passes for_edit true to gateway when constructed with for_edit true" do
+          crop_entity2 = Domain::Crop::Entities::CropEntity.new(id: 3, user_id: 1, name: "y", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
+          crop_stage_entity2 = Domain::Crop::Entities::CropStageEntity.new(id: 4, crop_id: 3, name: "t", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
           dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
-            persisted_crop: Object.new,
-            persisted_crop_stage: Object.new
+            crop_entity: crop_entity2,
+            crop_stage_entity: crop_stage_entity2
           )
 
           gw = Class.new do

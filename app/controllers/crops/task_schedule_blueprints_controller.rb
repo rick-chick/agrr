@@ -49,7 +49,7 @@ module Crops
       bundle = interactor.call(params[:crop_id], for_edit: false)
       return if bundle.nil?
 
-      @crop = bundle.persisted_crop
+      @crop = Forms::CropMasterForm.from_snapshot(bundle.master_form_snapshot)
     end
   end
 end

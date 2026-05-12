@@ -88,8 +88,8 @@ module Crops
       bundle = interactor.call(params[:crop_id], params[:id])
       return if bundle.nil?
 
-      @crop = bundle.persisted_crop
-      @crop_stage = bundle.persisted_crop_stage
+      @crop = bundle.crop_entity
+      @crop_stage = bundle.crop_stage_entity
     end
 
     def interactor
