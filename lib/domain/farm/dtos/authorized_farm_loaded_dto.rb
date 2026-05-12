@@ -3,13 +3,13 @@
 module Domain
   module Farm
     module Dtos
-      # Gateway が一度読み込んだ農場について、FarmEntity と永続モデルを束ねる。
+      # Gateway が一度読み込んだ農場について、FarmEntity とフォーム表示用スナップショットを束ねる。
       class AuthorizedFarmLoadedDto
-        attr_reader :farm_entity, :persisted_farm
+        attr_reader :farm_entity, :master_form_snapshot
 
-        def initialize(farm_entity:, persisted_farm:)
+        def initialize(farm_entity:, master_form_snapshot:)
           @farm_entity = farm_entity
-          @persisted_farm = persisted_farm
+          @master_form_snapshot = master_form_snapshot
         end
       end
     end

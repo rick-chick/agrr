@@ -22,7 +22,9 @@ class FieldsController < ApplicationController
 
   # GET /farms/:farm_id/fields/new
   def new
-    @field = CompositionRoot.field_gateway.build_blank_field_for_master_form!(persisted_farm: @farm)
+    farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(current_user)
+    snapshot = CompositionRoot.field_gateway.build_blank_field_for_master_form!(farm_id: @farm.id, farm_access_filter: farm_access_filter)
+    @field = Forms::FieldMasterForm.from_snapshot(snapshot)
   end
 
   # GET /farms/:farm_id/fields/:id/edit
@@ -91,7 +93,7 @@ class FieldsController < ApplicationController
     bundle = interactor.call(@farm.id, params[:id])
     return if bundle.nil?
 
-    @field = bundle.persisted_field
+    @field = Forms::FieldMasterForm.from_snapshot(bundle.master_form_snapshot)
   end
 
 end

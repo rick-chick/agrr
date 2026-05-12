@@ -102,16 +102,15 @@ module Adapters
         end
 
         def find_authorized_field_loaded_in_farm!(user, farm_id, field_id, farm_access_filter:)
-          bundle = @farm_gateway.find_authorized_farm_loaded_bundle!(user, farm_id, for_edit: true, access_filter: farm_access_filter)
-          farm = bundle.persisted_farm
+          @farm_gateway.find_authorized_farm_loaded_bundle!(user, farm_id, for_edit: true, access_filter: farm_access_filter)
           field = begin
-            farm.fields.find(field_id)
+            ::Field.where(farm_id: farm_id).find(field_id)
           rescue ActiveRecord::RecordNotFound
             raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
           end
           Domain::Field::Dtos::AuthorizedFieldLoadedInFarmDto.new(
             field_entity: Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field),
-            persisted_field: field
+            master_form_snapshot: Adapters::Farm::Mappers::FieldMasterFormSnapshotMapper.from_record(field)
           )
         end
 
@@ -164,8 +163,12 @@ module Adapters
           { success: false, error_dto: Domain::Shared::Dtos::ErrorDto.new(e.message) }
         end
 
-        def build_blank_field_for_master_form!(persisted_farm:)
-          persisted_farm.fields.build
+        def build_blank_field_for_master_form!(farm_id:, farm_access_filter:)
+          farm = find_farm_model!(farm_id)
+          unless farm_access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          Adapters::Farm::Mappers::FieldMasterFormSnapshotMapper.from_record(farm.fields.build)
         end
 
         private

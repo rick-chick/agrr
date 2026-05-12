@@ -196,7 +196,7 @@ module Adapters
                  end
           Domain::Farm::Dtos::AuthorizedFarmLoadedDto.new(
             farm_entity: Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm),
-            persisted_farm: farm
+            master_form_snapshot: Adapters::Farm::Mappers::FarmMasterFormSnapshotMapper.from_record(farm)
           )
         end
 

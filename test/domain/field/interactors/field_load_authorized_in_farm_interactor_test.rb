@@ -23,10 +23,12 @@ module Domain
         end
 
         test "returns bundle when gateway succeeds" do
-          persisted = Object.new
+          snapshot = Domain::Farm::Dtos::FieldMasterFormSnapshot.new(
+            attributes: { name: "North", farm_id: 3 }, new_record: false, id: 7
+          )
           dto = Domain::Field::Dtos::AuthorizedFieldLoadedInFarmDto.new(
             field_entity: @entity,
-            persisted_field: persisted
+            master_form_snapshot: snapshot
           )
 
           gw = Class.new do
@@ -69,7 +71,7 @@ module Domain
           bundle = interactor.call("3", "7")
 
           assert_equal @entity, bundle.field_entity
-          assert_same persisted, bundle.persisted_field
+          assert_same snapshot, bundle.master_form_snapshot
           assert_equal 3, gw.captured_farm_id
           assert_equal 7, gw.captured_field_id
           user_lookup.verify
