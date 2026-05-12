@@ -73,14 +73,6 @@ module Adapters
             .map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          fertilize = find_fertilize_model!(id)
-          unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          fertilize
-        end
-
         def find_authorized_for_view(user, id, access_filter:)
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
         end
@@ -154,6 +146,14 @@ module Adapters
         end
 
         private
+
+        def find_authorized_model_for_edit(user, id, access_filter:)
+          fertilize = find_fertilize_model!(id)
+          unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          fertilize
+        end
 
         def index_relation_for_filter(filter)
           case filter.mode

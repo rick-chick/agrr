@@ -3,15 +3,15 @@
 module Domain
   module Fertilize
     module Dtos
-      # 肥料更新失敗時に Output Port へ渡す。HTML 再表示用のフォームモデルは Interactor が Gateway で解決して渡す（Presenter が controller の ivar を読まない）。
+      # 肥料更新失敗時に Output Port へ渡す。HTML 再表示用スナップショットは Interactor が Entity から構築（AR なし）。
       class FertilizeUpdateFailureDto
-        attr_reader :message, :form_fertilize
+        attr_reader :message, :master_form_snapshot
 
         # @param message [String]
-        # @param form_fertilize [Object, nil] Adapter が読み済みの永続モデルインスタンス（HTML の form_with / errors のみで使用）。
-        def initialize(message:, form_fertilize: nil)
+        # @param master_form_snapshot [Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot, nil]
+        def initialize(message:, master_form_snapshot: nil)
           @message = message
-          @form_fertilize = form_fertilize
+          @master_form_snapshot = master_form_snapshot
         end
       end
     end

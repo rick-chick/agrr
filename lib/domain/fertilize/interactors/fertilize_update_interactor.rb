@@ -13,6 +13,7 @@ module Domain
         end
 
         def call(input_dto)
+          current = nil
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
           current = @gateway.find_authorized_for_edit(user, input_dto.fertilize_id, access_filter: access_filter)
@@ -46,40 +47,28 @@ module Domain
           @output_port.on_success(fertilize_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
-        rescue Domain::Shared::Exceptions::RecordNotFound => e
-          form_fertilize = load_form_fertilize_for_failure(user, input_dto, access_filter)
+        rescue Domain::Shared::Exceptions::RecordNotFound, Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(
-            Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: e.message, form_fertilize: form_fertilize)
-          )
-        rescue Domain::Shared::Exceptions::RecordInvalid => e
-          form_fertilize = load_form_fertilize_for_failure(user, input_dto, access_filter)
-          @output_port.on_failure(
-            Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(message: e.message, form_fertilize: form_fertilize)
+            Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(
+              message: e.message,
+              master_form_snapshot: current ? snapshot_from_entity(current) : nil
+            )
           )
         end
 
         private
 
-        def load_form_fertilize_for_failure(user, input_dto, access_filter)
-          return nil unless user && access_filter && !Domain::Shared::ValidationHelpers.blank?(input_dto.fertilize_id)
-
-          fid = input_dto.fertilize_id.to_i
-          begin
-            bundle = @gateway.find_authorized_fertilize_loaded_bundle!(user, fid, for_edit: true, access_filter: access_filter)
-            return bundle.persisted_fertilize
-          rescue Domain::Shared::Policies::PolicyPermissionDenied,
-                 Domain::Shared::Exceptions::RecordNotFound,
-                 Domain::Shared::Exceptions::RecordInvalid
-            # fall through to model_for_edit
-          end
-
-          begin
-            @gateway.find_authorized_model_for_edit(user, fid, access_filter: access_filter)
-          rescue Domain::Shared::Policies::PolicyPermissionDenied,
-                 Domain::Shared::Exceptions::RecordNotFound,
-                 Domain::Shared::Exceptions::RecordInvalid
-            nil
-          end
+        def snapshot_from_entity(entity)
+          Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot.new(
+            attributes: {
+              name: entity.name, n: entity.n, p: entity.p, k: entity.k,
+              description: entity.description, package_size: entity.package_size,
+              is_reference: entity.is_reference, region: entity.region, user_id: entity.user_id
+            },
+            new_record: false,
+            id: entity.id,
+            error_messages: []
+          )
         end
       end
     end
