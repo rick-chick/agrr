@@ -40,7 +40,7 @@ module Adapters
         attr_accessor :user, :session_data, :result
 
         def initialize(user:, session_data:, logger:, cultivation_plan_gateway:, crop_stage_copy_gateway:)
-          @user = user
+          @user = user.is_a?(::User) ? user : ::User.find(user.id)
           @session_data = session_data
           @logger = logger
           @cultivation_plan_gateway = cultivation_plan_gateway

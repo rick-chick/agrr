@@ -122,12 +122,13 @@ module Adapters
         end
 
         def build_blank_agricultural_task_for_master_form(user)
-          user.agricultural_tasks.build
+          ::AgriculturalTask.new(user_id: user.id, is_reference: false)
         end
 
         def build_after_create_failure_agricultural_task_for_master_form!(user:, attributes:)
           sym = attributes.respond_to?(:symbolize_keys) ? attributes.symbolize_keys : attributes.to_h.symbolize_keys
-          task = user.agricultural_tasks.build(
+          task = ::AgriculturalTask.new(
+            user_id: user.id,
             name: sym[:name],
             description: sym[:description],
             time_per_sqm: sym[:time_per_sqm],

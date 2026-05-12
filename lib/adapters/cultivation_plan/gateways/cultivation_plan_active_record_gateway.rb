@@ -6,6 +6,10 @@ module Adapters
       class CultivationPlanActiveRecordGateway < Domain::CultivationPlan::Gateways::CultivationPlanGateway
         include Adapters::Shared::Concerns::ActiveRecordTransactional
 
+        def initialize(deletion_undo_gateway:)
+          @deletion_undo_gateway = deletion_undo_gateway
+        end
+
         def find_with_field_cultivations_for_task_schedule(plan_id)
           plan = ::CultivationPlan.includes(
             field_cultivations: {
@@ -193,9 +197,10 @@ module Adapters
         def destroy(plan_id, user, toast_message:)
           plan_model = find_private_owned_cultivation_plan_model!(user, plan_id)
 
-          ::DeletionUndo::Manager.schedule(
-            record: plan_model,
-            actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(user),
+          @deletion_undo_gateway.schedule(
+            resource_type: "CultivationPlan",
+            resource_id: plan_model.id,
+            actor_id: user&.id,
             toast_message: toast_message
           )
         rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied

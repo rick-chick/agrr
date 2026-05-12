@@ -4,7 +4,9 @@ require "test_helper"
 
 class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTest < ActiveSupport::TestCase
   def setup
-    @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
+    @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
+      deletion_undo_gateway: Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+    )
   end
 
   test "should find existing cultivation plan" do

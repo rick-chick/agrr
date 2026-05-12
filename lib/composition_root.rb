@@ -136,7 +136,9 @@ module CompositionRoot
     end
 
     def cultivation_plan_gateway
-      @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
+      @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
+        deletion_undo_gateway: deletion_undo_gateway
+      )
     end
 
     def agrr_optimization_payload_builder(cultivation_plan)
