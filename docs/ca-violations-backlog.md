@@ -103,8 +103,8 @@
 
 #### ドメイン DTO／Port の `persisted_*`（プロパティで AR を保持）
 
-- `Domain::Farm::Dtos::AuthorizedFarmLoadedDto` の `persisted_farm` を廃止または非 AR 型へ。
-- `Domain::Field::Dtos::AuthorizedFieldLoadedInFarmDto` の `persisted_field` を同上。
+- （**解消済み・2026-05-12**）`Domain::Farm::Dtos::AuthorizedFarmLoadedDto` の `persisted_farm` を `master_form_snapshot`（`FarmMasterFormSnapshot`）に置換。`FarmActiveRecordGateway#find_authorized_farm_loaded_bundle!` で `FarmMasterFormSnapshotMapper.from_record`。`FarmMasterFormSnapshotMapper` / `FieldMasterFormSnapshotMapper` を `app/adapters/farm/mappers/` から `lib/adapters/farm/mappers/` に移動（Zeitwerk 名前空間競合 `Adapters::Farm::Mappers::` の `lib/` 優先問題を解消）。
+- （**解消済み・2026-05-12**）`Domain::Field::Dtos::AuthorizedFieldLoadedInFarmDto` の `persisted_field` を `master_form_snapshot`（`FieldMasterFormSnapshot`）に置換。`FieldActiveRecordGateway#find_authorized_field_loaded_in_farm!` を `Field.where(farm_id:)` スコープ＋`FieldMasterFormSnapshotMapper.from_record` に変更。`build_blank_field_for_master_form!` シグネチャを `farm_id:/farm_access_filter:` 返却 `FieldMasterFormSnapshot` に変更。`FieldsController#new` / `#set_field` を追従。`lib/presenters/html/farm/farm_load_for_edit_html_presenter.rb`（死コード）を削除。
 - `Domain::Pesticide::Dtos::AuthorizedPesticideLoadedDto` の `persisted_pesticide` を同上。
 - （**解消済み・2026-05-12**）`Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto` の `persisted_fertilize` を `master_form_snapshot`（`FertilizeMasterFormSnapshot`）に置換。`FertilizeActiveRecordGateway#find_authorized_fertilize_loaded_bundle!` で `FertilizeMasterFormSnapshotMapper.from_record` を使用。
 - `Domain::Crop::Dtos::AuthorizedCropLoadedDto` / `AuthorizedCropStageInCropContextDto` / `AuthorizedCropTaskTemplateInCropContextDto` の `persisted_crop` 等を同上。
