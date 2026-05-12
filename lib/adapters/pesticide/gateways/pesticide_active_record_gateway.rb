@@ -92,7 +92,7 @@ module Adapters
                       end
           Domain::Pesticide::Dtos::AuthorizedPesticideLoadedDto.new(
             pesticide_entity: Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide),
-            persisted_pesticide: pesticide
+            master_form_snapshot: Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide)
           )
         end
 
