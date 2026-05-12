@@ -109,7 +109,7 @@
 - （**解消済み・2026-05-12**）`Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto` の `persisted_fertilize` を `master_form_snapshot`（`FertilizeMasterFormSnapshot`）に置換。`FertilizeActiveRecordGateway#find_authorized_fertilize_loaded_bundle!` で `FertilizeMasterFormSnapshotMapper.from_record` を使用。
 - `Domain::Crop::Dtos::AuthorizedCropLoadedDto` / `AuthorizedCropStageInCropContextDto` / `AuthorizedCropTaskTemplateInCropContextDto` の `persisted_crop` 等を同上。
 - `Domain::Crop::Dtos::CropDetailOutputDto` の `crop` / `persisted_crop` を同上。
-- `Domain::AgriculturalTask::Dtos::AuthorizedAgriculturalTaskLoadedDto` の `persisted_agricultural_task` を同上。
+- （**解消済み・2026-05-12**）`Domain::AgriculturalTask::Dtos::AuthorizedAgriculturalTaskLoadedDto` の `persisted_agricultural_task` を `master_form_snapshot`（`AgriculturalTaskMasterFormSnapshot`）に置換。`AgriculturalTaskMasterFormSnapshotMapper` を `app/adapters/` から `lib/adapters/` に移動（Zeitwerk 競合解消）。
 - `Domain::Pest::Ports::PestHtmlAuthorizedPestLoad` の `persisted_pest` を削除し、`pest_html_authorized_pest_load.rb` 内の暫定コメント（禁止 **3**）を解消する実装へ。
 
 #### Interactor が `persisted_*`（AR）を返す
