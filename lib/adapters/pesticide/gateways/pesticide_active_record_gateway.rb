@@ -65,22 +65,6 @@ module Adapters
           index_relation_for_filter(filter).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
-        def find_authorized_model_for_view(user, id, access_filter:)
-          pesticide = find_pesticide_model!(id)
-          unless access_filter.view_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          pesticide
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          pesticide = find_pesticide_model!(id)
-          unless access_filter.edit_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          pesticide
-        end
-
         def find_authorized_for_view(user, id, access_filter:)
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
         end
@@ -205,6 +189,22 @@ module Adapters
 
         def selectable_scope(user)
           ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
+        end
+
+        def find_authorized_model_for_view(user, id, access_filter:)
+          pesticide = find_pesticide_model!(id)
+          unless access_filter.view_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          pesticide
+        end
+
+        def find_authorized_model_for_edit(user, id, access_filter:)
+          pesticide = find_pesticide_model!(id)
+          unless access_filter.edit_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          pesticide
         end
 
         def find_pesticide_model!(id)

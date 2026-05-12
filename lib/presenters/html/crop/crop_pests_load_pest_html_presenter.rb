@@ -8,8 +8,8 @@ module Presenters
           @view = view
         end
 
-        def on_success(pest)
-          @view.instance_variable_set(:@pest, pest)
+        def on_success(pest_snapshot)
+          @view.instance_variable_set(:@pest, Forms::CropNestedPestForm.from_crop_nest_snapshot(pest_snapshot))
         end
 
         def on_not_found(crop_id:)

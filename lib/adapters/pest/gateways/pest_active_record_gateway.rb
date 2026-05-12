@@ -36,22 +36,6 @@ module Adapters
           ordered.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
-        def find_authorized_model_for_view(user, id, access_filter:)
-          pest = find_pest_model!(id)
-          unless access_filter.view_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          pest
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          pest = find_pest_model!(id)
-          unless access_filter.edit_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          pest
-        end
-
         def authorized_pest_detail_output(user, id, access_filter:)
           pest = ::Pest.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods, :crops).find(id)
           unless access_filter.view_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
@@ -160,47 +144,43 @@ module Adapters
           pest = ::Pest.new(attrs)
 
           unless crop
-            return { status: :invalid, pest_record: pest, unassociated_pest_entities: [] }
+            return { status: :invalid, pest_snapshot: pest_crop_nest_snapshot_from(pest), unassociated_pest_entities: [] }
           end
 
           if pest.save
             crop.pests << pest unless crop.pests.include?(pest)
-            return { status: :created, pest_record: pest, unassociated_pest_entities: [] }
+            return { status: :created, pest_snapshot: pest_crop_nest_snapshot_from(pest), unassociated_pest_entities: [] }
           end
 
           available_entities = list_selectable_pest_entities_recent_first(user)
           crop_pests_ids = crop.pest_ids
           unassociated = available_entities.reject { |e| crop_pests_ids.include?(e.id) }
-          { status: :invalid, pest_record: pest, unassociated_pest_entities: unassociated }
+          { status: :invalid, pest_snapshot: pest_crop_nest_snapshot_from(pest), unassociated_pest_entities: unassociated }
         end
 
         def update_pest_for_crop(user:, crop_id:, pest_id:, pest_attrs:, crop_access_filter:)
           crop = crop_authorized_for_nested_edit(crop_id, crop_access_filter)
-          return { status: :crop_missing, pest_record: nil } unless crop
+          return { status: :crop_missing, pest_snapshot: nil } unless crop
 
-          pest = crop.pests.find_by(id: pest_id)
-          return { status: :pest_missing, pest_record: nil } unless pest
+          pest = crop.pests.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods).find_by(id: pest_id)
+          return { status: :pest_missing, pest_snapshot: nil } unless pest
 
           attrs = pest_attrs.to_h.symbolize_keys
           if pest.update(attrs)
-            { status: :updated, pest_record: pest }
+            { status: :updated, pest_snapshot: pest_crop_nest_snapshot_from(pest) }
           else
-            { status: :invalid, pest_record: pest }
+            { status: :invalid, pest_snapshot: pest_crop_nest_snapshot_from(pest) }
           end
         end
 
-        def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter:)
+        def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter:, for_edit_form: false)
           crop = crop_authorized_for_nested_edit(crop_id, crop_access_filter)
-          return { status: :not_found, pest_record: nil } unless crop
+          return { status: :not_found, pest_snapshot: nil } unless crop
 
-          pest = crop.pests.find_by(id: pest_id)
-          return { status: :not_found, pest_record: nil } unless pest
+          pest = crop.pests.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods).find_by(id: pest_id)
+          return { status: :not_found, pest_snapshot: nil } unless pest
 
-          { status: :found, pest_record: pest }
-        end
-
-        def prepare_crop_nested_pest_for_edit_form!(pest_record)
-          ensure_pest_control_method_row_for_form!(pest_record)
+          { status: :found, pest_snapshot: pest_crop_nest_snapshot_from(pest, ensure_blank_control_method: for_edit_form) }
         end
 
         def prepare_top_level_pest_for_edit_form!(pest_record)
@@ -333,10 +313,17 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pest not found"
         end
 
-        def find_user_owned_non_reference_pest_record_by_name(user_id:, name:)
+        def find_user_owned_non_reference_pest_by_name(user_id:, name:)
           return nil if name.blank?
 
-          ::Pest.find_by(name: name, is_reference: false, user_id: user_id)
+          record = ::Pest.find_by(name: name, is_reference: false, user_id: user_id)
+          return nil unless record
+
+          Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record)
+        end
+
+        def pest_ids_linked_to_crop(crop_id:)
+          ::CropPest.where(crop_id: crop_id).pluck(:pest_id)
         end
 
         def unlink_pest_from_crop_for_masters(user:, crop_id:, pest_id:)
@@ -353,6 +340,22 @@ module Adapters
         end
 
         private
+
+        def find_authorized_model_for_view(user, id, access_filter:)
+          pest = find_pest_model!(id)
+          unless access_filter.view_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          pest
+        end
+
+        def find_authorized_model_for_edit(user, id, access_filter:)
+          pest = find_pest_model!(id)
+          unless access_filter.edit_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          pest
+        end
 
         def crop_authorized_for_nested_edit(crop_id, crop_access_filter)
           crop = ::Crop.find_by(id: crop_id)
@@ -381,6 +384,32 @@ module Adapters
         def ensure_pest_control_method_row_for_form!(pest_record)
           pest_record.pest_control_methods.build if pest_record.pest_control_methods.empty?
           pest_record
+        end
+
+        def pest_crop_nest_snapshot_from(pest, ensure_blank_control_method: false)
+          tp = pest.pest_temperature_profile
+          temperature_profile_row = tp && { id: tp.id, base_temperature: tp.base_temperature, max_temperature: tp.max_temperature }
+          tr = pest.pest_thermal_requirement
+          thermal_requirement_row = tr && { id: tr.id, required_gdd: tr.required_gdd, first_generation_gdd: tr.first_generation_gdd }
+          control_method_rows = pest.pest_control_methods.sort_by(&:id).map do |m|
+            { id: m.id, method_type: m.method_type, method_name: m.method_name, description: m.description, timing_hint: m.timing_hint }
+          end
+          error_messages = {}
+          pest.errors.each do |error|
+            attr = error.attribute
+            (error_messages[attr] ||= []) << error.message
+          end
+          if ensure_blank_control_method && control_method_rows.empty?
+            control_method_rows = [ { id: nil, method_type: nil, method_name: nil, description: nil, timing_hint: nil } ]
+          end
+          Domain::Pest::Dtos::PestCropNestSnapshotDto.new(
+            id: pest.id, user_id: pest.user_id, name: pest.name, name_scientific: pest.name_scientific,
+            family: pest.family, order: pest.order, description: pest.description,
+            occurrence_season: pest.occurrence_season, region: pest.region, is_reference: pest.is_reference,
+            created_at: pest.created_at, updated_at: pest.updated_at,
+            temperature_profile_row: temperature_profile_row, thermal_requirement_row: thermal_requirement_row,
+            control_method_rows: control_method_rows, error_messages_by_attribute: error_messages
+          )
         end
 
         def extract_crop_ids_from_ai_payload(affected_crops)

@@ -8,13 +8,13 @@ class CropToggleTaskTemplateInteractorTest < ActiveSupport::TestCase
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
 
-    crop = mock
+    crop_entity = mock
     crop_gateway = mock
-    crop_gateway.expects(:find_authorized_model_for_edit).with(user, 9, access_filter: anything).returns(crop)
+    crop_gateway.expects(:find_authorized_for_edit).with(user, 9, access_filter: anything).returns(crop_entity)
 
-    agricultural_task = mock
+    task_entity = mock
     task_gateway = mock
-    task_gateway.expects(:find_model).with(44).returns(agricultural_task)
+    task_gateway.expects(:find_model).with(44).returns(task_entity)
 
     result = Domain::Crop::Dtos::CropToggleTaskTemplateSnapshotDto.new(
       available_agricultural_tasks: [],
@@ -23,7 +23,7 @@ class CropToggleTaskTemplateInteractorTest < ActiveSupport::TestCase
     )
 
     toggle_gateway = mock
-    toggle_gateway.expects(:toggle_build_snapshot!).with(crop: crop, agricultural_task: agricultural_task).returns(result)
+    toggle_gateway.expects(:toggle_build_snapshot!).with(crop_id: 9, agricultural_task_id: 44).returns(result)
 
     output = mock
     output.expects(:on_success).with(result)

@@ -105,22 +105,6 @@ module Adapters
 
         public
 
-        def find_authorized_model_for_view(user, id, access_filter:)
-          rule = find_interaction_rule_model!(id)
-          unless access_filter.view_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          rule
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          rule = find_interaction_rule_model!(id)
-          unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          rule
-        end
-
         def find_authorized_for_view(user, id, access_filter:)
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
         end
@@ -170,6 +154,22 @@ module Adapters
         end
 
         private
+
+        def find_authorized_model_for_view(user, id, access_filter:)
+          rule = find_interaction_rule_model!(id)
+          unless access_filter.view_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          rule
+        end
+
+        def find_authorized_model_for_edit(user, id, access_filter:)
+          rule = find_interaction_rule_model!(id)
+          unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          rule
+        end
 
         def find_interaction_rule_model!(id)
           ::InteractionRule.find(id)

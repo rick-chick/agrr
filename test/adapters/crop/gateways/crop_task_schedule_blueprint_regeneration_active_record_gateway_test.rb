@@ -85,7 +85,7 @@ class CropTaskScheduleBlueprintRegenerationActiveRecordGatewayTest < ActiveSuppo
     gateway = build_gateway(schedule: @schedule_response, fertilize: @fertilize_response)
 
     assert_difference -> { CropTaskScheduleBlueprint.count }, 2 do
-      gateway.regenerate_from_crop!(crop: @crop)
+      gateway.regenerate_from_crop!(crop_id: @crop.id)
     end
 
     @crop.reload
@@ -116,7 +116,7 @@ class CropTaskScheduleBlueprintRegenerationActiveRecordGatewayTest < ActiveSuppo
     updated_schedule["task_schedules"][0]["gdd_trigger"] = 125
 
     gateway = build_gateway(schedule: updated_schedule, fertilize: @fertilize_response)
-    gateway.regenerate_from_crop!(crop: @crop)
+    gateway.regenerate_from_crop!(crop_id: @crop.id)
 
     @crop.reload
     new_blueprint = @crop.crop_task_schedule_blueprints.find_by!(agricultural_task: @soil_task)
@@ -141,9 +141,9 @@ class CropTaskScheduleBlueprintRegenerationActiveRecordGatewayTest < ActiveSuppo
     updated_schedule["task_schedules"][0]["gdd_trigger"] = 180
 
     gateway = build_gateway(schedule: updated_schedule, fertilize: @fertilize_response)
-    gateway.regenerate_from_crop!(crop: @crop)
+    gateway.regenerate_from_crop!(crop_id: @crop.id)
 
-    current_blueprints = @crop.crop_task_schedule_blueprints
+    current_blueprints = @crop.crop_task_schedule_blueprints.reset
     assert_equal 2, current_blueprints.size
     regenerated = current_blueprints.find { |bp| bp.agricultural_task_id == @soil_task.id }
     assert_equal BigDecimal("180"), regenerated.gdd_trigger
@@ -154,7 +154,7 @@ class CropTaskScheduleBlueprintRegenerationActiveRecordGatewayTest < ActiveSuppo
     gateway = build_gateway(schedule: @schedule_response, fertilize: @fertilize_response)
 
     assert_raises(Domain::Crop::Exceptions::MissingTaskTemplatesForBlueprintRegeneration) do
-      gateway.regenerate_from_crop!(crop: crop_without_tasks)
+      gateway.regenerate_from_crop!(crop_id: crop_without_tasks.id)
     end
   end
 
@@ -164,7 +164,7 @@ class CropTaskScheduleBlueprintRegenerationActiveRecordGatewayTest < ActiveSuppo
     gateway = build_gateway(schedule: empty_schedule, fertilize: empty_fertilize)
 
     assert_raises(Domain::Crop::Exceptions::BlueprintRegenerationFromAgrrFailed) do
-      gateway.regenerate_from_crop!(crop: @crop)
+      gateway.regenerate_from_crop!(crop_id: @crop.id)
     end
   end
 
@@ -202,7 +202,7 @@ class CropTaskScheduleBlueprintRegenerationActiveRecordGatewayTest < ActiveSuppo
     }
 
     gateway = build_gateway(schedule: precise_schedule, fertilize: precise_fertilize)
-    gateway.regenerate_from_crop!(crop: @crop)
+    gateway.regenerate_from_crop!(crop_id: @crop.id)
 
     @crop.reload
     precise_blueprint = @crop.crop_task_schedule_blueprints.find_by!(stage_order: 2)

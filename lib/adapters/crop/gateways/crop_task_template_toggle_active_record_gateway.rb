@@ -4,7 +4,9 @@ module Adapters
   module Crop
     module Gateways
       class CropTaskTemplateToggleActiveRecordGateway < Domain::Crop::Gateways::CropTaskTemplateToggleGateway
-        def toggle_build_snapshot!(crop:, agricultural_task:)
+        def toggle_build_snapshot!(crop_id:, agricultural_task_id:)
+          crop = ::Crop.find(crop_id)
+          agricultural_task = ::AgriculturalTask.find(agricultural_task_id)
           if (existing_template = crop.crop_task_templates.find_by(agricultural_task: agricultural_task))
             remove_template_and_blueprints(crop: crop, agricultural_task: agricultural_task, existing_template: existing_template)
           else

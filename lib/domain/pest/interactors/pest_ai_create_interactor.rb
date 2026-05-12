@@ -68,7 +68,7 @@ module Domain
 
           @logger.info "📊 [AI Pest] Retrieved data: name=#{pest_data['name']}, family=#{pest_data['family']}"
 
-          existing_pest = @pest_gateway.find_user_owned_non_reference_pest_record_by_name(
+          existing_pest = @pest_gateway.find_user_owned_non_reference_pest_by_name(
             user_id: @user_id,
             name: pest_data["name"]
           )

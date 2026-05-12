@@ -34,13 +34,13 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           ag_gateway = Object.new
-          ag_gateway.define_singleton_method(:find_authorized_model_for_edit) do |u, tid, access_filter:|
+          ag_gateway.define_singleton_method(:find_authorized_for_edit) do |u, tid, access_filter:|
             raise unless u == user && tid == task_id
             raise unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
 
             base_task
           end
-          ag_gateway.define_singleton_method(:preview_agricultural_task_for_edit_crop_selection) do |base_task:, user:, agricultural_task_params:|
+          ag_gateway.define_singleton_method(:preview_agricultural_task_for_edit_crop_selection) do |base_entity:, user:, agricultural_task_params:|
             preview_task
           end
           ag_gateway.define_singleton_method(:linked_crop_ids_for_task_templates) do |tid|
@@ -115,7 +115,7 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           ag_gateway = Object.new
-          ag_gateway.define_singleton_method(:find_authorized_model_for_edit) do |u, tid, access_filter:|
+          ag_gateway.define_singleton_method(:find_authorized_for_edit) do |u, tid, access_filter:|
             raise unless u == user && tid == task_id
             raise unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
 

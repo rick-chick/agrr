@@ -29,6 +29,8 @@ module Domain
           !!is_reference
         end
 
+        alias is_reference? reference?
+
         def to_param
           id.to_s
         end

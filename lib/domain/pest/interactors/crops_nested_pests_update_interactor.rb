@@ -24,19 +24,19 @@ module Domain
             return @output_port.on_not_found(crop_id: crop_id)
           end
 
-          pest = found[:pest_record]
+          snapshot = found[:pest_snapshot]
           requested = pest_attrs.to_h.symbolize_keys
 
           if requested.key?(:is_reference)
             requested_ref = Domain::Shared::TypeConverters::BooleanConverter.cast(requested[:is_reference]) || false
-            if requested_ref != pest.is_reference && !user.admin?
-              return @output_port.on_reference_flag_denied(crop_id: crop_id, pest: pest)
+            if requested_ref != snapshot.is_reference && !user.admin?
+              return @output_port.on_reference_flag_denied(crop_id: crop_id, pest_id: snapshot.id)
             end
           end
 
           normalized = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_update(
             user,
-            pest.attributes.symbolize_keys,
+            { is_reference: snapshot.is_reference },
             requested
           )
 
@@ -50,9 +50,9 @@ module Domain
 
           case result[:status]
           when :updated
-            @output_port.on_updated(crop_id: crop_id, pest: result[:pest_record])
+            @output_port.on_updated(crop_id: crop_id, pest_id: result[:pest_snapshot].id)
           when :invalid
-            @output_port.on_invalid(crop_id: crop_id, pest: result[:pest_record])
+            @output_port.on_invalid(crop_id: crop_id, pest_snapshot: result[:pest_snapshot])
           when :crop_missing, :pest_missing
             @output_port.on_not_found(crop_id: crop_id)
           end

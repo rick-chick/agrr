@@ -41,14 +41,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        def find_authorized_model_for_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
-        end
-
         # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（HTML フォーム用。契約は {Domain::Pest::Ports::PestHtmlAuthorizedPestLoad}）。
         def find_authorized_pest_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_pest_loaded_bundle!"
@@ -75,29 +67,22 @@ module Domain
         end
 
         # 新規作成 + crop への紐付け（HTML/Masters 共用）。pest_attrs は Interactor で PestPolicy 正規化済み。
-        # @return [Hash] { status: :created|:invalid, pest_record:, unassociated_pest_entities: [...] }
+        # @return [Hash] { status: :created|:invalid, pest_snapshot: PestCropNestSnapshotDto, unassociated_pest_entities: [...] }
         def create_pest_for_crop(user:, crop_id:, pest_attrs:, crop_access_filter:)
           raise NotImplementedError, "Subclasses must implement create_pest_for_crop"
         end
 
         # crop 配下の Pest を更新する。pest_attrs は Interactor で正規化済み。
-        # @return [Hash] { status: :updated|:invalid|:crop_missing|:pest_missing, pest_record: }
+        # @return [Hash] { status: :updated|:invalid|:crop_missing|:pest_missing, pest_snapshot: PestCropNestSnapshotDto|nil }
         def update_pest_for_crop(user:, crop_id:, pest_id:, pest_attrs:, crop_access_filter:)
           raise NotImplementedError, "Subclasses must implement update_pest_for_crop"
         end
 
         # crop 配下の Pest を取得する（HTML 編集等向け）。
-        # @return [Hash] { status: :found|:not_found, pest_record: }
-        def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter:)
+        # @param for_edit_form [Boolean] true のとき防除方法が 0 件なら空行を補完する
+        # @return [Hash] { status: :found|:not_found, pest_snapshot: PestCropNestSnapshotDto|nil }
+        def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter:, for_edit_form: false)
           raise NotImplementedError, "Subclasses must implement find_pest_in_crop"
-        end
-
-        # Mutates the persisted Pest AR for nested-attributes UX (build empty pest_control_methods when none).
-        # 同一 AR を破壊的に変更する（防除方法が 0 件のときに空行を build）。
-        # @param pest_record [Pest]
-        # @return [Pest] pest_record
-        def prepare_crop_nested_pest_for_edit_form!(pest_record)
-          raise NotImplementedError, "Subclasses must implement prepare_crop_nested_pest_for_edit_form!"
         end
 
         # HTML トップレベル編集（`/pests/:id/edit`）用。防除方法が 0 件なら空行を build。
@@ -144,9 +129,16 @@ module Domain
           raise NotImplementedError, "Subclasses must implement associate_affected_crops_for_ai_pest"
         end
 
-        # AI API: ユーザー害虫を名前で検索（なければ nil）。戻りは永続 Pest。
-        def find_user_owned_non_reference_pest_record_by_name(user_id:, name:)
-          raise NotImplementedError, "Subclasses must implement find_user_owned_non_reference_pest_record_by_name"
+        # AI API: ユーザー害虫を名前で検索（なければ nil）。
+        # @return [Domain::Pest::Entities::PestEntity, nil]
+        def find_user_owned_non_reference_pest_by_name(user_id:, name:)
+          raise NotImplementedError, "Subclasses must implement find_user_owned_non_reference_pest_by_name"
+        end
+
+        # 作物に紐づく害虫 ID の一覧（新規フォームの除外判定用）。
+        # @return [Array<Integer>]
+        def pest_ids_linked_to_crop(crop_id:)
+          raise NotImplementedError, "Subclasses must implement pest_ids_linked_to_crop"
         end
 
         # マスター API: 作物から害虫の関連を外す（ユーザー作物のみ）

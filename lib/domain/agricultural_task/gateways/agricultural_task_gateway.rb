@@ -21,15 +21,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        # 表層（コントローラ等）で AR インスタンスが必要な場合のみ
-        def find_authorized_model_for_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
-        end
-
         def find_authorized_agricultural_task_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_agricultural_task_loaded_bundle!"
         end
@@ -71,8 +62,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement merge_update_form_snapshot_for_master_form!"
         end
 
-        # HTML 編集の作物選択データ読込: update 時は送信パラメータを反映したプレビュー用コピー（永続化しない）
-        def preview_agricultural_task_for_edit_crop_selection(base_task:, user:, agricultural_task_params:)
+        # HTML 編集の作物選択データ読込: update 時は送信パラメータを反映したプレビュー用エンティティを返す（永続化しない）
+        # @param base_entity [Domain::AgriculturalTask::Entities::AgriculturalTaskEntity]
+        # @return [Domain::AgriculturalTask::Entities::AgriculturalTaskEntity]
+        def preview_agricultural_task_for_edit_crop_selection(base_entity:, user:, agricultural_task_params:)
           raise NotImplementedError, "Subclasses must implement preview_agricultural_task_for_edit_crop_selection"
         end
       end

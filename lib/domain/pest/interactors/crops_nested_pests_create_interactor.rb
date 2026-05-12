@@ -47,9 +47,9 @@ module Domain
           )
           case result[:status]
           when :created
-            @output_port.on_created(crop_id: crop_id, pest: result[:pest_record])
+            @output_port.on_created(crop_id: crop_id, pest_id: result[:pest_snapshot].id)
           when :invalid
-            @output_port.on_invalid(result[:pest_record], result[:unassociated_pest_entities])
+            @output_port.on_invalid(crop_id: crop_id, pest_snapshot: result[:pest_snapshot], unassociated_pest_entities: result[:unassociated_pest_entities])
           end
         end
       end

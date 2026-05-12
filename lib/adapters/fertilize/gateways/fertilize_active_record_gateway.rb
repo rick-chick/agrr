@@ -73,14 +73,6 @@ module Adapters
             .map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
-        def find_authorized_model_for_view(user, id, access_filter:)
-          fertilize = find_fertilize_model!(id)
-          unless access_filter.view_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          fertilize
-        end
-
         def find_authorized_model_for_edit(user, id, access_filter:)
           fertilize = find_fertilize_model!(id)
           unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
@@ -172,6 +164,14 @@ module Adapters
           else
             raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
           end
+        end
+
+        def find_authorized_model_for_view(user, id, access_filter:)
+          fertilize = find_fertilize_model!(id)
+          unless access_filter.view_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          fertilize
         end
 
         def find_fertilize_model!(id)

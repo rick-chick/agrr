@@ -20,7 +20,7 @@ module Crops
     def new
       presenter = Presenters::Html::Crop::CropPestsNewHtmlPresenter.new(view: self)
       Domain::Pest::Interactors::CropsNestedPestsNewInteractor.new(output_port: presenter,
-        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(@crop)
+        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id)
     end
 
     # GET /crops/:crop_id/pests/:id/edit

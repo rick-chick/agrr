@@ -18,8 +18,8 @@ module Domain
         def call
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          crop = @gateway.find_authorized_model_for_edit(user, @crop_id, access_filter: access_filter)
-          @blueprint_regeneration_gateway.regenerate_from_crop!(crop: crop)
+          @gateway.find_authorized_for_edit(user, @crop_id, access_filter: access_filter)
+          @blueprint_regeneration_gateway.regenerate_from_crop!(crop_id: @crop_id)
           @output_port.on_success
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

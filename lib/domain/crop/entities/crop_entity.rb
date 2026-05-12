@@ -31,6 +31,10 @@ module Domain
           reference?
         end
 
+        def to_param
+          id.to_s
+        end
+
         def display_name
           [ name, variety ].compact.join(" ")
         end

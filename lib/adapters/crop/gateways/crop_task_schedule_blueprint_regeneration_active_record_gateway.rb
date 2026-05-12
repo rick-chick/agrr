@@ -14,7 +14,8 @@ module Adapters
           @fertilize_gateway = fertilize_gateway
         end
 
-        def regenerate_from_crop!(crop:)
+        def regenerate_from_crop!(crop_id:)
+          crop = ::Crop.find(crop_id)
           templates = crop.crop_task_templates.includes(:agricultural_task).order(:id)
 
           if templates.empty?

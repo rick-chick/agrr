@@ -2,7 +2,7 @@
 
 最終通し走査: 2026-05-06（セクション0 継続） / 2026-05-07（通し走査増分） / 2026-05-08（CA 対応計画: Gateway 命名リネーム＋裏取り grep/read） / **2026-05-09（§F Farm `find_authorized_model_*` 公開 API 除去）**: `FarmGateway` から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除し、AR ロードは `FarmActiveRecordGateway` の private `authorized_farm_record_for_*!` のみ。`AuthorizedFarmLoadedDto#persisted_farm` は未処理（§F 別行）。 / **2026-05-08（CA ワークフロー再走査）**: `ARCHITECTURE.md` `## What we require` と禁止 1〜30 を再読し、代表 grep（`lib/domain` の `Rails.` / `CompositionRoot` / `Adapters::` / `ActiveRecord::` は実コード一致なし、コメント・例外説明のみ／`lib/presenters` の `CompositionRoot` なし／`app/controllers/api` の `rescue` / `rescue_from` なし／`frontend/.../components` の `adapters/` 直 import なし／`lib/presenters` の `perform_later` なし／`lib/domain` の `*Gateway.default` なし／`usecase` の `adapters/` import はすべて `*.providers.ts`）。**新規未処理の逸脱なし**。 / **2026-05-08（計画通し走査）**: `ARCHITECTURE.md` `## What we require` と禁止 1〜30 を再読し、`lib/domain`・`lib/presenters`・`app/controllers/api`・`frontend/src/app/components` を対象に Glob/grep による意味読み。**ブロッキング級の新規逸脱なし**（既存の許容 `rescue` は backlog「残置」のまま）。**2026-05-08（空 backlog 裏取り）**: 未処理キュー空を契機に走査し、`PrivatePlanHtmlCreateInteractor` 等の **Interactor/DTO/OutputPort 名の `Html`** を検出 → `PrivatePlanCreateFromSession*` にリネーム（Interactors 禁止 **4**）。**2026-05-08（チャネル語 grep 洗い出し）**: 下記「洗い出し一覧」と未処理 `[ ]` を追記（通し走査の代替ではなく候補一覧）。**2026-05-08（cultivation_plan add_crop）**: `ApiAddCropOutputPort`→`AddCropOutputPort`、`ApiAddCropPresenter`→`AddCropPresenter`（`CultivationPlanRestBaseController#add_crop`）。**2026-05-08（cultivation_plan add_field）**: `ApiAddFieldOutputPort`→`AddFieldOutputPort`、`ApiAddFieldPresenter`→`AddFieldPresenter`（`#add_field`）。**2026-05-08（cultivation_plan remove_field）**: `ApiRemoveField*`→`RemoveField*`。**2026-05-08（cultivation_plan manual adjust）**: `ApiPlanAdjust*`→`ManualPlanAdjust*`。**2026-05-08（cultivation_plan plan data）**: `ApiPlanData*`→`RetrieveCultivationPlan*`。**2026-05-08（private plan initialize API DTO/ポート）**: `ApiPrivatePlanCreate*`→`PrivatePlanInitializeFromSelection*`。**2026-05-08（shared HttpJsonEnvelope）**: `ApiJsonResult`→`HttpJsonEnvelope`。**2026-05-08（api_keys）**: `ApiUserApiKeyRotateInteractor`→`UserApiKeyRotateInteractor`。**2026-05-08（file_blob gateway）**: `ApiFileBlob*`→`FileBlob*` / `#file_blob_gateway`。**2026-05-08（plans API list presenter）**: `ApiV1PrivatePlansListPresenter`→`PrivateOwnedPlansListPresenter`。**2026-05-08（plans API show presenter）**: `ApiV1PrivatePlanShowPresenter`→`PrivateOwnedPlanDetailPresenter`。**2026-05-08（files JSON presenter）**: `ApiV1FilesJsonPresenter`→`FileBlobJsonPresenter`。**2026-05-08（ApiWeather BC）**: `[ADR 0010](adr/0010-domain-api-weather-bounded-context-naming.md)` で `Domain::ApiWeather` を外部気象連携 BC 名として固定—HTTP チャネル語の除去対象から除外（禁止 **4** の意味読み）。**2026-05-08（継続・空 backlog 通し走査）**: 代表 grep（`lib/domain` の `Rails.` / `CompositionRoot.` / `ActiveRecord::` 実コード、`lib/presenters` の `CompositionRoot`、`app/controllers/api` の `rescue`、`frontend` components の `adapters/` 直 import）—**新規 backlog 候補なし**（`lib/domain` 一致はコメントのみ）。`test-common` Rails 2053 runs / Frontend 375 GREEN。
 
-**2026-05-09（Gateway／DTO の ActiveRecord 越境）**: コードベース横断の洗い出しを「洗い出し一覧 §F」と、その直下の **未処理 `[ ]` TODO** に記録（`ARCHITECTURE.md` Gateway 境界・`lib/domain/` 禁止 **3**・Rationalizations **4**）。
+**2026-05-09（Gateway／DTO の ActiveRecord 越境）**: コードベース横断の洗い出しを「洗い出し一覧 §F」と、その直下の **未処理 `[ ]` TODO** に記録（`ARCHITECTURE.md` Gateway 境界・`lib/domain/` 禁止 **3**・Rationalizations **4**）。 / **2026-05-12（§F Pest `pest_record:` AR 越境解消）**: `PestGateway` 公開メソッドの `pest_record:` を `pest_snapshot: PestCropNestSnapshotDto` に置換、`prepare_crop_nested_pest_for_edit_form!` を `find_pest_in_crop(for_edit_form:)` に統合、`find_user_owned_non_reference_pest_record_by_name`→`find_user_owned_non_reference_pest_by_name` リネーム。全追従ファイル（Interactors 3 + PestAiCreate + Presenters 3）を更新。`lib/domain/` 禁止 **3** の当該行解消。
 
 ## 洗い出し一覧（機械探索・2026-05-08／§F 増分 2026-05-09）
 
@@ -65,17 +65,17 @@
 #### Gateway 公開 API が AR を返す
 
 - （解消済み・2026-05-09）`FarmGateway` / `FarmActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private `authorized_farm_record_for_view!` / `authorized_farm_record_for_edit!` のみ（`find_authorized_for_*` / `find_authorized_farm_loaded_bundle!` は従来どおり）。`AuthorizedFarmLoadedDto#persisted_farm` の AR 同梱は下記「DTO」の行が未処理。
-- `CropGateway` / `CropMemoryGateway`: 上記と同型の `find_authorized_model_*` を解消。
-- `PestGateway` / `PestActiveRecordGateway` と `PestMemoryGateway`: 上記を解消（Memory 側はシグネチャも `access_filter:` 等と整合）。
-- `PesticideGateway` / `PesticideActiveRecordGateway`: 上記を解消。
-- `FertilizeGateway` / `FertilizeActiveRecordGateway`: 上記を解消。
-- `InteractionRuleGateway` / `InteractionRuleActiveRecordGateway`: 上記を解消。
-- `AgriculturalTaskGateway` / `AgriculturalTaskActiveRecordGateway`: `find_authorized_model_for_view` / `find_authorized_model_for_edit` が内部 AR を返さないようにする。
+- （解消済み・2026-05-12）`CropGateway` / `CropMemoryGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。`CropRegenerateTaskScheduleBlueprintsInteractor` は `find_authorized_for_edit`（Entity）に変更し、下流 `CropTaskScheduleBlueprintRegenerationGateway#regenerate_from_crop!` のシグネチャを `crop:` AR → `crop_id:` に変更（アダプタ内部でロード）。`CropToggleTaskTemplateInteractor` も `find_authorized_for_edit`（Entity）に変更し、`CropTaskTemplateToggleGateway#toggle_build_snapshot!` のシグネチャを `crop:, agricultural_task:` AR → `crop_id:, agricultural_task_id:` に変更（アダプタ内部でロード）。AR はアダプター private に集約。
+- （解消済み・2026-05-12）`PestGateway` / `PestActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private に集約（`find_authorized_for_edit` / `find_authorized_pest_loaded_bundle!` の内部ヘルパー）。`PestMemoryGateway` には元から実装なし。
+- （解消済み・2026-05-12）`PesticideGateway` / `PesticideActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private に集約。
+- （部分解消済み・2026-05-12）`FertilizeGateway` / `FertilizeActiveRecordGateway`: `find_authorized_model_for_view` を公開 IF から削除しアダプター private に集約。`find_authorized_model_for_edit` は `FertilizeUpdateInteractor#load_form_fertilize_for_failure` が呼んでいるため公開のまま残存（`persisted_*` クラスタ解消時に除去予定）。`FertilizeAiUpdateInteractor#load_authorized_fertilize` の `bundle.persisted_fertilize` → `find_authorized_for_edit`（エンティティ）に変更済み。
+- （解消済み・2026-05-12）`InteractionRuleGateway` / `InteractionRuleActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private に集約。
+- （解消済み・2026-05-12）`AgriculturalTaskGateway` / `AgriculturalTaskActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。`AgriculturalTaskEntity` に `is_reference?` alias を追加。`preview_agricultural_task_for_edit_crop_selection` のシグネチャを `base_task:` (AR) → `base_entity:` (Entity) に変更し戻り値も Entity に統一（差分があれば `to_hash.merge` で新 Entity を構築）。`AgriculturalTaskEditFormCropSelectionLoadInteractor` を `find_authorized_for_edit`（Entity）使用に更新。AR はアダプター private に集約。
 
 #### `find_model` が AR を返す
 
-- `CropGateway#find_model` と `CropMemoryGateway#find_model` — ドメインが期待する型へ変更するか、ゲートウェイ IF から削除して呼び出しを移す。
-- `AgriculturalTaskGateway#find_model` と `AgriculturalTaskActiveRecordGateway#find_model` — 同上。
+- （解消済み・2026-05-12）`CropGateway#find_model` と `CropMemoryGateway#find_model` — `CropEntity` を返すよう変更。`CropEntity#to_param` を追加（path helpers 互換）。`CropsNestedPestsNewInteractor` を `crop_id:` シグネチャに変更し `pest_ids_linked_to_crop(crop_id:)` を新設ゲートウェイメソッドで代替（`CropPest.where(crop_id:).pluck(:pest_id)`）。`_form.html.erb` の `form_with(model: [crop, pest])` を `form_with(model: pest, url: ...)` に変更（entity は `to_model` 未実装のため）。`crop_path(@crop)` 等の path helpers は `to_param` で継続動作。
+- （解消済み・2026-05-12）`AgriculturalTaskGateway#find_model` と `AgriculturalTaskActiveRecordGateway#find_model` — `AgriculturalTaskEntity` を返すよう変更。`CropToggleTaskTemplateInteractor` は entity を受け取り存在確認のみ（AR は `CropTaskTemplateToggleActiveRecordGateway` 内でロード）。`AgriculturalTaskEntity` に `is_reference?` alias 追加済み（`preview_agricultural_task_for_edit_crop_selection` との連携）。
 
 #### `build_blank_*` が AR（未保存含む）を返す
 
@@ -89,8 +89,8 @@
 
 #### Hash／メソッドで `pest_record` 等に AR を載せる
 
-- `PestGateway` 契約と実装: `create_pest_for_crop` / `update_pest_for_crop` / `find_pest_in_crop` の `pest_record:` を永続境界の DTO に置換（`PestActiveRecordGateway`・`PestMemoryGateway` の両方）。
-- `PestGateway#find_user_owned_non_reference_pest_record_by_name` — 戻り値をエンティティ／DTO にし、メソッド名から `_record` を外す。
+- ~~`PestGateway` 契約と実装: `create_pest_for_crop` / `update_pest_for_crop` / `find_pest_in_crop` の `pest_record:` を永続境界の DTO に置換（`PestActiveRecordGateway`・`PestMemoryGateway` の両方）。~~（**解消済み 2026-05-12**）
+- ~~`PestGateway#find_user_owned_non_reference_pest_record_by_name` — 戻り値をエンティティ／DTO にし、メソッド名から `_record` を外す。~~（**解消済み 2026-05-12**）
 
 #### セッション解決が User AR を返す
 
@@ -115,12 +115,14 @@
 #### Interactor が `persisted_*`（AR）を返す
 
 - `FertilizeUpdateInteractor` — `bundle.persisted_fertilize` を返している経路を、エンティティ／DTO のみ返すよう変更。
-- `FertilizeAiUpdateInteractor` — `bundle.persisted_fertilize` 同上。
+- ~~`FertilizeAiUpdateInteractor` — `bundle.persisted_fertilize` 同上。~~（**解消済み 2026-05-12**: `find_authorized_for_edit`（エンティティ）に変更）
 
 ---
 
 ## 修正単位
 
+- **解消済み（2026-05-12）**: **§F Pest: `find_authorized_model_*` をドメインゲートウェイ公開 API から除去** — `PestGateway` から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。`PestActiveRecordGateway` は private に集約（`find_authorized_for_edit` / `find_authorized_pest_loaded_bundle!` の内部ヘルパー）。`lib/domain/` 禁止 **3**。
+- **解消済み（2026-05-12）**: **§F Pest: `pest_record:` AR 越境を DTO に置換** — `PestGateway` 公開メソッド `create_pest_for_crop` / `update_pest_for_crop` / `find_pest_in_crop` の戻り値キーを `pest_record:` から `pest_snapshot: PestCropNestSnapshotDto` に変更。`prepare_crop_nested_pest_for_edit_form!` をゲートウェイ公開 API から除去し `find_pest_in_crop(for_edit_form:)` に統合。`find_user_owned_non_reference_pest_record_by_name` → `find_user_owned_non_reference_pest_by_name`（戻り値 `PestEntity`）にリネーム。`PestActiveRecordGateway` に `pest_crop_nest_snapshot_from` private メソッドをインライン実装（`app/` 側 `PestCropNestSnapshotMapper` を lib 内から参照しない）。Interactors（`CropsNestedPestsCreate` / `Update` / `LoadPest` / `PestAiCreate`）・Presenters（`CropPestsCreate` / `Update` / `LoadPest`）を追従。`lib/domain/` 禁止 **3**。
 - **解消済み（2026-05-09）**: **§F Farm: `find_authorized_model_*` をドメインゲートウェイ公開 API から除去** — `lib/domain/farm/gateways/farm_gateway.rb` から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。`FarmActiveRecordGateway` は private `authorized_farm_record_for_view!` / `authorized_farm_record_for_edit!` に集約。`lib/domain/` 禁止 **3**・Rationalizations **4**（名目 Gateway）の当該行を解消。`AuthorizedFarmLoadedDto#persisted_farm` は §F「DTO」の行が未処理。
 - **解消済み（2026-05-08）**: **cultivation_plan: ポート／DTO から Html・Json・Page チャネル語を除去** — `PublicPlanResultsHtmlOutputPort`→`PublicPlanResultsOutputPort`、`PublicPlanResultsPageReadModel`→`PublicPlanResultsReadModel`、`TaskScheduleHtmlShellPlan`→`TaskScheduleTimelineShellPlan`、`TaskScheduleItemJsonOutputPort`→`TaskScheduleItemMutationOutputPort`；`TaskScheduleItemJsonPresenter`→`TaskScheduleItemMutationPresenter`；`TaskScheduleItemScheduleDeletionUndoInteractor` の `json_output_port`→`mutation_output_port`。Interactors 禁止 **4**。
 - **解消済み（2026-05-08）**: **私有計画: `CompositionRoot` / Adapter の `html` 命名（ジョブチェーン・select_crop runner）** — `PrivatePlanHtmlPostCreateJobChain`→`PrivatePlanPostCreateJobChain`、`private_plan_html_post_create_job_chain`→`private_plan_post_create_job_chain`、`PrivatePlanSelectCropHtmlContextRunner`→`PrivatePlanSelectCropContextRunner`、`private_plan_select_crop_html_context_runner`→`private_plan_select_crop_context_runner`（ファイル名同様）。Interactors 禁止 **4** @ Application edge / `lib/adapters`。

@@ -69,22 +69,6 @@ module Adapters
           crop_task_schedule_blueprints: [ :agricultural_task ]
         }.freeze
 
-        def find_authorized_model_for_view(user, id, access_filter:)
-          crop = find_crop_model!(id)
-          unless access_filter.view_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          crop
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          crop = find_crop_model!(id)
-          unless access_filter.edit_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          crop
-        end
-
         def find_authorized_for_view(user, id, access_filter:)
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
         end
@@ -340,7 +324,7 @@ module Adapters
         end
 
         def find_model(id)
-          find_crop_model!(id)
+          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_crop_model!(id))
         end
 
         def entry_schedule_ordered_stage_rows(crop_id:)
@@ -624,6 +608,22 @@ module Adapters
         end
 
         private
+
+        def find_authorized_model_for_edit(user, id, access_filter:)
+          crop = find_crop_model!(id)
+          unless access_filter.edit_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          crop
+        end
+
+        def find_authorized_model_for_view(user, id, access_filter:)
+          crop = find_crop_model!(id)
+          unless access_filter.view_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+          crop
+        end
 
         def raise_record_invalid_for_model!(record)
           raise Domain::Shared::Exceptions::RecordInvalid.new(

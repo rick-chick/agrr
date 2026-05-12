@@ -10,10 +10,10 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCa
 
     crop = mock
     gateway = mock
-    gateway.expects(:find_authorized_model_for_edit).with(user, 9, access_filter: anything).returns(crop)
+    gateway.expects(:find_authorized_for_edit).with(user, 9, access_filter: anything).returns(crop)
 
     regeneration_gateway = mock
-    regeneration_gateway.expects(:regenerate_from_crop!).with(crop: crop)
+    regeneration_gateway.expects(:regenerate_from_crop!).with(crop_id: 9)
 
     output = mock
     output.expects(:on_success)
@@ -37,7 +37,7 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCa
 
     crop = mock
     gateway = mock
-    gateway.expects(:find_authorized_model_for_edit).with(user, 9, access_filter: anything).returns(crop)
+    gateway.expects(:find_authorized_for_edit).with(user, 9, access_filter: anything).returns(crop)
 
     regeneration_gateway = mock
     regeneration_gateway.expects(:regenerate_from_crop!).raises(Domain::Crop::Exceptions::BlueprintRegenerationFromAgrrFailed.new("x"))

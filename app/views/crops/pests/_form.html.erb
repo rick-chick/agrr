@@ -11,7 +11,7 @@
      data-i18n-method-description-label="<%= t('pests.form.method_description_label') %>"
      data-i18n-timing-hint-label="<%= t('pests.form.timing_hint_label') %>"
      data-i18n-remove-method="<%= t('pests.form.remove_method') %>">
-  <%= form_with(model: [crop, pest]) do |f| %>
+  <%= form_with(model: pest, url: pest.persisted? ? crop_pest_path(crop, pest) : crop_pests_path(crop), local: true) do |f| %>
     <% if pest.errors.any? %>
       <div class="errors">
         <h3><%= t('pests.form.errors.title', count: pest.errors.count) %></h3>

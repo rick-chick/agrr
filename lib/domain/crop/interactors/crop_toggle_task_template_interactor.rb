@@ -27,21 +27,21 @@ module Domain
 
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
 
-          crop = begin
-            @gateway.find_authorized_model_for_edit(user, @crop_id, access_filter: access_filter)
+          begin
+            @gateway.find_authorized_for_edit(user, @crop_id, access_filter: access_filter)
           rescue Domain::Shared::Exceptions::RecordNotFound
             @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.not_found")))
             return
           end
 
-          agricultural_task = begin
+          begin
             @agricultural_task_gateway.find_model(@agricultural_task_id)
           rescue Domain::Shared::Exceptions::RecordNotFound
             @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.task_not_found")))
             return
           end
 
-          result = @toggle_gateway.toggle_build_snapshot!(crop: crop, agricultural_task: agricultural_task)
+          result = @toggle_gateway.toggle_build_snapshot!(crop_id: @crop_id, agricultural_task_id: @agricultural_task_id)
           @output_port.on_success(result)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

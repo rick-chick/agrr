@@ -29,14 +29,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        def find_authorized_model_for_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_view"
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_model_for_edit"
-        end
-
         def find_authorized_fertilize_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_fertilize_loaded_bundle!"
         end
