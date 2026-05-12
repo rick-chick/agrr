@@ -3,13 +3,13 @@
 module Domain
   module Fertilize
     module Dtos
-      # Gateway が一度読み込んだ肥料について、FertilizeEntity と永続モデルを束ねる。
+      # Gateway が一度読み込んだ肥料について、FertilizeEntity とフォーム表示用スナップショットを束ねる。
       class AuthorizedFertilizeLoadedDto
-        attr_reader :fertilize_entity, :persisted_fertilize
+        attr_reader :fertilize_entity, :master_form_snapshot
 
-        def initialize(fertilize_entity:, persisted_fertilize:)
+        def initialize(fertilize_entity:, master_form_snapshot:)
           @fertilize_entity = fertilize_entity
-          @persisted_fertilize = persisted_fertilize
+          @master_form_snapshot = master_form_snapshot
         end
       end
     end

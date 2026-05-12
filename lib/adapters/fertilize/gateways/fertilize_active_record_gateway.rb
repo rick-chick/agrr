@@ -89,7 +89,7 @@ module Adapters
                       end
           Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto.new(
             fertilize_entity: Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize),
-            persisted_fertilize: fertilize
+            master_form_snapshot: Adapters::Fertilize::Mappers::FertilizeMasterFormSnapshotMapper.from_record(fertilize)
           )
         end
 
