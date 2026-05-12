@@ -59,7 +59,7 @@ module Adapters
                  end
           Domain::Pest::Ports::PestHtmlAuthorizedPestLoad.new(
             pest_entity: Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest),
-            persisted_pest: pest
+            pest_master_edit_payload: Adapters::Pest::Mappers::PestMasterEditPayloadMapper.from_record(pest)
           )
         end
 

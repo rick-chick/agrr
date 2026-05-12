@@ -29,7 +29,8 @@ module Domain
           input_dto = Domain::Pest::Dtos::PestUpdateInputDto.new(pest_id: 1, name: "x")
           pest_entity = mock
           persisted = mock
-          bundle = Domain::Pest::Ports::PestHtmlAuthorizedPestLoad.new(pest_entity: pest_entity, persisted_pest: persisted)
+          payload = Domain::Pest::Dtos::PestMasterEditPayload.new(id: 1, new_record: false)
+          bundle = Domain::Pest::Ports::PestHtmlAuthorizedPestLoad.new(pest_entity: pest_entity, pest_master_edit_payload: payload)
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           current_pest = mock

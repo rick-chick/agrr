@@ -20,18 +20,16 @@ class PestUpdateHtmlPresenterTest < ActiveSupport::TestCase
 
   test "on_failure sets flash alert and renders edit template" do
     view_mock = mock
-    pest_mock = mock
     presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(view: view_mock)
 
+    payload = Domain::Pest::Dtos::PestMasterEditPayload.new(id: 1, new_record: false)
     reload_bundle = mock
-    reload_bundle.stubs(:persisted_pest).returns(pest_mock)
+    reload_bundle.stubs(:pest_master_edit_payload).returns(payload)
     failure_dto = Domain::Pest::Dtos::PestUpdateFailureDto.new(message: "Test error", reload_bundle: reload_bundle)
 
-    pest_mock.expects(:assign_attributes)
-    pest_params_mock = mock
-    pest_params_mock.stubs(:permit).returns({})
-
-    view_mock.stubs(:params).returns(id: 1, pest: pest_params_mock, crop_ids: nil)
+    pest_params = ActionController::Parameters.new({})
+    params_with_pest = ActionController::Parameters.new(id: "1", pest: { name: "x" }, crop_ids: nil)
+    view_mock.stubs(:params).returns(params_with_pest)
     view_mock.stubs(:prepare_crop_selection_for)
     view_mock.stubs(:normalize_crop_ids_for)
 
@@ -40,7 +38,7 @@ class PestUpdateHtmlPresenterTest < ActiveSupport::TestCase
     flash_mock.expects(:now).returns(flash_now_mock)
     flash_now_mock.expects(:[]=).with(:alert, "Test error")
     view_mock.expects(:flash).returns(flash_mock)
-    view_mock.expects(:instance_variable_set).with(:@pest, pest_mock)
+    view_mock.expects(:instance_variable_set).with(:@pest, instance_of(Forms::PestMasterForm))
     view_mock.expects(:render_form).with(:edit, status: :unprocessable_entity)
 
     presenter.on_failure(failure_dto)
