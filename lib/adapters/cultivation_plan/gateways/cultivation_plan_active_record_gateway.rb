@@ -608,26 +608,6 @@ module Adapters
           end
         end
 
-        def normalize_farm_for_plan!(farm)
-          return farm if farm.is_a?(::Farm)
-
-          ::Farm.find(farm.id)
-        end
-
-        def normalize_user_for_plan(user)
-          return nil if user.nil?
-          return user if user.is_a?(::User)
-
-          ::User.find(user.id)
-        end
-
-        def normalize_crops_for_plan!(crops)
-          return [] if crops.blank?
-          return crops if crops.first.is_a?(::Crop)
-
-          crops.map { |c| ::Crop.find(c.id) }
-        end
-
         def build_task_schedule_timeline_field(field_cultivation, schedules)
           task_options = build_task_schedule_task_options(field_cultivation)
           schedule_reads = schedules.map { |schedule| build_task_schedule_timeline_schedule(schedule) }
@@ -800,6 +780,26 @@ module Adapters
         end
 
         private
+
+        def normalize_farm_for_plan!(farm)
+          return farm if farm.is_a?(::Farm)
+
+          ::Farm.find(farm.id)
+        end
+
+        def normalize_user_for_plan(user)
+          return nil if user.nil?
+          return user if user.is_a?(::User)
+
+          ::User.find(user.id)
+        end
+
+        def normalize_crops_for_plan!(crops)
+          return [] if crops.blank?
+          return crops if crops.first.is_a?(::Crop)
+
+          crops.map { |c| ::Crop.find(c.id) }
+        end
 
         # PlanAccess.private_scope / find_private_owned! と同一条件の永続写像（Adapter は PlanAccess を参照しない）
         def private_cultivation_plans_scope(user)

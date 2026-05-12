@@ -79,13 +79,13 @@
 
 #### `build_blank_*` が AR（未保存含む）を返す
 
-- `FarmGateway#build_blank_farm_for_master_form!` / `FarmActiveRecordGateway` — フォーム組み立てを AR 非依存の境界に移す（またはエッジ限定契約を `docs/contracts` で明示し実装を閉じる）。
-- `FieldGateway#build_blank_field_for_master_form!` / `FieldActiveRecordGateway` — 同上。
-- `PestGateway#build_blank_pest_for_form` / `PestActiveRecordGateway`・`PestMemoryGateway` — 同上。
-- `PesticideGateway#build_blank_pesticide_for_master_form` / `PesticideActiveRecordGateway` — 同上。
-- `FertilizeGateway#build_blank_fertilize_for_master_form` / `FertilizeActiveRecordGateway` — 同上。
-- `AgriculturalTaskGateway#build_blank_agricultural_task_for_master_form` / `AgriculturalTaskActiveRecordGateway` — 同上。
-- `CropGateway#build_blank_crop_for_master_form` / `CropMemoryGateway` — 同上。
+- （**解消済み・2026-05-12**）`FarmGateway#build_blank_farm_for_master_form!` — ドメインゲートウェイ interface から stub を削除（アダプター実装は残存、コントローラが直接呼ぶため）。
+- （**解消済み・2026-05-12**）`FieldGateway#build_blank_field_for_master_form!` — 同上。
+- （**解消済み・2026-05-12**）`PestGateway#build_blank_pest_for_form` — 同上。`CropsNestedPestsNewInteractor` を `PestCropNestSnapshotDto.blank_for_nested_new` に移行し、`app/adapters/presenters/` 側と interface を統一（`lib/presenters/` 旧版を削除）。
+- （**解消済み・2026-05-12**）`PesticideGateway#build_blank_pesticide_for_master_form` — 同上。
+- （**解消済み・2026-05-12**）`FertilizeGateway#build_blank_fertilize_for_master_form` — 同上。
+- （**解消済み・2026-05-12**）`AgriculturalTaskGateway#build_blank_agricultural_task_for_master_form` — 同上。
+- （**解消済み・2026-05-12**）`CropGateway#build_blank_crop_for_master_form` — 同上。
 
 #### Hash／メソッドで `pest_record` 等に AR を載せる
 
@@ -98,7 +98,7 @@
 
 #### `CultivationPlanActiveRecordGateway` 内の AR 第一級取り扱い
 
-- `normalize_farm_for_plan!` / `normalize_user_for_plan` / `normalize_crops_for_plan!` — 公開メソッドが AR を返さないようリファクタ（内部限定に閉じるか、エンティティ化）。
+- （**解消済み・2026-05-12**）`normalize_farm_for_plan!` / `normalize_user_for_plan` / `normalize_crops_for_plan!` — `CultivationPlanActiveRecordGateway` の `private` セクションへ移動。アダプター内部限定の AR ヘルパーとして閉じた。
 - `destroy` の `DeletionUndo::Manager.schedule(record: plan_model)` — Undo が要求する境界を `resource_type` / `resource_id` 等へ寄せ、`CultivationPlan` AR を渡さない（Undo 側契約と両立させる）。
 
 #### ドメイン DTO／Port の `persisted_*`（プロパティで AR を保持）

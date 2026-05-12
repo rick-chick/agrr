@@ -13,12 +13,11 @@ module Domain
 
         def call(crop_id:)
           user = @user_lookup.find(@user_id)
-          pest = @pest_gateway.build_blank_pest_for_form
-
+          blank_snapshot = Domain::Pest::Dtos::PestCropNestSnapshotDto.blank_for_nested_new(user_id: user.id)
           available_entities = @pest_gateway.list_selectable_pest_entities_recent_first(user)
           linked_pest_ids = @pest_gateway.pest_ids_linked_to_crop(crop_id: crop_id)
           unassociated_pests = available_entities.reject { |e| linked_pest_ids.include?(e.id) }
-          @output_port.on_success(pest:, unassociated_pests:)
+          @output_port.on_success(pest_crop_nest_snapshot: blank_snapshot, unassociated_pests:)
         end
       end
     end

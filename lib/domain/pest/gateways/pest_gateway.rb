@@ -92,12 +92,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement prepare_top_level_pest_for_edit_form!"
         end
 
-        # 新規 Pest フォーム描画用の空インスタンスをビルド（nested 関連付き）。
-        # @return [Pest] 未保存の AR レコード（HTML form_with で使う）
-        def build_blank_pest_for_form
-          raise NotImplementedError, "Subclasses must implement build_blank_pest_for_form"
-        end
-
         # @param order [Symbol] :recent_first | :id_asc
         # @return [Array<Domain::Pest::Entities::PestEntity>] 作物に紐づく害虫（HTML/API ともにエンティティ）
         def list_pests_for_crop_filtered(crop_id:, pest_ids:, order: :recent_first)

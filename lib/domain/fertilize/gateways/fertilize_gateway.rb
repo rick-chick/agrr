@@ -50,10 +50,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_user_owned_non_reference_fertilize_record_by_name"
         end
 
-        # マスタCRUD フォーム用の未保存肥料レコード（保存しない）。
-        def build_blank_fertilize_for_master_form
-          raise NotImplementedError, "Subclasses must implement build_blank_fertilize_for_master_form"
-        end
       end
     end
   end

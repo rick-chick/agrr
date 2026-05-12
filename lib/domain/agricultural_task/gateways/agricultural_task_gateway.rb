@@ -47,11 +47,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement linked_crop_ids_for_task_templates"
         end
 
-        # マスタCRUD 新規: ユーザーに紐づく未保存レコード（コントローラはゲートウェイのみ）
-        def build_blank_agricultural_task_for_master_form(user)
-          raise NotImplementedError, "Subclasses must implement build_blank_agricultural_task_for_master_form"
-        end
-
         # マスタCRUD 作成失敗時: 送信属性で検証エラー状態を再現（永続化しない）
         def build_after_create_failure_agricultural_task_for_master_form!(user:, attributes:)
           raise NotImplementedError, "Subclasses must implement build_after_create_failure_agricultural_task_for_master_form!"

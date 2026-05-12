@@ -149,11 +149,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_crop_loaded_bundle!"
         end
 
-        # マスタCRUD: 新規フォーム用の未保存 Crop（永続化しない）
-        def build_blank_crop_for_master_form
-          raise NotImplementedError, "Subclasses must implement build_blank_crop_for_master_form"
-        end
-
         # マスタCRUD: create 失敗時の再描画用に属性を載せた未保存 Crop（永続化しない）
         def build_new_crop_with_attributes_for_master_form(attributes:)
           raise NotImplementedError, "Subclasses must implement build_new_crop_with_attributes_for_master_form"

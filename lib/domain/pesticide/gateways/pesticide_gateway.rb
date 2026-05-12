@@ -60,11 +60,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_for_crop_with_user"
         end
 
-        # マスタCRUD 新規フォーム用の空レコード（ネストした constraint / application_detail を build）
-        def build_blank_pesticide_for_master_form
-          raise NotImplementedError, "Subclasses must implement build_blank_pesticide_for_master_form"
-        end
-
         # マスタCRUD create 失敗時のフォーム再表示用（未保存）
         def build_pesticide_for_create_failure_master_form(attributes_hash)
           raise NotImplementedError, "Subclasses must implement build_pesticide_for_create_failure_master_form"
