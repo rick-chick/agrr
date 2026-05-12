@@ -68,7 +68,7 @@
 - （解消済み・2026-05-12）`CropGateway` / `CropMemoryGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。`CropRegenerateTaskScheduleBlueprintsInteractor` は `find_authorized_for_edit`（Entity）に変更し、下流 `CropTaskScheduleBlueprintRegenerationGateway#regenerate_from_crop!` のシグネチャを `crop:` AR → `crop_id:` に変更（アダプタ内部でロード）。`CropToggleTaskTemplateInteractor` も `find_authorized_for_edit`（Entity）に変更し、`CropTaskTemplateToggleGateway#toggle_build_snapshot!` のシグネチャを `crop:, agricultural_task:` AR → `crop_id:, agricultural_task_id:` に変更（アダプタ内部でロード）。AR はアダプター private に集約。
 - （解消済み・2026-05-12）`PestGateway` / `PestActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private に集約（`find_authorized_for_edit` / `find_authorized_pest_loaded_bundle!` の内部ヘルパー）。`PestMemoryGateway` には元から実装なし。
 - （解消済み・2026-05-12）`PesticideGateway` / `PesticideActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private に集約。
-- （解消済み・2026-05-12）`FertilizeGateway` / `FertilizeActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private に集約。`FertilizeUpdateInteractor` の failure 経路を `FertilizeMasterFormSnapshot`（純 DTO）に変更したことで `find_authorized_model_for_edit` の呼び出し元がなくなり private 化完了。`AuthorizedFertilizeLoadedDto#persisted_fertilize` の AR 同梱は下記「DTO」の行が未処理。
+- （解消済み・2026-05-12）`FertilizeGateway` / `FertilizeActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private に集約。`FertilizeUpdateInteractor` の failure 経路を `FertilizeMasterFormSnapshot`（純 DTO）に変更したことで `find_authorized_model_for_edit` の呼び出し元がなくなり private 化完了。`AuthorizedFertilizeLoadedDto#persisted_fertilize` は同日別コミットで解消済み。
 - （解消済み・2026-05-12）`InteractionRuleGateway` / `InteractionRuleActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。AR はアダプター private に集約。
 - （解消済み・2026-05-12）`AgriculturalTaskGateway` / `AgriculturalTaskActiveRecordGateway`: 公開 IF から `find_authorized_model_for_view` / `find_authorized_model_for_edit` を削除。`AgriculturalTaskEntity` に `is_reference?` alias を追加。`preview_agricultural_task_for_edit_crop_selection` のシグネチャを `base_task:` (AR) → `base_entity:` (Entity) に変更し戻り値も Entity に統一（差分があれば `to_hash.merge` で新 Entity を構築）。`AgriculturalTaskEditFormCropSelectionLoadInteractor` を `find_authorized_for_edit`（Entity）使用に更新。AR はアダプター private に集約。
 
@@ -106,7 +106,7 @@
 - `Domain::Farm::Dtos::AuthorizedFarmLoadedDto` の `persisted_farm` を廃止または非 AR 型へ。
 - `Domain::Field::Dtos::AuthorizedFieldLoadedInFarmDto` の `persisted_field` を同上。
 - `Domain::Pesticide::Dtos::AuthorizedPesticideLoadedDto` の `persisted_pesticide` を同上。
-- `Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto` の `persisted_fertilize` を同上。
+- （**解消済み・2026-05-12**）`Domain::Fertilize::Dtos::AuthorizedFertilizeLoadedDto` の `persisted_fertilize` を `master_form_snapshot`（`FertilizeMasterFormSnapshot`）に置換。`FertilizeActiveRecordGateway#find_authorized_fertilize_loaded_bundle!` で `FertilizeMasterFormSnapshotMapper.from_record` を使用。
 - `Domain::Crop::Dtos::AuthorizedCropLoadedDto` / `AuthorizedCropStageInCropContextDto` / `AuthorizedCropTaskTemplateInCropContextDto` の `persisted_crop` 等を同上。
 - `Domain::Crop::Dtos::CropDetailOutputDto` の `crop` / `persisted_crop` を同上。
 - `Domain::AgriculturalTask::Dtos::AuthorizedAgriculturalTaskLoadedDto` の `persisted_agricultural_task` を同上。
