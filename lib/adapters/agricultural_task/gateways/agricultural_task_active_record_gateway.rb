@@ -59,7 +59,7 @@ module Adapters
                  end
           Domain::AgriculturalTask::Dtos::AuthorizedAgriculturalTaskLoadedDto.new(
             agricultural_task_entity: Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task),
-            persisted_agricultural_task: task
+            master_form_snapshot: Adapters::AgriculturalTask::Mappers::AgriculturalTaskMasterFormSnapshotMapper.from_record(task)
           )
         end
 

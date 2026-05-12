@@ -3,13 +3,13 @@
 module Domain
   module AgriculturalTask
     module Dtos
-      # Gateway が一度読み込んだ農作業について、AgriculturalTaskEntity と永続モデルを束ねる。
+      # Gateway が一度読み込んだ農作業について、AgriculturalTaskEntity とフォーム表示用スナップショットを束ねる。
       class AuthorizedAgriculturalTaskLoadedDto
-        attr_reader :agricultural_task_entity, :persisted_agricultural_task
+        attr_reader :agricultural_task_entity, :master_form_snapshot
 
-        def initialize(agricultural_task_entity:, persisted_agricultural_task:)
+        def initialize(agricultural_task_entity:, master_form_snapshot:)
           @agricultural_task_entity = agricultural_task_entity
-          @persisted_agricultural_task = persisted_agricultural_task
+          @master_form_snapshot = master_form_snapshot
         end
       end
     end
