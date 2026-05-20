@@ -25,7 +25,7 @@ module Adapters::Agrr::Gateways
         "prediction_end_date" => "2026-12-31"
       }
 
-      out = EntryScheduleOptimizationGateway.normalize_entry_weather_payload(nested)
+      out = EntryScheduleOptimizationDaemonGateway.normalize_entry_weather_payload(nested)
 
       assert out["data"].is_a?(Array)
       assert_equal 3, out["data"].size
@@ -39,7 +39,7 @@ module Adapters::Agrr::Gateways
         "longitude" => 139.0,
         "data" => @rows
       }
-      out = EntryScheduleOptimizationGateway.normalize_entry_weather_payload(flat)
+      out = EntryScheduleOptimizationDaemonGateway.normalize_entry_weather_payload(flat)
 
       assert_equal 3, out["data"].size
       assert_equal 35.0, out["latitude"].to_f
@@ -52,7 +52,7 @@ module Adapters::Agrr::Gateways
           { "thermal" => { "required_gdd" => 800.0 } }
         ]
       }
-      out = EntryScheduleOptimizationGateway.scale_stage_gdd_for_optimize_period(req, max_total_gdd: 1000.0)
+      out = EntryScheduleOptimizationDaemonGateway.scale_stage_gdd_for_optimize_period(req, max_total_gdd: 1000.0)
       stages = out["stage_requirements"]
       total = stages.sum { |s| s["thermal"]["required_gdd"].to_f }
 
@@ -71,7 +71,7 @@ module Adapters::Agrr::Gateways
       }
 
       travel_to Time.zone.parse("2026-06-15") do
-        svc = EntryScheduleOptimizationGateway.new(crop: crop, weather_payload: nested, farm: nil, crop_gateway: CompositionRoot.crop_gateway)
+        svc = EntryScheduleOptimizationDaemonGateway.new(crop: crop, weather_payload: nested, farm: nil, crop_gateway: CompositionRoot.crop_gateway)
         range = svc.send(:evaluation_range)
 
         assert_equal Date.new(2026, 5, 1), range[0]

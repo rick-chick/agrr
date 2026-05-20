@@ -150,7 +150,7 @@ class PredictWeatherDataJob < ApplicationJob
     Rails.logger.info "📍 [PredictWeatherDataJob] Location: (#{weather_location.latitude}, #{weather_location.longitude}), elevation: #{weather_location.elevation}m, timezone: #{weather_location.timezone}"
 
     # PredictionGatewayを使って予測を実行（daemon経由で高速実行）
-    prediction_gateway = Adapters::Agrr::Gateways::PredictionGateway.new
+    prediction_gateway = Adapters::Agrr::Gateways::PredictionDaemonGateway.new
 
     prediction_result = prediction_gateway.predict(
       historical_data: formatted_data,

@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class ScheduleGateway < BaseGatewayV2
+      class ScheduleDaemonGateway < BaseGatewayV2
         def generate(crop_name:, variety:, stage_requirements:, agricultural_tasks:)
           stage_file = write_temp_file(stage_requirements, prefix: "stage_requirements")
           tasks_file = write_temp_file(agricultural_tasks, prefix: "agricultural_tasks")

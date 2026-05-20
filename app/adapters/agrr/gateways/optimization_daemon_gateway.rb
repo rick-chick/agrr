@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class OptimizationGateway < BaseGatewayV2
+      class OptimizationDaemonGateway < BaseGatewayV2
         def optimize(crop_name:, crop_variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil, crop_requirement: nil, interaction_rules: nil)
           Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{crop_variety}"
 

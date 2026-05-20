@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class FertilizeGateway < BaseGatewayV2
+      class FertilizeDaemonGateway < BaseGatewayV2
         def plan(crop:, use_harvest_start: true, max_applications: 2)
           crop_requirement = crop.to_agrr_requirement
           crop_file = write_temp_file(crop_requirement, prefix: "fertilize_crop")

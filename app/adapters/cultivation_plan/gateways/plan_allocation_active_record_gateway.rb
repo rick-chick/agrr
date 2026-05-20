@@ -5,7 +5,7 @@ module Adapters
     module Gateways
       class PlanAllocationActiveRecordGateway < Domain::CultivationPlan::Gateways::PlanAllocationGateway
         def initialize
-          @inner = ::Adapters::Agrr::Gateways::PlanAllocationGatewayAdapter.new
+          @inner = ::Adapters::Agrr::Gateways::PlanAllocationDaemonGateway.new
         end
 
         def allocate(fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules: nil, objective: "maximize_profit", max_time: nil, enable_parallel: false)

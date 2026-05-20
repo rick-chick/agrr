@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class PredictionGateway < BaseGatewayV2
+      class PredictionDaemonGateway < BaseGatewayV2
         def predict(historical_data:, days:, model: "lightgbm")
           # 環境変数でモデル選択を制御
           # 優先順位:

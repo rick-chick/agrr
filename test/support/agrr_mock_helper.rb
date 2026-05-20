@@ -35,7 +35,7 @@ module AgrrMockHelper
 
   # Weather情報取得のモック (Minitest用) - 新しいJSON構造
   def stub_fetch_weather_data
-    Adapters::Agrr::Gateways::WeatherGateway.class_eval do
+    Adapters::Agrr::Gateways::WeatherDaemonGateway.class_eval do
       define_method(:fetch_by_date_range) do |latitude:, longitude:, start_date:, end_date:, data_source: nil|
         resolved_data_source = data_source || ENV["WEATHER_DATA_SOURCE"] || "noaa"
         days = (start_date..end_date).to_a
@@ -68,7 +68,7 @@ module AgrrMockHelper
     FetchWeatherDataJob.class_eval do
       define_method(:fetch_weather_from_agrr) do |lat, lon, sd, ed, _farm_id = nil|
         data_source = determine_data_source(_farm_id, latitude: lat, longitude: lon)
-        weather_gateway = Adapters::Agrr::Gateways::WeatherGateway.new
+        weather_gateway = Adapters::Agrr::Gateways::WeatherDaemonGateway.new
         weather_gateway.fetch_by_date_range(
           latitude: lat,
           longitude: lon,
@@ -129,7 +129,7 @@ module AgrrMockHelper
 
   # Adjust Gateway のモック化
   def mock_agrr_adjust_success
-    Adapters::Agrr::Gateways::AdjustGateway.class_eval do
+    Adapters::Agrr::Gateways::AdjustDaemonGateway.class_eval do
       define_method(:adjust) do |current_allocation:, moves:, fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules:, objective:, enable_parallel:|
         # 既存の割り当てを基にモック結果を作成
         # moves が渡された場合は、該当する allocation の start_date を更新して返す（テストでの adjust 動作を簡易的に再現）
@@ -204,7 +204,7 @@ module AgrrMockHelper
 
   # 天気予測のモック (Minitest用)
   def stub_weather_prediction
-    Adapters::Agrr::Gateways::PredictionGateway.class_eval do
+    Adapters::Agrr::Gateways::PredictionDaemonGateway.class_eval do
       define_method(:predict) do |historical_data:, days:, model:|
         Rails.logger.info "🧪 [Mock PredictionGateway] Returning mock prediction data for #{days} days"
 

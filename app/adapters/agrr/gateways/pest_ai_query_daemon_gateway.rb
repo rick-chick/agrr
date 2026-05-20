@@ -4,7 +4,7 @@ module Adapters
   module Agrr
     module Gateways
       # API 害虫 AI で ::Adapters::Agrr::Gateways::DaemonClient.pest_to_crop を叩く処理とリトライ
-      class PestAiDaemonQueryGateway
+      class PestAiQueryDaemonGateway
         DEFAULT_MAX_RETRIES = 3
 
         def initialize(logger:, translator:, agrr_service: nil)

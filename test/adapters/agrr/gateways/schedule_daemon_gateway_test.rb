@@ -36,7 +36,7 @@ class AgrrScheduleGatewayTest < ActiveSupport::TestCase
   end
 
   def setup
-    @gateway = Adapters::Agrr::Gateways::ScheduleGateway.new
+    @gateway = Adapters::Agrr::Gateways::ScheduleDaemonGateway.new
     @stub_service = StubAgrrService.new
     @gateway.instance_variable_set(:@agrr_service, @stub_service)
 

@@ -25,7 +25,7 @@ class AgrrFertilizeGatewayTest < ActiveSupport::TestCase
   end
 
   def setup
-    @gateway = Adapters::Agrr::Gateways::FertilizeGateway.new
+    @gateway = Adapters::Agrr::Gateways::FertilizeDaemonGateway.new
     @stub_service = StubAgrrService.new
     @gateway.instance_variable_set(:@agrr_service, @stub_service)
 

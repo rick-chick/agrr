@@ -3,11 +3,11 @@
 module Adapters
   module Agrr
     module Gateways
-      # Domain 層から agrr 多圃場割当 CLI（Adapters::Agrr::Gateways::AllocationGateway）を呼ぶ薄いアダプタ。
-      # 最適化ロジックは allocate サブコマンド（T-031 / OptimizationGateway 統合の一環）。
-      class PlanAllocationGatewayAdapter
+      # Domain 層から agrr 多圃場割当 CLI（Adapters::Agrr::Gateways::AllocationDaemonGateway）を呼ぶ薄いアダプタ。
+      # 最適化ロジックは allocate サブコマンド（T-031 / OptimizationDaemonGateway 統合の一環）。
+      class PlanAllocationDaemonGateway
         def initialize
-          @implementation = ::Adapters::Agrr::Gateways::AllocationGateway.new
+          @implementation = ::Adapters::Agrr::Gateways::AllocationDaemonGateway.new
         end
 
         def allocate(fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules: nil, objective: "maximize_profit", max_time: nil, enable_parallel: false)

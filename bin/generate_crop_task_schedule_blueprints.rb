@@ -276,8 +276,8 @@ end
 options = parse_options(ARGV)
 crops = fetch_crops(options)
 
-schedule_gateway = Agrr::ScheduleGateway.new
-fertilize_gateway = Agrr::FertilizeGateway.new
+schedule_gateway = Adapters::Agrr::Gateways::ScheduleDaemonGateway.new
+fertilize_gateway = Adapters::Agrr::Gateways::FertilizeDaemonGateway.new
 
 all_blueprints = []
 

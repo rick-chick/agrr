@@ -132,7 +132,7 @@ module CompositionRoot
     end
 
     def agrr_progress_gateway
-      @agrr_progress_gateway ||= Adapters::Agrr::Gateways::ProgressGateway.new
+      @agrr_progress_gateway ||= Adapters::Agrr::Gateways::ProgressDaemonGateway.new
     end
 
     def cultivation_plan_gateway
@@ -381,11 +381,11 @@ module CompositionRoot
     end
 
     def agrr_adjust_gateway
-      @agrr_adjust_gateway ||= Adapters::Agrr::Gateways::AdjustGateway.new
+      @agrr_adjust_gateway ||= Adapters::Agrr::Gateways::AdjustDaemonGateway.new
     end
 
     def agrr_candidates_gateway
-      @agrr_candidates_gateway ||= Adapters::Agrr::Gateways::CandidatesGateway.new
+      @agrr_candidates_gateway ||= Adapters::Agrr::Gateways::CandidatesDaemonGateway.new
     end
 
     # add_crop 候補探索（Api::V1::CultivationPlanRestBaseController 経路の主導線）
@@ -735,8 +735,8 @@ module CompositionRoot
 
     def crop_task_schedule_blueprint_regeneration_gateway
       @crop_task_schedule_blueprint_regeneration_gateway ||= Adapters::Crop::Gateways::CropTaskScheduleBlueprintRegenerationActiveRecordGateway.new(
-        schedule_gateway: Adapters::Agrr::Gateways::ScheduleGateway.new,
-        fertilize_gateway: Adapters::Agrr::Gateways::FertilizeGateway.new
+        schedule_gateway: Adapters::Agrr::Gateways::ScheduleDaemonGateway.new,
+        fertilize_gateway: Adapters::Agrr::Gateways::FertilizeDaemonGateway.new
       )
     end
 
@@ -745,14 +745,14 @@ module CompositionRoot
     end
 
     def crop_ai_daemon_query_gateway
-      @crop_ai_daemon_query_gateway ||= Adapters::Agrr::Gateways::CropAiDaemonQueryGateway.new(
+      @crop_ai_daemon_query_gateway ||= Adapters::Agrr::Gateways::CropAiQueryDaemonGateway.new(
         logger: logger,
         translator: translator
       )
     end
 
     def pest_ai_daemon_query_gateway
-      @pest_ai_daemon_query_gateway ||= Adapters::Agrr::Gateways::PestAiDaemonQueryGateway.new(
+      @pest_ai_daemon_query_gateway ||= Adapters::Agrr::Gateways::PestAiQueryDaemonGateway.new(
         logger: logger,
         translator: translator
       )

@@ -5,7 +5,7 @@ module Adapters
     module Gateways
       # エントリ作物スケジュール用: AGRR CLI `optimize period` のみで栽培開始〜完了の最適期間を算出する（フォールバックなし）
       # T-035: app/services/crop_schedule/entry_agrr_optimization から adapter へ移行。
-      class EntryScheduleOptimizationGateway
+      class EntryScheduleOptimizationDaemonGateway
         ES = Domain::CultivationPlan::Interactors::EntrySchedule
 
         # インスタンス生成時は必ず +crop_gateway+ を渡す（テストではスタブ可）。{.call} も同様。
@@ -80,7 +80,7 @@ module Adapters
           return failed_result(:insufficient_weather) if weather_for_file.blank?
 
           crop_requirement = self.class.scale_stage_gdd_for_optimize_period(@crop.to_agrr_requirement)
-          gateway = ::Adapters::Agrr::Gateways::OptimizationGateway.new
+          gateway = ::Adapters::Agrr::Gateways::OptimizationDaemonGateway.new
           parsed = gateway.optimize(
             crop_name: @crop.name,
             crop_variety: @crop.variety.presence || "general",
@@ -123,16 +123,16 @@ module Adapters
             weather_end_date: extract_weather_end
           )
         rescue ::Adapters::Agrr::Gateways::DaemonClient::DaemonNotRunningError => e
-          Rails.logger.warn("[EntryScheduleOptimizationGateway] daemon: #{e.message}")
+          Rails.logger.warn("[EntryScheduleOptimizationDaemonGateway] daemon: #{e.message}")
           failed_result(:daemon_unavailable)
         rescue ::Adapters::Agrr::Gateways::BaseGatewayV2::ExecutionError, ::Adapters::Agrr::Gateways::DaemonClient::CommandExecutionError => e
-          Rails.logger.warn("[EntryScheduleOptimizationGateway] execution: #{e.class}: #{e.message}")
+          Rails.logger.warn("[EntryScheduleOptimizationDaemonGateway] execution: #{e.class}: #{e.message}")
           failed_result(:execution_failed)
         rescue ::Adapters::Agrr::Gateways::BaseGatewayV2::ParseError, ArgumentError, Date::Error, TypeError, JSON::ParserError => e
-          Rails.logger.warn("[EntryScheduleOptimizationGateway] parse/args: #{e.class}: #{e.message}")
+          Rails.logger.warn("[EntryScheduleOptimizationDaemonGateway] parse/args: #{e.class}: #{e.message}")
           failed_result(:invalid_response)
         rescue StandardError => e
-          Rails.logger.error("[EntryScheduleOptimizationGateway] #{e.class}: #{e.message}\n#{e.backtrace&.first(8)&.join("\n")}")
+          Rails.logger.error("[EntryScheduleOptimizationDaemonGateway] #{e.class}: #{e.message}\n#{e.backtrace&.first(8)&.join("\n")}")
           failed_result(:crop_requirement_error)
         end
 

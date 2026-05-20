@@ -41,8 +41,8 @@ class AgrrWeatherGatewayTest < ActiveSupport::TestCase
   end
 
   def setup
-    load Rails.root.join("app/adapters/agrr/gateways/weather_gateway.rb")
-    @gateway = Adapters::Agrr::Gateways::WeatherGateway.new
+    load Rails.root.join("app/adapters/agrr/gateways/weather_daemon_gateway.rb")
+    @gateway = Adapters::Agrr::Gateways::WeatherDaemonGateway.new
     @stub_service = StubAgrrService.new
     @gateway.instance_variable_set(:@agrr_service, @stub_service)
     # 環境変数をクリーンアップ
@@ -85,7 +85,7 @@ class AgrrWeatherGatewayTest < ActiveSupport::TestCase
     ENV["WEATHER_DATA_SOURCE"] = "nasa-power"
     begin
       # 新しいゲートウェイインスタンスを作成して環境変数を反映
-      gateway = Adapters::Agrr::Gateways::WeatherGateway.new
+      gateway = Adapters::Agrr::Gateways::WeatherDaemonGateway.new
       stub_service = StubAgrrService.new
       gateway.instance_variable_set(:@agrr_service, stub_service)
 

@@ -142,7 +142,7 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   def agrr_weather_gateway
-    @agrr_weather_gateway ||= Adapters::Agrr::Gateways::WeatherGateway.new
+    @agrr_weather_gateway ||= Adapters::Agrr::Gateways::WeatherDaemonGateway.new
   end
 
   def presenter

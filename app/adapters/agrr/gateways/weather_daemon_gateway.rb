@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class WeatherGateway < BaseGatewayV2
+      class WeatherDaemonGateway < BaseGatewayV2
         def fetch(latitude:, longitude:, days:)
           Rails.logger.info "🌤️  [AGRR] Fetching weather: lat=#{latitude}, lon=#{longitude}, days=#{days}"
 

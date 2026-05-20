@@ -7,8 +7,8 @@ module Adapters
       class CropTaskScheduleBlueprintRegenerationActiveRecordGateway <
         Domain::Crop::Gateways::CropTaskScheduleBlueprintRegenerationGateway
         def initialize(
-          schedule_gateway: Adapters::Agrr::Gateways::ScheduleGateway.new,
-          fertilize_gateway: Adapters::Agrr::Gateways::FertilizeGateway.new
+          schedule_gateway: Adapters::Agrr::Gateways::ScheduleDaemonGateway.new,
+          fertilize_gateway: Adapters::Agrr::Gateways::FertilizeDaemonGateway.new
         )
           @schedule_gateway = schedule_gateway
           @fertilize_gateway = fertilize_gateway

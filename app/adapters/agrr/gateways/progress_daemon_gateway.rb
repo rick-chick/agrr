@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class ProgressGateway < BaseGatewayV2
+      class ProgressDaemonGateway < BaseGatewayV2
         # agrr progress コマンドを実行して作物の成長進捗を計算
         # @param crop [Crop] 作物モデル
         # @param start_date [Date] 栽培開始日

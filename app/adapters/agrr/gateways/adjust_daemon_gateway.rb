@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class AdjustGateway < BaseGatewayV2
+      class AdjustDaemonGateway < BaseGatewayV2
         # agrr optimize adjust コマンドを実行して既存の割り当てを手修正
         # @param current_allocation [Hash] 現在の割り当てデータ（agrr optimize allocateの出力形式）
         # @param moves [Array<Hash>] 移動指示のリスト

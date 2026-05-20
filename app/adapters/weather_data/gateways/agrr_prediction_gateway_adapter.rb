@@ -5,7 +5,7 @@ module Adapters
     module Gateways
       class AgrrPredictionGatewayAdapter < Domain::WeatherData::Gateways::PredictionGateway
         def initialize
-          @implementation = ::Adapters::Agrr::Gateways::PredictionGateway.new
+          @implementation = ::Adapters::Agrr::Gateways::PredictionDaemonGateway.new
         end
 
         def predict(historical_data:, days:, model: "lightgbm")

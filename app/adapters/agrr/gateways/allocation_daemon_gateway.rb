@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class AllocationGateway < BaseGatewayV2
+      class AllocationDaemonGateway < BaseGatewayV2
         def allocate(fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules: nil, objective: "maximize_profit", max_time: nil, enable_parallel: false)
           Rails.logger.info "⚙️  [AGRR] Multi-field allocation: fields=#{fields.count}, crops=#{crops.count}"
 

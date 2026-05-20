@@ -3,7 +3,7 @@
 module Adapters
   module Agrr
     module Gateways
-      class CandidatesGateway < BaseGatewayV2
+      class CandidatesDaemonGateway < BaseGatewayV2
         # agrr optimize candidates コマンドを実行して最適な作付候補を取得
         # @param current_allocation [Hash] 現在の割り当てデータ（agrr optimize allocateの出力形式）
         # @param fields [Array<Hash>] 圃場設定

@@ -33,7 +33,7 @@ class AgrrProgressGatewayTest < ActiveSupport::TestCase
   end
 
   def setup
-    @gateway = Adapters::Agrr::Gateways::ProgressGateway.new
+    @gateway = Adapters::Agrr::Gateways::ProgressDaemonGateway.new
     @stub_service = StubAgrrService.new
     @gateway.instance_variable_set(:@agrr_service, @stub_service)
 

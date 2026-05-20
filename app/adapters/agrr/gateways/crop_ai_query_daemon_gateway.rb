@@ -4,7 +4,7 @@ module Adapters
   module Agrr
     module Gateways
       # API 作物 AI 作成で ::Adapters::Agrr::Gateways::DaemonClient.crop を叩く処理とリトライ（Controller の rescue を不要にする）
-      class CropAiDaemonQueryGateway
+      class CropAiQueryDaemonGateway
         DEFAULT_MAX_RETRIES = 3
 
         def initialize(logger:, translator:, agrr_service: nil)
