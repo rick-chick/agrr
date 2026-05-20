@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class FieldDetailInteractorTest < ActiveSupport::TestCase
+class FieldDetailInteractorTest < DomainLibTestCase
   test "call passes FieldWithFarm to output port on success" do
     farm_entity = Domain::Farm::Entities::FarmEntity.new(
       id: 1, name: "F", latitude: nil, longitude: nil, region: nil, user_id: 9,
-      created_at: Time.current, updated_at: Time.current, is_reference: false
+      created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1), is_reference: false
     )
     field_entity = Domain::Field::Entities::FieldEntity.new(
       id: 2, farm_id: 1, user_id: 9, name: "North", description: nil,
-      created_at: Time.current, updated_at: Time.current, area: nil, daily_fixed_cost: nil, region: nil
+      created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1), area: nil, daily_fixed_cost: nil, region: nil
     )
     result = Domain::Field::Results::FieldWithFarm.new(farm: farm_entity, field: field_entity)
 
@@ -37,7 +37,7 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
     interactor.call(5)
   end
 
-  test "call forwards RecordNotFound to on_failure as ErrorDto" do
+  test "call forwards RecordNotFound to on_failure as Error" do
     user = stub(id: 20)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
@@ -47,7 +47,7 @@ class FieldDetailInteractorTest < ActiveSupport::TestCase
 
     output = mock
     output.expects(:on_failure).with do |err|
-      assert_instance_of Domain::Shared::Dtos::ErrorDto, err
+      assert_instance_of Domain::Shared::Dtos::Error, err
       assert_equal "Field not found", err.message
       true
     end

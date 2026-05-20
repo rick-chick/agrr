@@ -36,11 +36,11 @@ module Api
           # @return [401] APIキーが無効
           # @return [404] 作物が見つからない
           def index
-            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInputDto.new(
+            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInput.new(
               user_id: current_user.id,
               crop_id: params[:crop_id]
             )
-            presenter = Presenters::Api::Crop::CropMastersTaskTemplateIndexPresenter.new(
+            presenter = Adapters::Crop::Presenters::Api::CropMastersTaskTemplateIndexPresenter.new(
               view: self,
               translator: CompositionRoot.translator
             )
@@ -68,7 +68,7 @@ module Api
           # @return [404] 作物または農業タスクが見つからない
           # @return [422] 既に関連付けられている、またはバリデーションエラー
           def create
-            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInput.new(
               user_id: current_user.id,
               crop_id: params[:crop_id],
               agricultural_task_id: template_params[:agricultural_task_id],
@@ -79,7 +79,7 @@ module Api
               required_tools: template_params[:required_tools],
               skill_level: template_params[:skill_level]
             )
-            presenter = Presenters::Api::Crop::CropMastersTaskTemplateCreatePresenter.new(
+            presenter = Adapters::Crop::Presenters::Api::CropMastersTaskTemplateCreatePresenter.new(
               view: self,
               translator: CompositionRoot.translator
             )
@@ -107,13 +107,13 @@ module Api
           # @return [404] 作物または関連が見つからない
           # @return [422] バリデーションエラー
           def update
-            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateUpdateInputDto.new(
+            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateUpdateInput.new(
               user_id: current_user.id,
               crop_id: params[:crop_id],
               template_id: params[:id],
               attributes: template_params.except(:agricultural_task_id).to_h
             )
-            presenter = Presenters::Api::Crop::CropMastersTaskTemplateUpdatePresenter.new(
+            presenter = Adapters::Crop::Presenters::Api::CropMastersTaskTemplateUpdatePresenter.new(
               view: self,
               translator: CompositionRoot.translator
             )
@@ -133,12 +133,12 @@ module Api
           # @return [401] APIキーが無効
           # @return [404] 作物または関連が見つからない
           def destroy
-            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInputDto.new(
+            input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInput.new(
               user_id: current_user.id,
               crop_id: params[:crop_id],
               template_id: params[:id]
             )
-            presenter = Presenters::Api::Crop::CropMastersTaskTemplateDestroyPresenter.new(
+            presenter = Adapters::Crop::Presenters::Api::CropMastersTaskTemplateDestroyPresenter.new(
               view: self,
               translator: CompositionRoot.translator
             )

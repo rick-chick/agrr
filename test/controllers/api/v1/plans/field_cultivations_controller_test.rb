@@ -11,13 +11,14 @@ module Api
           @session = Session.create_for_user(@user)
           cookies[:session_id] = @session.session_id
 
-          # WeatherLocationを作成
-          @weather_location = WeatherLocation.create!(
+          # WeatherLocationを作成 (ユニーク制約を考慮しfind_or_create_by使用)
+          @weather_location = WeatherLocation.find_or_create_by!(
             latitude: 35.6762,
-            longitude: 139.6503,
-            timezone: "Asia/Tokyo",
-            elevation: 0.0
-          )
+            longitude: 139.6503
+          ) do |wl|
+            wl.timezone = "Asia/Tokyo"
+            wl.elevation = 0.0
+          end
 
           # Farmを作成
           @farm = create(:farm,
@@ -114,7 +115,7 @@ module Api
         end
 
         test "climate_data delegates to interactor error response" do
-          error_dto = Domain::Shared::Dtos::ErrorDto.new("gateway failure")
+          error_dto = Domain::Shared::Dtos::Error.new("gateway failure")
           with_field_climate_interactor_stub(->(output_port, _) { output_port.on_error(error_dto) }) do
             get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
 
@@ -245,6 +246,7 @@ module Api
           }
           @cultivation_plan.update!(predicted_weather_data: predicted_data)
 
+          I18n.backend.store_translations(:ja, api: { errors: { no_cultivation_period: "栽培期間が設定されていません" } })
           get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
 
           assert_response :bad_request

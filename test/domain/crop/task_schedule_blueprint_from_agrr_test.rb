@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class DomainCropTaskScheduleBlueprintFromAgrrTest < ActiveSupport::TestCase
+class DomainCropTaskScheduleBlueprintFromAgrrTest < DomainLibTestCase
   test "fertilizer_row assigns basal then topdress task types from index" do
     types = Domain::AgriculturalTask::Constants::ScheduleItemTypes
     first = Domain::Crop::TaskScheduleBlueprintFromAgrr.fertilizer_row(

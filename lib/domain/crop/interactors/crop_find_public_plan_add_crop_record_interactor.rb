@@ -17,7 +17,7 @@ module Domain
             @output_port.on_success(crop)
           else
             @logger.warn("[CropFindPublicPlanAddCropRecordInteractor] reference crop not found crop_id=#{crop_id.inspect}")
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Crop not found"))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new("Crop not found"))
           end
         end
       end

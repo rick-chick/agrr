@@ -30,7 +30,7 @@
   <h2 class="stages-title"><%= t('crops.show.stages_title') %></h2>
   <% if crop.crop_stages.any? %>
     <ol class="stages-list">
-      <% crop.crop_stages.order(:order).each do |stage| %>
+      <% crop.crop_stages.each do |stage| %>
         <li class="stage-item">
           <div class="stage-name"><%= stage.name %></div>
           <div class="stage-order"><%= t('crops.show.stage_order') %>: <%= stage.order %></div>

@@ -102,7 +102,7 @@ module Domain
         end
 
         # プライベート計画ウィザード「農場選択」HTML 用の農場選択肢のみ（PageDto は Assembler 側）
-        # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanNewFarmChoiceDto>]
+        # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanNewFarmChoice>]
         def private_plan_new_farm_choices(user:)
           raise NotImplementedError, "Subclasses must implement private_plan_new_farm_choices"
         end
@@ -113,19 +113,19 @@ module Domain
         end
 
         # 農場天気参照: 所有農場のみ（Interactor が管理者なら別メソッドを呼ぶ）。
-        # @return [Domain::Farm::Dtos::FarmWeatherDataAccessContextDto, nil]
+        # @return [Domain::Farm::Dtos::FarmWeatherDataAccessContext, nil]
         def farm_weather_data_access_context_for_owned_farm(user_id:, farm_id:)
           raise NotImplementedError, "Subclasses must implement farm_weather_data_access_context_for_owned_farm"
         end
 
         # 農場 id のみ（管理者ユースケースで Interactor からのみ呼ぶ）。
-        # @return [Domain::Farm::Dtos::FarmWeatherDataAccessContextDto, nil]
+        # @return [Domain::Farm::Dtos::FarmWeatherDataAccessContext, nil]
         def farm_weather_data_access_context_for_admin_lookup(farm_id:)
           raise NotImplementedError, "Subclasses must implement farm_weather_data_access_context_for_admin_lookup"
         end
 
         # 作付計画表: ユーザー所有農場のみ、名前順（HTML 選択 UI）
-        # @return [Array<Domain::Farm::Dtos::FarmIdNameDto>]
+        # @return [Array<Domain::Farm::Dtos::FarmIdName>]
         def planning_schedule_user_owned_farms(user:)
           raise NotImplementedError, "Subclasses must implement planning_schedule_user_owned_farms"
         end

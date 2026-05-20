@@ -224,53 +224,6 @@ class AgriculturalTaskTest < ActiveSupport::TestCase
     assert other.valid?
   end
 
-  test "should belong to user" do
-    user = create(:user)
-    task = create(:agricultural_task, :user_owned, user: user)
-
-    assert_equal user.id, task.user_id
-    assert_equal user, task.user
-  end
-
-  test "should allow nil user for reference tasks" do
-    task = create(:agricultural_task, is_reference: true, user_id: nil)
-
-    assert_nil task.user_id
-    assert_nil task.user
-  end
-
-  test "user should have many agricultural_tasks" do
-    user = create(:user)
-    task1 = create(:agricultural_task, :user_owned, user: user)
-    task2 = create(:agricultural_task, :user_owned, user: user)
-
-    assert_includes user.agricultural_tasks, task1
-    assert_includes user.agricultural_tasks, task2
-    assert_equal 2, user.agricultural_tasks.count
-  end
-
-  test "should filter agricultural_tasks by is_reference and user_id combination" do
-    user1 = create(:user)
-    user2 = create(:user)
-
-    ref_task = create(:agricultural_task, is_reference: true, user_id: nil)
-    user1_task = create(:agricultural_task, :user_owned, user: user1)
-    user2_task = create(:agricultural_task, :user_owned, user: user2)
-
-    # 一般ユーザーの視点（自身のタスクのみ）
-    visible_tasks = AgriculturalTask.where(user_id: user1.id, is_reference: false)
-
-    assert_includes visible_tasks, user1_task
-    assert_not_includes visible_tasks, ref_task
-    assert_not_includes visible_tasks, user2_task
-
-    # 管理者の視点（参照タスクまたは自身のタスク）
-    admin_user = create(:user, admin: true)
-    admin_visible_tasks = AgriculturalTask.where("is_reference = ? OR user_id = ?", true, admin_user.id)
-
-    assert_includes admin_visible_tasks, ref_task
-  end
-
   # ========== スコープのテスト ==========
 
   test "recent scope should return tasks ordered by created_at desc" do

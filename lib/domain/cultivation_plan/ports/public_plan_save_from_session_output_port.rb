@@ -8,7 +8,7 @@ module Domain
           raise NotImplementedError
         end
 
-        # @param failure [Domain::CultivationPlan::Dtos::PublicPlanSaveFailureDto]
+        # @param failure [Domain::CultivationPlan::Dtos::PublicPlanSaveFailure]
         def on_failure(failure)
           raise NotImplementedError
         end

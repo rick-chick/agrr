@@ -14,7 +14,7 @@ module Domain
           farm = @farm_loader.call(farm_id)
           @output_port.on_success(farm)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Dtos::EntryScheduleFailureDto.record_not_found(e.message))
+          @output_port.on_failure(Dtos::EntryScheduleFailure.record_not_found(e.message))
         end
       end
     end

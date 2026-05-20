@@ -23,7 +23,7 @@ module Domain
             access_filter: access_filter
           )
           if result[:success]
-            destroy_output_dto = Domain::Crop::Dtos::CropDestroyOutputDto.new(undo: result[:undo_entity])
+            destroy_output_dto = Domain::Crop::Dtos::CropDestroyOutput.new(undo: result[:undo_entity])
             @output_port.on_success(destroy_output_dto)
           else
             @output_port.on_failure(result[:error_dto])
@@ -31,9 +31,9 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("crops.flash.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

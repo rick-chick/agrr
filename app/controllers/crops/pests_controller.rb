@@ -7,29 +7,32 @@ module Crops
 
     # GET /crops/:crop_id/pests
     def index
-      presenter = Presenters::Html::Crop::CropPestsIndexHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropPestsIndexHtmlPresenter.new(view: self)
       Domain::Pest::Interactors::CropsNestedPestsIndexInteractor.new(output_port: presenter,
         user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id)
     end
 
     # GET /crops/:crop_id/pests/:id
     def show
+      render_form(:show)
     end
 
     # GET /crops/:crop_id/pests/new
     def new
-      presenter = Presenters::Html::Crop::CropPestsNewHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropPestsNewHtmlPresenter.new(view: self)
       Domain::Pest::Interactors::CropsNestedPestsNewInteractor.new(output_port: presenter,
         user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id)
+      presenter.render_template
     end
 
     # GET /crops/:crop_id/pests/:id/edit
     def edit
+      render_form(:edit)
     end
 
     # POST /crops/:crop_id/pests
     def create
-      presenter = Presenters::Html::Crop::CropPestsCreateHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropPestsCreateHtmlPresenter.new(view: self)
       pest_attrs =
         if params[:pest].present?
           pest_params.respond_to?(:to_unsafe_h) ? pest_params.to_unsafe_h : pest_params.to_h
@@ -46,7 +49,7 @@ module Crops
 
     # PATCH/PUT /crops/:crop_id/pests/:id
     def update
-      presenter = Presenters::Html::Crop::CropPestsUpdateHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropPestsUpdateHtmlPresenter.new(view: self)
       pest_attrs =
         if params[:pest].present?
           pest_params.respond_to?(:to_unsafe_h) ? pest_params.to_unsafe_h : pest_params.to_h
@@ -65,16 +68,22 @@ module Crops
       )
     end
 
+    # Presenter から明示レシーバで呼ぶための公開フック
+    # ネームスペース付きコントローラーでテンプレート検索が壊れるため、prefixes を明示
+    def render_form(action, status: :ok, locals: {}, prefixes: ["crops/pests"])
+      render(action, status: status, locals: locals, prefixes: prefixes)
+    end
+
     private
 
     def load_authorized_crop
-      presenter = Presenters::Html::Crop::CropPestsLoadCropHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropPestsLoadCropHtmlPresenter.new(view: self)
       Domain::Crop::Interactors::CropLoadAuthorizedForCropPestsInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:crop_id])
     end
 
     def load_nested_pest
-      presenter = Presenters::Html::Crop::CropPestsLoadPestHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropPestsLoadPestHtmlPresenter.new(view: self)
       Domain::Pest::Interactors::CropsNestedPestsLoadPestInteractor.new(
         output_port: presenter,
         user_id: current_user.id,

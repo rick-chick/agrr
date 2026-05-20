@@ -53,6 +53,7 @@ us:
   # API error messages
   api:
     errors:
+      no_cultivation_period: "Cultivation period is not set"
       backdoor:
         not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
         missing_token: "Missing authentication token"
@@ -78,8 +79,15 @@ us:
     messages:
       pests:
         associated_successfully: "Pest associated successfully"
+      fertilizes:
+        created_by_ai: "Fertilizer information fetched and saved with AI!"
+        invalid_payload: "Invalid fertilizer data received from AI"
 
   public_plans:
+    show:
+      detail:
+        title: "Plan Details"
+        loading: "Loading..."
     errors:
       field_not_found: "Field not found"
       cannot_remove_field_with_cultivations: "This field has cultivation schedules. Remove crops first."
@@ -169,6 +177,14 @@ us:
       updated_success: "✓ Fetched and updated fertilizer information for \"%{name}\"!"
       fetch_failed: "Failed to fetch fertilizer information"
       network_error: "Network error occurred"
+    pest_ai:
+      enter_name: "Please enter a pest name"
+      fetching: "Fetching pest information with AI..."
+      button_fetching: "🤖 Fetching with AI..."
+      created_success: "✓ Retrieved and saved pest '%{name}'!"
+      updated_success: "✓ Retrieved and updated pest information for '%{name}'!"
+      fetch_failed: "Failed to retrieve pest information"
+      network_error: "A network error occurred"
 
   # Navigation
   nav:
@@ -191,6 +207,48 @@ us:
     terms: "Terms of Service"
     contact: "Contact"
     copyright: "© 2025 AGRR. All rights reserved."
+
+  # Deletion undo
+  deletion_undo:
+    toast_message: "%{resource} was deleted. You can undo this action."
+    schedule_forbidden: "You are not allowed to perform this action."
+    redirect_notice: "%{resource} was deleted."
+    restored: "Deletion was undone."
+    undo_button: "Undo"
+    close_button: "Close"
+    expired: "The undo time has expired."
+    restore_failed: "Deletion could not be undone."
+    not_found: "Undo action was not found."
+  pesticides:
+    undo:
+      toast: "%{name} was deleted. You can undo this action."
+  agricultural_tasks:
+    undo:
+      toast: "%{name} was deleted. You can undo this action."
+  crops:
+    undo:
+      toast: "%{name} was deleted. You can undo this action."
+  pests:
+    form:
+      ai_button: "🤖 Get & Save Pest Info with AI"
+      ai_help: "Use AI to fetch pest information"
+      ai_processing_title: "🤖 Fetching pest information with AI..."
+      ai_processing_message: "Fetching pest information..."
+      ai_progress_text: "Processing..."
+    undo:
+      toast: "%{name} was deleted. You can undo this action."
+  fertilizes:
+    undo:
+      toast: "%{name} was deleted. You can undo this action."
+  farms:
+    undo:
+      toast: "%{name} was deleted. You can undo this action."
+  fields:
+    undo:
+      toast: "%{name} was deleted. You can undo this action."
+  interaction_rules:
+    undo:
+      toast: "%{source} → %{target} rule was deleted. You can undo this action."
 
   # Flash messages
   flash:
@@ -230,3 +288,101 @@ us:
           has_one: "Cannot delete record because a dependent %{record} exists"
           has_many: "Cannot delete record because dependent %{record} exist"
 
+  # Validation error messages (standard Rails messages, English)
+  errors:
+    format: "%{attribute} %{message}"
+    template:
+      header: "%{count} error(s) prohibited this %{model} from being saved"
+    messages:
+      required: "must exist"
+      blank: "can't be blank"
+      empty: "can't be empty"
+      invalid: "is invalid"
+      confirmation: "doesn't match %{attribute}"
+      accepted: "must be accepted"
+      too_long: "is too long (maximum is %{count} characters)"
+      too_short: "is too short (minimum is %{count} characters)"
+      wrong_length: "is the wrong length (should be %{count} characters)"
+      not_a_number: "is not a number"
+      not_an_integer: "must be an integer"
+      greater_than: "must be greater than %{count}"
+      greater_than_or_equal_to: "must be greater than or equal to %{count}"
+      equal_to: "must be equal to %{count}"
+      less_than: "must be less than %{count}"
+      less_than_or_equal_to: "must be less than or equal to %{count}"
+      other_than: "must be other than %{count}"
+      odd: "must be odd"
+      even: "must be even"
+      taken: "has already been taken"
+      inclusion: "is not included in the list"
+      exclusion: "is reserved"
+      present: "must be blank"
+      model_invalid: "Validation failed: %{errors}"
+      required_dependency: "is missing the required %{dependency}"
+
+  # JavaScript messages
+  js:
+    crop_ai:
+      enter_name: "Enter crop name"
+      fetching: "Fetching crop information with AI..."
+      button_fetching: "🤖 Fetching information with AI..."
+      button_idle: "🤖 Fetch and save with AI"
+      created_success: "✓ Fetched and saved crop information for \"%{name}\"!"
+      fetch_failed: "Failed to fetch crop information"
+      network_error: "Network error occurred"
+    copy_to_clipboard:
+      success: "Copied!"
+      failure: "Copy failed."
+      fallback: "Please copy manually."
+    fields:
+      map_load_failed: "Failed to load map"
+      retry: "Retry"
+    plans:
+      gantt_not_loaded: "Gantt chart feature is not loaded (script loading may have failed)"
+      data_missing: "Required information for data loading is missing"
+      load_failed: "Failed to load data"
+      load_error: "Failed to load data"
+    crop_palette:
+      plan_id_missing: "Plan ID is missing"
+      crop_types_limit: "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}"
+      crop_add_failed: "Failed to add crop: %{message}"
+      communication_error: "Communication error occurred"
+    fertilize_ai:
+      enter_name: "Enter fertilizer name"
+      fetching: "Fetching fertilizer information with AI..."
+      button_fetching: "🤖 Fetching information with AI..."
+      created_success: "✓ Fetched and saved fertilizer information for \"%{name}\"!"
+      updated_success: "✓ Fetched and updated fertilizer information for \"%{name}\"!"
+      fetch_failed: "Failed to fetch fertilizer information"
+      network_error: "Network error occurred"
+    pest_ai:
+      enter_name: "Please enter a pest name"
+      fetching: "Fetching pest information with AI..."
+      button_fetching: "🤖 Fetching with AI..."
+      created_success: "✓ Retrieved and saved pest '%{name}'!"
+      updated_success: "✓ Retrieved and updated pest information for '%{name}'!"
+      fetch_failed: "Failed to retrieve pest information"
+      network_error: "A network error occurred"
+    gantt:
+      optimization_failed: "Optimization failed"
+      update_failed: "Update failed"
+      fetch_error: "Fetch error"
+      field_info_error: "Failed to get field information"
+      communication_error: "Communication error occurred"
+      invalid_area: "Invalid area value"
+      field_add_failed: "Failed to add field"
+      field_delete_failed: "Failed to delete field"
+      add_field_button: "Add Field"
+      adding_field_loading: "Adding field..."
+      confirm_delete_field: "Delete %{field_name}?\n(This field has no crops, so it can be deleted)"
+      confirm_delete_crop: "Delete %{crop_name}?"
+      adding_field_loading: "Adding..."
+    timeline:
+      update_failed: "Failed to update"
+      date_required: "Date is required"
+      complete_failed: "Failed to complete"
+      cancel_failed: "Failed to cancel"
+      name_required: "Name is required"
+      create_failed: "Failed to create"
+      crop_required: "Crop is required"
+      notes_placeholder: "Notes"

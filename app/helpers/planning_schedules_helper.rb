@@ -43,7 +43,7 @@ module PlanningSchedulesHelper
     return "" unless cultivation_starts_in_period?(cultivation_info, period_index)
 
     cultivation = cultivation_info[:cultivation]
-    crop_color = get_crop_color_for_schedule(cultivation[:crop_name].to_s)
+    crop_color = get_crop_color_for_schedule(cultivation.crop_name.to_s)
     rowspan_attrs = rowspan_attributes(cultivation_info[:rowspan])
 
     tag_attrs = {
@@ -55,9 +55,9 @@ module PlanningSchedulesHelper
     content_tag(:td, tag_attrs) do
       content_tag(:div, class: "cultivation-items") do
         content_tag(:div, class: "cultivation-item", style: "background-color: #{crop_color[:fill]}; border-left: 4px solid #{crop_color[:stroke]}; color: #{crop_color[:text]};") do
-          content_tag(:div, cultivation[:crop_name], class: "cultivation-crop-name") +
+          content_tag(:div, cultivation.crop_name, class: "cultivation-crop-name") +
           content_tag(:div, class: "cultivation-period") do
-            "#{I18n.l(cultivation[:start_date], format: :short)} - #{I18n.l(cultivation[:completion_date], format: :short)}"
+            "#{I18n.l(cultivation.start_date, format: :short)} - #{I18n.l(cultivation.completion_date, format: :short)}"
           end
         end
       end

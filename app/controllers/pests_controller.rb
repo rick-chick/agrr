@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 class PestsController < ApplicationController
-  before_action :load_pest_for_edit, only: [ :edit, :update ]
+  before_action :load_pest_for_edit, only: [ :update ]
 
   # GET /pests
   def index
-    presenter = Presenters::Html::Pest::PestListHtmlPresenter.new(view: self)
+    presenter = Adapters::Pest::Presenters::Html::PestListHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestListInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call
@@ -13,7 +13,7 @@ class PestsController < ApplicationController
 
   # GET /pests/:id
   def show
-    presenter = Presenters::Html::Pest::PestDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::Pest::Presenters::Html::PestDetailHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
@@ -27,16 +27,19 @@ class PestsController < ApplicationController
 
   # GET /pests/:id/edit
   def edit
-    CompositionRoot.pest_gateway.prepare_top_level_pest_for_edit_form!(@pest)
-    prepare_crop_selection_for(@pest)
+    bundle = load_pest_for_edit
+    return if bundle.nil?
+
+    prepare_crop_selection_for(bundle.pest_master_edit_payload)
+    @pest = bundle.pest_master_edit_payload
   end
 
   # POST /pests
   def create
-    input_dto = Domain::Pest::Dtos::PestCreateInputDto.from_hash(
+    input_dto = Domain::Pest::Dtos::PestCreateInput.from_hash(
       { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] }
     )
-    presenter = Presenters::Html::Pest::PestCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::Pest::Presenters::Html::PestCreateHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestCreateInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -44,11 +47,11 @@ class PestsController < ApplicationController
 
   # PATCH/PUT /pests/:id
   def update
-    input_dto = Domain::Pest::Dtos::PestUpdateInputDto.from_hash(
+    input_dto = Domain::Pest::Dtos::PestUpdateInput.from_hash(
       { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] },
       params[:id]
     )
-    presenter = Presenters::Html::Pest::PestUpdateHtmlPresenter.new(
+    presenter = Adapters::Pest::Presenters::Html::PestUpdateHtmlPresenter.new(
       view: self
     )
     Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: presenter,
@@ -60,14 +63,14 @@ class PestsController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::Pest::PestDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::Pest::Presenters::Html::PestDestroyHtmlPresenter.new(view: self)
         Domain::Pest::Interactors::PestDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       end
 
       format.json do
-        DeletionUndo::HtmlMasterScheduleInvoker.call(
+        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
           view: self,
           actor_id: current_user.id,
           resource_type: "Pest",
@@ -88,9 +91,16 @@ class PestsController < ApplicationController
   end
 
   def load_pest_for_edit
-    presenter = Presenters::Html::Pest::PestLoadForEditHtmlPresenter.new(view: self)
-    Domain::Pest::Interactors::PestLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
+    failure_presenter = Adapters::Pest::Presenters::Html::PestAuthorizationFailureRedirectPresenter.new(
+      view: self, permission_message_key: "pests.flash.no_permission"
+    )
+    interactor = Domain::Pest::Interactors::PestLoadAuthorizedModelForEditInteractor.new(
+      failure_presenter: failure_presenter,
+      user_id: current_user.id,
+      gateway: CompositionRoot.pest_gateway,
+      user_lookup: CompositionRoot.user_lookup
+    )
+    interactor.call(params[:id])
   end
 
   def pest_params
@@ -149,7 +159,7 @@ class PestsController < ApplicationController
   def prepare_crop_selection_for(pest, selected_ids: nil)
     @accessible_crops = PestCropAssociationPolicy.accessible_crops_scope(pest, user: current_user).to_a
     allowed_ids = @accessible_crops.map(&:id)
-    normalized_selected = Array(selected_ids || pest.crop_ids).map(&:to_i).uniq & allowed_ids
+    normalized_selected = Array(selected_ids || pest.associated_crop_ids).map(&:to_i).uniq & allowed_ids
 
     @selected_crop_ids = normalized_selected
     @crop_cards = @accessible_crops.map do |crop|

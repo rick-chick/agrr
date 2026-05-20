@@ -27,7 +27,7 @@ class AuthTestController < ApplicationController
   end
 
   def mock_logout
-    presenter = Presenters::Html::Auth::AuthTestLogoutHtmlPresenter.new(view: self)
+    presenter = Adapters::Auth::Presenters::Html::AuthTestLogoutHtmlPresenter.new(view: self)
     Domain::Auth::Interactors::AuthUserLogoutInteractor.new(
       output_port: presenter,
       session_revocation_gateway: CompositionRoot.user_session_revocation_gateway
@@ -70,7 +70,7 @@ class AuthTestController < ApplicationController
     pending_allowed = return_to.present? && allowed_return_to?(return_to)
     stashed = session[:public_plan_save_data].present?
 
-    input = Domain::Auth::Dtos::AuthTestMockLoginInputDto.new(
+    input = Domain::Auth::Dtos::AuthTestMockLoginInput.new(
       google_id: auth_hash["uid"],
       email: auth_hash.dig("info", "email"),
       name: auth_hash.dig("info", "name"),
@@ -81,7 +81,7 @@ class AuthTestController < ApplicationController
       pending_return_to_allowed: pending_allowed
     )
 
-    presenter = Presenters::Html::Auth::AuthTestMockLoginHtmlPresenter.new(view: self)
+    presenter = Adapters::Auth::Presenters::Html::AuthTestMockLoginHtmlPresenter.new(view: self)
     Domain::Auth::Interactors::AuthTestMockLoginInteractor.new(
       output_port: presenter,
       gateway: CompositionRoot.auth_test_login_gateway,

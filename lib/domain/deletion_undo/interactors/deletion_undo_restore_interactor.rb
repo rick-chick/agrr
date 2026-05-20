@@ -26,19 +26,19 @@ module Domain
 
           @gateway.perform_restore(event.id)
 
-          output_dto = Domain::DeletionUndo::Dtos::DeletionUndoRestoreOutputDto.new(
+          output_dto = Domain::DeletionUndo::Dtos::DeletionUndoRestoreOutput.new(
             status: "restored",
             undo_token: event.undo_token
           )
           @output_port.on_success(output_dto)
         rescue Domain::DeletionUndo::Exceptions::DeletionUndoNotFoundError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Not found"))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new("Not found"))
         rescue Domain::DeletionUndo::Exceptions::DeletionUndoExpiredError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::DeletionUndo::Exceptions::DeletionUndoRestoreConflictError => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

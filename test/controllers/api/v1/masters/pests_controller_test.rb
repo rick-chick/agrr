@@ -12,14 +12,6 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes Pest Views" do
-          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestListView
-          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestDetailView
-          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestCreateView
-          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestUpdateView
-          assert_includes Api::V1::Masters::PestsController.included_modules, Views::Api::Pest::PestDeleteView
-        end
-
         test "should get index" do
           pest1 = create(:pest, :user_owned, user: @user)
           pest2 = create(:pest, :user_owned, user: @user)

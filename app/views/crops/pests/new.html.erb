@@ -27,8 +27,7 @@
 
 <div class="form-section">
   <h2 class="form-section-title"><%= t('.create_new_pest') %></h2>
-  <%= render 'form', pest: @pest, crop: @crop %>
+  <%= render 'crops/pests/form', pest: @pest, crop: @crop %>
 </div>
 
 <%= link_to t('.back_to_list'), crop_pests_path(@crop), class: "btn btn-secondary" %>
-

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module AgriculturalTask
     module Interactors
-      class AgriculturalTaskEditFormCropSelectionLoadInteractorTest < ActiveSupport::TestCase
+      class AgriculturalTaskEditFormCropSelectionLoadInteractorTest < DomainLibTestCase
         test "update action uses preview task for reference crop list and filters selected ids" do
           user_id = 10
           task_id = 5
@@ -56,7 +56,7 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
-          input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInputDto.new(
+          input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInput.new(
             user_id: user_id,
             agricultural_task_id: task_id,
             controller_action: "update",
@@ -134,7 +134,7 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
-          input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInputDto.new(
+          input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInput.new(
             user_id: user_id,
             agricultural_task_id: task_id,
             controller_action: "edit",

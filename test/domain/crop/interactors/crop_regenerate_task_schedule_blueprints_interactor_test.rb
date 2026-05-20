@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCase
+class CropRegenerateTaskScheduleBlueprintsInteractorTest < DomainLibTestCase
   test "on_success when regenerator succeeds" do
-    user = Domain::Shared::Dtos::UserDto.new(id: 1, admin: true)
+    user = Domain::Shared::Dtos::User.new(id: 1, admin: true)
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
 
@@ -31,7 +31,7 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCa
   end
 
   test "on_failure with blueprint regeneration domain errors uses message" do
-    user = Domain::Shared::Dtos::UserDto.new(id: 1, admin: true)
+    user = Domain::Shared::Dtos::User.new(id: 1, admin: true)
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
 
@@ -44,7 +44,7 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < ActiveSupport::TestCa
 
     output = mock
     output.expects(:on_failure).with do |dto|
-      assert_instance_of Domain::Shared::Dtos::ErrorDto, dto
+      assert_instance_of Domain::Shared::Dtos::Error, dto
       assert_equal "x", dto.message
       true
     end

@@ -1,14 +1,14 @@
 <%# 部分テンプレート: 1ほ場の期間セル群を描画する %>
 <%# locals: arranged_cultivations(Array<Hash>), periods(Array<Hash>), period_index(Integer) %>
-<% presenter ||= Presenters::Html::Plans::PlanningSchedulePresenter.new(periods: periods) %>
+<% presenter ||= Adapters::CultivationPlan::Presenters::Html::PlanningSchedulePresenter.new(periods: periods) %>
 <% cells = presenter.period_cells(arranged_cultivations: arranged_cultivations, period_index: period_index) %>
 <% cells.each do |cell| %>
-  <% if cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_TYPE_KEY] == :cultivation %>
-    <% if cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_RENDER_KEY] %>
-      <%= raw render_cultivation_cell(cultivation_info: cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_CULTIVATION_KEY], colspan: cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_COLSPAN_KEY], period_index: period_index) %>
+  <% if cell[Adapters::CultivationPlan::Presenters::Html::ScheduleTableFieldArranger::CELL_TYPE_KEY] == :cultivation %>
+    <% if cell[Adapters::CultivationPlan::Presenters::Html::ScheduleTableFieldArranger::CELL_RENDER_KEY] %>
+      <%= raw render_cultivation_cell(cultivation_info: cell[Adapters::CultivationPlan::Presenters::Html::ScheduleTableFieldArranger::CELL_CULTIVATION_KEY], colspan: cell[Adapters::CultivationPlan::Presenters::Html::ScheduleTableFieldArranger::CELL_COLSPAN_KEY], period_index: period_index) %>
     <% end %>
   <% else %>
-    <%= raw render_empty_cell(colspan: cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_COLSPAN_KEY], show_label: cell[Presenters::Html::Plans::ScheduleTableFieldArranger::CELL_SHOW_LABEL_KEY]) %>
+    <%= raw render_empty_cell(colspan: cell[Adapters::CultivationPlan::Presenters::Html::ScheduleTableFieldArranger::CELL_COLSPAN_KEY], show_label: cell[Adapters::CultivationPlan::Presenters::Html::ScheduleTableFieldArranger::CELL_SHOW_LABEL_KEY]) %>
   <% end %>
 <% end %>
 

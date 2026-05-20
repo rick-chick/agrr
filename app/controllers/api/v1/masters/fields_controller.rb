@@ -4,16 +4,11 @@ module Api
   module V1
     module Masters
       class FieldsController < BaseController
-        include Views::Api::Field::FieldListView
-        include Views::Api::Field::FieldDetailView
-        include Views::Api::Field::FieldCreateView
-        include Views::Api::Field::FieldUpdateView
-        include Views::Api::Field::FieldDeleteView
 
         # GET /api/v1/masters/farms/:farm_id/fields
         def index
           return unless input_valid?(:index)
-          presenter = Presenters::Api::Field::FieldListPresenter.new(view: self)
+          presenter = Adapters::Field::Presenters::Api::FieldListPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldListInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:farm_id])
@@ -22,7 +17,7 @@ module Api
         # GET /api/v1/masters/fields/:id
         def show
           input_valid?(:show) || return
-          presenter = Presenters::Api::Field::FieldDetailPresenter.new(view: self)
+          presenter = Adapters::Field::Presenters::Api::FieldDetailPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
@@ -31,12 +26,12 @@ module Api
         # POST /api/v1/masters/farms/:farm_id/fields
         def create
           return unless input_valid?(:create)
-          input_dto = Domain::Field::Dtos::FieldCreateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+          input_dto = Domain::Field::Dtos::FieldCreateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys)
           unless valid_create_params?(input_dto)
             render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
           end
-          presenter = Presenters::Api::Field::FieldCreatePresenter.new(view: self)
+          presenter = Adapters::Field::Presenters::Api::FieldCreatePresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldCreateInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto, params[:farm_id])
@@ -45,8 +40,8 @@ module Api
         # PATCH/PUT /api/v1/masters/fields/:id
         def update
           input_valid?(:update) || return
-          input_dto = Domain::Field::Dtos::FieldUpdateInputDto.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
-          presenter = Presenters::Api::Field::FieldUpdatePresenter.new(view: self)
+          input_dto = Domain::Field::Dtos::FieldUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
+          presenter = Adapters::Field::Presenters::Api::FieldUpdatePresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
@@ -55,7 +50,7 @@ module Api
         # DELETE /api/v1/masters/fields/:id
         def destroy
           input_valid?(:destroy) || return
-          presenter = Presenters::Api::Field::FieldDeletePresenter.new(view: self)
+          presenter = Adapters::Field::Presenters::Api::FieldDeletePresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])

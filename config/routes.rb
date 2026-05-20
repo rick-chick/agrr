@@ -182,12 +182,6 @@ Rails.application.routes.draw do
 
         # Contact messages (public)
         resources :contact_messages, only: [ :create, :index ]
-        # Weather API endpoints
-        namespace :weather do
-          get "historical", to: "weather#historical"
-          get "forecast", to: "weather#forecast"
-          get "status", to: "weather#status"
-        end
 
         # 内部スクリプト専用APIエンドポイント（開発・テスト環境のみ）
         post "internal/farms/:farm_id/fetch_weather_data", to: "internal#fetch_weather_data"

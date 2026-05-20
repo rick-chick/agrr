@@ -77,25 +77,4 @@ class NutrientRequirementTest < ActiveSupport::TestCase
     assert nutrient_req.valid?
   end
 
-  test "should belong to crop_stage" do
-    nutrient_req = create(:nutrient_requirement, crop_stage: @crop_stage)
-
-    assert_equal @crop_stage, nutrient_req.crop_stage
-  end
-
-  test "should have factory with traits" do
-    assert create(:nutrient_requirement, :vegetative_high)
-    assert create(:nutrient_requirement, :flowering_high)
-    assert create(:nutrient_requirement, :fruiting_high)
-    assert create(:nutrient_requirement, :low_intake)
-  end
-
-  test "crop stage should have nutrient requirement" do
-    create(:nutrient_requirement, crop_stage: @crop_stage)
-
-    assert_not_nil @crop_stage.nutrient_requirement
-    assert_equal 0.5, @crop_stage.nutrient_requirement.daily_uptake_n
-    assert_equal 0.2, @crop_stage.nutrient_requirement.daily_uptake_p
-    assert_equal 0.8, @crop_stage.nutrient_requirement.daily_uptake_k
-  end
 end

@@ -10,13 +10,13 @@ module Domain
         end
 
         def call(snapshot)
-          if snapshot.undo_token.blank?
+          if Domain::Shared.blank?(snapshot.undo_token)
             @logger&.error(
               "[DeletionUndo] Missing undo_token for #{snapshot.resource_type || 'unknown'}#" \
               "#{snapshot.resource_id || 'unknown'}"
             )
             @output_port.on_failure(
-              Domain::DeletionUndo::Dtos::DeletionUndoSchedulePayloadFailureDto.new(reason: :missing_undo_token)
+              Domain::DeletionUndo::Dtos::DeletionUndoSchedulePayloadFailure.new(reason: :missing_undo_token)
             )
             return
           end
@@ -25,7 +25,7 @@ module Domain
           resource_label = snapshot.metadata["resource_label"]
 
           @output_port.on_success(
-            Domain::DeletionUndo::Dtos::DeletionUndoScheduleSuccessPayloadDto.new(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleSuccessOutput.new(
               undo_token: snapshot.undo_token,
               undo_deadline: snapshot.metadata["undo_deadline"],
               toast_message: snapshot.toast_message,
@@ -40,13 +40,13 @@ module Domain
 
         def compute_resource_dom_id(snapshot)
           stored = snapshot.metadata["resource_dom_id"]
-          return stored if stored.present?
-          return nil unless snapshot.resource_type.present? && snapshot.resource_id.present?
+           return stored if Domain::Shared.present?(stored)
+           return nil unless Domain::Shared.present?(snapshot.resource_type) && Domain::Shared.present?(snapshot.resource_id)
 
-          [
-            snapshot.resource_type.to_s.demodulize.underscore,
-            snapshot.resource_id.to_s
-          ].join("_")
+           [
+              snapshot.resource_type.to_s.split("::").last.gsub(/[A-Z]/) { |m| "_#{m.downcase}" }.delete_prefix("_"),
+              snapshot.resource_id.to_s
+            ].join("_")
         end
       end
     end

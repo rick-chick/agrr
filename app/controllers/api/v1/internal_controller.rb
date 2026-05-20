@@ -15,8 +15,8 @@ module Api
       # POST /api/v1/internal/farms/:farm_id/fetch_weather_data
       # 特定の農場の天気データを取得開始
       def fetch_weather_data
-        input_dto = Domain::WeatherData::Dtos::InternalWeatherFetchStartInputDto.new(farm_id: params[:farm_id])
-        presenter = Presenters::Api::Internal::InternalWeatherFetchStartPresenter.new(
+        input_dto = Domain::WeatherData::Dtos::InternalWeatherFetchStartInput.new(farm_id: params[:farm_id])
+        presenter = Adapters::WeatherData::Presenters::Api::InternalWeatherFetchStartPresenter.new(
           view: self,
           translator: CompositionRoot.translator
         )

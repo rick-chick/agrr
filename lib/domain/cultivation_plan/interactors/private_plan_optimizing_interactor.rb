@@ -16,16 +16,16 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          read_model = @gateway.private_plan_optimizing_read_model(plan_id: @plan_id, user: user)
+          read_model = @gateway.private_plan_optimizing_snapshot(plan_id: @plan_id, user: user)
           dto = Assemblers::PrivatePlanOptimizingAssembler.call(read_model)
           @output_port.on_success(dto)
-        rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.not_found")))
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("[PrivatePlanOptimizingInteractor] record_invalid: #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

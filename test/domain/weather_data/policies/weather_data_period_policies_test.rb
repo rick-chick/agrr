@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class WeatherDataPeriodPoliciesTest < ActiveSupport::TestCase
+class WeatherDataPeriodPoliciesTest < DomainLibTestCase
   FakeClock = Struct.new(:today)
 
   test "fetch_range uses latest_weather_date and minimum today-2" do

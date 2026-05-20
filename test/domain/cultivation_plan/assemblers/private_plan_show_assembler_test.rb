@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PrivatePlanShowAssemblerTest < ActiveSupport::TestCase
+class PrivatePlanShowAssemblerTest < DomainLibTestCase
   test "call builds show dto and gantt row hashes from detail reads" do
-    fc_read = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto::FieldCultivationRead.new(
+    fc_read = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::FieldCultivationRead.new(
       id: 1,
       cultivation_plan_field_id: 2,
       field_display_name: "North",
@@ -17,12 +17,12 @@ class PrivatePlanShowAssemblerTest < ActiveSupport::TestCase
       estimated_cost: 100,
       optimization_profit: 42
     )
-    field_read = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto::PlanFieldRead.new(
+    field_read = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::PlanFieldRead.new(
       id: 2,
       name: "North",
       area: 50
     )
-    detail = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto.new(
+    detail = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail.new(
       id: 99,
       display_name: "P1",
       farm_display_name: "F1",
@@ -40,7 +40,7 @@ class PrivatePlanShowAssemblerTest < ActiveSupport::TestCase
 
     dto = Domain::CultivationPlan::Assemblers::PrivatePlanShowAssembler.call(detail)
 
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShowDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShow, dto
     assert_equal 99, dto.id
     assert_equal "pending", dto.status
     assert_equal 1, dto.gantt_cultivation_rows.size

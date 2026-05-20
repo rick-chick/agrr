@@ -72,7 +72,7 @@ module Adapters
             prediction_gateway: CompositionRoot.prediction_gateway
           )
 
-          dto = gateway.fetch_field_cultivation_climate_data(field_cultivation_id: @field_cultivation.id)
+          dto = gateway.find_climate_data_by_field_cultivation(field_cultivation_id: @field_cultivation.id)
 
           assert_equal @field_cultivation.id, dto.field_cultivation[:id]
           assert_equal @field_cultivation.field_display_name, dto.field_cultivation[:field_name]
@@ -130,7 +130,7 @@ module Adapters
             prediction_gateway: CompositionRoot.prediction_gateway
           )
 
-          dto = gateway.fetch_field_cultivation_climate_data(field_cultivation_id: @field_cultivation.id)
+          dto = gateway.find_climate_data_by_field_cultivation(field_cultivation_id: @field_cultivation.id)
 
           assert_equal false, dto.debug_info[:using_agrr_progress]
           assert_equal 0, dto.debug_info[:progress_records_count]
@@ -144,7 +144,7 @@ module Adapters
             current_user: @user,
             logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
             translator: Adapters::Translators::RailsTranslator.new,
-            progress_gateway_factory: -> { Agrr::ProgressGateway.new },
+            progress_gateway_factory: -> { Adapters::Agrr::Gateways::ProgressGateway.new },
             weather_prediction_service_factory: ->(*) { raise "weather prediction should not be called" },
             weather_data_gateway: CompositionRoot.weather_data_gateway,
             cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
@@ -153,7 +153,7 @@ module Adapters
           )
 
           assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-            gateway.fetch_field_cultivation_climate_data(field_cultivation_id: 999_999)
+            gateway.find_climate_data_by_field_cultivation(field_cultivation_id: 999_999)
           end
         end
 
@@ -162,7 +162,7 @@ module Adapters
             current_user: @user,
             logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
             translator: Adapters::Translators::RailsTranslator.new,
-            progress_gateway_factory: -> { Agrr::ProgressGateway.new },
+            progress_gateway_factory: -> { Adapters::Agrr::Gateways::ProgressGateway.new },
             weather_prediction_service_factory: ->(*) { raise "unused" },
             weather_data_gateway: CompositionRoot.weather_data_gateway,
             cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,

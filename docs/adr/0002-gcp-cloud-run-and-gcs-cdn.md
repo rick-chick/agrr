@@ -13,7 +13,7 @@ Rails API / HTML は Cloud Run、Angular 静的資産は GCS、エッジは Clou
 
 ## Consequences
 
-デプロイは `scripts/gcp-deploy.sh` / `scripts/gcp-frontend-deploy.sh` に集約。
+デプロイは `.cursor/skills/deploy-server/scripts/gcp-deploy.sh` / `.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh` に集約。
 
 ## Alternatives considered
 

@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module AgriculturalTask
     module Interactors
-      class AgriculturalTaskUpdateInteractorTest < ActiveSupport::TestCase
+      class AgriculturalTaskUpdateInteractorTest < DomainLibTestCase
         test "calls on_success when gateway updates" do
           user_id = 10
           user = Object.new
           task_entity = Object.new
-          update_input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.new(
+          update_input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInput.new(
             id: 5,
             name: "剪定"
           )
@@ -48,7 +48,7 @@ module Domain
         test "calls on_failure with policy_exception when permission is denied" do
           user_id = 10
           user = Object.new
-          update_input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.new(id: 5, name: "x")
+          update_input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInput.new(id: 5, name: "x")
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class Domain::Pest::Interactors::CropsNestedPestsNewInteractorTest < ActiveSupport::TestCase
+class Domain::Pest::Interactors::CropsNestedPestsNewInteractorTest < DomainLibTestCase
   test "on_success passes blank DTO snapshot and unassociated pest entities" do
-    user = Domain::Shared::Dtos::UserDto.new(id: 7, admin: false)
+    user = Domain::Shared::Dtos::User.new(id: 7, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(7).returns(user)
 
@@ -19,7 +19,7 @@ class Domain::Pest::Interactors::CropsNestedPestsNewInteractorTest < ActiveSuppo
 
     output = mock
     output.expects(:on_success).with do |pest_crop_nest_snapshot:, unassociated_pests:|
-      pest_crop_nest_snapshot.is_a?(Domain::Pest::Dtos::PestCropNestSnapshotDto) &&
+      pest_crop_nest_snapshot.is_a?(Domain::Pest::Dtos::PestCropNestSnapshot) &&
         pest_crop_nest_snapshot.id.nil? &&
         pest_crop_nest_snapshot.user_id == 7 &&
         unassociated_pests == [ e2 ]

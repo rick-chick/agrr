@@ -15,15 +15,15 @@ module Domain
 
         def call
           unless @plan_id
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("public_plans.errors.not_found")))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("public_plans.errors.not_found")))
             return
           end
 
-          read_model = @gateway.public_plan_optimizing_read_model(plan_id: @plan_id)
+          read_model = @gateway.public_plan_optimizing_snapshot(plan_id: @plan_id)
           dto = Assemblers::PublicPlanOptimizingAssembler.call(read_model)
           @output_port.on_success(dto)
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("public_plans.errors.not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("public_plans.errors.not_found")))
         end
       end
     end

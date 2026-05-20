@@ -21,7 +21,7 @@ module Domain
           user = begin
             @user_lookup.find(@user_id)
           rescue Domain::Shared::Exceptions::RecordNotFound => e
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
             return
           end
 
@@ -30,14 +30,14 @@ module Domain
           begin
             @gateway.find_authorized_for_edit(user, @crop_id, access_filter: access_filter)
           rescue Domain::Shared::Exceptions::RecordNotFound
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.not_found")))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("crops.flash.not_found")))
             return
           end
 
           begin
             @agricultural_task_gateway.find_model(@agricultural_task_id)
           rescue Domain::Shared::Exceptions::RecordNotFound
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("crops.flash.task_not_found")))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("crops.flash.task_not_found")))
             return
           end
 
@@ -46,7 +46,7 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

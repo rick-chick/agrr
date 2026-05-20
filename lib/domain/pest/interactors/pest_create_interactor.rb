@@ -40,13 +40,13 @@ module Domain
           attrs = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_create(user, attrs)
           pest_entity = @gateway.create_for_user(user, attrs)
 
-          if Domain::Shared::ValidationHelpers.present?(input_dto.crop_ids)
+          if Domain::Shared.present?(input_dto.crop_ids)
             @gateway.associate_crops_with_pest_id(pest_id: pest_entity.id, crop_ids: input_dto.crop_ids, user: user)
           end
 
           @output_port.on_success(pest_entity)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

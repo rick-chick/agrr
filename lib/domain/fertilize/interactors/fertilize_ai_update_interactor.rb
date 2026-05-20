@@ -52,7 +52,7 @@ module Domain
             return Domain::Shared::Dtos::HttpJsonEnvelope.new(status: status_code, body: { error: error_msg })
           end
 
-          fertilize_data = Domain::Fertilize::Services::FertilizeAiAgrrPayloadNormalizer.normalize_fertilize_payload(fertilize_info)
+          fertilize_data = Domain::Fertilize::Mappers::FertilizeAiAgrrMapper.normalize_fertilize_payload(fertilize_info)
           unless fertilize_data
             return Domain::Shared::Dtos::HttpJsonEnvelope.new(
               status: :unprocessable_entity,

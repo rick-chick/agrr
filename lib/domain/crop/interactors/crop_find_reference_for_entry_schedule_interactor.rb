@@ -16,9 +16,9 @@ module Domain
           @output_port.on_success(crop)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[CropFindReferenceForEntryScheduleInteractor] #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

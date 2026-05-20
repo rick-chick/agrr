@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PublicPlanOptimizingInteractorTest < ActiveSupport::TestCase
+class PublicPlanOptimizingInteractorTest < DomainLibTestCase
   test "call passes dto from gateway to on_success" do
-    read_model = Domain::CultivationPlan::Dtos::PublicPlanOptimizingReadModel.new(
+    read_model = Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot.new(
       id: 10,
       plan_year: nil,
       farm_display_name: "F1",
@@ -14,7 +14,7 @@ class PublicPlanOptimizingInteractorTest < ActiveSupport::TestCase
     )
 
     gateway = mock
-    gateway.expects(:public_plan_optimizing_read_model).with(plan_id: 10).returns(read_model)
+    gateway.expects(:public_plan_optimizing_snapshot).with(plan_id: 10).returns(read_model)
 
     translator = mock
     logger = mock
@@ -41,7 +41,7 @@ class PublicPlanOptimizingInteractorTest < ActiveSupport::TestCase
 
   test "call forwards missing plan_id to on_failure" do
     gateway = mock
-    gateway.expects(:public_plan_optimizing_read_model).never
+    gateway.expects(:public_plan_optimizing_snapshot).never
 
     translator = mock
     translator.expects(:t).with("public_plans.errors.not_found").returns("見つかりません")
@@ -65,7 +65,7 @@ class PublicPlanOptimizingInteractorTest < ActiveSupport::TestCase
 
   test "call forwards RecordNotFound to on_failure with not_found message" do
     gateway = mock
-    gateway.expects(:public_plan_optimizing_read_model).raises(Domain::Shared::Exceptions::RecordNotFound.new("x"))
+    gateway.expects(:public_plan_optimizing_snapshot).raises(Domain::Shared::Exceptions::RecordNotFound.new("x"))
 
     translator = mock
     translator.expects(:t).with("public_plans.errors.not_found").returns("見つかりません")
@@ -89,7 +89,7 @@ class PublicPlanOptimizingInteractorTest < ActiveSupport::TestCase
 
   test "propagates unexpected StandardError from gateway" do
     gateway = mock
-    gateway.expects(:public_plan_optimizing_read_model).raises(StandardError.new("internal"))
+    gateway.expects(:public_plan_optimizing_snapshot).raises(StandardError.new("internal"))
 
     translator = mock
     logger = mock

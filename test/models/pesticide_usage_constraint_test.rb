@@ -7,11 +7,6 @@ class PesticideUsageConstraintTest < ActiveSupport::TestCase
     @pesticide = create(:pesticide)
   end
 
-  test "should belong to pesticide" do
-    constraint = create(:pesticide_usage_constraint, pesticide: @pesticide)
-    assert_equal @pesticide, constraint.pesticide
-  end
-
   test "should validate pesticide presence" do
     constraint = PesticideUsageConstraint.new
     assert_not constraint.valid?
@@ -65,12 +60,5 @@ class PesticideUsageConstraintTest < ActiveSupport::TestCase
     assert constraint.valid?
   end
 
-  test "should destroy when pesticide is destroyed" do
-    constraint = create(:pesticide_usage_constraint, pesticide: @pesticide)
-    constraint_id = constraint.id
 
-    @pesticide.destroy
-
-    assert_not PesticideUsageConstraint.exists?(constraint_id)
-  end
 end

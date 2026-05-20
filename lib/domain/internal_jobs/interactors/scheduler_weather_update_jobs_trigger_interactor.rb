@@ -16,7 +16,7 @@ module Domain
             @output_port.on_success
           when :failure
             @output_port.on_failure(
-              Dtos::SchedulerWeatherUpdateTriggerFailureDto.new(message: r.error_message)
+              Dtos::SchedulerWeatherUpdateTriggerFailure.new(message: r.error_message)
             )
           else
             raise ArgumentError, "unexpected gateway result kind: #{r.kind.inspect}"

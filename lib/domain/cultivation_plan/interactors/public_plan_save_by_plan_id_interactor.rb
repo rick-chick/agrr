@@ -20,7 +20,7 @@ module Domain
         end
 
         def call(plan_id:, user:)
-          fdto = Dtos::PublicPlanSaveFailureDto
+          fdto = Dtos::PublicPlanSaveFailure
           if plan_id.blank?
             @output_port.on_failure(fdto.new(kind: fdto::KIND_MISSING_PLAN_ID))
             return
@@ -44,24 +44,24 @@ module Domain
           fallback = @translator.t("public_plans.save.error")
           text = (msg.nil? || msg.to_s.empty?) ? fallback : msg.to_s
           @output_port.on_failure(
-            Dtos::PublicPlanSaveFailureDto.new(
-              kind: Dtos::PublicPlanSaveFailureDto::KIND_SAVE_FAILED,
+            Dtos::PublicPlanSaveFailure.new(
+              kind: Dtos::PublicPlanSaveFailure::KIND_SAVE_FAILED,
               message: text
             )
           )
         rescue Domain::Shared::Exceptions::InvalidTaskScheduleItem => e
           @logger.error("❌ [PublicPlanSaveByPlanIdInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
-            Dtos::PublicPlanSaveFailureDto.new(
-              kind: Dtos::PublicPlanSaveFailureDto::KIND_UNEXPECTED,
+            Dtos::PublicPlanSaveFailure.new(
+              kind: Dtos::PublicPlanSaveFailure::KIND_UNEXPECTED,
               message: @translator.t("public_plans.save.error")
             )
           )
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("❌ [PublicPlanSaveByPlanIdInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
-            Dtos::PublicPlanSaveFailureDto.new(
-              kind: Dtos::PublicPlanSaveFailureDto::KIND_SAVE_FAILED,
+            Dtos::PublicPlanSaveFailure.new(
+              kind: Dtos::PublicPlanSaveFailure::KIND_SAVE_FAILED,
               message: e.message
             )
           )

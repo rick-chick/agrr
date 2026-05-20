@@ -22,7 +22,7 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
         end
 
         test "should raise when fertilize not found" do
-          assert_raises(StandardError) do
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
             @gateway.find_by_id(9999)
           end
         end
@@ -37,7 +37,7 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
             "package_size" => 25.0
           }
 
-          dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
+          dto = Domain::Fertilize::Dtos::FertilizeCreateInput.from_hash(fertilize_data)
           entity = @gateway.create(dto)
 
           assert_not_nil entity
@@ -66,7 +66,7 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
             "package_size" => nil
           }
 
-          dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
+          dto = Domain::Fertilize::Dtos::FertilizeCreateInput.from_hash(fertilize_data)
           entity = @gateway.create(dto)
 
           assert_not_nil entity
@@ -82,8 +82,8 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
             "n" => 46.0
           }
 
-          dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash(fertilize_data)
-          assert_raises(StandardError) do
+          dto = Domain::Fertilize::Dtos::FertilizeCreateInput.from_hash(fertilize_data)
+          assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
             @gateway.create(dto)
           end
         end
@@ -96,7 +96,7 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
             description: "粒状の尿素肥料"
           }
 
-          dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
+          dto = Domain::Fertilize::Dtos::FertilizeUpdateInput.from_hash(update_data, fertilize.id)
           entity = @gateway.update(fertilize.id, dto)
 
           assert_equal "尿素（粒状）", entity.name
@@ -111,7 +111,7 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
             package_size: 25.0
           }
 
-          dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
+          dto = Domain::Fertilize::Dtos::FertilizeUpdateInput.from_hash(update_data, fertilize.id)
           entity = @gateway.update(fertilize.id, dto)
 
           assert_equal 25.0, entity.package_size
@@ -126,7 +126,7 @@ class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport:
             n: 50.0
           }
 
-          dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash(update_data, fertilize.id)
+          dto = Domain::Fertilize::Dtos::FertilizeUpdateInput.from_hash(update_data, fertilize.id)
           entity = @gateway.update(fertilize.id, dto)
 
           assert_equal "尿素", entity.name  # unchanged

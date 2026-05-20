@@ -20,7 +20,7 @@ module Domain
           if climate_data.nil?
             @logger.warn("[FieldCultivationClimateDataInteractor] Missing climate data for field_cultivation_id=#{field_cultivation_id}")
             @output_port.on_error(
-              Domain::Shared::Dtos::ErrorDto.new("Field cultivation climate data not found")
+              Domain::Shared::Dtos::Error.new("Field cultivation climate data not found")
             )
             return
           end
@@ -29,22 +29,22 @@ module Domain
           @output_port.present(filtered_data)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[FieldCultivationClimateDataInteractor] Field cultivation not found: #{e.message}")
-          @output_port.on_error(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_error(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.warn("[FieldCultivationClimateDataInteractor] Record invalid: #{e.message}")
-          @output_port.on_error(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_error(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::FieldCultivation::Errors::NoWeatherLocationError,
                Domain::FieldCultivation::Errors::NoCultivationPeriodError,
                Domain::FieldCultivation::Errors::WeatherPayloadInvalidError => e
           @logger.warn("[FieldCultivationClimateDataInteractor] Climate precondition: #{e.class}: #{e.message}")
-          @output_port.on_error(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_error(Domain::Shared::Dtos::Error.new(e.message))
         end
 
         private
 
         def safe_fetch_climate_data(field_cultivation_id, display_start_date, display_end_date)
           begin
-            @gateway.fetch_field_cultivation_climate_data(
+            @gateway.find_climate_data_by_field_cultivation(
               field_cultivation_id: field_cultivation_id,
               display_start_date: display_start_date,
               display_end_date: display_end_date
@@ -113,7 +113,7 @@ module Domain
             }
           )
 
-          Domain::FieldCultivation::Dtos::FieldCultivationClimateDataSuccessDto.new(
+          Domain::FieldCultivation::Dtos::FieldCultivationClimateDataOutput.new(
             field_cultivation: adjusted_field_cultivation,
             farm: climate_data.farm,
             crop_requirements: climate_data.crop_requirements,
@@ -126,7 +126,7 @@ module Domain
         end
 
         def filter_weather_data(weather_data, range_start, range_end)
-          Domain::Shared::ValidationHelpers.to_array(weather_data).select do |datum|
+          Domain::Shared.to_array(weather_data).select do |datum|
             date_value = parse_date(datum["date"] || datum[:date])
             next false unless date_value
             date_value >= range_start && date_value <= range_end
@@ -134,7 +134,7 @@ module Domain
         end
 
         def filter_gdd_data(gdd_data, range_start, range_end)
-          Domain::Shared::ValidationHelpers.to_array(gdd_data).select do |datum|
+          Domain::Shared.to_array(gdd_data).select do |datum|
             date_value = parse_date(datum["date"] || datum[:date])
             next false unless date_value
             date_value >= range_start && date_value <= range_end

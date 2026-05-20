@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module InteractionRule
     module Interactors
-      class InteractionRuleListInteractorTest < ActiveSupport::TestCase
+      class InteractionRuleListInteractorTest < DomainLibTestCase
         test "call passes partitioned rules to output port on success" do
           user = Object.new
           def user.id; 1; end

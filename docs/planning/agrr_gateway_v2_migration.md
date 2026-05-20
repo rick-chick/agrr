@@ -38,7 +38,7 @@
 2. **`base_gateway_v2.rb` の内容**を `base_gateway.rb` に移し、クラス名を `BaseGateway` に変更。既存の v1 `base_gateway.rb` は上書き削除。
 3. 各 `*Gateway` の `class X < BaseGatewayV2` を `class X < BaseGateway` に置換。
 4. **`require` / autoload**：`base_gateway_v2.rb` への参照が無いことを確認。
-5. **テスト**: `./bin/test test/gateways/agrr`、`./bin/test test/controllers/api/v1/plans`、`./bin/test test/controllers/api/v1/public_plans`、必要に応じて `scripts/test_agrr_integration.rb`。
+5. **テスト**: `.cursor/skills/test-common/scripts/run-test-rails.sh test/gateways/agrr`、`.cursor/skills/test-common/scripts/run-test-rails.sh test/controllers/api/v1/plans`、`.cursor/skills/test-common/scripts/run-test-rails.sh test/controllers/api/v1/public_plans`、必要に応じて `scripts/test_agrr_integration.rb`。
 6. **ドキュメント**: 本ファイルの「現状」を「完了」に更新し、`ARCHITECTURE.md` の gateway 節が単一基底であることを明記。
 
 ## v1 と v2 の挙動差分（統合時の注意点）

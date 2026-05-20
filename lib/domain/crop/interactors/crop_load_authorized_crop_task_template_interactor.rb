@@ -12,7 +12,7 @@ module Domain
           @for_edit = for_edit
         end
 
-        # @return [Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContextDto, nil]
+        # @return [Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContext, nil]
         def call(crop_id, template_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)

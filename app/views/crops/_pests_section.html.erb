@@ -2,18 +2,18 @@
 <%# 作物詳細画面の害虫セクション %>
 <%# 
   パラメータ:
-    crop: Crop - 表示する作物オブジェクト
+    crop: CropEntity - 表示する作物オブジェクト
+    pests: PestEntity array - 関連害虫列表
   
   必要なデータ例:
     crop.id = 1
-    crop.pests = [
-      { name: "アブラムシ", name_scientific: "Aphidoidea", family: "アブラムシ科", order: "カメムシ目", occurrence_season: "春〜秋" },
-      { name: "ハダニ", name_scientific: "Tetranychidae", family: "ハダニ科", order: "ダニ目", occurrence_season: "夏" }
+    pests = [
+      { id: 1, name: "アブラムシ", name_scientific: "Aphidoidea", family: "アブラムシ科", order: "カメムシ目", occurrence_season: "春〜秋" },
+      { id: 2, name: "ハダニ", name_scientific: "Tetranychidae", family: "ハダニ科", order: "ダニ目", occurrence_season: "夏" }
     ]
   
-  使用例（外部から独立して使用可能）:
-    render 'crops/pests_section', crop: Crop.find(1)
-    render 'crops/pests_section', crop: @selected_crop
+  使用例:
+    render 'crops/pests_section', crop: @crop, pests: @pests
 %>
 
 <div class="pests-section">
@@ -21,9 +21,9 @@
     <h2 class="stages-title"><%= t('crops.show.pests_title') %></h2>
     <%= link_to t('crops.show.manage_pests'), crop_pests_path(crop), class: "btn btn-secondary btn-sm pests-section__action" %>
   </div>
-  <% if crop.pests.any? %>
+  <% if pests&.any? %>
     <div class="pests-grid">
-      <% crop.pests.recent.each do |pest| %>
+      <% pests.each do |pest| %>
         <article class="pest-card">
           <header class="pest-card__header">
             <h3 class="pest-card__name">
@@ -65,5 +65,4 @@
       <p><%= t('crops.show.no_pests_description') %></p>
     </div>
   <% end %>
-</div>
-
+</div>

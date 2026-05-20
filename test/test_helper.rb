@@ -21,9 +21,6 @@ if ENV["RAILS_ENV"] && ENV["RAILS_ENV"] != "test"
        .cursor/skills/test-common/scripts/run-test-rails.sh
        docker compose --profile test run --rm test bundle exec rails test
 
-    💡 このガードをバイパスするには ALLOW_DIRECT_RAILS_TEST=1 を設定
-       （ただしDBが壊れるリスクを理解した上で使用してください）
-
     🔄 前回DBが壊れた場合の復旧方法:
        docker compose down
        docker volume rm agrr_storage_dev_data

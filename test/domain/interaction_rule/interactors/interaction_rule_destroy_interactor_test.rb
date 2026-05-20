@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module InteractionRule
     module Interactors
-      class InteractionRuleDestroyInteractorTest < ActiveSupport::TestCase
+      class InteractionRuleDestroyInteractorTest < DomainLibTestCase
         test "calls on_failure with policy exception when gateway denies destroy" do
           user_id = 10
           rule_id = 7

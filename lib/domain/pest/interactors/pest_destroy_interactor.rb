@@ -23,17 +23,17 @@ module Domain
             access_filter: access_filter
           )
           if result[:success]
-            dto = Domain::Pest::Dtos::PestDestroyOutputDto.new(undo: result[:undo_entity])
+            dto = Domain::Pest::Dtos::PestDestroyOutput.new(undo: result[:undo_entity])
             @output_port.on_success(dto)
           else
             @output_port.on_failure(result[:error_dto])
           end
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("pests.flash.not_found")))
         rescue Domain::Shared::Policies::PolicyPermissionDenied
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("pests.flash.no_permission")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("pests.flash.no_permission")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

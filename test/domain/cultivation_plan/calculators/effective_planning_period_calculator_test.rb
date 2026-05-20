@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class EffectivePlanningPeriodCalculatorTest < ActiveSupport::TestCase
+class EffectivePlanningPeriodCalculatorTest < DomainLibTestCase
   test "calculate uses allocations and moves to extend range" do
     current_allocation = {
       optimization_result: {

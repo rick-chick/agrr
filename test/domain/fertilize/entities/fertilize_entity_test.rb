@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Fertilize
     module Entities
-      class FertilizeEntityTest < ActiveSupport::TestCase
+      class FertilizeEntityTest < DomainLibTestCase
         test "should initialize with valid attributes" do
           entity = FertilizeEntity.new(
             id: 1,
@@ -16,8 +16,8 @@ module Domain
             description: "窒素肥料",
             package_size: 25.0,
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_equal 1, entity.id
@@ -39,8 +39,8 @@ module Domain
             description: "窒素肥料",
             package_size: nil,
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_nil entity.package_size
@@ -57,8 +57,8 @@ module Domain
               description: nil,
               package_size: nil,
               is_reference: true,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
           end
         end
@@ -73,8 +73,8 @@ module Domain
             description: nil,
             package_size: nil,
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert entity.has_nutrient?(:n)
@@ -92,8 +92,8 @@ module Domain
             description: nil,
             package_size: nil,
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_equal "20-10-5", entity.npk_summary
@@ -109,8 +109,8 @@ module Domain
             description: nil,
             package_size: nil,
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_equal "20-10", entity.npk_summary
@@ -128,8 +128,8 @@ module Domain
             application_rate: nil,
             package_size: nil,
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert entity.reference?

@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PrivatePlanShowInteractorTest < ActiveSupport::TestCase
+class PrivatePlanShowInteractorTest < DomainLibTestCase
   test "call passes assembled show dto from gateway detail to on_success" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
 
-    detail = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto.new(
+    detail = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail.new(
       id: 10,
       display_name: "Plan X",
       farm_display_name: "F1",
@@ -31,7 +31,7 @@ class PrivatePlanShowInteractorTest < ActiveSupport::TestCase
     logger = mock
     output = mock
     output.expects(:on_success).with do |dto|
-      assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShowDto, dto
+      assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShow, dto
       assert_equal 10, dto.id
       assert_equal "Plan X", dto.display_name
       assert_equal "F1", dto.farm_display_name

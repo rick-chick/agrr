@@ -1,17 +1,32 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module PublicPlan
     module Interactors
-      class EntryScheduleShowInteractorTest < ActiveSupport::TestCase
+      class EntryScheduleShowInteractorTest < DomainLibTestCase
         Result = Domain::CultivationPlan::Interactors::EntrySchedule::WindowService::Result
 
         test "on_success yields dto tied to injected runners" do
-          weather_location = create(:weather_location)
-          farm = create(:farm, :reference, region: "jp", weather_location: weather_location)
-          crop = create(:crop, :reference, :with_stages, region: "jp")
+          weather_location = Object.new
+          weather_location.define_singleton_method(:id) { 1 }
+          weather_location.define_singleton_method(:region) { "jp" }
+          weather_location.define_singleton_method(:latitude) { 35.0 }
+          weather_location.define_singleton_method(:longitude) { 135.0 }
+          weather_location.define_singleton_method(:elevation) { 100 }
+          farm = Domain::Farm::Entities::FarmEntity.new(
+            id: 1, name: "Farm", latitude: 35.0, longitude: 135.0, region: "jp",
+            user_id: 1, created_at: nil, updated_at: nil, is_reference: true,
+            weather_data_status: nil, weather_data_fetched_years: nil,
+            weather_data_total_years: nil, weather_data_last_error: nil
+          )
+          farm.define_singleton_method(:weather_location) { weather_location }
+          crop = Domain::Crop::Entities::CropEntity.new(
+            id: 1, name: "Crop", name_scientific: nil, family: nil, order: nil,
+            description: nil, is_reference: true, created_at: nil, updated_at: nil
+          )
+          crop.define_singleton_method(:crop_stages) { [] }
 
           prediction_payload = {
             "data" => [ { "time" => "2026-01-01" } ],
@@ -82,7 +97,7 @@ module Domain
           assert_equal farm, runner_calls.first[:farm]
           assert_equal prediction_payload, runner_calls.first[:weather_payload]
 
-          assert_instance_of Domain::PublicPlan::Dtos::EntryScheduleShowSuccessDto, received
+          assert_instance_of Domain::PublicPlan::Dtos::EntryScheduleShowOutput, received
           assert_equal farm.id, received.farm_fragment[:id]
           assert_equal 2026, received.prediction_fragment[:chart_calendar_year]
           assert_equal crop.id, received.crop_fragment[:id]

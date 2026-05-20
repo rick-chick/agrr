@@ -11,9 +11,9 @@ module Domain
         md =
           case md
           when Hash
-            md.stringify_keys
+            Hash[md.map { |k, v| [k.to_s, v] }]
           else
-            md.to_h.stringify_keys
+            md.to_h.map { |k, v| [k.to_s, v] }.to_h
           end
 
         new(

@@ -7,13 +7,14 @@ module Domain
         attr_reader :id, :name, :latitude, :longitude, :region, :user_id,
                     :created_at, :updated_at, :is_reference,
                     :weather_data_status, :weather_data_fetched_years, :weather_data_total_years,
-                    :weather_data_last_error
+                    :weather_data_last_error, :weather_location_id
 
         # weather_* は HTML 詳細（気象 UI）用。一覧・API などでは nil のまま。
         def initialize(id:, name:, latitude:, longitude:, region:, user_id:,
                       created_at:, updated_at:, is_reference:,
                       weather_data_status: nil, weather_data_fetched_years: nil,
-                      weather_data_total_years: nil, weather_data_last_error: nil)
+                      weather_data_total_years: nil, weather_data_last_error: nil,
+                      weather_location_id: nil)
           @id = id
           @name = name
           @latitude = latitude
@@ -27,6 +28,7 @@ module Domain
           @weather_data_fetched_years = weather_data_fetched_years
           @weather_data_total_years = weather_data_total_years
           @weather_data_last_error = weather_data_last_error
+          @weather_location_id = weather_location_id
         end
 
         def weather_data_progress
@@ -42,11 +44,11 @@ module Domain
         end
 
         def has_coordinates?
-          Domain::Shared::ValidationHelpers.present?(latitude) && Domain::Shared::ValidationHelpers.present?(longitude)
+          Domain::Shared.present?(latitude) && Domain::Shared.present?(longitude)
         end
 
         def display_name
-          name.presence || "Farm #{id}"
+          (name.nil? || name.empty?) ? "Farm #{id}" : name
         end
 
         def as_json(options = nil)

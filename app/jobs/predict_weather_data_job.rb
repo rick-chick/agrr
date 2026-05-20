@@ -8,8 +8,8 @@ class PredictWeatherDataJob < ApplicationJob
   queue_as :default
 
   # リトライ設定（agrr実行エラー時のみ）
-  retry_on Agrr::BaseGateway::ExecutionError, wait: 5.minutes, attempts: 3
-  retry_on Agrr::BaseGateway::ParseError, wait: 5.minutes, attempts: 3
+  retry_on Adapters::Agrr::Gateways::BaseGateway::ExecutionError, wait: 5.minutes, attempts: 3
+  retry_on Adapters::Agrr::Gateways::BaseGateway::ParseError, wait: 5.minutes, attempts: 3
 
   # データ不足エラーはリトライしない
   discard_on ArgumentError
@@ -150,7 +150,7 @@ class PredictWeatherDataJob < ApplicationJob
     Rails.logger.info "📍 [PredictWeatherDataJob] Location: (#{weather_location.latitude}, #{weather_location.longitude}), elevation: #{weather_location.elevation}m, timezone: #{weather_location.timezone}"
 
     # PredictionGatewayを使って予測を実行（daemon経由で高速実行）
-    prediction_gateway = Agrr::PredictionGateway.new
+    prediction_gateway = Adapters::Agrr::Gateways::PredictionGateway.new
 
     prediction_result = prediction_gateway.predict(
       historical_data: formatted_data,
@@ -222,8 +222,8 @@ class PredictWeatherDataJob < ApplicationJob
         cultivation_plan_id &&
         channel_class &&
         !exception.is_a?(ActiveRecord::RecordNotFound) &&
-        !exception.is_a?(Agrr::BaseGateway::ExecutionError) &&
-        !exception.is_a?(Agrr::BaseGateway::ParseError)
+        !exception.is_a?(Adapters::Agrr::Gateways::BaseGateway::ExecutionError) &&
+        !exception.is_a?(Adapters::Agrr::Gateways::BaseGateway::ParseError)
       cp = CultivationPlan.find_by(id: cultivation_plan_id)
       if cp
         phase_failed_notified = false

@@ -20,12 +20,12 @@ module Domain
             pest_id: pest_id,
             crop_access_filter: crop_access_filter
           )
-          unless found[:status] == :found
+          unless found.status == :found
             return @output_port.on_not_found(crop_id: crop_id)
           end
 
-          snapshot = found[:pest_snapshot]
-          requested = pest_attrs.to_h.symbolize_keys
+           snapshot = found.crop_nest_snapshot
+          requested = Domain::Shared.symbolize_keys(pest_attrs.to_h)
 
           if requested.key?(:is_reference)
             requested_ref = Domain::Shared::TypeConverters::BooleanConverter.cast(requested[:is_reference]) || false
@@ -48,11 +48,11 @@ module Domain
             crop_access_filter: crop_access_filter
           )
 
-          case result[:status]
+          case result.status
           when :updated
-            @output_port.on_updated(crop_id: crop_id, pest_id: result[:pest_snapshot].id)
+            @output_port.on_updated(crop_id: crop_id, pest_id: result.crop_nest_snapshot.id)
           when :invalid
-            @output_port.on_invalid(crop_id: crop_id, pest_snapshot: result[:pest_snapshot])
+            @output_port.on_invalid(crop_id: crop_id, pest_snapshot: result.crop_nest_snapshot)
           when :crop_missing, :pest_missing
             @output_port.on_not_found(crop_id: crop_id)
           end

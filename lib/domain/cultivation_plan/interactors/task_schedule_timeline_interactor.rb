@@ -22,11 +22,11 @@ module Domain
             @user_lookup.find(@user_id)
           rescue Domain::Shared::Exceptions::RecordNotFound
             @logger.warn("[TaskScheduleTimelineInteractor] user_record_not_found user_id=#{@user_id.inspect}")
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.session_invalid")))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.session_invalid")))
             return
           end
 
-          read_model = @gateway.task_schedule_timeline_read_model(user: user, plan_id: @plan_id)
+          read_model = @gateway.task_schedule_timeline_snapshot(user: user, plan_id: @plan_id)
           dto = Domain::CultivationPlan::Assemblers::TaskScheduleTimelineAssembler.call(read_model, today: @clock.today)
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
@@ -36,10 +36,10 @@ module Domain
           raise
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[TaskScheduleTimelineInteractor] record_not_found: #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.warn("[TaskScheduleTimelineInteractor] record_invalid: #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
 
         private

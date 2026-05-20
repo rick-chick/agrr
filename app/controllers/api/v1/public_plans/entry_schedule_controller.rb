@@ -13,7 +13,7 @@ module Api
         # GET .../public_plans/entry_schedule/farms
         def farms
           region = params[:region].presence || locale_to_region(I18n.locale)
-          presenter = Presenters::Api::PublicPlans::ReferenceFarmsPresenter.new(view: self)
+          presenter = Adapters::PublicPlan::Presenters::Api::ReferenceFarmsPresenter.new(view: self)
           Domain::Farm::Interactors::FarmListReferenceForRegionInteractor.new(output_port: presenter, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger).call(region)
         end
 
@@ -26,7 +26,7 @@ module Api
           limit = parse_entry_limit
           offset = decode_entry_cursor(params[:cursor])
           CompositionRoot.entry_schedule_crops_index_interactor(
-            output_port: Presenters::Api::PublicPlans::EntryScheduleCropsIndexPresenter.new(view: self)
+            output_port: Adapters::PublicPlan::Presenters::Api::EntryScheduleCropsIndexPresenter.new(view: self)
           ).call(
             farm: farm,
             prediction_end_date_raw: params[:prediction_end_date].presence,
@@ -42,13 +42,13 @@ module Api
           return if performed?
 
           farm = @entry_schedule_reference_farm
-          presenter = Presenters::Api::PublicPlans::EntryScheduleReferenceCropPresenter.new(view: self)
+          presenter = Adapters::PublicPlan::Presenters::Api::EntryScheduleReferenceCropPresenter.new(view: self)
           Domain::Crop::Interactors::CropFindReferenceForEntryScheduleInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(farm.region, params[:id])
           return if performed?
 
           crop = @reference_crop
           reference_date = Date.current
-          presenter = Presenters::Api::PublicPlans::EntryScheduleShowPresenter.new(view: self)
+          presenter = Adapters::PublicPlan::Presenters::Api::EntryScheduleShowPresenter.new(view: self)
           CompositionRoot.entry_schedule_show_interactor(output_port: presenter, clock: Time.zone).call(
             farm: farm,
             crop: crop,
@@ -61,7 +61,7 @@ module Api
 
         def resolve_entry_schedule_reference_farm!
           CompositionRoot.entry_schedule_resolve_reference_farm_interactor(
-            output_port: Presenters::Api::PublicPlans::EntryScheduleResolveReferenceFarmPresenter.new(view: self)
+            output_port: Adapters::PublicPlan::Presenters::Api::EntryScheduleResolveReferenceFarmPresenter.new(view: self)
           ).call(params[:farm_id])
         end
 

@@ -19,7 +19,7 @@ module Adapters
 
         # CropStage tests
         test "create_crop_stage creates a new crop stage" do
-          dto = Domain::Crop::Dtos::CropStageCreateInputDto.new(
+          dto = Domain::Crop::Dtos::CropStageCreateInput.new(
             crop_id: @crop.id,
             payload: { name: "Seedling", order: 1 }
           )
@@ -34,7 +34,7 @@ module Adapters
 
         test "update_crop_stage updates an existing crop stage" do
           crop_stage = create(:crop_stage, crop: @crop)
-          dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::CropStageUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { name: "Updated Stage", order: 2 }
@@ -77,7 +77,7 @@ module Adapters
 
         test "create_temperature_requirement creates a new requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
-          dto = Domain::Crop::Dtos::TemperatureRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::TemperatureRequirementUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { base_temperature: 10.0, optimal_min: 15.0 }
@@ -93,7 +93,7 @@ module Adapters
         test "update_temperature_requirement updates existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:temperature_requirement, crop_stage: crop_stage)
-          dto = Domain::Crop::Dtos::TemperatureRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::TemperatureRequirementUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { base_temperature: 12.0, optimal_max: 25.0 }
@@ -118,7 +118,7 @@ module Adapters
 
         test "create_thermal_requirement creates a new requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
-          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { required_gdd: 100.0 }
@@ -133,7 +133,7 @@ module Adapters
         test "update_thermal_requirement updates existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:thermal_requirement, crop_stage: crop_stage)
-          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { required_gdd: 150.0 }
@@ -157,7 +157,7 @@ module Adapters
 
         test "create_sunshine_requirement creates a new requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
-          dto = Domain::Crop::Dtos::SunshineRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::SunshineRequirementUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { minimum_sunshine_hours: 8.0, target_sunshine_hours: 10.0 }
@@ -173,7 +173,7 @@ module Adapters
         test "update_sunshine_requirement updates existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:sunshine_requirement, crop_stage: crop_stage)
-          dto = Domain::Crop::Dtos::SunshineRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::SunshineRequirementUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { target_sunshine_hours: 12.0 }
@@ -197,7 +197,7 @@ module Adapters
 
         test "create_nutrient_requirement creates a new requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
-          dto = Domain::Crop::Dtos::NutrientRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::NutrientRequirementUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { daily_uptake_n: 1.5, daily_uptake_p: 0.8, region: "test_region" }
@@ -214,7 +214,7 @@ module Adapters
         test "update_nutrient_requirement updates existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:nutrient_requirement, crop_stage: crop_stage)
-          dto = Domain::Crop::Dtos::NutrientRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::NutrientRequirementUpdateInput.new(
             crop_id: @crop.id,
             stage_id: crop_stage.id,
             payload: { daily_uptake_k: 2.0, region: "updated_region" }
@@ -314,7 +314,7 @@ module Adapters
         test "create_masters_crop_task_template_association creates association with overrides" do
           user = @crop.user
           task = create(:agricultural_task, :user_owned, user: user, name: "元のタスク名")
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInput.new(
             user_id: user.id,
             crop_id: @crop.id,
             agricultural_task_id: task.id,
@@ -346,7 +346,7 @@ module Adapters
 
         test "create_masters_crop_task_template_association returns failure when task not found" do
           user = @crop.user
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInput.new(
             user_id: user.id,
             crop_id: @crop.id,
             agricultural_task_id: 99_999
@@ -362,7 +362,7 @@ module Adapters
           other_user = create(:user)
           user = @crop.user
           task = create(:agricultural_task, :user_owned, user: other_user)
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInput.new(
             user_id: user.id,
             crop_id: @crop.id,
             agricultural_task_id: task.id
@@ -378,7 +378,7 @@ module Adapters
           user = @crop.user
           task = create(:agricultural_task, :user_owned, user: user)
           create(:crop_task_template, crop: @crop, agricultural_task: task)
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInput.new(
             user_id: user.id,
             crop_id: @crop.id,
             agricultural_task_id: task.id
@@ -394,7 +394,7 @@ module Adapters
         test "create_masters_crop_task_template_association raises record invalid when validation fails" do
           user = @crop.user
           task = create(:agricultural_task, :user_owned, user: user)
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInput.new(
             user_id: user.id,
             crop_id: @crop.id,
             agricultural_task_id: task.id,

@@ -14,7 +14,7 @@ module Domain
         end
 
         def call
-          Domain::CultivationPlan::Dtos::TaskScheduleTimelineDto.new(
+          Domain::CultivationPlan::Dtos::TaskScheduleTimeline.new(
             plan: @read_model.plan,
             fields: @read_model.fields,
             scheduled_dates: @read_model.scheduled_dates,

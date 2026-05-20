@@ -8,7 +8,7 @@ module Api
           before_action :set_crop
 
           def index
-            presenter = Presenters::Api::Pesticide::MastersCropPesticidesIndexPresenter.new(view: self)
+            presenter = Adapters::Pesticide::Presenters::Api::MastersCropPesticidesIndexPresenter.new(view: self)
             Domain::Pesticide::Interactors::MastersCropPesticidesIndexInteractor.new(output_port: presenter,
               user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pesticide_gateway: CompositionRoot.pesticide_gateway).call(@crop)
           end
@@ -16,7 +16,7 @@ module Api
           private
 
           def set_crop
-            presenter = Presenters::Api::Crop::MastersNestedCropContextPresenter.new(
+            presenter = Adapters::Crop::Presenters::Api::MastersNestedCropContextPresenter.new(
               view: self,
               not_found_message: "Crop not found"
             )

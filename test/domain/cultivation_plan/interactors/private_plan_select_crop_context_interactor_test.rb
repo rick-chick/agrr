@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PrivatePlanSelectCropContextInteractorTest < ActiveSupport::TestCase
+class PrivatePlanSelectCropContextInteractorTest < DomainLibTestCase
   test "call passes dto with farm, crops, total_area from gateways" do
     user = mock
     user_lookup = mock
@@ -15,19 +15,19 @@ class PrivatePlanSelectCropContextInteractorTest < ActiveSupport::TestCase
       longitude: 135.0,
       region: "ja",
       user_id: 7,
-      created_at: Time.current,
-      updated_at: Time.current,
+      created_at: Time.utc(2026, 1, 1),
+      updated_at: Time.utc(2026, 1, 1),
       is_reference: false
     )
 
     field1 = Domain::Field::Entities::FieldEntity.new(
       id: 10, farm_id: 1, user_id: 7, name: "A", description: nil,
-      created_at: Time.current, updated_at: Time.current, area: 10.0,
+      created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1), area: 10.0,
       daily_fixed_cost: 0, region: nil
     )
     field2 = Domain::Field::Entities::FieldEntity.new(
       id: 11, farm_id: 1, user_id: 7, name: "B", description: nil,
-      created_at: Time.current, updated_at: Time.current, area: 20.5,
+      created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1), area: 20.5,
       daily_fixed_cost: 0, region: nil
     )
     farm_fields = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [ field1, field2 ])
@@ -44,7 +44,7 @@ class PrivatePlanSelectCropContextInteractorTest < ActiveSupport::TestCase
     logger = mock
     output = mock
     output.expects(:on_success).with do |dto|
-      assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanSelectCropContextDto, dto
+      assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanSelectCropContext, dto
       assert_equal farm_entity, dto.farm
       assert_equal "My Farm", dto.plan_name
       assert_equal crop_entities, dto.crops

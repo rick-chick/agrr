@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class AgrrInteractionRulesCalculatorTest < ActiveSupport::TestCase
+class AgrrInteractionRulesCalculatorTest < DomainLibTestCase
   test "build generates unique rules with injected random" do
     crop_groups = {
       "1" => [ "leafy", "leafy" ],

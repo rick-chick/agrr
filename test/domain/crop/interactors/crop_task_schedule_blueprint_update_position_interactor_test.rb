@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropTaskScheduleBlueprintUpdatePositionInteractorTest < ActiveSupport::TestCase
+      class CropTaskScheduleBlueprintUpdatePositionInteractorTest < DomainLibTestCase
         setup do
-          @user = create(:user)
+          @user = OpenStruct.new(id: 1)
           @gateway = Object.new
           @user_lookup = Object.new
           @output = mock("output_port")
@@ -19,7 +19,7 @@ module Domain
         end
 
         test "call returns bad_request when gdd_trigger is negative" do
-          dto = Domain::Crop::Dtos::CropTaskScheduleBlueprintUpdatePositionInputDto.new(
+          dto = Domain::Crop::Dtos::CropTaskScheduleBlueprintUpdatePositionInput.new(
             user_id: @user.id,
             crop_id: 1,
             blueprint_id: 2,
@@ -33,7 +33,7 @@ module Domain
         end
 
         test "call forwards PolicyPermissionDenied to on_forbidden" do
-          dto = Domain::Crop::Dtos::CropTaskScheduleBlueprintUpdatePositionInputDto.new(
+          dto = Domain::Crop::Dtos::CropTaskScheduleBlueprintUpdatePositionInput.new(
             user_id: @user.id,
             crop_id: 1,
             blueprint_id: 2,

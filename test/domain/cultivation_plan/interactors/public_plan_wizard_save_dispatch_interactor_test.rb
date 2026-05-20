@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module CultivationPlan
     module Interactors
-      class PublicPlanWizardSaveDispatchInteractorTest < ActiveSupport::TestCase
+      class PublicPlanWizardSaveDispatchInteractorTest < DomainLibTestCase
         setup do
           @cultivation_gateway = mock
           @save_gateway = mock
           @output_port = mock
           @translator = Adapters::Translators::RailsTranslator.new
-          @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
+           @logger = ::Logger.new(File::NULL)
         end
 
         test "on_plan_not_found when plan_id is not positive" do

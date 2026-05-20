@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropDestroyInteractorTest < ActiveSupport::TestCase
+      class CropDestroyInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns success" do
           user_id = 10
           crop_id = 22
@@ -34,7 +34,7 @@ module Domain
 
           interactor.call(crop_id)
 
-          assert_instance_of Domain::Crop::Dtos::CropDestroyOutputDto, received
+          assert_instance_of Domain::Crop::Dtos::CropDestroyOutput, received
           assert_equal undo_entity, received.undo
           user_lookup.verify
           output_port.verify

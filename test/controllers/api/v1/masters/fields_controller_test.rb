@@ -13,14 +13,6 @@ module Api
           @farm = create(:farm, :user_owned, user: @user)
         end
 
-        test "includes Field Views" do
-          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldListView
-          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldDetailView
-          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldCreateView
-          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldUpdateView
-          assert_includes Api::V1::Masters::FieldsController.included_modules, Views::Api::Field::FieldDeleteView
-        end
-
         test "should get index" do
           field1 = create(:field, farm: @farm, user: @user)
           field2 = create(:field, farm: @farm, user: @user)

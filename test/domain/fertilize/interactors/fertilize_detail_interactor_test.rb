@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class FertilizeDetailInteractorTest < ActiveSupport::TestCase
+class FertilizeDetailInteractorTest < DomainLibTestCase
   test "call passes fertilize detail dto to output port" do
     user = mock
     entity = mock
@@ -16,7 +16,7 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
 
     output = mock
     output.expects(:on_success).with do |dto|
-      assert_instance_of Domain::Fertilize::Dtos::FertilizeDetailOutputDto, dto
+      assert_instance_of Domain::Fertilize::Dtos::FertilizeDetailOutput, dto
       assert_same entity, dto.fertilize
       true
     end
@@ -65,7 +65,7 @@ class FertilizeDetailInteractorTest < ActiveSupport::TestCase
 
     output = mock
     output.expects(:on_failure).with do |err|
-      assert_instance_of Domain::Shared::Dtos::ErrorDto, err
+      assert_instance_of Domain::Shared::Dtos::Error, err
       assert_equal "指定された肥料が見つかりません。", err.message
       true
     end

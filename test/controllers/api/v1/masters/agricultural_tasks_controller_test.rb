@@ -15,14 +15,6 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes AgriculturalTask Views" do
-          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskListView
-          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskDetailView
-          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskCreateView
-          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskUpdateView
-          assert_includes Api::V1::Masters::AgriculturalTasksController.included_modules, Views::Api::AgriculturalTask::AgriculturalTaskDeleteView
-        end
-
         test "should get index" do
           task1 = create(:agricultural_task, :user_owned, user: @user)
           task2 = create(:agricultural_task, :user_owned, user: @user)

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropCreateInteractorTest < ActiveSupport::TestCase
+      class CropCreateInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns entity" do
           user_id = 10
           user = Object.new
@@ -15,7 +15,7 @@ module Domain
           def user.id
             10
           end
-          input_dto = Domain::Crop::Dtos::CropCreateInputDto.new(name: "新規作物", variety: "品種")
+          input_dto = Domain::Crop::Dtos::CropCreateInput.new(name: "新規作物", variety: "品種")
           crop_entity = Object.new
 
           user_lookup = Minitest::Mock.new
@@ -50,7 +50,7 @@ module Domain
             false
           end
           msg = I18n.t("crops.flash.reference_only_admin")
-          input_dto = Domain::Crop::Dtos::CropCreateInputDto.new(name: "参照のみ", is_reference: true)
+          input_dto = Domain::Crop::Dtos::CropCreateInput.new(name: "参照のみ", is_reference: true)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
@@ -72,7 +72,7 @@ module Domain
 
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal msg, received.message
           user_lookup.verify
           translator.verify

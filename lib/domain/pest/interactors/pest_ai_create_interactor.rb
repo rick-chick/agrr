@@ -56,7 +56,7 @@ module Domain
           @logger.info "🤖 [AI Pest] Querying pest info for: #{pn}"
           pest_info = @pest_ai_query_gateway.fetch_pest_json(pn, crops_arg)
 
-          interpreted = Domain::Pest::Services::PestAiDaemonResponseInterpreter.interpret(
+          interpreted = Domain::Pest::Mappers::PestAiResponseMapper.interpret(
             pest_info,
             translator: @translator,
             validate_affected_crops_shape: true

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module CultivationPlan
     module Interactors
-      class AddFieldInteractorTest < ActiveSupport::TestCase
+      class AddFieldInteractorTest < DomainLibTestCase
         setup do
           @output = mock
           @gateway = mock
@@ -49,7 +49,7 @@ module Domain
         end
       end
 
-      class RemoveFieldInteractorTest < ActiveSupport::TestCase
+      class RemoveFieldInteractorTest < DomainLibTestCase
         setup do
           @output = mock
           @gateway = mock
@@ -72,7 +72,7 @@ module Domain
         end
       end
 
-      class RetrieveCultivationPlanInteractorTest < ActiveSupport::TestCase
+      class RetrieveCultivationPlanInteractorTest < DomainLibTestCase
         setup do
           @output = mock
           @gateway = mock
@@ -94,7 +94,7 @@ module Domain
         end
       end
 
-      class ManualPlanAdjustInteractorTest < ActiveSupport::TestCase
+      class ManualPlanAdjustInteractorTest < DomainLibTestCase
         setup do
           @output = mock
           @gateway = mock

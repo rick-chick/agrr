@@ -21,8 +21,8 @@ module Domain
             crop_access_filter: crop_access_filter,
             for_edit_form: for_edit_form
           )
-          if result[:status] == :found
-            @output_port.on_success(result[:pest_snapshot])
+          if result.status == :found
+            @output_port.on_success(result.crop_nest_snapshot)
           else
             @output_port.on_not_found(crop_id: crop_id)
           end

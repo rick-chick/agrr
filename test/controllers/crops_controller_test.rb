@@ -9,8 +9,8 @@ class BlueprintRegenerationGatewayDouble
     @calls = []
   end
 
-  def regenerate_from_crop!(crop:)
-    @calls << crop
+  def regenerate_from_crop!(crop_id:)
+    @calls << crop_id
   end
 end
 
@@ -146,7 +146,7 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_equal 1, gateway_double.calls.size
-    assert_equal @admin_crop.id, gateway_double.calls.first.id
+    assert_equal @admin_crop.id, gateway_double.calls.first
     assert_redirected_to crop_path(@admin_crop)
     assert_equal I18n.t("crops.flash.task_schedule_blueprints_generated"), flash[:notice]
   end

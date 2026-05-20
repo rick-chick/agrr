@@ -9,19 +9,19 @@ module Api
           before_action :set_crop
 
           def index
-            presenter = Presenters::Api::Pest::MastersCropPestsIndexPresenter.new(view: self)
+            presenter = Adapters::Pest::Presenters::Api::MastersCropPestsIndexPresenter.new(view: self)
             Domain::Pest::Interactors::MastersCropPestsIndexInteractor.new(output_port: presenter,
               user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id)
           end
 
           def create
-            presenter = Presenters::Api::Pest::MastersCropPestsCreatePresenter.new(view: self)
+            presenter = Adapters::Pest::Presenters::Api::MastersCropPestsCreatePresenter.new(view: self)
             Domain::Pest::Interactors::MastersCropPestsCreateInteractor.new(output_port: presenter,
               user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(@crop.id, params[:pest_id])
           end
 
           def destroy
-            presenter = Presenters::Api::Pest::MastersCropPestsDestroyPresenter.new(view: self)
+            presenter = Adapters::Pest::Presenters::Api::MastersCropPestsDestroyPresenter.new(view: self)
             Domain::Pest::Interactors::MastersCropPestsDestroyInteractor.new(
               output_port: presenter,
               user_id: current_user.id,
@@ -33,7 +33,7 @@ module Api
           private
 
           def set_crop
-            presenter = Presenters::Api::Crop::MastersNestedCropContextPresenter.new(view: self)
+            presenter = Adapters::Crop::Presenters::Api::MastersNestedCropContextPresenter.new(view: self)
             Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
               user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:crop_id])
           end

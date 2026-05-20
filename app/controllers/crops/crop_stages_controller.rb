@@ -2,19 +2,18 @@
 
 module Crops
   class CropStagesController < Api::V1::BaseController
-    include Views::Api::Crop::CropStageCreateView
 
     before_action :authenticate_user!
     before_action :find_crop_for_list_and_create, only: [ :index, :create ]
     before_action :find_crop_and_crop_stage, only: [ :show, :update, :destroy ]
 
     def index
-      input_dto = Domain::Crop::Dtos::CropStageListInputDto.new(crop_id: @crop.id)
+      input_dto = Domain::Crop::Dtos::CropStageListInput.new(crop_id: @crop.id)
       list_interactor.call(input_dto)
     end
 
     def show
-      input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
+      input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: @crop_stage.id)
       detail_interactor.call(input_dto)
     end
 
@@ -23,7 +22,7 @@ module Crops
         return render(json: { error: "Invalid parameters" }, status: :bad_request)
       end
 
-      input_dto = Domain::Crop::Dtos::CropStageCreateInputDto.new(
+      input_dto = Domain::Crop::Dtos::CropStageCreateInput.new(
         crop_id: @crop.id,
         payload: crop_stage_params
       )
@@ -36,7 +35,7 @@ module Crops
         return render(json: { error: "Invalid parameters" }, status: :bad_request)
       end
 
-      input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
+      input_dto = Domain::Crop::Dtos::CropStageUpdateInput.new(
         crop_stage_id: @crop_stage.id,
         payload: crop_stage_params
       )
@@ -45,7 +44,7 @@ module Crops
     end
 
     def destroy
-      input_dto = Domain::Crop::Dtos::CropStageDeleteInputDto.new(
+      input_dto = Domain::Crop::Dtos::CropStageDeleteInput.new(
         crop_stage_id: @crop_stage.id
       )
 
@@ -71,14 +70,14 @@ module Crops
     end
 
     def find_crop_for_list_and_create
-      presenter = Presenters::Api::Crop::CropLoadForMastersPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Api::CropLoadForMastersPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
       interactor.call(params[:crop_id])
     end
 
     def find_crop_and_crop_stage
-      failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
+      failure = Adapters::Crop::Presenters::Api::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
       interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,
@@ -113,7 +112,7 @@ module Crops
     end
 
     def presenter
-      @presenter ||= Presenters::Api::Crop::CropStageCreatePresenter.new(view: self)
+      @presenter ||= Adapters::Crop::Presenters::Api::CropStageCreatePresenter.new(view: self)
     end
 
   end

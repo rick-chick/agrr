@@ -10,7 +10,7 @@ module Api
             before_action :set_crop_and_crop_stage
 
             def show
-              input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
+              input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementShowInteractor.new(
                 output_port: nutrient_requirement_presenter,
@@ -20,7 +20,7 @@ module Api
             end
 
             def create
-              input_dto = Domain::Crop::Dtos::NutrientRequirementUpdateInputDto.new(
+              input_dto = Domain::Crop::Dtos::NutrientRequirementUpdateInput.new(
                 crop_id: @crop.id,
                 stage_id: @crop_stage.id,
                 payload: nutrient_requirement_params.to_h.symbolize_keys
@@ -34,7 +34,7 @@ module Api
             end
 
             def update
-              input_dto = Domain::Crop::Dtos::NutrientRequirementUpdateInputDto.new(
+              input_dto = Domain::Crop::Dtos::NutrientRequirementUpdateInput.new(
                 crop_id: @crop.id,
                 stage_id: @crop_stage.id,
                 payload: nutrient_requirement_params.to_h.symbolize_keys
@@ -48,7 +48,7 @@ module Api
             end
 
             def destroy
-              input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
+              input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementDestroyInteractor.new(
                 output_port: nutrient_requirement_presenter,
@@ -68,7 +68,7 @@ module Api
             private
 
             def set_crop_and_crop_stage
-              failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
+              failure = Adapters::Crop::Presenters::Api::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
               interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
                 failure_presenter: failure,
                 user_id: current_user.id,
@@ -87,7 +87,7 @@ module Api
             end
 
             def nutrient_requirement_presenter
-              @nutrient_requirement_presenter ||= Presenters::Api::Crop::MastersNutrientRequirementPresenter.new(view: self)
+              @nutrient_requirement_presenter ||= Adapters::Crop::Presenters::Api::MastersNutrientRequirementPresenter.new(view: self)
             end
           end
         end

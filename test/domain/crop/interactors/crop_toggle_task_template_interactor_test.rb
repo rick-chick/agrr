@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class CropToggleTaskTemplateInteractorTest < ActiveSupport::TestCase
+class CropToggleTaskTemplateInteractorTest < DomainLibTestCase
   test "on_success delegates to toggle gateway" do
-    user = Domain::Shared::Dtos::UserDto.new(id: 1, admin: true)
+    user = Domain::Shared::Dtos::User.new(id: 1, admin: true)
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
 
@@ -16,7 +16,7 @@ class CropToggleTaskTemplateInteractorTest < ActiveSupport::TestCase
     task_gateway = mock
     task_gateway.expects(:find_model).with(44).returns(task_entity)
 
-    result = Domain::Crop::Dtos::CropToggleTaskTemplateSnapshotDto.new(
+    result = Domain::Crop::Dtos::CropToggleTaskTemplateSnapshot.new(
       available_agricultural_tasks: [],
       selected_task_ids: [],
       task_schedule_blueprints: []

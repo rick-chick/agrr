@@ -15,14 +15,6 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes InteractionRule Views" do
-          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleListView
-          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleDetailView
-          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleCreateView
-          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleUpdateView
-          assert_includes Api::V1::Masters::InteractionRulesController.included_modules, Views::Api::InteractionRule::InteractionRuleDeleteView
-        end
-
         test "should get index" do
           rule1 = create(:interaction_rule, :user_owned, user: @user)
           rule2 = create(:interaction_rule, :user_owned, user: @user)

@@ -21,7 +21,7 @@ module Domain
         end
 
         def display_name
-          name.presence || "Field #{id}"
+          (name.nil? || name.empty?) ? "Field #{id}" : name
         end
 
         # ハッシュからの変換（テスト用）

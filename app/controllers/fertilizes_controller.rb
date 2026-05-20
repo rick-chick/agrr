@@ -5,7 +5,7 @@ class FertilizesController < ApplicationController
 
   # GET /fertilizes
   def index
-    presenter = Presenters::Html::Fertilize::FertilizeListHtmlPresenter.new(view: self)
+    presenter = Adapters::Fertilize::Presenters::Html::FertilizeListHtmlPresenter.new(view: self)
     interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call
@@ -13,7 +13,7 @@ class FertilizesController < ApplicationController
 
   # GET /fertilizes/:id
   def show
-    presenter = Presenters::Html::Fertilize::FertilizeDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::Fertilize::Presenters::Html::FertilizeDetailHtmlPresenter.new(view: self)
     interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
@@ -30,16 +30,16 @@ class FertilizesController < ApplicationController
 
   # POST /fertilizes
   def create
-    input_dto = Domain::Fertilize::Dtos::FertilizeCreateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys })
-    presenter = Presenters::Html::Fertilize::FertilizeCreateHtmlPresenter.new(view: self)
+    input_dto = Domain::Fertilize::Dtos::FertilizeCreateInput.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys })
+    presenter = Adapters::Fertilize::Presenters::Html::FertilizeCreateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # PATCH/PUT /fertilizes/:id
   def update
-    input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInputDto.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys }, params[:id])
-    presenter = Presenters::Html::Fertilize::FertilizeUpdateHtmlPresenter.new(view: self)
+    input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInput.from_hash({ fertilize: fertilize_params.to_h.symbolize_keys }, params[:id])
+    presenter = Adapters::Fertilize::Presenters::Html::FertilizeUpdateHtmlPresenter.new(view: self)
     Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
@@ -48,14 +48,14 @@ class FertilizesController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::Fertilize::FertilizeDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::Fertilize::Presenters::Html::FertilizeDestroyHtmlPresenter.new(view: self)
         Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       end
 
       format.json do
-        DeletionUndo::HtmlMasterScheduleInvoker.call(
+        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
           view: self,
           actor_id: current_user.id,
           resource_type: "Fertilize",
@@ -72,7 +72,7 @@ class FertilizesController < ApplicationController
   private
 
   def set_fertilize
-    presenter = Presenters::Html::Fertilize::FertilizeLoadForViewHtmlPresenter.new(view: self)
+    presenter = Adapters::Fertilize::Presenters::Html::FertilizeLoadForViewHtmlPresenter.new(view: self)
     interactor = Domain::Fertilize::Interactors::FertilizeLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])

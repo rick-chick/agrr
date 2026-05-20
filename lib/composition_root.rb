@@ -132,7 +132,7 @@ module CompositionRoot
     end
 
     def agrr_progress_gateway
-      @agrr_progress_gateway ||= Agrr::ProgressGateway.new
+      @agrr_progress_gateway ||= Adapters::Agrr::Gateways::ProgressGateway.new
     end
 
     def cultivation_plan_gateway
@@ -154,33 +154,33 @@ module CompositionRoot
 
     def cultivation_plan_rest_optimization_events_gateway
       @cultivation_plan_rest_optimization_events_gateway ||=
-        Adapters::CultivationPlan::Gateways::CultivationPlanRestOptimizationEventsActionCableGateway.new(
+        Adapters::CultivationPlan::Gateways::CultivationPlanOptimizationEventsActionCableGateway.new(
           logger: logger
         )
     end
 
     def cultivation_plan_rest_field_mutation_gateway
-      Adapters::CultivationPlan::Gateways::CultivationPlanRestFieldMutationActiveRecordGateway.new(
+      Adapters::CultivationPlan::Gateways::CultivationPlanFieldMutationActiveRecordGateway.new(
         events_gateway: cultivation_plan_rest_optimization_events_gateway,
         logger: logger
       )
     end
 
     def cultivation_plan_rest_workbench_payload_gateway(available_crop_rows_gateway:)
-      Adapters::CultivationPlan::Gateways::CultivationPlanRestWorkbenchPayloadActiveRecordGateway.new(
+      Adapters::CultivationPlan::Gateways::CultivationPlanWorkbenchPayloadActiveRecordGateway.new(
         logger: logger,
         available_crop_rows_gateway: available_crop_rows_gateway
       )
     end
 
     def cultivation_plan_rest_adjust_gateway
-      Adapters::CultivationPlan::Gateways::CultivationPlanRestAdjustThroughHostGateway.new(
+      Adapters::CultivationPlan::Gateways::CultivationPlanAdjustActiveRecordGateway.new(
         logger: logger
       )
     end
 
     def cultivation_plan_rest_add_crop_coordinator_gateway(optimization_host:)
-      Adapters::CultivationPlan::Gateways::CultivationPlanRestAddCropCoordinatorActiveRecordGateway.new(
+      Adapters::CultivationPlan::Gateways::CultivationPlanAddCropCoordinatorActiveRecordGateway.new(
         optimization_host: optimization_host,
         logger: logger
       )
@@ -263,7 +263,7 @@ module CompositionRoot
     end
 
     def plan_allocation_gateway
-      @plan_allocation_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationGatewayAdapter.new
+      @plan_allocation_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationActiveRecordGateway.new
     end
 
     def interaction_rule_gateway
@@ -274,7 +274,7 @@ module CompositionRoot
     end
 
     def weather_data_gateway
-      @weather_data_gateway ||= Adapters::WeatherData::Gateways::ActiveRecordWeatherDataGateway.new
+      @weather_data_gateway ||= Adapters::WeatherData::Gateways::WeatherDataActiveRecordGateway.new
     end
 
     def farm_weather_prediction_payload_parse_gateway
@@ -310,7 +310,7 @@ module CompositionRoot
     end
 
     def backdoor_shell_stdout_capture_gateway
-      @backdoor_shell_stdout_capture_gateway ||= Adapters::Backdoor::ShellStdoutCaptureGateway.new(logger: logger)
+      @backdoor_shell_stdout_capture_gateway ||= Adapters::Backdoor::Gateways::ShellStdoutCaptureGateway.new(logger: logger)
     end
 
     def session_cookie_user_gateway
@@ -328,7 +328,7 @@ module CompositionRoot
     end
 
     def file_blob_gateway
-      @file_blob_gateway ||= Adapters::StoredBlobs::Gateways::FileBlobActiveRecordGateway.new(
+      @file_blob_gateway ||= Adapters::FileBlob::Gateways::FileBlobActiveRecordGateway.new(
         rails_blob_url_generator: lambda do |blob|
           Rails.application.routes.url_helpers.rails_blob_url(blob, only_path: false)
         end
@@ -381,11 +381,11 @@ module CompositionRoot
     end
 
     def agrr_adjust_gateway
-      @agrr_adjust_gateway ||= Agrr::AdjustGateway.new
+      @agrr_adjust_gateway ||= Adapters::Agrr::Gateways::AdjustGateway.new
     end
 
     def agrr_candidates_gateway
-      @agrr_candidates_gateway ||= Agrr::CandidatesGateway.new
+      @agrr_candidates_gateway ||= Adapters::Agrr::Gateways::CandidatesGateway.new
     end
 
     # add_crop 候補探索（Api::V1::CultivationPlanRestBaseController 経路の主導線）
@@ -447,9 +447,9 @@ module CompositionRoot
         log.warn "⚠️ [Candidates] Weather prediction error: #{e.message}"
         raise
       rescue ActiveRecord::ActiveRecordError \
-             , Agrr::BaseGatewayV2::ExecutionError \
-             , Agrr::BaseGatewayV2::ParseError \
-             , ::Agrr::DaemonClient::AgrrError \
+             , Adapters::Agrr::Gateways::BaseGatewayV2::ExecutionError \
+             , Adapters::Agrr::Gateways::BaseGatewayV2::ParseError \
+             , ::Adapters::Agrr::Gateways::DaemonClient::AgrrError \
              , JSON::ParserError \
              , JSON::GeneratorError \
              , SystemCallError \
@@ -475,9 +475,9 @@ module CompositionRoot
           planning_end: planning_end,
           interaction_rules: ir
         )
-      rescue Agrr::BaseGatewayV2::ExecutionError,
-             Agrr::BaseGatewayV2::ParseError,
-             Agrr::BaseGatewayV2::NoAllocationCandidatesError,
+      rescue Adapters::Agrr::Gateways::BaseGatewayV2::ExecutionError,
+             Adapters::Agrr::Gateways::BaseGatewayV2::ParseError,
+             Adapters::Agrr::Gateways::BaseGatewayV2::NoAllocationCandidatesError,
              JSON::ParserError,
              SystemCallError => e
         log.error "❌ [Candidates] Failed to run candidates: #{e.message}"
@@ -571,7 +571,7 @@ module CompositionRoot
     end
 
     def cultivation_plan_weather_dto_from(cultivation_plan)
-      Domain::WeatherData::Dtos::CultivationPlanWeatherDto.new(
+      Domain::WeatherData::Dtos::CultivationPlanWeather.new(
         id: cultivation_plan.id,
         prediction_target_end_date: cultivation_plan.prediction_target_end_date,
         calculated_planning_end_date: cultivation_plan.calculated_planning_end_date,
@@ -634,7 +634,7 @@ module CompositionRoot
     end
 
     def entry_schedule_cursor_decode_gateway
-      @entry_schedule_cursor_decode_gateway ||= Adapters::PublicPlans::EntryScheduleCursorDecodeGateway.new
+      @entry_schedule_cursor_decode_gateway ||= Adapters::PublicPlan::Gateways::EntryScheduleCursorDecodeGateway.new
     end
 
     def entry_schedule_reference_farm_loader
@@ -681,7 +681,7 @@ module CompositionRoot
     end
 
     def task_schedule_item_mutation_gateway
-      @task_schedule_item_mutation_gateway ||= Adapters::Plans::TaskScheduleItemActiveRecordMutationGateway.new(
+      @task_schedule_item_mutation_gateway ||= Adapters::CultivationPlan::Gateways::TaskScheduleItemActiveRecordMutationGateway.new(
         logger: logger
       )
     end
@@ -735,8 +735,8 @@ module CompositionRoot
 
     def crop_task_schedule_blueprint_regeneration_gateway
       @crop_task_schedule_blueprint_regeneration_gateway ||= Adapters::Crop::Gateways::CropTaskScheduleBlueprintRegenerationActiveRecordGateway.new(
-        schedule_gateway: Agrr::ScheduleGateway.new,
-        fertilize_gateway: Agrr::FertilizeGateway.new
+        schedule_gateway: Adapters::Agrr::Gateways::ScheduleGateway.new,
+        fertilize_gateway: Adapters::Agrr::Gateways::FertilizeGateway.new
       )
     end
 
@@ -745,14 +745,14 @@ module CompositionRoot
     end
 
     def crop_ai_daemon_query_gateway
-      @crop_ai_daemon_query_gateway ||= Adapters::Agrr::CropAiDaemonQueryGateway.new(
+      @crop_ai_daemon_query_gateway ||= Adapters::Agrr::Gateways::CropAiDaemonQueryGateway.new(
         logger: logger,
         translator: translator
       )
     end
 
     def pest_ai_daemon_query_gateway
-      @pest_ai_daemon_query_gateway ||= Adapters::Agrr::PestAiDaemonQueryGateway.new(
+      @pest_ai_daemon_query_gateway ||= Adapters::Agrr::Gateways::PestAiDaemonQueryGateway.new(
         logger: logger,
         translator: translator
       )
@@ -858,7 +858,7 @@ module CompositionRoot
     end
 
     def weather_location_dto_from_active_record(weather_location)
-      Domain::WeatherData::Dtos::WeatherLocationDto.new(
+      Domain::WeatherData::Dtos::WeatherLocation.new(
         id: weather_location.id,
         latitude: weather_location.latitude,
         longitude: weather_location.longitude,
@@ -869,30 +869,10 @@ module CompositionRoot
     end
 
     def farm_weather_prediction_dto_from_active_record(farm)
-      Domain::WeatherData::Dtos::FarmWeatherPredictionDto.new(
+      Domain::WeatherData::Dtos::FarmWeatherPrediction.new(
         id: farm.id,
         weather_location_id: farm.weather_location_id,
         predicted_weather_data: farm.predicted_weather_data
-      )
-    end
-
-    def agrr_service_weather_query_gateway
-      @agrr_service_weather_query_gateway ||= Adapters::ApiWeather::Gateways::AgrrServiceWeatherQueryActiveGateway.new(
-        agrr_service: ::Agrr::DaemonClient.new
-      )
-    end
-
-    def api_weather_historical_interactor(output_port:)
-      Domain::ApiWeather::Interactors::ApiWeatherHistoricalInteractor.new(
-        output_port: output_port,
-        gateway: agrr_service_weather_query_gateway
-      )
-    end
-
-    def api_weather_forecast_interactor(output_port:)
-      Domain::ApiWeather::Interactors::ApiWeatherForecastInteractor.new(
-        output_port: output_port,
-        gateway: agrr_service_weather_query_gateway
       )
     end
   end

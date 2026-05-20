@@ -5,7 +5,7 @@ module Domain
     module Assemblers
       class PublicPlanOptimizingAssembler
         def self.call(read_model)
-          Domain::CultivationPlan::Dtos::PublicPlanOptimizingDto.new(
+          Domain::CultivationPlan::Dtos::PublicPlanOptimizing.new(
             id: read_model.id,
             plan_year: read_model.plan_year,
             farm_display_name: read_model.farm_display_name,

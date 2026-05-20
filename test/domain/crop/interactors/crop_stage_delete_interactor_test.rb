@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropStageDeleteInteractorTest < ActiveSupport::TestCase
+      class CropStageDeleteInteractorTest < DomainLibTestCase
         test "calls on_success with delete result when gateway succeeds" do
           gateway = Minitest::Mock.new
           gateway.expect(:delete_crop_stage, nil, [ 1 ])
@@ -15,7 +15,7 @@ module Domain
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
           interactor = CropStageDeleteInteractor.new(output_port: output_port, gateway: gateway)
-          input_dto = Domain::Crop::Dtos::CropStageDeleteInputDto.new(
+          input_dto = Domain::Crop::Dtos::CropStageDeleteInput.new(
             crop_id: 1,
             stage_id: 1
           )
@@ -26,7 +26,7 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure with ErrorDto when gateway raises RecordInvalid" do
+        test "calls on_failure with Error when gateway raises RecordInvalid" do
           gateway = Minitest::Mock.new
           gateway.expect(:delete_crop_stage, nil) do |stage_id|
             assert_equal 9, stage_id
@@ -39,10 +39,10 @@ module Domain
           output_port.define_singleton_method(:on_failure) { |dto| received_failure = dto }
 
           interactor = CropStageDeleteInteractor.new(output_port: output_port, gateway: gateway)
-          input_dto = Domain::Crop::Dtos::CropStageDeleteInputDto.new(crop_id: 1, stage_id: 9)
+          input_dto = Domain::Crop::Dtos::CropStageDeleteInput.new(crop_id: 1, stage_id: 9)
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received_failure
+          assert_instance_of Domain::Shared::Dtos::Error, received_failure
           assert_equal "cannot delete", received_failure.message
           gateway.verify
         end
@@ -54,7 +54,7 @@ module Domain
           output_port = Minitest::Mock.new
 
           interactor = CropStageDeleteInteractor.new(output_port: output_port, gateway: gateway)
-          input_dto = Domain::Crop::Dtos::CropStageDeleteInputDto.new(
+          input_dto = Domain::Crop::Dtos::CropStageDeleteInput.new(
             crop_id: 1,
             stage_id: 1
           )

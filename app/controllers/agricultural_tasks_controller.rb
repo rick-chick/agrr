@@ -6,13 +6,13 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks
   def index
-    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskListInputDto.from_hash({
+    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskListInput.from_hash({
       is_admin: admin_user?,
       filter: params[:filter],
       query: params[:query].to_s.strip
     })
 
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskListHtmlPresenter.new(
+    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskListHtmlPresenter.new(
       view: self,
       input_dto: input_dto
     )
@@ -25,7 +25,7 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks/:id
   def show
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskDetailHtmlPresenter.new(view: self)
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -46,8 +46,8 @@ class AgriculturalTasksController < ApplicationController
   def create
     task_attributes = build_task_attributes
 
-    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInputDto.from_hash({ agricultural_task: task_attributes })
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskCreateHtmlPresenter.new(view: self)
+    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInput.from_hash({ agricultural_task: task_attributes })
+    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskCreateHtmlPresenter.new(view: self)
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
@@ -59,14 +59,14 @@ class AgriculturalTasksController < ApplicationController
   def update
     task_attributes = build_task_attributes
 
-    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInputDto.from_hash(
+    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInput.from_hash(
       {
         agricultural_task: task_attributes,
         selected_crop_ids: selected_crop_ids_from_params
       },
       params[:id]
     )
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskUpdateHtmlPresenter.new(
+    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskUpdateHtmlPresenter.new(
       view: self,
       form_resubmit: {
         dto: @input_dto,
@@ -85,7 +85,7 @@ class AgriculturalTasksController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
 
         interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -95,7 +95,7 @@ class AgriculturalTasksController < ApplicationController
       end
 
       format.json do
-        DeletionUndo::HtmlMasterScheduleInvoker.call(
+        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
           view: self,
           actor_id: current_user.id,
           resource_type: "AgriculturalTask",
@@ -121,11 +121,11 @@ class AgriculturalTasksController < ApplicationController
 
   def set_agricultural_task
     if action_requires_edit_permission?
-      presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskLoadForEditHtmlPresenter.new(view: self)
+      presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskLoadForEditHtmlPresenter.new(view: self)
       interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     else
-      presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskLoadForViewHtmlPresenter.new(view: self)
+      presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskLoadForViewHtmlPresenter.new(view: self)
       interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     end
@@ -179,7 +179,7 @@ class AgriculturalTasksController < ApplicationController
     return unless action_requires_edit_permission?
 
     preview_attrs = agricultural_task_attributes_hash_for_crop_preview
-    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInputDto.new(
+    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInput.new(
       user_id: current_user.id,
       agricultural_task_id: params[:id].to_i,
       controller_action: params[:action].to_s,
@@ -188,7 +188,7 @@ class AgriculturalTasksController < ApplicationController
       include_crop_cards: params[:action].to_s == "edit"
     )
 
-    presenter = Presenters::Html::AgriculturalTask::AgriculturalTaskEditFormCropSelectionLoadHtmlPresenter.new(view: self)
+    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskEditFormCropSelectionLoadHtmlPresenter.new(view: self)
     interactor = CompositionRoot.agricultural_task_edit_form_crop_selection_load_interactor(
       output_port: presenter,
       user_id: current_user.id
@@ -231,7 +231,7 @@ class AgriculturalTasksController < ApplicationController
 
     normalized_ids = Array(selected_crop_ids).map(&:to_i).uniq
     @selected_crop_ids = normalized_ids
-    @crop_cards = Domain::AgriculturalTask::Services::EditFormCropSelectionCards.build(
+    @crop_cards = Domain::AgriculturalTask::Mappers::EditFormCropSelectionCardsMapper.build(
       accessible_crops: @accessible_crops,
       selected_ids: normalized_ids
     )

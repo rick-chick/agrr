@@ -16,7 +16,7 @@ module Domain
           user = @user_lookup.find(@user_id)
           attrs = {}
           attrs[:name] = input_dto.name unless input_dto.name.nil?
-          attrs[:region] = input_dto.region if Domain::Shared::ValidationHelpers.present?(input_dto.region)
+          attrs[:region] = input_dto.region if Domain::Shared.present?(input_dto.region)
           attrs[:latitude] = input_dto.latitude if !input_dto.latitude.nil?
           attrs[:longitude] = input_dto.longitude if !input_dto.longitude.nil?
 
@@ -28,9 +28,9 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

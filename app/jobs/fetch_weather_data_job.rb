@@ -46,7 +46,7 @@ class FetchWeatherDataJob < ApplicationJob
     translator: job.translator,
     logger: job.logger_gateway
   )
-  retry_interactor.execute(
+  retry_interactor.call(
     input_dto: {
       farm_id: job.arguments.first[:farm_id],
       start_date: job.arguments.first[:start_date],
@@ -68,7 +68,7 @@ class FetchWeatherDataJob < ApplicationJob
     translator: job.translator,
     logger: job.logger_gateway
   )
-  discard_interactor.execute(
+  discard_interactor.call(
     input_dto: {
       farm_id: job.arguments.first[:farm_id],
       start_date: job.arguments.first[:start_date],
@@ -123,7 +123,7 @@ class FetchWeatherDataJob < ApplicationJob
       logger: logger_gateway
     )
 
-    interactor.execute(input_dto:)
+    interactor.call(input_dto:)
   end
 
   def farm_gateway
@@ -134,7 +134,7 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   def cultivation_plan_gateway
-    @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
+    @cultivation_plan_gateway ||= CompositionRoot.cultivation_plan_gateway
   end
 
   def weather_data_gateway
@@ -142,7 +142,7 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   def agrr_weather_gateway
-    @agrr_weather_gateway ||= Agrr::WeatherGateway.new
+    @agrr_weather_gateway ||= Adapters::Agrr::Gateways::WeatherGateway.new
   end
 
   def presenter

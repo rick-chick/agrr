@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Farm
     module Entities
-      class FieldEntityTest < ActiveSupport::TestCase
+      class FieldEntityTest < DomainLibTestCase
         test "should initialize with valid attributes" do
           entity = FieldEntity.new(
             id: 1,
@@ -15,8 +15,8 @@ module Domain
             region: "Kyoto",
             farm_id: 1,
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_equal 1, entity.id
@@ -37,8 +37,8 @@ module Domain
             region: "Kyoto",
             farm_id: 1,
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_equal "Test Field", entity.display_name
@@ -53,8 +53,8 @@ module Domain
             region: "Kyoto",
             farm_id: 1,
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_equal "Field 1", entity.display_name
@@ -69,8 +69,8 @@ module Domain
             region: "Kyoto",
             farm_id: 1,
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           }
 
           entity = FieldEntity.from_hash(hash)

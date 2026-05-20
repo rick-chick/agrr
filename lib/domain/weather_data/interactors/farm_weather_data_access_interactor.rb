@@ -23,8 +23,8 @@ module Domain
         end
 
         def call(input_dto)
-          unless input_dto.is_a?(Domain::WeatherData::Dtos::FarmWeatherDataAccessInputDto)
-            raise ArgumentError, "input_dto must be FarmWeatherDataAccessInputDto"
+          unless input_dto.is_a?(Domain::WeatherData::Dtos::FarmWeatherDataAccessInput)
+            raise ArgumentError, "input_dto must be FarmWeatherDataAccessInput"
           end
 
           ctx = if input_dto.is_admin

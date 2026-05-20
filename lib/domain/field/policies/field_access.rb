@@ -27,7 +27,7 @@ module Domain
         end
 
         def self.build_for_create(user, farm, attrs)
-          attributes = attrs.to_h.symbolize_keys
+          attributes = Domain::Shared.symbolize_keys(attrs.to_h)
 
           attributes[:user_id] ||= user.id
           attributes[:farm_id] = farm.id

@@ -31,7 +31,7 @@ module Domain
             end
           end
 
-          raw = pest_attrs.to_h.symbolize_keys
+          raw = Domain::Shared.symbolize_keys(pest_attrs.to_h)
           wants_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(raw[:is_reference]) || false
           if wants_reference && !user.admin?
             return @output_port.on_reference_only_admin(crop_id: crop_id)
@@ -45,11 +45,11 @@ module Domain
             pest_attrs: normalized_attrs,
             crop_access_filter: crop_access_filter
           )
-          case result[:status]
+          case result.status
           when :created
-            @output_port.on_created(crop_id: crop_id, pest_id: result[:pest_snapshot].id)
+            @output_port.on_created(crop_id: crop_id, pest_id: result.pest_entity.id)
           when :invalid
-            @output_port.on_invalid(crop_id: crop_id, pest_snapshot: result[:pest_snapshot], unassociated_pest_entities: result[:unassociated_pest_entities])
+            @output_port.on_invalid(crop_id: crop_id, pest_snapshot: result.crop_nest_snapshot, unassociated_pest_entities: result.unassociated_pest_entities)
           end
         end
       end

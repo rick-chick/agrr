@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropStageDetailInteractorTest < ActiveSupport::TestCase
+      class CropStageDetailInteractorTest < DomainLibTestCase
         test "calls on_success with crop stage when gateway succeeds" do
           crop_stage = Domain::Crop::Entities::CropStageEntity.new(
             id: 1,
             crop_id: 1,
             name: "種まき",
             order: 1,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           gateway = Minitest::Mock.new
           gateway.expect(:find_crop_stage_by_id, crop_stage, [ 1 ])
@@ -23,7 +23,7 @@ module Domain
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
           interactor = CropStageDetailInteractor.new(output_port: output_port, gateway: gateway)
-          input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: 1)
+          input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 1)
           interactor.call(input_dto)
 
           assert_equal crop_stage, received.stage
@@ -31,7 +31,7 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure with ErrorDto when gateway raises RecordInvalid" do
+        test "calls on_failure with Error when gateway raises RecordInvalid" do
           gateway = Minitest::Mock.new
           gateway.expect(:find_crop_stage_by_id, nil) do |_id|
             raise Domain::Shared::Exceptions::RecordInvalid.new("not found")
@@ -43,10 +43,10 @@ module Domain
           output_port.define_singleton_method(:on_failure) { |dto| received_failure = dto }
 
           interactor = CropStageDetailInteractor.new(output_port: output_port, gateway: gateway)
-          input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: 1)
+          input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 1)
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received_failure
+          assert_instance_of Domain::Shared::Dtos::Error, received_failure
           assert_equal "not found", received_failure.message
           gateway.verify
         end
@@ -58,7 +58,7 @@ module Domain
           output_port = Minitest::Mock.new
 
           interactor = CropStageDetailInteractor.new(output_port: output_port, gateway: gateway)
-          input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: 1)
+          input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 1)
           err = assert_raises(StandardError) do
             interactor.call(input_dto)
           end

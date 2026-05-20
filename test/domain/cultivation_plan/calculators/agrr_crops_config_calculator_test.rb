@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class AgrrCropsConfigCalculatorTest < ActiveSupport::TestCase
+class AgrrCropsConfigCalculatorTest < DomainLibTestCase
   test "build skips crops without stages and sets crop_id" do
     logger = Minitest::Mock.new
     logger.expect(:warn, nil, [ "⚠️ [AGRR] Skipping crop 'NoStage' (id=99): no growth stages" ])

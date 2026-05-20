@@ -69,7 +69,7 @@ module Plans
 
     def destroy
       fallback_location = plan_task_schedule_path(task_schedule_route_plan_id)
-      presenter = Presenters::Plans::TaskScheduleItemDestroyPresenter.new(
+      presenter = Adapters::CultivationPlan::Presenters::TaskScheduleItemDestroyPresenter.new(
         view: self,
         logger: CompositionRoot.logger,
         fallback_location: fallback_location
@@ -105,7 +105,7 @@ module Plans
     private
 
     def task_schedule_item_mutation_presenter
-      Presenters::Plans::TaskScheduleItemMutationPresenter.new(view: self)
+      Adapters::CultivationPlan::Presenters::TaskScheduleItemMutationPresenter.new(view: self)
     end
 
     def task_schedule_route_plan_id

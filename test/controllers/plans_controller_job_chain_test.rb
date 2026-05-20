@@ -9,7 +9,7 @@ class PlansControllerJobChainTest < ActionController::TestCase
     @user = create(:user)
     sign_in_as @user
 
-    @weather_location = WeatherLocation.create!(
+    @weather_location = WeatherLocation.find_or_create_by_coordinates(
       latitude: 36.0,
       longitude: 140.0,
       elevation: 50.0,

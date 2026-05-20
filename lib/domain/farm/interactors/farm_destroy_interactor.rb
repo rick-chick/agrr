@@ -25,7 +25,7 @@ module Domain
             access_filter: access_filter
           )
           if result[:success]
-            destroy_output_dto = Domain::Farm::Dtos::FarmDestroyOutputDto.new(
+            destroy_output_dto = Domain::Farm::Dtos::FarmDestroyOutput.new(
               undo: result[:undo_entity],
               farm_name: result[:farm_name]
             )
@@ -36,12 +36,12 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("farms.flash.not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("farms.flash.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::AssociationInUse
           @output_port.on_failure(
-            Domain::Shared::Dtos::ErrorDto.new(@translator.t("farms.flash.cannot_delete_in_use"))
+            Domain::Shared::Dtos::Error.new(@translator.t("farms.flash.cannot_delete_in_use"))
           )
         end
       end

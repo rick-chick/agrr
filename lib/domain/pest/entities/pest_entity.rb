@@ -27,6 +27,11 @@ module Domain
           !!is_reference
         end
 
+        # 配列用メソッド: pests.recent.each のために recent 配列を返す
+        def self.recent(pests)
+          pests.sort_by { |p| -p.created_at.to_i }
+        end
+
         def to_hash
           {
             id: id,
@@ -45,7 +50,7 @@ module Domain
         private
 
         def validate!
-          raise ArgumentError, "Name is required" if Domain::Shared::ValidationHelpers.blank?(name)
+          raise ArgumentError, "Name is required" if Domain::Shared.blank?(name)
           validate_region!
         end
 

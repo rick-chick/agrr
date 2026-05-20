@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class PesticideAssociationPolicyTest < ActiveSupport::TestCase
+class PesticideAssociationAccessTest < ActiveSupport::TestCase
   setup do
     @user = create(:user)
     @admin = create(:user, :admin)
@@ -13,7 +13,7 @@ class PesticideAssociationPolicyTest < ActiveSupport::TestCase
     admin_crop = create(:crop, is_reference: false, user: @admin)
     other_user_crop = create(:crop, is_reference: false, user: @user)
 
-    scope = PesticideAssociationPolicy.accessible_crops_scope(@admin)
+    scope = Domain::Shared::PesticideAssociationAccess.accessible_crops_scope(@admin)
 
     assert_includes scope, reference_crop
     assert_includes scope, admin_crop
@@ -25,7 +25,7 @@ class PesticideAssociationPolicyTest < ActiveSupport::TestCase
     user_crop = create(:crop, is_reference: false, user: @user)
     other_user_crop = create(:crop, is_reference: false, user: create(:user))
 
-    scope = PesticideAssociationPolicy.accessible_crops_scope(@user)
+    scope = Domain::Shared::PesticideAssociationAccess.accessible_crops_scope(@user)
 
     assert_not_includes scope, reference_crop
     assert_includes scope, user_crop
@@ -37,7 +37,7 @@ class PesticideAssociationPolicyTest < ActiveSupport::TestCase
     admin_pest = create(:pest, is_reference: false, user: @admin)
     other_user_pest = create(:pest, is_reference: false, user: @user)
 
-    scope = PesticideAssociationPolicy.accessible_pests_scope(@admin)
+    scope = Domain::Shared::PesticideAssociationAccess.accessible_pests_scope(@admin)
 
     assert_includes scope, reference_pest
     assert_includes scope, admin_pest
@@ -49,7 +49,7 @@ class PesticideAssociationPolicyTest < ActiveSupport::TestCase
     user_pest = create(:pest, is_reference: false, user: @user)
     other_user_pest = create(:pest, is_reference: false, user: create(:user))
 
-    scope = PesticideAssociationPolicy.accessible_pests_scope(@user)
+    scope = Domain::Shared::PesticideAssociationAccess.accessible_pests_scope(@user)
 
     assert_not_includes scope, reference_pest
     assert_includes scope, user_pest

@@ -22,14 +22,14 @@ module Domain
         end
 
         def self.normalize_attrs_for_create(user, attrs)
-          h = attrs.to_h.symbolize_keys
+          h = Domain::Shared.symbolize_keys(attrs.to_h)
           h[:user_id] = user.id
           h[:is_reference] = false
           h
         end
 
         def self.normalize_attrs_for_update(_user, _current_attrs, requested_attrs)
-          requested_attrs.to_h.symbolize_keys
+          Domain::Shared.symbolize_keys(requested_attrs.to_h)
         end
       end
     end

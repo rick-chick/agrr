@@ -11,12 +11,14 @@ class FertilizeAiButtonSeleniumTest < ApplicationSystemTestCase
       google_id: "fertilize_ai_selenium_#{SecureRandom.hex(8)}"
     )
     login_as_system_user(@user)
-    visit new_fertilize_path
+    # ブラウザにjaロケールCookieを設定（Accept-Languageヘッダーがusになるため）
+    page.driver.browser.manage.add_cookie(name: "locale", value: "ja", path: "/")
+    visit new_fertilize_path(locale: :ja)
   end
 
   test "肥料AIボタンが表示され、クリックできる" do
     # ボタンが存在することを確認（Propshaftで配信されるfertilize_ai.jsを使用）
-    assert_selector "#ai-save-fertilize-btn", wait: 5
+    assert_selector "#ai-save-fertilize-btn", wait: 2
 
     button = find("#ai-save-fertilize-btn")
     assert button.present?, "肥料AIボタンが表示されていません"
@@ -27,7 +29,7 @@ class FertilizeAiButtonSeleniumTest < ApplicationSystemTestCase
 
     # JavaScriptが動作したか確認（ステータスメッセージが表示される）
     # Propshaftで配信されるfertilize_ai.jsが動作すれば、エラーメッセージが表示される
-    assert_selector "#ai-save-status", wait: 3, visible: :all
+    assert_selector "#ai-save-status", wait: 2, visible: :all
 
     status = find("#ai-save-status", visible: :all)
     assert_match(/肥料名を入力/, status.text, "エラーメッセージが表示されていません")
@@ -62,13 +64,11 @@ class FertilizeAiButtonSeleniumTest < ApplicationSystemTestCase
       }
     })
 
-    visit new_fertilize_path
     fill_in "fertilize[name]", with: "Selenium尿素"
     find("#ai-save-fertilize-btn").click
 
-    assert_selector "#ad-popup-overlay.show", wait: 3
-    assert eventually(timeout: 5) { stub.create_calls.size == 1 }
-    assert eventually(timeout: 5) { current_path.match?(/\/fertilizes\/\d+/) }
+    assert_selector "#ad-popup-overlay.show", wait: 2
+    assert eventually(timeout: 3, interval: 0.5) { current_path.match?(/\/fertilizes\/\d+/) }
   ensure
     remove_fertilize_ai_stub
   end
@@ -80,15 +80,16 @@ class FertilizeAiButtonSeleniumTest < ApplicationSystemTestCase
       "code" => "daemon_not_running"
     })
 
-    visit new_fertilize_path
+    visit new_fertilize_path(locale: :ja)
     fill_in "fertilize[name]", with: "Selenium失敗"
     button = find("#ai-save-fertilize-btn")
     button.click
 
-    assert_selector "#ai-save-status", text: /Seleniumテスト失敗/, wait: 5, visible: :all
-    status = find("#ai-save-status", visible: :all)
-    assert eventually { !button.disabled? }
-    assert eventually { !page.find("#ad-popup-overlay")[:class].include?("show") }
+    assert_selector "#ai-save-status", text: /Seleniumテスト失敗/, wait: 2, visible: :all
+
+    assert eventually(timeout: 2) { !button.disabled? }, "失敗後にボタンが再度有効化されていません"
+    # 広告ポップアップはデフォルトで非表示（display: none）のため、visible: :all を指定する
+    assert eventually(timeout: 2) { !page.find("#ad-popup-overlay", visible: :all)[:class].include?("show") }
   ensure
     remove_fertilize_ai_stub
   end

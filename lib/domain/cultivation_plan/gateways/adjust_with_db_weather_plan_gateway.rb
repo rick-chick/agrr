@@ -44,7 +44,7 @@ module Domain
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
 
-        # @return [Domain::WeatherData::Dtos::CultivationPlanWeatherDto]
+        # @return [Domain::WeatherData::Dtos::CultivationPlanWeather]
         def cultivation_plan_weather_dto
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
@@ -65,7 +65,7 @@ module Domain
         end
 
         # @param plan_id [Integer]
-        # @param events_gateway [Domain::CultivationPlan::Gateways::CultivationPlanRestOptimizationEventsGateway]
+        # @param events_gateway [Domain::CultivationPlan::Gateways::CultivationPlanOptimizationEventsGateway]
         def broadcast_optimization_complete(plan_id:, events_gateway:, status:)
           raise NotImplementedError, "#{self.class}##{__method__}"
         end

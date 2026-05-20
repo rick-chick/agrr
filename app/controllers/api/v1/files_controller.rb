@@ -6,7 +6,7 @@ module Api
       before_action :authenticate_user!
 
       def index
-        presenter = Presenters::Api::Files::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        presenter = Adapters::FileBlob::Presenters::Api::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobListInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.file_blob_gateway
@@ -14,7 +14,7 @@ module Api
       end
 
       def show
-        presenter = Presenters::Api::Files::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        presenter = Adapters::FileBlob::Presenters::Api::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobShowInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.file_blob_gateway
@@ -22,19 +22,20 @@ module Api
       end
 
       def create
-        presenter = Presenters::Api::Files::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
-        Domain::FileBlob::Interactors::FileBlobCreateInteractor.new(
-          output_port: presenter,
-          gateway: CompositionRoot.file_blob_gateway
-        ).call(
-          io: params[:file],
+        input = Domain::FileBlob::Dtos::FileBlobCreateUploadInput.new(
+          upload: params[:file],
           filename: params[:file]&.original_filename,
           content_type: params[:file]&.content_type
         )
+        presenter = Adapters::FileBlob::Presenters::Api::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        Domain::FileBlob::Interactors::FileBlobCreateInteractor.new(
+          output_port: presenter,
+          gateway: CompositionRoot.file_blob_gateway
+        ).call(input: input)
       end
 
       def destroy
-        presenter = Presenters::Api::Files::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        presenter = Adapters::FileBlob::Presenters::Api::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobDestroyInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.file_blob_gateway

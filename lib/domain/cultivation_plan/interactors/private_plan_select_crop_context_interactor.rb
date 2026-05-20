@@ -26,7 +26,7 @@ module Domain
           total_area = fields_result.fields.sum { |f| f.area.to_f }
           crops = @crop_gateway.list_user_owned_non_reference_crops_ordered_by_name(user)
           plan_name = farm.name.to_s
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanSelectCropContextDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanSelectCropContext.new(
             farm: farm,
             plan_name: plan_name,
             crops: crops,
@@ -34,10 +34,10 @@ module Domain
           )
           @output_port.on_success(dto)
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.farm_not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.farm_not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("[PrivatePlanSelectCropContextInteractor] record_invalid: #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

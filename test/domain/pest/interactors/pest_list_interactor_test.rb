@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class Domain::Pest::Interactors::PestListInteractorTest < ActiveSupport::TestCase
+class Domain::Pest::Interactors::PestListInteractorTest < DomainLibTestCase
   test "call loads pests using policy-built filter for regular user" do
     user = Object.new
     def user.id; 42; end
@@ -53,7 +53,7 @@ class Domain::Pest::Interactors::PestListInteractorTest < ActiveSupport::TestCas
     ).call
   end
 
-  test "call maps RecordInvalid to failure ErrorDto" do
+  test "call maps RecordInvalid to failure Error" do
     user = Object.new
     def user.id; 1; end
     def user.admin?; false; end
@@ -65,7 +65,7 @@ class Domain::Pest::Interactors::PestListInteractorTest < ActiveSupport::TestCas
     gateway.expects(:list_index_for_filter).raises(Domain::Shared::Exceptions::RecordInvalid.new("x"))
 
     output = mock
-    output.expects(:on_failure).with { |dto| dto.is_a?(Domain::Shared::Dtos::ErrorDto) && dto.message == "x" }
+    output.expects(:on_failure).with { |dto| dto.is_a?(Domain::Shared::Dtos::Error) && dto.message == "x" }
 
     Domain::Pest::Interactors::PestListInteractor.new(
       output_port: output,

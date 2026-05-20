@@ -28,7 +28,7 @@ class ApplicationControllerLocaleTest < ActionController::TestCase
   test "cookie locale is used when path locale is absent" do
     @request.path = "/auth/login"
     @request.cookies["locale"] = "in"
-    @request.env["HTTP_ACCEPT_LANGUAGE"] = "ja-JP,ja;q=0.9"
+    # header not set to test cookie precedence over default
 
     assert_equal "in", captured_locale_from_switch
   end

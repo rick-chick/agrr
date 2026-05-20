@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class FertilizeListInteractorTest < ActiveSupport::TestCase
+class FertilizeListInteractorTest < DomainLibTestCase
   test "call passes fertilize entities to output port" do
     user = Object.new
     def user.id; 42; end

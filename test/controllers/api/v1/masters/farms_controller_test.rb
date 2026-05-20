@@ -12,14 +12,6 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes Farm Views" do
-          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmListView
-          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmDetailView
-          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmCreateView
-          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmUpdateView
-          assert_includes Api::V1::Masters::FarmsController.included_modules, Views::Api::Farm::FarmDeleteView
-        end
-
         test "should get index" do
           farm1 = create(:farm, :user_owned, user: @user)
           farm2 = create(:farm, :user_owned, user: @user)
@@ -77,10 +69,10 @@ module Api
         test "should return forbidden on index when gateway denies policy" do
           fake_gw = Object.new
           def fake_gw.user_id=(_); end
-          def fake_gw.list(_dto)
+          def fake_gw.list(_input_dto)
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
-          def fake_gw.reference_farms_for_admin_list(**_)
+          def fake_gw.reference_farms_for_admin_list(is_admin:)
             []
           end
           CompositionRoot.instance_variable_set(:@farm_gateway, fake_gw)

@@ -32,7 +32,7 @@ module Domain
           @logger = logger
         end
 
-        def execute(input_dto:)
+        def call(input_dto:)
           latitude = input_dto[:latitude]
           longitude = input_dto[:longitude]
           start_date = input_dto[:start_date]
@@ -169,7 +169,7 @@ module Domain
           end
 
           if all_records.any?
-            dtos = all_records.map { |attrs| Domain::WeatherData::Dtos::WeatherDataDto.from_attrs(attrs) }
+            dtos = all_records.map { |attrs| Domain::WeatherData::Dtos::WeatherData.from_attrs(attrs) }
             @weather_data_gateway.upsert_weather_data!(
               weather_data_dtos: dtos,
               weather_location_id: weather_location.id

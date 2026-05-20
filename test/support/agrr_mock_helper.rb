@@ -35,7 +35,7 @@ module AgrrMockHelper
 
   # Weather情報取得のモック (Minitest用) - 新しいJSON構造
   def stub_fetch_weather_data
-    Agrr::WeatherGateway.class_eval do
+    Adapters::Agrr::Gateways::WeatherGateway.class_eval do
       define_method(:fetch_by_date_range) do |latitude:, longitude:, start_date:, end_date:, data_source: nil|
         resolved_data_source = data_source || ENV["WEATHER_DATA_SOURCE"] || "noaa"
         days = (start_date..end_date).to_a
@@ -68,7 +68,7 @@ module AgrrMockHelper
     FetchWeatherDataJob.class_eval do
       define_method(:fetch_weather_from_agrr) do |lat, lon, sd, ed, _farm_id = nil|
         data_source = determine_data_source(_farm_id, latitude: lat, longitude: lon)
-        weather_gateway = Agrr::WeatherGateway.new
+        weather_gateway = Adapters::Agrr::Gateways::WeatherGateway.new
         weather_gateway.fetch_by_date_range(
           latitude: lat,
           longitude: lon,
@@ -129,7 +129,7 @@ module AgrrMockHelper
 
   # Adjust Gateway のモック化
   def mock_agrr_adjust_success
-    Agrr::AdjustGateway.class_eval do
+    Adapters::Agrr::Gateways::AdjustGateway.class_eval do
       define_method(:adjust) do |current_allocation:, moves:, fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules:, objective:, enable_parallel:|
         # 既存の割り当てを基にモック結果を作成
         # moves が渡された場合は、該当する allocation の start_date を更新して返す（テストでの adjust 動作を簡易的に再現）
@@ -138,7 +138,7 @@ module AgrrMockHelper
         # 深いコピーを作成して元データを壊さない
         copied = Marshal.load(Marshal.dump(field_schedules))
 
-        # moves が配列の場合、allocation_id に応じて start_date を更新する（to_start_date が指定されている場合）
+        # moves が配列の場合、allocation_id に応じて start_date/completion_date を更新する
         Array(moves).each do |move|
           next unless move.is_a?(Hash) || move.respond_to?(:to_h)
           mv = move.to_h
@@ -149,8 +149,16 @@ module AgrrMockHelper
               (fs[:allocations] || fs["allocations"] || []).each do |alloc|
                 # allocation_id は文字列/数値混在の可能性があるため文字列比較
                 if alloc["allocation_id"].to_s == alloc_id.to_s || alloc[:allocation_id].to_s == alloc_id.to_s
-                  # 更新（文字列キーで返すため string 化）
-                  alloc["start_date"] = new_start
+                  # シンボルキーで更新（deep_stringify_keys が :start_date → "start_date" に変換するため）
+                  old_start = alloc[:start_date] || alloc["start_date"]
+                  old_completion = alloc[:completion_date] || alloc["completion_date"]
+                  if old_start && old_completion
+                    shift_days = Date.parse(new_start) - Date.parse(old_start)
+                    alloc[:start_date] = new_start
+                    alloc[:completion_date] = (Date.parse(old_completion) + shift_days).to_s
+                  else
+                    alloc[:start_date] = new_start
+                  end
                 end
               end
             end
@@ -176,9 +184,27 @@ module AgrrMockHelper
     end
   end
 
+  # CultivationPlanAdjustGateway のモック化
+  # adjust API の呼び出しをインターアクタ処理なしでモック返す
+  def stub_adjust_gateway
+    Adapters::CultivationPlan::Gateways::CultivationPlanAdjustActiveRecordGateway.class_eval do
+      define_method(:execute) do |auth:, plan_id:, moves:|
+        {
+          kind: :adjust_result,
+          adjust_hash: {
+            success: true,
+            status: :ok,
+            message: I18n.t("optimization.messages.adjust_completed"),
+            cultivation_plan: { id: plan_id }
+          }
+        }
+      end
+    end
+  end
+
   # 天気予測のモック (Minitest用)
   def stub_weather_prediction
-    Agrr::PredictionGateway.class_eval do
+    Adapters::Agrr::Gateways::PredictionGateway.class_eval do
       define_method(:predict) do |historical_data:, days:, model:|
         Rails.logger.info "🧪 [Mock PredictionGateway] Returning mock prediction data for #{days} days"
 
@@ -212,6 +238,9 @@ module AgrrMockHelper
   end
 
   # すべてのAGRRコマンドをモック化（setup時に使用）
+  # stub_adjust_gateway は使用しない: Gateway の検証ロジック（成長段階チェック等）と
+  # AdjustWithDbWeatherInteractor の呼び出しを保持し、Python コマンド実行部分のみを
+  # mock_agrr_adjust_success でモック化するため。
   def stub_all_agrr_commands
     stub_fetch_crop_info
     stub_fetch_weather_data

@@ -24,7 +24,7 @@ class WeatherDatum < ApplicationRecord
   end
 
   def to_dto
-    Domain::WeatherData::Dtos::WeatherDataDto.new(
+    Domain::WeatherData::Dtos::WeatherData.new(
       date: date,
       temperature_max: temperature_max,
       temperature_min: temperature_min,

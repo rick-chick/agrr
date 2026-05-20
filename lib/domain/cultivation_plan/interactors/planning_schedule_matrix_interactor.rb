@@ -48,7 +48,7 @@ module Domain
           next_year = current_year + 1
 
           all_fields = @cultivation_plan_gateway.aggregated_planning_schedule_fields(user: user, farm_id: farm_id)
-          selected_fields = all_fields.select { |f| field_ids.include?(f[:id]) }
+          selected_fields = all_fields.select { |f| field_ids.include?(f.id) }
 
           start_year = year_param.to_i.nonzero? || (next_year - range_const + 1)
           granularity = granularity_param.presence || "quarter"
@@ -69,19 +69,21 @@ module Domain
             granularity: granularity
           ).reverse
 
+          # バッチ取得（N+1回避）: 農場・期間で一括フェッチし、フィールド名でグループ化
+          all_cultivations = @cultivation_plan_gateway.planning_schedule_cultivations_for_farm(
+            user: user,
+            farm_id: farm_id,
+            period_start: period_start,
+            period_end: period_end
+          )
+
+          # selected_fields の field_id => cultivations にマッピング
           cultivations_by_field = {}
           selected_fields.each do |field|
-            cultivations_by_field[field[:id]] =
-              @cultivation_plan_gateway.planning_schedule_cultivations_for_field(
-                user: user,
-                farm_id: farm_id,
-                field_name: field[:name],
-                period_start: period_start,
-                period_end: period_end
-              )
+            cultivations_by_field[field.id] = all_cultivations[field.name] || []
           end
 
-          dto = Domain::CultivationPlan::Dtos::PlanningScheduleMatrixSuccessDto.new(
+          dto = Domain::CultivationPlan::Dtos::PlanningScheduleMatrixOutput.new(
             farm: farm_row,
             selected_fields: selected_fields,
             periods: periods,

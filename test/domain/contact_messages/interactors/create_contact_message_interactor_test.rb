@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module ContactMessages
     module Interactors
-      class CreateContactMessageInteractorTest < ActiveSupport::TestCase
+      class CreateContactMessageInteractorTest < DomainLibTestCase
         def noop_recaptcha
           Class.new do
             def verify(**)
@@ -64,7 +64,7 @@ module Domain
             message: ""
           )
 
-          record = ::ContactMessage.new(email: "invalid", message: "")
+          record = Domain::ContactMessages::Entities::ContactMessage.new(email: "invalid", message: "")
           record.valid?
           invalid_exception = Domain::Shared::Exceptions::RecordInvalid.new(
             "Validation failed",

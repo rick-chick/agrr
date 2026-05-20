@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module ContactMessages
     module Entities
-      class ContactMessageEntityTest < ActiveSupport::TestCase
+      class ContactMessageEntityTest < DomainLibTestCase
         test "initializes with provided attributes and status helpers" do
-          now = Time.current
+          now = Time.utc(2026, 1, 1)
           entity = Domain::ContactMessages::Entities::ContactMessage.new(
             id: 1,
             name: "Taro",
@@ -31,8 +31,8 @@ module Domain
           entity = Domain::ContactMessages::Entities::ContactMessage.new(email: "", message: "")
 
           refute entity.valid?
-          assert entity.errors[:email].present?
-          assert entity.errors[:message].present?
+          assert !entity.errors[:email].nil? && !entity.errors[:email].empty?
+          assert !entity.errors[:message].nil? && !entity.errors[:message].empty?
         end
 
         test "enforces length limits for optional fields" do
@@ -41,8 +41,8 @@ module Domain
           entity.subject = "s" * 300
 
           refute entity.valid?
-          assert entity.errors[:name].present?
-          assert entity.errors[:subject].present?
+          assert !entity.errors[:name].nil? && !entity.errors[:name].empty?
+          assert !entity.errors[:subject].nil? && !entity.errors[:subject].empty?
         end
       end
     end

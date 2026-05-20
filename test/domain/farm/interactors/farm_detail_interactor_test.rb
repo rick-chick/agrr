@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Farm
     module Interactors
-      class FarmDetailInteractorTest < ActiveSupport::TestCase
+      class FarmDetailInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns dto" do
           user_id = 10
           farm_id = 3

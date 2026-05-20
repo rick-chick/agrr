@@ -35,11 +35,11 @@ module Domain
             raise ArgumentError, "anchors_resolver must respond to :anchors_for"
           end
           unless weather_location.is_a?(Domain::WeatherData::Contracts::WeatherLocationPredictionInput)
-            raise ArgumentError, "weather_location must include Domain::WeatherData::Contracts::WeatherLocationPredictionInput (WeatherLocationDto を利用可)"
+            raise ArgumentError, "weather_location must include Domain::WeatherData::Contracts::WeatherLocationPredictionInput (WeatherLocation を利用可)"
           end
           assert_weather_location_shape!(weather_location)
           if farm && !farm.is_a?(Domain::WeatherData::Contracts::FarmWeatherPredictionInput)
-            raise ArgumentError, "farm must include Domain::WeatherData::Contracts::FarmWeatherPredictionInput (FarmWeatherPredictionDto を利用可)"
+            raise ArgumentError, "farm must include Domain::WeatherData::Contracts::FarmWeatherPredictionInput (FarmWeatherPrediction を利用可)"
           end
           assert_farm_shape!(farm) if farm
 
@@ -60,12 +60,12 @@ module Domain
 
         # 天気予測を実行してCultivationPlanに保存
         # @param plan_weather [Domain::WeatherData::Contracts::CultivationPlanWeatherPredictionInput]
-        #   具象クラスは {Domain::WeatherData::Dtos::CultivationPlanWeatherDto}
+        #   具象クラスは {Domain::WeatherData::Dtos::CultivationPlanWeather}
         # @param target_end_date [Date] 予測終了日（デフォルト: 計画由来の終了日）
         # @return [Hash] 予測データとメタ情報
         def predict_for_cultivation_plan(plan_weather:, target_end_date: nil)
           unless plan_weather.is_a?(Domain::WeatherData::Contracts::CultivationPlanWeatherPredictionInput)
-            raise ArgumentError, "plan_weather must include Domain::WeatherData::Contracts::CultivationPlanWeatherPredictionInput (CultivationPlanWeatherDto を利用可)"
+            raise ArgumentError, "plan_weather must include Domain::WeatherData::Contracts::CultivationPlanWeatherPredictionInput (CultivationPlanWeather を利用可)"
           end
           assert_cultivation_plan_weather_shape!(plan_weather)
 
@@ -110,7 +110,7 @@ module Domain
         # 既存の予測データを取得（新規予測は実行しない）
         # @param target_end_date [Date] 必要な予測終了日
         # @param cultivation_plan_weather [Domain::WeatherData::Contracts::CultivationPlanWeatherPredictionInput, nil]
-        #   具象クラスは {Domain::WeatherData::Dtos::CultivationPlanWeatherDto}
+        #   具象クラスは {Domain::WeatherData::Dtos::CultivationPlanWeather}
         # @return [Hash] 予測データとメタ情報
         def get_existing_prediction(target_end_date: nil, cultivation_plan_weather: nil)
           if cultivation_plan_weather && !cultivation_plan_weather.is_a?(Domain::WeatherData::Contracts::CultivationPlanWeatherPredictionInput)

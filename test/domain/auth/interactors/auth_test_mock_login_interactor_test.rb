@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Auth
     module Interactors
-      class AuthTestMockLoginInteractorTest < ActiveSupport::TestCase
+      class AuthTestMockLoginInteractorTest < DomainLibTestCase
         setup do
           @gateway = mock
           @appender = mock
@@ -15,7 +15,7 @@ module Domain
             gateway: @gateway,
             oauth_url_appender: @appender
           )
-          @input = Domain::Auth::Dtos::AuthTestMockLoginInputDto.new(
+          @input = Domain::Auth::Dtos::AuthTestMockLoginInput.new(
             google_id: "gid",
             email: "e",
             name: "n",
@@ -35,7 +35,7 @@ module Domain
         end
 
         test "blank google_id triggers missing mock" do
-          input = Domain::Auth::Dtos::AuthTestMockLoginInputDto.new(
+          input = Domain::Auth::Dtos::AuthTestMockLoginInput.new(
             google_id: "",
             email: "e",
             name: "n",
@@ -51,7 +51,7 @@ module Domain
         end
 
         test "success without extras calls on_success_root" do
-          expires = Time.zone.parse("2026-05-08 12:00:00")
+          expires = Time.utc(2026, 5, 8, 12, 0, 0)
           result = Domain::Auth::Dtos::AuthTestMockLoginPersistResult.new(
             status: :success,
             user_name: "U",
@@ -66,7 +66,7 @@ module Domain
         end
 
         test "success with stashed public plan" do
-          input = Domain::Auth::Dtos::AuthTestMockLoginInputDto.new(
+          input = Domain::Auth::Dtos::AuthTestMockLoginInput.new(
             google_id: "gid",
             email: "e",
             name: "n",
@@ -76,7 +76,7 @@ module Domain
             pending_return_to: nil,
             pending_return_to_allowed: false
           )
-          expires = Time.zone.now
+          expires = Time.utc(2026, 1, 1)
           result = Domain::Auth::Dtos::AuthTestMockLoginPersistResult.new(
             status: :success,
             user_name: "U",

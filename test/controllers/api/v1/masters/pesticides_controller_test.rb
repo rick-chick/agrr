@@ -17,14 +17,6 @@ module Api
           @pest = create(:pest, :user_owned, user: @user)
         end
 
-        test "includes Pesticide Views" do
-          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideListView
-          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideDetailView
-          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideCreateView
-          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideUpdateView
-          assert_includes Api::V1::Masters::PesticidesController.included_modules, Views::Api::Pesticide::PesticideDeleteView
-        end
-
         test "should get index" do
           pesticide1 = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
           pesticide2 = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)

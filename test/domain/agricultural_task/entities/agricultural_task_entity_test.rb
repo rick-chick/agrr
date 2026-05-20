@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module AgriculturalTask
     module Entities
-      class AgriculturalTaskEntityTest < ActiveSupport::TestCase
+      class AgriculturalTaskEntityTest < DomainLibTestCase
         test "should initialize with valid attributes" do
           entity = AgriculturalTaskEntity.new(
             id: 1,
@@ -19,8 +19,8 @@ module Domain
             region: "jp",
             task_type: "planting",
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_equal 1, entity.id
@@ -49,8 +49,8 @@ module Domain
             region: nil,
             task_type: "planting",
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_nil entity.region
@@ -70,8 +70,8 @@ module Domain
               region: "jp",
               task_type: "planting",
               is_reference: true,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
           end
         end
@@ -90,8 +90,8 @@ module Domain
               region: "invalid",
               task_type: "planting",
               is_reference: true,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
           end
         end
@@ -110,8 +110,8 @@ module Domain
               region: valid_region,
               task_type: "planting",
               is_reference: true,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
 
             assert_equal valid_region, entity.region
@@ -131,8 +131,8 @@ module Domain
             region: "jp",
             task_type: "planting",
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert entity.reference?
@@ -151,8 +151,8 @@ module Domain
             region: "jp",
             task_type: "planting",
             is_reference: false,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
 
           assert_not entity.reference?

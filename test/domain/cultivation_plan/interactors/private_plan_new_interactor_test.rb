@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PrivatePlanNewInteractorTest < ActiveSupport::TestCase
+class PrivatePlanNewInteractorTest < DomainLibTestCase
   test "call passes dto from farm_gateway to on_success" do
     user = mock
     user_lookup = mock

@@ -8,11 +8,11 @@ module Crops
 
     # GET /crops/:crop_id/agricultural_tasks
     def index
-      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInputDto.new(
+      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInput.new(
         user_id: current_user.id,
         crop_id: params[:crop_id]
       )
-      presenter = Presenters::Html::Crop::CropMastersTaskTemplateIndexHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropMastersTaskTemplateIndexHtmlPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropMastersTaskTemplateIndexInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -23,11 +23,11 @@ module Crops
 
     # GET /crops/:crop_id/agricultural_tasks/new
     def new
-      input_dto = Domain::Crop::Dtos::CropNestedCropTaskTemplatesNewInputDto.new(
+      input_dto = Domain::Crop::Dtos::CropNestedCropTaskTemplatesNewInput.new(
         user_id: current_user.id,
         crop_id: params[:crop_id]
       )
-      presenter = Presenters::Html::Crop::CropNestedCropTaskTemplatesNewHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropNestedCropTaskTemplatesNewHtmlPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropNestedCropTaskTemplatesNewInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -46,7 +46,7 @@ module Crops
         return
       end
 
-      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInputDto.new(
+      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateCreateInput.new(
         user_id: current_user.id,
         crop_id: params[:crop_id],
         agricultural_task_id: params[:agricultural_task_id],
@@ -57,7 +57,7 @@ module Crops
         required_tools: nil,
         skill_level: nil
       )
-      presenter = Presenters::Html::Crop::CropMastersTaskTemplateCreateHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropMastersTaskTemplateCreateHtmlPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropMastersTaskTemplateCreateInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -67,13 +67,13 @@ module Crops
     end
 
     def update
-      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateUpdateInputDto.new(
+      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateUpdateInput.new(
         user_id: current_user.id,
         crop_id: params[:crop_id],
         template_id: params[:id],
         attributes: crop_task_template_update_attributes
       )
-      presenter = Presenters::Html::Crop::CropMastersTaskTemplateUpdateHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropMastersTaskTemplateUpdateHtmlPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropMastersTaskTemplateUpdateInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -83,12 +83,12 @@ module Crops
     end
 
     def destroy
-      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInputDto.new(
+      input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInput.new(
         user_id: current_user.id,
         crop_id: params[:crop_id],
         template_id: params[:id]
       )
-      presenter = Presenters::Html::Crop::CropMastersTaskTemplateDestroyHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropMastersTaskTemplateDestroyHtmlPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropMastersTaskTemplateDestroyInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -100,7 +100,7 @@ module Crops
     private
 
     def set_crop
-      failure = Presenters::Html::Crop::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+      failure = Adapters::Crop::Presenters::Html::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,
@@ -114,7 +114,7 @@ module Crops
     end
 
     def set_template
-      failure = Presenters::Html::Crop::CropTaskTemplateLoadFailureRedirectPresenter.new(view: self)
+      failure = Adapters::Crop::Presenters::Html::CropTaskTemplateLoadFailureRedirectPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedCropTaskTemplateInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,

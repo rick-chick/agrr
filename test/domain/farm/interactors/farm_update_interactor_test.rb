@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Farm
     module Interactors
-      class FarmUpdateInteractorTest < ActiveSupport::TestCase
+      class FarmUpdateInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns entity" do
           user_id = 10
           user = Object.new
           farm_id = 5
-          input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.new(farm_id: farm_id, name: "N")
+          input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(farm_id: farm_id, name: "N")
           farm_entity = Object.new
 
           user_lookup = Minitest::Mock.new
@@ -47,7 +47,7 @@ module Domain
           user_id = 10
           user = Object.new
           farm_id = 5
-          input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.new(farm_id: farm_id, name: "N")
+          input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(farm_id: farm_id, name: "N")
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])

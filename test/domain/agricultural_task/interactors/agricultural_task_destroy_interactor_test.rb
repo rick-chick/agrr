@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module AgriculturalTask
     module Interactors
-      class AgriculturalTaskDestroyInteractorTest < ActiveSupport::TestCase
+      class AgriculturalTaskDestroyInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns success" do
           user_id = 10
           task_id = 22
@@ -35,7 +35,7 @@ module Domain
 
           interactor.call(task_id)
 
-          assert_instance_of Domain::AgriculturalTask::Dtos::AgriculturalTaskDestroyOutputDto, received
+          assert_instance_of Domain::AgriculturalTask::Dtos::AgriculturalTaskDestroyOutput, received
           assert_equal undo_entity, received.undo
           user_lookup.verify
           output_port.verify

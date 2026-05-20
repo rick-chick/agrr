@@ -67,6 +67,9 @@ Dockerfile*
 docker-compose*
 .dockerignore
 
+# AutoGPT (permission denied directory)
+AutoGPT/
+
 # Database schema (force migrations to run from scratch)
 db/schema.rb
 db/cache_schema.rb

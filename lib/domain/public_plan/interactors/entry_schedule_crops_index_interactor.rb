@@ -25,14 +25,14 @@ module Domain
             reference_date: reference_date
           )
 
-          prediction_meta = Services::EntryScheduleResponseBuilder.prediction_meta(
+          prediction_meta = Domain::PublicPlan::Mappers::EntryScheduleCropMapper.prediction_meta(
             farm: farm,
             payload_hash: payload_hash,
             chart_calendar_year: reference_date.year
           )
 
           items = build_crop_list_items(farm, payload_hash)
-          items.sort_by! { |it| Services::EntryScheduleResponseBuilder.sort_tuple_for_list_item(it) }
+          items.sort_by! { |it| Domain::PublicPlan::Mappers::EntryScheduleCropMapper.sort_tuple_for_list_item(it) }
 
           total_count = items.size
           offset = 0 if offset.nil? || offset.negative?
@@ -55,14 +55,14 @@ module Domain
 
           @output_port.on_success(payload)
         rescue Domain::PublicPlan::Exceptions::WeatherLocationMissingError
-          @output_port.on_failure(Dtos::EntryScheduleFailureDto.weather_location_required)
+          @output_port.on_failure(Dtos::EntryScheduleFailure.weather_location_required)
         rescue Domain::PublicPlan::Exceptions::PredictionPayloadMissingError
-          @output_port.on_failure(Dtos::EntryScheduleFailureDto.prediction_payload_missing)
+          @output_port.on_failure(Dtos::EntryScheduleFailure.prediction_payload_missing)
         rescue Domain::PublicPlan::Exceptions::WeatherPredictionFailedError => e
-          @output_port.on_failure(Dtos::EntryScheduleFailureDto.weather_prediction_failed(e.message))
+          @output_port.on_failure(Dtos::EntryScheduleFailure.weather_prediction_failed(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("[EntryScheduleCropsIndexInteractor] RecordInvalid: #{e.message}")
-          @output_port.on_failure(Dtos::EntryScheduleFailureDto.internal_error(e.message))
+          @output_port.on_failure(Dtos::EntryScheduleFailure.internal_error(e.message))
         end
 
         private
@@ -76,7 +76,7 @@ module Domain
               farm: farm,
               crop_gateway: @crop_gateway
             )
-            items << Services::EntryScheduleResponseBuilder.crop_list_item(
+            items << Domain::PublicPlan::Mappers::EntryScheduleCropMapper.crop_list_item(
               crop,
               result,
               translator: @translator,

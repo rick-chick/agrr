@@ -19,7 +19,7 @@ module Domain
             @user_lookup.find(@user_id)
           rescue Domain::Shared::Exceptions::RecordNotFound
             @logger.warn("[PrivatePlanShowInteractor] user_record_not_found user_id=#{@user_id.inspect}")
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.session_invalid")))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.session_invalid")))
             return
           end
 
@@ -35,10 +35,10 @@ module Domain
           raise
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[PrivatePlanShowInteractor] record_not_found: #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.warn("[PrivatePlanShowInteractor] record_invalid: #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
 
         private

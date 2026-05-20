@@ -74,7 +74,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_empty found_crops
   end
 
-  test "private_plan_optimizing_read_model returns read model for owned private plan" do
+  test "private_plan_optimizing_snapshot returns read model for owned private plan" do
     user = create(:user)
     farm = create(:farm, user: user, name: "表示農場")
     plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "optimizing",
@@ -83,11 +83,11 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
     create(:cultivation_plan_crop, cultivation_plan: plan, crop: create(:crop, user: user, is_reference: false))
 
-    read = @gateway.private_plan_optimizing_read_model(plan_id: plan.id, user: user)
+    read = @gateway.private_plan_optimizing_snapshot(plan_id: plan.id, user: user)
     dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingAssembler.call(read)
 
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingReadModel, read
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingSnapshot, read
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizing, dto
     assert_equal plan.id, dto.id
     assert_equal 2024, dto.plan_year
     assert_equal farm.display_name, dto.farm_display_name
@@ -97,35 +97,35 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_not dto.completed?
   end
 
-  test "private_plan_optimizing_read_model raises domain RecordNotFound when plan belongs to another user" do
+  test "private_plan_optimizing_snapshot raises domain RecordNotFound when plan belongs to another user" do
     owner = create(:user)
     other = create(:user)
     farm = create(:farm, user: owner)
     plan = create(:cultivation_plan, farm: farm, user: owner, plan_type: "private")
 
     assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.private_plan_optimizing_read_model(plan_id: plan.id, user: other)
+      @gateway.private_plan_optimizing_snapshot(plan_id: plan.id, user: other)
     end
   end
 
-  test "private_plan_optimizing_read_model raises domain RecordNotFound when id missing" do
+  test "private_plan_optimizing_snapshot raises domain RecordNotFound when id missing" do
     user = create(:user)
 
     assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.private_plan_optimizing_read_model(plan_id: 9_999_999, user: user)
+      @gateway.private_plan_optimizing_snapshot(plan_id: 9_999_999, user: user)
     end
   end
 
-  test "public_plan_optimizing_read_model returns read model for public plan" do
+  test "public_plan_optimizing_snapshot returns read model for public plan" do
     farm = create(:farm, name: "公開テスト農場")
     plan = create(:cultivation_plan, :public_plan, farm: farm, status: "optimizing",
                   optimization_phase_message: "working")
 
-    read = @gateway.public_plan_optimizing_read_model(plan_id: plan.id)
+    read = @gateway.public_plan_optimizing_snapshot(plan_id: plan.id)
     dto = Domain::CultivationPlan::Assemblers::PublicPlanOptimizingAssembler.call(read)
 
-    assert_instance_of Domain::CultivationPlan::Dtos::PublicPlanOptimizingReadModel, read
-    assert_instance_of Domain::CultivationPlan::Dtos::PublicPlanOptimizingDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot, read
+    assert_instance_of Domain::CultivationPlan::Dtos::PublicPlanOptimizing, dto
     assert_equal plan.id, dto.id
     assert_equal farm.display_name, dto.farm_display_name
     assert_equal 0, dto.cultivation_plan_crops_count
@@ -133,19 +133,19 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_equal "optimizing", dto.status
   end
 
-  test "public_plan_optimizing_read_model raises when plan is private" do
+  test "public_plan_optimizing_snapshot raises when plan is private" do
     user = create(:user)
     farm = create(:farm, user: user)
     plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
 
     assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.public_plan_optimizing_read_model(plan_id: plan.id)
+      @gateway.public_plan_optimizing_snapshot(plan_id: plan.id)
     end
   end
 
-  test "public_plan_optimizing_read_model raises domain RecordNotFound when id missing" do
+  test "public_plan_optimizing_snapshot raises domain RecordNotFound when id missing" do
     assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.public_plan_optimizing_read_model(plan_id: 9_999_999)
+      @gateway.public_plan_optimizing_snapshot(plan_id: 9_999_999)
     end
   end
 
@@ -156,7 +156,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexAssembler.call(plan_rows: rows)
 
     assert_empty rows
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanIndexDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanIndex, dto
     assert_predicate dto, :empty?
     assert_empty dto.plan_rows
   end
@@ -205,7 +205,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
 
     dto = @gateway.find_private_cultivation_plan_detail(user: user, plan_id: plan.id)
 
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail, dto
     assert_equal plan.id, dto.id
     assert_equal plan.display_name, dto.display_name
     assert_equal farm.display_name, dto.farm_display_name
@@ -218,7 +218,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_equal [ crop.id ], dto.palette_used_crop_ids
     assert_equal 1, dto.palette_crops.size
     pc = dto.palette_crops.first
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShowPaletteCropDto, pc
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShowPaletteCrop, pc
     assert_equal crop.id, pc.id
     assert_equal "Carrot", pc.name
     assert_equal "V1", pc.variety
@@ -245,7 +245,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_equal 1, dto.cultivation_plan_fields_count
     assert_equal 1, dto.field_cultivations.size
     row = dto.field_cultivations.first
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto::FieldCultivationRead, row
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::FieldCultivationRead, row
     assert_equal fc.id, row.id
     assert_equal field.id, row.cultivation_plan_field_id
     assert_equal fc.field_display_name, row.field_display_name
@@ -257,7 +257,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
 
     assert_equal 1, dto.cultivation_plan_fields.size
     fr = dto.cultivation_plan_fields.first
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto::PlanFieldRead, fr
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::PlanFieldRead, fr
     assert_equal field.id, fr.id
     assert_equal "North", fr.name
     assert_in_delta 50.0, fr.area.to_f, 0.001
@@ -282,16 +282,16 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     end
   end
 
-  test "public_plan_results_read_model show_schedule_warning is false when plan has no field cultivations" do
+  test "public_plan_results_snapshot show_schedule_warning is false when plan has no field cultivations" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
 
-    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_snapshot(plan_id: plan.id)
     assert_not_nil rm
     assert_equal false, rm.show_schedule_warning
   end
 
-  test "public_plan_results_read_model show_schedule_warning is false when every field cultivation has schedule with items" do
+  test "public_plan_results_snapshot show_schedule_warning is false when every field cultivation has schedule with items" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
     crop = create(:crop, :reference)
@@ -301,12 +301,12 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     schedule = create(:task_schedule, cultivation_plan: plan, field_cultivation: fc)
     create(:task_schedule_item, task_schedule: schedule)
 
-    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_snapshot(plan_id: plan.id)
     assert_not_nil rm
     assert_equal false, rm.show_schedule_warning
   end
 
-  test "public_plan_results_read_model show_schedule_warning is true when some field cultivation lacks schedule items" do
+  test "public_plan_results_snapshot show_schedule_warning is true when some field cultivation lacks schedule items" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
     crop = create(:crop, :reference)
@@ -318,12 +318,12 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     schedule = create(:task_schedule, cultivation_plan: plan, field_cultivation: fc1)
     create(:task_schedule_item, task_schedule: schedule)
 
-    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_snapshot(plan_id: plan.id)
     assert_not_nil rm
     assert_equal true, rm.show_schedule_warning
   end
 
-  test "public_plan_results_read_model show_schedule_warning is true when schedule has no items" do
+  test "public_plan_results_snapshot show_schedule_warning is true when schedule has no items" do
     farm = create(:farm)
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm)
     crop = create(:crop, :reference)
@@ -332,7 +332,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     fc = create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field, cultivation_plan_crop: plan_crop)
     create(:task_schedule, cultivation_plan: plan, field_cultivation: fc)
 
-    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_snapshot(plan_id: plan.id)
     assert_not_nil rm
     assert_equal true, rm.show_schedule_warning
   end
@@ -369,11 +369,11 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_equal true, @gateway.public_plan_wizard_plan_exists?(plan_id: plan.id)
   end
 
-  test "public_plan_results_read_model returns nil when plan missing" do
-    assert_nil @gateway.public_plan_results_read_model(plan_id: 9_999_999_999)
+  test "public_plan_results_snapshot returns nil when plan missing" do
+    assert_nil @gateway.public_plan_results_snapshot(plan_id: 9_999_999_999)
   end
 
-  test "public_plan_results_read_model returns snapshot with gantt rows and palette" do
+  test "public_plan_results_snapshot returns snapshot with gantt rows and palette" do
     farm = create(:farm, region: "jp")
     plan = create(:cultivation_plan, :public_plan, :completed, farm: farm, total_cost: 100, total_revenue: 200, total_profit: 100)
     crop = create(:crop, :reference, region: "jp", name: "Alpha Crop")
@@ -381,7 +381,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     field = create(:cultivation_plan_field, cultivation_plan: plan, name: "Plot1", area: 10)
     create(:field_cultivation, cultivation_plan: plan, cultivation_plan_field: field, cultivation_plan_crop: plan_crop)
 
-    rm = @gateway.public_plan_results_read_model(plan_id: plan.id)
+    rm = @gateway.public_plan_results_snapshot(plan_id: plan.id)
     assert_not_nil rm
     assert_equal plan.id, rm.plan_id
     assert_equal true, rm.status_completed

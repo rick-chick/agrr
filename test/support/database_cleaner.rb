@@ -34,3 +34,7 @@ end
 class ActiveSupport::TestCase
   include DatabaseCleanerSetup
 end
+
+class ActionDispatch::IntegrationTest
+  include DatabaseCleanerSetup
+end

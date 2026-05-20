@@ -23,7 +23,7 @@ module Domain
         end
 
         def self.normalize_attrs_for_create(user, attrs)
-          h = attrs.to_h.symbolize_keys
+          h = Domain::Shared.symbolize_keys(attrs.to_h)
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(h[:is_reference]) || false
 
           if user.admin?
@@ -44,8 +44,8 @@ module Domain
 
         # current_attrs: { is_reference:, user_id:, ... } スナップショット
         def self.normalize_attrs_for_update(user, current_attrs, requested_attrs)
-          crop = current_attrs.to_h.symbolize_keys
-          attributes = requested_attrs.to_h.symbolize_keys
+          crop = Domain::Shared.symbolize_keys(current_attrs.to_h)
+          attributes = Domain::Shared.symbolize_keys(requested_attrs.to_h)
 
           if attributes.key?(:is_reference)
             requested_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference])

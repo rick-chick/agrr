@@ -1,0 +1,55 @@
+# frozen_string_literal: true
+
+module Adapters
+  module Pesticide
+    module Presenters
+      module Api
+        class PesticideUpdatePresenter < Domain::Pesticide::Ports::PesticideUpdateOutputPort
+          def initialize(view:)
+            @view = view
+          end
+
+          def on_success(pesticide_entity)
+            json = {
+              id: pesticide_entity.id,
+              user_id: pesticide_entity.user_id,
+              name: pesticide_entity.name,
+              active_ingredient: pesticide_entity.active_ingredient,
+              description: pesticide_entity.description,
+              crop_id: pesticide_entity.crop_id,
+              pest_id: pesticide_entity.pest_id,
+              region: pesticide_entity.region,
+              is_reference: pesticide_entity.is_reference,
+              created_at: pesticide_entity.created_at,
+              updated_at: pesticide_entity.updated_at
+            }
+            @view.render_response(json: json, status: :ok)
+          end
+
+          def on_failure(error_dto)
+            if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+              @view.render_response(
+                json: { error: I18n.t("pesticides.flash.no_permission") },
+                status: :forbidden
+              )
+              return
+            end
+
+            msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+            if msg == I18n.t("pesticides.flash.reference_flag_admin_only")
+              @view.render_response(
+                json: { error: msg },
+                status: :forbidden
+              )
+              return
+            end
+
+            status = (msg == "Pesticide not found") ? :not_found : :unprocessable_entity
+            json = (status == :not_found) ? { error: msg } : { errors: [ msg ] }
+            @view.render_response(json: json, status: status)
+          end
+        end
+      end
+    end
+  end
+end

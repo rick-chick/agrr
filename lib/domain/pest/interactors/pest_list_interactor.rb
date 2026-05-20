@@ -18,7 +18,7 @@ module Domain
           pests = @gateway.list_index_for_filter(filter)
           @output_port.on_success(pests)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

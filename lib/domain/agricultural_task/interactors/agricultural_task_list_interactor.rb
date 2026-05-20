@@ -12,7 +12,7 @@ module Domain
         end
 
         def call(input_dto = nil)
-          input_dto ||= Domain::AgriculturalTask::Dtos::AgriculturalTaskListInputDto.new(is_admin: false)
+          input_dto ||= Domain::AgriculturalTask::Dtos::AgriculturalTaskListInput.new(is_admin: false)
 
           user = @user_lookup.find(@user_id)
 
@@ -22,15 +22,14 @@ module Domain
             filter: input_dto.filter,
             query: input_dto.query
           )
-          reference_tasks = @gateway.reference_tasks_for_index(is_admin: input_dto.is_admin)
 
-          @output_port.on_success(filtered_tasks, reference_tasks_for_index: reference_tasks)
+          @output_port.on_success(filtered_tasks)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
 
         private

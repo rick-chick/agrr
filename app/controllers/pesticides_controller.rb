@@ -5,39 +5,33 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides
   def index
-    presenter = Presenters::Html::Pesticide::PesticideListHtmlPresenter.new(view: self)
+    presenter = Adapters::Pesticide::Presenters::Html::PesticideListHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pesticides/:id
   def show
-    presenter = Presenters::Html::Pesticide::PesticideDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::Pesticide::Presenters::Html::PesticideDetailHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   # GET /pesticides/new
   def new
-    @pesticide = CompositionRoot.pesticide_gateway.build_blank_pesticide_for_master_form
+    @pesticide = CompositionRoot.pesticide_gateway.build_new_pesticide_with_attributes_for_master_form(attributes: {})
     load_crops_and_pests
   end
 
   # GET /pesticides/:id/edit
   def edit
-    CompositionRoot.pesticide_gateway.ensure_nested_associations_for_pesticide_master_form!(@pesticide)
     load_crops_and_pests
   end
 
   # POST /pesticides
   def create
-    input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys)
-    presenter = Presenters::Html::Pesticide::PesticideCreateHtmlPresenter.new(view: self)
-
-    # 失敗時にフォーム再表示するために @pesticide をセット
-    @pesticide = CompositionRoot.pesticide_gateway.build_pesticide_for_create_failure_master_form(
-      pesticide_params.to_unsafe_h.deep_symbolize_keys
-    )
+    input_dto = Domain::Pesticide::Dtos::PesticideCreateInput.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys)
+    presenter = Adapters::Pesticide::Presenters::Html::PesticideCreateHtmlPresenter.new(view: self)
 
     Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -45,14 +39,8 @@ class PesticidesController < ApplicationController
 
   # PATCH/PUT /pesticides/:id
   def update
-    input_dto = Domain::Pesticide::Dtos::PesticideUpdateInputDto.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys, params[:id])
-    presenter = Presenters::Html::Pesticide::PesticideUpdateHtmlPresenter.new(view: self)
-
-    # 失敗時にフォーム再表示するために @pesticide を更新
-    CompositionRoot.pesticide_gateway.assign_pesticide_attributes_for_master_form!(
-      @pesticide,
-      pesticide_params.to_unsafe_h.deep_symbolize_keys
-    )
+    input_dto = Domain::Pesticide::Dtos::PesticideUpdateInput.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys, params[:id])
+    presenter = Adapters::Pesticide::Presenters::Html::PesticideUpdateHtmlPresenter.new(view: self)
 
     Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -62,14 +50,14 @@ class PesticidesController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::Pesticide::PesticideDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::Pesticide::Presenters::Html::PesticideDestroyHtmlPresenter.new(view: self)
         Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
       end
 
       format.json do
-        DeletionUndo::HtmlMasterScheduleInvoker.call(
+        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
           view: self,
           actor_id: current_user.id,
           resource_type: "Pesticide",
@@ -88,10 +76,31 @@ class PesticidesController < ApplicationController
     render(action, status: status, locals: locals)
   end
 
+  # Presenter から失敗時に呼び出される（Crop パターン準拠）
+  def after_pesticide_create_failure
+    @pesticide = CompositionRoot.pesticide_gateway.build_new_pesticide_with_attributes_for_master_form(
+      attributes: pesticide_params.to_unsafe_h.deep_symbolize_keys
+    )
+    load_crops_and_pests
+  end
+
+  # Presenter から失敗時に呼び出される（Crop パターン準拠）
+  def after_pesticide_update_failure
+    user = CompositionRoot.user_lookup.find(current_user.id)
+    access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
+    @pesticide = CompositionRoot.pesticide_gateway.merge_edit_pesticide_params_for_master_form!(
+      user: user,
+      pesticide_id: params[:id].to_i,
+      attributes: pesticide_params.to_unsafe_h.deep_symbolize_keys,
+      access_filter: access_filter
+    )
+    load_crops_and_pests
+  end
+
   private
 
   def load_pesticide_for_view
-    presenter = Presenters::Html::Pesticide::PesticideLoadForViewHtmlPresenter.new(view: self)
+    presenter = Adapters::Pesticide::Presenters::Html::PesticideLoadForViewHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end

@@ -13,7 +13,7 @@ module Domain
         end
 
         def call
-          Domain::CultivationPlan::Dtos::PrivatePlanShowDto.new(
+          Domain::CultivationPlan::Dtos::PrivatePlanShow.new(
             id: @detail.id,
             display_name: @detail.display_name,
             farm_display_name: @detail.farm_display_name,

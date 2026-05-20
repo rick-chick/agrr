@@ -12,7 +12,7 @@ module Domain
           @user_lookup = user_lookup
         end
 
-        # @return [Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto, nil]
+        # @return [Domain::Crop::Dtos::AuthorizedCropStageInCropContext, nil]
         def call(crop_id, crop_stage_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)

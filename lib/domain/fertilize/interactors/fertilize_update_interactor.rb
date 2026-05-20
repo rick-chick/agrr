@@ -21,7 +21,7 @@ module Domain
           attrs = {}
 
           # is_referenceをbooleanに変換してチェック
-          if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
+          if Domain::Shared.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             if is_reference != current.is_reference && !user.admin?
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("fertilizes.flash.reference_flag_admin_only"))
@@ -29,7 +29,7 @@ module Domain
             attrs[:is_reference] = is_reference
           end
 
-          attrs[:name] = input_dto.name if Domain::Shared::ValidationHelpers.present?(input_dto.name)
+          attrs[:name] = input_dto.name if Domain::Shared.present?(input_dto.name)
           attrs[:n] = input_dto.n if !input_dto.n.nil?
           attrs[:p] = input_dto.p if !input_dto.p.nil?
           attrs[:k] = input_dto.k if !input_dto.k.nil?
@@ -49,7 +49,7 @@ module Domain
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound, Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(
-            Domain::Fertilize::Dtos::FertilizeUpdateFailureDto.new(
+            Domain::Fertilize::Dtos::FertilizeUpdateFailure.new(
               message: e.message,
               master_form_snapshot: current ? snapshot_from_entity(current) : nil
             )

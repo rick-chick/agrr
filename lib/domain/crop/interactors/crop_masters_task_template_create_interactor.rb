@@ -11,9 +11,9 @@ module Domain
         end
 
         def call(input_dto)
-          unless Domain::Shared::ValidationHelpers.present?(input_dto.agricultural_task_id)
+          unless Domain::Shared.present?(input_dto.agricultural_task_id)
             return @output_port.on_failure(
-              Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
+              Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailure.new(
                 reason: :missing_agricultural_task_id
               )
             )
@@ -30,7 +30,7 @@ module Domain
           end
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(
-            Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailureDto.new(
+            Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailure.new(
               reason: :validation_failed,
               errors: e.flatten_error_messages
             )

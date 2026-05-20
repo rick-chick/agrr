@@ -26,7 +26,7 @@ module Domain
           end
 
           attrs = {}
-          attrs[:name] = update_input_dto.name if Domain::Shared::ValidationHelpers.present?(update_input_dto.name)
+          attrs[:name] = update_input_dto.name if Domain::Shared.present?(update_input_dto.name)
           attrs[:description] = update_input_dto.description if !update_input_dto.description.nil?
           attrs[:time_per_sqm] = update_input_dto.time_per_sqm if !update_input_dto.time_per_sqm.nil?
           attrs[:weather_dependency] = update_input_dto.weather_dependency if !update_input_dto.weather_dependency.nil?
@@ -59,10 +59,10 @@ module Domain
           @output_port.on_failure(e)
           false
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
           false
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
           false
         end
       end

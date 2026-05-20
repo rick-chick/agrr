@@ -73,7 +73,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement field_cultivations_present?"
         end
 
-        # @return [Array<Domain::CultivationPlan::Dtos::CultivationPlanCropWithAgrrDto>]
+        # @return [Array<Domain::CultivationPlan::Dtos::CultivationPlanCropWithAgrr>]
         def cultivation_plan_crops_with_crop(plan_id)
           raise NotImplementedError, "Subclasses must implement cultivation_plan_crops_with_crop"
         end
@@ -109,39 +109,39 @@ module Domain
         end
 
         # HTML `PlansController#optimize` 用の軽量スナップショット（認可つき）。
-        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizationRedirectDto]
+        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizationRedirect]
         def private_plan_optimization_redirect_snapshot(user:, plan_id:)
           raise NotImplementedError, "Subclasses must implement private_plan_optimization_redirect_snapshot"
         end
 
         # プライベート計画「最適化進捗」HTML 用（認可つき）。読み取りスナップショットのみ（PageDto は Assembler 側）。
-        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizingReadModel]
-        def private_plan_optimizing_read_model(plan_id:, user:)
-          raise NotImplementedError, "Subclasses must implement private_plan_optimizing_read_model"
+        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizingSnapshot]
+        def private_plan_optimizing_snapshot(plan_id:, user:)
+          raise NotImplementedError, "Subclasses must implement private_plan_optimizing_snapshot"
         end
 
         # 公開（無認可）計画「最適化進捗」HTML 用。`plan_type` が public の計画のみ。
-        # @return [Domain::CultivationPlan::Dtos::PublicPlanOptimizingReadModel]
-        def public_plan_optimizing_read_model(plan_id:)
-          raise NotImplementedError, "Subclasses must implement public_plan_optimizing_read_model"
+        # @return [Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot]
+        def public_plan_optimizing_snapshot(plan_id:)
+          raise NotImplementedError, "Subclasses must implement public_plan_optimizing_snapshot"
         end
 
         # プライベート計画一覧（HTML index）の行データのみ
-        # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRowDto>]
+        # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRow>]
         def private_plan_index_plan_rows(user:)
           raise NotImplementedError, "Subclasses must implement private_plan_index_plan_rows"
         end
 
         # プライベート計画の読み取り専用スナップショット（認可つき）。View やガント埋め込み形は知らない。
-        # @return [Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetailDto]
+        # @return [Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail]
         def find_private_cultivation_plan_detail(user:, plan_id:)
           raise NotImplementedError, "Subclasses must implement find_private_cultivation_plan_detail"
         end
 
         # 作業予定タイムライン（認可つき）。読み取り専用スナップショットのみ。
-        # @return [Domain::CultivationPlan::Dtos::TaskScheduleTimelineReadModel]
-        def task_schedule_timeline_read_model(user:, plan_id:)
-          raise NotImplementedError, "Subclasses must implement task_schedule_timeline_read_model"
+        # @return [Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot]
+        def task_schedule_timeline_snapshot(user:, plan_id:)
+          raise NotImplementedError, "Subclasses must implement task_schedule_timeline_snapshot"
         end
 
         # 作付計画表: 農場に紐づく圃場名の集約（計画横断）。ハッシュは id / name / area / farm_name を含む。
@@ -154,15 +154,20 @@ module Domain
           raise NotImplementedError, "Subclasses must implement planning_schedule_cultivations_for_field"
         end
 
+        # 作付計画表: 農場・期間で一括取得した作付行（ハッシュ配列）。N+1回避用。
+        def planning_schedule_cultivations_for_farm(user:, farm_id:, period_start:, period_end:)
+          raise NotImplementedError, "Subclasses must implement planning_schedule_cultivations_for_farm"
+        end
+
         # API 公開プラン保存: 既存公開計画 id から PlanSaveSession 用の session_data 相当を組み立てる（なければ nil）
         def session_data_for_public_plan_save_from_plan_id(plan_id:)
           raise NotImplementedError, "Subclasses must implement session_data_for_public_plan_save_from_plan_id"
         end
 
         # 公開プラン結果フロー用の読み取りスナップショット（存在しなければ nil）
-        # @return [Domain::CultivationPlan::Dtos::PublicPlanResultsReadModel, nil]
-        def public_plan_results_read_model(plan_id:)
-          raise NotImplementedError, "Subclasses must implement public_plan_results_read_model"
+        # @return [Domain::CultivationPlan::Dtos::PublicPlanResultsSnapshot, nil]
+        def public_plan_results_snapshot(plan_id:)
+          raise NotImplementedError, "Subclasses must implement public_plan_results_snapshot"
         end
 
         # ウィザード文脈で計画 id が参照可能か（`CultivationPlan` 全体からの存在）

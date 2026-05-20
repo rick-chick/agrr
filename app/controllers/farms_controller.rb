@@ -5,10 +5,10 @@ class FarmsController < ApplicationController
 
   # GET /farms
   def index
-    input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: admin_user?)
+    input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: admin_user?)
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::Farm::FarmListHtmlPresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::Html::FarmListHtmlPresenter.new(view: self)
 
         Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
           output_port: presenter,
@@ -18,7 +18,7 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Presenters::Html::Farm::FarmListJsonPresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::Html::FarmListJsonPresenter.new(view: self)
         Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -32,7 +32,7 @@ class FarmsController < ApplicationController
   def show
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::Farm::FarmDetailHtmlPresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::Html::FarmDetailHtmlPresenter.new(view: self)
 
         interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -42,7 +42,7 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Presenters::Api::Farm::FarmDetailPresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::Api::FarmDetailPresenter.new(view: self)
         Domain::Farm::Interactors::FarmDetailInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -68,8 +68,8 @@ class FarmsController < ApplicationController
   def create
     respond_to do |format|
       format.html do
-        @input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys })
-        presenter = Presenters::Html::Farm::FarmCreateHtmlPresenter.new(view: self)
+        @input_dto = Domain::Farm::Dtos::FarmCreateInput.from_hash({ farm: farm_params.to_h.symbolize_keys })
+        presenter = Adapters::Farm::Presenters::Html::FarmCreateHtmlPresenter.new(view: self)
 
         interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -79,8 +79,8 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Presenters::Html::Farm::FarmDirectJsonCreatePresenter.new(view: self)
-        input_dto = Domain::Farm::Dtos::FarmCreateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys })
+        presenter = Adapters::Farm::Presenters::Html::FarmDirectJsonCreatePresenter.new(view: self)
+        input_dto = Domain::Farm::Dtos::FarmCreateInput.from_hash({ farm: farm_params.to_h.symbolize_keys })
         Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -92,8 +92,8 @@ class FarmsController < ApplicationController
   def update
     respond_to do |format|
       format.html do
-        @input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
-        presenter = Presenters::Html::Farm::FarmUpdateHtmlPresenter.new(view: self)
+        @input_dto = Domain::Farm::Dtos::FarmUpdateInput.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
+        presenter = Adapters::Farm::Presenters::Html::FarmUpdateHtmlPresenter.new(view: self)
 
         interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -103,8 +103,8 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
-        presenter = Presenters::Api::Farm::FarmUpdatePresenter.new(view: self)
+        input_dto = Domain::Farm::Dtos::FarmUpdateInput.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
+        presenter = Adapters::Farm::Presenters::Api::FarmUpdatePresenter.new(view: self)
         Domain::Farm::Interactors::FarmUpdateInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -120,7 +120,7 @@ class FarmsController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Presenters::Html::Farm::FarmDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::Html::FarmDestroyHtmlPresenter.new(view: self)
 
         interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -130,7 +130,7 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Presenters::Html::Farm::FarmDestroyJsonPresenter.new(
+        presenter = Adapters::Farm::Presenters::Html::FarmDestroyJsonPresenter.new(
           view: self,
           fallback_location: farms_path
         )
@@ -174,7 +174,7 @@ class FarmsController < ApplicationController
   private
 
   def load_farm_for_edit
-    presenter = Presenters::Html::Farm::FarmLoadForEditHtmlPresenter.new(view: self)
+    presenter = Adapters::Farm::Presenters::Html::FarmLoadForEditHtmlPresenter.new(view: self)
     Domain::Farm::Interactors::FarmLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end

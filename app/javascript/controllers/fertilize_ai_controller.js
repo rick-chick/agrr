@@ -102,7 +102,7 @@ export default class extends Controller {
             // 編集時：編集画面に戻る
             window.location.href = `/fertilizes/${data.fertilize_id}/edit`
           }
-        }, 1500)
+        }, 800)
       } else {
         this.hideAdPopup()
         const errorMessage = data.error || (this.element.dataset.fetchFailed || '肥料情報の取得に失敗しました')

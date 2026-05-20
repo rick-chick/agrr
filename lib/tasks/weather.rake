@@ -143,7 +143,7 @@ namespace :weather do
       WeatherLocation.joins(:weather_data).distinct
     end
 
-    gcs_gateway = Adapters::WeatherData::Gateways::GcsWeatherDataGateway.new unless dry_run
+    gcs_gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new unless dry_run
 
     total_records = 0
     total_year_files = 0

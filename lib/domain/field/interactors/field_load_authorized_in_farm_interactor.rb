@@ -14,7 +14,7 @@ module Domain
 
         # @param farm_id [Integer, String]
         # @param field_id [Integer, String]
-        # @return [Domain::Field::Dtos::AuthorizedFieldLoadedInFarmDto, nil]
+        # @return [Domain::Field::Dtos::AuthorizedFieldLoadedInFarm, nil]
         def call(farm_id, field_id)
           user = @user_lookup.find(@user_id)
           farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
@@ -24,7 +24,7 @@ module Domain
             field_id.to_i,
             farm_access_filter: farm_access_filter
           )
-        rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
           @failure_presenter.on_permission_denied
           nil
         rescue Domain::Shared::Exceptions::RecordNotFound

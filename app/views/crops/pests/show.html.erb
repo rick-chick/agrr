@@ -5,7 +5,7 @@
     <h1 class="crop-detail-title">
       <%= link_to @crop.name, crop_path(@crop), class: "crop-link" %> - <%= @pest.name %>
     </h1>
-    <% if admin_user? && @pest.is_reference %>
+    <% if admin_user? && @pest.is_reference? %>
       <div class="crop-detail-type reference"><%= t('.reference_pest') %></div>
     <% end %>
   </div>
@@ -51,7 +51,7 @@
       </div>
     <% end %>
     
-    <% if @pest.pest_temperature_profile %>
+    <% if @pest.pest_temperature_profile.present? %>
       <div class="info-item">
         <span class="info-label">🌡️ <%= t('.temperature_profile') %>:</span>
         <div class="info-value">
@@ -61,7 +61,7 @@
       </div>
     <% end %>
     
-    <% if @pest.pest_thermal_requirement %>
+    <% if @pest.pest_thermal_requirement.present? %>
       <div class="info-item">
         <span class="info-label">🌡️ <%= t('.thermal_requirement') %>:</span>
         <div class="info-value">
@@ -90,7 +90,7 @@
     <div class="stages-section">
       <h2 class="stages-title"><%= t('.control_methods_title') %></h2>
       <div class="control-methods-list">
-        <% @pest.pest_control_methods.order(:id).each do |method| %>
+        <% @pest.pest_control_methods.each do |method| %>
           <div class="control-method-card">
             <div class="method-header">
               <span class="method-type-badge method-type-<%= method.method_type %>">
@@ -119,4 +119,3 @@
     <%= link_to t('.edit'), edit_crop_pest_path(@crop, @pest), class: "btn btn-secondary" %>
   </div>
 </div>
-

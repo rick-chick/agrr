@@ -9,8 +9,11 @@ module Domain
           @gateway = gateway
         end
 
-        def call(io:, filename:, content_type:)
-          unless io.present?
+        def call(input:)
+          io = input.upload
+          filename = input.filename
+          content_type = input.content_type
+          if io.nil? || (io.respond_to?(:empty?) && io.empty?)
             @output_port.on_missing_file
             return
           end

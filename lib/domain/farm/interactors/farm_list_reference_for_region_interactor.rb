@@ -16,7 +16,7 @@ module Domain
           @output_port.on_success(farms)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("[FarmListReferenceForRegionInteractor] #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

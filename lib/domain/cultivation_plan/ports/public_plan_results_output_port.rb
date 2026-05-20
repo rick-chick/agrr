@@ -12,7 +12,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement redirect_to_optimizing"
         end
 
-        # @param read_model [Domain::CultivationPlan::Dtos::PublicPlanResultsReadModel]
+        # @param read_model [Domain::CultivationPlan::Dtos::PublicPlanResultsSnapshot]
         def on_success(read_model)
           raise NotImplementedError, "Subclasses must implement on_success"
         end

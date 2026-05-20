@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PlanningDateCalculatorTest < ActiveSupport::TestCase
+class PlanningDateCalculatorTest < DomainLibTestCase
   test "normalize_decimal returns string F format for numeric" do
     assert_equal "1.5", Domain::CultivationPlan::Calculators::PlanningDateCalculator.normalize_decimal(BigDecimal("1.5"))
   end
@@ -33,7 +33,7 @@ class PlanningDateCalculatorTest < ActiveSupport::TestCase
       logger: logger,
       as_of: as_of
     )
-    assert_equal as_of.beginning_of_year, dates[:start_date]
+    assert_equal Date.new(as_of.year, 1, 1), dates[:start_date]
     assert_equal Date.new(2026, 12, 31), dates[:end_date]
     logger.verify
   end

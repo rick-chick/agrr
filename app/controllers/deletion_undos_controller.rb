@@ -7,17 +7,17 @@ class DeletionUndosController < ApplicationController
   skip_before_action :verify_authenticity_token, if: -> { request.format.json? }
 
   def create
-    input_dto = Domain::DeletionUndo::Dtos::DeletionUndoRestoreInputDto.new(
+    input_dto = Domain::DeletionUndo::Dtos::DeletionUndoRestoreInput.new(
       undo_token: params.require(:undo_token)
     )
 
     respond_to do |format|
       format.json do
-        execute_restore_use_case(input_dto, Presenters::Api::DeletionUndo::DeletionUndoRestorePresenter)
+        execute_restore_use_case(input_dto, Adapters::DeletionUndo::Presenters::Api::DeletionUndoRestorePresenter)
       end
 
       format.html do
-        execute_restore_use_case(input_dto, Presenters::Html::DeletionUndo::DeletionUndoRestoreHtmlPresenter)
+        execute_restore_use_case(input_dto, Adapters::DeletionUndo::Presenters::Html::DeletionUndoRestoreHtmlPresenter)
       end
     end
   end

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module CultivationPlan
     module Interactors
-      class AddCropInteractorTest < ActiveSupport::TestCase
+      class AddCropInteractorTest < DomainLibTestCase
         setup do
           @output = mock
           @coordinator = mock

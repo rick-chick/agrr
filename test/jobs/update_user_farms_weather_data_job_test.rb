@@ -5,9 +5,12 @@ require "test_helper"
 class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
   setup do
     @user = create(:user)
+    # 各テストでユニークな緯度経度を使用（DBクリーニング不備対策）
+    unique_lat = 35.6762 + rand(0.001..0.999)
+    unique_lon = 139.6503 + rand(0.001..0.999)
     @weather_location = WeatherLocation.create!(
-      latitude: 35.6762,
-      longitude: 139.6503,
+      latitude: unique_lat,
+      longitude: unique_lon,
       elevation: 10.0,
       timezone: "Asia/Tokyo"
     )
@@ -78,9 +81,11 @@ class UpdateUserFarmsWeatherDataJobTest < ActiveJob::TestCase
 
   test "複数の通常農場に対して順次ジョブをエンキューする" do
     # setupで既に@weather_locationが作成されているため、異なる緯度経度を使用
+    unique_lat2 = 35.0 + rand(0..10)
+    unique_lon2 = 139.0 + rand(0..10)
     weather_location2 = WeatherLocation.create!(
-      latitude: 36.2048,
-      longitude: 138.2529,
+      latitude: unique_lat2,
+      longitude: unique_lon2,
       elevation: 20.0,
       timezone: "Asia/Tokyo"
     )

@@ -379,27 +379,27 @@ function calculateDropInfo(svgCoords) {
   const ganttState = window.ganttState;
   const config = ganttState.config;
   const chartWidth = ganttState.chartWidth;
-  
+
   // 表示範囲が設定されている場合は表示範囲を使用、なければ計画期間を使用（フォールバック）
   // 注: 表示範囲が未設定の場合は計画期間をフォールバックとして使用するが、
   //     通常は表示範囲が設定されているため、表示範囲を基準に計算する
   const displayStartDate = ganttState.displayStartDate || ganttState.planStartDate;
   const displayEndDate = ganttState.displayEndDate || ganttState.planEndDate;
   const fieldGroups = ganttState.fieldGroups;
-  
+
   // 表示範囲の日数を計算（表示範囲が設定されている場合は表示範囲の日数、なければ計画期間の日数）
   const totalDays = daysBetween(displayStartDate, displayEndDate);
 
   // Y座標から圃場を判定
   const ROW_HEIGHT = 70;
   const HEADER_HEIGHT = config.margin.top;
-  
+
   if (svgCoords.y < HEADER_HEIGHT) {
     return null;
   }
 
   const fieldIndex = Math.floor((svgCoords.y - HEADER_HEIGHT) / ROW_HEIGHT);
-  
+
   if (fieldIndex < 0 || fieldIndex >= fieldGroups.length) {
     return null;
   }
@@ -408,7 +408,7 @@ function calculateDropInfo(svgCoords) {
 
   // X座標から日付を計算
   const MARGIN_LEFT = config.margin.left;
-  
+
   if (svgCoords.x < MARGIN_LEFT) {
     return null;
   }

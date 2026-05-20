@@ -10,7 +10,7 @@ module Domain
         end
 
         def call(input_dto)
-          unless input_dto.resource_type.present? && !input_dto.resource_id.nil?
+          unless input_dto.resource_type && !input_dto.resource_id.nil?
             raise ArgumentError, "resource_type and resource_id are required"
           end
 
@@ -25,30 +25,30 @@ module Domain
           )
 
           @output_port.on_success(event)
-        rescue DeletionUndo::Error => e
+        rescue Domain::DeletionUndo::Exceptions::DeletionUndoError => e
           @output_port.on_failure(
-            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailure.new(
               reason: :undo_system_error,
               detail_message: e.message
             )
           )
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(
-            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailure.new(
               reason: :validation_error,
               detail_message: e.message
             )
           )
         rescue Domain::Shared::Exceptions::AssociationInUse => e
           @output_port.on_failure(
-            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailure.new(
               reason: :association_in_use,
               detail_message: e.message
             )
           )
-        rescue Domain::Shared::Policies::PolicyPermissionDenied, ::PolicyPermissionDenied
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(
-            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailureDto.new(
+            Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailure.new(
               reason: :forbidden,
               detail_message: nil
             )

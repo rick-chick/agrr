@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PrivatePlanOptimizingInteractorTest < ActiveSupport::TestCase
+class PrivatePlanOptimizingInteractorTest < DomainLibTestCase
   test "call passes dto from gateway to on_success" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
 
-    read_model = Domain::CultivationPlan::Dtos::PrivatePlanOptimizingReadModel.new(
+    read_model = Domain::CultivationPlan::Dtos::PrivatePlanOptimizingSnapshot.new(
       id: 10,
       plan_year: 2025,
       farm_display_name: "F1",
@@ -19,7 +19,7 @@ class PrivatePlanOptimizingInteractorTest < ActiveSupport::TestCase
     dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingAssembler.call(read_model)
 
     gateway = mock
-    gateway.expects(:private_plan_optimizing_read_model).with(plan_id: 10, user: user).returns(read_model)
+    gateway.expects(:private_plan_optimizing_snapshot).with(plan_id: 10, user: user).returns(read_model)
 
     translator = mock
     logger = mock
@@ -51,7 +51,7 @@ class PrivatePlanOptimizingInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(3).returns(user)
 
     gateway = mock
-    gateway.expects(:private_plan_optimizing_read_model).raises(PolicyPermissionDenied)
+    gateway.expects(:private_plan_optimizing_snapshot).raises(Domain::Shared::Policies::PolicyPermissionDenied)
 
     translator = mock
     translator.expects(:t).with("plans.errors.not_found").returns("見つかりません")
@@ -81,7 +81,7 @@ class PrivatePlanOptimizingInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(3).returns(user)
 
     gateway = mock
-    gateway.expects(:private_plan_optimizing_read_model).raises(Domain::Shared::Exceptions::RecordNotFound.new("x"))
+    gateway.expects(:private_plan_optimizing_snapshot).raises(Domain::Shared::Exceptions::RecordNotFound.new("x"))
 
     translator = mock
     translator.expects(:t).with("plans.errors.not_found").returns("見つかりません")
@@ -111,7 +111,7 @@ class PrivatePlanOptimizingInteractorTest < ActiveSupport::TestCase
     user_lookup.expects(:find).with(3).returns(user)
 
     gateway = mock
-    gateway.expects(:private_plan_optimizing_read_model).raises(StandardError.new("internal"))
+    gateway.expects(:private_plan_optimizing_snapshot).raises(StandardError.new("internal"))
 
     translator = mock
     logger = mock

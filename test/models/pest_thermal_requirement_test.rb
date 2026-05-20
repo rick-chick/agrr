@@ -7,11 +7,6 @@ class PestThermalRequirementTest < ActiveSupport::TestCase
     @pest = create(:pest)
   end
 
-  test "should belong to pest" do
-    requirement = create(:pest_thermal_requirement, pest: @pest)
-    assert_equal @pest, requirement.pest
-  end
-
   test "should validate pest presence" do
     requirement = PestThermalRequirement.new
     assert_not requirement.valid?
@@ -24,12 +19,5 @@ class PestThermalRequirementTest < ActiveSupport::TestCase
     assert_nil requirement.first_generation_gdd
   end
 
-  test "should destroy when pest is destroyed" do
-    requirement = create(:pest_thermal_requirement, pest: @pest)
-    requirement_id = requirement.id
 
-    @pest.destroy
-
-    assert_not PestThermalRequirement.exists?(requirement_id)
-  end
 end

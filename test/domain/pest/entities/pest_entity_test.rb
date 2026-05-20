@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Pest
     module Entities
-      class PestEntityTest < ActiveSupport::TestCase
+      class PestEntityTest < DomainLibTestCase
         test "should initialize with valid attributes" do
           entity = PestEntity.new(
             id: 1,
@@ -18,8 +18,8 @@ module Domain
             occurrence_season: "Spring",
             region: "jp",
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert_equal 1, entity.id
           assert_equal 123, entity.user_id
@@ -45,8 +45,8 @@ module Domain
             occurrence_season: "Spring",
             region: nil,
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert_nil entity.region
         end
@@ -58,8 +58,8 @@ module Domain
               name: "",
               region: "jp",
               is_reference: true,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
           end
         end
@@ -71,8 +71,8 @@ module Domain
               name: "Test Pest",
               region: "invalid",
               is_reference: true,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
           end
         end
@@ -84,8 +84,8 @@ module Domain
               name: "Test Pest",
               region: valid_region,
               is_reference: true,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
             assert_equal valid_region, entity.region
           end
@@ -97,8 +97,8 @@ module Domain
             name: "Test Pest",
             region: "jp",
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert entity.reference?
         end
@@ -109,15 +109,15 @@ module Domain
             name: "Test Pest",
             region: "jp",
             is_reference: false,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           refute entity.reference?
         end
 
         test "to_hash returns expected hash" do
-          created_at = Time.current
-          updated_at = Time.current
+          created_at = Time.utc(2026, 1, 1)
+          updated_at = Time.utc(2026, 1, 1)
           entity = PestEntity.new(
             id: 1,
             user_id: 123,

@@ -20,7 +20,7 @@ module Domain
           @output_port.on_success(rows)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[PrivateOwnedPlansListInteractor] #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("plans.errors.session_invalid")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.session_invalid")))
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise
         rescue Domain::Shared::Exceptions::PersistenceFailed => e
@@ -28,7 +28,7 @@ module Domain
           raise
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.warn("[PrivateOwnedPlansListInteractor] #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

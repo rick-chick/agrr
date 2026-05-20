@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropLoadUserNonReferenceForMastersInteractorTest < ActiveSupport::TestCase
+      class CropLoadUserNonReferenceForMastersInteractorTest < DomainLibTestCase
         setup do
           @crop = Entities::CropEntity.new(
             id: 1,

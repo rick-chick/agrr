@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Auth
     module Interactors
-      class AuthUserLogoutInteractorTest < ActiveSupport::TestCase
+      class AuthUserLogoutInteractorTest < DomainLibTestCase
         setup do
           @gateway = mock
           @port = mock

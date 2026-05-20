@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PrivatePlanIndexInteractorTest < ActiveSupport::TestCase
+class PrivatePlanIndexInteractorTest < DomainLibTestCase
   test "call passes dto from gateway to on_success" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(9).returns(user)
 
-    row = Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRowDto.new(
+    row = Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRow.new(
       id: 1,
       farm_display_name: "F",
       total_area: 100,
@@ -16,7 +16,7 @@ class PrivatePlanIndexInteractorTest < ActiveSupport::TestCase
       fields_count: 1,
       status: "pending",
       display_name: "Plan",
-      created_at: Time.zone.parse("2026-01-01 12:00:00")
+      created_at: Time.utc(2026, 1, 1, 12, 0, 0)
     )
     dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexAssembler.call(plan_rows: [ row ])
 

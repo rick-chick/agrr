@@ -46,7 +46,7 @@ module Domain
               weather_location: @snapshot.weather_location_input,
               farm: @snapshot.farm_weather_input
             )
-            plan_weather = Domain::WeatherData::Dtos::CultivationPlanWeatherDto.new(
+            plan_weather = Domain::WeatherData::Dtos::CultivationPlanWeather.new(
               id: @snapshot.plan_id,
               prediction_target_end_date: @snapshot.prediction_target_end_date,
               calculated_planning_end_date: @snapshot.calculated_planning_end_date,
@@ -132,7 +132,7 @@ module Domain
             [ start_date, end_date ]
           elsif @snapshot.plan_type_private
             [
-              today.beginning_of_year,
+              Date.new(today.year, 1, 1),
               Date.new(today.year + 1, 12, 31)
             ]
           else
@@ -224,7 +224,7 @@ module Domain
           field_schedules.each do |schedule|
             field_id = schedule["field_id"]
 
-            if schedule["allocations"].blank?
+            if Domain::Shared::ValidationHelpers.blank?(schedule["allocations"])
               @logger.warn "⚠️  [AGRR] No allocations for field #{field_id}"
               next
             end
@@ -247,24 +247,28 @@ module Domain
           field_number = field_id.split("_").last
           field_name = field_number
 
+          optimization_persist_dto = Domain::CultivationPlan::Dtos::FieldCultivationOptimizationPersist.new(
+            allocation_id: allocation["allocation_id"],
+            expected_revenue: allocation["expected_revenue"],
+            profit: allocation["profit"],
+            raw_allocation_document: allocation
+          )
+
+          create_attrs_dto = Domain::CultivationPlan::Dtos::FieldCultivationCreateAttrs.new(
+            cultivation_plan_field_id: upsert_cultivation_plan_field(field_name, allocation["area_used"]),
+            cultivation_plan_crop_id: find_cultivation_plan_crop_by_crop_id(crop_id, crop_name),
+            area: allocation["area_used"],
+            start_date: Date.parse(allocation["start_date"]),
+            completion_date: Date.parse(allocation["completion_date"]),
+            cultivation_days: allocation["growth_days"],
+            estimated_cost: allocation["total_cost"],
+            status: :completed,
+            optimization_result: optimization_persist_dto
+          )
+
           field_cultivation = @cultivation_plan_gateway.create_field_cultivation(
             plan_id: @plan_id,
-            attrs: {
-              cultivation_plan_field_id: upsert_cultivation_plan_field(field_name, allocation["area_used"]),
-              cultivation_plan_crop_id: find_cultivation_plan_crop_by_crop_id(crop_id, crop_name),
-              area: allocation["area_used"],
-              start_date: Date.parse(allocation["start_date"]),
-              completion_date: Date.parse(allocation["completion_date"]),
-              cultivation_days: allocation["growth_days"],
-              estimated_cost: allocation["total_cost"],
-              status: :completed,
-              optimization_result: {
-                allocation_id: allocation["allocation_id"],
-                expected_revenue: allocation["expected_revenue"],
-                profit: allocation["profit"],
-                raw: allocation
-              }
-            }
+            attrs: create_attrs_dto
           )
 
           @logger.info "🌱 [AGRR] Created FieldCultivation ##{field_cultivation.id}: #{crop_name} (#{crop_variety}) " \
@@ -294,17 +298,19 @@ module Domain
         end
 
         def update_cultivation_plan_with_results(allocation_result)
+          apply_attrs_dto = Domain::CultivationPlan::Dtos::OptimizationApplyAttrs.new(
+            total_profit: allocation_result[:total_profit],
+            total_revenue: allocation_result[:total_revenue],
+            total_cost: allocation_result[:total_cost],
+            optimization_time: allocation_result[:optimization_time],
+            algorithm_used: allocation_result[:algorithm_used],
+            is_optimal: allocation_result[:is_optimal],
+            optimization_summary: allocation_result[:summary].to_json
+          )
+
           @cultivation_plan_gateway.apply_optimization_result(
             plan_id: @plan_id,
-            attrs: {
-              total_profit: allocation_result[:total_profit],
-              total_revenue: allocation_result[:total_revenue],
-              total_cost: allocation_result[:total_cost],
-              optimization_time: allocation_result[:optimization_time],
-              algorithm_used: allocation_result[:algorithm_used],
-              is_optimal: allocation_result[:is_optimal],
-              optimization_summary: allocation_result[:summary].to_json
-            }
+            attrs: apply_attrs_dto
           )
 
           @logger.info "📊 [AGRR] CultivationPlan ##{@plan_id} updated with optimization results: " \

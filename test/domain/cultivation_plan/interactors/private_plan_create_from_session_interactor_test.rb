@@ -1,27 +1,35 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
+require "adapters/translators/rails_translator"
+require "logger"
 
 module Domain
   module CultivationPlan
     module Interactors
-      class PrivatePlanCreateFromSessionInteractorTest < ActiveSupport::TestCase
+      class PrivatePlanCreateFromSessionInteractorTest < DomainLibTestCase
+        # @clock.today = Date.new(2026, 6, 15) => beginning_of_year = Date.new(2026, 1, 1)
+        CLOCK_TODAY = Date.new(2026, 6, 15)
+        PLANNING_START = Date.new(2026, 1, 1)
+        PLANNING_END = Date.new(2027, 12, 31)
+
         setup do
-          @user = create(:user)
+          @user_id = 1
+          @user = stub(id: @user_id, admin?: false)
           @farm_entity = Domain::Farm::Entities::FarmEntity.new(
             id: 1,
             name: "F",
             latitude: 35.0,
             longitude: 139.0,
             region: "jp",
-            user_id: @user.id,
-            created_at: Time.current,
-            updated_at: Time.current,
+            user_id: @user_id,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           )
           @crop_entity = Domain::Crop::Entities::CropEntity.new(
             id: 10,
-            user_id: @user.id,
+            user_id: @user_id,
             name: "C",
             variety: "V",
             is_reference: false,
@@ -30,12 +38,12 @@ module Domain
             region: "jp",
             groups: [],
             crop_stages: [],
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           @gateway = mock("cultivation_plan_gateway")
           @output_port = mock("output_port")
-          @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
+           @logger = ::Logger.new(File::NULL)
           @translator = Adapters::Translators::RailsTranslator.new
           @clock = Object.new
           def @clock.today
@@ -60,7 +68,7 @@ module Domain
         end
 
         test "on_missing_session when farm_id blank" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
             farm_id: nil,
             crop_ids: [ 10 ],
             user: @user
@@ -70,7 +78,7 @@ module Domain
         end
 
         test "on_restart when farm missing" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user
@@ -81,7 +89,7 @@ module Domain
         end
 
         test "on_no_crops_selected when crop_ids empty" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
             farm_id: 1,
             crop_ids: [],
             user: @user
@@ -94,7 +102,7 @@ module Domain
         end
 
         test "on_no_crops_selected when crops not resolved" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
             farm_id: 1,
             crop_ids: [ 99 ],
             user: @user
@@ -108,7 +116,7 @@ module Domain
         end
 
         test "on_existing_plan when plan exists" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user
@@ -116,20 +124,20 @@ module Domain
           existing = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: 88,
             farm_id: 1,
-            user_id: @user.id,
+            user_id: @user_id,
             total_area: 1.0,
             plan_type: "private",
             plan_year: 2024,
             plan_name: "x",
-            planning_start_date: Date.current,
-            planning_end_date: Date.current,
+            planning_start_date: Date.new(2026, 1, 1),
+            planning_end_date: Date.new(2026, 1, 1),
             status: "draft",
             session_id: nil,
             display_name: "x",
             cultivation_plan_crops_count: 0,
             cultivation_plan_fields_count: 0,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           @gateway.expects(:find_farm).returns(@farm_entity)
           @gateway.expects(:find_crops).returns([ @crop_entity ])
@@ -139,7 +147,7 @@ module Domain
         end
 
         test "on_success enqueues post-create job chain then notifies presenter" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user,
@@ -149,20 +157,20 @@ module Domain
           created = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: 42,
             farm_id: 1,
-            user_id: @user.id,
+            user_id: @user_id,
             total_area: 50.0,
             plan_type: "private",
             plan_year: nil,
             plan_name: "P",
-            planning_start_date: @clock.today.beginning_of_year,
-            planning_end_date: Date.new(@clock.today.year + 1, 12, 31),
+            planning_start_date: PLANNING_START,
+            planning_end_date: PLANNING_END,
             status: "draft",
             session_id: "sess-html",
             display_name: "P",
             cultivation_plan_crops_count: 1,
             cultivation_plan_fields_count: 1,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
           @gateway.expects(:find_farm).returns(@farm_entity)
@@ -177,8 +185,8 @@ module Domain
             plan_type: "private",
             plan_year: nil,
             plan_name: "P",
-            planning_start_date: @clock.today.beginning_of_year,
-            planning_end_date: Date.new(@clock.today.year + 1, 12, 31)
+            planning_start_date: PLANNING_START,
+            planning_end_date: PLANNING_END
           ).returns(result)
 
           @post_create_job_chain.expects(:enqueue_for_plan).with(plan_id: 42)
@@ -187,7 +195,7 @@ module Domain
         end
 
         test "total_area from gateway when omitted in dto" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user,
@@ -197,20 +205,20 @@ module Domain
           created = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: 42,
             farm_id: 1,
-            user_id: @user.id,
+            user_id: @user_id,
             total_area: 120.0,
             plan_type: "private",
             plan_year: nil,
             plan_name: "F",
-            planning_start_date: @clock.today.beginning_of_year,
-            planning_end_date: Date.new(@clock.today.year + 1, 12, 31),
+            planning_start_date: PLANNING_START,
+            planning_end_date: PLANNING_END,
             status: "draft",
             session_id: "sess-html",
             display_name: "F",
             cultivation_plan_crops_count: 1,
             cultivation_plan_fields_count: 1,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
           @gateway.expects(:find_farm).returns(@farm_entity)
@@ -226,8 +234,8 @@ module Domain
             plan_type: "private",
             plan_year: nil,
             plan_name: "F",
-            planning_start_date: @clock.today.beginning_of_year,
-            planning_end_date: Date.new(@clock.today.year + 1, 12, 31)
+            planning_start_date: PLANNING_START,
+            planning_end_date: PLANNING_END
           ).returns(result)
 
           @post_create_job_chain.expects(:enqueue_for_plan).with(plan_id: 42)
@@ -236,7 +244,7 @@ module Domain
         end
 
         test "on_initialize_failed when initialize returns errors" do
-          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+          dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
             farm_id: 1,
             crop_ids: [ 10 ],
             user: @user

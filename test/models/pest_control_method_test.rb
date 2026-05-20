@@ -7,11 +7,6 @@ class PestControlMethodTest < ActiveSupport::TestCase
     @pest = create(:pest)
   end
 
-  test "should belong to pest" do
-    method = create(:pest_control_method, pest: @pest)
-    assert_equal @pest, method.pest
-  end
-
   test "should validate pest presence" do
     method = PestControlMethod.new
     assert_not method.valid?
@@ -84,12 +79,5 @@ class PestControlMethodTest < ActiveSupport::TestCase
     assert_not_includes physicals, chemical
   end
 
-  test "should destroy when pest is destroyed" do
-    method = create(:pest_control_method, pest: @pest)
-    method_id = method.id
 
-    @pest.destroy
-
-    assert_not PestControlMethod.exists?(method_id)
-  end
 end

@@ -35,9 +35,11 @@ class CultivationPlan < ApplicationRecord
   validates :planning_end_date, presence: true, if: :plan_type_private?
 
   # 農場とユーザで一意制約（private計画のみ、plan_yearを除外）
+  # message: I18n.t はクラスロード時に評価されるためロケール依存の失敗を引き起こす。
+  # Rails 7+ の翻訳ベースバリデーションを使用（検証時に評価される）
   validates :farm_id, uniqueness: {
     scope: [ :user_id ],
-    message: I18n.t("activerecord.errors.models.cultivation_plan.attributes.farm_id.taken")
+    message: :taken
   }, if: :plan_type_private?
 
   # == Enums ===============================================================

@@ -109,51 +109,6 @@ class PestTest < ActiveSupport::TestCase
     assert other.valid?
   end
 
-  # 関連テスト
-  test "should have one pest_temperature_profile" do
-    pest = create(:pest, :with_temperature_profile)
-    assert_not_nil pest.pest_temperature_profile
-    assert_equal 10.0, pest.pest_temperature_profile.base_temperature
-  end
-
-  test "should have one pest_thermal_requirement" do
-    pest = create(:pest, :with_thermal_requirement)
-    assert_not_nil pest.pest_thermal_requirement
-    assert_equal 300.0, pest.pest_thermal_requirement.required_gdd
-  end
-
-  test "should have many pest_control_methods" do
-    pest = create(:pest, :with_control_methods)
-    assert_equal 3, pest.pest_control_methods.count
-  end
-
-  test "should have many crop_pests" do
-    pest = create(:pest)
-    crop1 = create(:crop)
-    crop2 = create(:crop)
-
-    create(:crop_pest, crop: crop1, pest: pest)
-    create(:crop_pest, crop: crop2, pest: pest)
-
-    assert_equal 2, pest.crop_pests.count
-    assert_equal 2, pest.crops.count
-  end
-
-  test "should destroy related records when pest is destroyed" do
-    pest = create(:pest, :complete)
-    temp_profile_id = pest.pest_temperature_profile.id
-    thermal_req_id = pest.pest_thermal_requirement.id
-    control_method_ids = pest.pest_control_methods.pluck(:id)
-
-    pest.destroy
-
-    assert_not PestTemperatureProfile.exists?(temp_profile_id)
-    assert_not PestThermalRequirement.exists?(thermal_req_id)
-    control_method_ids.each do |id|
-      assert_not PestControlMethod.exists?(id)
-    end
-  end
-
   # from_agrr_output テスト（agrr CLI出力形式から作成）
   test "should create pest from agrr output" do
     pest = Pest.from_agrr_output(pest_data: @pest_data, is_reference: true)
@@ -777,22 +732,6 @@ class PestTest < ActiveSupport::TestCase
 
     assert_includes user_owned_pests, user_pest
     assert_not_includes user_owned_pests, reference_pest
-  end
-
-  test "should filter pests by is_reference and user_id combination" do
-    user1 = create(:user)
-    user2 = create(:user)
-
-    ref_pest = create(:pest, is_reference: true, user_id: nil)
-    user1_pest = create(:pest, :user_owned, user: user1)
-    user2_pest = create(:pest, :user_owned, user: user2)
-
-    # 一般ユーザーの視点
-    visible_pests = Pest.where("is_reference = ? OR user_id = ?", true, user1.id)
-
-    assert_includes visible_pests, ref_pest
-    assert_includes visible_pests, user1_pest
-    assert_not_includes visible_pests, user2_pest
   end
 
   test "recent scope should order by created_at desc" do

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropLoadAuthorizedInteractorTest < ActiveSupport::TestCase
+      class CropLoadAuthorizedInteractorTest < DomainLibTestCase
         setup do
           @fixed_at = Time.utc(2026, 1, 15, 12, 0, 0).freeze
           @entity = Entities::CropEntity.new(
@@ -26,7 +26,7 @@ module Domain
 
         test "returns bundle when gateway succeeds" do
           snapshot = Domain::Crop::Dtos::CropMasterFormSnapshot.for_unsaved_blank_form
-          dto = Domain::Crop::Dtos::AuthorizedCropLoadedDto.new(crop_entity: @entity, master_form_snapshot: snapshot)
+          dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: @entity, master_form_snapshot: snapshot)
 
           gw = Class.new do
             attr_accessor :captured_for_edit

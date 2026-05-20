@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropMastersTaskTemplateDestroyInteractorTest < ActiveSupport::TestCase
+      class CropMastersTaskTemplateDestroyInteractorTest < DomainLibTestCase
         setup do
           @gateway = mock
           @output_port = mock
@@ -18,7 +18,7 @@ module Domain
         end
 
         test "should succeed when gateway destroys" do
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInputDto.new(
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInput.new(
             user_id: 1,
             crop_id: 2,
             template_id: 3
@@ -38,7 +38,7 @@ module Domain
         end
 
         test "should return association_not_found when gateway raises RecordNotFound" do
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInputDto.new(
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateDestroyInput.new(
             user_id: 1,
             crop_id: 2,
             template_id: 3

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropDetailInteractorTest < ActiveSupport::TestCase
+      class CropDetailInteractorTest < DomainLibTestCase
         test "calls on_success with crop detail dto when gateway succeeds" do
           user_id = 10
           crop_id = 22

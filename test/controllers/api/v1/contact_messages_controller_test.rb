@@ -129,7 +129,7 @@ module Api
         failing_interactor = Class.new do
           define_method(:initialize) { |**_| }
           define_method(:call) do |_input, output_port:|
-            output_port&.on_failure(::Domain::Shared::Dtos::ErrorDto.new("boom"))
+            output_port&.on_failure(::Domain::Shared::Dtos::Error.new("boom"))
             OpenStruct.new(success?: false)
           end
         end

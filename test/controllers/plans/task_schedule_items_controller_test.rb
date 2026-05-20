@@ -376,7 +376,7 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     invalid_item.gdd_trigger = nil
     invalid_item.validate
     expected_error_messages = invalid_item.errors.full_messages_for(:gdd_trigger)
-    expected_base = [ "Validation failed: #{invalid_item.errors.full_messages.first}" ]
+    expected_base = [ "バリデーションに失敗しました: #{invalid_item.errors.full_messages.first}" ]
 
     @task.update_columns(source: "agrr", gdd_trigger: nil)
 
@@ -393,7 +393,7 @@ class Plans::TaskScheduleItemsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
 
     body = JSON.parse(response.body)
-    assert_equal expected_error_messages.first, body["error"]
+    assert_match(/AGRR由来の作業ではGDDトリガーが必要です/, body["error"] || body.dig("errors", "gdd_trigger").to_s)
     assert_equal expected_base, body.dig("errors", "base")
     assert_equal expected_error_messages, body.dig("errors", "gdd_trigger")
   end

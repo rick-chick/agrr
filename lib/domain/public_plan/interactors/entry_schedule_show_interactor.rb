@@ -32,14 +32,14 @@ module Domain
             crop_gateway: @crop_gateway
           )
           crop_stages = @crop_gateway.list_crop_stages_by_crop_id(crop.id)
-          crop_detail = Services::EntryScheduleResponseBuilder.crop_detail(
+          crop_detail = Domain::PublicPlan::Mappers::EntryScheduleCropMapper.crop_detail(
             crop,
             result,
             translator: @translator,
             crop_stages: crop_stages,
             clock: @clock
           )
-          prediction_meta = Services::EntryScheduleResponseBuilder.prediction_meta(
+          prediction_meta = Domain::PublicPlan::Mappers::EntryScheduleCropMapper.prediction_meta(
             farm: farm,
             payload_hash: payload_hash,
             chart_calendar_year: reference_date.year
@@ -51,18 +51,18 @@ module Domain
             longitude: farm.longitude,
             region: farm.region
           }
-          dto = Dtos::EntryScheduleShowSuccessDto.new(
+          dto = Dtos::EntryScheduleShowOutput.new(
             farm_fragment: farm_fragment,
             prediction_fragment: prediction_meta,
             crop_fragment: crop_detail
           )
           @output_port.on_success(dto)
         rescue Domain::PublicPlan::Exceptions::WeatherLocationMissingError
-          @output_port.on_failure(Dtos::EntryScheduleFailureDto.weather_location_required)
+          @output_port.on_failure(Dtos::EntryScheduleFailure.weather_location_required)
         rescue Domain::PublicPlan::Exceptions::PredictionPayloadMissingError
-          @output_port.on_failure(Dtos::EntryScheduleFailureDto.prediction_payload_missing)
+          @output_port.on_failure(Dtos::EntryScheduleFailure.prediction_payload_missing)
         rescue Domain::PublicPlan::Exceptions::WeatherPredictionFailedError => e
-          @output_port.on_failure(Dtos::EntryScheduleFailureDto.weather_prediction_failed(e.message))
+          @output_port.on_failure(Dtos::EntryScheduleFailure.weather_prediction_failed(e.message))
         end
       end
     end

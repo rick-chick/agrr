@@ -3,10 +3,9 @@
 module Api
   module V1
     class PlansController < BaseController
-      include Views::Api::CultivationPlan::CultivationPlanDeleteView
 
       def index
-        presenter = Presenters::Api::Plans::PrivateOwnedPlansListPresenter.new(view: self, translator: translator)
+        presenter = Adapters::CultivationPlan::Presenters::Api::PrivateOwnedPlansListPresenter.new(view: self, translator: translator)
         Domain::CultivationPlan::Interactors::PrivateOwnedPlansListInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -18,7 +17,7 @@ module Api
       end
 
       def show
-        presenter = Presenters::Api::Plans::PrivateOwnedPlanDetailPresenter.new(view: self)
+        presenter = Adapters::CultivationPlan::Presenters::Api::PrivateOwnedPlanDetailPresenter.new(view: self)
         Domain::CultivationPlan::Interactors::PrivateOwnedPlanDetailInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -30,8 +29,8 @@ module Api
       end
 
       def create
-        presenter = Presenters::Api::Plans::PrivatePlanInitializeFromSelectionPresenter.new(view: self)
-        input_dto = Domain::CultivationPlan::Dtos::PrivatePlanInitializeFromSelectionInputDto.new(
+        presenter = Adapters::CultivationPlan::Presenters::Api::PrivatePlanInitializeFromSelectionPresenter.new(view: self)
+        input_dto = Domain::CultivationPlan::Dtos::PrivatePlanInitializeFromSelectionInput.new(
           farm_id: create_params[:farm_id],
           crop_ids: create_params[:crop_ids] || [],
           plan_name: create_params[:plan_name],
@@ -52,7 +51,7 @@ module Api
       # - calls the destroy interactor immediately (no confirmation dialog is necessary)
       # - renders the DeletionUndoResponse through the presenter/view contract
       def destroy
-        presenter = Presenters::Api::CultivationPlan::CultivationPlanDeletePresenter.new(view: self)
+        presenter = Adapters::CultivationPlan::Presenters::Api::CultivationPlanDeletePresenter.new(view: self)
         interactor = Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.cultivation_plan_gateway, user_lookup: CompositionRoot.user_lookup)

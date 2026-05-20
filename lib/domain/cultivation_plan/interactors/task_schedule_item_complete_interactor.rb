@@ -11,7 +11,7 @@ module Domain
         end
 
         def call(user_id:, plan_id:, item_id:, completion_params:)
-          input = Domain::CultivationPlan::Dtos::TaskScheduleItemCompleteInputDto.from_completion_params(
+          input = Domain::CultivationPlan::Dtos::TaskScheduleItemCompleteInput.from_completion_params(
             completion_params,
             clock: @clock
           )

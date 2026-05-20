@@ -45,11 +45,11 @@ class Adapters::Pesticide::Gateways::PesticideActiveRecordGatewayTest < ActiveSu
     assert_equal "new", p.name
   end
 
-  test "accessible crops and pests scopes delegate to PesticideAssociationPolicy" do
+  test "accessible crops and pests scopes delegate to PesticideAssociationAccess" do
     crops_gw = @gateway.accessible_crops_scope_for_pesticide_master_form(user: @user)
     pests_gw = @gateway.accessible_pests_scope_for_pesticide_master_form(user: @user)
-    crops_po = PesticideAssociationPolicy.accessible_crops_scope(@user)
-    pests_po = PesticideAssociationPolicy.accessible_pests_scope(@user)
+    crops_po = Domain::Shared::PesticideAssociationAccess.accessible_crops_scope(@user)
+    pests_po = Domain::Shared::PesticideAssociationAccess.accessible_pests_scope(@user)
 
     assert_equal crops_po.to_sql, crops_gw.to_sql
     assert_equal pests_po.to_sql, pests_gw.to_sql

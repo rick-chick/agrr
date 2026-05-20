@@ -20,8 +20,8 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
         user: @anonymous_user
       )
 
-      # 気象データ用のWeatherLocationを作成
-      @weather_location = WeatherLocation.create!(
+      # 気象データ用のWeatherLocationを作成（find_or_createで競合を回避）
+      @weather_location = WeatherLocation.find_or_create_by_coordinates(
         latitude: 43.0642,
         longitude: 141.3469,
         elevation: 10.0,

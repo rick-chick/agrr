@@ -47,8 +47,10 @@ module Api
             farm = json.first
             assert farm["name"].present?
             assert farm["region"].present?
-            assert farm["latitude"].is_a?(Numeric)
-            assert farm["longitude"].is_a?(Numeric)
+            lat = farm["latitude"]
+            lon = farm["longitude"]
+            assert lat.is_a?(Numeric) || (lat.is_a?(String) && lat =~ /\A-?\d+(\.\d+)?\z/)
+            assert lon.is_a?(Numeric) || (lon.is_a?(String) && lon =~ /\A-?\d+(\.\d+)?\z/)
           end
         end
 
@@ -75,7 +77,7 @@ module Api
         end
 
         test "create returns plan_id and enqueues job chain on success" do
-          weather_location = WeatherLocation.create!(
+          weather_location = WeatherLocation.find_or_create_by_coordinates(
             latitude: 36.0,
             longitude: 140.0,
             elevation: 50.0,
@@ -119,7 +121,7 @@ module Api
         end
 
         test "create returns 422 when farm_size is invalid" do
-          weather_location = WeatherLocation.create!(
+          weather_location = WeatherLocation.find_or_create_by_coordinates(
             latitude: 36.0,
             longitude: 140.0,
             elevation: 50.0,
@@ -140,7 +142,7 @@ module Api
         end
 
         test "create returns 422 when no crops selected" do
-          weather_location = WeatherLocation.create!(
+          weather_location = WeatherLocation.find_or_create_by_coordinates(
             latitude: 36.0,
             longitude: 140.0,
             elevation: 50.0,

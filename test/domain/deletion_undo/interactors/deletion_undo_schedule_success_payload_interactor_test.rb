@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module DeletionUndo
     module Interactors
-      class DeletionUndoScheduleSuccessPayloadInteractorTest < ActiveSupport::TestCase
+      class DeletionUndoScheduleSuccessPayloadInteractorTest < DomainLibTestCase
         ScheduledUndoStub = Struct.new(
           :undo_token,
           :metadata,
@@ -33,7 +33,7 @@ module Domain
 
           DeletionUndoScheduleSuccessPayloadInteractor.new(output_port: output_port, logger: nil).call(snapshot)
 
-          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoSchedulePayloadFailureDto, received
+          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoSchedulePayloadFailure, received
           assert_equal :missing_undo_token, received.reason
           output_port.verify
         end
@@ -60,7 +60,7 @@ module Domain
 
           DeletionUndoScheduleSuccessPayloadInteractor.new(output_port: output_port, logger: nil).call(snapshot)
 
-          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleSuccessPayloadDto, received
+          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleSuccessOutput, received
           assert_equal "tok-a", received.undo_token
           assert_equal "2026-05-01T00:00:00Z", received.undo_deadline
           assert_equal "toast", received.toast_message

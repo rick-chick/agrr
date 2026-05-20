@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module InteractionRule
     module Entities
-      class InteractionRuleEntityTest < ActiveSupport::TestCase
+      class InteractionRuleEntityTest < DomainLibTestCase
         test "should initialize with valid attributes" do
           entity = InteractionRuleEntity.new(
             id: 1,
@@ -18,8 +18,8 @@ module Domain
             description: "Test rule",
             region: "jp",
             is_reference: false,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert_equal 1, entity.id
           assert_equal 123, entity.user_id
@@ -45,8 +45,8 @@ module Domain
             description: "Test rule",
             region: nil,
             is_reference: false,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert_nil entity.region
         end
@@ -64,8 +64,8 @@ module Domain
               description: "Test rule",
               region: "jp",
               is_reference: false,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
           end
         end
@@ -83,8 +83,8 @@ module Domain
               description: "Test rule",
               region: "invalid",
               is_reference: false,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
           end
         end
@@ -102,8 +102,8 @@ module Domain
               description: "Test rule",
               region: valid_region,
               is_reference: false,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
             assert_equal valid_region, entity.region
           end
@@ -121,15 +121,15 @@ module Domain
             description: "Test rule",
             region: "jp",
             is_reference: true,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert entity.reference?
         end
 
         test "to_hash returns expected hash" do
-          created_at = Time.current
-          updated_at = Time.current
+          created_at = Time.utc(2026, 1, 1)
+          updated_at = Time.utc(2026, 1, 1)
           entity = InteractionRuleEntity.new(
             id: 1,
             user_id: 123,

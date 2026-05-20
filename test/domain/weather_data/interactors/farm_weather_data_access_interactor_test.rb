@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < ActiveSupport::TestCase
+class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < DomainLibTestCase
   class RecordingOutputPort < Domain::WeatherData::Ports::FarmWeatherDataAccessOutputPort
     attr_reader :calls
 
@@ -101,7 +101,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < Ac
 
   class FakeParse
     def predicted_at_from_payload(_s)
-      Time.zone.parse("2026-01-01T00:00:00Z")
+      Time.utc(2026, 1, 1, 0, 0, 0)
     end
 
     def prediction_start_date_from_payload(_s)
@@ -115,8 +115,13 @@ class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < Ac
     @enqueue = FakeEnqueue.new
     @parse = FakeParse.new
     @output = RecordingOutputPort.new
-    @logger = Logger.new(File::NULL)
-    @clock = Time.zone
+    @logger = ::Logger.new(File::NULL)
+    fixed_now = Time.utc(2026, 1, 1, 0, 0, 0)
+    fixed_today = Date.new(2026, 1, 1)
+    @clock = Struct.new(:now_val, :today_val) do
+      def now; now_val; end
+      def today; today_val; end
+    end.new(fixed_now, fixed_today)
     @interactor = Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractor.new(
       output_port: @output,
       farm_gateway: @farm_gateway,
@@ -129,7 +134,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < Ac
   end
 
   test "index builds temperature_mean from max/min when dto mean is nil (hash keys are symbols)" do
-    ctx = Domain::Farm::Dtos::FarmWeatherDataAccessContextDto.new(
+    ctx = Domain::Farm::Dtos::FarmWeatherDataAccessContext.new(
       farm_id: 1,
       display_name: "テスト",
       latitude: 35.0,
@@ -139,7 +144,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < Ac
     )
     @farm_gateway.ctx = ctx
 
-    row = Domain::WeatherData::Dtos::WeatherDataDto.new(
+    row = Domain::WeatherData::Dtos::WeatherData.new(
       date: Date.new(2024, 6, 1),
       temperature_max: 30.0,
       temperature_min: 20.0,
@@ -151,7 +156,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < Ac
     )
     @weather_gateway.rows = [ row ]
 
-    input = Domain::WeatherData::Dtos::FarmWeatherDataAccessInputDto.new(
+    input = Domain::WeatherData::Dtos::FarmWeatherDataAccessInput.new(
       farm_id: 1,
       user_id: 1,
       is_admin: false,
@@ -169,7 +174,7 @@ class Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractorTest < Ac
 
   test "returns farm_not_found when gateway returns nil" do
     @farm_gateway.ctx = nil
-    input = Domain::WeatherData::Dtos::FarmWeatherDataAccessInputDto.new(
+    input = Domain::WeatherData::Dtos::FarmWeatherDataAccessInput.new(
       farm_id: 99,
       user_id: 1,
       is_admin: false,

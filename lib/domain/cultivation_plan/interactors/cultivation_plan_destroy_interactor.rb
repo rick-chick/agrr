@@ -17,15 +17,15 @@ module Domain
           display_name = @gateway.private_owned_plan_display_name(user: user, plan_id: plan_id)
           toast_message = @translator.t("plans.undo.toast", name: display_name)
           undo_response = @gateway.destroy(plan_id, user, toast_message: toast_message)
-          destroy_output_dto = Domain::CultivationPlan::Dtos::CultivationPlanDestroyOutputDto.new(undo: undo_response)
+          destroy_output_dto = Domain::CultivationPlan::Dtos::CultivationPlanDestroyOutput.new(undo: undo_response)
           @output_port.on_success(destroy_output_dto)
-        rescue ::PolicyPermissionDenied, Domain::Shared::Policies::PolicyPermissionDenied
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
           handle_failure(@translator.t("plans.errors.not_found"))
         rescue Domain::Shared::Exceptions::RecordNotFound
           handle_failure(@translator.t("plans.errors.not_found"))
         rescue Domain::Shared::Exceptions::AssociationInUse
           handle_failure(@translator.t("plans.errors.delete_failed"))
-        rescue DeletionUndo::Error => e
+        rescue Domain::DeletionUndo::Exceptions::DeletionUndoError => e
           handle_failure(@translator.t("plans.errors.delete_error", message: e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           handle_failure(e.message)
@@ -34,7 +34,7 @@ module Domain
         private
 
         def handle_failure(message)
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(message))
         end
       end
     end

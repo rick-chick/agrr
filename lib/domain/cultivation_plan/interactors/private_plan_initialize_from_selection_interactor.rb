@@ -24,9 +24,9 @@ module Domain
         end
 
         def call(input_dto)
-          unless Domain::Shared::ValidationHelpers.present?(input_dto.crop_ids)
+          unless Domain::Shared.present?(input_dto.crop_ids)
             @output_port.on_failure(
-              Dtos::PrivatePlanInitializeFromSelectionFailureDto.new(
+              Dtos::PrivatePlanInitializeFromSelectionFailure.new(
                 http_status: :unprocessable_entity,
                 message: @translator.t("plans.errors.select_crop")
               )
@@ -37,7 +37,7 @@ module Domain
           farm = @cultivation_plan_gateway.find_farm(input_dto.farm_id, input_dto.user)
           unless farm
             @output_port.on_failure(
-              Dtos::PrivatePlanInitializeFromSelectionFailureDto.new(
+              Dtos::PrivatePlanInitializeFromSelectionFailure.new(
                 http_status: :not_found,
                 message: @translator.t("plans.errors.not_found")
               )
@@ -48,7 +48,7 @@ module Domain
           crops = @cultivation_plan_gateway.find_crops(input_dto.crop_ids, input_dto.user)
           if crops.empty?
             @output_port.on_failure(
-              Dtos::PrivatePlanInitializeFromSelectionFailureDto.new(
+              Dtos::PrivatePlanInitializeFromSelectionFailure.new(
                 http_status: :not_found,
                 message: @translator.t("plans.errors.not_found")
               )
@@ -59,7 +59,7 @@ module Domain
           existing = @cultivation_plan_gateway.find_existing(farm, input_dto.user)
           if existing
             @output_port.on_failure(
-              Dtos::PrivatePlanInitializeFromSelectionFailureDto.new(
+              Dtos::PrivatePlanInitializeFromSelectionFailure.new(
                 http_status: :unprocessable_entity,
                 message: @translator.t("plans.errors.plan_already_exists_annual")
               )
@@ -67,7 +67,7 @@ module Domain
             return
           end
 
-          plan_name = input_dto.plan_name.presence || farm.name
+          plan_name = input_dto.plan_name || farm.name
           session_id = @session_id_generator.call
           total_area = @cultivation_plan_gateway.total_field_area_for_farm(farm.id, input_dto.user)
 
@@ -80,15 +80,15 @@ module Domain
             plan_type: "private",
             plan_year: nil,
             plan_name: plan_name,
-            planning_start_date: @clock.today.beginning_of_year,
+            planning_start_date: Domain::Shared::DateCalendar.beginning_of_year(@clock.today),
             planning_end_date: Date.new(@clock.today.year + 1, 12, 31)
           )
 
           unless result.success? && result.cultivation_plan
-            msg = result.errors.present? ? result.errors.join(", ") : @translator.t("public_plans.save.error")
+            msg = Domain::Shared.present?(result.errors) ? result.errors.join(", ") : @translator.t("public_plans.save.error")
             @logger.error("❌ [PrivatePlanInitializeFromSelectionInteractor] Initialize failed: #{msg}")
             @output_port.on_failure(
-              Dtos::PrivatePlanInitializeFromSelectionFailureDto.new(
+              Dtos::PrivatePlanInitializeFromSelectionFailure.new(
                 http_status: :unprocessable_entity,
                 message: msg
               )
@@ -101,11 +101,11 @@ module Domain
 
           @job_chain_enqueuer.enqueue_after_create(cultivation_plan_id: plan_id)
 
-          @output_port.on_success(Dtos::PrivatePlanInitializeFromSelectionSuccessDto.new(id: plan_id))
+          @output_port.on_success(Dtos::PrivatePlanInitializeFromSelectionOutput.new(id: plan_id))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.error("❌ [PrivatePlanInitializeFromSelectionInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
-            Dtos::PrivatePlanInitializeFromSelectionFailureDto.new(
+            Dtos::PrivatePlanInitializeFromSelectionFailure.new(
               http_status: :unprocessable_entity,
               message: e.message
             )

@@ -2,11 +2,10 @@ module Api
   module V1
     class ContactMessagesController < Api::V1::BaseController
       INTERACTOR_CLASS = ::Domain::ContactMessages::Interactors::CreateContactMessageInteractor
-      PRESENTER_CLASS = ::Presenters::Api::ContactMessages::ContactMessageCreatePresenter
+      PRESENTER_CLASS = ::Adapters::ContactMessages::Presenters::Api::ContactMessageCreatePresenter
       RATE_LIMITER_CLASS = ::Adapters::ContactMessages::Services::ContactMessageRateLimiter
       RECAPTCHA_VERIFIER_CLASS = ::Adapters::ContactMessages::Services::RecaptchaVerifier
 
-      include Views::Api::ContactMessages::CreateView
 
       protect_from_forgery with: :null_session
       # Allow anonymous clients to submit contact messages

@@ -71,7 +71,7 @@ class DeletionUndoEvent < ApplicationRecord
   end
 
   def ensure_expires_at
-    self.expires_at ||= Time.current + DeletionUndo::Manager.default_ttl
+    self.expires_at ||= Time.current + Adapters::DeletionUndo::Manager.default_ttl
   end
 
   def ensure_auto_hide_metadata

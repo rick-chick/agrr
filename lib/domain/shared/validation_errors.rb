@@ -29,6 +29,11 @@ module Domain
         full_messages.any?(&block)
       end
 
+      # ActiveModel::Errors との互換性（ビューで `errors.count` が呼ばれる）
+      def count
+        full_messages.size
+      end
+
       def messages
         @messages_by_attribute.each_with_object({}) do |(key, msgs), acc|
           acc[key] = msgs.dup unless msgs.empty?

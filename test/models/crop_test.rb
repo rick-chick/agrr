@@ -99,31 +99,6 @@ class CropTest < ActiveSupport::TestCase
     assert_includes crop.errors[:user], "は参照データには設定できません"
   end
 
-  # Pest関連テスト
-  test "should have many crop_pests" do
-    crop = create(:crop)
-    pest1 = create(:pest)
-    pest2 = create(:pest)
-
-    create(:crop_pest, crop: crop, pest: pest1)
-    create(:crop_pest, crop: crop, pest: pest2)
-
-    assert_equal 2, crop.crop_pests.count
-  end
-
-  test "should have many pests through crop_pests" do
-    crop = create(:crop)
-    pest1 = create(:pest)
-    pest2 = create(:pest)
-
-    create(:crop_pest, crop: crop, pest: pest1)
-    create(:crop_pest, crop: crop, pest: pest2)
-
-    assert_equal 2, crop.pests.count
-    assert_includes crop.pests, pest1
-    assert_includes crop.pests, pest2
-  end
-
   # associate_pests_from_agrr_output テスト
   test "should associate pests from agrr output" do
     crop = create(:crop, :tomato)

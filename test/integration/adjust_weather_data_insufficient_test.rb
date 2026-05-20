@@ -5,11 +5,15 @@ require "test_helper"
 # 計画期間外での修正処理で気温データが不足する場合のテスト
 class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
   def setup
+    # 一意の座標を生成（WeatherLocationの一意性バリデーションとの衝突を回避）
+    @lat = 35.0 + SecureRandom.random_number * 10
+    @lon = 139.0 + SecureRandom.random_number * 10
+
     @user = create(:user)
-    @farm = create(:farm, user: @user, latitude: 35.6762, longitude: 139.6503, region: "jp")
+    @farm = create(:farm, user: @user, latitude: @lat, longitude: @lon, region: "jp")
     @weather_location = create(:weather_location,
-      latitude: 35.6762,
-      longitude: 139.6503,
+      latitude: @lat,
+      longitude: @lon,
       elevation: 50.0,
       timezone: "Asia/Tokyo"
     )

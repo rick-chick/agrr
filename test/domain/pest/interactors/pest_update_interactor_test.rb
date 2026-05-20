@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Pest
     module Interactors
-      class PestUpdateInteractorTest < ActiveSupport::TestCase
+      UserStub = Struct.new(:id, :admin?, keyword_init: true)
+
+      class PestUpdateInteractorTest < DomainLibTestCase
         setup do
-          @user = create(:user)
+          @user = UserStub.new(id: 1, admin?: true)
           @user_id = @user.id
           @mock_gateway = mock
           @mock_output_port = mock
@@ -26,11 +28,11 @@ module Domain
         end
 
         test "on_failure includes reload_bundle when update raises RecordInvalid and reload succeeds" do
-          input_dto = Domain::Pest::Dtos::PestUpdateInputDto.new(pest_id: 1, name: "x")
+          input_dto = Domain::Pest::Dtos::PestUpdateInput.new(pest_id: 1, name: "x")
           pest_entity = mock
           persisted = mock
           payload = Domain::Pest::Dtos::PestMasterEditPayload.new(id: 1, new_record: false)
-          bundle = Domain::Pest::Ports::PestHtmlAuthorizedPestLoad.new(pest_entity: pest_entity, pest_master_edit_payload: payload)
+          bundle = Domain::Pest::Ports::PestAuthorizedLoad.new(pest_entity: pest_entity, pest_master_edit_payload: payload)
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           current_pest = mock
@@ -43,13 +45,13 @@ module Domain
 
           @interactor.call(input_dto)
 
-          assert_instance_of Domain::Pest::Dtos::PestUpdateFailureDto, received
+          assert_instance_of Domain::Pest::Dtos::PestUpdateFailure, received
           assert_equal "update failed", received.message
           assert_equal bundle, received.reload_bundle
         end
 
         test "propagates StandardError when user lookup raises" do
-          input_dto = Domain::Pest::Dtos::PestUpdateInputDto.new(pest_id: 1, name: "x")
+          input_dto = Domain::Pest::Dtos::PestUpdateInput.new(pest_id: 1, name: "x")
 
           @mock_user_lookup.expects(:find).with(@user_id).raises(StandardError, "no user")
           @mock_gateway.expects(:find_authorized_for_edit).never
@@ -62,7 +64,7 @@ module Domain
         end
 
         test "on_failure has nil reload_bundle when reload bundle raises RecordNotFound" do
-          input_dto = Domain::Pest::Dtos::PestUpdateInputDto.new(pest_id: 1, name: "x")
+          input_dto = Domain::Pest::Dtos::PestUpdateInput.new(pest_id: 1, name: "x")
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           current_pest = mock
@@ -77,7 +79,7 @@ module Domain
 
           @interactor.call(input_dto)
 
-          assert_instance_of Domain::Pest::Dtos::PestUpdateFailureDto, received
+          assert_instance_of Domain::Pest::Dtos::PestUpdateFailure, received
           assert_equal "update failed", received.message
           assert_nil received.reload_bundle
         end

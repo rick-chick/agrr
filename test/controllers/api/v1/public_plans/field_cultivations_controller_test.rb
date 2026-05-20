@@ -10,19 +10,14 @@ module Api
           # アノニマスユーザーを作成
           @anonymous_user = User.anonymous_user
 
-          # WeatherLocationを作成
-          @weather_location = WeatherLocation.create!(
-            latitude: 35.6762,
-            longitude: 139.6503,
-            timezone: "Asia/Tokyo",
-            elevation: 0.0
-          )
+          # WeatherLocationを作成（ファクトリ使用で各テストで一意の座標を生成）
+          @weather_location = create(:weather_location)
 
           # 参照農場を作成
           @farm = create(:farm, :reference,
             name: "参照農場",
-            latitude: 35.6762,
-            longitude: 139.6503,
+            latitude: @weather_location.latitude,
+            longitude: @weather_location.longitude,
             region: "jp",
             user: @anonymous_user,
             weather_location: @weather_location
@@ -111,7 +106,7 @@ module Api
         end
 
         test "public climate_data delegates to interactor error response" do
-          error_dto = Domain::Shared::Dtos::ErrorDto.new("public gateway failure")
+          error_dto = Domain::Shared::Dtos::Error.new("public gateway failure")
           with_field_climate_interactor_stub(->(output_port, _) { output_port.on_error(error_dto) }) do
             get "/api/v1/public_plans/field_cultivations/#{@field_cultivation.id}/climate_data"
 

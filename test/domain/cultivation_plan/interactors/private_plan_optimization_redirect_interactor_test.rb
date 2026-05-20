@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class PrivatePlanOptimizationRedirectInteractorTest < ActiveSupport::TestCase
+class PrivatePlanOptimizationRedirectInteractorTest < DomainLibTestCase
   test "call passes dto from gateway to on_success" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
 
-    dto = Domain::CultivationPlan::Dtos::PrivatePlanOptimizationRedirectDto.new(
+    dto = Domain::CultivationPlan::Dtos::PrivatePlanOptimizationRedirect.new(
       plan_id: 10,
       already_optimizing: false
     )

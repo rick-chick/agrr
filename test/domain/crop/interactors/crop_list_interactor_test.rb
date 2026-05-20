@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class Domain::Crop::Interactors::CropListInteractorTest < ActiveSupport::TestCase
+class Domain::Crop::Interactors::CropListInteractorTest < DomainLibTestCase
   test "call loads crops using policy-built filter for regular user" do
     user = Object.new
     def user.id; 42; end
@@ -51,7 +51,7 @@ class Domain::Crop::Interactors::CropListInteractorTest < ActiveSupport::TestCas
     ).call
   end
 
-  test "call maps RecordNotFound to failure ErrorDto" do
+  test "call maps RecordNotFound to failure Error" do
     user = Object.new
     def user.id; 1; end
     def user.admin?; false; end
@@ -64,7 +64,7 @@ class Domain::Crop::Interactors::CropListInteractorTest < ActiveSupport::TestCas
     gateway.expects(:list_index_for_filter).with(expected_filter).raises(Domain::Shared::Exceptions::RecordNotFound.new("x"))
 
     output = mock
-    output.expects(:on_failure).with { |dto| dto.is_a?(Domain::Shared::Dtos::ErrorDto) && dto.message == "x" }
+    output.expects(:on_failure).with { |dto| dto.is_a?(Domain::Shared::Dtos::Error) && dto.message == "x" }
 
     Domain::Crop::Interactors::CropListInteractor.new(
       output_port: output,

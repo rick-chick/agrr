@@ -11,7 +11,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # 計画一覧（農場別）
   def index
-    presenter = Presenters::Html::Plans::PrivatePlanIndexHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanIndexHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -27,7 +27,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # Step 1: 農場選択
   def new
-    presenter = Presenters::Html::Plans::PrivatePlanNewHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanNewHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -63,11 +63,11 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # Step 3: 計画作成（最適化はしない）
   def create
-    presenter = Presenters::Html::Plans::PrivatePlanCreateFromSessionPresenter.new(
+    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanCreateFromSessionPresenter.new(
       view: self,
       session_key: self.class.session_key
     )
-    input_dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInputDto.new(
+    input_dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
       farm_id: parse_positive_route_id(session_data[:farm_id]),
       crop_ids: crop_ids,
       plan_name: session_data[:plan_name],
@@ -94,7 +94,7 @@ class PlansController < CultivationPlanHtmlBaseController
       redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
     end
 
-    presenter = Presenters::Html::Plans::PrivatePlanOptimizationRedirectHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanOptimizationRedirectHtmlPresenter.new(view: self)
     CompositionRoot.private_plan_optimization_redirect_interactor(
       output_port: presenter,
       user_id: current_user.id,
@@ -122,7 +122,7 @@ class PlansController < CultivationPlanHtmlBaseController
       redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
     end
 
-    presenter = Presenters::Html::Plans::PrivatePlanShowHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanShowHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -149,7 +149,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # 計画削除（Undo 対応は Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor へ委譲）
   def destroy
-    presenter = Presenters::Html::Plans::CultivationPlanDestroyHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::Html::CultivationPlanDestroyHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -162,7 +162,7 @@ class PlansController < CultivationPlanHtmlBaseController
   private
 
   def load_private_plan_select_crop_context(farm_id)
-    presenter = Presenters::Html::Plans::PrivatePlanSelectCropHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanSelectCropHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanSelectCropContextInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -176,7 +176,7 @@ class PlansController < CultivationPlanHtmlBaseController
   end
 
   def load_private_plan_optimizing(plan_id)
-    presenter = Presenters::Html::Plans::PrivatePlanOptimizingHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanOptimizingHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor.new(
       output_port: presenter,
       user_id: current_user.id,

@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module CultivationPlan
     module Interactors
-      class PublicPlanSaveFromSessionInteractorTest < ActiveSupport::TestCase
+      class PublicPlanSaveFromSessionInteractorTest < DomainLibTestCase
         setup do
           @gateway = mock
           @output_port = mock
           @translator = Adapters::Translators::RailsTranslator.new
-          @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
-          @fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailureDto
+           @logger = ::Logger.new("/dev/null")
+          @fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailure
         end
 
         test "on_success when gateway result is successful" do
-          result = Adapters::CultivationPlan::Sessions::PlanSaveSession::Result.new
-          result.success = true
+          result = Object.new
+          def result.success?; true; end
 
           @gateway.expects(:save_from_session).with(user: :u, session_data: { k: 1 }).returns(result)
           @output_port.expects(:on_success).once
@@ -31,9 +31,9 @@ module Domain
         end
 
         test "on_failure save_failed when gateway returns unsuccessful result with message" do
-          result = Adapters::CultivationPlan::Sessions::PlanSaveSession::Result.new
-          result.success = false
-          result.error_message = "farm limit"
+          result = Object.new
+          def result.success?; false; end
+          def result.error_message; "farm limit"; end
 
           @gateway.expects(:save_from_session).returns(result)
           @output_port.expects(:on_success).never

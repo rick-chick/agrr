@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Pesticide
     module Interactors
-      class PesticideUpdateInteractorTest < ActiveSupport::TestCase
+      class PesticideUpdateInteractorTest < DomainLibTestCase
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           user = Object.new
-          input_dto = Domain::Pesticide::Dtos::PesticideUpdateInputDto.new(pesticide_id: 5, name: "Y")
+          input_dto = Domain::Pesticide::Dtos::PesticideUpdateInput.new(pesticide_id: 5, name: "Y")
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
@@ -49,11 +49,11 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure with ErrorDto when non-admin toggles is_reference" do
+        test "calls on_failure with Error when non-admin toggles is_reference" do
           user_id = 10
           user = Object.new
           user.define_singleton_method(:admin?) { false }
-          input_dto = Domain::Pesticide::Dtos::PesticideUpdateInputDto.new(pesticide_id: 5, is_reference: true)
+          input_dto = Domain::Pesticide::Dtos::PesticideUpdateInput.new(pesticide_id: 5, is_reference: true)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
@@ -85,7 +85,7 @@ module Domain
 
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal "flag admin only", received.message
           user_lookup.verify
           translator.verify

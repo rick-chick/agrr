@@ -1,6 +1,6 @@
 require "test_helper"
 
-DeletionUndo::Manager # ensure DeletionUndo constants are loaded before controller/interactor run
+Adapters::DeletionUndo::Manager # ensure DeletionUndo constants are loaded before controller/interactor run
 
 module Api
   module V1
@@ -206,11 +206,14 @@ module Api
       test "destroy returns 422 when deletion fails" do
         plan = create(:cultivation_plan, :annual_planning, farm: @farm, user: @user, plan_type: :private)
 
-        # Mock DeletionUndo::Manager to raise an error that results in 422
-        DeletionUndo::Manager.stub(:schedule, ->(*) { raise ActiveRecord::DeleteRestrictionError }) do
+        # Stub the gateway destroy to simulate failure (interactor catches AssociationInUse)
+        CompositionRoot.cultivation_plan_gateway.stubs(:destroy).raises(Domain::Shared::Exceptions::AssociationInUse)
+        begin
           assert_no_difference "::CultivationPlan.count" do
             delete "/api/v1/plans/#{plan.id}", headers: { "Accept" => "application/json" }
           end
+        ensure
+          CompositionRoot.cultivation_plan_gateway.unstub(:destroy)
         end
 
         assert_response :unprocessable_entity

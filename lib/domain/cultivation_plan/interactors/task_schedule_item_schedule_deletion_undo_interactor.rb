@@ -14,7 +14,7 @@ module Domain
 
         def call(user_id:, plan_id:, item_id:)
           row = @mutation_gateway.deletion_undo_schedule_row_for_item!(user_id, plan_id, item_id)
-          input = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto.new(
+          input = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInput.new(
             resource_type: row[:resource_type],
             resource_id: row[:resource_id],
             actor_id: user_id,

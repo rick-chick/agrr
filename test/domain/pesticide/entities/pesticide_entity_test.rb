@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
+require "adapters/pesticide/mappers/pesticide_mapper"
 
 module Domain
   module Pesticide
     module Entities
-      class PesticideEntityTest < ActiveSupport::TestCase
+      class PesticideEntityTest < DomainLibTestCase
         test "should initialize with valid attributes" do
           entity = PesticideEntity.new(
             id: 1,
@@ -17,8 +18,8 @@ module Domain
             pest_id: 4,
             region: "jp",
             is_reference: false,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert_equal 1, entity.id
           assert_equal 2, entity.user_id
@@ -38,8 +39,8 @@ module Domain
             name: "Test Pesticide",
             region: nil,
             is_reference: false,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert_nil entity.region
         end
@@ -52,8 +53,8 @@ module Domain
               name: "Test Pesticide",
               region: "invalid",
               is_reference: false,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
           end
         end
@@ -66,8 +67,8 @@ module Domain
               name: "Test Pesticide",
               region: valid_region,
               is_reference: false,
-              created_at: Time.current,
-              updated_at: Time.current
+              created_at: Time.utc(2026, 1, 1),
+              updated_at: Time.utc(2026, 1, 1)
             )
             assert_equal valid_region, entity.region
           end
@@ -84,8 +85,8 @@ module Domain
           record.stubs(:pest_id).returns(4)
           record.stubs(:region).returns("jp")
           record.stubs(:is_reference).returns(false)
-          record.stubs(:created_at).returns(Time.current)
-          record.stubs(:updated_at).returns(Time.current)
+          record.stubs(:created_at).returns(Time.utc(2026, 1, 1))
+          record.stubs(:updated_at).returns(Time.utc(2026, 1, 1))
 
           entity = Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record)
           assert_equal 1, entity.id

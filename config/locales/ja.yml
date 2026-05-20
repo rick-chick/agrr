@@ -55,6 +55,8 @@ ja:
 
   # API用エラーメッセージ
   api:
+    errors:
+      no_cultivation_period: "栽培期間が設定されていません"
     entry_schedule:
       label:
         sowing: "種をまく目安"
@@ -361,6 +363,11 @@ ja:
   # ActiveRecord
   activerecord:
     errors:
+      messages:
+        record_invalid: "バリデーションに失敗しました: %{errors}"
+        restrict_dependent_destroy:
+          has_one: "%{record}が存在しているので削除できません"
+          has_many: "%{record}が存在しているので削除できません"
       models:
         task_schedule_item:
           attributes:

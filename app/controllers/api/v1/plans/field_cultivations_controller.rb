@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_dependency "field_cultivation_climate/mock_progress_records"
 
 module Api
   module V1
@@ -8,8 +7,7 @@ module Api
       class FieldCultivationsController < ApplicationController
         before_action :authenticate_user!
         skip_before_action :verify_authenticity_token, only: [ :update ]
-        include Views::Api::Plans::FieldCultivations::FieldCultivationClimateDataView
-        include ::FieldCultivationClimate::MockProgressRecords
+        include ::Adapters::FieldCultivation::MockProgressRecords
 
         def show
           field_cultivation_api_show_interactor.call(field_cultivation_id: params[:id])
@@ -19,7 +17,7 @@ module Api
         # 栽培期間の気温・GDDデータを返す（agrr progressコマンドを使用）
         def climate_data
           field_cultivation_climate_data_interactor.call(
-            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInputDto.new(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: field_cultivation_id_param,
               display_start_date: params[:display_start_date],
               display_end_date: params[:display_end_date]
@@ -30,7 +28,7 @@ module Api
         # PATCH /api/v1/plans/field_cultivations/:id
         def update
           field_cultivation_api_update_interactor.call(
-            Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInputDto.new(
+            Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInput.new(
               field_cultivation_id: params[:id],
               start_date: field_cultivation_params[:start_date],
               completion_date: field_cultivation_params[:completion_date],
@@ -53,14 +51,14 @@ module Api
 
         def field_cultivation_api_show_interactor
           Domain::FieldCultivation::Interactors::FieldCultivationShowInteractor.new(
-            output_port: Presenters::Api::FieldCultivation::FieldCultivationApiShowPresenter.new(view: self),
+            output_port: Adapters::FieldCultivation::Presenters::Api::FieldCultivationApiShowPresenter.new(view: self),
             gateway: field_cultivation_plan_api_gateway
           )
         end
 
         def field_cultivation_api_update_interactor
           Domain::FieldCultivation::Interactors::FieldCultivationUpdateInteractor.new(
-            output_port: Presenters::Api::FieldCultivation::FieldCultivationApiUpdatePresenter.new(view: self),
+            output_port: Adapters::FieldCultivation::Presenters::Api::FieldCultivationApiUpdatePresenter.new(view: self),
             gateway: field_cultivation_plan_api_gateway
           )
         end
@@ -68,7 +66,7 @@ module Api
         def field_cultivation_climate_data_interactor
           uid = current_user.id
           Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor.new(
-            output_port: Presenters::Api::FieldCultivationClimate::FieldCultivationClimateDataPresenter.new(view: self),
+            output_port: Adapters::FieldCultivation::Presenters::Api::FieldCultivationClimateDataPresenter.new(view: self),
             gateway: CompositionRoot.field_cultivation_climate_gateway_for(CompositionRoot.user_lookup.find(uid)),
             logger: CompositionRoot.logger
           )

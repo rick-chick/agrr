@@ -41,11 +41,11 @@ module Domain
 
           accessible_crops =
             if preview_task.is_reference?
-              @crop_gateway.list_reference_crop_entities(region: preview_task.region.presence)
+              @crop_gateway.list_reference_crop_entities(region: preview_task.region)
             else
               @crop_gateway.list_non_reference_crops_for_user_id_ordered(
                 preview_task.user_id,
-                preview_task.region.presence
+                preview_task.region
               )
             end
 
@@ -56,7 +56,7 @@ module Domain
               .map(&:to_i)
               .uniq
 
-          raw = Array(input_dto.raw_selected_crop_ids).reject(&:blank?).map(&:to_i)
+          raw = Array(input_dto.raw_selected_crop_ids).reject { |v| v.nil? || v.to_s.empty? }.map(&:to_i)
           filtered_selected = raw.select { |id| accessible_crop_ids.include?(id) }
 
           selected_for_cards =
@@ -70,7 +70,7 @@ module Domain
 
           crop_cards =
             if input_dto.include_crop_cards
-              Domain::AgriculturalTask::Services::EditFormCropSelectionCards.build(
+              Domain::AgriculturalTask::Mappers::EditFormCropSelectionCardsMapper.build(
                 accessible_crops: accessible_crops,
                 selected_ids: selected_for_cards
               )
@@ -79,7 +79,7 @@ module Domain
             end
 
           @output_port.on_success(
-            Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionSuccessDto.new(
+            Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionOutput.new(
               accessible_crops: accessible_crops,
               accessible_crop_ids: accessible_crop_ids,
               filtered_selected_crop_ids: filtered_selected,

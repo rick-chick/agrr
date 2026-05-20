@@ -28,7 +28,7 @@ module Crops
     end
 
     test "should get index with no pests" do
-      get crop_pests_path(@crop)
+      get crop_pests_path(@crop), headers: { "Accept" => "text/html" }
       assert_response :success
       assert_select ".empty-state"
       assert_select ".crop-card", count: 0
@@ -70,7 +70,7 @@ module Crops
       create(:crop_pest, crop: admin_crop, pest: admin_pest)
       create(:crop_pest, crop: admin_crop, pest: other_user_pest)
 
-      get crop_pests_path(admin_crop)
+      get crop_pests_path(admin_crop), headers: { "Accept" => "text/html" }
       assert_response :success
 
       # 管理者は参照害虫と自分の害虫のみ表示される
@@ -90,11 +90,11 @@ module Crops
       create(:crop_pest, crop: other_crop, pest: other_user_pest)
 
       # 他人の作物の害虫管理画面にアクセス試行（まず作物へのアクセスが拒否される）
-      get crop_pests_path(other_crop)
+      get crop_pests_path(other_crop), headers: { "Accept" => "text/html" }
       assert_redirected_to crops_path
 
       # もし何らかの方法で害虫にアクセスしようとした場合
-      get crop_pest_path(admin_crop, other_user_pest)
+      get crop_pest_path(admin_crop, other_user_pest), headers: { "Accept" => "text/html" }
       # 害虫が作物に関連付けられていないので、リダイレクトされる
       assert_redirected_to crop_pests_path(admin_crop)
     end
@@ -102,12 +102,12 @@ module Crops
     test "should access reference crop" do
       reference_crop = create(:crop, :reference)
 
-      get crop_pests_path(reference_crop)
+      get crop_pests_path(reference_crop), headers: { "Accept" => "text/html" }
       assert_response :success
     end
 
     test "should redirect when crop not found" do
-      get crop_pests_path(crop_id: 99999)
+      get crop_pests_path(crop_id: 99999), headers: { "Accept" => "text/html" }
       assert_redirected_to crops_path
       assert_equal I18n.t("crops.flash.not_found"), flash[:alert]
     end
@@ -118,7 +118,7 @@ module Crops
       pest = create(:pest, is_reference: true)
       create(:crop_pest, crop: @crop, pest: pest)
 
-      get crop_pest_path(@crop, pest)
+      get crop_pest_path(@crop, pest), headers: { "Accept" => "text/html" }
       assert_response :success
       assert_select ".crop-detail-title" do |elements|
         assert_select "a", text: @crop.name
@@ -131,13 +131,13 @@ module Crops
       other_crop = create(:crop, user: @user)
       create(:crop_pest, crop: other_crop, pest: pest)
 
-      get crop_pest_path(@crop, pest)
+      get crop_pest_path(@crop, pest), headers: { "Accept" => "text/html" }
       assert_redirected_to crop_pests_path(@crop)
       assert_equal I18n.t("crops.pests.flash.not_found"), flash[:alert]
     end
 
     test "should redirect when pest not found" do
-      get crop_pest_path(@crop, id: 99999)
+      get crop_pest_path(@crop, id: 99999), headers: { "Accept" => "text/html" }
       assert_redirected_to crop_pests_path(@crop)
       assert_equal I18n.t("crops.pests.flash.not_found"), flash[:alert]
     end
@@ -147,7 +147,7 @@ module Crops
     test "should get new" do
       create(:pest, is_reference: true)
 
-      get new_crop_pest_path(@crop)
+      get new_crop_pest_path(@crop), headers: { "Accept" => "text/html" }
       assert_response :success
       assert_select "form"
       assert_select 'select[name="pest_id"]'
@@ -159,7 +159,7 @@ module Crops
       unassociated_pest2 = create(:pest, is_reference: true)
       create(:crop_pest, crop: @crop, pest: associated_pest)
 
-      get new_crop_pest_path(@crop)
+      get new_crop_pest_path(@crop), headers: { "Accept" => "text/html" }
       assert_response :success
 
       assert_select 'select[name="pest_id"] option[value=?]', unassociated_pest1.id.to_s
@@ -273,7 +273,7 @@ module Crops
       pest = create(:pest, is_reference: true)
       create(:crop_pest, crop: @crop, pest: pest)
 
-      get edit_crop_pest_path(@crop, pest)
+      get edit_crop_pest_path(@crop, pest), headers: { "Accept" => "text/html" }
       assert_response :success
       assert_select "form"
     end
@@ -283,7 +283,7 @@ module Crops
       other_crop = create(:crop, user: @user)
       create(:crop_pest, crop: other_crop, pest: pest)
 
-      get edit_crop_pest_path(@crop, pest)
+      get edit_crop_pest_path(@crop, pest), headers: { "Accept" => "text/html" }
       assert_redirected_to crop_pests_path(@crop)
       assert_equal I18n.t("crops.pests.flash.not_found"), flash[:alert]
     end

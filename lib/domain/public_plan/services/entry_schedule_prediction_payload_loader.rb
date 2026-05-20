@@ -8,7 +8,7 @@ module Domain
         Interactor = Domain::WeatherData::Interactors::WeatherPredictionInteractor
 
         def self.load_with_existing_service!(farm:, prediction_end_date_raw:, reference_date:, weather_prediction_service:)
-          target_end = EntrySchedulePredictionEndDate.parse(
+          target_end = Domain::PublicPlan::Mappers::EntrySchedulePredictionEndDateMapper.parse(
             prediction_end_date_raw,
             reference_date: reference_date
           )

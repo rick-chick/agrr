@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module InteractionRule
     module Interactors
-      class InteractionRuleDetailInteractorTest < ActiveSupport::TestCase
+      class InteractionRuleDetailInteractorTest < DomainLibTestCase
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           rule_id = 3

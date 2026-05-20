@@ -78,6 +78,22 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".plans-empty"
   end
 
+  test "fields_selection shows farm dropdown and field labels" do
+    sign_in_as @user
+
+    # 計画を作成（ほ場が表示されるために必要なcompleted計画）
+    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "completed")
+    create(:cultivation_plan_field, cultivation_plan: plan, name: "ほ場1", area: 1000)
+
+    get fields_selection_planning_schedules_path
+
+    assert_response :success
+    # 農場選択ドロップダウンが表示されることを確認
+    assert_select 'select[name="farm_id"]'
+    # ほ場ラベルが表示されることを確認
+    assert_select ".field-checkbox-label", text: /ほ場1/
+  end
+
   test "schedule requires authentication" do
     get schedule_planning_schedules_path
     assert_redirected_to auth_login_path
@@ -128,6 +144,7 @@ class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: /作付け計画表/
     assert_select ".schedule-table"
+    assert_select ".cultivation-item", text: /トマト/
   end
 
   test "schedule displays 5 years of data" do

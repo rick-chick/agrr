@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Farm
     module Entities
-      class FarmEntityTest < ActiveSupport::TestCase
+      class FarmEntityTest < DomainLibTestCase
         test "should initialize with valid attributes" do
           entity = FarmEntity.new(
             id: 1,
@@ -14,8 +14,8 @@ module Domain
             longitude: 135.0,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           )
 
@@ -36,8 +36,8 @@ module Domain
             longitude: 135.0,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           )
 
@@ -52,8 +52,8 @@ module Domain
             longitude: 135.0,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           )
 
@@ -68,8 +68,8 @@ module Domain
             longitude: 135.0,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           )
 
@@ -84,8 +84,8 @@ module Domain
             longitude: nil,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           )
 
@@ -100,8 +100,8 @@ module Domain
             longitude: 135.0,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           )
 
@@ -116,8 +116,8 @@ module Domain
             longitude: 135.0,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           )
 
@@ -132,8 +132,8 @@ module Domain
             longitude: 135.0,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: true
           )
 
@@ -148,8 +148,8 @@ module Domain
             longitude: 135.0,
             region: "Kyoto",
             user_id: 1,
-            created_at: Time.current,
-            updated_at: Time.current,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
             is_reference: false
           }
 

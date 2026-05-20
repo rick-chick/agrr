@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module DeletionUndo
     module Entities
-      class DeletionUndoEntityTest < ActiveSupport::TestCase
+      class DeletionUndoEntityTest < DomainLibTestCase
         setup do
-          @expires_at = Time.zone.parse("2026-05-01 12:00:00")
+          @expires_at = Time.utc(2026, 5, 1, 12, 0, 0)
         end
 
         test "expired? is true when now is after expires_at" do
@@ -18,7 +18,7 @@ module Domain
             metadata: {}
           )
 
-          assert entity.expired?(now: @expires_at + 1.second)
+          assert entity.expired?(now: @expires_at + 1)
         end
 
         test "expired? is false when now equals expires_at" do
@@ -40,7 +40,7 @@ module Domain
             metadata: {}
           )
 
-          refute entity.expired?(now: @expires_at - 1.second)
+          refute entity.expired?(now: @expires_at - 1)
         end
       end
     end

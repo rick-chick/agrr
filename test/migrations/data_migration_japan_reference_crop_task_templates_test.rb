@@ -7,28 +7,43 @@ class DataMigrationJapanReferenceCropTaskTemplatesTest < ActiveSupport::TestCase
   end.freeze
 
   def setup
-    CropTaskTemplate.delete_all
-    AgriculturalTask.delete_all
+    ActiveRecord::Base.lease_connection.disable_referential_integrity do
+      CropTaskTemplate.delete_all
+      AgriculturalTask.delete_all
 
-    # 参照作物を作成
-    reference_crop_names.each do |crop_name|
-      Crop.where(name: crop_name, region: "jp", is_reference: true).delete_all
-      create(:crop, :reference, name: crop_name, region: "jp")
-    end
+      # 参照作物をバッチ作成
+      reference_crop_names.each do |crop_name|
+        Crop.where(name: crop_name, region: "jp", is_reference: true).delete_all
+      end
+      Crop.insert_all(
+        reference_crop_names.map { |crop_name| {
+          name: crop_name,
+          variety: "general",
+          is_reference: true,
+          area_per_unit: 0.25,
+          revenue_per_area: 5000.0,
+          groups: [],
+          user_id: nil,
+          region: "jp"
+        } }
+      )
 
-    # 参照タスクを作成（DataMigrationJapanReferenceTasksで作成される想定）
-    EXPECTED_TASKS.each do |name, attributes|
-      AgriculturalTask.where(name: name, region: "jp", is_reference: true).delete_all
-      AgriculturalTask.create!(
-        name: name,
-        description: attributes[:description],
-        time_per_sqm: attributes[:time_per_sqm],
-        weather_dependency: attributes[:weather_dependency],
-        required_tools: attributes[:required_tools].to_json,
-        skill_level: attributes[:skill_level],
-        user_id: nil,
-        is_reference: true,
-        region: "jp"
+      # 参照タスクをバッチ作成（DataMigrationJapanReferenceTasksで作成される想定）
+      EXPECTED_TASKS.each do |name, attributes|
+        AgriculturalTask.where(name: name, region: "jp", is_reference: true).delete_all
+      end
+      AgriculturalTask.insert_all(
+        EXPECTED_TASKS.map { |name, attributes| {
+          name: name,
+          description: attributes[:description],
+          time_per_sqm: attributes[:time_per_sqm],
+          weather_dependency: attributes[:weather_dependency],
+          required_tools: attributes[:required_tools].to_json,
+          skill_level: attributes[:skill_level],
+          user_id: nil,
+          is_reference: true,
+          region: "jp"
+        } }
       )
     end
 
@@ -126,7 +141,34 @@ class DataMigrationJapanReferenceCropTaskTemplatesTest < ActiveSupport::TestCase
   end
 
   def test_down_removes_crop_task_templates
-    @migration.up
+    # upではなく直接テンプレートをバッチ作成（セットアップでAgriculturalTask/Cropは既に存在）
+    task_map = AgriculturalTask.where(name: EXPECTED_TASKS.keys, region: "jp", is_reference: true).index_by(&:name)
+    crop_map = Crop.where(name: reference_crop_names, region: "jp", is_reference: true).index_by(&:name)
+
+    templates = EXPECTED_TASKS.flat_map do |task_name, attributes|
+      task = task_map[task_name]
+      next unless task
+
+      attributes[:crops].flat_map do |crop_name|
+        crop = crop_map[crop_name]
+        next unless crop
+
+        {
+          crop_id: crop.id,
+          agricultural_task_id: task.id,
+          name: task_name,
+          description: attributes[:description],
+          time_per_sqm: attributes[:time_per_sqm],
+          weather_dependency: attributes[:weather_dependency],
+          required_tools: attributes[:required_tools].to_json,
+          skill_level: attributes[:skill_level],
+          is_reference: true
+        }
+      end
+    end.compact
+
+    CropTaskTemplate.insert_all(templates)
+
     @migration.down
 
     # CropTaskTemplateが削除されていることを確認

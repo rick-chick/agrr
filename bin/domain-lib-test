@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# lib/domain のユニットテストを Rails アプリ（config/environment）を起動せずに実行する。
+# Usage:
+#   bundle exec bin/domain-lib-test
+#   bundle exec bin/domain-lib-test test/domain/crop/interactors/crop_list_interactor_test.rb
+
+ENV["RAILS_ENV"] ||= "test"
+
+root = File.expand_path("..", __dir__)
+Dir.chdir(root)
+
+tests =
+  if ARGV.empty?
+    Dir.glob(File.join(root, "test/domain/**/*_test.rb")).sort.reject do |f|
+      File.read(f).include?('require "test_helper"')
+    end
+  else
+    ARGV.map { |t| File.absolute_path(t, root) }
+  end
+
+unless tests.all? { |p| File.file?(p) }
+  abort "domain-lib-test: 指定されたパスのファイルが見つかりません: #{tests.inspect}"
+end
+
+# ruby foo.rb bar.rb は bar を実行しない（ARGV に入るだけ）ため、明示的に load する。
+load_script = tests.map { |p| "load(#{p.dump})" }.join("; ")
+exec(
+  Gem.ruby,
+  "-W:deprecated",
+  "-I#{root}/lib",
+  "-I#{root}/app",
+  "-I#{root}/test",
+  "-e",
+  load_script
+)

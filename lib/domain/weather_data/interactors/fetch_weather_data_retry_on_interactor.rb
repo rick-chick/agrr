@@ -14,7 +14,7 @@ module Domain
           @translator = translator
         end
 
-        def execute(input_dto:)
+        def call(input_dto:)
           farm_id = input_dto[:farm_id]
           start_date = input_dto[:start_date]
           end_date = input_dto[:end_date]

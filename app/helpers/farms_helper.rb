@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module FarmsHelper
-  # FarmListRowDto 用。キーは app/models/farm.rb#weather_data_status_text と揃える。
+  # FarmListRow 用。キーは app/models/farm.rb#weather_data_status_text と揃える。
   def farm_list_row_weather_status_text(row)
     case row.weather_data_status
     when "pending"

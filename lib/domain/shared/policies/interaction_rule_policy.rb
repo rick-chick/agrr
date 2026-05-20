@@ -23,7 +23,7 @@ module Domain
         end
 
         def self.normalize_attrs_for_create(user, params)
-          attributes = params.to_h.symbolize_keys
+          attributes = Domain::Shared.symbolize_keys(params.to_h)
           attributes.delete(:region) unless user.admin?
 
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference]) || false
@@ -40,8 +40,8 @@ module Domain
         end
 
         def self.normalize_attrs_for_update(user, current_attrs, params)
-          rule = current_attrs.to_h.symbolize_keys
-          update_params = params.to_h.symbolize_keys
+          rule = Domain::Shared.symbolize_keys(current_attrs.to_h)
+          update_params = Domain::Shared.symbolize_keys(params.to_h)
 
           update_params.delete(:region) unless user.admin?
 

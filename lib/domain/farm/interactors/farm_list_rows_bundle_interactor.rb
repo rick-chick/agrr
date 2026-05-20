@@ -13,7 +13,7 @@ module Domain
         end
 
         def call(input_dto = nil)
-          input_dto ||= Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
+          input_dto ||= Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
           @gateway.user_id = @user_id
 
           bundle = @gateway.farm_list_rows_bundle(input_dto)
@@ -21,9 +21,9 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

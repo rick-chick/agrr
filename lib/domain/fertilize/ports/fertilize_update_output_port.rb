@@ -8,7 +8,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement on_success"
         end
 
-        # @param failure_dto [Domain::Fertilize::Dtos::FertilizeUpdateFailureDto]
+        # @param failure_dto [Domain::Fertilize::Dtos::FertilizeUpdateFailure]
         def on_failure(failure_dto)
           raise NotImplementedError, "Subclasses must implement on_failure"
         end

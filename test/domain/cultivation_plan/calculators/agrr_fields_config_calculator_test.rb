@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class AgrrFieldsConfigCalculatorTest < ActiveSupport::TestCase
+class AgrrFieldsConfigCalculatorTest < DomainLibTestCase
   test "build maps fields and defaults daily_fixed_cost" do
     plan_fields = [
       {

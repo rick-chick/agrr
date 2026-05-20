@@ -16,13 +16,13 @@ module Domain
           when :success
             @logger.error("✅ Database cleared successfully. Before: #{r.before_stats.to_h}, After: #{r.after_stats.to_h}")
             @output_port.on_success(
-              Dtos::BackdoorClearDatabaseSuccessDto.new(
+              Dtos::BackdoorClearDatabaseOutput.new(
                 before_stats: r.before_stats,
                 after_stats: r.after_stats
               )
             )
           when :failure
-            @output_port.on_failure(Dtos::BackdoorClearDatabaseFailureDto.new(message: r.error_message))
+            @output_port.on_failure(Dtos::BackdoorClearDatabaseFailure.new(message: r.error_message))
           else
             raise ArgumentError, "unexpected gateway result kind: #{r.kind.inspect}"
           end

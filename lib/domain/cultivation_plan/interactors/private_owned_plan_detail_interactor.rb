@@ -28,7 +28,7 @@ module Domain
           raise
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.warn("[PrivateOwnedPlanDetailInteractor] #{e.class}: #{e.message}")
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

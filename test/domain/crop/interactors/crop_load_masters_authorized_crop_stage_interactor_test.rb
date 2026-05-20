@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropLoadMastersAuthorizedCropStageInteractorTest < ActiveSupport::TestCase
+      class CropLoadMastersAuthorizedCropStageInteractorTest < DomainLibTestCase
         test "returns dto when gateway succeeds" do
           crop_entity = Domain::Crop::Entities::CropEntity.new(id: 1, user_id: 1, name: "x", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
           crop_stage_entity = Domain::Crop::Entities::CropStageEntity.new(id: 2, crop_id: 1, name: "s", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
-          dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContextDto.new(
+          dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContext.new(
             crop_entity: crop_entity,
             crop_stage_entity: crop_stage_entity
           )

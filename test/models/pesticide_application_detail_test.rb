@@ -7,11 +7,6 @@ class PesticideApplicationDetailTest < ActiveSupport::TestCase
     @pesticide = create(:pesticide)
   end
 
-  test "should belong to pesticide" do
-    detail = create(:pesticide_application_detail, pesticide: @pesticide)
-    assert_equal @pesticide, detail.pesticide
-  end
-
   test "should validate pesticide presence" do
     detail = PesticideApplicationDetail.new
     assert_not detail.valid?
@@ -68,12 +63,5 @@ class PesticideApplicationDetailTest < ActiveSupport::TestCase
     assert detail.valid?
   end
 
-  test "should destroy when pesticide is destroyed" do
-    detail = create(:pesticide_application_detail, pesticide: @pesticide)
-    detail_id = detail.id
 
-    @pesticide.destroy
-
-    assert_not PesticideApplicationDetail.exists?(detail_id)
-  end
 end

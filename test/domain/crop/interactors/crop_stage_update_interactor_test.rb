@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropStageUpdateInteractorTest < ActiveSupport::TestCase
+      class CropStageUpdateInteractorTest < DomainLibTestCase
         test "calls on_success with updated crop stage when gateway succeeds" do
           updated_crop_stage = Domain::Crop::Entities::CropStageEntity.new(
             id: 1,
             crop_id: 1,
             name: "発芽",
             order: 2,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           gateway = Minitest::Mock.new
           payload = { name: "発芽", order: 2 }
-          input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
+          input_dto = Domain::Crop::Dtos::CropStageUpdateInput.new(
             crop_id: 1,
             stage_id: 1,
             payload: payload
@@ -36,10 +36,10 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure with ErrorDto when gateway raises RecordInvalid" do
+        test "calls on_failure with Error when gateway raises RecordInvalid" do
           gateway = Minitest::Mock.new
           payload = { name: "", order: 2 }
-          input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
+          input_dto = Domain::Crop::Dtos::CropStageUpdateInput.new(
             crop_id: 1,
             stage_id: 1,
             payload: payload
@@ -58,7 +58,7 @@ module Domain
           interactor = CropStageUpdateInteractor.new(output_port: output_port, gateway: gateway)
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received_failure
+          assert_instance_of Domain::Shared::Dtos::Error, received_failure
           assert_equal "Name can't be blank", received_failure.message
           gateway.verify
         end
@@ -66,7 +66,7 @@ module Domain
         test "propagates StandardError when gateway raises" do
           gateway = Minitest::Mock.new
           payload = { name: "発芽", order: 2 }
-          input_dto = Domain::Crop::Dtos::CropStageUpdateInputDto.new(
+          input_dto = Domain::Crop::Dtos::CropStageUpdateInput.new(
             crop_id: 1,
             stage_id: 1,
             payload: payload

@@ -2872,37 +2872,17 @@ function handleQuickRangeAction(action) {
       break;
       
     case 'range-1year':
-      // 現在の開始日から1年間の範囲を設定
-      // 開始日は現在の開始日のまま
+      // 現在の開始日から1年間の範囲を設定（開始日は変更せず、終了日を開始日から+1年）
       newStartDate = new Date(currentStartDate);
-      // 終了日は開始日から1年後（うるう年を考慮して安全に計算）
       newEndDate = new Date(currentStartDate);
-      const endMonth = newEndDate.getMonth();
-      const endDay = newEndDate.getDate();
-      newEndDate.setMonth(0, 1); // 年の最初の月の最初の日に設定
       newEndDate.setFullYear(newEndDate.getFullYear() + 1);
-      // 1年後の同じ月・日を設定（うるう年を考慮）
-      newEndDate.setMonth(endMonth);
-      const targetYearLastDay = new Date(newEndDate.getFullYear(), newEndDate.getMonth() + 1, 0).getDate();
-      newEndDate.setDate(Math.min(endDay, targetYearLastDay));
-      // 計画範囲の制約を削除：計画範囲外の期間にも作付けを作成できるようにする
       break;
       
     case 'range-2year':
-      // 現在の開始日から2年間の範囲を設定
-      // 開始日は現在の開始日のまま
+      // 現在の開始日から2年間の範囲を設定（開始日は変更せず、終了日を開始日から+2年）
       newStartDate = new Date(currentStartDate);
-      // 終了日は開始日から2年後（うるう年を考慮して安全に計算）
       newEndDate = new Date(currentStartDate);
-      const endMonth2 = newEndDate.getMonth();
-      const endDay2 = newEndDate.getDate();
-      newEndDate.setMonth(0, 1); // 年の最初の月の最初の日に設定
       newEndDate.setFullYear(newEndDate.getFullYear() + 2);
-      // 2年後の同じ月・日を設定（うるう年を考慮）
-      newEndDate.setMonth(endMonth2);
-      const targetYearLastDay2 = new Date(newEndDate.getFullYear(), newEndDate.getMonth() + 1, 0).getDate();
-      newEndDate.setDate(Math.min(endDay2, targetYearLastDay2));
-      // 計画範囲の制約を削除：計画範囲外の期間にも作付けを作成できるようにする
       break;
       
     case 'full-range':

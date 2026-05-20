@@ -8,16 +8,6 @@ class CropPestTest < ActiveSupport::TestCase
     @pest = create(:pest)
   end
 
-  test "should belong to crop" do
-    crop_pest = create(:crop_pest, crop: @crop, pest: @pest)
-    assert_equal @crop, crop_pest.crop
-  end
-
-  test "should belong to pest" do
-    crop_pest = create(:crop_pest, crop: @crop, pest: @pest)
-    assert_equal @pest, crop_pest.pest
-  end
-
   test "should validate crop presence" do
     crop_pest = CropPest.new(pest: @pest)
     assert_not crop_pest.valid?

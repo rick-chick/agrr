@@ -26,7 +26,7 @@ module Domain
         end
 
         def call(input_dto)
-          unless Domain::Shared::ValidationHelpers.present?(input_dto.farm_id)
+          unless Domain::Shared.present?(input_dto.farm_id)
             @output_port.on_missing_session
             return
           end
@@ -37,7 +37,7 @@ module Domain
             return
           end
 
-          unless Domain::Shared::ValidationHelpers.present?(input_dto.crop_ids)
+          unless Domain::Shared.present?(input_dto.crop_ids)
             notify_no_crops_after_context(farm.id)
             return
           end
@@ -54,7 +54,7 @@ module Domain
             return
           end
 
-          plan_name = input_dto.plan_name.to_s.strip.presence || farm.name
+          plan_name = input_dto.plan_name.to_s.strip.empty? ? farm.name : input_dto.plan_name.to_s.strip
           total_area = resolved_total_area(input_dto, farm)
           session_id = @session_id_generator.call
 
@@ -67,12 +67,12 @@ module Domain
             plan_type: "private",
             plan_year: nil,
             plan_name: plan_name,
-            planning_start_date: @clock.today.beginning_of_year,
+            planning_start_date: Domain::Shared::DateCalendar.beginning_of_year(@clock.today),
             planning_end_date: Date.new(@clock.today.year + 1, 12, 31)
           )
 
           unless result.success? && result.cultivation_plan
-            msg = result.errors.present? ? result.errors.join(", ") : @translator.t("public_plans.save.error")
+            msg = Domain::Shared.present?(result.errors) ? result.errors.join(", ") : @translator.t("public_plans.save.error")
             @logger.error("❌ [PrivatePlanCreateFromSessionInteractor] Initialize failed: #{msg}")
             @output_port.on_initialize_failed(message: msg)
             return
@@ -97,7 +97,7 @@ module Domain
         end
 
         def resolved_total_area(input_dto, farm)
-          if Domain::Shared::ValidationHelpers.present?(input_dto.total_area)
+          if Domain::Shared.present?(input_dto.total_area)
             input_dto.total_area.to_f
           else
             @cultivation_plan_gateway.total_field_area_for_farm(farm.id, input_dto.user)

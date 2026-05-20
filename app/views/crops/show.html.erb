@@ -7,7 +7,7 @@
   
   <%= render 'crops/basic_info', crop: @crop %>
   
-  <%= render 'crops/pests_section', crop: @crop %>
+  <%= render 'crops/pests_section', crop: @crop, pests: @pests %>
   
   <div class="task-schedule-blueprints-section">
     <%= render 'crops/available_task_templates_section',

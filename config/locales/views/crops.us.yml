@@ -1,3 +1,5 @@
+us:
+  crops:
     agricultural_tasks:
       flash:
         template_created: "Template created from the selected task."
@@ -45,9 +47,6 @@
           required_tools_label: "Required Tools"
           required_tools_hint: "Enter one per line"
           submit_update: "Update Template"
-
-us:
-  crops:
     form:
       name_label: "Name"
       variety_label: "Variety"

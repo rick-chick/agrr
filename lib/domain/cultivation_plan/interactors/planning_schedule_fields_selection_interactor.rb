@@ -33,7 +33,7 @@ module Domain
             fields = @cultivation_plan_gateway.aggregated_planning_schedule_fields(user: user, farm_id: selected_farm_id)
 
             requested_field_ids = normalize_field_ids(field_ids_param)
-            allowed_ids = fields.map { |f| f[:id] }
+            allowed_ids = fields.map { |f| f.id }
             selected_field_ids = (requested_field_ids.presence || allowed_ids).map(&:to_i).uniq & allowed_ids
           elsif selected_farm_id && !selected_farm
             fields = []
@@ -45,7 +45,7 @@ module Domain
           range_const = Domain::CultivationPlan::PlanningScheduleConstants::DEFAULT_YEARS_RANGE
           year_range = ((next_year - range_const + 1)..next_year).to_a.reverse
 
-          dto = Domain::CultivationPlan::Dtos::PlanningScheduleFieldsSelectionSuccessDto.new(
+          dto = Domain::CultivationPlan::Dtos::PlanningScheduleFieldsSelectionOutput.new(
             farms: farms,
             selected_farm_id: selected_farm_id,
             selected_farm: selected_farm,

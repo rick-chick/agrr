@@ -15,7 +15,7 @@ module Domain
           case r.kind
           when :farm_not_found
             @output_port.on_failure(
-              Dtos::InternalWeatherFetchFailureDto.new(
+              Dtos::InternalWeatherFetchFailure.new(
                 message: @translator.t("api.errors.common.farm_not_found"),
                 http_status: :not_found
               )
@@ -23,8 +23,8 @@ module Domain
           when :completed
             snap = r.snapshot
             @output_port.on_success(
-              Dtos::InternalWeatherFetchStartSuccessDto.new(
-                variant: Dtos::InternalWeatherFetchStartSuccessDto::VARIANT_ALREADY_COMPLETED,
+              Dtos::InternalWeatherFetchStartOutput.new(
+                variant: Dtos::InternalWeatherFetchStartOutput::VARIANT_ALREADY_COMPLETED,
                 farm_id: snap.farm_id,
                 weather_data_status: snap.weather_data_status,
                 weather_data_count: snap.weather_data_count,
@@ -34,8 +34,8 @@ module Domain
           when :started
             snap = r.snapshot
             @output_port.on_success(
-              Dtos::InternalWeatherFetchStartSuccessDto.new(
-                variant: Dtos::InternalWeatherFetchStartSuccessDto::VARIANT_FETCH_STARTED,
+              Dtos::InternalWeatherFetchStartOutput.new(
+                variant: Dtos::InternalWeatherFetchStartOutput::VARIANT_FETCH_STARTED,
                 farm_id: snap.farm_id,
                 weather_data_status: snap.weather_data_status,
                 weather_data_count: snap.weather_data_count,
@@ -44,7 +44,7 @@ module Domain
             )
           when :failed
             @output_port.on_failure(
-              Dtos::InternalWeatherFetchFailureDto.new(
+              Dtos::InternalWeatherFetchFailure.new(
                 message: r.error_message.to_s,
                 http_status: :internal_server_error
               )

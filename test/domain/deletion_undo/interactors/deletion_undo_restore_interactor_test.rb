@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module DeletionUndo
     module Interactors
-      class DeletionUndoRestoreInteractorTest < ActiveSupport::TestCase
+      class DeletionUndoRestoreInteractorTest < DomainLibTestCase
         setup do
           @undo_token = "undo-token-1"
-          @expires_at = Time.zone.parse("2026-05-01 12:00:00")
-          @input_dto = Domain::DeletionUndo::Dtos::DeletionUndoRestoreInputDto.new(
+          @expires_at = Time.utc(2026, 5, 1, 12, 0, 0)
+          @input_dto = Domain::DeletionUndo::Dtos::DeletionUndoRestoreInput.new(
             undo_token: @undo_token
           )
         end
 
         test "calls on_success when event is scheduled and not expired for clock.now" do
-          frozen_now = @expires_at - 1.minute
+          frozen_now = @expires_at - 60
           clock = Object.new
           clock.define_singleton_method(:now) { frozen_now }
 
@@ -43,7 +43,7 @@ module Domain
           )
           interactor.call(@input_dto)
 
-          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoRestoreOutputDto, received
+          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoRestoreOutput, received
           assert_equal "restored", received.status
           assert_equal @undo_token, received.undo_token
 
@@ -52,7 +52,7 @@ module Domain
         end
 
         test "calls expire_if_needed and on_failure when event is expired for clock.now" do
-          frozen_now = @expires_at + 1.minute
+          frozen_now = @expires_at + 60
           clock = Object.new
           clock.define_singleton_method(:now) { frozen_now }
 
@@ -80,7 +80,7 @@ module Domain
           )
           interactor.call(@input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_includes received.message, "expired"
 
           gateway.verify
@@ -88,7 +88,7 @@ module Domain
         end
 
         test "calls mark_failed and on_failure when event is not scheduled but not expired for clock.now" do
-          frozen_now = @expires_at - 1.minute
+          frozen_now = @expires_at - 60
           clock = Object.new
           clock.define_singleton_method(:now) { frozen_now }
 
@@ -116,7 +116,7 @@ module Domain
           )
           interactor.call(@input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
 
           gateway.verify
           output_port.verify

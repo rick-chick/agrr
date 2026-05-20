@@ -41,7 +41,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（HTML フォーム用。契約は {Domain::Pest::Ports::PestHtmlAuthorizedPestLoad}）。
+        # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（HTML フォーム用。契約は {Domain::Pest::Ports::PestAuthorizedLoad}）。
         def find_authorized_pest_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_pest_loaded_bundle!"
         end
@@ -67,20 +67,20 @@ module Domain
         end
 
         # 新規作成 + crop への紐付け（HTML/Masters 共用）。pest_attrs は Interactor で PestPolicy 正規化済み。
-        # @return [Hash] { status: :created|:invalid, pest_snapshot: PestCropNestSnapshotDto, unassociated_pest_entities: [...] }
+        # @return [Hash] { status: :created|:invalid, pest_snapshot: PestCropNestSnapshot, unassociated_pest_entities: [...] }
         def create_pest_for_crop(user:, crop_id:, pest_attrs:, crop_access_filter:)
           raise NotImplementedError, "Subclasses must implement create_pest_for_crop"
         end
 
         # crop 配下の Pest を更新する。pest_attrs は Interactor で正規化済み。
-        # @return [Hash] { status: :updated|:invalid|:crop_missing|:pest_missing, pest_snapshot: PestCropNestSnapshotDto|nil }
+        # @return [Hash] { status: :updated|:invalid|:crop_missing|:pest_missing, pest_snapshot: PestCropNestSnapshot|nil }
         def update_pest_for_crop(user:, crop_id:, pest_id:, pest_attrs:, crop_access_filter:)
           raise NotImplementedError, "Subclasses must implement update_pest_for_crop"
         end
 
         # crop 配下の Pest を取得する（HTML 編集等向け）。
         # @param for_edit_form [Boolean] true のとき防除方法が 0 件なら空行を補完する
-        # @return [Hash] { status: :found|:not_found, pest_snapshot: PestCropNestSnapshotDto|nil }
+        # @return [Hash] { status: :found|:not_found, pest_snapshot: PestCropNestSnapshot|nil }
         def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter:, for_edit_form: false)
           raise NotImplementedError, "Subclasses must implement find_pest_in_crop"
         end

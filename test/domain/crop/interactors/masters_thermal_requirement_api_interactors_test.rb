@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class MastersThermalRequirementShowInteractorTest < ActiveSupport::TestCase
+      class MastersThermalRequirementShowInteractorTest < DomainLibTestCase
         setup do
           @mock_gateway = mock
           @mock_output_port = mock
@@ -16,7 +16,7 @@ module Domain
         end
 
         test "renders show success when requirement exists" do
-          dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: 9)
+          dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 9)
           entity = mock
 
           @mock_gateway.expects(:find_thermal_requirement).with(9).returns(entity)
@@ -26,7 +26,7 @@ module Domain
         end
 
         test "renders not found when requirement missing" do
-          dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: 9)
+          dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 9)
 
           @mock_gateway.expects(:find_thermal_requirement).with(9).returns(nil)
           @mock_output_port.expects(:on_not_found)
@@ -35,7 +35,7 @@ module Domain
         end
       end
 
-      class MastersThermalRequirementCreateInteractorTest < ActiveSupport::TestCase
+      class MastersThermalRequirementCreateInteractorTest < DomainLibTestCase
         setup do
           @mock_gateway = mock
           @mock_output_port = mock
@@ -46,7 +46,7 @@ module Domain
         end
 
         test "creates when absent and reports success" do
-          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
             crop_id: 1,
             stage_id: 2,
             payload: { required_gdd: 200.0 }
@@ -61,7 +61,7 @@ module Domain
         end
 
         test "reports already exists when requirement present" do
-          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
             crop_id: 1,
             stage_id: 2,
             payload: { required_gdd: 200.0 }
@@ -75,7 +75,7 @@ module Domain
         end
 
         test "reports validation errors on RecordInvalid" do
-          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
             crop_id: 1,
             stage_id: 2,
             payload: { required_gdd: "bad" }
@@ -90,7 +90,7 @@ module Domain
         end
       end
 
-      class MastersThermalRequirementUpdateInteractorTest < ActiveSupport::TestCase
+      class MastersThermalRequirementUpdateInteractorTest < DomainLibTestCase
         setup do
           @mock_gateway = mock
           @mock_output_port = mock
@@ -101,7 +101,7 @@ module Domain
         end
 
         test "updates when present" do
-          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
             crop_id: 1,
             stage_id: 2,
             payload: { required_gdd: 250.0 }
@@ -117,7 +117,7 @@ module Domain
         end
 
         test "not found when missing before update" do
-          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+          dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
             crop_id: 1,
             stage_id: 2,
             payload: {}
@@ -131,7 +131,7 @@ module Domain
         end
       end
 
-      class MastersThermalRequirementDestroyInteractorTest < ActiveSupport::TestCase
+      class MastersThermalRequirementDestroyInteractorTest < DomainLibTestCase
         setup do
           @mock_gateway = mock
           @mock_output_port = mock
@@ -142,7 +142,7 @@ module Domain
         end
 
         test "destroys and reports success" do
-          dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: 5)
+          dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 5)
 
           @mock_gateway.expects(:destroy_thermal_requirement).with(5)
           @mock_output_port.expects(:on_destroy_success)
@@ -151,7 +151,7 @@ module Domain
         end
 
         test "not found when gateway raises RecordNotFound" do
-          dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: 5)
+          dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 5)
 
           @mock_gateway.expects(:destroy_thermal_requirement).raises(Domain::Shared::Exceptions::RecordNotFound.new("ThermalRequirement not found"))
           @mock_output_port.expects(:on_not_found)

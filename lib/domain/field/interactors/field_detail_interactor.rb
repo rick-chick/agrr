@@ -16,12 +16,12 @@ module Domain
           farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
           result = @gateway.field_with_farm_for_user(field_id, farm_access_filter: farm_access_filter)
           @output_port.on_success(result)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied => e
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise
         end

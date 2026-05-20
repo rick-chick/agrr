@@ -1,0 +1,85 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# CI / local gate: ARCHITECTURE.md Prohibited practices (high-signal subset).
+# See ARCHITECTURE.md "Testing" and docs/ca-violations-backlog.md §G.
+
+ROOT = File.expand_path("..", __dir__)
+$stderr.sync = true
+$stdout.sync = true
+
+violations = []
+
+def each_rb_under(root)
+  return unless File.directory?(root)
+
+  Dir.glob(File.join(root, "**", "*.rb")).sort.each { |path| yield path }
+end
+
+def code_before_comment(line)
+  line.split("#", 2).first
+end
+
+domain_root = File.join(ROOT, "lib", "domain")
+each_rb_under(domain_root) do |path|
+  File.foreach(path, chomp: true).with_index(1) do |line, lineno|
+    stripped = line.strip
+    next if stripped.empty?
+    next if stripped.start_with?("#")
+
+    code = code_before_comment(line)
+    next if code.strip.empty?
+
+    violations << "#{path}:#{lineno}: lib/domain must not reference Rails. in code" if code.match?(/\bRails\./)
+  end
+end
+
+presenters_root = File.join(ROOT, "app", "adapters", "presenters")
+%w[CompositionRoot find_model perform_later].each do |needle|
+  each_rb_under(presenters_root) do |path|
+    File.foreach(path, chomp: true).with_index(1) do |line, lineno|
+      stripped = line.strip
+      next if stripped.empty?
+      next if stripped.start_with?("#")
+
+      code = code_before_comment(line)
+      next if code.strip.empty?
+
+      case needle
+      when "find_model"
+        next unless code.match?(/\bfind_model\b/)
+      else
+        next unless code.include?(needle)
+      end
+
+      violations << "#{path}:#{lineno}: presenters must not use #{needle} (#{line.strip})"
+    end
+  end
+end
+
+interactors_root = File.join(ROOT, "lib", "domain")
+each_rb_under(interactors_root) do |path|
+  next unless path.include?("#{File::SEPARATOR}interactors#{File::SEPARATOR}")
+
+  File.foreach(path, chomp: true).with_index(1) do |line, lineno|
+    stripped = line.strip
+    next if stripped.empty?
+    next if stripped.start_with?("#")
+
+    code = code_before_comment(line)
+    next if code.strip.empty?
+
+    next unless code.include?("find_user_non_reference_crop_record")
+
+    violations << "#{path}:#{lineno}: interactors must not call find_user_non_reference_crop_record; use find_user_non_reference_crop_entity (#{line.strip})"
+  end
+end
+
+if violations.empty?
+  puts "ca-boundary-check: OK"
+  exit 0
+end
+
+warn "ca-boundary-check: FAILED (#{violations.size} violation(s))"
+violations.each { |v| warn v }
+exit 1

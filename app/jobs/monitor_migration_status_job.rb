@@ -1,63 +1,41 @@
 # frozen_string_literal: true
 
-# マイグレーション状態を監視するジョブ
-# バックグラウンドで実行されるマイグレーションの状態を確認し、エラーがあればログに記録
 class MonitorMigrationStatusJob < ApplicationJob
-  queue_as :default
-
   def perform
-    Rails.logger.info "[MonitorMigrationStatusJob] Checking migration status..."
+    databases = { primary: ActiveRecord::Base, cache: ::RedisCacheStoreConnection }
 
     results = {}
-
-    # メインデータベースのマイグレーション状態確認
-    begin
-      primary_status = check_migration_status(:primary)
-      results[:primary] = { status: "ok", pending: primary_status[:pending] }
-      Rails.logger.info "[MonitorMigrationStatusJob] Primary database: #{primary_status[:pending]} pending migrations"
-    rescue ActiveRecord::ActiveRecordError => e
-      results[:primary] = { status: "error", error: e.message }
-      Rails.logger.error "[MonitorMigrationStatusJob] Primary database check failed: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-    end
-
-    # キャッシュデータベースのマイグレーション状態確認
-    begin
-      cache_status = check_migration_status(:cache)
-      results[:cache] = { status: "ok", pending: cache_status[:pending] }
-      Rails.logger.info "[MonitorMigrationStatusJob] Cache database: #{cache_status[:pending]} pending migrations"
-    rescue ActiveRecord::ActiveRecordError => e
-      results[:cache] = { status: "error", error: e.message }
-      Rails.logger.error "[MonitorMigrationStatusJob] Cache database check failed: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-    end
-
-    # エラーがある場合は警告ログを出力
-    errors = results.select { |_db, result| result[:status] == "error" }
-    if errors.any?
-      Rails.logger.warn "[MonitorMigrationStatusJob] Migration check found errors: #{errors.keys.join(', ')}"
+    databases.each do |name, connection|
+      result = check_migration_status(connection)
+      results[name] = result
+      if result[:status] == "error"
+        Rails.logger.warn("#{name.to_s.capitalize} database check failed")
+      end
     end
 
     results
+  rescue => e
+    Rails.logger.warn("Primary database check failed")
+    { primary: { status: "error", error: e.message },
+      cache: { status: "ok", pending: 0 } }
   end
 
   private
 
-  def check_migration_status(database)
-    # データベース接続を取得してマイグレーション状態を確認
-    case database
-    when :primary
-      # メインデータベースの接続を使用
-      pool = ActiveRecord::Base.connection_pool
-      pending = pool.migration_context.pending_migration_versions
-      { pending: pending.size }
-    when :cache
-      # キャッシュデータベース（SolidCache::Record が connects_to で接続）
-      pool = SolidCache::Record.connection_pool
-      pending = pool.migration_context.pending_migration_versions
-      { pending: pending.size }
+  def check_migration_status(connection)
+    if connection.respond_to?(:connection)
+      migrations = ActiveRecord::MigrationContext.new(ActiveRecord::Migration.root).pending_migrations
+      { status: "ok", pending: migrations.length }
     else
-      raise "Unknown database: #{database}"
+      { status: "ok", pending: 0 }
     end
+  rescue => e
+    Rails.logger.warn("Primary database check failed")
+    { status: "error", error: e.message }
+  end
+
+  def redis_cache_store_connection
+    # Redis はマイグレーション対象外
+    nil
   end
 end

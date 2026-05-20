@@ -25,11 +25,11 @@ module Adapters
         end
 
         test "should raise when not found" do
-          assert_raises(StandardError) { @gateway.find_by_id(9999) }
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) { @gateway.find_by_id(9999) }
         end
 
         test "should create and return entity" do
-          create_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInputDto.new(
+          create_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInput.new(
             rule_type: "continuous_cultivation",
             source_group: "ナス科",
             target_group: "ナス科",
@@ -47,7 +47,7 @@ module Adapters
         end
 
         test "should raise when create fails validation - invalid region" do
-          create_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInputDto.new(
+          create_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInput.new(
             rule_type: "continuous_cultivation",
             source_group: "ナス科",
             target_group: "ナス科",
@@ -55,12 +55,12 @@ module Adapters
             region: "invalid",
             is_reference: true
           )
-          assert_raises(StandardError) { @gateway.create(create_dto) }
+          assert_raises(Domain::Shared::Exceptions::RecordInvalid) { @gateway.create(create_dto) }
         end
 
         test "should update and return entity" do
           record = create(:interaction_rule, :reference, rule_type: "continuous_cultivation", region: "jp")
-          update_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInputDto.new(
+          update_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInput.new(
             id: record.id,
             region: "us"
           )
@@ -75,11 +75,11 @@ module Adapters
 
         test "should raise when update fails validation - invalid region" do
           record = create(:interaction_rule, :reference, region: "jp")
-          update_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInputDto.new(
+          update_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInput.new(
             id: record.id,
             region: "invalid"
           )
-          assert_raises(StandardError) { @gateway.update(record.id, update_dto) }
+          assert_raises(Domain::Shared::Exceptions::RecordInvalid) { @gateway.update(record.id, update_dto) }
         end
 
         test "should destroy existing record" do
@@ -89,7 +89,7 @@ module Adapters
         end
 
         test "should raise when destroy not found" do
-          assert_raises(StandardError) { @gateway.destroy(9999) }
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) { @gateway.destroy(9999) }
         end
 
         test "should list all records and return entities" do

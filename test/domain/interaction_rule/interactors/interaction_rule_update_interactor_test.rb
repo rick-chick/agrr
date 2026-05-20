@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module InteractionRule
     module Interactors
-      class InteractionRuleUpdateInteractorTest < ActiveSupport::TestCase
+      class InteractionRuleUpdateInteractorTest < DomainLibTestCase
         test "calls on_failure with policy exception when find_authorized_for_edit denies" do
           user_id = 10
           user = Object.new
-          dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInputDto.new(
+          dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInput.new(
             id: 9,
             source_group: "変更しようとしたグループ"
           )

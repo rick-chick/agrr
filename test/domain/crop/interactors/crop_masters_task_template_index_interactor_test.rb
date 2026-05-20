@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropMastersTaskTemplateIndexInteractorTest < ActiveSupport::TestCase
+      class CropMastersTaskTemplateIndexInteractorTest < DomainLibTestCase
         setup do
           @gateway = mock
           @output_port = mock
@@ -18,7 +18,7 @@ module Domain
         end
 
         test "should return rows successfully" do
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInputDto.new(user_id: 1, crop_id: 2)
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInput.new(user_id: 1, crop_id: 2)
           user = mock
           rows = [ { "id" => 1 } ]
 
@@ -30,7 +30,7 @@ module Domain
         end
 
         test "should return crop_not_found when gateway raises RecordNotFound" do
-          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInputDto.new(user_id: 1, crop_id: 2)
+          input_dto = Domain::Crop::Dtos::MastersCropTaskTemplateIndexInput.new(user_id: 1, crop_id: 2)
           user = mock
 
           @user_lookup.expects(:find).with(1).returns(user)

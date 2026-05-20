@@ -5,7 +5,7 @@ class InteractionRulesController < ApplicationController
 
   # GET /interaction_rules
   def index
-    presenter = Presenters::Html::InteractionRule::InteractionRuleListHtmlPresenter.new(view: self)
+    presenter = Adapters::InteractionRule::Presenters::Html::InteractionRuleListHtmlPresenter.new(view: self)
     Domain::InteractionRule::Interactors::InteractionRuleListInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -16,7 +16,7 @@ class InteractionRulesController < ApplicationController
 
   # GET /interaction_rules/:id
   def show
-    presenter = Presenters::Html::InteractionRule::InteractionRuleDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::InteractionRule::Presenters::Html::InteractionRuleDetailHtmlPresenter.new(view: self)
     Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -42,7 +42,7 @@ class InteractionRulesController < ApplicationController
 
     @form = InteractionRuleForm.from_params(filtered_params)
 
-    presenter = Presenters::Html::InteractionRule::InteractionRuleCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::InteractionRule::Presenters::Html::InteractionRuleCreateHtmlPresenter.new(view: self)
     interactor = Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -51,7 +51,7 @@ class InteractionRulesController < ApplicationController
       user_lookup: user_lookup_adapter
     )
 
-    input_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInputDto.from_hash(
+    input_dto = Domain::InteractionRule::Dtos::InteractionRuleCreateInput.from_hash(
       filtered_params.merge(user_id: current_user.id)
     )
     interactor.call(input_dto)
@@ -64,7 +64,7 @@ class InteractionRulesController < ApplicationController
 
     @form = InteractionRuleForm.from_params(filtered_params.merge(id: params[:id].to_i))
 
-    presenter = Presenters::Html::InteractionRule::InteractionRuleUpdateHtmlPresenter.new(view: self)
+    presenter = Adapters::InteractionRule::Presenters::Html::InteractionRuleUpdateHtmlPresenter.new(view: self)
     interactor = Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -73,7 +73,7 @@ class InteractionRulesController < ApplicationController
       user_lookup: user_lookup_adapter
     )
 
-    input_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInputDto.from_hash(
+    input_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInput.from_hash(
       filtered_params,
       params[:id]
     )
@@ -85,12 +85,12 @@ class InteractionRulesController < ApplicationController
     respond_to do |format|
       format.html do
         destroy_with_presenter(
-          Presenters::Html::InteractionRule::InteractionRuleDestroyHtmlPresenter.new(view: self)
+          Adapters::InteractionRule::Presenters::Html::InteractionRuleDestroyHtmlPresenter.new(view: self)
         )
       end
       format.json do
         destroy_with_presenter(
-          Presenters::Api::InteractionRule::InteractionRuleDeletePresenter.new(view: self)
+          Adapters::InteractionRule::Presenters::Api::InteractionRuleDeletePresenter.new(view: self)
         )
       end
     end
@@ -121,7 +121,7 @@ class InteractionRulesController < ApplicationController
 
   def preload_interaction_rule_entity
     for_edit = params[:action].to_sym.in?([ :edit, :update ])
-    presenter = Presenters::Html::InteractionRule::InteractionRuleHtmlLoadPresenter.new(view: self, for_edit: for_edit)
+    presenter = Adapters::InteractionRule::Presenters::Html::InteractionRuleHtmlLoadPresenter.new(view: self, for_edit: for_edit)
     Domain::InteractionRule::Interactors::InteractionRuleLoadInteractor.new(
       output_port: presenter,
       user_id: current_user.id,

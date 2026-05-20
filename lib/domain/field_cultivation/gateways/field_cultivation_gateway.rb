@@ -4,16 +4,16 @@ module Domain
   module FieldCultivation
     module Gateways
       class FieldCultivationGateway
-        def fetch_field_cultivation_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
-          raise NotImplementedError, "Subclasses must implement fetch_field_cultivation_climate_data"
+        def find_climate_data_by_field_cultivation(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
+          raise NotImplementedError, "Subclasses must implement find_climate_data_by_field_cultivation"
         end
 
         def climate_data_fallback_dto(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
           raise NotImplementedError, "Subclasses must implement climate_data_fallback_dto"
         end
 
-        def fetch_api_summary(field_cultivation_id:)
-          raise NotImplementedError, "Subclasses must implement fetch_api_summary"
+        def find_api_summary_by_field_cultivation(field_cultivation_id:)
+          raise NotImplementedError, "Subclasses must implement find_api_summary_by_field_cultivation"
         end
 
         def update_field_cultivation_schedule(field_cultivation_id:, start_date:, completion_date:, public_plan: false)

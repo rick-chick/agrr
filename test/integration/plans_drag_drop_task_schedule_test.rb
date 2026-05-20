@@ -61,25 +61,12 @@ class PlansDragDropTaskScheduleTest < ActionDispatch::IntegrationTest
       scheduled_date: Date.current + 40.days
     )
 
-    # 天気データを作成（adjust処理に必要）
+    # 天気ロケーションを作成（adjust処理でfarm_without_weather_location?チェックに必要）
+    # NOTE: adjust gateway をモック化しているため、weather_datum の作成は不要
     @weather_location = create(:weather_location,
       latitude: @farm.latitude || 35.0,
       longitude: @farm.longitude || 139.0
     )
-
-    # 天気データを追加（adjust処理に必要）
-    # NOTE: 過去20年分は重いためテストではサンプル化して短縮する
-    end_date = Date.current
-    start_date = [ end_date - 365.days, end_date - 20.years.to_i.days ].max
-    (start_date..end_date).each do |date|
-      create(:weather_datum,
-        weather_location: @weather_location,
-        date: date,
-        temperature_max: 25.0,
-        temperature_min: 15.0,
-        temperature_mean: 20.0
-      )
-    end
 
     @farm.update!(weather_location: @weather_location)
 

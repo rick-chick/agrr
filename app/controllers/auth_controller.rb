@@ -86,7 +86,7 @@ class AuthController < ApplicationController
   end
 
   def logout
-    presenter = Presenters::Html::Auth::AuthUserLogoutHtmlPresenter.new(view: self)
+    presenter = Adapters::Auth::Presenters::Html::AuthUserLogoutHtmlPresenter.new(view: self)
     Domain::Auth::Interactors::AuthUserLogoutInteractor.new(
       output_port: presenter,
       session_revocation_gateway: CompositionRoot.user_session_revocation_gateway

@@ -10,7 +10,7 @@ module Api
             before_action :set_crop_and_crop_stage
 
             def show
-              input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
+              input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersThermalRequirementShowInteractor.new(
                 output_port: thermal_requirement_presenter,
@@ -20,7 +20,7 @@ module Api
             end
 
             def create
-              input_dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+              input_dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
                 crop_id: @crop.id,
                 stage_id: @crop_stage.id,
                 payload: thermal_requirement_params.to_h.symbolize_keys
@@ -34,7 +34,7 @@ module Api
             end
 
             def update
-              input_dto = Domain::Crop::Dtos::ThermalRequirementUpdateInputDto.new(
+              input_dto = Domain::Crop::Dtos::ThermalRequirementUpdateInput.new(
                 crop_id: @crop.id,
                 stage_id: @crop_stage.id,
                 payload: thermal_requirement_params.to_h.symbolize_keys
@@ -48,7 +48,7 @@ module Api
             end
 
             def destroy
-              input_dto = Domain::Crop::Dtos::CropStageDetailInputDto.new(crop_stage_id: @crop_stage.id)
+              input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: @crop_stage.id)
 
               interactor = Domain::Crop::Interactors::MastersThermalRequirementDestroyInteractor.new(
                 output_port: thermal_requirement_presenter,
@@ -68,7 +68,7 @@ module Api
             private
 
             def set_crop_and_crop_stage
-              failure = Presenters::Api::Crop::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
+              failure = Adapters::Crop::Presenters::Api::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
               interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
                 failure_presenter: failure,
                 user_id: current_user.id,
@@ -87,7 +87,7 @@ module Api
             end
 
             def thermal_requirement_presenter
-              @thermal_requirement_presenter ||= Presenters::Api::Crop::MastersThermalRequirementPresenter.new(view: self)
+              @thermal_requirement_presenter ||= Adapters::Crop::Presenters::Api::MastersThermalRequirementPresenter.new(view: self)
             end
           end
         end

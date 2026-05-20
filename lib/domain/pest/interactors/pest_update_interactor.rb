@@ -39,7 +39,7 @@ module Domain
           attrs[:pest_control_methods_attributes] = input_dto.pest_control_methods_attributes if input_dto.pest_control_methods_attributes
 
           # is_referenceのチェック
-          if Domain::Shared::ValidationHelpers.present?(input_dto.is_reference)
+          if Domain::Shared.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             if is_reference != current.reference? && !user.admin?
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pests.flash.reference_flag_admin_only"))
@@ -64,18 +64,18 @@ module Domain
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(
-            Domain::Pest::Dtos::PestUpdateFailureDto.new(message: e.message, reload_bundle: reload_bundle_for_failure(user, input_dto, access_filter))
+            Domain::Pest::Dtos::PestUpdateFailure.new(message: e.message, reload_bundle: reload_bundle_for_failure(user, input_dto, access_filter))
           )
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(
-            Domain::Pest::Dtos::PestUpdateFailureDto.new(message: e.message, reload_bundle: reload_bundle_for_failure(user, input_dto, access_filter))
+            Domain::Pest::Dtos::PestUpdateFailure.new(message: e.message, reload_bundle: reload_bundle_for_failure(user, input_dto, access_filter))
           )
         end
 
         private
 
         def reload_bundle_for_failure(user, input_dto, access_filter)
-          return nil unless user && access_filter && !Domain::Shared::ValidationHelpers.blank?(input_dto.pest_id)
+          return nil unless user && access_filter && !Domain::Shared.blank?(input_dto.pest_id)
 
           @gateway.find_authorized_pest_loaded_bundle!(user, input_dto.pest_id.to_i, for_edit: true, access_filter: access_filter)
         rescue *RELOAD_BUNDLE_RESCUES

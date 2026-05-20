@@ -36,7 +36,7 @@ module Domain
             segs = phase_segments(crop, result)
             ranges = []
             segs.each do |seg|
-              next if seg[:start_date].blank? || seg[:end_date].blank?
+              next if Domain::Shared::ValidationHelpers.blank?(seg[:start_date]) || Domain::Shared::ValidationHelpers.blank?(seg[:end_date])
 
               ranges << { start_date: Date.parse(seg[:start_date]), end_date: Date.parse(seg[:end_date]), label: seg[:label] }
             end
@@ -62,7 +62,7 @@ module Domain
 
           def schedule_flow_summary(crop, result)
             segs = phase_segments(crop, result)
-            parts = segs.filter_map { |s| s[:label] if s[:empty_reason].blank? && s[:start_date].present? }
+            parts = segs.filter_map { |s| s[:label] if Domain::Shared::ValidationHelpers.blank?(s[:empty_reason]) && Domain::Shared::ValidationHelpers.present?(s[:start_date]) }
             if parts.empty?
               return t("api.entry_schedule.flow.summary_fallback")
             end
@@ -73,7 +73,7 @@ module Domain
           def schedule_flow_detail(crop, result)
             segs = phase_segments(crop, result)
             chunks = segs.filter_map do |s|
-              next if s[:start_date].blank?
+              next if Domain::Shared::ValidationHelpers.blank?(s[:start_date])
 
               t(
                 "api.entry_schedule.flow.detail_chunk",
@@ -93,8 +93,8 @@ module Domain
             rp = result.reason_parts || {}
             if rp[:source].to_s == "agrr_optimize_period" && result.eligible
               segs = phase_segments(crop, result)
-              sow_seg = segs.find { |s| s[:phase_key].to_s == "sowing" && s[:empty_reason].blank? && s[:start_date].present? }
-              tr_seg = segs.find { |s| s[:phase_key].to_s == "transplant" && s[:empty_reason].blank? && s[:start_date].present? }
+              sow_seg = segs.find { |s| s[:phase_key].to_s == "sowing" && Domain::Shared::ValidationHelpers.blank?(s[:empty_reason]) && Domain::Shared::ValidationHelpers.present?(s[:start_date]) }
+              tr_seg = segs.find { |s| s[:phase_key].to_s == "transplant" && Domain::Shared::ValidationHelpers.blank?(s[:empty_reason]) && Domain::Shared::ValidationHelpers.present?(s[:start_date]) }
               out_sow = []
               out_tr = []
               if sow_seg
@@ -156,7 +156,7 @@ module Domain
 
           def segment_harvest_from_quarter(s0, e0, weather_end, quarter_index)
             h = phase_base(:harvest)
-            if weather_end.blank?
+            if Domain::Shared::ValidationHelpers.blank?(weather_end)
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.no_weather_end"))
             end
 
@@ -185,7 +185,7 @@ module Domain
             unless eligible
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.ineligible"))
             end
-            if sow_first.blank?
+            if Domain::Shared::ValidationHelpers.blank?(sow_first)
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.no_sowing_window"))
             end
 
@@ -201,12 +201,12 @@ module Domain
             unless eligible
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.ineligible"))
             end
-            if sow_first.blank? || tr_first.blank?
+            if Domain::Shared::ValidationHelpers.blank?(sow_first) || Domain::Shared::ValidationHelpers.blank?(tr_first)
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.nursery_gap"))
             end
 
-            start_d = sow_first[:end_date] + 1.day
-            end_d = tr_first[:start_date] - 1.day
+            start_d = sow_first[:end_date] + 1
+            end_d = tr_first[:start_date] - 1
             if end_d < start_d
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.nursery_gap"))
             end
@@ -223,7 +223,7 @@ module Domain
             unless eligible
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.ineligible"))
             end
-            if tr_first.blank?
+            if Domain::Shared::ValidationHelpers.blank?(tr_first)
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.no_transplant_window"))
             end
 
@@ -239,10 +239,10 @@ module Domain
             unless eligible
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.ineligible"))
             end
-            if tr_first.blank?
+            if Domain::Shared::ValidationHelpers.blank?(tr_first)
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.no_transplant_window"))
             end
-            if weather_end.blank?
+            if Domain::Shared::ValidationHelpers.blank?(weather_end)
               return h.merge(empty_reason: t("api.entry_schedule.phase.empty.no_weather_end"))
             end
 
@@ -268,7 +268,7 @@ module Domain
           end
 
           def walk_months(start_date, end_date)
-            d = start_date.beginning_of_month
+            d = Date.new(start_date.year, start_date.month, 1)
             while d <= end_date
               yield d
               d = d.next_month
@@ -276,16 +276,16 @@ module Domain
           end
 
           def format_month_range(start_iso, end_iso)
-            return "" if start_iso.blank?
+            return "" if Domain::Shared::ValidationHelpers.blank?(start_iso)
 
             s = Date.parse(start_iso)
-            e = end_iso.present? ? Date.parse(end_iso) : s
+            e = Domain::Shared::ValidationHelpers.present?(end_iso) ? Date.parse(end_iso) : s
             t("api.entry_schedule.flow.month_range", start: s.strftime("%Y-%m"), end: e.strftime("%Y-%m"))
           end
 
           def sowing_proximity_days(sow_first, eligible)
             return 999_999 unless eligible
-            return 999_999 if sow_first.blank?
+            return 999_999 if Domain::Shared::ValidationHelpers.blank?(sow_first)
 
             today = @clock.today
             s = sow_first[:start_date]
@@ -297,7 +297,7 @@ module Domain
           end
 
           def window_width_days(sow_first)
-            return 999_999 if sow_first.blank?
+            return 999_999 if Domain::Shared::ValidationHelpers.blank?(sow_first)
 
             (sow_first[:end_date] - sow_first[:start_date]).to_i + 1
           end

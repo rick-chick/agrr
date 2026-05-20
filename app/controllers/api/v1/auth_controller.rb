@@ -8,7 +8,7 @@ module Api
       end
 
       def logout
-        presenter = Presenters::Api::V1::Auth::AuthUserLogoutApiPresenter.new(view: self)
+        presenter = Adapters::Auth::Presenters::Api::AuthUserLogoutApiPresenter.new(view: self)
         Domain::Auth::Interactors::AuthUserLogoutInteractor.new(
           output_port: presenter,
           session_revocation_gateway: CompositionRoot.user_session_revocation_gateway

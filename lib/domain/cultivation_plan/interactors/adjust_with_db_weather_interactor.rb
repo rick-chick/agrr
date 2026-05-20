@@ -252,7 +252,7 @@ module Domain
               @logger.info "✅ [Adjust] Historical weather data loaded: #{historical_rows.count} records (#{historical_data_start} to #{historical_data_end})"
 
               facts = @plan_gateway.weather_location_facts
-              current_year_formatted = Domain::WeatherData::Services::AdjustHistoricalPredictionMerger.build_historical_agrr_series(
+              current_year_formatted = Domain::WeatherData::Mappers::AdjustHistoricalPredictionMapper.build_historical_agrr_series(
                 latitude: facts[:latitude],
                 longitude: facts[:longitude],
                 elevation: facts[:elevation],
@@ -260,7 +260,7 @@ module Domain
                 rows: historical_rows
               )
 
-              merged = Domain::WeatherData::Services::AdjustHistoricalPredictionMerger.merge_historical_series_with_prediction(
+              merged = Domain::WeatherData::Mappers::AdjustHistoricalPredictionMapper.merge_historical_series_with_prediction(
                 current_year_formatted,
                 prediction_data
               )
@@ -310,14 +310,14 @@ module Domain
               extended_prediction_data
             else
               facts = @plan_gateway.weather_location_facts
-              current_year_formatted = Domain::WeatherData::Services::AdjustHistoricalPredictionMerger.build_historical_agrr_series(
+              current_year_formatted = Domain::WeatherData::Mappers::AdjustHistoricalPredictionMapper.build_historical_agrr_series(
                 latitude: facts[:latitude],
                 longitude: facts[:longitude],
                 elevation: facts[:elevation],
                 timezone: facts[:timezone],
                 rows: historical_rows
               )
-              Domain::WeatherData::Services::AdjustHistoricalPredictionMerger.merge_historical_series_with_prediction(
+              Domain::WeatherData::Mappers::AdjustHistoricalPredictionMapper.merge_historical_series_with_prediction(
                 current_year_formatted,
                 extended_prediction_data
               )
@@ -419,7 +419,7 @@ module Domain
             message: @translator.translate("api.errors.common.invalid_date_format", message: e.message),
             status: :bad_request
           }
-        rescue Agrr::BaseGateway::ExecutionError => e
+        rescue Adapters::Agrr::Gateways::BaseGateway::ExecutionError => e
           @logger.error "❌ [Adjust] Failed to adjust: #{e.message}"
           {
             success: false,

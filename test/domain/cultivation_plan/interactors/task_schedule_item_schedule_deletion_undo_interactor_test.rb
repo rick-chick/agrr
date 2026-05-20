@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
+require "adapters/translators/rails_translator"
 
 module Domain
   module CultivationPlan
     module Interactors
-      class TaskScheduleItemScheduleDeletionUndoInteractorTest < ActiveSupport::TestCase
+      class TaskScheduleItemScheduleDeletionUndoInteractorTest < DomainLibTestCase
         setup do
           @mutation_output_port = mock("mutation_output_port")
           @mutation_gateway = mock("mutation_gateway")
@@ -29,7 +30,7 @@ module Domain
 
           @mutation_gateway.expects(:deletion_undo_schedule_row_for_item!).with(10, 20, 30).returns(row)
           @deletion_undo_interactor.expects(:call).with do |dto|
-            dto.is_a?(Domain::DeletionUndo::Dtos::DeletionUndoScheduleInputDto) &&
+            dto.is_a?(Domain::DeletionUndo::Dtos::DeletionUndoScheduleInput) &&
               dto.resource_type == row[:resource_type] &&
               dto.resource_id == row[:resource_id] &&
               dto.actor_id == 10 &&

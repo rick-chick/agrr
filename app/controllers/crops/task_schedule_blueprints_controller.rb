@@ -6,14 +6,14 @@ module Crops
 
     # PATCH /crops/:crop_id/task_schedule_blueprints/:id/update_position
     def update_position
-      input_dto = Domain::Crop::Dtos::CropTaskScheduleBlueprintUpdatePositionInputDto.new(
+      input_dto = Domain::Crop::Dtos::CropTaskScheduleBlueprintUpdatePositionInput.new(
         user_id: current_user.id,
         crop_id: params[:crop_id],
         blueprint_id: params[:id].to_i,
         gdd_trigger: params[:gdd_trigger]&.to_f,
         priority: params[:priority]&.to_i
       )
-      presenter = Presenters::Html::Crop::CropTaskScheduleBlueprintUpdatePositionPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropTaskScheduleBlueprintUpdatePositionPresenter.new(view: self)
       Domain::Crop::Interactors::CropTaskScheduleBlueprintUpdatePositionInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -23,12 +23,12 @@ module Crops
 
     # DELETE /crops/:crop_id/task_schedule_blueprints/:id
     def destroy
-      input_dto = Domain::Crop::Dtos::CropTaskScheduleBlueprintDestroyInputDto.new(
+      input_dto = Domain::Crop::Dtos::CropTaskScheduleBlueprintDestroyInput.new(
         user_id: current_user.id,
         crop_id: params[:crop_id],
         blueprint_id: params[:id].to_i
       )
-      presenter = Presenters::Html::Crop::CropTaskScheduleBlueprintDestroyPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::Html::CropTaskScheduleBlueprintDestroyPresenter.new(view: self)
       Domain::Crop::Interactors::CropTaskScheduleBlueprintDestroyInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -39,7 +39,7 @@ module Crops
     private
 
     def set_crop
-      failure = Presenters::Html::Crop::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+      failure = Adapters::Crop::Presenters::Html::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,

@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module FieldCultivation
     module Interactors
-      class FieldCultivationClimateDataInteractorTest < ActiveSupport::TestCase
+      class FieldCultivationClimateDataInteractorTest < DomainLibTestCase
         test "delivers climate information when gateway returns data" do
           fc_id = 42
-          success_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataSuccessDto.new(
+          success_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataOutput.new(
             field_cultivation: { id: fc_id, field_name: "north", crop_name: "tomato" },
             farm: { id: 1, name: "Yokohama Farm", latitude: 35.4, longitude: 139.6 },
             crop_requirements: { base_temperature: 10.0 },
@@ -21,7 +21,7 @@ module Domain
 
           fetch_args = {}
           gateway = Object.new
-          gateway.define_singleton_method(:fetch_field_cultivation_climate_data) do |field_cultivation_id:, display_start_date:, display_end_date:|
+          gateway.define_singleton_method(:find_climate_data_by_field_cultivation) do |field_cultivation_id:, display_start_date:, display_end_date:|
             fetch_args[:field_cultivation_id] = field_cultivation_id
             fetch_args[:display_start_date] = display_start_date
             fetch_args[:display_end_date] = display_end_date
@@ -40,7 +40,7 @@ module Domain
             logger: logger
           )
 
-          input_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInputDto.new(
+          input_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
             field_cultivation_id: fc_id
           )
 
@@ -56,7 +56,7 @@ module Domain
         test "routes RecordNotFound through the output port" do
           fc_id = 42
           gateway = Object.new
-          gateway.define_singleton_method(:fetch_field_cultivation_climate_data) do |_kwargs|
+          gateway.define_singleton_method(:find_climate_data_by_field_cultivation) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 
@@ -71,12 +71,12 @@ module Domain
             gateway: gateway,
             logger: logger
           ).call(
-            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInputDto.new(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: fc_id
             )
           )
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal "gone", received.message
           output_port.verify
         end
@@ -84,7 +84,7 @@ module Domain
         test "routes missing climate data through the output port" do
           fc_id = 99
           gateway = Object.new
-          gateway.define_singleton_method(:fetch_field_cultivation_climate_data) do |_kwargs|
+          gateway.define_singleton_method(:find_climate_data_by_field_cultivation) do |_kwargs|
             nil
           end
 
@@ -99,12 +99,12 @@ module Domain
             gateway: gateway,
             logger: logger
           ).call(
-            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInputDto.new(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: fc_id
             )
           )
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal "Field cultivation climate data not found", received.message
           output_port.verify
         end

@@ -383,10 +383,10 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     create(:crop_pest, crop: admin_crop, pest: reference_pest)
     create(:crop_pest, crop: admin_crop, pest: admin_pest)
 
-    get crop_pest_path(admin_crop, reference_pest)
+    get crop_pest_path(admin_crop, reference_pest, locale: :us)
     assert_response :success
 
-    get crop_pest_path(admin_crop, admin_pest)
+    get crop_pest_path(admin_crop, admin_pest, locale: :us)
     assert_response :success
   end
 end

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Shared
-    class TypeConvertersTest < ActiveSupport::TestCase
+    class TypeConvertersTest < DomainLibTestCase
       test "IntegerConverter.cast yields integer for digit strings and rejects non-digits" do
         assert_equal 42, TypeConverters::IntegerConverter.cast("42")
         assert_equal(-3, TypeConverters::IntegerConverter.cast("-3"))

@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Interactors
-      class CropUpdateInteractorTest < ActiveSupport::TestCase
+      class CropUpdateInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns entity" do
           user_id = 10
           user = Object.new
           crop_id = 5
-          input_dto = Domain::Crop::Dtos::CropUpdateInputDto.new(crop_id: crop_id, name: "更新された名前")
+          input_dto = Domain::Crop::Dtos::CropUpdateInput.new(crop_id: crop_id, name: "更新された名前")
           crop_entity = Object.new
 
           user_lookup = Minitest::Mock.new
@@ -48,7 +48,7 @@ module Domain
           user_id = 10
           user = Object.new
           crop_id = 5
-          input_dto = Domain::Crop::Dtos::CropUpdateInputDto.new(crop_id: crop_id, name: "変更しようとした名前")
+          input_dto = Domain::Crop::Dtos::CropUpdateInput.new(crop_id: crop_id, name: "変更しようとした名前")
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
@@ -90,7 +90,7 @@ module Domain
           end
           crop_id = 5
           msg = I18n.t("crops.flash.reference_flag_admin_only")
-          input_dto = Domain::Crop::Dtos::CropUpdateInputDto.new(crop_id: crop_id, is_reference: true)
+          input_dto = Domain::Crop::Dtos::CropUpdateInput.new(crop_id: crop_id, is_reference: true)
 
           current_entity = Object.new
           def current_entity.reference?
@@ -120,7 +120,7 @@ module Domain
 
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal msg, received.message
           user_lookup.verify
           translator.verify

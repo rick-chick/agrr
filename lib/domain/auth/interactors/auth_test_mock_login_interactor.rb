@@ -16,7 +16,7 @@ module Domain
             return
           end
 
-          if input_dto.google_id.blank?
+          if input_dto.google_id.nil? || input_dto.google_id.empty?
             @output_port.on_missing_mock
             return
           end
@@ -27,7 +27,7 @@ module Domain
           when :success
             if input_dto.stashed_public_plan
               @output_port.on_success_process_saved_plan(session_id: result.session_id, expires_at: result.expires_at)
-            elsif input_dto.pending_return_to.present? && input_dto.pending_return_to_allowed
+            elsif input_dto.pending_return_to && input_dto.pending_return_to_allowed
               url = @oauth_url_appender.append(input_dto.pending_return_to)
               @output_port.on_success_return_to(
                 url: url,

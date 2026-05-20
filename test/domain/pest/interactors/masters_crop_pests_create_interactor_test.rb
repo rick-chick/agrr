@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Pest
     module Interactors
-      class MastersCropPestsCreateInteractorTest < ActiveSupport::TestCase
+      class MastersCropPestsCreateInteractorTest < DomainLibTestCase
         setup do
-          @user = create(:user)
+          @user = Object.new
+          @user.define_singleton_method(:id) { 1 }
+          @user.define_singleton_method(:email) { "test@example.com" }
+          @user.define_singleton_method(:name) { "Test" }
+          @user.define_singleton_method(:admin?) { false }
           @user_id = @user.id
           @mock_pest_gateway = mock
           @mock_output_port = mock

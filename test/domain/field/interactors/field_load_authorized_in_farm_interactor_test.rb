@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Field
     module Interactors
-      class FieldLoadAuthorizedInFarmInteractorTest < ActiveSupport::TestCase
+      class FieldLoadAuthorizedInFarmInteractorTest < DomainLibTestCase
         setup do
           @fixed_at = Time.utc(2026, 1, 15, 12, 0, 0).freeze
           @entity = Entities::FieldEntity.new(
@@ -26,7 +26,7 @@ module Domain
           snapshot = Domain::Farm::Dtos::FieldMasterFormSnapshot.new(
             attributes: { name: "North", farm_id: 3 }, new_record: false, id: 7
           )
-          dto = Domain::Field::Dtos::AuthorizedFieldLoadedInFarmDto.new(
+          dto = Domain::Field::Dtos::AuthorizedFieldLoadedInFarm.new(
             field_entity: @entity,
             master_form_snapshot: snapshot
           )

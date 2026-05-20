@@ -65,14 +65,19 @@ module Domain
           raise NotImplementedError, "Subclasses must implement build_pesticide_for_create_failure_master_form"
         end
 
-        # マスタCRUD edit / update 失敗時にネストが欠けていれば build
-        def ensure_nested_associations_for_pesticide_master_form!(pesticide)
-          raise NotImplementedError, "Subclasses must implement ensure_nested_associations_for_pesticide_master_form!"
-        end
-
-        # マスタCRUD update 失敗時の再表示用
+        # マスタCRUD update 失敗時の再表示用（AR モデルをフォームに変換）
         def assign_pesticide_attributes_for_master_form!(pesticide, attributes_hash)
           raise NotImplementedError, "Subclasses must implement assign_pesticide_attributes_for_master_form!"
+        end
+
+        # マスタCRUD update 失敗時にパラメータをマージして {Forms::PesticideMasterForm} を返す
+        def merge_edit_pesticide_params_for_master_form!(user:, pesticide_id:, attributes:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement merge_edit_pesticide_params_for_master_form!"
+        end
+
+        # マスタCRUD create 失敗時に属性付き新規 Pesticide を {Forms::PesticideMasterForm} として返す
+        def build_new_pesticide_with_attributes_for_master_form(attributes:)
+          raise NotImplementedError, "Subclasses must implement build_new_pesticide_with_attributes_for_master_form"
         end
 
         # 農薬フォームで選択可能な作物スコープ（永続層・ポリシーはアダプター側）

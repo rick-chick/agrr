@@ -185,7 +185,7 @@ module Api
           Rails.logger.error "   Request IP: #{request.remote_ip}"
           Rails.logger.error "   User Agent: #{request.user_agent}"
 
-          presenter = Presenters::Api::Backdoor::BackdoorClearDatabasePresenter.new(view: self)
+          presenter = Adapters::Backdoor::Presenters::Api::BackdoorClearDatabasePresenter.new(view: self)
           Domain::Backdoor::Interactors::BackdoorClearDatabaseInteractor.new(
             output_port: presenter,
             gateway: CompositionRoot.backdoor_application_database_clear_gateway,

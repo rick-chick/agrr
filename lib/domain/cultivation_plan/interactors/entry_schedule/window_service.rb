@@ -105,7 +105,7 @@ module Domain
 
           def parse_day(datum)
             raw = datum["time"] || datum["date"] || datum[:time] || datum[:date]
-            return nil if raw.blank?
+            return nil if Domain::Shared::ValidationHelpers.blank?(raw)
 
             Date.parse(raw.to_s)
           rescue ArgumentError, TypeError
@@ -126,19 +126,19 @@ module Domain
             t_mean = row[:t_mean]
             return false unless t_min && t_mean
 
-            if temp_req.frost_threshold.present?
+            if Domain::Shared::ValidationHelpers.present?(temp_req.frost_threshold)
               return false if t_min < temp_req.frost_threshold.to_f
             end
 
-            if temp_req.optimal_min.present? && temp_req.optimal_max.present?
+            if Domain::Shared::ValidationHelpers.present?(temp_req.optimal_min) && Domain::Shared::ValidationHelpers.present?(temp_req.optimal_max)
               return t_mean >= temp_req.optimal_min.to_f && t_mean <= temp_req.optimal_max.to_f
             end
 
-            if temp_req.optimal_min.present?
+            if Domain::Shared::ValidationHelpers.present?(temp_req.optimal_min)
               return t_mean >= temp_req.optimal_min.to_f
             end
 
-            if temp_req.base_temperature.present?
+            if Domain::Shared::ValidationHelpers.present?(temp_req.base_temperature)
               return t_min >= temp_req.base_temperature.to_f
             end
 

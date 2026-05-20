@@ -16,14 +16,14 @@ module Domain
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
           fertilize_entity = @gateway.find_authorized_for_view(user, fertilize_id, access_filter: access_filter)
-          dto = Domain::Fertilize::Dtos::FertilizeDetailOutputDto.new(fertilize: fertilize_entity)
+          dto = Domain::Fertilize::Dtos::FertilizeDetailOutput.new(fertilize_entity: fertilize_entity)
           @output_port.on_success(dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(@translator.t("fertilizes.flash.not_found")))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("fertilizes.flash.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

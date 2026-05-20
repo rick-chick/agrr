@@ -45,7 +45,7 @@ module Domain
         end
 
         def validate_email
-          if Domain::Shared::ValidationHelpers.blank?(email)
+          if Domain::Shared.blank?(email)
             @errors.add(:email, "can't be blank")
           elsif email.to_s.length > 255
             @errors.add(:email, "is too long (maximum is 255 characters)")
@@ -55,7 +55,7 @@ module Domain
         end
 
         def validate_message
-          if Domain::Shared::ValidationHelpers.blank?(message)
+          if Domain::Shared.blank?(message)
             @errors.add(:message, "can't be blank")
           elsif message.to_s.length > 5000
             @errors.add(:message, "is too long (maximum is 5000 characters)")
@@ -65,7 +65,7 @@ module Domain
         def validate_optional_field_lengths
           %i[name subject source].each do |attr|
             value = public_send(attr)
-            next if Domain::Shared::ValidationHelpers.blank?(value)
+            next if Domain::Shared.blank?(value)
             next if value.to_s.length <= 255
 
             @errors.add(attr, "is too long (maximum is 255 characters)")

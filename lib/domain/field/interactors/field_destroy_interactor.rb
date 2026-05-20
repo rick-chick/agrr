@@ -15,16 +15,16 @@ module Domain
           user = @user_lookup.find(@user_id)
           farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
           undo_response = @gateway.destroy(field_id, farm_access_filter: farm_access_filter)
-          dto = Domain::Field::Dtos::FieldDestroyOutputDto.new(undo: undo_response)
+          dto = Domain::Field::Dtos::FieldDestroyOutput.new(undo: undo_response)
           @output_port.on_success(dto)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied, PolicyPermissionDenied => e
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::AssociationInUse => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
-        rescue DeletionUndo::Error => e
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+        rescue Domain::DeletionUndo::Exceptions::DeletionUndoError => e
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise
         end

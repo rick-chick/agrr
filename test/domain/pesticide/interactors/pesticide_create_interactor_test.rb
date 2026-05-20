@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Pesticide
     module Interactors
-      class PesticideCreateInteractorTest < ActiveSupport::TestCase
+      class PesticideCreateInteractorTest < DomainLibTestCase
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           user = Object.new
           user.define_singleton_method(:admin?) { false }
           user.define_singleton_method(:id) { user_id }
-          input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.new(name: "X", crop_id: 1, pest_id: 2)
+          input_dto = Domain::Pesticide::Dtos::PesticideCreateInput.new(name: "X", crop_id: 1, pest_id: 2)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
@@ -38,11 +38,11 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure with ErrorDto when non-admin requests reference pesticide" do
+        test "calls on_failure with Error when non-admin requests reference pesticide" do
           user_id = 10
           user = Object.new
           user.define_singleton_method(:admin?) { false }
-          input_dto = Domain::Pesticide::Dtos::PesticideCreateInputDto.new(
+          input_dto = Domain::Pesticide::Dtos::PesticideCreateInput.new(
             name: "参照農薬",
             active_ingredient: "X",
             crop_id: 1,
@@ -72,7 +72,7 @@ module Domain
 
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal "reference only", received.message
           user_lookup.verify
           translator.verify

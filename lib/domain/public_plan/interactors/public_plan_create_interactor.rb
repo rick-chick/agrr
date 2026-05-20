@@ -21,20 +21,20 @@ module Domain
           # 農場を取得
           farm = @gateway.find_farm(input_dto.farm_id)
           unless farm
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Farm not found"))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new("Farm not found"))
             return
           end
 
           # 農場サイズを取得
           farm_size = @gateway.find_farm_size(input_dto.farm_size_id)
           unless farm_size
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Invalid farm size"))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new("Invalid farm size"))
             return
           end
 
           total_area = farm_size[:area_sqm]
           unless total_area&.positive?
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new("Invalid total area"))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new("Invalid total area"))
             return
           end
 
@@ -42,8 +42,8 @@ module Domain
           crops = @gateway.find_crops(input_dto.crop_ids, farm.region)
           if crops.empty?
             @output_port.on_failure(
-              Domain::PublicPlan::Dtos::PublicPlanCreateFailureDto.new(
-                kind: Domain::PublicPlan::Dtos::PublicPlanCreateFailureDto::KIND_NO_CROPS,
+              Domain::PublicPlan::Dtos::PublicPlanCreateFailure.new(
+                kind: Domain::PublicPlan::Dtos::PublicPlanCreateFailure::KIND_NO_CROPS,
                 message: "No crops selected",
                 farm_id: input_dto.farm_id,
                 farm_size_id: input_dto.farm_size_id,
@@ -72,7 +72,7 @@ module Domain
 
           unless result.success? && result.cultivation_plan
             error_message = result.errors&.join(", ") || "Failed to create cultivation plan"
-            @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(error_message))
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(error_message))
             return
           end
 
@@ -83,7 +83,7 @@ module Domain
           @logger.info "🌱 [PublicPlanCreateInteractor] Created new CultivationPlan with plan_id: #{plan_id}"
 
           # 成功レスポンスを返す（ジョブチェーンは表現層の前にエッジ注入ゲートウェイで実行）
-          success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateSuccessDto.new(plan_id: plan_id)
+          success_dto = Domain::PublicPlan::Dtos::PublicPlanCreateOutput.new(plan_id: plan_id)
           @optimization_job_chain_gateway&.enqueue_after_create!(
             cultivation_plan_id: plan_id,
             caller_label: self.class.name,
@@ -92,7 +92,7 @@ module Domain
           @output_port.on_success(success_dto)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.warn "❌ [PublicPlanCreateInteractor] Validation: #{e.message}"
-          @output_port.on_failure(Domain::Shared::Dtos::ErrorDto.new(e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

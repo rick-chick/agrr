@@ -47,7 +47,7 @@ module Domain
           if periods.empty?
             logger.info "⚠️ [PlanSaveService] No field_cultivations found, using default 2-year window from as_of: #{as_of}"
             return {
-              start_date: as_of.beginning_of_year,
+              start_date: Date.new(as_of.year, 1, 1),
               end_date: Date.new(as_of.year + 1, 12, 31)
             }
           end
@@ -58,8 +58,8 @@ module Domain
           min_start_date = start_dates.min
           max_end_date = end_dates.max
 
-          planning_start_date = min_start_date.beginning_of_year
-          planning_end_date = max_end_date.end_of_year
+          planning_start_date = Date.new(min_start_date.year, 1, 1)
+          planning_end_date = Date.new(max_end_date.year, 12, 31)
 
           logger.debug "📊 [PlanSaveService] Field cultivations count: #{periods.size}"
           logger.debug "📊 [PlanSaveService] Min start date: #{min_start_date}, Max end date: #{max_end_date}"

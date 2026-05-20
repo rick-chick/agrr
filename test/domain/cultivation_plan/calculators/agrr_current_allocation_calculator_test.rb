@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class AgrrCurrentAllocationCalculatorTest < ActiveSupport::TestCase
+class AgrrCurrentAllocationCalculatorTest < DomainLibTestCase
   test "build aggregates optimization_result from field rows" do
     field_rows = [
       {

@@ -9,7 +9,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   self.use_transactional_tests = false
 
   # Capybaraのパフォーマンス最適化
-  Capybara.default_max_wait_time = 5 # デフォルトは2秒、必要に応じて調整
+  Capybara.default_max_wait_time = 15 # システムテスト安定化のため15秒に延長（Angular hydration, JS描画, 非同期待機対応）
   Capybara.default_normalize_ws = true
 
   # Docker環境でリモートSeleniumを使用する場合
@@ -34,6 +34,10 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     options.add_argument("--window-size=1400,1400")
     options.add_argument("--disable-web-security")
     options.add_argument("--allow-running-insecure-content")
+    # ロケール検出を ja に固定する。CI ブラウザ既定の Accept-Language（en-US 等）が
+    # アプリのロケール検出に漏れ込み、システムテストが非決定的になるのを防ぐ。
+    options.add_argument("--lang=ja")
+    options.add_preference("intl.accept_languages", "ja")
 
     Capybara::Selenium::Driver.new(
       app,
@@ -102,6 +106,36 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     })
   end
 
+  # システムテスト用のログイン&訪問ヘルパー
+  def login_and_visit(url)
+    visit root_path(locale: :ja)
+    page.driver.browser.manage.add_cookie(
+      name: "session_id",
+      value: @session.session_id,
+      path: "/"
+    )
+    visit url
+  end
+
+  # Cookie consent acceptヘルパー
+  def accept_cookie_consent
+    if has_selector?(".cookie-consent-banner", visible: true, wait: 5)
+      find("button.btn-primary", text: /同意/).click
+    end
+  end
+
+  # Cookie consent dismissヘルパー
+  def dismiss_cookie_consent
+    if has_selector?(".cookie-consent-banner", visible: true, wait: 5)
+      find("button.btn-primary", text: /同意/).click
+    end
+  end
+
+  # localStorageにCookie同意ステータスを直接設定する（UIクリックのタイミング問題を回避）
+  def set_cookie_consent_granted
+    page.execute_script("localStorage.setItem('cookieConsentStatus', 'granted')")
+  end
+
   # システムテスト用のログインヘルパー
   def login_as_system_user(user)
     # セッションを作成
@@ -124,6 +158,9 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     # APIキーをLocalStorageに設定
     visit root_path
     page.execute_script("localStorage.setItem('agrr_api_key', '#{user.api_key}')")
+
+    # Cookie同意をlocalStorageに直接設定（バナーによるクリック妨害を全システムテストで回避）
+    set_cookie_consent_granted
 
     # デバッグ用にコンソールログを表示
     page.execute_script("console.log('API Key set')")

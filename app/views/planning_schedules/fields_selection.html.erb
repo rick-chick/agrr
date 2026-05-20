@@ -64,10 +64,10 @@
               <div class="fields-checkbox-list">
                 <% @fields.each do |field| %>
                   <label class="field-checkbox-item">
-                    <%= check_box_tag "field_ids[]", field[:id], @selected_field_ids.include?(field[:id]), 
+                    <%= check_box_tag "field_ids[]", field.id, @selected_field_ids.include?(field.id), 
                         class: "field-checkbox" %>
                     <span class="field-checkbox-label">
-                      <%= field[:name] %> (<%= number_with_delimiter(field[:area].to_i) %>㎡)
+                      <%= field.name %> (<%= number_with_delimiter(field.area.to_i) %>㎡)
                     </span>
                   </label>
                 <% end %>

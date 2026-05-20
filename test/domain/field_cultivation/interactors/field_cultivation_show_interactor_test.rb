@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module FieldCultivation
     module Interactors
-      class FieldCultivationShowInteractorTest < ActiveSupport::TestCase
+      class FieldCultivationShowInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns summary dto" do
           fc_id = 42
-          dto = Domain::FieldCultivation::Dtos::FieldCultivationApiSummaryDto.new(
+          dto = Domain::FieldCultivation::Dtos::FieldCultivationApiSummary.new(
             id: fc_id,
             field_name: "F",
             crop_name: "C",
             area: 1.0,
-            start_date: Date.current,
-            completion_date: Date.current + 1,
+            start_date: Date.new(2026, 1, 1),
+            completion_date: Date.new(2026, 1, 1) + 1,
             cultivation_days: 2,
             estimated_cost: 3,
             gdd: 4,
@@ -23,7 +23,7 @@ module Domain
 
           call_args = nil
           gateway = Object.new
-          gateway.define_singleton_method(:fetch_api_summary) do |field_cultivation_id:|
+          gateway.define_singleton_method(:find_api_summary_by_field_cultivation) do |field_cultivation_id:|
             call_args = field_cultivation_id
             dto
           end
@@ -40,10 +40,10 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure with ErrorDto when gateway raises RecordNotFound" do
+        test "calls on_failure with Error when gateway raises RecordNotFound" do
           fc_id = 99
           gateway = Object.new
-          gateway.define_singleton_method(:fetch_api_summary) do |_kwargs|
+          gateway.define_singleton_method(:find_api_summary_by_field_cultivation) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 
@@ -53,7 +53,7 @@ module Domain
 
           FieldCultivationShowInteractor.new(output_port: output_port, gateway: gateway).call(field_cultivation_id: fc_id)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal "gone", received.message
           output_port.verify
         end

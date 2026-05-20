@@ -1,26 +1,26 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module Crop
     module Entities
-      class CropStageEntityTest < ActiveSupport::TestCase
+      class CropStageEntityTest < DomainLibTestCase
         test "should initialize with valid attributes" do
           entity = CropStageEntity.new(
             id: 1,
             crop_id: 1,
             name: "種まき",
             order: 1,
-            created_at: Time.current,
-            updated_at: Time.current
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
           )
           assert_equal 1, entity.id
           assert_equal 1, entity.crop_id
           assert_equal "種まき", entity.name
           assert_equal 1, entity.order
-          assert entity.created_at.present?
-          assert entity.updated_at.present?
+          assert !entity.created_at.nil?
+          assert !entity.updated_at.nil?
         end
 
         test "should initialize with nil optional attributes" do

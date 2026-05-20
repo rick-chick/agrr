@@ -17,13 +17,13 @@ module Domain
           when "month"
             current = start_date
             while current <= end_date
-              period_end = [ current.end_of_month, end_date ].min
+              period_end = [ Date.new(current.year, current.month, -1), end_date ].min
               periods << {
                 label: @translator.l(current, format: "%Y年%m月"),
                 start_date: current,
                 end_date: period_end
               }
-              current = current.next_month.beginning_of_month
+              current = Date.new(current.year, current.month, 1).next_month
             end
           when "quarter"
             current = start_date

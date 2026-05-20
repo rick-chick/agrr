@@ -13,7 +13,7 @@ module Domain
 
         def call(crop_id:)
           user = @user_lookup.find(@user_id)
-          blank_snapshot = Domain::Pest::Dtos::PestCropNestSnapshotDto.blank_for_nested_new(user_id: user.id)
+          blank_snapshot = Domain::Pest::Dtos::PestCropNestSnapshot.blank_for_nested_new(user_id: user.id)
           available_entities = @pest_gateway.list_selectable_pest_entities_recent_first(user)
           linked_pest_ids = @pest_gateway.pest_ids_linked_to_crop(crop_id: crop_id)
           unassociated_pests = available_entities.reject { |e| linked_pest_ids.include?(e.id) }

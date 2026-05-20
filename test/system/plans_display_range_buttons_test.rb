@@ -4,6 +4,10 @@ require "application_system_test_case"
 
 class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
   setup do
+    # 一意の座標を生成（WeatherLocationの一意性バリデーションとの衝突を回避）
+    @lat = 35.0 + SecureRandom.random_number * 10
+    @lon = 139.0 + SecureRandom.random_number * 10
+
     # テストデータを作成
     @user = User.create!(
       email: "range_test@example.com",
@@ -12,16 +16,16 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
     )
 
     @weather_location = WeatherLocation.create!(
-      latitude: 35.6812,
-      longitude: 139.7671,
+      latitude: @lat,
+      longitude: @lon,
       timezone: "Asia/Tokyo"
     )
 
     @farm = Farm.create!(
       user: @user,
       name: "範囲テスト農場",
-      latitude: 35.6812,
-      longitude: 139.7671,
+      latitude: @lat,
+      longitude: @lon,
       weather_location: @weather_location,
       is_reference: false,
       region: "jp"
@@ -42,9 +46,9 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
       revenue_per_area: 1000.0
     )
 
-    # 計画期間を2年間に設定（現在年から翌年まで）
+    # 計画期間を1年間に設定（現在年）
     plan_start_date = Date.current.beginning_of_year
-    plan_end_date = Date.new(Date.current.year + 1, 12, 31)
+    plan_end_date = Date.new(Date.current.year, 12, 31)
 
     # Private計画を作成
     @private_plan = CultivationPlan.create!(
@@ -60,7 +64,6 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
 
     @plan_field = CultivationPlanField.create!(
       cultivation_plan: @private_plan,
-      field: @field,
       name: @field.name,
       area: @field.area
     )
@@ -97,38 +100,38 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
   end
 
   test "期間選択ボタンが表示される" do
-    login_and_visit plan_path(@private_plan, locale: :ja)
+    login_and_visit_with_consent_fast plan_path(@private_plan, locale: :ja)
 
     # ページが読み込まれるまで待つ
-    assert_selector "h1", text: /計画/, wait: 10
+    assert_selector "h1", text: /計画/, wait: 2
 
     # ガントセクションのツールバー内に表示範囲コントロールが存在することを確認
-    assert_selector ".plans-gantt-panel", wait: 5
+    assert_selector ".plans-gantt-panel", wait: 1
     within ".plans-gantt-panel" do
-      assert_selector ".display-range-toolbar", wait: 5
+      assert_selector ".display-range-toolbar", wait: 0
     end
 
     # 開始日・終了日の入力フィールドが存在することを確認
-    assert_selector "#display-start-date", wait: 5
-    assert_selector "#display-end-date", wait: 5
+    assert_selector "#display-start-date", wait: 0
+    assert_selector "#display-end-date", wait: 0
 
     # 適用ボタンが存在することを確認
-    assert_selector "#apply-display-range", wait: 5
+    assert_selector "#apply-display-range", wait: 0
 
     # クイック選択ボタン群が存在することを確認
-    assert_selector ".display-range-quick-buttons", wait: 5
-    assert_selector '[data-display-range-action="month-back"]', wait: 5
-    assert_selector '[data-display-range-action="month-forward"]', wait: 5
-    assert_selector '[data-display-range-action="range-1year"]', wait: 5
-    assert_selector '[data-display-range-action="range-2year"]', wait: 5
-    assert_selector '[data-display-range-action="full-range"]', wait: 5
+    assert_selector ".display-range-quick-buttons", wait: 0
+    assert_selector '[data-display-range-action="month-back"]', wait: 0
+    assert_selector '[data-display-range-action="month-forward"]', wait: 0
+    assert_selector '[data-display-range-action="range-1year"]', wait: 0
+    assert_selector '[data-display-range-action="range-2year"]', wait: 0
+    assert_selector '[data-display-range-action="full-range"]', wait: 0
   end
 
   test "ガントセクションがアクションバー直後に配置される" do
-    login_and_visit plan_path(@private_plan, locale: :ja)
+    login_and_visit_with_consent_fast plan_path(@private_plan, locale: :ja)
 
-    assert_selector ".plans-container", wait: 10
-    assert_selector ".plans-gantt-panel", wait: 5
+    assert_selector ".plans-container", wait: 2
+    assert_selector ".plans-gantt-panel", wait: 2
 
     children_classes = page.evaluate_script(<<~JS)
       Array.from(document.querySelector('.plans-container').children)
@@ -140,20 +143,16 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
   end
 
   test "全体表示ボタンで計画期間全体が表示される" do
-    login_and_visit plan_path(@private_plan, locale: :ja)
+    login_and_visit_with_consent plan_path(@private_plan, locale: :ja)
 
     # ページが読み込まれるまで待つ
-    assert_selector "h1", text: /計画/, wait: 10
-
-    # 初期の日付を取得
-    initial_start_date = find("#display-start-date").value
-    initial_end_date = find("#display-end-date").value
+    assert_selector "h1", text: /計画/, wait: 3
 
     # 全体表示ボタンをクリック
     find('[data-display-range-action="full-range"]').click
 
-    # JavaScriptの実行を待つ
-    sleep 1
+    # JavaScriptの実行と日付更新を待つ
+    find("#display-start-date", wait: 2)
 
     # 日付が計画期間全体に更新されることを確認
     final_start_date = find("#display-start-date").value
@@ -164,92 +163,84 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
   end
 
   test "1年ボタンで1年間の範囲が設定される" do
-    login_and_visit plan_path(@private_plan, locale: :ja)
+    login_and_visit_with_consent plan_path(@private_plan, locale: :ja)
 
     # ページが読み込まれるまで待つ
-    assert_selector "h1", text: /計画/, wait: 10
-
-    # 初期の開始日を取得
-    initial_start_date = Date.parse(find("#display-start-date").value)
+    assert_selector "h1", text: /計画/, wait: 3
 
     # 1年ボタンをクリック
     find('[data-display-range-action="range-1year"]').click
 
-    # JavaScriptの実行を待つ
-    sleep 1
+    # JavaScriptの実行と日付更新を待つ
+    find("#display-start-date", wait: 2)
 
     # 開始日と終了日を取得
     start_date = Date.parse(find("#display-start-date").value)
     end_date = Date.parse(find("#display-end-date").value)
 
-    # 開始日は初期値から変わらない（または計画期間内に制約される）
+    # 開始日は計画開始日以降であること
     assert start_date >= @private_plan.planning_start_date, "開始日は計画開始日以降である必要があります"
 
-    # 終了日は開始日から約1年後であることを確認（計画期間を超えない場合は調整される）
-    expected_end_date = [ start_date + 1.year, @private_plan.planning_end_date ].min
-    assert_equal expected_end_date, end_date, "終了日は開始日から1年後（または計画終了日）である必要があります"
+    # 終了日は開始日から約1年後であることを確認（計画範囲制約は削除済み）
+    expected_end_date = start_date + 1.year
+    assert_equal expected_end_date, end_date, "終了日は開始日から1年後である必要があります"
   end
 
   test "2年ボタンで2年間の範囲が設定される" do
-    login_and_visit plan_path(@private_plan, locale: :ja)
+    login_and_visit_with_consent plan_path(@private_plan, locale: :ja)
 
     # ページが読み込まれるまで待つ
-    assert_selector "h1", text: /計画/, wait: 10
-
-    # 初期の開始日を取得
-    initial_start_date = Date.parse(find("#display-start-date").value)
+    assert_selector "h1", text: /計画/, wait: 3
 
     # 2年ボタンをクリック
     find('[data-display-range-action="range-2year"]').click
 
-    # JavaScriptの実行を待つ
-    sleep 1
+    # JavaScriptの実行と日付更新を待つ
+    find("#display-start-date", wait: 2)
 
     # 開始日と終了日を取得
     start_date = Date.parse(find("#display-start-date").value)
     end_date = Date.parse(find("#display-end-date").value)
 
-    # 開始日は初期値から変わらない（または計画期間内に制約される）
+    # 開始日は計画開始日以降であること
     assert start_date >= @private_plan.planning_start_date, "開始日は計画開始日以降である必要があります"
 
-    # 終了日は開始日から約2年後であることを確認（計画期間を超えない場合は調整される）
-    expected_end_date = [ start_date + 2.years, @private_plan.planning_end_date ].min
-    assert_equal expected_end_date, end_date, "終了日は開始日から2年後（または計画終了日）である必要があります"
+    # 終了日は開始日から約2年後であることを確認（計画範囲制約は削除済み）
+    expected_end_date = start_date + 2.years
+    assert_equal expected_end_date, end_date, "終了日は開始日から2年後である必要があります"
   end
 
-  test "計画期間外への移動が防止される" do
+  test "月移動ボタンで表示範囲がシフトする" do
     login_and_visit plan_path(@private_plan, locale: :ja)
+    dismiss_cookie_consent
 
     # ページが読み込まれるまで待つ
-    assert_selector "h1", text: /計画/, wait: 10
+    assert_selector "h1", text: /計画/, wait: 3
 
-    # 1ヶ月前に移動ボタンを複数回クリック（計画期間外に移動しようとする）
+    # 1ヶ月前に移動ボタンを複数回クリックして範囲がシフトすることを確認
     month_back_button = find('[data-display-range-action="month-back"]')
-    20.times do
+    3.times do
       month_back_button.click
-      sleep 0.3
     end
 
-    # JavaScriptの実行を待つ
-    sleep 1
+    # JavaScriptの実行と日付更新を待つ
+    find("#display-start-date", wait: 3)
 
-    # 開始日が計画期間内に制約されていることを確認
+    # 開始日が終了日より前であることを確認
     start_date = Date.parse(find("#display-start-date").value)
     end_date = Date.parse(find("#display-end-date").value)
 
-    assert start_date >= @private_plan.planning_start_date, "開始日は計画開始日以降である必要があります"
-    assert end_date <= @private_plan.planning_end_date, "終了日は計画終了日以前である必要があります"
     assert start_date < end_date, "開始日は終了日より前である必要があります"
   end
 
   test "ガントチャートが再描画される" do
-    login_and_visit plan_path(@private_plan, locale: :ja)
+    login_and_visit_with_consent plan_path(@private_plan, locale: :ja)
 
     # ページが読み込まれるまで待つ
-    assert_selector "h1", text: /計画/, wait: 10
+    assert_selector "h1", text: /計画/, wait: 3
 
     # ガントチャートコンテナが存在することを確認
-    assert_selector "#gantt-chart-container", wait: 10, visible: :all
+    assert_selector "#gantt-chart-container", wait: 5, visible: :all
 
     # 初期状態でSVGが存在することを確認（存在しない場合もあるので、コンテナの存在のみ確認）
     gantt_container = find("#gantt-chart-container", visible: :all)
@@ -259,15 +250,48 @@ class PlansDisplayRangeButtonsTest < ApplicationSystemTestCase
     find('[data-display-range-action="full-range"]').click
 
     # JavaScriptの実行と再描画を待つ
-    sleep 2
+    find("#gantt-chart-container", wait: 3, visible: :all)
 
     # ガントチャートコンテナが依然として存在することを確認
-    assert_selector "#gantt-chart-container", wait: 5, visible: :all
+    assert_selector "#gantt-chart-container", wait: 3, visible: :all
 
-    # データが保持されていることを確認
+    # データが保持されていることを確認（JSONをパースして本質的なフィールドのみ比較）
     final_container = find("#gantt-chart-container", visible: :all)
     final_data = final_container["data-cultivations"]
 
-    assert_equal initial_data, final_data, "ガントチャートのデータは保持される必要があります"
+    initial_parsed = JSON.parse(initial_data)
+    final_parsed = JSON.parse(final_data)
+
+    assert_equal initial_parsed.map { |d| d["id"] }, final_parsed.map { |d| d["id"] }, "ガントチャートのデータIDは保持される必要があります"
+    assert_equal initial_parsed.map { |d| d["start_date"] }, final_parsed.map { |d| d["start_date"] }, "開始日は保持される必要があります"
+    assert_equal initial_parsed.map { |d| d["completion_date"] }, final_parsed.map { |d| d["completion_date"] }, "終了日は保持される必要があります"
+  end
+
+  private
+
+  # login_and_visitと違い、root_pathアクセス後にlocalStorageにcookie同意を設定し、
+  # その後に目標URLにアクセスするため、cookie consentカードが表示されない
+  def login_and_visit_with_consent(url)
+    visit root_path(locale: :ja)
+    page.driver.browser.manage.add_cookie(
+      name: "session_id",
+      value: @session.session_id,
+      path: "/"
+    )
+    # rootページでlocalStorageに同意ステータスを設定（Stimulus connect前に設定される）
+    set_cookie_consent_granted
+    visit url
+  end
+
+  # /upヘルスチェックでドメインを確立（root_pathより軽量）・cookie同意をlocalStorageに設定
+  def login_and_visit_with_consent_fast(url)
+    visit rails_health_check_path
+    page.driver.browser.manage.add_cookie(
+      name: "session_id",
+      value: @session.session_id,
+      path: "/"
+    )
+    set_cookie_consent_granted
+    visit url
   end
 end

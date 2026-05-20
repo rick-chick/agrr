@@ -200,7 +200,7 @@ module Api
               }
             end
 
-            Agrr::AdjustGateway.stub(:new, adjust_double) do
+            Adapters::Agrr::Gateways::AdjustGateway.stub(:new, adjust_double) do
               post "/api/v1/public_plans/cultivation_plans/#{@cultivation_plan.id}/adjust",
                    params: {
                      moves: [

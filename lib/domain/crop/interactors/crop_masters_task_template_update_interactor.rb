@@ -24,7 +24,7 @@ module Domain
             @output_port.on_success(result[:row])
           else
             @output_port.on_failure(
-              Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailureDto.new(
+              Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailure.new(
                 reason: :validation_failed,
                 errors: result[:errors]
               )
@@ -32,7 +32,7 @@ module Domain
           end
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(
-            Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailureDto.new(reason: :association_not_found)
+            Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailure.new(reason: :association_not_found)
           )
         end
       end

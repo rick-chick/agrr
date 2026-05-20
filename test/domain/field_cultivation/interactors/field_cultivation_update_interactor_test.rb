@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module FieldCultivation
     module Interactors
-      class FieldCultivationUpdateInteractorTest < ActiveSupport::TestCase
+      class FieldCultivationUpdateInteractorTest < DomainLibTestCase
         test "calls on_success when gateway updates" do
-          input = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInputDto.new(
+          input = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInput.new(
             field_cultivation_id: 1,
-            start_date: Date.current,
-            completion_date: Date.current + 5,
+            start_date: Date.new(2026, 1, 1),
+            completion_date: Date.new(2026, 1, 1) + 5,
             public_plan: false
           )
-          success = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateSuccessDto.new(
+          success = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateOutput.new(
             field_cultivation_id: 1,
             start_date: input.start_date,
             completion_date: input.completion_date
@@ -43,11 +43,11 @@ module Domain
           output_port.verify
         end
 
-        test "calls on_failure with ErrorDto when gateway raises RecordNotFound" do
-          input = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInputDto.new(
+        test "calls on_failure with Error when gateway raises RecordNotFound" do
+          input = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInput.new(
             field_cultivation_id: 1,
-            start_date: Date.current,
-            completion_date: Date.current + 5,
+            start_date: Date.new(2026, 1, 1),
+            completion_date: Date.new(2026, 1, 1) + 5,
             public_plan: true
           )
 
@@ -62,16 +62,16 @@ module Domain
 
           FieldCultivationUpdateInteractor.new(output_port: output_port, gateway: gateway).call(input)
 
-          assert_instance_of Domain::Shared::Dtos::ErrorDto, received
+          assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal "missing", received.message
           output_port.verify
         end
 
         test "calls on_failure with RecordInvalid when gateway raises RecordInvalid" do
-          input = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInputDto.new(
+          input = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInput.new(
             field_cultivation_id: 1,
-            start_date: Date.current,
-            completion_date: Date.current + 5,
+            start_date: Date.new(2026, 1, 1),
+            completion_date: Date.new(2026, 1, 1) + 5,
             public_plan: false
           )
 

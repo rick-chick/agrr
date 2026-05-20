@@ -13,33 +13,23 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     @gateway.user_id = @user.id
   end
 
-  test "should list all farms for admin user" do
-    # ユーザー農場を作成（テストユーザーに紐づく）
+  test "list_user_and_reference_farms includes user farm and reference farm" do
     user_farm = create(:farm, user: @user, is_reference: false)
-    # 参照農場を作成（アノニマスユーザーに属する）
     reference_farm = create(:farm, user: User.anonymous_user, is_reference: true)
 
-    # 管理者用の input_dto を作成
-    admin_input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
-    entities = @gateway.list(admin_input_dto)
+    entities = @gateway.list_user_and_reference_farms(user_id: @user.id)
 
-    # 管理者ユーザーの場合は自分の農場と参照農場の両方が含まれる
     farm_ids = entities.map(&:id)
     assert_includes farm_ids, user_farm.id
     assert_includes farm_ids, reference_farm.id
   end
 
-  test "should list only non-reference farms for regular user" do
-    # ユーザー農場を作成（テストユーザーに紐づく）
+  test "list_user_owned_farms excludes reference farms" do
     user_farm = create(:farm, user: @user, is_reference: false)
-    # 参照農場を作成（アノニマスユーザーに属する）
     reference_farm = create(:farm, user: User.anonymous_user, is_reference: true)
 
-    # 一般ユーザー用の input_dto を作成
-    regular_input_dto = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
-    entities = @gateway.list(regular_input_dto)
+    entities = @gateway.list_user_owned_farms(user_id: @user.id)
 
-    # 一般ユーザーの場合は参照農場が含まれず、自分の農場のみが含まれる
     farm_ids = entities.map(&:id)
     assert_includes farm_ids, user_farm.id
     assert_not_includes farm_ids, reference_farm.id
@@ -63,7 +53,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
 
   test "should create farm" do
     user = create(:user)
-    create_input_dto = Domain::Farm::Dtos::FarmCreateInputDto.new(
+    create_input_dto = Domain::Farm::Dtos::FarmCreateInput.new(
       name: "新規農場",
       region: "jp",
       latitude: 35.6895,
@@ -85,7 +75,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
   test "should update farm" do
     farm = create(:farm, name: "元の農場", latitude: 35.6895, user: @user)
 
-    update_input_dto = Domain::Farm::Dtos::FarmUpdateInputDto.new(
+    update_input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(
       farm_id: farm.id,
       name: "更新農場",
       latitude: 36.6895
@@ -106,32 +96,45 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     end
   end
 
-  test "reference_farms_for_admin_list returns entities for admin only" do
+  test "list_reference_farms returns all reference farm entities" do
     create(:farm, user: User.anonymous_user, is_reference: true)
-    assert_empty @gateway.reference_farms_for_admin_list(is_admin: false)
-    ref_entities = @gateway.reference_farms_for_admin_list(is_admin: true)
+    ref_entities = @gateway.list_reference_farms
     assert ref_entities.all? { |e| e.is_reference }
     assert_operator ref_entities.size, :>=, 1
   end
 
-  test "farm_list_rows_bundle returns dto with main and reference rows for admin" do
+  test "list_user_owned_farms returns only user non-reference farms" do
+    user_farm = create(:farm, user: @user, is_reference: false)
+    create(:farm, user: User.anonymous_user, is_reference: true)
+    farms = @gateway.list_user_owned_farms(user_id: @user.id)
+    assert farms.all? { |e| !e.is_reference && e.user_id == @user.id }
+    assert_includes farms.map(&:id), user_farm.id
+  end
+
+  test "list_user_owned_farm_rows returns rows without reference farms" do
     user_farm = create(:farm, user: @user, is_reference: false, name: "Mine")
     create(:field, farm: user_farm)
-    user_input = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: false)
-    dto_user = @gateway.farm_list_rows_bundle(user_input)
-    assert_equal 1, dto_user.farm_rows.size
-    assert_equal user_farm.id, dto_user.farm_rows.first.id
-    assert_equal 1, dto_user.farm_rows.first.field_count
-    assert_empty dto_user.reference_farm_rows
+    rows = @gateway.list_user_owned_farm_rows(user_id: @user.id)
+    assert_equal 1, rows.size
+    assert_equal user_farm.id, rows.first.id
+    assert_equal 1, rows.first.field_count
+  end
 
-    admin_input = Domain::Farm::Dtos::FarmListInputDto.new(is_admin: true)
+  test "list_user_and_reference_farm_rows includes user farms and reference farms" do
+    user_farm = create(:farm, user: @user, is_reference: false, name: "Mine")
     ref = create(:farm, user: User.anonymous_user, is_reference: true, name: "Ref")
-    dto_admin = @gateway.farm_list_rows_bundle(admin_input)
-    ref_ids = dto_admin.reference_farm_rows.map(&:id)
-    assert_includes ref_ids, ref.id
-    main_ids = dto_admin.farm_rows.map(&:id)
-    assert_includes main_ids, user_farm.id
-    assert_includes main_ids, ref.id
+    rows = @gateway.list_user_and_reference_farm_rows(user_id: @user.id)
+    ids = rows.map(&:id)
+    assert_includes ids, user_farm.id
+    assert_includes ids, ref.id
+  end
+
+  test "list_reference_farm_rows returns only reference farm rows" do
+    create(:farm, user: @user, is_reference: false)
+    ref = create(:farm, user: User.anonymous_user, is_reference: true, name: "Ref")
+    rows = @gateway.list_reference_farm_rows
+    assert rows.all? { |r| r.is_reference }
+    assert_includes rows.map(&:id), ref.id
   end
 
   test "private_plan_new_farm_choices returns empty array when user has no farms" do
@@ -144,7 +147,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
       default_plan_name: I18n.t("plans.default_plan_name")
     )
     assert_empty choices
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanNewDto, dto
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanNew, dto
     assert dto.empty?
     assert_equal I18n.t("plans.default_plan_name"), dto.default_plan_name
   end

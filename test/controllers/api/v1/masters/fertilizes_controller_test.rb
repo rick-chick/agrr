@@ -12,14 +12,6 @@ module Api
           @api_key = @user.api_key
         end
 
-        test "includes Fertilize Views" do
-          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeListView
-          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeDetailView
-          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeCreateView
-          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeUpdateView
-          assert_includes Api::V1::Masters::FertilizesController.included_modules, Views::Api::Fertilize::FertilizeDeleteView
-        end
-
         test "should get index" do
           fertilize1 = create(:fertilize, :user_owned, user: @user)
           fertilize2 = create(:fertilize, :user_owned, user: @user)

@@ -7,5 +7,4 @@
   <%= link_to t('.back_to_list'), crop_pests_path(@crop), class: "btn btn-secondary" %>
 </div>
 
-<%= render 'form', pest: @pest, crop: @crop %>
-
+<%= render 'crops/pests/form', pest: @pest, crop: @crop %>
