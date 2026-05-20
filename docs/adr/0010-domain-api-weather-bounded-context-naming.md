@@ -1,7 +1,12 @@
 # ADR 0010: `Domain::ApiWeather` naming is not HTTP-channel vocabulary
 
-- **Status**: Accepted
+- **Status**: Superseded（2026-05-21 — `api_weather` BC を撤去）
 - **Date**: 2026-05-08
+
+> **Superseded (2026-05-21)**: `lib/domain/api_weather/` は HTTP controller 撤去後、
+> route・`CompositionRoot` 配線・adapter 実装・テストのいずれも持たない完全な未配線
+> dead code であった。bounded context ごと削除したため、本 ADR が扱う命名判断は対象を
+> 失い失効した。将来 weather 連携を再実装する場合は新規 ADR を起票する。
 
 ## Context
 
