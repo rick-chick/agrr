@@ -536,7 +536,7 @@ docs/
 Placement follows two rules.
 
 1. **Runtime** - `test/domain/` is the only Rails-free suite (`run-test-domain-lib.sh`); everything else runs on the Rails stack (`run-test-rails.sh`). `test/domain/` tests only **domain abstractions** (interfaces, entities, DTOs, policies, interactors) using **memory gateways** injected into interactors. Concrete adapter implementations (including memory gateways under `app/adapters/`) are tested under `test/adapters/` on the Rails stack.
-2. **Layer mirror** - `test/<X>/` mirrors the target production path with the source root (`app/` / `lib/`) dropped.
+2. **Layer mirror** - `test/<X>/` mirrors the target production path with the source root (`app/` / `lib/`) dropped. **適用条件**: mirror テストは *テスト可能なロジックがある場合* に置く。次は mirror テスト不要 — interactor を持たず interface / DTO のみの domain context（例: `logger`）、静的・開発用 controller（`pages` / `dev/*` / `sitemaps` / `spa` / `demo` / `api_docs`）、presenter のみで構成され controller / edge テストで間接被覆されるアダプタ。
 
 ```
 test/
@@ -544,18 +544,28 @@ test/
 ├── adapters/     # ⇔ app/adapters/<context>/  gateway (AR, memory, HTTP, ...) / presenter / mapper implementation tests
 ├── controllers/  # HTTP edge (JSON / HTML) - the only place the real graph is exercised
 ├── models/       # AR validations / persistence invariants
-├── policies/ jobs/ channels/ mailers/ helpers/ views/ forms/ migrations/ tasks/
+├── policies/     # ⇔ lib/domain/<context>/policies/  policy units (Rails-stack)
+├── jobs/         # ⇔ app/jobs/
+├── channels/     # ⇔ app/channels/
+├── mailers/      # ⇔ app/mailers/
+├── helpers/      # ⇔ app/helpers/
+├── views/        # ⇔ app/views/  (view-level units)
+├── forms/        # ⇔ app/models/forms/
+├── migrations/   # data migration tests
+├── tasks/        # ⇔ lib/tasks/  (rake task tests)
 ├── integration/  # multi-request flows only (ActionDispatch::IntegrationTest)
 ├── system/       # browser E2E
+├── javascript/   # app/javascript/ (Stimulus) の JS ユニットテスト。Ruby runner 対象外（別途実行）
 └── support/ factories/ fixtures/ domain_stubs/   # shared, non-test files
 ```
 
-**Granularity** - two kinds per use case: a pure unit test (interactor + memory gateways injected, `test/domain/`) and an edge test (HTTP through the controller, `test/controllers/`). Do not instantiate an interactor directly with real gateway implementations in a test (Controller-mediated indirect instantiation in edge tests is fine).
+**Granularity** - two kinds per use case: a pure unit test (interactor + memory gateways injected, `test/domain/`) and an edge test (HTTP through the controller, `test/controllers/`). Do not instantiate an interactor directly with real gateway implementations in a test (Controller-mediated indirect instantiation in edge tests is fine). **適用除外**: 「ユースケース（interactor）」を持たない context（interface / DTO のみ。例: `logger`）、および静的・開発用 controller には適用しない。
 
 **Rules**
 
 - Use the runner scripts, not raw `rails test` (protects the development database). Orchestration: `[.cursor/rules/rails-testing-workflow.mdc](.cursor/rules/rails-testing-workflow.mdc)`, `[.cursor/skills/test-common/SKILL.md](.cursor/skills/test-common/SKILL.md)`.
-- Do not create a test directory that belongs to neither runner.
+- テスト等の終了が非自明なプロセスは `process-monitor` skill 経由で実行し、exit code 取得後にのみ成否を断定する（実行中に「完了」と書かない）。
+- Do not create a new Ruby test directory that belongs to neither Ruby runner. `test/javascript/` は例外で、`app/javascript/`（Stimulus）の JS ユニットテストを置く既存ディレクトリ。Ruby runner（`run-test-rails.sh` / `run-test-domain-lib.sh`）では実行されず、JS ツール側で実行する。Angular SPA のテストは `frontend/` 配下（本 `test/javascript/` とは別）。
 - Frontend: `cd frontend && npm test`, `npm run build`, i18n check scripts (`frontend/package.json`).
 
 ## Implementation Guidelines
