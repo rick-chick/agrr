@@ -161,9 +161,9 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 **Heuristic:** If the gateway's job is effectively "produce the blob this one HTML partial or Angular screen expects," the boundary is wrong-lift assembly to the **Interactor** or to a domain **mapper** under `lib/domain/<context>/mappers/` (read snapshots → **output-port DTOs** / use-case payloads; **not** HTTP-aware types).
 
-**Allowed:** Persistence operations and **domain-meaningful read snapshots** as DTOs or value objects (IDs, dates, counts, cultivated rows, etc.). Gateways may accept identity-bound filters as input parameters (e.g. `find_by_user(user_id)`), but do not make authorization or validation decisions. **Authorization and validation decisions belong in Policies.** **Presenter-shaped** composites required by an output port (for example `PrivatePlanShowOutput`) are composed **outside** the gateway adapter — in the **Interactor** or a domain **mapper** under `lib/domain/<context>/mappers/`.
+**Allowed:** Persistence operations and **domain-meaningful read snapshots** as DTOs or value objects (IDs, dates, counts, cultivated rows, etc.). Gateways may accept identity-bound filters as input parameters (e.g. `find_by_user(user_id)`), but do not make authorization or validation decisions. See [R0](#r0-authorization-and-validation). **Presenter-shaped** composites required by an output port (for example `PrivatePlanShowOutput`) are composed **outside** the gateway adapter — in the **Interactor** or a domain **mapper** under `lib/domain/<context>/mappers/`.
 
-**Decision boundary:** Gateway methods are narrow persistence / HTTP / process I/O. Cross-context orchestration, multi-step business flow, authorization decisions, and validation decisions driven by domain rules belong in Policies (called by Interactors). Examples on the wrong side of the boundary include authorization encoded as a scope chooser (`scope_for_admin_or_user`, `is_admin ? A.where(...) : B.where(...)`), role-aware visibility filters, conditional dispatch across multiple I/O calls, uniqueness checks, resource limit checks, and methods that bundle several persistence operations into a single use-case-encoding entry point. A gateway that returns different domain shapes depending on caller identity has crossed the boundary.
+**Decision boundary:** Gateway methods are narrow persistence / HTTP / process I/O. Cross-context orchestration, multi-step business flow, authorization and validation decisions follow [R0](#r0-authorization-and-validation). Examples on the wrong side of the boundary include authorization encoded as a scope chooser (`scope_for_admin_or_user`, `is_admin ? A.where(...) : B.where(...)`), role-aware visibility filters, conditional dispatch across multiple I/O calls, uniqueness checks, resource limit checks, and methods that bundle several persistence operations into a single use-case-encoding entry point. A gateway that returns different domain shapes depending on caller identity has crossed the boundary.
 
 ### Gateway injection
 
@@ -289,7 +289,7 @@ Example: `Domain::Shared::Ports::LoggerPort` (interface) ↔ `Adapters::Shared::
 | `update(...)` | persisted entity | Modify an existing entity. `save` is deprecated; unify to `create`/`update` within the bounded context. |
 | `delete(id)` | result | Permanent delete. `destroy` is deprecated; unify to `delete` within the bounded context. |
 
-**The gateway only filters by the given criteria**; authorization decisions belong in the Interactor/Policy. Soft delete is the dedicated method `soft_destroy_with_undo(id, user)`.
+**The gateway only filters by the given criteria**; authorization and validation follow [R0](#r0-authorization-and-validation). Soft delete is the dedicated method `soft_destroy_with_undo(id, user)`.
 
 **Allowed exceptions:**
 - `get_<state>` - *narrow, non-entity* scalar getter (progress percentage, fetched-year list). Never for entities.
@@ -330,7 +330,7 @@ The Rails application layer lives under `app/`.
 - `**ActiveSupport::Concern`** - **Do not add** new concern modules under `app/controllers/concerns/`, `app/models/concerns/`, or elsewhere to share **domain-shaped or use-case** logic. Express reuse in `lib/domain` as **Plain Ruby**, wire it with **explicit injection** at the edge. Legacy concerns are **debt** to fold into interactors and policies.
 - `**app/controllers/api/v1/`** - JSON API; params → DTOs → interactors + API presenters. Flow: [API Layer](#api-layer).
 - `**app/controllers/*_controller.rb`** - HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
-- `**app/models/`** - ActiveRecord; **DB-level constraints only** (UNIQUE INDEX, NOT NULL, CHECK). Business validations belong in `lib/domain` (Policies/Interactors). Model validations are **safety net only**.
+- `**app/models/`** - ActiveRecord; **DB-level constraints only** (UNIQUE INDEX, NOT NULL, CHECK). Business validations follow [R0](#r0-authorization-and-validation). Model validations are **safety net only**.
 - `**app/services/`** - Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` and `lib/domain/.../policies` (see roadmap).
 - `**app/adapters/agrr/gateways/`** - HTTP/process integration with the **agrr** daemon (optimization, weather, progress, etc.). These are infrastructure adapters, not domain entities. Legacy path `app/gateways/agrr/` is being migrated per [`docs/planning/naming-placement-migration.md`](docs/planning/naming-placement-migration.md).
 
@@ -342,6 +342,12 @@ The Rails application layer lives under `app/`.
 ## Rules
 
 This section defines the normative rules for new code. Positive rules are stated first; prohibited patterns (**❌**) show common violations. Where common community patterns, prevailing pragmatism, or existing project conventions conflict with the rules below, this file takes precedence. "Existing code already does this" or "tests pass" does not override a rule — treat such mismatches as debt to fix, not a template to copy. Refactors must not **relocate** a smell (e.g. push the same coupling to a fat controller) or **reintroduce** the same dependency shape under a different name.
+
+### R0. Authorization and Validation
+
+**Policies define and evaluate rules. Interactors orchestrate: they fetch data via Gateways, pass it to Policies, and act on the results. Gateways never make authorization or validation decisions.**
+
+This rule is the single source of truth for authorization and validation responsibilities across all layers. Other sections reference `[R0](#r0-authorization-and-validation)` instead of restating this relationship.
 
 ### Domain Layer
 
@@ -369,11 +375,11 @@ This section defines the normative rules for new code. Positive rules are stated
 - ❌ Returning different domain shapes depending on caller identity
 - ❌ Presenter-shaped composites (`PrivatePlanShowOutput`) assembled inside gateway — compose in Interactor or output-port DTO
 - ❌ "Nominal interfaces" — gateways that return AR types, expose query chains, or are single monolithic adapters
-- ✅ Identity-scoped reads: `find_<entity>_by_<identity>(user, ...)` — gateway only filters by given identity; **authorization decisions belong in Interactor/Policy**
+- ✅ Identity-scoped reads (`find_by_user(user_id)` etc.) — gateway only filters by given identity; **authorization and validation follow [R0](#r0-authorization-and-validation)**. Method naming follows [Gateway method naming](#gateway-method-naming-the-five-verbs)
 
 ### Use Cases
 
-**R4. Use-case ownership** — Interactors own validation, business rules, and gateway orchestration. One use case ⇒ one interactor; HTML and API share the same interactor. `call(input)` is the only execution method. `output_port` passed via constructor keyword argument.
+**R4. Use-case ownership** — Interactors orchestrate validation (via Policies per [R0](#r0-authorization-and-validation)), business rules, and gateway orchestration. One use case ⇒ one interactor; HTML and API share the same interactor. `call(input)` is the only execution method. `output_port` passed via constructor keyword argument.
 
 - ❌ Raw `params`, `redirect_to`, `render`, HTTP status codes, flash
 - ❌ View-only shaping — logic for specific layout/field order belongs in presenters; do not bloat DTOs to "align HTML and JSON"

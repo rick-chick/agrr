@@ -18,7 +18,7 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
       frozen_date: Date.new(2026, 5, 15),
       frozen_time: Time.utc(2026, 5, 15, 8, 0, 0)
     )
-    @anchors_resolver = Adapters::WeatherData::RailsWeatherPredictionAnchorsResolver.new(zone: Time.zone)
+    @anchors_resolver = Adapters::WeatherData::Ports::RailsWeatherPredictionAnchorsAdapter.new(zone: Time.zone)
     @weather_location = create(:weather_location)
     @user = create(:user)
     @farm = create(:farm, user: @user, weather_location: @weather_location)

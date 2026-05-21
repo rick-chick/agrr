@@ -278,7 +278,7 @@ module CompositionRoot
     end
 
     def farm_weather_prediction_payload_parse_gateway
-      @farm_weather_prediction_payload_parse_gateway ||= Adapters::WeatherData::FarmWeatherPredictionPayloadParseAdapter.new
+      @farm_weather_prediction_payload_parse_gateway ||= Adapters::WeatherData::Ports::FarmWeatherPredictionPayloadParseAdapter.new
     end
 
     def predict_weather_standalone_enqueue_gateway
@@ -607,7 +607,7 @@ module CompositionRoot
       end
 
       anchors_resolver ||= if clock.is_a?(ActiveSupport::TimeZone)
-        Adapters::WeatherData::RailsWeatherPredictionAnchorsResolver.new(zone: clock)
+        Adapters::WeatherData::Ports::RailsWeatherPredictionAnchorsAdapter.new(zone: clock)
       else
         raise ArgumentError,
               "weather_prediction_interactor requires anchors_resolver when clock is not an ActiveSupport::TimeZone (#{clock.class})"
