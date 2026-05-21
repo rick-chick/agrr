@@ -193,7 +193,7 @@ module Domain
           end
 
           crops_collection.each do |_crop_key, cpc|
-            crop_requirement = cpc.agrr_requirement.deep_dup
+            crop_requirement = Domain::Shared.deep_dup(cpc.agrr_requirement)
 
             revenue_per_area = cpc.revenue_per_area || 5000.0
 

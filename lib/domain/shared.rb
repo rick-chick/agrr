@@ -22,6 +22,11 @@ unless defined?(ActiveSupport)
     def present?
       Domain::Shared.present?(self)
     end
+
+    # ActiveSupport の Object#presence（present? ? self : nil）の Rails 非依存代替。
+    def presence
+      self if present?
+    end
   end
 end
 
