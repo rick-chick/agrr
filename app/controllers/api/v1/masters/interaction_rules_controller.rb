@@ -7,7 +7,7 @@ module Api
 
         # GET /api/v1/masters/interaction_rules
         def index
-          presenter = Adapters::InteractionRule::Presenters::Api::InteractionRuleListPresenter.new(view: self)
+          presenter = Adapters::InteractionRule::Presenters::InteractionRuleListApiPresenter.new(view: self)
           Domain::InteractionRule::Interactors::InteractionRuleListInteractor.new(
             output_port: presenter,
             user_id: current_user.id,
@@ -19,7 +19,7 @@ module Api
         # GET /api/v1/masters/interaction_rules/:id
         def show
           input_valid?(:show) || return
-          presenter = Adapters::InteractionRule::Presenters::Api::InteractionRuleDetailPresenter.new(view: self)
+          presenter = Adapters::InteractionRule::Presenters::InteractionRuleDetailApiPresenter.new(view: self)
           Domain::InteractionRule::Interactors::InteractionRuleDetailInteractor.new(
             output_port: presenter,
             user_id: current_user.id,
@@ -35,7 +35,7 @@ module Api
             render_response(json: { errors: [ "rule_type, source_group, target_group, impact_ratio are required" ] }, status: :unprocessable_entity)
             return
           end
-          presenter = Adapters::InteractionRule::Presenters::Api::InteractionRuleCreatePresenter.new(view: self)
+          presenter = Adapters::InteractionRule::Presenters::InteractionRuleCreateApiPresenter.new(view: self)
           Domain::InteractionRule::Interactors::InteractionRuleCreateInteractor.new(
             output_port: presenter,
             user_id: current_user.id,
@@ -49,7 +49,7 @@ module Api
         def update
           input_valid?(:update) || return
           input_dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
-          presenter = Adapters::InteractionRule::Presenters::Api::InteractionRuleUpdatePresenter.new(view: self)
+          presenter = Adapters::InteractionRule::Presenters::InteractionRuleUpdateApiPresenter.new(view: self)
           Domain::InteractionRule::Interactors::InteractionRuleUpdateInteractor.new(
             output_port: presenter,
             user_id: current_user.id,
@@ -62,7 +62,7 @@ module Api
         # DELETE /api/v1/masters/interaction_rules/:id
         def destroy
           input_valid?(:destroy) || return
-          presenter = Adapters::InteractionRule::Presenters::Api::InteractionRuleDeletePresenter.new(view: self)
+          presenter = Adapters::InteractionRule::Presenters::InteractionRuleDeleteApiPresenter.new(view: self)
           Domain::InteractionRule::Interactors::InteractionRuleDestroyInteractor.new(
             output_port: presenter,
             user_id: current_user.id,

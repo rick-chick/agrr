@@ -19,7 +19,7 @@ module Api
         end
 
         def get_crop_for_add_crop(crop_id)
-          presenter = Adapters::Crop::Presenters::Api::CropRecordPresenter.new(view: self)
+          presenter = Adapters::Crop::Presenters::CropRecordApiPresenter.new(view: self)
           Domain::Crop::Interactors::CropFindPublicPlanAddCropRecordInteractor.new(
             output_port: presenter,
             gateway: CompositionRoot.crop_gateway,

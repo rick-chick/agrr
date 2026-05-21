@@ -15,7 +15,7 @@ module Api
         def trigger_weather_update
           Rails.logger.info "🌤️ [Scheduler] Weather update triggered via API"
 
-          presenter = Adapters::InternalJobs::Presenters::Api::SchedulerWeatherUpdateTriggerPresenter.new(view: self)
+          presenter = Adapters::InternalJobs::Presenters::SchedulerWeatherUpdateTriggerApiPresenter.new(view: self)
           Domain::InternalJobs::Interactors::SchedulerWeatherUpdateJobsTriggerInteractor.new(
             output_port: presenter,
             gateway: CompositionRoot.scheduler_weather_update_jobs_enqueue_gateway

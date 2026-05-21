@@ -136,7 +136,7 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field.reload)
         end
 
-        def soft_destroy_with_undo(user:, field_id:, auto_hide_after: 5000, translator:, farm_access_filter:)
+        def soft_delete_with_undo(user:, field_id:, auto_hide_after: 5000, translator:, farm_access_filter:)
           field = find_field_model!(field_id)
           unless field_edit_allowed?(farm_access_filter, field)
             raise Domain::Shared::Policies::PolicyPermissionDenied

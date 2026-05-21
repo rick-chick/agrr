@@ -251,7 +251,7 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.detail_dto_from_farm_record(farm)
         end
 
-        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:, access_filter:)
+        def soft_delete_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:, access_filter:)
           farm = find_farm_model!(farm_id)
           unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

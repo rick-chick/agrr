@@ -16,7 +16,7 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = Object.new
-          gateway.define_singleton_method(:soft_destroy_with_undo) do |**_kwargs|
+          gateway.define_singleton_method(:soft_delete_with_undo) do |**_kwargs|
             { success: true, undo_entity: undo_entity }
           end
 
@@ -49,7 +49,7 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = Object.new
-          gateway.define_singleton_method(:soft_destroy_with_undo) do |**_kwargs|
+          gateway.define_singleton_method(:soft_delete_with_undo) do |**_kwargs|
             raise Domain::Shared::Policies::PolicyPermissionDenied
           end
 

@@ -16,7 +16,7 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          gateway.expects(:soft_destroy_with_undo).with(
+          gateway.expects(:soft_delete_with_undo).with(
             user: user,
             rule_id: rule_id,
             auto_hide_after: 5000,

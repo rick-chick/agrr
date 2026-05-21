@@ -60,7 +60,7 @@ class FieldsController < ApplicationController
         interactor.call(params[:id])
       end
       format.json do
-        presenter = Adapters::Field::Presenters::Api::FieldDeletePresenter.new(view: self)
+        presenter = Adapters::Field::Presenters::FieldDeleteApiPresenter.new(view: self)
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
         interactor.call(params[:id])

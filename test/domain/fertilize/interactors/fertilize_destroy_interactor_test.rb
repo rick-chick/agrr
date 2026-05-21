@@ -12,7 +12,7 @@ class FertilizeDestroyInteractorTest < DomainLibTestCase
     user_lookup.expect(:find, user, [ user_id ])
 
     gateway = Object.new
-    gateway.define_singleton_method(:soft_destroy_with_undo) do |*_args, **_kw|
+    gateway.define_singleton_method(:soft_delete_with_undo) do |*_args, **_kw|
       raise Domain::Shared::Policies::PolicyPermissionDenied
     end
 

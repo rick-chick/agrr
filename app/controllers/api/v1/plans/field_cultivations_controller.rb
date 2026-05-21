@@ -51,14 +51,14 @@ module Api
 
         def field_cultivation_api_show_interactor
           Domain::FieldCultivation::Interactors::FieldCultivationShowInteractor.new(
-            output_port: Adapters::FieldCultivation::Presenters::Api::FieldCultivationApiShowPresenter.new(view: self),
+            output_port: Adapters::FieldCultivation::Presenters::FieldCultivationApiShowApiPresenter.new(view: self),
             gateway: field_cultivation_plan_api_gateway
           )
         end
 
         def field_cultivation_api_update_interactor
           Domain::FieldCultivation::Interactors::FieldCultivationUpdateInteractor.new(
-            output_port: Adapters::FieldCultivation::Presenters::Api::FieldCultivationApiUpdatePresenter.new(view: self),
+            output_port: Adapters::FieldCultivation::Presenters::FieldCultivationApiUpdateApiPresenter.new(view: self),
             gateway: field_cultivation_plan_api_gateway
           )
         end
@@ -66,7 +66,7 @@ module Api
         def field_cultivation_climate_data_interactor
           uid = current_user.id
           Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor.new(
-            output_port: Adapters::FieldCultivation::Presenters::Api::FieldCultivationClimateDataPresenter.new(view: self),
+            output_port: Adapters::FieldCultivation::Presenters::FieldCultivationClimateDataApiPresenter.new(view: self),
             gateway: CompositionRoot.field_cultivation_climate_gateway_for(CompositionRoot.user_lookup.find(uid)),
             logger: CompositionRoot.logger
           )

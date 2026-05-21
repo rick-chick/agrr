@@ -90,7 +90,7 @@ class InteractionRulesController < ApplicationController
       end
       format.json do
         destroy_with_presenter(
-          Adapters::InteractionRule::Presenters::Api::InteractionRuleDeletePresenter.new(view: self)
+          Adapters::InteractionRule::Presenters::InteractionRuleDeleteApiPresenter.new(view: self)
         )
       end
     end

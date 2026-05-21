@@ -17,7 +17,7 @@ module Domain
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
           farm_entity = @gateway.find_authorized_for_edit(user, farm_id, access_filter: access_filter)
           toast_message = @translator.t("flash.farms.deleted", name: farm_entity.name)
-          result = @gateway.soft_destroy_with_undo(
+          result = @gateway.soft_delete_with_undo(
             user: user,
             farm_id: farm_id,
             auto_hide_after: 5000,

@@ -7,7 +7,7 @@ module Api
 
         # GET /api/v1/masters/agricultural_tasks
         def index
-          presenter = Adapters::AgriculturalTask::Presenters::Api::AgriculturalTaskListPresenter.new(view: self)
+          presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskListApiPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskListInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call
@@ -16,7 +16,7 @@ module Api
         # GET /api/v1/masters/agricultural_tasks/:id
         def show
           input_valid?(:show) || return
-          presenter = Adapters::AgriculturalTask::Presenters::Api::AgriculturalTaskDetailPresenter.new(view: self)
+          presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskDetailApiPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
@@ -29,7 +29,7 @@ module Api
             render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
           end
-          presenter = Adapters::AgriculturalTask::Presenters::Api::AgriculturalTaskCreatePresenter.new(view: self)
+          presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskCreateApiPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
@@ -39,7 +39,7 @@ module Api
         def update
           input_valid?(:update) || return
           input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
-          presenter = Adapters::AgriculturalTask::Presenters::Api::AgriculturalTaskUpdatePresenter.new(view: self)
+          presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateApiPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
@@ -48,7 +48,7 @@ module Api
         # DELETE /api/v1/masters/agricultural_tasks/:id
         def destroy
           input_valid?(:destroy) || return
-          presenter = Adapters::AgriculturalTask::Presenters::Api::AgriculturalTaskDeletePresenter.new(view: self)
+          presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskDeleteApiPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)

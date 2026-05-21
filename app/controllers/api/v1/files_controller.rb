@@ -6,7 +6,7 @@ module Api
       before_action :authenticate_user!
 
       def index
-        presenter = Adapters::FileBlob::Presenters::Api::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        presenter = Adapters::FileBlob::Presenters::FileBlobJsonApiPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobListInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.file_blob_gateway
@@ -14,7 +14,7 @@ module Api
       end
 
       def show
-        presenter = Adapters::FileBlob::Presenters::Api::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        presenter = Adapters::FileBlob::Presenters::FileBlobJsonApiPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobShowInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.file_blob_gateway
@@ -27,7 +27,7 @@ module Api
           filename: params[:file]&.original_filename,
           content_type: params[:file]&.content_type
         )
-        presenter = Adapters::FileBlob::Presenters::Api::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        presenter = Adapters::FileBlob::Presenters::FileBlobJsonApiPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobCreateInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.file_blob_gateway
@@ -35,7 +35,7 @@ module Api
       end
 
       def destroy
-        presenter = Adapters::FileBlob::Presenters::Api::FileBlobJsonPresenter.new(view: self, translator: CompositionRoot.translator)
+        presenter = Adapters::FileBlob::Presenters::FileBlobJsonApiPresenter.new(view: self, translator: CompositionRoot.translator)
         Domain::FileBlob::Interactors::FileBlobDestroyInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.file_blob_gateway

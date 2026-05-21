@@ -171,7 +171,7 @@ module Adapters
           Domain::Shared::PesticideAssociationAccess.accessible_pests_scope(user)
         end
 
-        def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:, access_filter:)
           pesticide = find_pesticide_model!(pesticide_id)
           unless access_filter.edit_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

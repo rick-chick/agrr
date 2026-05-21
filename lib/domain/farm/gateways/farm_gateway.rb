@@ -92,8 +92,8 @@ module Domain
         end
 
         # 認可・DeletionUndo スケジュールをアダプタ内で完結。Interactor に AR を渡さない。
-        def soft_destroy_with_undo(user:, farm_id:, auto_hide_after:, toast_message:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
+        def soft_delete_with_undo(user:, farm_id:, auto_hide_after:, toast_message:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
         # 農場一覧カード行: メイン一覧＋参照農場行を一度に組み立てる（list + 行DTO 変換の二重クエリを避ける）

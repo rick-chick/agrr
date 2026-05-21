@@ -15,7 +15,7 @@ module Domain
         def call(pesticide_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
-          result = @gateway.soft_destroy_with_undo(
+          result = @gateway.soft_delete_with_undo(
             user: user,
             pesticide_id: pesticide_id,
             auto_hide_after: 5000,

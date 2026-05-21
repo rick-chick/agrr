@@ -2,7 +2,7 @@ module Api
   module V1
     class ContactMessagesController < Api::V1::BaseController
       INTERACTOR_CLASS = ::Domain::ContactMessages::Interactors::CreateContactMessageInteractor
-      PRESENTER_CLASS = ::Adapters::ContactMessages::Presenters::Api::ContactMessageCreatePresenter
+      PRESENTER_CLASS = ::Adapters::ContactMessages::Presenters::ContactMessageCreateApiPresenter
       RATE_LIMITER_CLASS = ::Adapters::ContactMessages::Services::ContactMessageRateLimiter
       RECAPTCHA_VERIFIER_CLASS = ::Adapters::ContactMessages::Services::RecaptchaVerifier
 

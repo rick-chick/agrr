@@ -5,7 +5,7 @@ class Api::V1::PublicPlansController < Api::V1::BaseController
   def save_plan
     Rails.logger.info "🔍 [API PublicPlans#save_plan] Called"
 
-    presenter = Adapters::PublicPlan::Presenters::Api::PublicPlanSaveFromSessionApiPresenter.new(view: self)
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanSaveFromSessionApiApiPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PublicPlanSaveByPlanIdInteractor.new(
       output_port: presenter,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,

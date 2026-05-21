@@ -131,7 +131,7 @@ module Adapters
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
         end
 
-        def soft_destroy_with_undo(user:, rule_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, rule_id:, auto_hide_after: 5000, translator:, access_filter:)
           rule = find_interaction_rule_model!(rule_id)
           unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

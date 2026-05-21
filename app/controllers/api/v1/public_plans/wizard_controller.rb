@@ -11,7 +11,7 @@ module Api
 
         def farms
           region = params[:region].presence || locale_to_region(I18n.locale)
-          presenter = Adapters::PublicPlan::Presenters::Api::ReferenceFarmsPresenter.new(view: self)
+          presenter = Adapters::PublicPlan::Presenters::ReferenceFarmsApiPresenter.new(view: self)
           Domain::Farm::Interactors::FarmListReferenceForRegionInteractor.new(output_port: presenter, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger).call(region)
         end
 
@@ -28,7 +28,7 @@ module Api
           end
 
           Rails.logger.info "🌱 [WizardController#crops] Found farm region: #{region}"
-          presenter = Adapters::PublicPlan::Presenters::Api::ReferenceCropsPresenter.new(view: self)
+          presenter = Adapters::PublicPlan::Presenters::ReferenceCropsApiPresenter.new(view: self)
           Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: region)
           Rails.logger.info "🌱 [WizardController#crops] Rendered reference crops"
         end
@@ -46,7 +46,7 @@ module Api
           )
 
           # Presenter と Gateway を準備
-          presenter = Adapters::PublicPlan::Presenters::Api::PublicPlanCreatePresenter.new(view: self)
+          presenter = Adapters::PublicPlan::Presenters::PublicPlanCreateApiPresenter.new(view: self)
 
           # Interactor を実行（成功時は presenter が render、ジョブチェーンは Interactor 経由で注入ゲートウェイが処理）
           interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(

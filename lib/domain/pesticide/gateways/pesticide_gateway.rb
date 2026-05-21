@@ -50,8 +50,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_destroy_with_undo(user:, pesticide_id:, auto_hide_after:, translator:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
+        def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after:, translator:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
         # Crop に紐づく、user に閲覧可能な Pesticide エンティティを最近順で返す。

@@ -70,14 +70,14 @@ module Crops
     end
 
     def find_crop_for_list_and_create
-      presenter = Adapters::Crop::Presenters::Api::CropLoadForMastersPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropLoadForMastersApiPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropLoadUserNonReferenceForMastersInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
       interactor.call(params[:crop_id])
     end
 
     def find_crop_and_crop_stage
-      failure = Adapters::Crop::Presenters::Api::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
+      failure = Adapters::Crop::Presenters::CropNestedRecordNotFoundJsonApiPresenter.new(view: self, error_message: "CropStage not found")
       interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,
@@ -112,7 +112,7 @@ module Crops
     end
 
     def presenter
-      @presenter ||= Adapters::Crop::Presenters::Api::CropStageCreatePresenter.new(view: self)
+      @presenter ||= Adapters::Crop::Presenters::CropStageCreateApiPresenter.new(view: self)
     end
 
   end

@@ -109,7 +109,7 @@ module Adapters
           end
         end
 
-        def soft_destroy_with_undo(user:, task_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, task_id:, auto_hide_after: 5000, translator:, access_filter:)
           task = find_agricultural_task_model!(task_id)
           unless access_filter.edit_allows?(is_reference: task.is_reference, record_user_id: task.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

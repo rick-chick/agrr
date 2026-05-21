@@ -15,7 +15,7 @@ module Domain
         def call(fertilize_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
-          result = @gateway.soft_destroy_with_undo(
+          result = @gateway.soft_delete_with_undo(
             user: user,
             fertilize_id: fertilize_id,
             auto_hide_after: 5000,

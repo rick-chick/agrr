@@ -95,7 +95,7 @@ module Api::V1::Masters::Crops
     end
 
     def load_authorized_parent_crop(for_edit:)
-      presenter = Adapters::Crop::Presenters::Api::CropParentAuthorizationFailurePresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropParentAuthorizationFailureApiPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(failure_presenter: presenter,
         user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
       bundle = interactor.call(params[:crop_id], for_edit: for_edit)
@@ -106,7 +106,7 @@ module Api::V1::Masters::Crops
 
     def load_authorized_crop_and_crop_stage
       for_edit = %w[update destroy].include?(action_name)
-      failure = Adapters::Crop::Presenters::Api::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
+      failure = Adapters::Crop::Presenters::CropNestedRecordNotFoundJsonApiPresenter.new(view: self, error_message: "CropStage not found")
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedCropStageInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,
@@ -122,23 +122,23 @@ module Api::V1::Masters::Crops
     end
 
     def list_presenter
-      @list_presenter ||= Adapters::Crop::Presenters::Api::CropStageListPresenter.new(view: self)
+      @list_presenter ||= Adapters::Crop::Presenters::CropStageListApiPresenter.new(view: self)
     end
 
     def detail_presenter
-      @detail_presenter ||= Adapters::Crop::Presenters::Api::CropStageDetailPresenter.new(view: self)
+      @detail_presenter ||= Adapters::Crop::Presenters::CropStageDetailApiPresenter.new(view: self)
     end
 
     def create_presenter
-      @create_presenter ||= Adapters::Crop::Presenters::Api::CropStageCreatePresenter.new(view: self)
+      @create_presenter ||= Adapters::Crop::Presenters::CropStageCreateApiPresenter.new(view: self)
     end
 
     def update_presenter
-      @update_presenter ||= Adapters::Crop::Presenters::Api::CropStageUpdatePresenter.new(view: self)
+      @update_presenter ||= Adapters::Crop::Presenters::CropStageUpdateApiPresenter.new(view: self)
     end
 
     def delete_presenter
-      @delete_presenter ||= Adapters::Crop::Presenters::Api::CropStageDeletePresenter.new(view: self)
+      @delete_presenter ||= Adapters::Crop::Presenters::CropStageDeleteApiPresenter.new(view: self)
     end
 
   end

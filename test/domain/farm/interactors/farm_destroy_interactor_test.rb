@@ -32,7 +32,7 @@ module Domain
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(@user)
           @mock_gateway.expects(:find_authorized_for_edit).with(@user, farm_id, access_filter: access_filter).returns(farm_entity)
           @mock_translator.expects(:t).with("flash.farms.deleted", name: "Test Farm").returns("toast-msg")
-          @mock_gateway.expects(:soft_destroy_with_undo).with(
+          @mock_gateway.expects(:soft_delete_with_undo).with(
             user: @user,
             farm_id: farm_id,
             auto_hide_after: 5000,

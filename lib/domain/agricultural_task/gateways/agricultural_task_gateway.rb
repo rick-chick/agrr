@@ -38,8 +38,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_destroy_with_undo(user:, task_id:, auto_hide_after:, translator:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
+        def soft_delete_with_undo(user:, task_id:, auto_hide_after:, translator:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
         # 作物選択 UI: 当該農業作業に紐づく CropTaskTemplate の作物 ID 一覧

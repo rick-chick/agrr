@@ -29,7 +29,7 @@ module Api
 
         # GET /api/v1/masters/crops
         def index
-          presenter = Adapters::Crop::Presenters::Api::CropListPresenter.new(view: self)
+          presenter = Adapters::Crop::Presenters::CropListApiPresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropListInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call
@@ -38,7 +38,7 @@ module Api
         # GET /api/v1/masters/crops/:id
         def show
           input_valid?(:show) || return
-          presenter = Adapters::Crop::Presenters::Api::CropDetailPresenter.new(view: self)
+          presenter = Adapters::Crop::Presenters::CropDetailApiPresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropDetailInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
@@ -51,7 +51,7 @@ module Api
             render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
           end
-          presenter = Adapters::Crop::Presenters::Api::CropCreatePresenter.new(view: self)
+          presenter = Adapters::Crop::Presenters::CropCreateApiPresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.crop_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
@@ -60,7 +60,7 @@ module Api
         # PATCH/PUT /api/v1/masters/crops/:id
         def update
           input_dto = Domain::Crop::Dtos::CropUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
-          presenter = Adapters::Crop::Presenters::Api::CropUpdatePresenter.new(view: self)
+          presenter = Adapters::Crop::Presenters::CropUpdateApiPresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.crop_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
@@ -69,7 +69,7 @@ module Api
         # DELETE /api/v1/masters/crops/:id
         def destroy
           input_valid?(:destroy) || return
-          presenter = Adapters::Crop::Presenters::Api::CropDeletePresenter.new(view: self)
+          presenter = Adapters::Crop::Presenters::CropDeleteApiPresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)

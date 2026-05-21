@@ -68,7 +68,7 @@ module Api
             private
 
             def set_crop_and_crop_stage
-              failure = Adapters::Crop::Presenters::Api::CropNestedRecordNotFoundJsonPresenter.new(view: self, error_message: "CropStage not found")
+              failure = Adapters::Crop::Presenters::CropNestedRecordNotFoundJsonApiPresenter.new(view: self, error_message: "CropStage not found")
               interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
                 failure_presenter: failure,
                 user_id: current_user.id,
@@ -87,7 +87,7 @@ module Api
             end
 
             def nutrient_requirement_presenter
-              @nutrient_requirement_presenter ||= Adapters::Crop::Presenters::Api::MastersNutrientRequirementPresenter.new(view: self)
+              @nutrient_requirement_presenter ||= Adapters::Crop::Presenters::MastersNutrientRequirementApiPresenter.new(view: self)
             end
           end
         end

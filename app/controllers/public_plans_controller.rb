@@ -217,7 +217,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       return
     end
 
-    presenter = Adapters::PublicPlan::Presenters::Api::PublicPlanSaveFromSessionApiPresenter.new(view: self)
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanSaveFromSessionApiApiPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PublicPlanSaveByPlanIdInteractor.new(
       output_port: presenter,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,

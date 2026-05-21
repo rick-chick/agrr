@@ -7,7 +7,7 @@ module Api
 
         # GET /api/v1/masters/fertilizes
         def index
-          presenter = Adapters::Fertilize::Presenters::Api::FertilizeListPresenter.new(view: self)
+          presenter = Adapters::Fertilize::Presenters::FertilizeListApiPresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call
@@ -16,7 +16,7 @@ module Api
         # GET /api/v1/masters/fertilizes/:id
         def show
           input_valid?(:show) || return
-          presenter = Adapters::Fertilize::Presenters::Api::FertilizeDetailPresenter.new(view: self)
+          presenter = Adapters::Fertilize::Presenters::FertilizeDetailApiPresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
@@ -29,7 +29,7 @@ module Api
             render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
           end
-          presenter = Adapters::Fertilize::Presenters::Api::FertilizeCreatePresenter.new(view: self)
+          presenter = Adapters::Fertilize::Presenters::FertilizeCreateApiPresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeCreateInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -39,7 +39,7 @@ module Api
         # PATCH/PUT /api/v1/masters/fertilizes/:id
         def update
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
-          presenter = Adapters::Fertilize::Presenters::Api::FertilizeUpdatePresenter.new(view: self)
+          presenter = Adapters::Fertilize::Presenters::FertilizeUpdateApiPresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -49,7 +49,7 @@ module Api
         # DELETE /api/v1/masters/fertilizes/:id
         def destroy
           input_valid?(:destroy) || return
-          presenter = Adapters::Fertilize::Presenters::Api::FertilizeDeletePresenter.new(view: self)
+          presenter = Adapters::Fertilize::Presenters::FertilizeDeleteApiPresenter.new(view: self)
           interactor = Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)

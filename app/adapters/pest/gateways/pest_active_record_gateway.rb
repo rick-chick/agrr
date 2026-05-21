@@ -89,7 +89,7 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
         end
 
-        def soft_destroy_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:, access_filter:)
           pest = find_pest_model!(pest_id)
           unless access_filter.edit_allows?(is_reference: pest.is_reference, record_user_id: pest.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

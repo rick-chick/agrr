@@ -376,7 +376,7 @@ module Adapters
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         end
 
-        def soft_destroy_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:, access_filter:)
           crop = find_crop_model!(crop_id)
           unless access_filter.edit_allows?(is_reference: crop.is_reference, record_user_id: crop.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

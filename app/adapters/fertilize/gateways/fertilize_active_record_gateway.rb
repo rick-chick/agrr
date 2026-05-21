@@ -111,7 +111,7 @@ module Adapters
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize.reload)
         end
 
-        def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator:, access_filter:)
           fertilize = find_fertilize_model!(fertilize_id)
           unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
             raise Domain::Shared::Policies::PolicyPermissionDenied

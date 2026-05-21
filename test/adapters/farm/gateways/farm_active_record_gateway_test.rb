@@ -180,7 +180,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal 0, second.fields_count
   end
 
-  test "soft_destroy_with_undo returns failure without scheduling when free_crop_plans exist" do
+  test "soft_delete_with_undo returns failure without scheduling when free_crop_plans exist" do
     farm = create(:farm, user: @user, is_reference: false)
     crop = create(:crop, user: @user)
     FreeCropPlan.create!(farm: farm, crop: crop, area_sqm: 100, session_id: "sess_gateway_block")
@@ -193,7 +193,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
       translator: CompositionRoot.translator
     )
 
-    result = gateway.soft_destroy_with_undo(
+    result = gateway.soft_delete_with_undo(
       user: @user,
       farm_id: farm.id,
       toast_message: "toast",

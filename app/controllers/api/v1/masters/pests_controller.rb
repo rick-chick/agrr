@@ -7,7 +7,7 @@ module Api
 
         # GET /api/v1/masters/pests
         def index
-          presenter = Adapters::Pest::Presenters::Api::PestListPresenter.new(view: self)
+          presenter = Adapters::Pest::Presenters::PestListApiPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestListInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.pest_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call
@@ -16,7 +16,7 @@ module Api
         # GET /api/v1/masters/pests/:id
         def show
           input_valid?(:show) || return
-          presenter = Adapters::Pest::Presenters::Api::PestDetailPresenter.new(view: self)
+          presenter = Adapters::Pest::Presenters::PestDetailApiPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -30,7 +30,7 @@ module Api
             render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
           end
-          presenter = Adapters::Pest::Presenters::Api::PestCreatePresenter.new(view: self)
+          presenter = Adapters::Pest::Presenters::PestCreateApiPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestCreateInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -40,7 +40,7 @@ module Api
         # PATCH/PUT /api/v1/masters/pests/:id
         def update
           input_dto = Domain::Pest::Dtos::PestUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
-          presenter = Adapters::Pest::Presenters::Api::PestUpdatePresenter.new(view: self)
+          presenter = Adapters::Pest::Presenters::PestUpdateApiPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
@@ -50,7 +50,7 @@ module Api
         # DELETE /api/v1/masters/pests/:id
         def destroy
           input_valid?(:destroy) || return
-          presenter = Adapters::Pest::Presenters::Api::PestDeletePresenter.new(view: self)
+          presenter = Adapters::Pest::Presenters::PestDeleteApiPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup)

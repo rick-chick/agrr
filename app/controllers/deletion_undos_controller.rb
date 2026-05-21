@@ -13,7 +13,7 @@ class DeletionUndosController < ApplicationController
 
     respond_to do |format|
       format.json do
-        execute_restore_use_case(input_dto, Adapters::DeletionUndo::Presenters::Api::DeletionUndoRestorePresenter)
+        execute_restore_use_case(input_dto, Adapters::DeletionUndo::Presenters::DeletionUndoRestoreApiPresenter)
       end
 
       format.html do

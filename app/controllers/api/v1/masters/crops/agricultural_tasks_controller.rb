@@ -40,7 +40,7 @@ module Api
               user_id: current_user.id,
               crop_id: params[:crop_id]
             )
-            presenter = Adapters::Crop::Presenters::Api::CropMastersTaskTemplateIndexPresenter.new(
+            presenter = Adapters::Crop::Presenters::CropMastersTaskTemplateIndexApiPresenter.new(
               view: self,
               translator: CompositionRoot.translator
             )
@@ -79,7 +79,7 @@ module Api
               required_tools: template_params[:required_tools],
               skill_level: template_params[:skill_level]
             )
-            presenter = Adapters::Crop::Presenters::Api::CropMastersTaskTemplateCreatePresenter.new(
+            presenter = Adapters::Crop::Presenters::CropMastersTaskTemplateCreateApiPresenter.new(
               view: self,
               translator: CompositionRoot.translator
             )
@@ -113,7 +113,7 @@ module Api
               template_id: params[:id],
               attributes: template_params.except(:agricultural_task_id).to_h
             )
-            presenter = Adapters::Crop::Presenters::Api::CropMastersTaskTemplateUpdatePresenter.new(
+            presenter = Adapters::Crop::Presenters::CropMastersTaskTemplateUpdateApiPresenter.new(
               view: self,
               translator: CompositionRoot.translator
             )
@@ -138,7 +138,7 @@ module Api
               crop_id: params[:crop_id],
               template_id: params[:id]
             )
-            presenter = Adapters::Crop::Presenters::Api::CropMastersTaskTemplateDestroyPresenter.new(
+            presenter = Adapters::Crop::Presenters::CropMastersTaskTemplateDestroyApiPresenter.new(
               view: self,
               translator: CompositionRoot.translator
             )

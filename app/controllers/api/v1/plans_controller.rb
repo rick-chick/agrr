@@ -5,7 +5,7 @@ module Api
     class PlansController < BaseController
 
       def index
-        presenter = Adapters::CultivationPlan::Presenters::Api::PrivateOwnedPlansListPresenter.new(view: self, translator: translator)
+        presenter = Adapters::CultivationPlan::Presenters::PrivateOwnedPlansListApiPresenter.new(view: self, translator: translator)
         Domain::CultivationPlan::Interactors::PrivateOwnedPlansListInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -17,7 +17,7 @@ module Api
       end
 
       def show
-        presenter = Adapters::CultivationPlan::Presenters::Api::PrivateOwnedPlanDetailPresenter.new(view: self)
+        presenter = Adapters::CultivationPlan::Presenters::PrivateOwnedPlanDetailApiPresenter.new(view: self)
         Domain::CultivationPlan::Interactors::PrivateOwnedPlanDetailInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -29,7 +29,7 @@ module Api
       end
 
       def create
-        presenter = Adapters::CultivationPlan::Presenters::Api::PrivatePlanInitializeFromSelectionPresenter.new(view: self)
+        presenter = Adapters::CultivationPlan::Presenters::PrivatePlanInitializeFromSelectionApiPresenter.new(view: self)
         input_dto = Domain::CultivationPlan::Dtos::PrivatePlanInitializeFromSelectionInput.new(
           farm_id: create_params[:farm_id],
           crop_ids: create_params[:crop_ids] || [],
@@ -51,7 +51,7 @@ module Api
       # - calls the destroy interactor immediately (no confirmation dialog is necessary)
       # - renders the DeletionUndoResponse through the presenter/view contract
       def destroy
-        presenter = Adapters::CultivationPlan::Presenters::Api::CultivationPlanDeletePresenter.new(view: self)
+        presenter = Adapters::CultivationPlan::Presenters::CultivationPlanDeleteApiPresenter.new(view: self)
         interactor = Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.cultivation_plan_gateway, user_lookup: CompositionRoot.user_lookup)

@@ -41,8 +41,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_destroy_with_undo(user:, fertilize_id:, auto_hide_after:, translator:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement soft_destroy_with_undo"
+        def soft_delete_with_undo(user:, fertilize_id:, auto_hide_after:, translator:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
         # AI API: ユーザー肥料を agrr 応答の商品名で検索（なければ nil）。戻りは永続 Fertilize。

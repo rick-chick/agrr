@@ -10,7 +10,7 @@ module Api
       # 作物追加: candidatesで最適日付を自動決定し、adjustで追加する
       def add_crop
         Domain::CultivationPlan::Interactors::AddCropInteractor.new(
-          output: Adapters::CultivationPlan::Presenters::Api::AddCropPresenter.new(
+          output: Adapters::CultivationPlan::Presenters::AddCropApiPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
@@ -31,7 +31,7 @@ module Api
       # 新しい圃場を追加
       def add_field
         Domain::CultivationPlan::Interactors::AddFieldInteractor.new(
-          output: Adapters::CultivationPlan::Presenters::Api::AddFieldPresenter.new(
+          output: Adapters::CultivationPlan::Presenters::AddFieldApiPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
@@ -49,7 +49,7 @@ module Api
       # 圃場を削除
       def remove_field
         Domain::CultivationPlan::Interactors::RemoveFieldInteractor.new(
-          output: Adapters::CultivationPlan::Presenters::Api::RemoveFieldPresenter.new(
+          output: Adapters::CultivationPlan::Presenters::RemoveFieldApiPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
@@ -65,7 +65,7 @@ module Api
       # 栽培計画データを取得
       def data
         Domain::CultivationPlan::Interactors::RetrieveCultivationPlanInteractor.new(
-          output: Adapters::CultivationPlan::Presenters::Api::RetrieveCultivationPlanPresenter.new(
+          output: Adapters::CultivationPlan::Presenters::RetrieveCultivationPlanApiPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
@@ -81,7 +81,7 @@ module Api
       def adjust
         moves = Adapters::CultivationPlan::AdjustMovesFromRequest.normalize(params[:moves] || [])
         Domain::CultivationPlan::Interactors::ManualPlanAdjustInteractor.new(
-          output: Adapters::CultivationPlan::Presenters::Api::ManualPlanAdjustPresenter.new(view: self),
+          output: Adapters::CultivationPlan::Presenters::ManualPlanAdjustApiPresenter.new(view: self),
           adjust_gateway: CompositionRoot.cultivation_plan_rest_adjust_gateway
         ).call(
           auth: cultivation_plan_rest_auth,
