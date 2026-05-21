@@ -41,7 +41,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（HTML フォーム用。契約は {Domain::Pest::Ports::PestAuthorizedLoad}）。
+        # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（HTML フォーム用。契約は {Domain::Pest::Dtos::PestAuthorizedLoad}）。
         def find_authorized_pest_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_pest_loaded_bundle!"
         end

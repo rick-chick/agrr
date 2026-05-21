@@ -59,7 +59,7 @@ module Adapters
                  else
                    find_authorized_model_for_view(user, id, access_filter: access_filter)
                  end
-          Domain::Pest::Ports::PestAuthorizedLoad.new(
+          Domain::Pest::Dtos::PestAuthorizedLoad.new(
             pest_entity: Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest),
             pest_master_edit_payload: Adapters::Pest::Mappers::PestMasterEditPayloadMapper.from_record(pest)
           )

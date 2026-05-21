@@ -14,7 +14,7 @@ module Domain
         end
 
         # @param pest_id [Integer, String]
-        # @return [Domain::Pest::Ports::PestAuthorizedLoad, nil]
+        # @return [Domain::Pest::Dtos::PestAuthorizedLoad, nil]
         def call(pest_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::PestPolicy.record_access_filter(user)

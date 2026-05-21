@@ -2,7 +2,7 @@
 
 module Domain
   module Pest
-    module Ports
+    module Dtos
       # HTML 害虫編集フォーム向けの認可済みロード結果。
       class PestAuthorizedLoad
         attr_reader :pest_entity, :pest_master_edit_payload
