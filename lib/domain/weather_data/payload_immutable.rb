@@ -9,7 +9,7 @@ module Domain
       def copy_and_deep_freeze(value)
         return nil if value.nil?
 
-        copy = value.deep_dup
+        copy = Domain::Shared.deep_dup(value)
         deep_freeze!(copy)
         copy
       end
