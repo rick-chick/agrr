@@ -3,74 +3,18 @@
 # Domain::Shared — ActiveSupport 非依存の純粋ヘルパ（blank? / present? / キー変換等）。
 #
 # ActiveSupport が無い実行環境（Rails-free な domain-lib テストハーネス）向けに、
-# 主要コアクラスへ blank? / present? を後付けする。Rails アプリでは ActiveSupport が
-# 同名メソッドを（より厳密に・より広い対象に）提供するため、ここで再定義すると
-# ActiveSupport 実装を破壊する（例: String#underscore の :: → / 変換が失われ
-# controller_path が壊れる）。よって `unless defined?(ActiveSupport)` でガードし、
-# ActiveSupport が居る環境では一切手を加えない。
-# Zeitwerk はファイルを module Domain { ... } で囲むため、::String 等で明示的にトップレベルを指定する。
+# blank? / present? を後付けする。ActiveSupport は `Object#blank?` / `Object#present?`
+# として全型に提供する（Date・BigDecimal 等を含む）。ここでも同様に `::Object` へ
+# 後付けし、ドメインコードが任意の値に対して blank? / present? を呼べるようにする
+# （以前は String 等 7 クラスのみで Date / BigDecimal が NoMethodError になっていた）。
+#
+# Rails アプリでは ActiveSupport が同名メソッドを（より厳密に・より広い対象に）
+# 提供するため、ここで再定義すると ActiveSupport 実装を破壊する（例: String#underscore
+# の :: → / 変換が失われ controller_path が壊れる）。よって `unless defined?(ActiveSupport)`
+# でガードし、ActiveSupport が居る環境では一切手を加えない。
+# Zeitwerk はファイルを module Domain { ... } で囲むため、::Object で明示的にトップレベルを指定する。
 unless defined?(ActiveSupport)
-  class ::String
-    def blank?
-      Domain::Shared.blank?(self)
-    end
-
-    def present?
-      Domain::Shared.present?(self)
-    end
-  end
-
-  class ::Array
-    def blank?
-      Domain::Shared.blank?(self)
-    end
-
-    def present?
-      Domain::Shared.present?(self)
-    end
-  end
-
-  class ::Hash
-    def blank?
-      Domain::Shared.blank?(self)
-    end
-
-    def present?
-      Domain::Shared.present?(self)
-    end
-  end
-
-  class ::NilClass
-    def blank?
-      Domain::Shared.blank?(self)
-    end
-
-    def present?
-      Domain::Shared.present?(self)
-    end
-  end
-
-  class ::FalseClass
-    def blank?
-      Domain::Shared.blank?(self)
-    end
-
-    def present?
-      Domain::Shared.present?(self)
-    end
-  end
-
-  class ::TrueClass
-    def blank?
-      Domain::Shared.blank?(self)
-    end
-
-    def present?
-      Domain::Shared.present?(self)
-    end
-  end
-
-  class ::Integer
+  class ::Object
     def blank?
       Domain::Shared.blank?(self)
     end
@@ -133,6 +77,18 @@ module Domain
       hash.to_hash.each_with_object({}) do |(k, v), result|
         key = k.respond_to?(:to_sym) ? k.to_sym : k
         result[key] = v
+      end
+    end
+
+    # ActiveSupport の Object#deep_dup（Hash / Array を再帰複製）の Rails 非依存代替。
+    def deep_dup(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) { |(k, v), result| result[deep_dup(k)] = deep_dup(v) }
+      when Array
+        obj.map { |e| deep_dup(e) }
+      else
+        obj.dup
       end
     end
 

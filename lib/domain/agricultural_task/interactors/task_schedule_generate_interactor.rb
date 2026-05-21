@@ -168,7 +168,7 @@ module Domain
             task_type: blueprint.task_type,
             agricultural_task_id: task&.id,
             name: name_for_blueprint(blueprint, task),
-            description: blueprint.description.presence || task&.description,
+            description: (blueprint.description if blueprint.description.present?) || task&.description,
             stage_name: blueprint.stage_name,
             stage_order: blueprint.stage_order,
             gdd_trigger: gdd_trigger,
@@ -258,7 +258,7 @@ module Domain
         def filtered_weather_data(weather_data, start_date)
           return weather_data unless start_date && weather_data.is_a?(Hash)
 
-          duplicated = weather_data.deep_dup
+          duplicated = Domain::Shared.deep_dup(weather_data)
           data_array = Array(duplicated["data"] || duplicated[:data])
 
           filtered = data_array.select do |entry|
