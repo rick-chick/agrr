@@ -12,7 +12,7 @@ class AgriculturalTasksController < ApplicationController
       query: params[:query].to_s.strip
     })
 
-    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskListHtmlPresenter.new(
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskListHtmlPresenter.new(
       view: self,
       input_dto: input_dto
     )
@@ -25,7 +25,7 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks/:id
   def show
-    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskDetailHtmlPresenter.new(view: self)
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -47,7 +47,7 @@ class AgriculturalTasksController < ApplicationController
     task_attributes = build_task_attributes
 
     @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInput.from_hash({ agricultural_task: task_attributes })
-    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskCreateHtmlPresenter.new(view: self)
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
@@ -66,7 +66,7 @@ class AgriculturalTasksController < ApplicationController
       },
       params[:id]
     )
-    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskUpdateHtmlPresenter.new(
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateHtmlPresenter.new(
       view: self,
       form_resubmit: {
         dto: @input_dto,
@@ -85,7 +85,7 @@ class AgriculturalTasksController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
 
         interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -121,11 +121,11 @@ class AgriculturalTasksController < ApplicationController
 
   def set_agricultural_task
     if action_requires_edit_permission?
-      presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskLoadForEditHtmlPresenter.new(view: self)
+      presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskLoadForEditHtmlPresenter.new(view: self)
       interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     else
-      presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskLoadForViewHtmlPresenter.new(view: self)
+      presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskLoadForViewHtmlPresenter.new(view: self)
       interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
     end
@@ -188,7 +188,7 @@ class AgriculturalTasksController < ApplicationController
       include_crop_cards: params[:action].to_s == "edit"
     )
 
-    presenter = Adapters::AgriculturalTask::Presenters::Html::AgriculturalTaskEditFormCropSelectionLoadHtmlPresenter.new(view: self)
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskEditFormCropSelectionLoadHtmlPresenter.new(view: self)
     interactor = CompositionRoot.agricultural_task_edit_form_crop_selection_load_interactor(
       output_port: presenter,
       user_id: current_user.id

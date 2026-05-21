@@ -5,14 +5,14 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides
   def index
-    presenter = Adapters::Pesticide::Presenters::Html::PesticideListHtmlPresenter.new(view: self)
+    presenter = Adapters::Pesticide::Presenters::PesticideListHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pesticides/:id
   def show
-    presenter = Adapters::Pesticide::Presenters::Html::PesticideDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::Pesticide::Presenters::PesticideDetailHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
@@ -31,7 +31,7 @@ class PesticidesController < ApplicationController
   # POST /pesticides
   def create
     input_dto = Domain::Pesticide::Dtos::PesticideCreateInput.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys)
-    presenter = Adapters::Pesticide::Presenters::Html::PesticideCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::Pesticide::Presenters::PesticideCreateHtmlPresenter.new(view: self)
 
     Domain::Pesticide::Interactors::PesticideCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -40,7 +40,7 @@ class PesticidesController < ApplicationController
   # PATCH/PUT /pesticides/:id
   def update
     input_dto = Domain::Pesticide::Dtos::PesticideUpdateInput.from_hash(pesticide_params.to_unsafe_h.deep_symbolize_keys, params[:id])
-    presenter = Adapters::Pesticide::Presenters::Html::PesticideUpdateHtmlPresenter.new(view: self)
+    presenter = Adapters::Pesticide::Presenters::PesticideUpdateHtmlPresenter.new(view: self)
 
     Domain::Pesticide::Interactors::PesticideUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -50,7 +50,7 @@ class PesticidesController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Adapters::Pesticide::Presenters::Html::PesticideDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::Pesticide::Presenters::PesticideDestroyHtmlPresenter.new(view: self)
         Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
@@ -100,7 +100,7 @@ class PesticidesController < ApplicationController
   private
 
   def load_pesticide_for_view
-    presenter = Adapters::Pesticide::Presenters::Html::PesticideLoadForViewHtmlPresenter.new(view: self)
+    presenter = Adapters::Pesticide::Presenters::PesticideLoadForViewHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end

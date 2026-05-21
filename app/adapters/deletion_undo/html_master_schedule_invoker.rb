@@ -18,7 +18,7 @@ module Adapters::DeletionUndo
           raise ArgumentError, "Adapters::DeletionUndo::HtmlMasterScheduleInvoker: pass record or resource_type/resource_id"
         end
 
-      presenter = Adapters::DeletionUndo::Presenters::Html::DeletionUndoScheduleMastersHtmlPresenter.new(
+      presenter = Adapters::DeletionUndo::Presenters::DeletionUndoScheduleMastersHtmlPresenter.new(
         view: view,
         fallback_location: fallback_location,
         in_use_message_key: in_use_message_key,

@@ -15,7 +15,7 @@ module Adapters
       end
 
       def call(farm_id:)
-        presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanSelectCropHtmlPresenter.new(view: @view)
+        presenter = Adapters::CultivationPlan::Presenters::PrivatePlanSelectCropHtmlPresenter.new(view: @view)
         Domain::CultivationPlan::Interactors::PrivatePlanSelectCropContextInteractor.new(
           output_port: presenter,
           user_id: @user_id,

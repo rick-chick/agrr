@@ -10,7 +10,7 @@ class ApiKeysController < ApplicationController
 
   # POST /api_keys/generate
   def generate
-    presenter = Adapters::ApiKeys::Presenters::Html::UserApiKeyRotateHtmlPresenter.new(view: self, regenerate: false)
+    presenter = Adapters::ApiKeys::Presenters::UserApiKeyRotateHtmlPresenter.new(view: self, regenerate: false)
     Domain::ApiKeys::Interactors::UserApiKeyRotateInteractor.new(
       output_port: presenter,
       gateway: CompositionRoot.user_api_key_rotation_gateway
@@ -19,7 +19,7 @@ class ApiKeysController < ApplicationController
 
   # POST /api_keys/regenerate
   def regenerate
-    presenter = Adapters::ApiKeys::Presenters::Html::UserApiKeyRotateHtmlPresenter.new(view: self, regenerate: true)
+    presenter = Adapters::ApiKeys::Presenters::UserApiKeyRotateHtmlPresenter.new(view: self, regenerate: true)
     Domain::ApiKeys::Interactors::UserApiKeyRotateInteractor.new(
       output_port: presenter,
       gateway: CompositionRoot.user_api_key_rotation_gateway

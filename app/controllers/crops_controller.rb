@@ -6,7 +6,7 @@ class CropsController < ApplicationController
 
   # GET /crops
   def index
-    presenter = Adapters::Crop::Presenters::Html::CropListHtmlPresenter.new(view: self)
+    presenter = Adapters::Crop::Presenters::CropListHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -16,7 +16,7 @@ class CropsController < ApplicationController
 
   # GET /crops/:id
   def show
-    presenter = Adapters::Crop::Presenters::Html::CropDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::Crop::Presenters::CropDetailHtmlPresenter.new(view: self)
     interactor = Domain::Crop::Interactors::CropDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
@@ -34,7 +34,7 @@ class CropsController < ApplicationController
   # POST /crops
   def create
     @input_dto = Domain::Crop::Dtos::CropCreateInput.from_hash({ crop: crop_params.to_h.symbolize_keys })
-    presenter = Adapters::Crop::Presenters::Html::CropCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::Crop::Presenters::CropCreateHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
@@ -45,7 +45,7 @@ class CropsController < ApplicationController
   # PATCH/PUT /crops/:id
   def update
     @input_dto = Domain::Crop::Dtos::CropUpdateInput.from_hash({ crop: crop_params.to_h.symbolize_keys }, params[:id])
-    presenter = Adapters::Crop::Presenters::Html::CropUpdateHtmlPresenter.new(view: self)
+    presenter = Adapters::Crop::Presenters::CropUpdateHtmlPresenter.new(view: self)
 
     interactor = Domain::Crop::Interactors::CropUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
@@ -57,7 +57,7 @@ class CropsController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Adapters::Crop::Presenters::Html::CropDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::Crop::Presenters::CropDestroyHtmlPresenter.new(view: self)
         interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -80,7 +80,7 @@ class CropsController < ApplicationController
   end
 
   def generate_task_schedule_blueprints
-    presenter = Adapters::Crop::Presenters::Html::CropRegenerateTaskScheduleBlueprintsHtmlPresenter.new(view: self)
+    presenter = Adapters::Crop::Presenters::CropRegenerateTaskScheduleBlueprintsHtmlPresenter.new(view: self)
     Domain::Crop::Interactors::CropRegenerateTaskScheduleBlueprintsInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -95,7 +95,7 @@ class CropsController < ApplicationController
 
   # POST /crops/:id/toggle_task_template
   def toggle_task_template
-    presenter = Adapters::Crop::Presenters::Html::CropToggleTaskTemplateHtmlPresenter.new(view: self)
+    presenter = Adapters::Crop::Presenters::CropToggleTaskTemplateHtmlPresenter.new(view: self)
     Domain::Crop::Interactors::CropToggleTaskTemplateInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -144,7 +144,7 @@ class CropsController < ApplicationController
   def set_crop
     action = params[:action].to_sym
     for_edit = action.in?([ :edit, :update, :generate_task_schedule_blueprints, :toggle_task_template ])
-    presenter = Adapters::Crop::Presenters::Html::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+    presenter = Adapters::Crop::Presenters::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
     interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(failure_presenter: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
     bundle = interactor.call(params[:id], for_edit: for_edit)

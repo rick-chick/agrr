@@ -6,7 +6,7 @@ class FieldsController < ApplicationController
 
   # GET /farms/:farm_id/fields
   def index
-    presenter = Adapters::Field::Presenters::Html::FieldListHtmlPresenter.new(view: self)
+    presenter = Adapters::Field::Presenters::FieldListHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldListInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:farm_id])
@@ -14,7 +14,7 @@ class FieldsController < ApplicationController
 
   # GET /farms/:farm_id/fields/:id
   def show
-    presenter = Adapters::Field::Presenters::Html::FieldDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::Field::Presenters::FieldDetailHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
@@ -35,7 +35,7 @@ class FieldsController < ApplicationController
   # POST /farms/:farm_id/fields
   def create
     input_dto = Domain::Field::Dtos::FieldCreateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys)
-    presenter = Adapters::Field::Presenters::Html::FieldCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::Field::Presenters::FieldCreateHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call(input_dto, @farm.id)
@@ -44,7 +44,7 @@ class FieldsController < ApplicationController
   # PATCH/PUT /farms/:farm_id/fields/:id
   def update
     input_dto = Domain::Field::Dtos::FieldUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id])
-    presenter = Adapters::Field::Presenters::Html::FieldUpdateHtmlPresenter.new(view: self)
+    presenter = Adapters::Field::Presenters::FieldUpdateHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call(input_dto)
@@ -54,7 +54,7 @@ class FieldsController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Adapters::Field::Presenters::Html::FieldDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::Field::Presenters::FieldDestroyHtmlPresenter.new(view: self)
         interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
         interactor.call(params[:id])
@@ -80,14 +80,14 @@ class FieldsController < ApplicationController
   private
 
   def set_farm
-    presenter = Adapters::Farm::Presenters::Html::FarmLoadForEditHtmlPresenter.new(view: self)
+    presenter = Adapters::Farm::Presenters::FarmLoadForEditHtmlPresenter.new(view: self)
     interactor = Domain::Farm::Interactors::FarmLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:farm_id])
   end
 
   def set_field
-    failure_presenter = Adapters::Field::Presenters::Html::FieldLoadInFarmAuthorizationFailureRedirectPresenter.new(view: self)
+    failure_presenter = Adapters::Field::Presenters::FieldLoadInFarmAuthorizationFailureRedirectPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldLoadAuthorizedInFarmInteractor.new(failure_presenter: failure_presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
     bundle = interactor.call(@farm.id, params[:id])

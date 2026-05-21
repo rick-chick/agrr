@@ -7,7 +7,7 @@ module Crops
 
     # GET /crops/:crop_id/pests
     def index
-      presenter = Adapters::Crop::Presenters::Html::CropPestsIndexHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropPestsIndexHtmlPresenter.new(view: self)
       Domain::Pest::Interactors::CropsNestedPestsIndexInteractor.new(output_port: presenter,
         user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id)
     end
@@ -19,7 +19,7 @@ module Crops
 
     # GET /crops/:crop_id/pests/new
     def new
-      presenter = Adapters::Crop::Presenters::Html::CropPestsNewHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropPestsNewHtmlPresenter.new(view: self)
       Domain::Pest::Interactors::CropsNestedPestsNewInteractor.new(output_port: presenter,
         user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(crop_id: @crop.id)
       presenter.render_template
@@ -32,7 +32,7 @@ module Crops
 
     # POST /crops/:crop_id/pests
     def create
-      presenter = Adapters::Crop::Presenters::Html::CropPestsCreateHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropPestsCreateHtmlPresenter.new(view: self)
       pest_attrs =
         if params[:pest].present?
           pest_params.respond_to?(:to_unsafe_h) ? pest_params.to_unsafe_h : pest_params.to_h
@@ -49,7 +49,7 @@ module Crops
 
     # PATCH/PUT /crops/:crop_id/pests/:id
     def update
-      presenter = Adapters::Crop::Presenters::Html::CropPestsUpdateHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropPestsUpdateHtmlPresenter.new(view: self)
       pest_attrs =
         if params[:pest].present?
           pest_params.respond_to?(:to_unsafe_h) ? pest_params.to_unsafe_h : pest_params.to_h
@@ -77,13 +77,13 @@ module Crops
     private
 
     def load_authorized_crop
-      presenter = Adapters::Crop::Presenters::Html::CropPestsLoadCropHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropPestsLoadCropHtmlPresenter.new(view: self)
       Domain::Crop::Interactors::CropLoadAuthorizedForCropPestsInteractor.new(output_port: presenter,
         user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:crop_id])
     end
 
     def load_nested_pest
-      presenter = Adapters::Crop::Presenters::Html::CropPestsLoadPestHtmlPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropPestsLoadPestHtmlPresenter.new(view: self)
       Domain::Pest::Interactors::CropsNestedPestsLoadPestInteractor.new(
         output_port: presenter,
         user_id: current_user.id,

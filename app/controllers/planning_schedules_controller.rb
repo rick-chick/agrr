@@ -9,7 +9,7 @@ class PlanningSchedulesController < ApplicationController
 
   # ほ場選択画面
   def fields_selection
-    presenter = Adapters::CultivationPlan::Presenters::Html::PlanningScheduleFieldsSelectionHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::PlanningScheduleFieldsSelectionHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PlanningScheduleFieldsSelectionInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -25,7 +25,7 @@ class PlanningSchedulesController < ApplicationController
 
   # 作付け計画表画面
   def schedule
-    presenter = Adapters::CultivationPlan::Presenters::Html::PlanningScheduleMatrixHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::PlanningScheduleMatrixHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PlanningScheduleMatrixInteractor.new(
       output_port: presenter,
       user_id: current_user.id,

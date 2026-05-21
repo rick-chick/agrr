@@ -17,7 +17,7 @@ class DeletionUndosController < ApplicationController
       end
 
       format.html do
-        execute_restore_use_case(input_dto, Adapters::DeletionUndo::Presenters::Html::DeletionUndoRestoreHtmlPresenter)
+        execute_restore_use_case(input_dto, Adapters::DeletionUndo::Presenters::DeletionUndoRestoreHtmlPresenter)
       end
     end
   end

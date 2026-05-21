@@ -11,7 +11,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # 計画一覧（農場別）
   def index
-    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanIndexHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanIndexHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -27,7 +27,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # Step 1: 農場選択
   def new
-    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanNewHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanNewHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -63,7 +63,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # Step 3: 計画作成（最適化はしない）
   def create
-    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanCreateFromSessionPresenter.new(
+    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanCreateFromSessionPresenter.new(
       view: self,
       session_key: self.class.session_key
     )
@@ -94,7 +94,7 @@ class PlansController < CultivationPlanHtmlBaseController
       redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
     end
 
-    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanOptimizationRedirectHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanOptimizationRedirectHtmlPresenter.new(view: self)
     CompositionRoot.private_plan_optimization_redirect_interactor(
       output_port: presenter,
       user_id: current_user.id,
@@ -122,7 +122,7 @@ class PlansController < CultivationPlanHtmlBaseController
       redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
     end
 
-    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanShowHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanShowHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -149,7 +149,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # 計画削除（Undo 対応は Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor へ委譲）
   def destroy
-    presenter = Adapters::CultivationPlan::Presenters::Html::CultivationPlanDestroyHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::CultivationPlanDestroyHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -162,7 +162,7 @@ class PlansController < CultivationPlanHtmlBaseController
   private
 
   def load_private_plan_select_crop_context(farm_id)
-    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanSelectCropHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanSelectCropHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanSelectCropContextInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
@@ -176,7 +176,7 @@ class PlansController < CultivationPlanHtmlBaseController
   end
 
   def load_private_plan_optimizing(plan_id)
-    presenter = Adapters::CultivationPlan::Presenters::Html::PrivatePlanOptimizingHtmlPresenter.new(view: self)
+    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanOptimizingHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor.new(
       output_port: presenter,
       user_id: current_user.id,

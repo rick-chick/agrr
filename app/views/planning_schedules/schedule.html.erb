@@ -87,8 +87,8 @@
                 field_id = field.id
                 cultivations = @cultivations_by_field[field_id] || []
                 
-                # Adapters::CultivationPlan::Presenters::Html::ScheduleTableFieldArrangerを使って作付を配置
-                arranged_cultivations = Adapters::CultivationPlan::Presenters::Html::ScheduleTableFieldArranger.arrange(
+                # Adapters::CultivationPlan::Presenters::ScheduleTableFieldArrangerを使って作付を配置
+                arranged_cultivations = Adapters::CultivationPlan::Presenters::ScheduleTableFieldArranger.arrange(
                   cultivations: cultivations,
                   periods: @periods
                 )

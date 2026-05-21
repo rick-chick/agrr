@@ -27,7 +27,7 @@ class AuthTestController < ApplicationController
   end
 
   def mock_logout
-    presenter = Adapters::Auth::Presenters::Html::AuthTestLogoutHtmlPresenter.new(view: self)
+    presenter = Adapters::Auth::Presenters::AuthTestLogoutHtmlPresenter.new(view: self)
     Domain::Auth::Interactors::AuthUserLogoutInteractor.new(
       output_port: presenter,
       session_revocation_gateway: CompositionRoot.user_session_revocation_gateway
@@ -81,7 +81,7 @@ class AuthTestController < ApplicationController
       pending_return_to_allowed: pending_allowed
     )
 
-    presenter = Adapters::Auth::Presenters::Html::AuthTestMockLoginHtmlPresenter.new(view: self)
+    presenter = Adapters::Auth::Presenters::AuthTestMockLoginHtmlPresenter.new(view: self)
     Domain::Auth::Interactors::AuthTestMockLoginInteractor.new(
       output_port: presenter,
       gateway: CompositionRoot.auth_test_login_gateway,

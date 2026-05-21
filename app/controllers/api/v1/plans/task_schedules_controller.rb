@@ -25,7 +25,7 @@ module Api
         private
 
         def timeline_presenter
-          @timeline_presenter ||= Adapters::CultivationPlan::Presenters::Html::TaskScheduleTimelinePresenter.new(
+          @timeline_presenter ||= Adapters::CultivationPlan::Presenters::TaskScheduleTimelinePresenter.new(
             view: self,
             params: timeline_params
           )

@@ -5,7 +5,7 @@ class PestsController < ApplicationController
 
   # GET /pests
   def index
-    presenter = Adapters::Pest::Presenters::Html::PestListHtmlPresenter.new(view: self)
+    presenter = Adapters::Pest::Presenters::PestListHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestListInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call
@@ -13,7 +13,7 @@ class PestsController < ApplicationController
 
   # GET /pests/:id
   def show
-    presenter = Adapters::Pest::Presenters::Html::PestDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::Pest::Presenters::PestDetailHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
@@ -39,7 +39,7 @@ class PestsController < ApplicationController
     input_dto = Domain::Pest::Dtos::PestCreateInput.from_hash(
       { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] }
     )
-    presenter = Adapters::Pest::Presenters::Html::PestCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::Pest::Presenters::PestCreateHtmlPresenter.new(view: self)
     Domain::Pest::Interactors::PestCreateInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(input_dto)
@@ -51,7 +51,7 @@ class PestsController < ApplicationController
       { pest: pest_params.to_h.symbolize_keys, crop_ids: params[:crop_ids] },
       params[:id]
     )
-    presenter = Adapters::Pest::Presenters::Html::PestUpdateHtmlPresenter.new(
+    presenter = Adapters::Pest::Presenters::PestUpdateHtmlPresenter.new(
       view: self
     )
     Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: presenter,
@@ -63,7 +63,7 @@ class PestsController < ApplicationController
   def destroy
     respond_to do |format|
       format.html do
-        presenter = Adapters::Pest::Presenters::Html::PestDestroyHtmlPresenter.new(view: self)
+        presenter = Adapters::Pest::Presenters::PestDestroyHtmlPresenter.new(view: self)
         Domain::Pest::Interactors::PestDestroyInteractor.new(output_port: presenter,
           user_id: current_user.id,
           translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
@@ -91,7 +91,7 @@ class PestsController < ApplicationController
   end
 
   def load_pest_for_edit
-    failure_presenter = Adapters::Pest::Presenters::Html::PestAuthorizationFailureRedirectPresenter.new(
+    failure_presenter = Adapters::Pest::Presenters::PestAuthorizationFailureRedirectPresenter.new(
       view: self, permission_message_key: "pests.flash.no_permission"
     )
     interactor = Domain::Pest::Interactors::PestLoadAuthorizedModelForEditInteractor.new(

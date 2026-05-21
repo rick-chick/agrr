@@ -37,7 +37,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     region = locale_to_region(I18n.locale)
 
     # 選択された地域の参照農場のみ取得（Policy 経由）
-    presenter = Adapters::PublicPlan::Presenters::Html::ReferenceFarmsPresenter.new(view: self)
+    presenter = Adapters::PublicPlan::Presenters::ReferenceFarmsPresenter.new(view: self)
     Domain::Farm::Interactors::FarmListReferenceForRegionInteractor.new(output_port: presenter, gateway: CompositionRoot.farm_gateway, logger: CompositionRoot.logger).call(region)
 
     Rails.logger.debug "🌍 [PublicPlans#new] locale=#{I18n.locale}, region=#{region}, farms=#{@farms.count}"
@@ -45,7 +45,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # Step 2: 農場サイズ選択
   def select_farm_size
-    failure = Adapters::PublicPlan::Presenters::Html::PublicPlanWizardAlertRedirectPresenter.new(view: self, path_helper: :public_plans_path)
+    failure = Adapters::PublicPlan::Presenters::PublicPlanWizardAlertRedirectPresenter.new(view: self, path_helper: :public_plans_path)
     farm = Domain::PublicPlan::Interactors::PublicPlanWizardLoadFarmInteractor.new(
       public_plan_gateway: CompositionRoot.public_plan_gateway,
       failure_presenter: failure
@@ -60,7 +60,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # Step 3: 作物選択
   def select_crop
-    crop_step_presenter = Adapters::PublicPlan::Presenters::Html::PublicPlanWizardCropStepHtmlPresenter.new(view: self)
+    crop_step_presenter = Adapters::PublicPlan::Presenters::PublicPlanWizardCropStepHtmlPresenter.new(view: self)
     Domain::PublicPlan::Interactors::PublicPlanWizardPrepareCropStepInteractor.new(
       public_plan_gateway: CompositionRoot.public_plan_gateway,
       output_port: crop_step_presenter
@@ -69,7 +69,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
     @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id] == params[:farm_size_id] }
 
-    presenter = Adapters::PublicPlan::Presenters::Html::ReferenceCropsPresenter.new(view: self)
+    presenter = Adapters::PublicPlan::Presenters::ReferenceCropsPresenter.new(view: self)
     Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: @farm.region)
     session[:public_plan] = session_data.merge(
       total_area: @farm_size[:area_sqm],
@@ -92,7 +92,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       redirect_path: job_completion_redirect_path
     )
 
-    presenter = Adapters::PublicPlan::Presenters::Html::PublicPlanCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanCreateHtmlPresenter.new(view: self)
 
     Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
       output_port: presenter,
@@ -119,7 +119,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       return
     end
 
-    presenter_crops = Adapters::PublicPlan::Presenters::Html::ReferenceCropsPresenter.new(view: self)
+    presenter_crops = Adapters::PublicPlan::Presenters::ReferenceCropsPresenter.new(view: self)
     Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(
       output_port: presenter_crops,
       gateway: CompositionRoot.crop_gateway,
@@ -133,7 +133,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
   # Step 5: 最適化進捗画面（広告表示）
   def optimizing
     plan_id = normalize_public_plan_wizard_plan_id
-    presenter = Adapters::PublicPlan::Presenters::Html::PublicPlanOptimizingHtmlPresenter.new(view: self)
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanOptimizingHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PublicPlanOptimizingInteractor.new(
       output_port: presenter,
       plan_id: plan_id,
@@ -146,7 +146,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # Step 6: 結果表示
   def results
-    presenter = Adapters::PublicPlan::Presenters::Html::PublicPlanResultsHtmlPresenter.new(view: self)
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanResultsHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
       output_port: presenter,
       gateway: CompositionRoot.cultivation_plan_gateway
@@ -163,7 +163,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     end
 
     plan_id = normalize_public_plan_wizard_plan_id
-    presenter = Adapters::PublicPlan::Presenters::Html::PublicPlanWizardSaveDispatchHtmlPresenter.new(
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanWizardSaveDispatchHtmlPresenter.new(
       view: self,
       clear_stashed_save_data_on_success: false
     )
@@ -195,7 +195,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
   private
 
   def run_public_plan_save_from_session_html(user:, session_data:, clear_stashed_save_data_on_success:)
-    presenter = Adapters::PublicPlan::Presenters::Html::PublicPlanSaveFromSessionHtmlPresenter.new(
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanSaveFromSessionHtmlPresenter.new(
       view: self,
       clear_stashed_save_data_on_success: clear_stashed_save_data_on_success
     )
