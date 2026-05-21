@@ -11,10 +11,6 @@ module Domain
           @pest_entity = pest_entity
           @pest_master_edit_payload = pest_master_edit_payload
         end
-
-        def on_failure(failure_type)
-          raise NotImplementedError, "Subclasses must implement on_failure"
-        end
       end
     end
   end
