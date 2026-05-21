@@ -1,0 +1,149 @@
+# frozen_string_literal: true
+
+require "domain_lib_test_helper"
+
+module Domain
+  module CultivationPlan
+    module Interactors
+      # TaskScheduleTimelineInteractor の純粋ユニットテスト（memory gateway 注入・Rails 非依存）。
+      # 旧 test/integration/domain/... の実 AR + FactoryBot 版を ARCHITECTURE.md Testing 規約
+      # （interactor は memory gateway で test/domain/ に置く）に沿って書き直したもの。
+      class TaskScheduleTimelineInteractorTest < DomainLibTestCase
+        class StubOutputPort < Domain::CultivationPlan::Ports::TaskScheduleTimelineOutputPort
+          attr_reader :success_dto, :failure_dto
+
+          def on_success(dto)
+            @success_dto = dto
+          end
+
+          def on_failure(error_dto)
+            @failure_dto = error_dto
+          end
+        end
+
+        # gateway.task_schedule_timeline_snapshot が返す read_model（Assembler が
+        # plan / fields / scheduled_dates のみを読む）。
+        ReadModel = Struct.new(:plan, :fields, :scheduled_dates, keyword_init: true)
+        PlanRef = Struct.new(:id, keyword_init: true)
+        FieldRow = Struct.new(:field_cultivation_id, :task_options, keyword_init: true)
+        TaskOption = Struct.new(:template_id, keyword_init: true)
+
+        class FakeGateway
+          attr_reader :received
+
+          def initialize(read_model)
+            @read_model = read_model
+            @received = nil
+          end
+
+          def task_schedule_timeline_snapshot(user:, plan_id:)
+            @received = { user: user, plan_id: plan_id }
+            @read_model
+          end
+        end
+
+        class FakeUserLookup
+          def initialize(user: nil, raise_not_found: false)
+            @user = user
+            @raise_not_found = raise_not_found
+          end
+
+          def find(_user_id)
+            raise Domain::Shared::Exceptions::RecordNotFound if @raise_not_found
+
+            @user
+          end
+        end
+
+        class RecordingLogger
+          attr_reader :warns, :errors
+
+          def initialize
+            @warns = []
+            @errors = []
+          end
+
+          def warn(message)
+            @warns << message
+          end
+
+          def error(message)
+            @errors << message
+          end
+        end
+
+        class StubTranslator
+          def t(key, **_options)
+            "t:#{key}"
+          end
+        end
+
+        setup do
+          @plan_id = 99
+          @today = Date.new(2025, 1, 10)
+          @clock = Struct.new(:today).new(@today)
+          @output_port = StubOutputPort.new
+          @logger = RecordingLogger.new
+          @translator = StubTranslator.new
+        end
+
+        test "loads timeline snapshot and passes the assembled dto to on_success" do
+          read_model = ReadModel.new(
+            plan: PlanRef.new(id: @plan_id),
+            fields: [ FieldRow.new(field_cultivation_id: 7, task_options: [ TaskOption.new(template_id: 31) ]) ],
+            scheduled_dates: [ Date.new(2025, 1, 10) ]
+          )
+          gateway = FakeGateway.new(read_model)
+
+          build_interactor(gateway: gateway, user_lookup: FakeUserLookup.new(user: Object.new)).call
+
+          assert_nil @output_port.failure_dto
+          dto = @output_port.success_dto
+          assert_not_nil dto
+          assert_equal @plan_id, dto.plan.id
+          assert_equal @today, dto.today
+          assert_equal 1, dto.fields.size
+          assert_equal 7, dto.fields.first.field_cultivation_id
+          assert_equal 31, dto.fields.first.task_options.first.template_id
+          assert_includes dto.scheduled_dates, Date.new(2025, 1, 10)
+        end
+
+        test "passes the resolved user and plan_id to the gateway" do
+          user = Object.new
+          read_model = ReadModel.new(plan: PlanRef.new(id: @plan_id), fields: [], scheduled_dates: [])
+          gateway = FakeGateway.new(read_model)
+
+          build_interactor(gateway: gateway, user_lookup: FakeUserLookup.new(user: user)).call
+
+          assert_equal({ user: user, plan_id: @plan_id }, gateway.received)
+        end
+
+        test "calls on_failure when the user cannot be resolved" do
+          gateway = FakeGateway.new(ReadModel.new(plan: nil, fields: [], scheduled_dates: []))
+
+          build_interactor(gateway: gateway, user_lookup: FakeUserLookup.new(raise_not_found: true)).call
+
+          assert_nil @output_port.success_dto
+          assert_instance_of Domain::Shared::Dtos::Error, @output_port.failure_dto
+          assert_equal "t:plans.errors.session_invalid", @output_port.failure_dto.message
+          refute_empty @logger.warns
+        end
+
+        private
+
+        def build_interactor(gateway:, user_lookup:)
+          TaskScheduleTimelineInteractor.new(
+            output_port: @output_port,
+            user_id: 1,
+            plan_id: @plan_id,
+            gateway: gateway,
+            translator: @translator,
+            logger: @logger,
+            user_lookup: user_lookup,
+            clock: @clock
+          )
+        end
+      end
+    end
+  end
+end
