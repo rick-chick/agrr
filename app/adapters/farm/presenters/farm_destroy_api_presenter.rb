@@ -5,7 +5,7 @@ module Adapters
     module Presenters
       # HTML マスタ DELETE の JSON 応答 — `FarmDestroyInteractor` の Output port。
       # 成功時は DeletionUndo の DualFormat と同一ペイロード（Undo トークン等のフラット JSON）。
-      class FarmDestroyJsonPresenter < Domain::Farm::Ports::FarmDestroyOutputPort
+      class FarmDestroyApiPresenter < Domain::Farm::Ports::FarmDestroyOutputPort
         def initialize(view:, fallback_location:)
           @view = view
           @fallback_location = fallback_location

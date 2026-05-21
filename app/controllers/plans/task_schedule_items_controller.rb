@@ -105,7 +105,7 @@ module Plans
     private
 
     def task_schedule_item_mutation_presenter
-      Adapters::CultivationPlan::Presenters::TaskScheduleItemMutationPresenter.new(view: self)
+      Adapters::CultivationPlan::Presenters::TaskScheduleItemMutationApiPresenter.new(view: self)
     end
 
     def task_schedule_route_plan_id

@@ -3,7 +3,7 @@
 module Adapters
   module InteractionRule
     module Presenters
-      class InteractionRuleHtmlLoadPresenter
+      class InteractionRuleLoadHtmlPresenter
         def initialize(view:, for_edit:)
           @view = view
           @for_edit = for_edit

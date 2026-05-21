@@ -121,7 +121,7 @@ class InteractionRulesController < ApplicationController
 
   def preload_interaction_rule_entity
     for_edit = params[:action].to_sym.in?([ :edit, :update ])
-    presenter = Adapters::InteractionRule::Presenters::InteractionRuleHtmlLoadPresenter.new(view: self, for_edit: for_edit)
+    presenter = Adapters::InteractionRule::Presenters::InteractionRuleLoadHtmlPresenter.new(view: self, for_edit: for_edit)
     Domain::InteractionRule::Interactors::InteractionRuleLoadInteractor.new(
       output_port: presenter,
       user_id: current_user.id,

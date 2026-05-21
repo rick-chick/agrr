@@ -3,7 +3,7 @@
 module Adapters
   module Farm
     module Presenters
-      class FarmDirectJsonCreatePresenter < Domain::Farm::Ports::FarmCreateOutputPort
+      class FarmDirectCreateApiPresenter < Domain::Farm::Ports::FarmCreateOutputPort
         def initialize(view:)
           @view = view
         end

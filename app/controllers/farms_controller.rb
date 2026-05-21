@@ -18,7 +18,7 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Adapters::Farm::Presenters::FarmListJsonPresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: self)
         Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -79,7 +79,7 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Adapters::Farm::Presenters::FarmDirectJsonCreatePresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::FarmDirectCreateApiPresenter.new(view: self)
         input_dto = Domain::Farm::Dtos::FarmCreateInput.from_hash({ farm: farm_params.to_h.symbolize_keys })
         Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
           user_id: current_user.id,
@@ -130,7 +130,7 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Adapters::Farm::Presenters::FarmDestroyJsonPresenter.new(
+        presenter = Adapters::Farm::Presenters::FarmDestroyApiPresenter.new(
           view: self,
           fallback_location: farms_path
         )
@@ -166,7 +166,7 @@ class FarmsController < ApplicationController
     Rails.application.routes.url_helpers.farms_path
   end
 
-  # FarmListJsonPresenter など JSON 用 Presenter が参照する View インターフェース
+  # FarmListRowsBundleApiPresenter など JSON 用 Presenter が参照する View インターフェース
   def render_response(json:, status:)
     render(json: json, status: status)
   end

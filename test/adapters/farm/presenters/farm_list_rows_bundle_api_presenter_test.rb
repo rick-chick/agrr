@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class FarmListJsonPresenterTest < ActiveSupport::TestCase
+class FarmListRowsBundleApiPresenterTest < ActiveSupport::TestCase
   class FakeView
     attr_reader :json, :status
 
@@ -33,7 +33,7 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
 
   test "on_success renders farms and reference_farms from rows bundle with ok" do
     view = FakeView.new
-    presenter = Adapters::Farm::Presenters::FarmListJsonPresenter.new(view: view)
+    presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: view)
 
     t = Time.zone.parse("2024-01-15 12:00:00")
     row_main = build_row(id: 1, name: "A", created_at: t, updated_at: t)
@@ -84,7 +84,7 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
 
   test "on_success defaults missing rows to empty arrays" do
     view = FakeView.new
-    presenter = Adapters::Farm::Presenters::FarmListJsonPresenter.new(view: view)
+    presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: view)
 
     bundle = Domain::Farm::Dtos::FarmListRowsBundle.new(
       farm_rows: [],
@@ -100,7 +100,7 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
 
   test "on_success treats non-array farm_rows as empty farms" do
     view = FakeView.new
-    presenter = Adapters::Farm::Presenters::FarmListJsonPresenter.new(view: view)
+    presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: view)
 
     bundle = Domain::Farm::Dtos::FarmListRowsBundle.new(
       farm_rows: nil,
@@ -116,7 +116,7 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
 
   test "on_success treats non-array reference_farm_rows as empty" do
     view = FakeView.new
-    presenter = Adapters::Farm::Presenters::FarmListJsonPresenter.new(view: view)
+    presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: view)
 
     bundle = Domain::Farm::Dtos::FarmListRowsBundle.new(
       farm_rows: [],
@@ -131,7 +131,7 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders forbidden for PolicyPermissionDenied" do
     view = FakeView.new
-    presenter = Adapters::Farm::Presenters::FarmListJsonPresenter.new(view: view)
+    presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: view)
 
     err = Domain::Shared::Policies::PolicyPermissionDenied.new
 
@@ -143,7 +143,7 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders unprocessable_entity with Error message" do
     view = FakeView.new
-    presenter = Adapters::Farm::Presenters::FarmListJsonPresenter.new(view: view)
+    presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: view)
 
     error_dto = Domain::Shared::Dtos::Error.new("Database connection failed")
 
@@ -155,7 +155,7 @@ class FarmListJsonPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders unprocessable_entity for string failure using to_s" do
     view = FakeView.new
-    presenter = Adapters::Farm::Presenters::FarmListJsonPresenter.new(view: view)
+    presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: view)
 
     presenter.on_failure("Some error string")
 

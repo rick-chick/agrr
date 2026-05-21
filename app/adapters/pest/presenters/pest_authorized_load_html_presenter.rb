@@ -3,7 +3,7 @@
 module Adapters
   module Pest
     module Presenters
-      class PestHtmlAuthorizedLoad < Domain::Pest::Ports::PestAuthorizedLoad
+      class PestAuthorizedLoadHtmlPresenter < Domain::Pest::Ports::PestAuthorizedLoad
         def initialize(view:)
           @view = view
         end

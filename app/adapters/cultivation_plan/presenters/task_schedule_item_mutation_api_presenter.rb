@@ -3,7 +3,7 @@
 module Adapters
   module CultivationPlan
     module Presenters
-      class TaskScheduleItemMutationPresenter < Domain::CultivationPlan::Ports::TaskScheduleItemMutationOutputPort
+      class TaskScheduleItemMutationApiPresenter < Domain::CultivationPlan::Ports::TaskScheduleItemMutationOutputPort
         def initialize(view:)
           @view = view
         end

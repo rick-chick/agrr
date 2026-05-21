@@ -3,7 +3,7 @@
 module Adapters
   module Farm
     module Presenters
-      class FarmListJsonPresenter < Domain::Farm::Ports::FarmListRowsBundleOutputPort
+      class FarmListRowsBundleApiPresenter < Domain::Farm::Ports::FarmListRowsBundleOutputPort
         def initialize(view:)
           @view = view
         end
