@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
 module Adapters
-  module Logger
-    module Gateways
-      class RailsLoggerGateway < Domain::Logger::Gateways::LoggerGateway
+  module Shared
+    module Ports
+      # Rails.logger への一方向出力アダプタ（Infrastructure Port 実装）。
+      # interface: Domain::Shared::Ports::LoggerPort
+      class RailsLoggerAdapter
+        include Domain::Shared::Ports::LoggerPort
+
         def debug(message, progname = nil)
           Rails.logger.debug(message)
         end

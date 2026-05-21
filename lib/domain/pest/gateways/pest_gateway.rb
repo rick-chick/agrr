@@ -117,7 +117,7 @@ module Domain
         # AI Pest API: affected_crops ペイロードを解決して害虫に作物を関連付ける。
         # ActiveRecord::ActiveRecordError は永続化境界で捕捉しログに留める（コントローラで rescue しない）。
         #
-        # @param logger [Domain::Logger::Gateways::LoggerGateway]
+        # @param logger [Domain::Shared::Ports::LoggerPort]
         # @return [Integer] 新規に紐づけた件数（既存リンクは含まない）
         def associate_affected_crops_for_ai_pest(pest_id:, affected_crops:, user:, logger:)
           raise NotImplementedError, "Subclasses must implement associate_affected_crops_for_ai_pest"

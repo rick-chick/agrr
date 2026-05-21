@@ -9,7 +9,7 @@ module Domain
         setup do
           @gateway = mock
           @output_port = mock
-          @translator = Adapters::Translators::RailsTranslator.new
+          @translator = Adapters::Shared::Ports::RailsTranslatorAdapter.new
            @logger = ::Logger.new("/dev/null")
           @fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailure
         end

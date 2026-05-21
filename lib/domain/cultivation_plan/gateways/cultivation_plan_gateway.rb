@@ -56,7 +56,7 @@ module Domain
 
         # 年度指定で既存計画を私有コピー（年度計画フロー）
         # @param logger [#info] DI 必須。当メソッド（年度私有コピー）は #info のみ使用。
-        #   推奨は {Domain::Logger::Gateways::LoggerGateway} のサブクラス（ダックタイプでも可）。
+        #   推奨は {Domain::Shared::Ports::LoggerPort} のサブクラス（ダックタイプでも可）。
         # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
         def copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:)
           raise NotImplementedError, "Subclasses must implement copy_private_plan_for_year"

@@ -8,8 +8,8 @@ module Adapters
         # ログはすべて +logger+ 経由（本メソッド内で Rails.logger は使わない）。
         #
         # @param logger [#info] 成功パス用（必須）。本メソッドは #info のみ使用。
-        #   推奨: {Domain::Logger::Gateways::LoggerGateway} のサブクラス
-        #   （{Adapters::Logger::Gateways::RailsLoggerGateway}、テストでは test/support/capturing_logger.rb の CapturingLogger）。
+        #   推奨: {Domain::Shared::Ports::LoggerPort} のサブクラス
+        #   （{Adapters::Shared::Ports::RailsLoggerAdapter}、テストでは test/support/capturing_logger.rb の CapturingLogger）。
         #   注入は CompositionRoot.logger 経由を想定。
         def self.copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:)
           source_plan = ::CultivationPlan.find(source_cultivation_plan_id)

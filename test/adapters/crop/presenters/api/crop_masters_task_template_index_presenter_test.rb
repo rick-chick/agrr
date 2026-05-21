@@ -35,6 +35,6 @@ class CropMastersTaskTemplateIndexPresenterTest < ActiveSupport::TestCase
   private
 
   def translator_stub
-    @translator_stub ||= Adapters::Translators::RailsTranslator.new
+    @translator_stub ||= Adapters::Shared::Ports::RailsTranslatorAdapter.new
   end
 end

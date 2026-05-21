@@ -19,7 +19,7 @@ module CompositionRoot
     end
 
     def logger
-      @logger ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
+      @logger ||= Adapters::Shared::Ports::RailsLoggerAdapter.new
     end
 
     def job_chain_async_dispatcher
@@ -36,7 +36,7 @@ module CompositionRoot
     end
 
     def translator
-      @translator ||= Adapters::Translators::RailsTranslator.new
+      @translator ||= Adapters::Shared::Ports::RailsTranslatorAdapter.new
     end
 
     def user_lookup
@@ -318,7 +318,7 @@ module CompositionRoot
     end
 
     def masters_api_session_resolve_gateway
-      @masters_api_session_resolve_gateway ||= Adapters::Api::V1::Masters::MastersApiSessionResolveGateway.new(
+      @masters_api_session_resolve_gateway ||= Adapters::Shared::Gateways::MastersApiSessionResolveGateway.new(
         session_cookie_resolver: session_cookie_user_gateway
       )
     end
@@ -626,7 +626,7 @@ module CompositionRoot
     end
 
     def entry_schedule_weather_loader_adapter
-      @entry_schedule_weather_loader_adapter ||= Adapters::PublicPlans::EntryScheduleWeatherLoaderAdapter.new(
+      @entry_schedule_weather_loader_adapter ||= Adapters::PublicPlan::EntryScheduleWeatherLoaderAdapter.new(
         prediction_service_factory: lambda { |farm|
           weather_prediction_interactor(weather_location: farm.weather_location, farm: farm)
         }
@@ -662,7 +662,7 @@ module CompositionRoot
         output_port: output_port,
         weather_loader: entry_schedule_weather_loader_adapter,
         crop_gateway: crop_gateway,
-        optimization_runner: Adapters::PublicPlans::EntryScheduleOptimizationRunnerAdapter,
+        optimization_runner: Adapters::PublicPlan::EntryScheduleOptimizationRunnerAdapter,
         translator: translator,
         clock: Time.zone,
         logger: logger
@@ -674,7 +674,7 @@ module CompositionRoot
         output_port: output_port,
         crop_gateway: crop_gateway,
         weather_loader: entry_schedule_weather_loader_adapter,
-        optimization_runner: Adapters::PublicPlans::EntryScheduleOptimizationRunnerAdapter,
+        optimization_runner: Adapters::PublicPlan::EntryScheduleOptimizationRunnerAdapter,
         translator: translator,
         clock: clock
       )

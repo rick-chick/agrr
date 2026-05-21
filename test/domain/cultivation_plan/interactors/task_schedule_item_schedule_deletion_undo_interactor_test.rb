@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "domain_lib_test_helper"
-require "adapters/translators/rails_translator"
+require "adapters/shared/ports/rails_translator_adapter"
 
 module Domain
   module CultivationPlan
@@ -11,7 +11,7 @@ module Domain
           @mutation_output_port = mock("mutation_output_port")
           @mutation_gateway = mock("mutation_gateway")
           @deletion_undo_interactor = mock("deletion_undo_interactor")
-          @translator = Adapters::Translators::RailsTranslator.new
+          @translator = Adapters::Shared::Ports::RailsTranslatorAdapter.new
           @interactor = TaskScheduleItemScheduleDeletionUndoInteractor.new(
             mutation_output_port: @mutation_output_port,
             mutation_gateway: @mutation_gateway,

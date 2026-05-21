@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Adapters
-  module PublicPlans
+  module PublicPlan
     # EntryScheduleOptimization の Agrr 実装へ委譲（Interactor から具象 Adapter 名を隠す）
     class EntryScheduleOptimizationRunnerAdapter
       def self.call(crop:, weather_payload:, farm:, crop_gateway:)

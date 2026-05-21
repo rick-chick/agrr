@@ -10,7 +10,7 @@ module Domain
           @cultivation_gateway = mock
           @save_gateway = mock
           @output_port = mock
-          @translator = Adapters::Translators::RailsTranslator.new
+          @translator = Adapters::Shared::Ports::RailsTranslatorAdapter.new
            @logger = ::Logger.new(File::NULL)
         end
 

@@ -1,82 +1,83 @@
 # frozen_string_literal: true
 
-# ActiveSupport なしで .blank? / .present? / .underscore を使えるようにする。
+# Domain::Shared — ActiveSupport 非依存の純粋ヘルパ（blank? / present? / キー変換等）。
+#
+# ActiveSupport が無い実行環境（Rails-free な domain-lib テストハーネス）向けに、
+# 主要コアクラスへ blank? / present? を後付けする。Rails アプリでは ActiveSupport が
+# 同名メソッドを（より厳密に・より広い対象に）提供するため、ここで再定義すると
+# ActiveSupport 実装を破壊する（例: String#underscore の :: → / 変換が失われ
+# controller_path が壊れる）。よって `unless defined?(ActiveSupport)` でガードし、
+# ActiveSupport が居る環境では一切手を加えない。
 # Zeitwerk はファイルを module Domain { ... } で囲むため、::String 等で明示的にトップレベルを指定する。
-class ::String
-  def blank?
-    Domain::Shared.blank?(self)
+unless defined?(ActiveSupport)
+  class ::String
+    def blank?
+      Domain::Shared.blank?(self)
+    end
+
+    def present?
+      Domain::Shared.present?(self)
+    end
   end
 
-  def present?
-    Domain::Shared.present?(self)
+  class ::Array
+    def blank?
+      Domain::Shared.blank?(self)
+    end
+
+    def present?
+      Domain::Shared.present?(self)
+    end
   end
 
-  def underscore
-    # CamelCase → snake_case 変換
-    result = gsub(/([A-Za-z])([A-Z][a-z]+)/, '\1_\2')
-    result = result.gsub(/__/, '__')
-    result = result.gsub(/([A-Za-z])([A-Z])/, '\1_\2')
-    result.downcase
-  end
-end
+  class ::Hash
+    def blank?
+      Domain::Shared.blank?(self)
+    end
 
-class ::Array
-  def blank?
-    Domain::Shared.blank?(self)
+    def present?
+      Domain::Shared.present?(self)
+    end
   end
 
-  def present?
-    Domain::Shared.present?(self)
-  end
-end
+  class ::NilClass
+    def blank?
+      Domain::Shared.blank?(self)
+    end
 
-class ::Hash
-  def blank?
-    Domain::Shared.blank?(self)
-  end
-
-  def present?
-    Domain::Shared.present?(self)
-  end
-end
-
-class ::NilClass
-  def blank?
-    Domain::Shared.blank?(self)
+    def present?
+      Domain::Shared.present?(self)
+    end
   end
 
-  def present?
-    Domain::Shared.present?(self)
-  end
-end
+  class ::FalseClass
+    def blank?
+      Domain::Shared.blank?(self)
+    end
 
-class ::FalseClass
-  def blank?
-    Domain::Shared.blank?(self)
-  end
-
-  def present?
-    Domain::Shared.present?(self)
-  end
-end
-
-class ::TrueClass
-  def blank?
-    Domain::Shared.blank?(self)
+    def present?
+      Domain::Shared.present?(self)
+    end
   end
 
-  def present?
-    Domain::Shared.present?(self)
-  end
-end
+  class ::TrueClass
+    def blank?
+      Domain::Shared.blank?(self)
+    end
 
-class ::Integer
-  def blank?
-    Domain::Shared.blank?(self)
+    def present?
+      Domain::Shared.present?(self)
+    end
   end
 
-  def present?
-    Domain::Shared.present?(self)
+  class ::Integer
+    def blank?
+      Domain::Shared.blank?(self)
+    end
+
+    def present?
+      Domain::Shared.present?(self)
+    end
   end
 end
 

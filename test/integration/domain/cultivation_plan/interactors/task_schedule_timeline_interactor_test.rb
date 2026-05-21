@@ -83,7 +83,7 @@ class TaskScheduleTimelineInteractorTest < ActiveSupport::TestCase
     @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new
     @output_port = StubOutputPort.new
     @clock = Struct.new(:today).new(Date.new(2025, 1, 10))
-    @logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
+    @logger = Adapters::Shared::Ports::RailsLoggerAdapter.new
     @user_lookup = Adapters::Shared::Gateways::UserActiveRecordGateway.new
   end
 
@@ -93,7 +93,7 @@ class TaskScheduleTimelineInteractorTest < ActiveSupport::TestCase
       user_id: @user.id,
       plan_id: @plan.id,
       gateway: @gateway,
-      translator: Adapters::Translators::RailsTranslator.new,
+      translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
       logger: @logger,
       user_lookup: @user_lookup,
       clock: @clock

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "domain_lib_test_helper"
-require "adapters/translators/rails_translator"
+require "adapters/shared/ports/rails_translator_adapter"
 require "logger"
 
 module Domain
@@ -43,7 +43,7 @@ module Domain
           @gateway = mock("cultivation_plan_gateway")
           @output_port = mock("output_port")
            @logger = ::Logger.new(File::NULL)
-          @translator = Adapters::Translators::RailsTranslator.new
+          @translator = Adapters::Shared::Ports::RailsTranslatorAdapter.new
           @clock = Object.new
           def @clock.today
             Date.new(2026, 6, 15)

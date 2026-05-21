@@ -150,7 +150,7 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   def logger_gateway
-    @logger_gateway ||= Adapters::Logger::Gateways::RailsLoggerGateway.new
+    @logger_gateway ||= Adapters::Shared::Ports::RailsLoggerAdapter.new
   end
 
   private

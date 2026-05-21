@@ -415,7 +415,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
       user: user,
       session_data: session_data,
-      logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+      logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
       crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway
     ).call

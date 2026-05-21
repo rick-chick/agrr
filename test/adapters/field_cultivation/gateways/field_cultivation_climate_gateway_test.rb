@@ -61,8 +61,8 @@ module Adapters
 
           gateway = FieldCultivationClimateGateway.new(
             current_user: @user,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: Adapters::Translators::RailsTranslator.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
+            translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
             use_mock_progress: false,
             progress_gateway_factory: -> { progress_gateway },
             weather_prediction_service_factory: ->(weather_location, farm) { weather_service },
@@ -119,8 +119,8 @@ module Adapters
 
           gateway = FieldCultivationClimateGateway.new(
             current_user: @user,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: Adapters::Translators::RailsTranslator.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
+            translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
             use_mock_progress: false,
             progress_gateway_factory: -> { progress_gateway },
             weather_prediction_service_factory: ->(weather_location, farm) { weather_service },
@@ -142,8 +142,8 @@ module Adapters
         test "raises record not found when field cultivation missing" do
           gateway = FieldCultivationClimateGateway.new(
             current_user: @user,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: Adapters::Translators::RailsTranslator.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
+            translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
             progress_gateway_factory: -> { Adapters::Agrr::Gateways::ProgressDaemonGateway.new },
             weather_prediction_service_factory: ->(*) { raise "weather prediction should not be called" },
             weather_data_gateway: CompositionRoot.weather_data_gateway,
@@ -160,8 +160,8 @@ module Adapters
         test "coerce_to_optional_date normalizes API query strings to Date" do
           gateway = FieldCultivationClimateGateway.new(
             current_user: @user,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
-            translator: Adapters::Translators::RailsTranslator.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
+            translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
             progress_gateway_factory: -> { Adapters::Agrr::Gateways::ProgressDaemonGateway.new },
             weather_prediction_service_factory: ->(*) { raise "unused" },
             weather_data_gateway: CompositionRoot.weather_data_gateway,

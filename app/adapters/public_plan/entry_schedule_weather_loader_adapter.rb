@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Adapters
-  module PublicPlans
+  module PublicPlan
     # 公開エントリスケジュール用: キャッシュ済み予測の再利用または WeatherPredictionInteractor 実行（Domain 境界向け）
     class EntryScheduleWeatherLoaderAdapter
       # @param prediction_service_factory [#call(farm)] farm は気象ロケーション検証済みで渡すこと

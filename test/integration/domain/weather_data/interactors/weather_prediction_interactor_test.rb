@@ -31,7 +31,7 @@ class WeatherPredictionInteractorTest < ActiveSupport::TestCase
     )
     @weather_data_gateway = Adapters::WeatherData::Gateways::WeatherDataActiveRecordGateway.new
     @prediction_gateway = Adapters::WeatherData::Gateways::AgrrPredictionGatewayAdapter.new
-    @weather_prediction_logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
+    @weather_prediction_logger = Adapters::Shared::Ports::RailsLoggerAdapter.new
   end
 
   def weather_location_dto(loc = @weather_location)

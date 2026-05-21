@@ -24,7 +24,7 @@ module Domain
               output_port: output_port,
               gateway: gateway,
               cultivation_plan_gateway: Minitest::Mock.new,
-              logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+              logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
               clock: Object.new
             )
           end
@@ -55,7 +55,7 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: cultivation_gateway_returning(creator_result),
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
@@ -106,7 +106,7 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: cultivation_gateway_returning(creator_result),
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             clock: FIXED_PUBLIC_PLAN_CLOCK,
             optimization_job_chain_gateway: opt_gateway
           )
@@ -140,7 +140,7 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
@@ -172,7 +172,7 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
@@ -205,7 +205,7 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
@@ -239,7 +239,7 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
@@ -281,7 +281,7 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: cultivation_gateway_returning(creator_result),
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
@@ -311,7 +311,7 @@ module Domain
             output_port: output_port,
             gateway: gateway,
             cultivation_plan_gateway: Minitest::Mock.new,
-            logger: Adapters::Logger::Gateways::RailsLoggerGateway.new,
+            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             clock: FIXED_PUBLIC_PLAN_CLOCK
           )
           input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(

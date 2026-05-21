@@ -51,7 +51,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     end
 
-    @plan_save_session_logger = Adapters::Logger::Gateways::RailsLoggerGateway.new
+    @plan_save_session_logger = Adapters::Shared::Ports::RailsLoggerAdapter.new
   end
 
   test "result success? reflects internal state" do
