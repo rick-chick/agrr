@@ -42,7 +42,7 @@ class FarmsController < ApplicationController
       end
 
       format.json do
-        presenter = Adapters::Farm::Presenters::Api::FarmDetailPresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::FarmDetailApiPresenter.new(view: self)
         Domain::Farm::Interactors::FarmDetailInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
@@ -104,7 +104,7 @@ class FarmsController < ApplicationController
 
       format.json do
         input_dto = Domain::Farm::Dtos::FarmUpdateInput.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
-        presenter = Adapters::Farm::Presenters::Api::FarmUpdatePresenter.new(view: self)
+        presenter = Adapters::Farm::Presenters::FarmUpdateApiPresenter.new(view: self)
         Domain::Farm::Interactors::FarmUpdateInteractor.new(
           output_port: presenter,
           user_id: current_user.id,

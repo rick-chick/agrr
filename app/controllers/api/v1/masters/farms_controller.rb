@@ -13,7 +13,7 @@ module Api
 
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: current_user&.admin?)
 
-          presenter = Adapters::Farm::Presenters::Api::FarmListPresenter.new(view: self)
+          presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmListInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator)
           interactor.call(input_dto)
@@ -23,7 +23,7 @@ module Api
         def show
           input_valid?(:show) || return
 
-          presenter = Adapters::Farm::Presenters::Api::FarmDetailPresenter.new(view: self)
+          presenter = Adapters::Farm::Presenters::FarmDetailApiPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
 
@@ -37,7 +37,7 @@ module Api
             render_response(json: { errors: [ "name, region, latitude, longitude are required" ] }, status: :unprocessable_entity)
             return
           end
-          presenter = Adapters::Farm::Presenters::Api::FarmCreatePresenter.new(view: self)
+          presenter = Adapters::Farm::Presenters::FarmCreateApiPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
@@ -46,7 +46,7 @@ module Api
         # PATCH/PUT /api/v1/masters/farms/:id
         def update
           input_dto = Domain::Farm::Dtos::FarmUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
-          presenter = Adapters::Farm::Presenters::Api::FarmUpdatePresenter.new(view: self)
+          presenter = Adapters::Farm::Presenters::FarmUpdateApiPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
@@ -57,7 +57,7 @@ module Api
         def destroy
           input_valid?(:destroy) || return
 
-          presenter = Adapters::Farm::Presenters::Api::FarmDeletePresenter.new(view: self)
+          presenter = Adapters::Farm::Presenters::FarmDeleteApiPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(output_port: presenter,
             user_id: current_user.id,
             translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)

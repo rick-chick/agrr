@@ -2,13 +2,13 @@
 
 require "test_helper"
 
-class FarmListPresenterTest < ActiveSupport::TestCase
+class FarmListApiPresenterTest < ActiveSupport::TestCase
   FarmStub = Struct.new(:id, :name, :latitude, :longitude, :region, :user_id, :created_at, :updated_at, :is_reference,
     keyword_init: true)
 
   test "on_success renders farms array as root JSON with ok" do
     view_mock = mock
-    presenter = Adapters::Farm::Presenters::Api::FarmListPresenter.new(view: view_mock)
+    presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: view_mock)
 
     t = Time.zone.parse("2024-01-15 12:00:00")
     farms = [
@@ -68,7 +68,7 @@ class FarmListPresenterTest < ActiveSupport::TestCase
 
   test "on_success ignores reference_farms keyword for response body" do
     view_mock = mock
-    presenter = Adapters::Farm::Presenters::Api::FarmListPresenter.new(view: view_mock)
+    presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: view_mock)
 
     farms = []
     ref_extra = [ mock("ref") ]
@@ -80,7 +80,7 @@ class FarmListPresenterTest < ActiveSupport::TestCase
 
   test "on_success treats non-array farms as empty list" do
     view_mock = mock
-    presenter = Adapters::Farm::Presenters::Api::FarmListPresenter.new(view: view_mock)
+    presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: view_mock)
 
     view_mock.expects(:render_response).with(json: [], status: :ok)
 
@@ -89,7 +89,7 @@ class FarmListPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders forbidden for PolicyPermissionDenied" do
     view_mock = mock
-    presenter = Adapters::Farm::Presenters::Api::FarmListPresenter.new(view: view_mock)
+    presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: view_mock)
 
     err = Domain::Shared::Policies::PolicyPermissionDenied.new
 
@@ -103,7 +103,7 @@ class FarmListPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders unprocessable_entity with Error message" do
     view_mock = mock
-    presenter = Adapters::Farm::Presenters::Api::FarmListPresenter.new(view: view_mock)
+    presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: view_mock)
 
     error_dto = Domain::Shared::Dtos::Error.new("Database connection failed")
 
@@ -117,7 +117,7 @@ class FarmListPresenterTest < ActiveSupport::TestCase
 
   test "on_failure renders unprocessable_entity for string failure using to_s" do
     view_mock = mock
-    presenter = Adapters::Farm::Presenters::Api::FarmListPresenter.new(view: view_mock)
+    presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: view_mock)
 
     view_mock.expects(:render_response).with(
       json: { error: "Some error string" },

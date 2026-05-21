@@ -2,10 +2,10 @@
 
 require "test_helper"
 
-class FarmUpdatePresenterTest < ActiveSupport::TestCase
+class FarmUpdateApiPresenterTest < ActiveSupport::TestCase
   test "on_failure renders forbidden with translated message for policy errors" do
     view_mock = Minitest::Mock.new
-    presenter = Adapters::Farm::Presenters::Api::FarmUpdatePresenter.new(view: view_mock)
+    presenter = Adapters::Farm::Presenters::FarmUpdateApiPresenter.new(view: view_mock)
 
     error_dto = Domain::Shared::Policies::PolicyPermissionDenied.new
 
