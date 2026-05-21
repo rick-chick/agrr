@@ -13,14 +13,14 @@ module Farms
         start_date: params[:start_date]&.to_date,
         end_date: params[:end_date]&.to_date
       )
-      presenter = Adapters::Farm::Presenters::FarmWeatherDataAccessPresenter.new(
+      presenter = Adapters::Farm::Presenters::FarmWeatherDataAccessHtmlPresenter.new(
         view: self,
         translator: CompositionRoot.translator
       )
       CompositionRoot.farm_weather_data_access_interactor(output_port: presenter).call(input_dto)
     end
 
-    # FarmWeatherDataAccessPresenter が参照する View インターフェース（public のままにすること）
+    # FarmWeatherDataAccessHtmlPresenter が参照する View インターフェース（public のままにすること）
     def render_response(json:, status:)
       render(json: json, status: status)
     end

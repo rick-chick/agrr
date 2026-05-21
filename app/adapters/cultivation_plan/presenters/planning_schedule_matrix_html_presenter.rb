@@ -23,7 +23,7 @@ module Adapters
           @view.instance_variable_set(:@granularity, dto.granularity)
           @view.instance_variable_set(
             :@schedule_presenter,
-            Adapters::CultivationPlan::Presenters::PlanningSchedulePresenter.new(periods: dto.periods)
+            Adapters::CultivationPlan::Presenters::PlanningScheduleHtmlPresenter.new(periods: dto.periods)
           )
         end
 

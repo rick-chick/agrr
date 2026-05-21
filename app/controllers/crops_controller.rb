@@ -144,7 +144,7 @@ class CropsController < ApplicationController
   def set_crop
     action = params[:action].to_sym
     for_edit = action.in?([ :edit, :update, :generate_task_schedule_blueprints, :toggle_task_template ])
-    presenter = Adapters::Crop::Presenters::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+    presenter = Adapters::Crop::Presenters::CropAuthorizationFailureRedirectHtmlPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
     interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(failure_presenter: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
     bundle = interactor.call(params[:id], for_edit: for_edit)

@@ -4,7 +4,7 @@ module Adapters
   module Field
     module Presenters
       # set_field 相当の失敗時、農場スコープの圃場一覧へリダイレクトする（@farm は set_farm 済み前提）。
-      class FieldLoadInFarmAuthorizationFailureRedirectPresenter
+      class FieldLoadInFarmAuthorizationFailureRedirectHtmlPresenter
         include Domain::Field::Ports::FieldLoadInFarmAuthorizationFailurePort
 
         def initialize(view:)

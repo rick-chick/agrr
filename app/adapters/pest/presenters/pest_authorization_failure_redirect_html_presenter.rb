@@ -4,7 +4,7 @@ module Adapters
   module Pest
     module Presenters
       # before_action で害虫取得に失敗したとき、一覧へリダイレクトする。
-      class PestAuthorizationFailureRedirectPresenter
+      class PestAuthorizationFailureRedirectHtmlPresenter
         include Domain::Pest::Ports::PestLoadedAuthorizationFailurePort
 
         def initialize(view:, permission_message_key:)

@@ -4,7 +4,7 @@ module Adapters
   module PublicPlan
     module Presenters
       # 公開プランウィザード用: 単純な redirect + I18n アラート
-      class PublicPlanWizardAlertRedirectPresenter
+      class PublicPlanWizardAlertRedirectHtmlPresenter
         def initialize(view:, path_helper:)
           @view = view
           @path_helper = path_helper

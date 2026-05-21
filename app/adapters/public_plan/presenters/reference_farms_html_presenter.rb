@@ -3,7 +3,7 @@
 module Adapters
   module PublicPlan
     module Presenters
-      class ReferenceFarmsPresenter
+      class ReferenceFarmsHtmlPresenter
         def initialize(view:)
           @view = view
         end

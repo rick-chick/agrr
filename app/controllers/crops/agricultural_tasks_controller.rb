@@ -100,7 +100,7 @@ module Crops
     private
 
     def set_crop
-      failure = Adapters::Crop::Presenters::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+      failure = Adapters::Crop::Presenters::CropAuthorizationFailureRedirectHtmlPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,
@@ -114,7 +114,7 @@ module Crops
     end
 
     def set_template
-      failure = Adapters::Crop::Presenters::CropTaskTemplateLoadFailureRedirectPresenter.new(view: self)
+      failure = Adapters::Crop::Presenters::CropTaskTemplateLoadFailureRedirectHtmlPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedCropTaskTemplateInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,

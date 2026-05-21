@@ -87,7 +87,7 @@ class FieldsController < ApplicationController
   end
 
   def set_field
-    failure_presenter = Adapters::Field::Presenters::FieldLoadInFarmAuthorizationFailureRedirectPresenter.new(view: self)
+    failure_presenter = Adapters::Field::Presenters::FieldLoadInFarmAuthorizationFailureRedirectHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldLoadAuthorizedInFarmInteractor.new(failure_presenter: failure_presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
     bundle = interactor.call(@farm.id, params[:id])

@@ -13,7 +13,7 @@ module Crops
         gdd_trigger: params[:gdd_trigger]&.to_f,
         priority: params[:priority]&.to_i
       )
-      presenter = Adapters::Crop::Presenters::CropTaskScheduleBlueprintUpdatePositionPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropTaskScheduleBlueprintUpdatePositionHtmlPresenter.new(view: self)
       Domain::Crop::Interactors::CropTaskScheduleBlueprintUpdatePositionInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -28,7 +28,7 @@ module Crops
         crop_id: params[:crop_id],
         blueprint_id: params[:id].to_i
       )
-      presenter = Adapters::Crop::Presenters::CropTaskScheduleBlueprintDestroyPresenter.new(view: self)
+      presenter = Adapters::Crop::Presenters::CropTaskScheduleBlueprintDestroyHtmlPresenter.new(view: self)
       Domain::Crop::Interactors::CropTaskScheduleBlueprintDestroyInteractor.new(
         output_port: presenter,
         gateway: CompositionRoot.crop_gateway,
@@ -39,7 +39,7 @@ module Crops
     private
 
     def set_crop
-      failure = Adapters::Crop::Presenters::CropAuthorizationFailureRedirectPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
+      failure = Adapters::Crop::Presenters::CropAuthorizationFailureRedirectHtmlPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,

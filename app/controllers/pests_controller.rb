@@ -91,7 +91,7 @@ class PestsController < ApplicationController
   end
 
   def load_pest_for_edit
-    failure_presenter = Adapters::Pest::Presenters::PestAuthorizationFailureRedirectPresenter.new(
+    failure_presenter = Adapters::Pest::Presenters::PestAuthorizationFailureRedirectHtmlPresenter.new(
       view: self, permission_message_key: "pests.flash.no_permission"
     )
     interactor = Domain::Pest::Interactors::PestLoadAuthorizedModelForEditInteractor.new(

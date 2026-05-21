@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Adapters::CultivationPlan::Presenters::TaskScheduleTimelinePresenter < Domain::CultivationPlan::Ports::TaskScheduleTimelineOutputPort
+class Adapters::CultivationPlan::Presenters::TaskScheduleTimelineHtmlPresenter < Domain::CultivationPlan::Ports::TaskScheduleTimelineOutputPort
   WEEK_LENGTH = 6
   CATEGORY_GENERAL = "general"
   CATEGORY_FERTILIZER = "fertilizer"

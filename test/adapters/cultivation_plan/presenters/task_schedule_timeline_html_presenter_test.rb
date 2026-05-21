@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
+class TaskScheduleTimelineHtmlPresenterTest < ActiveSupport::TestCase
   Snapshot = Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot
 
   setup do
@@ -185,7 +185,7 @@ class TaskScheduleTimelinePresenterTest < ActiveSupport::TestCase
   end
 
   def presenter_for(dto)
-    presenter = Adapters::CultivationPlan::Presenters::TaskScheduleTimelinePresenter.new(view: Object.new, params: {})
+    presenter = Adapters::CultivationPlan::Presenters::TaskScheduleTimelineHtmlPresenter.new(view: Object.new, params: {})
     presenter.on_success(dto)
     presenter
   end

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-# PlanningSchedulePresenter — HTML 用（lib/presenters/html/plans）
+# PlanningScheduleHtmlPresenter — HTML 用（lib/presenters/html/plans）
 # - Viewに渡すための純粋なデータ変換（Domain ViewModel）
 # - 期間配列を保持し、FieldArrangerのcells結果を供給する
-class Adapters::CultivationPlan::Presenters::PlanningSchedulePresenter
+class Adapters::CultivationPlan::Presenters::PlanningScheduleHtmlPresenter
   # @return [Array<Hash>] 降順の期間配列
   attr_reader :periods
 

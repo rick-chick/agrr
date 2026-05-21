@@ -3,7 +3,7 @@
 module Adapters
   module Farm
     module Presenters
-      class FarmWeatherDataAccessPresenter < Domain::WeatherData::Ports::FarmWeatherDataAccessOutputPort
+      class FarmWeatherDataAccessHtmlPresenter < Domain::WeatherData::Ports::FarmWeatherDataAccessOutputPort
         def initialize(view:, translator:)
           @view = view
           @translator = translator

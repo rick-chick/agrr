@@ -3,7 +3,7 @@
 module Adapters
   module Crop
     module Presenters
-      class CropTaskTemplateLoadFailureRedirectPresenter
+      class CropTaskTemplateLoadFailureRedirectHtmlPresenter
         include Domain::Crop::Ports::CropNestedResourceNotFoundFailurePort
 
         def initialize(view:)

@@ -4,7 +4,7 @@ module Adapters
   module Crop
     module Presenters
       # before_action で作物取得に失敗したとき、一覧へリダイレクトする。
-      class CropAuthorizationFailureRedirectPresenter
+      class CropAuthorizationFailureRedirectHtmlPresenter
         include Domain::Crop::Ports::CropLoadedAuthorizationFailurePort
 
         def initialize(view:, permission_message_key:)

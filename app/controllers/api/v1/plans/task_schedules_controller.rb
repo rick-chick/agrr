@@ -3,7 +3,7 @@
 module Api
   module V1
     module Plans
-      # GET /api/v1/plans/:id/task_schedule — Angular 作業予定画面と同一 JSON（Html::TaskScheduleTimelinePresenter）
+      # GET /api/v1/plans/:id/task_schedule — Angular 作業予定画面と同一 JSON（Html::TaskScheduleTimelineHtmlPresenter）
       class TaskSchedulesController < BaseController
         def show
           presenter = timeline_presenter
@@ -25,7 +25,7 @@ module Api
         private
 
         def timeline_presenter
-          @timeline_presenter ||= Adapters::CultivationPlan::Presenters::TaskScheduleTimelinePresenter.new(
+          @timeline_presenter ||= Adapters::CultivationPlan::Presenters::TaskScheduleTimelineHtmlPresenter.new(
             view: self,
             params: timeline_params
           )

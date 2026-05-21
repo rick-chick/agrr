@@ -33,7 +33,7 @@ module Plans
     private
 
     def timeline_presenter
-      @timeline_presenter ||= Adapters::CultivationPlan::Presenters::TaskScheduleTimelinePresenter.new(
+      @timeline_presenter ||= Adapters::CultivationPlan::Presenters::TaskScheduleTimelineHtmlPresenter.new(
         view: self,
         params: timeline_params
       )

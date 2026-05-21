@@ -3,7 +3,7 @@
 module Adapters
   module CultivationPlan
     module Presenters
-      class PrivatePlanCreateFromSessionPresenter < Domain::CultivationPlan::Ports::PrivatePlanCreateFromSessionOutputPort
+      class PrivatePlanCreateFromSessionHtmlPresenter < Domain::CultivationPlan::Ports::PrivatePlanCreateFromSessionOutputPort
         def initialize(
           view:,
           session_key:

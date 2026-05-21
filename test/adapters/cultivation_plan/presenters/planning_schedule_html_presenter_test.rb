@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class PlanningSchedulePresenterTest < ActiveSupport::TestCase
+class PlanningScheduleHtmlPresenterTest < ActiveSupport::TestCase
   def build_periods
     # 降順（最新→過去）で2期間
     [
@@ -12,14 +12,14 @@ class PlanningSchedulePresenterTest < ActiveSupport::TestCase
   end
 
   test "period_cells returns empty when no cultivations" do
-    presenter = Adapters::CultivationPlan::Presenters::PlanningSchedulePresenter.new(periods: build_periods)
+    presenter = Adapters::CultivationPlan::Presenters::PlanningScheduleHtmlPresenter.new(periods: build_periods)
     cells = presenter.period_cells(arranged_cultivations: [], period_index: 0)
     assert_kind_of Array, cells
   end
 
   test "period_cells handles single cultivation within a period" do
     periods = build_periods
-    presenter = Adapters::CultivationPlan::Presenters::PlanningSchedulePresenter.new(periods: periods)
+    presenter = Adapters::CultivationPlan::Presenters::PlanningScheduleHtmlPresenter.new(periods: periods)
     # arrange風データ（slot_index=0、開始はperiod_index=0）
     arranged = [
       {

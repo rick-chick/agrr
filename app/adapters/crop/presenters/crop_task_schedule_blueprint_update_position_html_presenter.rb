@@ -3,7 +3,7 @@
 module Adapters
   module Crop
     module Presenters
-      class CropTaskScheduleBlueprintUpdatePositionPresenter < Domain::Crop::Ports::CropTaskScheduleBlueprintUpdatePositionOutputPort
+      class CropTaskScheduleBlueprintUpdatePositionHtmlPresenter < Domain::Crop::Ports::CropTaskScheduleBlueprintUpdatePositionOutputPort
         def initialize(view:)
           @view = view
         end

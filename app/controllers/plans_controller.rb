@@ -63,7 +63,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   # Step 3: 計画作成（最適化はしない）
   def create
-    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanCreateFromSessionPresenter.new(
+    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanCreateFromSessionHtmlPresenter.new(
       view: self,
       session_key: self.class.session_key
     )
