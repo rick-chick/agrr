@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 module Domain
   module WeatherData
     module Mappers
-      class AdjustHistoricalPredictionMergerTest < ActiveSupport::TestCase
+      class AdjustHistoricalPredictionMapperTest < DomainLibTestCase
         test "build_historical_agrr_series skips rows missing temperatures and formats AGRR points" do
           rows = [
             {

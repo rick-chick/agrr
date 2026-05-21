@@ -21,7 +21,7 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 
 ## Quick Reference
 
-One-paragraph index to the normative sections: [Rules](#rules) and [API Layer](#api-layer) (includes [Modeled HTTP Outcomes](#modeled-http-outcomes)). **Contract-first** (`docs/contracts/`). **Domain-centric** backend (`lib/domain` for use-case logic; ActiveRecord for persistence). **Thin controllers**; **modeled** success/failure via interactor → presenter, not `rescue` as the main branch ([Checklist](#checklist)). **Domain-level** invariants (Policies enforce rules; ActiveRecord is safety net only) including [Resource Limits](#resource-limits). **One use case per interactor** where Clean Architecture applies. **Testability**: explicit constructor wiring; memory gateways in unit tests; integration tests at the edge ([Testing](#testing)). Typical pitfalls are integrated into the rules above.
+One-paragraph index to the normative sections: [Rules](#rules) and [API Layer](#api-layer) (includes [Modeled HTTP Outcomes](#modeled-http-outcomes)). **Contract-first** (`docs/contracts/`). **Domain-centric** backend (`lib/domain` for use-case logic; ActiveRecord for persistence). **Thin controllers**; **modeled** success/failure via interactor → presenter, not `rescue` as the main branch ([Checklist](#checklist)). **Domain-level** invariants (Policies enforce rules; ActiveRecord is safety net only) including [Resource Limits](#resource-limits). **One use case per interactor** where Clean Architecture applies. **Testability**: explicit constructor wiring; ad-hoc mocks in domain unit tests (`test/domain/`), memory gateways in adapter tests (`test/adapters/`), integration tests at the edge ([Testing](#testing)). Typical pitfalls are integrated into the rules above.
 
 
 
@@ -169,7 +169,7 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 Gateways are constructor-injected into Interactors from `CompositionRoot`. The keyword argument name reflects the gateway's role in the interactor (e.g. `farm_gateway:`, `deletion_undo_gateway:`). Interactors receive gateway instances — they never instantiate or locate gateways internally. When a use case requires multiple gateways, all are passed at construction time; interactors do not call other interactors (composition is gateway-level).
 
-Interactor constructor signatures **must** explicitly list all required gateways as keyword arguments, mirroring the `output_port:` convention already established for Presenters. This makes the dependency graph visible at the call site and simplifies test wiring (memory gateways in `test/adapters/`, real gateways in edge tests).
+Interactor constructor signatures **must** explicitly list all required gateways as keyword arguments, mirroring the `output_port:` convention already established for Presenters. This makes the dependency graph visible at the call site and simplifies test wiring: **ad-hoc mocks** (`Object.new`, `mock`, `Minitest::Mock`) in `test/domain/` unit tests; **memory gateways** (`*MemoryGateway`) in `test/adapters/` adapter tests; real gateways in edge tests (`test/controllers/`).
 
 ### Presenters
 
@@ -541,7 +541,10 @@ docs/
 
 Placement follows two rules.
 
-1. **Runtime** - `test/domain/` is the only Rails-free suite (`run-test-domain-lib.sh`); everything else runs on the Rails stack (`run-test-rails.sh`). `test/domain/` tests only **domain abstractions** (interfaces, entities, DTOs, policies, interactors) using **memory gateways** injected into interactors. Concrete adapter implementations (including memory gateways under `app/adapters/`) are tested under `test/adapters/` on the Rails stack.
+1. **Runtime** - `test/domain/` is the only Rails-free suite (`run-test-domain-lib.sh`); everything else runs on the Rails stack (`run-test-rails.sh`). Two kinds of test doubles serve different purposes:
+   - **Ad-hoc mocks** (`Object.new`, `mock`, `Minitest::Mock`) — used in `test/domain/` unit tests. Lightweight, Rails-free, satisfy only the gateway interface contract for the specific scenario being tested.
+   - **Memory gateways** (`app/adapters/<context>/gateways/*_memory_gateway.rb`) — full adapter implementations that store data in memory. Rails-dependent (Zeitwerk autoloaded). Used in `test/adapters/` adapter tests, `test/integration/`, `test/system/`, and other Rails-stack tests that need a working gateway without a real database.
+   Concrete adapter implementations (ActiveRecord gateways, memory gateways, HTTP gateways, etc. under `app/adapters/`) are tested under `test/adapters/` on the Rails stack.
 2. **Layer mirror** - `test/<X>/` mirrors the target production path with the source root (`app/` / `lib/`) dropped. **適用条件**: mirror テストは *テスト可能なロジックがある場合* に置く。次は mirror テスト不要 — interactor を持たず interface / DTO のみの domain context（例: `logger`）、静的・開発用 controller（`pages` / `dev/*` / `sitemaps` / `spa` / `demo` / `api_docs`）、presenter のみで構成され controller / edge テストで間接被覆されるアダプタ。
 
 ```
@@ -565,7 +568,11 @@ test/
 └── support/ factories/ fixtures/ domain_stubs/   # shared, non-test files
 ```
 
-**Granularity** - two kinds per use case: a pure unit test (interactor + memory gateways injected, `test/domain/`) and an edge test (HTTP through the controller, `test/controllers/`). Do not instantiate an interactor directly with real gateway implementations in a test (Controller-mediated indirect instantiation in edge tests is fine). **適用除外**: 「ユースケース（interactor）」を持たない context（interface / DTO のみ。例: `logger`）、および静的・開発用 controller には適用しない。
+**Granularity** - three tiers per use case:
+   1. **Unit test** (`test/domain/`) — interactor + ad-hoc mocks injected. Rails-free. Verifies interactor logic against gateway interface contracts.
+   2. **Adapter test** (`test/adapters/`) — gateway implementation (ActiveRecord, memory, HTTP, …) tested in isolation on the Rails stack.
+   3. **Edge test** (`test/controllers/`) — HTTP through the controller with real gateways. The only place the full wired graph is exercised.
+   Do not instantiate an interactor directly with real gateway implementations in a test (Controller-mediated indirect instantiation in edge tests is fine). **Exclusions**: contexts without interactors (interface / DTO only, e.g. `logger`), and static/development controllers (`pages`, `dev/*`, `sitemaps`, `spa`, `demo`, `api_docs`) do not require this test pattern.
 
 **Rules**
 
