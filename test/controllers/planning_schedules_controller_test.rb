@@ -3,6 +3,15 @@
 require "test_helper"
 
 class PlanningSchedulesControllerTest < ActionDispatch::IntegrationTest
+  # 作付け計画表のレンダリングは以下のユニットテストへ切り離し済み：
+  #   - セル <td>（rowspan/colspan・作物名・期間表記）の描画
+  #       → test/helpers/planning_schedules_helper_test.rb
+  #   - arrange 済みデータ → cells（rowspan/colspan 算出アルゴリズム）
+  #       → test/adapters/cultivation_plan/presenters/schedule_table_field_arranger_test.rb
+  # 以下の controller テストは「実際の作付日付 → 期間生成 → 配置 → 描画」までの
+  # 統合（date→render パイプライン）を検証するもので、上記ユニットテストとは
+  # カバー範囲が異なるため残置する。
+  #
   # --- Test DOM helpers (behavior-invariant refactor) ---
   # 期間ラベルに一致する行を返す
   def find_period_row(doc, label_text)
