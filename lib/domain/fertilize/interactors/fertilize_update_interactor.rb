@@ -23,7 +23,7 @@ module Domain
           # is_referenceをbooleanに変換してチェック
           if Domain::Shared.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
-            if is_reference != current.is_reference && !user.admin?
+            unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_flag_change_allowed?(user, requested: is_reference, current: current.is_reference)
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("fertilizes.flash.reference_flag_admin_only"))
             end
             attrs[:is_reference] = is_reference

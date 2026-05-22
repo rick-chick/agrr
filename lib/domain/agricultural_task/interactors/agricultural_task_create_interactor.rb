@@ -15,7 +15,7 @@ module Domain
         def call(create_input_dto)
           user = @user_lookup.find(@user_id)
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(create_input_dto.is_reference) || false
-          if is_reference && !user.admin?
+          unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_assignment_allowed?(user, is_reference: is_reference)
             raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("agricultural_tasks.flash.reference_only_admin"))
           end
 

@@ -20,7 +20,7 @@ module Domain
           unless update_input_dto.is_reference.nil?
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(update_input_dto.is_reference)
             requested = false if requested.nil?
-            if requested != current.reference? && !user.admin?
+            unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_flag_change_allowed?(user, requested: requested, current: current.reference?)
               raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("agricultural_tasks.flash.reference_flag_admin_only"))
             end
           end

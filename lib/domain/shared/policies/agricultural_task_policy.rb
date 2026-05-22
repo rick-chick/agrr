@@ -21,54 +21,16 @@ module Domain
           Domain::Shared::ReferenceRecordAccessFilter.new(user: user, policy_module: self)
         end
 
+        # 参照可能マスタ共通の正規化（region/is_reference/user_id）は
+        # ReferencableResourcePolicy へ委譲する。
         def self.normalize_attrs_for_create(user, attrs)
-          h = Domain::Shared.symbolize_keys(attrs.to_h)
-          # region は admin のみ設定可。一般ユーザーの指定値は破棄する。
-          h.delete(:region) unless user.admin?
-          is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(h[:is_reference]) || false
-
-          if user.admin?
-            if is_reference
-              h[:user_id] = nil
-              h[:is_reference] = true
-            else
-              h[:user_id] ||= user.id
-              h[:is_reference] = false
-            end
-          else
-            h[:user_id] = user.id
-            h[:is_reference] = false
-          end
-
-          h
+          Domain::Shared::Policies::ReferencableResourcePolicy
+            .normalize_referencable_attrs_for_create(user, attrs)
         end
 
         def self.normalize_attrs_for_update(user, current_attrs, requested_attrs)
-          task = Domain::Shared.symbolize_keys(current_attrs.to_h)
-          attributes = Domain::Shared.symbolize_keys(requested_attrs.to_h)
-          # region は admin のみ更新可。一般ユーザーの指定値は破棄する。
-          attributes.delete(:region) unless user.admin?
-
-          if attributes.key?(:is_reference)
-            requested_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference])
-            requested_reference = false if requested_reference.nil?
-
-            reference_changed = requested_reference != task[:is_reference]
-
-            if reference_changed
-              if requested_reference
-                attributes[:user_id] = nil
-              else
-                attributes[:user_id] = user.id
-              end
-
-              attributes[:is_reference] = requested_reference
-            else
-              attributes.delete(:is_reference)
-            end
-          end
-
-          attributes
+          Domain::Shared::Policies::ReferencableResourcePolicy
+            .normalize_referencable_attrs_for_update(user, current_attrs, requested_attrs)
         end
       end
     end
