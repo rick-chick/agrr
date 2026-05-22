@@ -9,6 +9,7 @@ module Domain
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           user = Object.new
+          def user.admin? = false
           input_dto = Domain::Pesticide::Dtos::PesticideUpdateInput.new(pesticide_id: 5, name: "Y")
 
           user_lookup = Minitest::Mock.new

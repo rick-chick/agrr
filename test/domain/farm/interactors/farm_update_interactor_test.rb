@@ -9,6 +9,7 @@ module Domain
         test "calls on_success when gateway returns entity" do
           user_id = 10
           user = Object.new
+          def user.admin? = false
           farm_id = 5
           input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(farm_id: farm_id, name: "N")
           farm_entity = Object.new
@@ -46,6 +47,7 @@ module Domain
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           user = Object.new
+          def user.admin? = false
           farm_id = 5
           input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(farm_id: farm_id, name: "N")
 

@@ -9,6 +9,7 @@ module Domain
         test "calls on_success when gateway returns entity" do
           user_id = 10
           user = Object.new
+          def user.admin? = false
           crop_id = 5
           input_dto = Domain::Crop::Dtos::CropUpdateInput.new(crop_id: crop_id, name: "更新された名前")
           crop_entity = Object.new
@@ -47,6 +48,7 @@ module Domain
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           user = Object.new
+          def user.admin? = false
           crop_id = 5
           input_dto = Domain::Crop::Dtos::CropUpdateInput.new(crop_id: crop_id, name: "変更しようとした名前")
 

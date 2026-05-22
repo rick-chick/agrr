@@ -567,19 +567,17 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert_nil stage.nutrient_requirement
   end
 
-  # ========== create / update の参照フラグ・groups・バリデーション ==========
+  # ========== create / update の groups・バリデーション ==========
+  #
+  # is_reference（admin のみ設定・変更可）の認可は CropCreate/UpdateInteractor が
+  # 判定する → test/domain/crop/interactors/crop_{create,update}_interactor_test.rb。
+  # 以下の controller テストは認可失敗が HTTP 応答（redirect + flash）へ
+  # 正しくマッピングされる境界のみを検証する。
 
-  test "一般ユーザーは参照作物を作成できない" do
+  test "一般ユーザーの参照作物作成失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
 
-    assert_no_difference("Crop.count") do
-      post crops_path, params: {
-        crop: {
-          name: "参照作物",
-          is_reference: true
-        }
-      }
-    end
+    post crops_path, params: { crop: { name: "参照作物", is_reference: true } }
 
     assert_redirected_to crops_path
     assert_equal I18n.t("crops.flash.reference_only_admin"), flash[:alert]
@@ -635,22 +633,13 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "A", "B", "C" ], crop.groups
   end
 
-  test "一般ユーザーは参照フラグを変更できない" do
+  test "一般ユーザーの参照フラグ変更失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
 
-    patch crop_path(@user_crop), params: {
-      crop: {
-        name: @user_crop.name,
-        is_reference: true
-      }
-    }
+    patch crop_path(@user_crop), params: { crop: { name: @user_crop.name, is_reference: true } }
 
     assert_redirected_to crop_path(@user_crop)
     assert_equal I18n.t("crops.flash.reference_flag_admin_only"), flash[:alert]
-
-    @user_crop.reload
-    refute @user_crop.is_reference?
-    assert_equal @user.id, @user_crop.user_id
   end
 
   test "updateでgroupsをカンマ区切り文字列から配列に変換する" do

@@ -142,17 +142,15 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     assert_equal false, fertilize.is_reference
   end
 
-  test "一般ユーザーは参照肥料を作成できない" do
+  # is_reference（admin のみ設定・変更可）の認可は FertilizeCreate/UpdateInteractor が
+  # 判定する → test/domain/fertilize/interactors/fertilize_{create,update}_interactor_test.rb。
+  # 以下の controller テストは認可失敗の HTTP 応答（redirect + flash）の境界のみ検証する。
+  test "一般ユーザーの参照肥料作成失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
-    assert_no_difference("Fertilize.count") do
-      post fertilizes_path, params: { fertilize: {
-        name: "参照肥料",
-        n: 20.0,
-        p: 10.0,
-        k: 10.0,
-        is_reference: true
-      } }
-    end
+
+    post fertilizes_path, params: { fertilize: {
+      name: "参照肥料", n: 20.0, p: 10.0, k: 10.0, is_reference: true
+    } }
 
     assert_redirected_to fertilizes_path
     assert_equal I18n.t("fertilizes.flash.reference_only_admin"), flash[:alert]
@@ -264,7 +262,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 30.0, @admin_fertilize.n
   end
 
-  test "一般ユーザーはis_referenceフラグを変更できない" do
+  test "一般ユーザーの is_reference 変更失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
     patch fertilize_path(@user_fertilize), params: { fertilize: {
       name: @user_fertilize.name,
@@ -273,9 +271,6 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to fertilize_path(@user_fertilize)
     assert_equal I18n.t("fertilizes.flash.reference_flag_admin_only"), flash[:alert]
-
-    @user_fertilize.reload
-    assert_equal false, @user_fertilize.is_reference
   end
 
   # ========== destroy アクションのテスト ==========

@@ -171,10 +171,11 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to pesticide_path(pesticide)
   end
 
-  test "一般ユーザーはis_referenceフラグを変更できない" do
-    # ユーザー所有の非参照農薬
+  # is_reference（admin のみ設定・変更可）の認可は PesticideCreate/UpdateInteractor が
+  # 判定する → test/domain/pesticide/interactors/pesticide_{create,update}_interactor_test.rb。
+  # 以下の controller テストは認可失敗の HTTP 応答（redirect + flash）の境界のみ検証する。
+  test "一般ユーザーの is_reference 変更失敗は redirect + flash へマッピングされる" do
     pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, is_reference: false)
-    original_is_reference = pesticide.is_reference
 
     patch pesticide_path(pesticide), params: { pesticide: {
       name: pesticide.name,
@@ -184,10 +185,6 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to pesticide_path(pesticide)
     assert_equal I18n.t("pesticides.flash.reference_flag_admin_only"), flash[:alert]
-
-    pesticide.reload
-    assert_equal original_is_reference, pesticide.is_reference
-    assert_equal @user.id, pesticide.user_id
   end
 
   test "作成時に必須項目が欠けていると422でnewを再表示する" do
@@ -240,15 +237,13 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to pesticides_path
   end
 
-  test "should not allow non-admin to create reference pesticide" do
-    assert_no_difference("Pesticide.count") do
-      post pesticides_path, params: { pesticide: {
-        name: "参照農薬",
-        crop_id: @crop.id,
-        pest_id: @pest.id,
-        is_reference: true
-      } }
-    end
+  test "一般ユーザーの参照農薬作成失敗は redirect + flash へマッピングされる" do
+    post pesticides_path, params: { pesticide: {
+      name: "参照農薬",
+      crop_id: @crop.id,
+      pest_id: @pest.id,
+      is_reference: true
+    } }
 
     assert_redirected_to pesticides_path
     assert_equal I18n.t("pesticides.flash.reference_only_admin"), flash[:alert]

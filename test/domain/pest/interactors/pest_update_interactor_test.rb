@@ -83,6 +83,27 @@ module Domain
           assert_equal "update failed", received.message
           assert_nil received.reload_bundle
         end
+
+        test "一般ユーザーが is_reference を変更しようとすると on_failure（reference_flag_admin_only）" do
+          non_admin = UserStub.new(id: 1, admin?: false)
+          input_dto = Domain::Pest::Dtos::PestUpdateInput.new(pest_id: 1, is_reference: true)
+          current = mock
+          current.stubs(:reference?).returns(false)
+
+          @mock_user_lookup.expects(:find).with(@user_id).returns(non_admin)
+          @mock_gateway.expects(:find_authorized_for_edit).with(non_admin, 1, access_filter: anything).returns(current)
+          @mock_gateway.expects(:update_for_user).never
+          @mock_gateway.stubs(:find_authorized_pest_loaded_bundle!).returns(nil)
+          @mock_translator.stubs(:t).with("pests.flash.reference_flag_admin_only")
+                          .returns("pests.flash.reference_flag_admin_only")
+
+          received = nil
+          @mock_output_port.expects(:on_failure).with { |arg| received = arg; true }
+
+          @interactor.call(input_dto)
+
+          assert_equal "pests.flash.reference_flag_admin_only", received.message
+        end
       end
     end
   end

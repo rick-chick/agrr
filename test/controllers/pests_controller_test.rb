@@ -263,20 +263,21 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "should not create reference pest without admin" do
-    assert_no_difference("Pest.count") do
-      post pests_path, params: { pest: {
-        pest_id: "test_pest_ref",
-        name: "参照害虫",
-        is_reference: true
-      } }
-    end
+  # is_reference（admin のみ設定・変更可）の認可は PestCreate/UpdateInteractor が
+  # 判定する → test/domain/pest/interactors/pest_{create,update}_interactor_test.rb。
+  # 以下の controller テストは認可失敗の HTTP 応答（redirect + flash）の境界のみ検証する。
+  test "一般ユーザーの参照害虫作成失敗は redirect + flash へマッピングされる" do
+    post pests_path, params: { pest: {
+      pest_id: "test_pest_ref",
+      name: "参照害虫",
+      is_reference: true
+    } }
 
     assert_redirected_to pests_path
     assert_equal I18n.t("pests.flash.reference_only_admin"), flash[:alert]
   end
 
-  test "should not update is_reference flag without admin" do
+  test "一般ユーザーの is_reference 変更失敗は redirect + flash へマッピングされる" do
     pest = create(:pest, :user_owned, user: @user)
 
     patch pest_path(pest), params: { pest: {
@@ -286,8 +287,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to pest_path(pest)
     assert_equal I18n.t("pests.flash.reference_flag_admin_only"), flash[:alert]
-    pest.reload
-    assert_equal false, pest.is_reference
   end
 
   test "should not destroy reference pest without admin" do

@@ -266,17 +266,19 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ own_crop.id ], @user_task.crops.pluck(:id)
   end
 
-  test "一般ユーザーは参照作業を作成できない" do
+  # is_reference（admin のみ設定・変更可）の認可は
+  # AgriculturalTaskCreate/UpdateInteractor が判定する
+  #   → test/domain/agricultural_task/interactors/agricultural_task_{create,update}_interactor_test.rb
+  # 以下の controller テストは認可失敗の HTTP 応答（redirect + flash）の境界のみ検証する。
+  test "一般ユーザーの参照作業作成失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
 
-    assert_no_difference("AgriculturalTask.count") do
-      post agricultural_tasks_path, params: {
-        agricultural_task: {
-          name: "参照作業",
-          is_reference: true
-        }
+    post agricultural_tasks_path, params: {
+      agricultural_task: {
+        name: "参照作業",
+        is_reference: true
       }
-    end
+    }
 
     assert_redirected_to agricultural_tasks_path
     assert_equal I18n.t("agricultural_tasks.flash.reference_only_admin"), flash[:alert]
@@ -355,27 +357,19 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ user_crop.id ], @reference_task.crops.pluck(:id)
   end
 
-  test "一般ユーザーは参照フラグを変更できない" do
+  test "一般ユーザーの is_reference 変更失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
     task = create(:agricultural_task, :user_owned, user: @user, is_reference: false)
 
     patch agricultural_task_path(task), params: {
       agricultural_task: {
         name: task.name,
-        description: task.description,
-        time_per_sqm: task.time_per_sqm,
-        weather_dependency: task.weather_dependency,
-        skill_level: task.skill_level,
-        required_tools: task.required_tools,
         is_reference: true
       }
     }
 
     assert_redirected_to agricultural_task_path(task)
     assert_equal I18n.t("agricultural_tasks.flash.reference_flag_admin_only"), flash[:alert]
-    task.reload
-    refute task.is_reference?
-    assert_equal @user.id, task.user_id
   end
 
   test "destroy_returns_undo_token_json" do
