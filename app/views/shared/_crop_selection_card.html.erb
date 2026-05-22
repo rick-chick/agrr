@@ -1,0 +1,27 @@
+<%# app/views/shared/_crop_selection_card.html.erb %>
+<%# 作物選択カード（pests / agricultural_tasks フォームの crop-selector で共用） %>
+<%#
+  local:
+    card        { crop:, selected: } — crop は #id #name #variety #is_reference? を持つ DTO/モデル
+    heading_tag カードタイトルの見出しタグ（フォームの見出し階層に合わせる。既定 "h3"）
+%>
+<% crop = card[:crop] %>
+<article class="crop-selection-card <%= 'is-selected' if card[:selected] %>"
+         data-role="crop-card"
+         data-crop-id="<%= crop.id %>"
+         data-selected="<%= card[:selected] %>"
+         data-crop-selector-target="card"
+         data-action="click->crop-selector#toggle">
+  <header class="crop-selection-card__header">
+    <%= content_tag(local_assigns.fetch(:heading_tag, "h3"), crop.name, class: "crop-selection-card__title") %>
+    <span class="crop-selection-card__badge <%= crop.is_reference? ? 'is-reference' : 'is-user' %>">
+      <%= crop.is_reference? ? t('agricultural_tasks.form.crop_selection.reference_badge') : t('agricultural_tasks.form.crop_selection.user_badge') %>
+    </span>
+  </header>
+  <% if crop.variety.present? %>
+    <p class="crop-selection-card__variety"><%= crop.variety %></p>
+  <% end %>
+  <% if card[:selected] %>
+    <span class="crop-selection-card__state"><%= t('agricultural_tasks.form.crop_selection.selected_state') %></span>
+  <% end %>
+</article>

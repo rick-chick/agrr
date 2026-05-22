@@ -33,22 +33,24 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # ========== index アクションのテスト ==========
+  #
+  # index の絞り込み（一般ユーザーは自分の作物のみ／管理者は参照作物も）は
+  # CropListInteractor のユニットテストが担保する。crop-card のテンプレート描画は
+  # test/views/crops_index_view_test.rb が担保する。
+  # ここは各ロールで index アクションの配線が通ることのみ確認する。
 
-  test "一般ユーザーのindexは自身の作物のみ表示" do
+  test "一般ユーザーの index は正常に描画される" do
     sign_in_as @user
     get crops_path
 
     assert_response :success
-    # 一般ユーザーの作物のみが表示される
-    assert_select ".crop-card", count: 1
   end
 
-  test "管理者のindexは自身の作物と参照作物を表示" do
+  test "管理者の index は正常に描画される" do
     sign_in_as @admin_user
     get crops_path
 
     assert_response :success
-    # 管理者の作物と参照作物が表示される
   end
 
   # ========== show アクションのテスト ==========
@@ -121,21 +123,10 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".task-manual-grid .task-manual-card .task-manual-card__name", text: /潅水/
   end
 
-  test "害虫一覧がカードレイアウトで表示される" do
-    sign_in_as @user
-    older_pest = create(:pest, name: "コナジラミ", name_scientific: "Aleyrodidae", created_at: 2.days.ago)
-    recent_pest = create(:pest, name: "アブラムシ", name_scientific: "Aphidoidea", created_at: Time.current)
-    create(:crop_pest, crop: @user_crop, pest: older_pest)
-    create(:crop_pest, crop: @user_crop, pest: recent_pest)
-
-    get crop_path(@user_crop)
-
-    assert_response :success
-    assert_select ".pests-grid .pest-card", count: 2
-    assert_select ".pest-card:first-child .pest-card__name", text: "アブラムシ"
-    assert_select ".pest-card:first-child .pest-card__scientific", text: "Aphidoidea"
-    assert_select ".pests-section__header .pests-section__action", text: I18n.t("crops.show.manage_pests")
-  end
+  # 害虫セクション（pest-card レイアウト）のテンプレート描画は
+  # test/views/crops_show_sections_view_test.rb が担保する。害虫の関連付け・並び順は
+  # CropDetailInteractor のユニットテストが担保する。crop#show の配線は上の
+  # 「作業テンプレートが表示される」テストが通している。
 
   test "管理者はAIで作業テンプレートを生成できる" do
     sign_in_as @admin_user

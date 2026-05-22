@@ -160,88 +160,17 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
     assert_equal expected_notice, flash[:notice]
   end
 
-  test "index displays plans including annual plans" do
-    sign_in_as @user
-    farm1 = create(:farm, user: @user, name: "農場1")
-    farm2 = create(:farm, user: @user, name: "農場2")
-
-    # 年度ベースの計画を作成
-    plan1 = create(:cultivation_plan, user: @user, farm: farm1, plan_year: 2025)
-    # 通年計画を作成
-    plan2 = create(:cultivation_plan, :annual_planning, user: @user, farm: farm2)
-
-    get plans_path
-    assert_response :success
-
-    # 両方の計画が表示されることを確認
-    assert_select "a[href=?]", plan_path(plan1)
-    assert_select "a[href=?]", plan_path(plan2)
-  end
-
-  test "index displays cards with farm name as title and hides plan name, period, and status" do
-    sign_in_as @user
-    farm = create(:farm, user: @user, name: "テスト農場A")
-    plan = create(
-      :cultivation_plan,
-      user: @user,
-      farm: farm,
-      plan_name: "テスト計画",
-      planning_start_date: Date.new(2025, 1, 1),
-      planning_end_date: Date.new(2025, 12, 31)
-    )
-
-    get plans_path
-    assert_response :success
-
-    # カードタイトルに地名（農場名）が表示されること
-    assert_select "h3.plan-card-title", text: farm.display_name
-
-    # ステータスバッジが表示されないこと
-    assert_select ".plan-card-status", count: 0
-
-    # 計画名がカードの見た目上の本文（タイトル・詳細・メタ）に含まれないこと
-    # ※ undo 用 data 属性には display_name が含まれるため response.body 全体では検査しない
-    doc = Nokogiri::HTML(@response.body)
-    card = doc.at_css(".plan-card")
-    assert card, "expected a plan card"
-    visible_parts = card.css("h3.plan-card-title, .plan-card-details, .plan-card-meta").map(&:text).join("\n")
-    assert_not visible_parts.include?("テスト計画")
-
-    # 計画期間ラベルが表示されないこと
-    assert_no_match(/計画期間:/, visible_parts)
-  end
-
-  test "index does not render farm accordion sections" do
+  # index カードのテンプレート描画（カードタイトル＝農場名、ステータスバッジ非表示、
+  # アコーディオン非描画、計画詳細リンク）は test/views/plans_index_view_test.rb が担保する。
+  # display_name に計画期間を付与しない仕様は test/models/cultivation_plan_test.rb が担保する。
+  # ここは index アクションの配線が通ることのみ確認する。
+  test "index renders successfully" do
     sign_in_as @user
     farm = create(:farm, user: @user)
     create(:cultivation_plan, user: @user, farm: farm)
 
     get plans_path
     assert_response :success
-
-    # アコーディオン用のdetails/summaryが存在しないこと
-    assert_select "details", count: 0
-    assert_select ".plans-farm-section", count: 0
-  end
-
-  test "index displays annual plan with period in display_name" do
-    sign_in_as @user
-    farm = create(:farm, user: @user, name: "テスト農場")
-
-    # 通年計画を作成
-    plan = create(:cultivation_plan, :annual_planning,
-                 user: @user,
-                 farm: farm,
-                 planning_start_date: Date.new(2025, 1, 1),
-                 planning_end_date: Date.new(2026, 12, 31))
-
-    get plans_path
-    assert_response :success
-
-    # 仕様変更: display_name は計画期間を付与しないため、年表記が含まれないことを確認
-    display_name = plan.display_name
-    assert_no_match /2025/, display_name
-    assert_no_match /2026/, display_name
   end
 
   test "destroy_plan_with_complex_associations_succeeds" do

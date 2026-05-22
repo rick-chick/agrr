@@ -1155,6 +1155,10 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # ========== 作物選択機能のテスト ==========
+  #
+  # crop-selection カード自体の描画（data 属性・バッジ・選択状態ラベル・見出しタグ等）は
+  # test/views/crop_selection_card_view_test.rb が担保する。以下の controller テストは
+  # 「どの作物がフォームに提示されるか」という絞り込み（ユースケース判定）を検証する。
 
   test "should show available crops in new form as cards" do
     crop1 = create(:crop, user: @user)

@@ -86,6 +86,9 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".associated-crop-card__variety", text: "(#{crop.variety})"
   end
 
+  # crop-selection カード自体の描画（data 属性・バッジ・選択状態ラベル・見出しタグ等）は
+  # test/views/crop_selection_card_view_test.rb が担保する。以下の controller テストは
+  # 「どの作物がフォームに提示されるか」という絞り込み（ユースケース判定）を検証する。
   test "編集フォームでユーザー自身の作物カードが表示され選択状態を切り替えられる" do
     sign_in_as @user
 

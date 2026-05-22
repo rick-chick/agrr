@@ -135,27 +135,15 @@ class FarmsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "After Patch", farm.name
   end
 
-  test "GET index HTML lists only current user farms for non-admin" do
+  # HTML index の行絞り込み（自分の農場のみ／管理者の参照農場）は
+  # FarmListRowsBundleInteractor のユニットテスト、テンプレート描画は
+  # test/views/farms_index_view_test.rb が担保する。ここは配線が通ることのみ確認する。
+  test "GET index HTML renders successfully" do
     sign_in_as @user
-    farm = create(:farm, user: @user, name: "My Listed Farm")
-    other_user = create(:user)
-    create(:farm, user: other_user, name: "Other User Farm")
+    create(:farm, user: @user, name: "My Listed Farm")
 
     get farms_path
     assert_response :success
-    assert_select ".farm-name", text: farm.display_name
-    assert_select ".farm-name", text: "Other User Farm", count: 0
-  end
-
-  test "GET index HTML shows reference farm section for admin when reference farms exist" do
-    admin = create(:user, admin: true)
-    sign_in_as admin
-    ref_farm = create(:farm, user: User.anonymous_user, is_reference: true, name: "Ref Farm For Index")
-
-    get farms_path
-    assert_response :success
-    assert_select "h2.section-header", text: /#{Regexp.escape(I18n.t("farms.index.reference_farms"))}/
-    assert_select ".farm-name", text: ref_farm.display_name
   end
 
   # ========== region編集のテスト ==========

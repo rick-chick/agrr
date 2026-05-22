@@ -10,15 +10,14 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     @farm = create(:farm, user: @user)
   end
 
-  test "index_renders_farm_and_field_names" do
+  # index / show のテンプレート描画は test/views/fields_view_test.rb が担保する。
+  # ここは Interactor + Presenter の配線が通ることのみ確認する。
+  test "index_renders_successfully" do
     sign_in_as @user
-    field = create(:field, farm: @farm, user: @user, name: "Alpha Plot")
+    create(:field, farm: @farm, user: @user, name: "Alpha Plot")
 
     get farm_fields_path(@farm)
     assert_response :success
-    assert_includes @response.body, @farm.display_name
-    assert_includes @response.body, field.display_name
-    assert_includes @response.body, "field_#{field.id}"
   end
 
   test "index_redirects_when_user_cannot_access_farm" do
@@ -29,14 +28,12 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate flash[:alert], :present?
   end
 
-  test "show_renders_field_detail" do
+  test "show_renders_successfully" do
     sign_in_as @user
     field = create(:field, farm: @farm, user: @user, name: "Beta Row")
 
     get farm_field_path(@farm, field)
     assert_response :success
-    assert_includes @response.body, field.display_name
-    assert_includes @response.body, "field_#{field.id}"
   end
 
   test "show_redirects_when_field_not_found" do
