@@ -180,12 +180,9 @@ class FarmsController < ApplicationController
   end
 
   def farm_params
-    permitted = [ :name, :latitude, :longitude ]
-
-    # 管理者のみregionを許可
-    permitted << :region if admin_user?
-
-    params.require(:farm).permit(*permitted)
+    # region は mass-assignment 許可のみ。admin 限定の認可は
+    # FarmPolicy.normalize_attrs_for_* が判定する。
+    params.require(:farm).permit(:name, :latitude, :longitude, :region)
   end
 
 end
