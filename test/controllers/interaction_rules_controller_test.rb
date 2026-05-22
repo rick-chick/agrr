@@ -134,151 +134,29 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
     assert_equal expected_notice, flash[:notice]
   end
 
-  # ========== region編集のテスト ==========
+  # ========== region / is_reference 認可 ==========
+  #
+  # region（admin のみ設定可）の認可は InteractionRulePolicy が判定する。
+  #   → test/policies/interaction_rule_policy_test.rb
+  #     test/domain/interaction_rule/interactors/interaction_rule_create_interactor_test.rb
+  #     test/domain/interaction_rule/interactors/interaction_rule_update_interactor_test.rb
+  # is_reference（admin のみ設定/変更可）の認可は Create/Update Interactor が判定する。
+  #   → 同上 interactor テスト
+  # 以下の controller テストは、認可失敗が HTTP 応答（redirect + flash）へ
+  # 正しくマッピングされる境界のみを検証する。
 
-  test "管理者は参照ルールのregionを更新できる" do
-    admin = create(:user, admin: true)
-    sign_in_as admin
-    ref_rule = InteractionRule.create!(
-      rule_type: "continuous_cultivation",
-      source_group: "GroupA",
-      target_group: "GroupB",
-      impact_ratio: 1.0,
-      is_reference: true,
-      user_id: nil,
-      region: "jp"
-    )
-
-    patch interaction_rule_path(ref_rule), params: {
-      interaction_rule: {
-        rule_type: ref_rule.rule_type,
-        source_group: ref_rule.source_group,
-        target_group: ref_rule.target_group,
-        impact_ratio: ref_rule.impact_ratio,
-        region: "us"
-      }
-    }
-
-    assert_redirected_to interaction_rule_path(ref_rule)
-    ref_rule.reload
-    assert_equal "us", ref_rule.region
-  end
-
-  test "管理者は自身のルールのregionを更新できる" do
-    admin = create(:user, admin: true)
-    sign_in_as admin
-    rule = InteractionRule.create!(
-      rule_type: "continuous_cultivation",
-      source_group: "GroupA",
-      target_group: "GroupB",
-      impact_ratio: 1.0,
-      is_reference: false,
-      user: admin,
-      region: "jp"
-    )
-
-    patch interaction_rule_path(rule), params: {
-      interaction_rule: {
-        rule_type: rule.rule_type,
-        source_group: rule.source_group,
-        target_group: rule.target_group,
-        impact_ratio: rule.impact_ratio,
-        region: "in"
-      }
-    }
-
-    assert_redirected_to interaction_rule_path(rule)
-    rule.reload
-    assert_equal "in", rule.region
-  end
-
-  test "一般ユーザーはregionを更新できない" do
-    sign_in_as @user
-    rule = InteractionRule.create!(
-      rule_type: "continuous_cultivation",
-      source_group: "GroupA",
-      target_group: "GroupB",
-      impact_ratio: 1.0,
-      is_reference: false,
-      user: @user,
-      region: "jp"
-    )
-
-    patch interaction_rule_path(rule), params: {
-      interaction_rule: {
-        rule_type: rule.rule_type,
-        source_group: rule.source_group,
-        target_group: rule.target_group,
-        impact_ratio: rule.impact_ratio,
-        region: "us"
-      }
-    }
-
-    assert_redirected_to interaction_rule_path(rule)
-    rule.reload
-    # regionは変更されない（パラメータに含まれても無視される）
-    assert_equal "jp", rule.region
-  end
-
-  test "管理者は新規ルール作成時にregionを設定できる" do
-    admin = create(:user, admin: true)
-    sign_in_as admin
-
-    post interaction_rules_path, params: {
-      interaction_rule: {
-        rule_type: "continuous_cultivation",
-        source_group: "GroupA",
-        target_group: "GroupB",
-        impact_ratio: 1.0,
-        is_reference: true,
-        region: "us"
-      }
-    }
-
-    rule = InteractionRule.last
-    assert_redirected_to interaction_rule_path(rule)
-    assert_equal "us", rule.region
-    assert rule.is_reference?
-    assert_nil rule.user_id
-  end
-
-  test "一般ユーザーは新規ルール作成時にregionを設定できない" do
+  test "一般ユーザーの参照ルール作成失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
 
     post interaction_rules_path, params: {
       interaction_rule: {
         rule_type: "continuous_cultivation",
-        source_group: "GroupA",
-        target_group: "GroupB",
+        source_group: "UserSource",
+        target_group: "UserTarget",
         impact_ratio: 1.0,
-        region: "us"
+        is_reference: true
       }
     }
-
-    assert_redirected_to interaction_rule_path(InteractionRule.last)
-    rule = InteractionRule.last
-    # regionは設定されない（パラメータに含まれても無視される）
-    assert_nil rule.region
-  end
-
-  # ========== create / update の参照・権限制御 ==========
-
-  test "一般ユーザーは参照ルールを作成できない" do
-    sign_in_as @user
-
-    assert_no_difference("InteractionRule.count") do
-      post interaction_rules_path, params: {
-        interaction_rule: {
-          rule_type: "continuous_cultivation",
-          source_group: "UserSource",
-          target_group: "UserTarget",
-          impact_ratio: 1.0,
-          is_directional: true,
-          description: "一般ユーザー参照ルール",
-          is_reference: true
-        }
-      }
-    end
 
     assert_redirected_to interaction_rules_path
     assert_equal I18n.t("interaction_rules.flash.reference_only_admin"), flash[:alert]
@@ -301,20 +179,9 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "一般ユーザーはis_referenceフラグを変更できない" do
+  test "一般ユーザーの is_reference 変更失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
-    rule = InteractionRule.create!(
-      rule_type: "continuous_cultivation",
-      source_group: "UserSource",
-      target_group: "UserTarget",
-      impact_ratio: 1.0,
-      is_directional: true,
-      description: "一般ユーザー用ルール",
-      is_reference: false,
-      user: @user
-    )
-
-    original_is_reference = rule.is_reference
+    rule = create_interaction_rule(user: @user)
 
     patch interaction_rule_path(rule), params: {
       interaction_rule: {
@@ -328,10 +195,6 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to interaction_rule_path(rule)
     assert_equal I18n.t("interaction_rules.flash.reference_flag_admin_only"), flash[:alert]
-
-    rule.reload
-    assert_equal original_is_reference, rule.is_reference
-    assert_equal @user.id, rule.user_id
   end
 
   test "update時に必須項目が欠けていると422でeditを再表示する" do
