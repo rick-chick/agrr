@@ -112,6 +112,8 @@ class PesticidesController < ApplicationController
   end
 
   def pesticide_params
+    # region / is_reference は mass-assignment 許可のみ。admin 限定の認可は
+    # PesticidePolicy.normalize_attrs_for_* と PesticideCreate/UpdateInteractor が判定する。
     permitted = [
       :name,
       :active_ingredient,
@@ -119,6 +121,7 @@ class PesticidesController < ApplicationController
       :crop_id,
       :pest_id,
       :is_reference,
+      :region,
       pesticide_usage_constraint_attributes: [
         :id,
         :min_temperature,
@@ -138,9 +141,6 @@ class PesticidesController < ApplicationController
         :_destroy
       ]
     ]
-
-    # 管理者のみregionを許可
-    permitted << :region if admin_user?
 
     params.require(:pesticide).permit(*permitted)
   end

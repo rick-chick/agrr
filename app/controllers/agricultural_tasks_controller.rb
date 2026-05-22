@@ -158,6 +158,9 @@ class AgriculturalTasksController < ApplicationController
   end
 
   def agricultural_task_params
+    # region / is_reference は mass-assignment 許可のみ。admin 限定の認可は
+    # AgriculturalTaskPolicy.normalize_attrs_for_* と
+    # AgriculturalTaskCreate/UpdateInteractor が判定する。
     permitted = [
       :name,
       :description,
@@ -166,11 +169,9 @@ class AgriculturalTasksController < ApplicationController
       :skill_level,
       :is_reference,
       :source_agricultural_task_id,
+      :region,
       required_tools: []
     ]
-
-    # 管理者のみregionを許可
-    permitted << :region if admin_user?
 
     params.require(:agricultural_task).permit(*permitted)
   end

@@ -19,4 +19,26 @@ class Domain::Shared::Policies::PesticidePolicyTest < ActiveSupport::TestCase
     refute Domain::Shared::Policies::PesticidePolicy.view_allowed?(@user, is_reference: true, user_id: nil)
     assert Domain::Shared::Policies::PesticidePolicy.view_allowed?(@admin, is_reference: true, user_id: nil)
   end
+
+  # ---- region 認可（admin のみ設定・更新可）----
+
+  test "normalize_attrs_for_create は admin の region を保持する" do
+    h = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_create(@admin, { region: "us", is_reference: false })
+    assert_equal "us", h[:region]
+  end
+
+  test "normalize_attrs_for_create は一般ユーザーの region を破棄する" do
+    h = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_create(@user, { region: "us", is_reference: false })
+    assert_not h.key?(:region)
+  end
+
+  test "normalize_attrs_for_update は admin の region を保持する" do
+    h = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_update(@admin, { is_reference: false }, { region: "in" })
+    assert_equal "in", h[:region]
+  end
+
+  test "normalize_attrs_for_update は一般ユーザーの region を破棄する" do
+    h = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_update(@user, { is_reference: false }, { region: "us" })
+    assert_not h.key?(:region)
+  end
 end

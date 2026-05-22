@@ -28,6 +28,8 @@ module Domain
 
         def self.normalize_attrs_for_create(user, attrs, admin_forced: false)
           h = Domain::Shared.symbolize_keys(attrs.to_h)
+          # region は admin のみ設定可。一般ユーザーの指定値は破棄する。
+          h.delete(:region) unless user.admin? || admin_forced
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(h[:is_reference]) || false
 
           if user.admin? || admin_forced
@@ -49,6 +51,8 @@ module Domain
         def self.normalize_attrs_for_update(user, current_attrs, requested_attrs)
           pest = Domain::Shared.symbolize_keys(current_attrs.to_h)
           attributes = Domain::Shared.symbolize_keys(requested_attrs.to_h)
+          # region は admin のみ更新可。一般ユーザーの指定値は破棄する。
+          attributes.delete(:region) unless user.admin?
 
           if attributes.key?(:is_reference)
             requested_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(attributes[:is_reference]) || false

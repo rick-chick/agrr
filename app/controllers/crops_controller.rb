@@ -154,6 +154,8 @@ class CropsController < ApplicationController
   end
 
   def crop_params
+    # region / is_reference は mass-assignment 許可のみ。admin 限定の認可は
+    # CropPolicy.normalize_attrs_for_* と CropCreate/UpdateInteractor が判定する。
     permitted = [
       :name,
       :variety,
@@ -161,6 +163,7 @@ class CropsController < ApplicationController
       :area_per_unit,
       :revenue_per_area,
       :groups,
+      :region,
       crop_stages_attributes: [
         :id,
         :name,
@@ -198,9 +201,6 @@ class CropsController < ApplicationController
         ]
       ]
     ]
-
-    # 管理者のみregionを許可
-    permitted << :region if admin_user?
 
     params.require(:crop).permit(*permitted)
   end

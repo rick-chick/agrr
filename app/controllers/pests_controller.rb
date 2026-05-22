@@ -104,6 +104,8 @@ class PestsController < ApplicationController
   end
 
   def pest_params
+    # region / is_reference は mass-assignment 許可のみ。admin 限定の認可は
+    # PestPolicy.normalize_attrs_for_* と PestCreate/UpdateInteractor が判定する。
     permitted = [
       :name,
       :name_scientific,
@@ -112,6 +114,7 @@ class PestsController < ApplicationController
       :description,
       :occurrence_season,
       :is_reference,
+      :region,
       pest_temperature_profile_attributes: [
         :id,
         :base_temperature,
@@ -134,8 +137,7 @@ class PestsController < ApplicationController
       ]
     ]
 
-    # 管理者のみ region / pest_id を許可
-    permitted << :region if admin_user?
+    # pest_id は admin のみ許可（region と異なり Policy 未対応のため Controller 認可を残置）
     permitted << :pest_id if admin_user?
 
     params.require(:pest).permit(*permitted)

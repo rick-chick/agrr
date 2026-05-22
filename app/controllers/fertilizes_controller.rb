@@ -79,6 +79,8 @@ class FertilizesController < ApplicationController
   end
 
   def fertilize_params
+    # region / is_reference は mass-assignment 許可のみ。admin 限定の認可は
+    # FertilizePolicy.normalize_attrs_for_* と FertilizeCreate/UpdateInteractor が判定する。
     permitted = [
       :name,
       :n,
@@ -86,11 +88,9 @@ class FertilizesController < ApplicationController
       :k,
       :description,
       :package_size,
-      :is_reference
+      :is_reference,
+      :region
     ]
-
-    # 管理者のみregionを許可
-    permitted << :region if admin_user?
 
     params.require(:fertilize).permit(*permitted)
   end
