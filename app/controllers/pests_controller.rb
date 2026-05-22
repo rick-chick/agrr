@@ -137,9 +137,6 @@ class PestsController < ApplicationController
       ]
     ]
 
-    # pest_id は admin のみ許可（region と異なり Policy 未対応のため Controller 認可を残置）
-    permitted << :pest_id if admin_user?
-
     params.require(:pest).permit(*permitted)
   end
 
