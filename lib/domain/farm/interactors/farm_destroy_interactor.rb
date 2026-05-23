@@ -17,6 +17,15 @@ module Domain
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
           farm_entity = @gateway.find_by_id(farm_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, farm_entity)
+          usage = @gateway.find_delete_usage(farm_id)
+          blocked = Domain::Farm::Policies::FarmDestroyPolicy.blocked_reason(usage)
+          if blocked == :free_crop_plans
+            return @output_port.on_failure(
+              Domain::Shared::Dtos::Error.new(
+                @translator.t("farms.flash.cannot_delete", count: usage.free_crop_plans_count)
+              )
+            )
+          end
           toast_message = @translator.t("flash.farms.deleted", name: farm_entity.name)
           result = @gateway.soft_delete_with_undo(
             user: user,

@@ -226,16 +226,7 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     assert_not_equal "更新された名前", @pesticide.name
   end
 
-  test "should destroy pesticide" do
-    # 外部参照のない農薬を作成
-    pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
-
-    assert_difference("Pesticide.count", -1) do
-      delete pesticide_path(pesticide)
-    end
-
-    assert_redirected_to pesticides_path
-  end
+  # destroy の undo JSON 契約は destroy_returns_undo_token_json。認可・使用中拒否は Interactor / API に寄せる。
 
   test "一般ユーザーの参照農薬作成失敗は redirect + flash へマッピングされる" do
     post pesticides_path, params: { pesticide: {

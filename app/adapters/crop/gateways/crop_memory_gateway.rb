@@ -365,17 +365,17 @@ module Adapters
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop.reload)
         end
 
+        def find_delete_usage(crop_id)
+          crop = find_crop_model!(crop_id)
+          Domain::Crop::Dtos::CropDeleteUsage.new(
+            cultivation_plan_crops_count: crop.cultivation_plan_crops.count,
+            free_crop_plans_count: crop.free_crop_plans.count,
+            pesticides_count: crop.pesticides.count
+          )
+        end
+
         def soft_delete_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:)
           crop = find_crop_model!(crop_id)
-          if crop.cultivation_plan_crops.any?
-            return { success: false, error_dto: Domain::Shared::Dtos::Error.new(translator.t("crops.flash.cannot_delete_in_use.plan")) }
-          end
-          if crop.free_crop_plans.any?
-            return { success: false, error_dto: Domain::Shared::Dtos::Error.new(translator.t("crops.flash.cannot_delete_in_use.other")) }
-          end
-          if crop.pesticides.any?
-            return { success: false, error_dto: Domain::Shared::Dtos::Error.new(translator.t("crops.flash.cannot_delete_in_use.other")) }
-          end
           toast_message = translator.t("crops.undo.toast", name: crop.name)
           undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(

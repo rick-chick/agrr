@@ -165,6 +165,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "cultural", pest.pest_control_methods.first.method_type
   end
 
+  # destroy の undo JSON / HTML リダイレクトは境界契約。使用中拒否・認可網羅は PestDestroyInteractorTest 等に寄せる。
+
   test "should destroy pest" do
     # 外部参照のない害虫を作成
     pest = create(:pest, :user_owned, user: @user)
@@ -239,30 +241,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert Pest.exists?(pest.id), "Undo後にPestが復元されていません"
   end
 
-  test "should destroy pest with nested associations" do
-    pest = create(:pest, :complete, :user_owned, user: @user)
-    temp_profile_id = pest.pest_temperature_profile.id
-    thermal_req_id = pest.pest_thermal_requirement.id
-    control_method_ids = pest.pest_control_methods.pluck(:id)
-
-    assert_difference("Pest.count", -1) do
-      assert_difference("PestTemperatureProfile.count", -1) do
-        assert_difference("PestThermalRequirement.count", -1) do
-          assert_difference("PestControlMethod.count", -control_method_ids.count) do
-            delete pest_path(pest)
-          end
-        end
-      end
-    end
-
-    assert_redirected_to pests_path
-    assert_nil PestTemperatureProfile.find_by(id: temp_profile_id)
-    assert_nil PestThermalRequirement.find_by(id: thermal_req_id)
-    control_method_ids.each do |id|
-      assert_nil PestControlMethod.find_by(id: id)
-    end
-  end
-
   # is_reference（admin のみ設定・変更可）の認可は PestCreate/UpdateInteractor が
   # 判定する → test/domain/pest/interactors/pest_{create,update}_interactor_test.rb。
   # 以下の controller テストは認可失敗の HTTP 応答（redirect + flash）の境界のみ検証する。
@@ -327,17 +305,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to pest_path(@pest)
     @pest.reload
     assert_equal "管理者が更新した名前", @pest.name
-  end
-
-  test "admin can destroy reference pest" do
-    admin_user = create(:user, admin: true)
-    sign_in_as admin_user
-
-    assert_difference("Pest.count", -1) do
-      delete pest_path(@pest)
-    end
-
-    assert_redirected_to pests_path
   end
 
   test "admin should see only reference pests and own pests in index" do
@@ -684,39 +651,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("pests.flash.not_found"), flash[:alert]
   end
 
-  test "should handle InvalidForeignKey on destroy when pest has crop associations" do
-    pest = create(:pest, :complete, :user_owned, user: @user)
-    crop = create(:crop, is_reference: false)
-    CropPest.create!(crop: crop, pest: pest)
-
-    initial_count = Pest.count
-
-    # 削除を試行
-    delete pest_path(pest)
-
-    # 外部キー制約が有効な場合: InvalidForeignKeyエラーが発生して削除に失敗
-    # 外部キー制約が無効な場合: 削除が成功するが、これは実際の運用では望ましくない
-    final_count = Pest.count
-
-    if final_count == initial_count
-      # 削除に失敗した場合（外部キー制約が有効）
-      assert_redirected_to pests_path
-      assert_equal I18n.t("pests.flash.cannot_delete_in_use"), flash[:alert]
-      assert_not_nil CropPest.find_by(pest_id: pest.id), "CropPest association should still exist"
-    else
-      # 削除が成功した場合（外部キー制約が無効、またはdependent: :destroyが動作）
-      # この場合、CropPestも一緒に削除されているか確認
-      if CropPest.exists?(pest_id: pest.id)
-        # CropPestが残っている場合は外部キー制約が無効だった可能性
-        skip "External foreign key constraints may not be enabled in this database"
-      else
-        # CropPestも削除されている場合はdependent: :destroyが動作した
-        # これは正常な動作（外部キー制約エラーではなく、関連も一緒に削除される）
-        assert_redirected_to pests_path
-        assert_equal I18n.t("deletion_undo.redirect_notice", resource: pest.name), flash[:notice]
-      end
-    end
-  end
+  # destroy の使用中拒否・認可網羅は PestDestroyInteractorTest / pests API controller に寄せる。
 
   # ========== 権限チェックの追加テスト ==========
 

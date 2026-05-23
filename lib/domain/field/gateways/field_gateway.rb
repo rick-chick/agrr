@@ -32,9 +32,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement build_blank_field_for_master_form!"
         end
 
-        def soft_delete_with_undo(user:, field_id:, auto_hide_after:, translator:, farm_access_filter:)
-          raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
-        end
       end
     end
   end

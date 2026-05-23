@@ -17,6 +17,16 @@ module Domain
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           current = @gateway.find_by_id(crop_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
+          usage = @gateway.find_delete_usage(crop_id)
+          blocked = Domain::Crop::Policies::CropDestroyPolicy.blocked_reason(usage)
+          if blocked
+            message_key = blocked == :cultivation_plan ? "plan" : "other"
+            return @output_port.on_failure(
+              Domain::Shared::Dtos::Error.new(
+                @translator.t("crops.flash.cannot_delete_in_use.#{message_key}")
+              )
+            )
+          end
           result = @gateway.soft_delete_with_undo(
             user: user,
             crop_id: crop_id,

@@ -52,21 +52,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def destroy(fertilize_id)
-          fertilize = ::Fertilize.find(fertilize_id)
-          ::Adapters::DeletionUndo::Manager.schedule(
-            record: fertilize,
-            actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(fertilize.user),
-            toast_message: @translator.t("fertilizes.undo.toast", name: fertilize.name)
-          )
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
-          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fertilizes.flash.cannot_delete_in_use")
-        rescue ::Domain::DeletionUndo::Exceptions::DeletionUndoError
-          raise
-        end
-
         def list_index_for_filter(filter)
           index_relation_for_filter(filter)
             .where.not(name: [ nil, "" ])

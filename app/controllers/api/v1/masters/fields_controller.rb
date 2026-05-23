@@ -53,7 +53,8 @@ module Api
           input_valid?(:destroy) || return
           presenter = Adapters::Field::Presenters::FieldDeleteApiPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id, gateway: CompositionRoot.field_gateway,
+            translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 

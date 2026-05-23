@@ -35,6 +35,10 @@ module Domain
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("fertilizes.flash.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+        rescue Domain::Shared::Exceptions::AssociationInUse
+          @output_port.on_failure(
+            Domain::Shared::Dtos::Error.new(@translator.t("fertilizes.flash.cannot_delete_in_use"))
+          )
         end
       end
     end

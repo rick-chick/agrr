@@ -274,21 +274,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
   end
 
   # ========== destroy アクションのテスト ==========
-
-  test "一般ユーザーは自身の肥料をdestroyできる" do
-    sign_in_as @user
-    fertilize = create(:fertilize, :user_owned, user: @user)
-
-    assert_difference -> { DeletionUndoEvent.count }, +1 do
-      assert_difference("Fertilize.count", -1) do
-        delete fertilize_path(fertilize)
-      end
-    end
-
-    assert_redirected_to fertilizes_path
-    assert_equal I18n.t("deletion_undo.redirect_notice", resource: fertilize.name), flash[:notice]
-    # TODO: HTMLレスポンスのUndoトースト表示もDOMレベルで検証する
-  end
+  # undo JSON と認可失敗の HTTP マッピングは境界契約。成功・認可網羅は FertilizeDestroyInteractorTest。
 
   test "一般ユーザーは参照肥料をdestroyできない" do
     sign_in_as @user
@@ -300,48 +286,6 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to fertilizes_path
     assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
-  end
-
-  test "一般ユーザーは他のユーザーの肥料をdestroyできない" do
-    sign_in_as @user
-    other_fertilize = create(:fertilize, :user_owned, user: @other_user)
-
-    assert_no_difference("Fertilize.count") do
-      delete fertilize_path(other_fertilize)
-    end
-
-    assert_redirected_to fertilizes_path
-    assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
-  end
-
-  test "管理者は参照肥料をdestroyできる" do
-    sign_in_as @admin_user
-    reference_fertilize = create(:fertilize, is_reference: true, user_id: nil)
-
-    assert_difference -> { DeletionUndoEvent.count }, +1 do
-      assert_difference("Fertilize.count", -1) do
-        delete fertilize_path(reference_fertilize)
-      end
-    end
-
-    assert_redirected_to fertilizes_path
-    assert_equal I18n.t("deletion_undo.redirect_notice", resource: reference_fertilize.name), flash[:notice]
-    # TODO: HTMLレスポンスのUndoトースト表示もDOMレベルで検証する
-  end
-
-  test "管理者は自身の肥料をdestroyできる" do
-    sign_in_as @admin_user
-    admin_fertilize = create(:fertilize, :user_owned, user: @admin_user)
-
-    assert_difference -> { DeletionUndoEvent.count }, +1 do
-      assert_difference("Fertilize.count", -1) do
-        delete fertilize_path(admin_fertilize)
-      end
-    end
-
-    assert_redirected_to fertilizes_path
-    assert_equal I18n.t("deletion_undo.redirect_notice", resource: admin_fertilize.name), flash[:notice]
-    # TODO: HTMLレスポンスのUndoトースト表示もDOMレベルで検証する
   end
 
   test "destroy_returns_undo_token_json" do

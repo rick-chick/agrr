@@ -6,8 +6,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
   def setup
     deletion_undo_gateway = mock("deletion_undo_gateway")
     @gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: deletion_undo_gateway,
-      translator: CompositionRoot.translator
+      deletion_undo_gateway: deletion_undo_gateway
     )
     @user = create(:user)
   end
@@ -85,14 +84,6 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal "更新農場", entity.name
     assert_equal 36.6895, entity.latitude
     assert_equal farm.longitude, entity.longitude  # unchanged
-  end
-
-  test "should delete farm" do
-    farm = create(:farm, name: "削除農場", user: @user)
-
-    assert_difference("::Farm.count", -1) do
-      @gateway.delete(farm.id, toast_message: "test undo toast")
-    end
   end
 
   test "list_reference_farms returns all reference farm entities" do
@@ -177,28 +168,6 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal high.id, second.id
     assert_not second.fields_present?
     assert_equal 0, second.fields_count
-  end
-
-  test "soft_delete_with_undo returns failure without scheduling when free_crop_plans exist" do
-    farm = create(:farm, user: @user, is_reference: false)
-    crop = create(:crop, user: @user)
-    FreeCropPlan.create!(farm: farm, crop: crop, area_sqm: 100, session_id: "sess_gateway_block")
-
-    deletion_undo_gateway = mock("deletion_undo_gateway")
-    deletion_undo_gateway.expects(:schedule).never
-
-    gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: deletion_undo_gateway,
-      translator: CompositionRoot.translator
-    )
-
-    result = gateway.soft_delete_with_undo(
-      user: @user,
-      farm_id: farm.id,
-      toast_message: "toast"
-    )
-    assert_equal false, result[:success]
-    assert result[:error_dto].message.present?
   end
 
   test "farm_weather_data_access_context_for_owned_farm returns dto for owner" do

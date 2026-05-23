@@ -4,10 +4,11 @@ module Domain
   module Field
     module Interactors
       class FieldDestroyInteractor < Domain::Field::Ports::FieldDestroyInputPort
-        def initialize(output_port:, user_id:, gateway:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @user_id = user_id
+          @translator = translator
           @user_lookup = user_lookup
         end
 
@@ -23,8 +24,10 @@ module Domain
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
-        rescue Domain::Shared::Exceptions::AssociationInUse => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+        rescue Domain::Shared::Exceptions::AssociationInUse
+          @output_port.on_failure(
+            Domain::Shared::Dtos::Error.new(@translator.t("fields.flash.cannot_delete_in_use"))
+          )
         rescue Domain::DeletionUndo::Exceptions::DeletionUndoError => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue NoMethodError, NameError, ArgumentError, SyntaxError

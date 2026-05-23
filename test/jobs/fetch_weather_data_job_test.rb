@@ -142,8 +142,7 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
 
     Kernel.stubs(:sleep)
     farm_gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
-      deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
-      translator: CompositionRoot.translator
+      deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
     )
     farm_gateway.expects(:update_weather_location_id).with(farm.id, 1)
     # Stub increment to directly update farm (DB update in increment is tested elsewhere)

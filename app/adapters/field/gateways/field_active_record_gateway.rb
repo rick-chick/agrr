@@ -69,7 +69,7 @@ module Adapters
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
-          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("fields.flash.cannot_delete_in_use")
+          raise Domain::Shared::Exceptions::AssociationInUse
         end
 
         def find_field_loaded_in_farm!(farm_id, field_id)
@@ -83,28 +83,6 @@ module Adapters
             field_entity: Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field),
             master_form_snapshot: Adapters::Farm::Mappers::FieldMasterFormSnapshotMapper.from_record(field)
           )
-        end
-
-        def soft_delete_with_undo(user:, field_id:, auto_hide_after: 5000, translator:, farm_access_filter: nil)
-          field = find_field_model!(field_id)
-          name = field.display_name
-          toast_message = translator.t("fields.undo.toast", name: name)
-          undo_gw = @deletion_undo_gateway
-          event = undo_gw.schedule(
-            resource_type: field.class.name,
-            resource_id: field.id,
-            actor_id: user.id,
-            toast_message: toast_message,
-            auto_hide_after: auto_hide_after,
-            metadata: { farm_id: field.farm_id }
-          )
-          { success: true, undo_entity: event, resource_name: name }
-        rescue Domain::Shared::Exceptions::AssociationInUse
-          raise
-        rescue Domain::Shared::Exceptions::RecordNotFound
-          raise
-        rescue StandardError => e
-          { success: false, error_dto: Domain::Shared::Dtos::Error.new(e.message) }
         end
 
         def build_blank_field_for_master_form!(farm_id:, farm_access_filter: nil)

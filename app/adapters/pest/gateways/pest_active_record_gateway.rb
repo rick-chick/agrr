@@ -71,11 +71,15 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest.reload)
         end
 
+        def find_delete_usage(pest_id)
+          pest = find_pest_model!(pest_id)
+          Domain::Pest::Dtos::PestDeleteUsage.new(
+            pesticides_count: pest.pesticides.count
+          )
+        end
+
         def soft_delete_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:)
           pest = find_pest_model!(pest_id)
-          if pest.pesticides.any?
-            return { success: false, error_dto: Domain::Shared::Dtos::Error.new(translator.t("pests.flash.cannot_delete_in_use")) }
-          end
           toast_message = translator.t("pests.undo.toast", name: pest.name)
           undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(

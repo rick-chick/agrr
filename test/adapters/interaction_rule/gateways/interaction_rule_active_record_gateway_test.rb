@@ -82,16 +82,6 @@ module Adapters
           assert_raises(Domain::Shared::Exceptions::RecordInvalid) { @gateway.update(record.id, update_dto) }
         end
 
-        test "should destroy existing record" do
-          record = create(:interaction_rule, :reference)
-          @gateway.delete(record.id)
-          assert_nil ::InteractionRule.find_by(id: record.id)
-        end
-
-        test "should raise when destroy not found" do
-          assert_raises(Domain::Shared::Exceptions::RecordNotFound) { @gateway.delete(9999) }
-        end
-
         test "should list all records and return entities" do
           record1 = create(:interaction_rule, :reference, region: "jp")
           record2 = create(:interaction_rule, :reference, region: "us")

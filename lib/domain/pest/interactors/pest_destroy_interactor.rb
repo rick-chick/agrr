@@ -17,6 +17,12 @@ module Domain
           access_filter = Domain::Shared::Policies::PestPolicy.record_access_filter(user)
           current = @gateway.find_by_id(pest_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
+          usage = @gateway.find_delete_usage(pest_id)
+          if Domain::Pest::Policies::PestDestroyPolicy.blocked_reason(usage) == :pesticides_in_use
+            return @output_port.on_failure(
+              Domain::Shared::Dtos::Error.new(@translator.t("pests.flash.cannot_delete_in_use"))
+            )
+          end
           result = @gateway.soft_delete_with_undo(
             user: user,
             pest_id: pest_id,

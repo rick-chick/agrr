@@ -19,10 +19,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def delete(rule_id)
-          raise NotImplementedError, "Subclasses must implement destroy"
-        end
-
         # agrr 分配用のルール配列（空なら nil）
         def agrr_rules_for_cultivation_plan_id(cultivation_plan_id)
           raise NotImplementedError, "Subclasses must implement agrr_rules_for_cultivation_plan_id"

@@ -53,15 +53,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "InteractionRule not found"
         end
 
-        def delete(rule_id)
-          rule = ::InteractionRule.find(rule_id)
-          rule.destroy!
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "InteractionRule not found"
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("interaction_rules.flash.cannot_delete_in_use")
-        end
-
         def agrr_rules_for_cultivation_plan_id(cultivation_plan_id)
           cultivation_plan = ::CultivationPlan.find(cultivation_plan_id)
           farm_region = cultivation_plan.farm.region

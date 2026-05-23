@@ -40,10 +40,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def delete(farm_id, toast_message:)
-          raise NotImplementedError, "Subclasses must implement destroy"
-        end
-
         def mark_weather_data_failed(farm_id, error_msg)
           raise NotImplementedError
         end
@@ -97,7 +93,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement farm_detail_with_fields"
         end
 
-        # 認可・DeletionUndo スケジュールをアダプタ内で完結。Interactor に AR を渡さない。
+        # @return [Domain::Farm::Dtos::FarmDeleteUsage]
+        def find_delete_usage(farm_id)
+          raise NotImplementedError, "Subclasses must implement find_delete_usage"
+        end
+
         def soft_delete_with_undo(user:, farm_id:, auto_hide_after:, toast_message:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end

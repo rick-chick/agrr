@@ -4,9 +4,8 @@ module Adapters
   module Farm
     module Gateways
       class FarmActiveRecordGateway < Domain::Farm::Gateways::FarmGateway
-        def initialize(deletion_undo_gateway:, translator:)
+        def initialize(deletion_undo_gateway:)
           @deletion_undo_gateway = deletion_undo_gateway
-          @translator = translator
         end
         def list_user_owned_farms(user_id:)
           ::Farm.where(user_id: user_id, is_reference: false).map { |record| Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(record) }
@@ -65,19 +64,6 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def delete(farm_id, toast_message:)
-          farm = ::Farm.find(farm_id)
-          ::Adapters::DeletionUndo::Manager.schedule(
-            record: farm,
-            actor: Adapters::Shared::UserActorResolver.user_for_deleted_by(farm.user),
-            toast_message: toast_message
-          )
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
-          raise Domain::Shared::Exceptions::AssociationInUse, "Farm is in use and cannot be deleted"
-        rescue ::Domain::DeletionUndo::Exceptions::DeletionUndoError
-          raise
         end
 
         def mark_weather_data_failed(farm_id, error_msg)
@@ -200,16 +186,15 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.detail_dto_from_farm_record(farm)
         end
 
+        def find_delete_usage(farm_id)
+          farm = find_farm_model!(farm_id)
+          Domain::Farm::Dtos::FarmDeleteUsage.new(
+            free_crop_plans_count: farm.free_crop_plans.count
+          )
+        end
+
         def soft_delete_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:)
           farm = find_farm_model!(farm_id)
-          if farm.free_crop_plans.any?
-            return {
-              success: false,
-              error_dto: Domain::Shared::Dtos::Error.new(
-                @translator.t("farms.flash.cannot_delete", count: farm.free_crop_plans.count)
-              )
-            }
-          end
           farm_name = farm.name
           event = @deletion_undo_gateway.schedule(
             resource_type: farm.class.name,

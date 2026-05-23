@@ -243,6 +243,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement entry_schedule_ordered_stage_rows"
         end
 
+        # @return [Domain::Crop::Dtos::CropDeleteUsage]
+        def find_delete_usage(crop_id)
+          raise NotImplementedError, "Subclasses must implement find_delete_usage"
+        end
+
         def soft_delete_with_undo(user:, crop_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end

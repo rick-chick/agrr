@@ -54,6 +54,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
+        # @return [Domain::Pest::Dtos::PestDeleteUsage]
+        def find_delete_usage(pest_id)
+          raise NotImplementedError, "Subclasses must implement find_delete_usage"
+        end
+
         def soft_delete_with_undo(user:, pest_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end

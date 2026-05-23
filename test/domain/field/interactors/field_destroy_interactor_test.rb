@@ -28,6 +28,7 @@ class FieldDestroyInteractorTest < DomainLibTestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
+      translator: Object.new,
       user_lookup: user_lookup
     )
     interactor.call(7)
@@ -53,6 +54,7 @@ class FieldDestroyInteractorTest < DomainLibTestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
+      translator: Object.new,
       user_lookup: user_lookup
     )
     interactor.call(7)
@@ -76,6 +78,7 @@ class FieldDestroyInteractorTest < DomainLibTestCase
       output_port: output,
       user_id: 20,
       gateway: gateway,
+      translator: Object.new,
       user_lookup: user_lookup
     )
     interactor.call(7)

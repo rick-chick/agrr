@@ -16,10 +16,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def delete(pesticide_id)
-          raise NotImplementedError, "Subclasses must implement destroy"
-        end
-
         # @param filter [Domain::Shared::ValueObjects::ReferenceIndexListFilter]
         def list_index_for_filter(filter)
           raise NotImplementedError, "Subclasses must implement list_index_for_filter"

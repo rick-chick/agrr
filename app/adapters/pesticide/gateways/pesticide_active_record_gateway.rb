@@ -52,17 +52,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
         end
 
-        def delete(pesticide_id)
-          pesticide = ::Pesticide.find(pesticide_id)
-          # DeletionUndo scheduling is handled in the interactor layer
-          pesticide.destroy!
-          true
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
-        rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
-          raise Domain::Shared::Exceptions::AssociationInUse, @translator.t("pesticides.flash.cannot_delete_in_use")
-        end
-
         def list_index_for_filter(filter)
           index_relation_for_filter(filter).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end

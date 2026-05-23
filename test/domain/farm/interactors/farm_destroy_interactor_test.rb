@@ -28,8 +28,11 @@ module Domain
           mock_undo.stubs(:expires_at).returns(Time.utc(2026, 1, 1, 0, 5, 0))
           farm_entity = stub(name: "Test Farm", is_reference: false, user_id: @user_id)
 
+          usage = Domain::Farm::Dtos::FarmDeleteUsage.new(free_crop_plans_count: 0)
+
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:find_by_id).with(farm_id).returns(farm_entity)
+          @mock_gateway.expects(:find_delete_usage).with(farm_id).returns(usage)
           @mock_translator.expects(:t).with("flash.farms.deleted", name: "Test Farm").returns("toast-msg")
           @mock_gateway.expects(:soft_delete_with_undo).with(
             user: @user,
@@ -43,12 +46,33 @@ module Domain
           @interactor.call(farm_id)
         end
 
+        test "calls on_failure when free crop plans block delete" do
+          farm_id = 1
+          farm_entity = stub(name: "Farm", is_reference: false, user_id: @user_id)
+
+          usage = Domain::Farm::Dtos::FarmDeleteUsage.new(free_crop_plans_count: 3)
+
+          @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
+          @mock_gateway.expects(:find_by_id).with(farm_id).returns(farm_entity)
+          @mock_gateway.expects(:find_delete_usage).with(farm_id).returns(usage)
+          @mock_translator.expects(:t).with("farms.flash.cannot_delete", count: 3).returns("blocked")
+          @mock_gateway.expects(:soft_delete_with_undo).never
+
+          received = nil
+          @mock_output_port.expects(:on_failure).with(instance_of(Domain::Shared::Dtos::Error)) { |e| received = e }
+
+          @interactor.call(farm_id)
+
+          assert_equal "blocked", received.message
+        end
+
         test "calls on_failure when policy permission denied" do
           farm_id = 1
           farm_entity = stub(is_reference: false, user_id: 99)
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_gateway.expects(:find_by_id).with(farm_id).returns(farm_entity)
+          @mock_gateway.expects(:find_delete_usage).never
           @mock_gateway.expects(:soft_delete_with_undo).never
 
           received = nil
