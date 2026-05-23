@@ -6,6 +6,7 @@ module Domain
       # agrr から作物情報を取得し、永続化（upsert）まで行う。
       class CropAiCreateInteractor
         def initialize(
+          output_port:,
           user_id:,
           user_lookup:,
           translator:,
@@ -13,6 +14,7 @@ module Domain
           crop_ai_query_gateway:,
           persistence:
         )
+          @output_port = output_port
           @user_id = user_id
           @user_lookup = user_lookup
           @translator = translator
@@ -24,17 +26,21 @@ module Domain
         def call(crop_name:, variety: nil)
           user = @user_lookup.find(@user_id)
           if user.anonymous?
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: :unauthorized,
-              body: { error: @translator.t("auth.api.login_required") }
+            return @output_port.on_failure(
+              Domain::Crop::Dtos::CropAiCreateFailure.new(
+                http_status: :unauthorized,
+                message: @translator.t("auth.api.login_required")
+              )
             )
           end
 
           cn = crop_name&.strip
           if cn.nil? || cn.empty?
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: :bad_request,
-              body: { error: @translator.t("api.errors.crops.name_required") }
+            return @output_port.on_failure(
+              Domain::Crop::Dtos::CropAiCreateFailure.new(
+                http_status: :bad_request,
+                message: @translator.t("api.errors.crops.name_required")
+              )
             )
           end
 
@@ -43,20 +49,27 @@ module Domain
 
           crop_info, agrr_failure = @crop_ai_query_gateway.fetch_crop_json(cn)
           if agrr_failure
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: agrr_failure.fetch(:status),
-              body: { error: agrr_failure.fetch(:message) }
+            return @output_port.on_failure(
+              Domain::Crop::Dtos::CropAiCreateFailure.new(
+                http_status: agrr_failure.fetch(:status),
+                message: agrr_failure.fetch(:message)
+              )
             )
           end
 
-          crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          @persistence.upsert(
+          result = @persistence.upsert(
             user_dto: user,
             crop_name: cn,
             variety: v,
             crop_info: crop_info,
-            crop_access_filter: crop_access_filter
+            crop_access_filter: Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           )
+
+          if result.is_a?(Domain::Crop::Dtos::CropAiCreateFailure)
+            @output_port.on_failure(result)
+          else
+            @output_port.on_success(result)
+          end
         end
       end
     end

@@ -11,11 +11,11 @@ module Api
       # POST /api/v1/pests/ai_create
       # AIで害虫情報を取得して保存
       def ai_create
-        result = CompositionRoot.pest_ai_create_interactor(current_user: current_user).call(
+        presenter = Adapters::Pest::Presenters::PestAiCreateApiPresenter.new(view: self)
+        CompositionRoot.pest_ai_create_interactor(current_user: current_user, output_port: presenter).call(
           pest_name: params[:name],
           affected_crops: pest_ai_create_affected_crops_from_params
         )
-        render json: result.body, status: result.status
       end
 
       # POST /api/v1/pests/:id/ai_update
@@ -26,6 +26,10 @@ module Api
           pest_query_name: params[:name]
         )
         render json: result.body, status: result.status
+      end
+
+      def render_response(json:, status:)
+        render json: json, status: status
       end
 
       private

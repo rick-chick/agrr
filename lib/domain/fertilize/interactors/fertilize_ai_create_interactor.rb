@@ -6,6 +6,7 @@ module Domain
       # agrr から肥料情報を取得し、新規作成または既存更新まで行う。
       class FertilizeAiCreateInteractor
         def initialize(
+          output_port:,
           user_id:,
           user_lookup:,
           fertilize_gateway:,
@@ -15,6 +16,7 @@ module Domain
           logger:,
           translator:
         )
+          @output_port = output_port
           @user_id = user_id
           @user_lookup = user_lookup
           @fertilize_gateway = fertilize_gateway
@@ -25,21 +27,24 @@ module Domain
           @translator = translator
         end
 
-        # @return [Domain::Shared::Dtos::HttpJsonEnvelope]
         def call(fertilize_query_name:)
           user = @user_lookup.find(@user_id)
           if user.anonymous?
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: :unauthorized,
-              body: { error: @translator.t("auth.api.login_required") }
+            return @output_port.on_failure(
+              Domain::Fertilize::Dtos::FertilizeAiCreateFailure.new(
+                http_status: :unauthorized,
+                message: @translator.t("auth.api.login_required")
+              )
             )
           end
 
           fertilize_name = fertilize_query_name&.strip
           if fertilize_name.nil? || fertilize_name.empty?
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: :bad_request,
-              body: { error: @translator.t("api.errors.fertilizes.name_required") }
+            return @output_port.on_failure(
+              Domain::Fertilize::Dtos::FertilizeAiCreateFailure.new(
+                http_status: :bad_request,
+                message: @translator.t("api.errors.fertilizes.name_required")
+              )
             )
           end
 
@@ -49,15 +54,19 @@ module Domain
           if fertilize_info["success"] == false
             error_msg = fertilize_info["error"] || @translator.t("api.errors.fertilizes.fetch_failed")
             status_code = fertilize_info["code"] == "daemon_not_running" ? :service_unavailable : :unprocessable_entity
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(status: status_code, body: { error: error_msg })
+            return @output_port.on_failure(
+              Domain::Fertilize::Dtos::FertilizeAiCreateFailure.new(http_status: status_code, message: error_msg)
+            )
           end
 
           fertilize_data = Domain::Fertilize::Mappers::FertilizeAiAgrrMapper.normalize_fertilize_payload(fertilize_info)
 
           unless fertilize_data
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: :unprocessable_entity,
-              body: { error: @translator.t("api.errors.fertilizes.invalid_payload") }
+            return @output_port.on_failure(
+              Domain::Fertilize::Dtos::FertilizeAiCreateFailure.new(
+                http_status: :unprocessable_entity,
+                message: @translator.t("api.errors.fertilizes.invalid_payload")
+              )
             )
           end
 
@@ -82,7 +91,7 @@ module Domain
           if existing_fertilize
             @logger.info "🔄 [AI Fertilize] Updating existing fertilize##{existing_fertilize.id}: #{fertilize_name_from_agrr}"
             result = @update_interactor.call(existing_fertilize.id, base_attrs.symbolize_keys)
-            status_code = :ok
+            http_status = :ok
           else
             @logger.info "🆕 [AI Fertilize] Creating new fertilize: #{fertilize_name_from_agrr}"
             normalized = Domain::Shared::Policies::FertilizePolicy.normalize_attrs_for_create(user, base_attrs)
@@ -91,22 +100,26 @@ module Domain
               is_reference: normalized[:is_reference]
             )
             result = @create_interactor.call(attrs_for_create)
-            status_code = :created
+            http_status = :created
           end
 
           unless result.success?
             @logger.error "❌ [AI Fertilize] Failed to #{existing_fertilize ? 'update' : 'create'}: #{result.error}"
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(status: :unprocessable_entity, body: { error: result.error })
+            return @output_port.on_failure(
+              Domain::Fertilize::Dtos::FertilizeAiCreateFailure.new(
+                http_status: :unprocessable_entity,
+                message: result.error
+              )
+            )
           end
 
           fertilize_entity = result.data
           action = existing_fertilize ? "Updated" : "Created"
           @logger.info "✅ [AI Fertilize] #{action} fertilize##{fertilize_entity.id}: #{fertilize_entity.name}"
 
-          Domain::Shared::Dtos::HttpJsonEnvelope.new(
-            status: status_code,
-            body: {
-              success: true,
+          @output_port.on_success(
+            Domain::Fertilize::Dtos::FertilizeAiCreateOutput.new(
+              http_status: http_status,
               fertilize_id: fertilize_entity.id,
               fertilize_name: fertilize_entity.name,
               n: fertilize_entity.n,
@@ -115,7 +128,7 @@ module Domain
               description: fertilize_entity.description,
               package_size: fertilize_entity.package_size,
               message: @translator.t("api.messages.fertilizes.created_by_ai", name: fertilize_entity.name)
-            }
+            )
           )
         end
       end

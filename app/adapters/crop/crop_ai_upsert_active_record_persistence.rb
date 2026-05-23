@@ -21,18 +21,18 @@ module Adapters
         unless dummy_crop.valid?
           validation_error = dummy_crop.errors[:user].first || dummy_crop.errors[:base].first
           if validation_error
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: :unprocessable_entity,
-              body: { error: validation_error }
+            return Domain::Crop::Dtos::CropAiCreateFailure.new(
+              http_status: :unprocessable_entity,
+              message: validation_error
             )
           end
         end
 
         if crop_info["success"] == false
           error_msg = crop_info["error"] || @translator.t("api.errors.crops.fetch_failed")
-          return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-            status: :unprocessable_entity,
-            body: { error: error_msg }
+          return Domain::Crop::Dtos::CropAiCreateFailure.new(
+            http_status: :unprocessable_entity,
+            message: error_msg
           )
         end
 
@@ -40,9 +40,9 @@ module Adapters
         stage_requirements = crop_info["stage_requirements"]
 
         unless crop_data
-          return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-            status: :unprocessable_entity,
-            body: { error: @translator.t("api.errors.crops.invalid_payload") }
+          return Domain::Crop::Dtos::CropAiCreateFailure.new(
+            http_status: :unprocessable_entity,
+            message: @translator.t("api.errors.crops.invalid_payload")
           )
         end
 
@@ -59,9 +59,9 @@ module Adapters
       rescue StandardError => e
         @logger.error "❌ [AI Crop] Error in persistence: #{e.message}"
         @logger.error "   Backtrace: #{e.backtrace.first(3).join("\n   ")}"
-        Domain::Shared::Dtos::HttpJsonEnvelope.new(
-          status: :internal_server_error,
-          body: { error: @translator.t("api.errors.crops.fetch_failed_with_reason", message: e.message) }
+        Domain::Crop::Dtos::CropAiCreateFailure.new(
+          http_status: :internal_server_error,
+          message: @translator.t("api.errors.crops.fetch_failed_with_reason", message: e.message)
         )
       end
 
@@ -106,19 +106,16 @@ module Adapters
           end
         end
 
-        Domain::Shared::Dtos::HttpJsonEnvelope.new(
-          status: :ok,
-          body: {
-            success: true,
-            crop_id: existing_crop.id,
-            crop_name: existing_crop.name,
-            variety: existing_crop.variety,
-            area_per_unit: existing_crop.area_per_unit,
-            revenue_per_area: existing_crop.revenue_per_area,
-            stages_count: stage_requirements.is_a?(Array) ? stage_requirements.size : 0,
-            is_reference: existing_crop.is_reference,
-            message: @translator.t("api.messages.crops.updated_with_latest", name: existing_crop.name)
-          }
+        Domain::Crop::Dtos::CropAiCreateOutput.new(
+          http_status: :ok,
+          crop_id: existing_crop.id,
+          crop_name: existing_crop.name,
+          variety: existing_crop.variety,
+          area_per_unit: existing_crop.area_per_unit,
+          revenue_per_area: existing_crop.revenue_per_area,
+          stages_count: stage_requirements.is_a?(Array) ? stage_requirements.size : 0,
+          is_reference: existing_crop.is_reference,
+          message: @translator.t("api.messages.crops.updated_with_latest", name: existing_crop.name)
         )
       end
 
@@ -162,9 +159,9 @@ module Adapters
         end
 
         unless result&.success?
-          return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-            status: :unprocessable_entity,
-            body: { error: result&.error }
+          return Domain::Crop::Dtos::CropAiCreateFailure.new(
+            http_status: :unprocessable_entity,
+            message: result&.error
           )
         end
 
@@ -173,18 +170,15 @@ module Adapters
           @logger.info "🌱 [AI Crop] Saved #{saved_stages} stages for crop##{crop_entity.id}"
         end
 
-        Domain::Shared::Dtos::HttpJsonEnvelope.new(
-          status: :created,
-          body: {
-            success: true,
-            crop_id: crop_entity.id,
-            crop_name: crop_entity.name,
-            variety: crop_entity.variety,
-            area_per_unit: crop_entity.area_per_unit,
-            revenue_per_area: crop_entity.revenue_per_area,
-            stages_count: stage_requirements.is_a?(Array) ? stage_requirements.size : 0,
-            message: @translator.t("api.messages.crops.created_by_ai", name: crop_entity.name)
-          }
+        Domain::Crop::Dtos::CropAiCreateOutput.new(
+          http_status: :created,
+          crop_id: crop_entity.id,
+          crop_name: crop_entity.name,
+          variety: crop_entity.variety,
+          area_per_unit: crop_entity.area_per_unit,
+          revenue_per_area: crop_entity.revenue_per_area,
+          stages_count: stage_requirements.is_a?(Array) ? stage_requirements.size : 0,
+          message: @translator.t("api.messages.crops.created_by_ai", name: crop_entity.name)
         )
       end
 

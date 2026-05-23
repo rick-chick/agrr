@@ -5,16 +5,26 @@ module Domain
     module Mappers
       # agrr 害虫応答ハッシュを API 向けに解釈する（コントローラの分岐を集約）。
       module PestAiResponseMapper
-        Interpretation = Struct.new(:error_result, :pest_data, :affected_crops_from_agrr, keyword_init: true)
+        Interpretation = Struct.new(:failure, :pest_data, :affected_crops_from_agrr, keyword_init: true) do
+          # ai_update 等 HttpJsonEnvelope 経路との互換（MU-06 対象外）
+          def error_result
+            return nil if failure.nil?
+
+            Domain::Shared::Dtos::HttpJsonEnvelope.new(
+              status: failure.http_status,
+              body: { error: failure.message }
+            )
+          end
+        end
 
         module_function
 
         def interpret(pest_info, translator:, validate_affected_crops_shape:)
           if pest_info["error_response"]
             return Interpretation.new(
-              error_result: Domain::Shared::Dtos::HttpJsonEnvelope.new(
-                status: pest_info["http_status"],
-                body: { error: pest_info["message"] }
+              failure: Domain::Pest::Dtos::PestAiCreateFailure.new(
+                http_status: pest_info["http_status"],
+                message: pest_info["message"]
               ),
               pest_data: nil,
               affected_crops_from_agrr: nil
@@ -25,7 +35,7 @@ module Domain
             error_msg = pest_info["error"] || translator.t("api.errors.pests.fetch_failed", default: "害虫情報の取得に失敗しました")
             status_code = pest_info["code"] == "daemon_not_running" ? :service_unavailable : :unprocessable_entity
             return Interpretation.new(
-              error_result: Domain::Shared::Dtos::HttpJsonEnvelope.new(status: status_code, body: { error: error_msg }),
+              failure: Domain::Pest::Dtos::PestAiCreateFailure.new(http_status: status_code, message: error_msg),
               pest_data: nil,
               affected_crops_from_agrr: nil
             )
@@ -34,9 +44,9 @@ module Domain
           pest_data = pest_info["data"]&.dig("pest")
           unless pest_data
             return Interpretation.new(
-              error_result: Domain::Shared::Dtos::HttpJsonEnvelope.new(
-                status: :unprocessable_entity,
-                body: { error: translator.t("api.errors.pests.invalid_payload", default: "不正なデータ形式です") }
+              failure: Domain::Pest::Dtos::PestAiCreateFailure.new(
+                http_status: :unprocessable_entity,
+                message: translator.t("api.errors.pests.invalid_payload", default: "不正なデータ形式です")
               ),
               pest_data: nil,
               affected_crops_from_agrr: nil
@@ -50,13 +60,13 @@ module Domain
               default: "agrr応答のaffected_cropsが不正です"
             )
             return Interpretation.new(
-              error_result: Domain::Shared::Dtos::HttpJsonEnvelope.new(status: :unprocessable_entity, body: { error: message }),
+              failure: Domain::Pest::Dtos::PestAiCreateFailure.new(http_status: :unprocessable_entity, message: message),
               pest_data: nil,
               affected_crops_from_agrr: nil
             )
           end
 
-          Interpretation.new(error_result: nil, pest_data: pest_data, affected_crops_from_agrr: affected_crops_from_agrr)
+          Interpretation.new(failure: nil, pest_data: pest_data, affected_crops_from_agrr: affected_crops_from_agrr)
         end
       end
     end

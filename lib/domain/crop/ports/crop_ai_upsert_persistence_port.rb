@@ -8,7 +8,7 @@ module Domain
       #
       # @!method upsert(user_dto:, crop_name:, variety:, crop_info:, crop_access_filter:)
       #   @param crop_access_filter [Domain::Shared::ReferenceRecordAccessFilter] CropPolicy.record_access_filter(user)
-      #   @return [Domain::Shared::Dtos::HttpJsonEnvelope]
+      #   @return [Domain::Crop::Dtos::CropAiCreateOutput, Domain::Crop::Dtos::CropAiCreateFailure]
       module CropAiUpsertPersistencePort
       end
     end

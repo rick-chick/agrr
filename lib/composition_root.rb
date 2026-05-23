@@ -599,9 +599,10 @@ module CompositionRoot
       )
     end
 
-    def crop_ai_create_interactor(current_user:)
+    def crop_ai_create_interactor(current_user:, output_port:)
       uid = current_user.id
       Domain::Crop::Interactors::CropAiCreateInteractor.new(
+        output_port: output_port,
         user_id: uid,
         user_lookup: user_lookup,
         translator: translator,
@@ -860,12 +861,13 @@ module CompositionRoot
       ).resolve
     end
 
-    def pest_ai_create_interactor(current_user:)
+    def pest_ai_create_interactor(current_user:, output_port:)
       uid = current_user.id
       pair = pest_ai_interactors_for(user_id: uid)
       gw = pest_gateway
       log = logger
       Domain::Pest::Interactors::PestAiCreateInteractor.new(
+        output_port: output_port,
         user_id: uid,
         user_lookup: user_lookup,
         pest_gateway: gw,
@@ -899,10 +901,11 @@ module CompositionRoot
       )
     end
 
-    def fertilize_ai_create_interactor(current_user:)
+    def fertilize_ai_create_interactor(current_user:, output_port:)
       uid = current_user.id
       pair = fertilize_ai_interactors_for(user_id: uid)
       Domain::Fertilize::Interactors::FertilizeAiCreateInteractor.new(
+        output_port: output_port,
         user_id: uid,
         user_lookup: user_lookup,
         fertilize_gateway: fertilize_gateway,

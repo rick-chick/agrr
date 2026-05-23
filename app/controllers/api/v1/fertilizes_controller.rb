@@ -11,10 +11,10 @@ module Api
       # POST /api/v1/fertilizes/ai_create
       # AIで肥料情報を取得して保存
       def ai_create
-        result = CompositionRoot.fertilize_ai_create_interactor(current_user: current_user).call(
+        presenter = Adapters::Fertilize::Presenters::FertilizeAiCreateApiPresenter.new(view: self)
+        CompositionRoot.fertilize_ai_create_interactor(current_user: current_user, output_port: presenter).call(
           fertilize_query_name: params[:name]
         )
-        render json: result.body, status: result.status
       end
 
       # POST /api/v1/fertilizes/:id/ai_update
@@ -25,6 +25,10 @@ module Api
           fertilize_query_name: params[:name]
         )
         render json: result.body, status: result.status
+      end
+
+      def render_response(json:, status:)
+        render json: json, status: status
       end
     end
   end

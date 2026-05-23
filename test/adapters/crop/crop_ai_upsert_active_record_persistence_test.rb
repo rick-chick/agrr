@@ -59,11 +59,11 @@ module Adapters
           crop_access_filter: @crop_access_filter
         )
 
-        assert result.success?
-        assert_equal :created, result.status
-        assert_equal true, result.body[:success]
-        assert_equal created_crop.id, result.body[:crop_id]
-        assert_equal created_crop.name, result.body[:crop_name]
+        assert_instance_of Domain::Crop::Dtos::CropAiCreateOutput, result
+        assert_equal :created, result.http_status
+        assert result.success
+        assert_equal created_crop.id, result.crop_id
+        assert_equal created_crop.name, result.crop_name
 
         attrs = fake_interactor.received_attrs
         assert_equal "ブロッコリー", attrs[:name]
@@ -124,8 +124,8 @@ module Adapters
           )
         end
 
-        assert_not result.success?
-        assert_equal :internal_server_error, result.status
+        assert_instance_of Domain::Crop::Dtos::CropAiCreateFailure, result
+        assert_equal :internal_server_error, result.http_status
       end
 
       test "updates existing crop when crop_id is editable by user" do
@@ -168,11 +168,11 @@ module Adapters
           crop_access_filter: @crop_access_filter
         )
 
-        assert result.success?
-        assert_equal :ok, result.status
-        assert_equal true, result.body[:success]
-        assert_equal existing_crop.id, result.body[:crop_id]
-        assert_equal "上書き品種", result.body[:variety]
+        assert_instance_of Domain::Crop::Dtos::CropAiCreateOutput, result
+        assert_equal :ok, result.http_status
+        assert result.success
+        assert_equal existing_crop.id, result.crop_id
+        assert_equal "上書き品種", result.variety
 
         existing_crop.reload
         assert_equal "上書き品種", existing_crop.variety
@@ -227,8 +227,8 @@ module Adapters
           crop_access_filter: @crop_access_filter
         )
 
-        assert_not result.success?
-        assert_equal :internal_server_error, result.status
+        assert_instance_of Domain::Crop::Dtos::CropAiCreateFailure, result
+        assert_equal :internal_server_error, result.http_status
 
         assert_equal 1, existing_crop.crop_stages.reload.count
         assert_equal [ "発芽" ], existing_crop.crop_stages.pluck(:name)

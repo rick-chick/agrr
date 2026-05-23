@@ -9,11 +9,15 @@ module Api
       # POST /api/v1/crops/ai_create
       # AIで作物情報を取得して保存
       def ai_create
-        result = CompositionRoot.crop_ai_create_interactor(current_user: current_user).call(
+        presenter = Adapters::Crop::Presenters::CropAiCreateApiPresenter.new(view: self)
+        CompositionRoot.crop_ai_create_interactor(current_user: current_user, output_port: presenter).call(
           crop_name: params[:name],
           variety: params[:variety]
         )
-        render json: result.body, status: result.status
+      end
+
+      def render_response(json:, status:)
+        render json: json, status: status
       end
     end
   end

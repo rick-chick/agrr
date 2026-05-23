@@ -6,6 +6,7 @@ module Domain
       # agrr 取得〜保存〜作物関連付けまで（エッジの runner で AR User を閉じ込める）。
       class PestAiCreateInteractor
         def initialize(
+          output_port:,
           user_id:,
           user_lookup:,
           pest_gateway:,
@@ -16,6 +17,7 @@ module Domain
           translator:,
           associate_affected_crops_runner:
         )
+          @output_port = output_port
           @user_id = user_id
           @user_lookup = user_lookup
           @pest_gateway = pest_gateway
@@ -29,21 +31,24 @@ module Domain
 
         # @param pest_name [String, nil]
         # @param affected_crops [Array<Hash>] crop_id / crop_name を含む素のハッシュ（コントローラで Parameters を除去済み）
-        # @return [Domain::Shared::Dtos::HttpJsonEnvelope]
         def call(pest_name:, affected_crops:)
           user = @user_lookup.find(@user_id)
           if user.anonymous?
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: :unauthorized,
-              body: { error: @translator.t("auth.api.login_required") }
+            return @output_port.on_failure(
+              Domain::Pest::Dtos::PestAiCreateFailure.new(
+                http_status: :unauthorized,
+                message: @translator.t("auth.api.login_required")
+              )
             )
           end
 
           pn = pest_name&.strip
           if pn.nil? || pn.empty?
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(
-              status: :bad_request,
-              body: { error: @translator.t("api.errors.pests.name_required", default: "害虫名を入力してください") }
+            return @output_port.on_failure(
+              Domain::Pest::Dtos::PestAiCreateFailure.new(
+                http_status: :bad_request,
+                message: @translator.t("api.errors.pests.name_required", default: "害虫名を入力してください")
+              )
             )
           end
 
@@ -61,7 +66,7 @@ module Domain
             translator: @translator,
             validate_affected_crops_shape: true
           )
-          return interpreted.error_result if interpreted.error_result
+          return @output_port.on_failure(interpreted.failure) if interpreted.failure
 
           pest_data = interpreted.pest_data
           affected_crops_from_agrr = interpreted.affected_crops_from_agrr
@@ -88,7 +93,7 @@ module Domain
           if existing_pest
             @logger.info "🔄 [AI Pest] Updating existing pest##{existing_pest.id}: #{pest_data['name']}"
             result = @update_interactor.call(existing_pest.id, base_attrs)
-            status_code = :ok
+            http_status = :ok
           else
             @logger.info "🆕 [AI Pest] Creating new pest: #{pest_data['name']}"
             normalized = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_create(user, {})
@@ -97,12 +102,17 @@ module Domain
               is_reference: normalized[:is_reference]
             )
             result = @create_interactor.call(attrs_for_create.symbolize_keys)
-            status_code = :created
+            http_status = :created
           end
 
           unless result.success?
             @logger.error "❌ [AI Pest] Failed to #{existing_pest ? 'update' : 'create'}: #{result.error}"
-            return Domain::Shared::Dtos::HttpJsonEnvelope.new(status: :unprocessable_entity, body: { error: result.error })
+            return @output_port.on_failure(
+              Domain::Pest::Dtos::PestAiCreateFailure.new(
+                http_status: :unprocessable_entity,
+                message: result.error
+              )
+            )
           end
 
           pest_entity = result.data
@@ -124,10 +134,9 @@ module Domain
             @logger.warn "⚠️  [AI Pest] Skipping crop association: affected_crops is empty or not an array"
           end
 
-          Domain::Shared::Dtos::HttpJsonEnvelope.new(
-            status: status_code,
-            body: {
-              success: true,
+          @output_port.on_success(
+            Domain::Pest::Dtos::PestAiCreateOutput.new(
+              http_status: http_status,
               pest_id: pest_entity.id,
               pest_name: pest_entity.name,
               name_scientific: pest_entity.name_scientific,
@@ -135,8 +144,12 @@ module Domain
               order: pest_entity.order,
               description: pest_entity.description,
               occurrence_season: pest_entity.occurrence_season,
-              message: @translator.t("api.messages.pests.created_by_ai", name: pest_entity.name, default: "害虫「%{name}」の情報を取得して保存しました")
-            }
+              message: @translator.t(
+                "api.messages.pests.created_by_ai",
+                name: pest_entity.name,
+                default: "害虫「%{name}」の情報を取得して保存しました"
+              )
+            )
           )
         end
       end
