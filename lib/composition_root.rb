@@ -83,6 +83,26 @@ module CompositionRoot
       )
     end
 
+    def crop_stage_gateway
+      @crop_stage_gateway ||= Adapters::Crop::Gateways::CropStageMemoryGateway.new
+    end
+
+    def temperature_requirement_gateway
+      @temperature_requirement_gateway ||= Adapters::Crop::Gateways::TemperatureRequirementMemoryGateway.new
+    end
+
+    def thermal_requirement_gateway
+      @thermal_requirement_gateway ||= Adapters::Crop::Gateways::ThermalRequirementMemoryGateway.new
+    end
+
+    def sunshine_requirement_gateway
+      @sunshine_requirement_gateway ||= Adapters::Crop::Gateways::SunshineRequirementMemoryGateway.new
+    end
+
+    def nutrient_requirement_gateway
+      @nutrient_requirement_gateway ||= Adapters::Crop::Gateways::NutrientRequirementMemoryGateway.new
+    end
+
     def crop_stage_copy_gateway
       @crop_stage_copy_gateway ||= Adapters::Crop::Gateways::CropStageCopyActiveRecordGateway.new
     end

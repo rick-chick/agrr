@@ -22,17 +22,17 @@ module Domain
             @farm_size_error = farm_size_error
           end
 
-          def find_farm(_farm_id)
+          def find_by_farm_id(_farm_id)
             @farm
           end
 
-          def find_farm_size(_farm_size_id)
+          def find_by_farm_size_id(_farm_size_id)
             raise @farm_size_error if @farm_size_error
 
             @farm_size
           end
 
-          def find_crops(_crop_ids, _region)
+          def list_by_ids(_crop_ids, _region)
             @crops
           end
         end

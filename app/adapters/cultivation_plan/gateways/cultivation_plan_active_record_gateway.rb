@@ -163,12 +163,12 @@ module Adapters
           Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(plan)
         end
 
-        def find_farm(farm_id, user)
+        def find_by_farm_id(farm_id, user)
           f = ::Farm.find_by(id: farm_id, user_id: user.id)
           f && Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(f)
         end
 
-        def find_crops(crop_ids, user)
+        def list_by_ids(crop_ids, user)
           ::Crop.where(id: crop_ids, user_id: user.id, is_reference: false).map do |c|
             Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(c)
           end

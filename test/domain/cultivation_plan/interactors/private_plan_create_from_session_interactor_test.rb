@@ -83,7 +83,7 @@ module Domain
             crop_ids: [ 10 ],
             user: @user
           )
-          @gateway.expects(:find_farm).with(1, @user).returns(nil)
+          @gateway.expects(:find_by_farm_id).with(1, @user).returns(nil)
           @output_port.expects(:on_restart)
           interactor.call(dto)
         end
@@ -94,7 +94,7 @@ module Domain
             crop_ids: [],
             user: @user
           )
-          @gateway.expects(:find_farm).returns(@farm_entity)
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
           @select_crop_runner.expects(:call).with(farm_id: 1)
           @select_crop_runner.expects(:response_committed?).returns(false)
           @output_port.expects(:on_no_crops_selected)
@@ -107,8 +107,8 @@ module Domain
             crop_ids: [ 99 ],
             user: @user
           )
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([])
           @select_crop_runner.expects(:call).with(farm_id: 1)
           @select_crop_runner.expects(:response_committed?).returns(false)
           @output_port.expects(:on_no_crops_selected)
@@ -139,8 +139,8 @@ module Domain
             created_at: Time.utc(2026, 1, 1),
             updated_at: Time.utc(2026, 1, 1)
           )
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(existing)
           @output_port.expects(:on_existing_plan).with(plan_id: 88, plan_year: 2024)
           interactor.call(dto)
@@ -173,8 +173,8 @@ module Domain
             updated_at: Time.utc(2026, 1, 1)
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:initialize_plan_from_selection).with(
             farm: @farm_entity,
@@ -221,8 +221,8 @@ module Domain
             updated_at: Time.utc(2026, 1, 1)
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:total_field_area_for_farm).with(1, @user).returns(120.0)
           @gateway.expects(:initialize_plan_from_selection).with(
@@ -250,8 +250,8 @@ module Domain
             user: @user
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: nil, errors: [ "boom" ])
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:total_field_area_for_farm).returns(10.0)
           @gateway.expects(:initialize_plan_from_selection).returns(result)

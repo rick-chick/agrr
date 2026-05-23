@@ -43,10 +43,6 @@ module Domain
         end
 
         # ネスト害虫用。認可は Interactor（NestedCropPestsAccess）側。
-        def find_crop_entity_by_id(crop_id)
-          raise NotImplementedError, "Subclasses must implement find_crop_entity_by_id"
-        end
-
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end

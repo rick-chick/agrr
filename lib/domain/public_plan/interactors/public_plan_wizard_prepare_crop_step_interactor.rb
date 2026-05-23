@@ -18,13 +18,13 @@ module Domain
             return
           end
 
-          farm = @public_plan_gateway.find_farm(farm_id)
+          farm = @public_plan_gateway.find_by_farm_id(farm_id)
           unless farm
             @output_port.on_missing_farm
             return
           end
 
-          farm_size = @public_plan_gateway.find_farm_size(farm_size_id)
+          farm_size = @public_plan_gateway.find_by_farm_size_id(farm_size_id)
           unless farm_size && ALLOWED_FARM_SIZE_IDS.include?(farm_size[:id].to_s)
             @output_port.on_invalid_farm_size(farm_id: farm.id)
             return

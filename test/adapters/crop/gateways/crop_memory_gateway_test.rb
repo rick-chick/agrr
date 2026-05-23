@@ -10,6 +10,10 @@ module Adapters
           @gateway = CropMemoryGateway.new(
             deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
           )
+          @temperature_requirement_gateway = Adapters::Crop::Gateways::TemperatureRequirementMemoryGateway.new
+          @thermal_requirement_gateway = Adapters::Crop::Gateways::ThermalRequirementMemoryGateway.new
+          @sunshine_requirement_gateway = Adapters::Crop::Gateways::SunshineRequirementMemoryGateway.new
+          @nutrient_requirement_gateway = Adapters::Crop::Gateways::NutrientRequirementMemoryGateway.new
           @crop = create(:crop)
         end
 
@@ -53,20 +57,20 @@ module Adapters
         end
 
         # TemperatureRequirement tests
-        test "find_temperature_requirement_by_crop_stage_id returns requirement if exists" do
+        test "find_by_crop_stage_id returns temperature requirement if exists" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:temperature_requirement, crop_stage: crop_stage)
 
-          result = @gateway.find_temperature_requirement_by_crop_stage_id(crop_stage.id)
+          result = @temperature_requirement_gateway.find_by_crop_stage_id(crop_stage.id)
 
           assert_equal requirement.id, result.id
           assert_equal requirement.base_temperature, result.base_temperature
         end
 
-        test "find_temperature_requirement_by_crop_stage_id returns nil if not exists" do
+        test "find_by_crop_stage_id returns nil if not exists" do
           crop_stage = create(:crop_stage, crop: @crop)
 
-          result = @gateway.find_temperature_requirement_by_crop_stage_id(crop_stage.id)
+          result = @temperature_requirement_gateway.find_by_crop_stage_id(crop_stage.id)
 
           assert_nil result
         end
@@ -102,11 +106,11 @@ module Adapters
         end
 
         # ThermalRequirement tests
-        test "find_thermal_requirement_by_crop_stage_id returns requirement if exists" do
+        test "thermal find_by_crop_stage_id returns requirement if exists" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:thermal_requirement, crop_stage: crop_stage)
 
-          result = @gateway.find_thermal_requirement_by_crop_stage_id(crop_stage.id)
+          result = @thermal_requirement_gateway.find_by_crop_stage_id(crop_stage.id)
 
           assert_equal requirement.id, result.id
           assert_equal requirement.required_gdd, result.required_gdd
@@ -141,11 +145,11 @@ module Adapters
         end
 
         # SunshineRequirement tests
-        test "find_sunshine_requirement_by_crop_stage_id returns requirement if exists" do
+        test "sunshine find_by_crop_stage_id returns requirement if exists" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:sunshine_requirement, crop_stage: crop_stage)
 
-          result = @gateway.find_sunshine_requirement_by_crop_stage_id(crop_stage.id)
+          result = @sunshine_requirement_gateway.find_by_crop_stage_id(crop_stage.id)
 
           assert_equal requirement.id, result.id
           assert_equal requirement.minimum_sunshine_hours, result.minimum_sunshine_hours
@@ -181,11 +185,11 @@ module Adapters
         end
 
         # NutrientRequirement tests
-        test "find_nutrient_requirement_by_crop_stage_id returns requirement if exists" do
+        test "nutrient find_by_crop_stage_id returns requirement if exists" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:nutrient_requirement, crop_stage: crop_stage)
 
-          result = @gateway.find_nutrient_requirement_by_crop_stage_id(crop_stage.id)
+          result = @nutrient_requirement_gateway.find_by_crop_stage_id(crop_stage.id)
 
           assert_equal requirement.id, result.id
           assert_equal requirement.daily_uptake_n, result.daily_uptake_n

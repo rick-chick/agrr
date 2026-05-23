@@ -365,7 +365,7 @@ module Domain
 
           @logger.warn "⚠️ [Adjust] Merged weather data ends at #{merged_end_date}, but effective_planning_end is #{effective_planning_end}. Extending prediction..."
 
-          @plan_gateway.reload_plan_record!
+          @plan_gateway.find_by_id
           plan_weather_dto = @plan_gateway.cultivation_plan_weather_dto
 
           extended_weather_info = weather_prediction_service.predict_for_cultivation_plan(

@@ -61,7 +61,7 @@ module Adapters
           )
         end
 
-        def reload_plan_record!
+        def find_by_id
           @session_plan.reload
         end
 

@@ -14,7 +14,8 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersThermalRequirementShowInteractor.new(
                 output_port: thermal_requirement_presenter,
-                gateway: CompositionRoot.crop_gateway
+                gateway: CompositionRoot.crop_gateway,
+                requirement_gateway: CompositionRoot.thermal_requirement_gateway
               )
               interactor.call(input_dto)
             end
@@ -28,7 +29,8 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersThermalRequirementCreateInteractor.new(
                 output_port: thermal_requirement_presenter,
-                gateway: CompositionRoot.crop_gateway
+                gateway: CompositionRoot.crop_gateway,
+                requirement_gateway: CompositionRoot.thermal_requirement_gateway
               )
               interactor.call(input_dto)
             end
@@ -42,7 +44,8 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersThermalRequirementUpdateInteractor.new(
                 output_port: thermal_requirement_presenter,
-                gateway: CompositionRoot.crop_gateway
+                gateway: CompositionRoot.crop_gateway,
+                requirement_gateway: CompositionRoot.thermal_requirement_gateway
               )
               interactor.call(input_dto)
             end
@@ -52,7 +55,7 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersThermalRequirementDestroyInteractor.new(
                 output_port: thermal_requirement_presenter,
-                gateway: CompositionRoot.crop_gateway
+                gateway: CompositionRoot.crop_gateway,
               )
               interactor.call(input_dto)
             end

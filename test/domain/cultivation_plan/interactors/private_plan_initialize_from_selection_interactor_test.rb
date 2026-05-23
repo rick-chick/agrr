@@ -76,7 +76,7 @@ module Domain
 
         test "on_failure not_found when farm missing" do
           dto = Dtos::PrivatePlanInitializeFromSelectionInput.new(farm_id: 99, crop_ids: [ 10 ], user: @user)
-          @gateway.expects(:find_farm).with(99, @user).returns(nil)
+          @gateway.expects(:find_by_farm_id).with(99, @user).returns(nil)
           @output_port.expects(:on_failure).with do |f|
             assert_equal :not_found, f.http_status
             true
@@ -86,8 +86,8 @@ module Domain
 
         test "on_failure not_found when no crops resolved" do
           dto = Dtos::PrivatePlanInitializeFromSelectionInput.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([])
           @output_port.expects(:on_failure).with do |f|
             assert_equal :not_found, f.http_status
             true
@@ -105,8 +105,8 @@ module Domain
             cultivation_plan_crops_count: 0, cultivation_plan_fields_count: 0,
             created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1)
           )
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(existing)
           @output_port.expects(:on_failure).with do |f|
             assert_equal :unprocessable_entity, f.http_status
@@ -127,8 +127,8 @@ module Domain
             created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1)
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:total_field_area_for_farm).with(1, @user).returns(100.0)
           @gateway.expects(:initialize_plan_from_selection).with(
@@ -155,8 +155,8 @@ module Domain
         test "on_failure unprocessable when initialize returns errors" do
           dto = Dtos::PrivatePlanInitializeFromSelectionInput.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: nil, errors: [ "boom" ])
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:total_field_area_for_farm).returns(10.0)
           @gateway.expects(:initialize_plan_from_selection).returns(result)
@@ -181,8 +181,8 @@ module Domain
             created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1)
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
-          @gateway.expects(:find_farm).returns(@farm_entity)
-          @gateway.expects(:find_crops).returns([ @crop_entity ])
+          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
+          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:total_field_area_for_farm).returns(10.0)
           @gateway.expects(:initialize_plan_from_selection).returns(result)

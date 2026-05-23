@@ -90,7 +90,7 @@ module Api
         end
 
         # id（文字列）または area_sqm（Integer）で一致させる。フロントが number で送っても 422 にしない。
-        def find_farm_size(param)
+        def find_by_farm_size_id(param)
           return nil if param.blank?
 
           farm_sizes_with_i18n.find do |size|

@@ -31,7 +31,7 @@ module Domain
             return
           end
 
-          farm = @cultivation_plan_gateway.find_farm(input_dto.farm_id, input_dto.user)
+          farm = @cultivation_plan_gateway.find_by_farm_id(input_dto.farm_id, input_dto.user)
           unless farm
             @output_port.on_restart
             return
@@ -42,7 +42,7 @@ module Domain
             return
           end
 
-          crops = @cultivation_plan_gateway.find_crops(input_dto.crop_ids, input_dto.user)
+          crops = @cultivation_plan_gateway.list_by_ids(input_dto.crop_ids, input_dto.user)
           if crops.empty?
             notify_no_crops_after_context(farm.id)
             return

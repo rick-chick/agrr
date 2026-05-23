@@ -40,7 +40,7 @@ module Domain
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
 
-        def reload_plan_record!
+        def find_by_id
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
 

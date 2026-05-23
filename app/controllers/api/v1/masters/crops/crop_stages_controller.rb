@@ -17,7 +17,7 @@ module Api::V1::Masters::Crops
     def show
       input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: @crop_stage.id)
 
-      interactor = Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: detail_presenter, gateway: CompositionRoot.crop_gateway)
+      interactor = Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: detail_presenter, crop_stage_gateway: CompositionRoot.crop_stage_gateway)
       interactor.call(input_dto)
     end
 

@@ -4,12 +4,12 @@ module Adapters
   module PublicPlan
     module Gateways
       class PublicPlanActiveRecordGateway < Domain::PublicPlan::Gateways::PublicPlanGateway
-        def find_farm(farm_id)
+        def find_by_farm_id(farm_id)
           f = ::Farm.find_by(id: farm_id)
           f && Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(f)
         end
 
-        def find_farm_size(farm_size_id)
+        def find_by_farm_size_id(farm_size_id)
           farm_sizes = [
             { id: "home_garden", area_sqm: 30 },
             { id: "community_garden", area_sqm: 50 },
@@ -21,7 +21,7 @@ module Adapters
           end
         end
 
-        def find_crops(crop_ids, region = nil)
+        def list_by_ids(crop_ids, region = nil)
           ids = Array(crop_ids).map(&:to_i).uniq.reject(&:zero?)
           return [] if ids.empty?
 

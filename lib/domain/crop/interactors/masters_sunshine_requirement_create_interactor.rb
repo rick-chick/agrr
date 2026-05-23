@@ -4,13 +4,14 @@ module Domain
   module Crop
     module Interactors
       class MastersSunshineRequirementCreateInteractor
-        def initialize(output_port:, gateway:)
+        def initialize(output_port:, gateway:, requirement_gateway:)
           @output_port = output_port
           @gateway = gateway
+          @requirement_gateway = requirement_gateway
         end
 
         def call(input_dto)
-          unless @gateway.find_sunshine_requirement_by_crop_stage_id(input_dto.stage_id).nil?
+          unless @requirement_gateway.find_by_crop_stage_id(input_dto.stage_id).nil?
             @output_port.on_already_exists
             return
           end

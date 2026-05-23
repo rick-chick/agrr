@@ -4,11 +4,12 @@ module Domain
   module Pest
     module Interactors
       class MastersCropPestsCreateInteractor
-        def initialize(output_port:, user_id:, user_lookup:, pest_gateway:)
+        def initialize(output_port:, user_id:, user_lookup:, pest_gateway:, crop_gateway:)
           @output_port = output_port
           @user_id = user_id
           @user_lookup = user_lookup
           @pest_gateway = pest_gateway
+          @crop_gateway = crop_gateway
         end
 
         def call(crop_id, pest_id_raw)
@@ -30,7 +31,7 @@ module Domain
             return @output_port.on_forbidden
           end
 
-          crop = @pest_gateway.find_crop_entity_by_id(crop_id)
+          crop = @crop_gateway.find_by_id(crop_id)
           unless crop
             return @output_port.on_pest_not_found
           end

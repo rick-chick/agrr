@@ -8,10 +8,12 @@ module Domain
       class MastersSunshineRequirementShowInteractorTest < DomainLibTestCase
         setup do
           @mock_gateway = mock
+          @mock_requirement_gateway = mock
           @mock_output_port = mock
           @interactor = MastersSunshineRequirementShowInteractor.new(
             output_port: @mock_output_port,
-            gateway: @mock_gateway
+            gateway: @mock_gateway,
+            requirement_gateway: @mock_requirement_gateway
           )
         end
 
@@ -19,7 +21,7 @@ module Domain
           dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 9)
           entity = mock
 
-          @mock_gateway.expects(:find_sunshine_requirement_by_crop_stage_id).with(9).returns(entity)
+          @mock_requirement_gateway.expects(:find_by_crop_stage_id).with(9).returns(entity)
           @mock_output_port.expects(:on_show_success).with(entity)
 
           @interactor.call(dto)
@@ -28,7 +30,7 @@ module Domain
         test "renders not found when requirement missing" do
           dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 9)
 
-          @mock_gateway.expects(:find_sunshine_requirement_by_crop_stage_id).with(9).returns(nil)
+          @mock_requirement_gateway.expects(:find_by_crop_stage_id).with(9).returns(nil)
           @mock_output_port.expects(:on_not_found)
 
           @interactor.call(dto)
@@ -38,10 +40,12 @@ module Domain
       class MastersSunshineRequirementCreateInteractorTest < DomainLibTestCase
         setup do
           @mock_gateway = mock
+          @mock_requirement_gateway = mock
           @mock_output_port = mock
           @interactor = MastersSunshineRequirementCreateInteractor.new(
             output_port: @mock_output_port,
-            gateway: @mock_gateway
+            gateway: @mock_gateway,
+            requirement_gateway: @mock_requirement_gateway
           )
         end
 
@@ -53,7 +57,7 @@ module Domain
           )
           created = mock
 
-          @mock_gateway.expects(:find_sunshine_requirement_by_crop_stage_id).with(2).returns(nil)
+          @mock_requirement_gateway.expects(:find_by_crop_stage_id).with(2).returns(nil)
           @mock_gateway.expects(:create_sunshine_requirement).with(2, dto).returns(created)
           @mock_output_port.expects(:on_create_success).with(created)
 
@@ -67,7 +71,7 @@ module Domain
             payload: { minimum_sunshine_hours: 5.0 }
           )
 
-          @mock_gateway.expects(:find_sunshine_requirement_by_crop_stage_id).with(2).returns(mock)
+          @mock_requirement_gateway.expects(:find_by_crop_stage_id).with(2).returns(mock)
           @mock_gateway.expects(:create_sunshine_requirement).never
           @mock_output_port.expects(:on_already_exists)
 
@@ -81,7 +85,7 @@ module Domain
             payload: { minimum_sunshine_hours: "bad" }
           )
 
-          @mock_gateway.expects(:find_sunshine_requirement_by_crop_stage_id).with(2).returns(nil)
+          @mock_requirement_gateway.expects(:find_by_crop_stage_id).with(2).returns(nil)
           err = Domain::Shared::Exceptions::RecordInvalid.new("x", errors: [ "must be numeric" ])
           @mock_gateway.expects(:create_sunshine_requirement).raises(err)
           @mock_output_port.expects(:on_validation_errors).with([ "must be numeric" ])
@@ -93,10 +97,12 @@ module Domain
       class MastersSunshineRequirementUpdateInteractorTest < DomainLibTestCase
         setup do
           @mock_gateway = mock
+          @mock_requirement_gateway = mock
           @mock_output_port = mock
           @interactor = MastersSunshineRequirementUpdateInteractor.new(
             output_port: @mock_output_port,
-            gateway: @mock_gateway
+            gateway: @mock_gateway,
+            requirement_gateway: @mock_requirement_gateway
           )
         end
 
@@ -109,7 +115,7 @@ module Domain
           existing = mock
           updated = mock
 
-          @mock_gateway.expects(:find_sunshine_requirement_by_crop_stage_id).with(2).returns(existing)
+          @mock_requirement_gateway.expects(:find_by_crop_stage_id).with(2).returns(existing)
           @mock_gateway.expects(:update_sunshine_requirement).with(2, dto).returns(updated)
           @mock_output_port.expects(:on_update_success).with(updated)
 
@@ -123,7 +129,7 @@ module Domain
             payload: {}
           )
 
-          @mock_gateway.expects(:find_sunshine_requirement_by_crop_stage_id).with(2).returns(nil)
+          @mock_requirement_gateway.expects(:find_by_crop_stage_id).with(2).returns(nil)
           @mock_gateway.expects(:update_sunshine_requirement).never
           @mock_output_port.expects(:on_not_found)
 

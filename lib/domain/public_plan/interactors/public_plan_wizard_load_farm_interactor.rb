@@ -12,7 +12,7 @@ module Domain
 
         # @return [Domain::Farm::Entities::FarmEntity, nil] nil のとき redirect 済み
         def call(farm_id:, alert_i18n_key:)
-          farm = @public_plan_gateway.find_farm(farm_id)
+          farm = @public_plan_gateway.find_by_farm_id(farm_id)
           unless farm
             @failure_presenter.redirect(alert_i18n_key: alert_i18n_key)
             return nil

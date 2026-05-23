@@ -9,7 +9,7 @@ module Adapters
           super(logger: logger, available_crop_rows_gateway: available_crop_rows_gateway)
         end
 
-        def load_snapshot(auth:, plan_id:)
+        def find_by_plan_id(auth:, plan_id:)
           cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
           available_crop_rows = available_crop_rows_gateway.list_by_farm_region(
             auth: auth,

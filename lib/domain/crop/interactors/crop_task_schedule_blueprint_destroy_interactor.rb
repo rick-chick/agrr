@@ -26,9 +26,8 @@ module Domain
           end
 
           blueprint_id_for_response = result[:blueprint_id_for_response]
-          crop = result[:crop]
-          reload = @gateway.reload_crop_after_task_schedule_blueprint_delete!(
-            crop: crop,
+          reload = @gateway.find_by_crop_id(
+            crop_id: input_dto.crop_id,
             blueprint_id_for_response: blueprint_id_for_response
           )
 

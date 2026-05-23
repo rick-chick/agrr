@@ -393,13 +393,6 @@ module Adapters
           :ok
         end
 
-        def find_crop_entity_by_id(crop_id)
-          crop = find_crop_model(crop_id)
-          return nil unless crop
-
-          Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
-        end
-
         private
 
         def find_crop_model(crop_id)

@@ -20,14 +20,14 @@ module Domain
 
         def call(input_dto)
           # 農場を取得
-          farm = @gateway.find_farm(input_dto.farm_id)
+          farm = @gateway.find_by_farm_id(input_dto.farm_id)
           unless farm
             @output_port.on_failure(Domain::Shared::Dtos::Error.new("Farm not found"))
             return
           end
 
           # 農場サイズを取得
-          farm_size = @gateway.find_farm_size(input_dto.farm_size_id)
+          farm_size = @gateway.find_by_farm_size_id(input_dto.farm_size_id)
           unless farm_size
             @output_port.on_failure(Domain::Shared::Dtos::Error.new("Invalid farm size"))
             return
@@ -40,7 +40,7 @@ module Domain
           end
 
           # 作物を取得（参照作物。地域は公開ウィザード整合のため農場地域で絞る）
-          crops = @gateway.find_crops(input_dto.crop_ids, farm.region)
+          crops = @gateway.list_by_ids(input_dto.crop_ids, farm.region)
           if crops.empty?
             reference_crops = list_reference_crops_for_no_crops(farm)
             @output_port.on_no_crops_failure(

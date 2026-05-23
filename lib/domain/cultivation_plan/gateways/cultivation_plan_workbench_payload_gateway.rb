@@ -11,7 +11,7 @@ module Domain
         end
 
         # @return [Hash] { kind: :success, snapshot: CultivationPlanWorkbenchSnapshot } など
-        def load_snapshot(auth:, plan_id:)
+        def find_by_plan_id(auth:, plan_id:)
           raise NotImplementedError
         end
 

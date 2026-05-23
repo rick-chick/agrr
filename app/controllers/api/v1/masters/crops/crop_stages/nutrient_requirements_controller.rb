@@ -14,7 +14,8 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementShowInteractor.new(
                 output_port: nutrient_requirement_presenter,
-                gateway: CompositionRoot.crop_gateway
+                gateway: CompositionRoot.crop_gateway,
+                requirement_gateway: CompositionRoot.nutrient_requirement_gateway
               )
               interactor.call(input_dto)
             end
@@ -28,7 +29,8 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementCreateInteractor.new(
                 output_port: nutrient_requirement_presenter,
-                gateway: CompositionRoot.crop_gateway
+                gateway: CompositionRoot.crop_gateway,
+                requirement_gateway: CompositionRoot.nutrient_requirement_gateway
               )
               interactor.call(input_dto)
             end
@@ -42,7 +44,8 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementUpdateInteractor.new(
                 output_port: nutrient_requirement_presenter,
-                gateway: CompositionRoot.crop_gateway
+                gateway: CompositionRoot.crop_gateway,
+                requirement_gateway: CompositionRoot.nutrient_requirement_gateway
               )
               interactor.call(input_dto)
             end
@@ -52,7 +55,7 @@ module Api
 
               interactor = Domain::Crop::Interactors::MastersNutrientRequirementDestroyInteractor.new(
                 output_port: nutrient_requirement_presenter,
-                gateway: CompositionRoot.crop_gateway
+                gateway: CompositionRoot.crop_gateway,
               )
               interactor.call(input_dto)
             end

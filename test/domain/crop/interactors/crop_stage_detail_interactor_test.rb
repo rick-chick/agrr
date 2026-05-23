@@ -16,13 +16,13 @@ module Domain
             updated_at: Time.utc(2026, 1, 1)
           )
           gateway = Minitest::Mock.new
-          gateway.expect(:find_crop_stage_by_id, crop_stage, [ 1 ])
+          gateway.expect(:find_by_id, crop_stage, [ 1 ])
 
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |arg| received = arg }
 
-          interactor = CropStageDetailInteractor.new(output_port: output_port, gateway: gateway)
+          interactor = CropStageDetailInteractor.new(output_port: output_port, crop_stage_gateway: gateway)
           input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 1)
           interactor.call(input_dto)
 
@@ -33,7 +33,7 @@ module Domain
 
         test "calls on_failure with Error when gateway raises RecordInvalid" do
           gateway = Minitest::Mock.new
-          gateway.expect(:find_crop_stage_by_id, nil) do |_id|
+          gateway.expect(:find_by_id, nil) do |_id|
             raise Domain::Shared::Exceptions::RecordInvalid.new("not found")
           end
 
@@ -42,7 +42,7 @@ module Domain
           output_port.define_singleton_method(:on_success) { |_| raise "must not call on_success" }
           output_port.define_singleton_method(:on_failure) { |dto| received_failure = dto }
 
-          interactor = CropStageDetailInteractor.new(output_port: output_port, gateway: gateway)
+          interactor = CropStageDetailInteractor.new(output_port: output_port, crop_stage_gateway: gateway)
           input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 1)
           interactor.call(input_dto)
 
@@ -53,11 +53,11 @@ module Domain
 
         test "propagates StandardError when gateway raises" do
           gateway = Minitest::Mock.new
-          gateway.expect(:find_crop_stage_by_id, nil) { raise StandardError, "crop stage not found" }
+          gateway.expect(:find_by_id, nil) { raise StandardError, "crop stage not found" }
 
           output_port = Minitest::Mock.new
 
-          interactor = CropStageDetailInteractor.new(output_port: output_port, gateway: gateway)
+          interactor = CropStageDetailInteractor.new(output_port: output_port, crop_stage_gateway: gateway)
           input_dto = Domain::Crop::Dtos::CropStageDetailInput.new(crop_stage_id: 1)
           err = assert_raises(StandardError) do
             interactor.call(input_dto)

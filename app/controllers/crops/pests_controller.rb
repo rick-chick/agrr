@@ -40,7 +40,7 @@ module Crops
           {}
         end
       Domain::Pest::Interactors::CropsNestedPestsCreateInteractor.new(output_port: presenter,
-        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway).call(
+        user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway, crop_gateway: CompositionRoot.crop_gateway).call(
         crop_id: @crop.id,
         link_pest_id: params[:pest_id],
         pest_attrs: pest_attrs
@@ -59,6 +59,7 @@ module Crops
       Domain::Pest::Interactors::CropsNestedPestsUpdateInteractor.new(
         output_port: presenter,
         pest_gateway: CompositionRoot.pest_gateway,
+        crop_gateway: CompositionRoot.crop_gateway,
         user_id: current_user.id,
         user_lookup: CompositionRoot.user_lookup
       ).call(
@@ -88,7 +89,8 @@ module Crops
         output_port: presenter,
         user_id: current_user.id,
         user_lookup: CompositionRoot.user_lookup,
-        pest_gateway: CompositionRoot.pest_gateway
+        pest_gateway: CompositionRoot.pest_gateway,
+        crop_gateway: CompositionRoot.crop_gateway
       ).call(crop_id: @crop.id, pest_id: params[:id],
         for_edit_form: action_name == "edit")
     end

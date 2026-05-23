@@ -100,7 +100,7 @@ module Crops
     end
 
     def detail_interactor
-      @detail_interactor ||= Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway)
+      @detail_interactor ||= Domain::Crop::Interactors::CropStageDetailInteractor.new(output_port: presenter, crop_stage_gateway: CompositionRoot.crop_stage_gateway)
     end
 
     def update_interactor

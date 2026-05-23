@@ -4,11 +4,12 @@ module Domain
   module Pest
     module Interactors
       class CropsNestedPestsCreateInteractor
-        def initialize(output_port:, user_id:, user_lookup:, pest_gateway:)
+        def initialize(output_port:, user_id:, user_lookup:, pest_gateway:, crop_gateway:)
           @output_port = output_port
           @user_id = user_id
           @user_lookup = user_lookup
           @pest_gateway = pest_gateway
+          @crop_gateway = crop_gateway
         end
 
         # @param crop_id [Integer]
@@ -16,7 +17,7 @@ module Domain
         # @param pest_attrs [Hash] Pest.new に渡す属性（permited）
         def call(crop_id:, link_pest_id:, pest_attrs:)
           user = @user_lookup.find(@user_id)
-          crop = @pest_gateway.find_crop_entity_by_id(crop_id)
+          crop = @crop_gateway.find_by_id(crop_id)
           unless crop
             return @output_port.on_invalid(crop_id: crop_id, pest_snapshot: nil, unassociated_pest_entities: [])
           end

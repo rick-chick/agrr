@@ -21,15 +21,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_by_crop_id"
         end
 
-        def find_crop_stage_by_id(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_crop_stage_by_id"
-        end
-
-        # TemperatureRequirement methods
-        def find_temperature_requirement_by_crop_stage_id(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_temperature_requirement_by_crop_stage_id"
-        end
-
         def create_temperature_requirement(crop_stage_id, requirement_dto)
           raise NotImplementedError, "Subclasses must implement create_temperature_requirement"
         end
@@ -43,10 +34,6 @@ module Domain
         end
 
         # ThermalRequirement methods
-        def find_thermal_requirement_by_crop_stage_id(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_thermal_requirement_by_crop_stage_id"
-        end
-
         def create_thermal_requirement(crop_stage_id, requirement_dto)
           raise NotImplementedError, "Subclasses must implement create_thermal_requirement"
         end
@@ -60,10 +47,6 @@ module Domain
         end
 
         # SunshineRequirement methods
-        def find_sunshine_requirement_by_crop_stage_id(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_sunshine_requirement_by_crop_stage_id"
-        end
-
         def create_sunshine_requirement(crop_stage_id, requirement_dto)
           raise NotImplementedError, "Subclasses must implement create_sunshine_requirement"
         end
@@ -77,10 +60,6 @@ module Domain
         end
 
         # NutrientRequirement methods
-        def find_nutrient_requirement_by_crop_stage_id(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_nutrient_requirement_by_crop_stage_id"
-        end
-
         def create_nutrient_requirement(crop_stage_id, requirement_dto)
           raise NotImplementedError, "Subclasses must implement create_nutrient_requirement"
         end
@@ -196,9 +175,9 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_task_schedule_blueprint_position_for_user"
         end
 
-        # Crops::TaskScheduleBlueprintsController — 削除後の crop 再読込と UI 用データ
-        def reload_crop_after_task_schedule_blueprint_delete!(crop:, blueprint_id_for_response:)
-          raise NotImplementedError, "Subclasses must implement reload_crop_after_task_schedule_blueprint_delete!"
+        # Crops::TaskScheduleBlueprintsController — 削除後の crop 読取と UI 用データ
+        def find_by_crop_id(crop_id:, blueprint_id_for_response:)
+          raise NotImplementedError, "Subclasses must implement find_by_crop_id"
         end
 
         def find_crop_show_detail(crop_id)

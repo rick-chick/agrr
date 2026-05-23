@@ -100,7 +100,7 @@ module Domain
             cultivations: [],
             available_crop_rows: []
           )
-          @gateway.expects(:load_snapshot).with(
+          @gateway.expects(:find_by_plan_id).with(
             auth: @auth,
             plan_id: 3
           ).returns(kind: :success, snapshot: snapshot)

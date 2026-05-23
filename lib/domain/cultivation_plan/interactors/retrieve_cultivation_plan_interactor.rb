@@ -10,7 +10,7 @@ module Domain
         end
 
         def call(auth:, plan_id:)
-          result = @workbench_payload_gateway.load_snapshot(
+          result = @workbench_payload_gateway.find_by_plan_id(
             auth: auth,
             plan_id: plan_id
           )
