@@ -19,11 +19,12 @@ module Adapters
             return
           end
 
-          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          if msg == I18n.t("pesticides.flash.reference_flag_admin_only")
-            @view.redirect_to @view.pesticide_path(@view.params[:id]), alert: msg
+          if error_dto.is_a?(Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure)
+            @view.redirect_to @view.pesticide_path(error_dto.resource_id), alert: error_dto.message
             return
           end
+
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
 
           @view.flash.now[:alert] = msg
           if error_dto.is_a?(Domain::Pesticide::Dtos::PesticideMasterFormFailure)

@@ -17,15 +17,16 @@ module Adapters
           if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
             msg = I18n.t("interaction_rules.flash.no_permission")
             status = :forbidden
+          elsif error_dto.is_a?(Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure)
+            msg = error_dto.message
+            status = :forbidden
           else
             msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-            status = if msg == I18n.t("interaction_rules.flash.reference_flag_admin_only")
-                       :forbidden
-            elsif msg == "InteractionRule not found"
+            status = if msg == "InteractionRule not found"
                        :not_found
-            else
+                     else
                        :unprocessable_entity
-            end
+                     end
           end
           json = (status == :unprocessable_entity) ? { errors: [ msg ] } : { error: msg }
           @view.render_response(json: json, status: status)

@@ -11,7 +11,7 @@
 - **`on_success`**: 引数は **`Domain::Field::Results::FieldWithFarm`**
   - `farm`: `Domain::Farm::Entities::FarmEntity`
   - `field`: `Domain::Field::Entities::FieldEntity`
-- **`on_failure`**: `params[:farm_id]` があれば `farm_fields_path(farm_id)`、なければ `farms_path` + `alert`
+- **`on_failure`**: `FieldDetailFailure` の `farm_id` があれば `farm_fields_path(farm_id)`、なければ `farms_path` + `alert`（`farm_id` は Controller が `FieldDetailInput` に載せたルートスコープ）
 - **境界**: ActiveRecord は Port を越えない
 
 ## Gateway

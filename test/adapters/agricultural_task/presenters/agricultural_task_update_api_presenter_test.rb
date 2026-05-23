@@ -18,4 +18,20 @@ class AgriculturalTaskUpdateApiPresenterTest < ActiveSupport::TestCase
 
     view_mock.verify
   end
+
+  test "on_failure renders forbidden for ReferenceFlagChangeDeniedFailure" do
+    view_mock = Minitest::Mock.new
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateApiPresenter.new(view: view_mock)
+    msg = I18n.t("agricultural_tasks.flash.reference_flag_admin_only")
+    error_dto = Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(message: msg, resource_id: 3)
+
+    view_mock.expect(:render_response, nil) do |json:, status:|
+      assert_equal :forbidden, status
+      assert_equal({ error: msg }, json)
+    end
+
+    presenter.on_failure(error_dto)
+
+    view_mock.verify
+  end
 end

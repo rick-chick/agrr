@@ -14,11 +14,12 @@ module Adapters
         end
 
         def on_failure(error_dto)
-          farm_id = @view.params[:farm_id]
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
+          farm_id = error_dto.is_a?(Domain::Field::Dtos::FieldDetailFailure) ? error_dto.farm_id : nil
           if farm_id.present?
-            @view.redirect_to @view.farm_fields_path(farm_id), alert: error_dto.message
+            @view.redirect_to @view.farm_fields_path(farm_id), alert: msg
           else
-            @view.redirect_to @view.farms_path, alert: error_dto.message
+            @view.redirect_to @view.farms_path, alert: msg
           end
         end
       end

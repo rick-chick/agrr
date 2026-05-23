@@ -11,7 +11,7 @@ module Adapters
           @error_message = error_message
         end
 
-        def on_not_found
+        def on_not_found(crop_id: nil)
           @view.render json: { error: @error_message }, status: :not_found
         end
       end

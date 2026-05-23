@@ -11,19 +11,25 @@ module Domain
           @user_lookup = user_lookup
         end
 
-        def call(field_id)
+        def call(input)
           user = @user_lookup.find(@user_id)
           farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          result = @gateway.field_with_farm_for_user(field_id, farm_access_filter: farm_access_filter)
+          result = @gateway.field_with_farm_for_user(input.field_id, farm_access_filter: farm_access_filter)
           @output_port.on_success(result)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
-          @output_port.on_failure(e)
+          @output_port.on_failure(failure_dto(e.message, input))
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          @output_port.on_failure(failure_dto(e.message, input))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          @output_port.on_failure(failure_dto(e.message, input))
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise
+        end
+
+        private
+
+        def failure_dto(message, input)
+          Domain::Field::Dtos::FieldDetailFailure.new(message: message, farm_id: input.farm_id)
         end
       end
     end

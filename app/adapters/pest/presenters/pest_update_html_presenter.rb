@@ -22,8 +22,8 @@ module Adapters
             return
           end
 
-          if failure_dto.is_a?(Domain::Pest::Dtos::PestReferenceFlagChangeDenied)
-            @view.redirect_to @view.pest_path(failure_dto.pest_id), alert: failure_dto.message
+          if failure_dto.is_a?(Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure)
+            @view.redirect_to @view.pest_path(failure_dto.resource_id), alert: failure_dto.message
             return
           end
 

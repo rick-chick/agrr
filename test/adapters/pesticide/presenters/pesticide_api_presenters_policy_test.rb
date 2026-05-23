@@ -53,7 +53,7 @@ class PesticideApiPresentersPolicyTest < ActiveSupport::TestCase
     end
 
     presenter = Adapters::Pesticide::Presenters::PesticideUpdateApiPresenter.new(view: view)
-    presenter.on_failure(Domain::Shared::Dtos::Error.new(msg))
+    presenter.on_failure(Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(message: msg, resource_id: 1))
     view.verify
   end
 end

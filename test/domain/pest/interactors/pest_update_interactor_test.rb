@@ -108,9 +108,9 @@ module Domain
 
           @interactor.call(input_dto)
 
-          assert_instance_of Domain::Pest::Dtos::PestReferenceFlagChangeDenied, received
+          assert_instance_of Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure, received
           assert_equal "pests.flash.reference_flag_admin_only", received.message
-          assert_equal 1, received.pest_id
+          assert_equal 1, received.resource_id
         end
       end
     end

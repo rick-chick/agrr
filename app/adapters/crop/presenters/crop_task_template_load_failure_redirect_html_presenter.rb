@@ -10,8 +10,7 @@ module Adapters
           @view = view
         end
 
-        def on_not_found
-          crop_id = @view.params[:crop_id]
+        def on_not_found(crop_id: nil)
           @view.redirect_to @view.crop_agricultural_tasks_path(crop_id), alert: I18n.t("crops.flash.not_found")
         end
       end

@@ -20,11 +20,12 @@ module Adapters
             return
           end
 
-          error_message = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          if error_message == I18n.t("interaction_rules.flash.reference_flag_admin_only")
-            @view.redirect_to @view.interaction_rule_path(@view.params[:id]), alert: error_message
+          if error_dto.is_a?(Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure)
+            @view.redirect_to @view.interaction_rule_path(error_dto.resource_id), alert: error_dto.message
             return
           end
+
+          error_message = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
 
           @view.flash.now[:alert] = error_message
           @view.render :edit, status: :unprocessable_entity

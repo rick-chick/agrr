@@ -68,9 +68,9 @@ module Domain
 
         def form_failure_or_error(user, input_dto, message)
           if message == @translator.t("pests.flash.reference_flag_admin_only")
-            Domain::Pest::Dtos::PestReferenceFlagChangeDenied.new(
+            Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
               message: message,
-              pest_id: input_dto.pest_id
+              resource_id: input_dto.pest_id
             )
           else
             pest_master_form_failure_for(user, input_dto, message: message)

@@ -24,7 +24,7 @@ module Domain
             access_filter: access_filter
           )
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @failure_presenter.on_not_found
+          @failure_presenter.on_not_found(crop_id: crop_id.to_i)
           nil
         end
       end

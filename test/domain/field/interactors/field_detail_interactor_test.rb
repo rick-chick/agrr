@@ -34,10 +34,11 @@ class FieldDetailInteractorTest < DomainLibTestCase
       gateway: gateway,
       user_lookup: user_lookup
     )
-    interactor.call(5)
+    input = Domain::Field::Dtos::FieldDetailInput.new(field_id: 5)
+    interactor.call(input)
   end
 
-  test "call forwards RecordNotFound to on_failure as Error" do
+  test "call forwards RecordNotFound to on_failure as FieldDetailFailure with farm_id" do
     user = stub(id: 20)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
@@ -47,8 +48,9 @@ class FieldDetailInteractorTest < DomainLibTestCase
 
     output = mock
     output.expects(:on_failure).with do |err|
-      assert_instance_of Domain::Shared::Dtos::Error, err
+      assert_instance_of Domain::Field::Dtos::FieldDetailFailure, err
       assert_equal "Field not found", err.message
+      assert_equal 3, err.farm_id
       true
     end
 
@@ -58,6 +60,7 @@ class FieldDetailInteractorTest < DomainLibTestCase
       gateway: gateway,
       user_lookup: user_lookup
     )
-    interactor.call(5)
+    input = Domain::Field::Dtos::FieldDetailInput.new(field_id: 5, farm_id: 3)
+    interactor.call(input)
   end
 end

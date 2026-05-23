@@ -68,7 +68,9 @@ module Domain
             user_lookup: user_lookup
           ).call(dto)
 
+          assert_instance_of Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure, received
           assert_equal "interaction_rules.flash.reference_flag_admin_only", received.message
+          assert_equal 9, received.resource_id
         end
 
         test "admin の region 更新は Policy により保持される" do

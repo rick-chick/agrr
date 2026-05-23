@@ -23,7 +23,7 @@ class CropUpdateApiPresenterTest < ActiveSupport::TestCase
     view_mock = Minitest::Mock.new
     presenter = Adapters::Crop::Presenters::CropUpdateApiPresenter.new(view: view_mock)
     msg = I18n.t("crops.flash.reference_flag_admin_only")
-    error_dto = Domain::Shared::Dtos::Error.new(msg)
+    error_dto = Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(message: msg, resource_id: 1)
 
     view_mock.expect(:render_response, nil) do |json:, status:|
       assert_equal :forbidden, status

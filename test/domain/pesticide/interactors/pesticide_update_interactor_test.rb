@@ -86,7 +86,8 @@ module Domain
 
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::Error, received
+          assert_instance_of Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure, received
+          assert_equal 5, received.resource_id
           assert_equal "flag admin only", received.message
           user_lookup.verify
           translator.verify

@@ -31,12 +31,12 @@ module Adapters
             return
           end
 
-          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          if msg == I18n.t("crops.flash.reference_flag_admin_only")
-            @view.render_response(json: { error: msg }, status: :forbidden)
+          if error_dto.is_a?(Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure)
+            @view.render_response(json: { error: error_dto.message }, status: :forbidden)
             return
           end
 
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
           status = (msg == "Crop not found") ? :not_found : :unprocessable_entity
           json = (status == :not_found) ? { error: msg } : { errors: [ msg ] }
           @view.render_response(json: json, status: status)

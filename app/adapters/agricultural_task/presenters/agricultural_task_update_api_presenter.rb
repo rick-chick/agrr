@@ -19,8 +19,13 @@ module Adapters
             return
           end
 
+          if error_dto.is_a?(Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure)
+            @view.render_response(json: { error: error_dto.message }, status: :forbidden)
+            return
+          end
+
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          status = (msg == I18n.t("agricultural_tasks.flash.no_permission")) ? :forbidden : ((msg == "AgriculturalTask not found") ? :not_found : :unprocessable_entity)
+          status = (msg == "AgriculturalTask not found") ? :not_found : :unprocessable_entity
           @view.render_response(json: { error: msg }, status: status)
         end
 

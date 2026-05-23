@@ -19,11 +19,12 @@ module Adapters
             return
           end
 
-          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          if msg == I18n.t("crops.flash.reference_flag_admin_only")
-            @view.redirect_to @view.crop_path(@view.params[:id]), alert: msg
+          if error_dto.is_a?(Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure)
+            @view.redirect_to @view.crop_path(error_dto.resource_id), alert: error_dto.message
             return
           end
+
+          msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
 
           @view.flash.now[:alert] = msg
           if error_dto.is_a?(Domain::Crop::Dtos::CropMasterFormFailure)

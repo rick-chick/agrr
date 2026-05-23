@@ -20,7 +20,8 @@ module Api
           presenter = Adapters::Field::Presenters::FieldDetailApiPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldDetailInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
-          interactor.call(params[:id])
+          input = Domain::Field::Dtos::FieldDetailInput.new(field_id: params[:id])
+          interactor.call(input)
         end
 
         # POST /api/v1/masters/farms/:farm_id/fields

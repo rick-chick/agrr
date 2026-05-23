@@ -122,8 +122,9 @@ module Domain
 
           interactor.call(input_dto)
 
-          assert_instance_of Domain::Shared::Dtos::Error, received
+          assert_instance_of Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure, received
           assert_equal msg, received.message
+          assert_equal crop_id, received.resource_id
           user_lookup.verify
           translator.verify
           output_port.verify

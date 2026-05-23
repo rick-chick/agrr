@@ -116,7 +116,9 @@ module Domain
           ).call(dto)
 
           assert_equal false, result
+          assert_instance_of Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure, received
           assert_equal "agricultural_tasks.flash.reference_flag_admin_only", received.message
+          assert_equal 5, received.resource_id
           user_lookup.verify
           output_port.verify
         end

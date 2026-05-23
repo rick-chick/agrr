@@ -51,7 +51,12 @@ module Domain
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           if reference_flag_msg && e.message == reference_flag_msg
-            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+            @output_port.on_failure(
+              Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
+                message: e.message,
+                resource_id: input_dto.crop_id
+              )
+            )
           else
             user_b = @user_lookup.find(@user_id)
             access_filter_b = Domain::Shared::Policies::CropPolicy.record_access_filter(user_b)
