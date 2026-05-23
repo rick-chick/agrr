@@ -39,7 +39,12 @@ module Domain
           if Domain::Shared.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_flag_change_allowed?(user, requested: is_reference, current: current.reference?)
-              raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pests.flash.reference_flag_admin_only"))
+              return @output_port.on_failure(
+                Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
+                  message: @translator.t("pests.flash.reference_flag_admin_only"),
+                  resource_id: input_dto.pest_id
+                )
+              )
             end
             attrs[:is_reference] = is_reference
           end
@@ -62,20 +67,7 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(form_failure_or_error(user, input_dto, e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(form_failure_or_error(user, input_dto, e.message))
-        end
-
-        private
-
-        def form_failure_or_error(user, input_dto, message)
-          if message == @translator.t("pests.flash.reference_flag_admin_only")
-            Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
-              message: message,
-              resource_id: input_dto.pest_id
-            )
-          else
-            pest_master_form_failure_for(user, input_dto, message: message)
-          end
+          @output_port.on_failure(pest_master_form_failure_for(user, input_dto, message: e.message))
         end
       end
     end

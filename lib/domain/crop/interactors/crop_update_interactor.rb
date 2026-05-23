@@ -18,13 +18,16 @@ module Domain
           current_entity = @gateway.find_by_id(input_dto.crop_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current_entity)
 
-          reference_flag_msg = nil
           unless input_dto.is_reference.nil?
-            reference_flag_msg = @translator.t("crops.flash.reference_flag_admin_only")
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
             requested = false if requested.nil?
             unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_flag_change_allowed?(user, requested: requested, current: current_entity.reference?)
-              raise Domain::Shared::Exceptions::RecordInvalid.new(reference_flag_msg)
+              return @output_port.on_failure(
+                Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
+                  message: @translator.t("crops.flash.reference_flag_admin_only"),
+                  resource_id: input_dto.crop_id
+                )
+              )
             end
           end
 
@@ -51,27 +54,18 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          if reference_flag_msg && e.message == reference_flag_msg
-            @output_port.on_failure(
-              Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
-                message: e.message,
-                resource_id: input_dto.crop_id
-              )
-            )
-          else
-            user_b = @user_lookup.find(@user_id)
-            access_filter_b = Domain::Shared::Policies::CropPolicy.record_access_filter(user_b)
-            Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(
-              access_filter_b,
-              @gateway.find_by_id(input_dto.crop_id)
-            )
-            snapshot = @gateway.merge_edit_crop_params_for_master_form!(
-              user: user_b,
-              crop_id: input_dto.crop_id,
-              attributes: input_dto.to_nested_crop_attributes_hash,
-            )
-            @output_port.on_failure(Domain::Crop::Dtos::CropMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
-          end
+          user_b = @user_lookup.find(@user_id)
+          access_filter_b = Domain::Shared::Policies::CropPolicy.record_access_filter(user_b)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(
+            access_filter_b,
+            @gateway.find_by_id(input_dto.crop_id)
+          )
+          snapshot = @gateway.merge_edit_crop_params_for_master_form!(
+            user: user_b,
+            crop_id: input_dto.crop_id,
+            attributes: input_dto.to_nested_crop_attributes_hash,
+          )
+          @output_port.on_failure(Domain::Crop::Dtos::CropMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
         end
       end
     end

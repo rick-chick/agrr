@@ -25,7 +25,12 @@ module Domain
           if Domain::Shared.present?(input_dto.is_reference)
             is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
             unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_flag_change_allowed?(user, requested: is_reference, current: current.is_reference)
-              raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("fertilizes.flash.reference_flag_admin_only"))
+              return @output_port.on_failure(
+                Domain::Fertilize::Dtos::FertilizeUpdateFailure.new(
+                  message: @translator.t("fertilizes.flash.reference_flag_admin_only"),
+                  master_form_snapshot: snapshot_from_entity(current)
+                )
+              )
             end
             attrs[:is_reference] = is_reference
           end

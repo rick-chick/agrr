@@ -18,13 +18,16 @@ module Domain
           current = @gateway.find_by_id(update_input_dto.id)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
 
-          reference_flag_msg = nil
           unless update_input_dto.is_reference.nil?
-            reference_flag_msg = @translator.t("interaction_rules.flash.reference_flag_admin_only")
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(update_input_dto.is_reference)
             requested = false if requested.nil?
-            if requested != current.reference? && !user.admin?
-              raise Domain::Shared::Exceptions::RecordInvalid.new(reference_flag_msg)
+            unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_flag_change_allowed?(user, requested: requested, current: current.reference?)
+              return @output_port.on_failure(
+                Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
+                  message: @translator.t("interaction_rules.flash.reference_flag_admin_only"),
+                  resource_id: update_input_dto.id
+                )
+              )
             end
           end
 
@@ -51,16 +54,7 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          if reference_flag_msg && e.message == reference_flag_msg
-            @output_port.on_failure(
-              Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
-                message: e.message,
-                resource_id: update_input_dto.id
-              )
-            )
-          else
-            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
-          end
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

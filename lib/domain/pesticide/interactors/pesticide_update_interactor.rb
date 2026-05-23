@@ -18,13 +18,16 @@ module Domain
           current = @gateway.find_by_id(input_dto.pesticide_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
 
-          reference_flag_msg = nil
           unless input_dto.is_reference.nil?
-            reference_flag_msg = @translator.t("pesticides.flash.reference_flag_admin_only")
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
             requested = false if requested.nil?
             unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_flag_change_allowed?(user, requested: requested, current: !!current.is_reference)
-              raise Domain::Shared::Exceptions::RecordInvalid.new(reference_flag_msg)
+              return @output_port.on_failure(
+                Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
+                  message: @translator.t("pesticides.flash.reference_flag_admin_only"),
+                  resource_id: input_dto.pesticide_id
+                )
+              )
             end
           end
 
@@ -50,22 +53,13 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          if reference_flag_msg && e.message == reference_flag_msg
-            @output_port.on_failure(
-              Domain::Shared::Dtos::ReferenceFlagChangeDeniedFailure.new(
-                message: e.message,
-                resource_id: input_dto.pesticide_id
-              )
-            )
-          else
-            user_b = @user_lookup.find(@user_id)
-            bundle = PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_after_update_merge(
-              user: user_b,
-              pesticide_id: input_dto.pesticide_id,
-              assign_attributes: input_dto.assign_attributes_for_form || {}
-            )
-            @output_port.on_failure(Domain::Pesticide::Dtos::PesticideMasterFormFailure.new(message: e.message, bundle: bundle))
-          end
+          user_b = @user_lookup.find(@user_id)
+          bundle = PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_after_update_merge(
+            user: user_b,
+            pesticide_id: input_dto.pesticide_id,
+            assign_attributes: input_dto.assign_attributes_for_form || {}
+          )
+          @output_port.on_failure(Domain::Pesticide::Dtos::PesticideMasterFormFailure.new(message: e.message, bundle: bundle))
         end
       end
     end
