@@ -34,7 +34,7 @@ module Domain
                 return @output_port.on_link_target_missing(crop_id: crop_id)
               end
             unless Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest_entity, user: user)
-              raise Domain::Shared::Policies::PolicyPermissionDenied
+              return @output_port.on_forbidden(crop_id: crop_id)
             end
 
             status = @pest_gateway.link_pest_to_crop(
