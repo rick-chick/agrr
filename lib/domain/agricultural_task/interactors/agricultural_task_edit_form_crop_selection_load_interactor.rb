@@ -70,7 +70,7 @@ module Domain
 
           crop_cards =
             if input_dto.include_crop_cards
-              Domain::AgriculturalTask::Mappers::EditFormCropSelectionCardsMapper.build(
+              Domain::Crop::Mappers::MasterFormCropSelectionCardsMapper.build(
                 accessible_crops: accessible_crops,
                 selected_ids: selected_for_cards
               )

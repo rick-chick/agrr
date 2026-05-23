@@ -2,7 +2,7 @@
 
 require "domain_lib_test_helper"
 
-class Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractorTest < DomainLibTestCase
+class Domain::Pest::Interactors::PestMasterFormCropSelectionLoadInteractorTest < DomainLibTestCase
   test "call resolves user and forwards gateway bundle to output port" do
     user = Object.new
     def user.id; 7; end
@@ -11,14 +11,23 @@ class Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractorTest < Domai
     user_lookup.expects(:find).with(7).returns(user)
 
     payload = Domain::Pest::Dtos::PestMasterEditPayload.for_blank_new
-    bundle = Domain::Pest::Dtos::PestHtmlCropSelectionLoadBundle.new(
-      accessible_crops: [ :c1 ],
+    crop = Domain::Crop::Entities::CropEntity.new(
+      id: 1,
+      user_id: 7,
+      name: "Tomato",
+      variety: nil,
+      is_reference: false,
+      area_per_unit: nil,
+      revenue_per_area: nil,
+      region: nil
+    )
+    bundle = Domain::Pest::Dtos::PestMasterFormCropSelectionBundle.new(
       selected_crop_ids: [ 1 ],
-      crop_cards: [ { crop: :c1, selected: true } ]
+      crop_cards: [ { crop: crop, selected: true } ]
     )
 
     gateway = mock
-    gateway.expects(:pest_html_master_form_crop_selection_bundle!).with(
+    gateway.expects(:pest_master_form_crop_selection_bundle!).with(
       user: user,
       master_edit_payload: payload,
       request_crop_ids: :use_payload_associations
@@ -27,7 +36,7 @@ class Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractorTest < Domai
     output = mock
     output.expects(:on_success).with(bundle)
 
-    Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractor.new(
+    Domain::Pest::Interactors::PestMasterFormCropSelectionLoadInteractor.new(
       output_port: output,
       user_id: 7,
       gateway: gateway,
@@ -43,14 +52,13 @@ class Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractorTest < Domai
     user_lookup.expects(:find).with(3).returns(user)
 
     payload = Domain::Pest::Dtos::PestMasterEditPayload.for_blank_new
-    bundle = Domain::Pest::Dtos::PestHtmlCropSelectionLoadBundle.new(
-      accessible_crops: [],
+    bundle = Domain::Pest::Dtos::PestMasterFormCropSelectionBundle.new(
       selected_crop_ids: [],
       crop_cards: []
     )
 
     gateway = mock
-    gateway.expects(:pest_html_master_form_crop_selection_bundle!).with(
+    gateway.expects(:pest_master_form_crop_selection_bundle!).with(
       user: user,
       master_edit_payload: payload,
       request_crop_ids: [ 9, 9 ]
@@ -59,7 +67,7 @@ class Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractorTest < Domai
     output = mock
     output.expects(:on_success).with(bundle)
 
-    Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractor.new(
+    Domain::Pest::Interactors::PestMasterFormCropSelectionLoadInteractor.new(
       output_port: output,
       user_id: 3,
       gateway: gateway,

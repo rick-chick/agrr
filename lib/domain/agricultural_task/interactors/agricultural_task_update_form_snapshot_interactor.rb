@@ -3,7 +3,7 @@
 module Domain
   module AgriculturalTask
     module Interactors
-      class AgriculturalTaskHtmlUpdateFailureInteractor
+      class AgriculturalTaskUpdateFormSnapshotInteractor
         def initialize(output_port:, user_id:, gateway:, user_lookup:)
           @output_port = output_port
           @user_id = user_id
@@ -33,7 +33,7 @@ module Domain
           normalized_ids = Array(selected_crop_ids).map(&:to_i).uniq
           crop_cards =
             if accessible_crops
-              Domain::AgriculturalTask::Mappers::EditFormCropSelectionCardsMapper.build(
+              Domain::Crop::Mappers::MasterFormCropSelectionCardsMapper.build(
                 accessible_crops: accessible_crops,
                 selected_ids: normalized_ids
               )

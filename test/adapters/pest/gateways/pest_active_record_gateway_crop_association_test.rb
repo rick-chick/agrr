@@ -55,31 +55,6 @@ module Adapters
           assert_includes @pest.crops, @crop2
         end
 
-        test "normalize_crop_ids_for_pest_form filters to accessible crop IDs only" do
-          normalized = @gw.normalize_crop_ids_for_pest_form(
-            pest_id: @pest.id,
-            association_context: nil,
-            raw_crop_ids: [ @crop1.id, @other_user_crop.id, 99999 ],
-            user: @user
-          )
-
-          assert_includes normalized, @crop1.id
-          assert_not_includes normalized, @other_user_crop.id
-          assert_not_includes normalized, 99999
-        end
-
-        test "normalize_crop_ids_for_pest_form handles string IDs" do
-          normalized = @gw.normalize_crop_ids_for_pest_form(
-            pest_id: @pest.id,
-            association_context: nil,
-            raw_crop_ids: [ @crop1.id.to_s, @crop2.id.to_s ],
-            user: @user
-          )
-
-          assert_includes normalized, @crop1.id
-          assert_includes normalized, @crop2.id
-        end
-
         test "link_pest_to_crop returns missing when crop is not authorized by crop_access_filter" do
           filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
           status = @gw.link_pest_to_crop(
@@ -117,6 +92,23 @@ module Adapters
           )
 
           assert_equal :forbidden, status
+        end
+
+        test "pest_master_form_crop_selection_bundle! returns CropEntity cards without ActiveRecord in bundle" do
+          payload = Domain::Pest::Dtos::PestMasterEditPayload.for_blank_new
+          bundle = @gw.pest_master_form_crop_selection_bundle!(
+            user: @user,
+            master_edit_payload: payload,
+            request_crop_ids: [ @crop1.id, @other_user_crop.id ]
+          )
+
+          assert_includes bundle.selected_crop_ids, @crop1.id
+          assert_not_includes bundle.selected_crop_ids, @other_user_crop.id
+          assert bundle.crop_cards.any?
+          bundle.crop_cards.each do |card|
+            assert_instance_of Domain::Crop::Entities::CropEntity, card[:crop]
+            refute card[:crop].is_a?(::Crop)
+          end
         end
       end
     end

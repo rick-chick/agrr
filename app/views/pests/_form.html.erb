@@ -12,12 +12,8 @@
      data-i18n-method-description-label="<%= t('pests.form.method_description_label') %>"
      data-i18n-timing-hint-label="<%= t('pests.form.timing_hint_label') %>"
      data-i18n-remove-method="<%= t('pests.form.remove_method') %>">
-  <%= form_with(
-  model: @pest.is_a?(::Pest) ? @pest : false,
-  url: @pest.is_a?(::Pest) ? nil : (@pest.persisted? ? pest_path(@pest.id) : pests_path),
-  local: true
-) do |f| %>
-    <% if @pest.respond_to?(:errors) && @pest.errors.any? %>
+  <%= form_with(model: @pest, local: true) do |f| %>
+    <% if @pest.errors.any? %>
       <div class="errors">
         <h3><%= t('pests.form.errors.title', count: @pest.errors.count) %></h3>
         <ul>
@@ -127,118 +123,45 @@
 
     <div class="form-section">
       <h3 class="form-section-title"><%= t('pests.form.temperature_profile_title') %></h3>
-      <% if @pest.is_a?(::Pest) %>
-        <%= f.fields_for :pest_temperature_profile do |temp_form| %>
-          <div class="form-group">
-            <%= temp_form.label :base_temperature, t('pests.form.base_temperature_label'), class: 'form-label' %>
-            <%= temp_form.number_field :base_temperature, step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.base_temperature_help') %></div>
-          </div>
+      <%= f.fields_for :pest_temperature_profile do |temp_form| %>
+        <div class="form-group">
+          <%= temp_form.label :base_temperature, t('pests.form.base_temperature_label'), class: 'form-label' %>
+          <%= temp_form.number_field :base_temperature, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pests.form.base_temperature_help') %></div>
+        </div>
 
-          <div class="form-group">
-            <%= temp_form.label :max_temperature, t('pests.form.max_temperature_label'), class: 'form-label' %>
-            <%= temp_form.number_field :max_temperature, step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.max_temperature_help') %></div>
-          </div>
+        <div class="form-group">
+          <%= temp_form.label :max_temperature, t('pests.form.max_temperature_label'), class: 'form-label' %>
+          <%= temp_form.number_field :max_temperature, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pests.form.max_temperature_help') %></div>
+        </div>
 
-          <%= temp_form.hidden_field :_destroy, value: false %>
-        <% end %>
-      <% else %>
-        <% if @pest.pest_temperature_profile_attributes.present? %>
-          <% attrs = @pest.pest_temperature_profile_attributes %>
-          <% if attrs[:id].present? %>
-            <%= hidden_field_tag 'pest[pest_temperature_profile_attributes][id]', attrs[:id] %>
-          <% end %>
-          <div class="form-group">
-            <%= label_tag 'pest[pest_temperature_profile_attributes][base_temperature]', t('pests.form.base_temperature_label'), class: 'form-label' %>
-            <%= number_field_tag 'pest[pest_temperature_profile_attributes][base_temperature]', attrs[:base_temperature], step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.base_temperature_help') %></div>
-          </div>
-
-          <div class="form-group">
-            <%= label_tag 'pest[pest_temperature_profile_attributes][max_temperature]', t('pests.form.max_temperature_label'), class: 'form-label' %>
-            <%= number_field_tag 'pest[pest_temperature_profile_attributes][max_temperature]', attrs[:max_temperature], step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.max_temperature_help') %></div>
-          </div>
-
-          <%= hidden_field_tag 'pest[pest_temperature_profile_attributes][_destroy]', false %>
-        <% else %>
-          <div class="form-group">
-            <%= label_tag 'pest[pest_temperature_profile_attributes][base_temperature]', t('pests.form.base_temperature_label'), class: 'form-label' %>
-            <%= number_field_tag 'pest[pest_temperature_profile_attributes][base_temperature]', nil, step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.base_temperature_help') %></div>
-          </div>
-
-          <div class="form-group">
-            <%= label_tag 'pest[pest_temperature_profile_attributes][max_temperature]', t('pests.form.max_temperature_label'), class: 'form-label' %>
-            <%= number_field_tag 'pest[pest_temperature_profile_attributes][max_temperature]', nil, step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.max_temperature_help') %></div>
-          </div>
-
-          <%= hidden_field_tag 'pest[pest_temperature_profile_attributes][_destroy]', false %>
-        <% end %>
+        <%= temp_form.hidden_field :_destroy, value: false %>
       <% end %>
     </div>
 
     <div class="form-section">
       <h3 class="form-section-title"><%= t('pests.form.thermal_requirement_title') %></h3>
-      <% if @pest.is_a?(::Pest) %>
-        <%= f.fields_for :pest_thermal_requirement do |thermal_form| %>
-          <div class="form-group">
-            <%= thermal_form.label :required_gdd, t('pests.form.required_gdd_label'), class: 'form-label' %>
-            <%= thermal_form.number_field :required_gdd, step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.required_gdd_help') %></div>
-          </div>
+      <%= f.fields_for :pest_thermal_requirement do |thermal_form| %>
+        <div class="form-group">
+          <%= thermal_form.label :required_gdd, t('pests.form.required_gdd_label'), class: 'form-label' %>
+          <%= thermal_form.number_field :required_gdd, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pests.form.required_gdd_help') %></div>
+        </div>
 
-          <div class="form-group">
-            <%= thermal_form.label :first_generation_gdd, t('pests.form.first_generation_gdd_label'), class: 'form-label' %>
-            <%= thermal_form.number_field :first_generation_gdd, step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.first_generation_gdd_help') %></div>
-          </div>
+        <div class="form-group">
+          <%= thermal_form.label :first_generation_gdd, t('pests.form.first_generation_gdd_label'), class: 'form-label' %>
+          <%= thermal_form.number_field :first_generation_gdd, step: :any, class: 'form-control' %>
+          <div class="form-text"><%= t('pests.form.first_generation_gdd_help') %></div>
+        </div>
 
-          <%= thermal_form.hidden_field :_destroy, value: false %>
-        <% end %>
-      <% else %>
-        <% if @pest.pest_thermal_requirement_attributes.present? %>
-          <% attrs = @pest.pest_thermal_requirement_attributes %>
-          <% if attrs[:id].present? %>
-            <%= hidden_field_tag 'pest[pest_thermal_requirement_attributes][id]', attrs[:id] %>
-          <% end %>
-          <div class="form-group">
-            <%= label_tag 'pest[pest_thermal_requirement_attributes][required_gdd]', t('pests.form.required_gdd_label'), class: 'form-label' %>
-            <%= number_field_tag 'pest[pest_thermal_requirement_attributes][required_gdd]', attrs[:required_gdd], step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.required_gdd_help') %></div>
-          </div>
-
-          <div class="form-group">
-            <%= label_tag 'pest[pest_thermal_requirement_attributes][first_generation_gdd]', t('pests.form.first_generation_gdd_label'), class: 'form-label' %>
-            <%= number_field_tag 'pest[pest_thermal_requirement_attributes][first_generation_gdd]', attrs[:first_generation_gdd], step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.first_generation_gdd_help') %></div>
-          </div>
-
-          <%= hidden_field_tag 'pest[pest_thermal_requirement_attributes][_destroy]', false %>
-        <% else %>
-          <div class="form-group">
-            <%= label_tag 'pest[pest_thermal_requirement_attributes][required_gdd]', t('pests.form.required_gdd_label'), class: 'form-label' %>
-            <%= number_field_tag 'pest[pest_thermal_requirement_attributes][required_gdd]', nil, step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.required_gdd_help') %></div>
-          </div>
-
-          <div class="form-group">
-            <%= label_tag 'pest[pest_thermal_requirement_attributes][first_generation_gdd]', t('pests.form.first_generation_gdd_label'), class: 'form-label' %>
-            <%= number_field_tag 'pest[pest_thermal_requirement_attributes][first_generation_gdd]', nil, step: :any, class: 'form-control' %>
-            <div class="form-text"><%= t('pests.form.first_generation_gdd_help') %></div>
-          </div>
-
-          <%= hidden_field_tag 'pest[pest_thermal_requirement_attributes][_destroy]', false %>
-        <% end %>
+        <%= thermal_form.hidden_field :_destroy, value: false %>
       <% end %>
     </div>
 
     <div class="form-section">
       <h3 class="form-section-title"><%= t('pests.form.control_methods_title') %></h3>
       <div id="control-methods-list" data-pest-form-target="methodsContainer">
-        <% if @pest.is_a?(::Pest) %>
         <%= f.fields_for :pest_control_methods do |method_form| %>
           <div class="control-method-fields nested-fields">
             <div class="nested-fields-header">
@@ -281,89 +204,6 @@
               <div class="form-text"><%= t('pests.form.timing_hint_help') %></div>
             </div>
           </div>
-        <% end %>
-        <% else %>
-          <% if @pest.pest_control_methods_attributes.any? %>
-            <% @pest.pest_control_methods_attributes.each do |key, attrs| %>
-              <div class="control-method-fields nested-fields">
-                <div class="nested-fields-header">
-                  <h4 class="nested-title"><%= t('pests.form.control_methods_title') %></h4>
-                  <% if attrs[:id].present? %>
-                    <%= hidden_field_tag 'pest[pest_control_methods_attributes][#{key}]', attrs[:id] %>
-                    <%= hidden_field_tag 'pest[pest_control_methods_attributes][#{key}][_destroy]', false, class: 'destroy-flag' %>
-                  <% end %>
-                  <button type="button" class="btn btn-error btn-sm remove-control-method">
-                    <%= t('pests.form.remove_method') %>
-                  </button>
-                </div>
-
-                <div class="form-group">
-                  <%= label_tag 'pest[pest_control_methods_attributes][#{key}][method_type]', t('pests.form.method_type_label'), class: 'form-label' %>
-                  <%= select_tag 'pest[pest_control_methods_attributes][#{key}][method_type]', 
-                    options_for_select([
-                      [t('pests.form.method_types.chemical'), 'chemical'],
-                      [t('pests.form.method_types.biological'), 'biological'],
-                      [t('pests.form.method_types.cultural'), 'cultural'],
-                      [t('pests.form.method_types.physical'), 'physical']
-                    ], attrs[:method_type]), 
-                    { include_blank: t('pests.form.select_method_type') } %>
-                </div>
-
-                <div class="form-group">
-                  <%= label_tag 'pest[pest_control_methods_attributes][#{key}][method_name]', t('pests.form.method_name_label'), class: 'form-label' %>
-                  <%= text_field_tag 'pest[pest_control_methods_attributes][#{key}][method_name]', attrs[:method_name], class: 'form-control' %>
-                </div>
-
-                <div class="form-group">
-                  <%= label_tag 'pest[pest_control_methods_attributes][#{key}][description]', t('pests.form.method_description_label'), class: 'form-label' %>
-                  <%= text_area_tag 'pest[pest_control_methods_attributes][#{key}][description]', attrs[:description], rows: 3, class: 'form-control' %>
-                </div>
-
-                <div class="form-group">
-                  <%= label_tag 'pest[pest_control_methods_attributes][#{key}][timing_hint]', t('pests.form.timing_hint_label'), class: 'form-label' %>
-                  <%= text_field_tag 'pest[pest_control_methods_attributes][#{key}][timing_hint]', attrs[:timing_hint], class: 'form-control' %>
-                  <div class="form-text"><%= t('pests.form.timing_hint_help') %></div>
-                </div>
-              </div>
-            <% end %>
-          <% else %>
-            <div class="control-method-fields nested-fields">
-              <div class="nested-fields-header">
-                <h4 class="nested-title"><%= t('pests.form.control_methods_title') %></h4>
-                <button type="button" class="btn btn-error btn-sm remove-control-method">
-                  <%= t('pests.form.remove_method') %>
-                </button>
-              </div>
-
-              <div class="form-group">
-                <%= label_tag 'pest[pest_control_methods_attributes][0][method_type]', t('pests.form.method_type_label'), class: 'form-label' %>
-                <%= select_tag 'pest[pest_control_methods_attributes][0][method_type]', 
-                  options_for_select([
-                    [t('pests.form.method_types.chemical'), 'chemical'],
-                    [t('pests.form.method_types.biological'), 'biological'],
-                    [t('pests.form.method_types.cultural'), 'cultural'],
-                    [t('pests.form.method_types.physical'), 'physical']
-                  ], nil), 
-                  { include_blank: t('pests.form.select_method_type') } %>
-              </div>
-
-              <div class="form-group">
-                <%= label_tag 'pest[pest_control_methods_attributes][0][method_name]', t('pests.form.method_name_label'), class: 'form-label' %>
-                <%= text_field_tag 'pest[pest_control_methods_attributes][0][method_name]', nil, class: 'form-control' %>
-              </div>
-
-              <div class="form-group">
-                <%= label_tag 'pest[pest_control_methods_attributes][0][description]', t('pests.form.method_description_label'), class: 'form-label' %>
-                <%= text_area_tag 'pest[pest_control_methods_attributes][0][description]', nil, rows: 3, class: 'form-control' %>
-              </div>
-
-              <div class="form-group">
-                <%= label_tag 'pest[pest_control_methods_attributes][0][timing_hint]', t('pests.form.timing_hint_label'), class: 'form-label' %>
-                <%= text_field_tag 'pest[pest_control_methods_attributes][0][timing_hint]', nil, class: 'form-control' %>
-                <div class="form-text"><%= t('pests.form.timing_hint_help') %></div>
-              </div>
-            </div>
-          <% end %>
         <% end %>
       </div>
       <button type="button" id="add-control-method" class="btn btn-secondary btn-sm" data-action="click->pest-form#addControlMethod">

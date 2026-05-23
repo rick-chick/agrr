@@ -88,8 +88,8 @@ module CompositionRoot
       @crop_stage_copy_gateway ||= Adapters::Crop::Gateways::CropStageCopyActiveRecordGateway.new
     end
 
-    def pest_html_crop_selection_load_interactor(output_port:, user_id:)
-      Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractor.new(
+    def pest_master_form_crop_selection_load_interactor(output_port:, user_id:)
+      Domain::Pest::Interactors::PestMasterFormCropSelectionLoadInteractor.new(
         output_port: output_port,
         user_id: user_id,
         gateway: pest_gateway,

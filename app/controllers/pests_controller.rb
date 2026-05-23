@@ -21,14 +21,12 @@ class PestsController < ApplicationController
 
   # GET /pests/new
   def new
-    presenter = Adapters::Pest::Presenters::PestHtmlNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Pest::Interactors::PestHtmlNewMasterFormInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      gateway: CompositionRoot.pest_gateway,
-      user_lookup: CompositionRoot.user_lookup,
-      raw_crop_ids: params[:crop_ids]
-    ).call
+    payload = Domain::Pest::Dtos::PestMasterEditPayload.for_blank_new
+    @pest = Forms::PestMasterForm.from_edit_payload(payload)
+    load_pest_master_form_crop_selection(
+      master_edit_payload: payload,
+      request_crop_ids: params[:crop_ids] ? Array(params[:crop_ids]) : []
+    )
   end
 
   # GET /pests/:id/edit
@@ -36,8 +34,9 @@ class PestsController < ApplicationController
     bundle = load_pest_for_edit
     return if bundle.nil?
 
-    load_pest_html_crop_selection(master_edit_payload: bundle.pest_master_edit_payload)
-    @pest = bundle.pest_master_edit_payload
+    payload = bundle.pest_master_edit_payload
+    @pest = Forms::PestMasterForm.from_edit_payload(payload)
+    load_pest_master_form_crop_selection(master_edit_payload: payload)
   end
 
   # POST /pests
@@ -152,33 +151,10 @@ class PestsController < ApplicationController
     render(action, status: status, locals: locals)
   end
 
-  # Presenter の on_failure から呼ばれるため public
-  def normalize_crop_ids_for(pest, raw_ids)
-    if pest.persisted?
-      CompositionRoot.pest_gateway.normalize_crop_ids_for_pest_form(
-        pest_id: pest.id,
-        association_context: nil,
-        raw_crop_ids: raw_ids,
-        user: current_user
-      )
-    else
-      CompositionRoot.pest_gateway.normalize_crop_ids_for_pest_form(
-        pest_id: nil,
-        association_context: Domain::Pest::Dtos::PestCropFormAssociationContext.new(
-          is_reference: pest.is_reference == true,
-          pest_owner_user_id: pest.user_id,
-          region: pest.region
-        ),
-        raw_crop_ids: raw_ids,
-        user: current_user
-      )
-    end
-  end
-
   # Interactor 経由で作物選択 UI 用インスタンス変数を設定する（Presenter の on_failure からも呼ぶ）。
-  def load_pest_html_crop_selection(master_edit_payload:, request_crop_ids: :use_payload_associations)
-    presenter = Adapters::Pest::Presenters::PestHtmlCropSelectionLoadHtmlPresenter.new(view: self)
-    CompositionRoot.pest_html_crop_selection_load_interactor(output_port: presenter, user_id: current_user.id).call(
+  def load_pest_master_form_crop_selection(master_edit_payload:, request_crop_ids: :use_payload_associations)
+    presenter = Adapters::Pest::Presenters::PestMasterFormCropSelectionLoadHtmlPresenter.new(view: self)
+    CompositionRoot.pest_master_form_crop_selection_load_interactor(output_port: presenter, user_id: current_user.id).call(
       master_edit_payload: master_edit_payload,
       request_crop_ids: request_crop_ids
     )

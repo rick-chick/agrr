@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 module Domain
-  module AgriculturalTask
+  module Crop
     module Mappers
-      # 農業作業編集フォーム: 作物カード行（作物 + 選択状態）を組み立てる。
-      module EditFormCropSelectionCardsMapper
+      # マスタ HTML フォーム: 作物カード行（作物 + 選択状態）を組み立てる。
+      module MasterFormCropSelectionCardsMapper
         module_function
 
         # @param accessible_crops [Array<Domain::Crop::Entities::CropEntity>]
         # @param selected_ids [Array<Integer, String, nil>]
-        # @return [Array<Hash>]
+        # @return [Array<Hash>] { crop:, selected: }
         def build(accessible_crops:, selected_ids:)
           normalized_ids = Array(selected_ids).map(&:to_i).uniq
           accessible_crops.map do |crop|

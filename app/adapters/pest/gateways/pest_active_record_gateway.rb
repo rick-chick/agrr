@@ -122,42 +122,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pest not found"
         end
 
-        def build_blank_pest_for_form
-          pest = ::Pest.new
-          pest.build_pest_temperature_profile
-          pest.build_pest_thermal_requirement
-          pest.pest_control_methods.build
-          pest
-        end
-
-        def pest_html_new_form_state!(user:, raw_crop_ids:)
-          pest = build_blank_pest_for_form
-          association_context = Domain::Pest::Dtos::PestCropFormAssociationContext.new(
-            is_reference: false,
-            pest_owner_user_id: user.id,
-            region: nil
-          )
-          normalized = normalize_crop_ids_for_pest_form(
-            pest_id: nil,
-            association_context: association_context,
-            raw_crop_ids: raw_crop_ids,
-            user: user
-          )
-          accessible = accessible_crops_relation_for_pest_association(
-            is_reference: false,
-            owner_user_id: user.id,
-            region: nil,
-            user: user
-          ).to_a
-          allowed_ids = accessible.map(&:id)
-          normalized_selected = Array(normalized).map(&:to_i).uniq & allowed_ids
-          crop_cards = accessible.map do |crop|
-            { crop: crop, selected: normalized_selected.include?(crop.id) }
-          end
-          Domain::Pest::Dtos::PestHtmlNewFormState.new(pest: pest, crop_cards: crop_cards, selected_crop_ids: normalized_selected)
-        end
-
-        def pest_html_master_form_crop_selection_bundle!(user:, master_edit_payload:, request_crop_ids: :use_payload_associations)
+        def pest_master_form_crop_selection_bundle!(user:, master_edit_payload:, request_crop_ids: :use_payload_associations)
           pest_like = Domain::Pest::Dtos::PestCropAssociationPestInput.from_master_edit_payload(master_edit_payload)
           raw_base =
             if request_crop_ids == :use_payload_associations
@@ -172,44 +137,26 @@ module Adapters
             region: pest_like.region,
             user: user
           )
-          accessible =
+          accessible_records =
             relation.to_a.select do |crop|
               Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest_like, user: user)
             end
-          allowed_ids = accessible.map(&:id)
+          accessible_crops =
+            accessible_records.map do |crop|
+              Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
+            end
+          allowed_ids = accessible_crops.map(&:id)
           normalized_selected = Array(raw_base).map(&:to_i).uniq & allowed_ids
           crop_cards =
-            accessible.map do |crop|
-              { crop: crop, selected: normalized_selected.include?(crop.id) }
-            end
+            Domain::Crop::Mappers::MasterFormCropSelectionCardsMapper.build(
+              accessible_crops: accessible_crops,
+              selected_ids: normalized_selected
+            )
 
-          Domain::Pest::Dtos::PestHtmlCropSelectionLoadBundle.new(
-            accessible_crops: accessible,
+          Domain::Pest::Dtos::PestMasterFormCropSelectionBundle.new(
             selected_crop_ids: normalized_selected,
             crop_cards: crop_cards
           )
-        end
-
-        def build_after_create_failure_pest_for_form!(user:, attributes:)
-          sym = attributes.respond_to?(:symbolize_keys) ? attributes.symbolize_keys : attributes.to_h.symbolize_keys
-          pest = ::Pest.new(
-            name: sym[:name],
-            name_scientific: sym[:name_scientific],
-            family: sym[:family],
-            order: sym[:order],
-            description: sym[:description],
-            occurrence_season: sym[:occurrence_season],
-            region: sym[:region],
-            is_reference: sym[:is_reference],
-            pest_temperature_profile_attributes: sym[:pest_temperature_profile_attributes],
-            pest_thermal_requirement_attributes: sym[:pest_thermal_requirement_attributes],
-            pest_control_methods_attributes: sym[:pest_control_methods_attributes]
-          )
-          pest.build_pest_temperature_profile unless pest.pest_temperature_profile
-          pest.build_pest_thermal_requirement unless pest.pest_thermal_requirement
-          pest.pest_control_methods.build if pest.pest_control_methods.empty?
-          pest.valid?
-          pest
         end
 
         def link_pest_to_crop(crop_id:, pest_id:, user:, crop_access_filter:)
@@ -299,34 +246,6 @@ module Adapters
             status: :found,
             crop_nest_snapshot: pest_crop_nest_snapshot_from(pest, ensure_blank_control_method: for_edit_form)
           )
-        end
-
-        def prepare_top_level_pest_for_edit_form!(pest_record)
-          ensure_pest_control_method_row_for_form!(pest_record)
-        end
-
-        def normalize_crop_ids_for_pest_form(pest_id:, association_context:, raw_crop_ids:, user:)
-          is_reference, owner_user_id, region =
-            if pest_id.present?
-              pest = ::Pest.find(pest_id)
-              [ pest.is_reference?, pest.user_id, pest.region ]
-            else
-              raise ArgumentError, "association_context is required when pest_id is nil" if association_context.nil?
-
-              [
-                association_context.is_reference == true,
-                association_context.pest_owner_user_id,
-                association_context.region
-              ]
-            end
-
-          allowed_ids = accessible_crops_relation_for_pest_association(
-            is_reference: is_reference,
-            owner_user_id: owner_user_id,
-            region: region,
-            user: user
-          ).pluck(:id)
-          Array(raw_crop_ids).compact.reject(&:blank?).map(&:to_i).uniq & allowed_ids
         end
 
         private

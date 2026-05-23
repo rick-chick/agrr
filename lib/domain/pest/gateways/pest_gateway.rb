@@ -88,21 +88,10 @@ module Domain
         # HTML トップレベル編集（`/pests/:id/edit`）用。防除方法が 0 件なら空行を build。
         # @param pest_record [Pest]
         # @return [Pest] pest_record
-        def prepare_top_level_pest_for_edit_form!(pest_record)
-          raise NotImplementedError, "Subclasses must implement prepare_top_level_pest_for_edit_form!"
-        end
-
         # @param order [Symbol] :recent_first | :id_asc
         # @return [Array<Domain::Pest::Entities::PestEntity>] 作物に紐づく害虫（HTML/API ともにエンティティ）
         def list_pests_for_crop_filtered(crop_id:, pest_ids:, order: :recent_first)
           raise NotImplementedError, "Subclasses must implement list_pests_for_crop_filtered"
-        end
-
-        # HTML フォーム: 生の crop_ids パラメータを、ユーザーが選択可能な作物 ID に正規化する。
-        # @param pest_id [Integer, nil] 保存済み害虫。未保存フォームでは nil。
-        # @param association_context [Domain::Pest::Dtos::PestCropFormAssociationContext, nil] pest_id が nil のとき必須。
-        def normalize_crop_ids_for_pest_form(pest_id:, association_context:, raw_crop_ids:, user:)
-          raise NotImplementedError, "Subclasses must implement normalize_crop_ids_for_pest_form"
         end
 
         # Pest 作成後に作物群と関連付け。
@@ -142,15 +131,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement unlink_pest_from_crop_for_masters"
         end
 
-        # HTML マスタ新規フォーム用（未保存 Pest + 作物選択 UI 状態）
-        def pest_html_new_form_state!(user:, raw_crop_ids:)
-          raise NotImplementedError, "Subclasses must implement pest_html_new_form_state!"
-        end
-
         # HTML 害虫マスタ編集・検証失敗時の作物選択 UI 用。
         # @param request_crop_ids [Symbol] :use_payload_associations または生の crop id 配列（空可）
-        def pest_html_master_form_crop_selection_bundle!(user:, master_edit_payload:, request_crop_ids: :use_payload_associations)
-          raise NotImplementedError, "Subclasses must implement pest_html_master_form_crop_selection_bundle!"
+        def pest_master_form_crop_selection_bundle!(user:, master_edit_payload:, request_crop_ids: :use_payload_associations)
+          raise NotImplementedError, "Subclasses must implement pest_master_form_crop_selection_bundle!"
         end
       end
     end
