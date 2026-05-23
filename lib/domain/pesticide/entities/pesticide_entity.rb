@@ -21,6 +21,12 @@ module Domain
           @updated_at = updated_at
         end
 
+        def reference?
+          !!is_reference
+        end
+
+        alias is_reference? reference?
+
         private
 
         def validate_region!(region)

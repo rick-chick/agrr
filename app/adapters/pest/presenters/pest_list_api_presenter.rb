@@ -4,12 +4,14 @@ module Adapters
   module Pest
     module Presenters
       class PestListApiPresenter < Domain::Pest::Ports::PestListOutputPort
+        include Adapters::Shared::Presenters::ListRowSupport
+
         def initialize(view:)
           @view = view
         end
 
         def on_success(pests)
-          json = pests.is_a?(Array) ? pests.map { |e| entity_to_json(e) } : []
+          json = pests.is_a?(Array) ? pests.map { |e| entity_to_json(unwrap_list_record(e)) } : []
           @view.render_response(json: json, status: :ok)
         end
 

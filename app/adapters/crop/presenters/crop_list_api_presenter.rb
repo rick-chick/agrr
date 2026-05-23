@@ -4,12 +4,14 @@ module Adapters
   module Crop
     module Presenters
       class CropListApiPresenter < Domain::Crop::Ports::CropListOutputPort
+        include Adapters::Shared::Presenters::ListRowSupport
+
         def initialize(view:)
           @view = view
         end
 
         def on_success(crops)
-          json = crops.is_a?(Array) ? crops.map { |e| entity_to_json(e) } : []
+          json = crops.is_a?(Array) ? crops.map { |e| entity_to_json(unwrap_list_record(e)) } : []
           @view.render_response(json: json, status: :ok)
         end
 

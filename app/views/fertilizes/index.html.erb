@@ -8,22 +8,23 @@
 <% if @fertilizes&.any? %>
   <div class="crops-grid">
     <% @fertilizes.each do |fertilize_row| %>
-      <% fertilize = fertilize_row.record %>
-      <% display = fertilize_row.display %>
+      <% parts = referencable_list_row_parts(fertilize_row) %>
+      <% fertilize = parts.record %>
+      <% display = parts.display %>
       <div class="crop-card" id="fertilize_<%= fertilize.id %>" data-undo-delete-record>
         <h3 class="crop-name"><%= fertilize.name %></h3>
         <% if fertilize.npk_summary.present? %>
           <div class="crop-variety">NPK: <%= fertilize.npk_summary %></div>
         <% end %>
-        <% if display.show_reference_badge %>
+        <% if display&.show_reference_badge %>
           <div class="crop-type reference"><%= t('.reference_fertilizes') %></div>
         <% end %>
         <div class="crop-actions">
           <%= link_to t('.actions.show'), fertilize_path(fertilize.id), class: "btn btn-info btn-sm" %>
-          <% if display.show_edit_button %>
+          <% if display&.show_edit_button %>
             <%= link_to t('.actions.edit'), edit_fertilize_path(fertilize.id), class: "btn btn-secondary btn-sm" %>
           <% end %>
-          <% if display.show_delete_button %>
+          <% if display&.show_delete_button %>
             <%= link_to t('.actions.delete'), fertilize_path(fertilize.id),
                         class: "btn btn-error btn-sm",
                         data: {

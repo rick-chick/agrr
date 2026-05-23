@@ -4,12 +4,14 @@ module Adapters
   module Pesticide
     module Presenters
       class PesticideListApiPresenter < Domain::Pesticide::Ports::PesticideListOutputPort
+        include Adapters::Shared::Presenters::ListRowSupport
+
         def initialize(view:)
           @view = view
         end
 
         def on_success(pesticides)
-          json = pesticides.is_a?(Array) ? pesticides.map { |e| entity_to_json(e) } : []
+          json = pesticides.is_a?(Array) ? pesticides.map { |e| entity_to_json(unwrap_list_record(e)) } : []
           @view.render_response(json: json, status: :ok)
         end
 

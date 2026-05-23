@@ -4,12 +4,14 @@ module Adapters
   module Fertilize
     module Presenters
       class FertilizeListApiPresenter < Domain::Fertilize::Ports::FertilizeListOutputPort
+        include Adapters::Shared::Presenters::ListRowSupport
+
         def initialize(view:)
           @view = view
         end
 
         def on_success(fertilizes)
-          json = fertilizes.is_a?(Array) ? fertilizes.map { |e| entity_to_json(e) } : []
+          json = fertilizes.is_a?(Array) ? fertilizes.map { |e| entity_to_json(unwrap_list_record(e)) } : []
           @view.render_response(json: json, status: :ok)
         end
 
