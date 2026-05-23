@@ -3,35 +3,35 @@
 module Domain
   module Field
     module Interactors
-      class FieldNewMasterFormInteractor
-        def initialize(output_port:, user_id:, farm_id:, gateway:, farm_gateway:, user_lookup:)
+      class FieldEditMasterFormInteractor
+        def initialize(output_port:, user_id:, gateway:, farm_gateway:, user_lookup:)
           @output_port = output_port
           @user_id = user_id
-          @farm_id = farm_id
           @gateway = gateway
           @farm_gateway = farm_gateway
           @user_lookup = user_lookup
         end
 
-        def call
+        def call(input)
           user = @user_lookup.find(@user_id)
-          list = @gateway.farm_fields_list(@farm_id)
+          list = @gateway.farm_fields_list(input.farm_id.to_i)
           Domain::Field::Policies::FieldAccess.assert_field_edit_on_farm_allowed!(user, list.farm)
           Domain::Field::Policies::FieldAccess.assert_farm_fields_list_allowed!(user, list.farm)
 
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          farm_bundle = @farm_gateway.find_farm_loaded_bundle!(@farm_id, for_edit: true)
+          farm_bundle = @farm_gateway.find_farm_loaded_bundle!(input.farm_id.to_i, for_edit: true)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, farm_bundle.farm_entity)
 
-          field_snapshot = @gateway.build_blank_field_for_master_form!(farm_id: @farm_id)
+          field_bundle = @gateway.find_field_loaded_in_farm!(input.farm_id.to_i, input.field_id.to_i)
+          Domain::Field::Policies::FieldAccess.find_owned!(user, input.field_id.to_i)
           @output_port.on_success(
             farm_master_form_snapshot: farm_bundle.master_form_snapshot,
-            field_master_form_snapshot: field_snapshot
+            field_master_form_snapshot: field_bundle.master_form_snapshot
           )
-        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
-          @output_port.on_failure(e)
-        rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @output_port.on_permission_denied(farm_id: input.farm_id)
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          @output_port.on_not_found(farm_id: input.farm_id)
         end
       end
     end

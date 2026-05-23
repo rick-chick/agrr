@@ -8,8 +8,19 @@ module Adapters
           @view = view
         end
 
-        def on_success(master_form_snapshot)
-          @view.instance_variable_set(:@field, Forms::FieldMasterForm.from_snapshot(master_form_snapshot))
+        def on_success(farm_master_form_snapshot:, field_master_form_snapshot:)
+          @view.instance_variable_set(:@farm, Forms::FarmMasterForm.from_snapshot(farm_master_form_snapshot))
+          @view.instance_variable_set(:@field, Forms::FieldMasterForm.from_snapshot(field_master_form_snapshot))
+        end
+
+        def on_failure(error_dto)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.redirect_back fallback_location: @view.farms_path,
+                               alert: I18n.t("fields.flash.no_permission")
+            return
+          end
+
+          @view.redirect_to @view.farms_path, alert: error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
         end
       end
     end

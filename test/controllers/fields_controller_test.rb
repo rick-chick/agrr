@@ -43,6 +43,35 @@ class FieldsControllerTest < ActionDispatch::IntegrationTest
     assert_predicate flash[:alert], :present?
   end
 
+  test "new_renders_successfully" do
+    sign_in_as @user
+    get new_farm_field_path(@farm)
+    assert_response :success
+  end
+
+  test "new_redirects_when_user_cannot_access_farm" do
+    other = create(:user)
+    sign_in_as other
+    get new_farm_field_path(@farm)
+    assert_redirected_to farms_path
+    assert_predicate flash[:alert], :present?
+  end
+
+  test "edit_renders_successfully" do
+    sign_in_as @user
+    field = create(:field, farm: @farm, user: @user, name: "Edit Plot")
+
+    get edit_farm_field_path(@farm, field)
+    assert_response :success
+  end
+
+  test "edit_redirects_when_field_not_found" do
+    sign_in_as @user
+    get edit_farm_field_path(@farm, 99_999_999)
+    assert_redirected_to farm_fields_path(@farm)
+    assert_predicate flash[:alert], :present?
+  end
+
   test "destroy_returns_undo_token_json" do
     sign_in_as @user
     field = create(:field, farm: @farm, user: @user)
