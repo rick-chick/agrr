@@ -12,7 +12,7 @@ module Adapters
         # optimization_host は attach 済みの plan を保持すること。
         def adjust_with_moves!(optimization_host:, plan_id:, moves:)
           cultivation_plan = ::CultivationPlan.find(plan_id)
-          optimization_host.adjust_with_db_weather(cultivation_plan, moves)
+          optimization_host.plan_allocation_adjust(cultivation_plan, moves)
         end
       end
     end

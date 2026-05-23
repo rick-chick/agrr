@@ -13,13 +13,12 @@ module Adapters
 
         def save_adjust_result!(plan_id:, result:)
           cultivation_plan = ::CultivationPlan.find(plan_id)
-          @logger.info "💾 [Save Adjusted Result] result keys: #{result.keys}"
-          @logger.info "💾 [Save Adjusted Result] field_schedules: #{result[:field_schedules]&.count || 'nil'}"
+          @logger.info "💾 [Save Adjusted Result] field_schedules: #{result.field_schedules.count}"
 
           used_crop_ids = Set.new
-          result[:field_schedules]&.each do |fs|
-            fs["allocations"]&.each do |alloc|
-              used_crop_ids.add(alloc["crop_id"])
+          result.field_schedules.each do |fs|
+            fs.allocations.each do |alloc|
+              used_crop_ids.add(alloc.crop_id)
             end
           end
           crop_by_id = ::Crop.where(id: used_crop_ids.to_a).index_by { |c| c.id.to_s }
@@ -28,9 +27,9 @@ module Adapters
           plan_crops_by_crop_id = cultivation_plan.cultivation_plan_crops.index_by { |pc| pc.crop.id.to_s }
 
           all_allocation_ids = []
-          result[:field_schedules]&.each do |fs|
-            fs["allocations"]&.each do |alloc|
-              all_allocation_ids << alloc["allocation_id"]
+          result.field_schedules.each do |fs|
+            fs.allocations.each do |alloc|
+              all_allocation_ids << alloc.resolved_allocation_raw
             end
           end
 
@@ -44,10 +43,8 @@ module Adapters
             raise I18n.t("controllers.agrr_optimization.errors.duplicate_allocation", ids: duplicates.join(", "))
           end
 
-          unless result[:field_schedules].present?
+          if result.field_schedules.empty?
             @logger.error "❌ [Save Adjusted Result] CRITICAL: field_schedules is empty"
-            @logger.error "❌ [Save Adjusted Result] Result keys: #{result.keys}"
-            @logger.error "❌ [Save Adjusted Result] Full result: #{result.inspect}"
             raise I18n.t("controllers.agrr_optimization.errors.result_empty")
           end
 
@@ -59,50 +56,45 @@ module Adapters
             existing_by_id = existing_fcs.index_by(&:id)
 
             desired_records = []
-            result[:field_schedules].each do |field_schedule|
-              field_id = field_schedule["field_id"]
+            result.field_schedules.each do |field_schedule|
+              field_id = field_schedule.field_id
               next unless field_id
               plan_field = plan_fields_by_id[field_id.to_i]
               unless plan_field
                 @logger.error "❌ [Save] CRITICAL: plan_field not found for field_id: #{field_id}"
                 @logger.error "❌ [Save] Available field_ids: #{cultivation_plan.cultivation_plan_fields.map(&:id)}"
-                @logger.error "❌ [Save] Field schedule: #{field_schedule.inspect}"
                 raise I18n.t("controllers.agrr_optimization.errors.field_missing", field_id: field_id)
               end
 
-              next unless field_schedule["allocations"]&.present?
-              field_schedule["allocations"].each do |allocation|
-                crop = crop_by_id[allocation["crop_id"]]
+              next if field_schedule.allocations.empty?
+              field_schedule.allocations.each do |allocation|
+                crop = crop_by_id[allocation.crop_id]
                 unless crop
-                  @logger.error "❌ [Save] CRITICAL: crop not found for crop_id: #{allocation['crop_id']}"
-                  @logger.error "❌ [Save] Available crop_ids: #{::Crop.pluck(:id)}"
-                  @logger.error "❌ [Save] Allocation details: #{allocation.inspect}"
-                  raise I18n.t("controllers.agrr_optimization.errors.crop_missing", crop_id: allocation["crop_id"])
+                  @logger.error "❌ [Save] CRITICAL: crop not found for crop_id: #{allocation.crop_id}"
+                  raise I18n.t("controllers.agrr_optimization.errors.crop_missing", crop_id: allocation.crop_id)
                 end
 
-                plan_crop = plan_crops_by_crop_id[allocation["crop_id"]]
+                plan_crop = plan_crops_by_crop_id[allocation.crop_id]
                 unless plan_crop
-                  @logger.error "❌ [Save] CRITICAL: plan_crop not found for crop_id: #{allocation['crop_id']}"
-                  @logger.error "❌ [Save] Available crop_ids: #{cultivation_plan.cultivation_plan_crops.map { |c| c.crop.id.to_s }}"
-                  @logger.error "❌ [Save] Allocation details: #{allocation.inspect}"
-                  raise I18n.t("controllers.agrr_optimization.errors.plan_crop_missing", crop_id: allocation["crop_id"])
+                  @logger.error "❌ [Save] CRITICAL: plan_crop not found for crop_id: #{allocation.crop_id}"
+                  raise I18n.t("controllers.agrr_optimization.errors.plan_crop_missing", crop_id: allocation.crop_id)
                 end
 
-                allocation_id_raw = allocation["allocation_id"] || allocation[:allocation_id] || allocation["id"] || allocation[:id]
+                allocation_id_raw = allocation.resolved_allocation_raw
                 allocation_id = allocation_id_raw.present? ? allocation_id_raw.to_i : nil
 
                 begin
-                  start_date = Date.parse(allocation["start_date"])
+                  start_date = Date.parse(allocation.start_date.to_s)
                 rescue ArgumentError
-                  @logger.error "❌ [Save] Invalid start_date format: #{allocation['start_date'].inspect}"
-                  raise ArgumentError, I18n.t("controllers.agrr_optimization.errors.start_date_invalid", value: allocation["start_date"].inspect, allocation_id: allocation_id_raw)
+                  @logger.error "❌ [Save] Invalid start_date format: #{allocation.start_date.inspect}"
+                  raise ArgumentError, I18n.t("controllers.agrr_optimization.errors.start_date_invalid", value: allocation.start_date.inspect, allocation_id: allocation_id_raw)
                 end
 
                 begin
-                  completion_date = Date.parse(allocation["completion_date"])
+                  completion_date = Date.parse(allocation.completion_date.to_s)
                 rescue ArgumentError
-                  @logger.error "❌ [Save] Invalid completion_date format: #{allocation['completion_date'].inspect}"
-                  raise ArgumentError, I18n.t("controllers.agrr_optimization.errors.completion_date_invalid", value: allocation["completion_date"].inspect, allocation_id: allocation_id_raw)
+                  @logger.error "❌ [Save] Invalid completion_date format: #{allocation.completion_date.inspect}"
+                  raise ArgumentError, I18n.t("controllers.agrr_optimization.errors.completion_date_invalid", value: allocation.completion_date.inspect, allocation_id: allocation_id_raw)
                 end
 
                 desired_records << {
@@ -114,12 +106,12 @@ module Adapters
                     start_date: start_date,
                     completion_date: completion_date,
                     cultivation_days: (completion_date - start_date).to_i + 1,
-                    area: allocation["area_used"] || allocation["area"],
-                    estimated_cost: allocation["total_cost"] || allocation["cost"],
+                    area: allocation.area_used || allocation.area,
+                    estimated_cost: allocation.total_cost || allocation.cost,
                     optimization_result: {
-                      revenue: allocation["expected_revenue"] || allocation["revenue"],
-                      profit: allocation["profit"],
-                      accumulated_gdd: allocation["accumulated_gdd"]
+                      revenue: allocation.expected_revenue || allocation.revenue,
+                      profit: allocation.profit,
+                      accumulated_gdd: allocation.accumulated_gdd
                     },
                     updated_at: now,
                     created_at: now
@@ -164,13 +156,13 @@ module Adapters
             end
 
             cultivation_plan.update!(
-              optimization_summary: result[:summary],
-              total_profit: result[:total_profit],
-              total_revenue: result[:total_revenue],
-              total_cost: result[:total_cost],
-              optimization_time: result[:optimization_time],
-              algorithm_used: result[:algorithm_used],
-              is_optimal: result[:is_optimal],
+              optimization_summary: result.summary,
+              total_profit: result.total_profit,
+              total_revenue: result.total_revenue,
+              total_cost: result.total_cost,
+              optimization_time: result.optimization_time,
+              algorithm_used: result.algorithm_used,
+              is_optimal: result.is_optimal,
               status: "completed"
             )
 

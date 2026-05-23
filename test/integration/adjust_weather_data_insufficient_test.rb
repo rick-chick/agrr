@@ -101,7 +101,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
-      result = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves)
+      result = CompositionRoot.plan_allocation_adjust_legacy(plan_id: @plan.id, moves: moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}"
       weather_prediction_service.verify
@@ -144,7 +144,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     # predict_for_cultivation_planは呼ばれない（既存データを再利用）
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
-      result = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves)
+      result = CompositionRoot.plan_allocation_adjust_legacy(plan_id: @plan.id, moves: moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}"
       weather_prediction_service.verify
@@ -197,7 +197,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service) do
-      result = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves)
+      result = CompositionRoot.plan_allocation_adjust_legacy(plan_id: @plan.id, moves: moves)
 
       assert result[:success], "修正処理が成功する必要がある。エラー: #{result[:message]}, ステータス: #{result[:status]}"
 
@@ -255,7 +255,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     end
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service1) do
-      result1 = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves1)
+      result1 = CompositionRoot.plan_allocation_adjust_legacy(plan_id: @plan.id, moves: moves1)
       assert result1[:success], "1回目の修正処理が成功する必要がある。エラー: #{result1[:message]}, ステータス: #{result1[:status]}"
       weather_prediction_service1.verify
     end
@@ -285,7 +285,7 @@ class AdjustWeatherDataInsufficientTest < ActiveSupport::TestCase
     # predict_for_cultivation_planは呼ばれない（既存データを再利用）
 
     Domain::WeatherData::Interactors::WeatherPredictionInteractor.stub(:new, weather_prediction_service2) do
-      result2 = CompositionRoot.adjust_with_db_weather_interactor.call(plan_id: @plan.id, moves: moves2)
+      result2 = CompositionRoot.plan_allocation_adjust_legacy(plan_id: @plan.id, moves: moves2)
 
       assert result2[:success], "2回目の修正処理が成功する必要がある。エラー: #{result2[:message]}, ステータス: #{result2[:status]}"
       weather_prediction_service2.verify

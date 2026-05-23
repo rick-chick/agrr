@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Gateways
-      # add_crop: adjust_with_db_weather 呼出しのみ（ホストブリッジ経由）。
+      # add_crop: plan_allocation_adjust 呼出しのみ（ホストブリッジ経由）。
       class CultivationPlanAddCropAdjustInvokeGateway
         def initialize(logger:)
           @logger = logger

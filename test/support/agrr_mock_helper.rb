@@ -130,7 +130,7 @@ module AgrrMockHelper
   # Adjust Gateway のモック化
   def mock_agrr_adjust_success
     Adapters::Agrr::Gateways::AdjustDaemonGateway.class_eval do
-      define_method(:adjust) do |current_allocation:, moves:, fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules:, objective:, enable_parallel:|
+      define_method(:adjust) do |current_allocation:, moves:, fields:, crops:, weather_data:, planning_start:, planning_end:, interaction_rules:, objective:, enable_parallel:, max_time: nil|
         # 既存の割り当てを基にモック結果を作成
         # moves が渡された場合は、該当する allocation の start_date を更新して返す（テストでの adjust 動作を簡易的に再現）
         field_schedules = current_allocation.dig(:optimization_result, :field_schedules) || []
@@ -184,21 +184,6 @@ module AgrrMockHelper
     end
   end
 
-  # ManualPlanAdjust 経路の AdjustWithDbWeatherInteractor をモック化
-  # adjust API の呼び出しをインターアクタ処理なしでモック返す
-  def stub_adjust_gateway
-    Domain::CultivationPlan::Interactors::AdjustWithDbWeatherInteractor.class_eval do
-      define_method(:call) do |plan_id:, moves:|
-        {
-          success: true,
-          status: :ok,
-          message: I18n.t("optimization.messages.adjust_completed"),
-          cultivation_plan: { id: plan_id }
-        }
-      end
-    end
-  end
-
   # 天気予測のモック (Minitest用)
   def stub_weather_prediction
     Adapters::Agrr::Gateways::PredictionDaemonGateway.class_eval do
@@ -235,9 +220,6 @@ module AgrrMockHelper
   end
 
   # すべてのAGRRコマンドをモック化（setup時に使用）
-  # stub_adjust_gateway は使用しない: Gateway の検証ロジック（成長段階チェック等）と
-  # AdjustWithDbWeatherInteractor の呼び出しを保持し、Python コマンド実行部分のみを
-  # mock_agrr_adjust_success でモック化するため。
   def stub_all_agrr_commands
     stub_fetch_crop_info
     stub_fetch_weather_data

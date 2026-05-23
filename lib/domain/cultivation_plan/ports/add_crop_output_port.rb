@@ -24,7 +24,7 @@ module Domain
           raise NotImplementedError
         end
 
-        # @param adjust_payload [Hash] adjust_with_db_weather の戻り（success / message / status 等）
+        # @param adjust_payload [Hash] plan_allocation_adjust の戻り（success / message / status 等）
         def on_adjust_failed(adjust_payload:)
           raise NotImplementedError
         end

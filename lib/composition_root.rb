@@ -215,20 +215,67 @@ module CompositionRoot
       }
     end
 
-    def adjust_with_db_weather_interactor(clock: Time.zone)
-      Domain::CultivationPlan::Interactors::AdjustWithDbWeatherInteractor.new(
+    def weather_prediction_interactor_factory
+      @weather_prediction_interactor_factory ||= Adapters::WeatherData::WeatherPredictionInteractorFactory.new(
+        cultivation_plan_gateway: cultivation_plan_gateway,
+        farm_gateway: farm_gateway,
+        weather_data_gateway: weather_data_gateway,
+        prediction_gateway: prediction_gateway,
+        logger: logger,
+        clock: Time.zone,
+        weather_location_dto_from_active_record: method(:weather_location_dto_from_active_record),
+        farm_weather_prediction_dto_from_active_record: method(:farm_weather_prediction_dto_from_active_record),
+        anchors_resolver_factory: lambda { |clock|
+          if clock.is_a?(ActiveSupport::TimeZone)
+            Adapters::WeatherData::Ports::RailsWeatherPredictionAnchorsAdapter.new(zone: clock)
+          else
+            raise ArgumentError,
+                  "weather_prediction_interactor_factory requires ActiveSupport::TimeZone clock (#{clock.class})"
+          end
+        }
+      )
+    end
+
+    def adjust_weather_prediction_gateway
+      @adjust_weather_prediction_gateway ||= Adapters::CultivationPlan::Gateways::AdjustWeatherPredictionActiveRecordGateway.new(
+        weather_prediction_interactor_factory: weather_prediction_interactor_factory
+      )
+    end
+
+    def plan_allocation_adjust_interactor_factory(clock: Time.zone)
+      Adapters::CultivationPlan::PlanAllocationAdjustInteractorFactory.new(
         logger: logger,
         translator: translator,
         clock: clock,
-        plan_gateway: Adapters::CultivationPlan::Gateways::AdjustWithDbWeatherPlanActiveRecordGateway.new(logger: logger),
-        weather_prediction_interactor_factory: lambda { |weather_location:, farm:|
-          weather_prediction_interactor(weather_location: weather_location, farm: farm, clock: clock)
-        },
+        plan_gateway: Adapters::CultivationPlan::Gateways::PlanAllocationAdjustPlanActiveRecordGateway.new(logger: logger),
+        weather_prediction_gateway: adjust_weather_prediction_gateway,
         agrr_adjust_gateway: agrr_adjust_gateway,
         save_adjusted_gateway: save_adjusted_agrr_result_gateway,
         optimization_events_gateway: cultivation_plan_rest_optimization_events_gateway,
-        debug_dump: adjust_with_db_weather_debug_dump(clock)
+        adjust_plan_growth_read_gateway: cultivation_plan_rest_adjust_plan_growth_read_gateway,
+        debug_dump_gateway: plan_allocation_adjust_debug_dump_gateway(clock: clock)
       )
+    end
+
+    def plan_allocation_adjust_debug_dump_gateway(clock: Time.zone)
+      if Rails.env.production?
+        Domain::CultivationPlan::Gateways::PlanAllocationAdjustDebugDumpNullGateway.new
+      else
+        Adapters::CultivationPlan::Gateways::PlanAllocationAdjustDebugDumpFileGateway.new(
+          logger: logger,
+          clock: clock,
+          root_path: Rails.root
+        )
+      end
+    end
+
+    # add_crop / integration 向けレガシー Hash 戻り（adapter collector 経由）
+    def plan_allocation_adjust_legacy(plan_id:, moves:, clock: Time.zone)
+      collector = Adapters::CultivationPlan::Ports::PlanAllocationAdjustLegacyHashCollector.new
+      plan_allocation_adjust_interactor_factory(clock: clock).build(output_port: collector).call(
+        Domain::CultivationPlan::Dtos::PlanAllocationAdjustInput.new(plan_id: plan_id, moves: moves)
+      )
+      collector.to_h
     end
 
     def private_plan_optimization_job_chain_builder
@@ -410,7 +457,7 @@ module CompositionRoot
     end
 
     def agrr_adjust_gateway
-      @agrr_adjust_gateway ||= Adapters::Agrr::Gateways::AdjustDaemonGateway.new
+      @agrr_adjust_gateway ||= Adapters::CultivationPlan::Gateways::PlanAdjustActiveRecordGateway.new
     end
 
     def agrr_candidates_gateway
@@ -862,29 +909,6 @@ module CompositionRoot
     end
 
     private
-
-    def adjust_with_db_weather_debug_dump(time_zone)
-      return nil if Rails.env.production?
-
-      log = logger
-      lambda do |current_allocation:, moves:, fields:, crops:|
-        debug_dir = Rails.root.join("tmp/debug")
-        FileUtils.mkdir_p(debug_dir)
-        ts = time_zone.now.to_i
-        debug_current_allocation_path = debug_dir.join("adjust_current_allocation_#{ts}.json")
-        debug_moves_path = debug_dir.join("adjust_moves_#{ts}.json")
-        debug_fields_path = debug_dir.join("adjust_fields_#{ts}.json")
-        debug_crops_path = debug_dir.join("adjust_crops_#{ts}.json")
-        File.write(debug_current_allocation_path, JSON.pretty_generate(current_allocation))
-        File.write(debug_moves_path, JSON.pretty_generate({ "moves" => moves }))
-        File.write(debug_fields_path, JSON.pretty_generate({ "fields" => fields }))
-        File.write(debug_crops_path, JSON.pretty_generate({ "crops" => crops }))
-        log.info "📁 [Adjust] Debug current_allocation saved to: #{debug_current_allocation_path}"
-        log.info "📁 [Adjust] Debug moves saved to: #{debug_moves_path}"
-        log.info "📁 [Adjust] Debug fields saved to: #{debug_fields_path}"
-        log.info "📁 [Adjust] Debug crops saved to: #{debug_crops_path}"
-      end
-    end
 
     def weather_location_dto_from_active_record(weather_location)
       Domain::WeatherData::Dtos::WeatherLocation.new(

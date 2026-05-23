@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Gateways
-      # adjust_with_db_weather 用: セッション内の CultivationPlan（AR はアダプター内に閉じる）へのアクセス。
-      class AdjustWithDbWeatherPlanGateway
+      # plan_allocation_adjust 用: セッション内の CultivationPlan（AR はアダプター内に閉じる）へのアクセス。
+      class PlanAllocationAdjustPlanGateway
         def begin_adjust_session!(plan_id)
           raise NotImplementedError, "#{self.class}##{__method__}"
         end

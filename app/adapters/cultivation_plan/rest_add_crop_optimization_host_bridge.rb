@@ -22,11 +22,8 @@ module Adapters
         )
       end
 
-      def adjust_with_db_weather(plan, moves)
-        CompositionRoot.adjust_with_db_weather_interactor.call(
-          plan_id: plan.id,
-          moves: moves
-        )
+      def plan_allocation_adjust(plan, moves)
+        CompositionRoot.plan_allocation_adjust_legacy(plan_id: plan.id, moves: moves)
       end
     end
   end

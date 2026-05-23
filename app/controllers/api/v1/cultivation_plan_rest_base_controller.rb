@@ -81,15 +81,14 @@ module Api
       # 不要な天気予測を実行しないことで高速化されています
       def adjust
         moves = Adapters::CultivationPlan::AdjustMovesFromRequest.normalize(params[:moves] || [])
-        Domain::CultivationPlan::Interactors::ManualPlanAdjustInteractor.new(
-          output: Adapters::CultivationPlan::Presenters::ManualPlanAdjustApiPresenter.new(view: self),
-          adjust_plan_growth_read_gateway: CompositionRoot.cultivation_plan_rest_adjust_plan_growth_read_gateway,
-          adjust_with_db_weather: CompositionRoot.adjust_with_db_weather_interactor,
-          logger: cultivation_plan_rest_logger
+        CompositionRoot.plan_allocation_adjust_interactor_factory.build(
+          output_port: Adapters::CultivationPlan::Presenters::PlanAllocationAdjustApiPresenter.new(view: self)
         ).call(
-          auth: cultivation_plan_rest_auth,
-          plan_id: params[:id].to_i,
-          moves: moves
+          Domain::CultivationPlan::Dtos::PlanAllocationAdjustInput.new(
+            plan_id: params[:id].to_i,
+            moves: moves,
+            auth: cultivation_plan_rest_auth
+          )
         )
       end
 

@@ -3,7 +3,7 @@
 module Adapters
   module CultivationPlan
     module Gateways
-      class AdjustWithDbWeatherPlanActiveRecordGateway < Domain::CultivationPlan::Gateways::AdjustWithDbWeatherPlanGateway
+      class PlanAllocationAdjustPlanActiveRecordGateway < Domain::CultivationPlan::Gateways::PlanAllocationAdjustPlanGateway
         ADJUST_INCLUDES = [
           :cultivation_plan_fields,
           { cultivation_plan_crops: :crop },

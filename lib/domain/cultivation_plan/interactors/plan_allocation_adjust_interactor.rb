@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # DB 上の天気で agrr adjust を回す主導線（旧 AgrrOptimization#adjust_with_db_weather）。
-      class AdjustWithDbWeatherInteractor
+      # 栽培計画の割当を agrr adjust で再最適化する（保存済み天気予測を再利用）。
+      class PlanAllocationAdjustInteractor
         WEATHER_PHASE_EXCEPTIONS = [
           Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
           Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError,
@@ -23,41 +23,52 @@ module Domain
 
         GENERAL_PERIOD_EXCEPTIONS = [ Date::Error, TypeError, NoMethodError, RangeError, ZeroDivisionError ].freeze
 
+        Failure = Dtos::PlanAllocationAdjustFailure
+        Output = Dtos::PlanAllocationAdjustOutput
+
         def initialize(
+          output_port:,
           logger:,
           translator:,
           clock:,
           plan_gateway:,
-          weather_prediction_interactor_factory:,
+          weather_prediction_gateway:,
           agrr_adjust_gateway:,
           save_adjusted_gateway:,
           optimization_events_gateway:,
-          debug_dump:
+          adjust_plan_growth_read_gateway:,
+          debug_dump_gateway:
         )
+          @output_port = output_port
           @logger = logger
           @translator = translator
           @clock = clock
           @plan_gateway = plan_gateway
-          @weather_prediction_interactor_factory = weather_prediction_interactor_factory
+          @weather_prediction_gateway = weather_prediction_gateway
           @agrr_adjust_gateway = agrr_adjust_gateway
           @save_adjusted_gateway = save_adjusted_gateway
           @optimization_events_gateway = optimization_events_gateway
-          @debug_dump = debug_dump
+          @adjust_plan_growth_read_gateway = adjust_plan_growth_read_gateway
+          @debug_dump_gateway = debug_dump_gateway
         end
 
-        # @param plan_id [Integer]
-        # @param moves [Array<Hash>]
-        # @return [Hash]
-        def call(plan_id:, moves:)
+        # @param input [Domain::CultivationPlan::Dtos::PlanAllocationAdjustInput]
+        def call(input)
+          return unless pass_growth_read_gate!(input) if input.rest_adjust?
+
+          plan_id = input.plan_id
+          moves = input.moves
           perf_start = @clock.now
-          @logger.info "⏱️ [PERF] adjust_with_db_weather() 開始: #{perf_start}"
+          @logger.info "⏱️ [PERF] plan_allocation_adjust() 開始: #{perf_start}"
 
           if moves.empty?
             @logger.info "ℹ️ [Adjust] 移動指示が空のため調整をスキップします"
-            return {
-              success: true,
-              message: "調整不要（移動指示なし）"
-            }
+            return @output_port.on_success(
+              output: Output.new(
+                message: "調整不要（移動指示なし）",
+                skipped: true
+              )
+            )
           end
 
           @plan_gateway.begin_adjust_session!(plan_id)
@@ -78,7 +89,7 @@ module Domain
           perf_after_crops = @clock.now
           @logger.info "⏱️ [PERF] 作物設定構築: #{((perf_after_crops - perf_after_fields) * 1000).round(2)}ms"
 
-          @debug_dump&.call(
+          @debug_dump_gateway.dump_payload!(
             current_allocation: current_allocation,
             moves: moves,
             fields: fields,
@@ -86,22 +97,23 @@ module Domain
           )
 
           if @plan_gateway.farm_without_weather_location?
-            return {
-              success: false,
-              message: @translator.translate("api.errors.no_weather_data"),
-              status: :not_found
-            }
+            return emit_failure(
+              Failure.new(
+                kind: Failure::KIND_NO_WEATHER_LOCATION,
+                message: @translator.translate("api.errors.no_weather_data")
+              )
+            )
           end
 
           effective_planning_start, effective_planning_end, period_failure =
             resolve_effective_planning_period(current_allocation, moves)
-          return period_failure if period_failure
+          return emit_failure(period_failure) if period_failure
 
           weather_data, weather_failure = fetch_and_merge_weather_data(
             effective_planning_end,
             effective_planning_start
           )
-          return weather_failure if weather_failure
+          return emit_failure(weather_failure) if weather_failure
 
           weather_data = normalize_nested_weather_data(weather_data)
 
@@ -112,7 +124,7 @@ module Domain
 
           effective_planning_start, effective_planning_end, period_failure_after =
             resolve_effective_planning_period(current_allocation, moves)
-          return period_failure_after if period_failure_after
+          return emit_failure(period_failure_after) if period_failure_after
 
           effective_planning_start = clamp_planning_start_to_weather!(
             weather_data,
@@ -132,11 +144,72 @@ module Domain
             perf_start: perf_start,
             perf_db_load: perf_db_load
           )
+        rescue StandardError => e
+          raise unless input.rest_adjust?
+
+          @logger.error "❌ [Adjust] Error: #{e.message}"
+          emit_failure(
+            Failure.new(
+              kind: Failure::KIND_UNEXPECTED,
+              message: e.message
+            )
+          )
         ensure
           @plan_gateway.end_adjust_session!
         end
 
         private
+
+        def pass_growth_read_gate!(input)
+          read = @adjust_plan_growth_read_gateway.load(auth: input.auth, plan_id: input.plan_id)
+
+          case read[:kind]
+          when :not_found
+            emit_failure(
+              Failure.new(
+                kind: Failure::KIND_NOT_FOUND,
+                message: @translator.translate("api.errors.common.not_found")
+              )
+            )
+            false
+          when :unexpected, :record_invalid
+            emit_failure(
+              Failure.new(
+                kind: Failure::KIND_UNEXPECTED,
+                message: read.fetch(:message)
+              )
+            )
+            false
+          when :success
+            read.fetch(:crop_rows).each do |row|
+              if row.growth_stage_count.zero?
+                emit_failure(
+                  Failure.new(
+                    kind: Failure::KIND_CROP_MISSING_GROWTH_STAGES,
+                    message: @translator.translate(
+                      "api.errors.cultivation_plan.crop_missing_growth_stages",
+                      crop_name: row.crop_name
+                    )
+                  )
+                )
+                return false
+              end
+            end
+            true
+          else
+            emit_failure(
+              Failure.new(
+                kind: Failure::KIND_UNEXPECTED,
+                message: "Unknown adjust growth read: #{read[:kind].inspect}"
+              )
+            )
+            false
+          end
+        end
+
+        def emit_failure(failure)
+          @output_port.on_failure(failure: failure)
+        end
 
         def resolve_effective_planning_period(current_allocation, moves)
           start_d, end_d = @plan_gateway.effective_planning_period(
@@ -151,22 +224,20 @@ module Domain
           [
             nil,
             nil,
-            {
-              success: false,
-              message: @translator.translate("api.errors.common.invalid_date_format", message: detail_message),
-              status: :bad_request
-            }
+            Failure.new(
+              kind: Failure::KIND_INVALID_DATE,
+              message: @translator.translate("api.errors.common.invalid_date_format", message: detail_message)
+            )
           ]
         rescue ArgumentError => e
           @logger.error "❌ [Adjust] Invalid date format in planning period calculation: #{e.message}"
           [
             nil,
             nil,
-            {
-              success: false,
-              message: @translator.translate("api.errors.common.invalid_date_format", message: e.message),
-              status: :bad_request
-            }
+            Failure.new(
+              kind: Failure::KIND_INVALID_DATE,
+              message: @translator.translate("api.errors.common.invalid_date_format", message: e.message)
+            )
           ]
         rescue *GENERAL_PERIOD_EXCEPTIONS => e
           @logger.error "❌ [Adjust] Failed to calculate planning period: #{e.class.name}: #{e.message}"
@@ -174,11 +245,10 @@ module Domain
           [
             nil,
             nil,
-            {
-              success: false,
-              message: @translator.translate("api.errors.optimization.calculate_period_failed", message: e.message),
-              status: :internal_server_error
-            }
+            Failure.new(
+              kind: Failure::KIND_CALCULATE_PERIOD_FAILED,
+              message: @translator.translate("api.errors.optimization.calculate_period_failed", message: e.message)
+            )
           ]
         end
 
@@ -213,7 +283,7 @@ module Domain
                   "気象データがありません。農場にWeatherLocationが設定されていません。"
           end
 
-          weather_prediction_service = @weather_prediction_interactor_factory.call(
+          weather_prediction_service = @weather_prediction_gateway.prediction_service(
             weather_location: weather_location,
             farm: farm
           )
@@ -280,11 +350,10 @@ module Domain
           @logger.error "❌ [Adjust] Failed to get weather data: #{e.message}"
           [
             nil,
-            {
-              success: false,
-              message: @translator.translate("api.errors.common.weather_fetch_failed", message: e.message),
-              status: :internal_server_error
-            }
+            Failure.new(
+              kind: Failure::KIND_WEATHER_FETCH_FAILED,
+              message: @translator.translate("api.errors.common.weather_fetch_failed", message: e.message)
+            )
           ]
         end
 
@@ -355,11 +424,7 @@ module Domain
           @logger.info "⏱️ [PERF] AdjustGateway.adjust() 呼び出し開始"
           @logger.info "📅 [Adjust] 計画期間: #{effective_planning_start} 〜 #{effective_planning_end} (制約として使用しない)"
 
-          interactor = AgrrAdjustInteractor.new(
-            gateway: @agrr_adjust_gateway,
-            logger: @logger
-          )
-          result = interactor.call(
+          result = @agrr_adjust_gateway.adjust(
             current_allocation: current_allocation,
             moves: moves,
             fields: fields,
@@ -377,7 +442,8 @@ module Domain
 
           if result && result[:field_schedules].present?
             perf_before_save = @clock.now
-            @save_adjusted_gateway.save_adjust_result!(plan_id: plan_id, result: result)
+            save_input = Dtos::SaveAdjustedAgrrResultInput.from_agrr_adjust_result_hash(result)
+            @save_adjusted_gateway.save_adjust_result!(plan_id: plan_id, result: save_input)
             perf_after_save = @clock.now
             @logger.info "⏱️ [PERF] DB保存完了: #{((perf_after_save - perf_before_save) * 1000).round(2)}ms"
 
@@ -399,33 +465,37 @@ module Domain
             )
 
             summary = @plan_gateway.plan_summary_for_adjust_response(plan_id: plan_id)
-            {
-              success: true,
-              message: @translator.translate("optimization.messages.adjust_completed"),
-              cultivation_plan: summary.merge(total_profit: result[:total_profit])
-            }
+            @output_port.on_success(
+              output: Output.new(
+                message: @translator.translate("optimization.messages.adjust_completed"),
+                cultivation_plan: summary.merge(total_profit: result[:total_profit])
+              )
+            )
           else
             @logger.error "❌ [Adjust] Result has no field_schedules"
-            {
-              success: false,
-              message: @translator.translate("api.errors.optimization.result_empty"),
-              status: :internal_server_error
-            }
+            emit_failure(
+              Failure.new(
+                kind: Failure::KIND_RESULT_EMPTY,
+                message: @translator.translate("api.errors.optimization.result_empty")
+              )
+            )
           end
         rescue ArgumentError => e
           @logger.error "❌ [Adjust] Invalid date format: #{e.message}"
-          {
-            success: false,
-            message: @translator.translate("api.errors.common.invalid_date_format", message: e.message),
-            status: :bad_request
-          }
-        rescue Adapters::Agrr::Gateways::BaseGateway::ExecutionError => e
+          emit_failure(
+            Failure.new(
+              kind: Failure::KIND_INVALID_DATE,
+              message: @translator.translate("api.errors.common.invalid_date_format", message: e.message)
+            )
+          )
+        rescue Domain::CultivationPlan::Errors::AdjustExecutionError => e
           @logger.error "❌ [Adjust] Failed to adjust: #{e.message}"
-          {
-            success: false,
-            message: @translator.translate("api.errors.optimization.adjust_failed", message: e.message),
-            status: :internal_server_error
-          }
+          emit_failure(
+            Failure.new(
+              kind: Failure::KIND_ADJUST_EXECUTION_FAILED,
+              message: @translator.translate("api.errors.optimization.adjust_failed", message: e.message)
+            )
+          )
         end
 
         def log_perf_summary(perf_start:, perf_db_load:, perf_before_adjust:, perf_after_adjust:, perf_before_save:, perf_after_save:, perf_end:)
