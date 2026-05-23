@@ -9,16 +9,12 @@ module Adapters
           f && Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(f)
         end
 
-        def find_by_farm_size_id(farm_size_id)
-          farm_sizes = [
-            { id: "home_garden", area_sqm: 30 },
-            { id: "community_garden", area_sqm: 50 },
-            { id: "rental_farm", area_sqm: 300 }
-          ]
+        def list_farm_sizes
+          Domain::PublicPlan::Catalog::FarmSizeCatalog.all
+        end
 
-          farm_sizes.find do |size|
-            size[:id].to_s == farm_size_id.to_s || size[:area_sqm] == farm_size_id.to_i
-          end
+        def find_by_farm_size_id(farm_size_id)
+          Domain::PublicPlan::Catalog::FarmSizeCatalog.find_by_id(farm_size_id)
         end
 
         def list_by_ids(crop_ids, region = nil)

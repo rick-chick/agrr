@@ -45,9 +45,14 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
         }
       end
     }) do
-      @controller.stub(:public_plan_render_select_crop_no_crops_failure!, ->(**_kw) {
-        @controller.flash.now[:alert] = I18n.t("public_plans.errors.select_crop")
-        @controller.render(inline: "<h2>stubbed</h2><p class='alert'>#{I18n.t('public_plans.errors.select_crop')}</p>", status: :unprocessable_entity)
+      controller = @controller
+      Adapters::PublicPlan::Presenters::PublicPlanWizardSelectCropNoCropsHtmlPresenter.stub(:new, ->(**_kw) {
+        Object.new.tap do |obj|
+          obj.define_singleton_method(:render_failure!) { |_args|
+            controller.flash.now[:alert] = I18n.t("public_plans.errors.select_crop")
+            controller.render(inline: "<h2>stubbed</h2><p class='alert'>#{I18n.t('public_plans.errors.select_crop')}</p>", status: :unprocessable_entity)
+          }
+        end
       }) do
 
         # 作物未選択でPOST
@@ -317,19 +322,10 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
 
   test "地域コードの変換が正しく動作する" do
-    controller = PublicPlansController.new
-
-    # 日本語ロケール
-    assert_equal "jp", controller.send(:locale_to_region, :ja)
-
-    # 英語ロケール
-    assert_equal "us", controller.send(:locale_to_region, :us)
-
-    # インドロケール
-    assert_equal "in", controller.send(:locale_to_region, :in)
-
-    # デフォルト（不明なロケール）
-    assert_equal "jp", controller.send(:locale_to_region, :unknown)
+    assert_equal "jp", Domain::Shared::Mappers::LocaleToRegionMapper.call(:ja)
+    assert_equal "us", Domain::Shared::Mappers::LocaleToRegionMapper.call(:us)
+    assert_equal "in", Domain::Shared::Mappers::LocaleToRegionMapper.call(:in)
+    assert_equal "jp", Domain::Shared::Mappers::LocaleToRegionMapper.call(:unknown)
   end
 
   test "農場の件数制限に達している場合にエラーメッセージが表示される" do
@@ -558,21 +554,18 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 end
 
 class PublicPlansControllerFarmSizesTest < ActiveSupport::TestCase
-  test "農場サイズの定数が正しく定義されている" do
-    farm_sizes = PublicPlansController.farm_sizes
+  test "農場サイズカタログが正しく定義されている" do
+    farm_sizes = Domain::PublicPlan::Catalog::FarmSizeCatalog.all
     assert_equal 3, farm_sizes.length
 
-    # home_garden
     home_garden = farm_sizes.find { |size| size[:id] == "home_garden" }
     assert_not_nil home_garden
     assert_equal 30, home_garden[:area_sqm]
 
-    # community_garden
     community_garden = farm_sizes.find { |size| size[:id] == "community_garden" }
     assert_not_nil community_garden
     assert_equal 50, community_garden[:area_sqm]
 
-    # rental_farm
     rental_farm = farm_sizes.find { |size| size[:id] == "rental_farm" }
     assert_not_nil rental_farm
     assert_equal 300, rental_farm[:area_sqm]

@@ -3,7 +3,7 @@
 module Adapters
   module PublicPlan
     module Presenters
-      class PublicPlanWizardCropStepHtmlPresenter < Domain::PublicPlan::Ports::PublicPlanWizardCropStepOutputPort
+      class PublicPlanWizardSelectCropHtmlPresenter < Domain::PublicPlan::Ports::PublicPlanWizardSelectCropOutputPort
         def initialize(view:)
           @view = view
         end
@@ -21,8 +21,16 @@ module Adapters
                              alert: I18n.t("public_plans.errors.select_farm_size")
         end
 
-        def on_success(farm:)
-          @view.instance_variable_set(:@farm, farm)
+        def on_success(dto)
+          key = @view.class.session_key
+          existing = (@view.session[key] || {}).with_indifferent_access
+          @view.session[key] = existing.merge(dto.session_patch)
+          @view.instance_variable_set(:@farm, dto.farm)
+          @view.instance_variable_set(
+            :@farm_size,
+            Adapters::PublicPlan::Mappers::FarmSizeI18nMapper.enrich_one(dto.farm_size)
+          )
+          @view.instance_variable_set(:@crops, dto.crops)
         end
       end
     end

@@ -24,6 +24,12 @@ module Adapters
           assert_nil @gateway.find_by_farm_id(999_999_999)
         end
 
+        test "list_farm_sizes returns catalog entries" do
+          sizes = @gateway.list_farm_sizes
+          assert_equal 3, sizes.size
+          assert_equal "home_garden", sizes.first[:id]
+        end
+
         test "find_by_farm_size_id resolves by id string" do
           size = @gateway.find_by_farm_size_id("home_garden")
 

@@ -16,10 +16,9 @@ module Adapters
         end
 
         def on_no_crops_failure(view_context)
-          farm_size = farm_size_with_i18n(view_context.farm_size)
-          @view.public_plan_render_select_crop_no_crops_failure!(
+          Adapters::PublicPlan::Presenters::PublicPlanWizardSelectCropNoCropsHtmlPresenter.new(view: @view).render_failure!(
             farm: view_context.farm,
-            farm_size: farm_size,
+            farm_size: view_context.farm_size,
             crops: view_context.crops
           )
         end
@@ -30,14 +29,6 @@ module Adapters
         end
 
         private
-
-        def farm_size_with_i18n(farm_size)
-          id = farm_size[:id].to_s
-          catalog_entry = @view.farm_sizes_with_i18n.find { |fs| fs[:id].to_s == id }
-          return farm_size.merge(catalog_entry.slice(:name, :description)) if catalog_entry
-
-          farm_size
-        end
 
         def failure_alert_for_message(msg)
           case msg

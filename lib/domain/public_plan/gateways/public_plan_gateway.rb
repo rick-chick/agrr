@@ -8,6 +8,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_by_farm_id"
         end
 
+        def list_farm_sizes
+          raise NotImplementedError, "Subclasses must implement list_farm_sizes"
+        end
+
         def find_by_farm_size_id(farm_size_id)
           raise NotImplementedError, "Subclasses must implement find_by_farm_size_id"
         end
