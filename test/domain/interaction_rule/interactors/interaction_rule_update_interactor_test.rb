@@ -6,9 +6,9 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleUpdateInteractorTest < DomainLibTestCase
-        test "calls on_failure with policy exception when find_authorized_for_edit denies" do
+        test "calls on_failure with policy exception when interactor denies edit" do
           user_id = 10
-          user = Object.new
+          user = stub(id: user_id, admin?: false)
           dto = Domain::InteractionRule::Dtos::InteractionRuleUpdateInput.new(
             id: 9,
             source_group: "変更しようとしたグループ"
@@ -17,12 +17,9 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
+          current = stub(reference?: false, user_id: 99)
           gateway = mock
-          gateway.expects(:find_authorized_for_edit).with(
-            user,
-            9,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          gateway.expects(:find_by_id).with(9).returns(current)
           gateway.expects(:update_for_user).never
 
           received = nil
@@ -52,8 +49,9 @@ module Domain
           translator = Object.new
           def translator.t(key) = key
 
+          current = stub(reference?: false, user_id: 10)
           gateway = mock
-          gateway.expects(:find_authorized_for_edit).returns(stub(reference?: false))
+          gateway.expects(:find_by_id).with(9).returns(current)
           gateway.expects(:update_for_user).never
 
           received = nil
@@ -80,8 +78,9 @@ module Domain
           user_lookup = mock
           user_lookup.expects(:find).with(10).returns(user)
 
+          current = stub(reference?: false, user_id: 10)
           gateway = mock
-          gateway.expects(:find_authorized_for_edit).returns(stub(reference?: false))
+          gateway.expects(:find_by_id).with(9).returns(current)
           gateway.expects(:update_for_user).with do |_user, _id, normalized, **|
             assert_equal "us", normalized[:region]
             true
@@ -106,8 +105,9 @@ module Domain
           user_lookup = mock
           user_lookup.expects(:find).with(10).returns(user)
 
+          current = stub(reference?: false, user_id: 10)
           gateway = mock
-          gateway.expects(:find_authorized_for_edit).returns(stub(reference?: false))
+          gateway.expects(:find_by_id).with(9).returns(current)
           gateway.expects(:update_for_user).with do |_user, _id, normalized, **|
             assert_not normalized.key?(:region)
             true

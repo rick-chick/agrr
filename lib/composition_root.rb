@@ -787,7 +787,8 @@ module CompositionRoot
     def deletion_undo_schedule_interactor(output_port:)
       Domain::DeletionUndo::Interactors::DeletionUndoScheduleInteractor.new(
         output_port: output_port,
-        gateway: deletion_undo_gateway
+        gateway: deletion_undo_gateway,
+        user_lookup: user_lookup
       )
     end
 

@@ -8,9 +8,9 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < DomainLibTestCase
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
 
-    crop = mock
+    crop = stub(is_reference: false, user_id: 1)
     gateway = mock
-    gateway.expects(:find_authorized_for_edit).with(user, 9, access_filter: anything).returns(crop)
+    gateway.expects(:find_by_id).with(9).returns(crop)
 
     regeneration_gateway = mock
     regeneration_gateway.expects(:regenerate_from_crop!).with(crop_id: 9)
@@ -35,9 +35,9 @@ class CropRegenerateTaskScheduleBlueprintsInteractorTest < DomainLibTestCase
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
 
-    crop = mock
+    crop = stub(is_reference: false, user_id: 1)
     gateway = mock
-    gateway.expects(:find_authorized_for_edit).with(user, 9, access_filter: anything).returns(crop)
+    gateway.expects(:find_by_id).with(9).returns(crop)
 
     regeneration_gateway = mock
     regeneration_gateway.expects(:regenerate_from_crop!).raises(Domain::Crop::Exceptions::BlueprintRegenerationFromAgrrFailed.new("x"))

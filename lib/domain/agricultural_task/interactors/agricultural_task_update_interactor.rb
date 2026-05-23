@@ -15,7 +15,8 @@ module Domain
         def call(update_input_dto)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
-          current = @gateway.find_authorized_for_edit(user, update_input_dto.id, access_filter: access_filter)
+          current = @gateway.find_by_id(update_input_dto.id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
 
           reference_flag_msg = nil
           unless update_input_dto.is_reference.nil?
@@ -51,7 +52,6 @@ module Domain
             user,
             update_input_dto.id,
             normalized,
-            access_filter: access_filter,
             selected_crop_ids: sync_ids
           )
 

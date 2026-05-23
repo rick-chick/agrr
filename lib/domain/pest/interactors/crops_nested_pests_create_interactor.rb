@@ -16,14 +16,17 @@ module Domain
         # @param pest_attrs [Hash] Pest.new に渡す属性（permited）
         def call(crop_id:, link_pest_id:, pest_attrs:)
           user = @user_lookup.find(@user_id)
-          crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          crop = @pest_gateway.find_crop_entity_by_id(crop_id)
+          unless crop
+            return @output_port.on_invalid(crop_id: crop_id, pest_snapshot: nil, unassociated_pest_entities: [])
+          end
+          Domain::Shared::Policies::CropNestedPestsAccess.assert_allowed!(user, crop)
 
           if link_pest_id.present?
             status = @pest_gateway.link_pest_to_crop(
               crop_id: crop_id,
               pest_id: link_pest_id,
-              user: user,
-              crop_access_filter: crop_access_filter
+              user: user
             )
             case status
             when :already_linked then return @output_port.on_already_linked(crop_id: crop_id)
@@ -43,8 +46,7 @@ module Domain
           result = @pest_gateway.create_pest_for_crop(
             user: user,
             crop_id: crop_id,
-            pest_attrs: normalized_attrs,
-            crop_access_filter: crop_access_filter
+            pest_attrs: normalized_attrs
           )
           case result.status
           when :created
@@ -52,6 +54,8 @@ module Domain
           when :invalid
             @output_port.on_invalid(crop_id: crop_id, pest_snapshot: result.crop_nest_snapshot, unassociated_pest_entities: result.unassociated_pest_entities)
           end
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @output_port.on_invalid(crop_id: crop_id, pest_snapshot: nil, unassociated_pest_entities: [])
         end
       end
     end

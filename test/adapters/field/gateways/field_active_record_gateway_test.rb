@@ -6,15 +6,14 @@ module Adapters
   module Field
     module Gateways
       class FieldActiveRecordGatewayTest < ActiveSupport::TestCase
-        test "authorized_farm_fields_list applies farm_access_filter for scope" do
+        test "farm_fields_list returns fields for farm" do
           user = create(:user)
           farm = create(:farm, user: user)
           create(:field, farm: farm, user: user, name: "North")
 
           gateway = CompositionRoot.field_gateway
-          filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
 
-          list = gateway.authorized_farm_fields_list(farm.id, farm_access_filter: filter)
+          list = gateway.farm_fields_list(farm.id)
 
           assert_kind_of Domain::Field::Results::FarmFieldsList, list
           assert_equal 1, list.fields.size

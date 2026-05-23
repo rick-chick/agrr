@@ -28,7 +28,11 @@ module Domain
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
 
           begin
-            @gateway.find_authorized_for_edit(user, @crop_id, access_filter: access_filter)
+            crop_entity = @gateway.find_by_id(@crop_id)
+            Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, crop_entity)
+          rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+            @output_port.on_failure(e)
+            return
           rescue Domain::Shared::Exceptions::RecordNotFound
             @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("crops.flash.not_found")))
             return

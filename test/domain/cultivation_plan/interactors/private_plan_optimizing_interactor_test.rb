@@ -4,9 +4,10 @@ require "domain_lib_test_helper"
 
 class PrivatePlanOptimizingInteractorTest < DomainLibTestCase
   test "call passes dto from gateway to on_success" do
-    user = mock
+    user = domain_user_stub(id: 3, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
+    stub_plan_access_find_private_owned!(user, 10)
 
     read_model = Domain::CultivationPlan::Dtos::PrivatePlanOptimizingSnapshot.new(
       id: 10,
@@ -45,18 +46,16 @@ class PrivatePlanOptimizingInteractorTest < DomainLibTestCase
     ).call
   end
 
-  test "call forwards PolicyPermissionDenied to on_failure with not_found message" do
-    user = mock
+  test "maps PlanAccess denial to on_failure with not_found message" do
+    user = domain_user_stub(id: 3, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
-
+    stub_plan_access_find_private_owned!(user, 10, error: Domain::Shared::Policies::PolicyPermissionDenied.new)
     gateway = mock
-    gateway.expects(:private_plan_optimizing_snapshot).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+    gateway.expects(:private_plan_optimizing_snapshot).never
 
     translator = mock
     translator.expects(:t).with("plans.errors.not_found").returns("見つかりません")
-
-    logger = mock
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -70,45 +69,16 @@ class PrivatePlanOptimizingInteractorTest < DomainLibTestCase
       plan_id: 10,
       gateway: gateway,
       translator: translator,
-      logger: logger,
-      user_lookup: user_lookup
-    ).call
-  end
-
-  test "call forwards RecordNotFound to on_failure with not_found message" do
-    user = mock
-    user_lookup = mock
-    user_lookup.expects(:find).with(3).returns(user)
-
-    gateway = mock
-    gateway.expects(:private_plan_optimizing_snapshot).raises(Domain::Shared::Exceptions::RecordNotFound.new("x"))
-
-    translator = mock
-    translator.expects(:t).with("plans.errors.not_found").returns("見つかりません")
-
-    logger = mock
-
-    output = mock
-    output.expects(:on_failure).with do |err|
-      assert_equal "見つかりません", err.message
-      true
-    end
-
-    Domain::CultivationPlan::Interactors::PrivatePlanOptimizingInteractor.new(
-      output_port: output,
-      user_id: 3,
-      plan_id: 10,
-      gateway: gateway,
-      translator: translator,
-      logger: logger,
+      logger: mock,
       user_lookup: user_lookup
     ).call
   end
 
   test "propagates unexpected StandardError from gateway" do
-    user = mock
+    user = domain_user_stub(id: 3, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
+    stub_plan_access_find_private_owned!(user, 10)
 
     gateway = mock
     gateway.expects(:private_plan_optimizing_snapshot).raises(StandardError.new("internal"))

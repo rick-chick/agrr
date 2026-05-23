@@ -35,8 +35,9 @@ module Domain
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           current_pest = mock
           current_pest.expects(:reference?).at_least_once.returns(false)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_pest)
-          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash), access_filter: anything).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
+          current_pest.stubs(:user_id).returns(@user_id)
+          @mock_gateway.expects(:find_by_id).with(1).returns(current_pest)
+          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
           @mock_gateway.expects(:pest_master_form_crop_selection_bundle!).with do |**kwargs|
             assert_equal @user, kwargs[:user]
             assert_equal [2], kwargs[:request_crop_ids]
@@ -59,7 +60,7 @@ module Domain
           input_dto = Domain::Pest::Dtos::PestUpdateInput.new(pest_id: 1, name: "x")
 
           @mock_user_lookup.expects(:find).with(@user_id).raises(StandardError, "no user")
-          @mock_gateway.expects(:find_authorized_for_edit).never
+          @mock_gateway.expects(:find_by_id).never
           @mock_gateway.expects(:update_for_user).never
           @mock_gateway.expects(:pest_master_form_crop_selection_bundle!).never
 
@@ -74,8 +75,9 @@ module Domain
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           current_pest = mock
           current_pest.expects(:reference?).at_least_once.returns(false)
-          @mock_gateway.expects(:find_authorized_for_edit).with(@user, 1, access_filter: anything).returns(current_pest)
-          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash), access_filter: anything).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
+          current_pest.stubs(:user_id).returns(@user_id)
+          @mock_gateway.expects(:find_by_id).with(1).returns(current_pest)
+          @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
           @mock_gateway.expects(:pest_master_form_crop_selection_bundle!).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("reload failed")
           )
@@ -95,9 +97,10 @@ module Domain
           input_dto = Domain::Pest::Dtos::PestUpdateInput.new(pest_id: 1, is_reference: true)
           current = mock
           current.stubs(:reference?).returns(false)
+          current.stubs(:user_id).returns(1)
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(non_admin)
-          @mock_gateway.expects(:find_authorized_for_edit).with(non_admin, 1, access_filter: anything).returns(current)
+          @mock_gateway.expects(:find_by_id).with(1).returns(current)
           @mock_gateway.expects(:update_for_user).never
           @mock_gateway.expects(:pest_master_form_crop_selection_bundle!).never
           @mock_translator.stubs(:t).with("pests.flash.reference_flag_admin_only")

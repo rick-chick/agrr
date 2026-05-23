@@ -55,43 +55,15 @@ module Adapters
           assert_includes @pest.crops, @crop2
         end
 
-        test "link_pest_to_crop returns missing when crop is not authorized by crop_access_filter" do
-          filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
-          status = @gw.link_pest_to_crop(
-            crop_id: @other_user_crop.id,
-            pest_id: @pest.id,
-            user: @user,
-            crop_access_filter: filter
-          )
-
-          assert_equal :missing, status
-        end
-
-        test "link_pest_to_crop links when crop is authorized" do
-          filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
-          # ユーザー害虫を自分の作物に紐づけ
+        test "link_pest_to_crop links when crop is accessible per PestCropAssociationAccess" do
           status = @gw.link_pest_to_crop(
             crop_id: @crop1.id,
             pest_id: @pest.id,
-            user: @user,
-            crop_access_filter: filter
+            user: @user
           )
 
           assert_equal :linked, status
           assert_includes @crop1.reload.pests, @pest
-        end
-
-        test "link_pest_to_crop returns forbidden when reference pest links to user crop" do
-          filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
-          ref_pest = create(:pest, is_reference: true, user_id: nil)
-          status = @gw.link_pest_to_crop(
-            crop_id: @crop1.id,
-            pest_id: ref_pest.id,
-            user: @user,
-            crop_access_filter: filter
-          )
-
-          assert_equal :forbidden, status
         end
 
         test "pest_master_form_crop_selection_bundle! returns CropEntity cards without ActiveRecord in bundle" do

@@ -15,12 +15,12 @@ module Domain
         def call(rule_id:, for_edit:)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::InteractionRulePolicy.record_access_filter(user)
-          rule_entity =
-            if for_edit
-              @gateway.find_authorized_for_edit(user, rule_id, access_filter: access_filter)
-            else
-              @gateway.find_authorized_for_view(user, rule_id, access_filter: access_filter)
-            end
+          rule_entity = @gateway.find_by_id(rule_id)
+          if for_edit
+            Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, rule_entity)
+          else
+            Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, rule_entity)
+          end
           @output_port.on_success(rule_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(:no_permission)

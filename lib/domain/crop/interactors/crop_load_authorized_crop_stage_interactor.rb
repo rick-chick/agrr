@@ -17,13 +17,17 @@ module Domain
         def call(crop_id, crop_stage_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          @gateway.find_authorized_crop_with_crop_stage_bundle!(
-            user,
+          bundle = @gateway.find_crop_with_crop_stage_bundle!(
             crop_id.to_i,
             crop_stage_id.to_i,
-            for_edit: @for_edit,
-            access_filter: access_filter
+            for_edit: @for_edit
           )
+          if @for_edit
+            Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, bundle.crop_entity)
+          else
+            Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, bundle.crop_entity)
+          end
+          bundle
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @failure_presenter.on_not_found
           nil

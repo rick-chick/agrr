@@ -5,16 +5,16 @@ require "domain_lib_test_helper"
 class FertilizeDestroyInteractorTest < DomainLibTestCase
   test "calls on_failure with policy exception when permission denied" do
     user_id = 10
-    user = Object.new
+    user = domain_user_stub(id: user_id, admin: false)
     fertilize_id = 7
+    fertilize_entity = domain_record_entity_stub(user_id: 99, is_reference: false)
 
     user_lookup = Minitest::Mock.new
     user_lookup.expect(:find, user, [ user_id ])
 
-    gateway = Object.new
-    gateway.define_singleton_method(:soft_delete_with_undo) do |*_args, **_kw|
-      raise Domain::Shared::Policies::PolicyPermissionDenied
-    end
+    gateway = mock
+    gateway.expects(:find_by_id).with(fertilize_id).returns(fertilize_entity)
+    gateway.expects(:soft_delete_with_undo).never
 
     received = nil
     output_port = Minitest::Mock.new

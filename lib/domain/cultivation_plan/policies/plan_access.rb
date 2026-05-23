@@ -10,7 +10,8 @@ module Domain
         end
 
         def self.find_private_owned!(user, id)
-          plan = ::CultivationPlan.find(id)
+          plan = ::CultivationPlan.find_by(id: id)
+          raise Domain::Shared::Exceptions::RecordNotFound, "CultivationPlan not found" unless plan
 
           allowed = plan.plan_type_private? && plan.user_id == user.id
           raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
@@ -23,7 +24,8 @@ module Domain
         end
 
         def self.find_public!(id)
-          plan = ::CultivationPlan.find(id)
+          plan = ::CultivationPlan.find_by(id: id)
+          raise Domain::Shared::Exceptions::RecordNotFound, "CultivationPlan not found" unless plan
 
           raise Domain::Shared::Policies::PolicyPermissionDenied unless plan.plan_type_public?
 

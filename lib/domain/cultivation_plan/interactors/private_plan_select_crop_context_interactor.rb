@@ -18,10 +18,8 @@ module Domain
         def call
           user = @user_lookup.find(@user_id)
           # 農場＋圃場は FieldGateway 1 経路で取得（view 用の farm find と二重に叩かない）
-          fields_result = @field_gateway.authorized_farm_fields_list(
-            @farm_id,
-            farm_access_filter: Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          )
+          fields_result = @field_gateway.farm_fields_list(@farm_id)
+          Domain::Field::Policies::FieldAccess.assert_farm_fields_list_allowed!(user, fields_result.farm)
           farm = fields_result.farm
           total_area = fields_result.fields.sum { |f| f.area.to_f }
           crops = @crop_gateway.list_user_owned_non_reference_crops_ordered_by_name(user)

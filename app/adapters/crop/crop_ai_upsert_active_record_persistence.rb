@@ -71,7 +71,8 @@ module Adapters
         return nil if crop_id.nil? || crop_id.to_s.strip.empty?
 
         begin
-          @crop_gateway.find_authorized_for_edit(user_dto, crop_id, access_filter: crop_access_filter)
+          entity = @crop_gateway.find_by_id(crop_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(crop_access_filter, entity)
           ::Crop.find(crop_id)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
           nil

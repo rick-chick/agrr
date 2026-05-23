@@ -49,15 +49,16 @@ module Domain
             updated_at: nil
           )
 
+          crop_entity = domain_record_entity_stub(user_id: @user_id, is_reference: false)
+
           @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_pest_gateway.expects(:pest_selectable_by_user?).with(@user, @pest_id).returns(true)
-          crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
+          @mock_pest_gateway.expects(:find_crop_entity_by_id).with(@crop_id).returns(crop_entity)
           @mock_pest_gateway.expects(:link_pest_to_crop).with(
             crop_id: @crop_id,
             pest_id: @pest_id,
-            user: @user,
-            crop_access_filter: crop_access_filter
+            user: @user
           ).returns(:linked)
           @mock_output_port.expects(:on_success).with(crop_id: @crop_id, pest_id: @pest_id)
 

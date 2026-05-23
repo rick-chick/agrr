@@ -22,7 +22,9 @@ module Domain
 
           normalized = Domain::Shared::Policies::FarmPolicy.normalize_attrs_for_update(user, {}, attrs)
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          farm_entity = @gateway.update_for_user(user, input_dto.farm_id, normalized, access_filter: access_filter)
+          current = @gateway.find_by_id(input_dto.farm_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
+          farm_entity = @gateway.update_for_user(user, input_dto.farm_id, normalized)
 
           @output_port.on_success(farm_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

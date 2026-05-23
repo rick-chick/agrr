@@ -21,6 +21,11 @@ module Domain
 
           fetch_args = {}
           gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+          )
           gateway.define_singleton_method(:find_climate_data) do |field_cultivation_id:, display_start_date:, display_end_date:|
             fetch_args[:field_cultivation_id] = field_cultivation_id
             fetch_args[:display_start_date] = display_start_date
@@ -58,6 +63,11 @@ module Domain
         test "routes RecordNotFound through the output port" do
           fc_id = 42
           gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+          )
           gateway.define_singleton_method(:find_climate_data) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
@@ -88,6 +98,11 @@ module Domain
         test "routes missing climate data through the output port" do
           fc_id = 99
           gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+          )
           gateway.define_singleton_method(:find_climate_data) do |_kwargs|
             nil
           end
@@ -116,11 +131,12 @@ module Domain
         end
 
         def user_lookup_stub(expected_user_id)
+          user = domain_user_stub(id: expected_user_id, admin: false)
           lookup = Object.new
           lookup.define_singleton_method(:find) do |id|
             raise "unexpected user id #{id.inspect}" unless id == expected_user_id
 
-            Struct.new(:id).new(id)
+            user
           end
           lookup
         end

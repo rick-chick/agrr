@@ -22,8 +22,19 @@ module Adapters
           @prediction_gateway = prediction_gateway
         end
 
+        def find_plan_access_context(field_cultivation_id)
+          fc = find_field_cultivation_model!(field_cultivation_id)
+          plan = fc.cultivation_plan
+          Domain::FieldCultivation::Dtos::FieldCultivationPlanAccessContext.new(
+            field_cultivation_id: fc.id,
+            plan_type_public: plan.plan_type_public?,
+            plan_type_private: plan.plan_type_private?,
+            plan_user_id: plan.user_id
+          )
+        end
+
         def find_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
-          field_cultivation = authorized_field_cultivation(field_cultivation_id)
+          field_cultivation = find_field_cultivation_model!(field_cultivation_id)
           plan = field_cultivation.cultivation_plan
           farm = plan.farm
 
@@ -68,7 +79,7 @@ module Adapters
         end
 
         def climate_data_fallback_dto(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
-          field_cultivation = authorized_field_cultivation(field_cultivation_id)
+          field_cultivation = find_field_cultivation_model!(field_cultivation_id)
           plan = field_cultivation.cultivation_plan
           farm = plan.farm
           weather_location = farm.weather_location
@@ -124,7 +135,7 @@ module Adapters
         end
 
         def find_api_summary(field_cultivation_id:)
-          fc = authorized_field_cultivation(field_cultivation_id)
+          fc = find_field_cultivation_model!(field_cultivation_id)
           Domain::FieldCultivation::Dtos::FieldCultivationApiSummary.new(
             id: fc.id,
             field_name: fc.field_display_name,
@@ -140,7 +151,7 @@ module Adapters
         end
 
         def update_field_cultivation_schedule(field_cultivation_id:, start_date:, completion_date:, public_plan: false)
-          fc = authorized_field_cultivation(field_cultivation_id)
+          fc = find_field_cultivation_model!(field_cultivation_id)
           unless fc.update(start_date: start_date, completion_date: completion_date)
             raise Domain::Shared::Exceptions::RecordInvalid.new(nil, errors: fc.errors.full_messages)
           end
@@ -212,22 +223,9 @@ module Adapters
           )
         end
 
-        def find_authorized_field_cultivation(field_cultivation_id)
-          field_cultivation = begin
-            ::FieldCultivation.find(field_cultivation_id)
-          rescue ActiveRecord::RecordNotFound
-            raise Domain::Shared::Exceptions::RecordNotFound
-          end
-          plan = field_cultivation.cultivation_plan
-          allowed = plan.plan_type_public? || (plan.plan_type_private? && plan.user_id == @current_user.id)
-          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
-          field_cultivation
-        end
-
-        # 計画の公開／私有と所有者条件を満たさない場合は PolicyPermissionDenied（下で RecordNotFound に正規化）
-        def authorized_field_cultivation(field_cultivation_id)
-          find_authorized_field_cultivation(field_cultivation_id)
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
+        def find_field_cultivation_model!(field_cultivation_id)
+          ::FieldCultivation.find(field_cultivation_id)
+        rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound
         end
 

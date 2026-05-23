@@ -5,10 +5,14 @@ module Domain
     module Policies
       # 圃場のアクセス。旧 FieldPolicy と同一ルール。
       class FieldAccess
-        def self.scope_for_farm(user, farm)
-          raise Domain::Shared::Policies::PolicyPermissionDenied unless farm.user_id == user.id || user.admin?
+        def self.assert_farm_fields_list_allowed!(user, farm_entity)
+          allowed = user.admin? || farm_entity.user_id == user.id
+          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
+        end
 
-          farm.fields
+        def self.assert_field_edit_on_farm_allowed!(user, farm_entity)
+          access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, farm_entity)
         end
 
         def self.find_owned!(user, id)

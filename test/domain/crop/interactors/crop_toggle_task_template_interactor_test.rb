@@ -8,9 +8,9 @@ class CropToggleTaskTemplateInteractorTest < DomainLibTestCase
     user_lookup = mock
     user_lookup.expects(:find).with(1).returns(user)
 
-    crop_entity = mock
+    crop_entity = stub(is_reference: false, user_id: 1)
     crop_gateway = mock
-    crop_gateway.expects(:find_authorized_for_edit).with(user, 9, access_filter: anything).returns(crop_entity)
+    crop_gateway.expects(:find_by_id).with(9).returns(crop_entity)
 
     task_entity = mock
     task_gateway = mock

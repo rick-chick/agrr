@@ -9,18 +9,16 @@ module Domain
         test "calls on_success with detail dto when gateway succeeds" do
           user_id = 10
           task_id = 22
-          user = Object.new
+          user = stub(id: user_id, admin?: false)
+          task_entity = stub(is_reference: false, user_id: user_id)
           detail_dto = Object.new
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          gateway.expects(:authorized_agricultural_task_detail_output).with(
-            user,
-            task_id,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).returns(detail_dto)
+          gateway.expects(:find_by_id).with(task_id).returns(task_entity)
+          gateway.expects(:authorized_agricultural_task_detail_output).with(task_id).returns(detail_dto)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -43,17 +41,15 @@ module Domain
         test "calls on_failure with policy exception when permission is denied" do
           user_id = 10
           task_id = 22
-          user = Object.new
+          user = stub(id: user_id, admin?: false)
+          task_entity = stub(is_reference: false, user_id: 99)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          gateway.expects(:authorized_agricultural_task_detail_output).with(
-            user,
-            task_id,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          gateway.expects(:find_by_id).with(task_id).returns(task_entity)
+          gateway.expects(:authorized_agricultural_task_detail_output).never
 
           received = nil
           output_port = Minitest::Mock.new

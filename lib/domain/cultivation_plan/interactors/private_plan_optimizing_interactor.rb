@@ -16,6 +16,7 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
+          Domain::CultivationPlan::Policies::PlanAccess.find_private_owned!(user, @plan_id)
           read_model = @gateway.private_plan_optimizing_snapshot(plan_id: @plan_id, user: user)
           dto = Mappers::PrivatePlanOptimizingMapper.call(read_model)
           @output_port.on_success(dto)

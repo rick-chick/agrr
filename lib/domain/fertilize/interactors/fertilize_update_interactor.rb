@@ -16,7 +16,8 @@ module Domain
           current = nil
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
-          current = @gateway.find_authorized_for_edit(user, input_dto.fertilize_id, access_filter: access_filter)
+          current = @gateway.find_by_id(input_dto.fertilize_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
 
           attrs = {}
 
@@ -42,7 +43,7 @@ module Domain
             { is_reference: !!current.is_reference },
             attrs
           )
-          fertilize_entity = @gateway.update_for_user(user, input_dto.fertilize_id, normalized, access_filter: access_filter)
+          fertilize_entity = @gateway.update_for_user(user, input_dto.fertilize_id, normalized)
 
           @output_port.on_success(fertilize_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

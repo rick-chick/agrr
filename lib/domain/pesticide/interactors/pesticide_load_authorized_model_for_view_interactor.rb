@@ -14,7 +14,8 @@ module Domain
         def call(pesticide_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
-          bundle = @gateway.find_authorized_pesticide_loaded_bundle!(user, pesticide_id.to_i, for_edit: false, access_filter: access_filter)
+          bundle = @gateway.find_pesticide_loaded_bundle!(pesticide_id.to_i, for_edit: false)
+          Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, bundle.pesticide_entity)
           @output_port.on_success(bundle)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure

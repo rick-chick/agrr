@@ -16,13 +16,20 @@ module Domain
         def call(crop_id, template_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          @gateway.find_authorized_crop_task_template_in_crop!(
-            user,
+          bundle = @gateway.find_crop_task_template_in_crop!(
             crop_id.to_i,
             template_id.to_i,
-            for_edit: @for_edit,
-            access_filter: access_filter
+            for_edit: @for_edit
           )
+          if @for_edit
+            Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, bundle.crop_entity)
+          else
+            Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, bundle.crop_entity)
+          end
+          bundle
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @failure_presenter.on_not_found(crop_id: crop_id.to_i)
+          nil
         rescue Domain::Shared::Exceptions::RecordNotFound
           @failure_presenter.on_not_found(crop_id: crop_id.to_i)
           nil

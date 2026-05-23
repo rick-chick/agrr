@@ -13,11 +13,12 @@ module Domain
         def call(input_dto)
           user = @user_lookup.find(input_dto.user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          crop_entity = @gateway.find_by_id(input_dto.crop_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, crop_entity)
           result = @gateway.delete_task_schedule_blueprint_bundle_in_crop!(
             user,
             input_dto.crop_id,
             input_dto.blueprint_id,
-            access_filter: access_filter
           )
 
           if result[:not_found]

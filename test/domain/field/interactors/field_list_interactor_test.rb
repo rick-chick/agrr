@@ -14,12 +14,12 @@ class FieldListInteractorTest < DomainLibTestCase
     )
     result = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [ field_entity ])
 
-    user = stub(id: 20)
+    user = stub(id: 9, admin?: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
 
     gateway = mock
-    gateway.expects(:authorized_farm_fields_list).with(10, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(result)
+    gateway.expects(:farm_fields_list).with(10).returns(result)
 
     output = mock
     output.expects(:on_success).with do |arg|
@@ -38,12 +38,12 @@ class FieldListInteractorTest < DomainLibTestCase
   end
 
   test "call forwards RecordNotFound to on_failure as Error" do
-    user = stub(id: 20)
+    user = stub(id: 9, admin?: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
 
     gateway = mock
-    gateway.expects(:authorized_farm_fields_list).raises(Domain::Shared::Exceptions::RecordNotFound.new("Farm not found"))
+    gateway.expects(:farm_fields_list).raises(Domain::Shared::Exceptions::RecordNotFound.new("Farm not found"))
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -63,12 +63,12 @@ class FieldListInteractorTest < DomainLibTestCase
 
   test "call forwards policy permission denied to on_failure as exception" do
     err = Domain::Shared::Policies::PolicyPermissionDenied.new
-    user = stub(id: 20)
+    user = stub(id: 9, admin?: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
 
     gateway = mock
-    gateway.expects(:authorized_farm_fields_list).with(10, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).raises(err)
+    gateway.expects(:farm_fields_list).with(10).raises(err)
 
     output = mock
     output.expects(:on_failure).with(err)

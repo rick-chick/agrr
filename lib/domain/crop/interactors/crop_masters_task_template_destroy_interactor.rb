@@ -13,11 +13,12 @@ module Domain
         def call(input_dto)
           user = @user_lookup.find(input_dto.user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          crop_record = @gateway.find_user_non_reference_crop_for_masters!(user, input_dto.crop_id.to_i)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, crop_record)
           @gateway.delete_masters_crop_task_template!(
             user: user,
             crop_id: input_dto.crop_id,
             template_id: input_dto.template_id,
-            access_filter: access_filter
           )
           @output_port.on_success
         rescue Domain::Shared::Exceptions::RecordNotFound

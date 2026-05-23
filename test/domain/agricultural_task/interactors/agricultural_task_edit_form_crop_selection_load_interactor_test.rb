@@ -9,7 +9,7 @@ module Domain
         test "update action uses preview task for reference crop list and filters selected ids" do
           user_id = 10
           task_id = 5
-          user = Object.new
+          user = domain_user_stub(id: user_id, admin: false)
 
           base_task = Object.new
           base_task.define_singleton_method(:is_reference?) { false }
@@ -34,9 +34,8 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           ag_gateway = Object.new
-          ag_gateway.define_singleton_method(:find_authorized_for_edit) do |u, tid, access_filter:|
-            raise unless u == user && tid == task_id
-            raise unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
+          ag_gateway.define_singleton_method(:find_by_id) do |tid|
+            raise unless tid == task_id
 
             base_task
           end
@@ -90,7 +89,7 @@ module Domain
         test "edit action uses base task and builds crop cards from linked template ids" do
           user_id = 10
           task_id = 5
-          user = Object.new
+          user = domain_user_stub(id: user_id, admin: false)
 
           base_task = Object.new
           base_task.define_singleton_method(:is_reference?) { false }
@@ -115,9 +114,8 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           ag_gateway = Object.new
-          ag_gateway.define_singleton_method(:find_authorized_for_edit) do |u, tid, access_filter:|
-            raise unless u == user && tid == task_id
-            raise unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
+          ag_gateway.define_singleton_method(:find_by_id) do |tid|
+            raise unless tid == task_id
 
             base_task
           end

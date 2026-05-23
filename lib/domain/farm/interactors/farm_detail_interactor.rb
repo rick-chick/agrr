@@ -15,7 +15,9 @@ module Domain
         def call(farm_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          farm_detail_dto = @gateway.detail_for_authorized_view(user, farm_id, access_filter: access_filter)
+          farm_entity = @gateway.find_by_id(farm_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, farm_entity)
+          farm_detail_dto = @gateway.farm_detail_with_fields(farm_id)
           @output_port.on_success(farm_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

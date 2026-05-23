@@ -27,6 +27,7 @@ module Domain
         test "returns bundle when gateway succeeds" do
           snapshot = Domain::Crop::Dtos::CropMasterFormSnapshot.for_unsaved_blank_form
           dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: @entity, master_form_snapshot: snapshot)
+          user = stub(id: 1, admin?: false)
 
           gw = Class.new do
             attr_accessor :captured_for_edit
@@ -35,9 +36,8 @@ module Domain
               @bundle = bundle
             end
 
-            def find_authorized_crop_loaded_bundle!(user, id, for_edit:, access_filter:)
-              raise ArgumentError unless user == :user_stub && id == 42
-              raise ArgumentError unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
+            def find_crop_loaded_bundle!(id, for_edit:)
+              raise ArgumentError unless id == 42
 
               @captured_for_edit = for_edit
               @bundle
@@ -45,7 +45,7 @@ module Domain
           end.new(dto)
 
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Class.new do
             def on_permission_denied
@@ -73,13 +73,31 @@ module Domain
         end
 
         test "delegates to failure presenter on policy denial" do
+          denied_entity = Entities::CropEntity.new(
+            id: 42,
+            user_id: 99,
+            name: "Foo",
+            variety: nil,
+            is_reference: false,
+            area_per_unit: nil,
+            revenue_per_area: nil,
+            region: nil,
+            groups: [],
+            crop_stages: [],
+            created_at: @fixed_at,
+            updated_at: @fixed_at
+          )
+          snapshot = Domain::Crop::Dtos::CropMasterFormSnapshot.for_unsaved_blank_form
+          dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: denied_entity, master_form_snapshot: snapshot)
+          user = stub(id: 1, admin?: false)
+
           gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_crop_loaded_bundle!, nil) do |*_args|
-            raise Domain::Shared::Policies::PolicyPermissionDenied
+          gateway.expect(:find_crop_loaded_bundle!, dto) do |id, for_edit:|
+            id == 42 && for_edit == true
           end
 
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Minitest::Mock.new
           failure.expect(:on_permission_denied, nil)
@@ -99,12 +117,13 @@ module Domain
 
         test "delegates to failure presenter on record not found" do
           gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_crop_loaded_bundle!, nil) do |*_args|
-            raise Domain::Shared::Exceptions::RecordNotFound, "gone"
+          gateway.expect(:find_crop_loaded_bundle!, nil) do |id, for_edit:|
+            raise Domain::Shared::Exceptions::RecordNotFound, "gone" if id == 99 && for_edit == false
           end
 
+          user = stub(id: 1, admin?: false)
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Minitest::Mock.new
           failure.expect(:on_not_found, nil)

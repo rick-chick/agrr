@@ -4,6 +4,11 @@ module Domain
   module FieldCultivation
     module Gateways
       class FieldCultivationGateway
+        # 認可は Interactor（PlanFieldCultivationAccess）。計画コンテキストのみ返す。
+        def find_plan_access_context(field_cultivation_id)
+          raise NotImplementedError, "Subclasses must implement find_plan_access_context"
+        end
+
         def find_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
           raise NotImplementedError, "Subclasses must implement find_climate_data"
         end

@@ -15,7 +15,8 @@ module Domain
         def call(fertilize_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
-          fertilize_entity = @gateway.find_authorized_for_view(user, fertilize_id, access_filter: access_filter)
+          fertilize_entity = @gateway.find_by_id(fertilize_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, fertilize_entity)
           dto = Domain::Fertilize::Dtos::FertilizeDetailOutput.new(fertilize_entity: fertilize_entity)
           @output_port.on_success(dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

@@ -13,10 +13,6 @@ module Adapters
           @crop = create(:crop)
         end
 
-        def crop_access_filter(user)
-          Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-        end
-
         # CropStage tests
         test "create_crop_stage creates a new crop stage" do
           dto = Domain::Crop::Dtos::CropStageCreateInput.new(
@@ -264,7 +260,7 @@ module Adapters
 
         test "delete_task_schedule_blueprint_bundle_in_crop! returns not_found when blueprint id does not exist" do
           user = @crop.user
-          result = @gateway.delete_task_schedule_blueprint_bundle_in_crop!(user, @crop.id, 9_999_999, access_filter: crop_access_filter(user))
+          result = @gateway.delete_task_schedule_blueprint_bundle_in_crop!(user, @crop.id, 9_999_999)
 
           assert result[:not_found]
           assert_equal false, result[:blueprint_deleted]
@@ -289,7 +285,6 @@ module Adapters
             blueprint_id: bp.id,
             gdd_trigger: 15.5,
             priority: nil,
-            access_filter: crop_access_filter(user)
           )
 
           assert out[:ok]
@@ -304,7 +299,6 @@ module Adapters
             blueprint_id: 9_999_999,
             gdd_trigger: 1.0,
             priority: nil,
-            access_filter: crop_access_filter(user)
           )
 
           assert_equal false, out[:ok]
@@ -328,7 +322,7 @@ module Adapters
           result = nil
 
           assert_difference("CropTaskTemplate.count", 1) do
-            result = @gateway.create_masters_crop_task_template_association(user, input_dto, access_filter: crop_access_filter(user))
+            result = @gateway.create_masters_crop_task_template_association(user, input_dto)
           end
 
           assert result.success?
@@ -352,13 +346,13 @@ module Adapters
             agricultural_task_id: 99_999
           )
 
-          result = @gateway.create_masters_crop_task_template_association(user, input_dto, access_filter: crop_access_filter(user))
+          result = @gateway.create_masters_crop_task_template_association(user, input_dto)
 
           assert result.failure?
           assert_equal :agricultural_task_not_found, result.failure.reason
         end
 
-        test "create_masters_crop_task_template_association returns forbidden when task belongs to other user" do
+        test "create_masters_crop_task_template_association persists when task belongs to other user (auth is interactor responsibility)" do
           other_user = create(:user)
           user = @crop.user
           task = create(:agricultural_task, :user_owned, user: other_user)
@@ -368,10 +362,10 @@ module Adapters
             agricultural_task_id: task.id
           )
 
-          result = @gateway.create_masters_crop_task_template_association(user, input_dto, access_filter: crop_access_filter(user))
-
-          assert result.failure?
-          assert_equal :forbidden, result.failure.reason
+          assert_difference("CropTaskTemplate.count", 1) do
+            result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+            assert result.template
+          end
         end
 
         test "create_masters_crop_task_template_association returns duplicate when association exists" do
@@ -385,7 +379,7 @@ module Adapters
           )
 
           assert_no_difference("CropTaskTemplate.count") do
-            result = @gateway.create_masters_crop_task_template_association(user, input_dto, access_filter: crop_access_filter(user))
+            result = @gateway.create_masters_crop_task_template_association(user, input_dto)
             assert result.failure?
             assert_equal :duplicate, result.failure.reason
           end
@@ -402,7 +396,7 @@ module Adapters
           )
 
           error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
-            @gateway.create_masters_crop_task_template_association(user, input_dto, access_filter: crop_access_filter(user))
+            @gateway.create_masters_crop_task_template_association(user, input_dto)
           end
 
           assert error.errors.any?, "expected validation error messages"
@@ -421,7 +415,6 @@ module Adapters
           rows = @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(
             user: user,
             crop_id: @crop.id,
-            access_filter: crop_access_filter(user)
           )
 
           ids = rows.map { |r| r[:id] }
@@ -440,7 +433,6 @@ module Adapters
             @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(
               user: user,
               crop_id: other_crop.id,
-              access_filter: crop_access_filter(user)
             )
           end
         end

@@ -30,12 +30,16 @@ module Domain
             return @output_port.on_forbidden
           end
 
-          crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          crop = @pest_gateway.find_crop_entity_by_id(crop_id)
+          unless crop
+            return @output_port.on_pest_not_found
+          end
+          Domain::Shared::Policies::CropNestedPestsAccess.assert_allowed!(user, crop)
+
           status = @pest_gateway.link_pest_to_crop(
             crop_id: crop_id,
             pest_id: pest_entity.id,
-            user: user,
-            crop_access_filter: crop_access_filter
+            user: user
           )
           case status
           when :missing
@@ -47,6 +51,8 @@ module Domain
           when :linked
             @output_port.on_success(crop_id: crop_id, pest_id: pest_entity.id)
           end
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @output_port.on_forbidden
         end
       end
     end

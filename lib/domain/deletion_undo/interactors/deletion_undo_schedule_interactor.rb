@@ -4,15 +4,18 @@ module Domain
   module DeletionUndo
     module Interactors
       class DeletionUndoScheduleInteractor < Domain::DeletionUndo::Ports::DeletionUndoScheduleInputPort
-        def initialize(output_port:, gateway:)
+        def initialize(output_port:, gateway:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
+          @user_lookup = user_lookup
         end
 
         def call(input_dto)
-          unless input_dto.resource_type && !input_dto.resource_id.nil?
+          unless Domain::Shared.present?(input_dto.resource_type) && !input_dto.resource_id.nil?
             raise ArgumentError, "resource_type and resource_id are required"
           end
+
+          ensure_schedule_authorized!(input_dto)
 
           event = @gateway.schedule(
             resource_type: input_dto.resource_type,
@@ -53,6 +56,20 @@ module Domain
               detail_message: nil
             )
           )
+        end
+
+        private
+
+        def ensure_schedule_authorized!(input_dto)
+          user = begin
+            @user_lookup.find(input_dto.actor_id)
+          rescue Domain::Shared::Exceptions::RecordNotFound
+            raise Domain::Shared::Policies::PolicyPermissionDenied
+          end
+
+          record = @gateway.find_schedulable_record!(input_dto.resource_type, input_dto.resource_id)
+          allowed = Domain::DeletionUndo::ScheduleAuthorization.schedule_allowed?(user, record)
+          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
         end
       end
     end

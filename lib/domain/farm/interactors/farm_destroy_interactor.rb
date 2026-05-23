@@ -15,14 +15,14 @@ module Domain
         def call(farm_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          farm_entity = @gateway.find_authorized_for_edit(user, farm_id, access_filter: access_filter)
+          farm_entity = @gateway.find_by_id(farm_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, farm_entity)
           toast_message = @translator.t("flash.farms.deleted", name: farm_entity.name)
           result = @gateway.soft_delete_with_undo(
             user: user,
             farm_id: farm_id,
             auto_hide_after: 5000,
-            toast_message: toast_message,
-            access_filter: access_filter
+            toast_message: toast_message
           )
           if result[:success]
             destroy_output_dto = Domain::Farm::Dtos::FarmDestroyOutput.new(

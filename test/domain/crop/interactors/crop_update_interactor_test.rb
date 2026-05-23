@@ -8,8 +8,7 @@ module Domain
       class CropUpdateInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns entity" do
           user_id = 10
-          user = Object.new
-          def user.admin? = false
+          user = stub(id: user_id, admin?: false)
           crop_id = 5
           input_dto = Domain::Crop::Dtos::CropUpdateInput.new(crop_id: crop_id, name: "更新された名前")
           crop_entity = Object.new
@@ -17,14 +16,11 @@ module Domain
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          current_entity = Object.new
-          def current_entity.reference?
-            false
-          end
+          current_entity = stub(reference?: false, is_reference: false, user_id: user_id)
 
           gateway = mock
-          gateway.expects(:find_authorized_for_edit).with(user, crop_id, access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(current_entity)
-          gateway.expects(:update_for_user).with(user, crop_id, instance_of(Hash), access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(crop_entity)
+          gateway.expects(:find_by_id).with(crop_id).returns(current_entity)
+          gateway.expects(:update_for_user).with(user, crop_id, instance_of(Hash)).returns(crop_entity)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -47,23 +43,18 @@ module Domain
 
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
-          user = Object.new
-          def user.admin? = false
+          user = stub(id: user_id, admin?: false)
           crop_id = 5
           input_dto = Domain::Crop::Dtos::CropUpdateInput.new(crop_id: crop_id, name: "変更しようとした名前")
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
+          current_entity = stub(reference?: false, is_reference: false, user_id: 99)
+
           gateway = Object.new
-          current_entity = Object.new
-          def current_entity.reference?
-            false
-          end
-          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id, **_kw| current_entity }
-          gateway.define_singleton_method(:update_for_user) do |_u, _fid, _attrs, **_kw|
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
+          gateway.define_singleton_method(:find_by_id) { |_id| current_entity }
+          gateway.define_singleton_method(:update_for_user) { |*| flunk "update_for_user should not be called" }
 
           received = nil
           output_port = Minitest::Mock.new
@@ -86,24 +77,18 @@ module Domain
 
         test "calls on_failure with error dto when non-admin toggles is_reference" do
           user_id = 10
-          user = Object.new
-          def user.admin?
-            false
-          end
+          user = stub(id: user_id, admin?: false)
           crop_id = 5
           msg = I18n.t("crops.flash.reference_flag_admin_only")
           input_dto = Domain::Crop::Dtos::CropUpdateInput.new(crop_id: crop_id, is_reference: true)
 
-          current_entity = Object.new
-          def current_entity.reference?
-            false
-          end
+          current_entity = stub(reference?: false, is_reference: false, user_id: user_id)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = Object.new
-          gateway.define_singleton_method(:find_authorized_for_edit) { |_u, _id, **_kw| current_entity }
+          gateway.define_singleton_method(:find_by_id) { |_id| current_entity }
 
           translator = Minitest::Mock.new
           translator.expect(:t, msg, [ "crops.flash.reference_flag_admin_only" ])

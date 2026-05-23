@@ -25,32 +25,24 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_index_for_filter"
         end
 
-        def find_authorized_for_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
-        end
-
-        # 認可済み農薬の HTML/API 詳細用 DTO（1 回の読み込みで関連名・制約を含む）
-        def authorized_pesticide_detail_output(user, id, access_filter:)
+        # 農薬の HTML/API 詳細用 DTO（1 回の読み込みで関連名・制約を含む。認可は Interactor 側）
+        def authorized_pesticide_detail_output(id)
           raise NotImplementedError, "Subclasses must implement authorized_pesticide_detail_output"
         end
 
-        def find_authorized_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
-        end
-
-        def find_authorized_pesticide_loaded_bundle!(user, id, for_edit:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_pesticide_loaded_bundle!"
+        def find_pesticide_loaded_bundle!(id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_pesticide_loaded_bundle!"
         end
 
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(user, id, attrs)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after:, translator:, access_filter:)
+        def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
@@ -81,7 +73,7 @@ module Domain
 
         # 更新検証失敗の再描画用スナップショット（永続化しない）
         # @return [Domain::Pesticide::Dtos::PesticideMasterFormSnapshot]
-        def build_pesticide_master_form_snapshot_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:)
+        def build_pesticide_master_form_snapshot_after_update_merge!(user:, pesticide_id:, assign_attributes:)
           raise NotImplementedError, "Subclasses must implement build_pesticide_master_form_snapshot_after_update_merge!"
         end
       end

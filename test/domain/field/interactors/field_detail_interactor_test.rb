@@ -5,21 +5,22 @@ require "domain_lib_test_helper"
 class FieldDetailInteractorTest < DomainLibTestCase
   test "call passes FieldWithFarm to output port on success" do
     farm_entity = Domain::Farm::Entities::FarmEntity.new(
-      id: 1, name: "F", latitude: nil, longitude: nil, region: nil, user_id: 9,
+      id: 1, name: "F", latitude: nil, longitude: nil, region: nil, user_id: 20,
       created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1), is_reference: false
     )
     field_entity = Domain::Field::Entities::FieldEntity.new(
-      id: 2, farm_id: 1, user_id: 9, name: "North", description: nil,
+      id: 2, farm_id: 1, user_id: 20, name: "North", description: nil,
       created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1), area: nil, daily_fixed_cost: nil, region: nil
     )
     result = Domain::Field::Results::FieldWithFarm.new(farm: farm_entity, field: field_entity)
 
-    user = stub(id: 20)
+    user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
+    stub_field_access_find_owned!(user, 5)
 
     gateway = mock
-    gateway.expects(:field_with_farm_for_user).with(5, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(result)
+    gateway.expects(:field_with_farm).with(5).returns(result)
 
     output = mock
     output.expects(:on_success).with do |arg|
@@ -39,12 +40,12 @@ class FieldDetailInteractorTest < DomainLibTestCase
   end
 
   test "call forwards RecordNotFound to on_failure as FieldDetailFailure with farm_id" do
-    user = stub(id: 20)
+    user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
 
     gateway = mock
-    gateway.expects(:field_with_farm_for_user).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
+    gateway.expects(:field_with_farm).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
 
     output = mock
     output.expects(:on_failure).with do |err|

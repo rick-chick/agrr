@@ -186,16 +186,14 @@ module Adapters
         # @return [DeletionUndoEvent] ::Adapters::DeletionUndo::Manager.schedule が返すイベント
         # @raise [Domain::Shared::Exceptions::RecordNotFound, AssociationInUse, ::Domain::DeletionUndo::Exceptions::DeletionUndoError] 等
         def private_owned_plan_display_name(user:, plan_id:)
-          plan_model = find_private_owned_cultivation_plan_model!(user, plan_id)
+          plan_model = find_cultivation_plan_model!(plan_id)
           plan_model.display_name
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
         rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
         end
 
         def delete(plan_id, user, toast_message:)
-          plan_model = find_private_owned_cultivation_plan_model!(user, plan_id)
+          plan_model = find_cultivation_plan_model!(plan_id)
 
           @deletion_undo_gateway.schedule(
             resource_type: "CultivationPlan",
@@ -203,8 +201,6 @@ module Adapters
             actor_id: user&.id,
             toast_message: toast_message
           )
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
         rescue ActiveRecord::RecordNotFound, Domain::Shared::Exceptions::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
         rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError, Domain::Shared::Exceptions::AssociationInUse
@@ -857,12 +853,10 @@ module Adapters
           ::CultivationPlan.plan_type_private.by_user(user)
         end
 
-        def find_private_owned_cultivation_plan_model!(user, plan_id)
-          plan = ::CultivationPlan.find(plan_id)
-          unless plan.plan_type_private? && plan.user_id == user.id
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          plan
+        def find_cultivation_plan_model!(plan_id)
+          ::CultivationPlan.find(plan_id)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         # 結果ページ Snapshot の `show_schedule_warning` 用（SQL 条件は同一）

@@ -30,26 +30,17 @@ module Domain
             field_entity: @entity,
             master_form_snapshot: snapshot
           )
+          user = stub(id: 9, admin?: false)
+          farm_entity = stub(user_id: 9, is_reference: false)
+          list = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [])
 
-          gw = Class.new do
-            attr_accessor :captured_farm_id, :captured_field_id
-
-            def initialize(bundle)
-              @bundle = bundle
-            end
-
-            def find_authorized_field_loaded_in_farm!(user, farm_id, field_id, farm_access_filter:)
-              raise ArgumentError unless user == :user_stub && farm_id == 3 && field_id == 7
-              raise ArgumentError unless farm_access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
-
-              @captured_farm_id = farm_id
-              @captured_field_id = field_id
-              @bundle
-            end
-          end.new(dto)
+          gw = mock
+          gw.expects(:farm_fields_list).with(3).returns(list)
+          gw.expects(:find_field_loaded_in_farm!).with(3, 7).returns(dto)
+          Domain::Field::Policies::FieldAccess.expects(:find_owned!).with(user, 7).returns(Object.new)
 
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Class.new do
             def on_permission_denied
@@ -72,19 +63,21 @@ module Domain
 
           assert_equal @entity, bundle.field_entity
           assert_same snapshot, bundle.master_form_snapshot
-          assert_equal 3, gw.captured_farm_id
-          assert_equal 7, gw.captured_field_id
           user_lookup.verify
         end
 
         test "delegates to failure presenter on policy denial" do
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_field_loaded_in_farm!, nil) do |*_args|
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
+          user = stub(id: 9, admin?: false)
+          farm_entity = stub(user_id: 99, is_reference: false)
+          list = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [])
+
+          gateway = mock
+          gateway.expects(:farm_fields_list).with(3).returns(list)
+          gateway.expects(:find_field_loaded_in_farm!).never
+          Domain::Field::Policies::FieldAccess.expects(:find_owned!).never
 
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Minitest::Mock.new
           failure.expect(:on_permission_denied, nil)
@@ -97,19 +90,24 @@ module Domain
           )
 
           assert_nil interactor.call(3, 7)
-          gateway.verify
           user_lookup.verify
           failure.verify
         end
 
         test "delegates to failure presenter on record not found" do
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_field_loaded_in_farm!, nil) do |*_args|
-            raise Domain::Shared::Exceptions::RecordNotFound, "gone"
-          end
+          user = stub(id: 9, admin?: false)
+          farm_entity = stub(user_id: 9, is_reference: false)
+          list = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [])
+
+          gateway = mock
+          gateway.expects(:farm_fields_list).with(3).returns(list)
+          gateway.expects(:find_field_loaded_in_farm!).with(3, 99).raises(
+            Domain::Shared::Exceptions::RecordNotFound, "gone"
+          )
+          Domain::Field::Policies::FieldAccess.expects(:find_owned!).with(user, 99).returns(Object.new)
 
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Minitest::Mock.new
           failure.expect(:on_not_found, nil)
@@ -122,7 +120,6 @@ module Domain
           )
 
           assert_nil interactor.call(3, 99)
-          gateway.verify
           user_lookup.verify
           failure.verify
         end

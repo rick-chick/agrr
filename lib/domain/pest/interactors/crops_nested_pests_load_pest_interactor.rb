@@ -13,12 +13,15 @@ module Domain
 
         def call(crop_id:, pest_id:, for_edit_form: false)
           user = @user_lookup.find(@user_id)
-          crop_access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          crop = @pest_gateway.find_crop_entity_by_id(crop_id)
+          unless crop
+            return @output_port.on_not_found(crop_id: crop_id)
+          end
+          Domain::Shared::Policies::CropNestedPestsAccess.assert_allowed!(user, crop)
 
           result = @pest_gateway.find_pest_in_crop(
             crop_id: crop_id,
             pest_id: pest_id,
-            crop_access_filter: crop_access_filter,
             for_edit_form: for_edit_form
           )
           if result.status == :found
@@ -26,6 +29,8 @@ module Domain
           else
             @output_port.on_not_found(crop_id: crop_id)
           end
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @output_port.on_not_found(crop_id: crop_id)
         end
       end
     end

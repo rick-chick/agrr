@@ -23,11 +23,8 @@ module Domain
         def call(input_dto)
           user = @user_lookup.find(input_dto.user_id)
           access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
-          base_entity = @agricultural_task_gateway.find_authorized_for_edit(
-            user,
-            input_dto.agricultural_task_id,
-            access_filter: access_filter
-          )
+          base_entity = @agricultural_task_gateway.find_by_id(input_dto.agricultural_task_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, base_entity)
           preview_task =
             if input_dto.controller_action.to_s == "update"
               @agricultural_task_gateway.preview_agricultural_task_for_edit_crop_selection(

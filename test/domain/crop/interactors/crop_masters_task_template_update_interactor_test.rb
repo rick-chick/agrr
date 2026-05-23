@@ -24,16 +24,17 @@ module Domain
             template_id: 3,
             attributes: { "name" => "x" }
           )
-          user = mock
+          user = stub(id: 1, admin?: false)
+          crop_record = stub(is_reference: false, user_id: 1)
           row = { "id" => 3, "name" => "x" }
 
           @user_lookup.expects(:find).with(1).returns(user)
+          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
           @gateway.expects(:update_masters_crop_task_template_for_api).with(
             user: user,
             crop_id: 2,
             template_id: 3,
             attributes: { "name" => "x" },
-            access_filter: anything
           ).returns({ ok: true, row: row })
           @output_port.expects(:on_success).with(row)
 
@@ -47,15 +48,16 @@ module Domain
             template_id: 3,
             attributes: {}
           )
-          user = mock
+          user = stub(id: 1, admin?: false)
+          crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
+          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
           @gateway.expects(:update_masters_crop_task_template_for_api).with(
             user: user,
             crop_id: 2,
             template_id: 3,
             attributes: {},
-            access_filter: anything
           ).returns(
             { ok: false, errors: [ "Name can't be blank" ] }
           )
@@ -75,15 +77,16 @@ module Domain
             template_id: 3,
             attributes: {}
           )
-          user = mock
+          user = stub(id: 1, admin?: false)
+          crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
+          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
           @gateway.expects(:update_masters_crop_task_template_for_api).with(
             user: user,
             crop_id: 2,
             template_id: 3,
             attributes: {},
-            access_filter: anything
           ).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )

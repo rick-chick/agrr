@@ -13,8 +13,10 @@ module Domain
 
         def call(field_id)
           user = @user_lookup.find(@user_id)
-          farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          undo_response = @gateway.delete(field_id, farm_access_filter: farm_access_filter)
+          Domain::Field::Policies::FieldAccess.find_owned!(user, field_id)
+          with_farm = @gateway.field_with_farm(field_id)
+          Domain::Field::Policies::FieldAccess.assert_field_edit_on_farm_allowed!(user, with_farm.farm)
+          undo_response = @gateway.delete(field_id)
           dto = Domain::Field::Dtos::FieldDestroyOutput.new(undo: undo_response)
           @output_port.on_success(dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

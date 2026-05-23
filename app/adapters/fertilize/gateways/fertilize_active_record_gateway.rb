@@ -73,20 +73,8 @@ module Adapters
             .map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
-        def find_authorized_for_view(user, id, access_filter:)
-          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
-        end
-
-        def find_authorized_for_edit(user, id, access_filter:)
-          Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
-        end
-
-        def find_authorized_fertilize_loaded_bundle!(user, id, for_edit:, access_filter:)
-          fertilize = if for_edit
-                        find_authorized_model_for_edit(user, id, access_filter: access_filter)
-                      else
-                        find_authorized_model_for_view(user, id, access_filter: access_filter)
-                      end
+        def find_fertilize_loaded_bundle!(id, for_edit:)
+          fertilize = find_fertilize_model!(id)
           Domain::Fertilize::Dtos::AuthorizedFertilizeLoaded.new(
             fertilize_entity: Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize),
             master_form_snapshot: Adapters::Fertilize::Mappers::FertilizeMasterFormSnapshotMapper.from_record(fertilize)
@@ -100,22 +88,15 @@ module Adapters
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(_user, id, attrs)
           fertilize = find_fertilize_model!(id)
-          unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-
           raise Domain::Shared::Exceptions::RecordInvalid, fertilize.errors.full_messages.join(", ") unless fertilize.update(attrs.to_h.symbolize_keys)
 
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize.reload)
         end
 
-        def soft_delete_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, fertilize_id:, auto_hide_after: 5000, translator:)
           fertilize = find_fertilize_model!(fertilize_id)
-          unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
           name = fertilize.name
           toast_message = translator.t("fertilizes.undo.toast", name: name)
           undo_gw = @deletion_undo_gateway
@@ -127,8 +108,6 @@ module Adapters
             auto_hide_after: auto_hide_after
           )
           { success: true, undo_entity: event, resource_name: name }
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
         rescue Domain::Shared::Exceptions::RecordNotFound
           raise
         rescue StandardError => e
@@ -173,14 +152,6 @@ module Adapters
 
         private
 
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          fertilize = find_fertilize_model!(id)
-          unless access_filter.edit_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          fertilize
-        end
-
         def index_relation_for_filter(filter)
           case filter.mode
           when :reference_or_owned
@@ -190,14 +161,6 @@ module Adapters
           else
             raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
           end
-        end
-
-        def find_authorized_model_for_view(user, id, access_filter:)
-          fertilize = find_fertilize_model!(id)
-          unless access_filter.view_allows?(is_reference: fertilize.is_reference, record_user_id: fertilize.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          fertilize
         end
 
         def find_fertilize_model!(id)

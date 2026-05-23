@@ -8,28 +8,17 @@ module Domain
       class PesticideUpdateInteractorTest < DomainLibTestCase
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
-          user = Object.new
-          def user.admin? = false
+          user = domain_user_stub(id: user_id, admin: false)
           input_dto = Domain::Pesticide::Dtos::PesticideUpdateInput.new(pesticide_id: 5, name: "Y")
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          current = Object.new
-          current.define_singleton_method(:is_reference) { false }
+          current = domain_record_entity_stub(user_id: 99, is_reference: false)
 
           gateway = mock
-          gateway.expects(:find_authorized_for_edit).with(
-            user,
-            5,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).returns(current)
-          gateway.expects(:update_for_user).with(
-            user,
-            5,
-            instance_of(Hash),
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          gateway.expects(:find_by_id).with(5).returns(current)
+          gateway.expects(:update_for_user).never
 
           received = nil
           output_port = Minitest::Mock.new
@@ -54,6 +43,7 @@ module Domain
           user_id = 10
           user = Object.new
           user.define_singleton_method(:admin?) { false }
+          user.define_singleton_method(:id) { user_id }
           input_dto = Domain::Pesticide::Dtos::PesticideUpdateInput.new(pesticide_id: 5, is_reference: true)
 
           user_lookup = Minitest::Mock.new
@@ -61,13 +51,10 @@ module Domain
 
           current_entity = Object.new
           current_entity.define_singleton_method(:is_reference) { false }
+          current_entity.define_singleton_method(:user_id) { user_id }
 
           gateway = mock
-          gateway.expects(:find_authorized_for_edit).with(
-            user,
-            5,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).returns(current_entity)
+          gateway.expects(:find_by_id).with(5).returns(current_entity)
 
           translator = Minitest::Mock.new
           translator.expect(:t, "flag admin only", [ "pesticides.flash.reference_flag_admin_only" ])

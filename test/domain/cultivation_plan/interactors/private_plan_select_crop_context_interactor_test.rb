@@ -4,7 +4,7 @@ require "domain_lib_test_helper"
 
 class PrivatePlanSelectCropContextInteractorTest < DomainLibTestCase
   test "call passes dto with farm, crops, total_area from gateways" do
-    user = mock
+    user = stub(id: 7, admin?: false)
     user_lookup = mock
     user_lookup.expects(:find).with(7).returns(user)
 
@@ -35,7 +35,7 @@ class PrivatePlanSelectCropContextInteractorTest < DomainLibTestCase
     crop_entities = [ mock, mock ]
 
     field_gateway = mock
-    field_gateway.expects(:authorized_farm_fields_list).with(1, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(farm_fields)
+    field_gateway.expects(:farm_fields_list).with(1).returns(farm_fields)
 
     crop_gateway = mock
     crop_gateway.expects(:list_user_owned_non_reference_crops_ordered_by_name).with(user).returns(crop_entities)
@@ -71,7 +71,7 @@ class PrivatePlanSelectCropContextInteractorTest < DomainLibTestCase
     user_lookup.expects(:find).with(7).returns(user)
 
     field_gateway = mock
-    field_gateway.expects(:authorized_farm_fields_list).raises(Domain::Shared::Exceptions::RecordNotFound.new("x"))
+    field_gateway.expects(:farm_fields_list).raises(Domain::Shared::Exceptions::RecordNotFound.new("x"))
 
     crop_gateway = mock
     translator = mock
@@ -103,7 +103,7 @@ class PrivatePlanSelectCropContextInteractorTest < DomainLibTestCase
     user_lookup.expects(:find).with(7).returns(user)
 
     field_gateway = mock
-    field_gateway.expects(:authorized_farm_fields_list).raises(StandardError.new("internal detail"))
+    field_gateway.expects(:farm_fields_list).raises(StandardError.new("internal detail"))
 
     crop_gateway = mock
     translator = mock

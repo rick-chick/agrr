@@ -52,14 +52,18 @@ module Api
         def field_cultivation_api_show_interactor
           Domain::FieldCultivation::Interactors::FieldCultivationShowInteractor.new(
             output_port: Adapters::FieldCultivation::Presenters::FieldCultivationApiShowApiPresenter.new(view: self),
-            gateway: field_cultivation_plan_api_gateway
+            gateway: field_cultivation_plan_api_gateway,
+            user_id: current_user.id,
+            user_lookup: CompositionRoot.user_lookup
           )
         end
 
         def field_cultivation_api_update_interactor
           Domain::FieldCultivation::Interactors::FieldCultivationUpdateInteractor.new(
             output_port: Adapters::FieldCultivation::Presenters::FieldCultivationApiUpdateApiPresenter.new(view: self),
-            gateway: field_cultivation_plan_api_gateway
+            gateway: field_cultivation_plan_api_gateway,
+            user_id: current_user.id,
+            user_lookup: CompositionRoot.user_lookup
           )
         end
 

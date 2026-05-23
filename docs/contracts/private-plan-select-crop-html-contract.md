@@ -12,7 +12,7 @@
 
 ## Gateway
 
-- **`FieldGateway#authorized_farm_fields_list(farm_id, user_id)`** — 認可済み **農場 entity ＋圃場 entity 一覧**を 1 経路で返す（`total_area` は圃場 `area` の合算）。農場の二重取得を避ける。
+- **`FieldGateway#farm_fields_list(farm_id)`** — **農場 entity ＋圃場 entity 一覧**を 1 経路で返す（`total_area` は圃場 `area` の合算）。認可は Interactor が `FieldAccess.assert_farm_fields_list_allowed!` で評価する。
 - **`CropGateway#list_user_owned_non_reference_crops_ordered_by_name`**
 
 ## Controller

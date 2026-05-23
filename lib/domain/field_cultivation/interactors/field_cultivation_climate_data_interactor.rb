@@ -4,6 +4,8 @@ module Domain
   module FieldCultivation
     module Interactors
       class FieldCultivationClimateDataInteractor < Domain::FieldCultivation::Ports::FieldCultivationClimateDataInputPort
+        include Concerns::PlanFieldCultivationAuthorization
+
         def initialize(output_port:, logger:, user_id:, user_lookup:, climate_gateway_for_user:)
           @output_port = output_port
           @logger = logger
@@ -15,6 +17,12 @@ module Domain
         def call(input_dto)
           user_dto = @user_id.present? ? @user_lookup.find(@user_id) : nil
           @gateway = @climate_gateway_for_user.call(user_dto)
+
+          if user_dto
+            assert_field_cultivation_plan_access!(user_dto, @gateway, input_dto.field_cultivation_id)
+          else
+            assert_public_field_cultivation_plan_access!(@gateway, input_dto.field_cultivation_id)
+          end
 
           field_cultivation_id = input_dto.field_cultivation_id
           display_start_date = input_dto.display_start_date
@@ -32,6 +40,8 @@ module Domain
 
           filtered_data = apply_display_range(climate_data, display_start_date, display_end_date)
           @output_port.present(filtered_data)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @output_port.on_error(Domain::Shared::Dtos::Error.new("Forbidden"))
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[FieldCultivationClimateDataInteractor] Field cultivation not found: #{e.message}")
           @output_port.on_error(Domain::Shared::Dtos::Error.new(e.message))

@@ -104,7 +104,9 @@ module Domain
 
         def load_authorized_fertilize(user, fertilize_id)
           access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
-          @fertilize_gateway.find_authorized_for_edit(user, fertilize_id.to_i, access_filter: access_filter)
+          entity = @fertilize_gateway.find_by_id(fertilize_id.to_i)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, entity)
+          entity
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           nil
         end

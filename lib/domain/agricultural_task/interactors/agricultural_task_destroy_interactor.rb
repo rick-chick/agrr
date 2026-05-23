@@ -15,12 +15,13 @@ module Domain
         def call(task_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
+          current = @gateway.find_by_id(task_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
           result = @gateway.soft_delete_with_undo(
             user: user,
             task_id: task_id,
             auto_hide_after: 5000,
-            translator: @translator,
-            access_filter: access_filter
+            translator: @translator
           )
           if result[:success]
             destroy_output_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskDestroyOutput.new(undo: result[:undo_entity])

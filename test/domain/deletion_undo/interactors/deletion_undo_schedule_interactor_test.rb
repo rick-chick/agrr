@@ -21,6 +21,14 @@ module Domain
             toast_message: "removed"
           )
 
+          interactor, user_lookup = build_deletion_undo_schedule_interactor(
+            output_port: nil,
+            gateway: gateway,
+            actor_id: nil,
+            resource_type: "Crop",
+            resource_id: 9
+          )
+
           gateway.expect(:schedule, entity) do |kwargs|
             assert_equal "Crop", kwargs[:resource_type]
             assert_equal 9, kwargs[:resource_id]
@@ -32,16 +40,26 @@ module Domain
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |e| received = e }
+          interactor.instance_variable_set(:@output_port, output_port)
 
-          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+          interactor.call(input_dto)
 
           assert_same entity, received
           gateway.verify
           output_port.verify
+          user_lookup.verify
         end
 
         test "maps Domain::DeletionUndo::Exceptions::DeletionUndoError to undo_system_error failure" do
           gateway = Minitest::Mock.new
+          interactor, user_lookup = build_deletion_undo_schedule_interactor(
+            output_port: nil,
+            gateway: gateway,
+            actor_id: nil,
+            resource_type: "Crop",
+            resource_id: 1
+          )
+
           gateway.expect(:schedule, nil) do |kwargs|
             assert_equal "Crop", kwargs[:resource_type]
             assert_equal false, kwargs[:validate_before_schedule]
@@ -58,14 +76,16 @@ module Domain
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |dto| received = dto }
+          interactor.instance_variable_set(:@output_port, output_port)
 
-          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+          interactor.call(input_dto)
 
           assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailure, received
           assert_equal :undo_system_error, received.reason
           assert_equal "tok", received.detail_message
           gateway.verify
           output_port.verify
+          user_lookup.verify
         end
 
         test "maps shared RecordInvalid to validation_error" do
@@ -78,23 +98,34 @@ module Domain
           )
 
           gateway = Minitest::Mock.new
+          interactor, user_lookup = build_deletion_undo_schedule_interactor(
+            output_port: nil,
+            gateway: gateway,
+            actor_id: nil,
+            resource_type: "Crop",
+            resource_id: 2
+          )
+
           gateway.expect(:schedule, nil) do |kwargs|
             assert_equal "Crop", kwargs[:resource_type]
             assert_equal 2, kwargs[:resource_id]
             assert_equal true, kwargs[:validate_before_schedule]
             raise Domain::Shared::Exceptions::RecordInvalid, "invalid record"
           end
+
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |dto| received = dto }
+          interactor.instance_variable_set(:@output_port, output_port)
 
-          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+          interactor.call(input_dto)
 
           assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailure, received
           assert_equal :validation_error, received.reason
           assert_equal "invalid record", received.detail_message
           gateway.verify
           output_port.verify
+          user_lookup.verify
         end
 
         test "maps shared AssociationInUse to association_in_use" do
@@ -106,6 +137,14 @@ module Domain
           )
 
           gateway = Minitest::Mock.new
+          interactor, user_lookup = build_deletion_undo_schedule_interactor(
+            output_port: nil,
+            gateway: gateway,
+            actor_id: 7,
+            resource_type: "Pest",
+            resource_id: 3
+          )
+
           gateway.expect(:schedule, nil) do |kwargs|
             assert_equal "Pest", kwargs[:resource_type]
             assert_equal 3, kwargs[:resource_id]
@@ -117,14 +156,16 @@ module Domain
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_failure, nil) { |dto| received = dto }
+          interactor.instance_variable_set(:@output_port, output_port)
 
-          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+          interactor.call(input_dto)
 
           assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailure, received
           assert_equal :association_in_use, received.reason
           assert_equal "in use", received.detail_message
           gateway.verify
           output_port.verify
+          user_lookup.verify
         end
 
         test "passes validate_before_schedule false to gateway" do
@@ -143,6 +184,14 @@ module Domain
             validate_before_schedule: false
           )
 
+          interactor, user_lookup = build_deletion_undo_schedule_interactor(
+            output_port: nil,
+            gateway: gateway,
+            actor_id: nil,
+            resource_type: "Farm",
+            resource_id: 11
+          )
+
           gateway.expect(:schedule, entity) do |kwargs|
             assert_equal "Farm", kwargs[:resource_type]
             assert_equal 11, kwargs[:resource_id]
@@ -152,37 +201,14 @@ module Domain
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_success, nil) { |e| received = e }
+          interactor.instance_variable_set(:@output_port, output_port)
 
-          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+          interactor.call(input_dto)
 
           assert_same entity, received
           gateway.verify
           output_port.verify
-        end
-
-        test "maps PolicyPermissionDenied to forbidden failure" do
-          gateway = Minitest::Mock.new
-          gateway.expect(:schedule, nil) do
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-
-          input_dto = Domain::DeletionUndo::Dtos::DeletionUndoScheduleInput.new(
-            resource_type: "Crop",
-            resource_id: 1,
-            actor_id: 2,
-            toast_message: "removed"
-          )
-
-          received = nil
-          output_port = Minitest::Mock.new
-          output_port.expect(:on_failure, nil) { |dto| received = dto }
-
-          DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
-
-          assert_instance_of Domain::DeletionUndo::Dtos::DeletionUndoScheduleFailure, received
-          assert_equal :forbidden, received.reason
-          gateway.verify
-          output_port.verify
+          user_lookup.verify
         end
 
         test "raises ArgumentError when resource_type is blank" do
@@ -192,11 +218,15 @@ module Domain
             toast_message: "x"
           )
           gateway = Minitest::Mock.new
-          gateway.expect(:schedule, nil, [Hash])
+          user_lookup = Minitest::Mock.new
           output_port = Minitest::Mock.new
 
           assert_raises(ArgumentError) do
-            DeletionUndoScheduleInteractor.new(output_port: output_port, gateway: gateway).call(input_dto)
+            DeletionUndoScheduleInteractor.new(
+              output_port: output_port,
+              gateway: gateway,
+              user_lookup: user_lookup
+            ).call(input_dto)
           end
         end
       end

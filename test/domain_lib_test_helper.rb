@@ -44,6 +44,7 @@ unless defined?(Rails::Application) && Rails.application&.initialized?
 end
 
 require ROOT.join("test/support/capturing_logger").to_s
+require ROOT.join("test/support/domain_lib_test_support").to_s
 
 # Minitest が Gem の minitest/rails_plugin（railties）を読むと ActiveSupport が載る。
 # domain-lib-test では `Minitest.run` 直前のプラグイン読込を抑止する（`--no-plugins` / MT_NO_PLUGINS と同じ）。
@@ -135,6 +136,7 @@ module DomainLibSetupTeardown
 end
 
 class DomainLibTestCase < Minitest::Test
+  include DomainLibTestSupport
   prepend DomainLibSetupTeardown
   extend DomainLibDeclarative
 

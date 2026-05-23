@@ -19,7 +19,13 @@ module Domain
         def call(crop_id, for_edit:)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          @gateway.find_authorized_crop_loaded_bundle!(user, crop_id.to_i, for_edit: for_edit, access_filter: access_filter)
+          bundle = @gateway.find_crop_loaded_bundle!(crop_id.to_i, for_edit: for_edit)
+          if for_edit
+            Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, bundle.crop_entity)
+          else
+            Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, bundle.crop_entity)
+          end
+          bundle
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @failure_presenter.on_permission_denied
           nil

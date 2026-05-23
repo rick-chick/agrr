@@ -21,13 +21,14 @@ module Domain
 
           user = @user_lookup.find(input_dto.user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          crop_entity = @gateway.find_by_id(input_dto.crop_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, crop_entity)
           out = @gateway.update_task_schedule_blueprint_position_for_user(
             user: user,
             crop_id: input_dto.crop_id,
             blueprint_id: input_dto.blueprint_id,
             gdd_trigger: input_dto.gdd_trigger,
             priority: input_dto.priority,
-            access_filter: access_filter
           )
 
           if out[:ok]

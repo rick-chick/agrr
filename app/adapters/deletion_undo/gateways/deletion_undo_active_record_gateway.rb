@@ -53,10 +53,13 @@ module Adapters
           build_entity(model)
         end
 
+        def find_schedulable_record!(resource_type, resource_id)
+          resolve_schedulable_record!(resource_type, resource_id)
+        end
+
         def schedule(resource_type:, resource_id:, actor_id: nil, toast_message: nil, auto_hide_after: nil,
                      metadata: {}, validate_before_schedule: false)
           record = resolve_schedulable_record!(resource_type, resource_id)
-          ensure_schedule_authorized!(record, actor_id)
           ar_actor = Adapters::Shared::UserActorResolver.user_for_deleted_by(
             actor_id.present? ? ::User.find_by(id: actor_id) : nil
           )
@@ -88,15 +91,6 @@ module Adapters
         end
 
         private
-
-        def ensure_schedule_authorized!(record, actor_id)
-          user = ::User.find_by(id: actor_id)
-          raise Domain::Shared::Policies::PolicyPermissionDenied unless user
-
-          allowed = Domain::DeletionUndo::ScheduleAuthorization.schedule_allowed?(user, record)
-
-          raise Domain::Shared::Policies::PolicyPermissionDenied unless allowed
-        end
 
         def resolve_schedulable_record!(resource_type, resource_id)
           klass = SCHEDULABLE_CLASS_BY_TYPE[resource_type]

@@ -15,7 +15,8 @@ module Domain
         def call(input_dto)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
-          current = @gateway.find_authorized_for_edit(user, input_dto.pesticide_id, access_filter: access_filter)
+          current = @gateway.find_by_id(input_dto.pesticide_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
 
           reference_flag_msg = nil
           unless input_dto.is_reference.nil?
@@ -41,7 +42,7 @@ module Domain
             { is_reference: !!current.is_reference },
             attrs
           )
-          pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, normalized, access_filter: access_filter)
+          pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, normalized)
 
           @output_port.on_success(pesticide_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
@@ -58,12 +59,10 @@ module Domain
             )
           else
             user_b = @user_lookup.find(@user_id)
-            access_filter_b = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user_b)
             bundle = PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_after_update_merge(
               user: user_b,
               pesticide_id: input_dto.pesticide_id,
-              assign_attributes: input_dto.assign_attributes_for_form || {},
-              access_filter: access_filter_b
+              assign_attributes: input_dto.assign_attributes_for_form || {}
             )
             @output_port.on_failure(Domain::Pesticide::Dtos::PesticideMasterFormFailure.new(message: e.message, bundle: bundle))
           end

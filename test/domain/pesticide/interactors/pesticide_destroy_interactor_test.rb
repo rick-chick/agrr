@@ -8,16 +8,16 @@ module Domain
       class PesticideDestroyInteractorTest < DomainLibTestCase
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
-          user = Object.new
+          user = domain_user_stub(id: user_id, admin: false)
           pesticide_id = 7
+          pesticide_entity = domain_record_entity_stub(user_id: 99, is_reference: false)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = Object.new
-          gateway.define_singleton_method(:soft_delete_with_undo) do |*_args, **_kw|
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
+          gateway = mock
+          gateway.expects(:find_by_id).with(pesticide_id).returns(pesticide_entity)
+          gateway.expects(:soft_delete_with_undo).never
 
           received = nil
           output_port = Minitest::Mock.new

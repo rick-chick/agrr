@@ -136,17 +136,9 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_reference_crop_for_entry_schedule!"
         end
 
-        def find_authorized_for_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
-        end
-
-        def find_authorized_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
-        end
-
-        # 認可済み作物を一度読み、Entity とマスタフォーム用スナップショットを束ねる（Controller の二重取得防止）。
-        def find_authorized_crop_loaded_bundle!(user, id, for_edit:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_crop_loaded_bundle!"
+        # 認可は Interactor（ReferenceRecordAuthorization）。永続読み込みのみ。
+        def find_crop_loaded_bundle!(id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_crop_loaded_bundle!"
         end
 
         # マスタCRUD: HTML 新規フォーム用の空スナップショット（永続化しない）
@@ -163,56 +155,54 @@ module Domain
 
         # マスタCRUD: update 失敗時の再描画用に認可済み作物へパラメータをマージ（永続化しない）
         # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:, access_filter:)
+        def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:)
           raise NotImplementedError, "Subclasses must implement merge_edit_crop_params_for_master_form!"
         end
 
         # マスター: 作物と CropStage を一度の作物読み込みで束ねる（before_action 二重取得の回避）。
-        def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, access_filter:)
+        def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
           raise NotImplementedError, "Subclasses must implement find_masters_crop_with_crop_stage_bundle!"
         end
 
         # マスター: 作物と CropTaskTemplate を一度の作物読み込みで束ねる。
-        def find_masters_crop_with_task_template_bundle!(user, crop_id, template_id, access_filter:)
+        def find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
           raise NotImplementedError, "Subclasses must implement find_masters_crop_with_task_template_bundle!"
         end
 
         # マスター API: 作物と農業タスクの関連付けを作成。
-        def create_masters_crop_task_template_association(user, input_dto, access_filter:)
+        def create_masters_crop_task_template_association(user, input_dto)
           raise NotImplementedError, "Subclasses must implement create_masters_crop_task_template_association"
         end
 
-        # 認可済み作物と CropStage を一度の作物読み込みで束ねる。
-        def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_crop_with_crop_stage_bundle!"
+        def find_crop_with_crop_stage_bundle!(crop_id, crop_stage_id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_crop_with_crop_stage_bundle!"
         end
 
         # マスター API: 作物に紐づく農業タスクテンプレート一覧 JSON 行（永続はゲートウェイ内のみ）
-        def masters_crop_agricultural_task_templates_index_rows(user:, crop_id:, access_filter:)
+        def masters_crop_agricultural_task_templates_index_rows(user:, crop_id:)
           raise NotImplementedError, "Subclasses must implement masters_crop_agricultural_task_templates_index_rows"
         end
 
         # 作物にネストしたタスク関連付け: 未関連付けの農業タスクを picklist 用に id/name の Hash 配列で返す（作物解決は find_user_non_reference_crop_for_masters! と同一）
-        def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:, access_filter:)
+        def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:)
           raise NotImplementedError, "Subclasses must implement selectable_agricultural_task_picklist_rows_for_nested_templates"
         end
 
         # @return [Hash] { ok: true, row: Hash } | { ok: false, errors: Array<String> }
-        def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:, access_filter:)
+        def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:)
           raise NotImplementedError, "Subclasses must implement update_masters_crop_task_template_for_api"
         end
 
-        def delete_masters_crop_task_template!(user:, crop_id:, template_id:, access_filter:)
+        def delete_masters_crop_task_template!(user:, crop_id:, template_id:)
           raise NotImplementedError, "Subclasses must implement delete_masters_crop_task_template!"
         end
 
-        # 認可済み作物に属する CropTaskTemplate を取得。
-        def find_authorized_crop_task_template_in_crop!(user, crop_id, template_id, for_edit:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_crop_task_template_in_crop!"
+        def find_crop_task_template_in_crop!(crop_id, template_id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_crop_task_template_in_crop!"
         end
 
         # ブループリント削除（app/services へ委譲）。RecordNotFound はここで握りつぶし not_found を返す。
-        def delete_task_schedule_blueprint_bundle_in_crop!(user, crop_id, blueprint_id, access_filter:)
+        def delete_task_schedule_blueprint_bundle_in_crop!(user, crop_id, blueprint_id)
           raise NotImplementedError, "Subclasses must implement delete_task_schedule_blueprint_bundle_in_crop!"
         end
 
@@ -222,7 +212,7 @@ module Domain
         end
 
         # 編集認可済み作物＋ブループリント ID で位置更新（Interactor は user_id / ID のみ渡す）
-        def update_task_schedule_blueprint_position_for_user(user:, crop_id:, blueprint_id:, gdd_trigger:, priority:, access_filter:)
+        def update_task_schedule_blueprint_position_for_user(user:, crop_id:, blueprint_id:, gdd_trigger:, priority:)
           raise NotImplementedError, "Subclasses must implement update_task_schedule_blueprint_position_for_user"
         end
 
@@ -231,8 +221,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement reload_crop_after_task_schedule_blueprint_delete!"
         end
 
-        def find_authorized_crop_show_detail(user, crop_id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_crop_show_detail"
+        def find_crop_show_detail(crop_id)
+          raise NotImplementedError, "Subclasses must implement find_crop_show_detail"
         end
 
         # @return [Domain::Crop::Entities::CropEntity]
@@ -244,7 +234,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(user, id, attrs)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
@@ -253,7 +243,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement entry_schedule_ordered_stage_rows"
         end
 
-        def soft_delete_with_undo(user:, crop_id:, auto_hide_after:, translator:, access_filter:)
+        def soft_delete_with_undo(user:, crop_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
       end

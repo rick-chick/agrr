@@ -15,12 +15,13 @@ module Domain
         def call(pesticide_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
+          current = @gateway.find_by_id(pesticide_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
           result = @gateway.soft_delete_with_undo(
             user: user,
             pesticide_id: pesticide_id,
             auto_hide_after: 5000,
-            translator: @translator,
-            access_filter: access_filter
+            translator: @translator
           )
           if result[:success]
             dto = Domain::Pesticide::Dtos::PesticideDestroyOutput.new(undo: result[:undo_entity])

@@ -23,14 +23,15 @@ module Domain
             crop_id: 2,
             template_id: 3
           )
-          user = mock
+          user = stub(id: 1, admin?: false)
+          crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
+          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
           @gateway.expects(:delete_masters_crop_task_template!).with(
             user: user,
             crop_id: 2,
             template_id: 3,
-            access_filter: anything
           ).returns(:ok)
           @output_port.expects(:on_success)
 
@@ -43,14 +44,15 @@ module Domain
             crop_id: 2,
             template_id: 3
           )
-          user = mock
+          user = stub(id: 1, admin?: false)
+          crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
+          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
           @gateway.expects(:delete_masters_crop_task_template!).with(
             user: user,
             crop_id: 2,
             template_id: 3,
-            access_filter: anything
           ).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )

@@ -8,22 +8,18 @@ module Domain
       class FarmUpdateInteractorTest < DomainLibTestCase
         test "calls on_success when gateway returns entity" do
           user_id = 10
-          user = Object.new
-          def user.admin? = false
+          user = domain_user_stub(id: user_id, admin: false)
           farm_id = 5
           input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(farm_id: farm_id, name: "N")
           farm_entity = Object.new
+          current = stub(is_reference: false, user_id: user_id)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          gateway.expects(:update_for_user).with(
-            user,
-            farm_id,
-            { name: "N" },
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).returns(farm_entity)
+          gateway.expects(:find_by_id).with(farm_id).returns(current)
+          gateway.expects(:update_for_user).with(user, farm_id, { name: "N" }).returns(farm_entity)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -46,21 +42,17 @@ module Domain
 
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
-          user = Object.new
-          def user.admin? = false
+          user = domain_user_stub(id: user_id, admin: false)
           farm_id = 5
           input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(farm_id: farm_id, name: "N")
+          current = stub(is_reference: false, user_id: 99)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          gateway.expects(:update_for_user).with(
-            user,
-            farm_id,
-            { name: "N" },
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          gateway.expects(:find_by_id).with(farm_id).returns(current)
+          gateway.expects(:update_for_user).never
 
           received = nil
           output_port = Minitest::Mock.new

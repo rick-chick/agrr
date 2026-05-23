@@ -33,28 +33,28 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_selectable_pest_entities_recent_first"
         end
 
-        def authorized_pest_detail_output(user, id, access_filter:)
+        def authorized_pest_detail_output(id)
           raise NotImplementedError, "Subclasses must implement authorized_pest_detail_output"
         end
 
-        def find_authorized_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
+        def find_pest_loaded_bundle!(id)
+          raise NotImplementedError, "Subclasses must implement find_pest_loaded_bundle!"
         end
 
-        # 認可済み害虫を一度読み、Entity と永続モデルを束ねる（HTML フォーム用。契約は {Domain::Pest::Dtos::PestAuthorizedLoad}）。
-        def find_authorized_pest_loaded_bundle!(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_pest_loaded_bundle!"
+        # ネスト害虫用。認可は Interactor（NestedCropPestsAccess）側。
+        def find_crop_entity_by_id(crop_id)
+          raise NotImplementedError, "Subclasses must implement find_crop_entity_by_id"
         end
 
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(user, id, attrs)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_delete_with_undo(user:, pest_id:, auto_hide_after:, translator:, access_filter:)
+        def soft_delete_with_undo(user:, pest_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 

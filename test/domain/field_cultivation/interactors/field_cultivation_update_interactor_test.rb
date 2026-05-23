@@ -21,6 +21,7 @@ module Domain
 
           seen = {}
           gateway = Object.new
+          attach_plan_access_context_to_gateway(gateway, input.field_cultivation_id)
           gateway.define_singleton_method(:update_field_cultivation_schedule) do |field_cultivation_id:, start_date:, completion_date:, public_plan:|
             seen[:field_cultivation_id] = field_cultivation_id
             seen[:start_date] = start_date
@@ -52,6 +53,7 @@ module Domain
           )
 
           gateway = Object.new
+          attach_plan_access_context_to_gateway(gateway, input.field_cultivation_id)
           gateway.define_singleton_method(:update_field_cultivation_schedule) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "missing"
           end
@@ -76,6 +78,7 @@ module Domain
           )
 
           gateway = Object.new
+          attach_plan_access_context_to_gateway(gateway, input.field_cultivation_id)
           gateway.define_singleton_method(:update_field_cultivation_schedule) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordInvalid.new(nil, errors: [ "bad" ])
           end

@@ -5,13 +5,17 @@ require "domain_lib_test_helper"
 class FieldDestroyInteractorTest < DomainLibTestCase
   test "call passes FieldDestroyOutput to output port on success" do
     undo_payload = { undo_token: "tok", toast_message: "m", undo_path: "/u" }
+    farm_entity = domain_record_entity_stub(user_id: 20, is_reference: false)
+    with_farm = stub(farm: farm_entity)
 
-    user = stub(id: 20)
+    user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
+    stub_field_access_find_owned!(user, 7)
 
     gateway = mock
-    gateway.expects(:delete).with(7, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(undo_payload)
+    gateway.expects(:field_with_farm).with(7).returns(with_farm)
+    gateway.expects(:delete).with(7).returns(undo_payload)
 
     output = mock
     output.expects(:on_success).with do |arg|
@@ -30,12 +34,13 @@ class FieldDestroyInteractorTest < DomainLibTestCase
   end
 
   test "call forwards RecordNotFound to on_failure as Error" do
-    user = stub(id: 20)
+    user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
+    stub_field_access_find_owned!(user, 7)
 
     gateway = mock
-    gateway.expects(:delete).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
+    gateway.expects(:field_with_farm).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -55,12 +60,14 @@ class FieldDestroyInteractorTest < DomainLibTestCase
 
   test "call forwards policy permission denied to on_failure as exception" do
     err = Domain::Shared::Policies::PolicyPermissionDenied.new
-    user = stub(id: 20)
+    user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
+    stub_field_access_find_owned!(user, 7, error: err)
 
     gateway = mock
-    gateway.expects(:delete).raises(err)
+    gateway.expects(:field_with_farm).never
+    gateway.expects(:delete).never
 
     output = mock
     output.expects(:on_failure).with(err)

@@ -80,34 +80,25 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_reference_farms_for_region"
         end
 
-        # @param access_filter [Domain::Shared::ReferenceRecordAccessFilter] FarmPolicy.record_access_filter(user)
-        def find_authorized_for_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
-        end
-
-        def find_authorized_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
-        end
-
-        def find_authorized_farm_loaded_bundle!(user, id, for_edit:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_farm_loaded_bundle!"
+        def find_farm_loaded_bundle!(id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_farm_loaded_bundle!"
         end
 
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(user, id, attrs)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        # 認可済み農場と圃場一覧を Entity/DTO で返す（Interactor 用）
-        def detail_for_authorized_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement detail_for_authorized_view"
+        # 農場と圃場一覧を Entity/DTO で返す（Interactor 用。認可は Interactor 側）
+        def farm_detail_with_fields(id)
+          raise NotImplementedError, "Subclasses must implement farm_detail_with_fields"
         end
 
         # 認可・DeletionUndo スケジュールをアダプタ内で完結。Interactor に AR を渡さない。
-        def soft_delete_with_undo(user:, farm_id:, auto_hide_after:, toast_message:, access_filter:)
+        def soft_delete_with_undo(user:, farm_id:, auto_hide_after:, toast_message:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 

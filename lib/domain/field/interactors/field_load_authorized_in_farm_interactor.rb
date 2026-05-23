@@ -17,13 +17,11 @@ module Domain
         # @return [Domain::Field::Dtos::AuthorizedFieldLoadedInFarm, nil]
         def call(farm_id, field_id)
           user = @user_lookup.find(@user_id)
-          farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          @gateway.find_authorized_field_loaded_in_farm!(
-            user,
-            farm_id.to_i,
-            field_id.to_i,
-            farm_access_filter: farm_access_filter
-          )
+          list = @gateway.farm_fields_list(farm_id.to_i)
+          Domain::Field::Policies::FieldAccess.assert_field_edit_on_farm_allowed!(user, list.farm)
+          Domain::Field::Policies::FieldAccess.assert_farm_fields_list_allowed!(user, list.farm)
+          Domain::Field::Policies::FieldAccess.find_owned!(user, field_id.to_i)
+          @gateway.find_field_loaded_in_farm!(farm_id.to_i, field_id.to_i)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @failure_presenter.on_permission_denied
           nil

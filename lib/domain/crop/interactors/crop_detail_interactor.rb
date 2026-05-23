@@ -14,7 +14,8 @@ module Domain
         def call(crop_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          crop_detail_dto = @gateway.find_authorized_crop_show_detail(user, crop_id, access_filter: access_filter)
+          crop_detail_dto = @gateway.find_crop_show_detail(crop_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, crop_detail_dto.crop)
           @output_port.on_success(crop_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

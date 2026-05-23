@@ -9,13 +9,17 @@ class FieldUpdateInteractorTest < DomainLibTestCase
       created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1), area: nil, daily_fixed_cost: nil, region: nil
     )
     dto = Domain::Field::Dtos::FieldUpdateInput.new(id: 5, name: "Updated")
+    farm_entity = domain_record_entity_stub(user_id: 20, is_reference: false)
+    with_farm = stub(farm: farm_entity)
 
-    user = stub(id: 20)
+    user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
+    stub_field_access_find_owned!(user, 5)
 
     gateway = mock
-    gateway.expects(:update).with(5, dto, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(field_entity)
+    gateway.expects(:field_with_farm).with(5).returns(with_farm)
+    gateway.expects(:update).with(5, dto).returns(field_entity)
 
     output = mock
     output.expects(:on_success).with(field_entity)
@@ -31,12 +35,13 @@ class FieldUpdateInteractorTest < DomainLibTestCase
 
   test "call forwards RecordNotFound to on_failure as Error" do
     dto = Domain::Field::Dtos::FieldUpdateInput.new(id: 5, name: "X")
-    user = stub(id: 20)
+    user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
+    stub_field_access_find_owned!(user, 5)
 
     gateway = mock
-    gateway.expects(:update).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
+    gateway.expects(:field_with_farm).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -57,12 +62,14 @@ class FieldUpdateInteractorTest < DomainLibTestCase
   test "call forwards policy permission denied to on_failure as exception" do
     err = Domain::Shared::Policies::PolicyPermissionDenied.new
     dto = Domain::Field::Dtos::FieldUpdateInput.new(id: 5, name: "X")
-    user = stub(id: 20)
+    user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
+    stub_field_access_find_owned!(user, 5, error: err)
 
     gateway = mock
-    gateway.expects(:update).raises(err)
+    gateway.expects(:field_with_farm).never
+    gateway.expects(:update).never
 
     output = mock
     output.expects(:on_failure).with(err)

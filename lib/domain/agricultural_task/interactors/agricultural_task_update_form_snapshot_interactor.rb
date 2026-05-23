@@ -23,12 +23,13 @@ module Domain
 
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
+          current = @gateway.find_by_id(dto.id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
           task = @gateway.merge_update_form_snapshot_for_master_form!(
             user: user,
             task_id: dto.id,
             dto: dto,
-            task_attributes: task_attributes,
-            access_filter: access_filter
+            task_attributes: task_attributes
           )
           normalized_ids = Array(selected_crop_ids).map(&:to_i).uniq
           crop_cards =

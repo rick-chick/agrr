@@ -9,18 +9,16 @@ module Domain
         test "calls on_success when gateway returns dto" do
           user_id = 10
           farm_id = 3
-          user = Object.new
+          user = stub(id: user_id, admin?: false)
+          farm_entity = stub(is_reference: false, user_id: user_id)
           dto = Object.new
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          gateway.expects(:detail_for_authorized_view).with(
-            user,
-            farm_id,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).returns(dto)
+          gateway.expects(:find_by_id).with(farm_id).returns(farm_entity)
+          gateway.expects(:farm_detail_with_fields).with(farm_id).returns(dto)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -44,17 +42,15 @@ module Domain
         test "calls on_failure with policy exception when permission denied" do
           user_id = 10
           farm_id = 3
-          user = Object.new
+          user = stub(id: user_id, admin?: false)
+          farm_entity = stub(is_reference: false, user_id: 99)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          gateway.expects(:detail_for_authorized_view).with(
-            user,
-            farm_id,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          gateway.expects(:find_by_id).with(farm_id).returns(farm_entity)
+          gateway.expects(:farm_detail_with_fields).never
 
           received = nil
           output_port = Minitest::Mock.new

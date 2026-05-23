@@ -15,7 +15,8 @@ module Domain
         def call(input_dto)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          current_entity = @gateway.find_authorized_for_edit(user, input_dto.crop_id, access_filter: access_filter)
+          current_entity = @gateway.find_by_id(input_dto.crop_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current_entity)
 
           reference_flag_msg = nil
           unless input_dto.is_reference.nil?
@@ -42,7 +43,7 @@ module Domain
             { is_reference: current_entity.reference? },
             attrs
           )
-          crop_entity = @gateway.update_for_user(user, input_dto.crop_id, normalized, access_filter: access_filter)
+          crop_entity = @gateway.update_for_user(user, input_dto.crop_id, normalized)
 
           @output_port.on_success(crop_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
@@ -60,11 +61,14 @@ module Domain
           else
             user_b = @user_lookup.find(@user_id)
             access_filter_b = Domain::Shared::Policies::CropPolicy.record_access_filter(user_b)
+            Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(
+              access_filter_b,
+              @gateway.find_by_id(input_dto.crop_id)
+            )
             snapshot = @gateway.merge_edit_crop_params_for_master_form!(
               user: user_b,
               crop_id: input_dto.crop_id,
               attributes: input_dto.to_nested_crop_attributes_hash,
-              access_filter: access_filter_b
             )
             @output_port.on_failure(Domain::Crop::Dtos::CropMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
           end

@@ -18,7 +18,8 @@ module Domain
         def call(input_dto)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::PestPolicy.record_access_filter(user)
-          current = @gateway.find_authorized_for_edit(user, input_dto.pest_id, access_filter: access_filter)
+          current = @gateway.find_by_id(input_dto.pest_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
 
           attrs = {}
           attrs[:name] = input_dto.name unless input_dto.name.nil?
@@ -48,7 +49,7 @@ module Domain
             { is_reference: current.reference? },
             attrs
           )
-          pest_entity = @gateway.update_for_user(user, input_dto.pest_id, normalized, access_filter: access_filter)
+          pest_entity = @gateway.update_for_user(user, input_dto.pest_id, normalized)
 
           unless input_dto.crop_ids.nil?
             @gateway.update_pest_crop_associations(pest_id: pest_entity.id, crop_ids: input_dto.crop_ids, user: user)

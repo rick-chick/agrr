@@ -130,20 +130,6 @@ class Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGatewayTest < Ac
     end
   end
 
-  test "schedule denies when actor cannot edit resource" do
-    owner = create(:user)
-    other = create(:user)
-    crop = create(:crop, user: owner, is_reference: false)
-
-    assert_raises(Domain::Shared::Policies::PolicyPermissionDenied) do
-      @gateway.schedule(
-        resource_type: "Crop",
-        resource_id: crop.id,
-        actor_id: other.id
-      )
-    end
-  end
-
   test "schedule rejects unknown resource_type" do
     user = create(:user)
     assert_raises(Domain::Shared::Exceptions::RecordInvalid) do

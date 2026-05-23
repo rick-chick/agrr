@@ -21,27 +21,19 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_index_for_filter"
         end
 
-        def find_authorized_for_view(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_view"
-        end
-
-        def find_authorized_for_edit(user, id, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
-        end
-
-        def find_authorized_fertilize_loaded_bundle!(user, id, for_edit:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement find_authorized_fertilize_loaded_bundle!"
+        def find_fertilize_loaded_bundle!(id, for_edit:)
+          raise NotImplementedError, "Subclasses must implement find_fertilize_loaded_bundle!"
         end
 
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(user, id, attrs)
           raise NotImplementedError, "Subclasses must implement update_for_user"
         end
 
-        def soft_delete_with_undo(user:, fertilize_id:, auto_hide_after:, translator:, access_filter:)
+        def soft_delete_with_undo(user:, fertilize_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 

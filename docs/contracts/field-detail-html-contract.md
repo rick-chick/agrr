@@ -16,7 +16,7 @@
 
 ## Gateway
 
-- **`field_with_farm_for_user(field_id, user_id)`** → `FieldWithFarm`（圃場の取得・認可に加え、農場を `find_authorized_for_edit` で揃える）
+- **`field_with_farm(field_id)`** → `FieldWithFarm`（圃場 + 農場 entity）。認可は Interactor が `FieldAccess` / `FarmPolicy` で評価する。
 
 ## Controller
 

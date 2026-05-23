@@ -12,7 +12,7 @@
 
 ## Gateway
 
-- **`find_authorized_for_view(user, id)`** → entity（Interactor が呼び出し）
+- **`find_by_id(id)`** → entity（Interactor が `ReferenceRecordAuthorization.assert_view_allowed!` で認可）
 
 ## Controller
 

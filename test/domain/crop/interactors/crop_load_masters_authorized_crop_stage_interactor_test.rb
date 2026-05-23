@@ -19,7 +19,6 @@ module Domain
             :u,
             1,
             2,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
           ).returns(dto)
 
           user_lookup = Minitest::Mock.new
@@ -49,7 +48,6 @@ module Domain
             :u,
             1,
             99,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
           ).raises(Domain::Shared::Exceptions::RecordNotFound, "x")
 
           user_lookup = Minitest::Mock.new

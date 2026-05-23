@@ -162,24 +162,8 @@ module Adapters
           end
         end
 
-        def find_authorized_for_view(user, id, access_filter:)
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(
-            authorized_farm_record_for_view!(user, id, access_filter: access_filter)
-          )
-        end
-
-        def find_authorized_for_edit(user, id, access_filter:)
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(
-            authorized_farm_record_for_edit!(user, id, access_filter: access_filter)
-          )
-        end
-
-        def find_authorized_farm_loaded_bundle!(user, id, for_edit:, access_filter:)
-          farm = if for_edit
-                   authorized_farm_record_for_edit!(user, id, access_filter: access_filter)
-                 else
-                   authorized_farm_record_for_view!(user, id, access_filter: access_filter)
-                 end
+        def find_farm_loaded_bundle!(id, for_edit:)
+          farm = find_farm_model!(id)
           Domain::Farm::Dtos::AuthorizedFarmLoaded.new(
             farm_entity: Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm),
             master_form_snapshot: Adapters::Farm::Mappers::FarmMasterFormSnapshotMapper.from_record(farm)
@@ -204,31 +188,20 @@ module Adapters
           Adapters::Farm::Mappers::FarmMasterFormSnapshotMapper.from_record(farm)
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(_user, id, attrs)
           farm = find_farm_model!(id)
-          unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-
           raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.update(attrs.to_h.symbolize_keys)
 
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
         end
 
-        def detail_for_authorized_view(user, id, access_filter:)
+        def farm_detail_with_fields(id)
           farm = find_farm_with_fields!(id)
-          unless access_filter.view_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-
           Adapters::Farm::Mappers::FarmMapper.detail_dto_from_farm_record(farm)
         end
 
-        def soft_delete_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:, access_filter:)
+        def soft_delete_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:)
           farm = find_farm_model!(farm_id)
-          unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
           if farm.free_crop_plans.any?
             return {
               success: false,
@@ -246,8 +219,6 @@ module Adapters
             auto_hide_after: auto_hide_after
           )
           { success: true, undo_entity: event, farm_name: farm_name }
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
         rescue Domain::Shared::Exceptions::RecordNotFound
           raise
         rescue Domain::Shared::Exceptions::RecordInvalid => e
@@ -273,22 +244,6 @@ module Adapters
         end
 
         private
-
-        def authorized_farm_record_for_view!(user, id, access_filter:)
-          farm = find_farm_model!(id)
-          unless access_filter.view_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          farm
-        end
-
-        def authorized_farm_record_for_edit!(user, id, access_filter:)
-          farm = find_farm_model!(id)
-          unless access_filter.edit_allows?(is_reference: farm.is_reference, record_user_id: farm.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          farm
-        end
 
         def farm_weather_data_access_context_from_record(record)
           return nil unless record

@@ -195,8 +195,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     result = gateway.soft_delete_with_undo(
       user: @user,
       farm_id: farm.id,
-      toast_message: "toast",
-      access_filter: Domain::Shared::Policies::FarmPolicy.record_access_filter(@user)
+      toast_message: "toast"
     )
     assert_equal false, result[:success]
     assert result[:error_dto].message.present?

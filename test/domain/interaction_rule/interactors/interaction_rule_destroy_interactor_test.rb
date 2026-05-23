@@ -6,23 +6,19 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleDestroyInteractorTest < DomainLibTestCase
-        test "calls on_failure with policy exception when gateway denies destroy" do
+        test "calls on_failure with policy exception when interactor denies destroy" do
           user_id = 10
           rule_id = 7
-          user = Object.new
+          user = stub(id: user_id, admin?: false)
           translator = Object.new
+          current = stub(is_reference: false, user_id: 99)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          gateway.expects(:soft_delete_with_undo).with(
-            user: user,
-            rule_id: rule_id,
-            auto_hide_after: 5000,
-            translator: translator,
-            access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)
-          ).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          gateway.expects(:find_by_id).with(rule_id).returns(current)
+          gateway.expects(:soft_delete_with_undo).never
 
           received = nil
           output_port = Minitest::Mock.new

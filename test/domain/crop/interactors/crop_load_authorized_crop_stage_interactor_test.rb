@@ -13,6 +13,7 @@ module Domain
             crop_entity: crop_entity,
             crop_stage_entity: crop_stage_entity
           )
+          user = stub(id: 1, admin?: false)
 
           gw = Class.new do
             attr_reader :captured_for_edit
@@ -21,9 +22,8 @@ module Domain
               @bundle = bundle
             end
 
-            def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:, access_filter:)
-              raise ArgumentError unless user == :user_stub && crop_id == 1 && crop_stage_id == 2
-              raise ArgumentError unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
+            def find_crop_with_crop_stage_bundle!(crop_id, crop_stage_id, for_edit:)
+              raise ArgumentError unless crop_id == 1 && crop_stage_id == 2
 
               @captured_for_edit = for_edit
               @bundle
@@ -31,7 +31,7 @@ module Domain
           end.new(dto)
 
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Class.new do
             def on_not_found
@@ -60,6 +60,7 @@ module Domain
             crop_entity: crop_entity2,
             crop_stage_entity: crop_stage_entity2
           )
+          user = stub(id: 1, admin?: false)
 
           gw = Class.new do
             attr_reader :captured_for_edit
@@ -68,16 +69,14 @@ module Domain
               @bundle = bundle
             end
 
-            def find_authorized_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, for_edit:, access_filter:)
+            def find_crop_with_crop_stage_bundle!(crop_id, crop_stage_id, for_edit:)
               @captured_for_edit = for_edit
-              raise ArgumentError unless access_filter.is_a?(Domain::Shared::ReferenceRecordAccessFilter)
-
               @bundle
             end
           end.new(dto)
 
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :u, [ 1 ])
+          user_lookup.expect(:find, user, [ 1 ])
 
           failure = Class.new do
             def on_not_found
@@ -98,14 +97,22 @@ module Domain
           user_lookup.verify
         end
 
-        test "delegates to failure presenter on_not_found when gateway raises policy denial" do
+        test "delegates to failure presenter on_not_found when interactor denies edit" do
+          crop_entity = Domain::Crop::Entities::CropEntity.new(id: 1, user_id: 99, name: "x", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
+          crop_stage_entity = Domain::Crop::Entities::CropStageEntity.new(id: 2, crop_id: 1, name: "s", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
+          dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContext.new(
+            crop_entity: crop_entity,
+            crop_stage_entity: crop_stage_entity
+          )
+          user = stub(id: 1, admin?: false)
+
           gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_crop_with_crop_stage_bundle!, nil) do
-            raise Domain::Shared::Policies::PolicyPermissionDenied
+          gateway.expect(:find_crop_with_crop_stage_bundle!, dto) do |crop_id, crop_stage_id, for_edit:|
+            crop_id == 1 && crop_stage_id == 2 && for_edit == true
           end
 
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Minitest::Mock.new
           failure.expect(:on_not_found, nil)
@@ -126,12 +133,13 @@ module Domain
 
         test "delegates to failure presenter on_not_found when gateway raises record not found" do
           gateway = Minitest::Mock.new
-          gateway.expect(:find_authorized_crop_with_crop_stage_bundle!, nil) do
-            raise Domain::Shared::Exceptions::RecordNotFound, "gone"
+          gateway.expect(:find_crop_with_crop_stage_bundle!, nil) do |crop_id, crop_stage_id, for_edit:|
+            raise Domain::Shared::Exceptions::RecordNotFound, "gone" if crop_id == 99 && crop_stage_id == 88 && for_edit == false
           end
 
+          user = stub(id: 1, admin?: false)
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :user_stub, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Minitest::Mock.new
           failure.expect(:on_not_found, nil)

@@ -19,11 +19,13 @@ module Domain
 
         test "calls on_success with picklist rows" do
           input_dto = Domain::Crop::Dtos::CropNestedCropTaskTemplatesNewInput.new(user_id: 1, crop_id: 2)
-          user = mock
+          user = stub(id: 1, admin?: false)
+          crop_record = stub(is_reference: false, user_id: 1)
           rows = [ { id: 9, name: "Task A" } ]
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:selectable_agricultural_task_picklist_rows_for_nested_templates).with(user: user, crop_id: 2, access_filter: anything).returns(rows)
+          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:selectable_agricultural_task_picklist_rows_for_nested_templates).with(user: user, crop_id: 2).returns(rows)
           @output_port.expects(:on_success).with(rows)
 
           @interactor.call(input_dto)
@@ -31,10 +33,10 @@ module Domain
 
         test "calls on_failure when gateway raises RecordNotFound" do
           input_dto = Domain::Crop::Dtos::CropNestedCropTaskTemplatesNewInput.new(user_id: 1, crop_id: 2)
-          user = mock
+          user = stub(id: 1, admin?: false)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:selectable_agricultural_task_picklist_rows_for_nested_templates).with(user: user, crop_id: 2, access_filter: anything).raises(
+          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )
           @output_port.expects(:on_failure).with do |failure_dto|

@@ -67,31 +67,15 @@ module Adapters
           index_relation_for_filter(filter).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
-        def find_authorized_for_view(user, id, access_filter:)
-          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
-        end
-
-        def authorized_pesticide_detail_output(user, id, access_filter:)
+        def authorized_pesticide_detail_output(id)
           pesticide = ::Pesticide.includes(:crop, :pest, :pesticide_usage_constraint, :pesticide_application_detail).find(id)
-          unless access_filter.view_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-
           Adapters::Pesticide::Mappers::PesticideMapper.detail_output_dto_from_record(pesticide)
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
         end
 
-        def find_authorized_for_edit(user, id, access_filter:)
-          Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
-        end
-
-        def find_authorized_pesticide_loaded_bundle!(user, id, for_edit:, access_filter:)
-          pesticide = if for_edit
-                        find_authorized_model_for_edit(user, id, access_filter: access_filter)
-                      else
-                        find_authorized_model_for_view(user, id, access_filter: access_filter)
-                      end
+        def find_pesticide_loaded_bundle!(id, for_edit:)
+          pesticide = find_pesticide_model!(id)
           Domain::Pesticide::Dtos::AuthorizedPesticideLoaded.new(
             pesticide_entity: Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide),
             master_form_snapshot: Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide)
@@ -105,12 +89,8 @@ module Adapters
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide)
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(_user, id, attrs)
           pesticide = find_pesticide_model!(id)
-          unless access_filter.edit_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-
           raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.update(attrs.to_h.symbolize_keys)
 
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide.reload)
@@ -150,8 +130,8 @@ module Adapters
           )
         end
 
-        def build_pesticide_master_form_snapshot_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:)
-          pesticide = find_authorized_model_for_edit(user, pesticide_id.to_i, access_filter: access_filter)
+        def build_pesticide_master_form_snapshot_after_update_merge!(user:, pesticide_id:, assign_attributes:)
+          pesticide = find_pesticide_model!(pesticide_id.to_i)
           ensure_nested_associations_for_pesticide_master_form!(pesticide)
           pesticide.assign_attributes(assign_attributes || {})
           pesticide.valid?
@@ -161,11 +141,8 @@ module Adapters
           )
         end
 
-        def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:)
           pesticide = find_pesticide_model!(pesticide_id)
-          unless access_filter.edit_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
           name = pesticide.name
           toast_message = translator.t("pesticides.undo.toast", name: name)
           undo_gw = @deletion_undo_gateway
@@ -177,8 +154,6 @@ module Adapters
             auto_hide_after: auto_hide_after
           )
           { success: true, undo_entity: event, resource_name: name }
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
         rescue Domain::Shared::Exceptions::RecordNotFound
           raise
         rescue StandardError => e
@@ -208,22 +183,6 @@ module Adapters
 
         def selectable_scope(user)
           ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
-        end
-
-        def find_authorized_model_for_view(user, id, access_filter:)
-          pesticide = find_pesticide_model!(id)
-          unless access_filter.view_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          pesticide
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          pesticide = find_pesticide_model!(id)
-          unless access_filter.edit_allows?(is_reference: pesticide.is_reference, record_user_id: pesticide.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          pesticide
         end
 
         def find_pesticide_model!(id)

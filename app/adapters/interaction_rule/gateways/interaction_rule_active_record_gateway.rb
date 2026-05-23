@@ -105,14 +105,6 @@ module Adapters
 
         public
 
-        def find_authorized_for_view(user, id, access_filter:)
-          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_view(user, id, access_filter: access_filter))
-        end
-
-        def find_authorized_for_edit(user, id, access_filter:)
-          Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
-        end
-
         def create_for_user(user, attrs)
           rule = ::InteractionRule.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") unless rule.save
@@ -120,22 +112,15 @@ module Adapters
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule)
         end
 
-        def update_for_user(user, id, attrs, access_filter:)
+        def update_for_user(_user, id, attrs)
           rule = find_interaction_rule_model!(id)
-          unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-
           raise Domain::Shared::Exceptions::RecordInvalid, rule.errors.full_messages.join(", ") unless rule.update(attrs.to_h.symbolize_keys)
 
           Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(rule.reload)
         end
 
-        def soft_delete_with_undo(user:, rule_id:, auto_hide_after: 5000, translator:, access_filter:)
+        def soft_delete_with_undo(user:, rule_id:, auto_hide_after: 5000, translator:)
           rule = find_interaction_rule_model!(rule_id)
-          unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
           toast_message = translator.t("interaction_rules.undo.toast", source: rule.source_group, target: rule.target_group)
           event = @deletion_undo_gateway.schedule(
             resource_type: rule.class.name,
@@ -145,8 +130,6 @@ module Adapters
             auto_hide_after: auto_hide_after
           )
           { success: true, undo_entity: event }
-        rescue Domain::Shared::Policies::PolicyPermissionDenied
-          raise
         rescue Domain::Shared::Exceptions::RecordNotFound
           raise
         rescue StandardError => e
@@ -154,22 +137,6 @@ module Adapters
         end
 
         private
-
-        def find_authorized_model_for_view(user, id, access_filter:)
-          rule = find_interaction_rule_model!(id)
-          unless access_filter.view_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          rule
-        end
-
-        def find_authorized_model_for_edit(user, id, access_filter:)
-          rule = find_interaction_rule_model!(id)
-          unless access_filter.edit_allows?(is_reference: rule.is_reference, record_user_id: rule.user_id)
-            raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          rule
-        end
 
         def find_interaction_rule_model!(id)
           ::InteractionRule.find(id)

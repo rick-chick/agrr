@@ -7,9 +7,9 @@ module Domain
     module Interactors
       class CropTaskScheduleBlueprintUpdatePositionInteractorTest < DomainLibTestCase
         setup do
-          @user = OpenStruct.new(id: 1)
-          @gateway = Object.new
-          @user_lookup = Object.new
+          @user = stub(id: 1, admin?: false)
+          @gateway = mock("gateway")
+          @user_lookup = mock("user_lookup")
           @output = mock("output_port")
           @interactor = Domain::Crop::Interactors::CropTaskScheduleBlueprintUpdatePositionInteractor.new(
             output_port: @output,
@@ -42,7 +42,8 @@ module Domain
           )
 
           @user_lookup.expects(:find).with(@user.id).returns(@user)
-          @gateway.expects(:update_task_schedule_blueprint_position_for_user).raises(Domain::Shared::Policies::PolicyPermissionDenied)
+          @gateway.expects(:find_by_id).with(1).returns(stub(is_reference: false, user_id: 99))
+          @gateway.expects(:update_task_schedule_blueprint_position_for_user).never
           @output.expects(:on_forbidden)
 
           @interactor.call(dto)
