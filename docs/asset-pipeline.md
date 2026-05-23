@@ -1,6 +1,6 @@
 # アセットパイプライン（Rails HTML 側）
 
-> **位置づけ**：Rails ERB / Hotwire 系（`app/javascript/`、`app/assets/javascripts/`）の運用メモ。Angular SPA（`frontend/`）はこの対象外。Hotwire スタックは [ADR 0003](adr/0003-angular-spa-and-hotwire-deprecation.md) で段階的廃止予定。
+> **位置づけ**：Rails ERB / Hotwire 系（`app/javascript/`、`app/assets/javascripts/`）の運用メモ。Angular SPA（`frontend/`）はこの対象外。Hotwire スタックは段階的廃止予定（本番 UI は Angular SPA が正）。
 
 ## jsbundling-rails (esbuild)
 

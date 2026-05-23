@@ -71,8 +71,7 @@ docker compose up
 |------------|------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | システムアーキテクチャ、設計思想 |
 | [CLAUDE.md](CLAUDE.md) | 規約・禁止事項の要約 |
-| [docs/contracts/](docs/contracts/) | API・機能契約 |
-| [docs/README.md](docs/README.md) | 全ドキュメント一覧 |
+| [docs/README.md](docs/README.md) | 補助ドキュメント一覧 |
 
 ---
 

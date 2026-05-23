@@ -3,7 +3,7 @@
 module Adapters
   module PublicPlan
     module Presenters
-      # POST 保存 API の JSON 応答（契約: public-plan-save-contract.md）。
+      # POST 保存 API の JSON 応答（成功: { success: true }。失敗は on_failure でエラー JSON）。
       class PublicPlanSaveFromSessionApiApiPresenter < Domain::CultivationPlan::Ports::PublicPlanSaveFromSessionOutputPort
         def initialize(view:)
           @view = view

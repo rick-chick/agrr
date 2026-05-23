@@ -3,7 +3,7 @@
 module Domain
   module PublicPlan
     module Mappers
-      # エントリ API の予測終端日。未指定・パース失敗時は reference_date の年末（docs/planning/crop_schedule_entry_weather_initialization.md）
+      # エントリ API の予測終端日。未指定・パース失敗時は reference_date の年末。
       module EntrySchedulePredictionEndDateMapper
         module_function
 

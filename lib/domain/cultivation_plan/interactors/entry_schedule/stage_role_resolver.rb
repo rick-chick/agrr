@@ -4,7 +4,8 @@ module Domain
   module CultivationPlan
     module Interactors
       module EntrySchedule
-        # エントリ作物スケジュール用: 「まき」「植え」に相当する CropStage を解決する（docs/planning/crop_schedule_stage_roles.md）
+        # エントリ作物スケジュール用: 「まき」「植え」に相当する CropStage を解決する。
+        # sowing = 最小 order、transplant = 名称に定植/植え付を含む stage、なければ 2 番目。
         # T-035: app/services/crop_schedule から domain へ移行。
         class StageRoleResolver
           TRANSPLANT_NAME_PATTERN = /定植|植え付/

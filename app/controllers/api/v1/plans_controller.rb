@@ -47,9 +47,9 @@ module Api
         ).call(input_dto)
       end
 
-      # Delete per docs/contracts/plan-delete-no-confirm-contract.md:
-      # - calls the destroy interactor immediately (no confirmation dialog is necessary)
-      # - renders the DeletionUndoResponse through the presenter/view contract
+      # Delete (see test/controllers/api/v1/plans_controller_test.rb "destroy deletes plan"):
+      # - calls the destroy interactor immediately (no confirmation dialog)
+      # - renders DeletionUndoResponse fields via CultivationPlanDeleteApiPresenter
       def destroy
         presenter = Adapters::CultivationPlan::Presenters::CultivationPlanDeleteApiPresenter.new(view: self)
         interactor = Domain::CultivationPlan::Interactors::CultivationPlanDestroyInteractor.new(output_port: presenter,

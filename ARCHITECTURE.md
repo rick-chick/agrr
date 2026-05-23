@@ -14,7 +14,7 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 | Backend             | Ruby on Rails 8 on **Google Cloud Run** (see `.cursor/skills/deploy-server/scripts/gcp-deploy.sh`)     |
 | Database            | SQLite3 (Solid Cache / Solid Cable / Solid Queue as applicable), **Litestream** replica to GCS |
 | Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads                 |
-| Contract-first API  | `docs/contracts/*.md` describe Angular ↔ Rails JSON contracts                                  |
+| Contract-first API  | `lib/domain` ports/DTOs plus integration and domain tests encoding observable API behavior   |
 
 
 **Architecture (primary):** Decoupled **Angular SPA + Rails API**. Server-rendered Rails HTML exists for some master CRUD flows and delegates to the same domain layer (`lib/domain`) via HTML presenters (`app/adapters/<context>/presenters/`).
@@ -398,7 +398,7 @@ This rule is the single source of truth for authorization and validation respons
 - ❌ Moving coupled logic into a fat controller or fat `app/services/` without DTOs, ports, and constructor injection
 - ❌ Tests that green-wrap a different graph than production (global stubs, implicit time) — fix production wiring first, then tests
 - ❌ `# TODO: move to domain`, feature flags, or `legacy_path`/`new_path` branches without a plan and deadline to collapse them
-- ✅ Deliberate interim steps belong in the **same PR or adjacent commits** with repayment, or their **lifetime and replacement** must be spelled out in `docs/contracts/` and tests bound to those contracts — see `.cursor/rules/no-convenience-tech-debt.mdc`
+- ✅ Deliberate interim steps belong in the **same PR or adjacent commits** with repayment, or their **lifetime and replacement** must be spelled out in the PR / goal statement and tests bound to that behavior — see `.cursor/rules/no-convenience-tech-debt.mdc`
 
 ### View Templates
 
@@ -406,9 +406,9 @@ This rule is the single source of truth for authorization and validation respons
 
 ### Contract-first Documentation
 
-**R9. Contract-first** — Behavior is defined by **contract text and the tests bound to it** (`docs/contracts/`), not by "matching whatever the legacy stack does."
+**R9. Contract-first** — Behavior is defined by **`ARCHITECTURE.md`**, **port/DTO contracts in `lib/domain`**, and **tests that encode observable behavior**, not by "matching whatever the legacy stack does."
 
-- ❌ Stating in contracts or ADRs that the Rails/HTML implementation alone is the source of truth
+- ❌ Treating the Rails/HTML implementation snapshot alone as the source of truth without ports, DTOs, and tests
 
 ### R10. Implementation order and Definition of done
 
@@ -529,9 +529,7 @@ The **Rules** section is the **primary specification**. **Execution procedures**
 
 ### Related Documentation
 
-- [docs/README.md](docs/README.md) (contracts, ADRs, archive index)
-- [docs/adr/](docs/adr/) (Architecture Decision Records)
-- [docs/contracts/](docs/contracts/) (API / feature contracts, contract-first)
+- [docs/README.md](docs/README.md) (supplementary docs index)
 - [.cursor/rules/rails-testing-workflow.mdc](.cursor/rules/rails-testing-workflow.mdc) (testing workflow rules)
 - [.cursor/skills/test-common/SKILL.md](.cursor/skills/test-common/SKILL.md) (test execution scripts)
 
