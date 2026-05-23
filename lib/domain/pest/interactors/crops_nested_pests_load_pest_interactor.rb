@@ -26,7 +26,9 @@ module Domain
             for_edit_form: for_edit_form
           )
           if result.status == :found
-            @output_port.on_success(result.crop_nest_snapshot)
+            snapshot = result.crop_nest_snapshot
+            html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_detail_record(user, snapshot)
+            @output_port.on_success(snapshot, html_display: html_display)
           else
             @output_port.on_not_found(crop_id: crop_id)
           end

@@ -17,7 +17,15 @@ module Domain
           rules = @gateway.list_index_for_filter(filter)
           reference_rules = rules.select(&:is_reference)
           interaction_rules = rules.reject(&:is_reference)
-          @output_port.on_success(interaction_rules: interaction_rules, reference_rules: reference_rules)
+          page_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_interaction_rule_index(
+            user,
+            reference_rules_any: reference_rules.any?
+          )
+          @output_port.on_success(
+            interaction_rules: interaction_rules,
+            reference_rules: reference_rules,
+            page_display: page_display
+          )
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordInvalid => e

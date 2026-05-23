@@ -28,6 +28,7 @@ class InteractionRulesController < ApplicationController
   # GET /interaction_rules/new
   def new
     @form = Adapters::InteractionRule::Presenters::Forms::InteractionRuleForm.new
+    @html_display = master_form_html_display_capabilities
   end
 
   # GET /interaction_rules/:id/edit

@@ -21,7 +21,8 @@ module Domain
           else
             Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, rule_entity)
           end
-          @output_port.on_success(rule_entity)
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_detail_record(user, rule_entity)
+          @output_port.on_success(rule_entity, html_display: html_display)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(:no_permission)
         rescue Domain::Shared::Exceptions::RecordNotFound

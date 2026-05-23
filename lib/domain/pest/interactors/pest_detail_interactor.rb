@@ -17,7 +17,16 @@ module Domain
           access_filter = Domain::Shared::Policies::PestPolicy.record_access_filter(user)
           dto = @gateway.find_pest_show_detail(pest_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, dto.pest)
-          @output_port.on_success(dto)
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_detail_record(user, dto.pest)
+          enriched = Domain::Pest::Dtos::PestDetailOutput.new(
+            pest: dto.pest,
+            temperature_profile: dto.temperature_profile,
+            thermal_requirement: dto.thermal_requirement,
+            control_methods: dto.control_methods,
+            associated_crops: dto.associated_crops,
+            html_display: html_display
+          )
+          @output_port.on_success(enriched)
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("pests.flash.not_found")))
         rescue Domain::Shared::Policies::PolicyPermissionDenied

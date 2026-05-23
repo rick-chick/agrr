@@ -4,12 +4,14 @@ module Adapters
   module Pest
     module Presenters
       class PestListHtmlPresenter < Domain::Pest::Ports::PestListOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
 
-        def on_success(pests)
-          @view.instance_variable_set(:@pests, pests)
+        def on_success(rows)
+          assign_list_row_view_models(@view, :@pests, rows)
           # index テンプレートをレンダリング（暗黙的に）
         end
 

@@ -118,7 +118,7 @@
       <% end %>
     </div>
 
-    <% if admin_user? %>
+    <% if @html_display&.show_reference_form_fields %>
       <div class="form-group">
         <div class="checkbox-group">
           <%= f.check_box :is_reference, class: 'form-control' %>

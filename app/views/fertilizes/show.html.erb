@@ -3,7 +3,7 @@
 <div class="crop-detail-card" id="fertilize_<%= @fertilize.id %>" data-undo-delete-record>
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @fertilize.name %></h1>
-    <% if admin_user? && @fertilize.is_reference %>
+    <% if @html_display&.show_reference_badge %>
       <div class="crop-detail-type reference"><%= t('.reference_fertilize') %></div>
     <% end %>
   </div>
@@ -69,24 +69,10 @@
 
   <div class="actions">
     <%= link_to t('.back_to_list'), fertilizes_path, class: "btn btn-secondary" %>
-    <% if @fertilize.is_reference %>
-      <%# 参照肥料は管理者のみ編集・削除可能 %>
-      <% if admin_user? %>
-        <%= link_to t('.edit'), edit_fertilize_path(@fertilize.id), class: "btn btn-secondary" %>
-        <%= link_to t('.delete'), fertilize_path(@fertilize.id),
-                    class: "btn btn-error",
-                    data: {
-                      controller: "undo-delete",
-                      action: "click->undo-delete#submit",
-                      turbo_method: :delete,
-                      undo_delete_url_value: fertilize_path(@fertilize.id),
-                      undo_delete_message_value: t('fertilizes.undo.toast', name: @fertilize.name),
-                      undo_delete_redirect_url_value: fertilizes_path
-                    } %>
-      <% end %>
-    <% else %>
-      <%# ユーザー肥料は所有者が編集・削除可能 %>
+    <% if @html_display&.show_edit_button %>
       <%= link_to t('.edit'), edit_fertilize_path(@fertilize.id), class: "btn btn-secondary" %>
+    <% end %>
+    <% if @html_display&.show_delete_button %>
       <%= link_to t('.delete'), fertilize_path(@fertilize.id),
                   class: "btn btn-error",
                   data: {

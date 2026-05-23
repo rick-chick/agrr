@@ -13,12 +13,31 @@ class Domain::Crop::Interactors::CropListInteractorTest < DomainLibTestCase
 
     expected_filter = Domain::Shared::Policies::CropPolicy.index_list_filter(user)
     e1 = mock
+    def e1.is_reference
+      false
+    end
+
+    def e1.user_id
+      42
+    end
+
     e2 = mock
+    def e2.is_reference
+      false
+    end
+
+    def e2.user_id
+      42
+    end
     gateway = mock
     gateway.expects(:list_index_for_filter).with(expected_filter).returns([ e1, e2 ])
 
     output = mock
-    output.expects(:on_success).with([ e1, e2 ])
+    output.expects(:on_success).with do |rows|
+      rows.size == 2 &&
+        rows.all? { |row| row.is_a?(Domain::Shared::Dtos::ReferencableListRow) } &&
+        rows.map(&:record) == [ e1, e2 ]
+    end
 
     Domain::Crop::Interactors::CropListInteractor.new(
       output_port: output,
@@ -41,7 +60,7 @@ class Domain::Crop::Interactors::CropListInteractorTest < DomainLibTestCase
     gateway.expects(:list_index_for_filter).with(expected_filter).returns([])
 
     output = mock
-    output.expects(:on_success).with([])
+    output.expects(:on_success).with { |rows| rows == [] }
 
     Domain::Crop::Interactors::CropListInteractor.new(
       output_port: output,

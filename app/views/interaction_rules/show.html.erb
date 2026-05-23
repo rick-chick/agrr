@@ -3,12 +3,10 @@
 <div class="page-header">
   <h1 class="page-title"><%= t('.title') %></h1>
   <div>
-    <% if @interaction_rule.is_reference %>
-      <% if admin_user? %>
-        <%= link_to t('.edit'), edit_interaction_rule_path(@interaction_rule), class: "btn btn-secondary" %>
-      <% end %>
-    <% else %>
+    <% if @html_display&.show_edit_button %>
       <%= link_to t('.edit'), edit_interaction_rule_path(@interaction_rule), class: "btn btn-secondary" %>
+    <% end %>
+    <% if @html_display&.show_delete_button %>
       <%= link_to t('.delete'), interaction_rule_path(@interaction_rule),
                   class: "btn btn-error",
                   data: {
@@ -25,12 +23,12 @@
 </div>
 
 <div class="rule-detail-card" id="interaction_rule_<%= @interaction_rule.id %>" data-undo-delete-record>
-  <% if admin_user? && @interaction_rule.is_reference %>
+  <% if @html_display&.show_reference_badge %>
     <div class="mb-4">
       <span class="badge badge-info"><%= t('.system_rule_badge') %></span>
     </div>
   <% end %>
-  
+
   <div class="detail-row">
     <div class="detail-label"><%= t('.rule_type') %></div>
     <div class="detail-value"><%= @interaction_rule.rule_type %></div>

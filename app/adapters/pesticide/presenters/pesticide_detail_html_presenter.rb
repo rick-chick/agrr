@@ -4,12 +4,15 @@ module Adapters
   module Pesticide
     module Presenters
       class PesticideDetailHtmlPresenter < Domain::Pesticide::Ports::PesticideDetailOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
 
         def on_success(pesticide_detail_dto)
           @view.instance_variable_set(:@pesticide, pesticide_detail_dto)
+          assign_html_display(@view, pesticide_detail_dto.html_display) if pesticide_detail_dto.html_display
           # show テンプレートをレンダリング（暗黙的に）
         end
 

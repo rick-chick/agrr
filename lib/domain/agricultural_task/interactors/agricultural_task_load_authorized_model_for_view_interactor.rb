@@ -17,7 +17,17 @@ module Domain
           access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
           bundle = @gateway.find_agricultural_task_loaded_bundle!(task_id.to_i, for_edit: false)
           Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, bundle.agricultural_task_entity)
-          @output_port.on_success(bundle)
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_referencable_form(
+            user,
+            crop_is_reference: bundle.agricultural_task_entity.reference?,
+            crop_user_id: bundle.agricultural_task_entity.user_id
+          )
+          enriched = Domain::AgriculturalTask::Dtos::AuthorizedAgriculturalTaskLoaded.new(
+            agricultural_task_entity: bundle.agricultural_task_entity,
+            master_form_snapshot: bundle.master_form_snapshot,
+            html_display: html_display
+          )
+          @output_port.on_success(enriched)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @logger.warn("[AgriculturalTaskLoadAuthorizedModelForViewInteractor] #{e.message}")
           @output_port.on_failure(:no_permission)

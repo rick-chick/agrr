@@ -16,7 +16,17 @@ module Domain
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
           bundle = @gateway.find_farm_loaded_bundle!(farm_id.to_i, for_edit: true)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, bundle.farm_entity)
-          @output_port.on_success(bundle)
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_referencable_form(
+            user,
+            crop_is_reference: bundle.farm_entity.reference?,
+            crop_user_id: bundle.farm_entity.user_id
+          )
+          enriched = Domain::Farm::Dtos::AuthorizedFarmLoaded.new(
+            farm_entity: bundle.farm_entity,
+            master_form_snapshot: bundle.master_form_snapshot,
+            html_display: html_display
+          )
+          @output_port.on_success(enriched)
         rescue Domain::Shared::Policies::PolicyPermissionDenied, Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure
         end

@@ -4,12 +4,15 @@ module Adapters
   module Fertilize
     module Presenters
       class FertilizeLoadForViewHtmlPresenter < Domain::Fertilize::Ports::FertilizeLoadOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
 
         def on_success(bundle)
           @view.instance_variable_set(:@fertilize, Forms::FertilizeMasterForm.from_snapshot(bundle.master_form_snapshot))
+          assign_html_display(@view, bundle.html_display) if bundle.html_display
         end
 
         def on_permission_denied

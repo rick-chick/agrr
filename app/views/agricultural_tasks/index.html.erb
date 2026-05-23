@@ -19,7 +19,7 @@
     <% end %>
   </div>
 
-  <% if admin_user? %>
+  <% if @html_display&.show_admin_list_filters %>
     <div class="agricultural-task-filters">
       <%= form_with url: agricultural_tasks_path, method: :get, local: true, class: "agricultural-task-filters-form" do |f| %>
         <%= f.hidden_field :query, value: @query if @query.present? %>
@@ -48,13 +48,15 @@
 
 <% if @agricultural_tasks.any? %>
   <div class="agricultural-tasks-grid">
-    <% @agricultural_tasks.each do |task| %>
+    <% @agricultural_tasks.each do |task_row| %>
+      <% task = task_row.record %>
+      <% display = task_row.display %>
       <div class="agricultural-task-card" id="agricultural_task_<%= task.id %>" data-undo-delete-record>
         <div class="agricultural-task-card__header">
           <h3 class="agricultural-task-name"><%= task.name %></h3>
-          <% if admin_user? && task.is_reference %>
+          <% if display.show_reference_badge %>
             <span class="agricultural-task-type reference"><%= t('.reference_task') %></span>
-          <% elsif !task.is_reference %>
+          <% elsif !task.reference? %>
             <span class="agricultural-task-type user"><%= t('.user_task_tag') %></span>
           <% end %>
         </div>
@@ -74,22 +76,10 @@
         <div class="agricultural-task-actions">
           <%= link_to t('.actions.show'), agricultural_task_path(task), class: "btn btn-info btn-sm", data: { turbo: false } %>
 
-          <% if task.is_reference %>
-            <% if admin_user? %>
-              <%= link_to t('.actions.edit'), edit_agricultural_task_path(task), class: "btn btn-secondary btn-sm" %>
-              <%= link_to t('.actions.delete'), agricultural_task_path(task),
-                          class: "btn btn-error btn-sm",
-                          data: {
-                            controller: "undo-delete",
-                            action: "click->undo-delete#submit",
-                            turbo_method: :delete,
-                            undo_delete_url_value: agricultural_task_path(task),
-                            undo_delete_message_value: t('agricultural_tasks.undo.toast', name: task.name),
-                            undo_delete_redirect_url_value: agricultural_tasks_path
-                          } %>
-            <% end %>
-          <% else %>
+          <% if display.show_edit_button %>
             <%= link_to t('.actions.edit'), edit_agricultural_task_path(task), class: "btn btn-secondary btn-sm" %>
+          <% end %>
+          <% if display.show_delete_button %>
             <%= link_to t('.actions.delete'), agricultural_task_path(task),
                         class: "btn btn-error btn-sm",
                         data: {

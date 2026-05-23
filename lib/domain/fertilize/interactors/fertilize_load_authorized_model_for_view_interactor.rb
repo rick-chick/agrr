@@ -16,7 +16,17 @@ module Domain
           access_filter = Domain::Shared::Policies::FertilizePolicy.record_access_filter(user)
           bundle = @gateway.find_fertilize_loaded_bundle!(fertilize_id.to_i, for_edit: false)
           Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, bundle.fertilize_entity)
-          @output_port.on_success(bundle)
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_referencable_form(
+            user,
+            crop_is_reference: bundle.fertilize_entity.reference?,
+            crop_user_id: bundle.fertilize_entity.user_id
+          )
+          enriched = Domain::Fertilize::Dtos::AuthorizedFertilizeLoaded.new(
+            fertilize_entity: bundle.fertilize_entity,
+            master_form_snapshot: bundle.master_form_snapshot,
+            html_display: html_display
+          )
+          @output_port.on_success(enriched)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_permission_denied
         rescue Domain::Shared::Exceptions::RecordNotFound

@@ -11,11 +11,12 @@ module Domain
         def_delegators :task, :id, :user_id, :name, :description, :time_per_sqm, :weather_dependency,
                        :required_tools, :skill_level, :region, :task_type, :is_reference, :created_at, :updated_at
 
-        attr_reader :task, :associated_crops
+        attr_reader :task, :associated_crops, :html_display
 
-        def initialize(task:, associated_crops:)
+        def initialize(task:, associated_crops:, html_display: nil)
           @task = task
           @associated_crops = associated_crops
+          @html_display = html_display
         end
 
         def crops

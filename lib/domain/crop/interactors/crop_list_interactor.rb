@@ -15,7 +15,8 @@ module Domain
           user = @user_lookup.find(@user_id)
           filter = Domain::Shared::Policies::CropPolicy.index_list_filter(user)
           crops = @gateway.list_index_for_filter(filter)
-          @output_port.on_success(crops)
+          rows = Domain::Shared::Mappers::ReferencableListRowMapper.map_records(user, crops)
+          @output_port.on_success(rows)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e

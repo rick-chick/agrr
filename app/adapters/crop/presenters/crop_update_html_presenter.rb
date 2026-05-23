@@ -4,6 +4,8 @@ module Adapters
   module Crop
     module Presenters
       class CropUpdateHtmlPresenter < Domain::Crop::Ports::CropUpdateOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
@@ -28,7 +30,9 @@ module Adapters
 
           @view.flash.now[:alert] = msg
           if error_dto.is_a?(Domain::Crop::Dtos::CropMasterFormFailure)
-            @view.instance_variable_set(:@crop, Forms::CropMasterForm.from_snapshot(error_dto.master_form_snapshot))
+            crop_form = Forms::CropMasterForm.from_snapshot(error_dto.master_form_snapshot)
+            @view.instance_variable_set(:@crop, crop_form)
+            assign_master_form_html_display_for_crop_form(@view, crop_form)
           end
           @view.render_form(:edit, status: :unprocessable_entity)
         end

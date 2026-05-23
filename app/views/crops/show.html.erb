@@ -3,7 +3,7 @@
 <% content_for :title, "#{@crop.name} - AGRR" %>
 
 <div class="crop-detail-card" id="crop_<%= @crop.id %>" data-undo-delete-record>
-  <%= render 'crops/header', crop: @crop %>
+  <%= render 'crops/header', crop: @crop, display: @html_display %>
   
   <%= render 'crops/basic_info', crop: @crop %>
   
@@ -15,12 +15,13 @@
                available_agricultural_tasks: @available_agricultural_tasks,
                selected_task_ids: @selected_task_ids %>
     
-    <%= render 'crops/task_schedule_blueprints_section', 
-               crop: @crop, 
-               task_schedule_blueprints: @task_schedule_blueprints %>
+    <%= render 'crops/task_schedule_blueprints_section',
+               crop: @crop,
+               task_schedule_blueprints: @task_schedule_blueprints,
+               display: @html_display %>
   </div>
 
   <%= render 'crops/stages_section', crop: @crop %>
   
-  <%= render 'crops/actions', crop: @crop %>
+  <%= render 'crops/actions', crop: @crop, display: @html_display %>
 </div>

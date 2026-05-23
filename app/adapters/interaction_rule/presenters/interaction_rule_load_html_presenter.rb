@@ -4,13 +4,16 @@ module Adapters
   module InteractionRule
     module Presenters
       class InteractionRuleLoadHtmlPresenter
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:, for_edit:)
           @view = view
           @for_edit = for_edit
         end
 
-        def on_success(rule_entity)
+        def on_success(rule_entity, html_display: nil)
           @view.instance_variable_set(:@interaction_rule, rule_entity)
+          assign_html_display(@view, html_display) if html_display
           if @for_edit
             @view.instance_variable_set(
               :@form,

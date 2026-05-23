@@ -23,6 +23,7 @@ class PestsController < ApplicationController
   def new
     payload = Domain::Pest::Dtos::PestMasterEditPayload.for_blank_new
     @pest = Forms::PestMasterForm.from_edit_payload(payload)
+    @html_display = master_form_html_display_capabilities
     load_pest_master_form_crop_selection(
       master_edit_payload: payload,
       request_crop_ids: params[:crop_ids] ? Array(params[:crop_ids]) : []
@@ -36,6 +37,7 @@ class PestsController < ApplicationController
 
     payload = bundle.pest_master_edit_payload
     @pest = Forms::PestMasterForm.from_edit_payload(payload)
+    @html_display = bundle.html_display
     load_pest_master_form_crop_selection(master_edit_payload: payload)
   end
 

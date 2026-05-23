@@ -15,7 +15,8 @@ module Domain
           user = @user_lookup.find(@user_id)
           filter = Domain::Shared::Policies::PesticidePolicy.index_list_filter(user)
           filtered_pesticides = @gateway.list_index_for_filter(filter)
-          @output_port.on_success(filtered_pesticides)
+          rows = Domain::Shared::Mappers::ReferencableListRowMapper.map_records(user, filtered_pesticides)
+          @output_port.on_success(rows)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordInvalid => e

@@ -71,6 +71,53 @@ module Domain
         # 更新属性の正規化。region は admin のみ保持。is_reference の変更があれば
         # user_id を連動させる（参照化→nil / 参照解除→操作ユーザー）。
         # @param current_attrs [Hash] 現在値スナップショット（:is_reference を含む）
+        # ---- HTML 表示フラグ（ERB の admin_user? / user_id 比較を置き換える）----
+
+        def show_reference_badge?(user, is_reference:)
+          user.admin? && is_reference
+        end
+
+        # 参照レコードは admin のみ、非参照は所有者または admin。
+        def show_edit_actions?(user, is_reference:, user_id:)
+          if is_reference
+            user.admin?
+          else
+            user.admin? || user_id == user.id
+          end
+        end
+
+        def show_reference_form_fields?(user)
+          user.admin?
+        end
+
+        def show_crop_stage_remove_button?(user, crop_is_reference:, crop_user_id:)
+          !crop_is_reference || user.admin?
+        end
+
+        def show_add_crop_stage_button?(user, crop_is_reference:, crop_user_id:)
+          show_crop_stage_remove_button?(user, crop_is_reference: crop_is_reference, crop_user_id: crop_user_id)
+        end
+
+        def show_generate_task_schedule_blueprints_button?(user, crop_is_reference:, crop_user_id:)
+          user.admin?
+        end
+
+        def show_delete_task_schedule_blueprint_button?(user, crop_is_reference:, crop_user_id:)
+          user.admin? || (!crop_is_reference && crop_user_id == user.id)
+        end
+
+        def show_admin_list_filters?(user)
+          user.admin?
+        end
+
+        def show_reference_rules_section?(user, reference_rules_any:)
+          user.admin? && reference_rules_any
+        end
+
+        def show_my_rules_section_header?(user, reference_rules_any:)
+          user.admin? && reference_rules_any
+        end
+
         def normalize_referencable_attrs_for_update(user, current_attrs, requested_attrs)
           current = Domain::Shared.symbolize_keys(current_attrs.to_h)
           attributes = Domain::Shared.symbolize_keys(requested_attrs.to_h)

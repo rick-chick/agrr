@@ -4,13 +4,16 @@ module Adapters
   module AgriculturalTask
     module Presenters
       class AgriculturalTaskListHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskListOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:, input_dto: nil)
           @view = view
           @input_dto = input_dto || Domain::AgriculturalTask::Dtos::AgriculturalTaskListInput.new(is_admin: false)
         end
 
-        def on_success(tasks, reference_tasks_for_index: [])
-          @view.instance_variable_set(:@agricultural_tasks, tasks)
+        def on_success(rows, page_display: nil, reference_tasks_for_index: [])
+          assign_list_row_view_models(@view, :@agricultural_tasks, rows)
+          assign_html_display(@view, page_display) if page_display
           @view.instance_variable_set(:@query, @input_dto.query.to_s)
           @view.instance_variable_set(:@selected_filter, @input_dto.filter.to_s)
         end

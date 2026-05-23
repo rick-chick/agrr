@@ -136,6 +136,7 @@ class CropsController < ApplicationController
     return if bundle.nil?
 
     @crop = Forms::CropMasterForm.from_snapshot(bundle.master_form_snapshot)
+    @html_display = bundle.html_display
   end
 
   def crop_params

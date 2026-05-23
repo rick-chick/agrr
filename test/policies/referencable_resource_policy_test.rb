@@ -90,4 +90,27 @@ class Domain::Shared::Policies::ReferencableResourcePolicyTest < ActiveSupport::
     assert_not h.key?(:is_reference)
     assert_equal "x", h[:name]
   end
+
+  # ---- HTML display flags ----
+
+  test "show_reference_badge? は admin かつ参照レコードのみ true" do
+    assert Policy.show_reference_badge?(@admin, is_reference: true)
+    assert_not Policy.show_reference_badge?(@user, is_reference: true)
+    assert_not Policy.show_reference_badge?(@admin, is_reference: false)
+  end
+
+  test "show_edit_actions? は参照は admin のみ、非参照は所有者または admin" do
+    assert Policy.show_edit_actions?(@admin, is_reference: true, user_id: nil)
+    assert_not Policy.show_edit_actions?(@user, is_reference: true, user_id: nil)
+
+    assert Policy.show_edit_actions?(@user, is_reference: false, user_id: @user.id)
+    assert_not Policy.show_edit_actions?(@user, is_reference: false, user_id: @user.id + 1)
+    assert Policy.show_edit_actions?(@admin, is_reference: false, user_id: 99)
+  end
+
+  test "show_delete_task_schedule_blueprint_button? は admin または非参照所有者" do
+    assert Policy.show_delete_task_schedule_blueprint_button?(@admin, crop_is_reference: true, crop_user_id: nil)
+    assert Policy.show_delete_task_schedule_blueprint_button?(@user, crop_is_reference: false, crop_user_id: @user.id)
+    assert_not Policy.show_delete_task_schedule_blueprint_button?(@user, crop_is_reference: true, crop_user_id: nil)
+  end
 end

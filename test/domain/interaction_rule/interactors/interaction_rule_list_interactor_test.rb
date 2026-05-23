@@ -23,10 +23,11 @@ module Domain
           gateway.expects(:list_index_for_filter).with(expected_filter).returns([ ref, owned ])
 
           output = mock
-          output.expects(:on_success).with(
-            interaction_rules: [ owned ],
-            reference_rules: [ ref ]
-          )
+          output.expects(:on_success).with do |payload|
+            payload[:interaction_rules] == [ owned ] &&
+              payload[:reference_rules] == [ ref ] &&
+              payload[:page_display].is_a?(Domain::Shared::Dtos::ResourceDisplayCapabilities)
+          end
 
           InteractionRuleListInteractor.new(
             output_port: output,

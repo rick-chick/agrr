@@ -57,7 +57,7 @@
     <%= form.text_area :description, rows: 3, class: "form-control", placeholder: t('interaction_rules.form.description_placeholder') %>
   </div>
 
-  <% if admin_user? %>
+  <% if @html_display&.show_reference_form_fields %>
     <div class="form-group">
       <%= form.label :is_reference, class: "form-label" %>
       <div class="form-check">

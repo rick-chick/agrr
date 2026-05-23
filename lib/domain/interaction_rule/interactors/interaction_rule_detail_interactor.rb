@@ -16,7 +16,11 @@ module Domain
           access_filter = Domain::Shared::Policies::InteractionRulePolicy.record_access_filter(user)
           rule_entity = @gateway.find_by_id(rule_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, rule_entity)
-          rule_detail_dto = Domain::InteractionRule::Dtos::InteractionRuleDetailOutput.new(rule: rule_entity)
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_detail_record(user, rule_entity)
+          rule_detail_dto = Domain::InteractionRule::Dtos::InteractionRuleDetailOutput.new(
+            rule: rule_entity,
+            html_display: html_display
+          )
           @output_port.on_success(rule_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

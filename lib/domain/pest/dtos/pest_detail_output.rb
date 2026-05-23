@@ -11,14 +11,17 @@ module Domain
         def_delegators :pest, :id, :user_id, :name, :name_scientific, :family, :order, :description,
                        :occurrence_season, :region, :is_reference, :created_at, :updated_at
 
-        attr_reader :pest, :temperature_profile, :thermal_requirement, :control_methods, :associated_crops
+        attr_reader :pest, :temperature_profile, :thermal_requirement, :control_methods, :associated_crops,
+                    :html_display
 
-        def initialize(pest:, temperature_profile:, thermal_requirement:, control_methods:, associated_crops:)
+        def initialize(pest:, temperature_profile:, thermal_requirement:, control_methods:, associated_crops:,
+                       html_display: nil)
           @pest = pest
           @temperature_profile = temperature_profile
           @thermal_requirement = thermal_requirement
           @control_methods = control_methods
           @associated_crops = associated_crops
+          @html_display = html_display
         end
 
         alias_method :pest_temperature_profile, :temperature_profile

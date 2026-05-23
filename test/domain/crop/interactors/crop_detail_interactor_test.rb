@@ -10,8 +10,14 @@ module Domain
           user_id = 10
           crop_id = 22
           user = stub(id: user_id, admin?: false)
-          crop = stub(is_reference: false, user_id: user_id)
-          crop_detail_dto = stub(crop: crop)
+          crop = stub(is_reference: false, user_id: user_id, reference?: false)
+          crop_detail_dto = stub(
+            crop: crop,
+            task_schedule_blueprints: [],
+            available_agricultural_tasks: [],
+            selected_task_ids: [],
+            associated_pests: []
+          )
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
@@ -32,7 +38,9 @@ module Domain
 
           interactor.call(crop_id)
 
-          assert_equal crop_detail_dto, received
+          assert_instance_of Domain::Crop::Dtos::CropDetailOutput, received
+          assert_equal crop, received.crop
+          assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, received.html_display
           user_lookup.verify
           output_port.verify
         end
@@ -41,7 +49,7 @@ module Domain
           user_id = 10
           crop_id = 22
           user = stub(id: user_id, admin?: false)
-          crop = stub(is_reference: false, user_id: 99)
+          crop = stub(is_reference: false, user_id: 99, reference?: false)
           crop_detail_dto = stub(crop: crop)
 
           user_lookup = Minitest::Mock.new

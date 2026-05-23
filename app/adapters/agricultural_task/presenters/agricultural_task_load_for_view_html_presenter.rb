@@ -4,6 +4,8 @@ module Adapters
   module AgriculturalTask
     module Presenters
       class AgriculturalTaskLoadForViewHtmlPresenter
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
@@ -11,6 +13,7 @@ module Adapters
         def on_success(bundle)
           @view.instance_variable_set(:@agricultural_task,
             Forms::AgriculturalTaskMasterForm.from_snapshot(bundle.master_form_snapshot))
+          assign_html_display(@view, bundle.html_display) if bundle.html_display
         end
 
         def on_failure(error_type)

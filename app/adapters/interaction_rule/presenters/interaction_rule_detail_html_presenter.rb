@@ -4,12 +4,15 @@ module Adapters
   module InteractionRule
     module Presenters
       class InteractionRuleDetailHtmlPresenter < Domain::InteractionRule::Ports::InteractionRuleDetailOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
 
-        def on_success(interaction_rule_entity)
-          @view.instance_variable_set(:@interaction_rule, interaction_rule_entity)
+        def on_success(rule_detail_dto)
+          @view.instance_variable_set(:@interaction_rule, rule_detail_dto.rule)
+          assign_html_display(@view, rule_detail_dto.html_display) if rule_detail_dto.html_display
           # show アクションでは何もしない（テンプレート表示）
         end
 

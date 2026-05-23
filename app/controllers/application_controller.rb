@@ -142,6 +142,14 @@ class ApplicationController < ActionController::Base
     current_user&.admin?
   end
 
+  def master_form_html_display_capabilities
+    Domain::Shared::Dtos::ResourceDisplayCapabilities.for_referencable_form(
+      current_user,
+      crop_is_reference: false,
+      crop_user_id: current_user.id
+    )
+  end
+
   def authenticate_admin!
     return if admin_user?
 

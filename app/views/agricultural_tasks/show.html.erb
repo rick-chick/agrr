@@ -3,7 +3,7 @@
 <div class="crop-detail-card" id="agricultural_task_<%= @agricultural_task.id %>" data-undo-delete-record>
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @agricultural_task.name %></h1>
-    <% if admin_user? && @agricultural_task.is_reference %>
+    <% if @html_display&.show_reference_badge %>
       <div class="crop-detail-type reference"><%= t('.reference_task') %></div>
     <% end %>
   </div>
@@ -90,24 +90,10 @@
   
     <div class="actions">
       <%= link_to t('.back_to_list'), agricultural_tasks_path, class: "btn btn-secondary" %>
-      <% if @agricultural_task.is_reference %>
-        <%# 参照タスクは管理者のみ編集・削除可能 %>
-        <% if admin_user? %>
-          <%= link_to t('.edit'), edit_agricultural_task_path(@agricultural_task.id), class: "btn btn-secondary" %>
-          <%= link_to t('.delete'), agricultural_task_path(@agricultural_task.id),
-                      class: "btn btn-error",
-                      data: {
-                        controller: "undo-delete",
-                        action: "click->undo-delete#submit",
-                        turbo_method: :delete,
-                        undo_delete_url_value: agricultural_task_path(@agricultural_task.id),
-                        undo_delete_message_value: t('agricultural_tasks.undo.toast', name: @agricultural_task.name),
-                        undo_delete_redirect_url_value: agricultural_tasks_path
-                      } %>
-        <% end %>
-      <% else %>
-        <%# ユーザータスクは所有者が編集・削除可能 %>
+      <% if @html_display&.show_edit_button %>
         <%= link_to t('.edit'), edit_agricultural_task_path(@agricultural_task.id), class: "btn btn-secondary" %>
+      <% end %>
+      <% if @html_display&.show_delete_button %>
         <%= link_to t('.delete'), agricultural_task_path(@agricultural_task.id),
                     class: "btn btn-error",
                     data: {

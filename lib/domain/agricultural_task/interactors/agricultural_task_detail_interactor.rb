@@ -16,7 +16,13 @@ module Domain
           access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
           task_detail_dto = @gateway.find_agricultural_task_show_detail(task_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, task_detail_dto.task)
-          @output_port.on_success(task_detail_dto)
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_detail_record(user, task_detail_dto.task)
+          enriched = Domain::AgriculturalTask::Dtos::AgriculturalTaskDetailOutput.new(
+            task: task_detail_dto.task,
+            associated_crops: task_detail_dto.associated_crops,
+            html_display: html_display
+          )
+          @output_port.on_success(enriched)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e

@@ -17,7 +17,9 @@ module Domain
           user = @user_lookup.find(@user_id)
           filtered_tasks = list_tasks_for_input(input_dto, user_id: user.id)
 
-          @output_port.on_success(filtered_tasks)
+          rows = Domain::Shared::Mappers::ReferencableListRowMapper.map_records(user, filtered_tasks)
+          page_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_agricultural_task_list(user)
+          @output_port.on_success(rows, page_display: page_display)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e

@@ -15,7 +15,8 @@ module Domain
           user = @user_lookup.find(@user_id)
           filter = Domain::Shared::Policies::FertilizePolicy.index_list_filter(user)
           filtered_fertilizes = @gateway.list_index_for_filter(filter)
-          @output_port.on_success(filtered_fertilizes)
+          rows = Domain::Shared::Mappers::ReferencableListRowMapper.map_records(user, filtered_fertilizes)
+          @output_port.on_success(rows)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e

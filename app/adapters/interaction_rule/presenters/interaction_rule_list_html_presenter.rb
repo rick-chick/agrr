@@ -4,6 +4,8 @@ module Adapters
   module InteractionRule
     module Presenters
       class InteractionRuleListHtmlPresenter < Domain::InteractionRule::Ports::InteractionRuleListOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
@@ -11,6 +13,7 @@ module Adapters
         def on_success(result)
           @view.instance_variable_set(:@interaction_rules, result[:interaction_rules] || [])
           @view.instance_variable_set(:@reference_rules, result[:reference_rules] || [])
+          assign_html_display(@view, result[:page_display]) if result[:page_display]
         end
 
         def on_failure(error_dto)

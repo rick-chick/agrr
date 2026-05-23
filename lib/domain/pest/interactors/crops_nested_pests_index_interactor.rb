@@ -20,7 +20,8 @@ module Domain
             order: :recent_first
           )
           available_pests = @pest_gateway.list_selectable_pest_entities_recent_first(user)
-          @output_port.on_success(pests:, available_pests:)
+          pest_rows = Domain::Shared::Mappers::ReferencableListRowMapper.map_records(user, pests)
+          @output_port.on_success(pests: pest_rows, available_pests:)
         end
       end
     end

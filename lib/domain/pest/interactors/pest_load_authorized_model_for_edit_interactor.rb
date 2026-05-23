@@ -20,7 +20,16 @@ module Domain
           access_filter = Domain::Shared::Policies::PestPolicy.record_access_filter(user)
           current = @gateway.find_by_id(pest_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
-          @gateway.find_pest_loaded_bundle!(pest_id.to_i)
+          bundle = @gateway.find_pest_loaded_bundle!(pest_id.to_i)
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_referencable_form(
+            user,
+            crop_is_reference: current.reference?,
+            crop_user_id: current.user_id
+          )
+          Domain::Pest::Dtos::PestAuthorizedLoad.new(
+            pest_master_edit_payload: bundle.pest_master_edit_payload,
+            html_display: html_display
+          )
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @failure_presenter.on_permission_denied
           nil

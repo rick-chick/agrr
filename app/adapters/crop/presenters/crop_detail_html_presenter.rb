@@ -4,6 +4,8 @@ module Adapters
   module Crop
     module Presenters
       class CropDetailHtmlPresenter < Domain::Crop::Ports::CropDetailOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
@@ -17,6 +19,7 @@ module Adapters
           @view.instance_variable_set(:@selected_task_ids,
                                      crop_detail_dto.selected_task_ids)
           @view.instance_variable_set(:@pests, crop_detail_dto.associated_pests)
+          assign_html_display(@view, crop_detail_dto.html_display) if crop_detail_dto.html_display
         end
 
         def on_failure(error_dto)

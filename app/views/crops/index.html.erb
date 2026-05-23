@@ -7,35 +7,23 @@
 
 <% if @crops.any? %>
   <div class="crops-grid">
-    <% @crops.each do |crop| %>
-      <%# CropEntity を渡す — dom_id は to_param が無いので id は固定規約 %>
+    <% @crops.each do |crop_row| %>
+      <% crop = crop_row.record %>
+      <% display = crop_row.display %>
       <div class="crop-card" id="crop_<%= crop.id %>" data-undo-delete-record>
           <h3 class="crop-name"><%= crop.name %></h3>
           <% if crop.variety.present? %>
             <div class="crop-variety"><%= t('activerecord.attributes.crop.variety') %>: <%= crop.variety %></div>
           <% end %>
-          <% if admin_user? && crop.is_reference %>
+          <% if display.show_reference_badge %>
             <div class="crop-type reference"><%= t('.reference_crops') %></div>
           <% end %>
           <div class="crop-actions">
             <%= link_to t('.actions.show'), crop_path(crop.id), class: "btn btn-info btn-sm" %>
-            <% if crop.is_reference %>
-              <%# Reference crops: admin only %>
-              <% if admin_user? %>
-                <%= link_to t('.actions.edit'), edit_crop_path(crop.id), class: "btn btn-secondary btn-sm" %>
-                <%= link_to t('.actions.delete'), crop_path(crop.id),
-                            class: "btn btn-error btn-sm",
-                            data: {
-                              controller: "undo-delete",
-                              action: "click->undo-delete#submit",
-                              turbo_method: :delete,
-                              undo_delete_url_value: crop_path(crop.id),
-                              undo_delete_message_value: t('crops.undo.toast', name: crop.name)
-                            } %>
-              <% end %>
-            <% else %>
-              <%# User crops: owner only %>
+            <% if display.show_edit_button %>
               <%= link_to t('.actions.edit'), edit_crop_path(crop.id), class: "btn btn-secondary btn-sm" %>
+            <% end %>
+            <% if display.show_delete_button %>
               <%= link_to t('.actions.delete'), crop_path(crop.id),
                           class: "btn btn-error btn-sm",
                           data: {

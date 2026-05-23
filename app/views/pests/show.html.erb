@@ -3,7 +3,7 @@
 <div class="crop-detail-card" id="pest_<%= @pest.id %>" data-undo-delete-record>
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @pest.name %></h1>
-    <% if admin_user? && @pest.is_reference %>
+    <% if @html_display&.show_reference_badge %>
       <div class="crop-detail-type reference"><%= t('.reference_pest') %></div>
     <% end %>
   </div>
@@ -148,24 +148,10 @@
 
     <div class="actions">
       <%= link_to t('.back_to_list'), pests_path, class: "btn btn-secondary" %>
-      <% if @pest.is_reference %>
-        <%# 参照害虫は管理者のみ編集・削除可能 %>
-        <% if admin_user? %>
-          <%= link_to t('.edit'), edit_pest_path(@pest.id), class: "btn btn-secondary" %>
-          <%= link_to t('.delete'), pest_path(@pest.id),
-                      class: "btn btn-error",
-                      data: {
-                        controller: "undo-delete",
-                        action: "click->undo-delete#submit",
-                        turbo_method: :delete,
-                        undo_delete_url_value: pest_path(@pest.id),
-                        undo_delete_message_value: t('pests.undo.toast', name: @pest.name),
-                        undo_delete_redirect_url_value: pests_path
-                      } %>
-        <% end %>
-      <% else %>
-        <%# ユーザー害虫は所有者が編集・削除可能 %>
+      <% if @html_display&.show_edit_button %>
         <%= link_to t('.edit'), edit_pest_path(@pest.id), class: "btn btn-secondary" %>
+      <% end %>
+      <% if @html_display&.show_delete_button %>
         <%= link_to t('.delete'), pest_path(@pest.id),
                     class: "btn btn-error",
                     data: {

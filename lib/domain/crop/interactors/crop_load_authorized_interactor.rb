@@ -25,7 +25,16 @@ module Domain
           else
             Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, bundle.crop_entity)
           end
-          bundle
+          html_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_referencable_form(
+            user,
+            crop_is_reference: bundle.crop_entity.reference?,
+            crop_user_id: bundle.crop_entity.user_id
+          )
+          Domain::Crop::Dtos::AuthorizedCropLoaded.new(
+            crop_entity: bundle.crop_entity,
+            master_form_snapshot: bundle.master_form_snapshot,
+            html_display: html_display
+          )
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @failure_presenter.on_permission_denied
           nil

@@ -13,15 +13,18 @@ module Domain
                        :is_reference, :created_at, :updated_at
 
         attr_reader :pesticide, :crop_name, :pest_name,
-                    :usage_constraint_snapshot, :application_detail_snapshot
+                    :usage_constraint_snapshot, :application_detail_snapshot,
+                    :html_display
 
         def initialize(pesticide:, crop_name:, pest_name:,
-                       usage_constraint_snapshot:, application_detail_snapshot:)
+                       usage_constraint_snapshot:, application_detail_snapshot:,
+                       html_display: nil)
           @pesticide = pesticide
           @crop_name = crop_name
           @pest_name = pest_name
           @usage_constraint_snapshot = usage_constraint_snapshot
           @application_detail_snapshot = application_detail_snapshot
+          @html_display = html_display
         end
 
         def crop

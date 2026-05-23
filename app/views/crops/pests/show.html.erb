@@ -5,7 +5,7 @@
     <h1 class="crop-detail-title">
       <%= link_to @crop.name, crop_path(@crop), class: "crop-link" %> - <%= @pest.name %>
     </h1>
-    <% if admin_user? && @pest.is_reference? %>
+    <% if @html_display&.show_reference_badge %>
       <div class="crop-detail-type reference"><%= t('.reference_pest') %></div>
     <% end %>
   </div>

@@ -4,12 +4,14 @@ module Adapters
   module Pesticide
     module Presenters
       class PesticideListHtmlPresenter < Domain::Pesticide::Ports::PesticideListOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
 
-        def on_success(pesticides)
-          @view.instance_variable_set(:@pesticides, pesticides)
+        def on_success(rows)
+          assign_list_row_view_models(@view, :@pesticides, rows)
           # index テンプレートをレンダリング（暗黙的に）
         end
 

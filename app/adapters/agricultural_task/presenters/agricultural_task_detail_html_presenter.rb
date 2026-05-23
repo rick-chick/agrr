@@ -4,12 +4,15 @@ module Adapters
   module AgriculturalTask
     module Presenters
       class AgriculturalTaskDetailHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskDetailOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
 
         def on_success(detail_dto)
           @view.instance_variable_set(:@agricultural_task, detail_dto)
+          assign_html_display(@view, detail_dto.html_display) if detail_dto.html_display
         end
 
         def on_failure(error_dto)

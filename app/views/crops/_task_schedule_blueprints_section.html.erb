@@ -28,7 +28,7 @@
 <div class="task-schedule-blueprints-section" id="crop-task-schedule-blueprints">
   <div class="task-schedule-blueprints__header">
     <h2 class="stages-title"><%= t('crops.show.task_schedule_blueprints_title') %></h2>
-    <% if admin_user? %>
+    <% if local_assigns[:display]&.show_generate_task_schedule_blueprints_button %>
       <div class="task-schedule-blueprints__actions">
         <%= button_to t('crops.show.generate_task_schedule_blueprints_button'),
                       generate_task_schedule_blueprints_crop_path(crop),
@@ -98,7 +98,7 @@
                 <div class="task-blueprint-card__title">
                   <%= blueprint.agricultural_task&.name || blueprint.description || blueprint.stage_name || t('crops.show.task_schedule_blueprints_missing_task') %>
                 </div>
-                <% if admin_user? || (!crop.is_reference && crop.user_id == current_user&.id) %>
+                <% if local_assigns[:display]&.show_delete_task_schedule_blueprint_button %>
                   <%= button_to crop_task_schedule_blueprint_path(crop, blueprint),
                                 method: :delete,
                                 class: "task-blueprint-card__delete-btn",

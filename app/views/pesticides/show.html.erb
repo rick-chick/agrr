@@ -3,7 +3,7 @@
 <div class="crop-detail-card" id="pesticide_<%= @pesticide.id %>" data-undo-delete-record>
   <div class="crop-detail-header">
     <h1 class="crop-detail-title"><%= @pesticide.name %></h1>
-    <% if admin_user? && @pesticide.is_reference %>
+    <% if @html_display&.show_reference_badge %>
       <div class="crop-detail-type reference"><%= t('.reference_pesticide') %></div>
     <% end %>
   </div>
@@ -106,36 +106,20 @@
   
   <div class="actions">
     <%= link_to t('.back_to_list'), pesticides_path, class: "btn btn-secondary" %>
-    <% if @pesticide.is_reference %>
-      <%# 参照農薬は管理者のみ編集・削除可能 %>
-      <% if admin_user? %>
-        <%= link_to t('.edit'), edit_pesticide_path(@pesticide.id), class: "btn btn-secondary" %>
-        <%= link_to t('.delete'), pesticide_path(@pesticide.id),
-                    class: "btn btn-error",
-                    data: {
-                      controller: "undo-delete",
-                      action: "click->undo-delete#submit",
-                      turbo_method: :delete,
-                      undo_delete_url_value: pesticide_path(@pesticide.id),
-                      undo_delete_message_value: t('pesticides.undo.toast', name: @pesticide.name),
-                      undo_delete_redirect_url_value: pesticides_path
-                    } %>
-      <% end %>
-    <% else %>
-      <%# ユーザー農薬は所有者が編集・削除可能 %>
-      <% if @pesticide.user_id == current_user.id || admin_user? %>
-        <%= link_to t('.edit'), edit_pesticide_path(@pesticide.id), class: "btn btn-secondary" %>
-        <%= link_to t('.delete'), pesticide_path(@pesticide.id),
-                    class: "btn btn-error",
-                    data: {
-                      controller: "undo-delete",
-                      action: "click->undo-delete#submit",
-                      turbo_method: :delete,
-                      undo_delete_url_value: pesticide_path(@pesticide.id),
-                      undo_delete_message_value: t('pesticides.undo.toast', name: @pesticide.name),
-                      undo_delete_redirect_url_value: pesticides_path
-                    } %>
-      <% end %>
+    <% if @html_display&.show_edit_button %>
+      <%= link_to t('.edit'), edit_pesticide_path(@pesticide.id), class: "btn btn-secondary" %>
+    <% end %>
+    <% if @html_display&.show_delete_button %>
+      <%= link_to t('.delete'), pesticide_path(@pesticide.id),
+                  class: "btn btn-error",
+                  data: {
+                    controller: "undo-delete",
+                    action: "click->undo-delete#submit",
+                    turbo_method: :delete,
+                    undo_delete_url_value: pesticide_path(@pesticide.id),
+                    undo_delete_message_value: t('pesticides.undo.toast', name: @pesticide.name),
+                    undo_delete_redirect_url_value: pesticides_path
+                  } %>
     <% end %>
   </div>
 </div>

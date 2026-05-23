@@ -51,7 +51,7 @@
           </div>
         </div>
         
-        <% if admin_user? %>
+        <% if @html_display&.show_reference_form_fields %>
           <div class="form-group">
             <%= form.label :region, t('farms.form.region_label'), class: "form-label" %>
             <%= form.select :region, 

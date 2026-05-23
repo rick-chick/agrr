@@ -4,12 +4,15 @@ module Adapters
   module Fertilize
     module Presenters
       class FertilizeDetailHtmlPresenter < Domain::Fertilize::Ports::FertilizeDetailOutputPort
+        include Adapters::Shared::Presenters::HtmlDisplaySupport
+
         def initialize(view:)
           @view = view
         end
 
         def on_success(fertilize_detail_dto)
           @view.instance_variable_set(:@fertilize, fertilize_detail_dto.display_dto)
+          assign_html_display(@view, fertilize_detail_dto.html_display) if fertilize_detail_dto.html_display
         end
 
         def on_failure(error_dto)
