@@ -80,6 +80,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_farm_loaded_bundle!"
         end
 
+        def count_user_owned_non_reference_farms(user_id:)
+          raise NotImplementedError, "Subclasses must implement count_user_owned_non_reference_farms"
+        end
+
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end

@@ -23,6 +23,14 @@ module Domain
               longitude: input_dto.longitude
             }
           )
+          existing_count = @gateway.count_user_owned_non_reference_farms(user_id: user.id)
+          if Domain::Farm::Policies::FarmCreateLimitPolicy.limit_exceeded?(existing_non_reference_count: existing_count)
+            msg = @translator.t("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded")
+            return @output_port.on_failure(
+              Domain::Farm::Dtos::FarmCreateLimitExceededFailure.new(message: msg)
+            )
+          end
+
           farm_entity = @gateway.create_for_user(user, attrs)
 
           @output_port.on_success(farm_entity)

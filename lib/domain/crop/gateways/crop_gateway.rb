@@ -189,6 +189,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
+        def count_user_owned_non_reference_crops(user_id:)
+          raise NotImplementedError, "Subclasses must implement count_user_owned_non_reference_crops"
+        end
+
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end

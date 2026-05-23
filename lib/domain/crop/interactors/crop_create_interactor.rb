@@ -30,6 +30,19 @@ module Domain
             is_reference: is_reference,
             crop_stages_attributes: input_dto.crop_stages_attributes || []
           })
+          unless is_reference
+            existing_count = @gateway.count_user_owned_non_reference_crops(user_id: user.id)
+            if Domain::Crop::Policies::CropCreateLimitPolicy.limit_exceeded?(
+              existing_non_reference_count: existing_count,
+              is_reference: is_reference
+            )
+              msg = @translator.t("activerecord.errors.models.crop.attributes.user.crop_limit_exceeded")
+              return @output_port.on_failure(
+                Domain::Crop::Dtos::CropCreateLimitExceededFailure.new(message: msg)
+              )
+            end
+          end
+
           crop_entity = @gateway.create_for_user(user, attrs)
 
           @output_port.on_success(crop_entity)

@@ -156,6 +156,10 @@ module Adapters
           )
         end
 
+        def count_user_owned_non_reference_farms(user_id:)
+          ::Farm.where(user_id: user_id, is_reference: false).count
+        end
+
         def create_for_user(user, attrs)
           farm = ::Farm.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.save

@@ -321,6 +321,10 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
+        def count_user_owned_non_reference_crops(user_id:)
+          ::Crop.where(user_id: user_id, is_reference: false).count
+        end
+
         def create_for_user(user, attrs)
           crop = ::Crop.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ") unless crop.save
