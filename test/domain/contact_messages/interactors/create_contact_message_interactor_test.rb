@@ -42,12 +42,13 @@ module Domain
           output_port.expect(:on_success, nil) { |dto| received = dto }
 
           interactor = CreateContactMessageInteractor.new(
+            output_port: output_port,
             gateway: gateway,
             recaptcha_verifier: noop_recaptcha,
             rate_limiter: noop_rate_limiter
           )
 
-          interactor.call(input, output_port: output_port)
+          interactor.call(input)
 
           assert_instance_of Domain::ContactMessages::Dtos::CreateContactMessageSuccess, received
           assert_equal entity, received.contact_message
@@ -79,12 +80,13 @@ module Domain
           output_port.expect(:on_failure, nil) { |dto| received = dto }
 
           interactor = CreateContactMessageInteractor.new(
+            output_port: output_port,
             gateway: gateway,
             recaptcha_verifier: noop_recaptcha,
             rate_limiter: noop_rate_limiter
           )
 
-          interactor.call(input, output_port: output_port)
+          interactor.call(input)
 
           assert_instance_of Domain::ContactMessages::Dtos::CreateContactMessageFailure, received
           assert received.validation?
@@ -109,14 +111,16 @@ module Domain
           gateway = Minitest::Mock.new
           gateway.expect(:create, nil) { raise StandardError, "boom" }
 
+          output_port = Minitest::Mock.new
           interactor = CreateContactMessageInteractor.new(
+            output_port: output_port,
             gateway: gateway,
             recaptcha_verifier: noop_recaptcha,
             rate_limiter: noop_rate_limiter
           )
 
           error = assert_raises(StandardError) do
-            interactor.call(input, output_port: nil)
+            interactor.call(input)
           end
           assert_equal "boom", error.message
 
@@ -143,12 +147,13 @@ module Domain
           output_port.expect(:on_failure, nil) { |dto| received = dto }
 
           interactor = CreateContactMessageInteractor.new(
+            output_port: output_port,
             gateway: gateway,
             recaptcha_verifier: noop_recaptcha,
             rate_limiter: limiter
           )
 
-          interactor.call(input, output_port: output_port)
+          interactor.call(input)
 
           assert_instance_of Domain::ContactMessages::Dtos::CreateContactMessageFailure, received
           assert received.rate_limit?
@@ -177,12 +182,13 @@ module Domain
           output_port.expect(:on_failure, nil) { |dto| received = dto }
 
           interactor = CreateContactMessageInteractor.new(
+            output_port: output_port,
             gateway: gateway,
             recaptcha_verifier: verifier,
             rate_limiter: noop_rate_limiter
           )
 
-          interactor.call(input, output_port: output_port)
+          interactor.call(input)
 
           assert_instance_of Domain::ContactMessages::Dtos::CreateContactMessageFailure, received
           assert received.recaptcha?

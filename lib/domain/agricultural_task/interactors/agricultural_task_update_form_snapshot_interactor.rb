@@ -11,14 +11,12 @@ module Domain
           @user_lookup = user_lookup
         end
 
-        # @param form_resubmit [Hash] :dto, :task_attributes, :selected_crop_ids
-        # @param accessible_crops [Array] Crop AR（作物選択 UI 用）
-        def call(form_resubmit, accessible_crops:)
-          return if form_resubmit.blank?
+        def call(input)
+          return if input.form_resubmit.blank?
 
-          dto = form_resubmit[:dto]
-          task_attributes = form_resubmit[:task_attributes]
-          selected_crop_ids = form_resubmit[:selected_crop_ids]
+          dto = input.form_resubmit[:dto]
+          task_attributes = input.form_resubmit[:task_attributes]
+          selected_crop_ids = input.form_resubmit[:selected_crop_ids]
           return if dto.nil?
 
           user = @user_lookup.find(@user_id)
@@ -33,9 +31,9 @@ module Domain
           )
           normalized_ids = Array(selected_crop_ids).map(&:to_i).uniq
           crop_cards =
-            if accessible_crops
+            if input.accessible_crops
               Domain::Crop::Mappers::MasterFormCropSelectionCardsMapper.build(
-                accessible_crops: accessible_crops,
+                accessible_crops: input.accessible_crops,
                 selected_ids: normalized_ids
               )
             else

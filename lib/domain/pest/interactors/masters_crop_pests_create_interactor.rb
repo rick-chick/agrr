@@ -12,8 +12,8 @@ module Domain
           @crop_gateway = crop_gateway
         end
 
-        def call(crop_id, pest_id_raw)
-          pest_id = pest_id_raw
+        def call(input)
+          pest_id = input.pest_id_raw
           unless pest_id.present?
             return @output_port.on_pest_id_missing
           end
@@ -31,7 +31,7 @@ module Domain
             return @output_port.on_forbidden
           end
 
-          crop = @crop_gateway.find_by_id(crop_id)
+          crop = @crop_gateway.find_by_id(input.crop_id)
           unless crop
             return @output_port.on_pest_not_found
           end
@@ -41,12 +41,12 @@ module Domain
             return @output_port.on_forbidden
           end
 
-          if @pest_gateway.crop_pest_association_exists?(crop_id: crop_id, pest_id: pest_entity.id)
+          if @pest_gateway.crop_pest_association_exists?(crop_id: input.crop_id, pest_id: pest_entity.id)
             return @output_port.on_already_associated
           end
 
           status = @pest_gateway.link_pest_to_crop(
-            crop_id: crop_id,
+            crop_id: input.crop_id,
             pest_id: pest_entity.id,
             user: user
           )
@@ -54,7 +54,7 @@ module Domain
           when :missing
             @output_port.on_pest_not_found
           when :linked
-            @output_port.on_success(crop_id: crop_id, pest_id: pest_entity.id)
+            @output_port.on_success(crop_id: input.crop_id, pest_id: pest_entity.id)
           end
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_forbidden

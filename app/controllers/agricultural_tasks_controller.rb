@@ -228,7 +228,12 @@ class AgriculturalTasksController < ApplicationController
       user_id: current_user.id,
       gateway: CompositionRoot.agricultural_task_gateway,
       user_lookup: CompositionRoot.user_lookup
-    ).call(form_resubmit, accessible_crops: @accessible_crops)
+    ).call(
+      Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateFormSnapshotInput.new(
+        form_resubmit: form_resubmit,
+        accessible_crops: @accessible_crops
+      )
+    )
   end
 
   # View interface for HTML Presenters（Presenter から呼ばれるため public）

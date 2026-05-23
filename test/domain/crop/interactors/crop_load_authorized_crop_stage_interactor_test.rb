@@ -47,7 +47,9 @@ module Domain
             for_edit: false
           )
 
-          out = interactor.call("1", "2")
+          out = interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: "1", crop_stage_id: "2")
+          )
           assert_same dto, out
           assert_equal false, gw.captured_for_edit
           user_lookup.verify
@@ -92,7 +94,9 @@ module Domain
             for_edit: true
           )
 
-          assert_same dto, interactor.call(3, 4)
+          assert_same dto, interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: 3, crop_stage_id: 4)
+          )
           assert_equal true, gw.captured_for_edit
           user_lookup.verify
         end
@@ -125,7 +129,9 @@ module Domain
             for_edit: true
           )
 
-          assert_nil interactor.call(1, 2)
+          assert_nil interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: 1, crop_stage_id: 2)
+          )
           gateway.verify
           user_lookup.verify
           failure.verify
@@ -152,7 +158,9 @@ module Domain
             for_edit: false
           )
 
-          assert_nil interactor.call(99, 88)
+          assert_nil interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: 99, crop_stage_id: 88)
+          )
           gateway.verify
           user_lookup.verify
           failure.verify

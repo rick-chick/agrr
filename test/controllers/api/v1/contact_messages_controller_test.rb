@@ -18,9 +18,9 @@ module Api
         fake_success_dto = OpenStruct.new(contact_message: fake_contact_message)
         fake_result = OpenStruct.new(success?: true, contact_message: fake_contact_message)
         fake_class = Class.new do
-          define_method(:initialize) { |**_| }
-          define_method(:call) do |_input, output_port: nil|
-            output_port&.on_success(fake_success_dto)
+          define_method(:initialize) { |output_port:, **_| @output_port = output_port }
+          define_method(:call) do |_input|
+            @output_port&.on_success(fake_success_dto)
             fake_result
           end
         end
@@ -52,9 +52,9 @@ module Api
         fake_failure_dto = OpenStruct.new(errors: fake_errors)
         fake_result = OpenStruct.new(success?: false, errors: fake_errors)
         fake_class = Class.new do
-          define_method(:initialize) { |**_| }
-          define_method(:call) do |_input, output_port: nil|
-            output_port&.on_failure(fake_failure_dto)
+          define_method(:initialize) { |output_port:, **_| @output_port = output_port }
+          define_method(:call) do |_input|
+            @output_port&.on_failure(fake_failure_dto)
             fake_result
           end
         end
@@ -127,9 +127,9 @@ module Api
 
       test "returns internal server error when interactor reports unexpected failure via output port" do
         failing_interactor = Class.new do
-          define_method(:initialize) { |**_| }
-          define_method(:call) do |_input, output_port:|
-            output_port&.on_failure(::Domain::Shared::Dtos::Error.new("boom"))
+          define_method(:initialize) { |output_port:, **_| @output_port = output_port }
+          define_method(:call) do |_input|
+            @output_port&.on_failure(::Domain::Shared::Dtos::Error.new("boom"))
             OpenStruct.new(success?: false)
           end
         end

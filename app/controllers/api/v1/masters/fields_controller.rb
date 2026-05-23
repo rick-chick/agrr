@@ -27,7 +27,10 @@ module Api
         # POST /api/v1/masters/farms/:farm_id/fields
         def create
           return unless input_valid?(:create)
-          input_dto = Domain::Field::Dtos::FieldCreateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+          input_dto = Domain::Field::Dtos::FieldCreateInput.from_hash(
+            params.to_unsafe_h.deep_symbolize_keys,
+            farm_id: params[:farm_id]
+          )
           unless valid_create_params?(input_dto)
             render_response(json: { errors: [ "name is required" ] }, status: :unprocessable_entity)
             return
@@ -35,7 +38,7 @@ module Api
           presenter = Adapters::Field::Presenters::FieldCreateApiPresenter.new(view: self)
           interactor = Domain::Field::Interactors::FieldCreateInteractor.new(output_port: presenter,
             user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
-          interactor.call(input_dto, params[:farm_id])
+          interactor.call(input_dto)
         end
 
         # PATCH/PUT /api/v1/masters/fields/:id

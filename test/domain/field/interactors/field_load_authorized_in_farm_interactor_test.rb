@@ -59,7 +59,9 @@ module Domain
             user_lookup: user_lookup
           )
 
-          bundle = interactor.call("3", "7")
+          bundle = interactor.call(
+            Domain::Field::Dtos::FieldLoadAuthorizedInFarmInput.new(farm_id: "3", field_id: "7")
+          )
 
           assert_equal @entity, bundle.field_entity
           assert_same snapshot, bundle.master_form_snapshot
@@ -89,7 +91,9 @@ module Domain
             user_lookup: user_lookup
           )
 
-          assert_nil interactor.call(3, 7)
+          assert_nil interactor.call(
+            Domain::Field::Dtos::FieldLoadAuthorizedInFarmInput.new(farm_id: 3, field_id: 7)
+          )
           user_lookup.verify
           failure.verify
         end
@@ -119,7 +123,9 @@ module Domain
             user_lookup: user_lookup
           )
 
-          assert_nil interactor.call(3, 99)
+          assert_nil interactor.call(
+            Domain::Field::Dtos::FieldLoadAuthorizedInFarmInput.new(farm_id: 3, field_id: 99)
+          )
           user_lookup.verify
           failure.verify
         end

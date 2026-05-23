@@ -14,12 +14,12 @@ module Domain
         end
 
         # @return [Domain::Crop::Dtos::AuthorizedCropStageInCropContext, nil]
-        def call(crop_id, crop_stage_id)
+        def call(input)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           bundle = @gateway.find_crop_with_crop_stage_bundle!(
-            crop_id.to_i,
-            crop_stage_id.to_i,
+            input.crop_id.to_i,
+            input.crop_stage_id.to_i,
             for_edit: @for_edit
           )
           if @for_edit

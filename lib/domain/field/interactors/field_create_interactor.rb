@@ -11,13 +11,13 @@ module Domain
           @user_lookup = user_lookup
         end
 
-        def call(create_input_dto, farm_id)
+        def call(create_input_dto)
           user = @user_lookup.find(@user_id)
           farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          list = @gateway.farm_fields_list(farm_id)
+          list = @gateway.farm_fields_list(create_input_dto.farm_id)
           Domain::Field::Policies::FieldAccess.assert_field_edit_on_farm_allowed!(user, list.farm)
           Domain::Field::Policies::FieldAccess.assert_farm_fields_list_allowed!(user, list.farm)
-          field = @gateway.create(create_input_dto, farm_id, farm_access_filter: farm_access_filter)
+          field = @gateway.create(create_input_dto, create_input_dto.farm_id, farm_access_filter: farm_access_filter)
           @output_port.on_success(field)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

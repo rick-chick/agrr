@@ -13,12 +13,12 @@ module Domain
         end
 
         # @return [Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContext, nil]
-        def call(crop_id, template_id)
+        def call(input)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           bundle = @gateway.find_crop_task_template_in_crop!(
-            crop_id.to_i,
-            template_id.to_i,
+            input.crop_id.to_i,
+            input.template_id.to_i,
             for_edit: @for_edit
           )
           if @for_edit
@@ -28,10 +28,10 @@ module Domain
           end
           bundle
         rescue Domain::Shared::Policies::PolicyPermissionDenied
-          @failure_presenter.on_not_found(crop_id: crop_id.to_i)
+          @failure_presenter.on_not_found(crop_id: input.crop_id.to_i)
           nil
         rescue Domain::Shared::Exceptions::RecordNotFound
-          @failure_presenter.on_not_found(crop_id: crop_id.to_i)
+          @failure_presenter.on_not_found(crop_id: input.crop_id.to_i)
           nil
         end
       end

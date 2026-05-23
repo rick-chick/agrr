@@ -78,7 +78,12 @@ module Api
                 gateway: CompositionRoot.crop_gateway,
                 user_lookup: CompositionRoot.user_lookup
               )
-              bundle = interactor.call(params[:crop_id], params[:crop_stage_id])
+              bundle = interactor.call(
+                Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(
+                  crop_id: params[:crop_id],
+                  crop_stage_id: params[:crop_stage_id]
+                )
+              )
               return if bundle.nil?
 
               @crop = bundle.crop_entity

@@ -130,7 +130,9 @@ class CropsController < ApplicationController
     presenter = Adapters::Crop::Presenters::CropAuthorizationFailureRedirectHtmlPresenter.new(view: self, permission_message_key: "crops.flash.no_permission")
     interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(failure_presenter: presenter,
       user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
-    bundle = interactor.call(params[:id], for_edit: for_edit)
+    bundle = interactor.call(
+      Domain::Crop::Dtos::CropLoadAuthorizedInput.new(crop_id: params[:id], for_edit: for_edit)
+    )
     return if bundle.nil?
 
     @crop = Forms::CropMasterForm.from_snapshot(bundle.master_form_snapshot)

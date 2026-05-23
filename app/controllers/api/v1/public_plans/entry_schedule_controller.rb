@@ -43,7 +43,16 @@ module Api
 
           farm = @entry_schedule_reference_farm
           presenter = Adapters::PublicPlan::Presenters::EntryScheduleReferenceCropApiPresenter.new(view: self)
-          Domain::Crop::Interactors::CropFindReferenceForEntryScheduleInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(farm.region, params[:id])
+          Domain::Crop::Interactors::CropFindReferenceForEntryScheduleInteractor.new(
+            output_port: presenter,
+            gateway: CompositionRoot.crop_gateway,
+            logger: CompositionRoot.logger
+          ).call(
+            Domain::Crop::Dtos::CropFindReferenceForEntryScheduleInput.new(
+              region: farm.region,
+              crop_id: params[:id]
+            )
+          )
           return if performed?
 
           crop = @reference_crop

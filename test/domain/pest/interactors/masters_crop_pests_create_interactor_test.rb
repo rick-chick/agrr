@@ -6,6 +6,10 @@ module Domain
   module Pest
     module Interactors
       class MastersCropPestsCreateInteractorTest < DomainLibTestCase
+        def create_input(pest_id_raw: @pest_id)
+          Domain::Pest::Dtos::MastersCropPestsCreateInput.new(crop_id: @crop_id, pest_id_raw: pest_id_raw)
+        end
+
         setup do
           @user = Object.new
           @user.define_singleton_method(:id) { 1 }
@@ -33,7 +37,7 @@ module Domain
           @mock_user_lookup.expects(:find).never
           @mock_output_port.expects(:on_pest_not_found).once
 
-          @interactor.call(@crop_id, @pest_id)
+          @interactor.call(create_input)
         end
 
         test "calls on_success when pest is found, selectable, and link returns :linked" do
@@ -73,7 +77,7 @@ module Domain
           ).returns(:linked)
           @mock_output_port.expects(:on_success).with(crop_id: @crop_id, pest_id: @pest_id)
 
-          @interactor.call(@crop_id, @pest_id)
+          @interactor.call(create_input)
         end
 
         test "calls on_already_associated when crop_pest_association_exists" do
@@ -108,7 +112,7 @@ module Domain
           @mock_pest_gateway.expects(:link_pest_to_crop).never
           @mock_output_port.expects(:on_already_associated).once
 
-          @interactor.call(@crop_id, @pest_id)
+          @interactor.call(create_input)
         end
 
         test "calls on_forbidden when crop is not associable with pest per PestCropAssociationAccess" do
@@ -142,7 +146,7 @@ module Domain
           @mock_pest_gateway.expects(:link_pest_to_crop).never
           @mock_output_port.expects(:on_forbidden).once
 
-          @interactor.call(@crop_id, @pest_id)
+          @interactor.call(create_input)
         end
       end
     end

@@ -14,11 +14,12 @@ module Api
       def create
         presenter = self.class::PRESENTER_CLASS.new(view: self)
         interactor = self.class::INTERACTOR_CLASS.new(
+          output_port: presenter,
           gateway: CompositionRoot.contact_message_gateway,
           recaptcha_verifier: self.class::RECAPTCHA_VERIFIER_CLASS.new,
           rate_limiter: self.class::RATE_LIMITER_CLASS.new(request: request)
         )
-        interactor.call(contact_message_input, output_port: presenter)
+        interactor.call(contact_message_input)
       end
 
       def render_response(json:, status:)

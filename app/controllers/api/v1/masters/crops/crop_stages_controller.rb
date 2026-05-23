@@ -98,7 +98,9 @@ module Api::V1::Masters::Crops
       presenter = Adapters::Crop::Presenters::CropParentAuthorizationFailureApiPresenter.new(view: self)
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedInteractor.new(failure_presenter: presenter,
         user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
-      bundle = interactor.call(params[:crop_id], for_edit: for_edit)
+      bundle = interactor.call(
+        Domain::Crop::Dtos::CropLoadAuthorizedInput.new(crop_id: params[:crop_id], for_edit: for_edit)
+      )
       return if bundle.nil?
 
       @crop = bundle.crop_entity
@@ -114,7 +116,9 @@ module Api::V1::Masters::Crops
         user_lookup: CompositionRoot.user_lookup,
         for_edit: for_edit
       )
-      bundle = interactor.call(params[:crop_id], params[:id])
+      bundle = interactor.call(
+        Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: params[:crop_id], crop_stage_id: params[:id])
+      )
       return if bundle.nil?
 
       @crop = bundle.crop_entity

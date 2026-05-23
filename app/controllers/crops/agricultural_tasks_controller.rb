@@ -108,7 +108,9 @@ module Crops
         gateway: CompositionRoot.crop_gateway,
         user_lookup: CompositionRoot.user_lookup
       )
-      bundle = interactor.call(params[:crop_id], for_edit: false)
+      bundle = interactor.call(
+        Domain::Crop::Dtos::CropLoadAuthorizedInput.new(crop_id: params[:crop_id], for_edit: false)
+      )
       return if bundle.nil?
 
       @crop = Forms::CropMasterForm.from_snapshot(bundle.master_form_snapshot)
@@ -123,7 +125,9 @@ module Crops
         user_lookup: CompositionRoot.user_lookup,
         for_edit: true
       )
-      bundle = interactor.call(@crop.id, params[:id])
+      bundle = interactor.call(
+        Domain::Crop::Dtos::CropLoadAuthorizedCropTaskTemplateInput.new(crop_id: @crop.id, template_id: params[:id])
+      )
       return if bundle.nil?
 
       @template = Forms::CropTaskTemplateEditForm.from_dto(bundle.crop_task_template_dto)

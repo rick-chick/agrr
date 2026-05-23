@@ -17,7 +17,9 @@ module Api
           def create
             presenter = Adapters::Pest::Presenters::MastersCropPestsCreateApiPresenter.new(view: self)
             Domain::Pest::Interactors::MastersCropPestsCreateInteractor.new(output_port: presenter,
-              user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway, crop_gateway: CompositionRoot.crop_gateway).call(@crop.id, params[:pest_id])
+              user_id: current_user.id, user_lookup: CompositionRoot.user_lookup, pest_gateway: CompositionRoot.pest_gateway, crop_gateway: CompositionRoot.crop_gateway).call(
+              Domain::Pest::Dtos::MastersCropPestsCreateInput.new(crop_id: @crop.id, pest_id_raw: params[:pest_id])
+            )
           end
 
           def destroy

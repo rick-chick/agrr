@@ -46,7 +46,9 @@ module Crops
         gateway: CompositionRoot.crop_gateway,
         user_lookup: CompositionRoot.user_lookup
       )
-      bundle = interactor.call(params[:crop_id], for_edit: false)
+      bundle = interactor.call(
+        Domain::Crop::Dtos::CropLoadAuthorizedInput.new(crop_id: params[:crop_id], for_edit: false)
+      )
       return if bundle.nil?
 
       @crop = Forms::CropMasterForm.from_snapshot(bundle.master_form_snapshot)

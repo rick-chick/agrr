@@ -11,8 +11,8 @@ module Domain
           @user_id = user_id
         end
 
-        def call(region, crop_id)
-          crop = @gateway.find_reference_crop_for_entry_schedule!(region, crop_id)
+        def call(input)
+          crop = @gateway.find_reference_crop_for_entry_schedule!(input.region, input.crop_id)
           @output_port.on_success(crop)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[CropFindReferenceForEntryScheduleInteractor] #{e.message}")

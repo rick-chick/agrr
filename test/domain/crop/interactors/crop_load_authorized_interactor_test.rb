@@ -64,7 +64,9 @@ module Domain
             user_lookup: user_lookup
           )
 
-          bundle = interactor.call("42", for_edit: false)
+          bundle = interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedInput.new(crop_id: "42", for_edit: false)
+          )
 
           assert_equal @entity, bundle.crop_entity
           assert_same snapshot, bundle.master_form_snapshot
@@ -109,7 +111,9 @@ module Domain
             user_lookup: user_lookup
           )
 
-          assert_nil interactor.call(42, for_edit: true)
+          assert_nil interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedInput.new(crop_id: 42, for_edit: true)
+          )
           gateway.verify
           user_lookup.verify
           failure.verify
@@ -135,7 +139,9 @@ module Domain
             user_lookup: user_lookup
           )
 
-          assert_nil interactor.call(99, for_edit: false)
+          assert_nil interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedInput.new(crop_id: 99, for_edit: false)
+          )
           gateway.verify
           user_lookup.verify
           failure.verify

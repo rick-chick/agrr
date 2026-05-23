@@ -4,7 +4,7 @@ module Domain
   module Field
     module Ports
       class FieldCreateInputPort
-        def call(create_input_dto, farm_id)
+        def call(create_input_dto)
           raise NotImplementedError, "Subclasses must implement call"
         end
       end

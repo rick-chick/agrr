@@ -34,7 +34,9 @@ module Domain
             user_lookup: user_lookup
           )
 
-          out = interactor.call(1, 2)
+          out = interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: 1, crop_stage_id: 2)
+          )
           assert_same dto, out
           user_lookup.verify
         end
@@ -59,7 +61,9 @@ module Domain
             user_lookup: user_lookup
           )
 
-          assert_nil interactor.call(1, 99)
+          assert_nil interactor.call(
+            Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: 1, crop_stage_id: 99)
+          )
           user_lookup.verify
           failure.verify
         end

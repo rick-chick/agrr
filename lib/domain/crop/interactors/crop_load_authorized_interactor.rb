@@ -16,11 +16,11 @@ module Domain
         # @param crop_id [Integer, String]
         # @param for_edit [Boolean] true なら編集権限で評価
         # @return [Domain::Crop::Dtos::AuthorizedCropLoaded, nil]
-        def call(crop_id, for_edit:)
+        def call(input)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          bundle = @gateway.find_crop_loaded_bundle!(crop_id.to_i, for_edit: for_edit)
-          if for_edit
+          bundle = @gateway.find_crop_loaded_bundle!(input.crop_id.to_i, for_edit: input.for_edit)
+          if input.for_edit
             Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, bundle.crop_entity)
           else
             Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, bundle.crop_entity)

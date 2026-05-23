@@ -35,11 +35,14 @@ class FieldsController < ApplicationController
 
   # POST /farms/:farm_id/fields
   def create
-    input_dto = Domain::Field::Dtos::FieldCreateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys)
+    input_dto = Domain::Field::Dtos::FieldCreateInput.from_hash(
+      params.to_unsafe_h.deep_symbolize_keys,
+      farm_id: @farm.id
+    )
     presenter = Adapters::Field::Presenters::FieldCreateHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
-    interactor.call(input_dto, @farm.id)
+    interactor.call(input_dto)
   end
 
   # PATCH/PUT /farms/:farm_id/fields/:id
@@ -93,7 +96,9 @@ class FieldsController < ApplicationController
     failure_presenter = Adapters::Field::Presenters::FieldLoadInFarmAuthorizationFailureRedirectHtmlPresenter.new(view: self)
     interactor = Domain::Field::Interactors::FieldLoadAuthorizedInFarmInteractor.new(failure_presenter: failure_presenter,
       user_id: current_user.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup)
-    bundle = interactor.call(@farm.id, params[:id])
+    bundle = interactor.call(
+      Domain::Field::Dtos::FieldLoadAuthorizedInFarmInput.new(farm_id: @farm.id, field_id: params[:id])
+    )
     return if bundle.nil?
 
     @field = Forms::FieldMasterForm.from_snapshot(bundle.master_form_snapshot)
