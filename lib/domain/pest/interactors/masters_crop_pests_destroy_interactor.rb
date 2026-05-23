@@ -13,10 +13,26 @@ module Domain
 
         def call(crop_id:, pest_id:)
           user = @user_lookup.find(@user_id)
-          status = @pest_gateway.unlink_pest_from_crop_for_masters(
-            user: user,
-            crop_id: crop_id.to_i,
-            pest_id: pest_id.to_i
+          crop = @pest_gateway.find_crop_entity_by_id(crop_id)
+          unless crop
+            return @output_port.on_crop_not_found
+          end
+          Domain::Shared::Policies::CropNestedPestsAccess.assert_allowed!(user, crop)
+
+          pest_entity =
+            begin
+              @pest_gateway.find_by_id(pest_id)
+            rescue Domain::Shared::Exceptions::RecordNotFound
+              return @output_port.on_pest_not_found
+            end
+
+          unless @pest_gateway.crop_pest_association_exists?(crop_id: crop_id, pest_id: pest_entity.id)
+            return @output_port.on_not_associated
+          end
+
+          status = @pest_gateway.unlink_pest_from_crop(
+            crop_id: crop_id,
+            pest_id: pest_entity.id
           )
 
           case status
@@ -26,12 +42,10 @@ module Domain
             @output_port.on_crop_not_found
           when :pest_not_found
             @output_port.on_pest_not_found
-          when :not_associated
-            @output_port.on_not_associated
           else
             @output_port.on_unexpected(status)
           end
-        rescue Domain::Shared::Exceptions::RecordNotFound
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_crop_not_found
         end
       end

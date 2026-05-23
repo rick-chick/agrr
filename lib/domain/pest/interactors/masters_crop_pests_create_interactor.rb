@@ -40,6 +40,10 @@ module Domain
             return @output_port.on_forbidden
           end
 
+          if @pest_gateway.crop_pest_association_exists?(crop_id: crop_id, pest_id: pest_entity.id)
+            return @output_port.on_already_associated
+          end
+
           status = @pest_gateway.link_pest_to_crop(
             crop_id: crop_id,
             pest_id: pest_entity.id,
@@ -48,8 +52,6 @@ module Domain
           case status
           when :missing
             @output_port.on_pest_not_found
-          when :already_linked
-            @output_port.on_already_associated
           when :linked
             @output_port.on_success(crop_id: crop_id, pest_id: pest_entity.id)
           end

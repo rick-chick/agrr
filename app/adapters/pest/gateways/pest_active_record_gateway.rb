@@ -140,6 +140,10 @@ module Adapters
           )
         end
 
+        def crop_pest_association_exists?(crop_id:, pest_id:)
+          ::CropPest.exists?(crop_id: crop_id, pest_id: pest_id)
+        end
+
         def link_pest_to_crop(crop_id:, pest_id:, user:)
           crop = find_crop_model(crop_id)
           pest = ::Pest.find_by(id: pest_id)
@@ -378,14 +382,12 @@ module Adapters
           ::CropPest.where(crop_id: crop_id).pluck(:pest_id)
         end
 
-        def unlink_pest_from_crop_for_masters(user:, crop_id:, pest_id:)
-          crop = ::Crop.user_owned.where(user_id: user.id).find_by(id: crop_id)
+        def unlink_pest_from_crop(crop_id:, pest_id:)
+          crop = find_crop_model(crop_id)
           return :crop_not_found unless crop
 
           pest = ::Pest.find_by(id: pest_id)
           return :pest_not_found unless pest
-
-          return :not_associated unless crop.pests.include?(pest)
 
           crop.pests.delete(pest)
           :ok

@@ -66,8 +66,12 @@ module Domain
 
         # AR を Domain に持ち込まないためのマスタ系操作。
 
-        # 既存の Pest を crop に紐付ける（id ベース）。認可は Interactor（PestCropAssociationAccess 等）。
-        # @return [Symbol] :linked / :already_linked / :missing
+        def crop_pest_association_exists?(crop_id:, pest_id:)
+          raise NotImplementedError, "Subclasses must implement crop_pest_association_exists?"
+        end
+
+        # 既存の Pest を crop に紐付ける（id ベース）。認可・重複判定は Interactor。
+        # @return [Symbol] :linked / :missing
         def link_pest_to_crop(crop_id:, pest_id:, user:)
           raise NotImplementedError, "Subclasses must implement link_pest_to_crop"
         end
@@ -131,10 +135,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement pest_ids_linked_to_crop"
         end
 
-        # マスター API: 作物から害虫の関連を外す（ユーザー作物のみ）
-        # @return [Symbol] :ok / :crop_not_found / :pest_not_found / :not_associated
-        def unlink_pest_from_crop_for_masters(user:, crop_id:, pest_id:)
-          raise NotImplementedError, "Subclasses must implement unlink_pest_from_crop_for_masters"
+        # 作物から害虫の関連を外す（永続化のみ）。関連の有無は Interactor が crop_pest_association_exists? で判定。
+        # @return [Symbol] :ok / :crop_not_found / :pest_not_found
+        def unlink_pest_from_crop(crop_id:, pest_id:)
+          raise NotImplementedError, "Subclasses must implement unlink_pest_from_crop"
         end
 
         # HTML 害虫マスタ編集・検証失敗時の作物選択 UI 用。

@@ -63,12 +63,48 @@ module Domain
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_pest_gateway.expects(:pest_selectable_by_user?).with(@user, @pest_id).returns(true)
           @mock_pest_gateway.expects(:find_crop_entity_by_id).with(@crop_id).returns(crop_entity)
+          @mock_pest_gateway.expects(:crop_pest_association_exists?).with(crop_id: @crop_id, pest_id: @pest_id).returns(false)
           @mock_pest_gateway.expects(:link_pest_to_crop).with(
             crop_id: @crop_id,
             pest_id: @pest_id,
             user: @user
           ).returns(:linked)
           @mock_output_port.expects(:on_success).with(crop_id: @crop_id, pest_id: @pest_id)
+
+          @interactor.call(@crop_id, @pest_id)
+        end
+
+        test "calls on_already_associated when crop_pest_association_exists" do
+          pest_entity = Domain::Pest::Entities::PestEntity.new(
+            id: @pest_id,
+            user_id: @user_id,
+            name: "アブラムシ",
+            name_scientific: nil,
+            family: nil,
+            order: nil,
+            description: nil,
+            occurrence_season: nil,
+            region: nil,
+            is_reference: false,
+            created_at: nil,
+            updated_at: nil
+          )
+          crop_entity = Domain::Crop::Entities::CropEntity.new(
+            id: @crop_id,
+            user_id: @user_id,
+            name: "トマト",
+            variety: nil,
+            is_reference: false,
+            region: nil
+          )
+
+          @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
+          @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
+          @mock_pest_gateway.expects(:pest_selectable_by_user?).with(@user, @pest_id).returns(true)
+          @mock_pest_gateway.expects(:find_crop_entity_by_id).with(@crop_id).returns(crop_entity)
+          @mock_pest_gateway.expects(:crop_pest_association_exists?).with(crop_id: @crop_id, pest_id: @pest_id).returns(true)
+          @mock_pest_gateway.expects(:link_pest_to_crop).never
+          @mock_output_port.expects(:on_already_associated).once
 
           @interactor.call(@crop_id, @pest_id)
         end

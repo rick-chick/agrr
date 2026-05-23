@@ -23,6 +23,10 @@ module Domain
           Domain::Shared::Policies::CropNestedPestsAccess.assert_allowed!(user, crop)
 
           if link_pest_id.present?
+            if @pest_gateway.crop_pest_association_exists?(crop_id: crop_id, pest_id: link_pest_id)
+              return @output_port.on_already_linked(crop_id: crop_id)
+            end
+
             pest_entity =
               begin
                 @pest_gateway.find_by_id(link_pest_id)
@@ -39,9 +43,8 @@ module Domain
               user: user
             )
             case status
-            when :already_linked then return @output_port.on_already_linked(crop_id: crop_id)
-            when :linked         then return @output_port.on_linked(crop_id: crop_id)
-            when :missing        then return @output_port.on_link_target_missing(crop_id: crop_id)
+            when :linked  then return @output_port.on_linked(crop_id: crop_id)
+            when :missing then return @output_port.on_link_target_missing(crop_id: crop_id)
             end
           end
 
