@@ -151,7 +151,7 @@ class PestsController < ApplicationController
     render(action, status: status, locals: locals)
   end
 
-  # Interactor 経由で作物選択 UI 用インスタンス変数を設定する（Presenter の on_failure からも呼ぶ）。
+  # Interactor 経由で作物選択 UI 用インスタンス変数を設定する（new / edit 用）。
   def load_pest_master_form_crop_selection(master_edit_payload:, request_crop_ids: :use_payload_associations)
     presenter = Adapters::Pest::Presenters::PestMasterFormCropSelectionLoadHtmlPresenter.new(view: self)
     CompositionRoot.pest_master_form_crop_selection_load_interactor(output_port: presenter, user_id: current_user.id).call(

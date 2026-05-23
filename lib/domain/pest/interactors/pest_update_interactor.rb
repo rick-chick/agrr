@@ -4,11 +4,7 @@ module Domain
   module Pest
     module Interactors
       class PestUpdateInteractor < Domain::Pest::Ports::PestUpdateInputPort
-        RELOAD_BUNDLE_RESCUES = [
-          Domain::Shared::Policies::PolicyPermissionDenied,
-          Domain::Shared::Exceptions::RecordNotFound,
-          Domain::Shared::Exceptions::RecordInvalid
-        ].freeze
+        include PestMasterFormFailureBuilder
 
         def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
@@ -63,23 +59,22 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(
-            Domain::Pest::Dtos::PestUpdateFailure.new(message: e.message, reload_bundle: reload_bundle_for_failure(user, input_dto, access_filter))
-          )
+          @output_port.on_failure(form_failure_or_error(user, input_dto, e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(
-            Domain::Pest::Dtos::PestUpdateFailure.new(message: e.message, reload_bundle: reload_bundle_for_failure(user, input_dto, access_filter))
-          )
+          @output_port.on_failure(form_failure_or_error(user, input_dto, e.message))
         end
 
         private
 
-        def reload_bundle_for_failure(user, input_dto, access_filter)
-          return nil unless user && access_filter && !Domain::Shared.blank?(input_dto.pest_id)
-
-          @gateway.find_authorized_pest_loaded_bundle!(user, input_dto.pest_id.to_i, for_edit: true, access_filter: access_filter)
-        rescue *RELOAD_BUNDLE_RESCUES
-          nil
+        def form_failure_or_error(user, input_dto, message)
+          if message == @translator.t("pests.flash.reference_flag_admin_only")
+            Domain::Pest::Dtos::PestReferenceFlagChangeDenied.new(
+              message: message,
+              pest_id: input_dto.pest_id
+            )
+          else
+            pest_master_form_failure_for(user, input_dto, message: message)
+          end
         end
       end
     end

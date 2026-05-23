@@ -51,17 +51,11 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(find_authorized_model_for_edit(user, id, access_filter: access_filter))
         end
 
-        def find_authorized_pest_loaded_bundle!(user, id, for_edit:, access_filter:)
-          pest = if for_edit
-                   record = find_authorized_model_for_edit(user, id, access_filter: access_filter)
-                   ensure_pest_control_method_row_for_form!(record)
-                   record
-                 else
-                   find_authorized_model_for_view(user, id, access_filter: access_filter)
-                 end
+        def find_authorized_pest_loaded_bundle!(user, id, access_filter:)
+          record = find_authorized_model_for_edit(user, id, access_filter: access_filter)
+          ensure_pest_control_method_row_for_form!(record)
           Domain::Pest::Dtos::PestAuthorizedLoad.new(
-            pest_entity: Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest),
-            pest_master_edit_payload: Adapters::Pest::Mappers::PestMasterEditPayloadMapper.from_record(pest)
+            pest_master_edit_payload: Adapters::Pest::Mappers::PestMasterEditPayloadMapper.from_record(record)
           )
         end
 

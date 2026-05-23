@@ -71,6 +71,25 @@ module Domain
             .call(build_input(is_reference: false))
         end
 
+        test "create の RecordInvalid 時は PestMasterFormFailure を返す" do
+          user = stub(id: 7, admin?: false)
+          input = build_input(is_reference: false)
+          crop_bundle = Domain::Pest::Dtos::PestMasterFormCropSelectionBundle.new(selected_crop_ids: [], crop_cards: [])
+          gateway = mock
+          gateway.expects(:create_for_user).raises(Domain::Shared::Exceptions::RecordInvalid.new("invalid"))
+          gateway.expects(:pest_master_form_crop_selection_bundle!).returns(crop_bundle)
+          output_port = mock
+          received = nil
+          output_port.expects(:on_failure).with { |arg| received = arg; true }
+
+          build_interactor(output_port: output_port, gateway: gateway, user: user).call(input)
+
+          assert_instance_of Domain::Pest::Dtos::PestMasterFormFailure, received
+          assert_equal "invalid", received.message
+          assert_equal crop_bundle, received.crop_selection_bundle
+          assert_equal "テスト害虫", received.master_edit_payload.name
+        end
+
         test "一般ユーザーの region 指定は Policy により破棄される" do
           gateway = mock
           gateway.expects(:create_for_user).with do |_user, attrs|

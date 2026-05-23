@@ -78,30 +78,6 @@ module Domain
           Domain::Shared::TypeConverters::BooleanConverter.cast(is_reference)
         end
 
-        def self.from_hash(hash)
-          id = hash[:id]
-          new(
-            id: id,
-            new_record: id.nil?,
-            error_messages: [],
-            created_at: hash[:created_at],
-            updated_at: hash[:updated_at],
-            name: hash[:name],
-            name_scientific: hash[:name_scientific],
-            family: hash[:family],
-            order: hash[:order],
-            description: hash[:description],
-            occurrence_season: hash[:occurrence_season],
-            is_reference: hash[:is_reference] || false,
-            region: hash[:region],
-            user_id: hash[:user_id],
-            associated_crop_ids: [],
-            pest_temperature_profile_attributes: hash[:pest_temperature_profile_attributes],
-            pest_thermal_requirement_attributes: hash[:pest_thermal_requirement_attributes],
-            pest_control_methods_attributes: hash[:pest_control_methods_attributes] || {}
-          )
-        end
-
         def self.for_blank_new
           new(
             id: nil,

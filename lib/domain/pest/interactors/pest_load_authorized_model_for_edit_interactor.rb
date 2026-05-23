@@ -18,7 +18,7 @@ module Domain
         def call(pest_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::PestPolicy.record_access_filter(user)
-          @gateway.find_authorized_pest_loaded_bundle!(user, pest_id.to_i, for_edit: true, access_filter: access_filter)
+          @gateway.find_authorized_pest_loaded_bundle!(user, pest_id.to_i, access_filter: access_filter)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @failure_presenter.on_permission_denied
           nil

@@ -14,23 +14,6 @@ module Domain
           @associated_crop_ids = associated_crop_ids
         end
 
-        # 害虫フォーム側モデル（is_reference? / user_id / region / persisted? / crop_ids を備える想定）。ActiveRecord 型に依存しない。
-        def self.from_pest_form_handle(handle)
-          persisted = handle.respond_to?(:persisted?) && handle.persisted?
-          crop_ids =
-            if persisted && handle.respond_to?(:crop_ids)
-              Array(handle.crop_ids).map(&:to_i)
-            else
-              []
-            end
-          new(
-            is_reference: handle.respond_to?(:is_reference?) && !!handle.is_reference?,
-            pest_user_id: handle.respond_to?(:user_id) ? handle.user_id : nil,
-            region: handle.respond_to?(:region) ? handle.region : nil,
-            associated_crop_ids: crop_ids
-          )
-        end
-
         # @param payload [Domain::Pest::Dtos::PestMasterEditPayload]
         def self.from_master_edit_payload(payload)
           new(

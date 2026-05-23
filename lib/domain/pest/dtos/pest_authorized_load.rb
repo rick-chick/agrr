@@ -5,10 +5,9 @@ module Domain
     module Dtos
       # HTML 害虫編集フォーム向けの認可済みロード結果。
       class PestAuthorizedLoad
-        attr_reader :pest_entity, :pest_master_edit_payload
+        attr_reader :pest_master_edit_payload
 
-        def initialize(pest_entity:, pest_master_edit_payload:)
-          @pest_entity = pest_entity
+        def initialize(pest_master_edit_payload:)
           @pest_master_edit_payload = pest_master_edit_payload
         end
       end

@@ -4,6 +4,8 @@ module Domain
   module Pest
     module Interactors
       class PestCreateInteractor < Domain::Pest::Ports::PestCreateInputPort
+        include PestMasterFormFailureBuilder
+
         def initialize(output_port:, user_id:, gateway:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
@@ -13,6 +15,7 @@ module Domain
         end
 
         def call(input_dto)
+          attrs = nil
           user = @user_lookup.find(@user_id)
 
           # is_referenceをbooleanに変換
@@ -46,7 +49,11 @@ module Domain
 
           @output_port.on_success(pest_entity)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          if attrs
+            @output_port.on_failure(pest_master_form_failure_for(user, input_dto, message: e.message))
+          else
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          end
         end
       end
     end
