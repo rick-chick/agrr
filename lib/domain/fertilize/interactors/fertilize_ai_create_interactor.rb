@@ -74,7 +74,7 @@ module Domain
 
           @logger.info "📊 [AI Fertilize] Retrieved data: name=#{fertilize_name_from_agrr}, n=#{fertilize_data['n']}, p=#{fertilize_data['p']}, k=#{fertilize_data['k']}, package_size=#{fertilize_data['package_size']}"
 
-          existing_fertilize = @fertilize_gateway.find_user_owned_non_reference_fertilize_record_by_name(
+          existing_fertilize = @fertilize_gateway.find_by_name(
             user_id: @user_id,
             name: fertilize_name_from_agrr
           )

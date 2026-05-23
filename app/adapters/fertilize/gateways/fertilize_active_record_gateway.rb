@@ -135,7 +135,7 @@ module Adapters
           { success: false, error_dto: Domain::Shared::Dtos::Error.new(e.message) }
         end
 
-        def find_user_owned_non_reference_fertilize_record_by_name(user_id:, name:)
+        def find_by_name(user_id:, name:)
           return nil if name.blank?
 
           ::Fertilize.find_by(name: name, is_reference: false, user_id: user_id)

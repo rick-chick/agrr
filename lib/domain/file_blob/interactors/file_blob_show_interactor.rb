@@ -10,7 +10,7 @@ module Domain
         end
 
         def call(blob_id:)
-          row = @gateway.find_row_by_id(blob_id)
+          row = @gateway.find_by_id(blob_id)
           unless row
             @output_port.on_not_found
             return

@@ -18,7 +18,7 @@ module Domain
             )
           ]
           gateway = Minitest::Mock.new
-          gateway.expect(:list_crop_stages_by_crop_id, crop_stages, [ 1 ])
+          gateway.expect(:list_by_crop_id, crop_stages, [ 1 ])
 
           received = nil
           output_port = Minitest::Mock.new
@@ -35,7 +35,7 @@ module Domain
 
         test "calls on_failure with Error when gateway raises RecordInvalid" do
           gateway = Minitest::Mock.new
-          gateway.expect(:list_crop_stages_by_crop_id, nil) do |_crop_id|
+          gateway.expect(:list_by_crop_id, nil) do |_crop_id|
             raise Domain::Shared::Exceptions::RecordInvalid.new("crop inaccessible")
           end
 
@@ -55,7 +55,7 @@ module Domain
 
         test "propagates StandardError when gateway raises" do
           gateway = Minitest::Mock.new
-          gateway.expect(:list_crop_stages_by_crop_id, nil) { raise StandardError, "database error" }
+          gateway.expect(:list_by_crop_id, nil) { raise StandardError, "database error" }
 
           output_port = Minitest::Mock.new
 

@@ -15,9 +15,9 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
   # ========== エンドツーエンドシナリオ ==========
 
   test "should complete full workflow: create pest with crops, view, edit associations" do
-    # 1. 害虫を作成して複数の作物と関連付け
+    # 1. 害虫を作成して複数の作物と関連付け（ユーザー害虫は参照作物も含めて紐づけ可能）
     assert_difference("Pest.count", 1) do
-      assert_difference("CropPest.count", 2) do
+      assert_difference("CropPest.count", 3) do
         post pests_path, params: {
           pest: {
             name: "アブラムシ",
@@ -32,26 +32,26 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     pest = Pest.last
     assert_redirected_to pest_path(pest)
-    assert_equal 2, pest.crops.count
+    assert_equal 3, pest.crops.count
 
     # 2. 害虫詳細画面で作物一覧を確認
     get pest_path(pest)
     assert_response :success
-    assert_select ".related-crop-card", count: 2
+    assert_select ".related-crop-card", count: 3
 
     # 3. 作物詳細画面で害虫一覧を確認
     get crop_path(@crop1)
     assert_response :success
     assert_select "a.pest-card__link", text: "アブラムシ"
 
-    # 4. 害虫の関連付けを編集（1つ削除、1つ追加）
+    # 4. 害虫の関連付けを編集（参照作物を削除、crop4を追加 → net 0）
     crop4 = create(:crop, user: @user, name: "キュウリ")
-    assert_difference("CropPest.count", 1) do  # crop4を追加（参照作物は最初から関連付けられていない）
+    assert_difference("CropPest.count", 0) do  # 参照作物削除(-1) + crop4追加(+1) = 0
       patch pest_path(pest), params: {
         pest: {
           name: pest.name
         },
-        crop_ids: [ @crop1.id, @crop2.id, crop4.id ]  # crop4を追加
+        crop_ids: [ @crop1.id, @crop2.id, crop4.id ]  # crop4を追加、参照作物を削除
       }
     end
 
@@ -73,18 +73,18 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     pest1 = create(:pest, is_reference: true, name: "害虫1")
     pest2 = create(:pest, is_reference: true, name: "害虫2")
 
-    # 作物単位の害虫管理画面から既存害虫を関連付け
+    # 参照作物に参照害虫を関連付け（参照害虫は参照作物のみ）
     assert_difference("CropPest.count", 2) do
-      post crop_pests_path(@crop1), params: { pest_id: pest1.id }
-      post crop_pests_path(@crop1), params: { pest_id: pest2.id }
+      post crop_pests_path(@reference_crop), params: { pest_id: pest1.id }
+      post crop_pests_path(@reference_crop), params: { pest_id: pest2.id }
     end
 
-    @crop1.reload
-    assert_equal 2, @crop1.pests.count
+    @reference_crop.reload
+    assert_equal 2, @reference_crop.pests.count
 
     # 害虫管理画面から同じ作物を選択して新規害虫を作成
     assert_difference("Pest.count", 1) do
-      assert_difference("CropPest.count", 2) do  # 新規害虫1つ + @crop1, @crop2（参照作物は関連付けられない）
+      assert_difference("CropPest.count", 3) do  # ユーザー害虫は参照作物も含めて紐づけ可能
         post pests_path, params: {
           pest: {
             name: "害虫3",
@@ -98,11 +98,11 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     pest3 = Pest.last
     assert pest3.crops.include?(@crop1)
     assert pest3.crops.include?(@crop2)
-    assert_not pest3.crops.include?(@reference_crop)
+    assert pest3.crops.include?(@reference_crop)
 
-    # @crop1には3つの害虫が関連付けられている
+    # @crop1には1つの害虫が関連付けられている
     @crop1.reload
-    assert_equal 3, @crop1.pests.count
+    assert_equal 1, @crop1.pests.count
   end
 
   test "should maintain data integrity across multiple operations" do
@@ -175,34 +175,34 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     @reference_crop.reload
     assert @reference_crop.pests.include?(reference_pest)
 
-    # 参照害虫を自分の作物に関連付け
-    assert_difference("CropPest.count", 1) do
+    # 参照害虫は参照作物にしか紐づけできない → 自分の作物には関連付け不可
+    assert_no_difference("CropPest.count") do
       post crop_pests_path(@crop1), params: { pest_id: reference_pest.id }
     end
 
     @crop1.reload
-    assert @crop1.pests.include?(reference_pest)
+    assert_not @crop1.pests.include?(reference_pest)
     reference_pest.reload
-    assert_equal 2, reference_pest.crops.count  # 参照作物と自分の作物
+    assert_equal 1, reference_pest.crops.count  # 参照作物のみ
   end
 
   test "should prevent duplicate associations in workflow" do
     pest = create(:pest, is_reference: true, name: "テスト害虫")
 
-    # 同じ害虫を同じ作物に関連付けようとする（1回目）
+    # 参照害虫は参照作物にしか紐づけできない
     assert_difference("CropPest.count", 1) do
-      post crop_pests_path(@crop1), params: { pest_id: pest.id }
+      post crop_pests_path(@reference_crop), params: { pest_id: pest.id }
     end
 
     # 同じ害虫を同じ作物に関連付けようとする（2回目 - 重複）
     assert_no_difference("CropPest.count") do
-      post crop_pests_path(@crop1), params: { pest_id: pest.id }
+      post crop_pests_path(@reference_crop), params: { pest_id: pest.id }
     end
 
     assert_equal I18n.t("crops.pests.flash.already_associated"), flash[:alert]
 
-    @crop1.reload
-    assert_equal 1, @crop1.pests.count  # 重複しない
+    @reference_crop.reload
+    assert_equal 1, @reference_crop.pests.count  # 重複しない
   end
 
   test "should handle large number of associations" do
@@ -265,33 +265,35 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     pest1 = create(:pest, is_reference: true, name: "害虫1")
     pest2 = create(:pest, is_reference: true, name: "害虫2")
 
-    # 同じ作物に2つの害虫を同時に関連付け（順次実行）
+    # 同じ参照作物に2つの害虫を同時に関連付け（順次実行）
     assert_difference("CropPest.count", 2) do
-      post crop_pests_path(@crop1), params: { pest_id: pest1.id }
-      post crop_pests_path(@crop1), params: { pest_id: pest2.id }
+      post crop_pests_path(@reference_crop), params: { pest_id: pest1.id }
+      post crop_pests_path(@reference_crop), params: { pest_id: pest2.id }
     end
 
-    @crop1.reload
-    assert_equal 2, @crop1.pests.count
-    assert @crop1.pests.include?(pest1)
-    assert @crop1.pests.include?(pest2)
+    @reference_crop.reload
+    assert_equal 2, @reference_crop.pests.count
+    assert @reference_crop.pests.include?(pest1)
+    assert @reference_crop.pests.include?(pest2)
 
     # 2つの害虫に同じ作物を関連付け
-    assert_difference("CropPest.count", 1) do  # pest2には既に関連付け済み
+    assert_difference("CropPest.count", 3) do  # ユーザー害虫は参照作物も含めて紐づけ可能
       post pests_path, params: {
         pest: {
           name: "害虫3",
           is_reference: false
         },
-        crop_ids: [ @crop1.id ]
+        crop_ids: [ @crop1.id, @crop2.id, @reference_crop.id ]
       }
     end
 
     pest3 = Pest.last
     assert pest3.crops.include?(@crop1)
+    assert pest3.crops.include?(@crop2)
+    assert pest3.crops.include?(@reference_crop)
 
-    @crop1.reload
-    assert_equal 3, @crop1.pests.count  # 3つの害虫に関連付けられている
+    @reference_crop.reload
+    assert_equal 3, @reference_crop.pests.count  # 3つの害虫に関連付けられている
   end
 
   test "should handle error cases gracefully" do

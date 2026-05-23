@@ -16,7 +16,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def destroy(pesticide_id)
+        def delete(pesticide_id)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 

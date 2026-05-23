@@ -152,11 +152,15 @@ module Adapters
           pest
         end
 
-        def link_pest_to_crop(crop_id:, pest_id:, crop_access_filter:)
+        def link_pest_to_crop(crop_id:, pest_id:, user:, crop_access_filter:)
           crop = crop_authorized_for_nested_edit(crop_id, crop_access_filter)
           pest = ::Pest.find_by(id: pest_id)
           return :missing unless crop && pest
           return :already_linked if crop.pests.include?(pest)
+
+          unless Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest, user: user)
+            return :forbidden
+          end
 
           crop.pests << pest
           :linked
@@ -242,8 +246,23 @@ module Adapters
         end
 
         def normalize_crop_ids_for_pest_form(pest_model:, raw_crop_ids:, user:)
-          allowed_ids = Domain::Shared::PestCropAssociationAccess.accessible_crops_scope(pest_model, user: user).pluck(:id)
+          allowed_ids = build_accessible_crops_scope(pest_model, user: user).pluck(:id)
           Array(raw_crop_ids).compact.reject(&:blank?).map(&:to_i).uniq & allowed_ids
+        end
+
+        # PestCropAssociationAccess#accessible_crops_scope のロジックをアダプター側へ移管（R1 違反解消）
+        def build_accessible_crops_scope(pest_model, user: nil)
+          scope =
+            if pest_model.is_reference?
+              ::Crop.where(is_reference: true)
+            else
+              owner_id = pest_model.user_id || user&.id
+              # ユーザー害虫: 同じ所有者の非参照作物 + 参照作物すべて
+              ::Crop.where("is_reference = ? OR (is_reference = ? AND user_id = ?)", true, false, owner_id)
+            end
+
+          scope = scope.where(region: pest_model.region) if pest_model.region.present?
+          scope.order(:name)
         end
 
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
@@ -367,7 +386,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pest not found"
         end
 
-        def find_user_owned_non_reference_pest_by_name(user_id:, name:)
+        def find_by_name(user_id:, name:)
           return nil if name.blank?
 
           record = ::Pest.find_by(name: name, is_reference: false, user_id: user_id)

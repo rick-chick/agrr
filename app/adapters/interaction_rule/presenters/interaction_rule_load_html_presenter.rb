@@ -14,7 +14,7 @@ module Adapters
           if @for_edit
             @view.instance_variable_set(
               :@form,
-              ::InteractionRuleForm.from_entity(rule_entity)
+              Adapters::InteractionRule::Presenters::Forms::InteractionRuleForm.from_entity(rule_entity)
             )
           end
         end

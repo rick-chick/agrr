@@ -1,6 +1,6 @@
 # ADR 0008: API / HTML Presenter を `lib/presenters/{api,html}/` に集約する
 
-- **Status**: Superseded by [ARCHITECTURE.md → Presenters](../../ARCHITECTURE.md#presenters-app-adapters-context-presenters) と [docs/planning/naming-placement-migration.md](../planning/naming-placement-migration.md)
+- **Status**: Superseded by [ARCHITECTURE.md → Presenters](../../ARCHITECTURE.md#presenters-app-adapters-context-presenters)
 - **Date**: 2026-04-20
 - **Superseded date**: 2026-05-19
 
@@ -14,7 +14,7 @@ API は `lib/presenters/api/`、HTML（計画系など）は `lib/presenters/htm
 
 ## Superseded（現行）
 
-Presenter は `app/adapters/<context>/presenters/<usecase>_{api,html}_presenter.rb` に配置し、`forms/` / `view_models/` / `mappers/` を同階層に持つ。`lib/presenters/{api,html}/` は legacy として段階廃止。配置・命名規約の詳細は [ARCHITECTURE.md → Naming and placement conventions](../../ARCHITECTURE.md#naming-and-placement-conventions)。移行 TODO は [docs/planning/naming-placement-migration.md](../planning/naming-placement-migration.md)。
+Presenter は `app/adapters/<context>/presenters/<usecase>_{api,html}_presenter.rb` に配置し、`forms/` / `view_models/` / `mappers/` を同階層に持つ。`lib/presenters/{api,html}/` は legacy として廃止済み。配置・命名規約の詳細は [ARCHITECTURE.md → Naming and placement conventions](../../ARCHITECTURE.md#naming-and-placement-conventions)。
 
 ## Consequences（当時）
 

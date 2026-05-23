@@ -84,12 +84,12 @@ module Adapters
 
         test "should destroy existing record" do
           record = create(:interaction_rule, :reference)
-          @gateway.destroy(record.id)
+          @gateway.delete(record.id)
           assert_nil ::InteractionRule.find_by(id: record.id)
         end
 
         test "should raise when destroy not found" do
-          assert_raises(Domain::Shared::Exceptions::RecordNotFound) { @gateway.destroy(9999) }
+          assert_raises(Domain::Shared::Exceptions::RecordNotFound) { @gateway.delete(9999) }
         end
 
         test "should list all records and return entities" do

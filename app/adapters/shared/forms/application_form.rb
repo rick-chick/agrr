@@ -14,7 +14,7 @@
 # - `errors_from(messages_hash)` で外部から errors を流し込み可能。
 # - `model_name`、`to_param`、`persisted?`、`to_key` を Entity ID と
 #   サブクラス名から推論。Rails の `form_with model: form` をそのまま使える。
-class ApplicationForm
+class Adapters::Shared::Forms::ApplicationForm
   include ActiveModel::Model
   include ActiveModel::Attributes
   include ActiveModel::Validations

@@ -34,11 +34,14 @@ module Domain
           status = @pest_gateway.link_pest_to_crop(
             crop_id: crop_id,
             pest_id: pest_entity.id,
+            user: user,
             crop_access_filter: crop_access_filter
           )
           case status
           when :missing
             @output_port.on_pest_not_found
+          when :forbidden
+            @output_port.on_forbidden
           when :already_linked
             @output_port.on_already_associated
           when :linked

@@ -4,7 +4,7 @@ module Adapters
   module Shared
     module Gateways
       # マスター API の API キー／セッション Cookie から User を解決する（ActiveRecord はこの境界内のみ）。
-      class MastersApiSessionResolveGateway
+      class MastersApiSessionResolveActiveRecordGateway
         def initialize(session_cookie_resolver: Adapters::Shared::Gateways::SessionCookieUserActiveRecordGateway.new)
           @session_cookie_resolver = session_cookie_resolver
         end

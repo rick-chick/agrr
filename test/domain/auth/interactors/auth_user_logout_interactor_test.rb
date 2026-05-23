@@ -12,7 +12,7 @@ module Domain
         end
 
         test "when not authenticated only notifies not logged in" do
-          @gateway.expects(:destroy_all_sessions_for_user!).never
+          @gateway.expects(:delete_all_sessions_for_user!).never
           @port.expects(:on_not_logged_in).once
           @port.expects(:on_success).never
 
@@ -23,7 +23,7 @@ module Domain
         end
 
         test "when authenticated revokes then success" do
-          @gateway.expects(:destroy_all_sessions_for_user!).with(user_id: 42).once
+          @gateway.expects(:delete_all_sessions_for_user!).with(user_id: 42).once
           @port.expects(:on_success).once
           @port.expects(:on_not_logged_in).never
 

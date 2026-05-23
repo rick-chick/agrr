@@ -57,20 +57,20 @@ module Adapters
         end
 
         # TemperatureRequirement tests
-        test "find_temperature_requirement returns requirement if exists" do
+        test "find_temperature_requirement_by_crop_stage_id returns requirement if exists" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:temperature_requirement, crop_stage: crop_stage)
 
-          result = @gateway.find_temperature_requirement(crop_stage.id)
+          result = @gateway.find_temperature_requirement_by_crop_stage_id(crop_stage.id)
 
           assert_equal requirement.id, result.id
           assert_equal requirement.base_temperature, result.base_temperature
         end
 
-        test "find_temperature_requirement returns nil if not exists" do
+        test "find_temperature_requirement_by_crop_stage_id returns nil if not exists" do
           crop_stage = create(:crop_stage, crop: @crop)
 
-          result = @gateway.find_temperature_requirement(crop_stage.id)
+          result = @gateway.find_temperature_requirement_by_crop_stage_id(crop_stage.id)
 
           assert_nil result
         end
@@ -106,11 +106,11 @@ module Adapters
         end
 
         # ThermalRequirement tests
-        test "find_thermal_requirement returns requirement if exists" do
+        test "find_thermal_requirement_by_crop_stage_id returns requirement if exists" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:thermal_requirement, crop_stage: crop_stage)
 
-          result = @gateway.find_thermal_requirement(crop_stage.id)
+          result = @gateway.find_thermal_requirement_by_crop_stage_id(crop_stage.id)
 
           assert_equal requirement.id, result.id
           assert_equal requirement.required_gdd, result.required_gdd
@@ -145,11 +145,11 @@ module Adapters
         end
 
         # SunshineRequirement tests
-        test "find_sunshine_requirement returns requirement if exists" do
+        test "find_sunshine_requirement_by_crop_stage_id returns requirement if exists" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:sunshine_requirement, crop_stage: crop_stage)
 
-          result = @gateway.find_sunshine_requirement(crop_stage.id)
+          result = @gateway.find_sunshine_requirement_by_crop_stage_id(crop_stage.id)
 
           assert_equal requirement.id, result.id
           assert_equal requirement.minimum_sunshine_hours, result.minimum_sunshine_hours
@@ -185,11 +185,11 @@ module Adapters
         end
 
         # NutrientRequirement tests
-        test "find_nutrient_requirement returns requirement if exists" do
+        test "find_nutrient_requirement_by_crop_stage_id returns requirement if exists" do
           crop_stage = create(:crop_stage, crop: @crop)
           requirement = create(:nutrient_requirement, crop_stage: crop_stage)
 
-          result = @gateway.find_nutrient_requirement(crop_stage.id)
+          result = @gateway.find_nutrient_requirement_by_crop_stage_id(crop_stage.id)
 
           assert_equal requirement.id, result.id
           assert_equal requirement.daily_uptake_n, result.daily_uptake_n
@@ -226,39 +226,39 @@ module Adapters
           assert_equal "updated_region", result.region
         end
 
-        test "destroy_temperature_requirement deletes existing requirement" do
+        test "delete_temperature_requirement deletes existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           create(:temperature_requirement, crop_stage: crop_stage)
 
           assert_difference("TemperatureRequirement.count", -1) do
-            @gateway.destroy_temperature_requirement(crop_stage.id)
+            @gateway.delete_temperature_requirement(crop_stage.id)
           end
         end
 
-        test "destroy_thermal_requirement deletes existing requirement" do
+        test "delete_thermal_requirement deletes existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           create(:thermal_requirement, crop_stage: crop_stage)
 
           assert_difference("ThermalRequirement.count", -1) do
-            @gateway.destroy_thermal_requirement(crop_stage.id)
+            @gateway.delete_thermal_requirement(crop_stage.id)
           end
         end
 
-        test "destroy_sunshine_requirement deletes existing requirement" do
+        test "delete_sunshine_requirement deletes existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           create(:sunshine_requirement, crop_stage: crop_stage)
 
           assert_difference("SunshineRequirement.count", -1) do
-            @gateway.destroy_sunshine_requirement(crop_stage.id)
+            @gateway.delete_sunshine_requirement(crop_stage.id)
           end
         end
 
-        test "destroy_nutrient_requirement deletes existing requirement" do
+        test "delete_nutrient_requirement deletes existing requirement" do
           crop_stage = create(:crop_stage, crop: @crop)
           create(:nutrient_requirement, crop_stage: crop_stage)
 
           assert_difference("NutrientRequirement.count", -1) do
-            @gateway.destroy_nutrient_requirement(crop_stage.id)
+            @gateway.delete_nutrient_requirement(crop_stage.id)
           end
         end
 

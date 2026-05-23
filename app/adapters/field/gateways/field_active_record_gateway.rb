@@ -67,7 +67,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
         end
 
-        def destroy(field_id, farm_access_filter:)
+        def delete(field_id, farm_access_filter:)
           user = farm_access_filter.user
           field = find_field_model!(field_id)
           assert_field_owned_by_user!(user, field)

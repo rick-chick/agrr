@@ -99,7 +99,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def destroy(farm_id, toast_message:)
+        def delete(farm_id, toast_message:)
           farm = ::Farm.find(farm_id)
           ::Adapters::DeletionUndo::Manager.schedule(
             record: farm,

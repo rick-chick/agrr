@@ -10,7 +10,7 @@ module Domain
         end
 
         def call(input_dto)
-          if @gateway.find_sunshine_requirement(input_dto.stage_id).nil?
+          if @gateway.find_sunshine_requirement_by_crop_stage_id(input_dto.stage_id).nil?
             @output_port.on_not_found
             return
           end

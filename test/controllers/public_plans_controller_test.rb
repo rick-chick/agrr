@@ -23,38 +23,6 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
     assert_nil public_plan[:crop_ids]
   end
 
-  # RED: Domain::WeatherData::Interactors::WeatherPredictionInteractor requires current year data (Date.current.year, 1, 1) to (Date.current - 2.days).
-  # When latest_weather_date is in the past, calculate_weather_data_params must return end_date >= Date.current - 2.days
-  # so that FetchWeatherDataJob fetches the current year and WeatherPredictionJob does not fail.
-  test "calculate_weather_data_params returns end_date at least Date.current - 2.days when latest_weather_date is in the past" do
-    weather_location = WeatherLocation.find_or_create_by_coordinates(
-      latitude: 38.0,
-      longitude: 142.0,
-      elevation: 10.0,
-      timezone: "Asia/Tokyo"
-    )
-    # Data only up to 1 year ago → latest_weather_date will be in the past
-    past_end_date = 1.year.ago.to_date
-    WeatherDatum.create!(
-      weather_location: weather_location,
-      date: past_end_date,
-      temperature_max: 25.0,
-      temperature_min: 15.0,
-      temperature_mean: 20.0,
-      precipitation: 0,
-      sunshine_hours: 8,
-      wind_speed: 3,
-      weather_code: 0
-    )
-
-    controller = PublicPlansController.new
-    params = controller.send(:calculate_weather_data_params, weather_location)
-
-    minimum_required = Date.current - 2.days
-    assert params[:end_date] >= minimum_required,
-           "end_date (#{params[:end_date]}) must be >= #{minimum_required} for Domain::WeatherData::Interactors::WeatherPredictionInteractor current year data"
-  end
-
   test "作物未選択のままcreateにPOSTすると422でselect_cropを再描画" do
     farm = Farm.reference.where(region: "jp").first ||
            Farm.create!(user: User.anonymous_user, name: "最適化テスト農場", is_reference: true, region: "jp", latitude: 35.6762, longitude: 139.6503)

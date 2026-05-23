@@ -14,7 +14,7 @@ module Domain
         def call(field_id)
           user = @user_lookup.find(@user_id)
           farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
-          undo_response = @gateway.destroy(field_id, farm_access_filter: farm_access_filter)
+          undo_response = @gateway.delete(field_id, farm_access_filter: farm_access_filter)
           dto = Domain::Field::Dtos::FieldDestroyOutput.new(undo: undo_response)
           @output_port.on_success(dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

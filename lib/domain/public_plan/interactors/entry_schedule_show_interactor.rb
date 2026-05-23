@@ -31,7 +31,7 @@ module Domain
             farm: farm,
             crop_gateway: @crop_gateway
           )
-          crop_stages = @crop_gateway.list_crop_stages_by_crop_id(crop.id)
+          crop_stages = @crop_gateway.list_by_crop_id(crop.id)
           crop_detail = Domain::PublicPlan::Mappers::EntryScheduleCropMapper.crop_detail(
             crop,
             result,

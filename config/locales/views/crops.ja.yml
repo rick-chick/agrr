@@ -276,6 +276,7 @@ ja:
         reference_only_admin: "参照害虫は管理者のみ作成できます。"
         reference_flag_admin_only: "参照フラグは管理者のみ変更できます。"
         not_found: "指定された害虫が見つかりません。"
+        no_permission: "権限がありません。"
       
       index:
         title: "害虫一覧"

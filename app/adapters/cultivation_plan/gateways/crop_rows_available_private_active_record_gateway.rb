@@ -3,24 +3,26 @@
 module Adapters
   module CultivationPlan
     module Gateways
-      class PlanDataAvailableCropRowsPublicActiveRecordGateway < Domain::CultivationPlan::Gateways::PlanDataAvailableCropRowsGateway
-        def initialize(crop_gateway:, logger:)
+      class CropRowsAvailablePrivateActiveRecordGateway < Domain::CultivationPlan::Gateways::PlanDataAvailableCropRowsGateway
+        def initialize(crop_gateway:, user_lookup:, logger:)
           @crop_gateway = crop_gateway
+          @user_lookup = user_lookup
           @logger = logger
         end
 
-        # 公開一覧は farm_region に依存（auth は呼び出し側で渡すのみ）。
+        # farm_region は private 一覧では不使用
         def rows(auth:, farm_region: nil)
-          crops = @crop_gateway.list_reference_crop_entities(region: farm_region)
+          user = @user_lookup.find(auth.user_id)
+          crops = @crop_gateway.list_user_owned_non_reference_crops_ordered_by_name(user)
           rows_from_entities(crops)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @logger.warn("[PlanDataAvailableCropRowsPublic] #{e.message}")
+          @logger.warn("[CropRowsAvailablePrivate] #{e.message}")
           []
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @logger.error("[PlanDataAvailableCropRowsPublic] record_invalid: #{e.message}")
+          @logger.error("[CropRowsAvailablePrivate] record_invalid: #{e.message}")
           []
         rescue StandardError => e
-          @logger.error("[PlanDataAvailableCropRowsPublic] #{e.message}")
+          @logger.error("[CropRowsAvailablePrivate] #{e.message}")
           []
         end
 

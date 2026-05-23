@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintGatewayTest < ActiveSupport::TestCase
+class Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGatewayTest < ActiveSupport::TestCase
   include PlanSaveMapperTestSupport
 
   test "copy_for_user_crops inserts blueprints for mapped user crop" do
@@ -57,7 +57,7 @@ class Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintGatewayTest 
     ctx = build_plan_save_context(user: user, session_data: {}, result: result)
     ctx.reference_crop_id_to_user_crop_id[ref_crop.id] = user_crop.id
 
-    ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintGateway.new(ctx).copy_for_user_crops
+    ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new(ctx).copy_for_user_crops
 
     bps = CropTaskScheduleBlueprint.where(crop_id: user_crop.id).order(:stage_order)
     assert_equal 1, bps.count
@@ -117,7 +117,7 @@ class Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintGatewayTest 
     ctx = build_plan_save_context(user: user, session_data: {}, result: result)
     ctx.reference_crop_id_to_user_crop_id[ref_crop.id] = user_crop.id
 
-    gw = ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintGateway
+    gw = ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway
     gw.new(ctx).copy_for_user_crops
     gw.new(ctx).copy_for_user_crops
 

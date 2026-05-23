@@ -60,7 +60,7 @@ module CompositionRoot
     end
 
     def sql_like_sanitize_port
-      @sql_like_sanitize_port ||= Adapters::Shared::Gateways::SqlLikeActiveRecordGateway.new
+      @sql_like_sanitize_port ||= Adapters::Shared::Ports::SqlLikeActiveRecordAdapter.new
     end
 
     def farm_gateway
@@ -310,7 +310,7 @@ module CompositionRoot
     end
 
     def backdoor_shell_stdout_capture_gateway
-      @backdoor_shell_stdout_capture_gateway ||= Adapters::Backdoor::Gateways::ShellStdoutCaptureGateway.new(logger: logger)
+      @backdoor_shell_stdout_capture_gateway ||= Adapters::Backdoor::Gateways::ShellStdoutCaptureCliGateway.new(logger: logger)
     end
 
     def session_cookie_user_gateway
@@ -318,7 +318,7 @@ module CompositionRoot
     end
 
     def masters_api_session_resolve_gateway
-      @masters_api_session_resolve_gateway ||= Adapters::Shared::Gateways::MastersApiSessionResolveGateway.new(
+      @masters_api_session_resolve_gateway ||= Adapters::Shared::Gateways::MastersApiSessionResolveActiveRecordGateway.new(
         session_cookie_resolver: session_cookie_user_gateway
       )
     end
@@ -346,7 +346,7 @@ module CompositionRoot
     end
 
     def prediction_gateway
-      @prediction_gateway ||= Adapters::WeatherData::Gateways::AgrrPredictionGatewayAdapter.new
+      @prediction_gateway ||= Adapters::Agrr::Gateways::PredictionDaemonGateway.new
     end
 
     def public_plan_save_gateway
@@ -581,7 +581,7 @@ module CompositionRoot
 
     # FieldCultivation 気象 AD gateway（user DTO 単位で current_user を渡す）
     def field_cultivation_climate_gateway_for(current_user_dto)
-      Adapters::FieldCultivation::Gateways::FieldCultivationClimateGateway.new(
+      Adapters::FieldCultivation::Gateways::FieldCultivationClimateActiveRecordGateway.new(
         current_user: current_user_dto,
         logger: logger,
         translator: translator,
@@ -633,8 +633,8 @@ module CompositionRoot
       )
     end
 
-    def entry_schedule_cursor_decode_gateway
-      @entry_schedule_cursor_decode_gateway ||= Adapters::PublicPlan::Gateways::EntryScheduleCursorDecodeGateway.new
+    def entry_schedule_cursor_decoder
+      @entry_schedule_cursor_decoder ||= Adapters::PublicPlan::EntryScheduleCursorDecoder.new
     end
 
     def entry_schedule_reference_farm_loader
@@ -681,7 +681,7 @@ module CompositionRoot
     end
 
     def task_schedule_item_mutation_gateway
-      @task_schedule_item_mutation_gateway ||= Adapters::CultivationPlan::Gateways::TaskScheduleItemActiveRecordMutationGateway.new(
+      @task_schedule_item_mutation_gateway ||= Adapters::CultivationPlan::Gateways::TaskScheduleItemMutationActiveRecordGateway.new(
         logger: logger
       )
     end

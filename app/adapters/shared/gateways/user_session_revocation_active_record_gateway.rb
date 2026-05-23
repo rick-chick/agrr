@@ -6,7 +6,7 @@ module Adapters
       class UserSessionRevocationActiveRecordGateway
         include Domain::Auth::Gateways::UserSessionRevocationGateway
 
-        def destroy_all_sessions_for_user!(user_id:)
+        def delete_all_sessions_for_user!(user_id:)
           ::Session.where(user_id: user_id).delete_all
         end
       end

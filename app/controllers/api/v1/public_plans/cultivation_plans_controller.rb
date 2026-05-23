@@ -12,7 +12,7 @@ module Api
         private
 
         def cultivation_plan_rest_plan_data_available_crop_rows_gateway
-          Adapters::CultivationPlan::Gateways::PlanDataAvailableCropRowsPublicActiveRecordGateway.new(
+          Adapters::CultivationPlan::Gateways::CropRowsAvailablePublicActiveRecordGateway.new(
             crop_gateway: CompositionRoot.crop_gateway,
             logger: cultivation_plan_rest_logger
           )

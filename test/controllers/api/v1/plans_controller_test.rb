@@ -207,13 +207,13 @@ module Api
         plan = create(:cultivation_plan, :annual_planning, farm: @farm, user: @user, plan_type: :private)
 
         # Stub the gateway destroy to simulate failure (interactor catches AssociationInUse)
-        CompositionRoot.cultivation_plan_gateway.stubs(:destroy).raises(Domain::Shared::Exceptions::AssociationInUse)
+        CompositionRoot.cultivation_plan_gateway.stubs(:delete).raises(Domain::Shared::Exceptions::AssociationInUse)
         begin
           assert_no_difference "::CultivationPlan.count" do
             delete "/api/v1/plans/#{plan.id}", headers: { "Accept" => "application/json" }
           end
         ensure
-          CompositionRoot.cultivation_plan_gateway.unstub(:destroy)
+          CompositionRoot.cultivation_plan_gateway.unstub(:delete)
         end
 
         assert_response :unprocessable_entity

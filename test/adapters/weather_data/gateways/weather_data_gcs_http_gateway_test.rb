@@ -158,8 +158,8 @@ class WeatherDataGcsHttpGatewayTest < ActiveSupport::TestCase
     assert_equal @date2, @gateway.latest_date(weather_location_id: @weather_location.id)
   end
 
-  test "find_weather_location_by_coordinates uses WeatherLocation" do
-    loc = @gateway.find_weather_location_by_coordinates(
+  test "find_by_coordinates uses WeatherLocation" do
+    loc = @gateway.find_by_coordinates(
       latitude: @weather_location.latitude,
       longitude: @weather_location.longitude
     )

@@ -73,7 +73,7 @@ module Api
         end
 
         def decode_entry_cursor(raw)
-          CompositionRoot.entry_schedule_cursor_decode_gateway.decode(raw)
+          CompositionRoot.entry_schedule_cursor_decoder.decode(raw)
         end
 
         def apply_entry_locale

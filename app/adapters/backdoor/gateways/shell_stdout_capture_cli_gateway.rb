@@ -4,7 +4,7 @@ module Adapters
   module Backdoor
     module Gateways
       # バックドアの死活監視などでバッククォート実行する。SystemCallError は境界で潰し nil を返す。
-      class ShellStdoutCaptureGateway
+      class ShellStdoutCaptureCliGateway
         def initialize(logger:)
           @logger = logger
         end

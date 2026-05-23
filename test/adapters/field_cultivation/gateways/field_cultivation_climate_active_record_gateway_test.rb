@@ -5,7 +5,7 @@ require "test_helper"
 module Adapters
   module FieldCultivation
     module Gateways
-      class FieldCultivationClimateGatewayTest < ActiveSupport::TestCase
+      class FieldCultivationClimateActiveRecordGatewayTest < ActiveSupport::TestCase
         def setup
           @user = create(:user)
           weather_location = create(:weather_location)
@@ -59,7 +59,7 @@ module Adapters
             )
             .returns(progress_result)
 
-          gateway = FieldCultivationClimateGateway.new(
+          gateway = FieldCultivationClimateActiveRecordGateway.new(
             current_user: @user,
             logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
@@ -72,7 +72,7 @@ module Adapters
             prediction_gateway: CompositionRoot.prediction_gateway
           )
 
-          dto = gateway.find_climate_data_by_field_cultivation(field_cultivation_id: @field_cultivation.id)
+          dto = gateway.find_climate_data(field_cultivation_id: @field_cultivation.id)
 
           assert_equal @field_cultivation.id, dto.field_cultivation[:id]
           assert_equal @field_cultivation.field_display_name, dto.field_cultivation[:field_name]
@@ -117,7 +117,7 @@ module Adapters
             )
             .returns(progress_result)
 
-          gateway = FieldCultivationClimateGateway.new(
+          gateway = FieldCultivationClimateActiveRecordGateway.new(
             current_user: @user,
             logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
@@ -130,7 +130,7 @@ module Adapters
             prediction_gateway: CompositionRoot.prediction_gateway
           )
 
-          dto = gateway.find_climate_data_by_field_cultivation(field_cultivation_id: @field_cultivation.id)
+          dto = gateway.find_climate_data(field_cultivation_id: @field_cultivation.id)
 
           assert_equal false, dto.debug_info[:using_agrr_progress]
           assert_equal 0, dto.debug_info[:progress_records_count]
@@ -140,7 +140,7 @@ module Adapters
         end
 
         test "raises record not found when field cultivation missing" do
-          gateway = FieldCultivationClimateGateway.new(
+          gateway = FieldCultivationClimateActiveRecordGateway.new(
             current_user: @user,
             logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
@@ -153,12 +153,12 @@ module Adapters
           )
 
           assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-            gateway.find_climate_data_by_field_cultivation(field_cultivation_id: 999_999)
+            gateway.find_climate_data(field_cultivation_id: 999_999)
           end
         end
 
         test "coerce_to_optional_date normalizes API query strings to Date" do
-          gateway = FieldCultivationClimateGateway.new(
+          gateway = FieldCultivationClimateActiveRecordGateway.new(
             current_user: @user,
             logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
             translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,

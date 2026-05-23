@@ -50,7 +50,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
         end
 
-        def destroy(pesticide_id)
+        def delete(pesticide_id)
           pesticide = ::Pesticide.find(pesticide_id)
           # DeletionUndo scheduling is handled in the interactor layer
           pesticide.destroy!
@@ -163,12 +163,22 @@ module Adapters
           Forms::PesticideMasterForm.from_snapshot(snapshot)
         end
 
+        # PesticideAssociationAccess#accessible_crops_scope のロジックをアダプター側へ移管（R1 違反解消）
         def accessible_crops_scope_for_pesticide_master_form(user:)
-          Domain::Shared::PesticideAssociationAccess.accessible_crops_scope(user)
+          if user.admin?
+            ::Crop.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Crop.where(user_id: user.id, is_reference: false)
+          end.order(:name)
         end
 
+        # PesticideAssociationAccess#accessible_pests_scope のロジックをアダプター側へ移管（R1 違反解消）
         def accessible_pests_scope_for_pesticide_master_form(user:)
-          Domain::Shared::PesticideAssociationAccess.accessible_pests_scope(user)
+          if user.admin?
+            ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Pest.where(user_id: user.id, is_reference: false)
+          end.order(:name)
         end
 
         def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:, access_filter:)

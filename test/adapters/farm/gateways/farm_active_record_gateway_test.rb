@@ -88,11 +88,11 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_equal farm.longitude, entity.longitude  # unchanged
   end
 
-  test "should destroy farm" do
+  test "should delete farm" do
     farm = create(:farm, name: "削除農場", user: @user)
 
     assert_difference("::Farm.count", -1) do
-      @gateway.destroy(farm.id, toast_message: "test undo toast")
+      @gateway.delete(farm.id, toast_message: "test undo toast")
     end
   end
 

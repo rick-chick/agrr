@@ -2,24 +2,8 @@
 
 module Domain
   module Shared
-    # app/policies/pest_crop_association_policy.rb と同一ルール（アダプターは本クラスのみ参照する）。
+    # 認可ルール（ORM 非依存）。スコープ構築は Adapters::Pest::Persistence::PestCropAssociationScopes
     class PestCropAssociationAccess
-      def self.accessible_crops_scope(pest, user: nil)
-        scope =
-          if pest.is_reference?
-            ::Crop.where(is_reference: true)
-          else
-            owner_id = pest.user_id || user&.id
-            ::Crop.where(is_reference: false, user_id: owner_id)
-          end
-
-        if pest.region.present?
-          scope = scope.where(region: pest.region)
-        end
-
-        scope.order(:name)
-      end
-
       def self.crop_accessible_for_pest?(crop, pest, user: nil)
         if pest.region.present?
           return false if crop.region != pest.region
@@ -29,8 +13,13 @@ module Domain
           return crop.is_reference?
         end
 
+        # ユーザー害虫: 参照作物または同じ所有者の非参照作物に関連付け可能
+        if crop.is_reference?
+          return true
+        end
+
         owner_id = pest.user_id || user&.id
-        crop.user_id == owner_id && !crop.is_reference?
+        crop.user_id == owner_id
       end
     end
   end

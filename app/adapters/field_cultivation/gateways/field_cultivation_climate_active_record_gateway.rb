@@ -4,7 +4,7 @@
 module Adapters
   module FieldCultivation
     module Gateways
-      class FieldCultivationClimateGateway < Domain::FieldCultivation::Gateways::FieldCultivationGateway
+      class FieldCultivationClimateActiveRecordGateway < Domain::FieldCultivation::Gateways::FieldCultivationGateway
         include ::Adapters::FieldCultivation::MockProgressRecords
         def initialize(current_user:, logger:, translator:, use_mock_progress: nil,
                        progress_gateway_factory:,
@@ -22,7 +22,7 @@ module Adapters
           @prediction_gateway = prediction_gateway
         end
 
-        def find_climate_data_by_field_cultivation(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
+        def find_climate_data(field_cultivation_id:, display_start_date: nil, display_end_date: nil)
           field_cultivation = authorized_field_cultivation(field_cultivation_id)
           plan = field_cultivation.cultivation_plan
           farm = plan.farm
@@ -91,7 +91,7 @@ module Adapters
 
           unless Domain::Shared::ValidationHelpers.present?(plan.predicted_weather_data)
             @cultivation_plan_gateway.update_predicted_weather_data(plan.id, weather_payload)
-            @logger.info "💾 [FieldCultivationClimateGateway] Saved prediction data to CultivationPlan##{plan.id}"
+            @logger.info "💾 [FieldCultivationClimateActiveRecordGateway] Saved prediction data to CultivationPlan##{plan.id}"
           end
 
           weather_data_records = extract_actual_weather_data(weather_payload, field_cultivation.start_date, field_cultivation.completion_date)
@@ -123,7 +123,7 @@ module Adapters
           )
         end
 
-        def find_api_summary_by_field_cultivation(field_cultivation_id:)
+        def find_api_summary(field_cultivation_id:)
           fc = authorized_field_cultivation(field_cultivation_id)
           Domain::FieldCultivation::Dtos::FieldCultivationApiSummary.new(
             id: fc.id,
@@ -245,7 +245,7 @@ module Adapters
 
         def fetch_crop(field_cultivation, plan_type_public:)
           plan_crop = field_cultivation.cultivation_plan_crop
-          @logger.debug("[FieldCultivationClimateGateway] plan_crop.crop_id=#{plan_crop&.crop_id}, plan_type_public=#{plan_type_public}, current_user_id=#{@current_user&.id}")
+          @logger.debug("[FieldCultivationClimateActiveRecordGateway] plan_crop.crop_id=#{plan_crop&.crop_id}, plan_type_public=#{plan_type_public}, current_user_id=#{@current_user&.id}")
           if plan_type_public
             ::Crop.find_by(id: plan_crop.crop_id)
           else
@@ -333,10 +333,10 @@ module Adapters
 
         def fetch_weather_payload(plan, farm, display_start_date: nil, display_end_date: nil, cultivation_period: nil)
           if plan.predicted_weather_data.present?
-            @logger.info "✅ [FieldCultivationClimateGateway] Using saved prediction for CultivationPlan##{plan.id}, merging with observed data"
+            @logger.info "✅ [FieldCultivationClimateActiveRecordGateway] Using saved prediction for CultivationPlan##{plan.id}, merging with observed data"
             merge_with_observed_data(plan.predicted_weather_data, farm.weather_location, display_start_date, display_end_date, cultivation_period)
           else
-            @logger.warn "⚠️ [FieldCultivationClimateGateway] No cached prediction for CultivationPlan##{plan.id}, generating"
+            @logger.warn "⚠️ [FieldCultivationClimateActiveRecordGateway] No cached prediction for CultivationPlan##{plan.id}, generating"
             service = @weather_prediction_service_factory.call(farm.weather_location, farm)
             prediction_info = service.predict_for_cultivation_plan(plan_weather: cultivation_plan_weather_snapshot(plan))
             prediction_info[:data]
@@ -346,7 +346,7 @@ module Adapters
         def ensure_weather_payload!(plan, weather_payload)
           return if weather_payload && weather_payload["data"]
 
-          @logger.error "❌ [FieldCultivationClimateGateway] Invalid weather payload for CultivationPlan##{plan.id}"
+          @logger.error "❌ [FieldCultivationClimateActiveRecordGateway] Invalid weather payload for CultivationPlan##{plan.id}"
           raise Domain::FieldCultivation::Errors::WeatherPayloadInvalidError, @translator.t("controllers.field_cultivations.errors.weather_format_invalid")
         end
 
@@ -371,7 +371,7 @@ module Adapters
 
           # cultivation_period 由来が不正な場合はキャッシュのみ返す
           if observed_start.nil? || observed_end.nil?
-            @logger.warn "🔄 [FieldCultivationClimateGateway] Skip observed merge: invalid observed range start=#{observed_start.inspect} end=#{observed_end.inspect}"
+            @logger.warn "🔄 [FieldCultivationClimateActiveRecordGateway] Skip observed merge: invalid observed range start=#{observed_start.inspect} end=#{observed_end.inspect}"
             return cached_weather_payload
           end
 
@@ -379,7 +379,7 @@ module Adapters
           actual_end = [ observed_end, Date.current - 1.day ].min
 
           if observed_start > actual_end
-            @logger.info "🔄 [FieldCultivationClimateGateway] No observed data needed for period #{observed_start} to #{observed_end}"
+            @logger.info "🔄 [FieldCultivationClimateActiveRecordGateway] No observed data needed for period #{observed_start} to #{observed_end}"
             return cached_weather_payload
           end
 
@@ -428,7 +428,7 @@ module Adapters
           # 時系列順にソート
           sorted_data = merged_data.values.sort_by { |datum| Date.parse(datum["time"]) }
 
-          @logger.info "🔄 [FieldCultivationClimateGateway] Merged #{observed_data.length} observed data points (#{observed_start} to #{actual_end}) with cached prediction data"
+          @logger.info "🔄 [FieldCultivationClimateActiveRecordGateway] Merged #{observed_data.length} observed data points (#{observed_start} to #{actual_end}) with cached prediction data"
 
           cached_weather_payload.merge("data" => sorted_data)
         end
@@ -445,7 +445,7 @@ module Adapters
         end
 
         def mock_progress_result(field_cultivation)
-          @logger.info "🧪 [FieldCultivationClimateGateway] Using mock progress for field_cultivation_id=#{field_cultivation.id}"
+          @logger.info "🧪 [FieldCultivationClimateActiveRecordGateway] Using mock progress for field_cultivation_id=#{field_cultivation.id}"
           {
             "progress_records" => generate_mock_progress_records(
               field_cultivation.start_date,

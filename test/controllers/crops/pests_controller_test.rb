@@ -170,7 +170,7 @@ module Crops
     # ========== 既存害虫の関連付けテスト ==========
 
     test "should associate existing pest with crop" do
-      pest = create(:pest, is_reference: true)
+      pest = create(:pest, :user_owned, user: @user)
 
       assert_difference("CropPest.count", 1) do
         post crop_pests_path(@crop), params: { pest_id: pest.id }

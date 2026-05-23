@@ -3,7 +3,7 @@
 require "test_helper"
 
 class ApplicationFormTest < ActiveSupport::TestCase
-  class SampleForm < ApplicationForm
+  class SampleForm < Adapters::Shared::Forms::ApplicationForm
     attribute :name, :string
     attribute :amount, :integer
   end

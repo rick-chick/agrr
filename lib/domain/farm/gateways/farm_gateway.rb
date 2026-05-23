@@ -25,7 +25,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def destroy(farm_id, toast_message:)
+        def delete(farm_id, toast_message:)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 

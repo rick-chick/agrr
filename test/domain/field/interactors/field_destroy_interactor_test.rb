@@ -11,7 +11,7 @@ class FieldDestroyInteractorTest < DomainLibTestCase
     user_lookup.expects(:find).with(20).returns(user)
 
     gateway = mock
-    gateway.expects(:destroy).with(7, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(undo_payload)
+    gateway.expects(:delete).with(7, farm_access_filter: instance_of(Domain::Shared::ReferenceRecordAccessFilter)).returns(undo_payload)
 
     output = mock
     output.expects(:on_success).with do |arg|
@@ -35,7 +35,7 @@ class FieldDestroyInteractorTest < DomainLibTestCase
     user_lookup.expects(:find).with(20).returns(user)
 
     gateway = mock
-    gateway.expects(:destroy).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
+    gateway.expects(:delete).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
 
     output = mock
     output.expects(:on_failure).with do |err|
@@ -60,7 +60,7 @@ class FieldDestroyInteractorTest < DomainLibTestCase
     user_lookup.expects(:find).with(20).returns(user)
 
     gateway = mock
-    gateway.expects(:destroy).raises(err)
+    gateway.expects(:delete).raises(err)
 
     output = mock
     output.expects(:on_failure).with(err)

@@ -1169,7 +1169,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-controller="crop-selector"]' do
       assert_select %(article[data-role="crop-card"][data-crop-id="#{crop1.id}"]), 1
       assert_select %(article[data-role="crop-card"][data-crop-id="#{crop2.id}"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+      # ユーザー害虫は参照作物とも関連付け可能
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 1
     end
   end
 
@@ -1184,7 +1185,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_select '[data-controller="crop-selector"]' do
       assert_select %(article[data-role="crop-card"][data-crop-id="#{my_crop.id}"]), 1
       assert_select %(article[data-role="crop-card"][data-crop-id="#{other_crop.id}"]), 0
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+      # ユーザー害虫は参照作物とも関連付け可能
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 1
     end
   end
 
@@ -1292,12 +1294,12 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_not pest.crops.include?(other_crop)
   end
 
-  test "ユーザー害虫は参照作物と関連付けできない" do
+  test "ユーザー害虫は参照作物とも関連付け可能" do
     reference_crop = create(:crop, :reference)
     my_crop = create(:crop, user: @user)
 
     assert_difference("Pest.count", 1) do
-      assert_difference("CropPest.count", 1) do
+      assert_difference("CropPest.count", 2) do
         post pests_path, params: {
           pest: { name: "テスト害虫", is_reference: false },
           crop_ids: [ reference_crop.id, my_crop.id ]
@@ -1306,9 +1308,9 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     end
 
     pest = Pest.last
-    assert_equal 1, pest.crops.count
+    assert_equal 2, pest.crops.count
     assert pest.crops.include?(my_crop)
-    assert_not pest.crops.include?(reference_crop)
+    assert pest.crops.include?(reference_crop)
   end
 
   test "参照害虫は参照作物のみ関連付けられる" do
@@ -1359,7 +1361,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".related-crop-card", count: 0
   end
 
-  test "ユーザー害虫の編集フォームではユーザー作物カードのみ表示され選択状態が保持される" do
+  test "ユーザー害虫の編集フォームではユーザー作物と参照作物が表示され選択状態が保持される" do
     crop1 = create(:crop, user: @user)
     crop2 = create(:crop, user: @user)
     other_user_crop = create(:crop, user: create(:user))
@@ -1373,7 +1375,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
       assert_select %(article[data-role="crop-card"][data-crop-id="#{crop1.id}"][data-selected="true"]), 1
       assert_select %(article[data-role="crop-card"][data-crop-id="#{crop2.id}"][data-selected="false"]), 1
       assert_select %(article[data-role="crop-card"][data-crop-id="#{other_user_crop.id}"]), 0
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+      # ユーザー害虫は参照作物とも関連付け可能
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 1
     end
     assert_select 'div[data-crop-selector-target="inputContainer"] input[name="crop_ids[]"][value=?]', crop1.id.to_s
   end
@@ -1559,7 +1562,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, pest.crops.count
   end
 
-  test "admin should initially see only own crops in new form" do
+  test "admin should initially see own crops and reference crops in new form" do
     admin_user = create(:user, admin: true)
     sign_in_as admin_user
 
@@ -1572,7 +1575,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '[data-controller="crop-selector"]' do
       assert_select %(article[data-role="crop-card"][data-crop-id="#{admin_crop.id}"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
+      # ユーザー害虫は参照作物とも関連付け可能
+      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 1
       assert_select %(article[data-role="crop-card"][data-crop-id="#{other_crop.id}"]), 0
     end
   end

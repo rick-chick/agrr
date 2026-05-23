@@ -10,7 +10,7 @@ module Domain
         end
 
         def call(input_dto)
-          @gateway.destroy_sunshine_requirement(input_dto.crop_stage_id)
+          @gateway.delete_sunshine_requirement(input_dto.crop_stage_id)
           @output_port.on_destroy_success
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_not_found

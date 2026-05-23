@@ -10,7 +10,7 @@ module Domain
         end
 
         def call(field_cultivation_id:)
-          dto = @gateway.find_api_summary_by_field_cultivation(field_cultivation_id: field_cultivation_id)
+          dto = @gateway.find_api_summary(field_cultivation_id: field_cultivation_id)
           @output_port.on_success(dto)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))

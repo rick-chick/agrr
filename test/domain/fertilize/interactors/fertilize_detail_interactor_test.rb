@@ -6,6 +6,16 @@ class FertilizeDetailInteractorTest < DomainLibTestCase
   test "call passes fertilize detail dto to output port" do
     user = mock
     entity = mock
+    entity.stubs(:id).returns(1)
+    entity.stubs(:name).returns("Test")
+    entity.stubs(:n).returns(nil)
+    entity.stubs(:p).returns(nil)
+    entity.stubs(:k).returns(nil)
+    entity.stubs(:description).returns(nil)
+    entity.stubs(:package_size).returns(nil)
+    entity.stubs(:is_reference).returns(false)
+    entity.stubs(:created_at).returns(nil)
+    entity.stubs(:updated_at).returns(nil)
     translator = mock
 
     user_lookup = mock
@@ -17,7 +27,8 @@ class FertilizeDetailInteractorTest < DomainLibTestCase
     output = mock
     output.expects(:on_success).with do |dto|
       assert_instance_of Domain::Fertilize::Dtos::FertilizeDetailOutput, dto
-      assert_same entity, dto.fertilize
+      assert_instance_of Domain::Fertilize::Dtos::FertilizeDisplay, dto.display_dto
+      assert_equal 1, dto.display_dto.id
       true
     end
 

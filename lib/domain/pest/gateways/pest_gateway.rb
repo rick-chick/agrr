@@ -62,7 +62,7 @@ module Domain
 
         # 既存の Pest を crop に紐付ける（id ベース）。crop は crop_access_filter で編集可否を検証する。
         # @return [Symbol] :linked / :already_linked / :missing
-        def link_pest_to_crop(crop_id:, pest_id:, crop_access_filter:)
+        def link_pest_to_crop(crop_id:, pest_id:, user:, crop_access_filter:)
           raise NotImplementedError, "Subclasses must implement link_pest_to_crop"
         end
 
@@ -125,8 +125,8 @@ module Domain
 
         # AI API: ユーザー害虫を名前で検索（なければ nil）。
         # @return [Domain::Pest::Entities::PestEntity, nil]
-        def find_user_owned_non_reference_pest_by_name(user_id:, name:)
-          raise NotImplementedError, "Subclasses must implement find_user_owned_non_reference_pest_by_name"
+        def find_by_name(user_id:, name:)
+          raise NotImplementedError, "Subclasses must implement find_by_name"
         end
 
         # 作物に紐づく害虫 ID の一覧（新規フォームの除外判定用）。

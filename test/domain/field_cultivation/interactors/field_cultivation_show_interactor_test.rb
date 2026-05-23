@@ -23,7 +23,7 @@ module Domain
 
           call_args = nil
           gateway = Object.new
-          gateway.define_singleton_method(:find_api_summary_by_field_cultivation) do |field_cultivation_id:|
+          gateway.define_singleton_method(:find_api_summary) do |field_cultivation_id:|
             call_args = field_cultivation_id
             dto
           end
@@ -43,7 +43,7 @@ module Domain
         test "calls on_failure with Error when gateway raises RecordNotFound" do
           fc_id = 99
           gateway = Object.new
-          gateway.define_singleton_method(:find_api_summary_by_field_cultivation) do |_kwargs|
+          gateway.define_singleton_method(:find_api_summary) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 

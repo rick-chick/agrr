@@ -35,7 +35,7 @@ module Domain
           }
 
           crop_gateway = Minitest::Mock.new
-          crop_gateway.expect(:list_crop_stages_by_crop_id, [], [ crop.id ])
+          crop_gateway.expect(:list_by_crop_id, [], [ crop.id ])
 
           translator = Object.new
           def translator.t(_key, **_options)

@@ -19,7 +19,7 @@
 - `bin/generate_crop_task_schedule_blueprints.rb`
   - AGRR CLI (`schedule`, `fertilize plan`) を通じて参照作物のテンプレート JSON を取得し、データマイグレーションを出力するスクリプト。
   - CLI 呼び出し時には `AgriculturalTask.to_agrr_format_array` を使用し、`task_id` が既存 ID になるよう保証する。
-- ブループリント属性の組み立て（CLI 応答 → DB 属性）は `Adapters::Crop::TaskScheduleBlueprintGenerator`（`lib/adapters/crop/task_schedule_blueprint_generator.rb`）。
+- ブループリント属性の組み立て（CLI 応答 → DB 属性）は `Adapters::Crop::TaskScheduleBlueprintGenerator`（`app/adapters/crop/task_schedule_blueprint_generator.rb`）。
 
 ## 生成フロー
 

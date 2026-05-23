@@ -25,8 +25,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_agricultural_task_loaded_bundle!"
         end
 
-        def find_model(id)
-          raise NotImplementedError, "Subclasses must implement find_model"
+        def find_by_id(id)
+          raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
         def create_for_user(user, attrs)

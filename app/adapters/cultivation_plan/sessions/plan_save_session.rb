@@ -76,14 +76,14 @@ module Adapters
               return @result
             end
 
-            plan_gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyGateway.new(ctx, logger: @logger)
+            plan_gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(ctx, logger: @logger)
             new_plan = plan_gateway.copy_cultivation_plan(farm, crops)
 
             plan_gateway.establish_master_data_relationships(
               farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules
             )
 
-            ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintGateway.new(ctx).copy_for_user_crops
+            ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new(ctx).copy_for_user_crops
             field_cultivation_map = plan_gateway.copy_plan_relations(new_plan)
             plan_gateway.copy_task_schedules(new_plan, field_cultivation_map)
 

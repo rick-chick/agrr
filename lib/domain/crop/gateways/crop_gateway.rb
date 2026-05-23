@@ -17,8 +17,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement delete_crop_stage"
         end
 
-        def list_crop_stages_by_crop_id(crop_id)
-          raise NotImplementedError, "Subclasses must implement list_crop_stages_by_crop_id"
+        def list_by_crop_id(crop_id)
+          raise NotImplementedError, "Subclasses must implement list_by_crop_id"
         end
 
         def find_crop_stage_by_id(crop_stage_id)
@@ -26,8 +26,8 @@ module Domain
         end
 
         # TemperatureRequirement methods
-        def find_temperature_requirement(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_temperature_requirement"
+        def find_temperature_requirement_by_crop_stage_id(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement find_temperature_requirement_by_crop_stage_id"
         end
 
         def create_temperature_requirement(crop_stage_id, requirement_dto)
@@ -38,13 +38,13 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_temperature_requirement"
         end
 
-        def destroy_temperature_requirement(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement destroy_temperature_requirement"
+        def delete_temperature_requirement(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement delete_temperature_requirement"
         end
 
         # ThermalRequirement methods
-        def find_thermal_requirement(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_thermal_requirement"
+        def find_thermal_requirement_by_crop_stage_id(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement find_thermal_requirement_by_crop_stage_id"
         end
 
         def create_thermal_requirement(crop_stage_id, requirement_dto)
@@ -55,13 +55,13 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_thermal_requirement"
         end
 
-        def destroy_thermal_requirement(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement destroy_thermal_requirement"
+        def delete_thermal_requirement(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement delete_thermal_requirement"
         end
 
         # SunshineRequirement methods
-        def find_sunshine_requirement(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_sunshine_requirement"
+        def find_sunshine_requirement_by_crop_stage_id(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement find_sunshine_requirement_by_crop_stage_id"
         end
 
         def create_sunshine_requirement(crop_stage_id, requirement_dto)
@@ -72,13 +72,13 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_sunshine_requirement"
         end
 
-        def destroy_sunshine_requirement(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement destroy_sunshine_requirement"
+        def delete_sunshine_requirement(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement delete_sunshine_requirement"
         end
 
         # NutrientRequirement methods
-        def find_nutrient_requirement(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_nutrient_requirement"
+        def find_nutrient_requirement_by_crop_stage_id(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement find_nutrient_requirement_by_crop_stage_id"
         end
 
         def create_nutrient_requirement(crop_stage_id, requirement_dto)
@@ -89,8 +89,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_nutrient_requirement"
         end
 
-        def destroy_nutrient_requirement(crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement destroy_nutrient_requirement"
+        def delete_nutrient_requirement(crop_stage_id)
+          raise NotImplementedError, "Subclasses must implement delete_nutrient_requirement"
         end
 
         # Policy 連携（永続化は Adapter）。一覧は Entity 配列のみ公開
@@ -199,8 +199,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_masters_crop_task_template_for_api"
         end
 
-        def destroy_masters_crop_task_template_for_api!(user:, crop_id:, template_id:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement destroy_masters_crop_task_template_for_api!"
+        def delete_masters_crop_task_template_for_api!(user:, crop_id:, template_id:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement delete_masters_crop_task_template_for_api!"
         end
 
         # 認可済み作物に属する CropTaskTemplate を取得。
@@ -233,8 +233,8 @@ module Domain
         end
 
         # @return [Domain::Crop::Entities::CropEntity]
-        def find_model(id)
-          raise NotImplementedError, "Subclasses must implement find_model"
+        def find_by_id(id)
+          raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
         def create_for_user(user, attrs)

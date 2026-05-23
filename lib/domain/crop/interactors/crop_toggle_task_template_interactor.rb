@@ -35,7 +35,7 @@ module Domain
           end
 
           begin
-            @agricultural_task_gateway.find_model(@agricultural_task_id)
+            @agricultural_task_gateway.find_by_id(@agricultural_task_id)
           rescue Domain::Shared::Exceptions::RecordNotFound
             @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("crops.flash.task_not_found")))
             return

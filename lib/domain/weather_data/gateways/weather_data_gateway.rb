@@ -37,8 +37,8 @@ module Domain
         end
 
         # 新規追加: WeatherLocation 検索
-        def find_weather_location_by_coordinates(latitude:, longitude:)
-          raise NotImplementedError, "Subclasses must implement find_weather_location_by_coordinates"
+        def find_by_coordinates(latitude:, longitude:)
+          raise NotImplementedError, "Subclasses must implement find_by_coordinates"
         end
 
         # 新規追加: WeatherLocation 検索/作成

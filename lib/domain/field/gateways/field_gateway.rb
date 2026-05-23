@@ -25,7 +25,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def destroy(field_id, farm_access_filter:)
+        def delete(field_id, farm_access_filter:)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 

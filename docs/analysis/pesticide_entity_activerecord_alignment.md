@@ -44,7 +44,7 @@ belongs_to :user, optional: true
 # + Entityの属性すべて
 ```
 
-**CropMemoryGateway** (`lib/adapters/crop/gateways/crop_memory_gateway.rb`):
+**CropMemoryGateway** (`app/adapters/crop/gateways/crop_memory_gateway.rb`):
 ```ruby
 def entity_from_record(record)
   Domain::Crop::Entities::CropEntity.new(
@@ -69,7 +69,7 @@ attr_reader :id, :name, :n, :p, :k, :description,
 # Entityの属性がそのままテーブルに存在
 ```
 
-**FertilizeMemoryGateway** (`lib/adapters/fertilize/gateways/fertilize_memory_gateway.rb`):
+**FertilizeMemoryGateway** (`app/adapters/fertilize/gateways/fertilize_memory_gateway.rb`):
 ```ruby
 def entity_from_record(record)
   Domain::Fertilize::Entities::FertilizeEntity.new(
@@ -141,7 +141,7 @@ end
 ### 2. Gatewayの作成（将来的に必要）
 
 ```ruby
-# lib/adapters/pesticide/gateways/pesticide_memory_gateway.rb
+# app/adapters/pesticide/gateways/pesticide_memory_gateway.rb
 def entity_from_record(record)
   Domain::Pesticide::Entities::PesticideEntity.new(
     id: record.id,

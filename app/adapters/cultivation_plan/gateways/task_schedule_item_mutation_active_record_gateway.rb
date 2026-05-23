@@ -4,7 +4,7 @@ module Adapters
   module CultivationPlan
     module Gateways
       # 作業予定 API の永続化（旧 TaskScheduleItemsController 内ロジック）
-      class TaskScheduleItemActiveRecordMutationGateway < Domain::CultivationPlan::Gateways::TaskScheduleItemMutationGateway
+      class TaskScheduleItemMutationActiveRecordGateway < Domain::CultivationPlan::Gateways::TaskScheduleItemMutationGateway
         AMOUNT_NUMERATOR_UNITS = {
           "ml" => { base: :liter, factor: BigDecimal("0.001") },
           "l" => { base: :liter, factor: BigDecimal("1") },
@@ -280,7 +280,7 @@ module Adapters
           )
           attributes
         rescue UnitConversionError => e
-          @logger.warn("[TaskScheduleItemActiveRecordMutationGateway] Amount unit conversion skipped: #{e.message}")
+          @logger.warn("[TaskScheduleItemMutationActiveRecordGateway] Amount unit conversion skipped: #{e.message}")
           attributes
         end
 

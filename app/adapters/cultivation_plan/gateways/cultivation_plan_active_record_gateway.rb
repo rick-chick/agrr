@@ -194,7 +194,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
         end
 
-        def destroy(plan_id, user, toast_message:)
+        def delete(plan_id, user, toast_message:)
           plan_model = find_private_owned_cultivation_plan_model!(user, plan_id)
 
           @deletion_undo_gateway.schedule(
@@ -221,7 +221,7 @@ module Adapters
         end
 
         def copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:)
-          PlanCopyGateway.copy_private_plan_for_year(
+          PlanCopyActiveRecordGateway.copy_private_plan_for_year(
             source_cultivation_plan_id: source_cultivation_plan_id,
             new_year: new_year,
             user_id: user_id,
@@ -289,7 +289,7 @@ module Adapters
           field.id
         end
 
-        def find_plan_crop_id_by_crop_id!(plan_id, crop_id)
+        def find_crop_id!(plan_id, crop_id)
           plan = ::CultivationPlan.find(plan_id)
           cpc = plan.cultivation_plan_crops.find_by(crop_id: crop_id)
           return cpc.id if cpc

@@ -72,7 +72,7 @@ module Adapters
         end
 
         # @return [Domain::WeatherData::Dtos::WeatherLocation, nil]
-        def find_weather_location_by_coordinates(latitude:, longitude:)
+        def find_by_coordinates(latitude:, longitude:)
           loc = ::WeatherLocation.find_by(latitude: latitude, longitude: longitude)
           Adapters::WeatherData::Mappers::WeatherLocationMapper.weather_location_dto_from_record(loc)
         end

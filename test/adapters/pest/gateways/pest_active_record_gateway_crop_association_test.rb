@@ -83,6 +83,7 @@ module Adapters
           status = @gw.link_pest_to_crop(
             crop_id: @other_user_crop.id,
             pest_id: @pest.id,
+            user: @user,
             crop_access_filter: filter
           )
 
@@ -91,15 +92,29 @@ module Adapters
 
         test "link_pest_to_crop links when crop is authorized" do
           filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
-          ref_pest = create(:pest, is_reference: true, user_id: nil)
+          # ユーザー害虫を自分の作物に紐づけ
           status = @gw.link_pest_to_crop(
             crop_id: @crop1.id,
-            pest_id: ref_pest.id,
+            pest_id: @pest.id,
+            user: @user,
             crop_access_filter: filter
           )
 
           assert_equal :linked, status
-          assert_includes @crop1.reload.pests, ref_pest
+          assert_includes @crop1.reload.pests, @pest
+        end
+
+        test "link_pest_to_crop returns forbidden when reference pest links to user crop" do
+          filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
+          ref_pest = create(:pest, is_reference: true, user_id: nil)
+          status = @gw.link_pest_to_crop(
+            crop_id: @crop1.id,
+            pest_id: ref_pest.id,
+            user: @user,
+            crop_access_filter: filter
+          )
+
+          assert_equal :forbidden, status
         end
       end
     end

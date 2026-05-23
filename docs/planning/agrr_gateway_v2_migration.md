@@ -6,9 +6,9 @@
 
 | ファイル | 役割 |
 |---------|------|
-| `app/gateways/agrr/base_gateway.rb` | **v1**。`Open3` 直叩きの `execute_command`。例外: `ExecutionError`, `ParseError`, `NoAllocationCandidatesError` |
-| `app/gateways/agrr/base_gateway_v2.rb` | **v2**。`AgrrService`（デーモン／CLI）経由のコマンドディスパッチ。同名の例外クラスを再定義 |
-| `app/gateways/agrr/*.rb`（9 本） | いずれも **`BaseGatewayV2` を継承**（`adjust`, `allocation`, `candidates`, `fertilize`, `optimization`, `prediction`, `progress`, `schedule`, `weather`） |
+| `app/adapters/agrr/gateways/base_gateway.rb` | **v1**。`Open3` 直叩きの `execute_command`。例外: `ExecutionError`, `ParseError`, `NoAllocationCandidatesError` |
+| `app/adapters/agrr/gateways/base_gateway_v2.rb` | **v2**。`AgrrService`（デーモン／CLI）経由のコマンドディスパッチ。同名の例外クラスを再定義 |
+| `app/adapters/agrr/gateways/*.rb`（9 本） | いずれも **`BaseGatewayV2` を継承**（`adjust`, `allocation`, `candidates`, `fertilize`, `optimization`, `prediction`, `progress`, `schedule`, `weather`） |
 
 ### v1 基底クラスに**直接**依存しているコード（`rg` 基準）
 
@@ -26,7 +26,7 @@
 
 ## 目標状態（ロードマップ T-015 完了後の次フェーズ）
 
-1. **単一の** `app/gateways/agrr/base_gateway.rb` のみを残す。
+1. **単一の** `app/adapters/agrr/gateways/base_gateway.rb` のみを残す。
 2. クラス名は **`Agrr::BaseGateway`**（現 v2 実装を本体とする）。
 3. 全 gateway の継承元を **`Agrr::BaseGateway`** に統一（`< BaseGatewayV2` を廃止）。
 4. `predict_weather_data_job` / `agrr_optimization` の例外参照は **`Agrr::BaseGateway::*` のまま**でよい（v2 側に定義を集約）。
@@ -38,7 +38,7 @@
 2. **`base_gateway_v2.rb` の内容**を `base_gateway.rb` に移し、クラス名を `BaseGateway` に変更。既存の v1 `base_gateway.rb` は上書き削除。
 3. 各 `*Gateway` の `class X < BaseGatewayV2` を `class X < BaseGateway` に置換。
 4. **`require` / autoload**：`base_gateway_v2.rb` への参照が無いことを確認。
-5. **テスト**: `.cursor/skills/test-common/scripts/run-test-rails.sh test/gateways/agrr`、`.cursor/skills/test-common/scripts/run-test-rails.sh test/controllers/api/v1/plans`、`.cursor/skills/test-common/scripts/run-test-rails.sh test/controllers/api/v1/public_plans`、必要に応じて `scripts/test_agrr_integration.rb`。
+5. **テスト**: `.cursor/skills/test-common/scripts/run-test-rails.sh test/adapters/agrr`、`.cursor/skills/test-common/scripts/run-test-rails.sh test/controllers/api/v1/plans`、`.cursor/skills/test-common/scripts/run-test-rails.sh test/controllers/api/v1/public_plans`。
 6. **ドキュメント**: 本ファイルの「現状」を「完了」に更新し、`ARCHITECTURE.md` の gateway 節が単一基底であることを明記。
 
 ## v1 と v2 の挙動差分（統合時の注意点）

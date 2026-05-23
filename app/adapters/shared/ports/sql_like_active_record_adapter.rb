@@ -2,8 +2,8 @@
 
 module Adapters
   module Shared
-    module Gateways
-      class SqlLikeActiveRecordGateway
+    module Ports
+      class SqlLikeActiveRecordAdapter
         include Domain::Shared::Ports::SqlLikeSanitizePort
 
         def sanitize_like(term)

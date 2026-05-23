@@ -6,7 +6,7 @@
 
 ## 実装箇所
 
-**対象ファイル**: `app/gateways/agrr/daemon_client.rb`（クラス `Agrr::DaemonClient`。本文の「AgrrService」は歴史的名称）
+**対象ファイル**: `app/adapters/agrr/gateways/daemon_client.rb`（クラス `Agrr::DaemonClient`。本文の「AgrrService」は歴史的名称）
 **対象メソッド**: `execute_command` (173-214行目)
 
 ## 現在の処理フロー
@@ -251,7 +251,7 @@ end
 ## 関連ファイル
 
 ### 修正対象
-- `app/gateways/agrr/daemon_client.rb` - メイン実装箇所
+- `app/adapters/agrr/gateways/daemon_client.rb` - メイン実装箇所
 
 ### テストファイル
 - `test/services/agrr_service_test.rb` - 単体テスト
@@ -259,7 +259,7 @@ end
 ### 参考ファイル
 - `bin/agrr_client` - agrrクライアント（ソケット接続の実装）
 - `scripts/start_app.sh` - daemon起動スクリプト（起動方法の参考）
-- `app/gateways/agrr/base_gateway_v2.rb` - Gateway層（エラーハンドリングの参考）
+- `app/adapters/agrr/gateways/base_gateway_v2.rb` - Gateway層（エラーハンドリングの参考）
 
 ## 実装手順
 

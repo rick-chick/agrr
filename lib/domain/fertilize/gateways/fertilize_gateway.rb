@@ -46,8 +46,8 @@ module Domain
         end
 
         # AI API: ユーザー肥料を agrr 応答の商品名で検索（なければ nil）。戻りは永続 Fertilize。
-        def find_user_owned_non_reference_fertilize_record_by_name(user_id:, name:)
-          raise NotImplementedError, "Subclasses must implement find_user_owned_non_reference_fertilize_record_by_name"
+        def find_by_name(user_id:, name:)
+          raise NotImplementedError, "Subclasses must implement find_by_name"
         end
 
       end

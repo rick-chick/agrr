@@ -14,7 +14,7 @@ class CropToggleTaskTemplateInteractorTest < DomainLibTestCase
 
     task_entity = mock
     task_gateway = mock
-    task_gateway.expects(:find_model).with(44).returns(task_entity)
+    task_gateway.expects(:find_by_id).with(44).returns(task_entity)
 
     result = Domain::Crop::Dtos::CropToggleTaskTemplateSnapshot.new(
       available_agricultural_tasks: [],

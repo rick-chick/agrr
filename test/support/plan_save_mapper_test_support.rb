@@ -72,7 +72,7 @@ module PlanSaveMapperTestSupport
     ).tap { |ctx| ctx.crop_stage_copy_gateway = CompositionRoot.crop_stage_copy_gateway }
   end
 
-  # 圃場・作付・CPC を持つ参照公開計画（PlanCopyGateway 用）
+  # 圃場・作付・CPC を持つ参照公開計画（PlanCopyActiveRecordGateway 用）
   def build_public_plan_with_field_cultivation(farm:, ref_crop:, plan_name: "Gateway plan")
     plan = CultivationPlan.create!(
       farm: farm,

@@ -19,7 +19,7 @@ class PestCropAssociationPolicyTest < ActiveSupport::TestCase
     assert_not_includes scope, user_crop
   end
 
-  test "accessible_crops_scope for user pest returns only user's non-reference crops" do
+  test "accessible_crops_scope for user pest returns user's non-reference crops and all reference crops" do
     user_pest = create(:pest, is_reference: false, user: @user)
     reference_crop = create(:crop, is_reference: true, user: nil)
     user_crop = create(:crop, is_reference: false, user: @user)
@@ -28,7 +28,7 @@ class PestCropAssociationPolicyTest < ActiveSupport::TestCase
     scope = PestCropAssociationPolicy.accessible_crops_scope(user_pest, user: @user)
 
     assert_includes scope, user_crop
-    assert_not_includes scope, reference_crop
+    assert_includes scope, reference_crop
     assert_not_includes scope, other_user_crop
   end
 
@@ -78,10 +78,10 @@ class PestCropAssociationPolicyTest < ActiveSupport::TestCase
     assert_not PestCropAssociationPolicy.crop_accessible_for_pest?(us_crop, reference_pest, user: @user)
   end
 
-  test "crop_accessible_for_pest? returns false for user pest and reference crop" do
+  test "crop_accessible_for_pest? returns true for user pest and reference crop" do
     user_pest = create(:pest, is_reference: false, user: @user)
     reference_crop = create(:crop, is_reference: true, user: nil)
 
-    assert_not PestCropAssociationPolicy.crop_accessible_for_pest?(reference_crop, user_pest, user: @user)
+    assert PestCropAssociationPolicy.crop_accessible_for_pest?(reference_crop, user_pest, user: @user)
   end
 end

@@ -3,7 +3,7 @@
 require "test_helper"
 require "stringio"
 
-class Adapters::CultivationPlan::Gateways::PlanCopyGatewayTest < ActiveSupport::TestCase
+class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < ActiveSupport::TestCase
   include PlanSaveMapperTestSupport
 
   test "copy_cultivation_plan creates private plan owned by user" do
@@ -29,7 +29,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyGatewayTest < ActiveSupport::
     )
     user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
 
-    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyGateway.new(ctx, logger: CapturingLogger.new)
+    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(ctx, logger: CapturingLogger.new)
     new_plan = gateway.copy_cultivation_plan(user_farm, [])
 
     assert new_plan.persisted?
@@ -59,7 +59,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyGatewayTest < ActiveSupport::
     user_crop_id = ctx.ref_cpc_id_to_user_crop_id[cpc.id]
     assert user_crop_id.present?
 
-    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyGateway.new(ctx, logger: CapturingLogger.new)
+    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(ctx, logger: CapturingLogger.new)
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], [], [], [], [])
 
@@ -124,7 +124,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyGatewayTest < ActiveSupport::
     user_task = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
     assert_not_nil user_task
 
-    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyGateway.new(ctx, logger: CapturingLogger.new)
+    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(ctx, logger: CapturingLogger.new)
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], tasks, [], [], [])
 
@@ -149,7 +149,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyGatewayTest < ActiveSupport::
 
     new_year = Date.current.year + 1
     log = CapturingLogger.new
-    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyGateway.copy_private_plan_for_year(
+    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: new_year,
       user_id: user.id,
@@ -182,7 +182,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyGatewayTest < ActiveSupport::
     )
 
     sid = "ws-sess-#{SecureRandom.hex(8)}"
-    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyGateway.copy_private_plan_for_year(
+    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 1,
       user_id: user.id,
@@ -211,7 +211,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyGatewayTest < ActiveSupport::
     )
     ActiveStorage::Attachment.create!(name: "attachments", record: source_plan, blob: blob)
 
-    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyGateway.copy_private_plan_for_year(
+    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 2,
       user_id: user.id,
@@ -240,7 +240,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyGatewayTest < ActiveSupport::
     )
     ActiveStorage::Attachment.create!(name: "attachments", record: source_plan, blob: blob)
 
-    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyGateway.copy_private_plan_for_year(
+    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.copy_private_plan_for_year(
       source_cultivation_plan_id: source_plan.id,
       new_year: Date.current.year + 2,
       user_id: user.id,

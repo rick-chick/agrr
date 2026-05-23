@@ -59,10 +59,10 @@ module Api
             assert_equal pest.id, json_response["pest_id"]
           end
 
-          test "should create association with reference pest" do
+          test "should not create association with reference pest for user crop" do
             reference_pest = create(:pest, :reference)
 
-            assert_difference("@crop.pests.count", 1) do
+            assert_no_difference("@crop.pests.count") do
               post api_v1_masters_crop_pests_path(@crop),
                    params: {
                      pest_id: reference_pest.id
@@ -73,7 +73,7 @@ module Api
                    }
             end
 
-            assert_response :created
+            assert_response :forbidden
           end
 
           test "should not create association without pest_id" do

@@ -21,7 +21,7 @@ module Domain
 
           fetch_args = {}
           gateway = Object.new
-          gateway.define_singleton_method(:find_climate_data_by_field_cultivation) do |field_cultivation_id:, display_start_date:, display_end_date:|
+          gateway.define_singleton_method(:find_climate_data) do |field_cultivation_id:, display_start_date:, display_end_date:|
             fetch_args[:field_cultivation_id] = field_cultivation_id
             fetch_args[:display_start_date] = display_start_date
             fetch_args[:display_end_date] = display_end_date
@@ -56,7 +56,7 @@ module Domain
         test "routes RecordNotFound through the output port" do
           fc_id = 42
           gateway = Object.new
-          gateway.define_singleton_method(:find_climate_data_by_field_cultivation) do |_kwargs|
+          gateway.define_singleton_method(:find_climate_data) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 
@@ -84,7 +84,7 @@ module Domain
         test "routes missing climate data through the output port" do
           fc_id = 99
           gateway = Object.new
-          gateway.define_singleton_method(:find_climate_data_by_field_cultivation) do |_kwargs|
+          gateway.define_singleton_method(:find_climate_data) do |_kwargs|
             nil
           end
 

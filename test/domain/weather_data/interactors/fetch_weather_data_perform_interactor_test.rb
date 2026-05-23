@@ -40,7 +40,7 @@ module Domain
           @cultivation_plan_gateway.expects(:update_phase).with(1, "phase_fetching_weather", "test")
           weather_location = mock("weather_location")
           weather_location.stubs(:id).returns(1)
-          @weather_data_gateway.expects(:find_weather_location_by_coordinates).with(latitude: 35.6762, longitude: 139.6503).returns(weather_location)
+          @weather_data_gateway.expects(:find_by_coordinates).with(latitude: 35.6762, longitude: 139.6503).returns(weather_location)
           @weather_data_gateway.expects(:weather_data_count).with(weather_location_id: 1, start_date: @input_dto[:start_date], end_date: @input_dto[:end_date]).returns(6)
           @farm_gateway.expects(:increment_weather_data_progress).with(1)
           @farm_gateway.stubs(:get_weather_data_progress).with(1).returns(50)
@@ -74,7 +74,7 @@ module Domain
             } }
           }
           @farm_gateway.expects(:find_by_id).with(1).returns(farm_entity)
-          @weather_data_gateway.expects(:find_weather_location_by_coordinates).with(latitude: 35.6762, longitude: 139.6503).returns(nil)
+          @weather_data_gateway.expects(:find_by_coordinates).with(latitude: 35.6762, longitude: 139.6503).returns(nil)
           @agrr_weather_gateway.expects(:fetch_by_date_range).with(latitude: 35.6762, longitude: 139.6503, start_date: @input_dto[:start_date], end_date: @input_dto[:end_date], data_source: "jma").returns(weather_data)
           @weather_data_gateway.expects(:find_or_create_weather_location).with(latitude: 35.6762, longitude: 139.6503, elevation: 50.0, timezone: "Asia/Tokyo").returns(weather_location)
           @farm_gateway.expects(:update_weather_location_id).with(1, 1)
@@ -130,7 +130,7 @@ module Domain
           weather_location.stubs(:id).returns(1)
           empty_data = { "location" => { "latitude" => 35.6762, "longitude" => 139.6503, "elevation" => 50.0, "timezone" => "Asia/Tokyo" }, "data" => [] }
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
-          @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
+          @weather_data_gateway.stubs(:find_by_coordinates).returns(nil)
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns(empty_data)
           assert_raises(FetchWeatherDataPerformInteractor::EmptyWeatherDataNotAllowedError) do
             @interactor.call(input_dto: @input_dto)
@@ -140,7 +140,7 @@ module Domain
         test "raises on nil response" do
           @cultivation_plan_gateway.expects(:update_phase).once
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
-          @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
+          @weather_data_gateway.stubs(:find_by_coordinates).returns(nil)
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns(nil)
           assert_raises(FetchWeatherDataPerformInteractor::InvalidWeatherApiResponseError) do
             @interactor.call(input_dto: @input_dto)
@@ -150,7 +150,7 @@ module Domain
         test "raises on non-hash response" do
           @cultivation_plan_gateway.expects(:update_phase).once
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
-          @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
+          @weather_data_gateway.stubs(:find_by_coordinates).returns(nil)
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns([])
           assert_raises(FetchWeatherDataPerformInteractor::InvalidWeatherApiResponseError) do
             @interactor.call(input_dto: @input_dto)
@@ -160,7 +160,7 @@ module Domain
         test "raises on missing location" do
           @cultivation_plan_gateway.expects(:update_phase).once
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
-          @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
+          @weather_data_gateway.stubs(:find_by_coordinates).returns(nil)
           bad_data = {
             "data" => (1..7).map { |day| {
               "time" => "2025-01-#{'%02d' % day}",
@@ -183,7 +183,7 @@ module Domain
         test "raises on excessive missing data" do
           @cultivation_plan_gateway.expects(:update_phase).once
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
-          @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
+          @weather_data_gateway.stubs(:find_by_coordinates).returns(nil)
           insufficient_data = { "location" => { "latitude" => 35.6762, "longitude" => 139.6503, "elevation" => 50, "timezone" => "Asia/Tokyo" }, "data" => Array.new(2) { |i| { "time" => "2025-01-0#{i+1}", "temperature_2m_max" => 20 } } } # 5/7 missing
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns(insufficient_data)
           assert_raises(FetchWeatherDataPerformInteractor::ExcessiveMissingWeatherDaysError) do
@@ -198,7 +198,7 @@ module Domain
           weather_location.stubs(:id).returns(1)
           acceptable_data = { "location" => { "latitude" => 35.6762, "longitude" => 139.6503, "elevation" => 50, "timezone" => "Asia/Tokyo" }, "data" => Array.new(6) { |i| { "time" => "2025-01-0#{i+1}", "temperature_2m_max" => 20, "temperature_2m_min" => 10, "temperature_2m_mean" => 15, "precipitation_sum" => 0, "sunshine_hours" => 6, "wind_speed_10m" => 3, "weather_code" => 0 } } } # 1/7 missing OK
           @farm_gateway.stubs(:find_by_id).returns(mock("farm", region: "jp"))
-          @weather_data_gateway.stubs(:find_weather_location_by_coordinates).returns(nil)
+          @weather_data_gateway.stubs(:find_by_coordinates).returns(nil)
           @agrr_weather_gateway.expects(:fetch_by_date_range).returns(acceptable_data)
           @weather_data_gateway.expects(:find_or_create_weather_location).returns(weather_location)
           @farm_gateway.expects(:update_weather_location_id).with(1, 1)

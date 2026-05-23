@@ -3,7 +3,7 @@
 module Adapters
   module CultivationPlan
     module Gateways
-      class CropTaskScheduleBlueprintGateway
+      class CropTaskScheduleBlueprintActiveRecordGateway
         def initialize(ctx)
           @ctx = ctx
           @task_mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)

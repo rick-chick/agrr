@@ -282,6 +282,7 @@ us:
         reference_only_admin: "Reference pests can only be created by administrators."
         reference_flag_admin_only: "Reference flag can only be changed by administrators."
         not_found: "Pest not found."
+        no_permission: "You do not have permission."
       
       index:
         title: "Pests"

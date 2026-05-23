@@ -22,6 +22,7 @@ module Domain
             status = @pest_gateway.link_pest_to_crop(
               crop_id: crop_id,
               pest_id: link_pest_id,
+              user: user,
               crop_access_filter: crop_access_filter
             )
             case status

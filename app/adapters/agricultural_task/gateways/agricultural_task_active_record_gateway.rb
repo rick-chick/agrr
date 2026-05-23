@@ -81,7 +81,7 @@ module Adapters
           )
         end
 
-        def find_model(id)
+        def find_by_id(id)
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_agricultural_task_model!(id))
         end
 

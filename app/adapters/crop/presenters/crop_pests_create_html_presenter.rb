@@ -20,6 +20,10 @@ module Adapters
           @view.redirect_to @view.crop_pests_path(crop_id), alert: I18n.t("crops.pests.flash.not_found")
         end
 
+        def on_forbidden(crop_id:)
+          @view.redirect_to @view.crop_pests_path(crop_id), alert: I18n.t("crops.pests.flash.no_permission")
+        end
+
         def on_reference_only_admin(crop_id:)
           @view.redirect_to @view.crop_pests_path(crop_id), alert: I18n.t("crops.pests.flash.reference_only_admin")
         end

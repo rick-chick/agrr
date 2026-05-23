@@ -18,7 +18,7 @@ Historically, server-rendered master CRUD flows named gateway operations `*_for_
 - **Master CRUD form assembly** (crop, farm, field, fertilize, agricultural task, pesticide)  
   - Replace `*_for_html_form` (and related pesticide helpers) with **`*_for_master_form`**, meaning “Rails master CRUD form wiring” without naming a markup channel.
 
-Implementations ([`lib/adapters/.../gateways/`](../../lib/adapters)), HTML controllers, interactors, and tests move in lockstep with the interface renames. Presenters do not gain new business rules; naming-only change.
+Implementations ([`app/adapters/.../gateways/`](../../app/adapters)), HTML controllers, interactors, and tests move in lockstep with the interface renames. Presenters do not gain new business rules; naming-only change.
 
 ## Consequences
 

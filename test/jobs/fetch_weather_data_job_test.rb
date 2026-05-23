@@ -134,7 +134,7 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
 
     # Use mock weather_data_gateway to avoid expensive DB upsert (logic covered by domain test)
     weather_data_mock = mock("weather_data_gateway")
-    weather_data_mock.expects(:find_weather_location_by_coordinates).with(latitude: farm.latitude, longitude: farm.longitude).returns(nil)
+    weather_data_mock.expects(:find_by_coordinates).with(latitude: farm.latitude, longitude: farm.longitude).returns(nil)
     weather_location_mock = mock("weather_location")
     weather_location_mock.stubs(:id).returns(1)
     weather_data_mock.expects(:find_or_create_weather_location).with(latitude: farm.latitude, longitude: farm.longitude, elevation: 50.0, timezone: "Asia/Tokyo").returns(weather_location_mock)

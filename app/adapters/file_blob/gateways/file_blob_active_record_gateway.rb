@@ -12,7 +12,7 @@ module Adapters
           ::ActiveStorage::Blob.order(created_at: :desc).map { |blob| build_row_dto(blob) }
         end
 
-        def find_row_by_id(blob_id)
+        def find_by_id(blob_id)
           blob = ::ActiveStorage::Blob.find_by(id: blob_id)
           return nil unless blob
 

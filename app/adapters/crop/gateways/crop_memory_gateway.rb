@@ -197,7 +197,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
         end
 
-        def destroy_masters_crop_task_template_for_api!(user:, crop_id:, template_id:, access_filter:)
+        def delete_masters_crop_task_template_for_api!(user:, crop_id:, template_id:, access_filter:)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
           tpl = crop.crop_task_templates.find(template_id.to_i)
           tpl.destroy!
@@ -333,7 +333,7 @@ module Adapters
           )
         end
 
-        def find_model(id)
+        def find_by_id(id)
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_crop_model!(id))
         end
 
@@ -441,7 +441,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
-        def list_crop_stages_by_crop_id(crop_id)
+        def list_by_crop_id(crop_id)
           crop_stages = ::CropStage.where(crop_id: crop_id).order(:order)
           crop_stages.map { |record| crop_stage_entity_from_record(record) }
         end
@@ -454,7 +454,7 @@ module Adapters
         end
 
         # TemperatureRequirement methods
-        def find_temperature_requirement(crop_stage_id)
+        def find_temperature_requirement_by_crop_stage_id(crop_stage_id)
           requirement = ::TemperatureRequirement.find_by(crop_stage_id: crop_stage_id)
           return nil unless requirement
           temperature_requirement_entity_from_record(requirement)
@@ -483,7 +483,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "TemperatureRequirement not found"
         end
 
-        def destroy_temperature_requirement(crop_stage_id)
+        def delete_temperature_requirement(crop_stage_id)
           requirement = ::TemperatureRequirement.find_by(crop_stage_id: crop_stage_id)
           unless requirement
             raise Domain::Shared::Exceptions::RecordNotFound, "TemperatureRequirement not found"
@@ -495,7 +495,7 @@ module Adapters
         end
 
         # ThermalRequirement methods
-        def find_thermal_requirement(crop_stage_id)
+        def find_thermal_requirement_by_crop_stage_id(crop_stage_id)
           requirement = ::ThermalRequirement.find_by(crop_stage_id: crop_stage_id)
           return nil unless requirement
           thermal_requirement_entity_from_record(requirement)
@@ -524,7 +524,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "ThermalRequirement not found"
         end
 
-        def destroy_thermal_requirement(crop_stage_id)
+        def delete_thermal_requirement(crop_stage_id)
           requirement = ::ThermalRequirement.find_by(crop_stage_id: crop_stage_id)
           unless requirement
             raise Domain::Shared::Exceptions::RecordNotFound, "ThermalRequirement not found"
@@ -536,7 +536,7 @@ module Adapters
         end
 
         # SunshineRequirement methods
-        def find_sunshine_requirement(crop_stage_id)
+        def find_sunshine_requirement_by_crop_stage_id(crop_stage_id)
           requirement = ::SunshineRequirement.find_by(crop_stage_id: crop_stage_id)
           return nil unless requirement
           sunshine_requirement_entity_from_record(requirement)
@@ -565,7 +565,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "SunshineRequirement not found"
         end
 
-        def destroy_sunshine_requirement(crop_stage_id)
+        def delete_sunshine_requirement(crop_stage_id)
           requirement = ::SunshineRequirement.find_by(crop_stage_id: crop_stage_id)
           unless requirement
             raise Domain::Shared::Exceptions::RecordNotFound, "SunshineRequirement not found"
@@ -577,7 +577,7 @@ module Adapters
         end
 
         # NutrientRequirement methods
-        def find_nutrient_requirement(crop_stage_id)
+        def find_nutrient_requirement_by_crop_stage_id(crop_stage_id)
           requirement = ::NutrientRequirement.find_by(crop_stage_id: crop_stage_id)
           return nil unless requirement
           nutrient_requirement_entity_from_record(requirement)
@@ -606,7 +606,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "NutrientRequirement not found"
         end
 
-        def destroy_nutrient_requirement(crop_stage_id)
+        def delete_nutrient_requirement(crop_stage_id)
           requirement = ::NutrientRequirement.find_by(crop_stage_id: crop_stage_id)
           unless requirement
             raise Domain::Shared::Exceptions::RecordNotFound, "NutrientRequirement not found"
@@ -733,7 +733,8 @@ module Adapters
         end
 
         def find_crop_model!(id)
-          ::Crop.find(id)
+          crop = ::Crop.find(id)
+          crop
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end

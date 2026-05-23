@@ -19,7 +19,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def destroy(rule_id)
+        def delete(rule_id)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
 

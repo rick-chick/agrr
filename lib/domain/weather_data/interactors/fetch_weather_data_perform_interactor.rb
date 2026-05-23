@@ -67,7 +67,7 @@ module Domain
           end
 
           # 既存データチェック
-          weather_location = @weather_data_gateway.find_weather_location_by_coordinates(latitude: latitude, longitude: longitude)
+          weather_location = @weather_data_gateway.find_by_coordinates(latitude: latitude, longitude: longitude)
           if weather_location
             expected_days = (start_date..end_date).count
             existing_count = @weather_data_gateway.weather_data_count(

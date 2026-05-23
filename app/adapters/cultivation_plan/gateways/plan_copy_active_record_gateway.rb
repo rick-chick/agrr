@@ -3,7 +3,7 @@
 module Adapters
   module CultivationPlan
     module Gateways
-      class PlanCopyGateway
+      class PlanCopyActiveRecordGateway
         # 年度指定で計画を私有コピー（PlanSaveSession の ctx は不要）。
         # ログはすべて +logger+ 経由（本メソッド内で Rails.logger は使わない）。
         #

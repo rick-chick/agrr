@@ -13,7 +13,7 @@ module Domain
 
         def call(crop_id)
           user = @user_lookup.find(@user_id)
-          crop = @gateway.find_model(crop_id.to_i)
+          crop = @gateway.find_by_id(crop_id.to_i)
           unless crop.is_reference || crop.user_id == user.id
             return @output_port.on_failure(:no_permission)
           end

@@ -53,7 +53,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "InteractionRule not found"
         end
 
-        def destroy(rule_id)
+        def delete(rule_id)
           rule = ::InteractionRule.find(rule_id)
           rule.destroy!
         rescue ActiveRecord::RecordNotFound

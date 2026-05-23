@@ -7,7 +7,7 @@
 # - Domain Entity (`Domain::InteractionRule::Entities::InteractionRuleEntity`) と
 #   生 params の双方からインスタンス化できる。
 # - エラー表示は Interactor の失敗結果から `errors_from` で流し込む。
-class InteractionRuleForm < ApplicationForm
+class Adapters::InteractionRule::Presenters::Forms::InteractionRuleForm < Adapters::Shared::Forms::ApplicationForm
   attribute :rule_type, :string
   attribute :source_group, :string
   attribute :target_group, :string

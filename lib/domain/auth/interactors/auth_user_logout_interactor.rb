@@ -18,7 +18,7 @@ module Domain
             return
           end
 
-          @session_revocation_gateway.destroy_all_sessions_for_user!(user_id: user_id)
+          @session_revocation_gateway.delete_all_sessions_for_user!(user_id: user_id)
           @output_port.on_success
         end
       end

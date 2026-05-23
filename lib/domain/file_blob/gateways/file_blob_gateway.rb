@@ -8,7 +8,7 @@ module Domain
           raise NotImplementedError
         end
 
-        def find_row_by_id(blob_id)
+        def find_by_id(blob_id)
           raise NotImplementedError
         end
 

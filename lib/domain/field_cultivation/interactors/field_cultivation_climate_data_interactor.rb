@@ -44,7 +44,7 @@ module Domain
 
         def safe_fetch_climate_data(field_cultivation_id, display_start_date, display_end_date)
           begin
-            @gateway.find_climate_data_by_field_cultivation(
+            @gateway.find_climate_data(
               field_cultivation_id: field_cultivation_id,
               display_start_date: display_start_date,
               display_end_date: display_end_date
