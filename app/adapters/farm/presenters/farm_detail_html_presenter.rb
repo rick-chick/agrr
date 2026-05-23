@@ -11,6 +11,7 @@ module Adapters
         def on_success(farm_detail_dto)
           @view.instance_variable_set(:@farm, farm_detail_dto.farm)
           @view.instance_variable_set(:@fields, farm_detail_dto.fields)
+          @view.instance_variable_set(:@turbo_stream_subscription, farm_detail_dto.turbo_stream_subscription)
           # show テンプレートをレンダリング（暗黙的に）
         end
 

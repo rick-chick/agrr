@@ -13,7 +13,7 @@
   <%= link_to t('.new_field'), new_farm_field_path(@farm.id), class: "btn btn-success" %>
 </div>
 
-<%= turbo_stream_from Farm, @farm.id %>
+<%= turbo_stream_from(*@turbo_stream_subscription.streamables) %>
 
 <% if @fields.any? %>
   <div class="fields-grid" id="fields">

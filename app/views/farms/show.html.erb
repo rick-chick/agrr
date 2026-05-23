@@ -8,7 +8,7 @@
   </div>
 </div>
 
-<%= turbo_stream_from Farm, @farm.id %>
+<%= turbo_stream_from(*@turbo_stream_subscription.streamables) %>
 
 <div class="farm-card" id="farm_<%= @farm.id %>" data-undo-delete-record>
   <%= render "farm_weather_section", farm: @farm, fields_count: @fields.count %>

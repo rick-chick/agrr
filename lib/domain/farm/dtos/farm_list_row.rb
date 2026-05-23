@@ -45,6 +45,10 @@ module Domain
         def reference?
           is_reference
         end
+
+        def turbo_stream_subscription
+          Domain::Shared::Dtos::TurboStreamSubscription.for_farm(id)
+        end
       end
     end
   end

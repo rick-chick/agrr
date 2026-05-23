@@ -31,5 +31,5 @@
 ## ビュー
 
 - パスヘルパーは `farm_path(@farm.id)` 等
-- Turbo: `turbo_stream_from Farm, @farm.id`
+- Turbo: `turbo_stream_from(*@turbo_stream_subscription.streamables)`（`@turbo_stream_subscription` は Presenter が `FarmFieldsList#turbo_stream_subscription` から設定。ERB は AR クラスを参照しない）
 - カードの DOM id: `"field_#{field.id}"`

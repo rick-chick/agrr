@@ -37,8 +37,7 @@
     <% if @farms.any? %>
       <div class="farms-grid" id="farms">
         <% @farms.each do |farm| %>
-          <%# Farm モデル + id でストリーム名を合わせる（FarmChannel.broadcast_to / Farm 更新のブロードキャストと対になる） %>
-          <%= turbo_stream_from Farm, farm.id %>
+          <%= turbo_stream_from(*farm.turbo_stream_subscription.streamables) %>
           <%= render "farm_card_wrapper", farm: farm %>
         <% end %>
       </div>

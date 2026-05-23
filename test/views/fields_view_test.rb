@@ -38,16 +38,18 @@ class FieldsViewTest < ActiveSupport::TestCase
   test "index は農場名と各圃場カードを描画する" do
     farm = farm_entity(name: "テスト農場")
     field = field_entity(name: "Alpha Plot")
+    turbo_stream_subscription = Domain::Shared::Dtos::TurboStreamSubscription.for_farm(farm.id)
 
     html = FieldsController.renderer.render(
       template: "fields/index",
       layout: false,
-      assigns: { farm: farm, fields: [ field ] }
+      assigns: { farm: farm, fields: [ field ], turbo_stream_subscription: turbo_stream_subscription }
     )
 
     assert_includes html, "テスト農場"
     assert_match %r{<h3 class="field-name">Alpha Plot</h3>}, html
     assert_includes html, %(id="field_#{field.id}")
+    assert_includes html, Turbo::StreamsChannel.signed_stream_name(turbo_stream_subscription.streamables)
   end
 
   test "show は圃場詳細（圃場名と dom id）を描画する" do

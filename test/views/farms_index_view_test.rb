@@ -7,6 +7,10 @@ require "test_helper"
 # FarmListRowsBundleInteractor のユニットテストが担保する。ここは
 # Interactor が渡した行 DTO をテンプレートがどう HTML に写すかだけを検証する。
 class FarmsIndexViewTest < ActiveSupport::TestCase
+  def turbo_stream_subscription_for(farm_id)
+    Domain::Shared::Dtos::TurboStreamSubscription.for_farm(farm_id)
+  end
+
   def farm_list_row(display_name:, id: 1, is_reference: false, user_id: 1)
     Domain::Farm::Dtos::FarmListRow.new(
       id: id,
@@ -38,16 +42,18 @@ class FarmsIndexViewTest < ActiveSupport::TestCase
   end
 
   test "index は @farms の各行を farm-name カードとして描画する" do
+    row = farm_list_row(display_name: "My Listed Farm", id: 5)
     html = FarmsController.renderer.render(
       template: "farms/index",
       layout: false,
       assigns: {
-        farms: [ farm_list_row(display_name: "My Listed Farm") ],
+        farms: [ row ],
         reference_farms: []
       }
     )
 
     assert_match %r{<h3 class="farm-name">My Listed Farm</h3>}, html
+    assert_includes html, Turbo::StreamsChannel.signed_stream_name(row.turbo_stream_subscription.streamables)
   end
 
   test "index は参照農場が存在するとき参照農場セクションヘッダを描画する" do

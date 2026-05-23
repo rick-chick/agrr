@@ -11,6 +11,7 @@ module Adapters
         def on_success(farm_fields_list)
           @view.instance_variable_set(:@farm, farm_fields_list.farm)
           @view.instance_variable_set(:@fields, farm_fields_list.fields)
+          @view.instance_variable_set(:@turbo_stream_subscription, farm_fields_list.turbo_stream_subscription)
         end
 
         def on_failure(error_dto)
