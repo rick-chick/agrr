@@ -13,7 +13,7 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          bundle = PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_for_new(user: user)
+          bundle = Domain::Pesticide::Mappers::PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_for_new(user: user)
           @output_port.on_success(bundle)
         end
       end

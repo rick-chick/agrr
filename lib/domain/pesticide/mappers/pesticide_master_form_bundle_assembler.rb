@@ -2,7 +2,7 @@
 
 module Domain
   module Pesticide
-    module Interactors
+    module Mappers
       # Gateway の読み取り結果を output-port DTO（bundle）に組み立てる。I/O は gateway のみ。
       class PesticideMasterFormBundleAssembler
         def initialize(gateway:)
