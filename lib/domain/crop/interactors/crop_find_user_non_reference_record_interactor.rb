@@ -14,8 +14,13 @@ module Domain
 
         def call(crop_id)
           user = @user_lookup.find(@user_id)
-          crop = @gateway.find_user_non_reference_crop_record(user, crop_id)
-          @output_port.on_success(crop)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          crop_entity = @gateway.find_by_id(crop_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, crop_entity)
+          @output_port.on_success(crop_entity)
+        rescue Domain::Shared::Policies::PolicyPermissionDenied => e
+          @logger.warn("[CropFindUserNonReferenceRecordInteractor] #{e.message}")
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[CropFindUserNonReferenceRecordInteractor] #{e.message}")
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))

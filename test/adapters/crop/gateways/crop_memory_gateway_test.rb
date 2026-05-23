@@ -322,7 +322,7 @@ module Adapters
           result = nil
 
           assert_difference("CropTaskTemplate.count", 1) do
-            result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+            result = @gateway.create_masters_crop_task_template_association(input_dto)
           end
 
           assert result.success?
@@ -346,7 +346,7 @@ module Adapters
             agricultural_task_id: 99_999
           )
 
-          result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+          result = @gateway.create_masters_crop_task_template_association(input_dto)
 
           assert result.failure?
           assert_equal :agricultural_task_not_found, result.failure.reason
@@ -363,7 +363,7 @@ module Adapters
           )
 
           assert_difference("CropTaskTemplate.count", 1) do
-            result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+            result = @gateway.create_masters_crop_task_template_association(input_dto)
             assert result.template
           end
         end
@@ -379,7 +379,7 @@ module Adapters
           )
 
           assert_no_difference("CropTaskTemplate.count") do
-            result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+            result = @gateway.create_masters_crop_task_template_association(input_dto)
             assert result.failure?
             assert_equal :duplicate, result.failure.reason
           end
@@ -396,7 +396,7 @@ module Adapters
           )
 
           error = assert_raises(Domain::Shared::Exceptions::RecordInvalid) do
-            @gateway.create_masters_crop_task_template_association(user, input_dto)
+            @gateway.create_masters_crop_task_template_association(input_dto)
           end
 
           assert error.errors.any?, "expected validation error messages"
@@ -425,16 +425,17 @@ module Adapters
           assert_equal task_free.name, hit[:name]
         end
 
-        test "selectable_agricultural_task_picklist_rows_for_nested_templates raises when crop is not user-owned non-reference" do
-          other_crop = create(:crop)
+        test "selectable_agricultural_task_picklist_rows_for_nested_templates resolves crop by id without user scope" do
+          other_crop = create(:crop, :user_owned, user: create(:user))
           user = @crop.user
+          task_free = create(:agricultural_task, :user_owned, user: user)
 
-          assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-            @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(
-              user: user,
-              crop_id: other_crop.id,
-            )
-          end
+          rows = @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(
+            user: user,
+            crop_id: other_crop.id,
+          )
+
+          assert_includes rows.map { |r| r[:id] }, task_free.id
         end
 
         test "list_index_for_filter owned_non_reference returns only that user's non-reference crops" do

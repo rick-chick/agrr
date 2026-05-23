@@ -36,7 +36,7 @@ module Adapters
           ordered.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
-        def authorized_pest_detail_output(id)
+        def find_pest_show_detail(id)
           pest = ::Pest.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods, :crops).find(id)
           Adapters::Pest::Mappers::PestMapper.detail_output_dto_from_record(pest)
         rescue ActiveRecord::RecordNotFound => e

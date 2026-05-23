@@ -21,7 +21,7 @@ module Adapters
             msgs = Array(failure_dto.errors).compact
             @view.flash.now[:alert] = msgs.join(", ") if msgs.any?
             @view.render :edit, status: :unprocessable_entity
-          when :association_not_found
+          when :association_not_found, :crop_not_found
             @view.redirect_to @view.crop_agricultural_tasks_path(crop),
                               alert: I18n.t("crops.flash.not_found")
           else

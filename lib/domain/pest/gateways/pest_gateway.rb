@@ -33,8 +33,9 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_selectable_pest_entities_recent_first"
         end
 
-        def authorized_pest_detail_output(id)
-          raise NotImplementedError, "Subclasses must implement authorized_pest_detail_output"
+        # 詳細 DTO（関連込み）。認可は Interactor 側（R0）。
+        def find_pest_show_detail(id)
+          raise NotImplementedError, "Subclasses must implement find_pest_show_detail"
         end
 
         def find_pest_loaded_bundle!(id)

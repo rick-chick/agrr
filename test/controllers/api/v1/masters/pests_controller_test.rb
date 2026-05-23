@@ -2,6 +2,7 @@
 
 require "test_helper"
 
+# 他ユーザーの害虫詳細の認可拒否は PestDetailInteractor 単体で表明。ここは HTTP 成功経路のみ。
 module Api
   module V1
     module Masters
@@ -68,21 +69,6 @@ module Api
           json_response = JSON.parse(response.body)
           assert_equal pest.id, json_response["id"]
           assert_equal "テスト害虫", json_response["name"]
-        end
-
-        test "should not show other user's pest" do
-          other_user = create(:user)
-          other_pest = create(:pest, :user_owned, user: other_user)
-
-          get api_v1_masters_pest_path(other_pest),
-              headers: {
-                "Accept" => "application/json",
-                "X-API-Key" => @api_key
-              }
-
-          assert_response :forbidden
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("pests.flash.no_permission"), json_response["error"]
         end
 
         test "should create pest" do

@@ -22,6 +22,11 @@ module Adapters
               json: { error: t_error(:association_not_found) },
               status: :not_found
             )
+          when :crop_not_found
+            @view.render_response(
+              json: { error: @translator.t("api.errors.crop_not_found") },
+              status: :not_found
+            )
           else
             if development_environment?
               raise ArgumentError,

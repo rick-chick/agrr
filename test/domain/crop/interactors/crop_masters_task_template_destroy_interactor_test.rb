@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# 作物編集認可の拒否・欠損は CropMastersCropEditAccessTest で表明。
 require "domain_lib_test_helper"
 
 module Domain
@@ -27,9 +28,8 @@ module Domain
           crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @gateway.expects(:delete_masters_crop_task_template!).with(
-            user: user,
             crop_id: 2,
             template_id: 3,
           ).returns(:ok)
@@ -48,9 +48,8 @@ module Domain
           crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @gateway.expects(:delete_masters_crop_task_template!).with(
-            user: user,
             crop_id: 2,
             template_id: 3,
           ).raises(

@@ -24,16 +24,6 @@ module Adapters
           scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
-        def find_user_non_reference_crop_for_masters!(user, crop_id)
-          user_owned_non_reference_scope(user).find(crop_id)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def find_user_non_reference_crop_record(user, crop_id)
-          user_owned_non_reference_scope(user).find_by(id: crop_id)
-        end
-
         def find_reference_crop_record_for_public_plan_add_crop(crop_id)
           return nil if crop_id.blank?
 
@@ -112,30 +102,8 @@ module Adapters
           Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop, error_messages: crop.errors.full_messages)
         end
 
-        def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
-          crop = find_user_non_reference_crop_for_masters!(user, crop_id)
-          stage = crop.crop_stages.find(crop_stage_id)
-          Domain::Crop::Dtos::AuthorizedCropStageInCropContext.new(
-            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
-            crop_stage_entity: crop_stage_entity_from_record(stage)
-          )
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
-        end
-
-        def find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
-          crop = find_user_non_reference_crop_for_masters!(user, crop_id)
-          tpl = crop.crop_task_templates.find(template_id)
-          Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContext.new(
-            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
-            crop_task_template_dto: masters_crop_task_template_dto_from_record(tpl, agricultural_task_snapshot_from_record(tpl.agricultural_task))
-          )
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
-        end
-
-        def create_masters_crop_task_template_association(user, input_dto)
-          crop = find_user_non_reference_crop_for_masters!(user, input_dto.crop_id.to_i)
+        def create_masters_crop_task_template_association(input_dto)
+          crop = find_crop_model!(input_dto.crop_id.to_i)
           agricultural_task = ::AgriculturalTask.find_by(id: input_dto.agricultural_task_id)
           unless agricultural_task
             return build_task_template_create_result(reason: :agricultural_task_not_found)
@@ -166,21 +134,21 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: Domain::Shared::ValidationErrors.from_errors_like(e.record.errors))
         end
 
-        def masters_crop_agricultural_task_templates_index_rows(user:, crop_id:)
-          crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
+        def masters_crop_agricultural_task_templates_index_rows(crop_id:)
+          crop = find_crop_model!(crop_id.to_i)
           crop.crop_task_templates.includes(:agricultural_task).map { |t| masters_crop_task_template_api_row(t) }
         end
 
         def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:)
-          crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
+          crop = find_crop_model!(crop_id.to_i)
           scope = ::AgriculturalTask.where("is_reference = ? OR user_id = ?", true, user.id)
           existing_task_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact
           scope = scope.where.not(id: existing_task_ids) if existing_task_ids.any?
           scope.recent.map { |t| { id: t.id, name: t.name } }
         end
 
-        def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:)
-          crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
+        def update_masters_crop_task_template_for_api(crop_id:, template_id:, attributes:)
+          crop = find_crop_model!(crop_id.to_i)
           tpl = crop.crop_task_templates.find(template_id.to_i)
           if tpl.update(attributes)
             { ok: true, row: masters_crop_task_template_api_row(tpl.reload) }
@@ -191,8 +159,8 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
         end
 
-        def delete_masters_crop_task_template!(user:, crop_id:, template_id:)
-          crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
+        def delete_masters_crop_task_template!(crop_id:, template_id:)
+          crop = find_crop_model!(crop_id.to_i)
           tpl = crop.crop_task_templates.find(template_id.to_i)
           tpl.destroy!
           :ok

@@ -24,11 +24,12 @@ module Domain
         end
 
         test "calls on_success when gateway returns crop" do
+          user = Domain::Shared::Dtos::User.new(id: 9, admin: false, anonymous: false)
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :the_user, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           gateway = Minitest::Mock.new
-          gateway.expect(:find_user_non_reference_crop_for_masters!, @crop, [ :the_user, 42 ])
+          gateway.expect(:find_by_id, @crop, [ 42 ])
 
           output = Minitest::Mock.new
           output.expect(:on_success, nil, [ @crop ])
@@ -48,11 +49,12 @@ module Domain
         end
 
         test "calls on_not_found when gateway raises RecordNotFound" do
+          user = Domain::Shared::Dtos::User.new(id: 9, admin: false, anonymous: false)
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :the_user, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           gateway = Minitest::Mock.new
-          gateway.expect(:find_user_non_reference_crop_for_masters!, nil) do
+          gateway.expect(:find_by_id, nil) do
             raise Domain::Shared::Exceptions::RecordNotFound, "missing"
           end
 

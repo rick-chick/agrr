@@ -71,7 +71,7 @@ each_rb_under(interactors_root) do |path|
 
     next unless code.include?("find_user_non_reference_crop_record")
 
-    violations << "#{path}:#{lineno}: interactors must not call find_user_non_reference_crop_record; use find_user_non_reference_crop_entity (#{line.strip})"
+    violations << "#{path}:#{lineno}: interactors must not call find_user_non_reference_crop_record; use find_by_id with CropPolicy.record_access_filter (#{line.strip})"
   end
 end
 

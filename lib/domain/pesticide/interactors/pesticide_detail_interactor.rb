@@ -14,9 +14,8 @@ module Domain
         def call(pesticide_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
-          pesticide_entity = @gateway.find_by_id(pesticide_id)
-          Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, pesticide_entity)
-          dto = @gateway.authorized_pesticide_detail_output(pesticide_id)
+          dto = @gateway.find_pesticide_show_detail(pesticide_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, dto.pesticide)
           @output_port.on_success(dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

@@ -26,7 +26,7 @@ module Domain
 
         test "calls on_success with entity when gateway returns crop" do
           gateway = Minitest::Mock.new
-          gateway.expect(:find_user_non_reference_crop_record, @crop, [ @user, 42 ])
+          gateway.expect(:find_by_id, @crop, [ 42 ])
 
           output = Minitest::Mock.new
           output.expect(:on_success, nil, [ @crop ])
@@ -50,14 +50,29 @@ module Domain
           user_lookup.verify
         end
 
-        test "calls on_success with nil when gateway returns nil" do
+        test "calls on_failure when crop is not editable by user" do
+          other_crop = Entities::CropEntity.new(
+            id: 99,
+            user_id: 1,
+            name: "Other",
+            variety: nil,
+            is_reference: false,
+            area_per_unit: nil,
+            revenue_per_area: nil,
+            region: nil,
+            groups: [],
+            crop_stages: [],
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
+          )
           gateway = Minitest::Mock.new
-          gateway.expect(:find_user_non_reference_crop_record, nil, [ @user, 99 ])
+          gateway.expect(:find_by_id, other_crop, [ 99 ])
 
           output = Minitest::Mock.new
-          output.expect(:on_success, nil, [ nil ])
+          output.expect(:on_failure, nil, [ Domain::Shared::Dtos::Error ])
 
           logger = Minitest::Mock.new
+          logger.expect(:warn, nil, [ String ])
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, @user, [ @user.id ])
 
@@ -74,6 +89,7 @@ module Domain
           gateway.verify
           output.verify
           user_lookup.verify
+          logger.verify
         end
       end
     end

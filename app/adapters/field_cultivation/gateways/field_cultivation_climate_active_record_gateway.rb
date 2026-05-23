@@ -247,7 +247,9 @@ module Adapters
           if plan_type_public
             ::Crop.find_by(id: plan_crop.crop_id)
           else
-            @crop_gateway.find_user_non_reference_crop_record(@current_user, plan_crop.crop_id)
+            return nil unless @current_user
+
+            ::Crop.where(user_id: @current_user.id, is_reference: false).find_by(id: plan_crop.crop_id)
           end
         end
 

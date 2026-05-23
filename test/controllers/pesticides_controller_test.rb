@@ -3,7 +3,7 @@
 require "test_helper"
 require "time"
 
-# 参照農薬の閲覧制限などは Pesticide*Interactor の認可と重なるが、
+# 参照農薬の閲覧拒否などは PesticideDetailInteractor 単体で表明。
 # ここでは index の表示フィルタと nested 作成の永続化挙動（Interactor 外の境界）を優先する。
 
 class PesticidesControllerTest < ActionDispatch::IntegrationTest
@@ -49,13 +49,6 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     assert_includes body, admin_pesticide.name
     assert_includes body, reference_pesticide.name
     refute_includes body, other_pesticide.name
-  end
-
-  test "should show pesticide" do
-    # 参照農薬は一般ユーザーでは閲覧できない（認可拒否）
-    get pesticide_path(@pesticide)
-    assert_redirected_to pesticides_path
-    assert_equal I18n.t("pesticides.flash.no_permission"), flash[:alert]
   end
 
   test "should get new" do

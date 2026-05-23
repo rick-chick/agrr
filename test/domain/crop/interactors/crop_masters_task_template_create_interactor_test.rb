@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# 作物編集認可の拒否・欠損は CropMastersCropEditAccessTest で表明。
 require "domain_lib_test_helper"
 
 module Domain
@@ -32,9 +33,9 @@ module Domain
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateOutput.new(template: template_dto)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @agricultural_task_gateway.expects(:find_by_id).with(3).returns(task_entity)
-          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto).returns(result)
+          @gateway.expects(:create_masters_crop_task_template_association).with(input_dto).returns(result)
           @output_port.expects(:on_success).with(template_dto)
 
           @interactor.call(input_dto)
@@ -48,7 +49,7 @@ module Domain
           )
 
           @user_lookup.expects(:find).never
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).never
+          @gateway.expects(:find_by_id).never
           @agricultural_task_gateway.expects(:find_by_id).never
           @gateway.expects(:create_masters_crop_task_template_association).never
           @output_port.expects(:on_failure).with do |failure_dto|
@@ -69,7 +70,7 @@ module Domain
           crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @agricultural_task_gateway.expects(:find_by_id).with(3).raises(
             Domain::Shared::Exceptions::RecordNotFound
           )
@@ -93,7 +94,7 @@ module Domain
           task_entity = stub(is_reference: false, user_id: 99)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @agricultural_task_gateway.expects(:find_by_id).with(3).returns(task_entity)
           @gateway.expects(:create_masters_crop_task_template_association).never
           @output_port.expects(:on_failure).with do |failure_dto|
@@ -119,9 +120,9 @@ module Domain
           result = Domain::Crop::Dtos::MastersCropTaskTemplateCreateOutput.new(failure: failure)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @agricultural_task_gateway.expects(:find_by_id).with(3).returns(task_entity)
-          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto).returns(result)
+          @gateway.expects(:create_masters_crop_task_template_association).with(input_dto).returns(result)
           @output_port.expects(:on_failure).with(failure)
 
           @interactor.call(input_dto)
@@ -142,9 +143,9 @@ module Domain
           )
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @agricultural_task_gateway.expects(:find_by_id).with(3).returns(task_entity)
-          @gateway.expects(:create_masters_crop_task_template_association).with(user, input_dto).raises(record_invalid)
+          @gateway.expects(:create_masters_crop_task_template_association).with(input_dto).raises(record_invalid)
           @output_port.expects(:on_failure).with do |failure_dto|
             assert_equal :validation_failed, failure_dto.reason
             assert_equal [ "Name can't be blank" ], failure_dto.errors

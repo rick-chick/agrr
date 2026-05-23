@@ -16,8 +16,9 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_user_and_reference_tasks"
         end
 
-        def authorized_agricultural_task_detail_output(id)
-          raise NotImplementedError, "Subclasses must implement authorized_agricultural_task_detail_output"
+        # 詳細 DTO。認可は Interactor 側（R0）。
+        def find_agricultural_task_show_detail(id)
+          raise NotImplementedError, "Subclasses must implement find_agricultural_task_show_detail"
         end
 
         def find_agricultural_task_loaded_bundle!(id, for_edit:)

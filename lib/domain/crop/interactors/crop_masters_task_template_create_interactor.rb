@@ -22,8 +22,14 @@ module Domain
 
           user = @user_lookup.find(input_dto.user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          crop_record = @gateway.find_user_non_reference_crop_for_masters!(user, input_dto.crop_id.to_i)
-          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, crop_record)
+          crop_failure = Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailure.new(reason: :crop_not_found)
+          return unless Domain::Crop::Policies::CropMastersCropEditAccess.assert_edit_or_on_failure(
+            access_filter: access_filter,
+            crop_id: input_dto.crop_id.to_i,
+            gateway: @gateway,
+            output_port: @output_port,
+            failure: crop_failure,
+          )
 
           begin
             task_entity = @agricultural_task_gateway.find_by_id(input_dto.agricultural_task_id)
@@ -42,7 +48,7 @@ module Domain
             )
           end
 
-          result = @gateway.create_masters_crop_task_template_association(user, input_dto)
+          result = @gateway.create_masters_crop_task_template_association(input_dto)
 
           if result.failure?
             @output_port.on_failure(result.failure)

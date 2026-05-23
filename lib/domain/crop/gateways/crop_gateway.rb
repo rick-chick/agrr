@@ -108,16 +108,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_non_reference_crops_for_user_id_ordered"
         end
 
-        # マスター系 HTML/API: 自ユーザーの非参照作物を id で取得（失敗時 RecordNotFound）
-        def find_user_non_reference_crop_for_masters!(user, crop_id)
-          raise NotImplementedError, "Subclasses must implement find_user_non_reference_crop_for_masters!"
-        end
-
-        # 個人計画 API 等: 自ユーザーの非参照作物を id で取得（なければ nil）。戻りは永続レコード。
-        def find_user_non_reference_crop_record(user, crop_id)
-          raise NotImplementedError, "Subclasses must implement find_user_non_reference_crop_record"
-        end
-
         # 公開栽培計画 REST add_crop: 参照作物レコードを id で解決（なければ nil）
         def find_reference_crop_record_for_public_plan_add_crop(crop_id)
           raise NotImplementedError, "Subclasses must implement find_reference_crop_record_for_public_plan_add_crop"
@@ -159,18 +149,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement merge_edit_crop_params_for_master_form!"
         end
 
-        # マスター: 作物と CropStage を一度の作物読み込みで束ねる（before_action 二重取得の回避）。
-        def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id)
-          raise NotImplementedError, "Subclasses must implement find_masters_crop_with_crop_stage_bundle!"
-        end
-
-        # マスター: 作物と CropTaskTemplate を一度の作物読み込みで束ねる。
-        def find_masters_crop_with_task_template_bundle!(user, crop_id, template_id)
-          raise NotImplementedError, "Subclasses must implement find_masters_crop_with_task_template_bundle!"
-        end
-
         # マスター API: 作物と農業タスクの関連付けを作成。
-        def create_masters_crop_task_template_association(user, input_dto)
+        def create_masters_crop_task_template_association(input_dto)
           raise NotImplementedError, "Subclasses must implement create_masters_crop_task_template_association"
         end
 
@@ -179,21 +159,21 @@ module Domain
         end
 
         # マスター API: 作物に紐づく農業タスクテンプレート一覧 JSON 行（永続はゲートウェイ内のみ）
-        def masters_crop_agricultural_task_templates_index_rows(user:, crop_id:)
+        def masters_crop_agricultural_task_templates_index_rows(crop_id:)
           raise NotImplementedError, "Subclasses must implement masters_crop_agricultural_task_templates_index_rows"
         end
 
-        # 作物にネストしたタスク関連付け: 未関連付けの農業タスクを picklist 用に id/name の Hash 配列で返す（作物解決は find_user_non_reference_crop_for_masters! と同一）
+        # 作物にネストしたタスク関連付け: 未関連付けの農業タスクを picklist 用に id/name の Hash 配列で返す（作物の編集認可は Interactor 側）
         def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:)
           raise NotImplementedError, "Subclasses must implement selectable_agricultural_task_picklist_rows_for_nested_templates"
         end
 
         # @return [Hash] { ok: true, row: Hash } | { ok: false, errors: Array<String> }
-        def update_masters_crop_task_template_for_api(user:, crop_id:, template_id:, attributes:)
+        def update_masters_crop_task_template_for_api(crop_id:, template_id:, attributes:)
           raise NotImplementedError, "Subclasses must implement update_masters_crop_task_template_for_api"
         end
 
-        def delete_masters_crop_task_template!(user:, crop_id:, template_id:)
+        def delete_masters_crop_task_template!(crop_id:, template_id:)
           raise NotImplementedError, "Subclasses must implement delete_masters_crop_task_template!"
         end
 

@@ -29,9 +29,8 @@ module Domain
           row = { "id" => 3, "name" => "x" }
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @gateway.expects(:update_masters_crop_task_template_for_api).with(
-            user: user,
             crop_id: 2,
             template_id: 3,
             attributes: { "name" => "x" },
@@ -52,9 +51,8 @@ module Domain
           crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @gateway.expects(:update_masters_crop_task_template_for_api).with(
-            user: user,
             crop_id: 2,
             template_id: 3,
             attributes: {},
@@ -81,9 +79,8 @@ module Domain
           crop_record = stub(is_reference: false, user_id: 1)
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:find_user_non_reference_crop_for_masters!).with(user, 2).returns(crop_record)
+          @gateway.expects(:find_by_id).with(2).returns(crop_record)
           @gateway.expects(:update_masters_crop_task_template_for_api).with(
-            user: user,
             crop_id: 2,
             template_id: 3,
             attributes: {},

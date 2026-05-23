@@ -15,7 +15,13 @@ module Domain
         # @return [Domain::Crop::Dtos::AuthorizedCropStageInCropContext, nil]
         def call(crop_id, crop_stage_id)
           user = @user_lookup.find(@user_id)
-          @gateway.find_masters_crop_with_crop_stage_bundle!(user, crop_id.to_i, crop_stage_id.to_i)
+          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
+          bundle = @gateway.find_crop_with_crop_stage_bundle!(crop_id.to_i, crop_stage_id.to_i, for_edit: false)
+          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, bundle.crop_entity)
+          bundle
+        rescue Domain::Shared::Policies::PolicyPermissionDenied
+          @failure_presenter.on_not_found
+          nil
         rescue Domain::Shared::Exceptions::RecordNotFound
           @failure_presenter.on_not_found
           nil

@@ -56,7 +56,7 @@ module Adapters
           index_relation_for_filter(filter).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
-        def authorized_pesticide_detail_output(id)
+        def find_pesticide_show_detail(id)
           pesticide = ::Pesticide.includes(:crop, :pest, :pesticide_usage_constraint, :pesticide_application_detail).find(id)
           Adapters::Pesticide::Mappers::PesticideMapper.detail_output_dto_from_record(pesticide)
         rescue ActiveRecord::RecordNotFound

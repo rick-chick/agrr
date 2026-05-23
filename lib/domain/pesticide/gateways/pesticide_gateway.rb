@@ -22,8 +22,8 @@ module Domain
         end
 
         # 農薬の HTML/API 詳細用 DTO（1 回の読み込みで関連名・制約を含む。認可は Interactor 側）
-        def authorized_pesticide_detail_output(id)
-          raise NotImplementedError, "Subclasses must implement authorized_pesticide_detail_output"
+        def find_pesticide_show_detail(id)
+          raise NotImplementedError, "Subclasses must implement find_pesticide_show_detail"
         end
 
         def find_pesticide_loaded_bundle!(id, for_edit:)

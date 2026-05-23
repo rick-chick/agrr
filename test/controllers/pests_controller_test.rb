@@ -2,6 +2,7 @@
 
 require "test_helper"
 
+# 他ユーザーの害虫詳細の閲覧拒否は PestDetailInteractor 単体で表明（show/edit 同一認可経路）。
 class PestsControllerTest < ActionDispatch::IntegrationTest
   include ActionView::RecordIdentifier
   setup do
@@ -391,15 +392,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert response_body.include?(my_pest.name), "自分の害虫が表示されるべき"
     assert_not response_body.include?(other_user_pest.name), "他人のユーザー害虫は表示されないべき"
     assert_not response_body.include?(reference_pest.name), "参照害虫は表示されないべき"
-  end
-
-  test "should not show other user pest detail" do
-    other_user = create(:user)
-    other_user_pest = create(:pest, :user_owned, user: other_user)
-
-    get pest_path(other_user_pest)
-    assert_redirected_to pests_path
-    assert_equal I18n.t("pests.flash.no_permission"), flash[:alert]
   end
 
   test "should show own pest detail" do

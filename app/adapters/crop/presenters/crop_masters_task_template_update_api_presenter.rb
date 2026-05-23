@@ -21,6 +21,8 @@ module Adapters
             @view.render_response(json: { errors: failure_dto.errors || [] }, status: :unprocessable_entity)
           when :association_not_found
             render_error(t_error(:association_not_found), :not_found)
+          when :crop_not_found
+            render_error(@translator.t("api.errors.crop_not_found"), :not_found)
           else
             if development_environment?
               raise ArgumentError,

@@ -7,7 +7,7 @@ module Domain
     module Interactors
       class CropLoadMastersAuthorizedCropStageInteractorTest < DomainLibTestCase
         test "returns dto when gateway succeeds" do
-          crop_entity = Domain::Crop::Entities::CropEntity.new(id: 1, user_id: 1, name: "x", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
+          crop_entity = Domain::Crop::Entities::CropEntity.new(id: 1, user_id: 9, name: "x", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
           crop_stage_entity = Domain::Crop::Entities::CropStageEntity.new(id: 2, crop_id: 1, name: "s", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
           dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContext.new(
             crop_entity: crop_entity,
@@ -15,14 +15,11 @@ module Domain
           )
 
           gateway = mock
-          gateway.expects(:find_masters_crop_with_crop_stage_bundle!).with(
-            :u,
-            1,
-            2,
-          ).returns(dto)
+          gateway.expects(:find_crop_with_crop_stage_bundle!).with(1, 2, for_edit: false).returns(dto)
 
+          user = stub(id: 9, admin?: false)
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :u, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Class.new do
             def on_not_found
@@ -44,14 +41,13 @@ module Domain
 
         test "calls failure presenter on record not found" do
           gateway = mock
-          gateway.expects(:find_masters_crop_with_crop_stage_bundle!).with(
-            :u,
-            1,
-            99,
-          ).raises(Domain::Shared::Exceptions::RecordNotFound, "x")
+          gateway.expects(:find_crop_with_crop_stage_bundle!).with(1, 99, for_edit: false).raises(
+            Domain::Shared::Exceptions::RecordNotFound, "x"
+          )
 
+          user = stub(id: 9, admin?: false)
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, :u, [ 9 ])
+          user_lookup.expect(:find, user, [ 9 ])
 
           failure = Minitest::Mock.new
           failure.expect(:on_not_found, nil)

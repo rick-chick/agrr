@@ -14,9 +14,8 @@ module Domain
         def call(task_id)
           user = @user_lookup.find(@user_id)
           access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
-          task_entity = @gateway.find_by_id(task_id)
-          Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, task_entity)
-          task_detail_dto = @gateway.authorized_agricultural_task_detail_output(task_id)
+          task_detail_dto = @gateway.find_agricultural_task_show_detail(task_id)
+          Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, task_detail_dto.task)
           @output_port.on_success(task_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
