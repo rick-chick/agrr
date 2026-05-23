@@ -106,7 +106,9 @@ module CompositionRoot
     def pesticide_gateway
       @pesticide_gateway ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway,
-        translator: translator
+        translator: translator,
+        crop_gateway: crop_gateway,
+        pest_gateway: pest_gateway
       )
     end
 

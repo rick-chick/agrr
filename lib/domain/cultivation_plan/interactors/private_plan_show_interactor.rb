@@ -25,7 +25,7 @@ module Domain
           end
 
           detail = @gateway.find_private_cultivation_plan_detail(user: user, plan_id: @plan_id)
-          dto = Domain::CultivationPlan::Assemblers::PrivatePlanShowAssembler.call(detail)
+          dto = Domain::CultivationPlan::Mappers::PrivatePlanShowMapper.call(detail)
           @output_port.on_success(ensure_planning_start_date_for_gantt(dto))
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise

@@ -4,8 +4,8 @@ module Domain
   module CultivationPlan
     module Interactors
       class RetrieveCultivationPlanInteractor
-        def initialize(output:, workbench_payload_gateway:)
-          @output = output
+        def initialize(output_port:, workbench_payload_gateway:)
+          @output_port = output_port
           @workbench_payload_gateway = workbench_payload_gateway
         end
 
@@ -17,16 +17,13 @@ module Domain
 
           case result[:kind]
           when :success
-            body = Domain::CultivationPlan::Mappers::CultivationPlanWorkbenchPayloadMapper.to_success_body(
-              result.fetch(:snapshot)
-            )
-            @output.on_success(body: body)
+            @output_port.on_success(snapshot: result.fetch(:snapshot))
           when :not_found
-            @output.on_not_found
+            @output_port.on_not_found
           when :unexpected, :record_invalid
-            @output.on_unexpected(message: result.fetch(:message))
+            @output_port.on_unexpected(message: result.fetch(:message))
           else
-            @output.on_unexpected(message: "Unknown data result: #{result[:kind].inspect}")
+            @output_port.on_unexpected(message: "Unknown data result: #{result[:kind].inspect}")
           end
         end
       end

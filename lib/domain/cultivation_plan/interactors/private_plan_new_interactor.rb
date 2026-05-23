@@ -23,7 +23,7 @@ module Domain
           end
 
           farm_choices = @farm_gateway.private_plan_new_farm_choices(user: user)
-          dto = Assemblers::PrivatePlanNewAssembler.call(
+          dto = Mappers::PrivatePlanNewMapper.call(
             farm_choices: farm_choices,
             default_plan_name: @translator.t("plans.default_plan_name")
           )

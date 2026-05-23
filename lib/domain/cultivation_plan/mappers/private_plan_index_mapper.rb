@@ -2,8 +2,8 @@
 
 module Domain
   module CultivationPlan
-    module Assemblers
-      class PrivatePlanIndexAssembler
+    module Mappers
+      class PrivatePlanIndexMapper
         def self.call(plan_rows:)
           Domain::CultivationPlan::Dtos::PrivatePlanIndex.new(plan_rows: plan_rows)
         end

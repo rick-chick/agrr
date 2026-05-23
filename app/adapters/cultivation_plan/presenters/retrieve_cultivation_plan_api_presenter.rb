@@ -9,7 +9,8 @@ module Adapters
           @translation_scope = translation_scope
         end
 
-        def on_success(body:)
+        def on_success(snapshot:)
+          body = Adapters::CultivationPlan::Mappers::CultivationPlanWorkbenchPayloadMapper.to_json_body(snapshot)
           @view.render json: body
         end
 

@@ -17,7 +17,7 @@
 
 ## Assembler
 
-- **`Domain::CultivationPlan::Assemblers::PrivatePlanShowAssembler.call(detail)`** — `PrivateCultivationPlanDetailDto` → **`PrivatePlanShowDto`**（ガント行は **`GanttChartRowHashes`** で `detail` の読み取り行から生成）。
+- **`Domain::CultivationPlan::Mappers::PrivatePlanShowMapper.call(detail)`** — `PrivateCultivationPlanDetailDto` → **`PrivatePlanShowDto`**（ガント行は **`GanttChartRowHashes`** で `detail` の読み取り行から生成）。
 
 ## Interactor
 

@@ -16,7 +16,7 @@ class PrivatePlanOptimizingInteractorTest < DomainLibTestCase
       optimization_phase_message: "msg",
       status: "optimizing"
     )
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingAssembler.call(read_model)
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanOptimizingMapper.call(read_model)
 
     gateway = mock
     gateway.expects(:private_plan_optimizing_snapshot).with(plan_id: 10, user: user).returns(read_model)

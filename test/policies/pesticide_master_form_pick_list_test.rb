@@ -2,15 +2,16 @@
 
 require "test_helper"
 
-# PesticideAssociationAccess は削除され、ロジックはアダプターの gateway メソッドへ移管された。
-# このテストはアダプターの実装を直接検証する。
-class PesticideAssociationAccessTest < ActiveSupport::TestCase
+# 農薬マスタフォームの作物・害虫プルダウンは CropPolicy / PestPolicy の index_list_filter 経由。
+class PesticideMasterFormPickListTest < ActiveSupport::TestCase
   setup do
     @user = create(:user)
     @admin = create(:user, :admin)
     @gateway = Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new(
       deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
-      translator: CompositionRoot.translator
+      translator: CompositionRoot.translator,
+      crop_gateway: CompositionRoot.crop_gateway,
+      pest_gateway: CompositionRoot.pest_gateway
     )
   end
 
@@ -19,7 +20,9 @@ class PesticideAssociationAccessTest < ActiveSupport::TestCase
     admin_crop = create(:crop, is_reference: false, user: @admin)
     other_user_crop = create(:crop, is_reference: false, user: @user)
 
-    rows = @gateway.list_crop_pick_rows_for_pesticide_master_form(user: @admin)
+    rows = @gateway.list_crop_pick_rows_for_pesticide_master_form(
+      crop_list_filter: Domain::Shared::Policies::CropPolicy.index_list_filter(@admin)
+    )
     ids = rows.map(&:id)
 
     assert_includes ids, reference_crop.id
@@ -32,7 +35,9 @@ class PesticideAssociationAccessTest < ActiveSupport::TestCase
     user_crop = create(:crop, is_reference: false, user: @user)
     other_user_crop = create(:crop, is_reference: false, user: create(:user))
 
-    rows = @gateway.list_crop_pick_rows_for_pesticide_master_form(user: @user)
+    rows = @gateway.list_crop_pick_rows_for_pesticide_master_form(
+      crop_list_filter: Domain::Shared::Policies::CropPolicy.index_list_filter(@user)
+    )
     ids = rows.map(&:id)
 
     assert_not_includes ids, reference_crop.id
@@ -45,7 +50,9 @@ class PesticideAssociationAccessTest < ActiveSupport::TestCase
     admin_pest = create(:pest, is_reference: false, user: @admin)
     other_user_pest = create(:pest, is_reference: false, user: @user)
 
-    rows = @gateway.list_pest_pick_rows_for_pesticide_master_form(user: @admin)
+    rows = @gateway.list_pest_pick_rows_for_pesticide_master_form(
+      pest_list_filter: Domain::Shared::Policies::PestPolicy.index_list_filter(@admin)
+    )
     ids = rows.map(&:id)
 
     assert_includes ids, reference_pest.id
@@ -58,7 +65,9 @@ class PesticideAssociationAccessTest < ActiveSupport::TestCase
     user_pest = create(:pest, is_reference: false, user: @user)
     other_user_pest = create(:pest, is_reference: false, user: create(:user))
 
-    rows = @gateway.list_pest_pick_rows_for_pesticide_master_form(user: @user)
+    rows = @gateway.list_pest_pick_rows_for_pesticide_master_form(
+      pest_list_filter: Domain::Shared::Policies::PestPolicy.index_list_filter(@user)
+    )
     ids = rows.map(&:id)
 
     assert_not_includes ids, reference_pest.id

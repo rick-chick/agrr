@@ -38,8 +38,9 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           if attrs
             bundle = @gateway.pesticide_html_master_form_bundle(
-              user: user,
-              assign_attributes: input_dto.assign_attributes_for_form || {}
+              assign_attributes: input_dto.assign_attributes_for_form || {},
+              crop_list_filter: Domain::Shared::Policies::CropPolicy.index_list_filter(user),
+              pest_list_filter: Domain::Shared::Policies::PestPolicy.index_list_filter(user)
             )
             @output_port.on_failure(Domain::Pesticide::Dtos::PesticideHtmlMasterFormFailure.new(message: e.message, bundle: bundle))
           else

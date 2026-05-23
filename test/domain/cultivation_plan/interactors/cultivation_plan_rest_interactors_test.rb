@@ -100,14 +100,13 @@ module Domain
             cultivations: [],
             available_crop_rows: []
           )
-          body = Domain::CultivationPlan::Mappers::CultivationPlanWorkbenchPayloadMapper.to_success_body(snapshot)
           @gateway.expects(:load_snapshot).with(
             auth: @auth,
             plan_id: 3
           ).returns(kind: :success, snapshot: snapshot)
-          @output.expects(:on_success).with(body: body)
+          @output.expects(:on_success).with(snapshot: snapshot)
 
-          RetrieveCultivationPlanInteractor.new(output: @output, workbench_payload_gateway: @gateway).call(
+          RetrieveCultivationPlanInteractor.new(output_port: @output, workbench_payload_gateway: @gateway).call(
             auth: @auth,
             plan_id: 3
           )

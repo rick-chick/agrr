@@ -58,7 +58,9 @@ module Domain
               user: user_b,
               pesticide_id: input_dto.pesticide_id,
               assign_attributes: input_dto.assign_attributes_for_form || {},
-              access_filter: access_filter_b
+              access_filter: access_filter_b,
+              crop_list_filter: Domain::Shared::Policies::CropPolicy.index_list_filter(user_b),
+              pest_list_filter: Domain::Shared::Policies::PestPolicy.index_list_filter(user_b)
             )
             @output_port.on_failure(Domain::Pesticide::Dtos::PesticideHtmlMasterFormFailure.new(message: e.message, bundle: bundle))
           end

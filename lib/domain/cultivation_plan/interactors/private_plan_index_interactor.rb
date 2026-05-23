@@ -23,7 +23,7 @@ module Domain
           end
 
           plan_rows = @gateway.private_plan_index_plan_rows(user: user)
-          dto = Assemblers::PrivatePlanIndexAssembler.call(plan_rows: plan_rows)
+          dto = Mappers::PrivatePlanIndexMapper.call(plan_rows: plan_rows)
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise

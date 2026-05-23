@@ -2,8 +2,8 @@
 
 module Domain
   module CultivationPlan
-    module Assemblers
-      class PrivatePlanShowAssembler
+    module Mappers
+      class PrivatePlanShowMapper
         def self.call(detail)
           new(detail).call
         end

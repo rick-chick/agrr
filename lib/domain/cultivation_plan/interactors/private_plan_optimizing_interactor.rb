@@ -17,7 +17,7 @@ module Domain
         def call
           user = @user_lookup.find(@user_id)
           read_model = @gateway.private_plan_optimizing_snapshot(plan_id: @plan_id, user: user)
-          dto = Assemblers::PrivatePlanOptimizingAssembler.call(read_model)
+          dto = Mappers::PrivatePlanOptimizingMapper.call(read_model)
           @output_port.on_success(dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("plans.errors.not_found")))

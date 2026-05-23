@@ -6,9 +6,11 @@ module Adapters
       class PesticideActiveRecordGateway < Domain::Pesticide::Gateways::PesticideGateway
         attr_accessor :translator
 
-        def initialize(deletion_undo_gateway:, translator:)
+        def initialize(deletion_undo_gateway:, translator:, crop_gateway:, pest_gateway:)
           @deletion_undo_gateway = deletion_undo_gateway
           @translator = translator
+          @crop_gateway = crop_gateway
+          @pest_gateway = pest_gateway
         end
 
         def find_by_id(pesticide_id)
@@ -120,75 +122,44 @@ module Adapters
           end
         end
 
-        def build_blank_pesticide_for_master_form
-          p = ::Pesticide.new
-          p.build_pesticide_usage_constraint
-          p.build_pesticide_application_detail
-          p
-        end
-
-        def build_pesticide_for_create_failure_master_form(attributes_hash)
-          ::Pesticide.new(attributes_hash || {})
-        end
-
         def ensure_nested_associations_for_pesticide_master_form!(pesticide)
           pesticide.build_pesticide_usage_constraint unless pesticide.pesticide_usage_constraint
           pesticide.build_pesticide_application_detail unless pesticide.pesticide_application_detail
           pesticide
         end
 
-        def assign_pesticide_attributes_for_master_form!(pesticide, attributes_hash)
-          pesticide.assign_attributes(attributes_hash || {})
-          pesticide
+        def list_crop_pick_rows_for_pesticide_master_form(crop_list_filter:)
+          crop_pick_entities(crop_list_filter).map do |crop|
+            Domain::Pesticide::Dtos::PesticideMasterFormCropPickRow.new(id: crop.id, name: crop.name)
+          end
         end
 
-        # マスタCRUD update 失敗時にパラメータをマージして {Forms::PesticideMasterForm} を返す
-        def merge_edit_pesticide_params_for_master_form!(user:, pesticide_id:, attributes:, access_filter:)
-          bundle = pesticide_html_master_form_bundle_after_update_merge!(user: user, pesticide_id: pesticide_id, assign_attributes: attributes, access_filter: access_filter)
-          Forms::PesticideMasterForm.from_snapshot(bundle.pesticide_master_form_snapshot)
+        def list_pest_pick_rows_for_pesticide_master_form(pest_list_filter:)
+          pest_pick_entities(pest_list_filter).map do |pest|
+            Domain::Pesticide::Dtos::PesticideMasterFormPestPickRow.new(id: pest.id, name: pest.name)
+          end
         end
 
-        # マスタCRUD create 失敗時に属性付き新規 Pesticide を {Forms::PesticideMasterForm} として返す
-        def build_new_pesticide_with_attributes_for_master_form(attributes:)
-          pesticide = ::Pesticide.new(attributes || {})
-          ensure_nested_associations_for_pesticide_master_form!(pesticide)
-          pesticide.valid?
-          snapshot = Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide, error_messages: pesticide.errors.full_messages)
-          Forms::PesticideMasterForm.from_snapshot(snapshot)
-        end
-
-        def list_crop_pick_rows_for_pesticide_master_form(user:)
-          accessible_crops_relation_for_pesticide_master_form(user: user).map { |c|
-            Domain::Pesticide::Dtos::PesticideMasterFormCropPickRow.new(id: c.id, name: c.name)
-          }
-        end
-
-        def list_pest_pick_rows_for_pesticide_master_form(user:)
-          accessible_pests_relation_for_pesticide_master_form(user: user).map { |p|
-            Domain::Pesticide::Dtos::PesticideMasterFormPestPickRow.new(id: p.id, name: p.name)
-          }
-        end
-
-        def pesticide_html_pick_list_bundle(user:)
+        def pesticide_html_pick_list_bundle(crop_list_filter:, pest_list_filter:)
           Domain::Pesticide::Dtos::PesticideHtmlPickListBundle.new(
-            crop_pick_rows: pesticide_crop_pick_rows(user: user),
-            pest_pick_rows: pesticide_pest_pick_rows(user: user)
+            crop_pick_rows: list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_list_filter),
+            pest_pick_rows: list_pest_pick_rows_for_pesticide_master_form(pest_list_filter: pest_list_filter)
           )
         end
 
-        def pesticide_html_master_form_bundle(user:, assign_attributes:)
+        def pesticide_html_master_form_bundle(assign_attributes:, crop_list_filter:, pest_list_filter:)
           pesticide = ::Pesticide.new(assign_attributes || {})
           ensure_nested_associations_for_pesticide_master_form!(pesticide)
           pesticide.valid?
           snap = Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide, error_messages: pesticide.errors.full_messages)
           Domain::Pesticide::Dtos::PesticideHtmlMasterFormBundle.new(
             pesticide_master_form_snapshot: snap,
-            crop_pick_rows: pesticide_crop_pick_rows(user: user),
-            pest_pick_rows: pesticide_pest_pick_rows(user: user)
+            crop_pick_rows: list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_list_filter),
+            pest_pick_rows: list_pest_pick_rows_for_pesticide_master_form(pest_list_filter: pest_list_filter)
           )
         end
 
-        def pesticide_html_master_form_bundle_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:)
+        def pesticide_html_master_form_bundle_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:, crop_list_filter:, pest_list_filter:)
           pesticide = find_authorized_model_for_edit(user, pesticide_id.to_i, access_filter: access_filter)
           ensure_nested_associations_for_pesticide_master_form!(pesticide)
           pesticide.assign_attributes(assign_attributes || {})
@@ -196,8 +167,8 @@ module Adapters
           snap = Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide, error_messages: pesticide.errors.full_messages)
           Domain::Pesticide::Dtos::PesticideHtmlMasterFormBundle.new(
             pesticide_master_form_snapshot: snap,
-            crop_pick_rows: pesticide_crop_pick_rows(user: user),
-            pest_pick_rows: pesticide_pest_pick_rows(user: user)
+            crop_pick_rows: list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_list_filter),
+            pest_pick_rows: list_pest_pick_rows_for_pesticide_master_form(pest_list_filter: pest_list_filter)
           )
         end
 
@@ -227,30 +198,12 @@ module Adapters
 
         private
 
-        def pesticide_crop_pick_rows(user:)
-          list_crop_pick_rows_for_pesticide_master_form(user: user)
+        def crop_pick_entities(crop_list_filter)
+          @crop_gateway.list_index_for_filter(crop_list_filter).sort_by { |crop| crop.name.to_s }
         end
 
-        def pesticide_pest_pick_rows(user:)
-          list_pest_pick_rows_for_pesticide_master_form(user: user)
-        end
-
-        # PesticideAssociationAccess#accessible_crops_scope のロジックをアダプター側へ移管（R1 違反解消）
-        def accessible_crops_relation_for_pesticide_master_form(user:)
-          if user.admin?
-            ::Crop.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::Crop.where(user_id: user.id, is_reference: false)
-          end.order(:name)
-        end
-
-        # PesticideAssociationAccess#accessible_pests_scope のロジックをアダプター側へ移管（R1 違反解消）
-        def accessible_pests_relation_for_pesticide_master_form(user:)
-          if user.admin?
-            ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::Pest.where(user_id: user.id, is_reference: false)
-          end.order(:name)
+        def pest_pick_entities(pest_list_filter)
+          @pest_gateway.list_index_for_filter(pest_list_filter).sort_by { |pest| pest.name.to_s }
         end
 
         def index_relation_for_filter(filter)

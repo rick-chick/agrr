@@ -13,7 +13,7 @@ class PrivatePlanNewInteractorTest < DomainLibTestCase
 
     translator = mock
     translator.expects(:t).with("plans.default_plan_name").returns("D")
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewAssembler.call(
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanNewMapper.call(
       farm_choices: [],
       default_plan_name: "D"
     )

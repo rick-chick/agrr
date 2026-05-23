@@ -2,8 +2,8 @@
 
 module Domain
   module CultivationPlan
-    module Assemblers
-      class PrivatePlanOptimizingAssembler
+    module Mappers
+      class PrivatePlanOptimizingMapper
         def self.call(read_model)
           Domain::CultivationPlan::Dtos::PrivatePlanOptimizing.new(
             id: read_model.id,

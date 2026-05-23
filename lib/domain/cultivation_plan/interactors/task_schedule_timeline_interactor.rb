@@ -27,7 +27,7 @@ module Domain
           end
 
           read_model = @gateway.task_schedule_timeline_snapshot(user: user, plan_id: @plan_id)
-          dto = Domain::CultivationPlan::Assemblers::TaskScheduleTimelineAssembler.call(read_model, today: @clock.today)
+          dto = Domain::CultivationPlan::Mappers::TaskScheduleTimelineMapper.call(read_model, today: @clock.today)
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise

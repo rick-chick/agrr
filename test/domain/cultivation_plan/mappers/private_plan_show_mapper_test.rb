@@ -2,7 +2,7 @@
 
 require "domain_lib_test_helper"
 
-class PrivatePlanShowAssemblerTest < DomainLibTestCase
+class PrivatePlanShowMapperTest < DomainLibTestCase
   test "call builds show dto and gantt row hashes from detail reads" do
     fc_read = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::FieldCultivationRead.new(
       id: 1,
@@ -38,7 +38,7 @@ class PrivatePlanShowAssemblerTest < DomainLibTestCase
       palette_crops: []
     )
 
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanShowAssembler.call(detail)
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanShowMapper.call(detail)
 
     assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShow, dto
     assert_equal 99, dto.id

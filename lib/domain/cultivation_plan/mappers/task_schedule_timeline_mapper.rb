@@ -2,8 +2,8 @@
 
 module Domain
   module CultivationPlan
-    module Assemblers
-      class TaskScheduleTimelineAssembler
+    module Mappers
+      class TaskScheduleTimelineMapper
         def self.call(read_model, today:)
           new(read_model, today).call
         end

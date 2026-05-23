@@ -4,8 +4,8 @@ module Domain
   module CultivationPlan
     module Ports
       class RetrieveCultivationPlanOutputPort
-        # @param body [Hash] render json にそのまま渡すハッシュ（success, data, totals）
-        def on_success(body:)
+        # @param snapshot [Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot]
+        def on_success(snapshot:)
           raise NotImplementedError
         end
 

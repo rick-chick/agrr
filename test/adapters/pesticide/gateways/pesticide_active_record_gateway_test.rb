@@ -6,54 +6,39 @@ class Adapters::Pesticide::Gateways::PesticideActiveRecordGatewayTest < ActiveSu
   setup do
     @gateway = Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new(
       deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
-      translator: CompositionRoot.translator
+      translator: CompositionRoot.translator,
+      crop_gateway: CompositionRoot.crop_gateway,
+      pest_gateway: CompositionRoot.pest_gateway
     )
     @user = create(:user)
   end
 
-  test "build_blank_pesticide_for_master_form returns new pesticide with nested builds" do
-    p = @gateway.build_blank_pesticide_for_master_form
+  test "pesticide_html_master_form_bundle builds nested associations on new record" do
+    crop_filter = Domain::Shared::Policies::CropPolicy.index_list_filter(@user)
+    pest_filter = Domain::Shared::Policies::PestPolicy.index_list_filter(@user)
 
-    assert_instance_of ::Pesticide, p
-    assert p.new_record?
-    assert p.pesticide_usage_constraint
-    assert p.pesticide_usage_constraint.new_record?
-    assert p.pesticide_application_detail
-    assert p.pesticide_application_detail.new_record?
+    bundle = @gateway.pesticide_html_master_form_bundle(
+      assign_attributes: { name: "n" },
+      crop_list_filter: crop_filter,
+      pest_list_filter: pest_filter
+    )
+
+    form = Forms::PesticideMasterForm.from_snapshot(bundle.pesticide_master_form_snapshot)
+    assert_equal "n", form.name
+    assert form.pesticide_usage_constraint
+    assert form.pesticide_application_detail
   end
 
-  test "build_pesticide_for_create_failure_master_form applies attributes on new record" do
-    p = @gateway.build_pesticide_for_create_failure_master_form({ name: "tmp-fail", active_ingredient: "X" })
+  test "list crop pick rows uses CropPolicy index_list_filter via crop gateway" do
+    crop_filter = Domain::Shared::Policies::CropPolicy.index_list_filter(@user)
+    user_crop = create(:crop, is_reference: false, user: @user)
+    create(:crop, is_reference: true, user: nil)
 
-    assert p.new_record?
-    assert_equal "tmp-fail", p.name
-    assert_equal "X", p.active_ingredient
-  end
+    pick_ids = @gateway.list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_filter).map(&:id)
+    entity_ids = CompositionRoot.crop_gateway.list_index_for_filter(crop_filter).map(&:id)
 
-  test "ensure_nested_associations_for_pesticide_master_form! builds missing nested records" do
-    p = ::Pesticide.new(name: "n")
-    @gateway.ensure_nested_associations_for_pesticide_master_form!(p)
-
-    assert p.pesticide_usage_constraint
-    assert p.pesticide_application_detail
-  end
-
-  test "assign_pesticide_attributes_for_master_form! updates in-memory attributes" do
-    p = ::Pesticide.new(name: "old")
-    @gateway.assign_pesticide_attributes_for_master_form!(p, { name: "new" })
-
-    assert_equal "new", p.name
-  end
-
-  test "accessible crops and pests relations return correct SQL for regular user" do
-    crops_rel = @gateway.send(:accessible_crops_relation_for_pesticide_master_form, user: @user)
-    pests_rel = @gateway.send(:accessible_pests_relation_for_pesticide_master_form, user: @user)
-
-    # 通常ユーザー: 自身の非参照レコードのみ
-    assert_match(/user_id/, crops_rel.to_sql)
-    assert_match(/is_reference/, crops_rel.to_sql)
-    assert_match(/user_id/, pests_rel.to_sql)
-    assert_match(/is_reference/, pests_rel.to_sql)
+    assert_equal entity_ids.sort, pick_ids.sort
+    assert_includes pick_ids, user_crop.id
   end
 
   test "list_index_for_filter owned_non_reference returns only that user's non-reference pesticides" do

@@ -84,7 +84,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     create(:cultivation_plan_crop, cultivation_plan: plan, crop: create(:crop, user: user, is_reference: false))
 
     read = @gateway.private_plan_optimizing_snapshot(plan_id: plan.id, user: user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanOptimizingAssembler.call(read)
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanOptimizingMapper.call(read)
 
     assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingSnapshot, read
     assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizing, dto
@@ -122,7 +122,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
                   optimization_phase_message: "working")
 
     read = @gateway.public_plan_optimizing_snapshot(plan_id: plan.id)
-    dto = Domain::CultivationPlan::Assemblers::PublicPlanOptimizingAssembler.call(read)
+    dto = Domain::CultivationPlan::Mappers::PublicPlanOptimizingMapper.call(read)
 
     assert_instance_of Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot, read
     assert_instance_of Domain::CultivationPlan::Dtos::PublicPlanOptimizing, dto
@@ -153,7 +153,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     user = create(:user)
 
     rows = @gateway.private_plan_index_plan_rows(user: user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexAssembler.call(plan_rows: rows)
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanIndexMapper.call(plan_rows: rows)
 
     assert_empty rows
     assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanIndex, dto
@@ -178,7 +178,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     create(:cultivation_plan_field, cultivation_plan: plan_a, name: "K1", area: 10, daily_fixed_cost: 0)
 
     rows = @gateway.private_plan_index_plan_rows(user: user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexAssembler.call(plan_rows: rows)
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanIndexMapper.call(plan_rows: rows)
 
     assert_equal 2, dto.plan_rows.size
     # recent: plan_b が新しいので先頭 → group_by で farm_b ブロックが先に登場し、その後 farm_a

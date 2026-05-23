@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-module Domain
+module Adapters
   module CultivationPlan
     module Mappers
       module CultivationPlanWorkbenchPayloadMapper
         module_function
 
         # @param snapshot [Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot]
-        # @return [Hash] API 互換（Presenter がそのまま render）
-        def to_success_body(snapshot)
+        # @return [Hash] REST workbench JSON（render json にそのまま渡す）
+        def to_json_body(snapshot)
           p = snapshot.plan
           {
             success: true,

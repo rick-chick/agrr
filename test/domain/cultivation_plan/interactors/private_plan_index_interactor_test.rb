@@ -18,7 +18,7 @@ class PrivatePlanIndexInteractorTest < DomainLibTestCase
       display_name: "Plan",
       created_at: Time.utc(2026, 1, 1, 12, 0, 0)
     )
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanIndexAssembler.call(plan_rows: [ row ])
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanIndexMapper.call(plan_rows: [ row ])
 
     gateway = mock
     gateway.expects(:private_plan_index_plan_rows).with(user: user).returns([ row ])

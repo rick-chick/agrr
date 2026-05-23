@@ -141,7 +141,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     create(:farm, user: other, is_reference: false)
 
     choices = @gateway.private_plan_new_farm_choices(user: @user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewAssembler.call(
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanNewMapper.call(
       farm_choices: choices,
       default_plan_name: I18n.t("plans.default_plan_name")
     )
@@ -159,7 +159,7 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     create(:field, farm: low, area: 5.0)
 
     choices = @gateway.private_plan_new_farm_choices(user: @user)
-    dto = Domain::CultivationPlan::Assemblers::PrivatePlanNewAssembler.call(
+    dto = Domain::CultivationPlan::Mappers::PrivatePlanNewMapper.call(
       farm_choices: choices,
       default_plan_name: I18n.t("plans.default_plan_name")
     )

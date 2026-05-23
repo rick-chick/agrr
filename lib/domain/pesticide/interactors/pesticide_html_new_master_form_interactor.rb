@@ -13,7 +13,11 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          bundle = @gateway.pesticide_html_master_form_bundle(user: user, assign_attributes: {})
+          bundle = @gateway.pesticide_html_master_form_bundle(
+            assign_attributes: {},
+            crop_list_filter: Domain::Shared::Policies::CropPolicy.index_list_filter(user),
+            pest_list_filter: Domain::Shared::Policies::PestPolicy.index_list_filter(user)
+          )
           @output_port.on_success(bundle)
         end
       end

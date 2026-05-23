@@ -20,7 +20,7 @@ module Domain
           end
 
           read_model = @gateway.public_plan_optimizing_snapshot(plan_id: @plan_id)
-          dto = Assemblers::PublicPlanOptimizingAssembler.call(read_model)
+          dto = Mappers::PublicPlanOptimizingMapper.call(read_model)
           @output_port.on_success(dto)
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("public_plans.errors.not_found")))
