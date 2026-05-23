@@ -140,35 +140,24 @@ module Adapters
           end
         end
 
-        def pesticide_html_pick_list_bundle(crop_list_filter:, pest_list_filter:)
-          Domain::Pesticide::Dtos::PesticideHtmlPickListBundle.new(
-            crop_pick_rows: list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_list_filter),
-            pest_pick_rows: list_pest_pick_rows_for_pesticide_master_form(pest_list_filter: pest_list_filter)
-          )
-        end
-
-        def pesticide_html_master_form_bundle(assign_attributes:, crop_list_filter:, pest_list_filter:)
+        def build_pesticide_master_form_snapshot_for_new(assign_attributes:)
           pesticide = ::Pesticide.new(assign_attributes || {})
           ensure_nested_associations_for_pesticide_master_form!(pesticide)
           pesticide.valid?
-          snap = Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide, error_messages: pesticide.errors.full_messages)
-          Domain::Pesticide::Dtos::PesticideHtmlMasterFormBundle.new(
-            pesticide_master_form_snapshot: snap,
-            crop_pick_rows: list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_list_filter),
-            pest_pick_rows: list_pest_pick_rows_for_pesticide_master_form(pest_list_filter: pest_list_filter)
+          Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(
+            pesticide,
+            error_messages: pesticide.errors.full_messages
           )
         end
 
-        def pesticide_html_master_form_bundle_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:, crop_list_filter:, pest_list_filter:)
+        def build_pesticide_master_form_snapshot_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:)
           pesticide = find_authorized_model_for_edit(user, pesticide_id.to_i, access_filter: access_filter)
           ensure_nested_associations_for_pesticide_master_form!(pesticide)
           pesticide.assign_attributes(assign_attributes || {})
           pesticide.valid?
-          snap = Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide, error_messages: pesticide.errors.full_messages)
-          Domain::Pesticide::Dtos::PesticideHtmlMasterFormBundle.new(
-            pesticide_master_form_snapshot: snap,
-            crop_pick_rows: list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_list_filter),
-            pest_pick_rows: list_pest_pick_rows_for_pesticide_master_form(pest_list_filter: pest_list_filter)
+          Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(
+            pesticide,
+            error_messages: pesticide.errors.full_messages
           )
         end
 

@@ -54,15 +54,13 @@ module Domain
           else
             user_b = @user_lookup.find(@user_id)
             access_filter_b = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user_b)
-            bundle = @gateway.pesticide_html_master_form_bundle_after_update_merge!(
+            bundle = PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_after_update_merge(
               user: user_b,
               pesticide_id: input_dto.pesticide_id,
               assign_attributes: input_dto.assign_attributes_for_form || {},
-              access_filter: access_filter_b,
-              crop_list_filter: Domain::Shared::Policies::CropPolicy.index_list_filter(user_b),
-              pest_list_filter: Domain::Shared::Policies::PestPolicy.index_list_filter(user_b)
+              access_filter: access_filter_b
             )
-            @output_port.on_failure(Domain::Pesticide::Dtos::PesticideHtmlMasterFormFailure.new(message: e.message, bundle: bundle))
+            @output_port.on_failure(Domain::Pesticide::Dtos::PesticideMasterFormFailure.new(message: e.message, bundle: bundle))
           end
         end
       end

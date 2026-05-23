@@ -3,14 +3,14 @@
 module Domain
   module Crop
     module Interactors
-      class CropHtmlNewMasterFormInteractor
+      class CropNewMasterFormInteractor
         def initialize(output_port:, gateway:)
           @output_port = output_port
           @gateway = gateway
         end
 
         def call
-          snapshot = @gateway.blank_crop_master_form_snapshot_for_html
+          snapshot = @gateway.blank_crop_master_form_snapshot
           @output_port.on_success(snapshot)
         end
       end

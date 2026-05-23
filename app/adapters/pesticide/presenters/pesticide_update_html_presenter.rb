@@ -26,7 +26,7 @@ module Adapters
           end
 
           @view.flash.now[:alert] = msg
-          if error_dto.is_a?(Domain::Pesticide::Dtos::PesticideHtmlMasterFormFailure)
+          if error_dto.is_a?(Domain::Pesticide::Dtos::PesticideMasterFormFailure)
             b = error_dto.bundle
             @view.instance_variable_set(:@pesticide, Forms::PesticideMasterForm.from_snapshot(b.pesticide_master_form_snapshot))
             @view.instance_variable_set(:@crops, b.crop_pick_rows)

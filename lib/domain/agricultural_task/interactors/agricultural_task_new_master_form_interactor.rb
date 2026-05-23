@@ -3,7 +3,7 @@
 module Domain
   module AgriculturalTask
     module Interactors
-      class AgriculturalTaskHtmlNewMasterFormInteractor
+      class AgriculturalTaskNewMasterFormInteractor
         def initialize(output_port:, user_id:, gateway:, user_lookup:)
           @output_port = output_port
           @user_id = user_id

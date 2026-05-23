@@ -39,7 +39,7 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           if attrs
             task = @gateway.build_after_create_failure_agricultural_task_for_master_form!(user: user, attributes: attrs)
-            @output_port.on_failure(Domain::AgriculturalTask::Dtos::AgriculturalTaskHtmlCreateFailure.new(message: e.message, task_for_form: task))
+            @output_port.on_failure(Domain::AgriculturalTask::Dtos::AgriculturalTaskMasterFormCreateFailure.new(message: e.message, task_for_form: task))
           else
             @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
           end

@@ -21,8 +21,8 @@ class FertilizesController < ApplicationController
 
   # GET /fertilizes/new
   def new
-    presenter = Adapters::Fertilize::Presenters::FertilizeHtmlNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Fertilize::Interactors::FertilizeHtmlNewMasterFormInteractor.new(output_port: presenter,
+    presenter = Adapters::Fertilize::Presenters::FertilizeNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Fertilize::Interactors::FertilizeNewMasterFormInteractor.new(output_port: presenter,
       gateway: CompositionRoot.fertilize_gateway).call
   end
 

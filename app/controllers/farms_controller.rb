@@ -56,8 +56,8 @@ class FarmsController < ApplicationController
 
   # GET /farms/new
   def new
-    presenter = Adapters::Farm::Presenters::FarmHtmlNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Farm::Interactors::FarmHtmlNewMasterFormInteractor.new(output_port: presenter,
+    presenter = Adapters::Farm::Presenters::FarmNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Farm::Interactors::FarmNewMasterFormInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.farm_gateway).call
   end
 

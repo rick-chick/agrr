@@ -3,7 +3,7 @@
 module Domain
   module AgriculturalTask
     module Ports
-      class AgriculturalTaskHtmlNewMasterFormOutputPort
+      class AgriculturalTaskNewMasterFormOutputPort
         def on_success(task_for_form)
           raise NotImplementedError, "Subclasses must implement on_success"
         end

@@ -35,8 +35,8 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks/new
   def new
-    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskHtmlNewMasterFormHtmlPresenter.new(view: self)
-    Domain::AgriculturalTask::Interactors::AgriculturalTaskHtmlNewMasterFormInteractor.new(
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskNewMasterFormHtmlPresenter.new(view: self)
+    Domain::AgriculturalTask::Interactors::AgriculturalTaskNewMasterFormInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
       gateway: CompositionRoot.agricultural_task_gateway,
@@ -222,8 +222,8 @@ class AgriculturalTasksController < ApplicationController
   def apply_agricultural_task_update_form_snapshot(form_resubmit)
     return unless form_resubmit
 
-    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskHtmlUpdateFailureHtmlPresenter.new(view: self)
-    Domain::AgriculturalTask::Interactors::AgriculturalTaskHtmlUpdateFailureInteractor.new(
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateFormSnapshotHtmlPresenter.new(view: self)
+    Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateFormSnapshotInteractor.new(
       output_port: presenter,
       user_id: current_user.id,
       gateway: CompositionRoot.agricultural_task_gateway,

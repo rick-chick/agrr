@@ -3,7 +3,7 @@
 module Adapters
   module Pesticide
     module Presenters
-      class PesticideHtmlNewMasterFormHtmlPresenter < Domain::Pesticide::Ports::PesticideHtmlNewMasterFormOutputPort
+      class PesticideNewMasterFormHtmlPresenter < Domain::Pesticide::Ports::PesticideNewMasterFormOutputPort
         def initialize(view:)
           @view = view
         end

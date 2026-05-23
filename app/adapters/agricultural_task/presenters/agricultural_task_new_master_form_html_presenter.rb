@@ -3,7 +3,7 @@
 module Adapters
   module AgriculturalTask
     module Presenters
-      class AgriculturalTaskHtmlNewMasterFormHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskHtmlNewMasterFormOutputPort
+      class AgriculturalTaskNewMasterFormHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskNewMasterFormOutputPort
         def initialize(view:)
           @view = view
         end

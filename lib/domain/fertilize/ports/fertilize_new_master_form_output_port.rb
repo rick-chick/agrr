@@ -3,8 +3,7 @@
 module Domain
   module Fertilize
     module Ports
-      class FertilizeHtmlNewMasterFormOutputPort
-        # @param master_form_snapshot [Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot]
+      class FertilizeNewMasterFormOutputPort
         def on_success(master_form_snapshot)
           raise NotImplementedError, "Subclasses must implement on_success"
         end

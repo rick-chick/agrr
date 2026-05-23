@@ -3,7 +3,7 @@
 module Adapters
   module Field
     module Presenters
-      class FieldHtmlNewMasterFormHtmlPresenter < Domain::Field::Ports::FieldHtmlNewMasterFormOutputPort
+      class FieldNewMasterFormHtmlPresenter < Domain::Field::Ports::FieldNewMasterFormOutputPort
         def initialize(view:)
           @view = view
         end

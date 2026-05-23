@@ -3,8 +3,8 @@
 module Domain
   module Pesticide
     module Dtos
-      # 農薬マスタ HTML フォーム用（スナップショット + プルダウン行）。
-      class PesticideHtmlMasterFormBundle
+      # 農薬マスタフォーム用（スナップショット + プルダウン行）。Interactor が gateway 読み取りを組み立てる。
+      class PesticideMasterFormBundle
         attr_reader :pesticide_master_form_snapshot, :crop_pick_rows, :pest_pick_rows
 
         # @param pesticide_master_form_snapshot [Domain::Pesticide::Dtos::PesticideMasterFormSnapshot]

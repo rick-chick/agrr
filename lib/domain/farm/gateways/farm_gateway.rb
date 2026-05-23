@@ -140,10 +140,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement planning_schedule_user_owned_farms"
         end
 
-        # HTML 農場マスタ新規フォーム用スナップショット（永続化しない）
+        # 農場マスタ新規フォーム用スナップショット（永続化しない）
         # @return [Domain::Farm::Dtos::FarmMasterFormSnapshot]
-        def blank_farm_master_form_snapshot_for_new_html!(user_id:)
-          raise NotImplementedError, "Subclasses must implement blank_farm_master_form_snapshot_for_new_html!"
+        def blank_farm_master_form_snapshot_for_new!(user_id:)
+          raise NotImplementedError, "Subclasses must implement blank_farm_master_form_snapshot_for_new!"
         end
       end
     end

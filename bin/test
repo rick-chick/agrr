@@ -21,4 +21,11 @@ fi
 
 echo "🚀 テストを実行します..."
 # AGRR専用スクリプトからの実行であることを示す環境変数を設定
-AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rails.sh" "$@"
+if [ $# -eq 0 ]; then
+  AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rails.sh"
+  echo ""
+  echo "🚀 lib/domain（Rails-free）テストを実行します..."
+  AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-domain-lib.sh"
+else
+  AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rails.sh" "$@"
+fi

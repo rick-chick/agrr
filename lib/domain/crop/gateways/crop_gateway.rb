@@ -151,8 +151,8 @@ module Domain
 
         # マスタCRUD: HTML 新規フォーム用の空スナップショット（永続化しない）
         # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def blank_crop_master_form_snapshot_for_html
-          raise NotImplementedError, "Subclasses must implement blank_crop_master_form_snapshot_for_html"
+        def blank_crop_master_form_snapshot
+          raise NotImplementedError, "Subclasses must implement blank_crop_master_form_snapshot"
         end
 
         # マスタCRUD: create 失敗時の再描画用（未保存 Crop をスナップショット化。永続化しない）

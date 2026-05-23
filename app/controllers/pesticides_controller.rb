@@ -19,15 +19,15 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides/new
   def new
-    presenter = Adapters::Pesticide::Presenters::PesticideHtmlNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Pesticide::Interactors::PesticideHtmlNewMasterFormInteractor.new(output_port: presenter,
+    presenter = Adapters::Pesticide::Presenters::PesticideNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideNewMasterFormInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pesticides/:id/edit
   def edit
-    presenter = Adapters::Pesticide::Presenters::PesticideHtmlPickListsHtmlPresenter.new(view: self)
-    Domain::Pesticide::Interactors::PesticideHtmlPickListsInteractor.new(output_port: presenter,
+    presenter = Adapters::Pesticide::Presenters::PesticideEditFormPickListsHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideEditFormPickListsInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 

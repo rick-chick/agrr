@@ -20,7 +20,7 @@ module Adapters
           end
 
           @view.flash.now[:alert] = msg
-          if error_dto.is_a?(Domain::AgriculturalTask::Dtos::AgriculturalTaskHtmlCreateFailure)
+          if error_dto.is_a?(Domain::AgriculturalTask::Dtos::AgriculturalTaskMasterFormCreateFailure)
             @view.instance_variable_set(:@agricultural_task, error_dto.task_for_form)
           end
           @view.render :new, status: :unprocessable_entity

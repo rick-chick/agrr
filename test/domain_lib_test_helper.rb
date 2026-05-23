@@ -7,8 +7,8 @@
 # ※ `minitest/pride` は active_support を読み込むため domain-lib-test では使用しない。
 # （ドメインコードに ActiveSupport 定数が紛れ込んでも検知できなくなる）
 #
-# 使い方:
-#   bundle exec ruby -Ilib:test test/domain/shared/hash_keys_test.rb
+# 使い方（test/domain/* の先頭 require は本ファイルのみ。test_helper 禁止）:
+#   .cursor/skills/test-common/scripts/run-test-domain-lib.sh [test/domain/...]
 #   bundle exec bin/domain-lib-test
 #
 ENV["RAILS_ENV"] ||= "test"
@@ -28,8 +28,6 @@ unless defined?(Rails::Application) && Rails.application&.initialized?
   I18n.backend.load_translations if I18n.backend.respond_to?(:load_translations)
   I18n.default_locale = :ja
   I18n.locale = :ja
-
-  require ROOT.join("test/support/domain_lib_test_support").to_s
 end
 
 require "zeitwerk"
@@ -46,7 +44,6 @@ unless defined?(Rails::Application) && Rails.application&.initialized?
 end
 
 require ROOT.join("test/support/capturing_logger").to_s
-require ROOT.join("test/support/domain_lib_test_support").to_s unless defined?(DomainLibTestSupport)
 
 # Minitest が Gem の minitest/rails_plugin（railties）を読むと ActiveSupport が載る。
 # domain-lib-test では `Minitest.run` 直前のプラグイン読込を抑止する（`--no-plugins` / MT_NO_PLUGINS と同じ）。

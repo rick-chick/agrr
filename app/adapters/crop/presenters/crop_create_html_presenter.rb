@@ -20,7 +20,7 @@ module Adapters
           end
 
           @view.flash.now[:alert] = msg
-          if error_dto.is_a?(Domain::Crop::Dtos::CropHtmlMasterFormFailure)
+          if error_dto.is_a?(Domain::Crop::Dtos::CropMasterFormFailure)
             @view.instance_variable_set(:@crop, Forms::CropMasterForm.from_snapshot(error_dto.master_form_snapshot))
           end
           @view.render_form(:new, status: :unprocessable_entity)

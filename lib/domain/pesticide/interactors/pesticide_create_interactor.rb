@@ -37,12 +37,11 @@ module Domain
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           if attrs
-            bundle = @gateway.pesticide_html_master_form_bundle(
-              assign_attributes: input_dto.assign_attributes_for_form || {},
-              crop_list_filter: Domain::Shared::Policies::CropPolicy.index_list_filter(user),
-              pest_list_filter: Domain::Shared::Policies::PestPolicy.index_list_filter(user)
+            bundle = PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_for_new(
+              user: user,
+              assign_attributes: input_dto.assign_attributes_for_form || {}
             )
-            @output_port.on_failure(Domain::Pesticide::Dtos::PesticideHtmlMasterFormFailure.new(message: e.message, bundle: bundle))
+            @output_port.on_failure(Domain::Pesticide::Dtos::PesticideMasterFormFailure.new(message: e.message, bundle: bundle))
           else
             @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
           end

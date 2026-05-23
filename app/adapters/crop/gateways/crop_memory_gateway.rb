@@ -89,12 +89,8 @@ module Adapters
           )
         end
 
-        def build_blank_crop_for_master_form
-          ::Crop.new
-        end
-
         # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def blank_crop_master_form_snapshot_for_html
+        def blank_crop_master_form_snapshot
           Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(::Crop.new)
         end
 

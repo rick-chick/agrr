@@ -3,8 +3,7 @@
 module Domain
   module AgriculturalTask
     module Dtos
-      # 農業作業マスタ HTML 作成検証失敗時（ゲートウェイが組み立てた未保存モデルをフォームへ戻す）。
-      class AgriculturalTaskHtmlCreateFailure
+      class AgriculturalTaskMasterFormCreateFailure
         attr_reader :message, :task_for_form
 
         def initialize(message:, task_for_form:)

@@ -3,8 +3,8 @@
 module Domain
   module Pesticide
     module Ports
-      class PesticideHtmlNewMasterFormOutputPort
-        # @param bundle [Domain::Pesticide::Dtos::PesticideHtmlMasterFormBundle]
+      class PesticideNewMasterFormOutputPort
+        # @param bundle [Domain::Pesticide::Dtos::PesticideMasterFormBundle]
         def on_success(bundle)
           raise NotImplementedError, "Subclasses must implement on_success"
         end

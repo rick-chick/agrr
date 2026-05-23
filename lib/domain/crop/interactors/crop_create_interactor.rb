@@ -38,7 +38,7 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           if attrs
             snapshot = @gateway.build_new_crop_with_attributes_for_master_form(attributes: attrs)
-            @output_port.on_failure(Domain::Crop::Dtos::CropHtmlMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
+            @output_port.on_failure(Domain::Crop::Dtos::CropMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
           else
             @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
           end

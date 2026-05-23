@@ -3,8 +3,7 @@
 module Domain
   module Field
     module Ports
-      class FieldHtmlNewMasterFormOutputPort
-        # @param master_form_snapshot [Domain::Farm::Dtos::FieldMasterFormSnapshot]
+      class FieldNewMasterFormOutputPort
         def on_success(master_form_snapshot)
           raise NotImplementedError, "Subclasses must implement on_success"
         end

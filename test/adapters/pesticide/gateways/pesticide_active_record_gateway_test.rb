@@ -13,17 +13,10 @@ class Adapters::Pesticide::Gateways::PesticideActiveRecordGatewayTest < ActiveSu
     @user = create(:user)
   end
 
-  test "pesticide_html_master_form_bundle builds nested associations on new record" do
-    crop_filter = Domain::Shared::Policies::CropPolicy.index_list_filter(@user)
-    pest_filter = Domain::Shared::Policies::PestPolicy.index_list_filter(@user)
+  test "build_pesticide_master_form_snapshot_for_new builds nested associations on new record" do
+    snapshot = @gateway.build_pesticide_master_form_snapshot_for_new(assign_attributes: { name: "n" })
 
-    bundle = @gateway.pesticide_html_master_form_bundle(
-      assign_attributes: { name: "n" },
-      crop_list_filter: crop_filter,
-      pest_list_filter: pest_filter
-    )
-
-    form = Forms::PesticideMasterForm.from_snapshot(bundle.pesticide_master_form_snapshot)
+    form = Forms::PesticideMasterForm.from_snapshot(snapshot)
     assert_equal "n", form.name
     assert form.pesticide_usage_constraint
     assert form.pesticide_application_detail

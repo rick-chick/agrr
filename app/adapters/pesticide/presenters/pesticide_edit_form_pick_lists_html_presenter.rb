@@ -3,7 +3,7 @@
 module Adapters
   module Pesticide
     module Presenters
-      class PesticideHtmlPickListsHtmlPresenter < Domain::Pesticide::Ports::PesticideHtmlPickListsOutputPort
+      class PesticideEditFormPickListsHtmlPresenter < Domain::Pesticide::Ports::PesticideEditFormPickListsOutputPort
         def initialize(view:)
           @view = view
         end

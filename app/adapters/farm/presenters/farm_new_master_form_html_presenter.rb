@@ -3,7 +3,7 @@
 module Adapters
   module Farm
     module Presenters
-      class FarmHtmlNewMasterFormHtmlPresenter < Domain::Farm::Ports::FarmHtmlNewMasterFormOutputPort
+      class FarmNewMasterFormHtmlPresenter < Domain::Farm::Ports::FarmNewMasterFormOutputPort
         def initialize(view:)
           @view = view
         end

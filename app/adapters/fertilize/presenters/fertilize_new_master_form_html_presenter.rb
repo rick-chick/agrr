@@ -3,7 +3,7 @@
 module Adapters
   module Fertilize
     module Presenters
-      class FertilizeHtmlNewMasterFormHtmlPresenter < Domain::Fertilize::Ports::FertilizeHtmlNewMasterFormOutputPort
+      class FertilizeNewMasterFormHtmlPresenter < Domain::Fertilize::Ports::FertilizeNewMasterFormOutputPort
         def initialize(view:)
           @view = view
         end

@@ -3,7 +3,7 @@
 module Adapters
   module Crop
     module Presenters
-      class CropHtmlNewMasterFormHtmlPresenter < Domain::Crop::Ports::CropHtmlNewMasterFormOutputPort
+      class CropNewMasterFormHtmlPresenter < Domain::Crop::Ports::CropNewMasterFormOutputPort
         def initialize(view:)
           @view = view
         end

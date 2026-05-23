@@ -11,11 +11,11 @@ ENV["RAILS_ENV"] ||= "test"
 root = File.expand_path("..", __dir__)
 Dir.chdir(root)
 
+require File.join(root, "test/support/domain_lib_test_convention.rb")
+
 tests =
   if ARGV.empty?
-    Dir.glob(File.join(root, "test/domain/**/*_test.rb")).sort.reject do |f|
-      File.read(f).include?('require "test_helper"')
-    end
+    DomainLibTestConvention.all_domain_test_paths(root)
   else
     ARGV.map { |t| File.absolute_path(t, root) }
   end
@@ -23,6 +23,8 @@ tests =
 unless tests.all? { |p| File.file?(p) }
   abort "domain-lib-test: 指定されたパスのファイルが見つかりません: #{tests.inspect}"
 end
+
+DomainLibTestConvention.assert_ok!(tests, root: root)
 
 # ruby foo.rb bar.rb は bar を実行しない（ARGV に入るだけ）ため、明示的に load する。
 load_script = tests.map { |p| "load(#{p.dump})" }.join("; ")

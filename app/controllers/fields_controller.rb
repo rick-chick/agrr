@@ -22,8 +22,8 @@ class FieldsController < ApplicationController
 
   # GET /farms/:farm_id/fields/new
   def new
-    presenter = Adapters::Field::Presenters::FieldHtmlNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Field::Interactors::FieldHtmlNewMasterFormInteractor.new(output_port: presenter,
+    presenter = Adapters::Field::Presenters::FieldNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Field::Interactors::FieldNewMasterFormInteractor.new(output_port: presenter,
       user_id: current_user.id, farm_id: @farm.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 

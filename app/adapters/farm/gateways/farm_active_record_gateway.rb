@@ -199,7 +199,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def blank_farm_master_form_snapshot_for_new_html!(user_id:)
+        def blank_farm_master_form_snapshot_for_new!(user_id:)
           farm = build_blank_farm_for_master_form!(user_id: user_id)
           Adapters::Farm::Mappers::FarmMasterFormSnapshotMapper.from_record(farm)
         end

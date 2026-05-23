@@ -3,7 +3,7 @@
 module Domain
   module Field
     module Interactors
-      class FieldHtmlNewMasterFormInteractor
+      class FieldNewMasterFormInteractor
         def initialize(output_port:, user_id:, farm_id:, gateway:, user_lookup:)
           @output_port = output_port
           @user_id = user_id

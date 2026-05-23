@@ -3,7 +3,7 @@
 module Adapters
   module AgriculturalTask
     module Presenters
-      class AgriculturalTaskHtmlUpdateFailureHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskHtmlUpdateFailureOutputPort
+      class AgriculturalTaskUpdateFormSnapshotHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskUpdateFormSnapshotOutputPort
         def initialize(view:)
           @view = view
         end

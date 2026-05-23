@@ -162,7 +162,7 @@ module Adapters
           fertilize
         end
 
-        def blank_fertilize_master_form_snapshot_for_html
+        def blank_fertilize_master_form_snapshot
           Adapters::Fertilize::Mappers::FertilizeMasterFormSnapshotMapper.from_record(build_blank_fertilize_for_master_form)
         end
 

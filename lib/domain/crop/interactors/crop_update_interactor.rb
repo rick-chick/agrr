@@ -61,7 +61,7 @@ module Domain
               attributes: input_dto.to_nested_crop_attributes_hash,
               access_filter: access_filter_b
             )
-            @output_port.on_failure(Domain::Crop::Dtos::CropHtmlMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
+            @output_port.on_failure(Domain::Crop::Dtos::CropMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
           end
         end
       end

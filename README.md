@@ -82,7 +82,7 @@ docker compose up
 
 ```bash
 .cursor/skills/test-common/scripts/run-test-rails.sh        # Rails 全体
-.cursor/skills/test-domain-lib/scripts/run-test-domain-lib.sh   # lib/domain のみ
+.cursor/skills/test-common/scripts/run-test-domain-lib.sh   # test/domain（Rails-free）
 .cursor/skills/test-common/scripts/run-test-frontend.sh     # Angular
 ```
 

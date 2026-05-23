@@ -60,7 +60,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_for_crop_with_user"
         end
 
-        # 農薬マスタ HTML フォームの作物プルダウン行（filter は Interactor が Policy で組み立てる）
+        # 農薬マスタフォームの作物プルダウン行（filter は Interactor が Policy で組み立てる）
         # @param crop_list_filter [Domain::Shared::ValueObjects::ReferenceIndexListFilter]
         # @return [Array<Domain::Pesticide::Dtos::PesticideMasterFormCropPickRow>]
         def list_crop_pick_rows_for_pesticide_master_form(crop_list_filter:)
@@ -73,19 +73,16 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_pest_pick_rows_for_pesticide_master_form"
         end
 
-        # HTML 新規・作成検証失敗の再描画用（スナップショット + プルダウン行）
-        def pesticide_html_master_form_bundle(assign_attributes:, crop_list_filter:, pest_list_filter:)
-          raise NotImplementedError, "Subclasses must implement pesticide_html_master_form_bundle"
+        # 新規・作成検証失敗の再描画用スナップショット（永続化しない）
+        # @return [Domain::Pesticide::Dtos::PesticideMasterFormSnapshot]
+        def build_pesticide_master_form_snapshot_for_new(assign_attributes:)
+          raise NotImplementedError, "Subclasses must implement build_pesticide_master_form_snapshot_for_new"
         end
 
-        # HTML 更新検証失敗の再描画用（スナップショット + プルダウン行）
-        def pesticide_html_master_form_bundle_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:, crop_list_filter:, pest_list_filter:)
-          raise NotImplementedError, "Subclasses must implement pesticide_html_master_form_bundle_after_update_merge!"
-        end
-
-        # HTML 編集画面の作物・害虫プルダウン行のみ
-        def pesticide_html_pick_list_bundle(crop_list_filter:, pest_list_filter:)
-          raise NotImplementedError, "Subclasses must implement pesticide_html_pick_list_bundle"
+        # 更新検証失敗の再描画用スナップショット（永続化しない）
+        # @return [Domain::Pesticide::Dtos::PesticideMasterFormSnapshot]
+        def build_pesticide_master_form_snapshot_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement build_pesticide_master_form_snapshot_after_update_merge!"
         end
       end
     end
