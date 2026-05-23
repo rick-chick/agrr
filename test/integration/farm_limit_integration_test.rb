@@ -143,7 +143,8 @@ class FarmLimitIntegrationTest < ActiveSupport::TestCase
       session_data: session_data,
       logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-      crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway
+      crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+      clock: CompositionRoot.clock
     ).call
 
     # 失敗することを確認

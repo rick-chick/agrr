@@ -11,7 +11,8 @@ module Adapters
         PREFIX = "weather_data"
         BUCKET_ENV = "GCS_WEATHER_DATA_BUCKET"
 
-        def initialize(bucket_name: nil, bucket: nil)
+        def initialize(clock:, bucket_name: nil, bucket: nil)
+          @clock = clock
           @injected_bucket = bucket
           @bucket_name = bucket_name || ENV[BUCKET_ENV] || ENV["GCS_BUCKET"] unless @injected_bucket
           raise("GCS_WEATHER_DATA_BUCKET or GCS_BUCKET must be set for GCS weather data storage") if !@injected_bucket && !@bucket_name
@@ -174,8 +175,8 @@ module Adapters
 
         def years_for_range(start_date, end_date)
           return [] unless start_date || end_date
-          s = start_date ? start_date.year : (end_date ? end_date.year : Date.current.year)
-          e = end_date ? end_date.year : (start_date ? start_date.year : Date.current.year)
+          s = start_date ? start_date.year : (end_date ? end_date.year : @clock.today.year)
+          e = end_date ? end_date.year : (start_date ? start_date.year : @clock.today.year)
           (s..e).to_a
         end
 

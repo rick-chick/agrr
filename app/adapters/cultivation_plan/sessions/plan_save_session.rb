@@ -39,10 +39,11 @@ module Adapters
 
         attr_accessor :user, :session_data, :result
 
-        def initialize(user:, session_data:, logger:, cultivation_plan_gateway:, crop_stage_copy_gateway:)
+        def initialize(user:, session_data:, logger:, clock:, cultivation_plan_gateway:, crop_stage_copy_gateway:)
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
           @session_data = session_data
           @logger = logger
+          @clock = clock
           @cultivation_plan_gateway = cultivation_plan_gateway
           @crop_stage_copy_gateway = crop_stage_copy_gateway
           @result = Result.new
@@ -76,7 +77,9 @@ module Adapters
               return @result
             end
 
-            plan_gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(ctx, logger: @logger)
+            plan_gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
+              ctx, logger: @logger, clock: @clock
+            )
             new_plan = plan_gateway.copy_cultivation_plan(farm, crops)
 
             plan_gateway.establish_master_data_relationships(

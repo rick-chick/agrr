@@ -30,9 +30,13 @@ module CompositionRoot
       @oauth_conversion_url_appender ||= Adapters::Application::OauthConversionUrlAppender.new
     end
 
+    def clock
+      @clock ||= Adapters::Shared::Ports::RailsClockAdapter.new
+    end
+
     # アプリエッジでの「今日」（テストは Time.zone 旅行と整合）
     def calendar_today
-      Time.zone.today
+      clock.today
     end
 
     def translator
@@ -369,7 +373,7 @@ module CompositionRoot
     end
 
     def weather_data_gateway
-      @weather_data_gateway ||= Adapters::WeatherData::Gateways::WeatherDataActiveRecordGateway.new
+      @weather_data_gateway ||= Adapters::WeatherData::WeatherDataGatewayFactory.resolve(clock: clock)
     end
 
     def farm_weather_prediction_payload_parse_gateway
@@ -452,6 +456,7 @@ module CompositionRoot
             user: user,
             session_data: session_data,
             logger: logger,
+            clock: clock,
             cultivation_plan_gateway: cultivation_plan_gateway,
             crop_stage_copy_gateway: crop_stage_copy_gateway
           ).call

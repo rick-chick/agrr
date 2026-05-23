@@ -137,7 +137,7 @@ class FetchWeatherDataJob < ApplicationJob
   end
 
   def weather_data_gateway
-    @weather_data_gateway ||= Adapters::WeatherData::WeatherDataGatewayFactory.resolve
+    @weather_data_gateway ||= Adapters::WeatherData::WeatherDataGatewayFactory.resolve(clock: CompositionRoot.clock)
   end
 
   def agrr_weather_gateway

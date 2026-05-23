@@ -29,7 +29,9 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     )
     user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
 
-    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(ctx, logger: CapturingLogger.new)
+    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
+      ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
+    )
     new_plan = gateway.copy_cultivation_plan(user_farm, [])
 
     assert new_plan.persisted?
@@ -59,7 +61,9 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     user_crop_id = ctx.ref_cpc_id_to_user_crop_id[cpc.id]
     assert user_crop_id.present?
 
-    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(ctx, logger: CapturingLogger.new)
+    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
+      ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
+    )
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], [], [], [], [])
 
@@ -124,7 +128,9 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     user_task = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
     assert_not_nil user_task
 
-    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(ctx, logger: CapturingLogger.new)
+    gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
+      ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
+    )
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], tasks, [], [], [])
 

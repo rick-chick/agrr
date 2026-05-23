@@ -108,9 +108,10 @@ module Adapters
           end
         end
 
-        def initialize(ctx, logger:)
+        def initialize(ctx, logger:, clock:)
           @ctx = ctx
           @logger = logger
+          @clock = clock
           @task_mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
           @calc = Domain::CultivationPlan::Calculators::PlanningDateCalculator
         end
@@ -128,7 +129,7 @@ module Adapters
             planning_dates = @calc.calculate_planning_dates_from_cultivations(
               cultivation_periods: cultivation_periods,
               logger: @logger,
-              as_of: Date.current
+              as_of: @clock.today
             )
             plan_year = nil
             @logger.info "📅 [PlanSaveService] Reference plan is annual planning (plan_year is null), calculated dates from cultivations"
@@ -136,7 +137,7 @@ module Adapters
             plan_year = @calc.calculate_plan_year_from_cultivations(
               cultivation_periods: cultivation_periods,
               logger: @logger,
-              as_of: Date.current
+              as_of: @clock.today
             )
             planning_dates = ::CultivationPlan.calculate_planning_dates(plan_year)
             @logger.info "📅 [PlanSaveService] Calculated plan_year: #{plan_year} from field_cultivations"

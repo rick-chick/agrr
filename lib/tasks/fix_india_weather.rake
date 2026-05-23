@@ -74,7 +74,7 @@ namespace :agrr do
             }
           end
 
-          gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
+          gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve(clock: CompositionRoot.clock)
           dtos = weather_records.map { |attrs| Domain::WeatherData::Dtos::WeatherDataDto.from_attrs(attrs) }
           gateway.upsert_weather_data!(
             weather_data_dtos: dtos,

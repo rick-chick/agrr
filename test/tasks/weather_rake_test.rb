@@ -53,7 +53,9 @@ class WeatherRakeTest < ActiveSupport::TestCase
     create(:weather_datum, weather_location: location, date: Date.new(2023, 1, 2),
            temperature_max: 12.0, temperature_min: 6.0, temperature_mean: 9.0)
 
-    gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new(bucket: @bucket)
+    gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new(
+      clock: CompositionRoot.clock, bucket: @bucket
+    )
     Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.stubs(:new).returns(gateway)
 
     with_env(
@@ -94,7 +96,9 @@ class WeatherRakeTest < ActiveSupport::TestCase
     create(:weather_datum, weather_location: loc1, date: Date.new(2023, 1, 1))
     create(:weather_datum, weather_location: loc2, date: Date.new(2023, 1, 1))
 
-    gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new(bucket: @bucket)
+    gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new(
+      clock: CompositionRoot.clock, bucket: @bucket
+    )
     Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.stubs(:new).returns(gateway)
 
     with_env(

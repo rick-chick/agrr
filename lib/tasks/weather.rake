@@ -96,7 +96,7 @@ namespace :weather do
     # 結果を表示
     location = WeatherLocation.find_by(latitude: latitude, longitude: longitude)
     if location
-      gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
+      gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve(clock: CompositionRoot.clock)
       weather_data = gateway.weather_data_for_period(weather_location_id: location.id, start_date: start_date, end_date: end_date)
       puts "\nFetched #{weather_data.count} records:"
       weather_data.each do |data|
@@ -143,7 +143,7 @@ namespace :weather do
       WeatherLocation.joins(:weather_data).distinct
     end
 
-    gcs_gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new unless dry_run
+    gcs_gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new(clock: CompositionRoot.clock) unless dry_run
 
     total_records = 0
     total_year_files = 0
@@ -182,7 +182,7 @@ namespace :weather do
 
   desc "Show weather data statistics"
   task stats: :environment do
-    gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve
+    gateway = Adapters::WeatherData::WeatherDataGatewayFactory.resolve(clock: CompositionRoot.clock)
     puts "Weather Data Statistics"
     puts "=" * 80
     puts "Weather Locations: #{WeatherLocation.count}"

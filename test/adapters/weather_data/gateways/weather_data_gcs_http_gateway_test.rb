@@ -46,7 +46,9 @@ class WeatherDataGcsHttpGatewayTest < ActiveSupport::TestCase
 
   setup do
     @bucket = InMemoryBucket.new
-    @gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new(bucket: @bucket)
+    @gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new(
+      clock: CompositionRoot.clock, bucket: @bucket
+    )
     @weather_location = create(:weather_location)
     @date1 = Date.new(2023, 1, 1)
     @date2 = Date.new(2023, 1, 2)
@@ -172,6 +174,22 @@ class WeatherDataGcsHttpGatewayTest < ActiveSupport::TestCase
       longitude: @weather_location.longitude
     )
     assert_equal @weather_location.id, loc.id
+  end
+
+  test "weather_data_for_period uses injected clock year when only start_date given" do
+    fixed_clock = Struct.new(:today).new(Date.new(2019, 3, 1))
+    gateway = Adapters::WeatherData::Gateways::WeatherDataGcsHttpGateway.new(
+      clock: fixed_clock, bucket: @bucket
+    )
+    path = "weather_data/#{@weather_location.id}/2019.json"
+    @bucket.put(path, { "2019-06-01" => { "temperature_max" => 20.0, "temperature_min" => 10.0 } }.to_json)
+
+    dtos = gateway.weather_data_for_period(
+      weather_location_id: @weather_location.id,
+      start_date: Date.new(2019, 6, 1)
+    )
+    assert_equal 1, dtos.size
+    assert_equal Date.new(2019, 6, 1), dtos.first.date
   end
 
   test "historical_data_count counts records with temp_max and temp_min" do
