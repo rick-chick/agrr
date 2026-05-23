@@ -23,6 +23,16 @@ module Domain
           Domain::Shared::Policies::CropNestedPestsAccess.assert_allowed!(user, crop)
 
           if link_pest_id.present?
+            pest_entity =
+              begin
+                @pest_gateway.find_by_id(link_pest_id)
+              rescue Domain::Shared::Exceptions::RecordNotFound
+                return @output_port.on_link_target_missing(crop_id: crop_id)
+              end
+            unless Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest_entity, user: user)
+              raise Domain::Shared::Policies::PolicyPermissionDenied
+            end
+
             status = @pest_gateway.link_pest_to_crop(
               crop_id: crop_id,
               pest_id: link_pest_id,

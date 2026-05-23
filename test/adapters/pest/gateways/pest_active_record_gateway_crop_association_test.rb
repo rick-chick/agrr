@@ -55,7 +55,7 @@ module Adapters
           assert_includes @pest.crops, @crop2
         end
 
-        test "link_pest_to_crop links when crop is accessible per PestCropAssociationAccess" do
+        test "link_pest_to_crop links pest to crop when both exist and not yet linked" do
           status = @gw.link_pest_to_crop(
             crop_id: @crop1.id,
             pest_id: @pest.id,

@@ -9,18 +9,26 @@ module Domain
           return false if crop.region != pest.region
         end
 
-        if pest.is_reference?
-          return crop.is_reference?
+        if reference?(pest)
+          return reference?(crop)
         end
 
         # ユーザー害虫: 参照作物または同じ所有者の非参照作物に関連付け可能
-        if crop.is_reference?
+        if reference?(crop)
           return true
         end
 
         owner_id = pest.user_id || user&.id
         crop.user_id == owner_id
       end
+
+      def self.reference?(record)
+        return record.reference? if record.respond_to?(:reference?)
+        return record.is_reference? if record.respond_to?(:is_reference?)
+
+        !!record.is_reference
+      end
+      private_class_method :reference?
     end
   end
 end

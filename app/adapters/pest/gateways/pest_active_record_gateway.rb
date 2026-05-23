@@ -140,15 +140,11 @@ module Adapters
           )
         end
 
-        def link_pest_to_crop(crop_id:, pest_id:, user:, crop_access_filter: nil)
+        def link_pest_to_crop(crop_id:, pest_id:, user:)
           crop = find_crop_model(crop_id)
           pest = ::Pest.find_by(id: pest_id)
           return :missing unless crop && pest
           return :already_linked if crop.pests.include?(pest)
-
-          unless Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest, user: user)
-            return :forbidden
-          end
 
           crop.pests << pest
           :linked

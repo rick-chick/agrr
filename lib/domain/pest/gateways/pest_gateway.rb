@@ -66,9 +66,9 @@ module Domain
 
         # AR を Domain に持ち込まないためのマスタ系操作。
 
-        # 既存の Pest を crop に紐付ける（id ベース）。crop は crop_access_filter で編集可否を検証する。
+        # 既存の Pest を crop に紐付ける（id ベース）。認可は Interactor（PestCropAssociationAccess 等）。
         # @return [Symbol] :linked / :already_linked / :missing
-        def link_pest_to_crop(crop_id:, pest_id:, user:, crop_access_filter:)
+        def link_pest_to_crop(crop_id:, pest_id:, user:)
           raise NotImplementedError, "Subclasses must implement link_pest_to_crop"
         end
 

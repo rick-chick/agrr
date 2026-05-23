@@ -27,6 +27,8 @@ module Domain
           !!is_reference
         end
 
+        alias is_reference? reference?
+
         # 配列用メソッド: pests.recent.each のために recent 配列を返す
         def self.recent(pests)
           pests.sort_by { |p| -p.created_at.to_i }

@@ -36,6 +36,10 @@ module Domain
           end
           Domain::Shared::Policies::CropNestedPestsAccess.assert_allowed!(user, crop)
 
+          unless Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest_entity, user: user)
+            return @output_port.on_forbidden
+          end
+
           status = @pest_gateway.link_pest_to_crop(
             crop_id: crop_id,
             pest_id: pest_entity.id,
@@ -44,8 +48,6 @@ module Domain
           case status
           when :missing
             @output_port.on_pest_not_found
-          when :forbidden
-            @output_port.on_forbidden
           when :already_linked
             @output_port.on_already_associated
           when :linked
