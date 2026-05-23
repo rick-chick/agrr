@@ -3,7 +3,7 @@
 module Adapters
   module CultivationPlan
     module Gateways
-      class CropRowsAvailablePrivateActiveRecordGateway < Domain::CultivationPlan::Gateways::PlanDataAvailableCropRowsGateway
+      class CropRowsAvailablePrivateActiveRecordGateway < Domain::CultivationPlan::Gateways::CropRowsAvailableGateway
         def initialize(crop_gateway:, user_lookup:, logger:)
           @crop_gateway = crop_gateway
           @user_lookup = user_lookup
@@ -11,7 +11,7 @@ module Adapters
         end
 
         # farm_region は private 一覧では不使用
-        def rows(auth:, farm_region: nil)
+        def list_by_farm_region(auth:, farm_region: nil)
           user = @user_lookup.find(auth.user_id)
           crops = @crop_gateway.list_user_owned_non_reference_crops_ordered_by_name(user)
           rows_from_entities(crops)
@@ -29,7 +29,14 @@ module Adapters
         private
 
         def rows_from_entities(crops)
-          crops.map { |c| { id: c.id, name: c.name, variety: c.variety, area_per_unit: c.area_per_unit } }
+          crops.map do |c|
+            Domain::CultivationPlan::Dtos::CropRowsAvailableRow.new(
+              id: c.id,
+              name: c.name,
+              variety: c.variety,
+              area_per_unit: c.area_per_unit
+            )
+          end
         end
       end
     end

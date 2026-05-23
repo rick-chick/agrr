@@ -1,12 +1,9 @@
 <%# app/views/shared/_gantt_chart.html.erb %>
 <%# 共通ガントチャートコンポーネント %>
 <%#
-  使い方（いずれか）:
-  A) レガシー: cultivation_plan: AR（公開計画など）
-  B) DTO 埋め込み: gantt_embed: { plan_id:, planning_start_date, planning_end_date,
-                           gantt_cultivation_rows:, gantt_field_rows:,
-                           crop_palette_embed: { used_crop_ids:, crops: } }（プライベート計画 show 等）
-
+  gantt_embed: { plan_id:, planning_start_date, planning_end_date,
+                 gantt_cultivation_rows:, gantt_field_rows:,
+                 crop_palette_embed: { used_crop_ids:, crops: } } 必須
   その他: show_crop_palette, plan_type, data_url, adjust_url, …
 %>
 
@@ -14,28 +11,13 @@
   show_crop_palette ||= false
   plan_type ||= 'public'
 
-  gantt_embed = local_assigns[:gantt_embed]
-
-  if gantt_embed.present?
-    plan_start_date = gantt_embed[:planning_start_date] || Date.current
-    plan_end_date = gantt_embed[:planning_end_date]
-    cultivation_data = gantt_embed[:gantt_cultivation_rows]
-    fields_data = gantt_embed[:gantt_field_rows]
-    cultivation_plan_id = gantt_embed[:plan_id]
-    crop_palette_embed = gantt_embed[:crop_palette_embed]
-  else
-    cultivation_plan = local_assigns.fetch(:cultivation_plan)
-    plan_start_date = cultivation_plan.planning_start_date || Date.current
-    plan_end_date = cultivation_plan.planning_end_date
-    cultivation_data = cultivation_plan.field_cultivations.map do |fc|
-      Domain::CultivationPlan::GanttChartRowHashes.cultivation_row_from_ar(fc)
-    end
-    fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
-      Domain::CultivationPlan::GanttChartRowHashes.field_row_from_ar(field)
-    end
-    cultivation_plan_id = cultivation_plan.id
-    crop_palette_embed = nil
-  end
+  gantt_embed = local_assigns.fetch(:gantt_embed)
+  plan_start_date = gantt_embed[:planning_start_date] || Date.current
+  plan_end_date = gantt_embed[:planning_end_date]
+  cultivation_data = gantt_embed[:gantt_cultivation_rows]
+  fields_data = gantt_embed[:gantt_field_rows]
+  cultivation_plan_id = gantt_embed[:plan_id]
+  crop_palette_embed = gantt_embed[:crop_palette_embed]
 
   gantt_title ||= t('plans.show.gantt.title', default: 'ガントチャート')
   detail_title ||= t('plans.show.detail.title', default: '栽培詳細')
@@ -52,19 +34,11 @@
     </div>
     <div class="gantt-header-actions">
       <% if show_crop_palette %>
-        <% if crop_palette_embed.present? %>
-          <%= render 'shared/crop_palette',
-                     crop_palette_embed: crop_palette_embed,
-                     crop_palette_toggle_label: crop_palette_toggle_label,
-                     crop_palette_title: crop_palette_title,
-                     crop_palette_in_use_label: crop_palette_in_use_label %>
-        <% else %>
-          <%= render 'shared/crop_palette',
-                     cultivation_plan: cultivation_plan,
-                     crop_palette_toggle_label: crop_palette_toggle_label,
-                     crop_palette_title: crop_palette_title,
-                     crop_palette_in_use_label: crop_palette_in_use_label %>
-        <% end %>
+        <%= render 'shared/crop_palette',
+                   crop_palette_embed: crop_palette_embed,
+                   crop_palette_toggle_label: crop_palette_toggle_label,
+                   crop_palette_title: crop_palette_title,
+                   crop_palette_in_use_label: crop_palette_in_use_label %>
       <% end %>
     </div>
   </div>

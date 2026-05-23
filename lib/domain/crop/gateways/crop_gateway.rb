@@ -199,8 +199,8 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update_masters_crop_task_template_for_api"
         end
 
-        def delete_masters_crop_task_template_for_api!(user:, crop_id:, template_id:, access_filter:)
-          raise NotImplementedError, "Subclasses must implement delete_masters_crop_task_template_for_api!"
+        def delete_masters_crop_task_template!(user:, crop_id:, template_id:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement delete_masters_crop_task_template!"
         end
 
         # 認可済み作物に属する CropTaskTemplate を取得。

@@ -39,11 +39,12 @@ module Adapters
           end
         end
 
-        def on_success(blueprint_id:, crop:, available_agricultural_tasks:, selected_task_ids:)
-          @view.instance_variable_set(:@blueprint_id, blueprint_id)
-          @view.instance_variable_set(:@crop, crop)
-          @view.instance_variable_set(:@available_agricultural_tasks, available_agricultural_tasks)
-          @view.instance_variable_set(:@selected_task_ids, selected_task_ids)
+        def on_success(output)
+          @view.instance_variable_set(:@blueprint_id, output.blueprint_id)
+          @view.instance_variable_set(:@crop, Forms::CropMasterForm.from_snapshot(output.crop_master_form_snapshot))
+          @view.instance_variable_set(:@task_schedule_blueprints, output.task_schedule_blueprint_cards)
+          @view.instance_variable_set(:@available_agricultural_tasks, output.available_agricultural_tasks)
+          @view.instance_variable_set(:@selected_task_ids, output.selected_task_ids)
 
           @view.respond_to do |format|
             format.html { @view.head :no_content }

@@ -4,13 +4,16 @@ module Domain
   module AgriculturalTask
     module Gateways
       class AgriculturalTaskGateway
-        def list_for_index(user:, is_admin:, filter: nil, query: nil)
-          raise NotImplementedError, "Subclasses must implement list_for_index"
+        def list_user_owned_tasks(user_id:, query: nil)
+          raise NotImplementedError, "Subclasses must implement list_user_owned_tasks"
         end
 
-        # 一覧 HTML 用: 管理者のみ参照農作業エンティティ一覧（非管理者は []）
-        def reference_tasks_for_index(is_admin:)
-          raise NotImplementedError, "Subclasses must implement reference_tasks_for_index"
+        def list_reference_tasks(query: nil)
+          raise NotImplementedError, "Subclasses must implement list_reference_tasks"
+        end
+
+        def list_user_and_reference_tasks(user_id:, query: nil)
+          raise NotImplementedError, "Subclasses must implement list_user_and_reference_tasks"
         end
 
         def authorized_agricultural_task_detail_output(user, id, access_filter:)

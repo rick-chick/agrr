@@ -94,8 +94,8 @@ module Domain
         end
 
         # @raise [Domain::CultivationPlan::Errors::CultivationPlanCropMissingError] 紐付けが無い場合（データ不整合）
-        def find_plan_crop_id_by_crop_id!(plan_id, crop_id)
-          raise NotImplementedError, "Subclasses must implement find_plan_crop_id_by_crop_id!"
+        def find_crop_id!(plan_id, crop_id)
+          raise NotImplementedError, "Subclasses must implement find_crop_id!"
         end
 
         # @param attrs [Hash] CultivationPlan#update! に渡す属性

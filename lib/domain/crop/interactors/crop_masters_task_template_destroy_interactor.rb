@@ -13,7 +13,7 @@ module Domain
         def call(input_dto)
           user = @user_lookup.find(input_dto.user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-          @gateway.delete_masters_crop_task_template_for_api!(
+          @gateway.delete_masters_crop_task_template!(
             user: user,
             crop_id: input_dto.crop_id,
             template_id: input_dto.template_id,

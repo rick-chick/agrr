@@ -1,25 +1,10 @@
 <%# app/views/shared/_crop_palette.html.erb %>
-<%# 作物パレット（サイドパネル） %>
-<%#
-  A) crop_palette_embed: { used_crop_ids:, crops: } — crops は DTO 等 #id #name #variety
-  B) cultivation_plan: AR（レガシー）
-%>
+<%# 作物パレット（サイドパネル） — crop_palette_embed: { used_crop_ids:, crops: } 必須 %>
 
 <%
-  crop_palette_embed = local_assigns[:crop_palette_embed]
-
-  if crop_palette_embed.present?
-    used_crop_ids = crop_palette_embed[:used_crop_ids]
-    available_crops = crop_palette_embed[:crops]
-  else
-    cultivation_plan = local_assigns.fetch(:cultivation_plan)
-    used_crop_ids = cultivation_plan.cultivation_plan_crops.map { |cpc| cpc.crop&.id }.compact
-    if cultivation_plan.plan_type == 'public'
-      available_crops = Crop.reference.where(region: cultivation_plan.farm.region).order(:name)
-    else
-      available_crops = cultivation_plan.user.crops.where(is_reference: false).order(:name)
-    end
-  end
+  crop_palette_embed = local_assigns.fetch(:crop_palette_embed)
+  used_crop_ids = crop_palette_embed[:used_crop_ids]
+  available_crops = crop_palette_embed[:crops]
 %>
 
 <%# ドロップダウンコンテナ（栽培スケジュールの右上に配置） %>

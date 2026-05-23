@@ -69,11 +69,8 @@ module Api
         test "should return forbidden on index when gateway denies policy" do
           fake_gw = Object.new
           def fake_gw.user_id=(_); end
-          def fake_gw.list(_input_dto)
+          def fake_gw.list_user_owned_farms(user_id:)
             raise Domain::Shared::Policies::PolicyPermissionDenied
-          end
-          def fake_gw.reference_farms_for_admin_list(is_admin:)
-            []
           end
           CompositionRoot.instance_variable_set(:@farm_gateway, fake_gw)
 

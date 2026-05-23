@@ -3,8 +3,7 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # REST plan data の available_crops 行。
-      class PlanDataAvailableCropRow
+      class CropRowsAvailableRow
         attr_reader :id, :name, :variety, :area_per_unit
 
         def initialize(id:, name:, variety:, area_per_unit:)

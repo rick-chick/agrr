@@ -10,20 +10,6 @@ module Adapters
           @deletion_undo_gateway = deletion_undo_gateway
           @translator = translator
         end
-        def list(input_dto)
-          if input_dto.is_admin
-            list_user_and_reference_farms(user_id: @user_id)
-          else
-            list_user_owned_farms(user_id: @user_id)
-          end
-        end
-
-        def reference_farms_for_admin_list(is_admin:)
-          return [] unless is_admin
-
-          list_reference_farms
-        end
-
         def list_user_owned_farms(user_id:)
           ::Farm.where(user_id: user_id, is_reference: false).map { |record| Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(record) }
         end
@@ -46,22 +32,6 @@ module Adapters
 
         def list_reference_farm_rows
           ::Farm.reference.includes(:fields).map { |r| farm_record_to_farm_list_row_dto(r) }
-        end
-
-        # 農場一覧カード行: 所有行＋参照行を一度に組み立て
-        def farm_list_rows_bundle(input_dto)
-          is_admin = input_dto.is_admin
-
-          rows = if is_admin
-                   list_user_and_reference_farm_rows(user_id: @user_id)
-                 else
-                   list_user_owned_farm_rows(user_id: @user_id)
-                 end
-
-          Domain::Farm::Dtos::FarmListRowsBundle.new(
-            farm_rows: rows,
-            reference_farm_rows: is_admin ? list_reference_farm_rows : []
-          )
         end
 
         def find_by_id(farm_id)

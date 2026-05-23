@@ -35,12 +35,7 @@ module Domain
             return @output_port.on_reload_failed(blueprint_id: input_dto.blueprint_id)
           end
 
-          @output_port.on_success(
-            blueprint_id: blueprint_id_for_response,
-            crop: reload[:crop],
-            available_agricultural_tasks: reload[:available_agricultural_tasks],
-            selected_task_ids: reload[:selected_task_ids]
-          )
+          @output_port.on_success(reload[:output])
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_forbidden
         end

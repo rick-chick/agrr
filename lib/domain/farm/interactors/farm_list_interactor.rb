@@ -15,8 +15,12 @@ module Domain
         def call(input_dto = nil)
           input_dto ||= Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
           @gateway.user_id = @user_id
-          farms = @gateway.list(input_dto)
-          reference_farms = @gateway.reference_farms_for_admin_list(is_admin: input_dto.is_admin)
+          farms = if input_dto.is_admin
+                    @gateway.list_user_and_reference_farms(user_id: @user_id)
+                  else
+                    @gateway.list_user_owned_farms(user_id: @user_id)
+                  end
+          reference_farms = input_dto.is_admin ? @gateway.list_reference_farms : []
 
           @output_port.on_success(farms, reference_farms: reference_farms)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e

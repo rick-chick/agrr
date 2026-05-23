@@ -15,13 +15,7 @@ module Domain
           input_dto ||= Domain::AgriculturalTask::Dtos::AgriculturalTaskListInput.new(is_admin: false)
 
           user = @user_lookup.find(@user_id)
-
-          filtered_tasks = @gateway.list_for_index(
-            user: user,
-            is_admin: input_dto.is_admin,
-            filter: input_dto.filter,
-            query: input_dto.query
-          )
+          filtered_tasks = list_tasks_for_input(input_dto, user_id: user.id)
 
           @output_port.on_success(filtered_tasks)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
@@ -33,6 +27,22 @@ module Domain
         end
 
         private
+
+        def list_tasks_for_input(input_dto, user_id:)
+          query = input_dto.query
+          unless input_dto.is_admin
+            return @gateway.list_user_owned_tasks(user_id: user_id, query: query)
+          end
+
+          case input_dto.filter
+          when "user"
+            @gateway.list_user_owned_tasks(user_id: user_id, query: query)
+          when "reference"
+            @gateway.list_reference_tasks(query: query)
+          else
+            @gateway.list_user_and_reference_tasks(user_id: user_id, query: query)
+          end
+        end
       end
     end
   end

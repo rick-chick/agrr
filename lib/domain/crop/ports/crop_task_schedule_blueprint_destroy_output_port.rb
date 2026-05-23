@@ -16,7 +16,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement on_reload_failed"
         end
 
-        def on_success(blueprint_id:, crop:, available_agricultural_tasks:, selected_task_ids:)
+        def on_success(output)
           raise NotImplementedError, "Subclasses must implement on_success"
         end
       end

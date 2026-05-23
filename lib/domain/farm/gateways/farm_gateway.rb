@@ -4,13 +4,28 @@ module Domain
   module Farm
     module Gateways
       class FarmGateway
-        def list(input_dto)
-          raise NotImplementedError, "Subclasses must implement list"
+        def list_user_owned_farms(user_id:)
+          raise NotImplementedError, "Subclasses must implement list_user_owned_farms"
         end
 
-        # 農場一覧 HTML 用: 管理者のみ参照農場エンティティ一覧（非管理者は []）
-        def reference_farms_for_admin_list(is_admin:)
-          raise NotImplementedError, "Subclasses must implement reference_farms_for_admin_list"
+        def list_user_and_reference_farms(user_id:)
+          raise NotImplementedError, "Subclasses must implement list_user_and_reference_farms"
+        end
+
+        def list_reference_farms
+          raise NotImplementedError, "Subclasses must implement list_reference_farms"
+        end
+
+        def list_user_owned_farm_rows(user_id:)
+          raise NotImplementedError, "Subclasses must implement list_user_owned_farm_rows"
+        end
+
+        def list_user_and_reference_farm_rows(user_id:)
+          raise NotImplementedError, "Subclasses must implement list_user_and_reference_farm_rows"
+        end
+
+        def list_reference_farm_rows
+          raise NotImplementedError, "Subclasses must implement list_reference_farm_rows"
         end
 
         def find_by_id(farm_id)
@@ -94,11 +109,6 @@ module Domain
         # 認可・DeletionUndo スケジュールをアダプタ内で完結。Interactor に AR を渡さない。
         def soft_delete_with_undo(user:, farm_id:, auto_hide_after:, toast_message:, access_filter:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
-        end
-
-        # 農場一覧カード行: メイン一覧＋参照農場行を一度に組み立てる（list + 行DTO 変換の二重クエリを避ける）
-        def farm_list_rows_bundle(input_dto)
-          raise NotImplementedError, "Subclasses must implement farm_list_rows_bundle"
         end
 
         # プライベート計画ウィザード「農場選択」HTML 用の農場選択肢のみ（PageDto は Assembler 側）

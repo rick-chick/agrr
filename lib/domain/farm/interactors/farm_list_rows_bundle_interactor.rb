@@ -16,7 +16,17 @@ module Domain
           input_dto ||= Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
           @gateway.user_id = @user_id
 
-          bundle = @gateway.farm_list_rows_bundle(input_dto)
+          farm_rows = if input_dto.is_admin
+                        @gateway.list_user_and_reference_farm_rows(user_id: @user_id)
+                      else
+                        @gateway.list_user_owned_farm_rows(user_id: @user_id)
+                      end
+          reference_farm_rows = input_dto.is_admin ? @gateway.list_reference_farm_rows : []
+
+          bundle = Domain::Farm::Dtos::FarmListRowsBundle.new(
+            farm_rows: farm_rows,
+            reference_farm_rows: reference_farm_rows
+          )
           @output_port.on_success(bundle)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

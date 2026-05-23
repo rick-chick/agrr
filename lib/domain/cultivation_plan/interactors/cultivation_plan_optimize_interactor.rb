@@ -288,7 +288,7 @@ module Domain
         end
 
         def find_cultivation_plan_crop_by_crop_id(crop_id, crop_name)
-          id = @cultivation_plan_gateway.find_plan_crop_id_by_crop_id!(@plan_id, crop_id)
+          id = @cultivation_plan_gateway.find_crop_id!(@plan_id, crop_id)
           @logger.debug "♻️ [AGRR] Found existing CultivationPlanCrop: #{crop_name} (Crop ID: #{crop_id})"
           id
         rescue Domain::CultivationPlan::Errors::CultivationPlanCropMissingError => e

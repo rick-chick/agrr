@@ -18,30 +18,6 @@ module Adapters
           scope.recent.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
 
-        def list_for_index(user:, is_admin:, filter: nil, query: nil)
-          scope = if is_admin
-                    case filter
-                    when "user"
-                      ::AgriculturalTask.where(user_id: user.id, is_reference: false)
-                    when "reference"
-                      ::AgriculturalTask.where(is_reference: true)
-                    else
-                      # デフォルト（"all" または nil）: 参照タスクと自分のユーザータスクの両方
-                      ::AgriculturalTask.where("is_reference = ? OR user_id = ?", true, user.id)
-                    end
-                  else
-                    ::AgriculturalTask.where(user_id: user.id, is_reference: false)
-                  end
-          scope = apply_search_scope(scope, query) if Domain::Shared::ValidationHelpers.present?(query)
-          scope.recent.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
-        end
-
-        def reference_tasks_for_index(is_admin:)
-          return [] unless is_admin
-
-          ::AgriculturalTask.where(is_reference: true).recent.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
-        end
-
         def list_reference_tasks(query: nil)
           scope = ::AgriculturalTask.where(is_reference: true)
           scope = apply_search_scope(scope, query) if Domain::Shared::ValidationHelpers.present?(query)

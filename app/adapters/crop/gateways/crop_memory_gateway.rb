@@ -197,7 +197,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
         end
 
-        def delete_masters_crop_task_template_for_api!(user:, crop_id:, template_id:, access_filter:)
+        def delete_masters_crop_task_template!(user:, crop_id:, template_id:, access_filter:)
           crop = find_user_non_reference_crop_for_masters!(user, crop_id.to_i)
           tpl = crop.crop_task_templates.find(template_id.to_i)
           tpl.destroy!
@@ -295,13 +295,20 @@ module Adapters
         # ブループリント削除後の crop 再読込と UI 用タスク一覧（レンダリング前の失敗を吸収）
         def reload_crop_after_task_schedule_blueprint_delete!(crop:, blueprint_id_for_response:)
           crop.reload
-          available = available_agricultural_tasks_for_crop(crop)
+          blueprints = crop.crop_task_schedule_blueprints.includes(:agricultural_task).ordered
+          available_records = available_agricultural_tasks_for_crop(crop)
           selected_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
           {
             ok: true,
-            crop: crop,
-            available_agricultural_tasks: available,
-            selected_task_ids: selected_ids,
+            output: Domain::Crop::Dtos::CropTaskScheduleBlueprintDestroyOutput.new(
+              blueprint_id: blueprint_id_for_response,
+              crop_master_form_snapshot: Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop),
+              task_schedule_blueprint_cards: Adapters::Crop::Mappers::CropTaskScheduleBlueprintCardMapper.from_records(blueprints),
+              available_agricultural_tasks: available_records.map do |task|
+                Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
+              end,
+              selected_task_ids: selected_ids
+            ),
             blueprint_id_for_response: blueprint_id_for_response
           }
         rescue ActiveRecord::StatementInvalid,

@@ -26,7 +26,7 @@ module Domain
           user = mock
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:delete_masters_crop_task_template_for_api!).with(
+          @gateway.expects(:delete_masters_crop_task_template!).with(
             user: user,
             crop_id: 2,
             template_id: 3,
@@ -46,7 +46,7 @@ module Domain
           user = mock
 
           @user_lookup.expects(:find).with(1).returns(user)
-          @gateway.expects(:delete_masters_crop_task_template_for_api!).with(
+          @gateway.expects(:delete_masters_crop_task_template!).with(
             user: user,
             crop_id: 2,
             template_id: 3,

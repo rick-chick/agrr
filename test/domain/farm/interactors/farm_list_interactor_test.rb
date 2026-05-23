@@ -19,18 +19,17 @@ module Domain
           )
         end
 
-        test "calls list and on_success with empty reference_farms for regular user" do
+        test "calls list_user_owned_farms and on_success with empty reference_farms for regular user" do
           filtered_farms = [ Object.new ]
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
           @mock_gateway.expects(:user_id=).with(@user_id)
-          @mock_gateway.expects(:list).with(input_dto).returns(filtered_farms)
-          @mock_gateway.expects(:reference_farms_for_admin_list).with(is_admin: false).returns([])
+          @mock_gateway.expects(:list_user_owned_farms).with(user_id: @user_id).returns(filtered_farms)
           @mock_output_port.expects(:on_success).with(filtered_farms, reference_farms: [])
 
           @interactor.call(input_dto)
         end
 
-        test "calls list and reference_farms_for_admin_list for admin" do
+        test "calls list_user_and_reference_farms and list_reference_farms for admin" do
           admin_user_id = 2
           admin_interactor = FarmListInteractor.new(
             output_port: @mock_output_port,
@@ -43,8 +42,8 @@ module Domain
           ref_rows = [ Object.new ]
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: true)
           @mock_gateway.expects(:user_id=).with(admin_user_id)
-          @mock_gateway.expects(:list).with(input_dto).returns(list_rows)
-          @mock_gateway.expects(:reference_farms_for_admin_list).with(is_admin: true).returns(ref_rows)
+          @mock_gateway.expects(:list_user_and_reference_farms).with(user_id: admin_user_id).returns(list_rows)
+          @mock_gateway.expects(:list_reference_farms).returns(ref_rows)
           @mock_output_port.expects(:on_success).with(list_rows, reference_farms: ref_rows)
 
           admin_interactor.call(input_dto)
@@ -54,7 +53,7 @@ module Domain
           err = Domain::Shared::Policies::PolicyPermissionDenied.new
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
           @mock_gateway.expects(:user_id=).with(@user_id)
-          @mock_gateway.expects(:list).with(input_dto).raises(err)
+          @mock_gateway.expects(:list_user_owned_farms).with(user_id: @user_id).raises(err)
           @mock_output_port.expects(:on_failure).with(err)
 
           @interactor.call(input_dto)

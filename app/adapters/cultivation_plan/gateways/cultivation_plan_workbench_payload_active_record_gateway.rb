@@ -11,10 +11,10 @@ module Adapters
 
         def build(auth:, plan_id:)
           cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
-          available_crop_rows = available_crop_rows_gateway.rows(
+          available_crop_rows = available_crop_rows_gateway.list_by_farm_region(
             auth: auth,
             farm_region: cultivation_plan.farm&.region
-          )
+          ).map(&:to_h)
 
           fields_data = cultivation_plan.cultivation_plan_fields.map do |field|
             {

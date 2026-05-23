@@ -8,8 +8,8 @@
 <% end %>
 
 <%= turbo_stream.replace "crop-task-schedule-blueprints" do %>
-  <%= render 'crops/task_schedule_blueprints_section', 
-             crop: @crop, 
-             task_schedule_blueprints: @crop.crop_task_schedule_blueprints.includes(:agricultural_task) %>
+  <%= render 'crops/task_schedule_blueprints_section',
+             crop: @crop,
+             task_schedule_blueprints: @task_schedule_blueprints %>
 <% end %>
 

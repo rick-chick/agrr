@@ -6,7 +6,7 @@ module Domain
   module AgriculturalTask
     module Interactors
       class AgriculturalTaskListInteractorTest < DomainLibTestCase
-        test "non-admin: calls list_for_index and passes tasks" do
+        test "non-admin: calls list_user_owned_tasks" do
           user = mock
           user.stubs(:id).returns(1)
           tasks = [ mock ]
@@ -15,7 +15,7 @@ module Domain
           user_lookup.expects(:find).with(1).returns(user)
 
           gateway = mock
-          gateway.expects(:list_for_index).with(user: user, is_admin: false, filter: "user", query: nil).returns(tasks)
+          gateway.expects(:list_user_owned_tasks).with(user_id: 1, query: nil).returns(tasks)
 
           output = mock
           output.expects(:on_success).with(tasks)
@@ -29,7 +29,7 @@ module Domain
           interactor.call
         end
 
-        test "admin with no filter (defaults to all): calls list_for_index" do
+        test "admin with no filter (defaults to all): calls list_user_and_reference_tasks" do
           user = mock
           user.stubs(:id).returns(2)
           tasks = [ mock ]
@@ -38,7 +38,7 @@ module Domain
           user_lookup.expects(:find).with(2).returns(user)
 
           gateway = mock
-          gateway.expects(:list_for_index).with(user: user, is_admin: true, filter: "all", query: nil).returns(tasks)
+          gateway.expects(:list_user_and_reference_tasks).with(user_id: 2, query: nil).returns(tasks)
 
           output = mock
           output.expects(:on_success).with(tasks)
@@ -53,7 +53,7 @@ module Domain
           interactor.call(input_dto)
         end
 
-        test "admin filter=reference: calls list_for_index for filtered tasks" do
+        test "admin filter=reference: calls list_reference_tasks" do
           user = mock
           user.stubs(:id).returns(2)
           refs = [ mock ]
@@ -62,7 +62,7 @@ module Domain
           user_lookup.expects(:find).with(2).returns(user)
 
           gateway = mock
-          gateway.expects(:list_for_index).with(user: user, is_admin: true, filter: "reference", query: nil).returns(refs)
+          gateway.expects(:list_reference_tasks).with(query: nil).returns(refs)
 
           output = mock
           output.expects(:on_success).with(refs)
@@ -86,7 +86,7 @@ module Domain
           user_lookup.expects(:find).with(1).returns(user)
 
           gateway = mock
-          gateway.expects(:list_for_index).with(user: user, is_admin: false, filter: "user", query: nil).raises(err)
+          gateway.expects(:list_user_owned_tasks).with(user_id: 1, query: nil).raises(err)
 
           output = mock
           output.expects(:on_failure).with(err)
@@ -107,7 +107,7 @@ module Domain
           user_lookup.expects(:find).with(1).returns(user)
 
           gateway = mock
-          gateway.expects(:list_for_index).with(user: user, is_admin: false, filter: "user", query: nil).raises(Domain::Shared::Exceptions::RecordNotFound.new("missing"))
+          gateway.expects(:list_user_owned_tasks).with(user_id: 1, query: nil).raises(Domain::Shared::Exceptions::RecordNotFound.new("missing"))
 
           output = mock
           output.expects(:on_failure).with do |dto|
