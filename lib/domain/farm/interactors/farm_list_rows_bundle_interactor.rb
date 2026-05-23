@@ -8,13 +8,11 @@ module Domain
         def initialize(output_port:, user_id:, gateway:)
           @output_port = output_port
           @gateway = gateway
-          @gateway.user_id = user_id if @gateway.respond_to?(:user_id=)
           @user_id = user_id
         end
 
         def call(input_dto = nil)
           input_dto ||= Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
-          @gateway.user_id = @user_id
 
           farm_rows = if input_dto.is_admin
                         @gateway.list_user_and_reference_farm_rows(user_id: @user_id)

@@ -14,51 +14,55 @@ class PesticideAssociationAccessTest < ActiveSupport::TestCase
     )
   end
 
-  test "accessible_crops_scope for admin returns reference and admin's crops" do
+  test "list_crop_pick_rows for admin returns reference and admin's crops" do
     reference_crop = create(:crop, is_reference: true, user: nil)
     admin_crop = create(:crop, is_reference: false, user: @admin)
     other_user_crop = create(:crop, is_reference: false, user: @user)
 
-    scope = @gateway.accessible_crops_scope_for_pesticide_master_form(user: @admin)
+    rows = @gateway.list_crop_pick_rows_for_pesticide_master_form(user: @admin)
+    ids = rows.map(&:id)
 
-    assert_includes scope, reference_crop
-    assert_includes scope, admin_crop
-    assert_not_includes scope, other_user_crop
+    assert_includes ids, reference_crop.id
+    assert_includes ids, admin_crop.id
+    assert_not_includes ids, other_user_crop.id
   end
 
-  test "accessible_crops_scope for regular user returns only user's non-reference crops" do
+  test "list_crop_pick_rows for regular user returns only user's non-reference crops" do
     reference_crop = create(:crop, is_reference: true, user: nil)
     user_crop = create(:crop, is_reference: false, user: @user)
     other_user_crop = create(:crop, is_reference: false, user: create(:user))
 
-    scope = @gateway.accessible_crops_scope_for_pesticide_master_form(user: @user)
+    rows = @gateway.list_crop_pick_rows_for_pesticide_master_form(user: @user)
+    ids = rows.map(&:id)
 
-    assert_not_includes scope, reference_crop
-    assert_includes scope, user_crop
-    assert_not_includes scope, other_user_crop
+    assert_not_includes ids, reference_crop.id
+    assert_includes ids, user_crop.id
+    assert_not_includes ids, other_user_crop.id
   end
 
-  test "accessible_pests_scope for admin returns reference and admin's pests" do
+  test "list_pest_pick_rows for admin returns reference and admin's pests" do
     reference_pest = create(:pest, is_reference: true, user: nil)
     admin_pest = create(:pest, is_reference: false, user: @admin)
     other_user_pest = create(:pest, is_reference: false, user: @user)
 
-    scope = @gateway.accessible_pests_scope_for_pesticide_master_form(user: @admin)
+    rows = @gateway.list_pest_pick_rows_for_pesticide_master_form(user: @admin)
+    ids = rows.map(&:id)
 
-    assert_includes scope, reference_pest
-    assert_includes scope, admin_pest
-    assert_not_includes scope, other_user_pest
+    assert_includes ids, reference_pest.id
+    assert_includes ids, admin_pest.id
+    assert_not_includes ids, other_user_pest.id
   end
 
-  test "accessible_pests_scope for regular user returns only user's non-reference pests" do
+  test "list_pest_pick_rows for regular user returns only user's non-reference pests" do
     reference_pest = create(:pest, is_reference: true, user: nil)
     user_pest = create(:pest, is_reference: false, user: @user)
     other_user_pest = create(:pest, is_reference: false, user: create(:user))
 
-    scope = @gateway.accessible_pests_scope_for_pesticide_master_form(user: @user)
+    rows = @gateway.list_pest_pick_rows_for_pesticide_master_form(user: @user)
+    ids = rows.map(&:id)
 
-    assert_not_includes scope, reference_pest
-    assert_includes scope, user_pest
-    assert_not_includes scope, other_user_pest
+    assert_not_includes ids, reference_pest.id
+    assert_includes ids, user_pest.id
+    assert_not_includes ids, other_user_pest.id
   end
 end

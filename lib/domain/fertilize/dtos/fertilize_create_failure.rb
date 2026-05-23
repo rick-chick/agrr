@@ -3,13 +3,14 @@
 module Domain
   module Fertilize
     module Dtos
-      # 肥料作成（HTML）の検証失敗時。Interactor がゲートウェイで検証済みフォームを渡す。
+      # 肥料作成（HTML）の検証失敗時。Interactor がゲートウェイで検証済みスナップショットを渡す。
       class FertilizeCreateFailure
-        attr_reader :message, :master_form
+        attr_reader :message, :master_form_snapshot
 
-        def initialize(message:, master_form:)
+        # @param master_form_snapshot [Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot]
+        def initialize(message:, master_form_snapshot:)
           @message = message
-          @master_form = master_form
+          @master_form_snapshot = master_form_snapshot
         end
       end
     end

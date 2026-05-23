@@ -36,8 +36,10 @@ module Domain
 
           interactor = FieldCultivationClimateDataInteractor.new(
             output_port: output_port,
-            gateway: gateway,
-            logger: logger
+            logger: logger,
+            user_id: 1,
+            user_lookup: user_lookup_stub(1),
+            climate_gateway_for_user: ->(_user_dto) { gateway }
           )
 
           input_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
@@ -68,8 +70,10 @@ module Domain
 
           FieldCultivationClimateDataInteractor.new(
             output_port: output_port,
-            gateway: gateway,
-            logger: logger
+            logger: logger,
+            user_id: 1,
+            user_lookup: user_lookup_stub(1),
+            climate_gateway_for_user: ->(_user_dto) { gateway }
           ).call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: fc_id
@@ -96,8 +100,10 @@ module Domain
 
           FieldCultivationClimateDataInteractor.new(
             output_port: output_port,
-            gateway: gateway,
-            logger: logger
+            logger: logger,
+            user_id: 1,
+            user_lookup: user_lookup_stub(1),
+            climate_gateway_for_user: ->(_user_dto) { gateway }
           ).call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: fc_id
@@ -107,6 +113,16 @@ module Domain
           assert_instance_of Domain::Shared::Dtos::Error, received
           assert_equal "Field cultivation climate data not found", received.message
           output_port.verify
+        end
+
+        def user_lookup_stub(expected_user_id)
+          lookup = Object.new
+          lookup.define_singleton_method(:find) do |id|
+            raise "unexpected user id #{id.inspect}" unless id == expected_user_id
+
+            Struct.new(:id).new(id)
+          end
+          lookup
         end
 
         # Minimal logger for unit tests (Interactor may call warn/info).

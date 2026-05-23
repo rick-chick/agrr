@@ -38,7 +38,6 @@ module Domain
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
           row = make_row(id: 1)
 
-          @mock_gateway.expects(:user_id=).with(@user_id).at_least_once
           @mock_gateway.expects(:list_user_owned_farm_rows).with(user_id: @user_id).returns([ row ])
           @mock_output_port.expects(:on_success).with do |bundle|
             assert_equal [ row ], bundle.farm_rows
@@ -65,7 +64,6 @@ module Domain
             weather_data_total_years: 0, weather_data_last_error: nil
           )
 
-          @mock_gateway.expects(:user_id=).with(admin_user_id).at_least_once
           @mock_gateway.expects(:list_user_and_reference_farm_rows).with(user_id: admin_user_id).returns([ farm_row ])
           @mock_gateway.expects(:list_reference_farm_rows).returns([ ref_row ])
           @mock_output_port.expects(:on_success).with do |bundle|
@@ -81,7 +79,6 @@ module Domain
           err = Domain::Shared::Policies::PolicyPermissionDenied.new
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
 
-          @mock_gateway.expects(:user_id=).with(@user_id).at_least_once
           @mock_gateway.expects(:list_user_owned_farm_rows).with(user_id: @user_id).raises(err)
           @mock_output_port.expects(:on_failure).with(err)
 

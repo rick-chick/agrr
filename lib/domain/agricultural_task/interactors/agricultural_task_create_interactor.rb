@@ -13,6 +13,7 @@ module Domain
         end
 
         def call(create_input_dto)
+          attrs = nil
           user = @user_lookup.find(@user_id)
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(create_input_dto.is_reference) || false
           unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_assignment_allowed?(user, is_reference: is_reference)
@@ -36,7 +37,12 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          if attrs
+            task = @gateway.build_after_create_failure_agricultural_task_for_master_form!(user: user, attributes: attrs)
+            @output_port.on_failure(Domain::AgriculturalTask::Dtos::AgriculturalTaskHtmlCreateFailure.new(message: e.message, task_for_form: task))
+          else
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          end
         end
       end
     end

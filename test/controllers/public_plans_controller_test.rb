@@ -47,7 +47,7 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
         }
       end
     }) do
-      @controller.stub(:public_plan_render_create_no_crops_failure!, ->(**_kw) {
+      @controller.stub(:public_plan_render_select_crop_no_crops_failure!, ->(**_kw) {
         @controller.flash.now[:alert] = I18n.t("public_plans.errors.select_crop")
         @controller.render(inline: "<h2>stubbed</h2><p class='alert'>#{I18n.t('public_plans.errors.select_crop')}</p>", status: :unprocessable_entity)
       }) do

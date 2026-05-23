@@ -45,15 +45,15 @@ class Adapters::Pesticide::Gateways::PesticideActiveRecordGatewayTest < ActiveSu
     assert_equal "new", p.name
   end
 
-  test "accessible crops and pests scopes return correct SQL" do
-    crops_gw = @gateway.accessible_crops_scope_for_pesticide_master_form(user: @user)
-    pests_gw = @gateway.accessible_pests_scope_for_pesticide_master_form(user: @user)
+  test "accessible crops and pests relations return correct SQL for regular user" do
+    crops_rel = @gateway.send(:accessible_crops_relation_for_pesticide_master_form, user: @user)
+    pests_rel = @gateway.send(:accessible_pests_relation_for_pesticide_master_form, user: @user)
 
     # 通常ユーザー: 自身の非参照レコードのみ
-    assert_match(/user_id/, crops_gw.to_sql)
-    assert_match(/is_reference/, crops_gw.to_sql)
-    assert_match(/user_id/, pests_gw.to_sql)
-    assert_match(/is_reference/, pests_gw.to_sql)
+    assert_match(/user_id/, crops_rel.to_sql)
+    assert_match(/is_reference/, crops_rel.to_sql)
+    assert_match(/user_id/, pests_rel.to_sql)
+    assert_match(/is_reference/, pests_rel.to_sql)
   end
 
   test "list_index_for_filter owned_non_reference returns only that user's non-reference pesticides" do

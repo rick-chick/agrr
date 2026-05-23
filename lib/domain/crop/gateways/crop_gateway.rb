@@ -144,22 +144,25 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_authorized_for_edit"
         end
 
-        # 認可済み作物を一度読み、Entity と永続モデル（連鎖プリロード済み）を束ねる（Controller の二重取得防止）。
+        # 認可済み作物を一度読み、Entity とマスタフォーム用スナップショットを束ねる（Controller の二重取得防止）。
         def find_authorized_crop_loaded_bundle!(user, id, for_edit:, access_filter:)
           raise NotImplementedError, "Subclasses must implement find_authorized_crop_loaded_bundle!"
         end
 
-        # マスタCRUD: create 失敗時の再描画用に属性を載せた未保存 Crop（永続化しない）
+        # マスタCRUD: HTML 新規フォーム用の空スナップショット（永続化しない）
+        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
+        def blank_crop_master_form_snapshot_for_html
+          raise NotImplementedError, "Subclasses must implement blank_crop_master_form_snapshot_for_html"
+        end
+
+        # マスタCRUD: create 失敗時の再描画用（未保存 Crop をスナップショット化。永続化しない）
+        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
         def build_new_crop_with_attributes_for_master_form(attributes:)
           raise NotImplementedError, "Subclasses must implement build_new_crop_with_attributes_for_master_form"
         end
 
-        # マスタCRUD: edit フォーム表示前にネスト用の空関連を補う（既に認可済みのレコードを変更）
-        def prepare_crop_record_for_edit_master_form!(crop)
-          raise NotImplementedError, "Subclasses must implement prepare_crop_record_for_edit_master_form!"
-        end
-
         # マスタCRUD: update 失敗時の再描画用に認可済み作物へパラメータをマージ（永続化しない）
+        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
         def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:, access_filter:)
           raise NotImplementedError, "Subclasses must implement merge_edit_crop_params_for_master_form!"
         end

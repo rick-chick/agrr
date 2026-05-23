@@ -10,7 +10,6 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
       translator: CompositionRoot.translator
     )
     @user = create(:user)
-    @gateway.user_id = @user.id
   end
 
   test "list_user_and_reference_farms includes user farm and reference farm" do

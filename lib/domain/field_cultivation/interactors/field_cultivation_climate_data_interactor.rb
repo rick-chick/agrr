@@ -4,13 +4,18 @@ module Domain
   module FieldCultivation
     module Interactors
       class FieldCultivationClimateDataInteractor < Domain::FieldCultivation::Ports::FieldCultivationClimateDataInputPort
-        def initialize(output_port:, gateway:, logger:)
+        def initialize(output_port:, logger:, user_id:, user_lookup:, climate_gateway_for_user:)
           @output_port = output_port
-          @gateway = gateway
           @logger = logger
+          @user_id = user_id
+          @user_lookup = user_lookup
+          @climate_gateway_for_user = climate_gateway_for_user
         end
 
         def call(input_dto)
+          user_dto = @user_id.present? ? @user_lookup.find(@user_id) : nil
+          @gateway = @climate_gateway_for_user.call(user_dto)
+
           field_cultivation_id = input_dto.field_cultivation_id
           display_start_date = input_dto.display_start_date
           display_end_date = input_dto.display_end_date

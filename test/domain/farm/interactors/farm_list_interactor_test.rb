@@ -22,7 +22,6 @@ module Domain
         test "calls list_user_owned_farms and on_success with empty reference_farms for regular user" do
           filtered_farms = [ Object.new ]
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
-          @mock_gateway.expects(:user_id=).with(@user_id)
           @mock_gateway.expects(:list_user_owned_farms).with(user_id: @user_id).returns(filtered_farms)
           @mock_output_port.expects(:on_success).with(filtered_farms, reference_farms: [])
 
@@ -41,7 +40,6 @@ module Domain
           list_rows = [ Object.new ]
           ref_rows = [ Object.new ]
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: true)
-          @mock_gateway.expects(:user_id=).with(admin_user_id)
           @mock_gateway.expects(:list_user_and_reference_farms).with(user_id: admin_user_id).returns(list_rows)
           @mock_gateway.expects(:list_reference_farms).returns(ref_rows)
           @mock_output_port.expects(:on_success).with(list_rows, reference_farms: ref_rows)
@@ -52,7 +50,6 @@ module Domain
         test "forwards policy permission denied to on_failure as exception" do
           err = Domain::Shared::Policies::PolicyPermissionDenied.new
           input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: false)
-          @mock_gateway.expects(:user_id=).with(@user_id)
           @mock_gateway.expects(:list_user_owned_farms).with(user_id: @user_id).raises(err)
           @mock_output_port.expects(:on_failure).with(err)
 

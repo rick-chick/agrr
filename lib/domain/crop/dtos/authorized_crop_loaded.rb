@@ -3,7 +3,7 @@
 module Domain
   module Crop
     module Dtos
-      # Gateway が一度読み込んだ作物について、CropEntity と永続モデル（連鎖プリロード済み）を束ねる。
+      # Gateway が一度読み込んだ作物について、CropEntity とマスタフォーム用スナップショットを束ねる。
       class AuthorizedCropLoaded
         attr_reader :crop_entity, :master_form_snapshot
 

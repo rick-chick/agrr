@@ -162,6 +162,15 @@ module Adapters
           fertilize
         end
 
+        def blank_fertilize_master_form_snapshot_for_html
+          Adapters::Fertilize::Mappers::FertilizeMasterFormSnapshotMapper.from_record(build_blank_fertilize_for_master_form)
+        end
+
+        def fertilize_master_form_snapshot_after_create_failure!(user:, attributes:)
+          fertilize = build_after_create_failure_fertilize_for_master_form!(user: user, attributes: attributes)
+          Adapters::Fertilize::Mappers::FertilizeMasterFormSnapshotMapper.from_record(fertilize, error_messages: fertilize.errors.full_messages)
+        end
+
         private
 
         def find_authorized_model_for_edit(user, id, access_filter:)

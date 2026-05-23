@@ -21,8 +21,14 @@ class PestsController < ApplicationController
 
   # GET /pests/new
   def new
-    @pest = CompositionRoot.pest_gateway.build_blank_pest_for_form
-    prepare_crop_selection_for(@pest, selected_ids: normalize_crop_ids_for(@pest, params[:crop_ids]))
+    presenter = Adapters::Pest::Presenters::PestHtmlNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Pest::Interactors::PestHtmlNewMasterFormInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      gateway: CompositionRoot.pest_gateway,
+      user_lookup: CompositionRoot.user_lookup,
+      raw_crop_ids: params[:crop_ids]
+    ).call
   end
 
   # GET /pests/:id/edit
@@ -30,7 +36,7 @@ class PestsController < ApplicationController
     bundle = load_pest_for_edit
     return if bundle.nil?
 
-    prepare_crop_selection_for(bundle.pest_master_edit_payload)
+    load_pest_html_crop_selection(master_edit_payload: bundle.pest_master_edit_payload)
     @pest = bundle.pest_master_edit_payload
   end
 
@@ -148,25 +154,34 @@ class PestsController < ApplicationController
 
   # Presenter の on_failure から呼ばれるため public
   def normalize_crop_ids_for(pest, raw_ids)
-    CompositionRoot.pest_gateway.normalize_crop_ids_for_pest_form(
-      pest_model: pest,
-      raw_crop_ids: raw_ids,
-      user: current_user
-    )
+    if pest.persisted?
+      CompositionRoot.pest_gateway.normalize_crop_ids_for_pest_form(
+        pest_id: pest.id,
+        association_context: nil,
+        raw_crop_ids: raw_ids,
+        user: current_user
+      )
+    else
+      CompositionRoot.pest_gateway.normalize_crop_ids_for_pest_form(
+        pest_id: nil,
+        association_context: Domain::Pest::Dtos::PestCropFormAssociationContext.new(
+          is_reference: pest.is_reference == true,
+          pest_owner_user_id: pest.user_id,
+          region: pest.region
+        ),
+        raw_crop_ids: raw_ids,
+        user: current_user
+      )
+    end
   end
 
-  def prepare_crop_selection_for(pest, selected_ids: nil)
-    @accessible_crops = PestCropAssociationPolicy.accessible_crops_scope(pest, user: current_user).to_a
-    allowed_ids = @accessible_crops.map(&:id)
-    normalized_selected = Array(selected_ids || pest.associated_crop_ids).map(&:to_i).uniq & allowed_ids
-
-    @selected_crop_ids = normalized_selected
-    @crop_cards = @accessible_crops.map do |crop|
-      {
-        crop: crop,
-        selected: normalized_selected.include?(crop.id)
-      }
-    end
+  # Interactor 経由で作物選択 UI 用インスタンス変数を設定する（Presenter の on_failure からも呼ぶ）。
+  def load_pest_html_crop_selection(master_edit_payload:, request_crop_ids: :use_payload_associations)
+    presenter = Adapters::Pest::Presenters::PestHtmlCropSelectionLoadHtmlPresenter.new(view: self)
+    CompositionRoot.pest_html_crop_selection_load_interactor(output_port: presenter, user_id: current_user.id).call(
+      master_edit_payload: master_edit_payload,
+      request_crop_ids: request_crop_ids
+    )
   end
 
   private

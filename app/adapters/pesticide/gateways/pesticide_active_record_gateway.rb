@@ -144,14 +144,8 @@ module Adapters
 
         # マスタCRUD update 失敗時にパラメータをマージして {Forms::PesticideMasterForm} を返す
         def merge_edit_pesticide_params_for_master_form!(user:, pesticide_id:, attributes:, access_filter:)
-          pesticide = find_authorized_model_for_edit(user, pesticide_id.to_i, access_filter: access_filter)
-          ensure_nested_associations_for_pesticide_master_form!(pesticide)
-          pesticide.assign_attributes(attributes || {})
-          pesticide.valid?
-          snapshot = Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide, error_messages: pesticide.errors.full_messages)
-          Forms::PesticideMasterForm.from_snapshot(snapshot)
-        rescue Domain::Shared::Exceptions::RecordNotFound
-          raise
+          bundle = pesticide_html_master_form_bundle_after_update_merge!(user: user, pesticide_id: pesticide_id, assign_attributes: attributes, access_filter: access_filter)
+          Forms::PesticideMasterForm.from_snapshot(bundle.pesticide_master_form_snapshot)
         end
 
         # マスタCRUD create 失敗時に属性付き新規 Pesticide を {Forms::PesticideMasterForm} として返す
@@ -163,22 +157,48 @@ module Adapters
           Forms::PesticideMasterForm.from_snapshot(snapshot)
         end
 
-        # PesticideAssociationAccess#accessible_crops_scope のロジックをアダプター側へ移管（R1 違反解消）
-        def accessible_crops_scope_for_pesticide_master_form(user:)
-          if user.admin?
-            ::Crop.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::Crop.where(user_id: user.id, is_reference: false)
-          end.order(:name)
+        def list_crop_pick_rows_for_pesticide_master_form(user:)
+          accessible_crops_relation_for_pesticide_master_form(user: user).map { |c|
+            Domain::Pesticide::Dtos::PesticideMasterFormCropPickRow.new(id: c.id, name: c.name)
+          }
         end
 
-        # PesticideAssociationAccess#accessible_pests_scope のロジックをアダプター側へ移管（R1 違反解消）
-        def accessible_pests_scope_for_pesticide_master_form(user:)
-          if user.admin?
-            ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
-          else
-            ::Pest.where(user_id: user.id, is_reference: false)
-          end.order(:name)
+        def list_pest_pick_rows_for_pesticide_master_form(user:)
+          accessible_pests_relation_for_pesticide_master_form(user: user).map { |p|
+            Domain::Pesticide::Dtos::PesticideMasterFormPestPickRow.new(id: p.id, name: p.name)
+          }
+        end
+
+        def pesticide_html_pick_list_bundle(user:)
+          Domain::Pesticide::Dtos::PesticideHtmlPickListBundle.new(
+            crop_pick_rows: pesticide_crop_pick_rows(user: user),
+            pest_pick_rows: pesticide_pest_pick_rows(user: user)
+          )
+        end
+
+        def pesticide_html_master_form_bundle(user:, assign_attributes:)
+          pesticide = ::Pesticide.new(assign_attributes || {})
+          ensure_nested_associations_for_pesticide_master_form!(pesticide)
+          pesticide.valid?
+          snap = Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide, error_messages: pesticide.errors.full_messages)
+          Domain::Pesticide::Dtos::PesticideHtmlMasterFormBundle.new(
+            pesticide_master_form_snapshot: snap,
+            crop_pick_rows: pesticide_crop_pick_rows(user: user),
+            pest_pick_rows: pesticide_pest_pick_rows(user: user)
+          )
+        end
+
+        def pesticide_html_master_form_bundle_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:)
+          pesticide = find_authorized_model_for_edit(user, pesticide_id.to_i, access_filter: access_filter)
+          ensure_nested_associations_for_pesticide_master_form!(pesticide)
+          pesticide.assign_attributes(assign_attributes || {})
+          pesticide.valid?
+          snap = Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide, error_messages: pesticide.errors.full_messages)
+          Domain::Pesticide::Dtos::PesticideHtmlMasterFormBundle.new(
+            pesticide_master_form_snapshot: snap,
+            crop_pick_rows: pesticide_crop_pick_rows(user: user),
+            pest_pick_rows: pesticide_pest_pick_rows(user: user)
+          )
         end
 
         def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:, access_filter:)
@@ -206,6 +226,32 @@ module Adapters
         end
 
         private
+
+        def pesticide_crop_pick_rows(user:)
+          list_crop_pick_rows_for_pesticide_master_form(user: user)
+        end
+
+        def pesticide_pest_pick_rows(user:)
+          list_pest_pick_rows_for_pesticide_master_form(user: user)
+        end
+
+        # PesticideAssociationAccess#accessible_crops_scope のロジックをアダプター側へ移管（R1 違反解消）
+        def accessible_crops_relation_for_pesticide_master_form(user:)
+          if user.admin?
+            ::Crop.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Crop.where(user_id: user.id, is_reference: false)
+          end.order(:name)
+        end
+
+        # PesticideAssociationAccess#accessible_pests_scope のロジックをアダプター側へ移管（R1 違反解消）
+        def accessible_pests_relation_for_pesticide_master_form(user:)
+          if user.admin?
+            ::Pest.where("is_reference = ? OR user_id = ?", true, user.id)
+          else
+            ::Pest.where(user_id: user.id, is_reference: false)
+          end.order(:name)
+        end
 
         def index_relation_for_filter(filter)
           case filter.mode

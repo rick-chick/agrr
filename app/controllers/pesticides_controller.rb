@@ -19,13 +19,16 @@ class PesticidesController < ApplicationController
 
   # GET /pesticides/new
   def new
-    @pesticide = CompositionRoot.pesticide_gateway.build_new_pesticide_with_attributes_for_master_form(attributes: {})
-    load_crops_and_pests
+    presenter = Adapters::Pesticide::Presenters::PesticideHtmlNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideHtmlNewMasterFormInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /pesticides/:id/edit
   def edit
-    load_crops_and_pests
+    presenter = Adapters::Pesticide::Presenters::PesticideHtmlPickListsHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideHtmlPickListsInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # POST /pesticides
@@ -76,39 +79,12 @@ class PesticidesController < ApplicationController
     render(action, status: status, locals: locals)
   end
 
-  # Presenter から失敗時に呼び出される（Crop パターン準拠）
-  def after_pesticide_create_failure
-    @pesticide = CompositionRoot.pesticide_gateway.build_new_pesticide_with_attributes_for_master_form(
-      attributes: pesticide_params.to_unsafe_h.deep_symbolize_keys
-    )
-    load_crops_and_pests
-  end
-
-  # Presenter から失敗時に呼び出される（Crop パターン準拠）
-  def after_pesticide_update_failure
-    user = CompositionRoot.user_lookup.find(current_user.id)
-    access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
-    @pesticide = CompositionRoot.pesticide_gateway.merge_edit_pesticide_params_for_master_form!(
-      user: user,
-      pesticide_id: params[:id].to_i,
-      attributes: pesticide_params.to_unsafe_h.deep_symbolize_keys,
-      access_filter: access_filter
-    )
-    load_crops_and_pests
-  end
-
   private
 
   def load_pesticide_for_view
     presenter = Adapters::Pesticide::Presenters::PesticideLoadForViewHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-  end
-
-  def load_crops_and_pests
-    gw = CompositionRoot.pesticide_gateway
-    @crops = gw.accessible_crops_scope_for_pesticide_master_form(user: current_user)
-    @pests = gw.accessible_pests_scope_for_pesticide_master_form(user: current_user)
   end
 
   def pesticide_params

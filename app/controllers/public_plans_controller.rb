@@ -91,7 +91,12 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       redirect_path: job_completion_redirect_path
     )
 
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanCreateHtmlPresenter.new(view: self)
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanCreateHtmlPresenter.new(
+      view: self,
+      public_plan_gateway: CompositionRoot.public_plan_gateway,
+      crop_gateway: CompositionRoot.crop_gateway,
+      logger: CompositionRoot.logger
+    )
 
     Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
       output_port: presenter,
@@ -103,28 +108,11 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     ).call(input_dto)
   end
 
-  # HTML Presenter から: 作物ゼロ時に select_crop を 422 で再描画する（農場はゲートウェイで再解決）
-  def public_plan_render_create_no_crops_failure!(farm_id:, farm_size_id:, region:)
-    farm_entity = CompositionRoot.public_plan_gateway.find_farm(farm_id)
-    unless farm_entity
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart")
-      return
-    end
-
-    @farm = farm_entity
-    @farm_size = farm_sizes_with_i18n.find { |fs| fs[:id].to_s == farm_size_id.to_s }
-    unless @farm_size
-      redirect_to public_plans_path, alert: I18n.t("public_plans.errors.restart")
-      return
-    end
-
-    presenter_crops = Adapters::PublicPlan::Presenters::ReferenceCropsHtmlPresenter.new(view: self)
-    Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(
-      output_port: presenter_crops,
-      gateway: CompositionRoot.crop_gateway,
-      logger: CompositionRoot.logger
-    ).call(region: region.presence || farm_entity.region)
-
+  # HTML Presenter / NoCropsFailureInteractor から: インスタンス変数の代入とテンプレ描画のみ
+  def public_plan_render_select_crop_no_crops_failure!(farm:, farm_size:, crops:)
+    @farm = farm
+    @farm_size = farm_size
+    @crops = crops
     flash.now[:alert] = I18n.t("public_plans.errors.select_crop")
     render :select_crop, status: :unprocessable_entity
   end
@@ -148,7 +136,8 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     presenter = Adapters::PublicPlan::Presenters::PublicPlanResultsHtmlPresenter.new(view: self)
     Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
       output_port: presenter,
-      gateway: CompositionRoot.cultivation_plan_gateway
+      gateway: CompositionRoot.cultivation_plan_gateway,
+      clock: Time.zone
     ).call(plan_id: normalize_public_plan_wizard_plan_id)
     return if performed?
   end

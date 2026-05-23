@@ -80,11 +80,31 @@ module Domain
         end
 
         test "dispatches success body" do
-          body = { success: true, data: {}, total_profit: 0, total_revenue: 0, total_cost: 0 }
-          @gateway.expects(:build).with(
+          plan = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchPlanHeader.new(
+            id: 1,
+            plan_year: 2026,
+            plan_name: "p",
+            plan_type: "private",
+            status: "draft",
+            total_area: 0.0,
+            planning_start_date: nil,
+            planning_end_date: nil,
+            total_profit: 0.0,
+            total_revenue: 0.0,
+            total_cost: 0.0
+          )
+          snapshot = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
+            plan: plan,
+            fields: [],
+            crops: [],
+            cultivations: [],
+            available_crop_rows: []
+          )
+          body = Domain::CultivationPlan::Mappers::CultivationPlanWorkbenchPayloadMapper.to_success_body(snapshot)
+          @gateway.expects(:load_snapshot).with(
             auth: @auth,
             plan_id: 3
-          ).returns(kind: :success, body: body)
+          ).returns(kind: :success, snapshot: snapshot)
           @output.expects(:on_success).with(body: body)
 
           RetrieveCultivationPlanInteractor.new(output: @output, workbench_payload_gateway: @gateway).call(
@@ -97,18 +117,32 @@ module Domain
       class ManualPlanAdjustInteractorTest < DomainLibTestCase
         setup do
           @output = mock
-          @gateway = mock
+          @growth = mock
+          @adjust = mock
+          @logger = mock
+          @logger.stubs(:error)
           @auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
         end
 
         test "dispatches adjust result" do
           adj = { success: true, message: "ok" }
-          @gateway.expects(:execute).with(auth: @auth, plan_id: 2, moves: []).returns(
-            kind: :adjust_result, adjust_hash: adj
+          row = Domain::CultivationPlan::Dtos::CultivationPlanAdjustCropGrowthRow.new(
+            crop_name: "C",
+            growth_stage_count: 1
           )
+          @growth.expects(:load).with(auth: @auth, plan_id: 2).returns(
+            kind: :success,
+            crop_rows: [row]
+          )
+          @adjust.expects(:call).with(plan_id: 2, moves: []).returns(adj)
           @output.expects(:on_adjust).with(result: adj)
 
-          ManualPlanAdjustInteractor.new(output: @output, adjust_gateway: @gateway).call(
+          ManualPlanAdjustInteractor.new(
+            output: @output,
+            adjust_plan_growth_read_gateway: @growth,
+            adjust_with_db_weather: @adjust,
+            logger: @logger
+          ).call(
             auth: @auth,
             plan_id: 2,
             moves: []
@@ -116,10 +150,20 @@ module Domain
         end
 
         test "dispatches crop_missing_growth_stages" do
-          @gateway.expects(:execute).returns(kind: :crop_missing_growth_stages, crop_name: "X")
+          row = Domain::CultivationPlan::Dtos::CultivationPlanAdjustCropGrowthRow.new(
+            crop_name: "X",
+            growth_stage_count: 0
+          )
+          @growth.expects(:load).returns(kind: :success, crop_rows: [row])
           @output.expects(:on_crop_missing_growth_stages).with(crop_name: "X")
+          @adjust.expects(:call).never
 
-          ManualPlanAdjustInteractor.new(output: @output, adjust_gateway: @gateway).call(
+          ManualPlanAdjustInteractor.new(
+            output: @output,
+            adjust_plan_growth_read_gateway: @growth,
+            adjust_with_db_weather: @adjust,
+            logger: @logger
+          ).call(
             auth: @auth,
             plan_id: 2,
             moves: []

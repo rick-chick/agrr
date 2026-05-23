@@ -32,8 +32,8 @@ module Adapters
           @view.flash.now[:alert] = msg
           payload = Domain::Pest::Dtos::PestMasterEditPayload.from_hash(@view.params[:pest].permit!.to_h.symbolize_keys)
           @view.instance_variable_set(:@pest, payload)
-          crop_ids = @view.params[:crop_ids] ? Array(@view.params[:crop_ids]) : []
-          @view.prepare_crop_selection_for(payload, selected_ids: crop_ids)
+          request_crop_ids = @view.params[:crop_ids] ? Array(@view.params[:crop_ids]) : []
+          @view.load_pest_html_crop_selection(master_edit_payload: payload, request_crop_ids: request_crop_ids)
           @view.render_form(:new, status: :unprocessable_entity)
         end
       end

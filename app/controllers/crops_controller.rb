@@ -24,7 +24,9 @@ class CropsController < ApplicationController
 
   # GET /crops/new
   def new
-    @crop = CompositionRoot.crop_gateway.build_blank_crop_for_master_form
+    presenter = Adapters::Crop::Presenters::CropHtmlNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Crop::Interactors::CropHtmlNewMasterFormInteractor.new(output_port: presenter,
+      gateway: CompositionRoot.crop_gateway).call
   end
 
   # GET /crops/:id/edit
@@ -114,25 +116,6 @@ class CropsController < ApplicationController
       format.turbo_stream { render :toggle_task_template }
       format.html { redirect_to crop_path(@crop) }
     end
-  end
-
-  def after_crop_create_failure
-    @crop = CompositionRoot.crop_gateway.build_new_crop_with_attributes_for_master_form(
-      attributes: crop_params.to_h.symbolize_keys
-    )
-    @crop.valid?
-  end
-
-  def after_crop_update_failure
-    user = CompositionRoot.user_lookup.find(current_user.id)
-    access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
-    @crop = CompositionRoot.crop_gateway.merge_edit_crop_params_for_master_form!(
-      user: user,
-      crop_id: params[:id].to_i,
-      attributes: crop_params.to_h.symbolize_keys,
-      access_filter: access_filter
-    )
-    @crop.valid?
   end
 
   def render_form(action, status: :ok, locals: {})

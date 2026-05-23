@@ -130,7 +130,8 @@ class PlansController < CultivationPlanHtmlBaseController
       gateway: CompositionRoot.cultivation_plan_gateway,
       translator: CompositionRoot.translator,
       logger: CompositionRoot.logger,
-      user_lookup: CompositionRoot.user_lookup
+      user_lookup: CompositionRoot.user_lookup,
+      clock: Time.zone
     ).call
     return if performed?
 

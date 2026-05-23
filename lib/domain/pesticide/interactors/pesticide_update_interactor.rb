@@ -17,11 +17,13 @@ module Domain
           access_filter = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user)
           current = @gateway.find_authorized_for_edit(user, input_dto.pesticide_id, access_filter: access_filter)
 
+          reference_flag_msg = nil
           unless input_dto.is_reference.nil?
+            reference_flag_msg = @translator.t("pesticides.flash.reference_flag_admin_only")
             requested = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference)
             requested = false if requested.nil?
             unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_flag_change_allowed?(user, requested: requested, current: !!current.is_reference)
-              raise Domain::Shared::Exceptions::RecordInvalid.new(@translator.t("pesticides.flash.reference_flag_admin_only"))
+              raise Domain::Shared::Exceptions::RecordInvalid.new(reference_flag_msg)
             end
           end
 
@@ -47,7 +49,19 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          if reference_flag_msg && e.message == reference_flag_msg
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          else
+            user_b = @user_lookup.find(@user_id)
+            access_filter_b = Domain::Shared::Policies::PesticidePolicy.record_access_filter(user_b)
+            bundle = @gateway.pesticide_html_master_form_bundle_after_update_merge!(
+              user: user_b,
+              pesticide_id: input_dto.pesticide_id,
+              assign_attributes: input_dto.assign_attributes_for_form || {},
+              access_filter: access_filter_b
+            )
+            @output_port.on_failure(Domain::Pesticide::Dtos::PesticideHtmlMasterFormFailure.new(message: e.message, bundle: bundle))
+          end
         end
       end
     end

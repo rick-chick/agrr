@@ -80,13 +80,30 @@ module Domain
           raise NotImplementedError, "Subclasses must implement build_new_pesticide_with_attributes_for_master_form"
         end
 
-        # 農薬フォームで選択可能な作物スコープ（永続層・ポリシーはアダプター側）
-        def accessible_crops_scope_for_pesticide_master_form(user:)
-          raise NotImplementedError, "Subclasses must implement accessible_crops_scope_for_pesticide_master_form"
+        # 農薬マスタ HTML フォームの作物プルダウン行（永続層・ポリシーはアダプター側）
+        # @return [Array<Domain::Pesticide::Dtos::PesticideMasterFormCropPickRow>]
+        def list_crop_pick_rows_for_pesticide_master_form(user:)
+          raise NotImplementedError, "Subclasses must implement list_crop_pick_rows_for_pesticide_master_form"
         end
 
-        def accessible_pests_scope_for_pesticide_master_form(user:)
-          raise NotImplementedError, "Subclasses must implement accessible_pests_scope_for_pesticide_master_form"
+        # @return [Array<Domain::Pesticide::Dtos::PesticideMasterFormPestPickRow>]
+        def list_pest_pick_rows_for_pesticide_master_form(user:)
+          raise NotImplementedError, "Subclasses must implement list_pest_pick_rows_for_pesticide_master_form"
+        end
+
+        # HTML 新規・作成検証失敗の再描画用（スナップショット + プルダウン行）
+        def pesticide_html_master_form_bundle(user:, assign_attributes:)
+          raise NotImplementedError, "Subclasses must implement pesticide_html_master_form_bundle"
+        end
+
+        # HTML 更新検証失敗の再描画用（スナップショット + プルダウン行）
+        def pesticide_html_master_form_bundle_after_update_merge!(user:, pesticide_id:, assign_attributes:, access_filter:)
+          raise NotImplementedError, "Subclasses must implement pesticide_html_master_form_bundle_after_update_merge!"
+        end
+
+        # HTML 編集画面の作物・害虫プルダウン行のみ
+        def pesticide_html_pick_list_bundle(user:)
+          raise NotImplementedError, "Subclasses must implement pesticide_html_pick_list_bundle"
         end
       end
     end

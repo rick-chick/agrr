@@ -130,6 +130,66 @@ module Adapters
           pest
         end
 
+        def pest_html_new_form_state!(user:, raw_crop_ids:)
+          pest = build_blank_pest_for_form
+          association_context = Domain::Pest::Dtos::PestCropFormAssociationContext.new(
+            is_reference: false,
+            pest_owner_user_id: user.id,
+            region: nil
+          )
+          normalized = normalize_crop_ids_for_pest_form(
+            pest_id: nil,
+            association_context: association_context,
+            raw_crop_ids: raw_crop_ids,
+            user: user
+          )
+          accessible = accessible_crops_relation_for_pest_association(
+            is_reference: false,
+            owner_user_id: user.id,
+            region: nil,
+            user: user
+          ).to_a
+          allowed_ids = accessible.map(&:id)
+          normalized_selected = Array(normalized).map(&:to_i).uniq & allowed_ids
+          crop_cards = accessible.map do |crop|
+            { crop: crop, selected: normalized_selected.include?(crop.id) }
+          end
+          Domain::Pest::Dtos::PestHtmlNewFormState.new(pest: pest, crop_cards: crop_cards, selected_crop_ids: normalized_selected)
+        end
+
+        def pest_html_master_form_crop_selection_bundle!(user:, master_edit_payload:, request_crop_ids: :use_payload_associations)
+          pest_like = Domain::Pest::Dtos::PestCropAssociationPestInput.from_master_edit_payload(master_edit_payload)
+          raw_base =
+            if request_crop_ids == :use_payload_associations
+              master_edit_payload.associated_crop_ids
+            else
+              Array(request_crop_ids)
+            end
+
+          relation = accessible_crops_relation_for_pest_association(
+            is_reference: pest_like.is_reference?,
+            owner_user_id: pest_like.user_id,
+            region: pest_like.region,
+            user: user
+          )
+          accessible =
+            relation.to_a.select do |crop|
+              Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest_like, user: user)
+            end
+          allowed_ids = accessible.map(&:id)
+          normalized_selected = Array(raw_base).map(&:to_i).uniq & allowed_ids
+          crop_cards =
+            accessible.map do |crop|
+              { crop: crop, selected: normalized_selected.include?(crop.id) }
+            end
+
+          Domain::Pest::Dtos::PestHtmlCropSelectionLoadBundle.new(
+            accessible_crops: accessible,
+            selected_crop_ids: normalized_selected,
+            crop_cards: crop_cards
+          )
+        end
+
         def build_after_create_failure_pest_for_form!(user:, attributes:)
           sym = attributes.respond_to?(:symbolize_keys) ? attributes.symbolize_keys : attributes.to_h.symbolize_keys
           pest = ::Pest.new(
@@ -245,25 +305,48 @@ module Adapters
           ensure_pest_control_method_row_for_form!(pest_record)
         end
 
-        def normalize_crop_ids_for_pest_form(pest_model:, raw_crop_ids:, user:)
-          allowed_ids = build_accessible_crops_scope(pest_model, user: user).pluck(:id)
+        def normalize_crop_ids_for_pest_form(pest_id:, association_context:, raw_crop_ids:, user:)
+          is_reference, owner_user_id, region =
+            if pest_id.present?
+              pest = ::Pest.find(pest_id)
+              [ pest.is_reference?, pest.user_id, pest.region ]
+            else
+              raise ArgumentError, "association_context is required when pest_id is nil" if association_context.nil?
+
+              [
+                association_context.is_reference == true,
+                association_context.pest_owner_user_id,
+                association_context.region
+              ]
+            end
+
+          allowed_ids = accessible_crops_relation_for_pest_association(
+            is_reference: is_reference,
+            owner_user_id: owner_user_id,
+            region: region,
+            user: user
+          ).pluck(:id)
           Array(raw_crop_ids).compact.reject(&:blank?).map(&:to_i).uniq & allowed_ids
         end
 
-        # PestCropAssociationAccess#accessible_crops_scope のロジックをアダプター側へ移管（R1 違反解消）
-        def build_accessible_crops_scope(pest_model, user: nil)
+        private
+
+        # {Domain::Shared::PestCropAssociationAccess} と整合する作物 Relation（アダプター内永続のみ）
+        def accessible_crops_relation_for_pest_association(is_reference:, owner_user_id:, region:, user:)
           scope =
-            if pest_model.is_reference?
+            if is_reference
               ::Crop.where(is_reference: true)
             else
-              owner_id = pest_model.user_id || user&.id
+              owner_id = owner_user_id || user&.id
               # ユーザー害虫: 同じ所有者の非参照作物 + 参照作物すべて
               ::Crop.where("is_reference = ? OR (is_reference = ? AND user_id = ?)", true, false, owner_id)
             end
 
-          scope = scope.where(region: pest_model.region) if pest_model.region.present?
+          scope = scope.where(region: region) if region.present?
           scope.order(:name)
         end
+
+        public
 
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
           pest = ::Pest.find(pest_id)

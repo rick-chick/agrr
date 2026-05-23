@@ -38,6 +38,21 @@ module Domain
             crop_stages_attributes: crop_params[:crop_stages_attributes]
           )
         end
+
+        # HTML update 失敗時に {merge_edit_crop_params_for_master_form!} へ渡す属性束（permit 相当）。
+        def to_nested_crop_attributes_hash
+          h = {
+            name: @name,
+            variety: @variety,
+            area_per_unit: @area_per_unit,
+            revenue_per_area: @revenue_per_area,
+            region: @region,
+            groups: @groups,
+            is_reference: @is_reference
+          }
+          h[:crop_stages_attributes] = @crop_stages_attributes if Domain::Shared.present?(@crop_stages_attributes)
+          h
+        end
       end
     end
   end

@@ -56,7 +56,9 @@ class FarmsController < ApplicationController
 
   # GET /farms/new
   def new
-    @farm = CompositionRoot.farm_gateway.build_blank_farm_for_master_form!(user_id: current_user.id)
+    presenter = Adapters::Farm::Presenters::FarmHtmlNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Farm::Interactors::FarmHtmlNewMasterFormInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.farm_gateway).call
   end
 
   # GET /farms/:id/edit

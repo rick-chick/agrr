@@ -3,7 +3,63 @@
 require "domain_lib_test_helper"
 
 class PrivatePlanShowInteractorTest < DomainLibTestCase
+  def unused_gantt_clock
+    @unused_gantt_clock ||= Object.new.tap { |c| c.define_singleton_method(:today) { Date.new(2001, 1, 1) } }
+  end
+
   test "call passes assembled show dto from gateway detail to on_success" do
+    user = mock
+    user_lookup = mock
+    user_lookup.expects(:find).with(3).returns(user)
+
+    detail = Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail.new(
+      id: 10,
+      display_name: "Plan X",
+      farm_display_name: "F1",
+      total_area: 100,
+      field_cultivations_count: 0,
+      cultivation_plan_fields_count: 0,
+      planning_start_date: Date.new(2025, 6, 1),
+      planning_end_date: nil,
+      status: "completed",
+      field_cultivations: [],
+      cultivation_plan_fields: [],
+      palette_used_crop_ids: [],
+      palette_crops: []
+    )
+
+    gateway = mock
+    gateway.expects(:find_private_cultivation_plan_detail).with(user: user, plan_id: 10).returns(detail)
+
+    translator = mock
+    logger = mock
+    output = mock
+    output.expects(:on_success).with do |dto|
+      assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShow, dto
+      assert_equal 10, dto.id
+      assert_equal "Plan X", dto.display_name
+      assert_equal "F1", dto.farm_display_name
+      assert_equal 100, dto.total_area
+      assert_equal "completed", dto.status
+      assert_equal Date.new(2025, 6, 1), dto.planning_start_date
+      assert_equal [], dto.gantt_cultivation_rows
+      assert_equal [], dto.gantt_field_rows
+      true
+    end
+
+    Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
+      output_port: output,
+      user_id: 3,
+      plan_id: 10,
+      gateway: gateway,
+      translator: translator,
+      logger: logger,
+      user_lookup: user_lookup,
+      clock: unused_gantt_clock
+    ).call
+  end
+
+  test "call fills nil planning_start_date from clock before on_success" do
     user = mock
     user_lookup = mock
     user_lookup.expects(:find).with(3).returns(user)
@@ -29,16 +85,14 @@ class PrivatePlanShowInteractorTest < DomainLibTestCase
 
     translator = mock
     logger = mock
+    fallback = Date.new(2026, 4, 1)
+    clock = Object.new
+    clock.define_singleton_method(:today) { fallback }
+
     output = mock
     output.expects(:on_success).with do |dto|
-      assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanShow, dto
+      assert_equal fallback, dto.planning_start_date
       assert_equal 10, dto.id
-      assert_equal "Plan X", dto.display_name
-      assert_equal "F1", dto.farm_display_name
-      assert_equal 100, dto.total_area
-      assert_equal "completed", dto.status
-      assert_equal [], dto.gantt_cultivation_rows
-      assert_equal [], dto.gantt_field_rows
       true
     end
 
@@ -49,7 +103,8 @@ class PrivatePlanShowInteractorTest < DomainLibTestCase
       gateway: gateway,
       translator: translator,
       logger: logger,
-      user_lookup: user_lookup
+      user_lookup: user_lookup,
+      clock: clock
     ).call
   end
 
@@ -79,7 +134,8 @@ class PrivatePlanShowInteractorTest < DomainLibTestCase
       gateway: gateway,
       translator: translator,
       logger: logger,
-      user_lookup: user_lookup
+      user_lookup: user_lookup,
+      clock: unused_gantt_clock
     ).call
   end
 
@@ -110,7 +166,8 @@ class PrivatePlanShowInteractorTest < DomainLibTestCase
       gateway: gateway,
       translator: translator,
       logger: logger,
-      user_lookup: user_lookup
+      user_lookup: user_lookup,
+      clock: unused_gantt_clock
     ).call
   end
 
@@ -135,7 +192,8 @@ class PrivatePlanShowInteractorTest < DomainLibTestCase
         gateway: gateway,
         translator: translator,
         logger: logger,
-        user_lookup: user_lookup
+        user_lookup: user_lookup,
+        clock: unused_gantt_clock
       ).call
     end
     assert_equal "internal", err.message
@@ -171,7 +229,8 @@ class PrivatePlanShowInteractorTest < DomainLibTestCase
         gateway: gateway,
         translator: translator,
         logger: logger,
-        user_lookup: user_lookup
+        user_lookup: user_lookup,
+        clock: unused_gantt_clock
       ).call
     end
   end
@@ -197,7 +256,8 @@ class PrivatePlanShowInteractorTest < DomainLibTestCase
         gateway: gateway,
         translator: translator,
         logger: logger,
-        user_lookup: user_lookup
+        user_lookup: user_lookup,
+        clock: unused_gantt_clock
       ).call
     end
   end

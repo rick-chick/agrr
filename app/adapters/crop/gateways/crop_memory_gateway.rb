@@ -81,7 +81,7 @@ module Adapters
         def find_authorized_crop_loaded_bundle!(user, id, for_edit:, access_filter:)
           crop = authorized_crop_record_with_association_preloads!(user, id, for_edit: for_edit, access_filter: access_filter)
 
-          prepare_crop_record_for_edit_master_form!(crop) if for_edit
+          prepare_crop_record_for_edit_master_form_internal!(crop) if for_edit
 
           Domain::Crop::Dtos::AuthorizedCropLoaded.new(
             crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
@@ -93,22 +93,35 @@ module Adapters
           ::Crop.new
         end
 
-        def build_new_crop_with_attributes_for_master_form(attributes:)
-          ::Crop.new(attributes)
+        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
+        def blank_crop_master_form_snapshot_for_html
+          Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(::Crop.new)
         end
 
-        def prepare_crop_record_for_edit_master_form!(crop)
+        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
+        def build_new_crop_with_attributes_for_master_form(attributes:)
+          crop = ::Crop.new(attributes)
+          crop.valid?
+          Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop, error_messages: crop.errors.full_messages)
+        end
+
+        private
+
+        # edit フォーム用にネストの空関連を補う（永続はゲートウェイ内のみ）
+        def prepare_crop_record_for_edit_master_form_internal!(crop)
           crop.crop_stages.each do |stage|
             stage.build_nutrient_requirement unless stage.nutrient_requirement
           end
         end
 
+        public
+
+        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
         def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:, access_filter:)
           crop = find_authorized_model_for_edit(user, crop_id, access_filter: access_filter)
           crop.assign_attributes(attributes)
           crop.valid?
-          snapshot = Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop, error_messages: crop.errors.full_messages)
-          Forms::CropMasterForm.from_snapshot(snapshot)
+          Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop, error_messages: crop.errors.full_messages)
         end
 
         def find_masters_crop_with_crop_stage_bundle!(user, crop_id, crop_stage_id, access_filter:)

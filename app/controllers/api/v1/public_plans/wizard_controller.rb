@@ -21,16 +21,13 @@ module Api
 
         def crops
           Rails.logger.info "🌱 [WizardController#crops] Called with farm_id: #{params[:farm_id]}"
-          region = CompositionRoot.farm_gateway.farm_region_for_wizard_lookup_by_id(params[:farm_id])
-          unless region
-            Rails.logger.warn "❌ [WizardController#crops] Farm not found: #{params[:farm_id]}"
-            return render json: { error: I18n.t("api.errors.common.farm_not_found"), error_key: "api.errors.common.farm_not_found" }, status: :not_found
-          end
-
-          Rails.logger.info "🌱 [WizardController#crops] Found farm region: #{region}"
-          presenter = Adapters::PublicPlan::Presenters::ReferenceCropsApiPresenter.new(view: self)
-          Domain::Crop::Interactors::CropListReferenceEntitiesInteractor.new(output_port: presenter, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger).call(region: region)
-          Rails.logger.info "🌱 [WizardController#crops] Rendered reference crops"
+          presenter = Adapters::PublicPlan::Presenters::PublicPlanWizardCropsApiPresenter.new(view: self)
+          Domain::PublicPlan::Interactors::PublicPlanWizardCropsInteractor.new(
+            output_port: presenter,
+            farm_gateway: CompositionRoot.farm_gateway,
+            crop_gateway: CompositionRoot.crop_gateway,
+            logger: CompositionRoot.logger
+          ).call(farm_id: params[:farm_id])
         end
 
         def create

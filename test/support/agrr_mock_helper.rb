@@ -184,19 +184,16 @@ module AgrrMockHelper
     end
   end
 
-  # CultivationPlanAdjustGateway のモック化
+  # ManualPlanAdjust 経路の AdjustWithDbWeatherInteractor をモック化
   # adjust API の呼び出しをインターアクタ処理なしでモック返す
   def stub_adjust_gateway
-    Adapters::CultivationPlan::Gateways::CultivationPlanAdjustActiveRecordGateway.class_eval do
-      define_method(:execute) do |auth:, plan_id:, moves:|
+    Domain::CultivationPlan::Interactors::AdjustWithDbWeatherInteractor.class_eval do
+      define_method(:call) do |plan_id:, moves:|
         {
-          kind: :adjust_result,
-          adjust_hash: {
-            success: true,
-            status: :ok,
-            message: I18n.t("optimization.messages.adjust_completed"),
-            cultivation_plan: { id: plan_id }
-          }
+          success: true,
+          status: :ok,
+          message: I18n.t("optimization.messages.adjust_completed"),
+          cultivation_plan: { id: plan_id }
         }
       end
     end

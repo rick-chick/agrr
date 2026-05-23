@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # `CultivationPlanAdjustGateway#execute` の戻り。
+      # 旧 `CultivationPlanAdjustGateway#execute` の戻り（廃止）。参照用。
       class CultivationPlanRestAdjustOutcome
         OUTCOME_CROP_MISSING_GROWTH_STAGES = :crop_missing_growth_stages
         OUTCOME_ADJUST_RESULT = :adjust_result

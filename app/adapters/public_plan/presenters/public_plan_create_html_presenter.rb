@@ -4,8 +4,11 @@ module Adapters
   module PublicPlan
     module Presenters
       class PublicPlanCreateHtmlPresenter < Domain::PublicPlan::Ports::PublicPlanCreateOutputPort
-        def initialize(view:)
+        def initialize(view:, public_plan_gateway:, crop_gateway:, logger:)
           @view = view
+          @public_plan_gateway = public_plan_gateway
+          @crop_gateway = crop_gateway
+          @logger = logger
         end
 
         def on_success(success_dto)
@@ -17,10 +20,18 @@ module Adapters
 
         def on_failure(failure_dto)
           if failure_dto.is_a?(Domain::PublicPlan::Dtos::PublicPlanCreateFailure) && failure_dto.no_crops?
-            @view.public_plan_render_create_no_crops_failure!(
-              farm_id: failure_dto.farm_id,
-              farm_size_id: failure_dto.farm_size_id,
-              region: failure_dto.region
+            Domain::PublicPlan::Interactors::PublicPlanCreateNoCropsFailureInteractor.new(
+              output_port: Adapters::PublicPlan::Presenters::PublicPlanCreateNoCropsFailureHtmlPresenter.new(view: @view),
+              public_plan_gateway: @public_plan_gateway,
+              crop_gateway: @crop_gateway,
+              logger: @logger
+            ).call(
+              Domain::PublicPlan::Dtos::PublicPlanCreateNoCropsFailureInput.new(
+                farm_id: failure_dto.farm_id,
+                farm_size_id: failure_dto.farm_size_id,
+                region: failure_dto.region,
+                farm_sizes: @view.farm_sizes_with_i18n
+              )
             )
             return
           end

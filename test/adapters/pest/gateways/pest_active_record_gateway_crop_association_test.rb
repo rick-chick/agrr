@@ -57,7 +57,8 @@ module Adapters
 
         test "normalize_crop_ids_for_pest_form filters to accessible crop IDs only" do
           normalized = @gw.normalize_crop_ids_for_pest_form(
-            pest_model: @pest,
+            pest_id: @pest.id,
+            association_context: nil,
             raw_crop_ids: [ @crop1.id, @other_user_crop.id, 99999 ],
             user: @user
           )
@@ -69,7 +70,8 @@ module Adapters
 
         test "normalize_crop_ids_for_pest_form handles string IDs" do
           normalized = @gw.normalize_crop_ids_for_pest_form(
-            pest_model: @pest,
+            pest_id: @pest.id,
+            association_context: nil,
             raw_crop_ids: [ @crop1.id.to_s, @crop2.id.to_s ],
             user: @user
           )

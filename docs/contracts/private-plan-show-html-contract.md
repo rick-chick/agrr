@@ -21,14 +21,14 @@
 
 ## Interactor
 
-- **注入**: `gateway` / `translator` / `logger` / `user_lookup`。**`plan_id` は正の整数にパースした値**のみ渡す（Controller 側）。
+- **注入**: `gateway` / `translator` / `logger` / `user_lookup` / **`clock`**（`#today` → `Date`）。**`plan_id` は正の整数にパースした値**のみ渡す（Controller 側）。永続層で `planning_start_date` が欠ける場合でも、**`shared/_gantt_chart` 用には `clock.today` で補完した `PrivatePlanShowDto` を `on_success` に渡す**（ビューで `Date.current` を使わない）。
 - **`PersistenceFailed`**: **ログ出力のうえ再 raise**。ユーザー向け `on_failure` やフラッシュには回さず、**通常は Rails が 500 を扱う**（恒久方針）。
 - **`on_failure` で redirect した場合**は Controller で `return if performed?` する。
 - **`PlanStatus.optimizing?(status)`** が真の場合、Interactor **成功後**に Controller が **`optimizing_plan_path`** へリダイレクトする。
 
 ## Controller
 
-- **注入**: Interactor に `gateway` / `translator` / `logger` / `user_lookup`（**Interactor のみ**が利用）。
+- **注入**: Interactor に `gateway` / `translator` / `logger` / `user_lookup` / **`clock`**（例: `Time.zone`）（**Interactor のみ**が利用）。
 
 ## テンプレ（`plans/show`）
 

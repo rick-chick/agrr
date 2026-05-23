@@ -45,6 +45,18 @@ module Domain
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
+        # HTML 新規フォーム用スナップショット（永続化しない）
+        # @return [Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot]
+        def blank_fertilize_master_form_snapshot_for_html
+          raise NotImplementedError, "Subclasses must implement blank_fertilize_master_form_snapshot_for_html"
+        end
+
+        # HTML 作成検証失敗時のスナップショット（永続化しない）
+        # @return [Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot]
+        def fertilize_master_form_snapshot_after_create_failure!(user:, attributes:)
+          raise NotImplementedError, "Subclasses must implement fertilize_master_form_snapshot_after_create_failure!"
+        end
+
         # AI API: ユーザー肥料を agrr 応答の商品名で検索（なければ nil）。戻りは永続 Fertilize。
         def find_by_name(user_id:, name:)
           raise NotImplementedError, "Subclasses must implement find_by_name"

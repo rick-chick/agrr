@@ -13,6 +13,7 @@ module Domain
         end
 
         def call(input_dto)
+          attrs = nil
           user = @user_lookup.find(@user_id)
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
           unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_assignment_allowed?(user, is_reference: is_reference)
@@ -35,7 +36,15 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          if attrs
+            bundle = @gateway.pesticide_html_master_form_bundle(
+              user: user,
+              assign_attributes: input_dto.assign_attributes_for_form || {}
+            )
+            @output_port.on_failure(Domain::Pesticide::Dtos::PesticideHtmlMasterFormFailure.new(message: e.message, bundle: bundle))
+          else
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          end
         end
       end
     end

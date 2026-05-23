@@ -35,7 +35,13 @@ class AgriculturalTasksController < ApplicationController
 
   # GET /agricultural_tasks/new
   def new
-    @agricultural_task = CompositionRoot.agricultural_task_gateway.build_blank_agricultural_task_for_master_form(current_user)
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskHtmlNewMasterFormHtmlPresenter.new(view: self)
+    Domain::AgriculturalTask::Interactors::AgriculturalTaskHtmlNewMasterFormInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      gateway: CompositionRoot.agricultural_task_gateway,
+      user_lookup: CompositionRoot.user_lookup
+    ).call
   end
 
   # GET /agricultural_tasks/:id/edit
@@ -216,26 +222,13 @@ class AgriculturalTasksController < ApplicationController
   def apply_agricultural_task_update_form_snapshot(form_resubmit)
     return unless form_resubmit
 
-    dto = form_resubmit[:dto]
-    task_attributes = form_resubmit[:task_attributes]
-    selected_crop_ids = form_resubmit[:selected_crop_ids]
-    return unless dto && params[:id]
-
-    @agricultural_task = CompositionRoot.agricultural_task_gateway.merge_update_form_snapshot_for_master_form!(
-      user: current_user,
-      task_id: params[:id],
-      dto: dto,
-      task_attributes: task_attributes,
-      access_filter: Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(current_user)
-    )
-    return unless defined?(@accessible_crops)
-
-    normalized_ids = Array(selected_crop_ids).map(&:to_i).uniq
-    @selected_crop_ids = normalized_ids
-    @crop_cards = Domain::AgriculturalTask::Mappers::EditFormCropSelectionCardsMapper.build(
-      accessible_crops: @accessible_crops,
-      selected_ids: normalized_ids
-    )
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskHtmlUpdateFailureHtmlPresenter.new(view: self)
+    Domain::AgriculturalTask::Interactors::AgriculturalTaskHtmlUpdateFailureInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      gateway: CompositionRoot.agricultural_task_gateway,
+      user_lookup: CompositionRoot.user_lookup
+    ).call(form_resubmit, accessible_crops: @accessible_crops)
   end
 
   # View interface for HTML Presenters（Presenter から呼ばれるため public）

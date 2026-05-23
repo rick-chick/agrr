@@ -3,14 +3,15 @@
 module Domain
   module CultivationPlan
     module Gateways
-      # REST GET data: 計画ワークベンチ用 JSON ボディ組み立て（永続読取のみ Gateway 側）。
+      # REST GET data: 計画ワークベンチ用スナップショット読取（永続のみ）。
       class CultivationPlanWorkbenchPayloadGateway
         def initialize(logger:, available_crop_rows_gateway:)
           @logger = logger
           @available_crop_rows_gateway = available_crop_rows_gateway
         end
 
-        def build(auth:, plan_id:)
+        # @return [Hash] { kind: :success, snapshot: CultivationPlanWorkbenchSnapshot } など
+        def load_snapshot(auth:, plan_id:)
           raise NotImplementedError
         end
 

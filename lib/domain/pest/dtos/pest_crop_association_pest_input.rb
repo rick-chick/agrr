@@ -31,6 +31,16 @@ module Domain
           )
         end
 
+        # @param payload [Domain::Pest::Dtos::PestMasterEditPayload]
+        def self.from_master_edit_payload(payload)
+          new(
+            is_reference: payload.is_reference?,
+            pest_user_id: payload.user_id,
+            region: payload.region,
+            associated_crop_ids: payload.associated_crop_ids
+          )
+        end
+
         # {PestCropAssociationAccess#filter_for_accessible_crops} が `user_id` / `is_reference?` を参照するための別名。
         def user_id
           pest_user_id

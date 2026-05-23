@@ -9,14 +9,15 @@ module Api
       # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/add_crop
       # 作物追加: candidatesで最適日付を自動決定し、adjustで追加する
       def add_crop
+        gws = CompositionRoot.cultivation_plan_rest_add_crop_support_gateways
         Domain::CultivationPlan::Interactors::AddCropInteractor.new(
           output: Adapters::CultivationPlan::Presenters::AddCropApiPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
-          add_crop_coordinator_gateway: CompositionRoot.cultivation_plan_rest_add_crop_coordinator_gateway(
-            optimization_host: cultivation_plan_rest_add_crop_optimizer_bridge
-          )
+          logger: cultivation_plan_rest_logger,
+          optimization_host: cultivation_plan_rest_add_crop_optimizer_bridge,
+          **gws
         ).call(
           auth: cultivation_plan_rest_auth,
           plan_id: params[:id].to_i,
@@ -82,7 +83,9 @@ module Api
         moves = Adapters::CultivationPlan::AdjustMovesFromRequest.normalize(params[:moves] || [])
         Domain::CultivationPlan::Interactors::ManualPlanAdjustInteractor.new(
           output: Adapters::CultivationPlan::Presenters::ManualPlanAdjustApiPresenter.new(view: self),
-          adjust_gateway: CompositionRoot.cultivation_plan_rest_adjust_gateway
+          adjust_plan_growth_read_gateway: CompositionRoot.cultivation_plan_rest_adjust_plan_growth_read_gateway,
+          adjust_with_db_weather: CompositionRoot.adjust_with_db_weather_interactor,
+          logger: cultivation_plan_rest_logger
         ).call(
           auth: cultivation_plan_rest_auth,
           plan_id: params[:id].to_i,

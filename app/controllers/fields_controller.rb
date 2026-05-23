@@ -22,9 +22,9 @@ class FieldsController < ApplicationController
 
   # GET /farms/:farm_id/fields/new
   def new
-    farm_access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(current_user)
-    snapshot = CompositionRoot.field_gateway.build_blank_field_for_master_form!(farm_id: @farm.id, farm_access_filter: farm_access_filter)
-    @field = Forms::FieldMasterForm.from_snapshot(snapshot)
+    presenter = Adapters::Field::Presenters::FieldHtmlNewMasterFormHtmlPresenter.new(view: self)
+    Domain::Field::Interactors::FieldHtmlNewMasterFormInteractor.new(output_port: presenter,
+      user_id: current_user.id, farm_id: @farm.id, gateway: CompositionRoot.field_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # GET /farms/:farm_id/fields/:id/edit

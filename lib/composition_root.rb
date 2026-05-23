@@ -88,6 +88,15 @@ module CompositionRoot
       @crop_stage_copy_gateway ||= Adapters::Crop::Gateways::CropStageCopyActiveRecordGateway.new
     end
 
+    def pest_html_crop_selection_load_interactor(output_port:, user_id:)
+      Domain::Pest::Interactors::PestHtmlCropSelectionLoadInteractor.new(
+        output_port: output_port,
+        user_id: user_id,
+        gateway: pest_gateway,
+        user_lookup: user_lookup
+      )
+    end
+
     def pest_gateway
       @pest_gateway ||= Adapters::Pest::Gateways::PestActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway
@@ -173,17 +182,35 @@ module CompositionRoot
       )
     end
 
-    def cultivation_plan_rest_adjust_gateway
-      Adapters::CultivationPlan::Gateways::CultivationPlanAdjustActiveRecordGateway.new(
+    def cultivation_plan_rest_adjust_plan_growth_read_gateway
+      Adapters::CultivationPlan::Gateways::CultivationPlanAdjustPlanGrowthReadActiveRecordGateway.new(
         logger: logger
       )
     end
 
-    def cultivation_plan_rest_add_crop_coordinator_gateway(optimization_host:)
-      Adapters::CultivationPlan::Gateways::CultivationPlanAddCropCoordinatorActiveRecordGateway.new(
-        optimization_host: optimization_host,
-        logger: logger
-      )
+    def cultivation_plan_rest_add_crop_support_gateways
+      {
+        optimize_attach_gateway:
+          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropOptimizeAttachActiveRecordGateway.new(
+            logger: logger
+          ),
+        plan_crop_insert_gateway:
+          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropPlanCropInsertActiveRecordGateway.new(
+            logger: logger
+          ),
+        best_candidate_gateway:
+          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropBestCandidateActiveRecordGateway.new(
+            logger: logger
+          ),
+        adjust_invoke_gateway:
+          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropAdjustInvokeActiveRecordGateway.new(
+            logger: logger
+          ),
+        plan_crop_delete_gateway:
+          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropPlanCropDeleteActiveRecordGateway.new(
+            logger: logger
+          )
+      }
     end
 
     def adjust_with_db_weather_interactor(clock: Time.zone)

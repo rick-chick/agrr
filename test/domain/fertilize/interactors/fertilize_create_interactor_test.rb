@@ -6,9 +6,7 @@ module Domain
   module Fertilize
     module Interactors
       # FertilizeCreateInteractor の純粋ユニットテスト（memory gateway 注入・Rails 非依存）。
-      # 旧 test/integration/domain/... を ARCHITECTURE.md Testing 規約に沿って書き直したもの。
-      # 旧テストの test 2 / 6 は interactor 改修前の失敗 DTO（FertilizeCreateFailure）を
-      # 期待しており stale だった。現行 interactor は Domain::Shared::Dtos::Error を返す。
+      # Interactor は create 検証失敗時に {Domain::Fertilize::Dtos::FertilizeCreateFailure} を返す。
       class FertilizeCreateInteractorTest < DomainLibTestCase
         FakeUser = Struct.new(:id, :is_admin, keyword_init: true) do
           def admin?
@@ -43,6 +41,16 @@ module Domain
             raise @error if @error
 
             @entity
+          end
+
+          def fertilize_master_form_snapshot_after_create_failure!(user:, attributes:)
+            h = Domain::Shared.symbolize_keys(attributes.to_h).merge(user_id: user.id)
+            Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot.new(
+              attributes: h,
+              new_record: true,
+              id: nil,
+              error_messages: [ "invalid" ]
+            )
           end
         end
 
@@ -117,6 +125,18 @@ module Domain
 
           assert_nil @output_port.success
           assert_instance_of Domain::Shared::Policies::PolicyPermissionDenied, @output_port.failure
+        end
+
+        test "calls on_failure with FertilizeCreateFailure when create raises RecordInvalid" do
+          user = FakeUser.new(id: 1, is_admin: false)
+          gateway = FakeGateway.new(entity: Object.new, error: Domain::Shared::Exceptions::RecordInvalid.new("bad"))
+          input = Domain::Fertilize::Dtos::FertilizeCreateInput.new(name: "Test", n: 1.0, p: 1.0, k: 1.0, region: "R")
+
+          build_interactor(gateway: gateway, user_lookup: FakeUserLookup.new(user: user)).call(input)
+
+          assert_nil @output_port.success
+          assert_instance_of Domain::Fertilize::Dtos::FertilizeCreateFailure, @output_port.failure
+          assert gateway.received, "gateway create must be attempted"
         end
 
         test "re-raises unexpected gateway errors" do

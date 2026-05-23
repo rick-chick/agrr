@@ -3,6 +3,10 @@
 require "domain_lib_test_helper"
 
 class PublicPlanResultsInteractorTest < DomainLibTestCase
+  def unused_gantt_clock
+    @unused_gantt_clock ||= Object.new.tap { |c| c.define_singleton_method(:today) { Date.new(2001, 1, 1) } }
+  end
+
   test "call passes read model to on_success when completed" do
     read_model = Domain::CultivationPlan::Dtos::PublicPlanResultsSnapshot.new(
       plan_id: 5,
@@ -29,7 +33,8 @@ class PublicPlanResultsInteractorTest < DomainLibTestCase
 
     Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
       output_port: output,
-      gateway: gateway
+      gateway: gateway,
+      clock: unused_gantt_clock
     ).call(plan_id: 5)
   end
 
@@ -42,7 +47,8 @@ class PublicPlanResultsInteractorTest < DomainLibTestCase
 
     Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
       output_port: output,
-      gateway: gateway
+      gateway: gateway,
+      clock: unused_gantt_clock
     ).call(plan_id: nil)
   end
 
@@ -55,7 +61,8 @@ class PublicPlanResultsInteractorTest < DomainLibTestCase
 
     Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
       output_port: output,
-      gateway: gateway
+      gateway: gateway,
+      clock: unused_gantt_clock
     ).call(plan_id: 0)
   end
 
@@ -68,7 +75,8 @@ class PublicPlanResultsInteractorTest < DomainLibTestCase
 
     Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
       output_port: output,
-      gateway: gateway
+      gateway: gateway,
+      clock: unused_gantt_clock
     ).call(plan_id: 9)
   end
 
@@ -98,7 +106,48 @@ class PublicPlanResultsInteractorTest < DomainLibTestCase
 
     Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
       output_port: output,
-      gateway: gateway
+      gateway: gateway,
+      clock: unused_gantt_clock
     ).call(plan_id: 3)
+  end
+
+  test "call fills nil planning_start_date from clock before on_success when completed" do
+    read_model = Domain::CultivationPlan::Dtos::PublicPlanResultsSnapshot.new(
+      plan_id: 7,
+      status_completed: true,
+      planning_start_date: nil,
+      planning_end_date: Date.new(2026, 12, 31),
+      farm_name: "Farm B",
+      total_area: 50,
+      field_cultivations_count: 1,
+      total_cost: 1,
+      total_revenue: 2,
+      total_profit: 1,
+      gantt_cultivation_rows: [],
+      gantt_field_rows: [],
+      crop_palette_embed: { used_crop_ids: [], crops: [] },
+      show_schedule_warning: false
+    )
+
+    fallback = Date.new(2026, 8, 15)
+    clock = Object.new
+    clock.define_singleton_method(:today) { fallback }
+
+    gateway = mock
+    gateway.expects(:public_plan_results_snapshot).with(plan_id: 7).returns(read_model)
+
+    output = mock
+    output.expects(:on_success).with do |rm|
+      assert_equal fallback, rm.planning_start_date
+      assert_equal 7, rm.plan_id
+      assert_equal read_model.planning_end_date, rm.planning_end_date
+      true
+    end
+
+    Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
+      output_port: output,
+      gateway: gateway,
+      clock: clock
+    ).call(plan_id: 7)
   end
 end

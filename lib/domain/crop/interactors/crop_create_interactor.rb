@@ -13,6 +13,7 @@ module Domain
         end
 
         def call(input_dto)
+          attrs = nil
           user = @user_lookup.find(@user_id)
           is_reference = Domain::Shared::TypeConverters::BooleanConverter.cast(input_dto.is_reference) || false
           unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_assignment_allowed?(user, is_reference: is_reference)
@@ -26,7 +27,8 @@ module Domain
             revenue_per_area: input_dto.revenue_per_area,
             region: input_dto.region,
             groups: input_dto.groups || [],
-            is_reference: is_reference
+            is_reference: is_reference,
+            crop_stages_attributes: input_dto.crop_stages_attributes || []
           })
           crop_entity = @gateway.create_for_user(user, attrs)
 
@@ -34,7 +36,12 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          if attrs
+            snapshot = @gateway.build_new_crop_with_attributes_for_master_form(attributes: attrs)
+            @output_port.on_failure(Domain::Crop::Dtos::CropHtmlMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
+          else
+            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+          end
         end
       end
     end
