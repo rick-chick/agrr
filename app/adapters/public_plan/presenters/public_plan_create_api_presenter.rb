@@ -17,6 +17,10 @@ module Adapters
           )
         end
 
+        def on_no_crops_failure(_view_context)
+          on_failure(Domain::Shared::Dtos::Error.new("No crops selected"))
+        end
+
         def on_failure(failure_dto)
           error_message = failure_dto.respond_to?(:message) ? failure_dto.message : failure_dto.to_s
 

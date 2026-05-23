@@ -49,6 +49,7 @@ module Api
           interactor = Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
             output_port: presenter,
             gateway: CompositionRoot.public_plan_gateway,
+            crop_gateway: CompositionRoot.crop_gateway,
             cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
             logger: CompositionRoot.logger,
             clock: Time.zone,

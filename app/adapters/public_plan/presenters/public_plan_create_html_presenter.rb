@@ -4,11 +4,8 @@ module Adapters
   module PublicPlan
     module Presenters
       class PublicPlanCreateHtmlPresenter < Domain::PublicPlan::Ports::PublicPlanCreateOutputPort
-        def initialize(view:, public_plan_gateway:, crop_gateway:, logger:)
+        def initialize(view:)
           @view = view
-          @public_plan_gateway = public_plan_gateway
-          @crop_gateway = crop_gateway
-          @logger = logger
         end
 
         def on_success(success_dto)
@@ -18,28 +15,29 @@ module Adapters
           @view.redirect_to @view.optimizing_public_plans_path
         end
 
-        def on_failure(failure_dto)
-          if failure_dto.is_a?(Domain::PublicPlan::Dtos::PublicPlanCreateFailure) && failure_dto.no_crops?
-            Domain::PublicPlan::Interactors::PublicPlanCreateNoCropsFailureInteractor.new(
-              output_port: Adapters::PublicPlan::Presenters::PublicPlanCreateNoCropsFailureHtmlPresenter.new(view: @view),
-              public_plan_gateway: @public_plan_gateway,
-              crop_gateway: @crop_gateway,
-              logger: @logger
-            ).call(
-              Domain::PublicPlan::Dtos::PublicPlanCreateNoCropsFailureInput.new(
-                farm_id: failure_dto.farm_id,
-                farm_size_id: failure_dto.farm_size_id,
-                region: failure_dto.region,
-                farm_sizes: @view.farm_sizes_with_i18n
-              )
-            )
-            return
-          end
+        def on_no_crops_failure(view_context)
+          farm_size = farm_size_with_i18n(view_context.farm_size)
+          @view.public_plan_render_select_crop_no_crops_failure!(
+            farm: view_context.farm,
+            farm_size: farm_size,
+            crops: view_context.crops
+          )
+        end
 
-          @view.redirect_to @view.public_plans_path, alert: failure_alert_for_message(failure_dto.message)
+        def on_failure(failure_dto)
+          message = failure_dto.respond_to?(:message) ? failure_dto.message : failure_dto.to_s
+          @view.redirect_to @view.public_plans_path, alert: failure_alert_for_message(message)
         end
 
         private
+
+        def farm_size_with_i18n(farm_size)
+          id = farm_size[:id].to_s
+          catalog_entry = @view.farm_sizes_with_i18n.find { |fs| fs[:id].to_s == id }
+          return farm_size.merge(catalog_entry.slice(:name, :description)) if catalog_entry
+
+          farm_size
+        end
 
         def failure_alert_for_message(msg)
           case msg

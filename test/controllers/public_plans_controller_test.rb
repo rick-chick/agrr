@@ -35,13 +35,11 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
       output_port = kw[:output_port]
       Object.new.tap do |obj|
         obj.define_singleton_method(:call) { |_input|
-          output_port.on_failure(
-            Domain::PublicPlan::Dtos::PublicPlanCreateFailure.new(
-              kind: Domain::PublicPlan::Dtos::PublicPlanCreateFailure::KIND_NO_CROPS,
-              message: "No crops selected",
-              farm_id: farm.id,
-              farm_size_id: "home_garden",
-              region: "jp"
+          output_port.on_no_crops_failure(
+            Domain::PublicPlan::Dtos::PublicPlanCreateNoCropsViewContext.new(
+              farm: farm,
+              farm_size: { id: "home_garden", area_sqm: 30 },
+              crops: []
             )
           )
         }

@@ -37,8 +37,21 @@ module Domain
           end
         end
 
+        class FakeCropGateway
+          def initialize(crops: [], error: nil)
+            @crops = crops
+            @error = error
+          end
+
+          def list_reference_crop_entities(region: nil)
+            raise @error if @error
+
+            @crops
+          end
+        end
+
         class RecordingOutputPort
-          attr_reader :success, :failure, :events
+          attr_reader :success, :failure, :no_crops_context, :events
 
           def initialize
             @events = []
@@ -52,6 +65,11 @@ module Domain
           def on_failure(error)
             @failure = error
             @events << :failure
+          end
+
+          def on_no_crops_failure(view_context)
+            @no_crops_context = view_context
+            @events << :no_crops_failure
           end
         end
 
@@ -79,6 +97,7 @@ module Domain
             PublicPlanCreateInteractor.new(
               output_port: @output_port,
               gateway: FakePublicPlanGateway.new,
+              crop_gateway: FakeCropGateway.new,
               cultivation_plan_gateway: Object.new,
               logger: @logger,
               clock: Object.new
@@ -152,17 +171,35 @@ module Domain
           assert_includes @output_port.failure.message, "Invalid total area"
         end
 
-        test "calls on_failure with a no-crops failure when no crops are resolved" do
+        test "calls on_no_crops_failure with view context when no crops are resolved" do
+          reference_crops = [ Crop.new(id: 10, name: "参照作物") ]
           interactor = build_interactor(
             gateway: FakePublicPlanGateway.new(farm: standard_farm, farm_size: { id: "home_garden", area_sqm: 30 }, crops: []),
+            crop_gateway: FakeCropGateway.new(crops: reference_crops),
             cultivation_plan_gateway: Object.new
           )
 
           interactor.call(standard_input)
 
-          assert_instance_of Domain::PublicPlan::Dtos::PublicPlanCreateFailure, @output_port.failure
-          assert @output_port.failure.no_crops?
-          assert_includes @output_port.failure.message, "No crops selected"
+          assert_nil @output_port.failure
+          assert_includes @output_port.events, :no_crops_failure
+          ctx = @output_port.no_crops_context
+          assert_instance_of Domain::PublicPlan::Dtos::PublicPlanCreateNoCropsViewContext, ctx
+          assert_equal standard_farm, ctx.farm
+          assert_equal({ id: "home_garden", area_sqm: 30 }, ctx.farm_size)
+          assert_equal reference_crops, ctx.crops
+        end
+
+        test "calls on_no_crops_failure with empty crops when reference crop list raises RecordInvalid" do
+          interactor = build_interactor(
+            gateway: FakePublicPlanGateway.new(farm: standard_farm, farm_size: { id: "home_garden", area_sqm: 30 }, crops: []),
+            crop_gateway: FakeCropGateway.new(error: Domain::Shared::Exceptions::RecordInvalid.new("invalid")),
+            cultivation_plan_gateway: Object.new
+          )
+
+          interactor.call(standard_input)
+
+          assert_equal [], @output_port.no_crops_context.crops
         end
 
         test "calls on_failure when the cultivation plan initialization reports errors" do
@@ -194,10 +231,11 @@ module Domain
 
         private
 
-        def build_interactor(gateway:, cultivation_plan_gateway:, optimization_job_chain_gateway: nil)
+        def build_interactor(gateway:, cultivation_plan_gateway:, crop_gateway: FakeCropGateway.new, optimization_job_chain_gateway: nil)
           PublicPlanCreateInteractor.new(
             output_port: @output_port,
             gateway: gateway,
+            crop_gateway: crop_gateway,
             cultivation_plan_gateway: cultivation_plan_gateway,
             logger: @logger,
             clock: FIXED_CLOCK,

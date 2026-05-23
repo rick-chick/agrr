@@ -91,16 +91,12 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       redirect_path: job_completion_redirect_path
     )
 
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanCreateHtmlPresenter.new(
-      view: self,
-      public_plan_gateway: CompositionRoot.public_plan_gateway,
-      crop_gateway: CompositionRoot.crop_gateway,
-      logger: CompositionRoot.logger
-    )
+    presenter = Adapters::PublicPlan::Presenters::PublicPlanCreateHtmlPresenter.new(view: self)
 
     Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.new(
       output_port: presenter,
       gateway: CompositionRoot.public_plan_gateway,
+      crop_gateway: CompositionRoot.crop_gateway,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
       logger: CompositionRoot.logger,
       clock: Time.zone,
@@ -108,7 +104,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     ).call(input_dto)
   end
 
-  # HTML Presenter / NoCropsFailureInteractor から: インスタンス変数の代入とテンプレ描画のみ
+  # HTML Presenter から: インスタンス変数の代入とテンプレ描画のみ
   def public_plan_render_select_crop_no_crops_failure!(farm:, farm_size:, crops:)
     @farm = farm
     @farm_size = farm_size
