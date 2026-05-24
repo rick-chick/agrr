@@ -25,14 +25,7 @@ module Adapters
             return
           end
 
-          @view.flash.now[:alert] = msg
-          if error_dto.is_a?(Domain::Pesticide::Dtos::PesticideMasterFormFailure)
-            b = error_dto.bundle
-            @view.instance_variable_set(:@pesticide, Forms::PesticideMasterForm.from_snapshot(b.pesticide_master_form_snapshot))
-            @view.instance_variable_set(:@crops, b.crop_pick_rows)
-            @view.instance_variable_set(:@pests, b.pest_pick_rows)
-          end
-          @view.render_form(:new, status: :unprocessable_entity)
+          @view.redirect_to @view.pesticides_path, alert: msg
         end
       end
     end

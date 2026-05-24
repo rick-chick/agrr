@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class PesticidesController < ApplicationController
-  before_action :load_pesticide_for_view, only: [ :edit, :update ]
-
   # GET /pesticides
   def index
     presenter = Adapters::Pesticide::Presenters::PesticideListHtmlPresenter.new(view: self)
@@ -15,20 +13,6 @@ class PesticidesController < ApplicationController
     presenter = Adapters::Pesticide::Presenters::PesticideDetailHtmlPresenter.new(view: self)
     Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-  end
-
-  # GET /pesticides/new
-  def new
-    presenter = Adapters::Pesticide::Presenters::PesticideNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Pesticide::Interactors::PesticideNewMasterFormInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
-  end
-
-  # GET /pesticides/:id/edit
-  def edit
-    presenter = Adapters::Pesticide::Presenters::PesticideEditFormPickListsHtmlPresenter.new(view: self)
-    Domain::Pesticide::Interactors::PesticideEditFormPickListsInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call
   end
 
   # POST /pesticides
@@ -57,18 +41,7 @@ class PesticidesController < ApplicationController
       translator: translator, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
-  # View interface for HTML Presenters（Presenter から呼ばれるため public）
-  def render_form(action, status: :ok, locals: {})
-    render(action, status: status, locals: locals)
-  end
-
   private
-
-  def load_pesticide_for_view
-    presenter = Adapters::Pesticide::Presenters::PesticideLoadForViewHtmlPresenter.new(view: self)
-    Domain::Pesticide::Interactors::PesticideLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-  end
 
   def pesticide_params
     # region / is_reference は mass-assignment 許可のみ。admin 限定の認可は

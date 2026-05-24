@@ -2,7 +2,6 @@
 
 <div class="page-header">
   <h1 class="page-title"><%= t('.title') %></h1>
-  <%= link_to t('.new_pesticide'), new_pesticide_path, class: "btn btn-success" %>
 </div>
 
 <% if @pesticides&.any? %>
@@ -21,9 +20,6 @@
         <% end %>
         <div class="crop-actions">
           <%= link_to t('.actions.show'), pesticide_path(pesticide.id), class: "btn btn-info btn-sm" %>
-          <% if display&.show_edit_button %>
-            <%= link_to t('.actions.edit'), edit_pesticide_path(pesticide.id), class: "btn btn-secondary btn-sm" %>
-          <% end %>
           <% if display&.show_delete_button %>
             <%= link_to t('.actions.delete'), pesticide_path(pesticide.id),
                         class: "btn btn-error btn-sm",
@@ -44,6 +40,5 @@
     <div class="empty-state-icon"><%= t('.empty.icon') %></div>
     <h3><%= t('.empty.title') %></h3>
     <p><%= t('.empty.description') %></p>
-    <%= link_to t('.empty.button'), new_pesticide_path, class: "btn btn-success" %>
   </div>
 <% end %>
