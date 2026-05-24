@@ -33,32 +33,17 @@ class AgriculturalTasksController < ApplicationController
     interactor.call(params[:id])
   end
 
-  # GET /agricultural_tasks/new
-  def new
-    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskNewMasterFormHtmlPresenter.new(view: self)
-    Domain::AgriculturalTask::Interactors::AgriculturalTaskNewMasterFormInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      gateway: CompositionRoot.agricultural_task_gateway,
-      user_lookup: CompositionRoot.user_lookup
-    ).call
-  end
-
-  # GET /agricultural_tasks/:id/edit
-  def edit
-  end
-
   # POST /agricultural_tasks
   def create
     task_attributes = build_task_attributes
 
-    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInput.from_hash({ agricultural_task: task_attributes })
+    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInput.from_hash({ agricultural_task: task_attributes })
     presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskCreateHtmlPresenter.new(view: self)
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
 
-    interactor.call(@input_dto)
+    interactor.call(input_dto)
   end
 
   # PATCH/PUT /agricultural_tasks/:id
@@ -89,14 +74,6 @@ class AgriculturalTasksController < ApplicationController
       translator: translator, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(params[:id])
-  end
-
-  def after_agricultural_task_create_failure
-    task_attributes = build_task_attributes
-    @agricultural_task = CompositionRoot.agricultural_task_gateway.build_after_create_failure_agricultural_task_for_master_form!(
-      user: current_user,
-      attributes: task_attributes
-    )
   end
 
   private

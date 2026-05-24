@@ -94,27 +94,6 @@ module Adapters
           ::CropTaskTemplate.where(agricultural_task_id: agricultural_task_id.to_i).pluck(:crop_id)
         end
 
-        def build_blank_agricultural_task_for_master_form(user)
-          ::AgriculturalTask.new(user_id: user.id, is_reference: false)
-        end
-
-        def build_after_create_failure_agricultural_task_for_master_form!(user:, attributes:)
-          sym = attributes.respond_to?(:symbolize_keys) ? attributes.symbolize_keys : attributes.to_h.symbolize_keys
-          task = ::AgriculturalTask.new(
-            user_id: user.id,
-            name: sym[:name],
-            description: sym[:description],
-            time_per_sqm: sym[:time_per_sqm],
-            weather_dependency: sym[:weather_dependency],
-            skill_level: sym[:skill_level],
-            is_reference: sym[:is_reference],
-            required_tools: sym[:required_tools],
-            region: sym[:region]
-          )
-          task.valid?
-          task
-        end
-
         def preview_agricultural_task_for_edit_crop_selection(base_entity:, user:, agricultural_task_params:)
           requested_flag = preview_requested_reference_flag(base_entity, agricultural_task_params)
           return base_entity if requested_flag == base_entity.is_reference?

@@ -66,7 +66,7 @@ Rails.application.routes.draw do
     resources :fertilizes, only: %i[index show create update destroy]
     resources :pesticides, only: %i[index show create update destroy]
     resources :pests, only: %i[index show create update destroy]
-    resources :agricultural_tasks
+    resources :agricultural_tasks, only: %i[index show create update destroy]
     resources :interaction_rules
 
     # APIキー管理（HTML）
