@@ -8,11 +8,8 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
   test "create does not store crop_ids in session" do
     farm = Farm.reference.first || Farm.create!(user: User.anonymous_user, name: "Ref Farm", is_reference: true, region: "jp", latitude: 35.0, longitude: 139.0)
 
-    # Step2: farm_idをセッションに入れる（GETアクションを直接呼び出し）
-    get :select_farm_size, params: { farm_id: farm.id }
-
     # Step3: 作物選択画面を通過（farm_size_id必須）
-    get :select_crop, params: { farm_size_id: "home_garden" }
+    get :select_crop, params: { farm_size_id: "home_garden", farm_id: farm.id }
 
     # Step4: 計画作成（create）
     crop = Crop.reference.first || Crop.create!(name: "Ref Crop", is_reference: true, region: "jp")
@@ -232,13 +229,8 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h2" # ビューにh2タグが存在することを確認
 
-    # Step 2: 農場サイズ選択画面の表示
-    get select_farm_size_public_plans_path(farm_id: @japan_farm.id)
-    assert_response :success
-    assert_select "h2" # ビューにh2タグが存在することを確認
-
-    # Step 3: 作物選択画面の表示（セッション経由）
-    get select_crop_public_plans_path(farm_size_id: "home_garden")
+    # Step 3: 作物選択画面の表示（farm_id はクエリ、HTML select_farm_size 削除後）
+    get select_crop_public_plans_path(farm_size_id: "home_garden", farm_id: @japan_farm.id)
     assert_response :success
     assert_select "h2" # ビューにh2タグが存在することを確認
 
@@ -303,12 +295,6 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     # 計画のステータスが'failed'に更新されることを確認（エラーハンドリングが動作）
     cultivation_plan.reload
     assert_equal "failed", cultivation_plan.status
-  end
-
-  test "エラーハンドリング（存在しない農場ID）" do
-    get select_farm_size_public_plans_path(farm_id: 99999)
-    assert_redirected_to public_plans_path
-    assert_equal I18n.t("public_plans.errors.select_region"), flash[:alert]
   end
 
   test "エラーハンドリング（作物が選択されていない）" do
@@ -532,12 +518,10 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def select_farm_size_public_plans_path(farm_id:)
-    "/public_plans/select_farm_size?farm_id=#{farm_id}"
-  end
-
-  def select_crop_public_plans_path(farm_size_id:)
-    "/public_plans/select_crop?farm_size_id=#{farm_size_id}"
+  def select_crop_public_plans_path(farm_size_id:, farm_id: nil)
+    query = "farm_size_id=#{farm_size_id}"
+    query += "&farm_id=#{farm_id}" if farm_id
+    "/public_plans/select_crop?#{query}"
   end
 
   def optimizing_public_plans_path

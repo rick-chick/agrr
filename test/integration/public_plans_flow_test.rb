@@ -74,14 +74,8 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
     assert_select "h2" # ビューにh2タグが存在することを確認
     assert_select ".enhanced-selection-card" # 農場選択カードが表示される
 
-    # Step 2: 農場サイズ選択画面の表示（北海道を選択）
-    get select_farm_size_public_plans_path(farm_id: @hokkaido_farm.id)
-    assert_response :success
-    assert_select "h2" # ビューにh2タグが存在することを確認
-    assert_select ".enhanced-summary-card" # サマリーカードが表示される
-
     # Step 3: 作物選択画面の表示（家庭菜園サイズを選択）
-    get select_crop_public_plans_path(farm_size_id: "home_garden")
+    get select_crop_public_plans_path(farm_size_id: "home_garden", farm_id: @hokkaido_farm.id)
     assert_response :success
     assert_select "h2" # ビューにh2タグが存在することを確認
     assert_select ".crop-card" # 作物カードが表示される
@@ -132,12 +126,10 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
 
   private
 
-  def select_farm_size_public_plans_path(farm_id:)
-    "/public_plans/select_farm_size?farm_id=#{farm_id}"
-  end
-
-  def select_crop_public_plans_path(farm_size_id:)
-    "/public_plans/select_crop?farm_size_id=#{farm_size_id}"
+  def select_crop_public_plans_path(farm_size_id:, farm_id: nil)
+    query = "farm_size_id=#{farm_size_id}"
+    query += "&farm_id=#{farm_id}" if farm_id
+    "/public_plans/select_crop?#{query}"
   end
 
   def optimizing_public_plans_path

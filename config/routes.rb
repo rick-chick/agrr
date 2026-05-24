@@ -93,7 +93,6 @@ Rails.application.routes.draw do
     end
     get "public_plans", to: "public_plans#new", as: "public_plans"
     post "public_plans", to: "public_plans#create"
-    get "public_plans/select_farm_size", to: "public_plans#select_farm_size", as: "select_farm_size_public_plans"
     get "public_plans/select_crop", to: "public_plans#select_crop", as: "select_crop_public_plans"
     post "public_plans/save_plan", to: "public_plans#save_plan", as: "save_plan_public_plans"
     get "public_plans/process_saved_plan", to: "public_plans#process_saved_plan", as: "process_saved_plan_public_plans"

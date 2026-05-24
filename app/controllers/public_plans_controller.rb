@@ -25,22 +25,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     Rails.logger.debug "🌍 [PublicPlans#new] locale=#{I18n.locale}, region=#{region}, farms=#{@farms.count}"
   end
 
-  # Step 2: 農場サイズ選択
-  def select_farm_size
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanWizardSelectFarmSizeHtmlPresenter.new(
-      view: self,
-      path_helper: :public_plans_path
-    )
-    Domain::PublicPlan::Interactors::PublicPlanWizardSelectFarmSizeInteractor.new(
-      public_plan_gateway: CompositionRoot.public_plan_gateway,
-      output_port: presenter
-    ).call(
-      farm_id: params[:farm_id].to_i,
-      alert_i18n_key: "public_plans.errors.select_region"
-    )
-    return if performed?
-  end
-
   # Step 3: 作物選択
   def select_crop
     presenter = Adapters::PublicPlan::Presenters::PublicPlanWizardSelectCropHtmlPresenter.new(view: self)
@@ -50,7 +34,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       output_port: presenter,
       logger: CompositionRoot.logger
     ).call(
-      farm_id: session_data[:farm_id],
+      farm_id: params[:farm_id].presence || session_data[:farm_id],
       farm_size_id: params[:farm_size_id]
     )
     return if performed?

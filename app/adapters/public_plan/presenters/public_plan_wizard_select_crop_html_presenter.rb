@@ -17,14 +17,14 @@ module Adapters
         end
 
         def on_invalid_farm_size(farm_id:)
-          @view.redirect_to @view.select_farm_size_public_plans_path(farm_id: farm_id),
+          @view.redirect_to @view.select_crop_public_plans_path(farm_id: farm_id),
                              alert: I18n.t("public_plans.errors.select_farm_size")
         end
 
         def on_success(dto)
           key = @view.class.session_key
           existing = (@view.session[key] || {}).with_indifferent_access
-          @view.session[key] = existing.merge(dto.session_patch)
+          @view.session[key] = existing.merge(dto.session_patch).merge(farm_id: dto.farm.id)
           @view.instance_variable_set(:@farm, dto.farm)
           @view.instance_variable_set(
             :@farm_size,
