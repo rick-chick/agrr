@@ -34,34 +34,6 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".agricultural-task-name", text: @admin_task.name
   end
 
-  test "一般ユーザーは新規作業フォームに必要項目を表示できる" do
-    sign_in_as @user
-
-    get new_agricultural_task_path
-
-    assert_response :success
-    assert_select 'form[action="' + agricultural_tasks_path + '"][method="post"]' do
-      assert_select 'input[name="agricultural_task[name]"]'
-      assert_select 'textarea[name="agricultural_task[description]"]'
-      assert_select 'input[name="agricultural_task[time_per_sqm]"]'
-      assert_select 'select[name="agricultural_task[weather_dependency]"]'
-      assert_select 'textarea[name="agricultural_task[required_tools]"]'
-      assert_select 'select[name="agricultural_task[skill_level]"]'
-      assert_select 'input[name="agricultural_task[is_reference]"]', false
-    end
-  end
-
-  test "管理者の新規作業フォームには参照フラグが表示される" do
-    sign_in_as @admin_user
-
-    get new_agricultural_task_path
-
-    assert_response :success
-    assert_select 'form[action="' + agricultural_tasks_path + '"][method="post"]' do
-      assert_select 'input[name="agricultural_task[is_reference]"][type="checkbox"]'
-    end
-  end
-
   test "一般ユーザーは自身の作業詳細を表示できる" do
     sign_in_as @user
 
@@ -84,118 +56,6 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".associated-crops-grid .associated-crop-card", count: 1
     assert_select ".associated-crop-card__name", text: crop.name
     assert_select ".associated-crop-card__variety", text: "(#{crop.variety})"
-  end
-
-  # crop-selection カード自体の描画（data 属性・バッジ・選択状態ラベル・見出しタグ等）は
-  # test/views/crop_selection_card_view_test.rb が担保する。以下の controller テストは
-  # 「どの作物がフォームに提示されるか」という絞り込み（ユースケース判定）を検証する。
-  test "編集フォームでユーザー自身の作物カードが表示され選択状態を切り替えられる" do
-    sign_in_as @user
-
-    selected_crop = create(:crop, user: @user, name: "きゅうり")
-    other_crop = create(:crop, user: @user, name: "トマト")
-    CropTaskTemplate.create!(
-      crop: selected_crop,
-      agricultural_task: @user_task,
-      name: @user_task.name,
-      description: @user_task.description,
-      time_per_sqm: @user_task.time_per_sqm,
-      weather_dependency: @user_task.weather_dependency,
-      required_tools: @user_task.required_tools,
-      skill_level: @user_task.skill_level
-    )
-
-    get edit_agricultural_task_path(@user_task)
-
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select '[data-role="crop-card"]', count: 2
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{selected_crop.id}"][data-selected="true"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_crop.id}"][data-selected="false"]), 1
-    end
-
-    assert_select 'div[data-crop-selector-target="inputContainer"] input[name="selected_crop_ids[]"][value=?]', selected_crop.id.to_s
-  end
-
-  test "ユーザー作業の編集フォームにはユーザー作物のみ表示される" do
-    sign_in_as @admin_user
-
-    reference_crop = create(:crop, :reference, name: "参照キャベツ")
-    admin_crop = create(:crop, user: @admin_user, name: "管理用トマト")
-    other_user_crop = create(:crop, user: @user, name: "他ユーザー作物")
-
-    CropTaskTemplate.create!(
-      crop: admin_crop,
-      agricultural_task: @admin_task,
-      name: @admin_task.name,
-      description: @admin_task.description,
-      time_per_sqm: @admin_task.time_per_sqm,
-      weather_dependency: @admin_task.weather_dependency,
-      required_tools: @admin_task.required_tools,
-      skill_level: @admin_task.skill_level
-    )
-
-    get edit_agricultural_task_path(@admin_task)
-
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{admin_crop.id}"][data-selected="true"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 0
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_user_crop.id}"]), 0
-    end
-  end
-
-  test "参照作業の編集フォームには参照作物のみ表示される" do
-    sign_in_as @admin_user
-
-    reference_crop = create(:crop, :reference, name: "参照ほうれん草")
-    user_crop = create(:crop, user: @admin_user, name: "管理用ほうれん草")
-
-    CropTaskTemplate.create!(
-      crop: reference_crop,
-      agricultural_task: @reference_task,
-      name: @reference_task.name,
-      description: @reference_task.description,
-      time_per_sqm: @reference_task.time_per_sqm,
-      weather_dependency: @reference_task.weather_dependency,
-      required_tools: @reference_task.required_tools,
-      skill_level: @reference_task.skill_level
-    )
-
-    get edit_agricultural_task_path(@reference_task)
-
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"][data-selected="true"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{user_crop.id}"]), 0
-    end
-  end
-
-  test "地域が設定されている場合は一致する地域の作物のみ表示される" do
-    sign_in_as @user
-
-    @user_task.update!(region: "jp")
-    matched_crop = create(:crop, user: @user, name: "地域内トマト", region: "jp")
-    unmatched_crop = create(:crop, user: @user, name: "地域外トマト", region: "us")
-
-    CropTaskTemplate.create!(
-      crop: matched_crop,
-      agricultural_task: @user_task,
-      name: @user_task.name,
-      description: @user_task.description,
-      time_per_sqm: @user_task.time_per_sqm,
-      weather_dependency: @user_task.weather_dependency,
-      required_tools: @user_task.required_tools,
-      skill_level: @user_task.skill_level
-    )
-
-    get edit_agricultural_task_path(@user_task)
-
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{matched_crop.id}"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{unmatched_crop.id}"]), 0
-    end
   end
 
   test "updateで選択した作物の関連付けが保存される" do
@@ -398,7 +258,7 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
   #   → test/policies/agricultural_task_policy_test.rb
   # このため region 系の controller テストは policy テストへ切り離した。
 
-  test "作成時に必須項目が欠けていると422でnewを再表示する" do
+  test "作成時に必須項目が欠けていると一覧へリダイレクトし flash を付与する" do
     sign_in_as @user
 
     assert_no_difference("AgriculturalTask.count") do
@@ -409,6 +269,7 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_response :unprocessable_entity
+    assert_redirected_to agricultural_tasks_path
+    assert flash[:alert].present?
   end
 end

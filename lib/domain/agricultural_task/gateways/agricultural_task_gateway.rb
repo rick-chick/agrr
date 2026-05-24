@@ -37,18 +37,6 @@ module Domain
         def soft_delete_with_undo(user:, task_id:, auto_hide_after:, translator:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
-
-        # 作物選択 UI: 当該農業作業に紐づく CropTaskTemplate の作物 ID 一覧
-        def linked_crop_ids_for_task_templates(agricultural_task_id)
-          raise NotImplementedError, "Subclasses must implement linked_crop_ids_for_task_templates"
-        end
-
-        # HTML 編集の作物選択データ読込: update 時は送信パラメータを反映したプレビュー用エンティティを返す（永続化しない）
-        # @param base_entity [Domain::AgriculturalTask::Entities::AgriculturalTaskEntity]
-        # @return [Domain::AgriculturalTask::Entities::AgriculturalTaskEntity]
-        def preview_agricultural_task_for_edit_crop_selection(base_entity:, user:, agricultural_task_params:)
-          raise NotImplementedError, "Subclasses must implement preview_agricultural_task_for_edit_crop_selection"
-        end
       end
     end
   end

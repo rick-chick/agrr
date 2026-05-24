@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class AgriculturalTasksController < ApplicationController
-  before_action :load_edit_form_crop_selection, only: [ :update ]
-
   # GET /agricultural_tasks
   def index
     input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskListInput.from_hash({
@@ -39,10 +37,8 @@ class AgriculturalTasksController < ApplicationController
     input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskCreateInput.from_hash({ agricultural_task: task_attributes })
     presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskCreateHtmlPresenter.new(view: self)
 
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
-
-    interactor.call(input_dto)
+    Domain::AgriculturalTask::Interactors::AgriculturalTaskCreateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # PATCH/PUT /agricultural_tasks/:id
@@ -58,21 +54,17 @@ class AgriculturalTasksController < ApplicationController
     )
     presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateHtmlPresenter.new(view: self)
 
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
-
-    interactor.call(input_dto)
+    Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup).call(input_dto)
   end
 
   # DELETE /agricultural_tasks/:id
   def destroy
     presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
 
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
+    Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
       user_id: current_user.id,
-      translator: translator, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
-
-    interactor.call(params[:id])
+      translator: translator, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   private
@@ -116,36 +108,8 @@ class AgriculturalTasksController < ApplicationController
     params.require(:agricultural_task).permit(*permitted)
   end
 
-  def load_edit_form_crop_selection
-    preview_attrs = agricultural_task_attributes_hash_for_crop_preview
-    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInput.new(
-      user_id: current_user.id,
-      agricultural_task_id: params[:id].to_i,
-      controller_action: params[:action].to_s,
-      agricultural_task_attributes_for_preview: preview_attrs,
-      raw_selected_crop_ids: params[:selected_crop_ids],
-      include_crop_cards: false
-    )
-
-    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskEditFormCropSelectionLoadHtmlPresenter.new(view: self)
-    interactor = CompositionRoot.agricultural_task_edit_form_crop_selection_load_interactor(
-      output_port: presenter,
-      user_id: current_user.id
-    )
-
-    interactor.call(input_dto)
-  end
-
-  def agricultural_task_attributes_hash_for_crop_preview
-    raw = params[:agricultural_task]
-    return {} if raw.nil?
-    return raw.to_unsafe_h if raw.respond_to?(:to_unsafe_h)
-
-    raw.to_h
-  end
-
   def selected_crop_ids_from_params
-    Array(@filtered_selected_crop_ids_from_crop_selection_load)
+    Array(params[:selected_crop_ids]).reject { |v| v.nil? || v.to_s.empty? }.map(&:to_i).uniq
   end
 
   public
@@ -153,10 +117,6 @@ class AgriculturalTasksController < ApplicationController
   # View interface for HTML Presenters（Presenter から呼ばれるため public）
   def redirect_to(path, notice: nil, alert: nil)
     super(path, notice: notice, alert: alert)
-  end
-
-  def render_form(action, status: :ok, locals: {})
-    render(action, status: status, locals: locals)
   end
 
   def agricultural_task_path(task)
@@ -169,5 +129,4 @@ class AgriculturalTasksController < ApplicationController
   end
 
   private
-
 end

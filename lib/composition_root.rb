@@ -141,17 +141,6 @@ module CompositionRoot
       )
     end
 
-    def agricultural_task_edit_form_crop_selection_load_interactor(output_port:, user_id:)
-      Domain::AgriculturalTask::Interactors::AgriculturalTaskEditFormCropSelectionLoadInteractor.new(
-        output_port: output_port,
-        user_id: user_id,
-        agricultural_task_gateway: agricultural_task_gateway,
-        crop_gateway: crop_gateway,
-        user_lookup: user_lookup,
-        logger: logger
-      )
-    end
-
     def task_schedule_gateway
       @task_schedule_gateway ||= Adapters::AgriculturalTask::Gateways::TaskScheduleActiveRecordGateway.new
     end

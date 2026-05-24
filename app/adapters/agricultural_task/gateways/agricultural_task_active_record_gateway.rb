@@ -80,22 +80,6 @@ module Adapters
           { success: false, error_dto: Domain::Shared::Dtos::Error.new(e.message) }
         end
 
-        def linked_crop_ids_for_task_templates(agricultural_task_id)
-          return [] if agricultural_task_id.blank?
-
-          ::CropTaskTemplate.where(agricultural_task_id: agricultural_task_id.to_i).pluck(:crop_id)
-        end
-
-        def preview_agricultural_task_for_edit_crop_selection(base_entity:, user:, agricultural_task_params:)
-          requested_flag = preview_requested_reference_flag(base_entity, agricultural_task_params)
-          return base_entity if requested_flag == base_entity.is_reference?
-
-          new_user_id = preview_user_id_after_reference_toggle(base_entity: base_entity, user: user, reference_flag: requested_flag)
-          Domain::AgriculturalTask::Entities::AgriculturalTaskEntity.new(
-            base_entity.to_hash.merge(is_reference: requested_flag, user_id: new_user_id)
-          )
-        end
-
         private
 
         def apply_search_scope(scope, term)
@@ -165,19 +149,6 @@ module Adapters
           scope = scope.where(region: task.region) if task.region.present?
 
           scope.where(id: Array(selected_crop_ids).map(&:to_i).uniq).pluck(:id)
-        end
-
-        def preview_requested_reference_flag(base_entity, attributes)
-          return base_entity.is_reference? unless attributes.respond_to?(:key?) && attributes.key?(:is_reference)
-
-          casted = ActiveModel::Type::Boolean.new.cast(attributes[:is_reference])
-          casted.nil? ? false : casted
-        end
-
-        def preview_user_id_after_reference_toggle(base_entity:, user:, reference_flag:)
-          return nil if reference_flag
-
-          base_entity.user_id.presence || user.id
         end
       end
     end
