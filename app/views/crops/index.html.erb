@@ -2,7 +2,6 @@
 
 <div class="page-header">
   <h1 class="page-title"><%= t('.title') %></h1>
-  <%= link_to t('.new_crop'), new_crop_path, class: "btn btn-success" %>
 </div>
 
 <% if @crops.any? %>
@@ -44,6 +43,5 @@
     <div class="empty-state-icon"><%= t('.empty.icon') %></div>
     <h3><%= t('.empty.title') %></h3>
     <p><%= t('.empty.description') %></p>
-    <%= link_to t('.empty.button'), new_crop_path, class: "btn btn-success" %>
   </div>
 <% end %>
