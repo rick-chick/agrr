@@ -19,9 +19,9 @@ module Adapters
             return
           end
 
-          @view.flash.now[:alert] = error_dto.message
-          # @farm はコントローラでセットされている前提
-          @view.render_form(:edit, status: :unprocessable_entity)
+          farm_id = @view.params[:id]
+          path = farm_id ? @view.farm_path(farm_id) : @view.farms_path
+          @view.redirect_to path, alert: error_dto.message
         end
       end
     end

@@ -4,7 +4,6 @@
   <h1 class="page-title farm-name"><%= @farm.display_name %></h1>
   <div>
     <%= link_to t('.fields_list'), farm_fields_path(@farm.id), class: "btn btn-info" %>
-    <%= link_to t('.edit'), edit_farm_path(@farm.id), class: "btn btn-secondary" %>
   </div>
 </div>
 
@@ -38,7 +37,6 @@
       <div class="actions">
         <%= link_to t('.back_to_list'), farms_path, class: "btn btn-secondary" %>
         <%= link_to t('.fields_list'), farm_fields_path(@farm.id), class: "btn btn-info" %>
-        <%= link_to t('.edit'), edit_farm_path(@farm.id), class: "btn btn-secondary" %>
         <%= link_to t('.delete'), farm_path(@farm.id),
                     class: "btn btn-error",
                     data: {

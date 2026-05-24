@@ -120,14 +120,6 @@ module Adapters
           end
         end
 
-        def find_farm_loaded_bundle!(id, for_edit:)
-          farm = find_farm_model!(id)
-          Domain::Farm::Dtos::AuthorizedFarmLoaded.new(
-            farm_entity: Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm),
-            master_form_snapshot: Adapters::Farm::Mappers::FarmMasterFormSnapshotMapper.from_record(farm)
-          )
-        end
-
         def count_user_owned_non_reference_farms(user_id:)
           ::Farm.where(user_id: user_id, is_reference: false).count
         end

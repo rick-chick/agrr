@@ -76,10 +76,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_reference_farms_for_region"
         end
 
-        def find_farm_loaded_bundle!(id, for_edit:)
-          raise NotImplementedError, "Subclasses must implement find_farm_loaded_bundle!"
-        end
-
         def count_user_owned_non_reference_farms(user_id:)
           raise NotImplementedError, "Subclasses must implement count_user_owned_non_reference_farms"
         end

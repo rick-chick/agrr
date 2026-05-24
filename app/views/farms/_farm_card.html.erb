@@ -32,7 +32,6 @@
   <div class="farm-actions">
     <%= link_to t('farms.card.detail'), farm_path(farm.id), class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
     <%= link_to t('farms.card.fields_list'), farm_fields_path(farm.id), class: "btn btn-info btn-sm", data: { turbo_frame: "_top" } %>
-    <%= link_to t('farms.card.edit'), edit_farm_path(farm.id), class: "btn btn-secondary btn-sm", data: { turbo_frame: "_top" } %>
     <%= link_to t('farms.card.delete'), farm_path(farm.id),
                 class: "btn btn-error btn-sm",
                 data: {
