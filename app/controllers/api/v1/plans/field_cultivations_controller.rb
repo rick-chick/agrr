@@ -73,7 +73,9 @@ module Api
             logger: CompositionRoot.logger,
             user_id: current_user.id,
             user_lookup: CompositionRoot.user_lookup,
-            climate_gateway_for_user: ->(user_dto) { CompositionRoot.field_cultivation_climate_gateway_for(user_dto) }
+            climate_gateways_for_user: ->(user_dto) {
+              CompositionRoot.field_cultivation_climate_gateways_bundle_for(user_dto)
+            }
           )
         end
 

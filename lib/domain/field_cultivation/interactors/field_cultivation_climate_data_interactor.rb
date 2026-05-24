@@ -6,29 +6,41 @@ module Domain
       class FieldCultivationClimateDataInteractor < Domain::FieldCultivation::Ports::FieldCultivationClimateDataInputPort
         include Concerns::PlanFieldCultivationAuthorization
 
-        def initialize(output_port:, logger:, user_id:, user_lookup:, climate_gateway_for_user:)
+        def initialize(output_port:, logger:, user_id:, user_lookup:, climate_gateways_for_user:)
           @output_port = output_port
           @logger = logger
           @user_id = user_id
           @user_lookup = user_lookup
-          @climate_gateway_for_user = climate_gateway_for_user
+          @climate_gateways_for_user = climate_gateways_for_user
         end
 
         def call(input_dto)
           user_dto = @user_id.present? ? @user_lookup.find(@user_id) : nil
-          @gateway = @climate_gateway_for_user.call(user_dto)
+          bundle = @climate_gateways_for_user.call(user_dto)
+          context_gateway = bundle.fetch(:context_gateway)
+          weather_gateway = bundle.fetch(:weather_gateway)
+          progress_gateway = bundle.fetch(:progress_gateway)
+          use_mock_progress = bundle.fetch(:use_mock_progress)
 
           if user_dto
-            assert_field_cultivation_plan_access!(user_dto, @gateway, input_dto.field_cultivation_id)
+            assert_field_cultivation_plan_access!(user_dto, context_gateway, input_dto.field_cultivation_id)
           else
-            assert_public_field_cultivation_plan_access!(@gateway, input_dto.field_cultivation_id)
+            assert_public_field_cultivation_plan_access!(context_gateway, input_dto.field_cultivation_id)
           end
 
           field_cultivation_id = input_dto.field_cultivation_id
           display_start_date = input_dto.display_start_date
           display_end_date = input_dto.display_end_date
 
-          climate_data = safe_fetch_climate_data(field_cultivation_id, display_start_date, display_end_date)
+          climate_data = assemble_climate_data(
+            context_gateway: context_gateway,
+            weather_gateway: weather_gateway,
+            progress_gateway: progress_gateway,
+            use_mock_progress: use_mock_progress,
+            field_cultivation_id: field_cultivation_id,
+            display_start_date: display_start_date,
+            display_end_date: display_end_date
+          )
 
           if climate_data.nil?
             @logger.warn("[FieldCultivationClimateDataInteractor] Missing climate data for field_cultivation_id=#{field_cultivation_id}")
@@ -57,38 +69,96 @@ module Domain
 
         private
 
-        def safe_fetch_climate_data(field_cultivation_id, display_start_date, display_end_date)
-          begin
-            @gateway.find_climate_data(
-              field_cultivation_id: field_cultivation_id,
-              display_start_date: display_start_date,
-              display_end_date: display_end_date
-            )
-          rescue Domain::FieldCultivation::Errors::NoWeatherLocationError,
-                 Domain::FieldCultivation::Errors::NoCultivationPeriodError => e
-            @logger.info "Fallback to on-the-fly prediction for field_cultivation_id=#{field_cultivation_id} (#{e.class})"
-            @gateway.climate_data_fallback_dto(
-              field_cultivation_id: field_cultivation_id,
-              display_start_date: display_start_date,
-              display_end_date: display_end_date
-            )
-          end
+        def assemble_climate_data(context_gateway:, weather_gateway:, progress_gateway:, use_mock_progress:,
+                                  field_cultivation_id:, display_start_date:, display_end_date:)
+          context = context_gateway.load_context(field_cultivation_id: field_cultivation_id)
+          weather_payload = fetch_weather_payload(
+            context: context,
+            weather_gateway: weather_gateway,
+            display_start_date: display_start_date,
+            display_end_date: display_end_date
+          )
+          return nil if weather_payload.nil?
+
+          weather_records = Mappers::FieldCultivationClimateDataMapper.extract_weather_records(
+            weather_payload,
+            context.start_date,
+            context.completion_date
+          )
+          progress_result = progress_gateway.calculate_progress(
+            context: context,
+            weather_payload: weather_payload,
+            use_mock: use_mock_progress
+          )
+
+          Mappers::FieldCultivationClimateDataMapper.build_output(
+            context: context,
+            weather_records: weather_records,
+            progress_result: progress_result
+          )
+        rescue Domain::FieldCultivation::Errors::NoWeatherLocationError,
+               Domain::FieldCultivation::Errors::NoCultivationPeriodError => e
+          @logger.info "Fallback to on-the-fly prediction for field_cultivation_id=#{field_cultivation_id} (#{e.class})"
+          assemble_climate_data_from_fallback(
+            context_gateway: context_gateway,
+            weather_gateway: weather_gateway,
+            progress_gateway: progress_gateway,
+            use_mock_progress: use_mock_progress,
+            field_cultivation_id: field_cultivation_id,
+            display_start_date: display_start_date,
+            display_end_date: display_end_date
+          )
+        end
+
+        def assemble_climate_data_from_fallback(context_gateway:, weather_gateway:, progress_gateway:, use_mock_progress:,
+                                                field_cultivation_id:, display_start_date:, display_end_date:)
+          context = context_gateway.load_context(field_cultivation_id: field_cultivation_id)
+          weather_payload = weather_gateway.fetch_fallback_weather_payload(
+            context: context,
+            display_start_date: display_start_date,
+            display_end_date: display_end_date
+          )
+          weather_gateway.persist_predicted_weather_if_absent(
+            plan_id: context.plan_id,
+            weather_payload: weather_payload
+          )
+
+          weather_records = Mappers::FieldCultivationClimateDataMapper.extract_weather_records(
+            weather_payload,
+            context.start_date,
+            context.completion_date
+          )
+          progress_result = progress_gateway.calculate_progress(
+            context: context,
+            weather_payload: weather_payload,
+            use_mock: use_mock_progress
+          )
+
+          Mappers::FieldCultivationClimateDataMapper.build_output(
+            context: context,
+            weather_records: weather_records,
+            progress_result: progress_result
+          )
+        end
+
+        def fetch_weather_payload(context:, weather_gateway:, display_start_date:, display_end_date:)
+          weather_gateway.fetch_primary_weather_payload(
+            context: context,
+            display_start_date: display_start_date,
+            display_end_date: display_end_date
+          )
         end
 
         def apply_display_range(climate_data, display_start_date, display_end_date)
           return climate_data unless display_start_date || display_end_date
 
-          # ガントチャートの表示範囲（24ヶ月固定）
           gantt_start = parse_date(display_start_date)
           gantt_end = parse_date(display_end_date)
           return climate_data unless gantt_start && gantt_end
 
-          # 作付期間
           cultivation_start = parse_date(climate_data.field_cultivation[:start_date] || climate_data.field_cultivation["start_date"])
           cultivation_end = parse_date(climate_data.field_cultivation[:completion_date] || climate_data.field_cultivation["completion_date"])
 
-          # 全てのコンポーネントの幅: 作付期間 ∩ ガントチャート範囲
-          # 気温データが存在しない場合でも作付期間全体を表示
           effective_start = [
             cultivation_start,
             gantt_start
@@ -99,7 +169,6 @@ module Domain
             gantt_end
           ].compact.min
 
-          # 共通部分が存在しない場合はガントチャート範囲を使用
           if effective_start > effective_end
             effective_start = gantt_start
             effective_end = gantt_end
@@ -108,7 +177,6 @@ module Domain
           filtered_weather = filter_weather_data(climate_data.weather_data, effective_start, effective_end)
           filtered_gdd = filter_gdd_data(climate_data.gdd_data, effective_start, effective_end)
 
-          # field_cultivationの期間も同じ範囲に調整
           adjusted_field_cultivation = climate_data.field_cultivation.merge(
             start_date: effective_start.to_s,
             completion_date: effective_end.to_s
@@ -144,6 +212,7 @@ module Domain
           Domain::Shared.to_array(weather_data).select do |datum|
             date_value = parse_date(datum["date"] || datum[:date])
             next false unless date_value
+
             date_value >= range_start && date_value <= range_end
           end
         end
@@ -152,6 +221,7 @@ module Domain
           Domain::Shared.to_array(gdd_data).select do |datum|
             date_value = parse_date(datum["date"] || datum[:date])
             next false unless date_value
+
             date_value >= range_start && date_value <= range_end
           end
         end

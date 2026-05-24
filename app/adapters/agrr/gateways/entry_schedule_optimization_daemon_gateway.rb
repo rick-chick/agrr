@@ -43,24 +43,10 @@ module Adapters
         # @param requirement_hash [Hash] Crop#to_agrr_requirement 相当
         # @return [Hash] 各 stage の thermal.required_gdd をスケールしたコピー
         def self.scale_stage_gdd_for_optimize_period(requirement_hash, max_total_gdd: nil)
-          max_total = (max_total_gdd || ENV["ENTRY_SCHEDULE_MAX_TOTAL_GDD"].presence&.to_f)
-          max_total = DEFAULT_MAX_TOTAL_GDD_FOR_OPTIMIZE if max_total.nil? || max_total <= 0
-
-          req = requirement_hash.deep_dup
-          stages = req["stage_requirements"]
-          return req unless stages.is_a?(Array)
-
-          sum = stages.sum { |s| s.dig("thermal", "required_gdd").to_f }
-          return req if sum <= 0.0 || sum <= max_total
-
-          factor = max_total / sum
-          stages.each do |s|
-            next unless s.is_a?(Hash) && s["thermal"].is_a?(Hash)
-
-            g = s["thermal"]["required_gdd"].to_f
-            s["thermal"]["required_gdd"] = (g * factor).round(2)
-          end
-          req
+          Domain::CultivationPlan::Calculators::EntryScheduleStageGddScaler.call(
+            requirement_hash,
+            max_total_gdd: max_total_gdd
+          )
         end
 
         def initialize(crop:, weather_payload:, crop_gateway:, farm: nil)

@@ -15,8 +15,8 @@ module Adapters
           @gw = PestActiveRecordGateway.new(deletion_undo_gateway: CompositionRoot.deletion_undo_gateway)
         end
 
-        test "associate_crops_with_pest_id associates accessible crops" do
-          count = @gw.associate_crops_with_pest_id(pest_id: @pest.id, crop_ids: [ @crop1.id, @crop2.id ], user: @user)
+        test "associate_crops_with_pest_id links given crop ids" do
+          count = @gw.associate_crops_with_pest_id(pest_id: @pest.id, crop_ids: [ @crop1.id, @crop2.id ])
 
           assert_equal 2, count
           @pest.reload
@@ -24,19 +24,19 @@ module Adapters
           assert_includes @pest.crops, @crop2
         end
 
-        test "associate_crops_with_pest_id does not associate inaccessible crops" do
-          count = @gw.associate_crops_with_pest_id(pest_id: @pest.id, crop_ids: [ @crop1.id, @other_user_crop.id ], user: @user)
+        test "associate_crops_with_pest_id persists all given crop ids" do
+          count = @gw.associate_crops_with_pest_id(pest_id: @pest.id, crop_ids: [ @crop1.id, @other_user_crop.id ])
 
-          assert_equal 1, count
+          assert_equal 2, count
           @pest.reload
           assert_includes @pest.crops, @crop1
-          assert_not_includes @pest.crops, @other_user_crop
+          assert_includes @pest.crops, @other_user_crop
         end
 
         test "associate_crops_with_pest_id does not duplicate existing associations" do
           @pest.crops << @crop1
 
-          count = @gw.associate_crops_with_pest_id(pest_id: @pest.id, crop_ids: [ @crop1.id, @crop2.id ], user: @user)
+          count = @gw.associate_crops_with_pest_id(pest_id: @pest.id, crop_ids: [ @crop1.id, @crop2.id ])
 
           assert_equal 1, count
           @pest.reload
@@ -46,7 +46,7 @@ module Adapters
         test "update_pest_crop_associations adds new associations and removes old ones" do
           @pest.crops << @crop1
 
-          result = @gw.update_pest_crop_associations(pest_id: @pest.id, crop_ids: [ @crop2.id ], user: @user)
+          result = @gw.update_pest_crop_associations(pest_id: @pest.id, crop_ids: [ @crop2.id ])
 
           assert_equal 1, result[:added]
           assert_equal 1, result[:removed]

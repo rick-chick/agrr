@@ -2,24 +2,18 @@
 
 module Domain
   module Shared
-    # 認可ルール（ORM 非依存）。スコープ構築は Adapters::Pest::Persistence::PestCropAssociationScopes
+    # @deprecated Prefer Domain::Shared::Policies::CropPolicy.crop_associable_with_pest?
     class PestCropAssociationAccess
       def self.crop_accessible_for_pest?(crop, pest, user: nil)
-        if pest.region.present?
-          return false if crop.region != pest.region
-        end
-
-        if reference?(pest)
-          return reference?(crop)
-        end
-
-        # ユーザー害虫: 参照作物または同じ所有者の非参照作物に関連付け可能
-        if reference?(crop)
-          return true
-        end
-
-        owner_id = pest.user_id || user&.id
-        crop.user_id == owner_id
+        Domain::Shared::Policies::CropPolicy.crop_associable_with_pest?(
+          user: user,
+          crop_is_reference: reference?(crop),
+          crop_user_id: crop.user_id,
+          crop_region: crop.region,
+          pest_is_reference: reference?(pest),
+          pest_user_id: pest.user_id,
+          pest_region: pest.region
+        )
       end
 
       def self.reference?(record)

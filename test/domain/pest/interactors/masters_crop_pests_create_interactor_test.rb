@@ -67,7 +67,6 @@ module Domain
 
           @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
-          @mock_pest_gateway.expects(:pest_selectable_by_user?).with(@user, @pest_id).returns(true)
           @mock_crop_gateway.expects(:find_by_id).with(@crop_id).returns(crop_entity)
           @mock_pest_gateway.expects(:crop_pest_association_exists?).with(crop_id: @crop_id, pest_id: @pest_id).returns(false)
           @mock_pest_gateway.expects(:link_pest_to_crop).with(
@@ -106,7 +105,6 @@ module Domain
 
           @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
-          @mock_pest_gateway.expects(:pest_selectable_by_user?).with(@user, @pest_id).returns(true)
           @mock_crop_gateway.expects(:find_by_id).with(@crop_id).returns(crop_entity)
           @mock_pest_gateway.expects(:crop_pest_association_exists?).with(crop_id: @crop_id, pest_id: @pest_id).returns(true)
           @mock_pest_gateway.expects(:link_pest_to_crop).never
@@ -115,7 +113,7 @@ module Domain
           @interactor.call(create_input)
         end
 
-        test "calls on_forbidden when crop is not associable with pest per PestCropAssociationAccess" do
+        test "calls on_forbidden when crop is not associable with pest per CropPolicy" do
           pest_entity = Domain::Pest::Entities::PestEntity.new(
             id: @pest_id,
             user_id: @user_id,
@@ -141,7 +139,6 @@ module Domain
 
           @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
-          @mock_pest_gateway.expects(:pest_selectable_by_user?).with(@user, @pest_id).returns(true)
           @mock_crop_gateway.expects(:find_by_id).with(@crop_id).returns(other_crop)
           @mock_pest_gateway.expects(:link_pest_to_crop).never
           @mock_output_port.expects(:on_forbidden).once

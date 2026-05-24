@@ -174,17 +174,13 @@ module CompositionRoot
     end
 
     def cultivation_plan_rest_field_mutation_gateway
-      Adapters::CultivationPlan::Gateways::CultivationPlanFieldMutationActiveRecordGateway.new(
-        events_gateway: cultivation_plan_rest_optimization_events_gateway,
-        logger: logger
-      )
+      @cultivation_plan_rest_field_mutation_gateway ||=
+        Adapters::CultivationPlan::Gateways::CultivationPlanFieldMutationActiveRecordGateway.new
     end
 
-    def cultivation_plan_rest_workbench_payload_gateway(available_crop_rows_gateway:)
-      Adapters::CultivationPlan::Gateways::CultivationPlanWorkbenchPayloadActiveRecordGateway.new(
-        logger: logger,
-        available_crop_rows_gateway: available_crop_rows_gateway
-      )
+    def cultivation_plan_rest_workbench_read_gateway
+      @cultivation_plan_rest_workbench_read_gateway ||=
+        Adapters::CultivationPlan::Gateways::CultivationPlanWorkbenchReadActiveRecordGateway.new
     end
 
     def cultivation_plan_rest_adjust_plan_growth_read_gateway
@@ -193,29 +189,9 @@ module CompositionRoot
       )
     end
 
-    def cultivation_plan_rest_add_crop_support_gateways
-      {
-        optimize_attach_gateway:
-          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropOptimizeAttachActiveRecordGateway.new(
-            logger: logger
-          ),
-        plan_crop_insert_gateway:
-          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropPlanCropInsertActiveRecordGateway.new(
-            logger: logger
-          ),
-        best_candidate_gateway:
-          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropBestCandidateActiveRecordGateway.new(
-            logger: logger
-          ),
-        adjust_invoke_gateway:
-          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropAdjustInvokeActiveRecordGateway.new(
-            logger: logger
-          ),
-        plan_crop_delete_gateway:
-          Adapters::CultivationPlan::Gateways::CultivationPlanAddCropPlanCropDeleteActiveRecordGateway.new(
-            logger: logger
-          )
-      }
+    def cultivation_plan_rest_plan_crop_gateway
+      @cultivation_plan_rest_plan_crop_gateway ||=
+        Adapters::CultivationPlan::Gateways::CultivationPlanPlanCropActiveRecordGateway.new
     end
 
     def weather_prediction_interactor_factory
@@ -422,16 +398,21 @@ module CompositionRoot
     end
 
     # add_crop 候補探索（Api::V1::CultivationPlanRestBaseController 経路の主導線）
+    def find_best_add_crop_candidate_interactor(clock: Time.zone)
+      @find_best_add_crop_candidate_interactor_cache ||= {}
+      @find_best_add_crop_candidate_interactor_cache[clock] ||= build_find_best_add_crop_candidate_interactor(clock: clock)
+    end
+
     def find_best_add_crop_candidate_service(clock: Time.zone)
+      find_best_add_crop_candidate_interactor(clock: clock)
+    end
+
+    def build_find_best_add_crop_candidate_interactor(clock: Time.zone)
       log = logger
       gw = agrr_candidates_gateway
 
-      plan_loader = lambda do |plan|
-        ::CultivationPlan.includes(
-          :cultivation_plan_fields,
-          { cultivation_plan_crops: :crop },
-          { field_cultivations: [ :cultivation_plan_field, { cultivation_plan_crop: :crop } ] }
-        ).find(plan.id)
+      plan_loader = lambda do |auth:, plan_id:|
+        ::Adapters::CultivationPlan::Persistence::PlanScopes.find_record!(auth, plan_id)
       end
 
       allocation_configs = lambda do |plan|
@@ -517,7 +498,7 @@ module CompositionRoot
         []
       end
 
-      Domain::CultivationPlan::Services::FindBestAddCropCandidate.new(
+      Domain::CultivationPlan::Interactors::FindBestAddCropCandidateInteractor.new(
         logger: log,
         today: -> { clock.today },
         plan_loader: plan_loader,
@@ -565,12 +546,14 @@ module CompositionRoot
         create_interactor: Adapters::Pest::PestCreateForAiAdapter.new(
           user_id: user_id,
           gateway: gw,
+          crop_gateway: crop_gateway,
           translator: tr,
           user_lookup: ul
         ),
         update_interactor: Adapters::Pest::PestUpdateForAiAdapter.new(
           user_id: user_id,
           gateway: gw,
+          crop_gateway: crop_gateway,
           logger: log,
           translator: tr,
           user_lookup: ul
@@ -613,20 +596,49 @@ module CompositionRoot
       )
     end
 
-    # FieldCultivation 気象 AD gateway（user DTO 単位で current_user を渡す）
+    # FieldCultivation API 用ファサード（認可・CRUD）
     def field_cultivation_climate_gateway_for(current_user_dto)
       Adapters::FieldCultivation::Gateways::FieldCultivationClimateActiveRecordGateway.new(
+        context_gateway: field_cultivation_climate_context_gateway_for(current_user_dto)
+      )
+    end
+
+    # FieldCultivation 気象ユースケース用 gateway 束（user DTO 単位）
+    def field_cultivation_climate_gateways_bundle_for(current_user_dto, use_mock_progress: nil)
+      {
+        context_gateway: field_cultivation_climate_context_gateway_for(current_user_dto),
+        weather_gateway: field_cultivation_climate_weather_gateway,
+        progress_gateway: field_cultivation_climate_progress_gateway_for(current_user_dto),
+        use_mock_progress: use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
+      }
+    end
+
+    def field_cultivation_climate_context_gateway_for(current_user_dto)
+      Adapters::FieldCultivation::Gateways::FieldCultivationClimateContextActiveRecordGateway.new(
         current_user: current_user_dto,
         logger: logger,
+        translator: translator
+      )
+    end
+
+    def field_cultivation_climate_weather_gateway
+      @field_cultivation_climate_weather_gateway ||= Adapters::FieldCultivation::Gateways::FieldCultivationClimateWeatherActiveRecordGateway.new(
+        logger: logger,
         translator: translator,
-        progress_gateway_factory: -> { agrr_progress_gateway },
         weather_prediction_service_factory: lambda { |weather_location, farm|
           weather_prediction_interactor(weather_location: weather_location, farm: farm)
         },
         weather_data_gateway: weather_data_gateway,
         cultivation_plan_gateway: cultivation_plan_gateway,
-        crop_gateway: crop_gateway,
         prediction_gateway: prediction_gateway
+      )
+    end
+
+    def field_cultivation_climate_progress_gateway_for(current_user_dto)
+      Adapters::FieldCultivation::Gateways::FieldCultivationClimateProgressActiveRecordGateway.new(
+        current_user: current_user_dto,
+        logger: logger,
+        progress_gateway_factory: -> { agrr_progress_gateway }
       )
     end
 
@@ -804,12 +816,13 @@ module CompositionRoot
         logger: log,
         translator: translator,
         associate_affected_crops_runner: lambda { |pest_id, crops|
-          gw.associate_affected_crops_for_ai_pest(
-            pest_id: pest_id,
-            affected_crops: crops,
-            user: current_user,
+          Domain::Pest::Interactors::PestAssociateAffectedCropsInteractor.new(
+            user_id: uid,
+            user_lookup: user_lookup,
+            pest_gateway: gw,
+            crop_gateway: crop_gateway,
             logger: log
-          )
+          ).call(pest_id: pest_id, affected_crops: crops)
         }
       )
     end

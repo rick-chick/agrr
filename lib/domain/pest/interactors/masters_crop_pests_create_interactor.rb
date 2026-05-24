@@ -27,7 +27,11 @@ module Domain
 
           user = @user_lookup.find(@user_id)
 
-          unless @pest_gateway.pest_selectable_by_user?(user, pest_entity.id)
+          unless Domain::Shared::Policies::PestPolicy.selectable_for_user?(
+            user,
+            is_reference: pest_entity.reference?,
+            user_id: pest_entity.user_id
+          )
             return @output_port.on_forbidden
           end
 

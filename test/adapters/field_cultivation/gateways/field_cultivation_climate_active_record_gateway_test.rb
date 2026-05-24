@@ -24,6 +24,33 @@ module Adapters
           )
         end
 
+        def climate_bundle(use_mock_progress: false)
+          CompositionRoot.field_cultivation_climate_gateways_bundle_for(
+            @user,
+            use_mock_progress: use_mock_progress
+          )
+        end
+
+        def assemble_climate_dto(bundle, field_cultivation_id:)
+          context = bundle.fetch(:context_gateway).load_context(field_cultivation_id: field_cultivation_id)
+          weather_payload = bundle.fetch(:weather_gateway).fetch_primary_weather_payload(context: context)
+          weather_records = Domain::FieldCultivation::Mappers::FieldCultivationClimateDataMapper.extract_weather_records(
+            weather_payload,
+            context.start_date,
+            context.completion_date
+          )
+          progress_result = bundle.fetch(:progress_gateway).calculate_progress(
+            context: context,
+            weather_payload: weather_payload,
+            use_mock: bundle.fetch(:use_mock_progress)
+          )
+          Domain::FieldCultivation::Mappers::FieldCultivationClimateDataMapper.build_output(
+            context: context,
+            weather_records: weather_records,
+            progress_result: progress_result
+          )
+        end
+
         test "returns climate dto for authorized field cultivation" do
           start_date = @field_cultivation.start_date
           weather_data_cli = {
@@ -43,12 +70,6 @@ module Adapters
             ]
           }
 
-          weather_service = mock("Domain::WeatherData::Interactors::WeatherPredictionInteractor")
-          weather_service
-            .expects(:predict_for_cultivation_plan)
-            .with { |plan_weather:, target_end_date: nil| plan_weather.id == @plan.id }
-            .returns({ data: weather_data_cli })
-
           progress_gateway = mock("AgrrProgressGateway")
           progress_gateway
             .expects(:calculate_progress)
@@ -59,20 +80,11 @@ module Adapters
             )
             .returns(progress_result)
 
-          gateway = FieldCultivationClimateActiveRecordGateway.new(
-            current_user: @user,
-            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
-            translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
-            use_mock_progress: false,
-            progress_gateway_factory: -> { progress_gateway },
-            weather_prediction_service_factory: ->(weather_location, farm) { weather_service },
-            weather_data_gateway: CompositionRoot.weather_data_gateway,
-            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-            crop_gateway: CompositionRoot.crop_gateway,
-            prediction_gateway: CompositionRoot.prediction_gateway
-          )
+          bundle = climate_bundle(use_mock_progress: false)
+          bundle.fetch(:weather_gateway).stubs(:fetch_primary_weather_payload).returns(weather_data_cli)
+          CompositionRoot.stubs(:agrr_progress_gateway).returns(progress_gateway)
 
-          dto = gateway.find_climate_data(field_cultivation_id: @field_cultivation.id)
+          dto = assemble_climate_dto(bundle, field_cultivation_id: @field_cultivation.id)
 
           assert_equal @field_cultivation.id, dto.field_cultivation[:id]
           assert_equal @field_cultivation.field_display_name, dto.field_cultivation[:field_name]
@@ -101,12 +113,6 @@ module Adapters
             "progress_records" => []
           }
 
-          weather_service = mock("Domain::WeatherData::Interactors::WeatherPredictionInteractor")
-          weather_service
-            .expects(:predict_for_cultivation_plan)
-            .with { |plan_weather:, target_end_date: nil| plan_weather.id == @plan.id }
-            .returns({ data: weather_data_cli })
-
           progress_gateway = mock("AgrrProgressGateway")
           progress_gateway
             .expects(:calculate_progress)
@@ -117,20 +123,11 @@ module Adapters
             )
             .returns(progress_result)
 
-          gateway = FieldCultivationClimateActiveRecordGateway.new(
-            current_user: @user,
-            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
-            translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
-            use_mock_progress: false,
-            progress_gateway_factory: -> { progress_gateway },
-            weather_prediction_service_factory: ->(weather_location, farm) { weather_service },
-            weather_data_gateway: CompositionRoot.weather_data_gateway,
-            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-            crop_gateway: CompositionRoot.crop_gateway,
-            prediction_gateway: CompositionRoot.prediction_gateway
-          )
+          bundle = climate_bundle(use_mock_progress: false)
+          bundle.fetch(:weather_gateway).stubs(:fetch_primary_weather_payload).returns(weather_data_cli)
+          CompositionRoot.stubs(:agrr_progress_gateway).returns(progress_gateway)
 
-          dto = gateway.find_climate_data(field_cultivation_id: @field_cultivation.id)
+          dto = assemble_climate_dto(bundle, field_cultivation_id: @field_cultivation.id)
 
           assert_equal false, dto.debug_info[:using_agrr_progress]
           assert_equal 0, dto.debug_info[:progress_records_count]
@@ -140,35 +137,15 @@ module Adapters
         end
 
         test "raises record not found when field cultivation missing" do
-          gateway = FieldCultivationClimateActiveRecordGateway.new(
-            current_user: @user,
-            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
-            translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
-            progress_gateway_factory: -> { Adapters::Agrr::Gateways::ProgressDaemonGateway.new },
-            weather_prediction_service_factory: ->(*) { raise "weather prediction should not be called" },
-            weather_data_gateway: CompositionRoot.weather_data_gateway,
-            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-            crop_gateway: CompositionRoot.crop_gateway,
-            prediction_gateway: CompositionRoot.prediction_gateway
-          )
+          bundle = climate_bundle(use_mock_progress: false)
 
           assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-            gateway.find_climate_data(field_cultivation_id: 999_999)
+            bundle.fetch(:context_gateway).load_context(field_cultivation_id: 999_999)
           end
         end
 
         test "coerce_to_optional_date normalizes API query strings to Date" do
-          gateway = FieldCultivationClimateActiveRecordGateway.new(
-            current_user: @user,
-            logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
-            translator: Adapters::Shared::Ports::RailsTranslatorAdapter.new,
-            progress_gateway_factory: -> { Adapters::Agrr::Gateways::ProgressDaemonGateway.new },
-            weather_prediction_service_factory: ->(*) { raise "unused" },
-            weather_data_gateway: CompositionRoot.weather_data_gateway,
-            cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-            crop_gateway: CompositionRoot.crop_gateway,
-            prediction_gateway: CompositionRoot.prediction_gateway
-          )
+          gateway = CompositionRoot.field_cultivation_climate_weather_gateway
 
           d = Date.new(2024, 6, 1)
           assert_equal d, gateway.send(:coerce_to_optional_date, d)

@@ -141,6 +141,15 @@ module Adapters
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_crop_model!(id))
         end
 
+        def resolve_crop_id_by_name(user_id:, crop_name:)
+          name = crop_name.to_s.strip
+          return nil if name.blank?
+
+          record = ::Crop.reference.find_by(name: name)
+          record ||= ::Crop.user_owned.where(user_id: user_id).find_by(name: name)
+          record&.id
+        end
+
         def entry_schedule_ordered_stage_rows(crop_id:)
           crop = ::Crop.includes(crop_stages: :temperature_requirement).find(crop_id)
           crop.crop_stages.sort_by(&:order).map do |st|

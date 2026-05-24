@@ -137,6 +137,12 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
+        # AI 害虫の affected_crops 名前フォールバック用。
+        # @return [Integer, nil]
+        def resolve_crop_id_by_name(user_id:, crop_name:)
+          raise NotImplementedError, "Subclasses must implement resolve_crop_id_by_name"
+        end
+
         def count_user_owned_non_reference_crops(user_id:)
           raise NotImplementedError, "Subclasses must implement count_user_owned_non_reference_crops"
         end

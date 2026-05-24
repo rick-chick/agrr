@@ -33,7 +33,8 @@ module Api
           presenter = Adapters::Pest::Presenters::PestCreateApiPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestCreateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.pest_gateway,
+            crop_gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 
@@ -43,7 +44,9 @@ module Api
           presenter = Adapters::Pest::Presenters::PestUpdateApiPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestUpdateInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.pest_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
+            translator: translator, gateway: CompositionRoot.pest_gateway,
+            crop_gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger,
+            user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 

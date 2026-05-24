@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require "net/http"
+require "net/protocol"
+require "json"
+
 module Domain
   module CultivationPlan
     module Interactors
@@ -161,50 +165,53 @@ module Domain
         private
 
         def pass_growth_read_gate!(input)
-          read = @adjust_plan_growth_read_gateway.load(auth: input.auth, plan_id: input.plan_id)
+          snapshots = @adjust_plan_growth_read_gateway.list_by_plan_id(
+            auth: input.auth,
+            plan_id: input.plan_id
+          )
+          crop_rows = Mappers::CultivationPlanAdjustCropGrowthRowMapper.from_snapshots(snapshots)
 
-          case read[:kind]
-          when :not_found
+          crop_rows.each do |row|
+            next unless row.growth_stage_count.zero?
+
             emit_failure(
               Failure.new(
-                kind: Failure::KIND_NOT_FOUND,
-                message: @translator.translate("api.errors.common.not_found")
-              )
-            )
-            false
-          when :unexpected, :record_invalid
-            emit_failure(
-              Failure.new(
-                kind: Failure::KIND_UNEXPECTED,
-                message: read.fetch(:message)
-              )
-            )
-            false
-          when :success
-            read.fetch(:crop_rows).each do |row|
-              if row.growth_stage_count.zero?
-                emit_failure(
-                  Failure.new(
-                    kind: Failure::KIND_CROP_MISSING_GROWTH_STAGES,
-                    message: @translator.translate(
-                      "api.errors.cultivation_plan.crop_missing_growth_stages",
-                      crop_name: row.crop_name
-                    )
-                  )
+                kind: Failure::KIND_CROP_MISSING_GROWTH_STAGES,
+                message: @translator.translate(
+                  "api.errors.cultivation_plan.crop_missing_growth_stages",
+                  crop_name: row.crop_name
                 )
-                return false
-              end
-            end
-            true
-          else
-            emit_failure(
-              Failure.new(
-                kind: Failure::KIND_UNEXPECTED,
-                message: "Unknown adjust growth read: #{read[:kind].inspect}"
               )
             )
-            false
+            return false
           end
+
+          true
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          emit_failure(
+            Failure.new(
+              kind: Failure::KIND_NOT_FOUND,
+              message: @translator.translate("api.errors.common.not_found")
+            )
+          )
+          false
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          emit_failure(
+            Failure.new(
+              kind: Failure::KIND_UNEXPECTED,
+              message: e.message
+            )
+          )
+          false
+        rescue StandardError => e
+          @logger.error "❌ [Adjust growth read] #{e.class}: #{e.message}"
+          emit_failure(
+            Failure.new(
+              kind: Failure::KIND_UNEXPECTED,
+              message: e.message
+            )
+          )
+          false
         end
 
         def emit_failure(failure)

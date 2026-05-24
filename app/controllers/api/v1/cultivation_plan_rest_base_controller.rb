@@ -9,7 +9,6 @@ module Api
       # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/add_crop
       # 作物追加: candidatesで最適日付を自動決定し、adjustで追加する
       def add_crop
-        gws = CompositionRoot.cultivation_plan_rest_add_crop_support_gateways
         Domain::CultivationPlan::Interactors::AddCropInteractor.new(
           output: Adapters::CultivationPlan::Presenters::AddCropApiPresenter.new(
             view: self,
@@ -17,14 +16,16 @@ module Api
           ),
           logger: cultivation_plan_rest_logger,
           optimization_host: cultivation_plan_rest_add_crop_optimizer_bridge,
-          **gws
+          plan_crop_gateway: CompositionRoot.cultivation_plan_rest_plan_crop_gateway,
+          find_best_candidate: CompositionRoot.find_best_add_crop_candidate_interactor
         ).call(
           auth: cultivation_plan_rest_auth,
           plan_id: params[:id].to_i,
           crop_id: params[:crop_id],
           field_id: params[:field_id],
           display_range: display_range_from_params,
-          crop_resolver: cultivation_plan_rest_add_crop_crop_resolver_bridge
+          crop_resolver: cultivation_plan_rest_add_crop_crop_resolver_bridge,
+          ui_filter_context: ui_filter_context
         )
       end
 
@@ -36,7 +37,10 @@ module Api
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
-          field_mutation_gateway: cultivation_plan_rest_field_mutation_gateway
+          plan_gateway: CompositionRoot.cultivation_plan_gateway,
+          field_mutation_gateway: cultivation_plan_rest_field_mutation_gateway,
+          events_gateway: CompositionRoot.cultivation_plan_rest_optimization_events_gateway,
+          logger: cultivation_plan_rest_logger
         ).call(
           auth: cultivation_plan_rest_auth,
           plan_id: params[:id].to_i,
@@ -54,7 +58,10 @@ module Api
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
-          field_mutation_gateway: cultivation_plan_rest_field_mutation_gateway
+          plan_gateway: CompositionRoot.cultivation_plan_gateway,
+          field_mutation_gateway: cultivation_plan_rest_field_mutation_gateway,
+          events_gateway: CompositionRoot.cultivation_plan_rest_optimization_events_gateway,
+          logger: cultivation_plan_rest_logger
         ).call(
           auth: cultivation_plan_rest_auth,
           plan_id: params[:id].to_i,
@@ -70,7 +77,9 @@ module Api
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
-          workbench_payload_gateway: cultivation_plan_rest_workbench_payload_gateway
+          workbench_read_gateway: CompositionRoot.cultivation_plan_rest_workbench_read_gateway,
+          available_crop_rows_gateway: cultivation_plan_rest_plan_data_available_crop_rows_gateway,
+          logger: cultivation_plan_rest_logger
         ).call(auth: cultivation_plan_rest_auth, plan_id: params[:id].to_i)
       end
 
@@ -104,12 +113,6 @@ module Api
 
       def cultivation_plan_rest_field_mutation_gateway
         CompositionRoot.cultivation_plan_rest_field_mutation_gateway
-      end
-
-      def cultivation_plan_rest_workbench_payload_gateway
-        CompositionRoot.cultivation_plan_rest_workbench_payload_gateway(
-          available_crop_rows_gateway: cultivation_plan_rest_plan_data_available_crop_rows_gateway
-        )
       end
 
       # Api::V1::Plans と PublicPlans で available_crops の解決規則が異なる

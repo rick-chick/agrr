@@ -18,9 +18,11 @@ module Domain
           @mock_user_lookup = mock
           @mock_logger = mock
           @mock_logger.stubs(:info)
+          @mock_crop_gateway = mock
           @interactor = PestUpdateInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
+            crop_gateway: @mock_crop_gateway,
             user_id: @user_id,
             logger: @mock_logger,
             translator: @mock_translator,

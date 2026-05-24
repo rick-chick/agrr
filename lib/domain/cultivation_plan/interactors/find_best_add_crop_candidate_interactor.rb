@@ -3,8 +3,7 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # add_crop 候補探索（Concern にあった主導線のオーケストレーション）。
-      # 永続化・HTTP・寛い rescue は注入側（CompositionRoot の Proc）に閉じる。
+      # add_crop 候補探索。永続化・HTTP・寛い rescue は注入側（CompositionRoot）に閉じる。
       class FindBestAddCropCandidateInteractor
         def initialize(
           logger:,
@@ -22,9 +21,14 @@ module Domain
           @candidates_invoker = candidates_invoker
         end
 
-        # @param ui_filter_context [Hash] ログ用（params 由来。空可）
-        def call(cultivation_plan:, crop:, field_id:, display_range:, ui_filter_context: {})
-          plan = @plan_loader.call(cultivation_plan)
+        # @param auth [Domain::CultivationPlan::Dtos::CultivationPlanRestAuth]
+        # @param plan_id [Integer]
+        # @param crop [#id] AR Crop または crop entity
+        # @param display_range [Hash] :start_date / :end_date
+        # @param ui_filter_context [Hash] ログ用（空可）
+        # @return [Hash, nil] 最良候補 { field_id:, start_date:, profit: } または nil
+        def call(auth:, plan_id:, crop:, field_id:, display_range:, ui_filter_context: {})
+          plan = @plan_loader.call(auth: auth, plan_id: plan_id)
           configs = @allocation_configs.call(plan)
           current_allocation = configs.fetch(:current_allocation)
           fields = configs.fetch(:fields)
@@ -78,7 +82,7 @@ module Domain
             interaction_rules: interaction_rules
           )
 
-          return select_best_candidate(candidates, field_id) unless candidates.empty?
+          return select_best_candidate(candidates, field_id, candidates_start: candidates_start) unless candidates.empty?
 
           @logger.warn "⚠️ [Candidates] No candidates found for target_end_date=#{target_end_date}"
           nil
@@ -93,33 +97,34 @@ module Domain
           else
             @logger.info "📅 [Candidates] UI表示範囲: not provided"
           end
-          filters = Domain::Shared::ValidationHelpers.present?(ui_filter_context) ? ui_filter_context : "none"
+          filters = Domain::Shared.present?(ui_filter_context) ? ui_filter_context : "none"
           @logger.info "📋 [Candidates] UI filters: #{filters}"
           @logger.info "📅 [Candidates] Candidate window: start=#{candidates_start} (UI start=#{display_start_date || 'N/A'}) end=#{candidates_end} target_end_date=#{target_end_date}"
         end
 
-        def select_best_candidate(candidates, preferred_field_id)
-          preferred_field_id = preferred_field_id.to_i if Domain::Shared::ValidationHelpers.present?(preferred_field_id)
+        def select_best_candidate(candidates, preferred_field_id, candidates_start: nil)
+          preferred_field_id = preferred_field_id.to_i if Domain::Shared.present?(preferred_field_id)
 
           today = @today.call
-          future_candidates = candidates.select do |c|
+          lower_bound = candidates_start || today
+          valid_candidates = candidates.select do |c|
             candidate_date = Date.parse(c[:start_date].to_s)
-            candidate_date >= today
+            candidate_date >= lower_bound
           rescue ArgumentError
             false
           end
 
-          @logger.info "🔍 [Candidates] Total: #{candidates.length}, Future: #{future_candidates.length} (filtered past dates before #{today})"
+          @logger.info "🔍 [Candidates] Total: #{candidates.length}, Valid: #{valid_candidates.length} (filtered before #{lower_bound})"
 
-          return nil if future_candidates.empty?
+          return nil if valid_candidates.empty?
 
           field_candidates = if preferred_field_id
-            future_candidates.select { |c| c[:field_id].to_i == preferred_field_id }
+            valid_candidates.select { |c| c[:field_id].to_i == preferred_field_id }
           else
             []
           end
 
-          pool = !field_candidates.empty? ? field_candidates : future_candidates
+          pool = !field_candidates.empty? ? field_candidates : valid_candidates
           pool.max_by { |c| c[:profit].to_f }
         end
       end

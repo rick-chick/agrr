@@ -46,7 +46,7 @@ One JSON action = **one or more interactor calls**, each with **its own presente
 
 #### Roles and Dependencies
 
-1. **Controller** — HTTP entry point. Converts `params` to input DTOs, instantiates Presenter and Interactor, injects gateways from `CompositionRoot`.
+1. **Controller** — HTTP entry point. Uses a **request mapper** (Form or adapter mapper) to build input DTOs from `params`, instantiates Presenter and Interactor, injects gateways from `CompositionRoot`, then `interactor.call(input_dto)`.
 2. **Presenter** (`app/adapters/<context>/presenters/...`) — Output port implementation. Receives `on_success(dto)` / `on_failure(dto)` and maps to HTTP responses.
 3. **Output port** (`lib/domain/.../ports/...`) — Callback contract (`on_success` / `on_failure`) that Interactors call; Presenters implement it.
 4. **Input port** (`lib/domain/.../ports/...`, optional) — Defines the shape of `call`. When absent, `call(input_dto)` applies.
@@ -62,6 +62,7 @@ flowchart TB
   end
   subgraph app_edge["Rails edge app/controllers/api/v1"]
     CTRL[Controller]
+    REQMAP[Request mapper Form or adapter mapper]
   end
   subgraph domain_core["lib/domain same bounded context"]
     IP[Input port optional]
@@ -80,7 +81,9 @@ flowchart TB
   end
 
   REQ --> CTRL
-  CTRL -->|"builds input DTO"| IU
+  CTRL --> REQMAP
+  REQMAP -->|"Input DTO"| CTRL
+  CTRL -->|"call(input_dto)"| IU
   CTRL -->|"instantiates"| PRES
   CTRL -->|"instantiates"| GADP
   CTRL -->|"injects output_port"| IU
@@ -99,7 +102,7 @@ flowchart TB
 
 #### Checklist
 
-1. Strong-params → **input DTO**.
+1. Strong-params → **request mapper or Form** → **input DTO** (see [Canonical use-case responsibility split](#canonical-use-case-responsibility-split); keep `ActionController` types out of Interactors).
 2. Instantiate API presenter (output port implementation): `presenter = PresenterClass.new(view: self)`.
 3. Instantiate gateway(s) from `CompositionRoot`.
 4. `InteractorClass.new(output_port: presenter, gateway: gw, ...).call(input_dto)`.
@@ -107,6 +110,63 @@ flowchart TB
 
 
 AI-specific endpoints (`ai_create`, etc.) follow this checklist; they are not special cases for layering.
+
+#### Canonical use-case responsibility split
+
+Normative end-to-end flow for JSON and HTML actions. Extends the [Checklist](#checklist) with **where mapping happens** at each boundary (including **Controller → Interactor**).
+
+```mermaid
+sequenceDiagram
+  participant Ctrl as Controller
+  participant ReqMap as Request_mapper_adapter
+  participant Int as Interactor
+  participant Gw as Gateway_adapter
+  participant Pol as Policy_pure
+  participant DMap as Domain_mapper
+  participant Port as Output_port
+  participant Pres as Presenter
+  participant AMap as Adapter_mapper
+
+  Ctrl->>ReqMap: params or request
+  ReqMap-->>Ctrl: Input DTO
+  Ctrl->>Int: call(input_dto)
+  Int->>Gw: find list count
+  Gw-->>Int: Entity or Snapshot
+  Int->>Pol: scalars attributes only
+  Pol-->>Int: allow or deny
+  Int->>Gw: create update delete
+  Int->>DMap: combine Snapshots
+  DMap-->>Int: Output DTO
+  Int->>Port: on_success on_failure
+  Port->>AMap: Output DTO
+  AMap-->>Pres: JSON Hash etc
+  Pres->>Ctrl: render_response
+```
+
+| Layer | Does | Does not |
+|---|---|---|
+| **Controller** | Wire presenter and gateways from `CompositionRoot`; invoke request mapper; `interactor.call(input_dto)` | Business rules; gateway I/O; `{ kind: }` outcome branching; AR queries for use-case data |
+| **Request mapper** (adapter) | `params` / `ActionController::Parameters` → `<Usecase>Input` (types, coercion, nesting). See placement below | Policy; gateway; authorization; business rules; I/O |
+| **Interactor** | Gateway order: read → Policy → write → domain mapper → output port | Pass gateway into Policy; read raw `params`; ActiveRecord; `{ kind: }` switches for modeled outcomes |
+| **Policy** | Decide from passed values only | Gateway; `find` / `count`; ActiveRecord ([R0](#r0-authorization-and-validation)) |
+| **Gateway** | Five-verb I/O; map AR → Entity/Snapshot in the adapter ([Gateway Boundary](#gateway-boundary)) | Authorization; rules; `{ kind: }`; presenter-shaped composites; JSON keyed for one screen |
+| **Domain mapper** | Combine snapshots → output DTO / port payload ([Mappers](#mappers)) | I/O |
+| **Presenter + adapter mapper** | Output DTO → HTTP status / JSON / view shape | Gateway calls; load data for the use case |
+
+**Request mapper placement (Controller → Interactor):**
+
+- Prefer `app/adapters/<context>/presenters/forms/<usecase>_form.rb` for typical CRUD `params` → `<Usecase>Input` ([Presenter-side helpers](#presenter-side-helpers-forms--view-models) — Form row).
+- Use `app/adapters/<context>/mappers/` modules (e.g. `AdjustMovesFromRequest`) when normalization is shared, not form-shaped, or reused across controllers.
+- Inline `Input.new(...)` in the controller is acceptable only for **trivial** mapping (no coercion, no nested structure, no duplication). Extract to Form or request mapper when types, nesting, or reuse appear.
+
+**Reference implementations:**
+
+| Step | Example |
+|---|---|
+| Request mapper | `Adapters::CultivationPlan::AdjustMovesFromRequest` → `PlanAllocationAdjustInput` in `CultivationPlanRestBaseController#adjust` |
+| Orchestration + pure Policy | `CropCreateInteractor` + `CropCreateLimitPolicy` (Interactor calls `gateway.count`; Policy receives counts only) |
+| Domain combine | `CultivationPlanWorkbenchSnapshotMapper` (read snapshots → `CultivationPlanWorkbenchSnapshot`) |
+| Response shape | `RetrieveCultivationPlanApiPresenter` + `CultivationPlanWorkbenchPayloadMapper` (adapter mapper only) |
 
 #### Layout example (reference implementation)
 
@@ -168,7 +228,7 @@ The Presenter itself stays thin: it implements the output port (`on_success` / `
 
 | Helper | Path | Direction | Mutability | Responsibility |
 |---|---|---|---|---|
-| **Form** | `app/adapters/<context>/presenters/forms/<usecase>_form.rb` | params → `<Usecase>Input` (write) | mutable (survives `on_failure` re-render) | **params → DTO conversion** (type coercion, defaults). No validation, no authorization, no business rules, no gateway calls |
+| **Form** | `app/adapters/<context>/presenters/forms/<usecase>_form.rb` | params → `<Usecase>Input` (write) | mutable (survives `on_failure` re-render) | **Request mapper** at the HTTP edge: params → Input DTO (type coercion, defaults). No validation, no authorization, no business rules, no gateway calls. See [Canonical use-case responsibility split](#canonical-use-case-responsibility-split) |
 | **ViewModel** | `app/adapters/<context>/presenters/view_models/<usecase>_view_model.rb` | `<Usecase>Output` → display (read) | immutable | formatted dates, derived labels, URLs, CSS classes; nothing that needs a gateway |
 
 **Why this split:** domain output DTOs are use-case-neutral - they encode *what the use case produced*, not *what the screen needs*. Form / ViewModel are where screen / API shape lives, so that `lib/domain/` does not grow per-screen variants like `*_read_model.rb` or `*_payload_dto.rb`.
@@ -186,18 +246,21 @@ The output port is the contract for transmitting use-case success/failure via DT
 
 ### Mappers
 
-Mappers are **Plain Ruby objects** that perform pure type transformations. They are used in two layers:
+Mappers are **Plain Ruby objects** that perform pure type transformations. They are used in **three** roles along the use-case path ([Canonical use-case responsibility split](#canonical-use-case-responsibility-split)):
 
-- **Domain mappers** (`lib/domain/<context>/mappers/`) — Called by Interactors. Entity ↔ DTO, DTO ↔ DTO transformations. **No I/O**, no Gateway/Policy calls. Extract to mapper even for simple field copying; do not inline conversion inside Interactors.
-- **Adapter mappers** (`app/adapters/<context>/mappers/`) — Called by Presenters. Domain output → JSON Hash / HTML display shape transformations.
+- **Request mappers** (`app/adapters/<context>/mappers/` or `app/adapters/<context>/presenters/forms/`) — Called by **Controllers** at the HTTP edge. `params` / request → `<Usecase>Input`. **No I/O**, no Policy, no gateway. Keeps `ActionController::Parameters` and strong-params details out of Interactors. Forms are the default request mapper for write flows; standalone mapper modules suit shared or non-form normalization (e.g. `AdjustMovesFromRequest`).
+- **Domain mappers** (`lib/domain/<context>/mappers/`) — Called by **Interactors**. Entity ↔ DTO, snapshot ↔ DTO, DTO ↔ DTO. **No I/O**, no Gateway/Policy calls. Extract to mapper even for simple field copying; do not inline conversion inside Interactors.
+- **Adapter mappers** (`app/adapters/<context>/mappers/`) — Called by **Presenters** (response path). Domain output → JSON Hash / HTML display shape.
 
 **Rule:** `lib/domain/<context>/assemblers/` is not allowed. Composition must be handled within Interactors or through domain mappers.
 
 **Naming:**
+- **Request mapper (module)**: `app/adapters/<context>/mappers/<name>_from_request.rb` or descriptive module name — e.g. `Adapters::CultivationPlan::AdjustMovesFromRequest`
+- **Request mapper (Form)**: `app/adapters/<context>/presenters/forms/<usecase>_form.rb` — `Adapters::<Context>::Presenters::Forms::<Usecase>Form`
 - **Domain mapper**: `lib/domain/<context>/mappers/<name>_mapper.rb` — `Domain::<Context>::Mappers::<Name>Mapper`
-- **Adapter mapper**: `app/adapters/<context>/mappers/<name>_mapper.rb` — `Adapters::<Context>::Mappers::<Name>Mapper`
+- **Adapter mapper (response)**: `app/adapters/<context>/mappers/<name>_mapper.rb` — `Adapters::<Context>::Mappers::<Name>Mapper`
 
-**Boundary:** Mappers perform pure transformations only. No business rules, authorization decisions, or I/O. Inputs and outputs are limited to DTOs, Entities, and Snapshots.
+**Boundary:** Mappers perform pure transformations only. No business rules, authorization decisions, or I/O. Request mappers: HTTP-shaped input → Input DTO. Domain mappers: DTOs, Entities, Snapshots only. Adapter mappers: domain port payloads → wire/view shape.
 
 ### Naming and placement conventions
 
@@ -301,7 +364,7 @@ Domain DTOs encode **use-case semantics only** - what the use case takes in, wha
 The Rails application layer lives under `app/`.
 
 - `**ActiveSupport::Concern`** - **Do not add** new concern modules under `app/controllers/concerns/`, `app/models/concerns/`, or elsewhere to share **domain-shaped or use-case** logic. Express reuse in `lib/domain` as **Plain Ruby**, wire it with **explicit injection** at the edge.
-- `**app/controllers/api/v1/`** - JSON API; params → DTOs → interactors + API presenters. Flow: [API Layer](#api-layer).
+- `**app/controllers/api/v1/`** - JSON API; request mapper / Form → input DTO → interactors + API presenters. Flow: [API Layer](#api-layer), [Canonical use-case responsibility split](#canonical-use-case-responsibility-split).
 - `**app/controllers/*_controller.rb`** - HTML controllers for legacy/admin-style flows; increasingly delegate to interactors + HTML presenters.
 - `**app/models/`** - ActiveRecord; **DB-level constraints only** (UNIQUE INDEX, NOT NULL, CHECK). Business validations follow [R0](#r0-authorization-and-validation). Model validations are **safety net only**.
 - `**app/services/`** - Orchestration and legacy services; **prefer** moving durable rules into `lib/domain/.../interactors` and `lib/domain/.../policies` (see roadmap).
@@ -382,10 +445,11 @@ This rule is the single source of truth for authorization and validation respons
 
 ### Application Edge
 
-**R7. Thin controllers** — Controllers map `params` → input DTO, instantiate presenter + interactor + gateways, and call. See [Checklist](#checklist).
+**R7. Thin controllers** — Controllers use a **request mapper or Form** for `params` → input DTO, instantiate presenter + interactor + gateways, and `interactor.call(input_dto)`. See [Checklist](#checklist) and [Canonical use-case responsibility split](#canonical-use-case-responsibility-split).
 
 - ❌ `rescue StandardError`, `rescue ActiveRecord::RecordNotFound`, or `rescue_from` as the **primary** mapper for anticipated domain outcomes — use output port instead
 - ❌ Business behavior inside action methods, private helpers, `before_action`, or controller-only `app/services/` adapters
+- ❌ Passing raw `params` or `ActionController::Parameters` into Interactors — map to `<Usecase>Input` at the controller edge first
 - ❌ ActiveRecord/ActiveStorage reads/writes for the use case (`current_user.farms.where(...)`, `Model.find`, `Blob.create_and_upload!`)
 - ❌ Third-party SDK/process clients, retry loops, JSON parsing as control flow, cross-record aggregation, authorization branches, conditional `*Job.perform_later`, `Rails.cache.fetch` whose result selects domain output
 - ❌ New CRUD or integration endpoints that don't route through an interactor

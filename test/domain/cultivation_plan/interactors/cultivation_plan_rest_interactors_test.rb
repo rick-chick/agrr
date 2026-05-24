@@ -8,25 +8,55 @@ module Domain
       class AddFieldInteractorTest < DomainLibTestCase
         setup do
           @output = mock
-          @gateway = mock
+          @plan_gateway = mock
+          @field_gateway = mock
+          @events_gateway = mock
+          @logger = mock
+          @logger.stubs(:error)
           @auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
+          @plan = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: 42,
+            farm_id: 1,
+            user_id: 1,
+            total_area: 0,
+            plan_type: "private"
+          )
+        end
+
+        def build_interactor
+          AddFieldInteractor.new(
+            output: @output,
+            plan_gateway: @plan_gateway,
+            field_mutation_gateway: @field_gateway,
+            events_gateway: @events_gateway,
+            logger: @logger
+          )
         end
 
         test "dispatches success" do
-          pf = mock
-          pf.stubs(:id).returns(3)
-          pf.stubs(:name).returns("A")
-          pf.stubs(:area).returns(1.5)
-          @gateway.expects(:add_field).with(
-            auth: @auth,
+          snapshot = Domain::CultivationPlan::Dtos::CultivationPlanFieldSnapshot.new(
+            id: 3,
+            name: "A",
+            area: 1.5
+          )
+          @plan_gateway.expects(:find_by_id_for_rest).with(auth: @auth, plan_id: 42).returns(@plan)
+          @field_gateway.expects(:count_fields).with(plan_id: 42).returns(1)
+          @field_gateway.expects(:create_field).with(
             plan_id: 42,
             field_name: "A",
-            field_area: "1.5",
+            field_area: 1.5,
             daily_fixed_cost: nil
-          ).returns(kind: :success, plan_field: pf, total_area: 10.0)
+          ).returns(snapshot)
+          @field_gateway.expects(:refresh_total_area).with(plan_id: 42).returns(10.0)
+          @events_gateway.expects(:broadcast_field_added).with do |kwargs|
+            kwargs[:plan_id] == 42 &&
+              kwargs[:plan_type] == "private" &&
+              kwargs[:total_area] == 10.0 &&
+              kwargs[:field_snapshot].is_a?(Domain::CultivationPlan::Dtos::FieldOptimizationEventSnapshot)
+          end
           @output.expects(:on_success).with(field_id: 3, name: "A", area: 1.5, total_area: 10.0)
 
-          AddFieldInteractor.new(output: @output, field_mutation_gateway: @gateway).call(
+          build_interactor.call(
             auth: @auth,
             plan_id: 42,
             field_name: "A",
@@ -36,10 +66,10 @@ module Domain
         end
 
         test "dispatches not_found" do
-          @gateway.expects(:add_field).returns(kind: :not_found)
+          @plan_gateway.expects(:find_by_id_for_rest).raises(Domain::Shared::Exceptions::RecordNotFound)
           @output.expects(:on_not_found)
 
-          AddFieldInteractor.new(output: @output, field_mutation_gateway: @gateway).call(
+          build_interactor.call(
             auth: @auth,
             plan_id: 1,
             field_name: "A",
@@ -52,30 +82,43 @@ module Domain
       class RemoveFieldInteractorTest < DomainLibTestCase
         setup do
           @output = mock
-          @gateway = mock
+          @plan_gateway = mock
+          @field_gateway = mock
+          @events_gateway = mock
+          @logger = mock
+          @logger.stubs(:error)
           @auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
+          @plan = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: 7,
+            farm_id: 1,
+            user_id: 1,
+            total_area: 0,
+            plan_type: "private"
+          )
         end
 
         test "dispatches field_not_found" do
-          @gateway.expects(:remove_field).with(
-            auth: @auth,
-            plan_id: 7,
-            field_id_param: "9"
-          ).returns(kind: :field_not_found)
+          @plan_gateway.expects(:find_by_id_for_rest).with(auth: @auth, plan_id: 7).returns(@plan)
+          @field_gateway.expects(:find_field).with(plan_id: 7, field_id: 9).returns(nil)
           @output.expects(:on_field_not_found)
 
-          RemoveFieldInteractor.new(output: @output, field_mutation_gateway: @gateway).call(
-            auth: @auth,
-            plan_id: 7,
-            field_id_param: "9"
-          )
+          RemoveFieldInteractor.new(
+            output: @output,
+            plan_gateway: @plan_gateway,
+            field_mutation_gateway: @field_gateway,
+            events_gateway: @events_gateway,
+            logger: @logger
+          ).call(auth: @auth, plan_id: 7, field_id_param: "9")
         end
       end
 
       class RetrieveCultivationPlanInteractorTest < DomainLibTestCase
         setup do
           @output = mock
-          @gateway = mock
+          @read_gateway = mock
+          @available_gateway = mock
+          @logger = mock
+          @logger.stubs(:error)
           @auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :public)
         end
 
@@ -93,23 +136,28 @@ module Domain
             total_revenue: 0.0,
             total_cost: 0.0
           )
-          snapshot = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
+          rows = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchRowsSnapshot.new(
             plan: plan,
             fields: [],
             crops: [],
             cultivations: [],
-            available_crop_rows: []
+            farm_region: "jp"
           )
-          @gateway.expects(:find_by_plan_id).with(
-            auth: @auth,
-            plan_id: 3
-          ).returns(kind: :success, snapshot: snapshot)
-          @output.expects(:on_success).with(snapshot: snapshot)
+          @read_gateway.expects(:load_rows).with(auth: @auth, plan_id: 3).returns(rows)
+          @available_gateway.expects(:list_by_farm_region).with(auth: @auth, farm_region: "jp").returns([])
+          @output.expects(:on_success).with do |kwargs|
+            s = kwargs[:snapshot]
+            s.is_a?(Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot) &&
+              s.plan == plan &&
+              s.available_crop_rows == []
+          end
 
-          RetrieveCultivationPlanInteractor.new(output_port: @output, workbench_payload_gateway: @gateway).call(
-            auth: @auth,
-            plan_id: 3
-          )
+          RetrieveCultivationPlanInteractor.new(
+            output_port: @output,
+            workbench_read_gateway: @read_gateway,
+            available_crop_rows_gateway: @available_gateway,
+            logger: @logger
+          ).call(auth: @auth, plan_id: 3)
         end
       end
 
@@ -143,14 +191,11 @@ module Domain
         end
 
         test "runs adjust after growth read passes" do
-          row = Domain::CultivationPlan::Dtos::CultivationPlanAdjustCropGrowthRow.new(
+          snapshot = Domain::CultivationPlan::Dtos::CultivationPlanAdjustPlanCropGrowthSnapshot.new(
             crop_name: "C",
             growth_stage_count: 1
           )
-          @growth.expects(:load).with(auth: @auth, plan_id: 2).returns(
-            kind: :success,
-            crop_rows: [row]
-          )
+          @growth.expects(:list_by_plan_id).with(auth: @auth, plan_id: 2).returns([snapshot])
           @output.expects(:on_success).with do |output:|
             output.skipped == true && output.message.include?("調整不要")
           end
@@ -165,11 +210,11 @@ module Domain
         end
 
         test "dispatches crop_missing_growth_stages as failure" do
-          row = Domain::CultivationPlan::Dtos::CultivationPlanAdjustCropGrowthRow.new(
+          snapshot = Domain::CultivationPlan::Dtos::CultivationPlanAdjustPlanCropGrowthSnapshot.new(
             crop_name: "X",
             growth_stage_count: 0
           )
-          @growth.expects(:load).returns(kind: :success, crop_rows: [row])
+          @growth.expects(:list_by_plan_id).returns([snapshot])
           @translator.expects(:translate).with(
             "api.errors.cultivation_plan.crop_missing_growth_stages",
             crop_name: "X"

@@ -13,7 +13,8 @@ module Domain
 
         def call(crop_id:)
           user = @user_lookup.find(@user_id)
-          accessible_pest_ids = @pest_gateway.selectable_pest_ids(user)
+          filter = Domain::Shared::Policies::PestPolicy.selectable_list_filter(user)
+          accessible_pest_ids = @pest_gateway.list_index_for_filter(filter).map(&:id)
           pests = @pest_gateway.list_pests_for_crop_filtered(
             crop_id: crop_id,
             pest_ids: accessible_pest_ids,

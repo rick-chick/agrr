@@ -9,27 +9,25 @@ module Adapters
           super(logger: logger)
         end
 
-        def load(auth:, plan_id:)
-          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
-          crop_rows = cultivation_plan.cultivation_plan_crops.filter_map do |plan_crop|
+        def list_by_plan_id(auth:, plan_id:)
+          cultivation_plan = ::Adapters::CultivationPlan::Persistence::PlanScopes.find_record!(auth, plan_id)
+          cultivation_plan.cultivation_plan_crops.filter_map do |plan_crop|
             crop = plan_crop.crop
             next if crop.nil?
 
-            Domain::CultivationPlan::Dtos::CultivationPlanAdjustCropGrowthRow.new(
+            Domain::CultivationPlan::Dtos::CultivationPlanAdjustPlanCropGrowthSnapshot.new(
               crop_name: crop.name,
               growth_stage_count: crop.crop_stages.size
             )
           end
-
-          { kind: :success, plan_id: cultivation_plan.id, crop_rows: crop_rows }
-        rescue ActiveRecord::RecordNotFound
-          { kind: :not_found }
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         rescue ActiveRecord::RecordInvalid => e
           logger.error "❌ [Adjust growth read] Record invalid: #{e.message}"
-          { kind: :record_invalid, message: e.message }
+          raise Domain::Shared::Exceptions::RecordInvalid.new(nil, errors: e.record.errors.full_messages)
         rescue ActiveRecord::ActiveRecordError => e
           logger.error "❌ [Adjust growth read] ActiveRecord error: #{e.message}"
-          { kind: :unexpected, message: e.message }
+          raise
         end
       end
     end

@@ -3,39 +3,33 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # add_crop REST: 狭い Gateway を組み合わせ、出力ポートへ写す。
+      # add_crop REST: 圃場作物追加と adjust までをオーケストレーションする。
       class AddCropInteractor
+        WEATHER_PREDICTION_EXCEPTIONS = [
+          Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
+          Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError
+        ].freeze
+
         def initialize(
           output:,
           logger:,
           optimization_host:,
-          optimize_attach_gateway:,
-          plan_crop_insert_gateway:,
-          best_candidate_gateway:,
-          adjust_invoke_gateway:,
-          plan_crop_delete_gateway:
+          plan_crop_gateway:,
+          find_best_candidate:
         )
           @output = output
           @logger = logger
           @optimization_host = optimization_host
-          @optimize_attach_gateway = optimize_attach_gateway
-          @plan_crop_insert_gateway = plan_crop_insert_gateway
-          @best_candidate_gateway = best_candidate_gateway
-          @adjust_invoke_gateway = adjust_invoke_gateway
-          @plan_crop_delete_gateway = plan_crop_delete_gateway
+          @plan_crop_gateway = plan_crop_gateway
+          @find_best_candidate = find_best_candidate
         end
 
         # @param crop_resolver [#crop_for_add_crop] エッジで実装（Concern の作物解決）。
-        def call(auth:, plan_id:, crop_id:, field_id:, display_range:, crop_resolver:)
-          attach1 = @optimize_attach_gateway.attach_plan!(
-            auth: auth,
-            plan_id: plan_id,
-            optimization_host: @optimization_host
-          )
-          unless attach1[:kind] == :success
-            dispatch_optimize_attach_failure(attach1)
-            return
-          end
+        # @param ui_filter_context [Hash] 候補探索ログ用（空可）
+        def call(auth:, plan_id:, crop_id:, field_id:, display_range:, crop_resolver:, ui_filter_context: {})
+          plan_crop_id = nil
+
+          @optimization_host.attach_plan_for_candidates!(auth: auth, plan_id: plan_id)
 
           crop_entity = crop_resolver.crop_for_add_crop(crop_id)
           unless crop_entity
@@ -43,52 +37,24 @@ module Domain
             return
           end
 
-          insert = @plan_crop_insert_gateway.create_plan_crop!(
+          plan_crop_snapshot = @plan_crop_gateway.create(auth: auth, plan_id: plan_id, crop_entity: crop_entity)
+          plan_crop_id = plan_crop_snapshot.id
+          plan_crop_display_name = plan_crop_snapshot.display_name
+
+          @optimization_host.attach_plan_for_candidates!(auth: auth, plan_id: plan_id)
+
+          best = @find_best_candidate.call(
             auth: auth,
             plan_id: plan_id,
-            crop_entity: crop_entity
-          )
-
-          case insert[:kind]
-          when :not_found
-            @output.on_not_found
-            return
-          when :record_invalid
-            @output.on_record_invalid(message: insert.fetch(:message))
-            return
-          when :unexpected
-            @output.on_unexpected(message: insert.fetch(:message))
-            return
-          when :success
-            plan_crop_id = insert.fetch(:plan_crop_id)
-            plan_crop_display_name = insert.fetch(:plan_crop_display_name)
-          else
-            @output.on_unexpected(message: "Unknown add_crop insert: #{insert[:kind].inspect}")
-            return
-          end
-
-          attach2 = @optimize_attach_gateway.attach_plan!(
-            auth: auth,
-            plan_id: plan_id,
-            optimization_host: @optimization_host
-          )
-          unless attach2[:kind] == :success
-            @plan_crop_delete_gateway.destroy_plan_crop!(plan_crop_id: plan_crop_id)
-            dispatch_optimize_attach_failure(attach2)
-            return
-          end
-
-          candidate = @best_candidate_gateway.find_best(
-            auth: auth,
-            plan_id: plan_id,
-            crop_id: crop_entity.id,
+            crop: crop_entity,
             field_id: field_id,
             display_range: display_range,
-            optimization_host: @optimization_host
+            ui_filter_context: ui_filter_context
           )
 
-          unless candidate[:kind] == :found
-            dispatch_candidate_failure(candidate, plan_crop_id: plan_crop_id)
+          unless best
+            rollback_plan_crop(plan_crop_id)
+            @output.on_no_candidates
             return
           end
 
@@ -97,65 +63,55 @@ module Domain
               allocation_id: nil,
               action: "add",
               crop_id: crop_entity.id.to_s,
-              to_field_id: candidate[:field_id],
-              to_start_date: candidate[:start_date],
+              to_field_id: best[:field_id],
+              to_start_date: best[:start_date],
               to_area: crop_entity.area_per_unit,
               variety: crop_entity.variety
             }
           ]
 
-          result = @adjust_invoke_gateway.adjust_with_moves!(
-            optimization_host: @optimization_host,
-            plan_id: plan_id,
-            moves: moves
-          )
+          adjust_result = @optimization_host.adjust_with_moves!(plan_id: plan_id, moves: moves)
 
-          if result[:success] || result["success"]
+          if adjust_result.success?
             @output.on_success(
               plan_crop_id: plan_crop_id,
               plan_crop_display_name: plan_crop_display_name
             )
           else
-            @output.on_adjust_failed(adjust_payload: result)
+            @output.on_adjust_failed(adjust_payload: adjust_result_to_legacy_hash(adjust_result))
           end
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          rollback_plan_crop(plan_crop_id) if plan_crop_id
+          @output.on_not_found
+        rescue Domain::Shared::Exceptions::RecordInvalid => e
+          @logger.error "❌ [Add Crop] Record invalid: #{e.message}"
+          rollback_plan_crop(plan_crop_id) if plan_crop_id
+          @output.on_record_invalid(message: e.message)
+        rescue *WEATHER_PREDICTION_EXCEPTIONS => e
+          @logger.warn "⚠️ [Add Crop] Prediction data incomplete: #{e.message}"
+          rollback_plan_crop(plan_crop_id) if plan_crop_id
+          @output.on_prediction_incomplete(technical_details: e.message)
         rescue StandardError => e
           @logger.error "❌ [Add Crop] Error: #{e.message}"
           @logger.error e.backtrace.join("\n") if e.backtrace
+          rollback_plan_crop(plan_crop_id) if plan_crop_id
           @output.on_unexpected(message: e.message)
         end
 
         private
 
-        def dispatch_optimize_attach_failure(result)
-          case result[:kind]
-          when :not_found
-            @output.on_not_found
-          when :record_invalid
-            @output.on_record_invalid(message: result.fetch(:message))
-          when :unexpected
-            @output.on_unexpected(message: result.fetch(:message))
-          else
-            @output.on_unexpected(message: "Unknown add_crop attach: #{result[:kind].inspect}")
-          end
+        def rollback_plan_crop(plan_crop_id)
+          @plan_crop_gateway.delete(id: plan_crop_id)
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          nil
         end
 
-        def dispatch_candidate_failure(result, plan_crop_id:)
-          @plan_crop_delete_gateway.destroy_plan_crop!(plan_crop_id: plan_crop_id)
-
-          case result[:kind]
-          when :prediction_incomplete
-            @output.on_prediction_incomplete(technical_details: result.fetch(:technical_details))
-          when :no_candidates
-            @output.on_no_candidates
-          when :not_found
-            @output.on_not_found
-          when :record_invalid
-            @output.on_record_invalid(message: result.fetch(:message))
-          when :unexpected
-            @output.on_unexpected(message: result.fetch(:message))
-          else
-            @output.on_unexpected(message: "Unknown add_crop candidate: #{result[:kind].inspect}")
-          end
+        def adjust_result_to_legacy_hash(result)
+          {
+            success: result.success?,
+            message: result.message,
+            status: result.http_status
+          }.compact
         end
       end
     end

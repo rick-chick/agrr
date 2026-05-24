@@ -3,25 +3,31 @@
 module Domain
   module CultivationPlan
     module Gateways
-      # REST: 圃場追加・削除（永続化 + イベント通知のオーケストレーション契約）。
-      # 実装はアダプタ。Interactor への戻りは { kind: Symbol, ... }（既存Presenter契約）。
+      # REST: 栽培計画圃場の永続化のみ。認可・ルールは Interactor + Policy。
       class CultivationPlanFieldMutationGateway
-        def initialize(events_gateway:, logger:)
-          @events_gateway = events_gateway
-          @logger = logger
-        end
-
-        def add_field(auth:, plan_id:, field_name:, field_area:, daily_fixed_cost:)
+        # @return [Integer]
+        def count_fields(plan_id:)
           raise NotImplementedError
         end
 
-        def remove_field(auth:, plan_id:, field_id_param:)
+        # @return [Domain::CultivationPlan::Dtos::CultivationPlanFieldSnapshot, nil]
+        def find_field(plan_id:, field_id:)
           raise NotImplementedError
         end
 
-        protected
+        # @return [Domain::CultivationPlan::Dtos::CultivationPlanFieldSnapshot]
+        def create_field(plan_id:, field_name:, field_area:, daily_fixed_cost:)
+          raise NotImplementedError
+        end
 
-        attr_reader :events_gateway, :logger
+        def delete_field(plan_id:, field_id:)
+          raise NotImplementedError
+        end
+
+        # @return [Float] 更新後の total_area
+        def refresh_total_area(plan_id:)
+          raise NotImplementedError
+        end
       end
     end
   end

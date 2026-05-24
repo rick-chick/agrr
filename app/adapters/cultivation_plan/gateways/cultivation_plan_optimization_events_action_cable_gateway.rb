@@ -9,24 +9,26 @@ module Adapters
           @logger = logger
         end
 
-        def broadcast_field_added(plan:, field_payload:, total_area:)
-          channel_class = plan.plan_type == "private" ? PlansOptimizationChannel : OptimizationChannel
+        def broadcast_field_added(plan_id:, plan_type:, field_snapshot:, total_area:)
+          plan = ::CultivationPlan.find(plan_id)
+          channel_class = plan_type.to_s == "private" ? PlansOptimizationChannel : OptimizationChannel
           channel_class.broadcast_to(
             plan,
             {
               type: "field_added",
-              field: field_payload,
+              field: field_snapshot.to_h,
               total_area: total_area
             }
           )
         rescue ActiveRecord::RecordInvalid => e
-          @logger.error "❌ [Action Cable field_added] plan_id=#{plan&.id} (validation): #{e.message}"
+          @logger.error "❌ [Action Cable field_added] plan_id=#{plan_id} (validation): #{e.message}"
         rescue StandardError => e
-          @logger.error "❌ [Action Cable field_added] plan_id=#{plan&.id}: #{e.message}"
+          @logger.error "❌ [Action Cable field_added] plan_id=#{plan_id}: #{e.message}"
         end
 
-        def broadcast_field_removed(plan:, field_id:, total_area:)
-          channel_class = plan.plan_type == "private" ? PlansOptimizationChannel : OptimizationChannel
+        def broadcast_field_removed(plan_id:, plan_type:, field_id:, total_area:)
+          plan = ::CultivationPlan.find(plan_id)
+          channel_class = plan_type.to_s == "private" ? PlansOptimizationChannel : OptimizationChannel
           channel_class.broadcast_to(
             plan,
             {
@@ -36,9 +38,9 @@ module Adapters
             }
           )
         rescue ActiveRecord::RecordInvalid => e
-          @logger.error "❌ [Action Cable field_removed] plan_id=#{plan&.id} (validation): #{e.message}"
+          @logger.error "❌ [Action Cable field_removed] plan_id=#{plan_id} (validation): #{e.message}"
         rescue StandardError => e
-          @logger.error "❌ [Action Cable field_removed] plan_id=#{plan&.id}: #{e.message}"
+          @logger.error "❌ [Action Cable field_removed] plan_id=#{plan_id}: #{e.message}"
         end
 
         def broadcast_optimization_complete(plan:, status:)

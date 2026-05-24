@@ -21,14 +21,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_index_for_filter"
         end
 
-        def selectable_pest_ids(user)
-          raise NotImplementedError, "Subclasses must implement selectable_pest_ids"
-        end
-
-        def pest_selectable_by_user?(user, pest_id)
-          raise NotImplementedError, "Subclasses must implement pest_selectable_by_user?"
-        end
-
         # 詳細 DTO（関連込み）。認可は Interactor 側（R0）。
         def find_pest_show_detail(id)
           raise NotImplementedError, "Subclasses must implement find_pest_show_detail"
@@ -73,23 +65,15 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_pests_for_crop_filtered"
         end
 
-        # Pest 作成後に作物群と関連付け。
-        def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
+        # Pest 作成後に作物群と関連付け（認可済み crop_ids のみ渡すこと）。
+        # @return [Integer] 新規に紐づけた件数
+        def associate_crops_with_pest_id(pest_id:, crop_ids:)
           raise NotImplementedError, "Subclasses must implement associate_crops_with_pest_id"
         end
 
-        # Pest 更新後の作物関連付け差分更新。
-        def update_pest_crop_associations(pest_id:, crop_ids:, user:)
+        # Pest 更新後の作物関連付け差分更新（認可済み crop_ids のみ渡すこと）。
+        def update_pest_crop_associations(pest_id:, crop_ids:)
           raise NotImplementedError, "Subclasses must implement update_pest_crop_associations"
-        end
-
-        # AI Pest API: affected_crops ペイロードを解決して害虫に作物を関連付ける。
-        # ActiveRecord::ActiveRecordError は永続化境界で捕捉しログに留める（コントローラで rescue しない）。
-        #
-        # @param logger [Domain::Shared::Ports::LoggerPort]
-        # @return [Integer] 新規に紐づけた件数（既存リンクは含まない）
-        def associate_affected_crops_for_ai_pest(pest_id:, affected_crops:, user:, logger:)
-          raise NotImplementedError, "Subclasses must implement associate_affected_crops_for_ai_pest"
         end
 
         # AI API: ユーザー害虫を名前で検索（なければ nil）。

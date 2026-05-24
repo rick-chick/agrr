@@ -19,6 +19,19 @@ class Domain::Shared::Policies::PestPolicyTest < ActiveSupport::TestCase
     assert Domain::Shared::Policies::PestPolicy.view_allowed?(@user, is_reference: true, user_id: nil)
   end
 
+  test "selectable_list_filter is reference_or_owned for regular user" do
+    filter = Domain::Shared::Policies::PestPolicy.selectable_list_filter(@user)
+
+    assert_equal :reference_or_owned, filter.mode
+    assert_equal @user.id, filter.user_id
+  end
+
+  test "selectable_for_user? allows reference and own pests" do
+    assert Domain::Shared::Policies::PestPolicy.selectable_for_user?(@user, is_reference: true, user_id: nil)
+    assert Domain::Shared::Policies::PestPolicy.selectable_for_user?(@user, is_reference: false, user_id: @user.id)
+    assert_not Domain::Shared::Policies::PestPolicy.selectable_for_user?(@user, is_reference: false, user_id: @user.id + 1)
+  end
+
   # ---- region 認可（admin のみ設定・更新可）----
 
   test "normalize_attrs_for_create は admin の region を保持する" do

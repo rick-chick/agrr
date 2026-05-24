@@ -6,7 +6,7 @@ module Domain
   module FieldCultivation
     module Interactors
       class FieldCultivationClimateDataInteractorTest < DomainLibTestCase
-        test "delivers climate information when gateway returns data" do
+        test "delivers climate information when gateways return data" do
           fc_id = 42
           success_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataOutput.new(
             field_cultivation: { id: fc_id, field_name: "north", crop_name: "tomato" },
@@ -19,18 +19,48 @@ module Domain
             debug_info: {}
           )
 
-          fetch_args = {}
-          gateway = Object.new
+          context_gateway = Object.new
           attach_plan_access_context_to_gateway(
-            gateway,
+            context_gateway,
             fc_id,
             context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
           )
-          gateway.define_singleton_method(:find_climate_data) do |field_cultivation_id:, display_start_date:, display_end_date:|
-            fetch_args[:field_cultivation_id] = field_cultivation_id
-            fetch_args[:display_start_date] = display_start_date
-            fetch_args[:display_end_date] = display_end_date
-            success_dto
+          context_gateway.define_singleton_method(:load_context) do |field_cultivation_id:|
+            raise "unexpected id" unless field_cultivation_id == fc_id
+
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateContextSnapshot.new(
+              field_cultivation_id: fc_id,
+              field_name: "north",
+              crop_name: "tomato",
+              start_date: Date.new(2026, 1, 1),
+              completion_date: Date.new(2026, 6, 1),
+              farm_id: 1,
+              farm_name: "Farm",
+              farm_latitude: 35.4,
+              farm_longitude: 139.6,
+              plan_id: 1,
+              plan_type_public: false,
+              plan_predicted_weather_present: true,
+              prediction_target_end_date: nil,
+              calculated_planning_end_date: nil,
+              predicted_weather_data: { "data" => [] },
+              crop_id: 1,
+              base_temperature: 10.0,
+              optimal_temperature_range: nil,
+              stages: []
+            )
+          end
+
+          weather_gateway = Object.new
+          weather_gateway.define_singleton_method(:fetch_primary_weather_payload) do |context:, display_start_date:, display_end_date:|
+            { "data" => [] }
+          end
+          weather_gateway.define_singleton_method(:fetch_fallback_weather_payload) { raise "unexpected fallback" }
+          weather_gateway.define_singleton_method(:persist_predicted_weather_if_absent) { nil }
+
+          progress_gateway = Object.new
+          progress_gateway.define_singleton_method(:calculate_progress) do |context:, weather_payload:, use_mock:|
+            {}
           end
 
           received = nil
@@ -44,7 +74,14 @@ module Domain
             logger: logger,
             user_id: 1,
             user_lookup: user_lookup_stub(1),
-            climate_gateway_for_user: ->(_user_dto) { gateway }
+            climate_gateways_for_user: lambda { |_user_dto|
+              {
+                context_gateway: context_gateway,
+                weather_gateway: weather_gateway,
+                progress_gateway: progress_gateway,
+                use_mock_progress: false
+              }
+            }
           )
 
           input_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
@@ -53,22 +90,19 @@ module Domain
 
           interactor.call(input_dto)
 
-          assert_equal fc_id, fetch_args[:field_cultivation_id]
-          assert_nil fetch_args[:display_start_date]
-          assert_nil fetch_args[:display_end_date]
-          assert_equal success_dto, received
+          assert_equal fc_id, received.field_cultivation[:id]
           output_port.verify
         end
 
         test "routes RecordNotFound through the output port" do
           fc_id = 42
-          gateway = Object.new
+          context_gateway = Object.new
           attach_plan_access_context_to_gateway(
-            gateway,
+            context_gateway,
             fc_id,
             context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
           )
-          gateway.define_singleton_method(:find_climate_data) do |_kwargs|
+          context_gateway.define_singleton_method(:load_context) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 
@@ -83,7 +117,14 @@ module Domain
             logger: logger,
             user_id: 1,
             user_lookup: user_lookup_stub(1),
-            climate_gateway_for_user: ->(_user_dto) { gateway }
+            climate_gateways_for_user: lambda { |_user_dto|
+              {
+                context_gateway: context_gateway,
+                weather_gateway: Object.new,
+                progress_gateway: Object.new,
+                use_mock_progress: false
+              }
+            }
           ).call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: fc_id
@@ -97,15 +138,45 @@ module Domain
 
         test "routes missing climate data through the output port" do
           fc_id = 99
-          gateway = Object.new
+          context_gateway = Object.new
           attach_plan_access_context_to_gateway(
-            gateway,
+            context_gateway,
             fc_id,
             context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
           )
-          gateway.define_singleton_method(:find_climate_data) do |_kwargs|
+          context_gateway.define_singleton_method(:load_context) do |field_cultivation_id:|
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateContextSnapshot.new(
+              field_cultivation_id: field_cultivation_id,
+              field_name: "x",
+              crop_name: "y",
+              start_date: Date.new(2026, 1, 1),
+              completion_date: Date.new(2026, 6, 1),
+              farm_id: 1,
+              farm_name: "Farm",
+              farm_latitude: 35.0,
+              farm_longitude: 139.0,
+              plan_id: 1,
+              plan_type_public: false,
+              plan_predicted_weather_present: false,
+              prediction_target_end_date: nil,
+              calculated_planning_end_date: nil,
+              predicted_weather_data: nil,
+              crop_id: 1,
+              base_temperature: 10.0,
+              optimal_temperature_range: nil,
+              stages: []
+            )
+          end
+
+          weather_gateway = Object.new
+          weather_gateway.define_singleton_method(:fetch_primary_weather_payload) do |context:, display_start_date: nil, display_end_date: nil|
             nil
           end
+          weather_gateway.define_singleton_method(:fetch_fallback_weather_payload) { nil }
+          weather_gateway.define_singleton_method(:persist_predicted_weather_if_absent) { nil }
+
+          progress_gateway = Object.new
+          progress_gateway.define_singleton_method(:calculate_progress) { raise "unexpected progress" }
 
           received = nil
           output_port = Minitest::Mock.new
@@ -118,7 +189,14 @@ module Domain
             logger: logger,
             user_id: 1,
             user_lookup: user_lookup_stub(1),
-            climate_gateway_for_user: ->(_user_dto) { gateway }
+            climate_gateways_for_user: lambda { |_user_dto|
+              {
+                context_gateway: context_gateway,
+                weather_gateway: weather_gateway,
+                progress_gateway: progress_gateway,
+                use_mock_progress: false
+              }
+            }
           ).call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: fc_id
@@ -141,7 +219,6 @@ module Domain
           lookup
         end
 
-        # Minimal logger for unit tests (Interactor may call warn/info).
         class SilencingLoggerStub
           def warn(*) end
 

@@ -10,6 +10,17 @@ module Domain
           Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: mode, user_id: user.id)
         end
 
+        # マスタ作物への害虫紐付け候補（参照害虫 + 自分の害虫）。
+        def self.selectable_list_filter(user)
+          Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: :reference_or_owned, user_id: user.id)
+        end
+
+        # @param is_reference [Boolean]
+        # @param user_id [Integer, nil]
+        def self.selectable_for_user?(user, is_reference:, user_id:)
+          is_reference == true || user_id.to_i == user.id.to_i
+        end
+
         def self.record_access_filter(user)
           Domain::Shared::ReferenceRecordAccessFilter.new(user: user, policy_module: self)
         end

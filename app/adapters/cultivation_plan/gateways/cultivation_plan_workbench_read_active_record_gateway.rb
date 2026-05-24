@@ -3,18 +3,10 @@
 module Adapters
   module CultivationPlan
     module Gateways
-      class CultivationPlanWorkbenchPayloadActiveRecordGateway <
-          Domain::CultivationPlan::Gateways::CultivationPlanWorkbenchPayloadGateway
-        def initialize(logger:, available_crop_rows_gateway:)
-          super(logger: logger, available_crop_rows_gateway: available_crop_rows_gateway)
-        end
-
-        def find_by_plan_id(auth:, plan_id:)
-          cultivation_plan = ::Adapters::CultivationPlan::RestAuthorizedCultivationPlanLoader.find!(auth, plan_id)
-          available_crop_rows = available_crop_rows_gateway.list_by_farm_region(
-            auth: auth,
-            farm_region: cultivation_plan.farm&.region
-          )
+      class CultivationPlanWorkbenchReadActiveRecordGateway <
+          Domain::CultivationPlan::Gateways::CultivationPlanWorkbenchReadGateway
+        def load_rows(auth:, plan_id:)
+          cultivation_plan = ::Adapters::CultivationPlan::Persistence::PlanScopes.find_record!(auth, plan_id)
 
           plan_header = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchPlanHeader.new(
             id: cultivation_plan.id,
@@ -67,23 +59,15 @@ module Adapters
             )
           end
 
-          snapshot = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
+          Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchRowsSnapshot.new(
             plan: plan_header,
             fields: field_rows,
             crops: crop_rows,
             cultivations: cultivation_rows,
-            available_crop_rows: available_crop_rows
+            farm_region: cultivation_plan.farm&.region
           )
-
-          { kind: :success, snapshot: snapshot }
-        rescue ActiveRecord::RecordNotFound
-          { kind: :not_found }
-        rescue ActiveRecord::RecordInvalid => e
-          logger.error "❌ [Data] Record invalid: #{e.message}"
-          { kind: :record_invalid, message: e.message }
-        rescue ActiveRecord::ActiveRecordError => e
-          logger.error "❌ [Data] ActiveRecord error: #{e.message}"
-          { kind: :unexpected, message: e.message }
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
       end
     end

@@ -2,28 +2,24 @@
 
 module Adapters
   module CultivationPlan
-    # add_crop での候補探索・adjust（CompositionRoot 経由でドメイン／ゲートウェイへ）。
-    class RestAddCropOptimizationHostBridge
+    # add_crop: 計画の attach と adjust（候補探索は FindBestAddCropCandidateInteractor へ）。
+    class RestAddCropOptimizationHostBridge < Domain::CultivationPlan::Ports::AddCropOptimizationHostPort
       def initialize(controller)
         @controller = controller
       end
 
-      def attach_plan_for_candidates(plan)
-        @plan = plan
+      def attach_plan_for_candidates!(auth:, plan_id:)
+        ::Adapters::CultivationPlan::Persistence::PlanScopes.find_record!(auth, plan_id)
       end
 
-      def find_best_candidate_for_crop(crop, field_id, display_range:)
-        CompositionRoot.find_best_add_crop_candidate_service.call(
-          cultivation_plan: @plan,
-          crop: crop,
-          field_id: field_id,
-          display_range: display_range,
-          ui_filter_context: @controller.send(:ui_filter_context)
+      def adjust_with_moves!(plan_id:, moves:)
+        raw = CompositionRoot.plan_allocation_adjust_legacy(plan_id: plan_id, moves: moves)
+        Domain::CultivationPlan::Dtos::AddCropAdjustResult.new(
+          success: raw[:success] || raw["success"],
+          message: raw[:message] || raw["message"],
+          http_status: raw[:status] || raw["status"],
+          skipped: raw[:skipped] || raw["skipped"]
         )
-      end
-
-      def plan_allocation_adjust(plan, moves)
-        CompositionRoot.plan_allocation_adjust_legacy(plan_id: plan.id, moves: moves)
       end
     end
   end

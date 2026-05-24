@@ -12,12 +12,11 @@ module Domain
           @auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
           @logger = mock
           @logger.stubs(:error)
-          @host = mock("optimization_host")
-          @attach = mock
-          @insert = mock
-          @candidate = mock
-          @adjust = mock
-          @delete = mock
+          @logger.stubs(:warn)
+          @host = mock
+          @host.stubs(:attach_plan_for_candidates!)
+          @plan_crop = mock
+          @find_best = mock
         end
 
         def interactor
@@ -25,49 +24,46 @@ module Domain
             output: @output,
             logger: @logger,
             optimization_host: @host,
-            optimize_attach_gateway: @attach,
-            plan_crop_insert_gateway: @insert,
-            best_candidate_gateway: @candidate,
-            adjust_invoke_gateway: @adjust,
-            plan_crop_delete_gateway: @delete
+            plan_crop_gateway: @plan_crop,
+            find_best_candidate: @find_best
           )
         end
 
-        test "dispatches success from gateway result" do
-          crop_entity = stub(
+        def crop_entity
+          stub(
             id: 1,
             name: "ナス",
             variety: "v",
             area_per_unit: 1.0,
             revenue_per_area: 2.0
           )
-          @attach.expects(:attach_plan!).twice.with(
-            auth: @auth,
-            plan_id: 9,
-            optimization_host: @host
-          ).returns({ kind: :success })
-          @resolver.expects(:crop_for_add_crop).with("1").returns(crop_entity)
-          @insert.expects(:create_plan_crop!).with(
-            auth: @auth,
-            plan_id: 9,
-            crop_entity: crop_entity
-          ).returns(
-            kind: :success,
-            plan_crop_id: 9,
-            plan_crop_display_name: "ナス"
+        end
+
+        def plan_crop_snapshot
+          Domain::CultivationPlan::Dtos::CultivationPlanCropSnapshot.new(
+            id: 9,
+            display_name: "ナス"
           )
-          @candidate.expects(:find_best).with(
+        end
+
+        test "dispatches success" do
+          crop = crop_entity
+          @host.expects(:attach_plan_for_candidates!).twice.with(auth: @auth, plan_id: 9)
+          @resolver.expects(:crop_for_add_crop).with("1").returns(crop)
+          @plan_crop.expects(:create).with(auth: @auth, plan_id: 9, crop_entity: crop).returns(plan_crop_snapshot)
+          @find_best.expects(:call).with(
             auth: @auth,
             plan_id: 9,
-            crop_id: 1,
+            crop: crop,
             field_id: "2",
             display_range: {},
-            optimization_host: @host
-          ).returns(kind: :found, field_id: "2", start_date: Date.new(2026, 1, 1))
-          @adjust.expects(:adjust_with_moves!).returns({ success: true })
-          @delete.expects(:destroy_plan_crop!).never
+            ui_filter_context: {}
+          ).returns(field_id: "2", start_date: Date.new(2026, 1, 1))
+          @host.expects(:adjust_with_moves!).returns(
+            Domain::CultivationPlan::Dtos::AddCropAdjustResult.new(success: true)
+          )
+          @plan_crop.expects(:delete).never
           @output.expects(:on_success).with(plan_crop_id: 9, plan_crop_display_name: "ナス")
-          @output.expects(:on_not_found).never
 
           interactor.call(
             auth: @auth,
@@ -79,11 +75,10 @@ module Domain
           )
         end
 
-        test "dispatches not_found" do
-          @attach.expects(:attach_plan!).returns({ kind: :not_found })
+        test "dispatches not_found on attach" do
+          @host.expects(:attach_plan_for_candidates!).raises(Domain::Shared::Exceptions::RecordNotFound)
           @output.expects(:on_not_found).once
-          @output.expects(:on_success).never
-          @insert.expects(:create_plan_crop!).never
+          @plan_crop.expects(:create).never
 
           interactor.call(
             auth: @auth,
@@ -95,20 +90,14 @@ module Domain
           )
         end
 
-        test "dispatches prediction_incomplete" do
-          crop_entity = stub(id: 1, name: "n", variety: "v", area_per_unit: 1.0, revenue_per_area: 1.0)
-          @attach.expects(:attach_plan!).twice.returns({ kind: :success })
-          @resolver.expects(:crop_for_add_crop).returns(crop_entity)
-          @insert.expects(:create_plan_crop!).returns(
-            kind: :success,
-            plan_crop_id: 9,
-            plan_crop_display_name: "n"
+        test "dispatches prediction_incomplete and rolls back plan crop" do
+          crop = crop_entity
+          @resolver.expects(:crop_for_add_crop).returns(crop)
+          @plan_crop.expects(:create).returns(plan_crop_snapshot)
+          @find_best.expects(:call).raises(
+            Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError.new("x")
           )
-          @candidate.expects(:find_best).returns(
-            kind: :prediction_incomplete,
-            technical_details: "x"
-          )
-          @delete.expects(:destroy_plan_crop!).with(plan_crop_id: 9)
+          @plan_crop.expects(:delete).with(id: 9)
           @output.expects(:on_prediction_incomplete).with(technical_details: "x")
 
           interactor.call(
@@ -121,24 +110,20 @@ module Domain
           )
         end
 
-        test "dispatches adjust_failed with payload" do
-          crop_entity = stub(id: 1, name: "n", variety: "v", area_per_unit: 1.0, revenue_per_area: 1.0)
-          payload = { success: false, message: "adj", status: :bad_request }
-          @attach.expects(:attach_plan!).twice.returns({ kind: :success })
-          @resolver.expects(:crop_for_add_crop).returns(crop_entity)
-          @insert.expects(:create_plan_crop!).returns(
-            kind: :success,
-            plan_crop_id: 9,
-            plan_crop_display_name: "n"
+        test "dispatches adjust_failed with legacy payload" do
+          crop = crop_entity
+          adjust = Domain::CultivationPlan::Dtos::AddCropAdjustResult.new(
+            success: false,
+            message: "adj",
+            http_status: :bad_request
           )
-          @candidate.expects(:find_best).returns(
-            kind: :found,
-            field_id: "2",
-            start_date: Date.new(2026, 1, 1)
+          @resolver.expects(:crop_for_add_crop).returns(crop)
+          @plan_crop.expects(:create).returns(plan_crop_snapshot)
+          @find_best.expects(:call).returns(field_id: "2", start_date: Date.new(2026, 1, 1))
+          @host.expects(:adjust_with_moves!).returns(adjust)
+          @output.expects(:on_adjust_failed).with(
+            adjust_payload: { success: false, message: "adj", status: :bad_request }
           )
-          @adjust.expects(:adjust_with_moves!).returns(payload)
-          @delete.expects(:destroy_plan_crop!).never
-          @output.expects(:on_adjust_failed).with(adjust_payload: payload)
 
           interactor.call(
             auth: @auth,

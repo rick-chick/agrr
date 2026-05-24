@@ -9,8 +9,12 @@ module Domain
           @logger = logger
         end
 
-        # @return [Hash] kind: :success（crop_rows, plan_id） / :not_found / :record_invalid / :unexpected
-        def load(auth:, plan_id:)
+        # @param auth [Domain::CultivationPlan::Dtos::CultivationPlanRestAuth]
+        # @param plan_id [Integer, String]
+        # @return [Array<Domain::CultivationPlan::Dtos::CultivationPlanAdjustPlanCropGrowthSnapshot>]
+        # @raise [Domain::Shared::Exceptions::RecordNotFound]
+        # @raise [Domain::Shared::Exceptions::RecordInvalid]
+        def list_by_plan_id(auth:, plan_id:)
           raise NotImplementedError
         end
 

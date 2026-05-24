@@ -34,6 +34,59 @@ module Domain
           Domain::Shared::Policies::ReferencableResourcePolicy
             .normalize_referencable_attrs_for_update(user, current_attrs, requested_attrs)
         end
+
+        # 害虫との crop_pest 関連付け可否（ORM 非依存）。
+        def self.crop_associable_with_pest?(
+          user:,
+          crop_is_reference:,
+          crop_user_id:,
+          crop_region:,
+          pest_is_reference:,
+          pest_user_id:,
+          pest_region:
+        )
+          if Domain::Shared.present?(pest_region)
+            return false if crop_region.to_s != pest_region.to_s
+          end
+
+          if pest_is_reference
+            return crop_is_reference == true
+          end
+
+          return true if crop_is_reference == true
+
+          owner_id = pest_user_id
+          if owner_id.nil?
+            return false if user.nil?
+
+            owner_id = user.id
+          end
+          crop_user_id.to_i == owner_id.to_i
+        end
+
+        # AI 害虫作成時の affected_crops: 参照作物は常に可。匿名は不可。
+        def self.ai_affected_crop_linkable?(
+          user:,
+          crop_is_reference:,
+          crop_user_id:,
+          crop_region:,
+          pest_is_reference:,
+          pest_user_id:,
+          pest_region:
+        )
+          return true if crop_is_reference == true
+          return false if user.nil? || (user.respond_to?(:anonymous?) && user.anonymous?)
+
+          crop_associable_with_pest?(
+            user: user,
+            crop_is_reference: crop_is_reference,
+            crop_user_id: crop_user_id,
+            crop_region: crop_region,
+            pest_is_reference: pest_is_reference,
+            pest_user_id: pest_user_id,
+            pest_region: pest_region
+          )
+        end
       end
     end
   end

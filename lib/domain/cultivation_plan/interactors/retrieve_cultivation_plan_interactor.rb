@@ -4,27 +4,34 @@ module Domain
   module CultivationPlan
     module Interactors
       class RetrieveCultivationPlanInteractor
-        def initialize(output_port:, workbench_payload_gateway:)
+        def initialize(
+          output_port:,
+          workbench_read_gateway:,
+          available_crop_rows_gateway:,
+          logger:
+        )
           @output_port = output_port
-          @workbench_payload_gateway = workbench_payload_gateway
+          @workbench_read_gateway = workbench_read_gateway
+          @available_crop_rows_gateway = available_crop_rows_gateway
+          @logger = logger
         end
 
         def call(auth:, plan_id:)
-          result = @workbench_payload_gateway.find_by_plan_id(
+          rows = @workbench_read_gateway.load_rows(auth: auth, plan_id: plan_id)
+          available_crop_rows = @available_crop_rows_gateway.list_by_farm_region(
             auth: auth,
-            plan_id: plan_id
+            farm_region: rows.farm_region
           )
-
-          case result[:kind]
-          when :success
-            @output_port.on_success(snapshot: result.fetch(:snapshot))
-          when :not_found
-            @output_port.on_not_found
-          when :unexpected, :record_invalid
-            @output_port.on_unexpected(message: result.fetch(:message))
-          else
-            @output_port.on_unexpected(message: "Unknown data result: #{result[:kind].inspect}")
-          end
+          snapshot = Mappers::CultivationPlanWorkbenchSnapshotMapper.to_snapshot(
+            rows: rows,
+            available_crop_rows: available_crop_rows
+          )
+          @output_port.on_success(snapshot: snapshot)
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          @output_port.on_not_found
+        rescue StandardError => e
+          @logger.error "❌ [Data] Error: #{e.message}"
+          @output_port.on_unexpected(message: e.message)
         end
       end
     end
