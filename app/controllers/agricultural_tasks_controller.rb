@@ -89,30 +89,13 @@ class AgriculturalTasksController < ApplicationController
 
   # DELETE /agricultural_tasks/:id
   def destroy
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskDestroyHtmlPresenter.new(view: self)
 
-        interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDestroyInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
 
-        interactor.call(params[:id])
-      end
-
-      format.json do
-        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
-          view: self,
-          actor_id: current_user.id,
-          resource_type: "AgriculturalTask",
-          resource_id: params[:id].to_i,
-          toast_message: nil,
-          fallback_location: agricultural_tasks_path,
-          in_use_message_key: nil,
-          delete_error_message_key: "agricultural_tasks.flash.delete_error"
-        )
-      end
-    end
+    interactor.call(params[:id])
   end
 
   def after_agricultural_task_create_failure
