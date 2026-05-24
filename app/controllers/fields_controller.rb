@@ -20,20 +20,6 @@ class FieldsController < ApplicationController
     return if performed?
   end
 
-  # GET /farms/:farm_id/fields/new
-  def new
-    presenter = Adapters::Field::Presenters::FieldNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Field::Interactors::FieldNewMasterFormInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      farm_id: params[:farm_id],
-      gateway: CompositionRoot.field_gateway,
-      farm_gateway: CompositionRoot.farm_gateway,
-      user_lookup: CompositionRoot.user_lookup
-    ).call
-    return if performed?
-  end
-
   # GET /farms/:farm_id/fields/:id/edit
   def edit
     presenter = Adapters::Field::Presenters::FieldEditMasterFormHtmlPresenter.new(view: self)

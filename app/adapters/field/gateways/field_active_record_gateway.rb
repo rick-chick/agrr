@@ -85,11 +85,6 @@ module Adapters
           )
         end
 
-        def build_blank_field_for_master_form!(farm_id:, farm_access_filter: nil)
-          farm = find_farm_model!(farm_id)
-          Adapters::Farm::Mappers::FieldMasterFormSnapshotMapper.from_record(farm.fields.build)
-        end
-
         private
 
         def field_entity_from_id(field_id)

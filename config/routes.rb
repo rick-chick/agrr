@@ -47,7 +47,7 @@ Rails.application.routes.draw do
 
     # HTML マスタ（Rails コントローラ・ナビで _path を参照するため）
     resources :farms do
-      resources :fields, controller: "fields"
+      resources :fields, controller: "fields", only: %i[index show create update destroy]
       get "weather_data", to: "farms/weather_data#index", as: "weather_data"
     end
     resources :crops do

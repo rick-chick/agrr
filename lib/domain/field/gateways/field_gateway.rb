@@ -28,10 +28,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_field_loaded_in_farm!"
         end
 
-        def build_blank_field_for_master_form!(farm_id:)
-          raise NotImplementedError, "Subclasses must implement build_blank_field_for_master_form!"
-        end
-
       end
     end
   end
