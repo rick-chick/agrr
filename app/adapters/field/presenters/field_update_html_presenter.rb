@@ -14,8 +14,7 @@ module Adapters
         end
 
         def on_failure(error_dto)
-          @view.flash.now[:alert] = error_dto.message
-          @view.render_form(:edit, status: :unprocessable_entity)
+          @view.redirect_to @view.farm_fields_path(@view.params[:farm_id]), alert: error_dto.message
         end
       end
     end

@@ -20,23 +20,6 @@ class FieldsController < ApplicationController
     return if performed?
   end
 
-  # GET /farms/:farm_id/fields/:id/edit
-  def edit
-    presenter = Adapters::Field::Presenters::FieldEditMasterFormHtmlPresenter.new(view: self)
-    input = Domain::Field::Dtos::FieldLoadAuthorizedInFarmInput.new(
-      farm_id: params[:farm_id],
-      field_id: params[:id]
-    )
-    Domain::Field::Interactors::FieldEditMasterFormInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      gateway: CompositionRoot.field_gateway,
-      farm_gateway: CompositionRoot.farm_gateway,
-      user_lookup: CompositionRoot.user_lookup
-    ).call(input)
-    return if performed?
-  end
-
   # POST /farms/:farm_id/fields
   def create
     input_dto = Domain::Field::Dtos::FieldCreateInput.from_hash(
