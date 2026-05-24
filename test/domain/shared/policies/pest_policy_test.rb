@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class Domain::Shared::Policies::PestPolicyTest < ActiveSupport::TestCase
+class Domain::Shared::Policies::PestPolicyTest < DomainLibTestCase
+  UserDouble = Struct.new(:id, :admin?, keyword_init: true)
+
   setup do
-    @user = create(:user)
-    @admin = create(:user, :admin)
+    @user = UserDouble.new(id: 9, admin?: false)
+    @admin = UserDouble.new(id: 1, admin?: true)
   end
 
   test "normalize_attrs_for_create for regular user forces non-reference" do
@@ -29,7 +31,7 @@ class Domain::Shared::Policies::PestPolicyTest < ActiveSupport::TestCase
   test "selectable_for_user? allows reference and own pests" do
     assert Domain::Shared::Policies::PestPolicy.selectable_for_user?(@user, is_reference: true, user_id: nil)
     assert Domain::Shared::Policies::PestPolicy.selectable_for_user?(@user, is_reference: false, user_id: @user.id)
-    assert_not Domain::Shared::Policies::PestPolicy.selectable_for_user?(@user, is_reference: false, user_id: @user.id + 1)
+    assert_not Domain::Shared::Policies::PestPolicy.selectable_for_user?(@user, is_reference: false, user_id: 10)
   end
 
   # ---- region 認可（admin のみ設定・更新可）----

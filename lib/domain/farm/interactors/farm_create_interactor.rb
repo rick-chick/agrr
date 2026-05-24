@@ -23,6 +23,11 @@ module Domain
               longitude: input_dto.longitude
             }
           )
+          if attrs[:longitude]
+            attrs[:longitude] = Domain::Farm::Policies::FarmCoordinateNormalizationPolicy.normalized_longitude(
+              attrs[:longitude]
+            )
+          end
           existing_count = @gateway.count_user_owned_non_reference_farms(user_id: user.id)
           if Domain::Farm::Policies::FarmCreateLimitPolicy.limit_exceeded?(existing_non_reference_count: existing_count)
             msg = @translator.t("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded")

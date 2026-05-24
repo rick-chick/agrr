@@ -23,7 +23,9 @@ module Api
         interactor = Domain::WeatherData::Interactors::InternalWeatherFetchStartInteractor.new(
           output_port: presenter,
           gateway: CompositionRoot.internal_weather_fetch_start_gateway,
-          translator: CompositionRoot.translator
+          translator: CompositionRoot.translator,
+          start_farm_weather_data_fetch_interactor: CompositionRoot.start_farm_weather_data_fetch_interactor,
+          calendar_today: CompositionRoot.calendar_today
         )
         interactor.call(input_dto)
       end

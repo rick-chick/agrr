@@ -144,21 +144,15 @@ class FetchWeatherDataJobTest < ActiveJob::TestCase
     farm_gateway = Adapters::Farm::Gateways::FarmActiveRecordGateway.new(
       deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
     )
+    farm.update!(weather_data_total_years: 1, weather_data_fetched_years: 0, weather_data_status: "fetching")
     farm_gateway.expects(:update_weather_location_id).with(farm.id, 1)
-    # Stub increment to directly update farm (DB update in increment is tested elsewhere)
-    farm_gateway.stubs(:increment_weather_data_progress).with(farm.id) do
-      farm.update!(weather_data_fetched_years: 1, weather_data_status: "completed")
-    end
-    # Stub progress reads (used only for logging)
-    farm_gateway.stubs(:get_weather_data_progress).with(farm.id).returns(100)
-    farm_gateway.stubs(:get_weather_data_fetched_years).with(farm.id).returns(1)
-    farm_gateway.stubs(:get_weather_data_total_years).with(farm.id).returns(1)
 
     Adapters::Agrr::Gateways::WeatherDaemonGateway.stub(:new, -> { gateway_mock.new(partial_data) }) do
       interactor = Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.new(
         weather_data_gateway: weather_data_mock,
         farm_gateway: farm_gateway,
-        cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+        advance_phase_interactor: CompositionRoot.advance_cultivation_plan_phase_interactor,
+        record_farm_weather_block_completed_interactor: CompositionRoot.record_farm_weather_block_completed_interactor,
         agrr_weather_gateway: Adapters::Agrr::Gateways::WeatherDaemonGateway.new,
         presenter: Adapters::WeatherData::Presenters::FetchWeatherDataJobRailsPresenter.new(logger: Adapters::Shared::Ports::RailsLoggerAdapter.new),
         logger: Adapters::Shared::Ports::RailsLoggerAdapter.new

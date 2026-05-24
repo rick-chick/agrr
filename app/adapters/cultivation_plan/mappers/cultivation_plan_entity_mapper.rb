@@ -20,6 +20,8 @@ module Adapters
             planning_start_date: plan.read_attribute(:planning_start_date),
             planning_end_date: plan.read_attribute(:planning_end_date),
             status: plan.status,
+            optimization_phase: plan.optimization_phase,
+            optimization_phase_message: plan.optimization_phase_message,
             session_id: plan.read_attribute(:session_id),
             display_name: plan.display_name,
             cultivation_plan_crops_count: plan.cultivation_plan_crops.count,

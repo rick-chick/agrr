@@ -45,6 +45,16 @@ module Domain
             { is_reference: !!current.is_reference },
             attrs
           )
+          effective_reference = normalized.fetch(:is_reference, current.is_reference)
+          effective_user_id = normalized.fetch(:user_id, current.user_id)
+          unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_record_user_id_valid?(
+            is_reference: effective_reference,
+            user_id: effective_user_id
+          )
+            raise Domain::Shared::Exceptions::RecordInvalid.new(
+              @translator.t("activerecord.errors.models.pesticide.attributes.user.blank")
+            )
+          end
           pesticide_entity = @gateway.update_for_user(user, input_dto.pesticide_id, normalized)
 
           @output_port.on_success(pesticide_entity)

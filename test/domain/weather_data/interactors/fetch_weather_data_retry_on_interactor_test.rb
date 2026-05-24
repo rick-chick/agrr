@@ -17,10 +17,12 @@ module Domain
           @farm_gateway = mock("farm_gateway")
           @presenter = mock("presenter")
           @translator = mock("translator")
+          @mark_failed = mock("mark_farm_weather_data_failed_interactor")
           @interactor = FetchWeatherDataRetryOnInteractor.new(
             farm_gateway: @farm_gateway,
             presenter: @presenter,
-            cultivation_plan_gateway: mock("cultivation_plan_gateway"),
+            advance_phase_interactor: mock("advance_phase_interactor"),
+            mark_farm_weather_data_failed_interactor: @mark_failed,
             logger: CapturingLogger.new,
             translator: @translator
           )
@@ -30,7 +32,7 @@ module Domain
           @presenter.expects(:error).with(regexp_matches(/Failed to fetch.*after 5 attempts/))
           @presenter.expects(:error).with(regexp_matches(/Final error: API error/))
           @translator.expects(:t).with("jobs.fetch_weather_data.retry_limit_exceeded", error: "API error").returns("リトライ上限に達しました: API error")
-          @farm_gateway.expects(:mark_weather_data_failed).with(1, "リトライ上限に達しました: API error")
+          @mark_failed.expects(:call)
 
           @interactor.call(input_dto: @input_dto)
         end

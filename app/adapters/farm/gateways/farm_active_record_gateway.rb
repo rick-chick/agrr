@@ -19,9 +19,12 @@ module Adapters
           list_reference_farms_for_region(nil)
         end
 
-        def find_by_id(farm_id)
+        def find_by_id(farm_id, include_weather_data_fields: false)
           farm = ::Farm.find(farm_id)
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(
+            farm,
+            include_weather_data_fields: include_weather_data_fields
+          )
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
@@ -54,29 +57,13 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def mark_weather_data_failed(farm_id, error_msg)
-          farm = ::Farm.find_by(id: farm_id)
-          farm&.mark_weather_data_failed!(error_msg)
-        end
+        def update_weather_progress(farm_id, attrs)
+          farm = ::Farm.find(farm_id)
+          raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.update(attrs.to_h.symbolize_keys)
 
-        def increment_weather_data_progress(farm_id)
-          farm = ::Farm.find_by(id: farm_id)
-          farm&.increment_weather_data_progress!
-        end
-
-        def get_weather_data_progress(farm_id)
-          farm = ::Farm.find_by(id: farm_id)
-          farm&.weather_data_progress
-        end
-
-        def get_weather_data_fetched_years(farm_id)
-          farm = ::Farm.find_by(id: farm_id)
-          farm&.weather_data_fetched_years
-        end
-
-        def get_weather_data_total_years(farm_id)
-          farm = ::Farm.find_by(id: farm_id)
-          farm&.weather_data_total_years
+          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload, include_weather_data_fields: true)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def update_weather_location_id(farm_id, weather_location_id)

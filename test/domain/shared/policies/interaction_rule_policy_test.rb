@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 # InteractionRulePolicy — region / is_reference の認可（admin 限定）はこのポリシーが判定する。
 # Controller の strong params では認可しない（mass-assignment 許可のみ）。
-class Domain::Shared::Policies::InteractionRulePolicyTest < ActiveSupport::TestCase
+class Domain::Shared::Policies::InteractionRulePolicyTest < DomainLibTestCase
+  UserDouble = Struct.new(:id, :admin?, keyword_init: true)
+
   setup do
-    @user = create(:user)
-    @admin = create(:user, :admin)
+    @user = UserDouble.new(id: 9, admin?: false)
+    @admin = UserDouble.new(id: 1, admin?: true)
   end
 
   # ---- normalize_attrs_for_create: region 認可 ----

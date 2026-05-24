@@ -13,16 +13,6 @@ class WeatherDatum < ApplicationRecord
   scope :by_year, ->(year) { where('strftime("%Y", date) = ?', year.to_s) }
   scope :recent, -> { order(date: :desc) }
 
-  # Instance methods
-  def temperature_range
-    return nil unless temperature_max && temperature_min
-    temperature_max - temperature_min
-  end
-
-  def has_precipitation?
-    precipitation.present? && precipitation > 0
-  end
-
   def to_dto
     Domain::WeatherData::Dtos::WeatherData.new(
       date: date,

@@ -42,7 +42,8 @@ class FetchWeatherDataJob < ApplicationJob
   retry_interactor = Domain::WeatherData::Interactors::FetchWeatherDataRetryOnInteractor.new(
     farm_gateway: job.farm_gateway,
     presenter: job.presenter,
-    cultivation_plan_gateway: job.cultivation_plan_gateway,
+    advance_phase_interactor: CompositionRoot.advance_cultivation_plan_phase_interactor,
+    mark_farm_weather_data_failed_interactor: CompositionRoot.mark_farm_weather_data_failed_interactor,
     translator: job.translator,
     logger: job.logger_gateway
   )
@@ -66,7 +67,8 @@ class FetchWeatherDataJob < ApplicationJob
     farm_gateway: job.farm_gateway,
     presenter: job.presenter,
     translator: job.translator,
-    logger: job.logger_gateway
+    logger: job.logger_gateway,
+    mark_farm_weather_data_failed_interactor: CompositionRoot.mark_farm_weather_data_failed_interactor
   )
   discard_interactor.call(
     input_dto: {
@@ -117,10 +119,13 @@ class FetchWeatherDataJob < ApplicationJob
     interactor = Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor.new(
       weather_data_gateway:,
       farm_gateway:,
-      cultivation_plan_gateway:,
+      advance_phase_interactor: CompositionRoot.advance_cultivation_plan_phase_interactor,
       agrr_weather_gateway:,
       presenter:,
-      logger: logger_gateway
+      logger: logger_gateway,
+      record_farm_weather_block_completed_interactor: CompositionRoot.record_farm_weather_block_completed_interactor(
+        farm_refresh_broadcast_port: Adapters::Farm::Ports::FarmRefreshBroadcastAdapter.new
+      )
     )
 
     interactor.call(input_dto:)

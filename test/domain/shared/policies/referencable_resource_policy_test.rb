@@ -1,16 +1,34 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
 # 参照可能マスタ（crop / fertilize / pesticide / pest / agricultural_task）共通の
 # 認可・正規化ルール。各 *Policy はこのモジュールへ委譲する。
-class Domain::Shared::Policies::ReferencableResourcePolicyTest < ActiveSupport::TestCase
+class Domain::Shared::Policies::ReferencableResourcePolicyTest < DomainLibTestCase
   Policy = Domain::Shared::Policies::ReferencableResourcePolicy
   UserDouble = Struct.new(:id, :admin?, keyword_init: true)
 
   setup do
     @user = UserDouble.new(id: 9, admin?: false)
     @admin = UserDouble.new(id: 1, admin?: true)
+  end
+
+  # ---- duplicate_name_record? ----
+
+  test "duplicate_name_record? は既存なしなら false" do
+    assert_not Policy.duplicate_name_record?(existing: nil)
+  end
+
+  test "duplicate_name_record? は作成時に既存があれば true" do
+    assert Policy.duplicate_name_record?(existing: stub(id: 1))
+  end
+
+  test "duplicate_name_record? は更新時に同一 ID なら false" do
+    assert_not Policy.duplicate_name_record?(existing: stub(id: 5), exclude_id: 5)
+  end
+
+  test "duplicate_name_record? は更新時に別 ID なら true" do
+    assert Policy.duplicate_name_record?(existing: stub(id: 1), exclude_id: 5)
   end
 
   # ---- reference_assignment_allowed? ----
@@ -89,6 +107,16 @@ class Domain::Shared::Policies::ReferencableResourcePolicyTest < ActiveSupport::
     h = Policy.normalize_referencable_attrs_for_update(@admin, { is_reference: false }, { is_reference: false, name: "x" })
     assert_not h.key?(:is_reference)
     assert_equal "x", h[:name]
+  end
+
+  test "reference_record_user_id_valid? は参照なら user_id nil のみ許可" do
+    assert Policy.reference_record_user_id_valid?(is_reference: true, user_id: nil)
+    assert_not Policy.reference_record_user_id_valid?(is_reference: true, user_id: 1)
+  end
+
+  test "reference_record_user_id_valid? は非参照なら user_id 必須" do
+    assert Policy.reference_record_user_id_valid?(is_reference: false, user_id: 9)
+    assert_not Policy.reference_record_user_id_valid?(is_reference: false, user_id: nil)
   end
 
 end

@@ -30,6 +30,14 @@ module Domain
             is_reference: is_reference,
             crop_stages_attributes: input_dto.crop_stages_attributes || []
           })
+          unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_record_user_id_valid?(
+            is_reference: attrs[:is_reference],
+            user_id: attrs[:user_id]
+          )
+            raise Domain::Shared::Exceptions::RecordInvalid.new(
+              @translator.t("activerecord.errors.models.crop.attributes.user.blank")
+            )
+          end
           unless is_reference
             existing_count = @gateway.count_user_owned_non_reference_crops(user_id: user.id)
             if Domain::Crop::Policies::CropCreateLimitPolicy.limit_exceeded?(

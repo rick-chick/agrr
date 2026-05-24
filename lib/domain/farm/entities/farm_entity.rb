@@ -7,14 +7,14 @@ module Domain
         attr_reader :id, :name, :latitude, :longitude, :region, :user_id,
                     :created_at, :updated_at, :is_reference,
                     :weather_data_status, :weather_data_fetched_years, :weather_data_total_years,
-                    :weather_data_last_error, :weather_location_id
+                    :weather_data_last_error, :weather_location_id, :last_broadcast_at
 
         # weather_* は HTML 詳細（気象 UI）用。一覧・API などでは nil のまま。
         def initialize(id:, name:, latitude:, longitude:, region:, user_id:,
                       created_at:, updated_at:, is_reference:,
                       weather_data_status: nil, weather_data_fetched_years: nil,
                       weather_data_total_years: nil, weather_data_last_error: nil,
-                      weather_location_id: nil)
+                      weather_location_id: nil, last_broadcast_at: nil)
           @id = id
           @name = name
           @latitude = latitude
@@ -29,14 +29,14 @@ module Domain
           @weather_data_total_years = weather_data_total_years
           @weather_data_last_error = weather_data_last_error
           @weather_location_id = weather_location_id
+          @last_broadcast_at = last_broadcast_at
         end
 
         def weather_data_progress
-          total = weather_data_total_years || 0
-          return 0 if total.zero?
-
-          fetched = weather_data_fetched_years || 0
-          (fetched.to_f / total * 100).round
+          Domain::Farm::Calculators::FarmWeatherProgressCalculator.progress_percent(
+            fetched: weather_data_fetched_years,
+            total: weather_data_total_years
+          )
         end
 
         def coordinates

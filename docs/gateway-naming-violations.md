@@ -180,3 +180,27 @@
 **P1（ファイル命名）**はリネーム+参照更新で対応可能。
 **P2（メソッド命名）**はインターフェース+全アダプター+全インタラクターの更新が必要。
 **P3（境界違反）**はアーキテクチャ再設計が必要（別エピック）。
+
+---
+
+## D. Models → Domain 移行: 五動詞外 Gateway メソッド（モデル委譲）
+
+`app/models` の業務ロジックを domain（Interactor / Policy / Calculator）へ移す際、次は **廃止対象**（Interactor が `update(id, attrs)` のみ呼ぶ）。
+
+| Gateway | メソッド | 現状 | 移行先 |
+|---|---|---|---|
+| `FarmGateway` | `increment_weather_data_progress` | `Farm#increment_weather_data_progress!` | `FarmWeatherProgressCalculator` + `update` |
+| `FarmGateway` | `get_weather_data_progress` 等 | モデル計算 | `find_by_id` → Entity / Calculator |
+| `FarmGateway` | `mark_weather_data_failed` | モデル | `MarkFarmWeatherDataFailedInteractor` + `update` |
+| `CultivationPlanGateway` | `update_phase` | `public_send("phase_*!")` | `AdvanceCultivationPlanPhaseInteractor` + `update` + Events Port |
+| agrr daemon gateways | 内部 `CropAgrrRequirementMapper` | adapter mapper | `CropAgrrRequirementBuilderPort`（Job/Interactor 注入） |
+
+### モデル public メソッド分類（抜粋）
+
+| 分類 | 例 |
+|---|---|
+| **Policy** | `user_must_be_nil_for_reference`, `name_uniqueness_scope`, `reference_farm_must_belong_to_anonymous_user` |
+| **Calculator** | `weather_data_progress`, `calculate_planning_dates`, `optimization_progress` |
+| **Interactor** | `start_weather_data_fetch!`, `phase_*!`, `check_optimization_completion` |
+| **Infrastructure Port** | `broadcast_*`, `to_agrr_format`（wire format は Builder Port + adapter mapper） |
+| **AR 安全網** | `validates` / `presence` / DB 整合 |

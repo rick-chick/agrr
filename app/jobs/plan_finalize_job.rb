@@ -25,20 +25,23 @@ class PlanFinalizeJob < ApplicationJob
       return
     end
 
-    plan = CultivationPlan.find(cultivation_plan_id)
-    Rails.logger.info "🧩 [PlanFinalizeJob] Finalizing CultivationPlan##{plan.id}"
+    Rails.logger.info "🧩 [PlanFinalizeJob] Finalizing CultivationPlan##{cultivation_plan_id}"
 
-    plan.complete!
-    plan.phase_completed!(channel_class)
+    CompositionRoot.cultivation_plan_gateway.update(cultivation_plan_id, { status: "completed" })
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_completed,
+      channel_class: channel_class
+    )
 
-    Rails.logger.info "✅ [PlanFinalizeJob] Finalized CultivationPlan##{plan.id}"
+    Rails.logger.info "✅ [PlanFinalizeJob] Finalized CultivationPlan##{cultivation_plan_id}"
   rescue *(CultivationPlanJobExceptions::PLAN_FINALIZE_FAILURES) => e
     Rails.logger.error "❌ [PlanFinalizeJob] Failed to finalize plan ##{cultivation_plan_id}: #{e.message}"
-    CompositionRoot.cultivation_plan_gateway.update_phase(
-      cultivation_plan_id,
-      :phase_failed,
-      "task_schedule_generation",
-      channel_class
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_failed,
+      channel_class: channel_class,
+      failure_subphase: "task_schedule_generation"
     )
     raise
   end

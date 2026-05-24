@@ -26,19 +26,15 @@ class OptimizationJob < ApplicationJob
     cultivation_plan_id ||= self.cultivation_plan_id
     channel_class ||= self.channel_class
 
-    cultivation_plan = CultivationPlan.find(cultivation_plan_id)
-
     Rails.logger.info "🚀 [OptimizationJob] Starting optimization for plan ##{cultivation_plan_id}"
 
-    # フェーズ遷移（status / optimization_phase / broadcast）は CultivationPlanOptimizeInteractor に集約
-
-    # 最適化処理
     optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(
       plan_id: cultivation_plan_id,
       channel_class: channel_class,
       allocation_gateway: CompositionRoot.plan_allocation_gateway,
       interaction_rule_gateway: CompositionRoot.interaction_rule_gateway,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+      advance_phase_interactor: CompositionRoot.advance_cultivation_plan_phase_interactor,
       logger: CompositionRoot.logger,
       weather_prediction_interactor_factory: lambda { |weather_location:, farm:|
         CompositionRoot.weather_prediction_interactor(weather_location: weather_location, farm: farm)
@@ -47,17 +43,20 @@ class OptimizationJob < ApplicationJob
     )
     optimizer.call
 
-    # 最適化完了通知（作業予定生成へ移行）
-    cultivation_plan.phase_optimization_completed!(channel_class)
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_optimization_completed,
+      channel_class: channel_class
+    )
 
     Rails.logger.info "✅ [OptimizationJob] Optimization completed for plan ##{cultivation_plan_id}"
   rescue *(CultivationPlanJobExceptions::OPTIMIZATION_FAILURES) => e
     Rails.logger.error "❌ [OptimizationJob] Failed to optimize plan ##{cultivation_plan_id}: #{e.message}"
-    CompositionRoot.cultivation_plan_gateway.update_phase(
-      cultivation_plan_id,
-      :phase_failed,
-      "optimizing",
-      channel_class
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_failed,
+      channel_class: channel_class,
+      failure_subphase: "optimizing"
     )
     raise
   end

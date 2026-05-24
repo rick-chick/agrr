@@ -69,7 +69,7 @@ module Adapters
             ::InteractionRule.reference.where(region: farm_region)
           end
 
-          rules_array = ::InteractionRule.to_agrr_format_array(rules)
+          rules_array = Adapters::InteractionRule::Mappers::InteractionRuleAgrrMapper.to_agrr_format_array(rules)
           return nil if rules_array.empty?
 
           rules_array

@@ -80,9 +80,10 @@ class AgrrProgressGatewayTest < ActiveSupport::TestCase
     end.new(@crop_profile)
 
     result = @gateway.calculate_progress(
-      crop: crop,
+      crop_requirement: @crop_profile,
       start_date: Date.new(2025, 4, 1),
-      weather_data: @weather_data
+      weather_data: @weather_data,
+      crop: crop
     )
 
     assert_not_nil @stub_service.received_args, "AGRR service should be called"

@@ -30,6 +30,14 @@ module Domain
             is_reference: is_reference
           }.compact
           attrs = Domain::Shared::Policies::PesticidePolicy.normalize_attrs_for_create(user, attrs)
+          unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_record_user_id_valid?(
+            is_reference: attrs[:is_reference],
+            user_id: attrs[:user_id]
+          )
+            raise Domain::Shared::Exceptions::RecordInvalid.new(
+              @translator.t("activerecord.errors.models.pesticide.attributes.user.blank")
+            )
+          end
           pesticide_entity = @gateway.create_for_user(user, attrs)
 
           @output_port.on_success(pesticide_entity)

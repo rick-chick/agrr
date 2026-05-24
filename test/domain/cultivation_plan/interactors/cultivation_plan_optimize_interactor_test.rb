@@ -25,12 +25,16 @@ module Domain::CultivationPlan::Interactors
       gateway.stubs(:optimization_plan_snapshot).with(42).returns(snapshot)
       gateway.stubs(:field_cultivations_present?).with(42).returns(false)
 
+      advance_phase = mock("advance_phase_interactor")
+      advance_phase.stubs(:call)
+
       optimizer = CultivationPlanOptimizeInteractor.new(
         plan_id: 42,
         channel_class: "OptimizationChannel",
         allocation_gateway: nil,
         interaction_rule_gateway: nil,
         cultivation_plan_gateway: gateway,
+        advance_phase_interactor: advance_phase,
         logger: CapturingLogger.new,
         weather_prediction_interactor_factory: ->(**) {},
         clock: Struct.new(:today).new(fixed_today)

@@ -40,6 +40,14 @@ module Domain
           attrs[:pest_control_methods_attributes] = input_dto.pest_control_methods_attributes if input_dto.pest_control_methods_attributes
 
           attrs = Domain::Shared::Policies::PestPolicy.normalize_attrs_for_create(user, attrs)
+          unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_record_user_id_valid?(
+            is_reference: attrs[:is_reference],
+            user_id: attrs[:user_id]
+          )
+            raise Domain::Shared::Exceptions::RecordInvalid.new(
+              @translator.t("activerecord.errors.models.pest.attributes.user.blank")
+            )
+          end
           pest_entity = @gateway.create_for_user(user, attrs)
 
           if Domain::Shared.present?(input_dto.crop_ids)

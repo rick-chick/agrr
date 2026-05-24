@@ -12,7 +12,8 @@ module Adapters
                 weather_data_status: record.weather_data_status,
                 weather_data_fetched_years: record.weather_data_fetched_years,
                 weather_data_total_years: record.weather_data_total_years,
-                weather_data_last_error: record.weather_data_last_error
+                weather_data_last_error: record.weather_data_last_error,
+                last_broadcast_at: record.last_broadcast_at
               }
             else
               {}

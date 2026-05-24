@@ -122,7 +122,11 @@ module Adapters
         private
 
         def payload_builder
-          AgrrOptimizationPayloadBuilder.new(@session_plan, logger: @logger)
+          AgrrOptimizationPayloadBuilder.new(
+            @session_plan,
+            logger: @logger,
+            crop_agrr_requirement_builder: Adapters::Crop::Ports::CropAgrrRequirementBuilderAdapter.new
+          )
         end
       end
     end

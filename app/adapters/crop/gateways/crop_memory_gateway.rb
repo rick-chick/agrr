@@ -29,6 +29,12 @@ module Adapters
           scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
+        def list_by_user_id(user_id:, region: nil)
+          scope = ::Crop.where(is_reference: false, user_id: user_id)
+          scope = scope.where(region: region) if region.present?
+          scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
+        end
+
         def each_reference_crop_for_entry_schedule(region)
           ::Crop.reference
             .yield_self { |s| region.present? ? s.where(region: region) : s }

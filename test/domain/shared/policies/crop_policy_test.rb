@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class Domain::Shared::Policies::CropPolicyTest < ActiveSupport::TestCase
+class Domain::Shared::Policies::CropPolicyTest < DomainLibTestCase
+  UserDouble = Struct.new(:id, :admin?, keyword_init: true)
+
   setup do
-    @user = create(:user)
-    @admin = create(:user, :admin)
+    @user = UserDouble.new(id: 9, admin?: false)
+    @admin = UserDouble.new(id: 1, admin?: true)
   end
 
   test "normalize_attrs_for_create for admin with reference crop" do

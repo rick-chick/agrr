@@ -4,12 +4,11 @@ module Adapters
   module AgriculturalTask
     module Gateways
       class AgriculturalTaskActiveRecordGateway < Domain::AgriculturalTask::Gateways::AgriculturalTaskGateway
-        attr_accessor :translator
+        include Adapters::Shared::Concerns::ActiveRecordTransactional
 
-        def initialize(deletion_undo_gateway:, sql_like_sanitize_port:, translator:)
+        def initialize(deletion_undo_gateway:, sql_like_sanitize_port:)
           @deletion_undo_gateway = deletion_undo_gateway
           @sql_like_sanitize_port = sql_like_sanitize_port
-          @translator = translator
         end
 
         def list_user_owned_tasks(user_id:, query: nil)
@@ -41,30 +40,36 @@ module Adapters
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_agricultural_task_model!(id))
         end
 
-        def create_for_user(user, attrs)
+        def find_by_reference_and_name(name:)
+          record = ::AgriculturalTask.reference.find_by(name: name)
+          return nil unless record
+
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record)
+        end
+
+        def find_by_user_id_and_name(user_id:, name:)
+          record = ::AgriculturalTask.user_owned.where(user_id: user_id).find_by(name: name)
+          return nil unless record
+
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record)
+        end
+
+        def create(attrs)
           task = ::AgriculturalTask.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.save
 
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
         end
 
-        # @param selected_crop_ids [Array<Integer>, nil] nil なら CropTaskTemplate の同期をスキップ
-        def update_for_user(_user, id, attrs, selected_crop_ids: nil)
-          ::ActiveRecord::Base.transaction do
-            task = find_agricultural_task_model!(id)
-            raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.update(attrs.to_h.symbolize_keys)
+        def update(id, attrs)
+          task = find_agricultural_task_model!(id)
+          raise Domain::Shared::Exceptions::RecordInvalid, task.errors.full_messages.join(", ") unless task.update(attrs.to_h.symbolize_keys)
 
-            task.reload
-            sync_crop_task_templates_for_task!(task, selected_crop_ids) unless selected_crop_ids.nil?
-
-            Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
-          end
+          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task.reload)
         end
 
-        def soft_delete_with_undo(user:, task_id:, auto_hide_after: 5000, translator:)
+        def soft_delete_with_undo(user:, task_id:, auto_hide_after: 5000, toast_message:)
           task = find_agricultural_task_model!(task_id)
-          name = task.name
-          toast_message = translator.t("agricultural_tasks.undo.toast", name: name)
           undo_gw = @deletion_undo_gateway
           event = undo_gw.schedule(
             resource_type: task.class.name,
@@ -73,7 +78,7 @@ module Adapters
             toast_message: toast_message,
             auto_hide_after: auto_hide_after
           )
-          { success: true, undo_entity: event, resource_name: name }
+          { success: true, undo_entity: event }
         rescue Domain::Shared::Exceptions::RecordNotFound
           raise
         rescue StandardError => e
@@ -99,57 +104,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        # HTML 更新フローでコントローラが担っていた作物テンプレート同期（AR は本アダプタに閉じる）
-        def sync_crop_task_templates_for_task!(task, selected_crop_ids)
-          allowed_crop_ids = allowed_crop_ids_for_template_sync(task, selected_crop_ids)
-          current_template_crop_ids = ::CropTaskTemplate.where(agricultural_task: task).pluck(:crop_id)
-
-          crops_to_add = allowed_crop_ids - current_template_crop_ids
-          crops_to_add.each do |crop_id|
-            crop = ::Crop.find_by(id: crop_id)
-            next unless crop
-
-            next if ::CropTaskTemplate.exists?(crop: crop, agricultural_task: task)
-
-            crop.crop_task_templates.create!(
-              agricultural_task: task,
-              name: task.name,
-              description: task.description,
-              time_per_sqm: task.time_per_sqm,
-              weather_dependency: task.weather_dependency,
-              required_tools: task.required_tools,
-              skill_level: task.skill_level
-            )
-          end
-
-          crops_to_remove = current_template_crop_ids - allowed_crop_ids
-          crops_to_remove.each do |crop_id|
-            crop = ::Crop.find_by(id: crop_id)
-            next unless crop
-
-            template = ::CropTaskTemplate.find_by(crop: crop, agricultural_task: task)
-            template&.destroy
-          end
-        rescue ActiveRecord::RecordInvalid => e
-          raise Domain::Shared::Exceptions::RecordInvalid, e.record.errors.full_messages.join(", ")
-        rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordNotSaved => e
-          raise Domain::Shared::Exceptions::RecordInvalid, e.message
-        rescue ActiveRecord::StatementInvalid => e
-          raise Domain::Shared::Exceptions::RecordInvalid, e.message
-        end
-
-        def allowed_crop_ids_for_template_sync(task, selected_crop_ids)
-          scope =
-            if task.is_reference?
-              ::Crop.where(is_reference: true)
-            else
-              ::Crop.where(is_reference: false, user_id: task.user_id)
-            end
-
-          scope = scope.where(region: task.region) if task.region.present?
-
-          scope.where(id: Array(selected_crop_ids).map(&:to_i).uniq).pluck(:id)
-        end
       end
     end
   end

@@ -91,6 +91,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_reference_crop_entities"
         end
 
+        # @return [Array<Domain::Crop::Entities::CropEntity>]
+        def list_by_user_id(user_id:, region: nil)
+          raise NotImplementedError, "Subclasses must implement list_by_user_id"
+        end
+
         # エントリスケジュール: agrr requirement 組み立て用に AR を逐次 yield（Relation は公開しない）
         def each_reference_crop_for_entry_schedule(region, &block)
           raise NotImplementedError, "Subclasses must implement each_reference_crop_for_entry_schedule"

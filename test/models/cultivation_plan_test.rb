@@ -413,12 +413,11 @@ class CultivationPlanTest < ActiveSupport::TestCase
     assert_equal Date.current.beginning_of_year, plan.calculated_planning_start_date
   end
 
-  test "calculated_planning_range returns hash with start and end dates" do
+  test "planning_start_date returns nil when column is nil (for validation)" do
     plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
     plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
     plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
-    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
-    field_cultivation = create(
+    create(
       :field_cultivation,
       cultivation_plan: plan,
       cultivation_plan_field: plan_field,
@@ -427,14 +426,10 @@ class CultivationPlanTest < ActiveSupport::TestCase
       completion_date: Date.new(2025, 10, 31)
     )
 
-    # カラムの値をnilに設定
     plan.update_column(:planning_start_date, nil)
     plan.reload
 
-    # カラムがnilの場合はnilを返す（バリデーションのため）
     assert_nil plan.planning_start_date
-
-    # 計算メソッドは別途使用可能
     assert_equal Date.new(2025, 1, 1), plan.calculated_planning_start_date
   end
 

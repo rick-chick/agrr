@@ -6,7 +6,7 @@ module Adapters
       module TaskScheduleGenerationContextMapper
         module_function
 
-        def from_plan_model(plan)
+        def from_plan_model(plan, crop_agrr_requirement_builder:)
           field_rows = plan.field_cultivations.map do |fc|
             cpc = fc.cultivation_plan_crop
             crop = cpc&.crop
@@ -15,7 +15,7 @@ module Adapters
             Domain::CultivationPlan::Dtos::FieldCultivationScheduleSnapshot.new(
               id: fc.id,
               start_date: fc.start_date,
-              crop: crop_snapshot_from(crop)
+              crop: crop_snapshot_from(crop, crop_agrr_requirement_builder: crop_agrr_requirement_builder)
             )
           end.compact
 
@@ -29,7 +29,7 @@ module Adapters
           Domain::CultivationPlan::Dtos::TaskScheduleGenerationContext.new(plan: snapshot)
         end
 
-        def crop_snapshot_from(crop)
+        def crop_snapshot_from(crop, crop_agrr_requirement_builder:)
           templates = crop.crop_task_templates.map do |t|
             at = t.agricultural_task
             entity = at ? Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(at) : nil
@@ -46,7 +46,7 @@ module Adapters
             name: crop.name,
             crop_task_templates: templates,
             crop_task_schedule_blueprints: blueprints,
-            agrr_requirement: Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(crop)
+            agrr_requirement: crop_agrr_requirement_builder.build_from(crop)
           )
         end
 

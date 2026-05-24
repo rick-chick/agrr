@@ -17,11 +17,12 @@ module Domain
           access_filter = Domain::Shared::Policies::AgriculturalTaskPolicy.record_access_filter(user)
           current = @gateway.find_by_id(task_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, current)
+          toast_message = @translator.t("agricultural_tasks.undo.toast", name: current.name)
           result = @gateway.soft_delete_with_undo(
             user: user,
             task_id: task_id,
             auto_hide_after: 5000,
-            translator: @translator
+            toast_message: toast_message
           )
           if result[:success]
             destroy_output_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskDestroyOutput.new(undo: result[:undo_entity])

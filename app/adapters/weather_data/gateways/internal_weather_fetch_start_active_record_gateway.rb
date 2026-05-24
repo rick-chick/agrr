@@ -24,9 +24,7 @@ module Adapters
             )
           end
 
-          farm.enqueue_weather_data_fetch
-
-          StartInternalWeatherFetchResult.started(
+          StartInternalWeatherFetchResult.needs_fetch(
             WeatherFetchFarmSnapshot.new(
               farm_id: farm.id,
               weather_data_status: farm.weather_data_status,

@@ -25,16 +25,29 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
-        def create_for_user(user, attrs)
-          raise NotImplementedError, "Subclasses must implement create_for_user"
+        # @return [Domain::AgriculturalTask::Entities::AgriculturalTaskEntity, nil]
+        def find_by_reference_and_name(name:)
+          raise NotImplementedError, "Subclasses must implement find_by_reference_and_name"
         end
 
-        # @param selected_crop_ids [Array<Integer>, nil] nil のとき作物テンプレート同期を行わない（API 等）
-        def update_for_user(user, id, attrs, selected_crop_ids: nil)
-          raise NotImplementedError, "Subclasses must implement update_for_user"
+        # @return [Domain::AgriculturalTask::Entities::AgriculturalTaskEntity, nil]
+        def find_by_user_id_and_name(user_id:, name:)
+          raise NotImplementedError, "Subclasses must implement find_by_user_id_and_name"
         end
 
-        def soft_delete_with_undo(user:, task_id:, auto_hide_after:, translator:)
+        def create(attrs)
+          raise NotImplementedError, "Subclasses must implement create"
+        end
+
+        def update(id, attrs)
+          raise NotImplementedError, "Subclasses must implement update"
+        end
+
+        def within_transaction(&block)
+          raise NotImplementedError, "Subclasses must implement within_transaction"
+        end
+
+        def soft_delete_with_undo(user:, task_id:, auto_hide_after:, toast_message:)
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
       end

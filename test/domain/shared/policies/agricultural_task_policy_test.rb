@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
-require "test_helper"
+require "domain_lib_test_helper"
 
-class Domain::Shared::Policies::AgriculturalTaskPolicyTest < ActiveSupport::TestCase
+class Domain::Shared::Policies::AgriculturalTaskPolicyTest < DomainLibTestCase
+  UserDouble = Struct.new(:id, :admin?, keyword_init: true)
+
   setup do
-    @user = create(:user)
-    @admin = create(:user, :admin)
+    @user = UserDouble.new(id: 9, admin?: false)
+    @admin = UserDouble.new(id: 1, admin?: true)
   end
 
   test "normalize_attrs_for_create for regular user" do
@@ -16,7 +18,7 @@ class Domain::Shared::Policies::AgriculturalTaskPolicyTest < ActiveSupport::Test
   end
 
   test "masters_crop_task_template_associate_allowed? allows reference task for another owner" do
-    other = create(:user)
+    other = UserDouble.new(id: 99, admin?: false)
     assert Domain::Shared::Policies::AgriculturalTaskPolicy.masters_crop_task_template_associate_allowed?(
       @user,
       is_reference: true,
@@ -33,7 +35,7 @@ class Domain::Shared::Policies::AgriculturalTaskPolicyTest < ActiveSupport::Test
   end
 
   test "masters_crop_task_template_associate_allowed? rejects other user non-reference task" do
-    other = create(:user)
+    other = UserDouble.new(id: 99, admin?: false)
     assert_not Domain::Shared::Policies::AgriculturalTaskPolicy.masters_crop_task_template_associate_allowed?(
       @user,
       is_reference: false,

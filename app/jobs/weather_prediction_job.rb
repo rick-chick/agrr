@@ -32,9 +32,11 @@ class WeatherPredictionJob < ApplicationJob
 
     Rails.logger.info "🌤️ [WeatherPredictionJob] Starting weather prediction for plan ##{cultivation_plan_id}"
 
-    Rails.logger.info "🌤️ [WeatherPredictionJob] Calling phase_predicting_weather! for plan ##{cultivation_plan_id}"
-    cultivation_plan.phase_predicting_weather!(channel_class)
-    Rails.logger.info "🌤️ [WeatherPredictionJob] phase_predicting_weather! completed for plan ##{cultivation_plan_id}"
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_predicting_weather,
+      channel_class: channel_class
+    )
 
     # 天気予測処理
     Rails.logger.info "🌤️ [WeatherPredictionJob] Starting weather prediction service for plan ##{cultivation_plan_id}"
@@ -49,17 +51,20 @@ class WeatherPredictionJob < ApplicationJob
     )
 
     # 天気予測完了通知
-    Rails.logger.info "🌤️ [WeatherPredictionJob] Calling phase_weather_prediction_completed! for plan ##{cultivation_plan_id}"
-    cultivation_plan.phase_weather_prediction_completed!(channel_class)
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_weather_prediction_completed,
+      channel_class: channel_class
+    )
 
     Rails.logger.info "✅ [WeatherPredictionJob] Weather prediction completed for plan ##{cultivation_plan_id}"
   rescue *(CultivationPlanJobExceptions::WEATHER_PREDICTION_FAILURES) => e
     Rails.logger.error "❌ [WeatherPredictionJob] Failed to predict weather for plan ##{cultivation_plan_id}: #{e.message}"
-    CompositionRoot.cultivation_plan_gateway.update_phase(
-      cultivation_plan_id,
-      :phase_failed,
-      "predicting_weather",
-      channel_class
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_failed,
+      channel_class: channel_class,
+      failure_subphase: "predicting_weather"
     )
     raise
   end

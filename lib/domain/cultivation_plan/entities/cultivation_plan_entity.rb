@@ -7,6 +7,7 @@ module Domain
       class CultivationPlanEntity
         attr_reader :id, :farm_id, :user_id, :total_area, :plan_type, :plan_year, :plan_name,
                     :planning_start_date, :planning_end_date, :status, :session_id, :display_name,
+                    :optimization_phase, :optimization_phase_message,
                     :cultivation_plan_crops_count, :cultivation_plan_fields_count, :updated_at, :created_at
 
         def initialize(
@@ -22,6 +23,8 @@ module Domain
           status: nil,
           session_id: nil,
           display_name: nil,
+          optimization_phase: nil,
+          optimization_phase_message: nil,
           cultivation_plan_crops_count: 0,
           cultivation_plan_fields_count: 0,
           created_at: nil,
@@ -39,6 +42,8 @@ module Domain
           @status = status
           @session_id = session_id
           @display_name = display_name
+          @optimization_phase = optimization_phase
+          @optimization_phase_message = optimization_phase_message
           @cultivation_plan_crops_count = cultivation_plan_crops_count
           @cultivation_plan_fields_count = cultivation_plan_fields_count
           @created_at = created_at

@@ -4,12 +4,11 @@ module Adapters
   module Agrr
     module Gateways
       class OptimizationDaemonGateway < BaseGatewayV2
-        def optimize(crop_name:, crop_variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop: nil, crop_requirement: nil, interaction_rules: nil)
+        def optimize(crop_name:, crop_variety:, weather_data:, field_area:, daily_fixed_cost:, evaluation_start:, evaluation_end:, crop_requirement:, interaction_rules: nil, crop: nil)
           Rails.logger.info "⚙️  [AGRR] Optimizing: crop=#{crop_name}, variety=#{crop_variety}"
 
-          # Cropモデルは必須
-          unless crop
-            raise ArgumentError, "crop parameter is required for optimization"
+          unless crop_requirement
+            raise ArgumentError, "crop_requirement is required (build via CropAgrrRequirementBuilderPort at the edge)"
           end
 
           field_config = build_field_config(field_area, daily_fixed_cost)
@@ -18,8 +17,6 @@ module Adapters
           weather_file = write_temp_file(weather_data, prefix: "weather")
           field_file = write_temp_file(field_config, prefix: "field")
 
-          # Cropモデルから作物プロファイルを生成（呼び出し側で crop_requirement を渡せば上書き）
-          crop_requirement ||= Adapters::Crop::Mappers::CropAgrrRequirementMapper.build_from(crop)
           crop_file = write_temp_file(crop_requirement, prefix: "crop_profile")
           Rails.logger.info "📝 [AGRR] Crop requirement: #{crop_requirement.to_json}"
 

@@ -4,9 +4,10 @@ module Adapters
   module CultivationPlan
     # AR→最適化ペイロードの写像（ドメイン側 `AgrrOptimizationPayloadBuilder`）。
     class AgrrOptimizationPayloadBuilder
-      def initialize(cultivation_plan, logger:)
+      def initialize(cultivation_plan, logger:, crop_agrr_requirement_builder:)
         @cultivation_plan = cultivation_plan
         @logger = logger
+        @crop_agrr_requirement_builder = crop_agrr_requirement_builder
       end
 
       # @param exclude_ids [Array<Integer>]
@@ -82,7 +83,7 @@ module Adapters
         entries = @cultivation_plan.cultivation_plan_crops.map do |plan_crop|
           crop = plan_crop.crop
           has_growth_stages = crop.crop_stages.exists?
-          requirement = has_growth_stages ? Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(crop) : nil
+          requirement = has_growth_stages ? @crop_agrr_requirement_builder.build_from(crop) : nil
 
           {
             crop_id: crop.id.to_s,

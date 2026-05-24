@@ -14,6 +14,7 @@ module Domain
           allocation_gateway:,
           interaction_rule_gateway:,
           cultivation_plan_gateway:,
+          advance_phase_interactor:,
           logger:,
           weather_prediction_interactor_factory:,
           clock:
@@ -23,6 +24,7 @@ module Domain
           @allocation_gateway = allocation_gateway
           @interaction_rule_gateway = interaction_rule_gateway
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @advance_phase_interactor = advance_phase_interactor
           @logger = logger
           @weather_prediction_interactor_factory = weather_prediction_interactor_factory
           @clock = clock
@@ -30,8 +32,8 @@ module Domain
 
         def call
           load_snapshot!
-          @cultivation_plan_gateway.update_phase(@plan_id, :start_optimizing)
-          @cultivation_plan_gateway.update_phase(@plan_id, :phase_optimizing, @channel_class)
+          advance_phase(:start_optimizing)
+          advance_phase(:phase_optimizing)
           @current_phase = nil
 
           begin
@@ -316,6 +318,16 @@ module Domain
           @logger.info "📊 [AGRR] CultivationPlan ##{@plan_id} updated with optimization results: " \
                             "profit=¥#{allocation_result[:total_profit]}, revenue=¥#{allocation_result[:total_revenue]}, " \
                             "cost=¥#{allocation_result[:total_cost]}"
+        end
+
+        def advance_phase(phase_name)
+          @advance_phase_interactor.call(
+            Dtos::AdvanceCultivationPlanPhaseInput.new(
+              plan_id: @plan_id,
+              phase_name: phase_name,
+              channel_class: @channel_class
+            )
+          )
         end
       end
     end

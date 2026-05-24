@@ -10,10 +10,14 @@ module Domain
           @gateway = mock("internal_weather_fetch_gateway")
           @presenter = mock("presenter")
           @translator = mock("translator")
+          @start_fetch = mock("start_farm_weather_data_fetch_interactor")
+          @start_fetch.stubs(:call)
           @interactor = InternalWeatherFetchStartInteractor.new(
             output_port: @presenter,
             gateway: @gateway,
-            translator: @translator
+            translator: @translator,
+            start_farm_weather_data_fetch_interactor: @start_fetch,
+            calendar_today: Date.new(2026, 1, 1)
           )
           @input_dto = Dtos::InternalWeatherFetchStartInput.new(farm_id: "42")
         end

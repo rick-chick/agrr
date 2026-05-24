@@ -46,6 +46,16 @@ module Domain
             { is_reference: current_entity.reference? },
             attrs
           )
+          effective_reference = normalized.fetch(:is_reference, current_entity.reference?)
+          effective_user_id = normalized.fetch(:user_id, current_entity.user_id)
+          unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_record_user_id_valid?(
+            is_reference: effective_reference,
+            user_id: effective_user_id
+          )
+            raise Domain::Shared::Exceptions::RecordInvalid.new(
+              @translator.t("activerecord.errors.models.crop.attributes.user.blank")
+            )
+          end
           crop_entity = @gateway.update_for_user(user, input_dto.crop_id, normalized)
 
           @output_port.on_success(crop_entity)

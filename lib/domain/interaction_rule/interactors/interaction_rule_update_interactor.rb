@@ -46,6 +46,16 @@ module Domain
             { is_reference: current.reference? },
             attrs
           )
+          effective_reference = normalized.fetch(:is_reference, current.reference?)
+          effective_user_id = normalized.fetch(:user_id, current.user_id)
+          unless Domain::Shared::Policies::ReferencableResourcePolicy.reference_record_user_id_valid?(
+            is_reference: effective_reference,
+            user_id: effective_user_id
+          )
+            raise Domain::Shared::Exceptions::RecordInvalid.new(
+              @translator.t("activerecord.errors.models.interaction_rule.attributes.user.blank")
+            )
+          end
           rule_entity = @gateway.update_for_user(user, update_input_dto.id, normalized)
 
           @output_port.on_success(rule_entity)

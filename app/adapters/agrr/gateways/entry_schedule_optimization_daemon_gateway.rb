@@ -65,8 +65,9 @@ module Adapters
           weather_for_file = weather_hash_for_agrr
           return failed_result(:insufficient_weather) if weather_for_file.blank?
 
+          builder = Adapters::Crop::Ports::CropAgrrRequirementBuilderAdapter.new
           crop_requirement = self.class.scale_stage_gdd_for_optimize_period(
-            Adapters::Crop::Mappers::CropAgrrRequirementMapper.build_from(@crop)
+            builder.build_from(@crop)
           )
           gateway = ::Adapters::Agrr::Gateways::OptimizationDaemonGateway.new
           parsed = gateway.optimize(
@@ -77,8 +78,8 @@ module Adapters
             daily_fixed_cost: 0.01,
             evaluation_start: eval_start,
             evaluation_end: eval_end,
-            crop: @crop,
-            crop_requirement: crop_requirement
+            crop_requirement: crop_requirement,
+            crop: @crop
           )
 
           start_d = parsed[:start_date]

@@ -17,10 +17,6 @@
 #     - user_idはnull（システム所有）
 #   - false: ユーザーが作成した個人のタスク
 #     - user_idが設定される（ユーザー所有）
-#
-# agrr CLIとの連携:
-#   - to_agrr_format メソッドでagrr CLIの期待する形式に変換
-#   - to_agrr_format_array メソッドで複数のタスクを配列に変換
 class AgriculturalTask < ApplicationRecord
   belongs_to :user, optional: true
   has_many :crop_task_templates, dependent: :destroy

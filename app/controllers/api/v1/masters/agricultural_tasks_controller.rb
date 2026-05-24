@@ -41,7 +41,12 @@ module Api
           input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInput.from_hash(params.to_unsafe_h.deep_symbolize_keys, params[:id].to_i)
           presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateApiPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id,
+            gateway: CompositionRoot.agricultural_task_gateway,
+            crop_gateway: CompositionRoot.crop_gateway,
+            crop_task_template_gateway: CompositionRoot.crop_task_template_gateway,
+            translator: translator,
+            user_lookup: CompositionRoot.user_lookup)
           interactor.call(input_dto)
         end
 

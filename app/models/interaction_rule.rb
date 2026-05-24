@@ -29,9 +29,6 @@
 #   - false: ユーザーが作成した個人のカスタムルール
 #     - 作成したユーザーのみが管理可能
 #
-# agrr CLIとの連携:
-#   - to_agrr_format メソッドでagrr CLIの期待する形式に変換
-#   - as_json メソッドでJSON出力をカスタマイズ
 class InteractionRule < ApplicationRecord
   belongs_to :user, optional: true
 
@@ -54,27 +51,6 @@ class InteractionRule < ApplicationRecord
   # デフォルト値を設定
   after_initialize do
     self.is_directional = true if is_directional.nil?
-  end
-
-  # agrr CLI の interaction-rules-file フォーマットに変換
-  # @return [Hash] agrr CLI が期待する相互作用ルールのハッシュ
-  def to_agrr_format
-    {
-      "rule_id" => "rule_#{id}",
-      "rule_type" => rule_type,
-      "source_group" => source_group,
-      "target_group" => target_group,
-      "impact_ratio" => impact_ratio.to_f,
-      "is_directional" => is_directional,
-      "description" => description
-    }.compact
-  end
-
-  # 複数のルールをagrr CLI形式の配列に変換
-  # @param rules [ActiveRecord::Relation<InteractionRule>] ルールのコレクション
-  # @return [Array<Hash>] agrr CLI形式のルール配列
-  def self.to_agrr_format_array(rules)
-    rules.map(&:to_agrr_format)
   end
 
   # 参照ルールは user を持たない（システム所有）

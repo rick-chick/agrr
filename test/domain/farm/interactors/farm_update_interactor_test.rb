@@ -12,7 +12,10 @@ module Domain
           farm_id = 5
           input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(farm_id: farm_id, name: "N")
           farm_entity = Object.new
-          current = stub(is_reference: false, user_id: user_id)
+          current = domain_record_entity_stub(user_id: user_id, is_reference: false)
+          current.stubs(:reference?).returns(false)
+          current.stubs(:latitude).returns(35.0)
+          current.stubs(:longitude).returns(139.0)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
@@ -45,7 +48,8 @@ module Domain
           user = domain_user_stub(id: user_id, admin: false)
           farm_id = 5
           input_dto = Domain::Farm::Dtos::FarmUpdateInput.new(farm_id: farm_id, name: "N")
-          current = stub(is_reference: false, user_id: 99)
+          current = domain_record_entity_stub(user_id: 99, is_reference: false)
+          current.stubs(:reference?).returns(false)
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])

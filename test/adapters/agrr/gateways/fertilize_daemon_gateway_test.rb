@@ -33,7 +33,8 @@ class AgrrFertilizeGatewayTest < ActiveSupport::TestCase
   end
 
   test "plan delegates to agrr service with default max_applications 2" do
-    result = @gateway.plan(crop: @crop)
+    req = Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(@crop)
+    result = @gateway.plan(crop_requirement: req)
 
     assert_not_nil result
     assert_not_nil @stub_service.received_args
@@ -42,7 +43,8 @@ class AgrrFertilizeGatewayTest < ActiveSupport::TestCase
   end
 
   test "plan allows overriding max_applications" do
-    result = @gateway.plan(crop: @crop, max_applications: 1)
+    req = Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(@crop)
+    result = @gateway.plan(crop_requirement: req, max_applications: 1)
 
     assert_not_nil result
     assert_equal 1, @stub_service.received_args[:max_applications]

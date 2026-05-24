@@ -16,7 +16,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_reference_farms"
         end
 
-        def find_by_id(farm_id)
+        def find_by_id(farm_id, include_weather_data_fields: false)
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
@@ -28,24 +28,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        def mark_weather_data_failed(farm_id, error_msg)
-          raise NotImplementedError
-        end
-
-        def increment_weather_data_progress(farm_id)
-          raise NotImplementedError
-        end
-
-        def get_weather_data_progress(farm_id)
-          raise NotImplementedError
-        end
-
-        def get_weather_data_fetched_years(farm_id)
-          raise NotImplementedError
-        end
-
-        def get_weather_data_total_years(farm_id)
-          raise NotImplementedError
+        # 気象進捗スカラーの部分更新（永続化のみ）。
+        # @return [Domain::Farm::Entities::FarmEntity]
+        def update_weather_progress(farm_id, attrs)
+          raise NotImplementedError, "Subclasses must implement update_weather_progress"
         end
 
         def update_weather_location_id(farm_id, weather_location_id)

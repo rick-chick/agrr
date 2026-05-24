@@ -59,7 +59,11 @@ class PredictWeatherDataJob < ApplicationJob
         raise ActiveRecord::RecordNotFound, error_message
       end
 
-      cultivation_plan.phase_predicting_weather!(channel_class)
+      CompositionRoot.advance_cultivation_plan_phase(
+        plan_id: cultivation_plan_id,
+        phase_name: :phase_predicting_weather,
+        channel_class: channel_class
+      )
       phase_predicting_weather_started = true
       Rails.logger.info "🌤️ [PredictWeatherDataJob] Started weather prediction for plan ##{cultivation_plan_id}"
     end
@@ -209,7 +213,11 @@ class PredictWeatherDataJob < ApplicationJob
         raise ActiveRecord::RecordNotFound, error_message
       end
 
-      cultivation_plan.phase_weather_prediction_completed!(channel_class)
+      CompositionRoot.advance_cultivation_plan_phase(
+        plan_id: cultivation_plan_id,
+        phase_name: :phase_weather_prediction_completed,
+        channel_class: channel_class
+      )
       Rails.logger.info "🌤️ [PredictWeatherDataJob] Weather prediction completed for plan ##{cultivation_plan_id}"
     end
 
@@ -224,18 +232,20 @@ class PredictWeatherDataJob < ApplicationJob
         !exception.is_a?(ActiveRecord::RecordNotFound) &&
         !exception.is_a?(Adapters::Agrr::Gateways::BaseGateway::ExecutionError) &&
         !exception.is_a?(Adapters::Agrr::Gateways::BaseGateway::ParseError)
-      cp = CultivationPlan.find_by(id: cultivation_plan_id)
-      if cp
-        phase_failed_notified = false
-        suppress(StandardError) do
-          cp.phase_failed!("predicting_weather", channel_class)
-          phase_failed_notified = true
-        end
-        if phase_failed_notified
-          Rails.logger.info "🌤️ [PredictWeatherDataJob] Weather prediction failed for plan ##{cultivation_plan_id}"
-        else
-          Rails.logger.error "❌ [PredictWeatherDataJob] Failed to notify phase failure (see Solid Queue / logs)"
-        end
+      phase_failed_notified = false
+      suppress(StandardError) do
+        CompositionRoot.advance_cultivation_plan_phase(
+          plan_id: cultivation_plan_id,
+          phase_name: :phase_failed,
+          channel_class: channel_class,
+          failure_subphase: "predicting_weather"
+        )
+        phase_failed_notified = true
+      end
+      if phase_failed_notified
+        Rails.logger.info "🌤️ [PredictWeatherDataJob] Weather prediction failed for plan ##{cultivation_plan_id}"
+      else
+        Rails.logger.error "❌ [PredictWeatherDataJob] Failed to notify phase failure (see Solid Queue / logs)"
       end
     end
   end

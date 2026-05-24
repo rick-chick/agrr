@@ -20,6 +20,10 @@ module Domain
             new(kind: :started, snapshot: snapshot)
           end
 
+          def self.needs_fetch(snapshot)
+            new(kind: :needs_fetch, snapshot: snapshot)
+          end
+
           def self.failed(message)
             new(kind: :failed, error_message: message)
           end

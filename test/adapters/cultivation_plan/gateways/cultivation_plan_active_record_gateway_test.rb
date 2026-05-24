@@ -5,7 +5,8 @@ require "test_helper"
 class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTest < ActiveSupport::TestCase
   def setup
     @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
-      deletion_undo_gateway: Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new
+      deletion_undo_gateway: Adapters::DeletionUndo::Gateways::DeletionUndoActiveRecordGateway.new,
+      crop_agrr_requirement_builder: Adapters::Crop::Ports::CropAgrrRequirementBuilderAdapter.new
     )
   end
 

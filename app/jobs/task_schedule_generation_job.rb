@@ -20,7 +20,6 @@ class TaskScheduleGenerationJob < ApplicationJob
     channel_class ||= self.channel_class
 
     self.channel_class = channel_class
-    cultivation_plan = nil
 
     unless cultivation_plan_id
       Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] cultivation_plan_id が指定されていません"
@@ -29,27 +28,34 @@ class TaskScheduleGenerationJob < ApplicationJob
 
     Rails.logger.info "🗓️ [TaskScheduleGenerationJob] Start generation for CultivationPlan##{cultivation_plan_id}"
 
-    cultivation_plan = CultivationPlan.find(cultivation_plan_id)
-    cultivation_plan.phase_task_schedule_generating!(channel_class)
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_task_schedule_generating,
+      channel_class: channel_class
+    )
 
     task_schedule_generator.generate!(cultivation_plan_id: cultivation_plan_id)
 
-    cultivation_plan.complete!
-    cultivation_plan.phase_completed!(channel_class)
+    CompositionRoot.cultivation_plan_gateway.update(cultivation_plan_id, { status: "completed" })
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: cultivation_plan_id,
+      phase_name: :phase_completed,
+      channel_class: channel_class
+    )
 
     Rails.logger.info "✅ [TaskScheduleGenerationJob] Completed generation for CultivationPlan##{cultivation_plan_id}"
   rescue Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::TemplateMissingError => e
     Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Template missing for CultivationPlan##{cultivation_plan_id}: #{e.message}"
-    handle_template_missing(cultivation_plan, channel_class, e)
+    handle_template_missing(cultivation_plan_id, channel_class, e)
   rescue Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::WeatherDataMissingError,
          Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::ProgressDataMissingError,
          Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::GddTriggerMissingError => e
     Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Failed CultivationPlan##{cultivation_plan_id}: #{e.message}"
-    handle_failure(cultivation_plan, channel_class, e)
+    handle_failure(cultivation_plan_id, channel_class, e)
     raise
   rescue Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor::Error => e
     Rails.logger.error "❌ [TaskScheduleGenerationJob] Failed for CultivationPlan##{cultivation_plan_id}: #{e.message}"
-    handle_failure(cultivation_plan, channel_class, e)
+    handle_failure(cultivation_plan_id, channel_class, e)
     raise
   end
 
@@ -59,26 +65,37 @@ class TaskScheduleGenerationJob < ApplicationJob
     @task_schedule_generator ||= CompositionRoot.task_schedule_generate_interactor
   end
 
-  def handle_failure(cultivation_plan, channel_class, error)
-    return unless cultivation_plan
-
-    Rails.logger.error "❌ [TaskScheduleGenerationJob] Handling failure for CultivationPlan##{cultivation_plan.id}: #{error.message}"
-    cultivation_plan.phase_failed!("task_schedule_generation", channel_class)
+  def finalize_plan_completed(plan_id, channel_class)
+    CompositionRoot.cultivation_plan_gateway.update(plan_id, { status: "completed" })
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: plan_id,
+      phase_name: :phase_completed,
+      channel_class: channel_class
+    )
   end
 
-  def handle_template_missing(cultivation_plan, channel_class, error)
-    return unless cultivation_plan
+  def handle_failure(plan_id, channel_class, error)
+    return unless plan_id
 
-    Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Handling template missing for CultivationPlan##{cultivation_plan.id}: #{error.message}"
+    Rails.logger.error "❌ [TaskScheduleGenerationJob] Handling failure for CultivationPlan##{plan_id}: #{error.message}"
+    CompositionRoot.advance_cultivation_plan_phase(
+      plan_id: plan_id,
+      phase_name: :phase_failed,
+      channel_class: channel_class,
+      failure_subphase: "task_schedule_generation"
+    )
+  end
+
+  def handle_template_missing(plan_id, channel_class, error)
+    return unless plan_id
+
+    Rails.logger.warn "⚠️ [TaskScheduleGenerationJob] Handling template missing for CultivationPlan##{plan_id}: #{error.message}"
 
     # 計画を完了状態にする（テンプレートがない場合でも計画は完成させる）
     # トーストはresults画面で表示されるため、ここでは通常の完了通知のみ送信
-    cultivation_plan.complete!
-    cultivation_plan.phase_completed!(channel_class)
+    finalize_plan_completed(plan_id, channel_class)
   rescue *(CultivationPlanJobExceptions::TASK_SCHEDULE_TEMPLATE_COMPLETION_FAILURES) => e
     Rails.logger.error "❌ [TaskScheduleGenerationJob] Failed to handle template missing: #{e.message}"
-    # エラーが発生しても計画は完了状態にする
-    cultivation_plan.complete! if cultivation_plan
-    cultivation_plan.phase_completed!(channel_class) if cultivation_plan
+    finalize_plan_completed(plan_id, channel_class) if plan_id
   end
 end

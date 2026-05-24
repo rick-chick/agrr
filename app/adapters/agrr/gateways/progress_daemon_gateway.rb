@@ -9,11 +9,13 @@ module Adapters
         # @param start_date [Date] 栽培開始日
         # @param weather_data [Hash] 気象データ
         # @return [Hash] 成長進捗データ
-        def calculate_progress(crop:, start_date:, weather_data:)
-          Rails.logger.info "📊 [AGRR Progress] Calculating progress: crop=#{crop.name}, start=#{start_date}"
+        def calculate_progress(crop_requirement:, start_date:, weather_data:, crop: nil)
+          label = crop&.name || "crop"
+          Rails.logger.info "📊 [AGRR Progress] Calculating progress: crop=#{label}, start=#{start_date}"
 
-          # Cropモデルから作物プロファイルを生成
-          crop_requirement = Adapters::Crop::Mappers::CropAgrrRequirementMapper.build_from(crop)
+          unless crop_requirement
+            raise ArgumentError, "crop_requirement is required (build via CropAgrrRequirementBuilderPort at the edge)"
+          end
           crop_file = write_temp_file(crop_requirement, prefix: "crop_profile")
           weather_file = write_temp_file(weather_data, prefix: "weather")
 

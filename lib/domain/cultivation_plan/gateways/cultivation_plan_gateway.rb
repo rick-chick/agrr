@@ -42,10 +42,14 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_by_id_for_rest"
         end
 
-        # phase 更新 proxy (phase_fetching_weather! など)
-        # @return [Boolean]
-        def update_phase(plan_id, phase_name, *args)
-          raise NotImplementedError, "Subclasses must implement update_phase"
+        # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
+        def update(plan_id, attrs)
+          raise NotImplementedError, "Subclasses must implement update"
+        end
+
+        # @return [Array<Domain::CultivationPlan::Entities::FieldCultivationEntity>]
+        def list_by_plan_id(plan_id)
+          raise NotImplementedError, "Subclasses must implement list_by_plan_id"
         end
 
         # @return [Domain::CultivationPlan::Dtos::TaskScheduleGenerationContext]

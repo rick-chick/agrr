@@ -136,9 +136,12 @@ module CompositionRoot
     def agricultural_task_gateway
       @agricultural_task_gateway ||= Adapters::AgriculturalTask::Gateways::AgriculturalTaskActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway,
-        sql_like_sanitize_port: sql_like_sanitize_port,
-        translator: translator
+        sql_like_sanitize_port: sql_like_sanitize_port
       )
+    end
+
+    def crop_task_template_gateway
+      @crop_task_template_gateway ||= Adapters::AgriculturalTask::Gateways::CropTaskTemplateActiveRecordGateway.new
     end
 
     def task_schedule_gateway
@@ -149,14 +152,76 @@ module CompositionRoot
       @agrr_progress_gateway ||= Adapters::Agrr::Gateways::ProgressDaemonGateway.new
     end
 
+    def crop_agrr_requirement_builder
+      @crop_agrr_requirement_builder ||= Adapters::Crop::Ports::CropAgrrRequirementBuilderAdapter.new
+    end
+
     def cultivation_plan_gateway
       @cultivation_plan_gateway ||= Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGateway.new(
-        deletion_undo_gateway: deletion_undo_gateway
+        deletion_undo_gateway: deletion_undo_gateway,
+        crop_agrr_requirement_builder: crop_agrr_requirement_builder
+      )
+    end
+
+    def cultivation_plan_check_optimization_completion_interactor
+      @cultivation_plan_check_optimization_completion_interactor ||=
+        Domain::CultivationPlan::Interactors::CultivationPlanCheckOptimizationCompletionInteractor.new(
+          cultivation_plan_gateway: cultivation_plan_gateway
+        )
+    end
+
+    def advance_cultivation_plan_phase_interactor
+      @advance_cultivation_plan_phase_interactor ||=
+        Domain::CultivationPlan::Interactors::AdvanceCultivationPlanPhaseInteractor.new(
+          cultivation_plan_gateway: cultivation_plan_gateway,
+          translator: translator,
+          phase_broadcast_port: Adapters::CultivationPlan::Ports::CultivationPlanPhaseBroadcastAdapter.new,
+          check_optimization_completion_interactor: cultivation_plan_check_optimization_completion_interactor
+        )
+    end
+
+    def fetch_weather_data_enqueue_port
+      @fetch_weather_data_enqueue_port ||= Adapters::WeatherData::Ports::FetchWeatherDataActiveJobAdapter.new
+    end
+
+    def start_farm_weather_data_fetch_interactor
+      @start_farm_weather_data_fetch_interactor ||=
+        Domain::Farm::Interactors::StartFarmWeatherDataFetchInteractor.new(
+          farm_gateway: farm_gateway,
+          fetch_weather_data_enqueue_port: fetch_weather_data_enqueue_port
+        )
+    end
+
+    def record_farm_weather_block_completed_interactor(farm_refresh_broadcast_port: nil)
+      Domain::Farm::Interactors::RecordFarmWeatherBlockCompletedInteractor.new(
+        farm_gateway: farm_gateway,
+        farm_refresh_broadcast_port: farm_refresh_broadcast_port ||
+          Adapters::Farm::Ports::FarmRefreshBroadcastAdapter.new
+      )
+    end
+
+    def mark_farm_weather_data_failed_interactor
+      @mark_farm_weather_data_failed_interactor ||=
+        Domain::Farm::Interactors::MarkFarmWeatherDataFailedInteractor.new(farm_gateway: farm_gateway)
+    end
+
+    def advance_cultivation_plan_phase(plan_id:, phase_name:, channel_class: nil, failure_subphase: nil)
+      advance_cultivation_plan_phase_interactor.call(
+        Domain::CultivationPlan::Dtos::AdvanceCultivationPlanPhaseInput.new(
+          plan_id: plan_id,
+          phase_name: phase_name,
+          channel_class: channel_class,
+          failure_subphase: failure_subphase
+        )
       )
     end
 
     def agrr_optimization_payload_builder(cultivation_plan)
-      Adapters::CultivationPlan::AgrrOptimizationPayloadBuilder.new(cultivation_plan, logger: logger)
+      Adapters::CultivationPlan::AgrrOptimizationPayloadBuilder.new(
+        cultivation_plan,
+        logger: logger,
+        crop_agrr_requirement_builder: crop_agrr_requirement_builder
+      )
     end
 
     def save_adjusted_agrr_result_gateway

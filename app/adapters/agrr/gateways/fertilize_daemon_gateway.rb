@@ -4,8 +4,10 @@ module Adapters
   module Agrr
     module Gateways
       class FertilizeDaemonGateway < BaseGatewayV2
-        def plan(crop:, use_harvest_start: true, max_applications: 2)
-          crop_requirement = Adapters::Crop::Mappers::CropAgrrRequirementMapper.build_from(crop)
+        def plan(crop_requirement:, use_harvest_start: true, max_applications: 2)
+          unless crop_requirement
+            raise ArgumentError, "crop_requirement is required (build via CropAgrrRequirementBuilderPort at the edge)"
+          end
           crop_file = write_temp_file(crop_requirement, prefix: "fertilize_crop")
 
           command_args = [

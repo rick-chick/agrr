@@ -19,17 +19,19 @@ module Domain
         def initialize(
           weather_data_gateway:,
           farm_gateway:,
-          cultivation_plan_gateway:,
+          advance_phase_interactor:,
           agrr_weather_gateway:,
           presenter:,
-          logger:
+          logger:,
+          record_farm_weather_block_completed_interactor:
         )
           @weather_data_gateway = weather_data_gateway
           @farm_gateway = farm_gateway
-          @cultivation_plan_gateway = cultivation_plan_gateway
+          @advance_phase_interactor = advance_phase_interactor
           @agrr_weather_gateway = agrr_weather_gateway
           @presenter = presenter
           @logger = logger
+          @record_farm_weather_block_completed_interactor = record_farm_weather_block_completed_interactor
         end
 
         def call(input_dto:)
@@ -62,7 +64,7 @@ module Domain
 
           # フェーズ更新 (開始)
           if cultivation_plan_id && channel_class
-            @cultivation_plan_gateway.update_phase(cultivation_plan_id, "phase_fetching_weather", channel_class)
+            advance_plan_phase(cultivation_plan_id, :phase_fetching_weather, channel_class)
             @presenter.info "🌤️ [FetchWeatherDataJob] Started fetching weather data for plan ##{cultivation_plan_id}"
           end
 
@@ -81,11 +83,7 @@ module Domain
               @presenter.info "⏭️  #{farm_info} Skipping #{period_str} - sufficient data exists (#{existing_count}/#{expected_days} days, #{((existing_count.to_f / expected_days) * 100).round(1)}%)"
 
               if farm_id
-                @farm_gateway.increment_weather_data_progress(farm_id)
-                progress = @farm_gateway.get_weather_data_progress(farm_id)
-                fetched_years = @farm_gateway.get_weather_data_fetched_years(farm_id)
-                total_years = @farm_gateway.get_weather_data_total_years(farm_id)
-                @presenter.info "📊 #{farm_info} Progress: #{progress}% (#{fetched_years}/#{total_years} blocks)"
+                record_farm_weather_block_progress(farm_id, current_time)
               end
 
               return
@@ -181,23 +179,29 @@ module Domain
 
           # Farm進捗更新
           if farm_id
-            @farm_gateway.increment_weather_data_progress(farm_id)
-            progress = @farm_gateway.get_weather_data_progress(farm_id)
-            fetched_years = @farm_gateway.get_weather_data_fetched_years(farm_id)
-            total_years = @farm_gateway.get_weather_data_total_years(farm_id)
-            @presenter.info "📊 #{farm_info} Progress: #{progress}% (#{fetched_years}/#{total_years} blocks)"
+            record_farm_weather_block_progress(farm_id, current_time)
           end
 
           @presenter.info "✅ #{farm_info} Saved #{data_count} weather records for #{period_str}"
 
           # フェーズ更新 (完了)
           if cultivation_plan_id && channel_class
-            @cultivation_plan_gateway.update_phase(cultivation_plan_id, "phase_weather_data_fetched", channel_class)
+            advance_plan_phase(cultivation_plan_id, :phase_weather_data_fetched, channel_class)
             @presenter.info "🌤️ [FetchWeatherDataJob] Weather data fetching completed for plan ##{cultivation_plan_id}"
           end
         end
 
         private
+
+        def advance_plan_phase(cultivation_plan_id, phase_name, channel_class)
+          @advance_phase_interactor.call(
+            Domain::CultivationPlan::Dtos::AdvanceCultivationPlanPhaseInput.new(
+              plan_id: cultivation_plan_id,
+              phase_name: phase_name,
+              channel_class: channel_class
+            )
+          )
+        end
 
         def fetch_weather_from_agrr(latitude, longitude, start_date, end_date, farm_id)
           data_source = determine_data_source(farm_id, latitude: latitude, longitude: longitude)
@@ -241,6 +245,19 @@ module Domain
         def japan_location?(latitude, longitude)
           return false if latitude.nil? || longitude.nil?
           latitude.between?(24.0, 46.0) && longitude.between?(130.0, 146.0)
+        end
+
+        def record_farm_weather_block_progress(farm_id, current_time)
+          farm_info = "[Farm##{farm_id}]"
+          updated = @record_farm_weather_block_completed_interactor.call(
+            Domain::Farm::Dtos::RecordFarmWeatherBlockCompletedInput.new(
+              farm_id: farm_id,
+              current_time: current_time
+            )
+          )
+          return unless updated
+
+          @presenter.info "📊 #{farm_info} Progress: #{updated.weather_data_progress}% (#{updated.weather_data_fetched_years}/#{updated.weather_data_total_years} blocks)"
         end
       end
     end

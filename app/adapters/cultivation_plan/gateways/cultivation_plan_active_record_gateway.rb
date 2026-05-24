@@ -6,8 +6,9 @@ module Adapters
       class CultivationPlanActiveRecordGateway < Domain::CultivationPlan::Gateways::CultivationPlanGateway
         include Adapters::Shared::Concerns::ActiveRecordTransactional
 
-        def initialize(deletion_undo_gateway:)
+        def initialize(deletion_undo_gateway:, crop_agrr_requirement_builder:)
           @deletion_undo_gateway = deletion_undo_gateway
+          @crop_agrr_requirement_builder = crop_agrr_requirement_builder
         end
 
         def find_with_field_cultivations_for_task_schedule(plan_id)
@@ -21,7 +22,10 @@ module Adapters
               }
             }
           ).find(plan_id)
-          Adapters::CultivationPlan::Mappers::TaskScheduleGenerationContextMapper.from_plan_model(plan)
+          Adapters::CultivationPlan::Mappers::TaskScheduleGenerationContextMapper.from_plan_model(
+            plan,
+            crop_agrr_requirement_builder: @crop_agrr_requirement_builder
+          )
         end
 
         def total_field_area_for_farm(farm_id, user)
@@ -216,11 +220,20 @@ module Adapters
           raise
         end
 
-        # phase 更新
-        def update_phase(plan_id, phase_name, *args)
+        def update(plan_id, attrs)
           plan = ::CultivationPlan.find(plan_id)
-          plan.public_send("#{phase_name}!", *args)
-          true
+          raise Domain::Shared::Exceptions::RecordInvalid, plan.errors.full_messages.join(", ") unless plan.update(attrs.to_h.symbolize_keys)
+
+          Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(plan)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
+        def list_by_plan_id(plan_id)
+          plan = ::CultivationPlan.find(plan_id)
+          plan.field_cultivations.map { |fc| field_cultivation_entity_from_model(fc) }
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:)
@@ -255,7 +268,7 @@ module Adapters
               id: cpc.id,
               name: cpc.name,
               crop_id: cpc.crop_id,
-              agrr_requirement: Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(crop),
+              agrr_requirement: @crop_agrr_requirement_builder.build_from(crop),
               revenue_per_area: crop.revenue_per_area,
               crop_name: crop.name
             )
@@ -644,6 +657,20 @@ module Adapters
           ::CultivationPlan.find(plan_id)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
+        def field_cultivation_entity_from_model(fc)
+          Domain::CultivationPlan::Entities::FieldCultivationEntity.new(
+            id: fc.id,
+            cultivation_plan_id: fc.cultivation_plan_id,
+            cultivation_plan_field_id: fc.cultivation_plan_field_id,
+            cultivation_plan_crop_id: fc.cultivation_plan_crop_id,
+            area: fc.area,
+            start_date: fc.start_date,
+            status: fc.status,
+            created_at: fc.created_at,
+            updated_at: fc.updated_at
+          )
         end
 
       end

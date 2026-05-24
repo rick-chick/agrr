@@ -31,6 +31,17 @@ module Domain
         # ---- 参照可能マスタの認可ルール（crop / fertilize / pesticide / pest /
         #      agricultural_task で共通。各 *Policy はここへ委譲する）----
 
+        # 参照レコードは user_id=nil、非参照は user_id 必須（内在バリデーション）。
+        # @param user_id [Integer, nil]
+        # @param is_reference [Boolean]
+        def reference_record_user_id_valid?(is_reference:, user_id:)
+          if is_reference
+            user_id.nil?
+          else
+            !user_id.nil?
+          end
+        end
+
         # 参照フラグ（is_reference）を新規付与してよいか。admin のみ true を許される。
         def reference_assignment_allowed?(user, is_reference:)
           !is_reference || user.admin?
@@ -40,6 +51,14 @@ module Domain
         # 変更しない（requested == current）か、admin のみ許される。
         def reference_flag_change_allowed?(user, requested:, current:)
           requested == current || user.admin?
+        end
+
+        # @param existing [Object, nil] Gateway.find_by_*_and_name の戻り
+        # @param exclude_id [Integer, nil] 更新時は自レコード ID を除外
+        def duplicate_name_record?(existing:, exclude_id: nil)
+          return false unless existing
+
+          exclude_id.nil? || existing.id != exclude_id
         end
 
         # 作成属性の正規化。region は admin（または admin_forced）のみ保持。

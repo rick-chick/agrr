@@ -84,7 +84,7 @@ module Adapters
             toast_message: toast_message,
             auto_hide_after: auto_hide_after
           )
-          { success: true, undo_entity: event, resource_name: name }
+          { success: true, undo_entity: event }
         rescue Domain::Shared::Exceptions::RecordNotFound
           raise
         rescue StandardError => e

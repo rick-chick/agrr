@@ -3,31 +3,6 @@
 require "test_helper"
 
 class PesticideTest < ActiveSupport::TestCase
-  setup do
-    @crop = create(:crop, :reference)
-    @pest = create(:pest, is_reference: true)
-    @pesticide_data = {
-      "pesticide_id" => "acetamiprid",
-      "name" => "アセタミプリド",
-      "active_ingredient" => "アセタミプリド",
-      "description" => "浸透性殺虫剤として広く使用される",
-      "usage_constraints" => {
-        "min_temperature" => 5.0,
-        "max_temperature" => 35.0,
-        "max_wind_speed_m_s" => 3.0,
-        "max_application_count" => 3,
-        "harvest_interval_days" => 1,
-        "other_constraints" => nil
-      },
-      "application_details" => {
-        "dilution_ratio" => "1000倍",
-        "amount_per_m2" => 0.1,
-        "amount_unit" => "ml",
-        "application_method" => "散布"
-      }
-    }
-  end
-
   # バリデーションテスト
 
   test "should validate crop presence" do

@@ -16,18 +16,20 @@ module Domain
           @farm_gateway = mock("farm_gateway")
           @presenter = mock("presenter")
           @translator = mock("translator")
+          @mark_failed = mock("mark_farm_weather_data_failed_interactor")
           @interactor = FetchWeatherDataDiscardOnInteractor.new(
             farm_gateway: @farm_gateway,
             presenter: @presenter,
             logger: CapturingLogger.new,
-            translator: @translator
+            translator: @translator,
+            mark_farm_weather_data_failed_interactor: @mark_failed
           )
         end
 
         test "execute calls presenter and marks failed" do
           @presenter.expects(:error).with(regexp_matches(/Invalid data.*Invalid record/))
           @translator.expects(:t).with("jobs.fetch_weather_data.validation_error", error: "Invalid record").returns("データ検証エラー: Invalid record")
-          @farm_gateway.expects(:mark_weather_data_failed).with(1, "データ検証エラー: Invalid record")
+          @mark_failed.expects(:call)
 
           @interactor.call(input_dto: @input_dto)
         end

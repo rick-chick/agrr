@@ -66,79 +66,12 @@ class CultivationPlan < ApplicationRecord
   # @deprecated 年度という概念は削除されました。このスコープは後方互換性のため残していますが、使用しないでください。
   scope :for_user_and_year, ->(user, year) { plan_type_private.by_user(user).by_plan_year(year) }
 
-  # == Callbacks ===========================================================
-  after_update :check_optimization_completion, if: :saved_change_to_status?
-
   # == Instance Methods ====================================================
 
   def optimization_progress
-    return 0 if field_cultivations.empty?
-
-    completed_count = field_cultivations.status_completed.count
-    (completed_count.to_f / field_cultivations.count * 100).round
-  end
-
-  def start_optimizing!
-    update!(status: :optimizing)
-  end
-
-  def complete!
-    update!(status: :completed)
-  end
-
-  # フェーズ更新メソッド
-  def update_phase!(phase, message, channel_class)
-    update!(optimization_phase: phase, optimization_phase_message: message)
-    broadcast_phase_update(channel_class)
-  end
-
-  def phase_fetching_weather!(channel_class)
-    update_phase!("fetching_weather", I18n.t("models.cultivation_plan.phases.fetching_weather"), channel_class)
-  end
-
-  def phase_weather_data_fetched!(channel_class)
-    update_phase!("weather_data_fetched", I18n.t("models.cultivation_plan.phases.weather_data_fetched"), channel_class)
-  end
-
-  def phase_predicting_weather!(channel_class)
-    update_phase!("predicting_weather", I18n.t("models.cultivation_plan.phases.predicting_weather"), channel_class)
-  end
-
-  def phase_weather_prediction_completed!(channel_class)
-    update_phase!("weather_prediction_completed", I18n.t("models.cultivation_plan.phases.weather_prediction_completed"), channel_class)
-  end
-
-  def phase_optimization_completed!(channel_class)
-    update_phase!("optimization_completed", I18n.t("models.cultivation_plan.phases.optimization_completed"), channel_class)
-  end
-
-  def phase_optimizing!(channel_class)
-    update_phase!("optimizing", I18n.t("models.cultivation_plan.phases.optimizing"), channel_class)
-  end
-
-  def phase_task_schedule_generating!(channel_class)
-    update_phase!("task_schedule_generating", I18n.t("models.cultivation_plan.phases.task_schedule_generating"), channel_class)
-  end
-
-  def phase_completed!(channel_class)
-    update_phase!("completed", I18n.t("models.cultivation_plan.phases.completed"), channel_class)
-  end
-
-  def phase_failed!(phase_name, channel_class)
-    message = case phase_name
-    when "fetching_weather"
-                I18n.t("models.cultivation_plan.phase_failed.fetching_weather")
-    when "predicting_weather"
-                I18n.t("models.cultivation_plan.phase_failed.predicting_weather")
-    when "optimizing"
-                I18n.t("models.cultivation_plan.phase_failed.optimizing")
-    when "task_schedule_generation"
-                I18n.t("models.cultivation_plan.phase_failed.task_schedule_generation")
-    else
-                I18n.t("models.cultivation_plan.phase_failed.default")
-    end
-    update!(optimization_phase: "failed", optimization_phase_message: message, status: "failed")
-    broadcast_phase_update(channel_class)
+    Domain::CultivationPlan::Calculators::CultivationPlanOptimizationProgressCalculator.progress_percent(
+      field_cultivations: field_cultivations
+    )
   end
 
   # 計画の表示名
@@ -172,18 +105,12 @@ class CultivationPlan < ApplicationRecord
   # @deprecated 年度という概念は削除されました。このメソッドは後方互換性のため残していますが、使用しないでください。
   # 計画年度から計画期間を計算（2年間）
   def self.calculate_planning_dates(plan_year)
-    {
-      start_date: Date.new(plan_year, 1, 1),
-      end_date: Date.new(plan_year + 1, 12, 31)
-    }
+    Domain::CultivationPlan::Calculators::PlanningDateCalculator.calculate_planning_dates(plan_year)
   end
 
   # public計画用の計画期間を計算（今日から来年の12月31日まで）
   def self.calculate_public_planning_dates
-    {
-      start_date: Date.current,
-      end_date: Date.new(Date.current.year + 1, 12, 31)
-    }
+    Domain::CultivationPlan::Calculators::PlanningDateCalculator.calculate_public_planning_dates(as_of: Date.current)
   end
 
   # 計画期間をメソッドとして計算
@@ -305,40 +232,4 @@ class CultivationPlan < ApplicationRecord
     end
   end
 
-  def check_optimization_completion
-    return unless status_optimizing?
-    # 空の配列の場合は完了しない
-    return if field_cultivations.empty?
-    complete! if field_cultivations.all?(&:status_completed?)
-  end
-
-  def broadcast_phase_update(channel_class)
-    payload = {
-      status: status,
-      progress: optimization_progress,
-      phase: optimization_phase,
-      phase_message: optimization_phase_message,
-      message: optimization_phase_message,
-      message_key: "models.cultivation_plan.phases.#{optimization_phase}"
-    }
-
-    Rails.logger.info "📡 [CultivationPlan##{id}] Attempting to broadcast phase update: #{optimization_phase}"
-    Rails.logger.info "📡 [CultivationPlan##{id}] Payload: #{payload.inspect}"
-    Rails.logger.info "📡 [CultivationPlan##{id}] Channel class: #{channel_class.is_a?(String) ? channel_class : channel_class.name}"
-
-    # WebSocket接続の確立を待つ
-    if optimization_phase == "predicting_weather"
-      Rails.logger.info "⏳ [CultivationPlan##{id}] Waiting for WebSocket connection for predicting_weather phase"
-      sleep(2.0) # 2秒待機
-    end
-
-    channel_class.broadcast_to(self, payload)
-    Rails.logger.info "📡 [CultivationPlan##{id}] Broadcast phase update: #{optimization_phase}"
-  rescue => e
-    Rails.logger.error "❌ Broadcast phase update failed for plan ##{id}: #{e.message}"
-    Rails.logger.error "❌ Channel class: #{channel_class.is_a?(String) ? channel_class : channel_class.name}"
-    Rails.logger.error "❌ Payload: #{payload.inspect}"
-    Rails.logger.error "❌ Backtrace: #{e.backtrace.first(5).join("\n")}"
-    # ブロードキャスト失敗しても処理は続行
-  end
 end

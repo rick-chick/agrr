@@ -4,10 +4,12 @@ module Domain
   module WeatherData
     module Interactors
       class InternalWeatherFetchStartInteractor
-        def initialize(output_port:, gateway:, translator:)
+        def initialize(output_port:, gateway:, translator:, start_farm_weather_data_fetch_interactor:, calendar_today:)
           @output_port = output_port
           @gateway = gateway
           @translator = translator
+          @start_farm_weather_data_fetch_interactor = start_farm_weather_data_fetch_interactor
+          @calendar_today = calendar_today
         end
 
         def call(input_dto)
@@ -31,8 +33,23 @@ module Domain
                 total_blocks: snap.total_blocks
               )
             )
-          when :started
+          when :started, :needs_fetch
             snap = r.snapshot
+            if r.kind == :needs_fetch
+              started_farm = @start_farm_weather_data_fetch_interactor.call(
+                Domain::Farm::Dtos::StartFarmWeatherDataFetchInput.new(
+                  farm_id: snap.farm_id,
+                  as_of: @calendar_today
+                )
+              )
+              snap = snap.dup if snap.frozen?
+              snap = InternalWeatherFetchStartGateway::WeatherFetchFarmSnapshot.new(
+                farm_id: snap.farm_id,
+                weather_data_status: started_farm&.weather_data_status || "fetching",
+                weather_data_count: snap.weather_data_count,
+                total_blocks: started_farm&.weather_data_total_years || snap.total_blocks
+              )
+            end
             @output_port.on_success(
               Dtos::InternalWeatherFetchStartOutput.new(
                 variant: Dtos::InternalWeatherFetchStartOutput::VARIANT_FETCH_STARTED,
