@@ -17,7 +17,9 @@ describe('AgriculturalTaskApiGateway', () => {
   });
 
   it('list uses masters API relative path', async () => {
-    const tasks: AgriculturalTask[] = [{ id: 1, name: 'Weeding' }];
+    const tasks: AgriculturalTask[] = [
+      { id: 1, name: 'Weeding', required_tools: [], is_reference: false }
+    ];
     vi.mocked(client.get).mockReturnValue(of(tasks));
 
     const result = await firstValueFrom(gateway.list());

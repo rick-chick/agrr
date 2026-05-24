@@ -4,11 +4,6 @@ class PlansController < CultivationPlanHtmlBaseController
   before_action :authenticate_user!
   layout "application"
 
-  # 基底クラス属性
-  self.plan_type = "private"
-  self.session_key = :plan_data
-  self.redirect_path_method = :plans_path
-
   # レガシー HTML 一覧は SPA へリダイレクト（Phase 5 でルートごと削除予定）
   def index
     redirect_to spa_private_plans_path, allow_other_host: true
@@ -51,29 +46,4 @@ class PlansController < CultivationPlanHtmlBaseController
   def spa_frontend_origin
     ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
   end
-
-  private
-
-  # ルートパラメータの正の整数 ID（計画 :id 等）。"abc" / 0 / 空白は nil
-  def parse_positive_route_id(raw)
-    return nil if raw.nil?
-
-    s = raw.is_a?(Integer) ? raw.to_s : raw.to_s.strip
-    return nil if s.empty?
-
-    return nil unless s.match?(/\A[1-9]\d*\z/)
-
-    s.to_i
-  end
-
-  # 基底クラスで要求されるフックの実装
-
-  def completion_redirect_path
-    :spa_plan_detail_url
-  end
-
-  def channel_class
-    PlansOptimizationChannel
-  end
-
 end

@@ -24,7 +24,7 @@ describe('FertilizeApiGateway', () => {
   });
 
   it('list uses masters API relative path', async () => {
-    const fertilizes: Fertilize[] = [{ id: 1, name: 'NPK' }];
+    const fertilizes: Fertilize[] = [{ id: 1, name: 'NPK', is_reference: false }];
     vi.mocked(client.get).mockReturnValue(of(fertilizes));
 
     const result = await firstValueFrom(gateway.list());

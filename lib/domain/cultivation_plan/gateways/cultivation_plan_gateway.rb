@@ -108,14 +108,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement optimization_plan_snapshot"
         end
 
-        # HTML `PlansController#optimize` 用の軽量スナップショット（認可つき）。
-        # 公開（無認可）計画「最適化進捗」HTML 用。`plan_type` が public の計画のみ。
-        # @return [Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot]
-        def public_plan_optimizing_snapshot(plan_id:)
-          raise NotImplementedError, "Subclasses must implement public_plan_optimizing_snapshot"
-        end
-
-        # プライベート計画一覧（HTML index）の行データのみ
+        # プライベート計画一覧の行データのみ
         # @return [Array<Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRow>]
         def private_plan_index_plan_rows(user:)
           raise NotImplementedError, "Subclasses must implement private_plan_index_plan_rows"

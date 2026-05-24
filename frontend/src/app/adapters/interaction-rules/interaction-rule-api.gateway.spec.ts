@@ -31,7 +31,9 @@ describe('InteractionRuleApiGateway', () => {
         source_group: 'A',
         target_group: 'B',
         impact_ratio: 1,
-        is_directional: true
+        is_directional: true,
+        region: 'jp',
+        is_reference: false
       }
     ];
     vi.mocked(client.get).mockReturnValue(of(rules));

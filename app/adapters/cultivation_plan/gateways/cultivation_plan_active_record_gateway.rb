@@ -340,20 +340,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def public_plan_optimizing_snapshot(plan_id:)
-          plan = ::CultivationPlan.plan_type_public.includes(:farm, :cultivation_plan_crops).find(plan_id)
-          Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot.new(
-            id: plan.id,
-            plan_year: plan.plan_year,
-            farm_display_name: plan.farm.display_name,
-            cultivation_plan_crops_count: plan.cultivation_plan_crops.size,
-            optimization_phase_message: plan.optimization_phase_message,
-            status: plan.status
-          )
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
         def find_private_cultivation_plan_detail(user:, plan_id:)
           Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
             plan = private_cultivation_plans_scope(user)

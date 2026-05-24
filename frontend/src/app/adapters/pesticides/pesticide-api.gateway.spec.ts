@@ -17,7 +17,9 @@ describe('PesticideApiGateway', () => {
   });
 
   it('list uses masters API relative path', async () => {
-    const pesticides: Pesticide[] = [{ id: 1, name: 'Spray', crop_id: 1, pest_id: 1 }];
+    const pesticides: Pesticide[] = [
+      { id: 1, name: 'Spray', crop_id: 1, pest_id: 1, is_reference: false }
+    ];
     vi.mocked(client.get).mockReturnValue(of(pesticides));
 
     const result = await firstValueFrom(gateway.list());

@@ -160,10 +160,6 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
     assert_equal expected_notice, flash[:notice]
   end
 
-  # index カードのテンプレート描画（カードタイトル＝農場名、ステータスバッジ非表示、
-  # アコーディオン非描画、計画詳細リンク）は test/views/plans_index_view_test.rb が担保する。
-  # display_name に計画期間を付与しない仕様は test/models/cultivation_plan_test.rb が担保する。
-  # ここは index アクションの配線が通ることのみ確認する。
   test "index redirects to SPA plans list" do
     sign_in_as @user
     farm = create(:farm, user: @user)

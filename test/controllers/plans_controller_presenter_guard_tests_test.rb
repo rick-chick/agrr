@@ -9,13 +9,6 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     sign_in_as @user
   end
 
-  test "index redirects to SPA plans list" do
-    get plans_path
-    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
-    assert_redirected_to "#{origin}/plans"
-  end
-
-  # SCOPE: copy 正常/異常
   # SCOPE: copy 正常/異常
   test "copy is disabled due to new uniqueness constraint" do
     # 新しい一意制約により、同じ農場・ユーザで複数の計画を作成できないため、

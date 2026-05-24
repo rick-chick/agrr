@@ -6,10 +6,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
   skip_before_action :verify_authenticity_token
   layout "public"
 
-  # 基底クラス属性
-  self.plan_type = "public"
   self.session_key = :public_plan
-  self.redirect_path_method = :public_plans_path
 
   # Step 1: 栽培地域（参照農場）選択（レガシー HTML。SPA は /public-plans/new）
   def new
@@ -58,9 +55,4 @@ class PublicPlansController < CultivationPlanHtmlBaseController
   def spa_frontend_origin
     ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
   end
-
-  def channel_class
-    OptimizationChannel
-  end
-
 end

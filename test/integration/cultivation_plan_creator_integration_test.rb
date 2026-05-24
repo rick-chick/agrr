@@ -198,7 +198,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
     # 文字列の作物IDを準備
     crop_ids_strings = @ref_crops.map(&:id).map(&:to_s)
 
-    # PlansControllerのfind_selected_cropsメソッドのロジックを再現
+    # crop_ids クエリパラメータ（文字列配列）を整数 ID に変換する一般的なパターン
     crops = Crop.where(id: crop_ids_strings.map(&:to_i), is_reference: true)
 
     # 正しく変換されているか確認

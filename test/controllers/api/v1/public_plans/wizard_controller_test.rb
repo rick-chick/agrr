@@ -169,6 +169,59 @@ module Api
           # このテストは Interactor のテストでカバーされているため、スキップ
           skip "Unexpected error handling is covered by Interactor unit tests"
         end
+
+        test "create then optimization job failure updates plan status" do
+          weather_location = WeatherLocation.find_or_create_by_coordinates(
+            latitude: 35.6762,
+            longitude: 139.6503,
+            elevation: 10.0,
+            timezone: "Asia/Tokyo"
+          )
+          farm = create(:farm, :reference,
+            name: "関東農場",
+            latitude: 35.6762,
+            longitude: 139.6503,
+            region: "jp",
+            user: User.anonymous_user,
+            weather_location: weather_location)
+          crop = create(:crop, :reference,
+            name: "ほうれん草",
+            variety: "一般",
+            area_per_unit: 0.1,
+            revenue_per_area: 800.0,
+            groups: [ "ヒユ科" ],
+            region: "jp",
+            user: nil)
+
+          post api_v1_public_plans_plans_path,
+               params: {
+                 farm_id: farm.id,
+                 farm_size_id: "home_garden",
+                 crop_ids: [ crop.id ]
+               },
+               as: :json
+          assert_response :success
+          plan_id = JSON.parse(response.body)["plan_id"]
+
+          cultivation_plan = CultivationPlan.find(plan_id)
+          assert_equal farm.id, cultivation_plan.farm_id
+          assert_equal 30, cultivation_plan.total_area
+          assert_equal "public", cultivation_plan.plan_type
+          assert_equal "pending", cultivation_plan.status
+
+          OptimizationJob.stub(:perform_now, ->(*args) {
+            opts = args.first || {}
+            pid = opts[:cultivation_plan_id] || opts["cultivation_plan_id"]
+            CultivationPlan.find(pid).update!(status: "failed") if pid
+            raise Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor::WeatherDataNotFoundError
+          }) do
+            assert_raises(Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor::WeatherDataNotFoundError) do
+              OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: "OptimizationChannel")
+            end
+          end
+
+          assert_equal "failed", cultivation_plan.reload.status
+        end
       end
     end
   end

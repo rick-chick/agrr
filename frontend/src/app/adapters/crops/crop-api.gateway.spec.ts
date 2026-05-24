@@ -18,7 +18,7 @@ describe('CropApiGateway', () => {
   });
 
   it('list uses masters API relative path', async () => {
-    const crops: Crop[] = [{ id: 1, name: 'Tomato' }];
+    const crops: Crop[] = [{ id: 1, name: 'Tomato', is_reference: false, groups: [] }];
     vi.mocked(client.get).mockReturnValue(of(crops));
 
     const result = await firstValueFrom(gateway.list());

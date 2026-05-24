@@ -114,34 +114,6 @@ module Adapters
           ::Farm.user_owned.by_user(user)
         end
 
-        def private_plan_new_farm_choices(user:)
-          Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
-            farms = user_owned_records(user).order(:id).to_a
-            farm_ids = farms.map(&:id)
-            stats_by_farm = {}
-            if farm_ids.any?
-              rows = ::Field.where(farm_id: farm_ids).group(:farm_id).pluck(
-                :farm_id,
-                Arel.sql("COUNT(*)"),
-                Arel.sql("COALESCE(SUM(area), 0)")
-              )
-              stats_by_farm = rows.to_h { |farm_id, cnt, sum_area| [ farm_id, [ cnt, sum_area.to_f ] ] }
-            end
-
-            farms.map do |f|
-              cnt, total_area = stats_by_farm[f.id] || [ 0, 0.0 ]
-              Domain::CultivationPlan::Dtos::PrivatePlanNewFarmChoice.new(
-                id: f.id,
-                display_name: f.name,
-                latitude: f.latitude.to_f,
-                longitude: f.longitude.to_f,
-                fields_count: cnt,
-                fields_total_area: total_area
-              )
-            end
-          end
-        end
-
         def planning_schedule_user_owned_farms(user:)
           user_owned_records(user).order(:name).map do |f|
             Domain::Farm::Dtos::FarmIdName.new(id: f.id, name: f.name)
