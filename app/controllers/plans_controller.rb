@@ -87,22 +87,6 @@ class PlansController < CultivationPlanHtmlBaseController
     return if performed?
   end
 
-  # 計画の最適化を実行
-  def optimize
-    plan_id = parse_positive_route_id(params[:id])
-    unless plan_id
-      redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
-    end
-
-    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanOptimizationRedirectHtmlPresenter.new(view: self)
-    CompositionRoot.private_plan_optimization_redirect_interactor(
-      output_port: presenter,
-      user_id: current_user.id,
-      plan_id: plan_id
-    ).call
-    return if performed?
-  end
-
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。
   # 計画コピー（前年度の計画を新年度にコピー）
   def copy
@@ -169,10 +153,6 @@ class PlansController < CultivationPlanHtmlBaseController
 
   def select_crop_redirect_path
     :select_crop_plans_path
-  end
-
-  def optimizing_redirect_path
-    :optimizing_plan_path
   end
 
   def completion_redirect_path

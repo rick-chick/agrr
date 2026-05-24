@@ -340,17 +340,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def private_plan_optimization_redirect_snapshot(user:, plan_id:)
-          row = private_cultivation_plans_scope(user).where(id: plan_id).pick(:id, :status)
-          raise Domain::Shared::Exceptions::RecordNotFound if row.nil?
-
-          picked_id, status = row
-          Domain::CultivationPlan::Dtos::PrivatePlanOptimizationRedirect.new(
-            plan_id: picked_id,
-            already_optimizing: Domain::CultivationPlan::PlanStatus.optimizing?(status)
-          )
-        end
-
         def public_plan_optimizing_snapshot(plan_id:)
           plan = ::CultivationPlan.plan_type_public.includes(:farm, :cultivation_plan_crops).find(plan_id)
           Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot.new(

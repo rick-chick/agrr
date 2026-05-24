@@ -71,23 +71,6 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     assert_equal I18n.t("plans.errors.select_farm"), flash[:alert]
   end
 
-  # SCOPE: optimize/optimizing の遷移
-  test "optimize redirects to optimizing when not already optimizing" do
-    plan = create(:cultivation_plan, user: @user, status: "pending")
-    post optimize_plan_path(plan)
-    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
-    assert_redirected_to "#{origin}/plans/#{plan.id}/optimizing"
-    assert_equal I18n.t("plans.messages.optimization_started"), flash[:notice]
-  end
-
-  test "optimize redirects back with alert when already optimizing" do
-    plan = create(:cultivation_plan, user: @user, status: "optimizing")
-    post optimize_plan_path(plan)
-    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
-    assert_redirected_to "#{origin}/plans/#{plan.id}"
-    assert_equal I18n.t("plans.errors.already_optimized"), flash[:alert]
-  end
-
   # SCOPE: copy 正常/異常
   # SCOPE: copy 正常/異常
   test "copy is disabled due to new uniqueness constraint" do

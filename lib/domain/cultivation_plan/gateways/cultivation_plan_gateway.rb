@@ -109,11 +109,6 @@ module Domain
         end
 
         # HTML `PlansController#optimize` 用の軽量スナップショット（認可つき）。
-        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizationRedirect]
-        def private_plan_optimization_redirect_snapshot(user:, plan_id:)
-          raise NotImplementedError, "Subclasses must implement private_plan_optimization_redirect_snapshot"
-        end
-
         # 公開（無認可）計画「最適化進捗」HTML 用。`plan_type` が public の計画のみ。
         # @return [Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot]
         def public_plan_optimizing_snapshot(plan_id:)

@@ -80,7 +80,6 @@ Rails.application.routes.draw do
         get :select_crop
       end
       member do
-        post :optimize
         post :copy
       end
       resource :task_schedule, only: [ :show ], controller: "plans/task_schedules"
