@@ -76,9 +76,6 @@ Rails.application.routes.draw do
 
     # HTML Plans（ナビ等で plans_path / public_plans_path を参照するため）
     resources :plans, only: [ :index, :new, :destroy ] do
-      collection do
-        get :select_crop
-      end
       member do
         post :copy
       end

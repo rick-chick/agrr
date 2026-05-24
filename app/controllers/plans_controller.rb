@@ -41,26 +41,6 @@ class PlansController < CultivationPlanHtmlBaseController
     Rails.logger.debug "🌍 [Plans#new] User: #{current_user.id}, Farms: #{@private_plan_new.farm_choices.size}"
   end
 
-  # Step 2: 作物選択
-  def select_crop
-    farm_id = parse_positive_route_id(params[:farm_id])
-    unless farm_id
-      redirect_to new_plan_path, alert: I18n.t("plans.errors.select_farm") and return
-    end
-
-    load_private_plan_select_crop_context(farm_id)
-    return if performed?
-
-    # セッションに保存（plan_yearは使用しない - 年度という概念は削除されました）
-    session[self.class.session_key] = {
-      farm_id: @farm.id,
-      plan_name: @plan_name,
-      total_area: @total_area
-    }
-
-    Rails.logger.debug "✅ [Plans#select_crop] Session saved: #{session[:plan_data].inspect}"
-  end
-
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。
   # 計画コピー（前年度の計画を新年度にコピー）
   def copy
@@ -97,21 +77,7 @@ class PlansController < CultivationPlanHtmlBaseController
 
   private
 
-  def load_private_plan_select_crop_context(farm_id)
-    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanSelectCropHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PrivatePlanSelectCropContextInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      farm_id: farm_id,
-      field_gateway: CompositionRoot.field_gateway,
-      crop_gateway: CompositionRoot.crop_gateway,
-      translator: CompositionRoot.translator,
-      logger: CompositionRoot.logger,
-      user_lookup: CompositionRoot.user_lookup
-    ).call
-  end
-
-  # ルートパラメータの正の整数 ID（計画 :id・作物選択 farm_id 等）。"abc" / 0 / 空白は nil
+  # ルートパラメータの正の整数 ID（計画 :id 等）。"abc" / 0 / 空白は nil
   def parse_positive_route_id(raw)
     return nil if raw.nil?
 
@@ -124,10 +90,6 @@ class PlansController < CultivationPlanHtmlBaseController
   end
 
   # 基底クラスで要求されるフックの実装
-
-  def select_crop_redirect_path
-    :select_crop_plans_path
-  end
 
   def completion_redirect_path
     :spa_plan_detail_url

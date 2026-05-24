@@ -187,4 +187,9 @@ module ApplicationHelper
   def spa_private_plan_optimizing_url(plan_id)
     "#{spa_private_plan_url(plan_id)}/optimizing"
   end
+
+  def spa_private_plan_select_crop_path
+    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
+    "#{origin}/plans/select-crop"
+  end
 end

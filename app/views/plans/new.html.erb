@@ -15,7 +15,7 @@
       <h2 class="content-card-title"><%= t('plans.new.title') %></h2>
       <p class="content-card-subtitle"><%= t('plans.new.subtitle') %></p>
 
-      <%= form_with url: select_crop_plans_path, method: :get, local: true do |f| %>
+      <%= form_with url: spa_private_plan_select_crop_path, method: :get, local: true do |f| %>
         <!-- 農場選択 -->
         <div class="plans-form-group">
           <label class="plans-form-label">
@@ -48,7 +48,7 @@
             <div class="radio-card-grid">
               <% @private_plan_new.farm_choices.each do |farm| %>
                 <label class="radio-card-wrapper">
-                  <input type="radio" name="farm_id" value="<%= farm.id %>" required
+                  <input type="radio" name="farmId" value="<%= farm.id %>" required
                          class="radio-card-input" />
                   <div class="radio-card">
                     <h3 class="radio-card-title">

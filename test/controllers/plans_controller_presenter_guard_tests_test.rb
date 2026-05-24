@@ -34,43 +34,6 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     assert_select "body", true
   end
 
-  # SCOPE: select_crop の正常/異常（不正farm_idはnewへリダイレクト）
-  test "select_crop renders selection data when valid params" do
-    farm = create(:farm, user: @user, name: "選択農場", latitude: 35.0, longitude: 135.0)
-    field1 = create(:field, user: @user, farm: farm, name: "F1", area: 10.0)
-    field2 = create(:field, user: @user, farm: farm, name: "F2", area: 20.0)
-    crop1 = create(:crop, user: @user, is_reference: false)
-    crop2 = create(:crop, user: @user, is_reference: false)
-
-    get select_crop_plans_path, params: { plan_year: Date.current.year, farm_id: farm.id }
-    assert_response :success
-
-    # セッションに保存されている（後続createで使用）
-    session_data = @request.session[:plan_data]
-    assert_equal farm.id, session_data[:farm_id]
-    assert_equal farm.name, session_data[:plan_name]
-    assert_in_delta 30.0, session_data[:total_area].to_f, 0.001
-    assert_select "body", true
-  end
-
-  test "select_crop redirects to new when farm is not found" do
-    get select_crop_plans_path, params: { plan_year: Date.current.year, farm_id: 9_999_999 }
-    assert_redirected_to new_plan_path
-    assert_equal I18n.t("plans.errors.farm_not_found"), flash[:alert]
-  end
-
-  test "select_crop redirects to new when farm_id is not a positive integer" do
-    get select_crop_plans_path, params: { farm_id: "abc" }
-    assert_redirected_to new_plan_path
-    assert_equal I18n.t("plans.errors.select_farm"), flash[:alert]
-  end
-
-  test "select_crop redirects to new when farm_id is zero" do
-    get select_crop_plans_path, params: { farm_id: "0" }
-    assert_redirected_to new_plan_path
-    assert_equal I18n.t("plans.errors.select_farm"), flash[:alert]
-  end
-
   # SCOPE: copy 正常/異常
   # SCOPE: copy 正常/異常
   test "copy is disabled due to new uniqueness constraint" do

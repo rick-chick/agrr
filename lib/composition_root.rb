@@ -314,18 +314,6 @@ module CompositionRoot
       )
     end
 
-    def private_plan_select_crop_context_runner(view:, user_id:)
-      Adapters::CultivationPlan::PrivatePlanSelectCropContextRunner.new(
-        view: view,
-        user_id: user_id,
-        field_gateway: field_gateway,
-        crop_gateway: crop_gateway,
-        translator: translator,
-        logger: logger,
-        user_lookup: user_lookup
-      )
-    end
-
     def plan_allocation_gateway
       @plan_allocation_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationActiveRecordGateway.new
     end
