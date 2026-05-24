@@ -26,10 +26,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_pesticide_show_detail"
         end
 
-        def find_pesticide_loaded_bundle!(id, for_edit:)
-          raise NotImplementedError, "Subclasses must implement find_pesticide_loaded_bundle!"
-        end
-
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
         end

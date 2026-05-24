@@ -63,14 +63,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
         end
 
-        def find_pesticide_loaded_bundle!(id, for_edit:)
-          pesticide = find_pesticide_model!(id)
-          Domain::Pesticide::Dtos::AuthorizedPesticideLoaded.new(
-            pesticide_entity: Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide),
-            master_form_snapshot: Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(pesticide)
-          )
-        end
-
         def create_for_user(user, attrs)
           pesticide = ::Pesticide.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.save

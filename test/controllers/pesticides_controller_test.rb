@@ -159,8 +159,7 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("pesticides.flash.reference_flag_admin_only"), flash[:alert]
   end
 
-  test "作成時に必須項目が欠けていると422でnewを再表示する" do
-    # name を空にしてバリデーションエラーを発生させる
+  test "作成時に必須項目が欠けていると一覧へ redirect する" do
     assert_no_difference("Pesticide.count") do
       post pesticides_path, params: { pesticide: {
         name: "",
@@ -169,10 +168,11 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
       } }
     end
 
-    assert_response :unprocessable_entity
+    assert_redirected_to pesticides_path
+    assert flash[:alert].present?
   end
 
-  test "update時に必須項目が欠けていると422でeditを再表示する" do
+  test "update時に必須項目が欠けていると詳細へ redirect する" do
     pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "元の名前")
     original_name = pesticide.name
 
@@ -180,19 +180,19 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
       name: ""
     } }
 
-    assert_response :unprocessable_entity
+    assert_redirected_to pesticide_path(pesticide)
+    assert flash[:alert].present?
 
     pesticide.reload
     assert_equal original_name, pesticide.name
   end
 
   test "should not update reference pesticide as non-admin" do
-    # 参照農薬は管理者のみ更新可能（一般ユーザーは before_action で農薬が見つからない）
     patch pesticide_path(@pesticide), params: { pesticide: {
       name: "更新された名前"
     } }
     assert_redirected_to pesticides_path
-    assert_equal I18n.t("pesticides.flash.not_found"), flash[:alert]
+    assert_equal I18n.t("pesticides.flash.no_permission"), flash[:alert]
 
     @pesticide.reload
     assert_not_equal "更新された名前", @pesticide.name
