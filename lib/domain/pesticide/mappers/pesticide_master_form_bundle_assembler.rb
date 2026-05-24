@@ -34,17 +34,6 @@ module Domain
           assemble_bundle(snapshot, crop_list_filter: crop_list_filter, pest_list_filter: pest_list_filter)
         end
 
-        # @return [Domain::Pesticide::Dtos::PesticideMasterFormPickListBundle]
-        def pick_list_bundle_for(user:)
-          crop_list_filter, pest_list_filter = pick_list_filters_for(user)
-          crop_rows = @gateway.list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_list_filter)
-          pest_rows = @gateway.list_pest_pick_rows_for_pesticide_master_form(pest_list_filter: pest_list_filter)
-          Domain::Pesticide::Mappers::PesticideMasterFormPickListBundleMapper.from_pick_rows(
-            crop_pick_rows: crop_rows,
-            pest_pick_rows: pest_rows
-          )
-        end
-
         private
 
         def pick_list_filters_for(user)

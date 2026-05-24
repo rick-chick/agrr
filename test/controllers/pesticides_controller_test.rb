@@ -51,27 +51,6 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     refute_includes body, other_pesticide.name
   end
 
-  test "should get new" do
-    get new_pesticide_path
-    assert_response :success
-  end
-
-  test "should get edit for admin user" do
-    # 管理者ユーザーを作成
-    admin_user = create(:user, admin: true)
-    sign_in_as admin_user
-
-    get edit_pesticide_path(@pesticide)
-    assert_response :success
-  end
-
-  test "should not get edit for non-admin user with reference pesticide" do
-    # 参照農薬は管理者のみ編集可能（一般ユーザーは参照農薬が見つからない）
-    get edit_pesticide_path(@pesticide)
-    assert_redirected_to pesticides_path
-    assert_equal I18n.t("pesticides.flash.not_found"), flash[:alert]
-  end
-
   test "should create pesticide" do
     assert_difference("Pesticide.count") do
       post pesticides_path, params: { pesticide: {
@@ -246,22 +225,6 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to pesticide_path(Pesticide.last)
     assert Pesticide.last.is_reference?
-  end
-
-  test "should display crops and pests in new form" do
-    get new_pesticide_path
-    assert_response :success
-    # ビューで@cropsと@pestsが設定されていることを確認
-    # (実際のビューで使用されているため)
-  end
-
-  test "should display crops and pests in edit form" do
-    admin_user = create(:user, admin: true)
-    sign_in_as admin_user
-
-    get edit_pesticide_path(@pesticide)
-    assert_response :success
-    # ビューで@cropsと@pestsが設定されていることを確認
   end
 
   # ========== region 認可 ==========
