@@ -29,20 +29,9 @@ module Adapters
 
           msg = failure_dto.respond_to?(:message) ? failure_dto.message : failure_dto.to_s
 
-          @view.flash.now[:alert] = msg
-          apply_pest_master_form_failure(failure_dto) if failure_dto.is_a?(Domain::Pest::Dtos::PestMasterFormFailure)
-          @view.render_form(:edit, status: :unprocessable_entity)
-        end
-
-        private
-
-        def apply_pest_master_form_failure(failure_dto)
-          @view.instance_variable_set(:@pest, Forms::PestMasterForm.from_edit_payload(failure_dto.master_edit_payload))
-          bundle = failure_dto.crop_selection_bundle
-          return if bundle.nil?
-
-          @view.instance_variable_set(:@selected_crop_ids, bundle.selected_crop_ids)
-          @view.instance_variable_set(:@crop_cards, bundle.crop_cards)
+          pest_id = failure_dto.is_a?(Domain::Pest::Dtos::PestMasterFormFailure) ? failure_dto.master_edit_payload.id : @view.params[:id]
+          path = pest_id ? @view.pest_path(pest_id) : @view.pests_path
+          @view.redirect_to path, alert: msg
         end
       end
     end

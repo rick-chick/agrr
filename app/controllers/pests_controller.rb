@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class PestsController < ApplicationController
-  before_action :load_pest_for_edit, only: [ :update ]
-
   # GET /pests
   def index
     presenter = Adapters::Pest::Presenters::PestListHtmlPresenter.new(view: self)
@@ -17,28 +15,6 @@ class PestsController < ApplicationController
     Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
       user_id: current_user.id,
       translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-  end
-
-  # GET /pests/new
-  def new
-    payload = Domain::Pest::Dtos::PestMasterEditPayload.for_blank_new
-    @pest = Forms::PestMasterForm.from_edit_payload(payload)
-    @html_display = master_form_html_display_capabilities
-    load_pest_master_form_crop_selection(
-      master_edit_payload: payload,
-      request_crop_ids: params[:crop_ids] ? Array(params[:crop_ids]) : []
-    )
-  end
-
-  # GET /pests/:id/edit
-  def edit
-    bundle = load_pest_for_edit
-    return if bundle.nil?
-
-    payload = bundle.pest_master_edit_payload
-    @pest = Forms::PestMasterForm.from_edit_payload(payload)
-    @html_display = bundle.html_display
-    load_pest_master_form_crop_selection(master_edit_payload: payload)
   end
 
   # POST /pests
@@ -80,22 +56,7 @@ class PestsController < ApplicationController
     @translator ||= CompositionRoot.translator
   end
 
-  def load_pest_for_edit
-    failure_presenter = Adapters::Pest::Presenters::PestAuthorizationFailureRedirectHtmlPresenter.new(
-      view: self, permission_message_key: "pests.flash.no_permission"
-    )
-    interactor = Domain::Pest::Interactors::PestLoadAuthorizedModelForEditInteractor.new(
-      failure_presenter: failure_presenter,
-      user_id: current_user.id,
-      gateway: CompositionRoot.pest_gateway,
-      user_lookup: CompositionRoot.user_lookup
-    )
-    interactor.call(params[:id])
-  end
-
   def pest_params
-    # region / is_reference は mass-assignment 許可のみ。admin 限定の認可は
-    # PestPolicy.normalize_attrs_for_* と PestCreate/UpdateInteractor が判定する。
     permitted = [
       :name,
       :name_scientific,
@@ -129,21 +90,4 @@ class PestsController < ApplicationController
 
     params.require(:pest).permit(*permitted)
   end
-
-  public
-
-  def render_form(action, status: :ok, locals: {})
-    render(action, status: status, locals: locals)
-  end
-
-  # Interactor 経由で作物選択 UI 用インスタンス変数を設定する（new / edit 用）。
-  def load_pest_master_form_crop_selection(master_edit_payload:, request_crop_ids: :use_payload_associations)
-    presenter = Adapters::Pest::Presenters::PestMasterFormCropSelectionLoadHtmlPresenter.new(view: self)
-    CompositionRoot.pest_master_form_crop_selection_load_interactor(output_port: presenter, user_id: current_user.id).call(
-      master_edit_payload: master_edit_payload,
-      request_crop_ids: request_crop_ids
-    )
-  end
-
-  private
 end

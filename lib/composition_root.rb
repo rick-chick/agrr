@@ -111,15 +111,6 @@ module CompositionRoot
       @crop_stage_copy_gateway ||= Adapters::Crop::Gateways::CropStageCopyActiveRecordGateway.new
     end
 
-    def pest_master_form_crop_selection_load_interactor(output_port:, user_id:)
-      Domain::Pest::Interactors::PestMasterFormCropSelectionLoadInteractor.new(
-        output_port: output_port,
-        user_id: user_id,
-        gateway: pest_gateway,
-        user_lookup: user_lookup
-      )
-    end
-
     def pest_gateway
       @pest_gateway ||= Adapters::Pest::Gateways::PestActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway

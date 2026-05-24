@@ -148,9 +148,6 @@
 
     <div class="actions">
       <%= link_to t('.back_to_list'), pests_path, class: "btn btn-secondary" %>
-      <% if @html_display&.show_edit_button %>
-        <%= link_to t('.edit'), edit_pest_path(@pest.id), class: "btn btn-secondary" %>
-      <% end %>
       <% if @html_display&.show_delete_button %>
         <%= link_to t('.delete'), pest_path(@pest.id),
                     class: "btn btn-error",
