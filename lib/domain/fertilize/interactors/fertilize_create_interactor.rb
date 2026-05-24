@@ -40,12 +40,7 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          if attrs
-            snapshot = @gateway.fertilize_master_form_snapshot_after_create_failure!(user: user, attributes: attrs)
-            @output_port.on_failure(Domain::Fertilize::Dtos::FertilizeCreateFailure.new(message: e.message, master_form_snapshot: snapshot))
-          else
-            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
-          end
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

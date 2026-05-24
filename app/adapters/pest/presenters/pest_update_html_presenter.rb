@@ -29,13 +29,13 @@ module Adapters
 
           msg = failure_dto.respond_to?(:message) ? failure_dto.message : failure_dto.to_s
 
-          if failure_dto.is_a?(Domain::Shared::Dtos::Error)
+          if failure_dto.is_a?(Domain::Shared::Dtos::Error) && msg == I18n.t("pests.flash.not_found")
             @view.redirect_to @view.pests_path, alert: msg
             return
           end
 
-          pest_id = failure_dto.is_a?(Domain::Pest::Dtos::PestMasterFormFailure) ? failure_dto.master_edit_payload.id : @view.params[:id]
-          path = pest_id ? @view.pest_path(pest_id) : @view.pests_path
+          pest_id = @view.params[:id]
+          path = pest_id.present? ? @view.pest_path(pest_id) : @view.pests_path
           @view.redirect_to path, alert: msg
         end
       end

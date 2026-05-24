@@ -52,9 +52,4 @@ class FieldsController < ApplicationController
     interactor.call(params[:id])
     return if performed?
   end
-
-  def render_form(action, status: :ok, locals: {})
-    render(action, status: status, locals: locals)
-  end
-
 end

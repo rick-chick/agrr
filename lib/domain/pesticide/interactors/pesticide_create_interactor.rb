@@ -36,15 +36,7 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          if attrs
-            bundle = Domain::Pesticide::Mappers::PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_for_new(
-              user: user,
-              assign_attributes: input_dto.assign_attributes_for_form || {}
-            )
-            @output_port.on_failure(Domain::Pesticide::Dtos::PesticideMasterFormFailure.new(message: e.message, bundle: bundle))
-          else
-            @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
-          end
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

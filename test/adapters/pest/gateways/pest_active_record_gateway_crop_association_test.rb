@@ -66,22 +66,6 @@ module Adapters
           assert_includes @crop1.reload.pests, @pest
         end
 
-        test "pest_master_form_crop_selection_bundle! returns CropEntity cards without ActiveRecord in bundle" do
-          payload = Domain::Pest::Dtos::PestMasterEditPayload.for_blank_new
-          bundle = @gw.pest_master_form_crop_selection_bundle!(
-            user: @user,
-            master_edit_payload: payload,
-            request_crop_ids: [ @crop1.id, @other_user_crop.id ]
-          )
-
-          assert_includes bundle.selected_crop_ids, @crop1.id
-          assert_not_includes bundle.selected_crop_ids, @other_user_crop.id
-          assert bundle.crop_cards.any?
-          bundle.crop_cards.each do |card|
-            assert_instance_of Domain::Crop::Entities::CropEntity, card[:crop]
-            refute card[:crop].is_a?(::Crop)
-          end
-        end
       end
     end
   end

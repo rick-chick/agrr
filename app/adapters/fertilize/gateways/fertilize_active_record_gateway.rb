@@ -97,28 +97,6 @@ module Adapters
           ::Fertilize.find_by(name: name, is_reference: false, user_id: user_id)
         end
 
-        def build_after_create_failure_fertilize_for_master_form!(user:, attributes:)
-          sym = attributes.respond_to?(:symbolize_keys) ? attributes.symbolize_keys : attributes.to_h.symbolize_keys
-          fertilize = ::Fertilize.new(
-            user_id: user.id,
-            name: sym[:name],
-            n: sym[:n],
-            p: sym[:p],
-            k: sym[:k],
-            description: sym[:description],
-            package_size: sym[:package_size],
-            region: sym[:region],
-            is_reference: sym[:is_reference]
-          )
-          fertilize.valid?
-          fertilize
-        end
-
-        def fertilize_master_form_snapshot_after_create_failure!(user:, attributes:)
-          fertilize = build_after_create_failure_fertilize_for_master_form!(user: user, attributes: attributes)
-          Adapters::Fertilize::Mappers::FertilizeMasterFormSnapshotMapper.from_record(fertilize, error_messages: fertilize.errors.full_messages)
-        end
-
         private
 
         def index_relation_for_filter(filter)

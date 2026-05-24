@@ -28,7 +28,7 @@ module Domain
               return @output_port.on_failure(
                 Domain::Fertilize::Dtos::FertilizeUpdateFailure.new(
                   message: @translator.t("fertilizes.flash.reference_flag_admin_only"),
-                  master_form_snapshot: snapshot_from_entity(current)
+                  fertilize_id: current.id
                 )
               )
             end
@@ -57,23 +57,8 @@ module Domain
           @output_port.on_failure(
             Domain::Fertilize::Dtos::FertilizeUpdateFailure.new(
               message: e.message,
-              master_form_snapshot: current ? snapshot_from_entity(current) : nil
+              fertilize_id: current&.id || input_dto.fertilize_id
             )
-          )
-        end
-
-        private
-
-        def snapshot_from_entity(entity)
-          Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot.new(
-            attributes: {
-              name: entity.name, n: entity.n, p: entity.p, k: entity.k,
-              description: entity.description, package_size: entity.package_size,
-              is_reference: entity.is_reference, region: entity.region, user_id: entity.user_id
-            },
-            new_record: false,
-            id: entity.id,
-            error_messages: []
           )
         end
       end

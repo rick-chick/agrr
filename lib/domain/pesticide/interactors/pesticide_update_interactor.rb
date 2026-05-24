@@ -53,13 +53,7 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          user_b = @user_lookup.find(@user_id)
-          bundle = Domain::Pesticide::Mappers::PesticideMasterFormBundleAssembler.new(gateway: @gateway).bundle_after_update_merge(
-            user: user_b,
-            pesticide_id: input_dto.pesticide_id,
-            assign_attributes: input_dto.assign_attributes_for_form || {}
-          )
-          @output_port.on_failure(Domain::Pesticide::Dtos::PesticideMasterFormFailure.new(message: e.message, bundle: bundle))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

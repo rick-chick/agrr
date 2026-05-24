@@ -95,43 +95,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pest not found"
         end
 
-        def pest_master_form_crop_selection_bundle!(user:, master_edit_payload:, request_crop_ids: :use_payload_associations)
-          pest_like = Domain::Pest::Dtos::PestCropAssociationPestInput.from_master_edit_payload(master_edit_payload)
-          raw_base =
-            if request_crop_ids == :use_payload_associations
-              master_edit_payload.associated_crop_ids
-            else
-              Array(request_crop_ids)
-            end
-
-          relation = accessible_crops_relation_for_pest_association(
-            is_reference: pest_like.is_reference?,
-            owner_user_id: pest_like.user_id,
-            region: pest_like.region,
-            user: user
-          )
-          accessible_records =
-            relation.to_a.select do |crop|
-              Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest_like, user: user)
-            end
-          accessible_crops =
-            accessible_records.map do |crop|
-              Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
-            end
-          allowed_ids = accessible_crops.map(&:id)
-          normalized_selected = Array(raw_base).map(&:to_i).uniq & allowed_ids
-          crop_cards =
-            Domain::Crop::Mappers::MasterFormCropSelectionCardsMapper.build(
-              accessible_crops: accessible_crops,
-              selected_ids: normalized_selected
-            )
-
-          Domain::Pest::Dtos::PestMasterFormCropSelectionBundle.new(
-            selected_crop_ids: normalized_selected,
-            crop_cards: crop_cards
-          )
-        end
-
         def crop_pest_association_exists?(crop_id:, pest_id:)
           ::CropPest.exists?(crop_id: crop_id, pest_id: pest_id)
         end
@@ -220,25 +183,6 @@ module Adapters
             crop_nest_snapshot: pest_crop_nest_snapshot_from(pest, ensure_blank_control_method: for_edit_form)
           )
         end
-
-        private
-
-        # {Domain::Shared::PestCropAssociationAccess} と整合する作物 Relation（アダプター内永続のみ）
-        def accessible_crops_relation_for_pest_association(is_reference:, owner_user_id:, region:, user:)
-          scope =
-            if is_reference
-              ::Crop.where(is_reference: true)
-            else
-              owner_id = owner_user_id || user&.id
-              # ユーザー害虫: 同じ所有者の非参照作物 + 参照作物すべて
-              ::Crop.where("is_reference = ? OR (is_reference = ? AND user_id = ?)", true, false, owner_id)
-            end
-
-          scope = scope.where(region: region) if region.present?
-          scope.order(:name)
-        end
-
-        public
 
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
           pest = ::Pest.find(pest_id)

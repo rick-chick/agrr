@@ -133,11 +133,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement unlink_pest_from_crop"
         end
 
-        # HTML 害虫マスタ編集・検証失敗時の作物選択 UI 用。
-        # @param request_crop_ids [Symbol] :use_payload_associations または生の crop id 配列（空可）
-        def pest_master_form_crop_selection_bundle!(user:, master_edit_payload:, request_crop_ids: :use_payload_associations)
-          raise NotImplementedError, "Subclasses must implement pest_master_form_crop_selection_bundle!"
-        end
       end
     end
   end

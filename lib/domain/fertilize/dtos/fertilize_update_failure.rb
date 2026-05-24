@@ -3,15 +3,15 @@
 module Domain
   module Fertilize
     module Dtos
-      # 肥料更新失敗時に Output Port へ渡す。HTML 再表示用スナップショットは Interactor が Entity から構築（AR なし）。
+      # 肥料更新失敗時に Output Port へ渡す（リダイレクト先 id のみ。フォーム再描画は行わない）。
       class FertilizeUpdateFailure
-        attr_reader :message, :master_form_snapshot
+        attr_reader :message, :fertilize_id
 
         # @param message [String]
-        # @param master_form_snapshot [Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot, nil]
-        def initialize(message:, master_form_snapshot: nil)
+        # @param fertilize_id [Integer, nil]
+        def initialize(message:, fertilize_id: nil)
           @message = message
-          @master_form_snapshot = master_form_snapshot
+          @fertilize_id = fertilize_id
         end
       end
     end

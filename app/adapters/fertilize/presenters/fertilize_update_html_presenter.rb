@@ -23,7 +23,12 @@ module Adapters
           end
 
           msg = failure_dto.respond_to?(:message) ? failure_dto.message : failure_dto.to_s
-          fertilize_id = failure_dto.respond_to?(:master_form_snapshot) ? failure_dto.master_form_snapshot&.id : @view.params[:id]
+          fertilize_id =
+            if failure_dto.is_a?(Domain::Fertilize::Dtos::FertilizeUpdateFailure)
+              failure_dto.fertilize_id
+            else
+              @view.params[:id]
+            end
 
           if msg == I18n.t("fertilizes.flash.reference_flag_admin_only") && fertilize_id
             @view.redirect_to @view.fertilize_path(fertilize_id), alert: msg

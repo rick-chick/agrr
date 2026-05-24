@@ -4,8 +4,6 @@ module Domain
   module Pest
     module Interactors
       class PestUpdateInteractor < Domain::Pest::Ports::PestUpdateInputPort
-        include PestMasterFormFailureBuilder
-
         def initialize(output_port:, user_id:, gateway:, logger:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
@@ -67,7 +65,7 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("pests.flash.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @output_port.on_failure(pest_master_form_failure_for(user, input_dto, message: e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

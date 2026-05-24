@@ -83,45 +83,6 @@ module Adapters
           end
         end
 
-        def ensure_nested_associations_for_pesticide_master_form!(pesticide)
-          pesticide.build_pesticide_usage_constraint unless pesticide.pesticide_usage_constraint
-          pesticide.build_pesticide_application_detail unless pesticide.pesticide_application_detail
-          pesticide
-        end
-
-        def list_crop_pick_rows_for_pesticide_master_form(crop_list_filter:)
-          crop_pick_entities(crop_list_filter).map do |crop|
-            Domain::Pesticide::Dtos::PesticideMasterFormCropPickRow.new(id: crop.id, name: crop.name)
-          end
-        end
-
-        def list_pest_pick_rows_for_pesticide_master_form(pest_list_filter:)
-          pest_pick_entities(pest_list_filter).map do |pest|
-            Domain::Pesticide::Dtos::PesticideMasterFormPestPickRow.new(id: pest.id, name: pest.name)
-          end
-        end
-
-        def build_pesticide_master_form_snapshot_for_new(assign_attributes:)
-          pesticide = ::Pesticide.new(assign_attributes || {})
-          ensure_nested_associations_for_pesticide_master_form!(pesticide)
-          pesticide.valid?
-          Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(
-            pesticide,
-            error_messages: pesticide.errors.full_messages
-          )
-        end
-
-        def build_pesticide_master_form_snapshot_after_update_merge!(user:, pesticide_id:, assign_attributes:)
-          pesticide = find_pesticide_model!(pesticide_id.to_i)
-          ensure_nested_associations_for_pesticide_master_form!(pesticide)
-          pesticide.assign_attributes(assign_attributes || {})
-          pesticide.valid?
-          Adapters::Pesticide::Mappers::PesticideMasterFormSnapshotMapper.from_record(
-            pesticide,
-            error_messages: pesticide.errors.full_messages
-          )
-        end
-
         def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:)
           pesticide = find_pesticide_model!(pesticide_id)
           name = pesticide.name
@@ -142,14 +103,6 @@ module Adapters
         end
 
         private
-
-        def crop_pick_entities(crop_list_filter)
-          @crop_gateway.list_index_for_filter(crop_list_filter).sort_by { |crop| crop.name.to_s }
-        end
-
-        def pest_pick_entities(pest_list_filter)
-          @pest_gateway.list_index_for_filter(pest_list_filter).sort_by { |pest| pest.name.to_s }
-        end
 
         def index_relation_for_filter(filter)
           case filter.mode

@@ -89,7 +89,7 @@ module Domain
 
           assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailure, received
           assert_equal "admin only", received.message
-          assert_instance_of Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot, received.master_form_snapshot
+          assert_equal 1, received.fertilize_id
         end
 
         test "should allow admin user to change is_reference flag" do
@@ -150,7 +150,7 @@ module Domain
 
           assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailure, received
           assert_equal "Update failed", received.message
-          assert_instance_of Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot, received.master_form_snapshot
+          assert_equal 1, received.fertilize_id
         end
 
         test "propagates StandardError when user lookup raises" do
@@ -164,7 +164,7 @@ module Domain
           end
         end
 
-        test "on_failure has nil master_form_snapshot when entity lookup fails before update" do
+        test "on_failure includes fertilize_id from input when entity lookup fails before update" do
           input_dto = Domain::Fertilize::Dtos::FertilizeUpdateInput.new(fertilize_id: 1, name: "x")
 
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
@@ -178,7 +178,7 @@ module Domain
 
           assert_instance_of Domain::Fertilize::Dtos::FertilizeUpdateFailure, received
           assert_equal "not found", received.message
-          assert_nil received.master_form_snapshot
+          assert_equal 1, received.fertilize_id
         end
       end
     end

@@ -13,27 +13,6 @@ class Adapters::Pesticide::Gateways::PesticideActiveRecordGatewayTest < ActiveSu
     @user = create(:user)
   end
 
-  test "build_pesticide_master_form_snapshot_for_new builds nested associations on new record" do
-    snapshot = @gateway.build_pesticide_master_form_snapshot_for_new(assign_attributes: { name: "n" })
-
-    assert_equal "n", snapshot.name
-    assert snapshot.new_record?
-    assert snapshot.pesticide_usage_constraint_attributes.present?
-    assert snapshot.pesticide_application_detail_attributes.present?
-  end
-
-  test "list crop pick rows uses CropPolicy index_list_filter via crop gateway" do
-    crop_filter = Domain::Shared::Policies::CropPolicy.index_list_filter(@user)
-    user_crop = create(:crop, is_reference: false, user: @user)
-    create(:crop, is_reference: true, user: nil)
-
-    pick_ids = @gateway.list_crop_pick_rows_for_pesticide_master_form(crop_list_filter: crop_filter).map(&:id)
-    entity_ids = CompositionRoot.crop_gateway.list_index_for_filter(crop_filter).map(&:id)
-
-    assert_equal entity_ids.sort, pick_ids.sort
-    assert_includes pick_ids, user_crop.id
-  end
-
   test "list_index_for_filter owned_non_reference returns only that user's non-reference pesticides" do
     user = create(:user)
     other = create(:user)

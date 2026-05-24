@@ -25,11 +25,7 @@ module Adapters
           end
 
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-          pesticide_id = if error_dto.is_a?(Domain::Pesticide::Dtos::PesticideMasterFormFailure)
-            error_dto.bundle.pesticide_master_form_snapshot.id
-          else
-            @view.params[:id]
-          end
+          pesticide_id = @view.params[:id]
           path = pesticide_id ? @view.pesticide_path(pesticide_id) : @view.pesticides_path
           @view.redirect_to path, alert: msg
         end
