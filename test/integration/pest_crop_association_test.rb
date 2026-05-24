@@ -5,6 +5,7 @@ require "test_helper"
 class PestCropAssociationTest < ActionDispatch::IntegrationTest
   setup do
     @user = create(:user)
+    @user.generate_api_key!
     sign_in_as @user
     @crop1 = create(:crop, user: @user, name: "トマト")
     @crop2 = create(:crop, user: @user, name: "レタス")
@@ -64,7 +65,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     # 5. 作物単位の害虫管理画面から害虫を削除
     other_crop = create(:crop, user: @user)
-    get crop_pests_path(other_crop)
+    get api_v1_masters_crop_pests_path(other_crop), headers: masters_api_headers
     assert_response :success
   end
 
@@ -75,8 +76,10 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     # 参照作物に参照害虫を関連付け（参照害虫は参照作物のみ）
     assert_difference("CropPest.count", 2) do
-      post crop_pests_path(@reference_crop), params: { pest_id: pest1.id }
-      post crop_pests_path(@reference_crop), params: { pest_id: pest2.id }
+      post api_v1_masters_crop_pests_path(@reference_crop), params: { pest_id: pest1.id }, headers: masters_api_headers
+      assert_response :created
+      post api_v1_masters_crop_pests_path(@reference_crop), params: { pest_id: pest2.id }, headers: masters_api_headers
+      assert_response :created
     end
 
     @reference_crop.reload
@@ -159,9 +162,8 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     assert_not pest.crops.include?(other_crop)
 
     # 他人の作物の害虫管理画面にはアクセスできない
-    get crop_pests_path(other_crop)
-    assert_redirected_to crops_path
-    assert_equal I18n.t("crops.flash.no_permission"), flash[:alert]
+    get api_v1_masters_crop_pests_path(other_crop), headers: masters_api_headers
+    assert_response :forbidden
   end
 
   test "should handle reference crops and pests correctly" do
@@ -169,7 +171,8 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     # 参照害虫を参照作物に関連付け（一般ユーザーでも可能）
     assert_difference("CropPest.count", 1) do
-      post crop_pests_path(@reference_crop), params: { pest_id: reference_pest.id }
+      post api_v1_masters_crop_pests_path(@reference_crop), params: { pest_id: reference_pest.id }, headers: masters_api_headers
+      assert_response :created
     end
 
     @reference_crop.reload
@@ -177,7 +180,8 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     # 参照害虫は参照作物にしか紐づけできない → 自分の作物には関連付け不可
     assert_no_difference("CropPest.count") do
-      post crop_pests_path(@crop1), params: { pest_id: reference_pest.id }
+      post api_v1_masters_crop_pests_path(@crop1), params: { pest_id: reference_pest.id }, headers: masters_api_headers
+      assert_response :forbidden
     end
 
     @crop1.reload
@@ -191,15 +195,18 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     # 参照害虫は参照作物にしか紐づけできない
     assert_difference("CropPest.count", 1) do
-      post crop_pests_path(@reference_crop), params: { pest_id: pest.id }
+      post api_v1_masters_crop_pests_path(@reference_crop), params: { pest_id: pest.id }, headers: masters_api_headers
+      assert_response :created
     end
 
     # 同じ害虫を同じ作物に関連付けようとする（2回目 - 重複）
     assert_no_difference("CropPest.count") do
-      post crop_pests_path(@reference_crop), params: { pest_id: pest.id }
+      post api_v1_masters_crop_pests_path(@reference_crop), params: { pest_id: pest.id }, headers: masters_api_headers
+      assert_response :unprocessable_entity
     end
 
-    assert_equal I18n.t("crops.pests.flash.already_associated"), flash[:alert]
+    json = JSON.parse(response.body)
+    assert_equal I18n.t("api.errors.pests.already_associated"), json["error"]
 
     @reference_crop.reload
     assert_equal 1, @reference_crop.pests.count  # 重複しない
@@ -267,8 +274,10 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
     # 同じ参照作物に2つの害虫を同時に関連付け（順次実行）
     assert_difference("CropPest.count", 2) do
-      post crop_pests_path(@reference_crop), params: { pest_id: pest1.id }
-      post crop_pests_path(@reference_crop), params: { pest_id: pest2.id }
+      post api_v1_masters_crop_pests_path(@reference_crop), params: { pest_id: pest1.id }, headers: masters_api_headers
+      assert_response :created
+      post api_v1_masters_crop_pests_path(@reference_crop), params: { pest_id: pest2.id }, headers: masters_api_headers
+      assert_response :created
     end
 
     @reference_crop.reload
@@ -299,7 +308,8 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
   test "should handle error cases gracefully" do
     # 存在しない害虫IDで関連付け試行
     assert_no_difference("CropPest.count") do
-      post crop_pests_path(@crop1), params: { pest_id: 99999 }
+      post api_v1_masters_crop_pests_path(@crop1), params: { pest_id: 99999 }, headers: masters_api_headers
+      assert_response :not_found
     end
 
     # 存在しない作物IDを含む選択
@@ -321,6 +331,7 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
 
   test "admin should not see other user's pests" do
     admin_user = create(:user, admin: true)
+    admin_user.generate_api_key!
     sign_in_as admin_user
 
     admin_crop = create(:crop, user: admin_user)
@@ -342,21 +353,21 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     assert_redirected_to pests_path
     assert_equal I18n.t("pests.flash.no_permission"), flash[:alert]
 
-    # 管理者は他人の作物にアクセスできない
-    get crop_pests_path(other_crop)
-    assert_redirected_to crops_path
-    assert_equal I18n.t("crops.flash.no_permission"), flash[:alert]
+    # 管理者は他人の作物の害虫一覧 API にアクセスできない
+    get api_v1_masters_crop_pests_path(other_crop), headers: masters_api_headers(admin_user)
+    assert_response :forbidden
 
-    # 管理者の作物の害虫一覧には参照害虫と自分の害虫のみ表示される
+    # 管理者の作物の害虫一覧 API には参照害虫と自分の害虫のみ含まれる
     create(:crop_pest, crop: admin_crop, pest: reference_pest)
     create(:crop_pest, crop: admin_crop, pest: admin_pest)
     create(:crop_pest, crop: admin_crop, pest: other_user_pest)
 
-    get crop_pests_path(admin_crop)
+    get api_v1_masters_crop_pests_path(admin_crop), headers: masters_api_headers(admin_user)
     assert_response :success
-    assert_select ".crop-card .crop-name", text: reference_pest.name, count: 1
-    assert_select ".crop-card .crop-name", text: admin_pest.name, count: 1
-    assert_select ".crop-card .crop-name", text: other_user_pest.name, count: 0
+    names = JSON.parse(response.body).map { |p| p["name"] }
+    assert_includes names, reference_pest.name
+    assert_includes names, admin_pest.name
+    assert_not_includes names, other_user_pest.name
   end
 
   test "admin should access reference pests and own pests" do
@@ -381,14 +392,21 @@ class PestCropAssociationTest < ActionDispatch::IntegrationTest
     get edit_pest_path(admin_pest)
     assert_response :success
 
-    # 管理者の作物からも参照害虫と自分の害虫にアクセス可能
+    # 管理者の作物からも参照害虫と自分の害虫の詳細 HTML にアクセス可能
     create(:crop_pest, crop: admin_crop, pest: reference_pest)
     create(:crop_pest, crop: admin_crop, pest: admin_pest)
 
-    get crop_pest_path(admin_crop, reference_pest, locale: :us)
+    get pest_path(reference_pest, locale: :us)
     assert_response :success
 
-    get crop_pest_path(admin_crop, admin_pest, locale: :us)
+    get pest_path(admin_pest, locale: :us)
     assert_response :success
+  end
+
+  private
+
+  def masters_api_headers(for_user = @user)
+    for_user.generate_api_key! unless for_user.api_key.present?
+    { "Accept" => "application/json", "X-API-Key" => for_user.api_key }
   end
 end

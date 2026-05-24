@@ -19,7 +19,7 @@
 <div class="pests-section">
   <div class="pests-section__header">
     <h2 class="stages-title"><%= t('crops.show.pests_title') %></h2>
-    <%= link_to t('crops.show.manage_pests'), crop_pests_path(crop), class: "btn btn-secondary btn-sm pests-section__action" %>
+    <%= link_to t('crops.show.manage_pests'), pests_path, class: "btn btn-secondary btn-sm pests-section__action" %>
   </div>
   <% if pests&.any? %>
     <div class="pests-grid">
@@ -27,7 +27,7 @@
         <article class="pest-card">
           <header class="pest-card__header">
             <h3 class="pest-card__name">
-              <%= link_to pest.name, crop_pest_path(crop, pest), class: "pest-card__link" %>
+              <%= link_to pest.name, pest_path(pest.id), class: "pest-card__link" %>
             </h3>
             <% if pest.name_scientific.present? %>
               <div class="pest-card__scientific"><%= pest.name_scientific %></div>
@@ -65,4 +65,4 @@
       <p><%= t('crops.show.no_pests_description') %></p>
     </div>
   <% end %>
-</div>
+</div>
