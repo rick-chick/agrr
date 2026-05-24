@@ -13,7 +13,7 @@
         </p>
       </div>
       <div>
-        <%= link_to new_plan_path, class: "btn btn-primary" do %>
+        <%= link_to spa_private_plan_new_path, class: "btn btn-primary" do %>
           <%= t('plans.index.create_new') %>
         <% end %>
       </div>
@@ -30,7 +30,7 @@
           <%= t('plans.index.no_plans_hint') %>
         </p>
         <div class="plans-empty-actions">
-          <%= link_to new_plan_path, class: "btn btn-primary" do %>
+          <%= link_to spa_private_plan_new_path, class: "btn btn-primary" do %>
             <%= t('plans.index.create_new') %>
           <% end %>
           <%= link_to public_plans_path, class: "btn btn-ghost" do %>

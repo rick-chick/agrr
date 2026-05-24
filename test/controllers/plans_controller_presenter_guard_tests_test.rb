@@ -25,15 +25,6 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     assert_select "body", true
   end
 
-  test "new renders successfully and lists user farms with default plan name" do
-    create(:farm, user: @user, name: "Farm A")
-    create(:farm, user: @user, name: "Farm B")
-
-    get new_plan_path
-    assert_response :success
-    assert_select "body", true
-  end
-
   # SCOPE: copy 正常/異常
   # SCOPE: copy 正常/異常
   test "copy is disabled due to new uniqueness constraint" do

@@ -25,22 +25,6 @@ class PlansController < CultivationPlanHtmlBaseController
     Rails.logger.debug "📅 [Plans#index] User: #{current_user.id}, Plan rows: #{@private_plan_index.plan_rows.size}"
   end
 
-  # Step 1: 農場選択
-  def new
-    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanNewHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PrivatePlanNewInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      farm_gateway: CompositionRoot.farm_gateway,
-      translator: CompositionRoot.translator,
-      logger: CompositionRoot.logger,
-      user_lookup: CompositionRoot.user_lookup
-    ).call
-    return if performed?
-
-    Rails.logger.debug "🌍 [Plans#new] User: #{current_user.id}, Farms: #{@private_plan_new.farm_choices.size}"
-  end
-
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。
   # 計画コピー（前年度の計画を新年度にコピー）
   def copy

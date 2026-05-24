@@ -192,4 +192,9 @@ module ApplicationHelper
     origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
     "#{origin}/plans/select-crop"
   end
+
+  def spa_private_plan_new_path
+    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
+    "#{origin}/plans/new"
+  end
 end

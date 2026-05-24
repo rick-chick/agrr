@@ -75,7 +75,7 @@ Rails.application.routes.draw do
     post "api_keys/regenerate", to: "api_keys#regenerate", as: "regenerate_api_key"
 
     # HTML Plans（ナビ等で plans_path / public_plans_path を参照するため）
-    resources :plans, only: [ :index, :new, :destroy ] do
+    resources :plans, only: [ :index, :destroy ] do
       member do
         post :copy
       end
