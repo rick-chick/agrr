@@ -4,9 +4,8 @@ module Adapters
   module AgriculturalTask
     module Presenters
       class AgriculturalTaskUpdateHtmlPresenter < Domain::AgriculturalTask::Ports::AgriculturalTaskUpdateOutputPort
-        def initialize(view:, form_resubmit: nil)
+        def initialize(view:)
           @view = view
-          @form_resubmit = form_resubmit
         end
 
         def on_success(task)
@@ -15,8 +14,8 @@ module Adapters
 
         def on_failure(error_dto)
           if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
-            @view.flash[:alert] = I18n.t("agricultural_tasks.flash.no_permission")
-            @view.redirect_to @view.agricultural_tasks_path
+            @view.redirect_back fallback_location: @view.agricultural_tasks_path,
+                               alert: I18n.t("agricultural_tasks.flash.no_permission")
             return
           end
 
@@ -26,10 +25,9 @@ module Adapters
           end
 
           msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-
-          @view.apply_agricultural_task_update_form_snapshot(@form_resubmit) if @form_resubmit
-          @view.flash.now[:alert] = msg
-          @view.render :edit, status: :unprocessable_entity
+          task_id = @view.params[:id]
+          path = task_id.present? ? @view.agricultural_task_path(task_id) : @view.agricultural_tasks_path
+          @view.redirect_to path, alert: msg
         end
       end
     end

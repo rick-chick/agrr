@@ -115,23 +115,6 @@ module Adapters
           task
         end
 
-        def merge_update_form_snapshot_for_master_form!(user:, task_id:, dto:, task_attributes:)
-          task = find_agricultural_task_model!(task_id.to_i)
-          ta = task_attributes.respond_to?(:symbolize_keys) ? task_attributes.symbolize_keys : task_attributes.to_h.symbolize_keys
-          task.assign_attributes(
-            name: dto.name || ta[:name],
-            description: dto.description || ta[:description],
-            time_per_sqm: dto.time_per_sqm || ta[:time_per_sqm],
-            weather_dependency: dto.weather_dependency || ta[:weather_dependency],
-            skill_level: dto.skill_level || ta[:skill_level],
-            is_reference: dto.is_reference.nil? ? ta[:is_reference] : dto.is_reference,
-            required_tools: dto.required_tools || ta[:required_tools],
-            region: dto.region || ta[:region]
-          )
-          task.valid?
-          task
-        end
-
         def preview_agricultural_task_for_edit_crop_selection(base_entity:, user:, agricultural_task_params:)
           requested_flag = preview_requested_reference_flag(base_entity, agricultural_task_params)
           return base_entity if requested_flag == base_entity.is_reference?

@@ -65,26 +65,19 @@ class AgriculturalTasksController < ApplicationController
   def update
     task_attributes = build_task_attributes
 
-    @input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInput.from_hash(
+    input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateInput.from_hash(
       {
         agricultural_task: task_attributes,
         selected_crop_ids: selected_crop_ids_from_params
       },
       params[:id]
     )
-    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateHtmlPresenter.new(
-      view: self,
-      form_resubmit: {
-        dto: @input_dto,
-        task_attributes: task_attributes,
-        selected_crop_ids: selected_crop_ids_from_params
-      }
-    )
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateHtmlPresenter.new(view: self)
 
     interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, translator: translator, user_lookup: CompositionRoot.user_lookup)
 
-    interactor.call(@input_dto)
+    interactor.call(input_dto)
   end
 
   # DELETE /agricultural_tasks/:id
@@ -200,24 +193,6 @@ class AgriculturalTasksController < ApplicationController
   end
 
   public
-
-  # HTML 更新失敗時に編集フォームへ送信内容を戻す（Presenter からのみ呼ぶ）
-  def apply_agricultural_task_update_form_snapshot(form_resubmit)
-    return unless form_resubmit
-
-    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskUpdateFormSnapshotHtmlPresenter.new(view: self)
-    Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateFormSnapshotInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      gateway: CompositionRoot.agricultural_task_gateway,
-      user_lookup: CompositionRoot.user_lookup
-    ).call(
-      Domain::AgriculturalTask::Dtos::AgriculturalTaskUpdateFormSnapshotInput.new(
-        form_resubmit: form_resubmit,
-        accessible_crops: @accessible_crops
-      )
-    )
-  end
 
   # View interface for HTML Presenters（Presenter から呼ばれるため public）
   def redirect_to(path, notice: nil, alert: nil)

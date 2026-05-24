@@ -57,11 +57,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement build_after_create_failure_agricultural_task_for_master_form!"
         end
 
-        # マスタCRUD 更新失敗時: DTO とパラメータ束をマージして検証エラー状態を再現（永続化しない）
-        def merge_update_form_snapshot_for_master_form!(user:, task_id:, dto:, task_attributes:)
-          raise NotImplementedError, "Subclasses must implement merge_update_form_snapshot_for_master_form!"
-        end
-
         # HTML 編集の作物選択データ読込: update 時は送信パラメータを反映したプレビュー用エンティティを返す（永続化しない）
         # @param base_entity [Domain::AgriculturalTask::Entities::AgriculturalTaskEntity]
         # @return [Domain::AgriculturalTask::Entities::AgriculturalTaskEntity]
