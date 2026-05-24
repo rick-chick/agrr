@@ -53,7 +53,7 @@ class AuthTestControllerTest < ActionController::TestCase
     assert_redirected_to root_path(locale: I18n.default_locale)
   end
 
-  def test_mock_login_redirects_to_process_saved_plan_when_session_data_present
+  def test_mock_login_redirects_to_spa_public_plan_results_when_session_data_present
     @request.session[:public_plan_save_data] = {
       plan_id: 1,
       farm_id: 1,

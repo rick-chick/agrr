@@ -21,7 +21,7 @@ class AuthControllerTest < ActionController::TestCase
     )
   end
 
-  def test_callback_redirects_to_process_saved_plan_when_session_data_present
+  def test_callback_redirects_to_spa_public_plan_results_when_session_data_present
     @request.session[:public_plan_save_data] = {
       plan_id: 1,
       farm_id: 1,

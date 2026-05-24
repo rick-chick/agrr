@@ -64,6 +64,28 @@ module Api
           assert_equal "plan_id is required", response_body["error"]
         end
       end
+
+      test "POST /api/v1/public_plans/save_plan - 保存失敗の場合エラーレスポンスを返す" do
+        @request.env["HTTP_ACCEPT"] = "application/json"
+
+        fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailure
+        Domain::CultivationPlan::Interactors::PublicPlanSaveByPlanIdInteractor.stub(:new, proc { |**kwargs|
+          Object.new.tap do |o|
+            o.define_singleton_method(:call) { |**_|
+              kwargs[:output_port].on_failure(
+                fdto.new(kind: fdto::KIND_SAVE_FAILED, message: "作成できるFarmは4件までです")
+              )
+            }
+          end
+        }) do
+          post :save_plan, params: { plan_id: 99999 }
+
+          assert_response :unprocessable_entity
+          response_body = JSON.parse(response.body)
+          assert_not response_body["success"]
+          assert_includes response_body["error"], "作成できるFarmは4件までです"
+        end
+      end
     end
   end
 end
