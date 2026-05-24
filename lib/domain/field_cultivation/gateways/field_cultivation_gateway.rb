@@ -13,7 +13,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_api_summary"
         end
 
-        def update_field_cultivation_schedule(field_cultivation_id:, start_date:, completion_date:, public_plan: false)
+        def update_field_cultivation_schedule(field_cultivation_id:, start_date:, completion_date:, cultivation_days: nil)
           raise NotImplementedError, "Subclasses must implement update_field_cultivation_schedule"
         end
       end

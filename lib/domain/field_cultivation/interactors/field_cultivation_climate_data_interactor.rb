@@ -6,51 +6,77 @@ module Domain
       class FieldCultivationClimateDataInteractor < Domain::FieldCultivation::Ports::FieldCultivationClimateDataInputPort
         include Concerns::PlanFieldCultivationAuthorization
 
-        def initialize(output_port:, logger:, user_id:, user_lookup:, climate_gateways_for_user:)
+        def initialize(
+          output_port:,
+          logger:,
+          user_id:,
+          user_lookup:,
+          climate_source_gateway:,
+          crop_gateway:,
+          weather_data_gateway:,
+          weather_prediction_gateway:,
+          prediction_gateway:,
+          cultivation_plan_gateway:,
+          anchors_resolver:,
+          climate_progress_gateway:,
+          clock:,
+          translator:,
+          use_mock_progress: false
+        )
           @output_port = output_port
           @logger = logger
           @user_id = user_id
           @user_lookup = user_lookup
-          @climate_gateways_for_user = climate_gateways_for_user
+          @climate_source_gateway = climate_source_gateway
+          @crop_gateway = crop_gateway
+          @weather_data_gateway = weather_data_gateway
+          @weather_prediction_gateway = weather_prediction_gateway
+          @prediction_gateway = prediction_gateway
+          @cultivation_plan_gateway = cultivation_plan_gateway
+          @anchors_resolver = anchors_resolver
+          @climate_progress_gateway = climate_progress_gateway
+          @clock = clock
+          @translator = translator
+          @use_mock_progress = use_mock_progress
         end
 
         def call(input_dto)
           user_dto = @user_id.present? ? @user_lookup.find(@user_id) : nil
-          bundle = @climate_gateways_for_user.call(user_dto)
-          context_gateway = bundle.fetch(:context_gateway)
-          weather_gateway = bundle.fetch(:weather_gateway)
-          progress_gateway = bundle.fetch(:progress_gateway)
-          use_mock_progress = bundle.fetch(:use_mock_progress)
 
           if user_dto
-            assert_field_cultivation_plan_access!(user_dto, context_gateway, input_dto.field_cultivation_id)
+            assert_field_cultivation_plan_access!(user_dto, @climate_source_gateway, input_dto.field_cultivation_id)
           else
-            assert_public_field_cultivation_plan_access!(context_gateway, input_dto.field_cultivation_id)
+            assert_public_field_cultivation_plan_access!(@climate_source_gateway, input_dto.field_cultivation_id)
           end
 
-          field_cultivation_id = input_dto.field_cultivation_id
-          display_start_date = input_dto.display_start_date
-          display_end_date = input_dto.display_end_date
+          source = @climate_source_gateway.find_by_field_cultivation_id(input_dto.field_cultivation_id)
+          assert_climate_preconditions!(source)
+
+          crop_entity = resolve_crop_entity(source: source, user_dto: user_dto)
+          raise Domain::Shared::Exceptions::RecordNotFound, crop_not_found_message unless crop_entity
+
+          context = Mappers::FieldCultivationClimateContextSnapshotMapper.to_context_snapshot(
+            source: source,
+            crop: crop_entity
+          )
 
           climate_data = assemble_climate_data(
-            context_gateway: context_gateway,
-            weather_gateway: weather_gateway,
-            progress_gateway: progress_gateway,
-            use_mock_progress: use_mock_progress,
-            field_cultivation_id: field_cultivation_id,
-            display_start_date: display_start_date,
-            display_end_date: display_end_date
+            source: source,
+            context: context,
+            crop_entity: crop_entity,
+            display_start_date: input_dto.display_start_date,
+            display_end_date: input_dto.display_end_date
           )
 
           if climate_data.nil?
-            @logger.warn("[FieldCultivationClimateDataInteractor] Missing climate data for field_cultivation_id=#{field_cultivation_id}")
+            @logger.warn("[FieldCultivationClimateDataInteractor] Missing climate data for field_cultivation_id=#{input_dto.field_cultivation_id}")
             @output_port.on_error(
               Domain::Shared::Dtos::Error.new("Field cultivation climate data not found")
             )
             return
           end
 
-          filtered_data = apply_display_range(climate_data, display_start_date, display_end_date)
+          filtered_data = apply_display_range(climate_data, input_dto.display_start_date, input_dto.display_end_date)
           @output_port.present(filtered_data)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_error(Domain::Shared::Dtos::Error.new("Forbidden"))
@@ -69,69 +95,87 @@ module Domain
 
         private
 
-        def assemble_climate_data(context_gateway:, weather_gateway:, progress_gateway:, use_mock_progress:,
-                                  field_cultivation_id:, display_start_date:, display_end_date:)
-          context = context_gateway.load_context(field_cultivation_id: field_cultivation_id)
-          weather_payload = fetch_weather_payload(
+        def assert_climate_preconditions!(source)
+          if Policies::FieldCultivationClimatePreconditionsPolicy.missing_weather_location?(
+            weather_location_present: source.weather_location_present
+          )
+            raise Domain::FieldCultivation::Errors::NoWeatherLocationError,
+                  @translator.t("api.errors.no_weather_data")
+          end
+
+          if Policies::FieldCultivationClimatePreconditionsPolicy.missing_cultivation_period?(
+            start_date: source.start_date,
+            completion_date: source.completion_date
+          )
+            raise Domain::FieldCultivation::Errors::NoCultivationPeriodError,
+                  @translator.t("api.errors.no_cultivation_period")
+          end
+        end
+
+        def resolve_crop_entity(source:, user_dto:)
+          crop_id = source.plan_crop_crop_id
+          return nil if crop_id.blank?
+
+          bundle = @crop_gateway.find_crop_loaded_bundle!(crop_id.to_i, for_edit: false)
+          crop_entity = bundle.crop_entity
+          unless Policies::FieldCultivationClimateCropViewPolicy.view_allowed?(
+            user: user_dto,
+            crop_entity: crop_entity,
+            plan_type_public: source.plan_type_public
+          )
+            return nil
+          end
+
+          crop_entity
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          nil
+        end
+
+        def crop_not_found_message
+          @translator.t("api.errors.crop_not_found")
+        end
+
+        def assemble_climate_data(source:, context:, crop_entity:, display_start_date:, display_end_date:)
+          weather_payload = fetch_primary_weather_payload(
+            source: source,
             context: context,
-            weather_gateway: weather_gateway,
+            display_start_date: display_start_date,
+            display_end_date: display_end_date
+          )
+          return assemble_climate_data_from_fallback(
+            source: source,
+            context: context,
+            crop_entity: crop_entity,
+            display_start_date: display_start_date,
+            display_end_date: display_end_date
+          ) if weather_payload.nil?
+
+          build_climate_output(context, crop_entity, weather_payload)
+        end
+
+        def assemble_climate_data_from_fallback(source:, context:, crop_entity:, display_start_date:, display_end_date:)
+          weather_payload = fetch_fallback_weather_payload(
+            source: source,
             display_start_date: display_start_date,
             display_end_date: display_end_date
           )
           return nil if weather_payload.nil?
 
-          weather_records = Mappers::FieldCultivationClimateDataMapper.extract_weather_records(
-            weather_payload,
-            context.start_date,
-            context.completion_date
-          )
-          progress_result = progress_gateway.calculate_progress(
-            context: context,
-            weather_payload: weather_payload,
-            use_mock: use_mock_progress
-          )
-
-          Mappers::FieldCultivationClimateDataMapper.build_output(
-            context: context,
-            weather_records: weather_records,
-            progress_result: progress_result
-          )
-        rescue Domain::FieldCultivation::Errors::NoWeatherLocationError,
-               Domain::FieldCultivation::Errors::NoCultivationPeriodError => e
-          @logger.info "Fallback to on-the-fly prediction for field_cultivation_id=#{field_cultivation_id} (#{e.class})"
-          assemble_climate_data_from_fallback(
-            context_gateway: context_gateway,
-            weather_gateway: weather_gateway,
-            progress_gateway: progress_gateway,
-            use_mock_progress: use_mock_progress,
-            field_cultivation_id: field_cultivation_id,
-            display_start_date: display_start_date,
-            display_end_date: display_end_date
-          )
+          persist_predicted_weather_if_absent!(source, weather_payload)
+          build_climate_output(context, crop_entity, weather_payload)
         end
 
-        def assemble_climate_data_from_fallback(context_gateway:, weather_gateway:, progress_gateway:, use_mock_progress:,
-                                                field_cultivation_id:, display_start_date:, display_end_date:)
-          context = context_gateway.load_context(field_cultivation_id: field_cultivation_id)
-          weather_payload = weather_gateway.fetch_fallback_weather_payload(
-            context: context,
-            display_start_date: display_start_date,
-            display_end_date: display_end_date
-          )
-          weather_gateway.persist_predicted_weather_if_absent(
-            plan_id: context.plan_id,
-            weather_payload: weather_payload
-          )
-
+        def build_climate_output(context, crop_entity, weather_payload)
           weather_records = Mappers::FieldCultivationClimateDataMapper.extract_weather_records(
             weather_payload,
             context.start_date,
             context.completion_date
           )
-          progress_result = progress_gateway.calculate_progress(
-            context: context,
+          progress_result = @climate_progress_gateway.calculate_progress(
+            crop_entity: crop_entity,
+            start_date: context.start_date,
             weather_payload: weather_payload,
-            use_mock: use_mock_progress
+            use_mock: @use_mock_progress
           )
 
           Mappers::FieldCultivationClimateDataMapper.build_output(
@@ -141,12 +185,158 @@ module Domain
           )
         end
 
-        def fetch_weather_payload(context:, weather_gateway:, display_start_date:, display_end_date:)
-          weather_gateway.fetch_primary_weather_payload(
-            context: context,
-            display_start_date: display_start_date,
-            display_end_date: display_end_date
+        def fetch_primary_weather_payload(source:, context:, display_start_date:, display_end_date:)
+          weather_payload = if context.plan_predicted_weather_present
+            merge_cached_prediction_with_observed(
+              source: source,
+              context: context,
+              display_start_date: display_start_date,
+              display_end_date: display_end_date
+            )
+          else
+            @logger.warn "⚠️ [FieldCultivationClimateDataInteractor] No cached prediction for CultivationPlan##{context.plan_id}, generating"
+            invoke_plan_prediction(source: source)
+          end
+
+          return nil if weather_payload.nil?
+
+          assert_valid_weather_payload!(context.plan_id, weather_payload)
+          weather_payload
+        end
+
+        def invoke_plan_prediction(source:)
+          targets = @climate_source_gateway.find_weather_prediction_targets_by_plan_id(source.plan_id)
+          plan_weather = Mappers::FieldCultivationClimatePlanWeatherMapper.to_cultivation_plan_weather(source: source)
+          service = @weather_prediction_gateway.prediction_service(
+            weather_location: targets[:weather_location],
+            farm: targets[:farm]
           )
+          prediction_info = service.predict_for_cultivation_plan(plan_weather: plan_weather)
+          return nil unless prediction_info.is_a?(Hash)
+
+          prediction_info[:data]
+        end
+
+        def merge_cached_prediction_with_observed(source:, context:, display_start_date:, display_end_date:)
+          @logger.info "✅ [FieldCultivationClimateDataInteractor] Using saved prediction for CultivationPlan##{context.plan_id}, merging with observed data"
+          cached = context.predicted_weather_data
+
+          decision = Policies::FieldCultivationClimateObservedMergeRangePolicy.resolve(
+            display_start_date: display_start_date,
+            display_end_date: display_end_date,
+            cultivation_start_date: context.start_date,
+            cultivation_end_date: context.completion_date,
+            today: @clock.today
+          )
+          return cached if decision.skip?
+
+          observed_dtos = @weather_data_gateway.weather_data_for_period(
+            weather_location_id: source.weather_location_id,
+            start_date: decision.start_date,
+            end_date: decision.end_date
+          )
+          return cached if observed_dtos.empty?
+
+          observed_formatted = Mappers::FieldCultivationClimateWeatherPayloadMapper.build_observed_agrr_payload(
+            weather_location_meta: Mappers::FieldCultivationClimateWeatherPayloadMapper.weather_location_meta_from_source(source: source),
+            observed_weather_dtos: observed_dtos
+          )
+
+          Mappers::FieldCultivationClimateWeatherPayloadMapper.merge_cached_with_observed(
+            cached_weather_payload: cached,
+            observed_formatted: observed_formatted
+          )
+        end
+
+        def fetch_fallback_weather_payload(source:, display_start_date:, display_end_date:)
+          @logger.info "Fallback to on-the-fly prediction for field_cultivation_id=#{source.field_cultivation_id}"
+          anchors = @anchors_resolver.anchors_for(@clock.today)
+          training_start_date = anchors.training_start_date
+          training_end_date = anchors.training_end_date
+          prediction_targets = @climate_source_gateway.find_weather_prediction_targets_by_plan_id(source.plan_id)
+          weather_location = prediction_targets[:weather_location]
+          weather_location_meta = Mappers::FieldCultivationClimateWeatherPayloadMapper.weather_location_meta_from_source(source: source)
+
+          training_data = @weather_data_gateway.weather_data_for_period(
+            weather_location_id: source.weather_location_id,
+            start_date: training_start_date,
+            end_date: training_end_date
+          )
+
+          training_formatted = Mappers::FieldCultivationClimateWeatherPayloadMapper.build_observed_agrr_payload_simple(
+            weather_location_meta: weather_location_meta,
+            observed_weather_dtos: training_data
+          )
+
+          prediction_days = Policies::FieldCultivationClimateFallbackHorizonPolicy.prediction_days(
+            completion_date: source.completion_date,
+            training_end_date: training_end_date
+          )
+
+          if Policies::FieldCultivationClimateFallbackHorizonPolicy.use_prediction_branch?(prediction_days: prediction_days)
+            future = @prediction_gateway.predict(
+              historical_data: training_formatted,
+              days: prediction_days,
+              model: "lightgbm"
+            )
+            return nil unless future.is_a?(Hash)
+
+            decision = Policies::FieldCultivationClimateObservedMergeRangePolicy.resolve(
+              display_start_date: display_start_date,
+              display_end_date: display_end_date,
+              cultivation_start_date: source.start_date,
+              cultivation_end_date: source.completion_date,
+              today: @clock.today
+            )
+
+            if decision.skip?
+              observed_start = Date.new(@clock.today.year, 1, 1)
+              observed_end = training_end_date
+            else
+              observed_start = decision.start_date
+              observed_end = decision.end_date
+            end
+
+            current_year_data = @weather_data_gateway.weather_data_for_period(
+              weather_location_id: source.weather_location_id,
+              start_date: observed_start,
+              end_date: observed_end
+            )
+
+            current_year_formatted = Mappers::FieldCultivationClimateWeatherPayloadMapper.build_observed_agrr_payload_simple(
+              weather_location_meta: weather_location_meta,
+              observed_weather_dtos: current_year_data
+            )
+
+            Mappers::FieldCultivationClimateWeatherPayloadMapper.merge_training_and_future(
+              training_formatted: current_year_formatted,
+              future_payload: future
+            )
+          else
+            @weather_data_gateway.format_for_agrr(
+              weather_data_dtos: @weather_data_gateway.weather_data_for_period(
+                weather_location_id: source.weather_location_id,
+                start_date: source.start_date,
+                end_date: source.completion_date
+              ),
+              weather_location: weather_location
+            )
+          end
+        end
+
+        def persist_predicted_weather_if_absent!(source, weather_payload)
+          return if source.plan_predicted_weather_present
+
+          @cultivation_plan_gateway.update_predicted_weather_data(source.plan_id, weather_payload)
+          @logger.info "💾 [FieldCultivationClimateDataInteractor] Saved prediction data to CultivationPlan##{source.plan_id}"
+        end
+
+        def assert_valid_weather_payload!(plan_id, weather_payload)
+          return if Mappers::FieldCultivationClimateWeatherPayloadMapper.valid_weather_payload?(weather_payload)
+
+          @logger.error "❌ [FieldCultivationClimateDataInteractor] Invalid weather payload for CultivationPlan##{plan_id}"
+          raise Domain::FieldCultivation::Errors::WeatherPayloadInvalidError,
+                @translator.t("controllers.field_cultivations.errors.weather_format_invalid")
         end
 
         def apply_display_range(climate_data, display_start_date, display_end_date)

@@ -599,46 +599,40 @@ module CompositionRoot
     # FieldCultivation API 用ファサード（認可・CRUD）
     def field_cultivation_climate_gateway_for(current_user_dto)
       Adapters::FieldCultivation::Gateways::FieldCultivationClimateActiveRecordGateway.new(
-        context_gateway: field_cultivation_climate_context_gateway_for(current_user_dto)
+        context_gateway: field_cultivation_climate_source_gateway_for(current_user_dto)
       )
     end
 
-    # FieldCultivation 気象ユースケース用 gateway 束（user DTO 単位）
-    def field_cultivation_climate_gateways_bundle_for(current_user_dto, use_mock_progress: nil)
-      {
-        context_gateway: field_cultivation_climate_context_gateway_for(current_user_dto),
-        weather_gateway: field_cultivation_climate_weather_gateway,
-        progress_gateway: field_cultivation_climate_progress_gateway_for(current_user_dto),
-        use_mock_progress: use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
-      }
+    def field_cultivation_climate_source_gateway_for(_current_user_dto = nil)
+      @field_cultivation_climate_source_gateway ||= Adapters::FieldCultivation::Gateways::FieldCultivationClimateSourceActiveRecordGateway.new
     end
 
-    def field_cultivation_climate_context_gateway_for(current_user_dto)
-      Adapters::FieldCultivation::Gateways::FieldCultivationClimateContextActiveRecordGateway.new(
-        current_user: current_user_dto,
-        logger: logger,
-        translator: translator
-      )
-    end
-
-    def field_cultivation_climate_weather_gateway
-      @field_cultivation_climate_weather_gateway ||= Adapters::FieldCultivation::Gateways::FieldCultivationClimateWeatherActiveRecordGateway.new(
-        logger: logger,
-        translator: translator,
-        weather_prediction_service_factory: lambda { |weather_location, farm|
-          weather_prediction_interactor(weather_location: weather_location, farm: farm)
-        },
-        weather_data_gateway: weather_data_gateway,
-        cultivation_plan_gateway: cultivation_plan_gateway,
-        prediction_gateway: prediction_gateway
-      )
-    end
-
-    def field_cultivation_climate_progress_gateway_for(current_user_dto)
-      Adapters::FieldCultivation::Gateways::FieldCultivationClimateProgressActiveRecordGateway.new(
-        current_user: current_user_dto,
+    def field_cultivation_climate_progress_gateway
+      @field_cultivation_climate_progress_gateway ||= Adapters::FieldCultivation::Gateways::FieldCultivationClimateProgressActiveRecordGateway.new(
         logger: logger,
         progress_gateway_factory: -> { agrr_progress_gateway }
+      )
+    end
+
+    def field_cultivation_climate_data_interactor(output_port:, user_dto:, use_mock_progress: nil)
+      clock = Time.zone
+      anchors_resolver = Adapters::WeatherData::Ports::RailsWeatherPredictionAnchorsAdapter.new(zone: clock)
+      Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor.new(
+        output_port: output_port,
+        logger: logger,
+        user_id: user_dto&.id,
+        user_lookup: user_lookup,
+        climate_source_gateway: field_cultivation_climate_source_gateway_for,
+        crop_gateway: crop_gateway,
+        weather_data_gateway: weather_data_gateway,
+        weather_prediction_gateway: adjust_weather_prediction_gateway,
+        prediction_gateway: prediction_gateway,
+        cultivation_plan_gateway: cultivation_plan_gateway,
+        anchors_resolver: anchors_resolver,
+        climate_progress_gateway: field_cultivation_climate_progress_gateway,
+        clock: clock,
+        translator: translator,
+        use_mock_progress: use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
       )
     end
 

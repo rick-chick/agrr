@@ -4,11 +4,12 @@ module Domain
   module FieldCultivation
     module Gateways
       class FieldCultivationClimateProgressGateway
-        # @param context [Domain::FieldCultivation::Dtos::FieldCultivationClimateContextSnapshot]
+        # @param crop_entity [Domain::Crop::Entities::CropEntity]
+        # @param start_date [Date]
         # @param weather_payload [Hash]
         # @param use_mock [Boolean]
         # @return [Hash]
-        def calculate_progress(context:, weather_payload:, use_mock:)
+        def calculate_progress(crop_entity:, start_date:, weather_payload:, use_mock:)
           raise NotImplementedError
         end
       end

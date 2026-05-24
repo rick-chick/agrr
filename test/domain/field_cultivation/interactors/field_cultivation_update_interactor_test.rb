@@ -22,11 +22,11 @@ module Domain
           seen = {}
           gateway = Object.new
           attach_plan_access_context_to_gateway(gateway, input.field_cultivation_id)
-          gateway.define_singleton_method(:update_field_cultivation_schedule) do |field_cultivation_id:, start_date:, completion_date:, public_plan:|
+          gateway.define_singleton_method(:update_field_cultivation_schedule) do |field_cultivation_id:, start_date:, completion_date:, cultivation_days:|
             seen[:field_cultivation_id] = field_cultivation_id
             seen[:start_date] = start_date
             seen[:completion_date] = completion_date
-            seen[:public_plan] = public_plan
+            seen[:cultivation_days] = cultivation_days
             success
           end
 
@@ -39,7 +39,7 @@ module Domain
           assert_equal input.field_cultivation_id, seen[:field_cultivation_id]
           assert_equal input.start_date, seen[:start_date]
           assert_equal input.completion_date, seen[:completion_date]
-          assert_equal false, seen[:public_plan]
+          assert_nil seen[:cultivation_days]
           assert_equal success, received
           output_port.verify
         end

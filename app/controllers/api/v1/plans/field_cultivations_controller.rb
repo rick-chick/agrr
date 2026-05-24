@@ -63,19 +63,15 @@ module Api
             output_port: Adapters::FieldCultivation::Presenters::FieldCultivationApiUpdateApiPresenter.new(view: self),
             gateway: field_cultivation_plan_api_gateway,
             user_id: current_user.id,
-            user_lookup: CompositionRoot.user_lookup
+            user_lookup: CompositionRoot.user_lookup,
+            translator: CompositionRoot.translator
           )
         end
 
         def field_cultivation_climate_data_interactor
-          Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor.new(
+          CompositionRoot.field_cultivation_climate_data_interactor(
             output_port: Adapters::FieldCultivation::Presenters::FieldCultivationClimateDataApiPresenter.new(view: self),
-            logger: CompositionRoot.logger,
-            user_id: current_user.id,
-            user_lookup: CompositionRoot.user_lookup,
-            climate_gateways_for_user: ->(user_dto) {
-              CompositionRoot.field_cultivation_climate_gateways_bundle_for(user_dto)
-            }
+            user_dto: CompositionRoot.user_lookup.find(current_user.id)
           )
         end
 

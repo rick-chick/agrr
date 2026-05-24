@@ -6,60 +6,113 @@ module Domain
   module FieldCultivation
     module Interactors
       class FieldCultivationClimateDataInteractorTest < DomainLibTestCase
+        def build_source(
+          fc_id:,
+          plan_predicted_weather_present: true,
+          weather_location_present: true,
+          start_date: Date.new(2026, 1, 1),
+          completion_date: Date.new(2026, 6, 1),
+          predicted_weather_data: { "data" => [ { "time" => "2026-01-01" } ] }
+        )
+          Dtos::FieldCultivationClimateSourceSnapshot.new(
+            field_cultivation_id: fc_id,
+            field_name: "north",
+            crop_name: "tomato",
+            start_date: start_date,
+            completion_date: completion_date,
+            farm_id: 1,
+            farm_name: "Farm",
+            farm_latitude: 35.4,
+            farm_longitude: 139.6,
+            weather_location_id: 3,
+            weather_location_present: weather_location_present,
+            weather_location_timezone: "Asia/Tokyo",
+            plan_id: 1,
+            plan_type_public: false,
+            plan_predicted_weather_present: plan_predicted_weather_present,
+            prediction_target_end_date: nil,
+            calculated_planning_end_date: nil,
+            predicted_weather_data: predicted_weather_data,
+            plan_crop_crop_id: 1
+          )
+        end
+
+        def build_crop_entity(is_reference: false, user_id: 1)
+          Domain::Crop::Entities::CropEntity.new(
+            id: 1,
+            user_id: user_id,
+            name: "tomato",
+            variety: nil,
+            is_reference: is_reference
+          )
+        end
+
+        def build_interactor(fc_id:, source_gateway:, crop_gateway:, weather_data_gateway: nil, weather_prediction_gateway: nil,
+                             prediction_gateway: nil, cultivation_plan_gateway: nil, anchors_resolver: nil, progress_gateway: nil)
+          FieldCultivationClimateDataInteractor.new(
+            output_port: nil,
+            logger: SilencingLoggerStub.new,
+            user_id: 1,
+            user_lookup: user_lookup_stub(1),
+            climate_source_gateway: source_gateway,
+            crop_gateway: crop_gateway,
+            weather_data_gateway: weather_data_gateway || Object.new,
+            weather_prediction_gateway: weather_prediction_gateway || Object.new,
+            prediction_gateway: prediction_gateway || Object.new,
+            cultivation_plan_gateway: cultivation_plan_gateway || Object.new,
+            anchors_resolver: anchors_resolver || default_anchors_resolver,
+            climate_progress_gateway: progress_gateway || Object.new,
+            clock: Struct.new(:today).new(Date.new(2026, 3, 1)),
+            translator: translator_stub,
+            use_mock_progress: false
+          )
+        end
+
+        def default_anchors_resolver
+          resolver = Object.new
+          resolver.define_singleton_method(:anchors_for) do |_day|
+            Domain::WeatherData::Dtos::WeatherPredictionAnchors.new(
+              training_start_date: Date.new(2006, 3, 1),
+              training_end_date: Date.new(2026, 2, 27),
+              current_year_history_start_date: Date.new(2026, 1, 1),
+              current_year_history_end_date: Date.new(2026, 2, 27),
+              default_target_end_date: Date.new(2026, 9, 1)
+            )
+          end
+          resolver
+        end
+
+        def attach_crop_bundle_gateway(crop_gateway, crop_entity)
+          crop_gateway.define_singleton_method(:find_crop_loaded_bundle!) do |crop_id, for_edit:|
+            Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: crop_entity)
+          end
+        end
+
         test "delivers climate information when gateways return data" do
           fc_id = 42
-          success_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataOutput.new(
-            field_cultivation: { id: fc_id, field_name: "north", crop_name: "tomato" },
-            farm: { id: 1, name: "Yokohama Farm", latitude: 35.4, longitude: 139.6 },
-            crop_requirements: { base_temperature: 10.0 },
-            weather_data: [],
-            gdd_data: [],
-            stages: [],
-            progress_result: {},
-            debug_info: {}
-          )
+          source = build_source(fc_id: fc_id)
 
-          context_gateway = Object.new
+          source_gateway = Object.new
           attach_plan_access_context_to_gateway(
-            context_gateway,
+            source_gateway,
             fc_id,
             context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
           )
-          context_gateway.define_singleton_method(:load_context) do |field_cultivation_id:|
-            raise "unexpected id" unless field_cultivation_id == fc_id
+          source_gateway.define_singleton_method(:find_by_field_cultivation_id) do |id|
+            raise "unexpected id" unless id == fc_id
 
-            Domain::FieldCultivation::Dtos::FieldCultivationClimateContextSnapshot.new(
-              field_cultivation_id: fc_id,
-              field_name: "north",
-              crop_name: "tomato",
-              start_date: Date.new(2026, 1, 1),
-              completion_date: Date.new(2026, 6, 1),
-              farm_id: 1,
-              farm_name: "Farm",
-              farm_latitude: 35.4,
-              farm_longitude: 139.6,
-              plan_id: 1,
-              plan_type_public: false,
-              plan_predicted_weather_present: true,
-              prediction_target_end_date: nil,
-              calculated_planning_end_date: nil,
-              predicted_weather_data: { "data" => [] },
-              crop_id: 1,
-              base_temperature: 10.0,
-              optimal_temperature_range: nil,
-              stages: []
-            )
+            source
           end
 
-          weather_gateway = Object.new
-          weather_gateway.define_singleton_method(:fetch_primary_weather_payload) do |context:, display_start_date:, display_end_date:|
-            { "data" => [] }
-          end
-          weather_gateway.define_singleton_method(:fetch_fallback_weather_payload) { raise "unexpected fallback" }
-          weather_gateway.define_singleton_method(:persist_predicted_weather_if_absent) { nil }
+          crop_entity = build_crop_entity
+          crop_gateway = Object.new
+          attach_crop_bundle_gateway(crop_gateway, crop_entity)
+
+          weather_data_gateway = Object.new
+          weather_data_gateway.define_singleton_method(:weather_data_for_period) { |**| [] }
 
           progress_gateway = Object.new
-          progress_gateway.define_singleton_method(:calculate_progress) do |context:, weather_payload:, use_mock:|
+          progress_gateway.define_singleton_method(:calculate_progress) do |**|
             {}
           end
 
@@ -67,28 +120,20 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:present, nil) { |arg| received = arg }
 
-          logger = SilencingLoggerStub.new
-
-          interactor = FieldCultivationClimateDataInteractor.new(
-            output_port: output_port,
-            logger: logger,
-            user_id: 1,
-            user_lookup: user_lookup_stub(1),
-            climate_gateways_for_user: lambda { |_user_dto|
-              {
-                context_gateway: context_gateway,
-                weather_gateway: weather_gateway,
-                progress_gateway: progress_gateway,
-                use_mock_progress: false
-              }
-            }
+          interactor = build_interactor(
+            fc_id: fc_id,
+            source_gateway: source_gateway,
+            crop_gateway: crop_gateway,
+            weather_data_gateway: weather_data_gateway,
+            progress_gateway: progress_gateway
           )
+          interactor.instance_variable_set(:@output_port, output_port)
 
-          input_dto = Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
-            field_cultivation_id: fc_id
+          interactor.call(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
+              field_cultivation_id: fc_id
+            )
           )
-
-          interactor.call(input_dto)
 
           assert_equal fc_id, received.field_cultivation[:id]
           output_port.verify
@@ -96,13 +141,13 @@ module Domain
 
         test "routes RecordNotFound through the output port" do
           fc_id = 42
-          context_gateway = Object.new
+          source_gateway = Object.new
           attach_plan_access_context_to_gateway(
-            context_gateway,
+            source_gateway,
             fc_id,
             context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
           )
-          context_gateway.define_singleton_method(:load_context) do |_kwargs|
+          source_gateway.define_singleton_method(:find_by_field_cultivation_id) do |_id|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 
@@ -110,22 +155,14 @@ module Domain
           output_port = Minitest::Mock.new
           output_port.expect(:on_error, nil) { |arg| received = arg }
 
-          logger = SilencingLoggerStub.new
+          interactor = build_interactor(
+            fc_id: fc_id,
+            source_gateway: source_gateway,
+            crop_gateway: Object.new
+          )
+          interactor.instance_variable_set(:@output_port, output_port)
 
-          FieldCultivationClimateDataInteractor.new(
-            output_port: output_port,
-            logger: logger,
-            user_id: 1,
-            user_lookup: user_lookup_stub(1),
-            climate_gateways_for_user: lambda { |_user_dto|
-              {
-                context_gateway: context_gateway,
-                weather_gateway: Object.new,
-                progress_gateway: Object.new,
-                use_mock_progress: false
-              }
-            }
-          ).call(
+          interactor.call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: fc_id
             )
@@ -136,68 +173,200 @@ module Domain
           output_port.verify
         end
 
-        test "routes missing climate data through the output port" do
-          fc_id = 99
-          context_gateway = Object.new
+        test "routes missing weather location through the output port" do
+          fc_id = 42
+          source = build_source(fc_id: fc_id, weather_location_present: false)
+
+          source_gateway = Object.new
           attach_plan_access_context_to_gateway(
-            context_gateway,
+            source_gateway,
             fc_id,
             context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
           )
-          context_gateway.define_singleton_method(:load_context) do |field_cultivation_id:|
-            Domain::FieldCultivation::Dtos::FieldCultivationClimateContextSnapshot.new(
-              field_cultivation_id: field_cultivation_id,
-              field_name: "x",
-              crop_name: "y",
-              start_date: Date.new(2026, 1, 1),
-              completion_date: Date.new(2026, 6, 1),
-              farm_id: 1,
-              farm_name: "Farm",
-              farm_latitude: 35.0,
-              farm_longitude: 139.0,
-              plan_id: 1,
-              plan_type_public: false,
-              plan_predicted_weather_present: false,
-              prediction_target_end_date: nil,
-              calculated_planning_end_date: nil,
-              predicted_weather_data: nil,
-              crop_id: 1,
-              base_temperature: 10.0,
-              optimal_temperature_range: nil,
-              stages: []
-            )
-          end
-
-          weather_gateway = Object.new
-          weather_gateway.define_singleton_method(:fetch_primary_weather_payload) do |context:, display_start_date: nil, display_end_date: nil|
-            nil
-          end
-          weather_gateway.define_singleton_method(:fetch_fallback_weather_payload) { nil }
-          weather_gateway.define_singleton_method(:persist_predicted_weather_if_absent) { nil }
-
-          progress_gateway = Object.new
-          progress_gateway.define_singleton_method(:calculate_progress) { raise "unexpected progress" }
+          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
 
           received = nil
           output_port = Minitest::Mock.new
           output_port.expect(:on_error, nil) { |arg| received = arg }
 
-          logger = SilencingLoggerStub.new
+          interactor = build_interactor(
+            fc_id: fc_id,
+            source_gateway: source_gateway,
+            crop_gateway: Object.new
+          )
+          interactor.instance_variable_set(:@output_port, output_port)
 
-          FieldCultivationClimateDataInteractor.new(
-            output_port: output_port,
-            logger: logger,
-            user_id: 1,
-            user_lookup: user_lookup_stub(1),
-            climate_gateways_for_user: lambda { |_user_dto|
-              {
-                context_gateway: context_gateway,
-                weather_gateway: weather_gateway,
-                progress_gateway: progress_gateway,
-                use_mock_progress: false
-              }
-            }
-          ).call(
+          interactor.call(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
+              field_cultivation_id: fc_id
+            )
+          )
+
+          assert_equal "api.errors.no_weather_data", received.message
+          output_port.verify
+        end
+
+        test "routes missing cultivation period through the output port" do
+          fc_id = 42
+          source = build_source(fc_id: fc_id, start_date: nil, completion_date: nil)
+
+          source_gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            source_gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+          )
+          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_error, nil) { |arg| received = arg }
+
+          interactor = build_interactor(
+            fc_id: fc_id,
+            source_gateway: source_gateway,
+            crop_gateway: Object.new
+          )
+          interactor.instance_variable_set(:@output_port, output_port)
+
+          interactor.call(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
+              field_cultivation_id: fc_id
+            )
+          )
+
+          assert_equal "api.errors.no_cultivation_period", received.message
+          output_port.verify
+        end
+
+        test "routes crop not found through the output port" do
+          fc_id = 42
+          source = build_source(fc_id: fc_id)
+
+          source_gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            source_gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+          )
+          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+
+          crop_entity = build_crop_entity(is_reference: false, user_id: 99)
+          crop_gateway = Object.new
+          attach_crop_bundle_gateway(crop_gateway, crop_entity)
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_error, nil) { |arg| received = arg }
+
+          interactor = build_interactor(
+            fc_id: fc_id,
+            source_gateway: source_gateway,
+            crop_gateway: crop_gateway
+          )
+          interactor.instance_variable_set(:@output_port, output_port)
+
+          interactor.call(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
+              field_cultivation_id: fc_id
+            )
+          )
+
+          assert_equal "api.errors.crop_not_found", received.message
+          output_port.verify
+        end
+
+        test "routes invalid weather payload through the output port" do
+          fc_id = 42
+          source = build_source(
+            fc_id: fc_id,
+            predicted_weather_data: { "data" => nil }
+          )
+
+          source_gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            source_gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+          )
+          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+
+          crop_entity = build_crop_entity
+          crop_gateway = Object.new
+          attach_crop_bundle_gateway(crop_gateway, crop_entity)
+
+          weather_data_gateway = Object.new
+          weather_data_gateway.define_singleton_method(:weather_data_for_period) { |**| [] }
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_error, nil) { |arg| received = arg }
+
+          interactor = build_interactor(
+            fc_id: fc_id,
+            source_gateway: source_gateway,
+            crop_gateway: crop_gateway,
+            weather_data_gateway: weather_data_gateway
+          )
+          interactor.instance_variable_set(:@output_port, output_port)
+
+          interactor.call(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
+              field_cultivation_id: fc_id
+            )
+          )
+
+          assert_equal "controllers.field_cultivations.errors.weather_format_invalid", received.message
+          output_port.verify
+        end
+
+        test "routes missing climate data through the output port" do
+          fc_id = 99
+          source = build_source(fc_id: fc_id, plan_predicted_weather_present: false)
+
+          source_gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            source_gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+          )
+          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+          source_gateway.define_singleton_method(:find_weather_prediction_targets_by_plan_id) do |_plan_id|
+            { weather_location: Object.new, farm: Object.new }
+          end
+
+          crop_entity = build_crop_entity
+          crop_gateway = Object.new
+          attach_crop_bundle_gateway(crop_gateway, crop_entity)
+
+          prediction_service = Object.new
+          prediction_service.define_singleton_method(:predict_for_cultivation_plan) { |plan_weather:| nil }
+
+          weather_prediction_gateway = Object.new
+          weather_prediction_gateway.define_singleton_method(:prediction_service) { |weather_location:, farm:| prediction_service }
+
+          prediction_gateway = Object.new
+          prediction_gateway.define_singleton_method(:predict) { |**| nil }
+
+          weather_data_gateway = Object.new
+          weather_data_gateway.define_singleton_method(:weather_data_for_period) { |**| [] }
+          weather_data_gateway.define_singleton_method(:format_for_agrr) { |**| nil }
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_error, nil) { |arg| received = arg }
+
+          interactor = build_interactor(
+            fc_id: fc_id,
+            source_gateway: source_gateway,
+            crop_gateway: crop_gateway,
+            weather_data_gateway: weather_data_gateway,
+            weather_prediction_gateway: weather_prediction_gateway,
+            prediction_gateway: prediction_gateway
+          )
+          interactor.instance_variable_set(:@output_port, output_port)
+
+          interactor.call(
             Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
               field_cultivation_id: fc_id
             )
@@ -217,6 +386,12 @@ module Domain
             user
           end
           lookup
+        end
+
+        def translator_stub
+          t = Object.new
+          t.define_singleton_method(:t) { |key| key }
+          t
         end
 
         class SilencingLoggerStub
