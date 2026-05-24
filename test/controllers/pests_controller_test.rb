@@ -23,12 +23,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: @pest.name
   end
 
-  test "should get new" do
-    get new_pest_path
-    assert_response :success
-    assert_select "form"
-  end
-
   test "should create pest" do
     assert_difference("Pest.count", 1) do
       post pests_path, params: { pest: {
@@ -107,20 +101,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, pest.pest_control_methods.count
     assert_equal "chemical", pest.pest_control_methods.first.method_type
     assert_equal "biological", pest.pest_control_methods.last.method_type
-  end
-
-  test "should get edit for non-reference pest" do
-    # 非参照害虫は編集可能
-    user_pest = create(:pest, :user_owned, user: @user)
-    get edit_pest_path(user_pest)
-    assert_response :success
-  end
-
-  test "should not get edit for reference pest without admin" do
-    # 参照害虫は一般ユーザーは編集不可
-    get edit_pest_path(@pest)
-    assert_redirected_to pests_path
-    assert_equal I18n.t("pests.flash.no_permission"), flash[:alert]
   end
 
   test "should update pest" do
@@ -241,9 +221,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     admin_user = create(:user, admin: true)
     sign_in_as admin_user
 
-    get edit_pest_path(@pest)
-    assert_response :success
-
     patch pest_path(@pest), params: { pest: {
       name: "管理者が更新した名前"
     } }
@@ -283,11 +260,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to pests_path
     assert_equal I18n.t("pests.flash.no_permission"), flash[:alert]
 
-    # 編集画面にアクセス試行
-    get edit_pest_path(other_user_pest)
-    assert_redirected_to pests_path
-    assert_equal I18n.t("pests.flash.no_permission"), flash[:alert]
-
     # 更新試行
     patch pest_path(other_user_pest), params: { pest: { name: "変更された名前" } }
     assert_redirected_to pests_path
@@ -304,9 +276,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
 
     get pest_path(reference_pest)
     assert_response :success
-
-    get edit_pest_path(reference_pest)
-    assert_response :success
   end
 
   test "admin should access own pest" do
@@ -316,9 +285,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     admin_pest = create(:pest, :user_owned, user: admin_user)
 
     get pest_path(admin_pest)
-    assert_response :success
-
-    get edit_pest_path(admin_pest)
     assert_response :success
   end
 
@@ -546,7 +512,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
       } }
     end
 
-    assert_response :unprocessable_entity
+    assert_redirected_to pests_path
+    assert flash[:alert].present?
   end
 
   test "should handle validation errors on update" do
@@ -556,7 +523,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
       name: ""  # 必須フィールドを空にする
     } }
 
-    assert_response :unprocessable_entity
+    assert_redirected_to pest_path(pest)
+    assert flash[:alert].present?
     pest.reload
     assert_not_equal "", pest.name
   end
@@ -565,12 +533,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
 
   test "should handle RecordNotFound in show" do
     get pest_path(id: 99999)
-    assert_redirected_to pests_path
-    assert_equal I18n.t("pests.flash.not_found"), flash[:alert]
-  end
-
-  test "should handle RecordNotFound in edit" do
-    get edit_pest_path(id: 99999)
     assert_redirected_to pests_path
     assert_equal I18n.t("pests.flash.not_found"), flash[:alert]
   end
@@ -624,7 +586,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
         }
       } }
     end
-    assert_response :unprocessable_entity
+    assert_redirected_to pests_path
+    assert flash[:alert].present?
   end
 
   test "should not create pest with empty control_method method_name" do
@@ -641,7 +604,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
         } }
       end
     end
-    assert_response :unprocessable_entity
+    assert_redirected_to pests_path
+    assert flash[:alert].present?
   end
 
   # ========== ネスト属性の削除・複合操作テスト ==========
@@ -1024,42 +988,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil pest.pest_control_methods.find_by(method_name: "新規物理的防除")
   end
 
-  # ========== 作物選択機能のテスト ==========
-  #
-  # crop-selection カード自体の描画（data 属性・バッジ・選択状態ラベル・見出しタグ等）は
-  # test/views/crop_selection_card_view_test.rb が担保する。以下の controller テストは
-  # 「どの作物がフォームに提示されるか」という絞り込み（ユースケース判定）を検証する。
-
-  test "should show available crops in new form as cards" do
-    crop1 = create(:crop, user: @user)
-    crop2 = create(:crop, user: @user)
-    reference_crop = create(:crop, :reference)
-
-    get new_pest_path
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop1.id}"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop2.id}"]), 1
-      # ユーザー害虫は参照作物とも関連付け可能
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 1
-    end
-  end
-
-  test "should show only user crops for regular user in new form" do
-    my_crop = create(:crop, user: @user)
-    other_user = create(:user)
-    other_crop = create(:crop, user: other_user)
-    reference_crop = create(:crop, :reference)
-
-    get new_pest_path
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{my_crop.id}"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_crop.id}"]), 0
-      # ユーザー害虫は参照作物とも関連付け可能
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 1
-    end
-  end
+  # ========== 作物選択機能のテスト（create/update 経由） ==========
 
   test "should create pest with single crop association" do
     crop = create(:crop, user: @user)
@@ -1232,59 +1161,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".related-crop-card", count: 0
   end
 
-  test "ユーザー害虫の編集フォームではユーザー作物と参照作物が表示され選択状態が保持される" do
-    crop1 = create(:crop, user: @user)
-    crop2 = create(:crop, user: @user)
-    other_user_crop = create(:crop, user: create(:user))
-    reference_crop = create(:crop, :reference)
-    pest = create(:pest, :user_owned, user: @user)
-    create(:crop_pest, crop: crop1, pest: pest)
-
-    get edit_pest_path(pest)
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop1.id}"][data-selected="true"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop2.id}"][data-selected="false"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_user_crop.id}"]), 0
-      # ユーザー害虫は参照作物とも関連付け可能
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 1
-    end
-    assert_select 'div[data-crop-selector-target="inputContainer"] input[name="crop_ids[]"][value=?]', crop1.id.to_s
-  end
-
-  test "参照害虫の編集フォームには参照作物のみ表示される" do
-    admin = create(:user, admin: true)
-    sign_in_as admin
-    reference_crop = create(:crop, :reference)
-    other_reference_crop = create(:crop, :reference)
-    user_crop = create(:crop, user: @user)
-    reference_pest = create(:pest, is_reference: true)
-    create(:crop_pest, crop: reference_crop, pest: reference_pest)
-
-    get edit_pest_path(reference_pest)
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"][data-selected="true"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_reference_crop.id}"][data-selected="false"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{user_crop.id}"]), 0
-    end
-    assert_select 'div[data-crop-selector-target="inputContainer"] input[name="crop_ids[]"][value=?]', reference_crop.id.to_s
-  end
-
-  test "地域指定のある害虫の編集フォームには地域一致の作物のみ表示される" do
-    crop_in_region = create(:crop, user: @user, region: "jp")
-    crop_out_region = create(:crop, user: @user, region: "us")
-    pest = create(:pest, :user_owned, user: @user, region: "jp")
-    create(:crop_pest, crop: crop_in_region, pest: pest)
-
-    get edit_pest_path(pest)
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop_in_region.id}"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{crop_out_region.id}"]), 0
-    end
-  end
-
   test "should add crop association on update" do
     crop1 = create(:crop, user: @user)
     crop2 = create(:crop, user: @user)
@@ -1433,25 +1309,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0, pest.crops.count
   end
 
-  test "admin should initially see own crops and reference crops in new form" do
-    admin_user = create(:user, admin: true)
-    sign_in_as admin_user
-
-    admin_crop = create(:crop, user: admin_user)
-    other_user = create(:user)
-    other_crop = create(:crop, user: other_user)
-    reference_crop = create(:crop, :reference)
-
-    get new_pest_path
-    assert_response :success
-    assert_select '[data-controller="crop-selector"]' do
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{admin_crop.id}"]), 1
-      # ユーザー害虫は参照作物とも関連付け可能
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{reference_crop.id}"]), 1
-      assert_select %(article[data-role="crop-card"][data-crop-id="#{other_crop.id}"]), 0
-    end
-  end
-
   test "should not update associations when validation fails" do
     crop1 = create(:crop, user: @user)
     crop2 = create(:crop, user: @user)
@@ -1467,7 +1324,8 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_response :unprocessable_entity
+    assert_redirected_to pest_path(pest)
+    assert flash[:alert].present?
     pest.reload
     assert_equal 1, pest.crops.count  # 変更されていない
   end

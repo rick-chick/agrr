@@ -65,7 +65,7 @@ module Domain
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(form_failure_or_error(user, input_dto, e.message))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(pest_master_form_failure_for(user, input_dto, message: e.message))
         end
