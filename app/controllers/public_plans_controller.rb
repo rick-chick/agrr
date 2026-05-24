@@ -58,12 +58,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
 
   # Step 4: 作付け計画作成（計算開始）
   def create
-    session_presenter = Adapters::PublicPlan::Presenters::PublicPlanWizardCreateSessionHtmlPresenter.new(view: self)
-    valid = Domain::PublicPlan::Interactors::PublicPlanWizardValidateCreateSessionInteractor.new(
-      output_port: session_presenter
-    ).call(session_data: session_data)
-    return unless valid
-
     input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
       farm_id: session_data[:farm_id],
       farm_size_id: session_data[:farm_size_id],
