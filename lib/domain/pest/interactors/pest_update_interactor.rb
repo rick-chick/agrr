@@ -64,8 +64,8 @@ module Domain
           @output_port.on_success(pest_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
-        rescue Domain::Shared::Exceptions::RecordNotFound => e
-          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(@translator.t("pests.flash.not_found")))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(pest_master_form_failure_for(user, input_dto, message: e.message))
         end

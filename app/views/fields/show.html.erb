@@ -12,9 +12,6 @@
 
 <div class="page-header">
   <h1 class="page-title"><%= @field.display_name %></h1>
-  <div>
-    <%= link_to t('.edit'), edit_farm_field_path(@farm.id, @field.id), class: "btn btn-secondary" %>
-  </div>
 </div>
 
 <div class="field-card" id="field_<%= @field.id %>" data-undo-delete-record>
@@ -51,7 +48,6 @@
 
   <div class="actions">
     <%= link_to t('.back_to_list'), farm_fields_path(@farm.id), class: "btn btn-secondary" %>
-    <%= link_to t('.edit'), edit_farm_field_path(@farm.id, @field.id), class: "btn btn-secondary" %>
     <%= link_to t('.delete'), farm_field_path(@farm.id, @field.id),
                 class: "btn btn-error",
                 data: {

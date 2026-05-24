@@ -82,7 +82,7 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
   # is_reference / region 認可は Interactor テストと API controller テストが担保する。
   # HTML の redirect + flash マッピングは ERB 廃止（Phase 5）に伴いここでは検証しない。
 
-  test "作成時に必須項目が欠けていると422でnewを再表示する" do
+  test "作成時に必須項目が欠けていると一覧へリダイレクトする" do
     sign_in_as @user
 
     assert_no_difference("InteractionRule.count") do
@@ -96,10 +96,11 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_response :unprocessable_entity
+    assert_redirected_to interaction_rules_path
+    assert_predicate flash[:alert], :present?
   end
 
-  test "update時に必須項目が欠けていると422でeditを再表示する" do
+  test "update時に必須項目が欠けていると詳細へリダイレクトする" do
     sign_in_as @user
     rule = create_interaction_rule(user: @user)
     original_rule_type = rule.rule_type
@@ -113,7 +114,8 @@ class InteractionRulesControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_redirected_to interaction_rule_path(rule)
+    assert_predicate flash[:alert], :present?
 
     rule.reload
     assert_equal original_rule_type, rule.rule_type
