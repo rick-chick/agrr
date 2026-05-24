@@ -31,7 +31,7 @@ module Domain
             master_form_snapshot: snapshot
           )
           user = stub(id: 9, admin?: false)
-          farm_entity = stub(user_id: 9, is_reference: false)
+          farm_entity = stub(id: 3, user_id: 9, is_reference: false)
           list = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [])
 
           gw = mock
@@ -70,7 +70,7 @@ module Domain
 
         test "delegates to failure presenter on policy denial" do
           user = stub(id: 9, admin?: false)
-          farm_entity = stub(user_id: 99, is_reference: false)
+          farm_entity = stub(id: 3, user_id: 99, is_reference: false)
           list = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [])
 
           gateway = mock
@@ -100,7 +100,7 @@ module Domain
 
         test "delegates to failure presenter on record not found" do
           user = stub(id: 9, admin?: false)
-          farm_entity = stub(user_id: 9, is_reference: false)
+          farm_entity = stub(id: 3, user_id: 9, is_reference: false)
           list = Domain::Field::Results::FarmFieldsList.new(farm: farm_entity, fields: [])
 
           gateway = mock

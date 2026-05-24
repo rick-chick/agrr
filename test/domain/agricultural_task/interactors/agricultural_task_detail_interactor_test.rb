@@ -16,7 +16,7 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          detail_dto = stub(task: task_entity)
+          detail_dto = stub(task: task_entity, associated_crops: [ :crop ])
           gateway.expects(:find_agricultural_task_show_detail).with(task_id).returns(detail_dto)
 
           received = nil
@@ -32,7 +32,10 @@ module Domain
 
           interactor.call(task_id)
 
-          assert_equal detail_dto, received
+          assert_instance_of Domain::AgriculturalTask::Dtos::AgriculturalTaskDetailOutput, received
+          assert_equal task_entity, received.task
+          assert_equal [ :crop ], received.associated_crops
+          assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, received.html_display
           user_lookup.verify
           output_port.verify
         end

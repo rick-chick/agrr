@@ -16,7 +16,13 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          detail_dto = stub(pest: pest_entity)
+          detail_dto = stub(
+            pest: pest_entity,
+            temperature_profile: :temp,
+            thermal_requirement: :thermal,
+            control_methods: [ :cm ],
+            associated_crops: [ :crop ]
+          )
           gateway.expects(:find_pest_show_detail).with(pest_id).returns(detail_dto)
 
           received = nil
@@ -35,7 +41,13 @@ module Domain
 
           interactor.call(pest_id)
 
-          assert_equal detail_dto, received
+          assert_instance_of Domain::Pest::Dtos::PestDetailOutput, received
+          assert_equal pest_entity, received.pest
+          assert_equal :temp, received.temperature_profile
+          assert_equal :thermal, received.thermal_requirement
+          assert_equal [ :cm ], received.control_methods
+          assert_equal [ :crop ], received.associated_crops
+          assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, received.html_display
           user_lookup.verify
           output_port.verify
         end

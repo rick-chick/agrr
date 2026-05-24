@@ -16,7 +16,13 @@ module Domain
           user_lookup.expect(:find, user, [ user_id ])
 
           gateway = mock
-          detail_dto = stub(pesticide: pesticide_entity)
+          detail_dto = stub(
+            pesticide: pesticide_entity,
+            crop_name: "トマト",
+            pest_name: "アブラムシ",
+            usage_constraint_snapshot: :usage,
+            application_detail_snapshot: :application
+          )
           gateway.expects(:find_pesticide_show_detail).with(pesticide_id).returns(detail_dto)
 
           received = nil
@@ -32,7 +38,13 @@ module Domain
 
           interactor.call(pesticide_id)
 
-          assert_equal detail_dto, received
+          assert_instance_of Domain::Pesticide::Dtos::PesticideDetailOutput, received
+          assert_equal pesticide_entity, received.pesticide
+          assert_equal "トマト", received.crop_name
+          assert_equal "アブラムシ", received.pest_name
+          assert_equal :usage, received.usage_constraint_snapshot
+          assert_equal :application, received.application_detail_snapshot
+          assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, received.html_display
           user_lookup.verify
           output_port.verify
         end

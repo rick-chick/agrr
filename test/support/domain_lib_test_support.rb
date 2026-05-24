@@ -9,6 +9,23 @@ module DomainLibTestSupport
     stub({ is_reference: is_reference, user_id: user_id }.merge(extra))
   end
 
+  # ReferencableListRowMapper 経由の list interactor 用
+  def expect_referencable_list_rows_on_success(output, records, page_display: false)
+    output.expects(:on_success).with do |rows, **kwargs|
+      assert_equal records.length, rows.length
+      rows.zip(records).each do |row, record|
+        assert_instance_of Domain::Shared::Dtos::ReferencableListRow, row
+        assert_same record, row.record
+      end
+      if page_display
+        assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, kwargs[:page_display]
+      else
+        assert_empty kwargs
+      end
+      true
+    end
+  end
+
   def schedulable_record_stub(type_name, is_reference: false, user_id: 1, **extra)
     klass = Class.new do
       define_singleton_method(:name) { type_name }

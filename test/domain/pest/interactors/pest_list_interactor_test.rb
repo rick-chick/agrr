@@ -12,13 +12,13 @@ class Domain::Pest::Interactors::PestListInteractorTest < DomainLibTestCase
     user_lookup.expects(:find).with(42).returns(user)
 
     expected_filter = Domain::Shared::Policies::PestPolicy.index_list_filter(user)
-    e1 = mock
-    e2 = mock
+    e1 = domain_record_entity_stub(user_id: 42)
+    e2 = domain_record_entity_stub(user_id: 42)
     gateway = mock
     gateway.expects(:list_index_for_filter).with(expected_filter).returns([ e1, e2 ])
 
     output = mock
-    output.expects(:on_success).with([ e1, e2 ])
+    expect_referencable_list_rows_on_success(output, [ e1, e2 ])
 
     Domain::Pest::Interactors::PestListInteractor.new(
       output_port: output,

@@ -7,8 +7,8 @@ class FertilizeListInteractorTest < DomainLibTestCase
     user = Object.new
     def user.id; 42; end
     def user.admin?; false; end
-    e1 = mock
-    e2 = mock
+    e1 = domain_record_entity_stub(user_id: 42)
+    e2 = domain_record_entity_stub(user_id: 42)
 
     user_lookup = mock
     user_lookup.expects(:find).with(42).returns(user)
@@ -18,7 +18,7 @@ class FertilizeListInteractorTest < DomainLibTestCase
     gateway.expects(:list_index_for_filter).with(expected_filter).returns([ e1, e2 ])
 
     output = mock
-    output.expects(:on_success).with([ e1, e2 ])
+    expect_referencable_list_rows_on_success(output, [ e1, e2 ])
 
     interactor = Domain::Fertilize::Interactors::FertilizeListInteractor.new(
       output_port: output,
