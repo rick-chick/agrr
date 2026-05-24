@@ -48,11 +48,10 @@ class AgriculturalTasksCardsTest < ApplicationSystemTestCase
     assert_selector ".agricultural-task-type.reference", text: /参照作業|Reference Task/
     within ".agricultural-task-card" do
       assert_selector ".agricultural-task-meta__label", text: /作業時間|Time per|㎡/
-      assert_selector ".btn-secondary", text: /編集|Edit/
+      assert_selector ".btn-info", text: /詳細|Show/
       assert_selector ".btn-error", text: /削除|Delete/
     end
 
-    assert_selector ".agricultural-task-card", minimum: 1
     assert_selector ".agricultural-task-card", minimum: 1
   end
 
