@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class InteractionRulesController < ApplicationController
-  before_action :preload_interaction_rule_entity, only: [ :show, :edit, :update ]
-
   # GET /interaction_rules
   def index
     presenter = Adapters::InteractionRule::Presenters::InteractionRuleListHtmlPresenter.new(view: self)
@@ -29,11 +27,6 @@ class InteractionRulesController < ApplicationController
   def new
     @form = Adapters::InteractionRule::Presenters::Forms::InteractionRuleForm.new
     @html_display = master_form_html_display_capabilities
-  end
-
-  # GET /interaction_rules/:id/edit
-  def edit
-    # @form は preload_interaction_rule_entity → Presenter で設定済み
   end
 
   # POST /interaction_rules
@@ -98,17 +91,6 @@ class InteractionRulesController < ApplicationController
       deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
       translator: CompositionRoot.translator
     )
-  end
-
-  def preload_interaction_rule_entity
-    for_edit = params[:action].to_sym.in?([ :edit, :update ])
-    presenter = Adapters::InteractionRule::Presenters::InteractionRuleLoadHtmlPresenter.new(view: self, for_edit: for_edit)
-    Domain::InteractionRule::Interactors::InteractionRuleLoadInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      gateway: interaction_rule_gateway,
-      user_lookup: user_lookup_adapter
-    ).call(rule_id: params[:id], for_edit: for_edit)
   end
 
   def destroy_with_presenter(presenter)

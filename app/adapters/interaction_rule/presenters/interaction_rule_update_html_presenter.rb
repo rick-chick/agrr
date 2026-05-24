@@ -27,8 +27,8 @@ module Adapters
 
           error_message = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
 
-          @view.flash.now[:alert] = error_message
-          @view.render :edit, status: :unprocessable_entity
+          path = @view.params[:id] ? @view.interaction_rule_path(@view.params[:id]) : @view.interaction_rules_path
+          @view.redirect_to path, alert: error_message
         end
       end
     end

@@ -4,7 +4,6 @@
   <h1 class="page-title"><%= t('.title') %></h1>
   <div>
     <% if @html_display&.show_edit_button %>
-      <%= link_to t('.edit'), edit_interaction_rule_path(@interaction_rule), class: "btn btn-secondary" %>
     <% end %>
     <% if @html_display&.show_delete_button %>
       <%= link_to t('.delete'), interaction_rule_path(@interaction_rule),

@@ -20,8 +20,7 @@ module Adapters
             return
           end
 
-          @view.flash.now[:alert] = error_message
-          @view.render :new, status: :unprocessable_entity
+          @view.redirect_to @view.interaction_rules_path, alert: error_message
         end
       end
     end
