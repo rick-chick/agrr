@@ -47,7 +47,6 @@ module Domain
           assert_equal :thermal, received.thermal_requirement
           assert_equal [ :cm ], received.control_methods
           assert_equal [ :crop ], received.associated_crops
-          assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, received.html_display
           user_lookup.verify
           output_port.verify
         end

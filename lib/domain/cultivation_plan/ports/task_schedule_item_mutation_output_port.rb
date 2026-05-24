@@ -19,10 +19,6 @@ module Domain
         def on_not_found
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end
-
-        def on_parameter_missing
-          raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
-        end
       end
     end
   end

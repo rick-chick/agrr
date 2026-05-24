@@ -31,18 +31,6 @@ class Adapters::CultivationPlan::Presenters::TaskScheduleTimelineHtmlPresenter <
     }
   end
 
-  def html_shell_plan
-    return nil unless @timeline
-
-    p = @timeline.plan
-    Domain::CultivationPlan::Dtos::TaskScheduleTimelineShellPlan.new(
-      id: p.id,
-      display_name: p.display_name,
-      total_area: p.total_area,
-      farm_display_name: p.farm_display_name
-    )
-  end
-
   private
 
   attr_reader :timeline, :params

@@ -27,11 +27,6 @@ module Adapters
           @view.render json: { error: message, errors: { "base" => [ message ] } }, status: :not_found
         end
 
-        def on_parameter_missing
-          message = I18n.t("controllers.plans.task_schedule_items.errors.parameter_missing")
-          @view.render json: { error: message, errors: { "base" => [ message ] } }, status: :bad_request
-        end
-
         private
 
         def build_error_hash(errors_input, fallback_message)

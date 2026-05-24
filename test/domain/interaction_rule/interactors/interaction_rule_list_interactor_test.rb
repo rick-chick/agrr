@@ -6,7 +6,7 @@ module Domain
   module InteractionRule
     module Interactors
       class InteractionRuleListInteractorTest < DomainLibTestCase
-        test "call passes partitioned rules to output port on success" do
+        test "call passes rules from gateway to output port on success" do
           user = Object.new
           def user.id; 1; end
           def user.admin?; false; end
@@ -14,20 +14,14 @@ module Domain
           user_lookup.expects(:find).with(1).returns(user)
 
           ref = mock
-          ref.expects(:is_reference).twice.returns(true)
           owned = mock
-          owned.expects(:is_reference).twice.returns(false)
 
           expected_filter = Domain::Shared::Policies::InteractionRulePolicy.index_list_filter(user)
           gateway = mock
           gateway.expects(:list_index_for_filter).with(expected_filter).returns([ ref, owned ])
 
           output = mock
-          output.expects(:on_success).with do |payload|
-            payload[:interaction_rules] == [ owned ] &&
-              payload[:reference_rules] == [ ref ] &&
-              payload[:page_display].is_a?(Domain::Shared::Dtos::ResourceDisplayCapabilities)
-          end
+          output.expects(:on_success).with([ ref, owned ])
 
           InteractionRuleListInteractor.new(
             output_port: output,

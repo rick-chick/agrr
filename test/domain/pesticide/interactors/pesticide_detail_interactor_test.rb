@@ -44,7 +44,6 @@ module Domain
           assert_equal "アブラムシ", received.pest_name
           assert_equal :usage, received.usage_constraint_snapshot
           assert_equal :application, received.application_detail_snapshot
-          assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, received.html_display
           user_lookup.verify
           output_port.verify
         end

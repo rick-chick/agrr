@@ -3,13 +3,12 @@
 module Domain
   module Shared
     module Dtos
-      # 一覧行: ドメイン record + HTML 表示フラグ。
+      # 一覧行: ドメイン record のみ（API JSON は entity をそのまま出す）。
       class ReferencableListRow
-        attr_reader :record, :display
+        attr_reader :record
 
-        def initialize(record:, display:)
+        def initialize(record:)
           @record = record
-          @display = display
         end
       end
     end

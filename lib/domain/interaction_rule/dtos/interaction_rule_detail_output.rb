@@ -4,11 +4,10 @@ module Domain
   module InteractionRule
     module Dtos
       class InteractionRuleDetailOutput
-        attr_reader :rule, :html_display
+        attr_reader :rule
 
-        def initialize(rule:, html_display: nil)
+        def initialize(rule:)
           @rule = rule
-          @html_display = html_display
         end
       end
     end

@@ -3,7 +3,6 @@ us:
     navbar:
       brand: "AGRR"
       plans: "Plans"
-      planning_schedules: "Planning Schedules"
       farms: "Farms"
       crops: "Crops"
       fertilizes: "Fertilizers"
@@ -22,11 +21,6 @@ us:
       api_keys: "API Keys"
       api_docs: "API"
 
-    crop_palette:
-      toggle: "Add crops"
-      title: "Add crops"
-      in_use: "In use"
-    
     footer:
       brand_description: "Agricultural Crop Planning Support System\nAiming for Sustainable Agriculture"
       services: "Services"

@@ -10,16 +10,8 @@ module Domain
           records.map { |record| map_record(user, record) }
         end
 
-        def map_record(user, record)
-          is_reference = record.respond_to?(:reference?) ? record.reference? : !!record.is_reference
-          Domain::Shared::Dtos::ReferencableListRow.new(
-            record: record,
-            display: Domain::Shared::Dtos::ResourceDisplayCapabilities.for_list_row(
-              user,
-              is_reference: is_reference,
-              user_id: record.user_id
-            )
-          )
+        def map_record(_user, record)
+          Domain::Shared::Dtos::ReferencableListRow.new(record: record)
         end
       end
     end

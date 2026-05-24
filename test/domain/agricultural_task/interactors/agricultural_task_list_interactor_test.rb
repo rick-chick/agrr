@@ -17,7 +17,7 @@ module Domain
           gateway.expects(:list_user_owned_tasks).with(user_id: 1, query: nil).returns(tasks)
 
           output = mock
-          expect_referencable_list_rows_on_success(output, tasks, page_display: true)
+          expect_referencable_list_rows_on_success(output, tasks, )
 
           interactor = AgriculturalTaskListInteractor.new(
             output_port: output,
@@ -39,7 +39,7 @@ module Domain
           gateway.expects(:list_user_and_reference_tasks).with(user_id: 2, query: nil).returns(tasks)
 
           output = mock
-          expect_referencable_list_rows_on_success(output, tasks, page_display: true)
+          expect_referencable_list_rows_on_success(output, tasks, )
 
           input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskListInput.new(is_admin: true)
           interactor = AgriculturalTaskListInteractor.new(
@@ -62,7 +62,7 @@ module Domain
           gateway.expects(:list_reference_tasks).with(query: nil).returns(refs)
 
           output = mock
-          expect_referencable_list_rows_on_success(output, refs, page_display: true)
+          expect_referencable_list_rows_on_success(output, refs, )
 
           input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskListInput.new(is_admin: true, filter: "reference")
           interactor = AgriculturalTaskListInteractor.new(

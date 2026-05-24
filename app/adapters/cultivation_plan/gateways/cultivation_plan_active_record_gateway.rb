@@ -606,75 +606,6 @@ module Adapters
           }
         end
 
-        def public_plan_results_snapshot(plan_id:)
-          plan = ::CultivationPlan.includes(
-            :farm,
-            cultivation_plan_fields: [],
-            field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ],
-            cultivation_plan_crops: [ :crop ]
-          ).find_by(id: plan_id)
-          return nil unless plan
-
-          gantt_cultivation_rows = plan.field_cultivations.map do |fc|
-            Domain::CultivationPlan::GanttChartRowHashes.cultivation_row_from_ar(fc)
-          end
-          gantt_field_rows = plan.cultivation_plan_fields.map do |field|
-            Domain::CultivationPlan::GanttChartRowHashes.field_row_from_ar(field)
-          end
-
-          used_crop_ids = plan.cultivation_plan_crops.map(&:crop_id).compact
-          region = plan.farm&.region
-          crop_rows = if region.present?
-            ::Crop.reference.where(region: region).order(:name).map do |c|
-              { id: c.id, name: c.name, variety: c.variety }
-            end
-          else
-            []
-          end
-          crop_palette_embed = { used_crop_ids: used_crop_ids, crops: crop_rows }
-
-          Domain::CultivationPlan::Dtos::PublicPlanResultsSnapshot.new(
-            plan_id: plan.id,
-            status_completed: plan.status_completed?,
-            planning_start_date: plan.planning_start_date,
-            planning_end_date: plan.planning_end_date,
-            farm_name: plan.farm&.name,
-            total_area: plan.total_area,
-            field_cultivations_count: plan.field_cultivations.size,
-            total_cost: plan.total_cost,
-            total_revenue: plan.total_revenue,
-            total_profit: plan.total_profit,
-            gantt_cultivation_rows: gantt_cultivation_rows,
-            gantt_field_rows: gantt_field_rows,
-            crop_palette_embed: crop_palette_embed,
-            show_schedule_warning: public_plan_schedule_items_coverage_warning?(plan)
-          )
-        end
-
-        def public_plan_wizard_plan_exists?(plan_id:)
-          return false if plan_id.blank?
-
-          ::CultivationPlan.find_by(id: plan_id).present?
-        end
-
-        def public_plan_wizard_save_session_payload(plan_id:, farm_id:, crop_ids:)
-          plan = ::CultivationPlan.find_by(id: plan_id)
-          return nil unless plan
-
-          {
-            plan_id: plan.id,
-            farm_id: farm_id,
-            crop_ids: crop_ids,
-            field_data: plan.cultivation_plan_fields.map do |field|
-              {
-                name: field.name,
-                area: field.area,
-                coordinates: [ 35.0, 139.0 ]
-              }
-            end
-          }
-        end
-
         private
 
         def normalize_farm_for_plan!(farm)
@@ -708,19 +639,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        # 結果ページ Snapshot の `show_schedule_warning` 用（SQL 条件は同一）
-        def public_plan_schedule_items_coverage_warning?(plan_model)
-          total_fc = plan_model.field_cultivations.count
-          return false if total_fc.zero?
-
-          with_items_fc = ::TaskSchedule
-            .where(cultivation_plan_id: plan_model.id)
-            .joins(:task_schedule_items)
-            .distinct
-            .count(:field_cultivation_id)
-
-          with_items_fc < total_fc
-        end
       end
     end
   end

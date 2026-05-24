@@ -363,38 +363,6 @@ module Adapters
           )
         end
 
-        test "selectable_agricultural_task_picklist_rows_for_nested_templates returns rows excluding already-linked tasks" do
-          user = @crop.user
-          task_linked = create(:agricultural_task, :user_owned, user: user, name: "LinkedPicklist")
-          task_free = create(:agricultural_task, :user_owned, user: user, name: "FreePicklist")
-          create(:crop_task_template, crop: @crop, agricultural_task: task_linked)
-
-          rows = @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(
-            user: user,
-            crop_id: @crop.id,
-          )
-
-          ids = rows.map { |r| r[:id] }
-          refute_includes ids, task_linked.id
-          assert_includes ids, task_free.id
-          hit = rows.find { |r| r[:id] == task_free.id }
-          assert_equal task_free.id, hit[:id]
-          assert_equal task_free.name, hit[:name]
-        end
-
-        test "selectable_agricultural_task_picklist_rows_for_nested_templates resolves crop by id without user scope" do
-          other_crop = create(:crop, :user_owned, user: create(:user))
-          user = @crop.user
-          task_free = create(:agricultural_task, :user_owned, user: user)
-
-          rows = @gateway.selectable_agricultural_task_picklist_rows_for_nested_templates(
-            user: user,
-            crop_id: other_crop.id,
-          )
-
-          assert_includes rows.map { |r| r[:id] }, task_free.id
-        end
-
         test "list_index_for_filter owned_non_reference returns only that user's non-reference crops" do
           user = create(:user)
           other = create(:user)

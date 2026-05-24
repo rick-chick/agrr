@@ -30,9 +30,7 @@ module Adapters
         private
 
         def rules_to_array(rules)
-          return rules if rules.is_a?(Array)
-          return [] unless rules.respond_to?(:[]) && rules[:interaction_rules]
-          Array(rules[:interaction_rules])
+          Array(rules)
         end
 
         def entity_to_json(entity)

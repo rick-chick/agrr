@@ -3,7 +3,6 @@ in:
     navbar:
       brand: "AGRR"
       plans: "योजनाएं"
-      planning_schedules: "योजना अनुसूची"
       farms: "खेत"
       crops: "फसलें"
       fertilizes: "उर्वरक"
@@ -22,11 +21,6 @@ in:
       api_keys: "API कुंजी管理"
       api_docs: "API"
 
-    crop_palette:
-      toggle: "作物を追加"
-      title: "作物を追加"
-      in_use: "使用中"
-    
     footer:
       brand_description: "कृषि फसल योजना सहायता प्रणाली\nस्थायी कृषि का लक्ष्य"
       services: "सेवाएं"

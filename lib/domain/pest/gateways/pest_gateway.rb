@@ -29,10 +29,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement pest_selectable_by_user?"
         end
 
-        def list_selectable_pest_entities_recent_first(user)
-          raise NotImplementedError, "Subclasses must implement list_selectable_pest_entities_recent_first"
-        end
-
         # 詳細 DTO（関連込み）。認可は Interactor 側（R0）。
         def find_pest_show_detail(id)
           raise NotImplementedError, "Subclasses must implement find_pest_show_detail"
@@ -68,25 +64,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement link_pest_to_crop"
         end
 
-        # 新規作成 + crop への紐付け（HTML/Masters 共用）。pest_attrs は Interactor で PestPolicy 正規化済み。
-        # @return [Hash] { status: :created|:invalid, pest_snapshot: PestCropNestSnapshot, unassociated_pest_entities: [...] }
-        def create_pest_for_crop(user:, crop_id:, pest_attrs:, crop_access_filter:)
-          raise NotImplementedError, "Subclasses must implement create_pest_for_crop"
-        end
-
-        # crop 配下の Pest を更新する。pest_attrs は Interactor で正規化済み。
-        # @return [Hash] { status: :updated|:invalid|:crop_missing|:pest_missing, pest_snapshot: PestCropNestSnapshot|nil }
-        def update_pest_for_crop(user:, crop_id:, pest_id:, pest_attrs:, crop_access_filter:)
-          raise NotImplementedError, "Subclasses must implement update_pest_for_crop"
-        end
-
-        # crop 配下の Pest を取得する（HTML 編集等向け）。
-        # @param for_edit_form [Boolean] true のとき防除方法が 0 件なら空行を補完する
-        # @return [Hash] { status: :found|:not_found, pest_snapshot: PestCropNestSnapshot|nil }
-        def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter:, for_edit_form: false)
-          raise NotImplementedError, "Subclasses must implement find_pest_in_crop"
-        end
-
         # HTML トップレベル編集（`/pests/:id/edit`）用。防除方法が 0 件なら空行を build。
         # @param pest_record [Pest]
         # @return [Pest] pest_record
@@ -119,12 +96,6 @@ module Domain
         # @return [Domain::Pest::Entities::PestEntity, nil]
         def find_by_name(user_id:, name:)
           raise NotImplementedError, "Subclasses must implement find_by_name"
-        end
-
-        # 作物に紐づく害虫 ID の一覧（新規フォームの除外判定用）。
-        # @return [Array<Integer>]
-        def pest_ids_linked_to_crop(crop_id:)
-          raise NotImplementedError, "Subclasses must implement pest_ids_linked_to_crop"
         end
 
         # 作物から害虫の関連を外す（永続化のみ）。関連の有無は Interactor が crop_pest_association_exists? で判定。

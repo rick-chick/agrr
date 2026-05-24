@@ -9,11 +9,6 @@ ja:
         failure: "APIキーの再生成に失敗しました。"
     auth_test:
       mock_data_missing: "モック認証データが設定されていません"
-    planning_schedules:
-      half_label: "%{year} %{half}"
-      half:
-        first: "上半期"
-        second: "下半期"
     cultivation_plans:
       errors:
         add_field_failed: "圃場の追加に失敗しました: %{message}"
@@ -60,11 +55,6 @@ us:
         failure: "Failed to regenerate API key."
     auth_test:
       mock_data_missing: "Mock authentication data is not configured."
-    planning_schedules:
-      half_label: "%{year} %{half}"
-      half:
-        first: "First half"
-        second: "Second half"
     cultivation_plans:
       errors:
         add_field_failed: "Failed to add field: %{message}"
@@ -111,11 +101,6 @@ in:
         failure: "API कुंजी को दोबारा बनाने में विफल रहा।"
     auth_test:
       mock_data_missing: "Mock authentication data is not configured."
-    planning_schedules:
-      half_label: "%{year} %{half}"
-      half:
-        first: "पहला अर्धवार्षिक"
-        second: "दूसरा अर्धवार्षिक"
     cultivation_plans:
       errors:
         add_field_failed: "Field addition failed: %{message}"

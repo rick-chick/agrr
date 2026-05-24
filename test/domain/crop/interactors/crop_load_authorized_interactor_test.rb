@@ -25,8 +25,7 @@ module Domain
         end
 
         test "returns bundle when gateway succeeds" do
-          snapshot = Domain::Crop::Dtos::CropMasterFormSnapshot.for_unsaved_blank_form
-          dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: @entity, master_form_snapshot: snapshot)
+          dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: @entity)
           user = stub(id: 1, admin?: false)
 
           gw = Class.new do
@@ -69,7 +68,6 @@ module Domain
           )
 
           assert_equal @entity, bundle.crop_entity
-          assert_same snapshot, bundle.master_form_snapshot
           assert_equal false, gw.captured_for_edit
           user_lookup.verify
         end
@@ -89,8 +87,7 @@ module Domain
             created_at: @fixed_at,
             updated_at: @fixed_at
           )
-          snapshot = Domain::Crop::Dtos::CropMasterFormSnapshot.for_unsaved_blank_form
-          dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: denied_entity, master_form_snapshot: snapshot)
+          dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: denied_entity)
           user = stub(id: 1, admin?: false)
 
           gateway = Minitest::Mock.new

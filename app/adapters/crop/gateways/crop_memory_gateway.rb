@@ -17,14 +17,6 @@ module Adapters
           user_owned_non_reference_scope(user).order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
-        def list_non_reference_crops_for_user_id_ordered(user_id, region = nil)
-          return [] if user_id.blank?
-
-          scope = ::Crop.where(is_reference: false, user_id: user_id)
-          scope = scope.where(region: region) if region.present?
-          scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
-        end
-
         def find_reference_crop_record_for_public_plan_add_crop(crop_id)
           return nil if crop_id.blank?
 
@@ -64,24 +56,10 @@ module Adapters
         def find_crop_loaded_bundle!(id, for_edit:)
           crop = crop_record_with_association_preloads!(id)
 
-          prepare_crop_record_for_edit_master_form_internal!(crop) if for_edit
-
           Domain::Crop::Dtos::AuthorizedCropLoaded.new(
-            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
-            master_form_snapshot: Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop)
+            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
           )
         end
-
-        private
-
-        # edit フォーム用にネストの空関連を補う（CropLoadAuthorized の for_edit 用）
-        def prepare_crop_record_for_edit_master_form_internal!(crop)
-          crop.crop_stages.each do |stage|
-            stage.build_nutrient_requirement unless stage.nutrient_requirement
-          end
-        end
-
-        public
 
         def create_masters_crop_task_template_association(input_dto)
           crop = find_crop_model!(input_dto.crop_id.to_i)
@@ -120,14 +98,6 @@ module Adapters
           crop.crop_task_templates.includes(:agricultural_task).map { |t| masters_crop_task_template_api_row(t) }
         end
 
-        def selectable_agricultural_task_picklist_rows_for_nested_templates(user:, crop_id:)
-          crop = find_crop_model!(crop_id.to_i)
-          scope = ::AgriculturalTask.where("is_reference = ? OR user_id = ?", true, user.id)
-          existing_task_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact
-          scope = scope.where.not(id: existing_task_ids) if existing_task_ids.any?
-          scope.recent.map { |t| { id: t.id, name: t.name } }
-        end
-
         def update_masters_crop_task_template_for_api(crop_id:, template_id:, attributes:)
           crop = find_crop_model!(crop_id.to_i)
           tpl = crop.crop_task_templates.find(template_id.to_i)
@@ -158,17 +128,6 @@ module Adapters
           )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
-        end
-
-        def find_crop_task_template_in_crop!(crop_id, template_id, for_edit:)
-          crop = find_crop_model!(crop_id)
-          tpl = crop.crop_task_templates.find(template_id)
-          Domain::Crop::Dtos::AuthorizedCropTaskTemplateInCropContext.new(
-            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
-            crop_task_template_dto: masters_crop_task_template_dto_from_record(tpl, agricultural_task_snapshot_from_record(tpl.agricultural_task))
-          )
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound
         end
 
         def find_crop_show_detail(crop_id)
@@ -491,22 +450,6 @@ module Adapters
             created_at: template.created_at,
             updated_at: template.updated_at
           }
-        end
-
-        def available_agricultural_tasks_for_crop(crop)
-          if !crop.is_reference && crop.user_id.present?
-            tasks = ::AgriculturalTask.user_owned.where(user_id: crop.user_id)
-            tasks = tasks.where(region: crop.region) if crop.region.present?
-            return tasks.order(:name)
-          end
-
-          if crop.is_reference
-            tasks = ::AgriculturalTask.reference
-            tasks = tasks.where(region: crop.region) if crop.region.present?
-            return tasks.order(:name)
-          end
-
-          ::AgriculturalTask.none
         end
 
         def index_relation_for_filter(filter)

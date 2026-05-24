@@ -35,7 +35,6 @@ module Domain
           assert_instance_of Domain::AgriculturalTask::Dtos::AgriculturalTaskDetailOutput, received
           assert_equal task_entity, received.task
           assert_equal [ :crop ], received.associated_crops
-          assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, received.html_display
           user_lookup.verify
           output_port.verify
         end

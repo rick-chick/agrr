@@ -768,13 +768,6 @@ module CompositionRoot
       )
     end
 
-    def crop_task_schedule_blueprint_regeneration_gateway
-      @crop_task_schedule_blueprint_regeneration_gateway ||= Adapters::Crop::Gateways::CropTaskScheduleBlueprintRegenerationActiveRecordGateway.new(
-        schedule_gateway: Adapters::Agrr::Gateways::ScheduleDaemonGateway.new,
-        fertilize_gateway: Adapters::Agrr::Gateways::FertilizeDaemonGateway.new
-      )
-    end
-
     def crop_ai_daemon_query_gateway
       @crop_ai_daemon_query_gateway ||= Adapters::Agrr::Gateways::CropAiQueryDaemonGateway.new(
         logger: logger,

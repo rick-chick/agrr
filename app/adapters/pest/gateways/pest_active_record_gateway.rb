@@ -20,10 +20,6 @@ module Adapters
           selectable_scope(user).exists?(id: pest_id)
         end
 
-        def list_selectable_pest_entities_recent_first(user)
-          selectable_scope(user).recent.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
-        end
-
         def list_pests_for_crop_filtered(crop_id:, pest_ids:, order: :recent_first)
           return [] if pest_ids.blank?
 
@@ -107,81 +103,6 @@ module Adapters
 
           crop.pests << pest
           :linked
-        end
-
-        def create_pest_for_crop(user:, crop_id:, pest_attrs:, crop_access_filter: nil)
-          crop = find_crop_model(crop_id)
-          attrs = pest_attrs.to_h.symbolize_keys
-          pest = ::Pest.new(attrs)
-
-          unless crop
-            return Domain::Pest::Dtos::PestMutationOutput.new(
-              status: :invalid,
-              crop_nest_snapshot: pest_crop_nest_snapshot_from(pest),
-              unassociated_pest_entities: []
-            )
-          end
-
-          if pest.save
-            crop.pests << pest unless crop.pests.include?(pest)
-            return Domain::Pest::Dtos::PestMutationOutput.new(
-              status: :created,
-              pest_entity: Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(pest),
-              crop_nest_snapshot: pest_crop_nest_snapshot_from(pest),
-              unassociated_pest_entities: []
-            )
-          end
-
-          available_entities = list_selectable_pest_entities_recent_first(user)
-          crop_pests_ids = crop.pest_ids
-          unassociated = available_entities.reject { |e| crop_pests_ids.include?(e.id) }
-          Domain::Pest::Dtos::PestMutationOutput.new(
-            status: :invalid,
-            crop_nest_snapshot: pest_crop_nest_snapshot_from(pest),
-            unassociated_pest_entities: unassociated
-          )
-        end
-
-        def update_pest_for_crop(user:, crop_id:, pest_id:, pest_attrs:, crop_access_filter: nil)
-          crop = find_crop_model(crop_id)
-          unless crop
-            return Domain::Pest::Dtos::PestMutationOutput.new(status: :crop_missing)
-          end
-
-          pest = crop.pests.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods).find_by(id: pest_id)
-          unless pest
-            return Domain::Pest::Dtos::PestMutationOutput.new(status: :pest_missing)
-          end
-
-          attrs = pest_attrs.to_h.symbolize_keys
-          if pest.update(attrs)
-            Domain::Pest::Dtos::PestMutationOutput.new(
-              status: :updated,
-              crop_nest_snapshot: pest_crop_nest_snapshot_from(pest)
-            )
-          else
-            Domain::Pest::Dtos::PestMutationOutput.new(
-              status: :invalid,
-              crop_nest_snapshot: pest_crop_nest_snapshot_from(pest)
-            )
-          end
-        end
-
-        def find_pest_in_crop(crop_id:, pest_id:, crop_access_filter: nil, for_edit_form: false)
-          crop = find_crop_model(crop_id)
-          unless crop
-            return Domain::Pest::Dtos::PestMutationOutput.new(status: :not_found)
-          end
-
-          pest = crop.pests.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods).find_by(id: pest_id)
-          unless pest
-            return Domain::Pest::Dtos::PestMutationOutput.new(status: :not_found)
-          end
-
-          Domain::Pest::Dtos::PestMutationOutput.new(
-            status: :found,
-            crop_nest_snapshot: pest_crop_nest_snapshot_from(pest, ensure_blank_control_method: for_edit_form)
-          )
         end
 
         def associate_crops_with_pest_id(pest_id:, crop_ids:, user:)
@@ -314,10 +235,6 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record)
         end
 
-        def pest_ids_linked_to_crop(crop_id:)
-          ::CropPest.where(crop_id: crop_id).pluck(:pest_id)
-        end
-
         def unlink_pest_from_crop(crop_id:, pest_id:)
           crop = find_crop_model(crop_id)
           return :crop_not_found unless crop
@@ -347,32 +264,6 @@ module Adapters
             associated_count += 1
           end
           associated_count
-        end
-
-        def pest_crop_nest_snapshot_from(pest, ensure_blank_control_method: false)
-          tp = pest.pest_temperature_profile
-          temperature_profile_row = tp && { id: tp.id, base_temperature: tp.base_temperature, max_temperature: tp.max_temperature }
-          tr = pest.pest_thermal_requirement
-          thermal_requirement_row = tr && { id: tr.id, required_gdd: tr.required_gdd, first_generation_gdd: tr.first_generation_gdd }
-          control_method_rows = pest.pest_control_methods.sort_by(&:id).map do |m|
-            { id: m.id, method_type: m.method_type, method_name: m.method_name, description: m.description, timing_hint: m.timing_hint }
-          end
-          error_messages = {}
-          pest.errors.each do |error|
-            attr = error.attribute
-            (error_messages[attr] ||= []) << error.message
-          end
-          if ensure_blank_control_method && control_method_rows.empty?
-            control_method_rows = [ { id: nil, method_type: nil, method_name: nil, description: nil, timing_hint: nil } ]
-          end
-          Domain::Pest::Dtos::PestCropNestSnapshot.new(
-            id: pest.id, user_id: pest.user_id, name: pest.name, name_scientific: pest.name_scientific,
-            family: pest.family, order: pest.order, description: pest.description,
-            occurrence_season: pest.occurrence_season, region: pest.region, is_reference: pest.is_reference,
-            created_at: pest.created_at, updated_at: pest.updated_at,
-            temperature_profile_row: temperature_profile_row, thermal_requirement_row: thermal_requirement_row,
-            control_method_rows: control_method_rows, error_messages_by_attribute: error_messages
-          )
         end
 
         def extract_crop_ids_from_ai_payload(affected_crops)

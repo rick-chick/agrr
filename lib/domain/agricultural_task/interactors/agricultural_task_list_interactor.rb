@@ -18,8 +18,7 @@ module Domain
           filtered_tasks = list_tasks_for_input(input_dto, user_id: user.id)
 
           rows = Domain::Shared::Mappers::ReferencableListRowMapper.map_records(user, filtered_tasks)
-          page_display = Domain::Shared::Dtos::ResourceDisplayCapabilities.for_agricultural_task_list(user)
-          @output_port.on_success(rows, page_display: page_display)
+          @output_port.on_success(rows)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
