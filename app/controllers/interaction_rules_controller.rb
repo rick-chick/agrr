@@ -85,31 +85,9 @@ class InteractionRulesController < ApplicationController
 
   # DELETE /interaction_rules/:id
   def destroy
-    respond_to do |format|
-      format.html do
-        destroy_with_presenter(
-          Adapters::InteractionRule::Presenters::InteractionRuleDestroyHtmlPresenter.new(view: self)
-        )
-      end
-      format.json do
-        destroy_with_presenter(
-          Adapters::InteractionRule::Presenters::InteractionRuleDeleteApiPresenter.new(view: self)
-        )
-      end
-    end
-  end
-
-  # JSON 削除応答: Presenter が controller を明示レシーバで呼ぶ
-  def render_response(json:, status:)
-    render json: json, status: status
-  end
-
-  def undo_deletion_path(undo_token:)
-    Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
-  end
-
-  def interaction_rule_destroy_json_redirect_path
-    interaction_rules_path
+    destroy_with_presenter(
+      Adapters::InteractionRule::Presenters::InteractionRuleDestroyHtmlPresenter.new(view: self)
+    )
   end
 
   private

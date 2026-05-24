@@ -42,11 +42,7 @@ module Adapters
         private
 
         def delete_json_redirect_path
-          if @view.respond_to?(:interaction_rule_destroy_json_redirect_path)
-            @view.interaction_rule_destroy_json_redirect_path
-          else
-            "/"
-          end
+          "/interaction_rules"
         end
 
         def resource_dom_id_for(event)

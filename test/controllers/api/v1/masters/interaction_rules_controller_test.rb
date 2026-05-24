@@ -177,22 +177,32 @@ module Api
           assert_equal "更新されたグループ", json_response["source_group"]
         end
 
-        test "should destroy interaction_rule" do
+        test "destroy_returns_undo_token_json_via_masters_api" do
           rule = create(:interaction_rule, :user_owned, user: @user)
 
-          assert_difference("@user.interaction_rules.where(is_reference: false).count", -1) do
-            delete api_v1_masters_interaction_rule_path(rule),
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
+          assert_difference -> { InteractionRule.count }, -1 do
+            assert_difference "DeletionUndoEvent.count", +1 do
+              delete api_v1_masters_interaction_rule_path(rule),
+                     headers: {
+                       "Accept" => "application/json",
+                       "X-API-Key" => @api_key
+                     }
+              assert_response :success
+            end
           end
 
-          assert_response :success
-          json_response = JSON.parse(response.body)
-          assert json_response.key?("undo_token")
-          assert json_response.key?("toast_message")
-          assert json_response.key?("undo_path")
+          body = @response.parsed_body
+          %w[undo_token undo_deadline toast_message undo_path auto_hide_after redirect_path resource_dom_id resource].each do |key|
+            assert body.key?(key), "JSONレスポンスに#{key}が含まれていません"
+            assert body[key].present?, "#{key} が空です"
+          end
+
+          undo_token = body.fetch("undo_token")
+          event = DeletionUndoEvent.find(undo_token)
+          assert_equal "InteractionRule", event.resource_type
+          assert_equal rule.id.to_s, event.resource_id
+          assert event.scheduled?
+          assert_equal undo_deletion_path(undo_token: undo_token), body.fetch("undo_path")
         end
 
       end
