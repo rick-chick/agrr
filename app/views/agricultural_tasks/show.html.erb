@@ -90,9 +90,6 @@
   
     <div class="actions">
       <%= link_to t('.back_to_list'), agricultural_tasks_path, class: "btn btn-secondary" %>
-      <% if @html_display&.show_edit_button %>
-        <%= link_to t('.edit'), edit_agricultural_task_path(@agricultural_task.id), class: "btn btn-secondary" %>
-      <% end %>
       <% if @html_display&.show_delete_button %>
         <%= link_to t('.delete'), agricultural_task_path(@agricultural_task.id),
                     class: "btn btn-error",

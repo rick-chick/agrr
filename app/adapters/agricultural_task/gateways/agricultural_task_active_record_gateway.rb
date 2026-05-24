@@ -37,14 +37,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def find_agricultural_task_loaded_bundle!(id, for_edit:)
-          task = find_agricultural_task_model!(id)
-          Domain::AgriculturalTask::Dtos::AuthorizedAgriculturalTaskLoaded.new(
-            agricultural_task_entity: Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task),
-            master_form_snapshot: Adapters::AgriculturalTask::Mappers::AgriculturalTaskMasterFormSnapshotMapper.from_record(task)
-          )
-        end
-
         def find_by_id(id)
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_agricultural_task_model!(id))
         end

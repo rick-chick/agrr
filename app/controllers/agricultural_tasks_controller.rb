@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 class AgriculturalTasksController < ApplicationController
-  before_action :set_agricultural_task, only: [ :edit, :update ]
-  before_action :load_edit_form_crop_selection, only: [ :edit, :update ]
+  before_action :load_edit_form_crop_selection, only: [ :update ]
 
   # GET /agricultural_tasks
   def index
@@ -78,18 +77,6 @@ class AgriculturalTasksController < ApplicationController
 
   private
 
-  def set_agricultural_task
-    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskLoadForEditHtmlPresenter.new(view: self)
-    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
-
-    interactor.call(params[:id])
-  end
-
-  def action_requires_edit_permission?
-    [ :edit, :update, :destroy ].include?(params[:action].to_sym)
-  end
-
   def build_task_attributes
     attributes = agricultural_task_params.to_h.symbolize_keys
 
@@ -130,8 +117,6 @@ class AgriculturalTasksController < ApplicationController
   end
 
   def load_edit_form_crop_selection
-    return unless action_requires_edit_permission?
-
     preview_attrs = agricultural_task_attributes_hash_for_crop_preview
     input_dto = Domain::AgriculturalTask::Dtos::AgriculturalTaskEditFormCropSelectionInput.new(
       user_id: current_user.id,
@@ -139,7 +124,7 @@ class AgriculturalTasksController < ApplicationController
       controller_action: params[:action].to_s,
       agricultural_task_attributes_for_preview: preview_attrs,
       raw_selected_crop_ids: params[:selected_crop_ids],
-      include_crop_cards: params[:action].to_s == "edit"
+      include_crop_cards: false
     )
 
     presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskEditFormCropSelectionLoadHtmlPresenter.new(view: self)
