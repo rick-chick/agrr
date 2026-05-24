@@ -22,13 +22,6 @@ class CropsController < ApplicationController
     interactor.call(params[:id])
   end
 
-  # GET /crops/new
-  def new
-    presenter = Adapters::Crop::Presenters::CropNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Crop::Interactors::CropNewMasterFormInteractor.new(output_port: presenter,
-      gateway: CompositionRoot.crop_gateway).call
-  end
-
   # GET /crops/:id/edit
   def edit
   end
