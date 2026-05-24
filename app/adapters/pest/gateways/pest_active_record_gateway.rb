@@ -43,14 +43,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def find_pest_loaded_bundle!(id)
-          record = find_pest_model!(id)
-          ensure_pest_control_method_row_for_form!(record)
-          Domain::Pest::Dtos::PestAuthorizedLoad.new(
-            pest_master_edit_payload: Adapters::Pest::Mappers::PestMasterEditPayloadMapper.from_record(record)
-          )
-        end
-
         def create_for_user(user, attrs)
           pest = ::Pest.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, pest.errors.full_messages.join(", ") unless pest.save
@@ -411,11 +403,6 @@ module Adapters
             associated_count += 1
           end
           associated_count
-        end
-
-        def ensure_pest_control_method_row_for_form!(pest_record)
-          pest_record.pest_control_methods.build if pest_record.pest_control_methods.empty?
-          pest_record
         end
 
         def pest_crop_nest_snapshot_from(pest, ensure_blank_control_method: false)

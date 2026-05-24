@@ -38,10 +38,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_pest_show_detail"
         end
 
-        def find_pest_loaded_bundle!(id)
-          raise NotImplementedError, "Subclasses must implement find_pest_loaded_bundle!"
-        end
-
         # ネスト害虫用。認可は Interactor（NestedCropPestsAccess）側。
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"
