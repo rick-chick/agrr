@@ -48,27 +48,10 @@ class FertilizesController < ApplicationController
 
   # DELETE /fertilizes/:id
   def destroy
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::Fertilize::Presenters::FertilizeDestroyHtmlPresenter.new(view: self)
-        Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-      end
-
-      format.json do
-        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
-          view: self,
-          actor_id: current_user.id,
-          resource_type: "Fertilize",
-          resource_id: params[:id].to_i,
-          toast_message: nil,
-          fallback_location: fertilizes_path,
-          in_use_message_key: nil,
-          delete_error_message_key: "fertilizes.flash.delete_error"
-        )
-      end
-    end
+    presenter = Adapters::Fertilize::Presenters::FertilizeDestroyHtmlPresenter.new(view: self)
+    Domain::Fertilize::Interactors::FertilizeDestroyInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   private

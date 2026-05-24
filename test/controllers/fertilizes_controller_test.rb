@@ -288,63 +288,6 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
   end
 
-  test "destroy_returns_undo_token_json" do
-    sign_in_as @user
-    fertilize = create(:fertilize, :user_owned, user: @user)
-
-    assert_difference -> { DeletionUndoEvent.count }, +1 do
-      assert_difference -> { Fertilize.count }, -1 do
-        delete fertilize_path(fertilize), as: :json
-      end
-    end
-
-    assert_response :success
-
-    body = response.parsed_body
-    assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i, body.fetch("undo_token"))
-    assert_nothing_raised { Time.iso8601(body.fetch("undo_deadline")) }
-    assert body.fetch("toast_message").present?, "toast_message が存在すること"
-
-    undo_token = body.fetch("undo_token")
-    assert_equal undo_deletion_path(undo_token: undo_token), body.fetch("undo_path")
-    assert_equal fertilizes_path(locale: I18n.locale), body.fetch("redirect_path")
-    assert_equal dom_id(fertilize), body.fetch("resource_dom_id")
-    # TODO: HTMLレスポンスのUndoパスについては実装後に検証する
-  end
-
-  test "undo_endpoint_restores_fertilize" do
-    sign_in_as @user
-    fertilize = create(:fertilize, :user_owned, user: @user)
-
-    assert_difference -> { Fertilize.count }, -1 do
-      delete fertilize_path(fertilize), as: :json
-    end
-
-    assert_response :success
-    undo_token = response.parsed_body.fetch("undo_token")
-
-    event = DeletionUndoEvent.find(undo_token)
-    assert_equal "scheduled", event.state
-    assert_not Fertilize.exists?(fertilize.id), "削除後はFertilizeが存在しないこと"
-
-    assert_difference -> { Fertilize.count }, +1 do
-      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
-    end
-
-    assert_response :success
-    body = response.parsed_body
-    assert_equal "restored", body.fetch("status")
-    assert flash.empty?, "JSON 応答では flash を利用しないこと"
-
-    event.reload
-    assert_equal "restored", event.state
-
-    restored = Fertilize.find(fertilize.id)
-    assert_equal @user.id, restored.user_id
-    refute restored.is_reference?, "ユーザー所有の肥料として復元されること"
-    # TODO: HTMLレスポンスのUndoフローは別途追加予定
-  end
-
   # ========== new アクションのテスト ==========
 
   test "should get new" do
