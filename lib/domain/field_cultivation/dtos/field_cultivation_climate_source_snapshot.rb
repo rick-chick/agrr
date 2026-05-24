@@ -8,9 +8,8 @@ module Domain
         attr_reader :field_cultivation_id, :field_name, :crop_name,
                     :start_date, :completion_date,
                     :farm_id, :farm_name, :farm_latitude, :farm_longitude,
-                    :weather_location_id, :weather_location_present, :weather_location_timezone,
+                    :weather_location_id, :weather_location_timezone,
                     :plan_id, :plan_type_public,
-                    :plan_predicted_weather_present,
                     :prediction_target_end_date, :calculated_planning_end_date,
                     :predicted_weather_data, :plan_crop_crop_id
 
@@ -25,11 +24,9 @@ module Domain
           farm_latitude:,
           farm_longitude:,
           weather_location_id:,
-          weather_location_present:,
           weather_location_timezone:,
           plan_id:,
           plan_type_public:,
-          plan_predicted_weather_present:,
           prediction_target_end_date:,
           calculated_planning_end_date:,
           predicted_weather_data:,
@@ -45,11 +42,9 @@ module Domain
           @farm_latitude = farm_latitude
           @farm_longitude = farm_longitude
           @weather_location_id = weather_location_id
-          @weather_location_present = weather_location_present
           @weather_location_timezone = weather_location_timezone
           @plan_id = plan_id
           @plan_type_public = plan_type_public
-          @plan_predicted_weather_present = plan_predicted_weather_present
           @prediction_target_end_date = prediction_target_end_date
           @calculated_planning_end_date = calculated_planning_end_date
           @predicted_weather_data = predicted_weather_data

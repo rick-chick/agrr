@@ -20,8 +20,7 @@ module Domain
           anchors_resolver:,
           climate_progress_gateway:,
           clock:,
-          translator:,
-          use_mock_progress: false
+          translator:
         )
           @output_port = output_port
           @logger = logger
@@ -37,7 +36,6 @@ module Domain
           @climate_progress_gateway = climate_progress_gateway
           @clock = clock
           @translator = translator
-          @use_mock_progress = use_mock_progress
         end
 
         def call(input_dto)
@@ -97,7 +95,7 @@ module Domain
 
         def assert_climate_preconditions!(source)
           if Policies::FieldCultivationClimatePreconditionsPolicy.missing_weather_location?(
-            weather_location_present: source.weather_location_present
+            weather_location_id: source.weather_location_id
           )
             raise Domain::FieldCultivation::Errors::NoWeatherLocationError,
                   @translator.t("api.errors.no_weather_data")
@@ -174,8 +172,7 @@ module Domain
           progress_result = @climate_progress_gateway.calculate_progress(
             crop_entity: crop_entity,
             start_date: context.start_date,
-            weather_payload: weather_payload,
-            use_mock: @use_mock_progress
+            weather_payload: weather_payload
           )
 
           Mappers::FieldCultivationClimateDataMapper.build_output(
@@ -208,8 +205,8 @@ module Domain
           targets = @climate_source_gateway.find_weather_prediction_targets_by_plan_id(source.plan_id)
           plan_weather = Mappers::FieldCultivationClimatePlanWeatherMapper.to_cultivation_plan_weather(source: source)
           service = @weather_prediction_gateway.prediction_service(
-            weather_location: targets[:weather_location],
-            farm: targets[:farm]
+            weather_location: targets.weather_location,
+            farm: targets.farm
           )
           prediction_info = service.predict_for_cultivation_plan(plan_weather: plan_weather)
           return nil unless prediction_info.is_a?(Hash)
@@ -254,7 +251,7 @@ module Domain
           training_start_date = anchors.training_start_date
           training_end_date = anchors.training_end_date
           prediction_targets = @climate_source_gateway.find_weather_prediction_targets_by_plan_id(source.plan_id)
-          weather_location = prediction_targets[:weather_location]
+          weather_location = prediction_targets.weather_location
           weather_location_meta = Mappers::FieldCultivationClimateWeatherPayloadMapper.weather_location_meta_from_source(source: source)
 
           training_data = @weather_data_gateway.weather_data_for_period(
@@ -325,7 +322,7 @@ module Domain
         end
 
         def persist_predicted_weather_if_absent!(source, weather_payload)
-          return if source.plan_predicted_weather_present
+          return if Domain::Shared::ValidationHelpers.present?(source.predicted_weather_data)
 
           @cultivation_plan_gateway.update_predicted_weather_data(source.plan_id, weather_payload)
           @logger.info "💾 [FieldCultivationClimateDataInteractor] Saved prediction data to CultivationPlan##{source.plan_id}"

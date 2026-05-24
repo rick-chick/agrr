@@ -608,13 +608,18 @@ module CompositionRoot
     end
 
     def field_cultivation_climate_progress_gateway
-      @field_cultivation_climate_progress_gateway ||= Adapters::FieldCultivation::Gateways::FieldCultivationClimateProgressActiveRecordGateway.new(
-        logger: logger,
-        progress_gateway_factory: -> { agrr_progress_gateway }
-      )
+      if Rails.env.test?
+        @field_cultivation_climate_progress_memory_gateway ||=
+          Adapters::FieldCultivation::Gateways::FieldCultivationClimateProgressMemoryGateway.new(logger: logger)
+      else
+        @field_cultivation_climate_progress_active_record_gateway ||=
+          Adapters::FieldCultivation::Gateways::FieldCultivationClimateProgressActiveRecordGateway.new(
+            progress_gateway_factory: -> { agrr_progress_gateway }
+          )
+      end
     end
 
-    def field_cultivation_climate_data_interactor(output_port:, user_dto:, use_mock_progress: nil)
+    def field_cultivation_climate_data_interactor(output_port:, user_dto:)
       clock = Time.zone
       anchors_resolver = Adapters::WeatherData::Ports::RailsWeatherPredictionAnchorsAdapter.new(zone: clock)
       Domain::FieldCultivation::Interactors::FieldCultivationClimateDataInteractor.new(
@@ -631,8 +636,7 @@ module CompositionRoot
         anchors_resolver: anchors_resolver,
         climate_progress_gateway: field_cultivation_climate_progress_gateway,
         clock: clock,
-        translator: translator,
-        use_mock_progress: use_mock_progress.nil? ? Rails.env.test? : use_mock_progress
+        translator: translator
       )
     end
 

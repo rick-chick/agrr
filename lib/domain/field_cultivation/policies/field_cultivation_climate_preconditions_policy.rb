@@ -7,8 +7,8 @@ module Domain
       module FieldCultivationClimatePreconditionsPolicy
         module_function
 
-        def missing_weather_location?(weather_location_present:)
-          !weather_location_present
+        def missing_weather_location?(weather_location_id:)
+          weather_location_id.nil?
         end
 
         def missing_cultivation_period?(start_date:, completion_date:)

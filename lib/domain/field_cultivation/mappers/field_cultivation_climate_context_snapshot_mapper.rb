@@ -26,7 +26,7 @@ module Domain
             farm_longitude: source.farm_longitude,
             plan_id: source.plan_id,
             plan_type_public: source.plan_type_public,
-            plan_predicted_weather_present: source.plan_predicted_weather_present,
+            plan_predicted_weather_present: Domain::Shared::ValidationHelpers.present?(source.predicted_weather_data),
             prediction_target_end_date: source.prediction_target_end_date,
             calculated_planning_end_date: source.calculated_planning_end_date,
             predicted_weather_data: source.predicted_weather_data,

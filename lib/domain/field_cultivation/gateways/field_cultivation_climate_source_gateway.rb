@@ -14,7 +14,7 @@ module Domain
           raise NotImplementedError
         end
 
-        # @return [Hash] :weather_location, :farm — adapter 内 AR 読取（WeatherPredictionInteractor 用）
+        # @return [Domain::FieldCultivation::Dtos::FieldCultivationWeatherPredictionTargets]
         def find_weather_prediction_targets_by_plan_id(plan_id)
           raise NotImplementedError
         end

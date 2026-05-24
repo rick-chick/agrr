@@ -8,8 +8,7 @@ module Domain
       class FieldCultivationClimateDataInteractorTest < DomainLibTestCase
         def build_source(
           fc_id:,
-          plan_predicted_weather_present: true,
-          weather_location_present: true,
+          weather_location_id: 3,
           start_date: Date.new(2026, 1, 1),
           completion_date: Date.new(2026, 6, 1),
           predicted_weather_data: { "data" => [ { "time" => "2026-01-01" } ] }
@@ -24,12 +23,10 @@ module Domain
             farm_name: "Farm",
             farm_latitude: 35.4,
             farm_longitude: 139.6,
-            weather_location_id: 3,
-            weather_location_present: weather_location_present,
+            weather_location_id: weather_location_id,
             weather_location_timezone: "Asia/Tokyo",
             plan_id: 1,
             plan_type_public: false,
-            plan_predicted_weather_present: plan_predicted_weather_present,
             prediction_target_end_date: nil,
             calculated_planning_end_date: nil,
             predicted_weather_data: predicted_weather_data,
@@ -63,8 +60,7 @@ module Domain
             anchors_resolver: anchors_resolver || default_anchors_resolver,
             climate_progress_gateway: progress_gateway || Object.new,
             clock: Struct.new(:today).new(Date.new(2026, 3, 1)),
-            translator: translator_stub,
-            use_mock_progress: false
+            translator: translator_stub
           )
         end
 
@@ -175,7 +171,7 @@ module Domain
 
         test "routes missing weather location through the output port" do
           fc_id = 42
-          source = build_source(fc_id: fc_id, weather_location_present: false)
+          source = build_source(fc_id: fc_id, weather_location_id: nil)
 
           source_gateway = Object.new
           attach_plan_access_context_to_gateway(
@@ -322,7 +318,7 @@ module Domain
 
         test "routes missing climate data through the output port" do
           fc_id = 99
-          source = build_source(fc_id: fc_id, plan_predicted_weather_present: false)
+          source = build_source(fc_id: fc_id, predicted_weather_data: nil)
 
           source_gateway = Object.new
           attach_plan_access_context_to_gateway(
@@ -332,7 +328,17 @@ module Domain
           )
           source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
           source_gateway.define_singleton_method(:find_weather_prediction_targets_by_plan_id) do |_plan_id|
-            { weather_location: Object.new, farm: Object.new }
+            Domain::FieldCultivation::Dtos::FieldCultivationWeatherPredictionTargets.new(
+              weather_location: Domain::WeatherData::Dtos::WeatherLocation.new(
+                id: 1,
+                latitude: 35.0,
+                longitude: 139.0
+              ),
+              farm: Domain::WeatherData::Dtos::FarmWeatherPrediction.new(
+                id: 1,
+                weather_location_id: 1
+              )
+            )
           end
 
           crop_entity = build_crop_entity

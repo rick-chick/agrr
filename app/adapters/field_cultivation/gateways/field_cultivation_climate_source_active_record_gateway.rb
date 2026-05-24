@@ -34,11 +34,9 @@ module Adapters
             farm_latitude: farm.latitude,
             farm_longitude: farm.longitude,
             weather_location_id: weather_location&.id,
-            weather_location_present: !weather_location.nil?,
             weather_location_timezone: weather_location&.timezone,
             plan_id: plan.id,
             plan_type_public: plan.plan_type_public?,
-            plan_predicted_weather_present: Domain::Shared::ValidationHelpers.present?(plan.predicted_weather_data),
             prediction_target_end_date: plan.prediction_target_end_date,
             calculated_planning_end_date: plan.calculated_planning_end_date,
             predicted_weather_data: plan.predicted_weather_data,
@@ -49,10 +47,10 @@ module Adapters
         def find_weather_prediction_targets_by_plan_id(plan_id)
           plan = ::CultivationPlan.includes(farm: :weather_location).find(plan_id)
           farm = plan.farm
-          {
-            weather_location: farm.weather_location,
-            farm: farm
-          }
+          Domain::FieldCultivation::Dtos::FieldCultivationWeatherPredictionTargets.new(
+            weather_location: Adapters::WeatherData::Mappers::WeatherLocationMapper.weather_location_dto_from_record(farm.weather_location),
+            farm: Adapters::WeatherData::Mappers::FarmWeatherPredictionMapper.farm_weather_prediction_dto_from_record(farm)
+          )
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound
         end

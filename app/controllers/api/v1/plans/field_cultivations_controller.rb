@@ -7,7 +7,6 @@ module Api
       class FieldCultivationsController < ApplicationController
         before_action :authenticate_user!
         skip_before_action :verify_authenticity_token, only: [ :update ]
-        include ::Adapters::FieldCultivation::MockProgressRecords
 
         def show
           field_cultivation_api_show_interactor.call(field_cultivation_id: params[:id])

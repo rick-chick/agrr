@@ -7,8 +7,8 @@ module Domain
     module Policies
       class FieldCultivationClimatePreconditionsPolicyTest < DomainLibTestCase
         test "missing_weather_location when not present" do
-          assert FieldCultivationClimatePreconditionsPolicy.missing_weather_location?(weather_location_present: false)
-          refute FieldCultivationClimatePreconditionsPolicy.missing_weather_location?(weather_location_present: true)
+          assert FieldCultivationClimatePreconditionsPolicy.missing_weather_location?(weather_location_id: nil)
+          refute FieldCultivationClimatePreconditionsPolicy.missing_weather_location?(weather_location_id: 1)
         end
 
         test "missing_cultivation_period when dates absent" do

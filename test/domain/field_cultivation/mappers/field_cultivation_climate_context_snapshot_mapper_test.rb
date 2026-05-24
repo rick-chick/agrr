@@ -51,11 +51,9 @@ module Domain
             farm_latitude: 35.0,
             farm_longitude: 135.0,
             weather_location_id: 3,
-            weather_location_present: true,
             weather_location_timezone: "Asia/Tokyo",
             plan_id: 7,
             plan_type_public: false,
-            plan_predicted_weather_present: true,
             prediction_target_end_date: Date.new(2025, 12, 31),
             calculated_planning_end_date: Date.new(2025, 12, 31),
             predicted_weather_data: { "data" => [] },
@@ -69,6 +67,58 @@ module Domain
           assert_equal 8.0, ctx.base_temperature
           assert_equal 1, ctx.stages.length
           assert_equal 100.0, ctx.stages.first[:cumulative_gdd_required]
+        end
+
+        test "to_context_snapshot derives plan_predicted_weather_present from predicted_weather_data" do
+          crop = Domain::Crop::Entities::CropEntity.new(
+            id: 5,
+            user_id: 1,
+            name: "Tomato",
+            variety: nil,
+            is_reference: false,
+            crop_stages: []
+          )
+          source_with_prediction = Dtos::FieldCultivationClimateSourceSnapshot.new(
+            field_cultivation_id: 10,
+            field_name: "Field A",
+            crop_name: "Tomato",
+            start_date: Date.new(2024, 4, 1),
+            completion_date: Date.new(2024, 8, 1),
+            farm_id: 2,
+            farm_name: "Farm",
+            farm_latitude: 35.0,
+            farm_longitude: 135.0,
+            weather_location_id: 3,
+            weather_location_timezone: "Asia/Tokyo",
+            plan_id: 7,
+            plan_type_public: false,
+            prediction_target_end_date: nil,
+            calculated_planning_end_date: nil,
+            predicted_weather_data: { "data" => [ { "time" => "2024-04-01" } ] },
+            plan_crop_crop_id: 5
+          )
+          source_without_prediction = Dtos::FieldCultivationClimateSourceSnapshot.new(
+            field_cultivation_id: 10,
+            field_name: "Field A",
+            crop_name: "Tomato",
+            start_date: Date.new(2024, 4, 1),
+            completion_date: Date.new(2024, 8, 1),
+            farm_id: 2,
+            farm_name: "Farm",
+            farm_latitude: 35.0,
+            farm_longitude: 135.0,
+            weather_location_id: 3,
+            weather_location_timezone: "Asia/Tokyo",
+            plan_id: 7,
+            plan_type_public: false,
+            prediction_target_end_date: nil,
+            calculated_planning_end_date: nil,
+            predicted_weather_data: nil,
+            plan_crop_crop_id: 5
+          )
+
+          assert FieldCultivationClimateContextSnapshotMapper.to_context_snapshot(source: source_with_prediction, crop: crop).plan_predicted_weather_present
+          refute FieldCultivationClimateContextSnapshotMapper.to_context_snapshot(source: source_without_prediction, crop: crop).plan_predicted_weather_present
         end
       end
     end
