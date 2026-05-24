@@ -58,14 +58,6 @@ module Adapters
             .map { |record| Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(record) }
         end
 
-        def find_fertilize_loaded_bundle!(id, for_edit:)
-          fertilize = find_fertilize_model!(id)
-          Domain::Fertilize::Dtos::AuthorizedFertilizeLoaded.new(
-            fertilize_entity: Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize),
-            master_form_snapshot: Adapters::Fertilize::Mappers::FertilizeMasterFormSnapshotMapper.from_record(fertilize)
-          )
-        end
-
         def create_for_user(user, attrs)
           fertilize = ::Fertilize.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, fertilize.errors.full_messages.join(", ") unless fertilize.save

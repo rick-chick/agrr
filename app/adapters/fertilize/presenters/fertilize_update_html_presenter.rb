@@ -23,22 +23,15 @@ module Adapters
           end
 
           msg = failure_dto.respond_to?(:message) ? failure_dto.message : failure_dto.to_s
-          snapshot = failure_dto.respond_to?(:master_form_snapshot) ? failure_dto.master_form_snapshot : nil
+          fertilize_id = failure_dto.respond_to?(:master_form_snapshot) ? failure_dto.master_form_snapshot&.id : @view.params[:id]
 
-          if snapshot.nil?
-            @view.flash.now[:alert] = msg
-            @view.redirect_to @view.fertilizes_path
+          if msg == I18n.t("fertilizes.flash.reference_flag_admin_only") && fertilize_id
+            @view.redirect_to @view.fertilize_path(fertilize_id), alert: msg
             return
           end
 
-          if msg == I18n.t("fertilizes.flash.reference_flag_admin_only")
-            @view.redirect_to @view.fertilize_path(snapshot.id), alert: msg
-            return
-          end
-
-          @view.instance_variable_set(:@fertilize, snapshot)
-          @view.flash.now[:alert] = msg
-          @view.render :edit, status: :unprocessable_entity
+          path = fertilize_id ? @view.fertilize_path(fertilize_id) : @view.fertilizes_path
+          @view.redirect_to path, alert: msg
         end
       end
     end
