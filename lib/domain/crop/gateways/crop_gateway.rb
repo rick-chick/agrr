@@ -116,12 +116,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement blank_crop_master_form_snapshot"
         end
 
-        # マスタCRUD: create 失敗時の再描画用（未保存 Crop をスナップショット化。永続化しない）
-        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def build_new_crop_with_attributes_for_master_form(attributes:)
-          raise NotImplementedError, "Subclasses must implement build_new_crop_with_attributes_for_master_form"
-        end
-
         # マスタCRUD: update 失敗時の再描画用に認可済み作物へパラメータをマージ（永続化しない）
         # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
         def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:)

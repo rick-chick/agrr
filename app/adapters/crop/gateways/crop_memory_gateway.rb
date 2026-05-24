@@ -77,13 +77,6 @@ module Adapters
           Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(::Crop.new)
         end
 
-        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def build_new_crop_with_attributes_for_master_form(attributes:)
-          crop = ::Crop.new(attributes)
-          crop.valid?
-          Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop, error_messages: crop.errors.full_messages)
-        end
-
         private
 
         # edit フォーム用にネストの空関連を補う（永続はゲートウェイ内のみ）

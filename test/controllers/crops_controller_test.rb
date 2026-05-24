@@ -583,7 +583,7 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("crops.flash.reference_only_admin"), flash[:alert]
   end
 
-  test "作成時に必須項目が欠けていると422でnewを再表示する" do
+  test "作成時に必須項目が欠けていると一覧へリダイレクトし flash を付与する" do
     sign_in_as @user
 
     assert_no_difference("Crop.count") do
@@ -598,7 +598,8 @@ class CropsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_response :unprocessable_entity
+    assert_redirected_to crops_path
+    assert flash[:alert].present?
   end
 
   test "一般ユーザーはgroupsをカンマ区切り文字列で指定して作成できる" do

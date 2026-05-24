@@ -21,13 +21,18 @@ module Adapters
             return
           end
 
-          @view.flash.now[:alert] = msg
-          if error_dto.is_a?(Domain::Crop::Dtos::CropMasterFormFailure)
-            crop_form = Forms::CropMasterForm.from_snapshot(error_dto.master_form_snapshot)
-            @view.instance_variable_set(:@crop, crop_form)
-            assign_master_form_html_display_for_crop_form(@view, crop_form)
+          if error_dto.is_a?(Domain::Shared::Policies::PolicyPermissionDenied)
+            @view.redirect_back fallback_location: @view.crops_path,
+                               alert: I18n.t("crops.flash.no_permission")
+            return
           end
-          @view.render_form(:new, status: :unprocessable_entity)
+
+          if error_dto.is_a?(Domain::Crop::Dtos::CropCreateLimitExceededFailure)
+            @view.redirect_to @view.crops_path, alert: error_dto.message
+            return
+          end
+
+          @view.redirect_to @view.crops_path, alert: msg
         end
       end
     end
