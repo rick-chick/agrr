@@ -198,6 +198,24 @@ module Api
           assert json_response["undo"].key?("auto_hide_after")
         end
 
+        test "destroy returns 422 when farm has free_crop_plans" do
+          farm = create(:farm, :user_owned, user: @user)
+          crop = create(:crop, :user_owned, user: @user)
+          FreeCropPlan.create!(farm: farm, crop: crop, area_sqm: 100, session_id: "sess_block_api")
+
+          assert_no_difference -> { Farm.count } do
+            delete api_v1_masters_farm_path(farm),
+                   headers: {
+                     "Accept" => "application/json",
+                     "X-API-Key" => @api_key
+                   }
+          end
+
+          assert_response :unprocessable_entity
+          body = response.parsed_body
+          assert body["error"].present?
+        end
+
         # 他ユーザー農場への拒否は Detail / Update / Destroy の Interactor で同一の policy 失敗を表明済み。
         # アダプターでは HTTP 403 とエラー本文の契約を show で代表する。
         test "cannot access other user's farm" do

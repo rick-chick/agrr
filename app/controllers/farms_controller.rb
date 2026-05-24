@@ -6,52 +6,24 @@ class FarmsController < ApplicationController
   # GET /farms
   def index
     input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: admin_user?)
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::Farm::Presenters::FarmListHtmlPresenter.new(view: self)
+    presenter = Adapters::Farm::Presenters::FarmListHtmlPresenter.new(view: self)
 
-        Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
-          output_port: presenter,
-          user_id: current_user.id,
-          gateway: CompositionRoot.farm_gateway
-        ).call(input_dto)
-      end
-
-      format.json do
-        presenter = Adapters::Farm::Presenters::FarmListRowsBundleApiPresenter.new(view: self)
-        Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
-          output_port: presenter,
-          user_id: current_user.id,
-          gateway: CompositionRoot.farm_gateway
-        ).call(input_dto)
-      end
-    end
+    Domain::Farm::Interactors::FarmListRowsBundleInteractor.new(
+      output_port: presenter,
+      user_id: current_user.id,
+      gateway: CompositionRoot.farm_gateway
+    ).call(input_dto)
   end
 
   # GET /farms/:id
   def show
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::Farm::Presenters::FarmDetailHtmlPresenter.new(view: self)
+    presenter = Adapters::Farm::Presenters::FarmDetailHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
 
-        interactor.call(params[:id])
-      end
-
-      format.json do
-        presenter = Adapters::Farm::Presenters::FarmDetailApiPresenter.new(view: self)
-        Domain::Farm::Interactors::FarmDetailInteractor.new(
-          output_port: presenter,
-          user_id: current_user.id,
-          translator: translator,
-          gateway: CompositionRoot.farm_gateway,
-          user_lookup: CompositionRoot.user_lookup
-        ).call(params[:id])
-      end
-    end
+    interactor.call(params[:id])
   end
 
   # GET /farms/new
@@ -68,83 +40,37 @@ class FarmsController < ApplicationController
 
   # POST /farms
   def create
-    respond_to do |format|
-      format.html do
-        @input_dto = Domain::Farm::Dtos::FarmCreateInput.from_hash({ farm: farm_params.to_h.symbolize_keys })
-        presenter = Adapters::Farm::Presenters::FarmCreateHtmlPresenter.new(view: self)
+    @input_dto = Domain::Farm::Dtos::FarmCreateInput.from_hash({ farm: farm_params.to_h.symbolize_keys })
+    presenter = Adapters::Farm::Presenters::FarmCreateHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor = Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
 
-        interactor.call(@input_dto)
-      end
-
-      format.json do
-        presenter = Adapters::Farm::Presenters::FarmDirectCreateApiPresenter.new(view: self)
-        input_dto = Domain::Farm::Dtos::FarmCreateInput.from_hash({ farm: farm_params.to_h.symbolize_keys })
-        Domain::Farm::Interactors::FarmCreateInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup).call(input_dto)
-      end
-    end
+    interactor.call(@input_dto)
   end
 
   # PATCH/PUT /farms/:id
   def update
-    respond_to do |format|
-      format.html do
-        @input_dto = Domain::Farm::Dtos::FarmUpdateInput.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
-        presenter = Adapters::Farm::Presenters::FarmUpdateHtmlPresenter.new(view: self)
+    @input_dto = Domain::Farm::Dtos::FarmUpdateInput.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
+    presenter = Adapters::Farm::Presenters::FarmUpdateHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor = Domain::Farm::Interactors::FarmUpdateInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
 
-        interactor.call(@input_dto)
-      end
-
-      format.json do
-        input_dto = Domain::Farm::Dtos::FarmUpdateInput.from_hash({ farm: farm_params.to_h.symbolize_keys }, params[:id])
-        presenter = Adapters::Farm::Presenters::FarmUpdateApiPresenter.new(view: self)
-        Domain::Farm::Interactors::FarmUpdateInteractor.new(
-          output_port: presenter,
-          user_id: current_user.id,
-          translator: translator,
-          gateway: CompositionRoot.farm_gateway,
-          user_lookup: CompositionRoot.user_lookup
-        ).call(input_dto)
-      end
-    end
+    interactor.call(@input_dto)
   end
 
   # DELETE /farms/:id
   def destroy
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::Farm::Presenters::FarmDestroyHtmlPresenter.new(view: self)
+    presenter = Adapters::Farm::Presenters::FarmDestroyHtmlPresenter.new(view: self)
 
-        interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor = Domain::Farm::Interactors::FarmDestroyInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
 
-        interactor.call(params[:id])
-      end
-
-      format.json do
-        presenter = Adapters::Farm::Presenters::FarmDestroyApiPresenter.new(
-          view: self,
-          fallback_location: farms_path
-        )
-        Domain::Farm::Interactors::FarmDestroyInteractor.new(
-          output_port: presenter,
-          user_id: current_user.id,
-          translator: translator,
-          gateway: CompositionRoot.farm_gateway,
-          user_lookup: CompositionRoot.user_lookup
-        ).call(params[:id])
-      end
-    end
+    interactor.call(params[:id])
   end
 
   # View interface for HTML Presenters（Presenter から呼ばれるため public）
@@ -156,21 +82,12 @@ class FarmsController < ApplicationController
     render(action, status: status, locals: locals)
   end
 
-  def undo_deletion_path(undo_token:)
-    Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
-  end
-
   def farm_path(farm)
     Rails.application.routes.url_helpers.farm_path(farm)
   end
 
   def farms_path
     Rails.application.routes.url_helpers.farms_path
-  end
-
-  # FarmListRowsBundleApiPresenter など JSON 用 Presenter が参照する View インターフェース
-  def render_response(json:, status:)
-    render(json: json, status: status)
   end
 
   private
