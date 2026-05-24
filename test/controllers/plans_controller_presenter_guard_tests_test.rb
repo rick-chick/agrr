@@ -9,20 +9,10 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     sign_in_as @user
   end
 
-  # SCOPE: index/new の表示系が 200 を返し、主要要素があることを確認
-  test "index renders successfully and groups plans by farm" do
-    # データ準備: 異なる農場のプライベート計画を作成（通年計画対応）
-    farm_a = create(:farm, user: @user)
-    farm_b = create(:farm, user: @user)
-    create(:cultivation_plan, user: @user, farm: farm_a, plan_year: nil,
-           planning_start_date: Date.new(2025, 1, 1), planning_end_date: Date.new(2026, 12, 31))
-    create(:cultivation_plan, user: @user, farm: farm_b, plan_year: nil,
-           planning_start_date: Date.new(2025, 1, 1), planning_end_date: Date.new(2026, 12, 31))
-
+  test "index redirects to SPA plans list" do
     get plans_path
-    assert_response :success
-    # 最低限、本文が存在する
-    assert_select "body", true
+    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
+    assert_redirected_to "#{origin}/plans"
   end
 
   # SCOPE: copy 正常/異常

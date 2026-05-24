@@ -9,20 +9,9 @@ class PlansController < CultivationPlanHtmlBaseController
   self.session_key = :plan_data
   self.redirect_path_method = :plans_path
 
-  # 計画一覧（農場別）
+  # レガシー HTML 一覧は SPA へリダイレクト（Phase 5 でルートごと削除予定）
   def index
-    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanIndexHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PrivatePlanIndexInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      gateway: CompositionRoot.cultivation_plan_gateway,
-      translator: CompositionRoot.translator,
-      logger: CompositionRoot.logger,
-      user_lookup: CompositionRoot.user_lookup
-    ).call
-    return if performed?
-
-    Rails.logger.debug "📅 [Plans#index] User: #{current_user.id}, Plan rows: #{@private_plan_index.plan_rows.size}"
+    redirect_to spa_private_plans_path, allow_other_host: true
   end
 
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。
@@ -45,6 +34,10 @@ class PlansController < CultivationPlanHtmlBaseController
       translator: CompositionRoot.translator,
       user_lookup: CompositionRoot.user_lookup
     ).call(params[:id])
+  end
+
+  def spa_private_plans_path
+    "#{spa_frontend_origin}/plans"
   end
 
   def spa_plan_detail_url(plan_id)

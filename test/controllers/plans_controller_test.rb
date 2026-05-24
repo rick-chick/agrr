@@ -164,13 +164,14 @@ class PlansControllerTest < ActionDispatch::IntegrationTest
   # アコーディオン非描画、計画詳細リンク）は test/views/plans_index_view_test.rb が担保する。
   # display_name に計画期間を付与しない仕様は test/models/cultivation_plan_test.rb が担保する。
   # ここは index アクションの配線が通ることのみ確認する。
-  test "index renders successfully" do
+  test "index redirects to SPA plans list" do
     sign_in_as @user
     farm = create(:farm, user: @user)
     create(:cultivation_plan, user: @user, farm: farm)
 
     get plans_path
-    assert_response :success
+    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
+    assert_redirected_to "#{origin}/plans"
   end
 
   test "destroy_plan_with_complex_associations_succeeds" do
