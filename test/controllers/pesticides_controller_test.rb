@@ -266,51 +266,6 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     # ビューで@cropsと@pestsが設定されていることを確認
   end
 
-  test "destroy_returns_undo_token_json" do
-    pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
-
-    assert_difference -> { DeletionUndoEvent.count }, +1 do
-      assert_difference -> { Pesticide.count }, -1 do
-        delete pesticide_path(pesticide), as: :json
-      end
-    end
-
-    assert_response :success
-
-    body = response.parsed_body
-    assert_match(/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i, body.fetch("undo_token"))
-    assert_nothing_raised { Time.iso8601(body.fetch("undo_deadline")) }
-    assert body.fetch("toast_message").present?, "toast_message が存在すること"
-
-    undo_token = body.fetch("undo_token")
-    assert_equal undo_deletion_path(undo_token: undo_token), body.fetch("undo_path")
-    assert_equal pesticides_path(locale: I18n.locale), body.fetch("redirect_path")
-    assert_equal dom_id(pesticide), body.fetch("resource_dom_id")
-  end
-
-  test "undo_endpoint_restores_pesticide" do
-    pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
-
-    delete pesticide_path(pesticide), as: :json
-    assert_response :success
-    undo_token = response.parsed_body.fetch("undo_token")
-    event = DeletionUndoEvent.find(undo_token)
-    event = DeletionUndoEvent.find(undo_token)
-    assert_equal "scheduled", event.state
-
-    assert_difference -> { Pesticide.count }, +1 do
-      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
-    end
-
-    assert_response :success
-    body = response.parsed_body
-    assert_equal "restored", body.fetch("status")
-    assert flash.empty?, "JSON 応答では flash を利用しないこと"
-
-    event.reload
-    assert_equal "restored", event.state
-  end
-
   # ========== region 認可 ==========
   #
   # region（admin のみ設定・更新可）の認可は PesticidePolicy.normalize_attrs_for_* が

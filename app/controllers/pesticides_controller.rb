@@ -51,27 +51,10 @@ class PesticidesController < ApplicationController
 
   # DELETE /pesticides/:id
   def destroy
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::Pesticide::Presenters::PesticideDestroyHtmlPresenter.new(view: self)
-        Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-      end
-
-      format.json do
-        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
-          view: self,
-          actor_id: current_user.id,
-          resource_type: "Pesticide",
-          resource_id: params[:id].to_i,
-          toast_message: nil,
-          fallback_location: pesticides_path,
-          in_use_message_key: nil,
-          delete_error_message_key: "pesticides.flash.delete_error"
-        )
-      end
-    end
+    presenter = Adapters::Pesticide::Presenters::PesticideDestroyHtmlPresenter.new(view: self)
+    Domain::Pesticide::Interactors::PesticideDestroyInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   # View interface for HTML Presenters（Presenter から呼ばれるため public）
