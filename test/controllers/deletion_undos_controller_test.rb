@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# POST /undo_deletion（JSON）の HTTP 契約。削除元リソース種別ごとの undo 生成は各 masters API / HTML controller 側。
+# POST /undo_deletion（JSON）の復元契約。undo 生成は各 masters API destroy（または HTML destroy）側。
 class DeletionUndosControllerTest < ActionDispatch::IntegrationTest
   setup do
     @user = create(:user)

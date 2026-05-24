@@ -166,7 +166,7 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "cultural", pest.pest_control_methods.first.method_type
   end
 
-  # destroy の undo JSON / HTML リダイレクトは境界契約。使用中拒否・認可網羅は PestDestroyInteractorTest 等に寄せる。
+  # destroy の HTML リダイレクト + undo 通知は境界契約。JSON undo / 復元は masters API + DeletionUndosControllerTest。
 
   test "should destroy pest" do
     # 外部参照のない害虫を作成

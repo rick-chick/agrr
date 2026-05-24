@@ -219,8 +219,6 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     assert_not_equal "更新された名前", @pesticide.name
   end
 
-  # destroy の undo JSON 契約は destroy_returns_undo_token_json。認可・使用中拒否は Interactor / API に寄せる。
-
   test "一般ユーザーの参照農薬作成失敗は redirect + flash へマッピングされる" do
     post pesticides_path, params: { pesticide: {
       name: "参照農薬",
