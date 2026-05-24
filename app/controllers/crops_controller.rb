@@ -57,28 +57,11 @@ class CropsController < ApplicationController
 
   # DELETE /crops/:id
   def destroy
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::Crop::Presenters::CropDestroyHtmlPresenter.new(view: self)
-        interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
-        interactor.call(params[:id])
-      end
-
-      format.json do
-        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
-          view: self,
-          actor_id: current_user.id,
-          resource_type: "Crop",
-          resource_id: params[:id].to_i,
-          toast_message: nil,
-          fallback_location: crops_path,
-          in_use_message_key: "crops.flash.cannot_delete_in_use",
-          delete_error_message_key: "crops.flash.delete_error"
-        )
-      end
-    end
+    presenter = Adapters::Crop::Presenters::CropDestroyHtmlPresenter.new(view: self)
+    interactor = Domain::Crop::Interactors::CropDestroyInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
+    interactor.call(params[:id])
   end
 
   def generate_task_schedule_blueprints
