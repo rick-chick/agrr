@@ -53,7 +53,7 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "InteractionRule not found"
         end
 
-        def agrr_rules_for_cultivation_plan_id(cultivation_plan_id)
+        def list_by_cultivation_plan_id(cultivation_plan_id:)
           cultivation_plan = ::CultivationPlan.find(cultivation_plan_id)
           farm_region = cultivation_plan.farm.region
 
@@ -69,10 +69,7 @@ module Adapters
             ::InteractionRule.reference.where(region: farm_region)
           end
 
-          rules_array = Adapters::InteractionRule::Mappers::InteractionRuleAgrrMapper.to_agrr_format_array(rules)
-          return nil if rules_array.empty?
-
-          rules_array
+          rules.map { |record| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(record) }
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end

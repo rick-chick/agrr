@@ -8,10 +8,11 @@ module Adapters
     class PestCreateForAiAdapter
       Result = Struct.new(:success?, :data, :error, keyword_init: true)
 
-      def initialize(user_id:, gateway:, crop_gateway:, translator:, user_lookup:)
+      def initialize(user_id:, gateway:, crop_gateway:, crop_pest_gateway:, translator:, user_lookup:)
         @user_id = user_id
         @gateway = gateway
         @crop_gateway = crop_gateway
+        @crop_pest_gateway = crop_pest_gateway
         @translator = translator
         @user_lookup = user_lookup
       end
@@ -21,6 +22,7 @@ module Adapters
         interactor = Domain::Pest::Interactors::PestCreateInteractor.new(output_port: output_port,
           gateway: @gateway,
           crop_gateway: @crop_gateway,
+          crop_pest_gateway: @crop_pest_gateway,
           user_id: @user_id,
           translator: @translator, user_lookup: @user_lookup)
         input_dto = build_input_dto(attrs)

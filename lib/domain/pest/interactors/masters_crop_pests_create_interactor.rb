@@ -4,12 +4,13 @@ module Domain
   module Pest
     module Interactors
       class MastersCropPestsCreateInteractor
-        def initialize(output_port:, user_id:, user_lookup:, pest_gateway:, crop_gateway:)
+        def initialize(output_port:, user_id:, user_lookup:, pest_gateway:, crop_gateway:, crop_pest_gateway:)
           @output_port = output_port
           @user_id = user_id
           @user_lookup = user_lookup
           @pest_gateway = pest_gateway
           @crop_gateway = crop_gateway
+          @crop_pest_gateway = crop_pest_gateway
         end
 
         def call(input)
@@ -45,21 +46,12 @@ module Domain
             return @output_port.on_forbidden
           end
 
-          if @pest_gateway.crop_pest_association_exists?(crop_id: input.crop_id, pest_id: pest_entity.id)
+          if @crop_pest_gateway.find_by_crop_id_and_pest_id(crop_id: input.crop_id, pest_id: pest_entity.id)
             return @output_port.on_already_associated
           end
 
-          status = @pest_gateway.link_pest_to_crop(
-            crop_id: input.crop_id,
-            pest_id: pest_entity.id,
-            user: user
-          )
-          case status
-          when :missing
-            @output_port.on_pest_not_found
-          when :linked
-            @output_port.on_success(crop_id: input.crop_id, pest_id: pest_entity.id)
-          end
+          @crop_pest_gateway.create(crop_id: input.crop_id, pest_id: pest_entity.id)
+          @output_port.on_success(crop_id: input.crop_id, pest_id: pest_entity.id)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_forbidden
         end

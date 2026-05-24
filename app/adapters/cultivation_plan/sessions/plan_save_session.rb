@@ -7,7 +7,7 @@ module Adapters
     module Sessions
       # 公開プラン保存フロー（旧 Domain::CultivationPlan::Interactors::PlanSaveSession）。
       # 大量の AR 操作を含むため Adapter 層に置く。Domain 側からは
-      # Domain::CultivationPlan::Gateways::PublicPlanSaveGateway インタフェース経由で呼ぶ。
+      # CompositionRoot 注入の save_from_session_runner（PublicPlanSaveInteractor）経由で呼ぶ。
       class PlanSaveSession
         include ActiveModel::Model
 
@@ -39,13 +39,14 @@ module Adapters
 
         attr_accessor :user, :session_data, :result
 
-        def initialize(user:, session_data:, logger:, clock:, cultivation_plan_gateway:, crop_stage_copy_gateway:)
+        def initialize(user:, session_data:, logger:, clock:, cultivation_plan_gateway:, crop_stage_copy_interactor:, blueprint_copy_interactor:)
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
           @session_data = session_data
           @logger = logger
           @clock = clock
           @cultivation_plan_gateway = cultivation_plan_gateway
-          @crop_stage_copy_gateway = crop_stage_copy_gateway
+          @crop_stage_copy_interactor = crop_stage_copy_interactor
+          @blueprint_copy_interactor_factory = blueprint_copy_interactor
           @result = Result.new
         end
 
@@ -53,7 +54,7 @@ module Adapters
           @logger.debug I18n.t("services.plan_save_service.debug.session_data_received", data: @session_data.inspect)
 
           ctx = PlanSaveContext.new(user: @user, session_data: @session_data, result: @result)
-          ctx.crop_stage_copy_gateway = @crop_stage_copy_gateway
+          ctx.crop_stage_copy_interactor = @crop_stage_copy_interactor
           farm_mapper = Mappers::FarmMapper.new(ctx)
 
           @cultivation_plan_gateway.within_transaction do
@@ -78,7 +79,7 @@ module Adapters
             end
 
             plan_gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
-              ctx, logger: @logger, clock: @clock
+              ctx: ctx, logger: @logger, clock: @clock
             )
             new_plan = plan_gateway.copy_cultivation_plan(farm, crops)
 
@@ -86,7 +87,11 @@ module Adapters
               farm, crops, fields, pests, agricultural_tasks, fertilizes, pesticides, interaction_rules
             )
 
-            ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new(ctx).copy_for_user_crops
+            @blueprint_copy_interactor_factory.call(ctx).call(
+              Domain::CultivationPlan::Dtos::CropTaskScheduleBlueprintCopyInput.new(
+                reference_crop_id_to_user_crop_id: ctx.reference_crop_id_to_user_crop_id
+              )
+            )
             field_cultivation_map = plan_gateway.copy_plan_relations(new_plan)
             plan_gateway.copy_task_schedules(new_plan, field_cultivation_map)
 

@@ -112,7 +112,8 @@ module Api::V1::Masters::Crops
       interactor = Domain::Crop::Interactors::CropLoadAuthorizedCropStageInteractor.new(
         failure_presenter: failure,
         user_id: current_user.id,
-        gateway: CompositionRoot.crop_gateway,
+        crop_gateway: CompositionRoot.crop_gateway,
+        crop_stage_gateway: CompositionRoot.crop_stage_gateway,
         user_lookup: CompositionRoot.user_lookup,
         for_edit: for_edit
       )

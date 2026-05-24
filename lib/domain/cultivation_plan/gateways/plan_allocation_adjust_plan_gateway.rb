@@ -13,6 +13,8 @@ module Domain
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
 
+        # @param exclude_ids [Array<Integer>]
+        # @return [Hash] Agrr current allocation（daemon 投入用 JSON 互換）
         def build_current_allocation(exclude_ids: [])
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
@@ -34,9 +36,13 @@ module Domain
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
 
-        # @param as_of [Date]
-        # @return [Array(Date, Date)] effective_start, effective_end
-        def effective_planning_period(current_allocation:, moves:, as_of:)
+        # @return [Array<Domain::CultivationPlan::Dtos::FieldCultivationPlanningPeriod>]
+        def list_field_cultivation_planning_periods
+          raise NotImplementedError, "#{self.class}##{__method__}"
+        end
+
+        # @return [Domain::CultivationPlan::Dtos::PlanAllocationAdjustPlanningBoundaries]
+        def planning_period_boundaries
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
 
@@ -61,12 +67,6 @@ module Domain
 
         # @return [Hash] latitude, longitude, elevation, timezone（Merger 用）
         def weather_location_facts
-          raise NotImplementedError, "#{self.class}##{__method__}"
-        end
-
-        # @param plan_id [Integer]
-        # @param events_gateway [Domain::CultivationPlan::Gateways::CultivationPlanOptimizationEventsGateway]
-        def broadcast_optimization_complete(plan_id:, events_gateway:, status:)
           raise NotImplementedError, "#{self.class}##{__method__}"
         end
 

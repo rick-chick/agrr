@@ -201,6 +201,6 @@
 |---|---|
 | **Policy** | `user_must_be_nil_for_reference`, `name_uniqueness_scope`, `reference_farm_must_belong_to_anonymous_user` |
 | **Calculator** | `weather_data_progress`, `calculate_planning_dates`, `optimization_progress` |
-| **Interactor** | `start_weather_data_fetch!`, `phase_*!`, `check_optimization_completion` |
+| **Interactor / domain module** | `start_weather_data_fetch!`, `phase_*!`（完了判定は `CultivationPlan::OptimizationCompletion`） |
 | **Infrastructure Port** | `broadcast_*`, `to_agrr_format`（wire format は Builder Port + adapter mapper） |
 | **AR 安全網** | `validates` / `presence` / DB 整合 |

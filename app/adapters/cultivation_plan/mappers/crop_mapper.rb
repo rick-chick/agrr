@@ -4,13 +4,13 @@ module Adapters
   module CultivationPlan
     module Mappers
       # 公開プラン保存セッション用 Crop マッパー（AR を扱うため Adapter 層）。
-      # Domain::Crop::Gateways::CropStageCopyGateway は依存できる（gateway interface）。
+      # Domain::Crop::Interactors::CropStageCopyInteractor は依存できる（use case）。
       class CropMapper
         def initialize(ctx)
           @ctx = ctx
-          @stage_copy_gateway = ctx.crop_stage_copy_gateway
-          unless @stage_copy_gateway
-            raise ArgumentError, "PlanSaveContext must set crop_stage_copy_gateway (use CompositionRoot.crop_stage_copy_gateway at the edge)"
+          @stage_copy_interactor = ctx.crop_stage_copy_interactor
+          unless @stage_copy_interactor
+            raise ArgumentError, "PlanSaveContext must set crop_stage_copy_interactor (use CompositionRoot.crop_stage_copy_interactor at the edge)"
           end
         end
 
@@ -88,9 +88,11 @@ module Adapters
         end
 
         def copy_crop_stages(reference_crop, new_crop)
-          @stage_copy_gateway.copy_reference_stages(
-            reference_crop_id: reference_crop.id,
-            new_crop_id: new_crop.id
+          @stage_copy_interactor.call(
+            Domain::Crop::Dtos::CropStageCopyInput.new(
+              reference_crop_id: reference_crop.id,
+              new_crop_id: new_crop.id
+            )
           )
         rescue => e
           Rails.logger.error I18n.t("services.plan_save_service.errors.crop_stage_copy_failed", errors: e.message)

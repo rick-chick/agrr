@@ -13,7 +13,9 @@ module Domain
           channel_class:,
           allocation_gateway:,
           interaction_rule_gateway:,
+          interaction_rule_agrr_format_builder:,
           cultivation_plan_gateway:,
+          private_read_gateway:,
           advance_phase_interactor:,
           logger:,
           weather_prediction_interactor_factory:,
@@ -23,7 +25,9 @@ module Domain
           @channel_class = channel_class
           @allocation_gateway = allocation_gateway
           @interaction_rule_gateway = interaction_rule_gateway
+          @interaction_rule_agrr_format_builder = interaction_rule_agrr_format_builder
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @private_read_gateway = private_read_gateway
           @advance_phase_interactor = advance_phase_interactor
           @logger = logger
           @weather_prediction_interactor_factory = weather_prediction_interactor_factory
@@ -122,7 +126,8 @@ module Domain
         private
 
         def load_snapshot!
-          @snapshot = @cultivation_plan_gateway.optimization_plan_snapshot(@plan_id)
+          rows = @private_read_gateway.find_optimization_read_by_plan_id(plan_id: @plan_id)
+          @snapshot = Mappers::OptimizationPlanSnapshotMapper.to_snapshot(rows)
         end
 
         def calculate_planning_period
@@ -148,7 +153,10 @@ module Domain
         end
 
         def prepare_interaction_rules
-          @interaction_rule_gateway.agrr_rules_for_cultivation_plan_id(@plan_id)
+          rules = @interaction_rule_gateway.list_by_cultivation_plan_id(cultivation_plan_id: @plan_id)
+          return nil if rules.empty?
+
+          @interaction_rule_agrr_format_builder.build_array_from(rules)
         end
 
         def prepare_allocation_data(evaluation_end)

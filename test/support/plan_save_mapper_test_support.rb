@@ -69,7 +69,7 @@ module PlanSaveMapperTestSupport
       user: user,
       session_data: session_data,
       result: result
-    ).tap { |ctx| ctx.crop_stage_copy_gateway = CompositionRoot.crop_stage_copy_gateway }
+    ).tap { |ctx| ctx.crop_stage_copy_interactor = CompositionRoot.crop_stage_copy_interactor }
   end
 
   # 圃場・作付・CPC を持つ参照公開計画（PlanCopyActiveRecordGateway 用）

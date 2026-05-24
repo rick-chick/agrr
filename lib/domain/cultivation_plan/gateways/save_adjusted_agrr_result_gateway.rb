@@ -3,14 +3,18 @@
 module Domain
   module CultivationPlan
     module Gateways
-      # Agrr adjust 結果（field_schedules 等）を FieldCultivation と CultivationPlan サマリへ反映する。
+      # Agrr adjust 結果の FieldCultivation CRUD と CultivationPlan サマリ更新（オーケストレーションは Interactor）。
       class SaveAdjustedAgrrResultGateway
         # @param plan_id [Integer]
-        # @param result [Domain::CultivationPlan::Dtos::SaveAdjustedAgrrResultInput]
-        # @return [void]
-        # @raise 既存 concern と同様（I18n 文言の RuntimeError / ArgumentError 等）
-        def save_adjust_result!(plan_id:, result:)
-          raise NotImplementedError, "#{self.class} must implement save_adjust_result!"
+        # @return [Domain::CultivationPlan::Dtos::SaveAdjustedAgrrPersistContext]
+        def load_persist_context(plan_id:)
+          raise NotImplementedError, "#{self.class}##{__method__}"
+        end
+
+        # @param plan_id [Integer]
+        # @param bundle [Domain::CultivationPlan::Dtos::SaveAdjustedAgrrPersistBundle]
+        def apply_persist_bundle!(plan_id:, bundle:)
+          raise NotImplementedError, "#{self.class}##{__method__}"
         end
       end
     end

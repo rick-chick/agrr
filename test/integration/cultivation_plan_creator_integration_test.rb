@@ -67,7 +67,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
+    result = CompositionRoot.cultivation_plan_plan_initializer.call(**creator_params)
 
     # 成功を確認
     assert result.success?, "CultivationPlanInitializeInteractor should succeed: #{result.errors.join(', ')}"
@@ -99,7 +99,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
+    result = CompositionRoot.cultivation_plan_plan_initializer.call(**creator_params)
 
     # 空の作物配列でも成功することを確認
     assert result.success?, "CultivationPlanInitializeInteractor should succeed with empty crops"
@@ -123,7 +123,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
+    result = CompositionRoot.cultivation_plan_plan_initializer.call(**creator_params)
 
     # 成功を確認
     assert result.success?, "CultivationPlanInitializeInteractor should succeed for private plan"
@@ -177,7 +177,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
       planning_end_date: Date.current.end_of_year
     }
 
-    result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
+    result = CompositionRoot.cultivation_plan_plan_initializer.call(**creator_params)
 
     # 成功を確認
     assert result.success?, "CultivationPlanInitializeInteractor should succeed with various area_per_unit values"
@@ -238,7 +238,7 @@ class CultivationPlanCreatorIntegrationTest < ActiveSupport::TestCase
         planning_end_date: Date.current.end_of_year
       }
 
-      result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(**creator_params, gateway: CompositionRoot.cultivation_plan_gateway, logger: CompositionRoot.logger).call
+      result = CompositionRoot.cultivation_plan_plan_initializer.call(**creator_params)
 
       # 成功を確認
       assert result.success?, "CultivationPlanInitializeInteractor should succeed with fixed logic"

@@ -59,46 +59,6 @@ module Adapters
           pests: []
         }.freeze
 
-        def find_crop_loaded_bundle!(id, for_edit:)
-          crop = crop_record_with_association_preloads!(id)
-
-          Domain::Crop::Dtos::AuthorizedCropLoaded.new(
-            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
-          )
-        end
-
-        def create_masters_crop_task_template_association(input_dto)
-          crop = find_crop_model!(input_dto.crop_id.to_i)
-          agricultural_task = ::AgriculturalTask.find_by(id: input_dto.agricultural_task_id)
-          unless agricultural_task
-            return build_task_template_create_result(reason: :agricultural_task_not_found)
-          end
-
-          existing_template = crop.crop_task_templates.find_by(agricultural_task_id: agricultural_task.id)
-          if existing_template
-            return build_task_template_create_result(reason: :duplicate)
-          end
-
-          template_params = {
-            agricultural_task: agricultural_task,
-            name: input_dto.name.nil? ? agricultural_task.name : input_dto.name,
-            description: input_dto.description.nil? ? agricultural_task.description : input_dto.description,
-            time_per_sqm: input_dto.time_per_sqm.nil? ? agricultural_task.time_per_sqm : input_dto.time_per_sqm,
-            weather_dependency: input_dto.weather_dependency.nil? ? agricultural_task.weather_dependency : input_dto.weather_dependency,
-            required_tools: input_dto.required_tools.nil? ? (agricultural_task.required_tools || []) : input_dto.required_tools,
-            skill_level: input_dto.skill_level.nil? ? agricultural_task.skill_level : input_dto.skill_level
-          }
-
-          template = crop.crop_task_templates.create!(template_params)
-          task_snapshot = agricultural_task_snapshot_from_record(agricultural_task)
-          template_dto = masters_crop_task_template_dto_from_record(template, task_snapshot)
-          Domain::Crop::Dtos::MastersCropTaskTemplateCreateOutput.new(template: template_dto)
-        rescue Domain::Shared::Exceptions::RecordNotFound
-          build_task_template_create_result(reason: :crop_not_found)
-        rescue ActiveRecord::RecordInvalid => e
-          raise Domain::Shared::Exceptions::RecordInvalid.new(e.message, errors: Domain::Shared::ValidationErrors.from_errors_like(e.record.errors))
-        end
-
         def masters_crop_agricultural_task_templates_index_rows(crop_id:)
           crop = find_crop_model!(crop_id.to_i)
           crop.crop_task_templates.includes(:agricultural_task).map { |t| masters_crop_task_template_api_row(t) }
@@ -123,17 +83,6 @@ module Adapters
           :ok
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
-        end
-
-        def find_crop_with_crop_stage_bundle!(crop_id, crop_stage_id, for_edit:)
-          crop = find_crop_model!(crop_id)
-          stage = crop.crop_stages.find(crop_stage_id)
-          Domain::Crop::Dtos::AuthorizedCropStageInCropContext.new(
-            crop_entity: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
-            crop_stage_entity: crop_stage_entity_from_record(stage)
-          )
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "CropStage not found"
         end
 
         def find_crop_show_detail(crop_id)
@@ -405,14 +354,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordInvalid.new(
             record.errors.full_messages.join(", "),
             errors: Domain::Shared::ValidationErrors.from_errors_like(record.errors)
-          )
-        end
-
-        def build_task_template_create_result(reason:)
-          Domain::Crop::Dtos::MastersCropTaskTemplateCreateOutput.new(
-            failure: Domain::Crop::Dtos::MastersCropTaskTemplateCreateFailure.new(
-              reason: reason
-            )
           )
         end
 

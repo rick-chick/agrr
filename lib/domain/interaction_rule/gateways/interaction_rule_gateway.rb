@@ -19,9 +19,9 @@ module Domain
           raise NotImplementedError, "Subclasses must implement update"
         end
 
-        # agrr 分配用のルール配列（空なら nil）
-        def agrr_rules_for_cultivation_plan_id(cultivation_plan_id)
-          raise NotImplementedError, "Subclasses must implement agrr_rules_for_cultivation_plan_id"
+        # @return [Array<Domain::InteractionRule::Entities::InteractionRuleEntity>]
+        def list_by_cultivation_plan_id(cultivation_plan_id:)
+          raise NotImplementedError, "Subclasses must implement list_by_cultivation_plan_id"
         end
 
         # @param filter [Domain::Shared::ValueObjects::ReferenceIndexListFilter]

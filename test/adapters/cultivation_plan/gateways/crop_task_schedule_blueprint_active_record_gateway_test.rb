@@ -57,7 +57,15 @@ class Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecord
     ctx = build_plan_save_context(user: user, session_data: {}, result: result)
     ctx.reference_crop_id_to_user_crop_id[ref_crop.id] = user_crop.id
 
-    ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new(ctx).copy_for_user_crops
+    Domain::CultivationPlan::Interactors::CropTaskScheduleBlueprintCopyInteractor.new(
+      blueprint_gateway: ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new,
+      task_mapping_port: ::Adapters::CultivationPlan::Ports::PlanSaveUserAgriculturalTaskMappingAdapter.new(ctx),
+      logger: ::Logger.new(File::NULL)
+    ).call(
+      Domain::CultivationPlan::Dtos::CropTaskScheduleBlueprintCopyInput.new(
+        reference_crop_id_to_user_crop_id: ctx.reference_crop_id_to_user_crop_id
+      )
+    )
 
     bps = CropTaskScheduleBlueprint.where(crop_id: user_crop.id).order(:stage_order)
     assert_equal 1, bps.count
@@ -117,9 +125,16 @@ class Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecord
     ctx = build_plan_save_context(user: user, session_data: {}, result: result)
     ctx.reference_crop_id_to_user_crop_id[ref_crop.id] = user_crop.id
 
-    gw = ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway
-    gw.new(ctx).copy_for_user_crops
-    gw.new(ctx).copy_for_user_crops
+    interactor = Domain::CultivationPlan::Interactors::CropTaskScheduleBlueprintCopyInteractor.new(
+      blueprint_gateway: ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new,
+      task_mapping_port: ::Adapters::CultivationPlan::Ports::PlanSaveUserAgriculturalTaskMappingAdapter.new(ctx),
+      logger: ::Logger.new(File::NULL)
+    )
+    input = Domain::CultivationPlan::Dtos::CropTaskScheduleBlueprintCopyInput.new(
+      reference_crop_id_to_user_crop_id: ctx.reference_crop_id_to_user_crop_id
+    )
+    interactor.call(input)
+    interactor.call(input)
 
     assert_equal 1, CropTaskScheduleBlueprint.where(crop_id: user_crop.id).count
   end

@@ -8,6 +8,7 @@ module Domain
         def initialize(
           output_port:,
           cultivation_plan_gateway:,
+          plan_initializer:,
           logger:,
           translator:,
           clock:,
@@ -16,6 +17,7 @@ module Domain
         )
           @output_port = output_port
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @plan_initializer = plan_initializer
           @logger = logger
           @translator = translator
           @clock = clock
@@ -71,7 +73,7 @@ module Domain
           session_id = @session_id_generator.call
           total_area = @cultivation_plan_gateway.total_field_area_for_farm(farm.id, input_dto.user)
 
-          result = @cultivation_plan_gateway.initialize_plan_from_selection(
+          result = @plan_initializer.call(
             farm: farm,
             total_area: total_area,
             crops: crops,

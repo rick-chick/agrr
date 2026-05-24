@@ -24,6 +24,7 @@ module Domain
           @user_lookup.stubs(:find).with(1).returns(@user)
           @pest_gateway = mock
           @crop_gateway = mock
+          @crop_pest_gateway = mock
           @logger = mock
           @logger.stubs(:info)
           @logger.stubs(:warn)
@@ -32,6 +33,7 @@ module Domain
             user_lookup: @user_lookup,
             pest_gateway: @pest_gateway,
             crop_gateway: @crop_gateway,
+            crop_pest_gateway: @crop_pest_gateway,
             logger: @logger
           )
           @pest = PestStub.new(id: 10, user_id: 1, region: nil, is_reference: false)
@@ -44,7 +46,8 @@ module Domain
           @pest_gateway.expects(:find_by_id).with(10).returns(@pest)
           @crop_gateway.expects(:find_by_id).with(2).returns(own_crop)
           @crop_gateway.expects(:find_by_id).with(3).returns(other_crop)
-          @pest_gateway.expects(:associate_crops_with_pest_id).with(pest_id: 10, crop_ids: [ 2 ]).returns(1)
+          @crop_pest_gateway.expects(:find_by_crop_id_and_pest_id).with(crop_id: 2, pest_id: 10).returns(nil)
+          @crop_pest_gateway.expects(:create).with(crop_id: 2, pest_id: 10)
 
           count = @interactor.call(
             pest_id: 10,
@@ -60,7 +63,8 @@ module Domain
           @pest_gateway.expects(:find_by_id).with(10).returns(@pest)
           @crop_gateway.expects(:resolve_crop_id_by_name).with(user_id: 1, crop_name: "RefTomato").returns(5)
           @crop_gateway.expects(:find_by_id).with(5).returns(ref_crop)
-          @pest_gateway.expects(:associate_crops_with_pest_id).with(pest_id: 10, crop_ids: [ 5 ]).returns(1)
+          @crop_pest_gateway.expects(:find_by_crop_id_and_pest_id).with(crop_id: 5, pest_id: 10).returns(nil)
+          @crop_pest_gateway.expects(:create).with(crop_id: 5, pest_id: 10)
 
           count = @interactor.call(pest_id: 10, affected_crops: [ { "crop_name" => "RefTomato" } ])
 

@@ -14,10 +14,16 @@ module Domain
           user = @user_lookup.find(input_dto.user_id)
           access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           failure = Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailure.new(reason: :crop_not_found)
+
+          begin
+            crop_entity = @gateway.find_by_id(input_dto.crop_id.to_i)
+          rescue Domain::Shared::Exceptions::RecordNotFound
+            return @output_port.on_failure(failure)
+          end
+
           return unless Domain::Crop::Policies::CropMastersCropEditAccess.assert_edit_or_on_failure(
             access_filter: access_filter,
-            crop_id: input_dto.crop_id.to_i,
-            gateway: @gateway,
+            crop_entity: crop_entity,
             output_port: @output_port,
             failure: failure,
           )

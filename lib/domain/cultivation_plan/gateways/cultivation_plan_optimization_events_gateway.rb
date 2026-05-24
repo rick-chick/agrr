@@ -16,7 +16,7 @@ module Domain
         end
 
         # adjust / 最適化完了時の Action Cable 通知（channel 選択とペイロードはアダプターで実施）
-        def broadcast_optimization_complete(plan:, status:)
+        def broadcast_optimization_complete(plan_id:, status:)
           raise NotImplementedError
         end
       end

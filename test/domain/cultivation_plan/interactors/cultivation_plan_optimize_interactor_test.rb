@@ -8,21 +8,29 @@ module Domain::CultivationPlan::Interactors
       fixed_today = Date.new(2026, 7, 20)
       target_end = Date.new(2027, 12, 31)
 
-      snapshot = Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot.new(
+      read_rows = Domain::CultivationPlan::Dtos::OptimizationPlanReadRows.new(
         plan_id: 42,
-        plan_type_private: false,
+        plan_type: "public",
         calculated_planning_start_date: nil,
         calculated_planning_end_date: nil,
         prediction_target_end_date: target_end,
         predicted_weather_data: nil,
         total_area: 0,
-        weather_location_present: true,
-        weather_location_input: nil,
-        farm_weather_input: nil
+        weather_location: Domain::CultivationPlan::Dtos::OptimizationPlanReadRows::WeatherLocationRead.new(
+          id: 1,
+          latitude: 0,
+          longitude: 0,
+          elevation: 0,
+          timezone: "UTC",
+          predicted_weather_data: nil
+        ),
+        farm_weather: nil
       )
 
+      private_read_gateway = mock
+      private_read_gateway.stubs(:find_optimization_read_by_plan_id).with(plan_id: 42).returns(read_rows)
+
       gateway = mock
-      gateway.stubs(:optimization_plan_snapshot).with(42).returns(snapshot)
       gateway.stubs(:field_cultivations_present?).with(42).returns(false)
 
       advance_phase = mock("advance_phase_interactor")
@@ -33,7 +41,9 @@ module Domain::CultivationPlan::Interactors
         channel_class: "OptimizationChannel",
         allocation_gateway: nil,
         interaction_rule_gateway: nil,
+        interaction_rule_agrr_format_builder: nil,
         cultivation_plan_gateway: gateway,
+        private_read_gateway: private_read_gateway,
         advance_phase_interactor: advance_phase,
         logger: CapturingLogger.new,
         weather_prediction_interactor_factory: ->(**) {},

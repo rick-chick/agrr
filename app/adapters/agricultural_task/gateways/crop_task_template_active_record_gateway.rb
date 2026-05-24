@@ -27,6 +27,19 @@ module Adapters
           raise map_active_record_failure(e)
         end
 
+        def create_detail(crop_id:, agricultural_task_id:, attributes:)
+          record = ::CropTaskTemplate.create!(
+            attributes.to_gateway_attrs.merge(
+              crop_id: crop_id,
+              agricultural_task_id: agricultural_task_id
+            )
+          )
+          crop_task_template_entity_from_record(record)
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotDestroyed, ActiveRecord::RecordNotSaved,
+               ActiveRecord::StatementInvalid => e
+          raise map_active_record_failure(e)
+        end
+
         def delete(agricultural_task_id:, crop_id:)
           template = ::CropTaskTemplate.find_by(agricultural_task_id: agricultural_task_id, crop_id: crop_id)
           template&.destroy
@@ -37,10 +50,29 @@ module Adapters
 
         private
 
+        def crop_task_template_entity_from_record(record)
+          Domain::Crop::Entities::CropTaskTemplateEntity.new(
+            id: record.id,
+            crop_id: record.crop_id,
+            agricultural_task_id: record.agricultural_task_id,
+            name: record.name,
+            description: record.description,
+            time_per_sqm: record.time_per_sqm,
+            weather_dependency: record.weather_dependency,
+            required_tools: record.required_tools || [],
+            skill_level: record.skill_level,
+            created_at: record.created_at,
+            updated_at: record.updated_at
+          )
+        end
+
         def map_active_record_failure(error)
           case error
           when ActiveRecord::RecordInvalid
-            Domain::Shared::Exceptions::RecordInvalid.new(error.record.errors.full_messages.join(", "))
+            Domain::Shared::Exceptions::RecordInvalid.new(
+              error.record.errors.full_messages.join(", "),
+              errors: Domain::Shared::ValidationErrors.from_errors_like(error.record.errors)
+            )
           else
             Domain::Shared::Exceptions::RecordInvalid.new(error.message)
           end

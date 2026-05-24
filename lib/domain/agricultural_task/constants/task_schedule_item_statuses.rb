@@ -6,6 +6,8 @@ module Domain
       # TaskScheduleItem の status 値（モデル定数へのドメイン依存を避ける）
       module TaskScheduleItemStatuses
         PLANNED = "planned"
+        RESCHEDULED = "rescheduled"
+        COMPLETED = "completed"
       end
     end
   end

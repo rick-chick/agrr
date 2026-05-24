@@ -75,7 +75,8 @@ module Api
               interactor = Domain::Crop::Interactors::CropLoadMastersAuthorizedCropStageInteractor.new(
                 failure_presenter: failure,
                 user_id: current_user.id,
-                gateway: CompositionRoot.crop_gateway,
+                crop_gateway: CompositionRoot.crop_gateway,
+                crop_stage_gateway: CompositionRoot.crop_stage_gateway,
                 user_lookup: CompositionRoot.user_lookup
               )
               bundle = interactor.call(

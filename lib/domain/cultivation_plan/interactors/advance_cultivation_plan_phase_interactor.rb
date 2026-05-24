@@ -4,16 +4,10 @@ module Domain
   module CultivationPlan
     module Interactors
       class AdvanceCultivationPlanPhaseInteractor
-        def initialize(
-          cultivation_plan_gateway:,
-          translator:,
-          phase_broadcast_port:,
-          check_optimization_completion_interactor: nil
-        )
+        def initialize(cultivation_plan_gateway:, translator:, phase_broadcast_port:)
           @cultivation_plan_gateway = cultivation_plan_gateway
           @translator = translator
           @phase_broadcast_port = phase_broadcast_port
-          @check_optimization_completion_interactor = check_optimization_completion_interactor
         end
 
         def call(input_dto)
@@ -45,11 +39,10 @@ module Domain
             )
           end
 
-          @check_optimization_completion_interactor&.call(
-            Dtos::CultivationPlanCheckOptimizationCompletionInput.new(plan_id: input_dto.plan_id)
+          OptimizationCompletion.apply(
+            gateway: @cultivation_plan_gateway,
+            plan_id: input_dto.plan_id
           )
-
-          plan
         end
       end
     end

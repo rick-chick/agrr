@@ -86,6 +86,7 @@ module Api
             interactor = Domain::Crop::Interactors::CropMastersTaskTemplateCreateInteractor.new(
               output_port: presenter,
               gateway: CompositionRoot.crop_gateway,
+              crop_task_template_gateway: CompositionRoot.crop_task_template_gateway,
               user_lookup: CompositionRoot.user_lookup,
               agricultural_task_gateway: CompositionRoot.agricultural_task_gateway
             )

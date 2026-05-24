@@ -28,27 +28,24 @@ module Domain
           @gateway = mock("cultivation_plan_gateway")
           @translator = mock("translator")
           @broadcast_port = mock("phase_broadcast_port")
-          @check_interactor = mock("check_optimization_completion_interactor")
           @interactor = AdvanceCultivationPlanPhaseInteractor.new(
             cultivation_plan_gateway: @gateway,
             translator: @translator,
-            phase_broadcast_port: @broadcast_port,
-            check_optimization_completion_interactor: @check_interactor
+            phase_broadcast_port: @broadcast_port
           )
         end
 
         test "call updates plan and broadcasts when phase requires broadcast" do
           @translator.expects(:t).with("models.cultivation_plan.phases.fetching_weather").returns("気象取得中")
           @gateway.expects(:update).with(1, has_entries(optimization_phase: "fetching_weather")).returns(@plan_entity)
-          @gateway.expects(:list_by_plan_id).with(1).returns([@field_cultivation])
+          @gateway.stubs(:list_by_plan_id).with(1).returns([@field_cultivation])
           @broadcast_port.expects(:broadcast_phase_update).with(
             plan_id: 1,
             channel_class: "TestChannel",
             payload: has_entries(status: "optimizing", progress: 100)
           )
-          @check_interactor.expects(:call).with(
-            instance_of(Dtos::CultivationPlanCheckOptimizationCompletionInput)
-          )
+          @gateway.expects(:find_by_id).with(1).returns(@plan_entity)
+          @gateway.expects(:update).with(1, { status: "completed" }).returns(@plan_entity)
 
           @interactor.call(
             Dtos::AdvanceCultivationPlanPhaseInput.new(
@@ -62,7 +59,8 @@ module Domain
         test "call skips broadcast when start_optimizing" do
           @gateway.expects(:update).with(1, { status: "optimizing" }).returns(@plan_entity)
           @broadcast_port.expects(:broadcast_phase_update).never
-          @check_interactor.expects(:call)
+          @gateway.expects(:find_by_id).with(1).returns(@plan_entity)
+          @gateway.expects(:list_by_plan_id).with(1).returns([])
 
           @interactor.call(
             Dtos::AdvanceCultivationPlanPhaseInput.new(

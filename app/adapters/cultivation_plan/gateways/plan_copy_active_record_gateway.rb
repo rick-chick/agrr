@@ -3,88 +3,118 @@
 module Adapters
   module CultivationPlan
     module Gateways
-      class PlanCopyActiveRecordGateway
-        # 年度指定で計画を私有コピー（PlanSaveSession の ctx は不要）。
-        # ログはすべて +logger+ 経由（本メソッド内で Rails.logger は使わない）。
-        #
-        # @param logger [#info] 成功パス用（必須）。本メソッドは #info のみ使用。
-        #   推奨: {Domain::Shared::Ports::LoggerPort} のサブクラス
-        #   （{Adapters::Shared::Ports::RailsLoggerAdapter}、テストでは test/support/capturing_logger.rb の CapturingLogger）。
-        #   注入は CompositionRoot.logger 経由を想定。
-        def self.copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:)
-          source_plan = ::CultivationPlan.find(source_cultivation_plan_id)
-          ar_user = ::User.find(user_id)
-          planning_dates = ::CultivationPlan.calculate_planning_dates(new_year)
+      class PlanCopyActiveRecordGateway < Domain::CultivationPlan::Gateways::PlanCopyGateway
+        def find_plan(source_plan_id:)
+          plan = ::CultivationPlan.find(source_plan_id)
+          Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(plan)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
 
+        def list_fields(source_plan_id:)
+          ::CultivationPlanField.where(cultivation_plan_id: source_plan_id).map do |field|
+            Domain::CultivationPlan::Dtos::PlanCopyFieldRow.new(
+              id: field.id,
+              name: field.name,
+              area: field.area,
+              daily_fixed_cost: field.daily_fixed_cost,
+              description: field.description
+            )
+          end
+        end
+
+        def list_crops(source_plan_id:)
+          ::CultivationPlanCrop.where(cultivation_plan_id: source_plan_id).map do |crop|
+            Domain::CultivationPlan::Dtos::PlanCopyCropRow.new(
+              id: crop.id,
+              crop_id: crop.crop_id,
+              name: crop.name,
+              variety: crop.variety,
+              area_per_unit: crop.area_per_unit,
+              revenue_per_area: crop.revenue_per_area
+            )
+          end
+        end
+
+        def list_field_cultivations(source_plan_id:)
+          ::FieldCultivation.where(cultivation_plan_id: source_plan_id).map do |fc|
+            Domain::CultivationPlan::Dtos::PlanCopyFieldCultivationRow.new(
+              cultivation_plan_field_id: fc.cultivation_plan_field_id,
+              cultivation_plan_crop_id: fc.cultivation_plan_crop_id,
+              area: fc.area,
+              status: fc.status
+            )
+          end
+        end
+
+        def create_plan(attrs:)
           plan_attrs = {
-            farm: source_plan.farm,
-            user: ar_user,
-            total_area: source_plan.total_area,
-            plan_type: "private",
-            plan_year: new_year,
-            plan_name: source_plan.plan_name,
-            planning_start_date: planning_dates[:start_date],
-            planning_end_date: planning_dates[:end_date],
-            status: "pending"
+            farm_id: attrs.farm_id,
+            user_id: attrs.user_id,
+            total_area: attrs.total_area,
+            plan_type: attrs.plan_type,
+            plan_year: attrs.plan_year,
+            plan_name: attrs.plan_name,
+            planning_start_date: attrs.planning_start_date,
+            planning_end_date: attrs.planning_end_date,
+            status: attrs.status
           }
-          plan_attrs[:session_id] = session_id if session_id.present?
+          plan_attrs[:session_id] = attrs.session_id if attrs.session_id.present?
 
-          new_plan = ::CultivationPlan.create!(plan_attrs)
+          plan = ::CultivationPlan.create!(plan_attrs)
+          Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(plan)
+        end
 
-          logger.info "✅ Created new plan ##{new_plan.id} (year: #{new_year})"
+        def create_field(plan_id:, name:, area:, daily_fixed_cost:, description: nil)
+          field = ::CultivationPlanField.create!(
+            cultivation_plan_id: plan_id,
+            name: name,
+            area: area,
+            daily_fixed_cost: daily_fixed_cost,
+            description: description
+          )
+          Domain::CultivationPlan::Dtos::PlanCopyFieldRow.new(
+            id: field.id,
+            name: field.name,
+            area: field.area,
+            daily_fixed_cost: field.daily_fixed_cost,
+            description: field.description
+          )
+        end
 
-          copied_attachments = copy_attachments_for_plan_copy(source_plan: source_plan, new_plan: new_plan)
-          logger.info "✅ Copied #{copied_attachments} attachments"
+        def create_crop(plan_id:, crop_id:, name:, variety:, area_per_unit:, revenue_per_area:)
+          crop = ::CultivationPlanCrop.create!(
+            cultivation_plan_id: plan_id,
+            crop_id: crop_id,
+            name: name,
+            variety: variety,
+            area_per_unit: area_per_unit,
+            revenue_per_area: revenue_per_area
+          )
+          Domain::CultivationPlan::Dtos::PlanCopyCropRow.new(
+            id: crop.id,
+            crop_id: crop.crop_id,
+            name: crop.name,
+            variety: crop.variety,
+            area_per_unit: crop.area_per_unit,
+            revenue_per_area: crop.revenue_per_area
+          )
+        end
 
-          source_plan.cultivation_plan_fields.each do |source_field|
-            ::CultivationPlanField.create!(
-              cultivation_plan: new_plan,
-              name: source_field.name,
-              area: source_field.area,
-              daily_fixed_cost: source_field.daily_fixed_cost,
-              description: source_field.description
-            )
-          end
+        def create_field_cultivation(plan_id:, cultivation_plan_field_id:, cultivation_plan_crop_id:, area:, status:)
+          ::FieldCultivation.create!(
+            cultivation_plan_id: plan_id,
+            cultivation_plan_field_id: cultivation_plan_field_id,
+            cultivation_plan_crop_id: cultivation_plan_crop_id,
+            area: area,
+            status: status
+          )
+        end
 
-          logger.info "✅ Copied #{source_plan.cultivation_plan_fields.count} fields"
-
-          source_plan.cultivation_plan_crops.each do |source_crop|
-            ::CultivationPlanCrop.create!(
-              cultivation_plan: new_plan,
-              crop: source_crop.crop,
-              name: source_crop.name,
-              variety: source_crop.variety,
-              area_per_unit: source_crop.area_per_unit,
-              revenue_per_area: source_crop.revenue_per_area
-            )
-          end
-
-          logger.info "✅ Copied #{source_plan.cultivation_plan_crops.count} crops"
-
-          field_mapping = {}
-          source_plan.cultivation_plan_fields.each_with_index do |source_field, index|
-            field_mapping[source_field.id] = new_plan.cultivation_plan_fields[index].id
-          end
-
-          crop_mapping = {}
-          source_plan.cultivation_plan_crops.each_with_index do |source_crop, index|
-            crop_mapping[source_crop.id] = new_plan.cultivation_plan_crops[index].id
-          end
-
-          source_plan.field_cultivations.each do |source_fc|
-            ::FieldCultivation.create!(
-              cultivation_plan: new_plan,
-              cultivation_plan_field_id: field_mapping[source_fc.cultivation_plan_field_id],
-              cultivation_plan_crop_id: crop_mapping[source_fc.cultivation_plan_crop_id],
-              area: source_fc.area,
-              status: "pending"
-            )
-          end
-
-          logger.info "✅ Copied #{source_plan.field_cultivations.count} field cultivations"
-          logger.info "✅ Plan copy completed: #{source_plan.id} -> #{new_plan.id}"
-
-          Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(new_plan.reload)
+        def copy_attachments(source_plan_id:, target_plan_id:)
+          source_plan = ::CultivationPlan.find(source_plan_id)
+          new_plan = ::CultivationPlan.find(target_plan_id)
+          self.class.copy_attachments_for_plan_copy(source_plan: source_plan, new_plan: new_plan)
         end
 
         def self.copy_attachments_for_plan_copy(source_plan:, new_plan:)
@@ -108,10 +138,12 @@ module Adapters
           end
         end
 
-        def initialize(ctx, logger:, clock:)
+        def initialize(ctx: nil, logger: nil, clock: nil)
           @ctx = ctx
           @logger = logger
           @clock = clock
+          return unless ctx
+
           @task_mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
           @calc = Domain::CultivationPlan::Calculators::PlanningDateCalculator
         end

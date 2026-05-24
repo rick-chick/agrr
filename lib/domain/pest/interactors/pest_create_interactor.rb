@@ -4,10 +4,11 @@ module Domain
   module Pest
     module Interactors
       class PestCreateInteractor < Domain::Pest::Ports::PestCreateInputPort
-        def initialize(output_port:, user_id:, gateway:, crop_gateway:, translator:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, crop_gateway:, crop_pest_gateway:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
           @crop_gateway = crop_gateway
+          @crop_pest_gateway = crop_pest_gateway
           @user_id = user_id
           @translator = translator
           @user_lookup = user_lookup
@@ -57,7 +58,8 @@ module Domain
               user: user,
               crop_gateway: @crop_gateway
             )
-            @gateway.associate_crops_with_pest_id(pest_id: pest_entity.id, crop_ids: crop_ids)
+            Services::CropPestAssociationSync.new(crop_pest_gateway: @crop_pest_gateway)
+              .add_missing(pest_id: pest_entity.id, crop_ids: crop_ids)
           end
 
           @output_port.on_success(pest_entity)

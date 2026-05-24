@@ -5,10 +5,10 @@ module Domain
     module Interactors
       # 認証ユーザーに紐づく私有計画の一覧（軽量 read）。
       class PrivateOwnedPlansListInteractor
-        def initialize(output_port:, user_id:, gateway:, translator:, logger:, user_lookup:)
+        def initialize(output_port:, user_id:, private_read_gateway:, translator:, logger:, user_lookup:)
           @output_port = output_port
           @user_id = user_id
-          @gateway = gateway
+          @private_read_gateway = private_read_gateway
           @translator = translator
           @logger = logger
           @user_lookup = user_lookup
@@ -16,7 +16,7 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          rows = @gateway.private_plan_index_plan_rows(user: user)
+          rows = @private_read_gateway.list_private_plan_index_rows_by_user_id(user_id: user.id)
           @output_port.on_success(rows)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[PrivateOwnedPlansListInteractor] #{e.class}: #{e.message}")

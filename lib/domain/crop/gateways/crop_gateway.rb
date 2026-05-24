@@ -105,20 +105,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_reference_crop_for_entry_schedule!"
         end
 
-        # 認可は Interactor（ReferenceRecordAuthorization）。永続読み込みのみ。
-        def find_crop_loaded_bundle!(id, for_edit:)
-          raise NotImplementedError, "Subclasses must implement find_crop_loaded_bundle!"
-        end
-
-        # マスター API: 作物と農業タスクの関連付けを作成。
-        def create_masters_crop_task_template_association(input_dto)
-          raise NotImplementedError, "Subclasses must implement create_masters_crop_task_template_association"
-        end
-
-        def find_crop_with_crop_stage_bundle!(crop_id, crop_stage_id, for_edit:)
-          raise NotImplementedError, "Subclasses must implement find_crop_with_crop_stage_bundle!"
-        end
-
         # マスター API: 作物に紐づく農業タスクテンプレート一覧 JSON 行（永続はゲートウェイ内のみ）
         def masters_crop_agricultural_task_templates_index_rows(crop_id:)
           raise NotImplementedError, "Subclasses must implement masters_crop_agricultural_task_templates_index_rows"

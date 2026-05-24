@@ -10,7 +10,7 @@ module Adapters
         plan_gateway:,
         weather_prediction_gateway:,
         agrr_adjust_gateway:,
-        save_adjusted_gateway:,
+        save_adjusted_result_interactor:,
         optimization_events_gateway:,
         adjust_plan_growth_read_gateway:,
         debug_dump_gateway:
@@ -21,7 +21,7 @@ module Adapters
         @plan_gateway = plan_gateway
         @weather_prediction_gateway = weather_prediction_gateway
         @agrr_adjust_gateway = agrr_adjust_gateway
-        @save_adjusted_gateway = save_adjusted_gateway
+        @save_adjusted_result_interactor = save_adjusted_result_interactor
         @optimization_events_gateway = optimization_events_gateway
         @adjust_plan_growth_read_gateway = adjust_plan_growth_read_gateway
         @debug_dump_gateway = debug_dump_gateway
@@ -36,7 +36,7 @@ module Adapters
           plan_gateway: @plan_gateway,
           weather_prediction_gateway: @weather_prediction_gateway,
           agrr_adjust_gateway: @agrr_adjust_gateway,
-          save_adjusted_gateway: @save_adjusted_gateway,
+          save_adjusted_result_interactor: @save_adjusted_result_interactor,
           optimization_events_gateway: @optimization_events_gateway,
           adjust_plan_growth_read_gateway: @adjust_plan_growth_read_gateway,
           debug_dump_gateway: @debug_dump_gateway

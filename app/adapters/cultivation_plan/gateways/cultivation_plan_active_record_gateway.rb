@@ -34,133 +34,30 @@ module Adapters
           ::Field.where(farm_id: farm_id).sum(:area).to_f
         end
 
-        # @return [Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result]
-        def initialize_plan_from_selection(farm:, total_area:, crops:, user: nil, session_id: nil, plan_type: "public", plan_year: nil, plan_name: nil, planning_start_date: nil, planning_end_date: nil)
-          ctx = InitializationContext.new(
-            farm: normalize_farm_for_plan!(farm),
-            total_area: total_area,
-            crops: normalize_crops_for_plan!(crops),
-            user: normalize_user_for_plan(user),
-            session_id: session_id,
-            plan_type: plan_type,
-            plan_year: plan_year,
-            plan_name: plan_name,
-            planning_start_date: planning_start_date,
-            planning_end_date: planning_end_date
-          )
+        # @param attrs [Domain::CultivationPlan::Dtos::CultivationPlanCreateAttrs]
+        # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
+        def create(attrs:)
+          plan_attrs = {
+            farm_id: attrs.farm_id,
+            user_id: attrs.user_id,
+            total_area: attrs.total_area,
+            plan_type: attrs.plan_type,
+            planning_start_date: attrs.planning_start_date,
+            planning_end_date: attrs.planning_end_date
+          }
+          plan_attrs[:session_id] = attrs.session_id if attrs.session_id.present?
+          plan_attrs[:plan_year] = attrs.plan_year unless attrs.plan_year.nil?
+          plan_attrs[:plan_name] = attrs.plan_name if attrs.plan_name
+          plan_attrs[:status] = attrs.status if attrs.status
 
-          if ctx.total_area <= 0
-            error_msg = "総面積は0より大きい値である必要があります (total_area: #{ctx.total_area})"
-            Rails.logger.error "❌ CultivationPlan creation failed: #{error_msg}"
-            return Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(
-              cultivation_plan: nil,
-              errors: [ error_msg ]
-            )
-          end
-
-          within_transaction do
-            ctx.create_cultivation_plan_and_relations
-            entity = Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(ctx.cultivation_plan.reload)
-            Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(cultivation_plan: entity, errors: [])
-          end
+          plan = ::CultivationPlan.create!(plan_attrs)
+          Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(plan)
         rescue ActiveRecord::RecordInvalid => e
           raise Domain::Shared::Exceptions::RecordInvalid.new(
             e.message,
             errors: Domain::Shared::ValidationErrors.from_errors_like(e.record&.errors)
           )
-        rescue StandardError => e
-          # アダプタ境界: 永続化の例外を Result に畳み、Interactor が on_failure へ載せられるようにする（domain は AR を掴まない）。
-          Rails.logger.error "❌ CultivationPlan creation failed: #{e.message}"
-          Rails.logger.error e.backtrace.join("\n")
-          Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(cultivation_plan: nil, errors: [ e.message ])
         end
-
-        # プラン初期化の内部状態（Interactor から Gateway へ移した永続化ロジック）
-        class InitializationContext
-          attr_reader :farm, :total_area, :crops, :user, :session_id, :plan_type, :plan_year, :plan_name, :planning_start_date, :planning_end_date
-          attr_accessor :cultivation_plan
-
-          def initialize(farm:, total_area:, crops:, user: nil, session_id: nil, plan_type: "public", plan_year: nil, plan_name: nil, planning_start_date: nil, planning_end_date: nil)
-            @farm = farm
-            @total_area = total_area
-            @crops = crops
-            @user = user
-            @session_id = session_id
-            @plan_type = plan_type
-            @plan_year = plan_year
-            @plan_name = plan_name
-            @planning_start_date = planning_start_date
-            @planning_end_date = planning_end_date
-          end
-
-          def create_cultivation_plan_and_relations
-            create_cultivation_plan
-            create_cultivation_plan_crops
-            create_cultivation_plan_fields
-            Rails.logger.info "✅ Added #{@cultivation_plan.cultivation_plan_fields.count} fields and #{@cultivation_plan.cultivation_plan_crops.count} crops to CultivationPlan ##{@cultivation_plan.id}"
-          end
-
-          def fields_allocation
-            @fields_allocation ||= begin
-              if @total_area <= 0 || @crops.empty?
-                Rails.logger.warn "⚠️ [FieldsAllocation] Invalid parameters detected (total_area: #{@total_area}, crops: #{@crops.count}). Creating default field."
-              end
-              Domain::CultivationPlan::FieldsAllocation.new(@total_area, @crops).allocate
-            end
-          end
-
-          def calculate_daily_cost(area)
-            area * 1.0
-          end
-
-          def create_cultivation_plan
-            plan_attrs = {
-              farm: @farm,
-              user: @user,
-              total_area: @total_area,
-              plan_type: @plan_type
-            }
-            plan_attrs[:session_id] = @session_id if @session_id.present?
-
-            if @plan_type == "private"
-              plan_attrs[:plan_year] = @plan_year
-              plan_attrs[:plan_name] = @plan_name.presence || @farm.name
-              plan_attrs[:planning_start_date] = @planning_start_date
-              plan_attrs[:planning_end_date] = @planning_end_date
-            else
-              planning_dates = ::CultivationPlan.calculate_public_planning_dates
-              plan_attrs[:planning_start_date] = planning_dates[:start_date]
-              plan_attrs[:planning_end_date] = planning_dates[:end_date]
-            end
-
-            @cultivation_plan = ::CultivationPlan.create!(plan_attrs)
-          end
-
-          def create_cultivation_plan_crops
-            @crops.each do |crop|
-              ::CultivationPlanCrop.create!(
-                cultivation_plan: @cultivation_plan,
-                crop: crop,
-                name: crop.name,
-                variety: crop.variety,
-                area_per_unit: crop.area_per_unit,
-                revenue_per_area: crop.revenue_per_area
-              )
-            end
-          end
-
-          def create_cultivation_plan_fields
-            fields_allocation.each_with_index do |allocation, index|
-              ::CultivationPlanField.create!(
-                cultivation_plan: @cultivation_plan,
-                name: "#{index + 1}",
-                area: allocation[:area],
-                daily_fixed_cost: calculate_daily_cost(allocation[:area])
-              )
-            end
-          end
-        end
-        private_constant :InitializationContext
 
         def find_existing(farm, user)
           plan = ::CultivationPlan.find_by(farm_id: farm.id, user_id: user.id, plan_type: "private")
@@ -234,16 +131,6 @@ module Adapters
           plan.field_cultivations.map { |fc| field_cultivation_entity_from_model(fc) }
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def copy_private_plan_for_year(source_cultivation_plan_id:, new_year:, user_id:, session_id: nil, logger:)
-          PlanCopyActiveRecordGateway.copy_private_plan_for_year(
-            source_cultivation_plan_id: source_cultivation_plan_id,
-            new_year: new_year,
-            user_id: user_id,
-            session_id: session_id,
-            logger: logger
-          )
         end
 
         def update_predicted_weather_data(cultivation_plan_id, payload)
@@ -323,291 +210,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordInvalid, e.message
         end
 
-        def optimization_plan_snapshot(plan_id)
-          plan = ::CultivationPlan.find(plan_id)
-          wl = plan.farm&.weather_location
-          farm = plan.farm
-          wl_dto = if wl
-            Domain::WeatherData::Dtos::WeatherLocation.new(
-              id: wl.id,
-              latitude: wl.latitude,
-              longitude: wl.longitude,
-              elevation: wl.elevation,
-              timezone: wl.timezone,
-              predicted_weather_data: wl.predicted_weather_data
-            )
-          end
-          fm_dto = if farm
-            Domain::WeatherData::Dtos::FarmWeatherPrediction.new(
-              id: farm.id,
-              weather_location_id: farm.weather_location_id,
-              predicted_weather_data: farm.predicted_weather_data
-            )
-          end
-          Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot.new(
-            plan_id: plan.id,
-            plan_type_private: plan.plan_type_private?,
-            calculated_planning_start_date: plan.calculated_planning_start_date,
-            calculated_planning_end_date: plan.calculated_planning_end_date,
-            prediction_target_end_date: plan.prediction_target_end_date,
-            predicted_weather_data: plan.predicted_weather_data,
-            total_area: plan.total_area,
-            weather_location_present: wl.present?,
-            weather_location_input: wl_dto,
-            farm_weather_input: fm_dto
-          )
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def find_private_cultivation_plan_detail(user:, plan_id:)
-          Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
-            plan = private_cultivation_plans_scope(user)
-                      .includes(
-                        :farm,
-                        field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ],
-                        cultivation_plan_fields: [],
-                        cultivation_plan_crops: [ :crop ]
-                      )
-                      .find(plan_id)
-
-            field_cultivations = plan.field_cultivations.map do |fc|
-              Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::FieldCultivationRead.new(
-                id: fc.id,
-                cultivation_plan_field_id: fc.cultivation_plan_field_id,
-                field_display_name: fc.field_display_name,
-                cultivation_plan_crop_id: fc.cultivation_plan_crop_id,
-                crop_display_name: fc.crop_display_name,
-                start_date: fc.start_date,
-                completion_date: fc.completion_date,
-                cultivation_days: fc.cultivation_days,
-                area: fc.area,
-                estimated_cost: fc.estimated_cost,
-                optimization_profit: Domain::CultivationPlan::GanttChartRowHashes.profit_from_optimization_result(
-                  fc.optimization_result
-                )
-              )
-            end
-
-            cultivation_plan_fields = plan.cultivation_plan_fields.map do |field|
-              Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::PlanFieldRead.new(
-                id: field.id,
-                name: field.name,
-                area: field.area
-              )
-            end
-
-            palette_used_crop_ids = plan.cultivation_plan_crops.map { |cpc| cpc.crop&.id }.compact
-            palette_crops = ::Crop.user_owned
-                               .where(user: user, is_reference: false)
-                               .select(:id, :name, :variety, :groups)
-                               .order(:name)
-                               .map do |c|
-              Domain::CultivationPlan::Dtos::PrivatePlanShowPaletteCrop.new(
-                id: c.id,
-                name: c.name,
-                variety: c.variety
-              )
-            end
-
-            Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail.new(
-              id: plan.id,
-              display_name: plan.display_name,
-              farm_display_name: plan.farm.display_name,
-              total_area: plan.total_area,
-              field_cultivations_count: plan.field_cultivations.size,
-              cultivation_plan_fields_count: plan.cultivation_plan_fields.size,
-              planning_start_date: plan.planning_start_date,
-              planning_end_date: plan.planning_end_date,
-              status: plan.status,
-              field_cultivations: field_cultivations,
-              cultivation_plan_fields: cultivation_plan_fields,
-              palette_used_crop_ids: palette_used_crop_ids,
-              palette_crops: palette_crops
-            )
-          end
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def task_schedule_timeline_snapshot(user:, plan_id:)
-          plan = private_cultivation_plans_scope(user).find(plan_id)
-          schedules = TaskSchedule.where(cultivation_plan_id: plan.id)
-                                  .includes(
-                                    { task_schedule_items: :agricultural_task },
-                                    field_cultivation: [
-                                      :cultivation_plan_field,
-                                      {
-                                        cultivation_plan_crop: {
-                                          crop: [
-                                            :agricultural_tasks,
-                                            { crop_task_templates: :agricultural_task }
-                                          ]
-                                        }
-                                      }
-                                    ]
-                                  )
-
-          timeline_generated_at = schedules.maximum(:generated_at)
-          scheduled_dates = TaskScheduleItem
-                              .joins(:task_schedule)
-                              .where(task_schedules: { cultivation_plan_id: plan.id })
-                              .where.not(scheduled_date: nil)
-                              .pluck(:scheduled_date)
-
-          fields = schedules.group_by(&:field_cultivation).map do |field_cultivation, field_schedules|
-            build_task_schedule_timeline_field(field_cultivation, field_schedules)
-          end
-
-          Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot.new(
-            plan: Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot::PlanRead.new(
-              id: plan.id,
-              display_name: plan.display_name,
-              status: plan.status,
-              planning_start_date: plan.planning_start_date,
-              planning_end_date: plan.planning_end_date,
-              timeline_generated_at: timeline_generated_at,
-              farm_display_name: plan.farm.display_name,
-              total_area: plan.total_area
-            ),
-            fields: fields,
-            scheduled_dates: scheduled_dates
-          )
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        # 部分 select の列は CultivationPlan#display_name（private）が参照する属性と一致させること
-        def private_plan_index_plan_rows(user:)
-          Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
-            plans = ::CultivationPlan
-                      .plan_type_private
-                      .by_user(user)
-                      .select(
-                        :id, :status, :plan_year, :plan_name, :plan_type,
-                        :total_area, :farm_id, :planning_start_date, :planning_end_date,
-                        :created_at, :updated_at
-                      )
-                      .preload(:farm)
-                      .recent
-                      .to_a
-
-            plan_ids = plans.map(&:id)
-            crops_count_hash = if plan_ids.empty?
-              {}
-            else
-              ::CultivationPlanCrop.where(cultivation_plan_id: plan_ids)
-                                   .group(:cultivation_plan_id)
-                                   .count
-            end
-            fields_count_hash = if plan_ids.empty?
-              {}
-            else
-              ::CultivationPlanField.where(cultivation_plan_id: plan_ids)
-                                    .group(:cultivation_plan_id)
-                                    .count
-            end
-
-            ordered_plans = plans.group_by(&:farm_id).values.flatten
-            ordered_plans.map do |p|
-              Domain::CultivationPlan::Dtos::PrivatePlanIndexPlanRow.new(
-                id: p.id,
-                farm_display_name: p.farm.display_name,
-                total_area: p.total_area,
-                crops_count: crops_count_hash[p.id] || 0,
-                fields_count: fields_count_hash[p.id] || 0,
-                status: p.status,
-                display_name: p.display_name,
-                created_at: p.created_at
-              )
-            end
-          end
-        end
-
-        def build_task_schedule_timeline_field(field_cultivation, schedules)
-          task_options = build_task_schedule_task_options(field_cultivation)
-          schedule_reads = schedules.map { |schedule| build_task_schedule_timeline_schedule(schedule) }
-
-          Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot::FieldRead.new(
-            id: field_cultivation&.id,
-            name: field_cultivation&.cultivation_plan_field&.name,
-            crop_name: field_cultivation&.cultivation_plan_crop&.name || field_cultivation&.cultivation_plan_crop&.crop&.name,
-            area_sqm: field_cultivation&.area,
-            field_cultivation_id: field_cultivation&.id,
-            crop_id: field_cultivation&.cultivation_plan_crop_id,
-            task_options: task_options,
-            schedules: schedule_reads
-          )
-        end
-
-        def build_task_schedule_timeline_schedule(schedule)
-          items = schedule.task_schedule_items.map do |item|
-            Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot::ItemRead.new(
-              id: item.id,
-              name: item.name,
-              task_type: item.task_type,
-              scheduled_date: item.scheduled_date,
-              stage_name: item.stage_name,
-              stage_order: item.stage_order,
-              gdd_trigger: item.gdd_trigger,
-              gdd_tolerance: item.gdd_tolerance,
-              priority: item.priority,
-              source: item.source,
-              weather_dependency: item.weather_dependency,
-              time_per_sqm: item.time_per_sqm,
-              amount: item.amount,
-              amount_unit: item.amount_unit,
-              status: item.respond_to?(:status) ? item.status : nil,
-              agricultural_task_id: item.agricultural_task_id,
-              field_cultivation_id: schedule.field_cultivation_id,
-              agricultural_task: build_task_schedule_task_master(item.agricultural_task),
-              actual_date: item.actual_date,
-              actual_notes: item.actual_notes,
-              rescheduled_at: item.rescheduled_at,
-              cancelled_at: item.cancelled_at,
-              completed_at: item.completed_at
-            )
-          end
-
-          Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot::ScheduleRead.new(
-            category: schedule.category,
-            items: items
-          )
-        end
-
-        def build_task_schedule_task_master(task)
-          return nil unless task
-
-          Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot::AgriculturalTaskRead.new(
-            name: task.name,
-            description: task.description,
-            time_per_sqm: task.time_per_sqm,
-            weather_dependency: task.weather_dependency,
-            required_tools: Array(task.required_tools).presence,
-            skill_level: task.skill_level,
-            task_type: task.task_type
-          )
-        end
-
-        def build_task_schedule_task_options(field_cultivation)
-          crop = field_cultivation&.cultivation_plan_crop&.crop
-          return [] unless crop
-
-          crop.crop_task_templates.sort_by(&:name).map do |template|
-            Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot::TaskOptionRead.new(
-              template_id: template.id,
-              name: template.name,
-              task_type: template.task_type || TaskScheduleItem::FIELD_WORK_TYPE,
-              agricultural_task_id: template.agricultural_task_id,
-              description: template.description,
-              weather_dependency: template.weather_dependency,
-              time_per_sqm: template.time_per_sqm,
-              required_tools: Array(template.required_tools).presence,
-              skill_level: template.skill_level
-            )
-          end
-        end
-
         def session_data_for_public_plan_save_from_plan_id(plan_id:)
           plan = ::CultivationPlan.find_by(id: plan_id)
           return nil unless plan
@@ -646,11 +248,6 @@ module Adapters
           return crops if crops.first.is_a?(::Crop)
 
           crops.map { |c| ::Crop.find(c.id) }
-        end
-
-        # PlanAccess.private_scope / find_private_owned! と同一条件の永続写像（Adapter は PlanAccess を参照しない）
-        def private_cultivation_plans_scope(user)
-          ::CultivationPlan.plan_type_private.by_user(user)
         end
 
         def find_cultivation_plan_model!(plan_id)

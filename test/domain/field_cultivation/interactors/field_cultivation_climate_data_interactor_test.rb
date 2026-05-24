@@ -78,9 +78,11 @@ module Domain
           resolver
         end
 
-        def attach_crop_bundle_gateway(crop_gateway, crop_entity)
-          crop_gateway.define_singleton_method(:find_crop_loaded_bundle!) do |crop_id, for_edit:|
-            Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: crop_entity)
+        def attach_crop_find_by_id_gateway(crop_gateway, crop_entity)
+          crop_gateway.define_singleton_method(:find_by_id) do |crop_id|
+            raise Domain::Shared::Exceptions::RecordNotFound unless crop_id == crop_entity.id
+
+            crop_entity
           end
         end
 
@@ -102,7 +104,7 @@ module Domain
 
           crop_entity = build_crop_entity
           crop_gateway = Object.new
-          attach_crop_bundle_gateway(crop_gateway, crop_entity)
+          attach_crop_find_by_id_gateway(crop_gateway, crop_entity)
 
           weather_data_gateway = Object.new
           weather_data_gateway.define_singleton_method(:weather_data_for_period) { |**| [] }
@@ -249,7 +251,7 @@ module Domain
 
           crop_entity = build_crop_entity(is_reference: false, user_id: 99)
           crop_gateway = Object.new
-          attach_crop_bundle_gateway(crop_gateway, crop_entity)
+          attach_crop_find_by_id_gateway(crop_gateway, crop_entity)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -289,7 +291,7 @@ module Domain
 
           crop_entity = build_crop_entity
           crop_gateway = Object.new
-          attach_crop_bundle_gateway(crop_gateway, crop_entity)
+          attach_crop_find_by_id_gateway(crop_gateway, crop_entity)
 
           weather_data_gateway = Object.new
           weather_data_gateway.define_singleton_method(:weather_data_for_period) { |**| [] }
@@ -343,7 +345,7 @@ module Domain
 
           crop_entity = build_crop_entity
           crop_gateway = Object.new
-          attach_crop_bundle_gateway(crop_gateway, crop_entity)
+          attach_crop_find_by_id_gateway(crop_gateway, crop_entity)
 
           prediction_service = Object.new
           prediction_service.define_singleton_method(:predict_for_cultivation_plan) { |plan_weather:| nil }

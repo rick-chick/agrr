@@ -9,7 +9,7 @@ module Api
         Domain::CultivationPlan::Interactors::PrivateOwnedPlansListInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
-          gateway: CompositionRoot.cultivation_plan_gateway,
+          private_read_gateway: CompositionRoot.cultivation_plan_private_read_gateway,
           translator: translator,
           logger: CompositionRoot.logger,
           user_lookup: CompositionRoot.user_lookup
@@ -21,7 +21,9 @@ module Api
         Domain::CultivationPlan::Interactors::PrivateOwnedPlanDetailInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
-          gateway: CompositionRoot.cultivation_plan_gateway,
+          private_read_gateway: CompositionRoot.cultivation_plan_private_read_gateway,
+          cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+          crop_gateway: CompositionRoot.crop_gateway,
           translator: translator,
           logger: CompositionRoot.logger,
           user_lookup: CompositionRoot.user_lookup
@@ -39,6 +41,7 @@ module Api
         Domain::CultivationPlan::Interactors::PrivatePlanInitializeFromSelectionInteractor.new(
           output_port: presenter,
           cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+          plan_initializer: CompositionRoot.cultivation_plan_plan_initializer,
           logger: CompositionRoot.logger,
           translator: translator,
           clock: Time.zone,

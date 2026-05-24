@@ -8,7 +8,7 @@ module Adapters
         attr_accessor :user, :session_data, :result, :farm_reused,
                       :reference_crop_id_to_user_crop_id, :ref_cpc_id_to_user_crop_id,
                       :reference_pest_id_to_user_pest_id, :reference_agricultural_task_id_to_user_task_id,
-                      :crop_stage_copy_gateway
+                      :crop_stage_copy_interactor
 
         def initialize(user:, session_data:, result:)
           @user = user

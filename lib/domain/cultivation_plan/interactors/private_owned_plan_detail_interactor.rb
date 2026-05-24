@@ -5,10 +5,21 @@ module Domain
     module Interactors
       # 認証ユーザーに属する単一私有計画のサマリ（id / name / status）。
       class PrivateOwnedPlanDetailInteractor
-        def initialize(output_port:, user_id:, gateway:, translator:, logger:, user_lookup:)
+        def initialize(
+          output_port:,
+          user_id:,
+          private_read_gateway:,
+          cultivation_plan_gateway:,
+          crop_gateway:,
+          translator:,
+          logger:,
+          user_lookup:
+        )
           @output_port = output_port
           @user_id = user_id
-          @gateway = gateway
+          @private_read_gateway = private_read_gateway
+          @cultivation_plan_gateway = cultivation_plan_gateway
+          @crop_gateway = crop_gateway
           @translator = translator
           @logger = logger
           @user_lookup = user_lookup
@@ -16,7 +27,18 @@ module Domain
 
         def call(plan_id:)
           user = @user_lookup.find(@user_id)
-          detail = @gateway.find_private_cultivation_plan_detail(user: user, plan_id: plan_id.to_i)
+          plan_id = plan_id.to_i
+          rows = @private_read_gateway.find_plan_read_rows_by_plan_id(plan_id: plan_id)
+          plan = @cultivation_plan_gateway.find_by_id(plan_id)
+          if Policies::PrivateCultivationPlanAccessPolicy.access_denied?(plan: plan, user_id: user.id)
+            raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
+          end
+
+          palette_crop_entities = @crop_gateway.list_user_owned_non_reference_crops_ordered_by_name(user)
+          detail = Mappers::PrivatePlanDetailMapper.to_detail(
+            rows: rows,
+            palette_crop_entities: palette_crop_entities
+          )
           @output_port.on_success(detail)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[PrivateOwnedPlanDetailInteractor] #{e.class}: #{e.message}")

@@ -43,21 +43,19 @@ module Adapters
           @session_plan.farm.weather_location.blank?
         end
 
-        def effective_planning_period(current_allocation:, moves:, as_of:)
-          cultivation_periods = @session_plan.field_cultivations.map do |cultivation|
-            {
+        def list_field_cultivation_planning_periods
+          @session_plan.field_cultivations.map do |cultivation|
+            Domain::CultivationPlan::Dtos::FieldCultivationPlanningPeriod.new(
               start_date: cultivation.start_date,
               completion_date: cultivation.completion_date
-            }
+            )
           end
+        end
 
-          Domain::CultivationPlan::Calculators::EffectivePlanningPeriodCalculator.calculate(
-            current_allocation: current_allocation,
-            moves: moves,
-            cultivation_periods: cultivation_periods,
+        def planning_period_boundaries
+          Domain::CultivationPlan::Dtos::PlanAllocationAdjustPlanningBoundaries.new(
             planning_start_date: @session_plan.planning_start_date,
-            planning_end_date: @session_plan.planning_end_date,
-            as_of: as_of
+            planning_end_date: @session_plan.planning_end_date
           )
         end
 
@@ -107,11 +105,6 @@ module Adapters
             elevation: (wl.elevation || 0.0).to_f,
             timezone: wl.timezone
           }
-        end
-
-        def broadcast_optimization_complete(plan_id:, events_gateway:, status:)
-          plan = ::CultivationPlan.find(plan_id)
-          events_gateway.broadcast_optimization_complete(plan: plan, status: status)
         end
 
         def plan_summary_for_adjust_response(plan_id:)

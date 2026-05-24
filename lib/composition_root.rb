@@ -107,8 +107,14 @@ module CompositionRoot
       @nutrient_requirement_gateway ||= Adapters::Crop::Gateways::NutrientRequirementMemoryGateway.new
     end
 
-    def crop_stage_copy_gateway
-      @crop_stage_copy_gateway ||= Adapters::Crop::Gateways::CropStageCopyActiveRecordGateway.new
+    def crop_stage_copy_interactor
+      @crop_stage_copy_interactor ||= Domain::Crop::Interactors::CropStageCopyInteractor.new(
+        crop_gateway: crop_gateway
+      )
+    end
+
+    def crop_pest_gateway
+      @crop_pest_gateway ||= Adapters::Pest::Gateways::CropPestActiveRecordGateway.new
     end
 
     def pest_gateway
@@ -163,11 +169,9 @@ module CompositionRoot
       )
     end
 
-    def cultivation_plan_check_optimization_completion_interactor
-      @cultivation_plan_check_optimization_completion_interactor ||=
-        Domain::CultivationPlan::Interactors::CultivationPlanCheckOptimizationCompletionInteractor.new(
-          cultivation_plan_gateway: cultivation_plan_gateway
-        )
+    def cultivation_plan_private_read_gateway
+      @cultivation_plan_private_read_gateway ||=
+        Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecordGateway.new
     end
 
     def advance_cultivation_plan_phase_interactor
@@ -175,8 +179,7 @@ module CompositionRoot
         Domain::CultivationPlan::Interactors::AdvanceCultivationPlanPhaseInteractor.new(
           cultivation_plan_gateway: cultivation_plan_gateway,
           translator: translator,
-          phase_broadcast_port: Adapters::CultivationPlan::Ports::CultivationPlanPhaseBroadcastAdapter.new,
-          check_optimization_completion_interactor: cultivation_plan_check_optimization_completion_interactor
+          phase_broadcast_port: Adapters::CultivationPlan::Ports::CultivationPlanPhaseBroadcastAdapter.new
         )
     end
 
@@ -228,6 +231,13 @@ module CompositionRoot
       @save_adjusted_agrr_result_gateway ||= Adapters::CultivationPlan::Gateways::SaveAdjustedAgrrResultActiveRecordGateway.new(
         logger: logger,
         clock: Time.zone
+      )
+    end
+
+    def save_adjusted_agrr_result_interactor
+      @save_adjusted_agrr_result_interactor ||= Domain::CultivationPlan::Interactors::SaveAdjustedAgrrResultInteractor.new(
+        save_gateway: save_adjusted_agrr_result_gateway,
+        logger: logger
       )
     end
 
@@ -294,7 +304,7 @@ module CompositionRoot
         plan_gateway: Adapters::CultivationPlan::Gateways::PlanAllocationAdjustPlanActiveRecordGateway.new(logger: logger),
         weather_prediction_gateway: adjust_weather_prediction_gateway,
         agrr_adjust_gateway: agrr_adjust_gateway,
-        save_adjusted_gateway: save_adjusted_agrr_result_gateway,
+        save_adjusted_result_interactor: save_adjusted_agrr_result_interactor,
         optimization_events_gateway: cultivation_plan_rest_optimization_events_gateway,
         adjust_plan_growth_read_gateway: cultivation_plan_rest_adjust_plan_growth_read_gateway,
         debug_dump_gateway: plan_allocation_adjust_debug_dump_gateway(clock: clock)
@@ -343,6 +353,30 @@ module CompositionRoot
       @interaction_rule_gateway ||= Adapters::InteractionRule::Gateways::InteractionRuleActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway,
         translator: translator
+      )
+    end
+
+    def interaction_rule_agrr_format_builder
+      @interaction_rule_agrr_format_builder ||=
+        Adapters::InteractionRule::Ports::InteractionRuleAgrrFormatBuilderAdapter.new
+    end
+
+    def entry_schedule_optimization_gateway
+      @entry_schedule_optimization_gateway ||=
+        Adapters::Agrr::Gateways::EntryScheduleOptimizationDaemonGateway.new
+    end
+
+    def entry_schedule_optimize_interactor(crop:, weather_payload:, farm:, crop_gateway:)
+      Domain::CultivationPlan::Interactors::EntryScheduleOptimizeInteractor.new(
+        crop: crop,
+        weather_payload: weather_payload,
+        farm: farm,
+        crop_gateway: crop_gateway,
+        crop_agrr_requirement_builder: crop_agrr_requirement_builder,
+        entry_schedule_optimization_gateway: entry_schedule_optimization_gateway,
+        clock: clock,
+        logger: logger,
+        agrr_enabled: ENV["ENTRY_SCHEDULE_DISABLE_AGRR"].to_s.blank?
       )
     end
 
@@ -422,19 +456,57 @@ module CompositionRoot
       @prediction_gateway ||= Adapters::Agrr::Gateways::PredictionDaemonGateway.new
     end
 
-    def public_plan_save_gateway
-      @public_plan_save_gateway ||= Domain::CultivationPlan::Gateways::PublicPlanSaveGateway.new(
-        logger: logger,
-        save_from_session_runner: lambda do |user:, session_data:, logger:|
-          Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
-            user: user,
-            session_data: session_data,
-            logger: logger,
-            clock: clock,
-            cultivation_plan_gateway: cultivation_plan_gateway,
-            crop_stage_copy_gateway: crop_stage_copy_gateway
-          ).call
-        end
+    def public_plan_save_from_session_runner
+      lambda do |user:, session_data:, logger:|
+        Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
+          user: user,
+          session_data: session_data,
+          logger: logger,
+          clock: clock,
+          cultivation_plan_gateway: cultivation_plan_gateway,
+          crop_stage_copy_interactor: crop_stage_copy_interactor,
+          blueprint_copy_interactor: crop_task_schedule_blueprint_copy_interactor_for_plan_save
+        ).call
+      end
+    end
+
+    def plan_copy_gateway
+      @plan_copy_gateway ||= Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new
+    end
+
+    def crop_task_schedule_blueprint_gateway
+      @crop_task_schedule_blueprint_gateway ||=
+        Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new
+    end
+
+    def crop_task_schedule_blueprint_copy_interactor_for_plan_save
+      # PlanSaveSession 内で ctx ごとに task mapping を組み立てるため、ファクトリを返す
+      lambda do |ctx|
+        Domain::CultivationPlan::Interactors::CropTaskScheduleBlueprintCopyInteractor.new(
+          blueprint_gateway: crop_task_schedule_blueprint_gateway,
+          task_mapping_port: Adapters::CultivationPlan::Ports::PlanSaveUserAgriculturalTaskMappingAdapter.new(ctx),
+          logger: logger
+        )
+      end
+    end
+
+    def cultivation_plan_plan_initializer
+      lambda do |**kwargs|
+        Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(
+          cultivation_plan_gateway: cultivation_plan_gateway,
+          plan_crop_gateway: cultivation_plan_rest_plan_crop_gateway,
+          field_mutation_gateway: cultivation_plan_rest_field_mutation_gateway,
+          clock: clock,
+          logger: logger,
+          **kwargs
+        ).call
+      end
+    end
+
+    def plan_copy_interactor
+      Domain::CultivationPlan::Interactors::PlanCopyInteractor.new(
+        plan_copy_gateway: plan_copy_gateway,
+        logger: logger
       )
     end
 
@@ -612,6 +684,7 @@ module CompositionRoot
           user_id: user_id,
           gateway: gw,
           crop_gateway: crop_gateway,
+          crop_pest_gateway: crop_pest_gateway,
           translator: tr,
           user_lookup: ul
         ),
@@ -619,6 +692,7 @@ module CompositionRoot
           user_id: user_id,
           gateway: gw,
           crop_gateway: crop_gateway,
+          crop_pest_gateway: crop_pest_gateway,
           logger: log,
           translator: tr,
           user_lookup: ul
@@ -805,7 +879,8 @@ module CompositionRoot
     def task_schedule_item_update_interactor(output_port:)
       Domain::CultivationPlan::Interactors::TaskScheduleItemUpdateInteractor.new(
         output_port: output_port,
-        gateway: task_schedule_item_mutation_gateway
+        gateway: task_schedule_item_mutation_gateway,
+        clock: Time.zone
       )
     end
 
@@ -884,6 +959,7 @@ module CompositionRoot
             user_lookup: user_lookup,
             pest_gateway: gw,
             crop_gateway: crop_gateway,
+            crop_pest_gateway: crop_pest_gateway,
             logger: log
           ).call(pest_id: pest_id, affected_crops: crops)
         }

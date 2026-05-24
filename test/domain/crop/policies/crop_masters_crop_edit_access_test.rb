@@ -6,54 +6,60 @@ module Domain
   module Crop
     module Policies
       class CropMastersCropEditAccessTest < DomainLibTestCase
+        TestUser = Struct.new(:id, :admin?, keyword_init: true)
+
+        FailurePort = Struct.new(:calls) do
+          def initialize
+            super([])
+          end
+
+          def on_failure(failure)
+            calls << failure
+          end
+        end
+
         setup do
-          @user = stub(id: 1, admin?: false)
+          @fixed_at = Time.utc(2026, 1, 15, 12, 0, 0).freeze
+          @user = TestUser.new(id: 1, admin?: false)
           @access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(@user)
-          @gateway = mock
-          @output_port = mock
+          @output_port = FailurePort.new
           @failure = Domain::Crop::Dtos::MastersCropTaskTemplateMastersFailure.new(reason: :crop_not_found)
         end
 
+        def crop_entity(user_id:)
+          Entities::CropEntity.new(
+            id: 2,
+            user_id: user_id,
+            name: "Foo",
+            variety: nil,
+            is_reference: false,
+            area_per_unit: nil,
+            revenue_per_area: nil,
+            region: nil,
+            groups: [],
+            crop_stages: [],
+            created_at: @fixed_at,
+            updated_at: @fixed_at
+          )
+        end
+
         test "assert_edit_or_on_failure returns true when edit is allowed" do
-          crop_record = stub(is_reference: false, user_id: 1)
-
-          @gateway.expects(:find_by_id).with(2).returns(crop_record)
-
-          assert Domain::Crop::Policies::CropMastersCropEditAccess.assert_edit_or_on_failure(
+          assert CropMastersCropEditAccess.assert_edit_or_on_failure(
             access_filter: @access_filter,
-            crop_id: 2,
-            gateway: @gateway,
+            crop_entity: crop_entity(user_id: 1),
             output_port: @output_port,
             failure: @failure,
           )
         end
 
         test "assert_edit_or_on_failure calls on_failure when edit is denied" do
-          crop_record = stub(is_reference: false, user_id: 99)
-
-          @gateway.expects(:find_by_id).with(2).returns(crop_record)
-          @output_port.expects(:on_failure).with(@failure)
-
-          assert_not Domain::Crop::Policies::CropMastersCropEditAccess.assert_edit_or_on_failure(
+          assert_not CropMastersCropEditAccess.assert_edit_or_on_failure(
             access_filter: @access_filter,
-            crop_id: 2,
-            gateway: @gateway,
+            crop_entity: crop_entity(user_id: 99),
             output_port: @output_port,
-            failure: @failure,
+            failure: @failure
           )
-        end
-
-        test "assert_edit_or_on_failure calls on_failure when crop is missing" do
-          @gateway.expects(:find_by_id).with(2).raises(Domain::Shared::Exceptions::RecordNotFound)
-          @output_port.expects(:on_failure).with(@failure)
-
-          assert_not Domain::Crop::Policies::CropMastersCropEditAccess.assert_edit_or_on_failure(
-            access_filter: @access_filter,
-            crop_id: 2,
-            gateway: @gateway,
-            output_port: @output_port,
-            failure: @failure,
-          )
+          assert_equal [@failure], @output_port.calls
         end
       end
     end

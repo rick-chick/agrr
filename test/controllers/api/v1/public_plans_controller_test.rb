@@ -19,7 +19,7 @@ module Api
         @request.env["HTTP_ACCEPT"] = "application/json"
 
         # Interactor is stubbed so plan_id doesn't need to reference real DB record
-        Domain::CultivationPlan::Interactors::PublicPlanSaveByPlanIdInteractor.stub(:new, proc { |**kwargs|
+        Domain::CultivationPlan::Interactors::PublicPlanSaveInteractor.stub(:new, proc { |**kwargs|
           Object.new.tap do |o|
             o.define_singleton_method(:call) { |**_| kwargs[:output_port].on_success }
           end
@@ -51,7 +51,7 @@ module Api
         @request.env["HTTP_ACCEPT"] = "application/json"
 
         fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailure
-        Domain::CultivationPlan::Interactors::PublicPlanSaveByPlanIdInteractor.stub(:new, proc { |**kwargs|
+        Domain::CultivationPlan::Interactors::PublicPlanSaveInteractor.stub(:new, proc { |**kwargs|
           Object.new.tap do |o|
             o.define_singleton_method(:call) { |**_| kwargs[:output_port].on_failure(fdto.new(kind: fdto::KIND_MISSING_PLAN_ID)) }
           end
@@ -69,7 +69,7 @@ module Api
         @request.env["HTTP_ACCEPT"] = "application/json"
 
         fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailure
-        Domain::CultivationPlan::Interactors::PublicPlanSaveByPlanIdInteractor.stub(:new, proc { |**kwargs|
+        Domain::CultivationPlan::Interactors::PublicPlanSaveInteractor.stub(:new, proc { |**kwargs|
           Object.new.tap do |o|
             o.define_singleton_method(:call) { |**_|
               kwargs[:output_port].on_failure(

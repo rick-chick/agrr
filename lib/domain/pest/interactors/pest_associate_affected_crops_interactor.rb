@@ -5,12 +5,14 @@ module Domain
     module Interactors
       # AI 害虫 API: affected_crops を解決し、認可済み crop_id のみ Gateway に永続化する。
       class PestAssociateAffectedCropsInteractor
-        def initialize(user_id:, user_lookup:, pest_gateway:, crop_gateway:, logger:)
+        def initialize(user_id:, user_lookup:, pest_gateway:, crop_gateway:, crop_pest_gateway:, logger:)
           @user_id = user_id
           @user_lookup = user_lookup
           @pest_gateway = pest_gateway
           @crop_gateway = crop_gateway
+          @crop_pest_gateway = crop_pest_gateway
           @logger = logger
+          @association_sync = Services::CropPestAssociationSync.new(crop_pest_gateway: crop_pest_gateway)
         end
 
         # @param affected_crops [Array<Hash>]
@@ -44,7 +46,7 @@ module Domain
             crop_gateway: @crop_gateway
           )
 
-          count = @pest_gateway.associate_crops_with_pest_id(pest_id: pest_id, crop_ids: authorized_ids)
+          count = @association_sync.add_missing(pest_id: pest_id, crop_ids: authorized_ids)
           @logger.info "✅ [AI Pest] Crop association completed: #{count} crops associated"
           count
         end

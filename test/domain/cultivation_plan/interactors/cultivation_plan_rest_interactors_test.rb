@@ -183,7 +183,7 @@ module Domain
             plan_gateway: @plan_gateway,
             weather_prediction_gateway: mock,
             agrr_adjust_gateway: mock,
-            save_adjusted_gateway: mock,
+            save_adjusted_result_interactor: mock,
             optimization_events_gateway: mock,
             adjust_plan_growth_read_gateway: @growth,
             debug_dump_gateway: Domain::CultivationPlan::Gateways::PlanAllocationAdjustDebugDumpNullGateway.new

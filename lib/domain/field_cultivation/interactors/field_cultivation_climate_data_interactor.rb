@@ -114,8 +114,7 @@ module Domain
           crop_id = source.plan_crop_crop_id
           return nil if crop_id.blank?
 
-          bundle = @crop_gateway.find_crop_loaded_bundle!(crop_id.to_i, for_edit: false)
-          crop_entity = bundle.crop_entity
+          crop_entity = @crop_gateway.find_by_id(crop_id.to_i)
           unless Policies::FieldCultivationClimateCropViewPolicy.view_allowed?(
             user: user_dto,
             crop_entity: crop_entity,

@@ -44,18 +44,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
-        # AR を Domain に持ち込まないためのマスタ系操作。
-
-        def crop_pest_association_exists?(crop_id:, pest_id:)
-          raise NotImplementedError, "Subclasses must implement crop_pest_association_exists?"
-        end
-
-        # 既存の Pest を crop に紐付ける（id ベース）。認可・重複判定は Interactor。
-        # @return [Symbol] :linked / :missing
-        def link_pest_to_crop(crop_id:, pest_id:, user:)
-          raise NotImplementedError, "Subclasses must implement link_pest_to_crop"
-        end
-
         # HTML トップレベル編集（`/pests/:id/edit`）用。防除方法が 0 件なら空行を build。
         # @param pest_record [Pest]
         # @return [Pest] pest_record
@@ -65,27 +53,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_pests_for_crop_filtered"
         end
 
-        # Pest 作成後に作物群と関連付け（認可済み crop_ids のみ渡すこと）。
-        # @return [Integer] 新規に紐づけた件数
-        def associate_crops_with_pest_id(pest_id:, crop_ids:)
-          raise NotImplementedError, "Subclasses must implement associate_crops_with_pest_id"
-        end
-
-        # Pest 更新後の作物関連付け差分更新（認可済み crop_ids のみ渡すこと）。
-        def update_pest_crop_associations(pest_id:, crop_ids:)
-          raise NotImplementedError, "Subclasses must implement update_pest_crop_associations"
-        end
-
         # AI API: ユーザー害虫を名前で検索（なければ nil）。
         # @return [Domain::Pest::Entities::PestEntity, nil]
         def find_by_name(user_id:, name:)
           raise NotImplementedError, "Subclasses must implement find_by_name"
-        end
-
-        # 作物から害虫の関連を外す（永続化のみ）。関連の有無は Interactor が crop_pest_association_exists? で判定。
-        # @return [Symbol] :ok / :crop_not_found / :pest_not_found
-        def unlink_pest_from_crop(crop_id:, pest_id:)
-          raise NotImplementedError, "Subclasses must implement unlink_pest_from_crop"
         end
 
       end

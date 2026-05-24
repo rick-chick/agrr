@@ -2,15 +2,15 @@
 
 module Adapters
   module PublicPlan
-    # EntryScheduleOptimization の Agrr 実装へ委譲（Interactor から具象 Adapter 名を隠す）
+    # EntryScheduleOptimizeInteractor へ委譲（PublicPlan Interactor から具象名を隠す）
     class EntryScheduleOptimizationRunnerAdapter
       def self.call(crop:, weather_payload:, farm:, crop_gateway:)
-        Adapters::Agrr::Gateways::EntryScheduleOptimizationDaemonGateway.call(
+        CompositionRoot.entry_schedule_optimize_interactor(
           crop: crop,
           weather_payload: weather_payload,
           farm: farm,
           crop_gateway: crop_gateway
-        )
+        ).call
       end
     end
   end

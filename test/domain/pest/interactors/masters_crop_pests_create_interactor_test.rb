@@ -19,6 +19,7 @@ module Domain
           @user_id = @user.id
           @mock_pest_gateway = mock
           @mock_crop_gateway = mock
+          @mock_crop_pest_gateway = mock
           @mock_output_port = mock
           @mock_user_lookup = mock
           @crop_id = 100
@@ -28,7 +29,8 @@ module Domain
             user_id: @user_id,
             user_lookup: @mock_user_lookup,
             pest_gateway: @mock_pest_gateway,
-            crop_gateway: @mock_crop_gateway
+            crop_gateway: @mock_crop_gateway,
+            crop_pest_gateway: @mock_crop_pest_gateway
           )
         end
 
@@ -40,7 +42,7 @@ module Domain
           @interactor.call(create_input)
         end
 
-        test "calls on_success when pest is found, selectable, and link returns :linked" do
+        test "calls on_success when pest is found, selectable, and association is created" do
           pest_entity = Domain::Pest::Entities::PestEntity.new(
             id: @pest_id,
             user_id: @user_id,
@@ -68,18 +70,14 @@ module Domain
           @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_crop_gateway.expects(:find_by_id).with(@crop_id).returns(crop_entity)
-          @mock_pest_gateway.expects(:crop_pest_association_exists?).with(crop_id: @crop_id, pest_id: @pest_id).returns(false)
-          @mock_pest_gateway.expects(:link_pest_to_crop).with(
-            crop_id: @crop_id,
-            pest_id: @pest_id,
-            user: @user
-          ).returns(:linked)
+          @mock_crop_pest_gateway.expects(:find_by_crop_id_and_pest_id).with(crop_id: @crop_id, pest_id: @pest_id).returns(nil)
+          @mock_crop_pest_gateway.expects(:create).with(crop_id: @crop_id, pest_id: @pest_id)
           @mock_output_port.expects(:on_success).with(crop_id: @crop_id, pest_id: @pest_id)
 
           @interactor.call(create_input)
         end
 
-        test "calls on_already_associated when crop_pest_association_exists" do
+        test "calls on_already_associated when association already exists" do
           pest_entity = Domain::Pest::Entities::PestEntity.new(
             id: @pest_id,
             user_id: @user_id,
@@ -106,8 +104,9 @@ module Domain
           @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_crop_gateway.expects(:find_by_id).with(@crop_id).returns(crop_entity)
-          @mock_pest_gateway.expects(:crop_pest_association_exists?).with(crop_id: @crop_id, pest_id: @pest_id).returns(true)
-          @mock_pest_gateway.expects(:link_pest_to_crop).never
+          link = Domain::Pest::Entities::CropPestLinkEntity.new(id: 1, crop_id: @crop_id, pest_id: @pest_id)
+          @mock_crop_pest_gateway.expects(:find_by_crop_id_and_pest_id).with(crop_id: @crop_id, pest_id: @pest_id).returns(link)
+          @mock_crop_pest_gateway.expects(:create).never
           @mock_output_port.expects(:on_already_associated).once
 
           @interactor.call(create_input)
@@ -140,7 +139,8 @@ module Domain
           @mock_pest_gateway.expects(:find_by_id).with(@pest_id).returns(pest_entity)
           @mock_user_lookup.expects(:find).with(@user_id).returns(@user)
           @mock_crop_gateway.expects(:find_by_id).with(@crop_id).returns(other_crop)
-          @mock_pest_gateway.expects(:link_pest_to_crop).never
+          @mock_crop_pest_gateway.expects(:find_by_crop_id_and_pest_id).never
+          @mock_crop_pest_gateway.expects(:create).never
           @mock_output_port.expects(:on_forbidden).once
 
           @interactor.call(create_input)

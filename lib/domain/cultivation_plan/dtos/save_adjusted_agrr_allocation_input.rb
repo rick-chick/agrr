@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # `SaveAdjustedAgrrResultGateway` が field_schedule の allocation を保存するときに読む 1 行分。
+      # adjust 結果保存（`SaveAdjustedAgrrPersistMapper`）で読む 1 allocation 行分。
       class SaveAdjustedAgrrAllocationInput
         attr_reader :allocation_id,
                     :external_allocation_id,

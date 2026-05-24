@@ -38,7 +38,7 @@ module Domain
           plan_gateway:,
           weather_prediction_gateway:,
           agrr_adjust_gateway:,
-          save_adjusted_gateway:,
+          save_adjusted_result_interactor:,
           optimization_events_gateway:,
           adjust_plan_growth_read_gateway:,
           debug_dump_gateway:
@@ -50,7 +50,7 @@ module Domain
           @plan_gateway = plan_gateway
           @weather_prediction_gateway = weather_prediction_gateway
           @agrr_adjust_gateway = agrr_adjust_gateway
-          @save_adjusted_gateway = save_adjusted_gateway
+          @save_adjusted_result_interactor = save_adjusted_result_interactor
           @optimization_events_gateway = optimization_events_gateway
           @adjust_plan_growth_read_gateway = adjust_plan_growth_read_gateway
           @debug_dump_gateway = debug_dump_gateway
@@ -219,9 +219,16 @@ module Domain
         end
 
         def resolve_effective_planning_period(current_allocation, moves)
-          start_d, end_d = @plan_gateway.effective_planning_period(
+          cultivation_periods = @plan_gateway.list_field_cultivation_planning_periods.map do |period|
+            { start_date: period.start_date, completion_date: period.completion_date }
+          end
+          boundaries = @plan_gateway.planning_period_boundaries
+          start_d, end_d = Calculators::EffectivePlanningPeriodCalculator.calculate(
             current_allocation: current_allocation,
             moves: moves,
+            cultivation_periods: cultivation_periods,
+            planning_start_date: boundaries.planning_start_date,
+            planning_end_date: boundaries.planning_end_date,
             as_of: @clock.today
           )
           [ start_d, end_d, nil ]
@@ -450,7 +457,7 @@ module Domain
           if result && result[:field_schedules].present?
             perf_before_save = @clock.now
             save_input = Dtos::SaveAdjustedAgrrResultInput.from_agrr_adjust_result_hash(result)
-            @save_adjusted_gateway.save_adjust_result!(plan_id: plan_id, result: save_input)
+            @save_adjusted_result_interactor.call(plan_id: plan_id, result: save_input)
             perf_after_save = @clock.now
             @logger.info "⏱️ [PERF] DB保存完了: #{((perf_after_save - perf_before_save) * 1000).round(2)}ms"
 
@@ -465,9 +472,8 @@ module Domain
               perf_end: perf_end
             )
 
-            @plan_gateway.broadcast_optimization_complete(
+            @optimization_events_gateway.broadcast_optimization_complete(
               plan_id: plan_id,
-              events_gateway: @optimization_events_gateway,
               status: "adjusted"
             )
 
@@ -487,6 +493,13 @@ module Domain
               )
             )
           end
+        rescue Errors::AdjustResultEmptyError,
+               Errors::AdjustResultDuplicateAllocationError => e
+          @logger.error "❌ [Adjust] Save validation failed: #{e.message}"
+          emit_failure(save_validation_failure(e))
+        rescue Errors::AdjustResultSaveReferenceError => e
+          @logger.error "❌ [Adjust] Save reference error: #{e.message}"
+          emit_failure(save_reference_failure(e))
         rescue ArgumentError => e
           @logger.error "❌ [Adjust] Invalid date format: #{e.message}"
           emit_failure(
@@ -502,6 +515,62 @@ module Domain
               kind: Failure::KIND_ADJUST_EXECUTION_FAILED,
               message: @translator.translate("api.errors.optimization.adjust_failed", message: e.message)
             )
+          )
+        end
+
+        def save_validation_failure(error)
+          case error
+          when Errors::AdjustResultEmptyError
+            Failure.new(
+              kind: Failure::KIND_RESULT_EMPTY,
+              message: @translator.translate("api.errors.optimization.result_empty")
+            )
+          when Errors::AdjustResultDuplicateAllocationError
+            Failure.new(
+              kind: Failure::KIND_UNEXPECTED,
+              message: @translator.translate(
+                "controllers.agrr_optimization.errors.duplicate_allocation",
+                ids: error.duplicate_ids.join(", ")
+              )
+            )
+          else
+            Failure.new(kind: Failure::KIND_UNEXPECTED, message: error.message)
+          end
+        end
+
+        def save_reference_failure(error)
+          message =
+            case error.kind
+            when Errors::AdjustResultSaveReferenceError::KIND_FIELD_MISSING
+              @translator.translate(
+                "controllers.agrr_optimization.errors.field_missing",
+                field_id: error.field_id
+              )
+            when Errors::AdjustResultSaveReferenceError::KIND_PLAN_CROP_MISSING,
+                 Errors::AdjustResultSaveReferenceError::KIND_CROP_MISSING
+              @translator.translate(
+                "controllers.agrr_optimization.errors.plan_crop_missing",
+                crop_id: error.crop_id
+              )
+            when Errors::AdjustResultSaveReferenceError::KIND_START_DATE_INVALID
+              @translator.translate(
+                "controllers.agrr_optimization.errors.start_date_invalid",
+                value: error.raw_value.inspect,
+                allocation_id: error.allocation_id
+              )
+            when Errors::AdjustResultSaveReferenceError::KIND_COMPLETION_DATE_INVALID
+              @translator.translate(
+                "controllers.agrr_optimization.errors.completion_date_invalid",
+                value: error.raw_value.inspect,
+                allocation_id: error.allocation_id
+              )
+            else
+              error.message
+            end
+
+          Failure.new(
+            kind: Failure::KIND_INVALID_DATE,
+            message: message
           )
         end
 

@@ -88,7 +88,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       farm_id: -1, # 不正ID
       field_data: []
     }
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert_equal false, result.success
     assert_match(/Couldn't find Farm|存在しない|見つかりません/i, result.error_message.to_s)
@@ -132,7 +133,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -189,7 +191,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -279,7 +282,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -311,7 +315,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     assert_equal reference_task.id, second_bp.source_agricultural_task_id
 
     # 既存があれば置換されることを確認（再実行で件数は変わらない）
-    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert second_result.success, second_result.error_message
     assert_equal 2, user_crop.crop_task_schedule_blueprints.count
@@ -361,7 +366,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # PlanSaveServiceを実行
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock)
     result = service.call
 
@@ -411,7 +417,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_crops_count = @user.crops.count
-    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
     assert_not first_result.skipped?, "First copy should not report skips"
@@ -425,7 +432,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     farm_count = @user.farms.count
 
     before_second_crops_count = @user.crops.count
-    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
     assert second_result.skipped?, "Second copy should report skips when reusing farm"
@@ -475,7 +483,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
 
@@ -484,7 +493,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
 
     crop_count = @user.crops.count
 
-    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
     assert second_result.skipped?, "Second copy should report skips when reusing crop"
@@ -553,7 +563,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    first_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
 
@@ -562,7 +573,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
 
     rule_count = @user.interaction_rules.count
 
-    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    second_result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
     assert second_result.skipped?, "Second copy should report skips when reusing interaction rule"
@@ -664,7 +676,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -739,7 +752,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -829,7 +843,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -893,7 +908,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_count = @user.fertilizes.count
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
 
     assert result.success, result.error_message
@@ -1002,7 +1018,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -1087,7 +1104,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_count = @user.agricultural_tasks.count
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
 
     assert result.success, result.error_message
@@ -1228,7 +1246,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -1344,7 +1363,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_count = @user.pesticides.count
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
 
     assert result.success, result.error_message
@@ -1428,7 +1448,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -1513,7 +1534,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     before_count = @user.pests.count
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
 
     assert result.success, result.error_message
@@ -1581,7 +1603,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # PlanSaveServiceを実行
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock)
     result = service.call
 
@@ -1650,7 +1673,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # PlanSaveServiceを実行
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock)
     result = service.call
 
@@ -1722,7 +1746,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       field_data: []
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -1800,7 +1825,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # 実行
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -1936,7 +1962,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -2067,7 +2094,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock)
     error = assert_raises Domain::Shared::Exceptions::InvalidTaskScheduleItem do
       service.call
@@ -2132,7 +2160,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # 実行
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
     assert result.success, result.error_message
 
@@ -2178,7 +2207,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     session_data[:plan_id] = plan.id
 
     # PlanSaveServiceを実行（失敗するはず）
-    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock).call
 
     # 失敗することを確認
@@ -2239,7 +2269,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       session_data: session_data,
       logger: @plan_save_session_logger,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-      crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+      crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock
     ).call
 
@@ -2335,7 +2366,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     }
 
     # PlanSaveServiceを実行
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock)
     result = service.call
 
@@ -2425,7 +2457,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock)
     result = service.call
 
@@ -2475,7 +2508,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock)
     result = service.call
 
@@ -2556,7 +2590,8 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
       ]
     }
 
-    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+    service = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(user: @user, session_data: session_data, logger: @plan_save_session_logger, cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway, crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock)
     result = service.call
 

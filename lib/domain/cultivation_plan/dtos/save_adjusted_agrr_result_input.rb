@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # Agrr adjust の保存に必要な範囲の入力（`SaveAdjustedAgrrResultGateway#save_adjust_result!`）。
+      # Agrr adjust の保存に必要な範囲の入力（`SaveAdjustedAgrrResultInteractor` 経由）。
       class SaveAdjustedAgrrResultInput
         attr_reader :field_schedules,
                     :summary,

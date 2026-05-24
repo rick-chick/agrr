@@ -3,18 +3,18 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # 既存の公開計画 id から保存用ペイロードを組み立て、`PublicPlanSaveGateway` へ委譲する。
-      class PublicPlanSaveByPlanIdInteractor
+      # 既存の公開計画 id から保存用ペイロードを組み立て、edge 注入 runner で保存する。
+      class PublicPlanSaveInteractor
         def initialize(
           output_port:,
           cultivation_plan_gateway:,
-          public_plan_save_gateway:,
+          save_from_session_runner:,
           logger:,
           translator:
         )
           @output_port = output_port
           @cultivation_plan_gateway = cultivation_plan_gateway
-          @public_plan_save_gateway = public_plan_save_gateway
+          @save_from_session_runner = save_from_session_runner
           @logger = logger
           @translator = translator
         end
@@ -34,7 +34,7 @@ module Domain
             return
           end
 
-          result = @public_plan_save_gateway.save_from_session(user: user, session_data: save_data)
+          result = @save_from_session_runner.call(user: user, session_data: save_data)
           if result.respond_to?(:success?) && result.success?
             @output_port.on_success
             return
@@ -50,7 +50,7 @@ module Domain
             )
           )
         rescue Domain::Shared::Exceptions::InvalidTaskScheduleItem => e
-          @logger.error("❌ [PublicPlanSaveByPlanIdInteractor] #{e.class}: #{e.message}")
+          @logger.error("❌ [PublicPlanSaveInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
             Dtos::PublicPlanSaveFailure.new(
               kind: Dtos::PublicPlanSaveFailure::KIND_UNEXPECTED,
@@ -58,7 +58,7 @@ module Domain
             )
           )
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          @logger.error("❌ [PublicPlanSaveByPlanIdInteractor] #{e.class}: #{e.message}")
+          @logger.error("❌ [PublicPlanSaveInteractor] #{e.class}: #{e.message}")
           @output_port.on_failure(
             Dtos::PublicPlanSaveFailure.new(
               kind: Dtos::PublicPlanSaveFailure::KIND_SAVE_FAILED,

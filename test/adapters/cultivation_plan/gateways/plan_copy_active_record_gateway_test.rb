@@ -30,7 +30,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
 
     gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
-      ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
+      ctx: ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
     )
     new_plan = gateway.copy_cultivation_plan(user_farm, [])
 
@@ -62,7 +62,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     assert user_crop_id.present?
 
     gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
-      ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
+      ctx: ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
     )
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], [], [], [], [])
@@ -129,7 +129,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     assert_not_nil user_task
 
     gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
-      ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
+      ctx: ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
     )
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], tasks, [], [], [])
@@ -155,11 +155,16 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
 
     new_year = Date.current.year + 1
     log = CapturingLogger.new
-    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.copy_private_plan_for_year(
-      source_cultivation_plan_id: source_plan.id,
-      new_year: new_year,
-      user_id: user.id,
+    interactor = Domain::CultivationPlan::Interactors::PlanCopyInteractor.new(
+      plan_copy_gateway: CompositionRoot.plan_copy_gateway,
       logger: log
+    )
+    new_entity = interactor.call(
+      Domain::CultivationPlan::Dtos::PlanCopyInput.new(
+        source_cultivation_plan_id: source_plan.id,
+        new_year: new_year,
+        user_id: user.id
+      )
     )
     new_plan = ::CultivationPlan.find(new_entity.id)
 
@@ -188,12 +193,13 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     )
 
     sid = "ws-sess-#{SecureRandom.hex(8)}"
-    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.copy_private_plan_for_year(
-      source_cultivation_plan_id: source_plan.id,
-      new_year: Date.current.year + 1,
-      user_id: user.id,
-      session_id: sid,
-      logger: CapturingLogger.new
+    new_entity = CompositionRoot.plan_copy_interactor.call(
+      Domain::CultivationPlan::Dtos::PlanCopyInput.new(
+        source_cultivation_plan_id: source_plan.id,
+        new_year: Date.current.year + 1,
+        user_id: user.id,
+        session_id: sid
+      )
     )
     new_plan = ::CultivationPlan.find(new_entity.id)
 
@@ -217,11 +223,12 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     )
     ActiveStorage::Attachment.create!(name: "attachments", record: source_plan, blob: blob)
 
-    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.copy_private_plan_for_year(
-      source_cultivation_plan_id: source_plan.id,
-      new_year: Date.current.year + 2,
-      user_id: user.id,
-      logger: CapturingLogger.new
+    new_entity = CompositionRoot.plan_copy_interactor.call(
+      Domain::CultivationPlan::Dtos::PlanCopyInput.new(
+        source_cultivation_plan_id: source_plan.id,
+        new_year: Date.current.year + 2,
+        user_id: user.id
+      )
     )
     new_plan = ::CultivationPlan.find(new_entity.id)
 
@@ -246,11 +253,12 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     )
     ActiveStorage::Attachment.create!(name: "attachments", record: source_plan, blob: blob)
 
-    new_entity = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.copy_private_plan_for_year(
-      source_cultivation_plan_id: source_plan.id,
-      new_year: Date.current.year + 2,
-      user_id: user.id,
-      logger: CapturingLogger.new
+    new_entity = CompositionRoot.plan_copy_interactor.call(
+      Domain::CultivationPlan::Dtos::PlanCopyInput.new(
+        source_cultivation_plan_id: source_plan.id,
+        new_year: Date.current.year + 2,
+        user_id: user.id
+      )
     )
     new_plan = ::CultivationPlan.find(new_entity.id)
 

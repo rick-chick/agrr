@@ -6,14 +6,14 @@ module Domain
       class PublicPlanCreateInteractor < Domain::PublicPlan::Ports::PublicPlanCreateInputPort
         # @param clock [#today] CompositionRoot で Time.zone を渡す想定（禁止4）。
         # @param optimization_job_chain_gateway [Domain::PublicPlan::Gateways::PublicPlanOptimizationJobChainGateway, nil] 成功時にジョブチェーンをエンキューする場合のみ注入
-        def initialize(output_port:, gateway:, crop_gateway:, cultivation_plan_gateway:, logger:, clock:, optimization_job_chain_gateway: nil)
+        def initialize(output_port:, gateway:, crop_gateway:, plan_initializer:, logger:, clock:, optimization_job_chain_gateway: nil)
           raise ArgumentError, "clock must respond to :today" unless clock.respond_to?(:today)
 
           @output_port = output_port
           @logger = logger
           @gateway = gateway
           @crop_gateway = crop_gateway
-          @cultivation_plan_gateway = cultivation_plan_gateway
+          @plan_initializer = plan_initializer
           @clock = clock
           @optimization_job_chain_gateway = optimization_job_chain_gateway
         end
@@ -57,7 +57,7 @@ module Domain
           # Old: planning_start_date: Date.current; planning_end_date: Date.current.end_of_year （各キーワードで today を評価）
           planning_start_date = @clock.today
           planning_end_date = Date.new(@clock.today.year, 12, 31)
-          result = Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor.new(
+          result = @plan_initializer.call(
             farm: farm,
             total_area: total_area,
             crops: crops,
@@ -65,10 +65,8 @@ module Domain
             session_id: input_dto.session_id,
             plan_type: "public",
             planning_start_date: planning_start_date,
-            planning_end_date: planning_end_date,
-            gateway: @cultivation_plan_gateway,
-            logger: @logger
-          ).call
+            planning_end_date: planning_end_date
+          )
 
           unless result.success? && result.cultivation_plan
             error_message = result.errors&.join(", ") || "Failed to create cultivation plan"

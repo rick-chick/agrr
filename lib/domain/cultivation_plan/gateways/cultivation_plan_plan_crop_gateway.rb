@@ -14,6 +14,15 @@ module Domain
           raise NotImplementedError
         end
 
+        # プラン初期化用（REST 認可スコープ外）。永続化のみ。
+        # @param attrs [Domain::CultivationPlan::Dtos::CultivationPlanPlanCropCreateAttrs]
+        # @return [Domain::CultivationPlan::Dtos::CultivationPlanCropSnapshot]
+        # @raise [Domain::Shared::Exceptions::RecordNotFound]
+        # @raise [Domain::Shared::Exceptions::RecordInvalid]
+        def create_for_plan(attrs:)
+          raise NotImplementedError
+        end
+
         # @raise [Domain::Shared::Exceptions::RecordNotFound]
         def delete(id:)
           raise NotImplementedError

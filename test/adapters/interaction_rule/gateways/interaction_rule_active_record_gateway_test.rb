@@ -126,6 +126,20 @@ module Adapters
           assert_includes ids, ref.id
           assert_includes ids, own.id
         end
+
+        test "list_by_cultivation_plan_id returns entities for plan farm region" do
+          user = create(:user)
+          farm = create(:farm, user: user, region: "jp")
+          plan = create(:cultivation_plan, user: user, farm: farm)
+          ref_rule = create(:interaction_rule, :reference, region: "jp")
+          create(:interaction_rule, :reference, region: "us")
+
+          entities = @gateway.list_by_cultivation_plan_id(cultivation_plan_id: plan.id)
+
+          assert_equal 1, entities.size
+          assert_equal ref_rule.id, entities.first.id
+          assert entities.first.is_a?(Domain::InteractionRule::Entities::InteractionRuleEntity)
+        end
       end
     end
   end

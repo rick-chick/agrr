@@ -5,10 +5,25 @@ module Domain
     module Gateways
       # 計画タスク予定 API 用の永続化（Adapter が AR を扱う）
       class TaskScheduleItemMutationGateway
+        # @return [Domain::CultivationPlan::Dtos::TaskScheduleFieldCultivationSnapshot]
+        def find_field_cultivation_for_create!(user_id, plan_id, field_cultivation_id)
+          raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
+        end
+
+        # @return [Domain::CultivationPlan::Dtos::TaskScheduleCropTaskTemplateSnapshot, nil] template_id が空なら nil
+        def find_crop_task_template_for_mutation(template_id)
+          raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
+        end
+
+        # @return [Domain::CultivationPlan::Dtos::TaskScheduleItemAmountSnapshot]
+        def find_item_amount_snapshot!(user_id, plan_id, item_id)
+          raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
+        end
+
         # @param user_id [Integer] 計画の所有者（プライベート計画スコープに使用）
         # @param plan_id [Integer,#to_i] 対象計画 ID
         # @return [Hash] `serialize_item` 相当のスナップショット
-        def create_item!(user_id, plan_id, attributes)
+        def create(user_id:, plan_id:, attributes:)
           raise NotImplementedError, "#{self.class.name} must implement #{__method__}"
         end
 

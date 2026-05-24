@@ -136,7 +136,8 @@ class FarmLimitIntegrationTest < ActiveSupport::TestCase
       session_data: session_data,
       logger: Adapters::Shared::Ports::RailsLoggerAdapter.new,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-      crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+      crop_stage_copy_interactor: CompositionRoot.crop_stage_copy_interactor,
+      blueprint_copy_interactor: CompositionRoot.crop_task_schedule_blueprint_copy_interactor_for_plan_save,
       clock: CompositionRoot.clock
     ).call
 

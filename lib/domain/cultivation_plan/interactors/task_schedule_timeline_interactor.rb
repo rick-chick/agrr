@@ -4,13 +4,24 @@ module Domain
   module CultivationPlan
     module Interactors
       class TaskScheduleTimelineInteractor
-        def initialize(output_port:, user_id:, plan_id:, gateway:, translator:, logger:, user_lookup:, clock:)
+        def initialize(
+          output_port:,
+          user_id:,
+          plan_id:,
+          private_read_gateway:,
+          cultivation_plan_gateway:,
+          translator:,
+          logger:,
+          user_lookup:,
+          clock:
+        )
           raise ArgumentError, "clock must respond to :today" unless clock.respond_to?(:today)
 
           @output_port = output_port
           @user_id = user_id
           @plan_id = plan_id
-          @gateway = gateway
+          @private_read_gateway = private_read_gateway
+          @cultivation_plan_gateway = cultivation_plan_gateway
           @translator = translator
           @logger = logger
           @user_lookup = user_lookup
@@ -26,8 +37,13 @@ module Domain
             return
           end
 
-          read_model = @gateway.task_schedule_timeline_snapshot(user: user, plan_id: @plan_id)
-          dto = Domain::CultivationPlan::Mappers::TaskScheduleTimelineMapper.call(read_model, today: @clock.today)
+          read_model = @private_read_gateway.find_task_schedule_timeline_by_plan_id(plan_id: @plan_id)
+          plan = @cultivation_plan_gateway.find_by_id(@plan_id)
+          if Policies::PrivateCultivationPlanAccessPolicy.access_denied?(plan: plan, user_id: user.id)
+            raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
+          end
+
+          dto = Mappers::TaskScheduleTimelineMapper.call(read_model, today: @clock.today)
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
           raise

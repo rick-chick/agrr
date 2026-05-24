@@ -43,7 +43,8 @@ module Adapters
           @logger.error "❌ [Action Cable field_removed] plan_id=#{plan_id}: #{e.message}"
         end
 
-        def broadcast_optimization_complete(plan:, status:)
+        def broadcast_optimization_complete(plan_id:, status:)
+          plan = ::CultivationPlan.find(plan_id)
           @logger.info "📡 [Action Cable] Broadcasting optimization #{status} for plan_id=#{plan.id}"
 
           channel_class = plan.plan_type_public? ? OptimizationChannel : PlansOptimizationChannel

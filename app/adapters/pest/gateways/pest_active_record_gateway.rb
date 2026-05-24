@@ -83,46 +83,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, "Pest not found"
         end
 
-        def crop_pest_association_exists?(crop_id:, pest_id:)
-          ::CropPest.exists?(crop_id: crop_id, pest_id: pest_id)
-        end
-
-        def link_pest_to_crop(crop_id:, pest_id:, user:)
-          crop = find_crop_model(crop_id)
-          pest = ::Pest.find_by(id: pest_id)
-          return :missing unless crop && pest
-          return :already_linked if crop.pests.include?(pest)
-
-          crop.pests << pest
-          :linked
-        end
-
-        def associate_crops_with_pest_id(pest_id:, crop_ids:)
-          pest = ::Pest.find(pest_id)
-          associate_crops_for_pest_record(pest, crop_ids)
-        end
-
-        def update_pest_crop_associations(pest_id:, crop_ids:)
-          pest = ::Pest.find(pest_id)
-          new_ids = Array(crop_ids).map(&:to_i).uniq
-          current_ids = pest.crop_ids
-
-          to_remove = current_ids - new_ids
-          removed_count = 0
-          to_remove.each do |crop_id|
-            crop = ::Crop.find_by(id: crop_id)
-            next unless crop
-
-            pest.crops.delete(crop)
-            removed_count += 1
-          end
-
-          to_add = new_ids - current_ids
-          added_count = associate_crops_for_pest_record(pest, to_add)
-
-          { added: added_count, removed: removed_count }
-        end
-
         def create(create_input_dto)
           pest = ::Pest.new(
             name: create_input_dto.name,
@@ -166,35 +126,7 @@ module Adapters
           Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record)
         end
 
-        def unlink_pest_from_crop(crop_id:, pest_id:)
-          crop = find_crop_model(crop_id)
-          return :crop_not_found unless crop
-
-          pest = ::Pest.find_by(id: pest_id)
-          return :pest_not_found unless pest
-
-          crop.pests.delete(pest)
-          :ok
-        end
-
         private
-
-        def find_crop_model(crop_id)
-          ::Crop.find_by(id: crop_id)
-        end
-
-        def associate_crops_for_pest_record(pest, crop_ids)
-          associated_count = 0
-          Array(crop_ids).each do |crop_id|
-            crop = ::Crop.find_by(id: crop_id)
-            next unless crop
-            next if pest.crops.include?(crop)
-
-            pest.crops << crop
-            associated_count += 1
-          end
-          associated_count
-        end
 
         def index_relation_for_filter(filter)
           case filter.mode

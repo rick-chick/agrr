@@ -5,9 +5,6 @@ require "domain_lib_test_helper"
 module Domain
   module CultivationPlan
     module Interactors
-      # TaskScheduleTimelineInteractor の純粋ユニットテスト（memory gateway 注入・Rails 非依存）。
-      # 旧 test/integration/domain/... の実 AR + FactoryBot 版を ARCHITECTURE.md Testing 規約
-      # （interactor は memory gateway で test/domain/ に置く）に沿って書き直したもの。
       class TaskScheduleTimelineInteractorTest < DomainLibTestCase
         class StubOutputPort < Domain::CultivationPlan::Ports::TaskScheduleTimelineOutputPort
           attr_reader :success_dto, :failure_dto
@@ -21,24 +18,31 @@ module Domain
           end
         end
 
-        # gateway.task_schedule_timeline_snapshot が返す read_model（Assembler が
-        # plan / fields / scheduled_dates のみを読む）。
         ReadModel = Struct.new(:plan, :fields, :scheduled_dates, keyword_init: true)
         PlanRef = Struct.new(:id, keyword_init: true)
         FieldRow = Struct.new(:field_cultivation_id, :task_options, keyword_init: true)
         TaskOption = Struct.new(:template_id, keyword_init: true)
 
-        class FakeGateway
-          attr_reader :received
+        class FakePrivateReadGateway
+          attr_reader :received_plan_id
 
           def initialize(read_model)
             @read_model = read_model
-            @received = nil
           end
 
-          def task_schedule_timeline_snapshot(user:, plan_id:)
-            @received = { user: user, plan_id: plan_id }
+          def find_task_schedule_timeline_by_plan_id(plan_id:)
+            @received_plan_id = plan_id
             @read_model
+          end
+        end
+
+        class FakeCultivationPlanGateway
+          def initialize(plan_entity)
+            @plan_entity = plan_entity
+          end
+
+          def find_by_id(_plan_id)
+            @plan_entity
           end
         end
 
@@ -80,11 +84,19 @@ module Domain
 
         setup do
           @plan_id = 99
+          @user_id = 1
           @today = Date.new(2025, 1, 10)
           @clock = Struct.new(:today).new(@today)
           @output_port = StubOutputPort.new
           @logger = RecordingLogger.new
           @translator = StubTranslator.new
+          @plan_entity = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: @plan_id,
+            farm_id: 1,
+            user_id: @user_id,
+            total_area: 1,
+            plan_type: "private"
+          )
         end
 
         test "loads timeline snapshot and passes the assembled dto to on_success" do
@@ -93,9 +105,12 @@ module Domain
             fields: [ FieldRow.new(field_cultivation_id: 7, task_options: [ TaskOption.new(template_id: 31) ]) ],
             scheduled_dates: [ Date.new(2025, 1, 10) ]
           )
-          gateway = FakeGateway.new(read_model)
+          private_read_gateway = FakePrivateReadGateway.new(read_model)
 
-          build_interactor(gateway: gateway, user_lookup: FakeUserLookup.new(user: Object.new)).call
+          build_interactor(
+            private_read_gateway: private_read_gateway,
+            user_lookup: FakeUserLookup.new(user: Struct.new(:id).new(@user_id))
+          ).call
 
           assert_nil @output_port.failure_dto
           dto = @output_port.success_dto
@@ -108,20 +123,27 @@ module Domain
           assert_includes dto.scheduled_dates, Date.new(2025, 1, 10)
         end
 
-        test "passes the resolved user and plan_id to the gateway" do
-          user = Object.new
+        test "passes plan_id to the private read gateway" do
           read_model = ReadModel.new(plan: PlanRef.new(id: @plan_id), fields: [], scheduled_dates: [])
-          gateway = FakeGateway.new(read_model)
+          private_read_gateway = FakePrivateReadGateway.new(read_model)
 
-          build_interactor(gateway: gateway, user_lookup: FakeUserLookup.new(user: user)).call
+          build_interactor(
+            private_read_gateway: private_read_gateway,
+            user_lookup: FakeUserLookup.new(user: Struct.new(:id).new(@user_id))
+          ).call
 
-          assert_equal({ user: user, plan_id: @plan_id }, gateway.received)
+          assert_equal @plan_id, private_read_gateway.received_plan_id
         end
 
         test "calls on_failure when the user cannot be resolved" do
-          gateway = FakeGateway.new(ReadModel.new(plan: nil, fields: [], scheduled_dates: []))
+          private_read_gateway = FakePrivateReadGateway.new(
+            ReadModel.new(plan: nil, fields: [], scheduled_dates: [])
+          )
 
-          build_interactor(gateway: gateway, user_lookup: FakeUserLookup.new(raise_not_found: true)).call
+          build_interactor(
+            private_read_gateway: private_read_gateway,
+            user_lookup: FakeUserLookup.new(raise_not_found: true)
+          ).call
 
           assert_nil @output_port.success_dto
           assert_instance_of Domain::Shared::Dtos::Error, @output_port.failure_dto
@@ -129,14 +151,36 @@ module Domain
           refute_empty @logger.warns
         end
 
+        test "calls on_failure when private plan access is denied" do
+          read_model = ReadModel.new(plan: PlanRef.new(id: @plan_id), fields: [], scheduled_dates: [])
+          private_read_gateway = FakePrivateReadGateway.new(read_model)
+          other_user_plan = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: @plan_id,
+            farm_id: 1,
+            user_id: 999,
+            total_area: 1,
+            plan_type: "private"
+          )
+
+          build_interactor(
+            private_read_gateway: private_read_gateway,
+            cultivation_plan_gateway: FakeCultivationPlanGateway.new(other_user_plan),
+            user_lookup: FakeUserLookup.new(user: Struct.new(:id).new(@user_id))
+          ).call
+
+          assert_nil @output_port.success_dto
+          assert_equal "t:plans.errors.not_found", @output_port.failure_dto.message
+        end
+
         private
 
-        def build_interactor(gateway:, user_lookup:)
+        def build_interactor(private_read_gateway:, user_lookup:, cultivation_plan_gateway: nil)
           TaskScheduleTimelineInteractor.new(
             output_port: @output_port,
-            user_id: 1,
+            user_id: @user_id,
             plan_id: @plan_id,
-            gateway: gateway,
+            private_read_gateway: private_read_gateway,
+            cultivation_plan_gateway: cultivation_plan_gateway || FakeCultivationPlanGateway.new(@plan_entity),
             translator: @translator,
             logger: @logger,
             user_lookup: user_lookup,

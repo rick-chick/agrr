@@ -6,164 +6,86 @@ module Domain
   module Crop
     module Interactors
       class CropLoadAuthorizedCropStageInteractorTest < DomainLibTestCase
-        test "returns bundle when gateway succeeds" do
-          crop_entity = Domain::Crop::Entities::CropEntity.new(id: 1, user_id: 1, name: "x", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
-          crop_stage_entity = Domain::Crop::Entities::CropStageEntity.new(id: 2, crop_id: 1, name: "s", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
-          dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContext.new(
-            crop_entity: crop_entity,
-            crop_stage_entity: crop_stage_entity
+        setup do
+          @crop_entity = Domain::Crop::Entities::CropEntity.new(
+            id: 1, user_id: 1, name: "x", variety: nil, is_reference: false,
+            area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [],
+            crop_stages: [], created_at: nil, updated_at: nil
           )
-          user = stub(id: 1, admin?: false)
-
-          gw = Class.new do
-            attr_reader :captured_for_edit
-
-            def initialize(bundle)
-              @bundle = bundle
-            end
-
-            def find_crop_with_crop_stage_bundle!(crop_id, crop_stage_id, for_edit:)
-              raise ArgumentError unless crop_id == 1 && crop_stage_id == 2
-
-              @captured_for_edit = for_edit
-              @bundle
-            end
-          end.new(dto)
-
-          user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, user, [ 9 ])
-
-          failure = Class.new do
+          @crop_stage_entity = Domain::Crop::Entities::CropStageEntity.new(
+            id: 2, crop_id: 1, name: "s", order: 1,
+            temperature_requirement: nil, thermal_requirement: nil,
+            sunshine_requirement: nil, nutrient_requirement: nil,
+            created_at: nil, updated_at: nil
+          )
+          @user = Struct.new(:id, :admin?, keyword_init: true).new(id: 1, admin?: false)
+          @user_lookup = Minitest::Mock.new
+          @user_lookup.expect(:find, @user, [9])
+          @failure = Class.new do
             def on_not_found
               raise "must not call"
             end
           end.new
+        end
+
+        test "returns bundle when crop and stage belong together" do
+          crop_gw = Minitest::Mock.new
+          crop_gw.expect(:find_by_id, @crop_entity, [1])
+          stage_gw = Minitest::Mock.new
+          stage_gw.expect(:find_by_id, @crop_stage_entity, [2])
 
           interactor = CropLoadAuthorizedCropStageInteractor.new(
-            failure_presenter: failure,
+            failure_presenter: @failure,
             user_id: 9,
-            gateway: gw,
-            user_lookup: user_lookup,
+            crop_gateway: crop_gw,
+            crop_stage_gateway: stage_gw,
+            user_lookup: @user_lookup,
             for_edit: false
           )
 
           out = interactor.call(
             Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: "1", crop_stage_id: "2")
           )
-          assert_same dto, out
-          assert_equal false, gw.captured_for_edit
-          user_lookup.verify
+          assert_equal 1, out.crop_entity.id
+          assert_equal 2, out.crop_stage_entity.id
+          crop_gw.verify
+          stage_gw.verify
+          @user_lookup.verify
         end
 
-        test "passes for_edit true to gateway when constructed with for_edit true" do
-          crop_entity2 = Domain::Crop::Entities::CropEntity.new(id: 3, user_id: 1, name: "y", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
-          crop_stage_entity2 = Domain::Crop::Entities::CropStageEntity.new(id: 4, crop_id: 3, name: "t", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
-          dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContext.new(
-            crop_entity: crop_entity2,
-            crop_stage_entity: crop_stage_entity2
+        test "returns nil when stage crop_id mismatches" do
+          wrong_stage = Domain::Crop::Entities::CropStageEntity.new(
+            id: 2, crop_id: 99, name: "s", order: 1,
+            temperature_requirement: nil, thermal_requirement: nil,
+            sunshine_requirement: nil, nutrient_requirement: nil,
+            created_at: nil, updated_at: nil
           )
-          user = stub(id: 1, admin?: false)
-
-          gw = Class.new do
-            attr_reader :captured_for_edit
-
-            def initialize(bundle)
-              @bundle = bundle
-            end
-
-            def find_crop_with_crop_stage_bundle!(crop_id, crop_stage_id, for_edit:)
-              @captured_for_edit = for_edit
-              @bundle
-            end
-          end.new(dto)
-
-          user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, user, [ 1 ])
+          crop_gw = Minitest::Mock.new
+          crop_gw.expect(:find_by_id, @crop_entity, [1])
+          stage_gw = Minitest::Mock.new
+          stage_gw.expect(:find_by_id, wrong_stage, [2])
 
           failure = Class.new do
             def on_not_found
-              raise "must not call"
+              @called = true
             end
+
+            attr_reader :called
           end.new
 
           interactor = CropLoadAuthorizedCropStageInteractor.new(
             failure_presenter: failure,
-            user_id: 1,
-            gateway: gw,
-            user_lookup: user_lookup,
-            for_edit: true
-          )
-
-          assert_same dto, interactor.call(
-            Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: 3, crop_stage_id: 4)
-          )
-          assert_equal true, gw.captured_for_edit
-          user_lookup.verify
-        end
-
-        test "delegates to failure presenter on_not_found when interactor denies edit" do
-          crop_entity = Domain::Crop::Entities::CropEntity.new(id: 1, user_id: 99, name: "x", variety: nil, is_reference: false, area_per_unit: nil, revenue_per_area: nil, region: nil, groups: [], crop_stages: [], created_at: nil, updated_at: nil)
-          crop_stage_entity = Domain::Crop::Entities::CropStageEntity.new(id: 2, crop_id: 1, name: "s", order: 1, temperature_requirement: nil, thermal_requirement: nil, sunshine_requirement: nil, nutrient_requirement: nil, created_at: nil, updated_at: nil)
-          dto = Domain::Crop::Dtos::AuthorizedCropStageInCropContext.new(
-            crop_entity: crop_entity,
-            crop_stage_entity: crop_stage_entity
-          )
-          user = stub(id: 1, admin?: false)
-
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_crop_with_crop_stage_bundle!, dto) do |crop_id, crop_stage_id, for_edit:|
-            crop_id == 1 && crop_stage_id == 2 && for_edit == true
-          end
-
-          user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, user, [ 9 ])
-
-          failure = Minitest::Mock.new
-          failure.expect(:on_not_found, nil)
-
-          interactor = CropLoadAuthorizedCropStageInteractor.new(
-            failure_presenter: failure,
             user_id: 9,
-            gateway: gateway,
-            user_lookup: user_lookup,
-            for_edit: true
+            crop_gateway: crop_gw,
+            crop_stage_gateway: stage_gw,
+            user_lookup: @user_lookup,
+            for_edit: false
           )
 
           assert_nil interactor.call(
             Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: 1, crop_stage_id: 2)
           )
-          gateway.verify
-          user_lookup.verify
-          failure.verify
-        end
-
-        test "delegates to failure presenter on_not_found when gateway raises record not found" do
-          gateway = Minitest::Mock.new
-          gateway.expect(:find_crop_with_crop_stage_bundle!, nil) do |crop_id, crop_stage_id, for_edit:|
-            raise Domain::Shared::Exceptions::RecordNotFound, "gone" if crop_id == 99 && crop_stage_id == 88 && for_edit == false
-          end
-
-          user = stub(id: 1, admin?: false)
-          user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, user, [ 9 ])
-
-          failure = Minitest::Mock.new
-          failure.expect(:on_not_found, nil)
-
-          interactor = CropLoadAuthorizedCropStageInteractor.new(
-            failure_presenter: failure,
-            user_id: 9,
-            gateway: gateway,
-            user_lookup: user_lookup,
-            for_edit: false
-          )
-
-          assert_nil interactor.call(
-            Domain::Crop::Dtos::CropLoadAuthorizedCropStageInput.new(crop_id: 99, crop_stage_id: 88)
-          )
-          gateway.verify
-          user_lookup.verify
-          failure.verify
+          assert failure.called
         end
       end
     end

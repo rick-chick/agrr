@@ -19,10 +19,12 @@ module Domain
           @mock_logger = mock
           @mock_logger.stubs(:info)
           @mock_crop_gateway = mock
+          @mock_crop_pest_gateway = mock
           @interactor = PestUpdateInteractor.new(
             output_port: @mock_output_port,
             gateway: @mock_gateway,
             crop_gateway: @mock_crop_gateway,
+            crop_pest_gateway: @mock_crop_pest_gateway,
             user_id: @user_id,
             logger: @mock_logger,
             translator: @mock_translator,
@@ -39,6 +41,7 @@ module Domain
           current_pest.stubs(:user_id).returns(@user_id)
           @mock_gateway.expects(:find_by_id).with(1).returns(current_pest)
           @mock_gateway.expects(:update_for_user).with(@user, 1, instance_of(Hash)).raises(Domain::Shared::Exceptions::RecordInvalid.new("update failed"))
+          @mock_crop_pest_gateway.expects(:list_by_pest_id).never
           received = nil
           @mock_output_port.expects(:on_failure).with { |dto| received = dto }
 

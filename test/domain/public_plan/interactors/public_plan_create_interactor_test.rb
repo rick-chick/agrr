@@ -98,7 +98,7 @@ module Domain
               output_port: @output_port,
               gateway: FakePublicPlanGateway.new,
               crop_gateway: FakeCropGateway.new,
-              cultivation_plan_gateway: Object.new,
+              plan_initializer: ->(**_kwargs) { nil },
               logger: @logger,
               clock: Object.new
             )
@@ -109,7 +109,7 @@ module Domain
         test "calls on_success with the created plan_id when initialization succeeds" do
           interactor = build_interactor(
             gateway: standard_gateway,
-            cultivation_plan_gateway: cultivation_gateway_returning(success_result(PlanRef.new(id: 123)))
+            plan_initializer: plan_initializer_returning(success_result(PlanRef.new(id: 123)))
           )
 
           interactor.call(standard_input)
@@ -123,7 +123,7 @@ module Domain
           job_chain = FakeJobChain.new(@output_port.events)
           interactor = build_interactor(
             gateway: standard_gateway,
-            cultivation_plan_gateway: cultivation_gateway_returning(success_result(PlanRef.new(id: 123))),
+            plan_initializer: plan_initializer_returning(success_result(PlanRef.new(id: 123))),
             optimization_job_chain_gateway: job_chain
           )
 
@@ -138,7 +138,7 @@ module Domain
         test "calls on_failure when the farm is not found" do
           interactor = build_interactor(
             gateway: FakePublicPlanGateway.new(farm: nil),
-            cultivation_plan_gateway: Object.new
+            plan_initializer: ->(**_kwargs) { nil }
           )
 
           interactor.call(standard_input)
@@ -150,7 +150,7 @@ module Domain
         test "calls on_failure when the farm size is invalid" do
           interactor = build_interactor(
             gateway: FakePublicPlanGateway.new(farm: standard_farm, farm_size: nil),
-            cultivation_plan_gateway: Object.new
+            plan_initializer: ->(**_kwargs) { nil }
           )
 
           interactor.call(standard_input)
@@ -162,7 +162,7 @@ module Domain
         test "calls on_failure when the total area is not positive" do
           interactor = build_interactor(
             gateway: FakePublicPlanGateway.new(farm: standard_farm, farm_size: { id: "x", area_sqm: 0 }),
-            cultivation_plan_gateway: Object.new
+            plan_initializer: ->(**_kwargs) { nil }
           )
 
           interactor.call(standard_input)
@@ -176,7 +176,7 @@ module Domain
           interactor = build_interactor(
             gateway: FakePublicPlanGateway.new(farm: standard_farm, farm_size: { id: "home_garden", area_sqm: 30 }, crops: []),
             crop_gateway: FakeCropGateway.new(crops: reference_crops),
-            cultivation_plan_gateway: Object.new
+            plan_initializer: ->(**_kwargs) { nil }
           )
 
           interactor.call(standard_input)
@@ -194,7 +194,7 @@ module Domain
           interactor = build_interactor(
             gateway: FakePublicPlanGateway.new(farm: standard_farm, farm_size: { id: "home_garden", area_sqm: 30 }, crops: []),
             crop_gateway: FakeCropGateway.new(error: Domain::Shared::Exceptions::RecordInvalid.new("invalid")),
-            cultivation_plan_gateway: Object.new
+            plan_initializer: ->(**_kwargs) { nil }
           )
 
           interactor.call(standard_input)
@@ -205,7 +205,7 @@ module Domain
         test "calls on_failure when the cultivation plan initialization reports errors" do
           interactor = build_interactor(
             gateway: standard_gateway,
-            cultivation_plan_gateway: cultivation_gateway_returning(
+            plan_initializer: plan_initializer_returning(
               Domain::CultivationPlan::Interactors::CultivationPlanInitializeInteractor::Result.new(
                 cultivation_plan: nil, errors: [ "Creation failed" ]
               )
@@ -221,7 +221,7 @@ module Domain
         test "propagates unexpected errors raised while reading the farm size" do
           interactor = build_interactor(
             gateway: FakePublicPlanGateway.new(farm: standard_farm, farm_size_error: StandardError.new("Database error")),
-            cultivation_plan_gateway: Object.new
+            plan_initializer: ->(**_kwargs) { nil }
           )
 
           assert_raises StandardError do
@@ -231,12 +231,12 @@ module Domain
 
         private
 
-        def build_interactor(gateway:, cultivation_plan_gateway:, crop_gateway: FakeCropGateway.new, optimization_job_chain_gateway: nil)
+        def build_interactor(gateway:, plan_initializer:, crop_gateway: FakeCropGateway.new, optimization_job_chain_gateway: nil)
           PublicPlanCreateInteractor.new(
             output_port: @output_port,
             gateway: gateway,
             crop_gateway: crop_gateway,
-            cultivation_plan_gateway: cultivation_plan_gateway,
+            plan_initializer: plan_initializer,
             logger: @logger,
             clock: FIXED_CLOCK,
             optimization_job_chain_gateway: optimization_job_chain_gateway
@@ -267,10 +267,8 @@ module Domain
           )
         end
 
-        def cultivation_gateway_returning(result)
-          gateway = Object.new
-          gateway.define_singleton_method(:initialize_plan_from_selection) { |**_kwargs| result }
-          gateway
+        def plan_initializer_returning(result)
+          ->(**_kwargs) { result }
         end
       end
     end

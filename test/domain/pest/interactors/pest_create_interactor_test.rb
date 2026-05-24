@@ -14,7 +14,7 @@ module Domain
           )
         end
 
-        def build_interactor(output_port:, gateway:, crop_gateway: mock, user:)
+        def build_interactor(output_port:, gateway:, crop_gateway: mock, crop_pest_gateway: mock, user:)
           user_lookup = mock
           user_lookup.expects(:find).with(7).returns(user)
           translator = Object.new
@@ -24,6 +24,7 @@ module Domain
             user_id: 7,
             gateway: gateway,
             crop_gateway: crop_gateway,
+            crop_pest_gateway: crop_pest_gateway,
             translator: translator,
             user_lookup: user_lookup
           )

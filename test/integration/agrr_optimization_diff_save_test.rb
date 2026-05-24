@@ -83,7 +83,7 @@ class AgrrOptimizationDiffSaveTest < ActiveSupport::TestCase
     assert_difference -> { FieldCultivation.where(cultivation_plan_id: @plan.id).count }, +0 do
       # 全体としては keep(1) + new(1) - delete(1) = 0件差
       save_input = Domain::CultivationPlan::Dtos::SaveAdjustedAgrrResultInput.from_agrr_adjust_result_hash(result)
-      CompositionRoot.save_adjusted_agrr_result_gateway.save_adjust_result!(plan_id: @plan.id, result: save_input)
+      CompositionRoot.save_adjusted_agrr_result_interactor.call(plan_id: @plan.id, result: save_input)
     end
 
     # 更新されたか

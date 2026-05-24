@@ -6,6 +6,8 @@ module Domain
   module Crop
     module Interactors
       class CropLoadAuthorizedInteractorTest < DomainLibTestCase
+        TestUser = Struct.new(:id, :admin?, keyword_init: true)
+
         setup do
           @fixed_at = Time.utc(2026, 1, 15, 12, 0, 0).freeze
           @entity = Entities::CropEntity.new(
@@ -24,24 +26,11 @@ module Domain
           )
         end
 
-        test "returns bundle when gateway succeeds" do
-          dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: @entity)
-          user = stub(id: 1, admin?: false)
+        test "returns authorized crop when gateway succeeds" do
+          user = TestUser.new(id: 1, admin?: false)
 
-          gw = Class.new do
-            attr_accessor :captured_for_edit
-
-            def initialize(bundle)
-              @bundle = bundle
-            end
-
-            def find_crop_loaded_bundle!(id, for_edit:)
-              raise ArgumentError unless id == 42
-
-              @captured_for_edit = for_edit
-              @bundle
-            end
-          end.new(dto)
+          gateway = Minitest::Mock.new
+          gateway.expect(:find_by_id, @entity, [42])
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ 9 ])
@@ -59,16 +48,16 @@ module Domain
           interactor = CropLoadAuthorizedInteractor.new(
             failure_presenter: failure,
             user_id: 9,
-            gateway: gw,
+            gateway: gateway,
             user_lookup: user_lookup
           )
 
-          bundle = interactor.call(
+          result = interactor.call(
             Domain::Crop::Dtos::CropLoadAuthorizedInput.new(crop_id: "42", for_edit: false)
           )
 
-          assert_equal @entity, bundle.crop_entity
-          assert_equal false, gw.captured_for_edit
+          assert_equal @entity, result.crop_entity
+          gateway.verify
           user_lookup.verify
         end
 
@@ -87,13 +76,10 @@ module Domain
             created_at: @fixed_at,
             updated_at: @fixed_at
           )
-          dto = Domain::Crop::Dtos::AuthorizedCropLoaded.new(crop_entity: denied_entity)
-          user = stub(id: 1, admin?: false)
+          user = TestUser.new(id: 1, admin?: false)
 
           gateway = Minitest::Mock.new
-          gateway.expect(:find_crop_loaded_bundle!, dto) do |id, for_edit:|
-            id == 42 && for_edit == true
-          end
+          gateway.expect(:find_by_id, denied_entity, [42])
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ 9 ])
@@ -118,13 +104,13 @@ module Domain
 
         test "delegates to failure presenter on record not found" do
           gateway = Minitest::Mock.new
-          gateway.expect(:find_crop_loaded_bundle!, nil) do |id, for_edit:|
-            raise Domain::Shared::Exceptions::RecordNotFound, "gone" if id == 99 && for_edit == false
+          gateway.expect(:find_by_id, nil) do |_id|
+            raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 
-          user = stub(id: 1, admin?: false)
+          user = TestUser.new(id: 1, admin?: false)
           user_lookup = Minitest::Mock.new
-          user_lookup.expect(:find, user, [ 9 ])
+          user_lookup.expect(:find, user, [9])
 
           failure = Minitest::Mock.new
           failure.expect(:on_not_found, nil)

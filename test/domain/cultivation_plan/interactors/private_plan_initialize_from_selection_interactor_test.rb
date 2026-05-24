@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
 require "domain_lib_test_helper"
-require "adapters/shared/ports/rails_translator_adapter"
 require "logger"
 
 module Domain
   module CultivationPlan
     module Interactors
       class PrivatePlanInitializeFromSelectionInteractorTest < DomainLibTestCase
+        FakeTranslator = Struct.new do
+          def t(key)
+            key.to_s
+          end
+        end
         # @clock.today = Date.new(2026, 6, 15) => beginning_of_year = Date.new(2026, 1, 1)
         PLANNING_START_DATE = Date.new(2026, 1, 1)
         PLANNING_END_DATE = Date.new(2027, 12, 31)
@@ -41,9 +45,10 @@ module Domain
             updated_at: Time.utc(2026, 1, 1)
           )
           @gateway = mock("cultivation_plan_gateway")
+          @plan_initializer = mock("plan_initializer")
           @output_port = mock("output_port")
            @logger = ::Logger.new(File::NULL)
-          @translator = Adapters::Shared::Ports::RailsTranslatorAdapter.new
+          @translator = FakeTranslator.new
           @clock = Object.new
           def @clock.today
             Date.new(2026, 6, 15)
@@ -56,6 +61,7 @@ module Domain
           PrivatePlanInitializeFromSelectionInteractor.new(
             output_port: @output_port,
             cultivation_plan_gateway: @gateway,
+            plan_initializer: @plan_initializer,
             logger: @logger,
             translator: @translator,
             clock: @clock,
@@ -131,7 +137,7 @@ module Domain
           @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:total_field_area_for_farm).with(1, @user).returns(100.0)
-          @gateway.expects(:initialize_plan_from_selection).with(
+          @plan_initializer.expects(:call).with(
             farm: @farm_entity,
             total_area: 100.0,
             crops: [ @crop_entity ],
@@ -159,7 +165,7 @@ module Domain
           @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:total_field_area_for_farm).returns(10.0)
-          @gateway.expects(:initialize_plan_from_selection).returns(result)
+          @plan_initializer.expects(:call).returns(result)
           @job_enqueuer.expects(:enqueue_after_create).never
           @output_port.expects(:on_failure).with do |f|
             assert_equal :unprocessable_entity, f.http_status
@@ -185,7 +191,7 @@ module Domain
           @gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
           @gateway.expects(:total_field_area_for_farm).returns(10.0)
-          @gateway.expects(:initialize_plan_from_selection).returns(result)
+          @plan_initializer.expects(:call).returns(result)
           @job_enqueuer.expects(:enqueue_after_create).raises(StandardError, "queue down")
           @output_port.expects(:on_success).never
           @output_port.expects(:on_failure).never
