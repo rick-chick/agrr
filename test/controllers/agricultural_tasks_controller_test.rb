@@ -2,6 +2,7 @@
 
 require "test_helper"
 
+# HTML 応答形の境界のみ。作物関連付けの永続化は domain/adapters テストが担保する。
 class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
   include ActionView::RecordIdentifier
   setup do
@@ -58,74 +59,6 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".associated-crop-card__variety", text: "(#{crop.variety})"
   end
 
-  test "updateで選択した作物の関連付けが保存される" do
-    sign_in_as @user
-
-    keep_crop = create(:crop, user: @user, name: "残す")
-    new_crop = create(:crop, user: @user, name: "追加する")
-    removed_crop = create(:crop, user: @user, name: "外す")
-
-    CropTaskTemplate.create!(
-      crop: keep_crop,
-      agricultural_task: @user_task,
-      name: @user_task.name,
-      description: @user_task.description,
-      time_per_sqm: @user_task.time_per_sqm,
-      weather_dependency: @user_task.weather_dependency,
-      required_tools: @user_task.required_tools,
-      skill_level: @user_task.skill_level
-    )
-    CropTaskTemplate.create!(
-      crop: removed_crop,
-      agricultural_task: @user_task,
-      name: @user_task.name,
-      description: @user_task.description,
-      time_per_sqm: @user_task.time_per_sqm,
-      weather_dependency: @user_task.weather_dependency,
-      required_tools: @user_task.required_tools,
-      skill_level: @user_task.skill_level
-    )
-
-    patch agricultural_task_path(@user_task), params: {
-      agricultural_task: {
-        name: @user_task.name,
-        description: @user_task.description,
-        time_per_sqm: @user_task.time_per_sqm,
-        weather_dependency: @user_task.weather_dependency,
-        skill_level: @user_task.skill_level,
-        required_tools: @user_task.required_tools
-      },
-      selected_crop_ids: [ keep_crop.id, new_crop.id ]
-    }
-
-    assert_redirected_to agricultural_task_path(@user_task)
-    @user_task.reload
-    assert_equal [ keep_crop.id, new_crop.id ].sort, @user_task.crops.pluck(:id).sort
-  end
-
-  test "利用不可な作物IDは更新時に無視される" do
-    sign_in_as @user
-
-    own_crop = create(:crop, user: @user)
-    other_user_crop = create(:crop, user: create(:user))
-
-    patch agricultural_task_path(@user_task), params: {
-      agricultural_task: {
-        name: @user_task.name,
-        description: @user_task.description,
-        time_per_sqm: @user_task.time_per_sqm,
-        weather_dependency: @user_task.weather_dependency,
-        skill_level: @user_task.skill_level,
-        required_tools: @user_task.required_tools
-      },
-      selected_crop_ids: [ own_crop.id, other_user_crop.id ]
-    }
-
-    assert_redirected_to agricultural_task_path(@user_task)
-    @user_task.reload
-    assert_equal [ own_crop.id ], @user_task.crops.pluck(:id)
-  end
-
   # is_reference（admin のみ設定・変更可）の認可は
   # AgriculturalTaskCreate/UpdateInteractor が判定する
   #   → test/domain/agricultural_task/interactors/agricultural_task_{create,update}_interactor_test.rb
@@ -142,79 +75,6 @@ class AgriculturalTasksControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to agricultural_tasks_path
     assert_equal I18n.t("agricultural_tasks.flash.reference_only_admin"), flash[:alert]
-  end
-
-  test "管理者が参照フラグを有効に変更するとユーザー作物の関連付けが解除される" do
-    sign_in_as @admin_user
-
-    user_crop = create(:crop, user: @admin_user, name: "管理用きゅうり")
-    CropTaskTemplate.create!(
-      crop: user_crop,
-      agricultural_task: @admin_task,
-      name: @admin_task.name,
-      description: @admin_task.description,
-      time_per_sqm: @admin_task.time_per_sqm,
-      weather_dependency: @admin_task.weather_dependency,
-      required_tools: @admin_task.required_tools,
-      skill_level: @admin_task.skill_level
-    )
-
-    patch agricultural_task_path(@admin_task), params: {
-      agricultural_task: {
-        name: @admin_task.name,
-        description: @admin_task.description,
-        time_per_sqm: @admin_task.time_per_sqm,
-        weather_dependency: @admin_task.weather_dependency,
-        skill_level: @admin_task.skill_level,
-        required_tools: @admin_task.required_tools,
-        is_reference: true
-      },
-      selected_crop_ids: [ user_crop.id ]
-    }
-
-    assert_redirected_to agricultural_task_path(@admin_task)
-    @admin_task.reload
-
-    assert @admin_task.is_reference?
-    assert_nil @admin_task.user_id
-    assert_empty @admin_task.crops
-  end
-
-  test "参照フラグ変更後は許可された作物のみ関連付けられる" do
-    sign_in_as @admin_user
-
-    reference_crop = create(:crop, :reference, name: "参照キャベツ")
-    user_crop = create(:crop, user: @admin_user, name: "管理トマト")
-    CropTaskTemplate.create!(
-      crop: reference_crop,
-      agricultural_task: @reference_task,
-      name: @reference_task.name,
-      description: @reference_task.description,
-      time_per_sqm: @reference_task.time_per_sqm,
-      weather_dependency: @reference_task.weather_dependency,
-      required_tools: @reference_task.required_tools,
-      skill_level: @reference_task.skill_level
-    )
-
-    patch agricultural_task_path(@reference_task), params: {
-      agricultural_task: {
-        name: @reference_task.name,
-        description: @reference_task.description,
-        time_per_sqm: @reference_task.time_per_sqm,
-        weather_dependency: @reference_task.weather_dependency,
-        skill_level: @reference_task.skill_level,
-        required_tools: @reference_task.required_tools,
-        is_reference: false
-      },
-      selected_crop_ids: [ reference_crop.id, user_crop.id ]
-    }
-
-    assert_redirected_to agricultural_task_path(@reference_task)
-    @reference_task.reload
-
-    refute @reference_task.is_reference?
-    assert_equal @admin_user.id, @reference_task.user_id
-    assert_equal [ user_crop.id ], @reference_task.crops.pluck(:id)
   end
 
   test "一般ユーザーの is_reference 変更失敗は redirect + flash へマッピングされる" do

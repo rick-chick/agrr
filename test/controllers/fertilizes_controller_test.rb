@@ -3,8 +3,8 @@
 require "test_helper"
 require "time"
 
-# 他ユーザーのリソースの GET 拒否は FertilizeDetailInteractor 等の認可と重なるが、
-# HTML の redirect / flash 契約は show の拒否 1 本で代表し、edit の他ユーザー拒否は省略する。
+# HTML 応答形（redirect / 一覧描画）の境界のみ。認可・永続化の網羅は
+# test/domain/fertilize/interactors/* と test/controllers/api/v1/masters/fertilizes_controller_test.rb。
 
 class FertilizesControllerTest < ActionDispatch::IntegrationTest
   include ActionView::RecordIdentifier
@@ -52,63 +52,12 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
 
   # ========== show アクションのテスト ==========
 
-  test "一般ユーザーは自身の肥料をshowできる" do
-    sign_in_as @user
-    get fertilize_path(@user_fertilize)
-
-    assert_response :success
-  end
-
-  test "一般ユーザーは参照肥料をshowできない" do
+  test "show の権限拒否は redirect + flash へマッピングされる" do
     sign_in_as @user
     get fertilize_path(@reference_fertilize)
 
     assert_redirected_to fertilizes_path
     assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
-  end
-
-  test "一般ユーザーは他のユーザーの肥料をshowできない" do
-    sign_in_as @user
-    get fertilize_path(@other_user_fertilize)
-
-    assert_redirected_to fertilizes_path
-    assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
-  end
-
-  test "管理者は参照肥料をshowできる" do
-    sign_in_as @admin_user
-    get fertilize_path(@reference_fertilize)
-
-    assert_response :success
-  end
-
-  test "管理者は自身の肥料をshowできる" do
-    sign_in_as @admin_user
-    get fertilize_path(@admin_fertilize)
-
-    assert_response :success
-  end
-
-  # ========== create アクションのテスト ==========
-
-  test "一般ユーザーは自身の肥料を作成できる（user_idが自動設定される）" do
-    sign_in_as @user
-    assert_difference("Fertilize.count") do
-      post fertilizes_path, params: { fertilize: {
-        name: "テスト肥料",
-        n: 20.0,
-        p: 10.0,
-        k: 10.0,
-        description: "テスト用",
-        package_size: 20.0
-      } }
-    end
-
-    assert_redirected_to fertilize_path(Fertilize.last)
-    fertilize = Fertilize.last
-    assert_equal 20.0, fertilize.package_size
-    assert_equal @user.id, fertilize.user_id
-    assert_equal false, fertilize.is_reference
   end
 
   # is_reference（admin のみ設定・変更可）の認可は FertilizeCreate/UpdateInteractor が
@@ -125,57 +74,7 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("fertilizes.flash.reference_only_admin"), flash[:alert]
   end
 
-  test "管理者は参照肥料を作成できる" do
-    sign_in_as @admin_user
-    assert_difference("Fertilize.count") do
-      post fertilizes_path, params: { fertilize: {
-        name: "参照肥料",
-        n: 20.0,
-        p: 10.0,
-        k: 10.0,
-        is_reference: true
-      } }
-    end
-
-    assert_redirected_to fertilize_path(Fertilize.last)
-    fertilize = Fertilize.last
-    assert_equal true, fertilize.is_reference
-    assert_nil fertilize.user_id
-  end
-
-  test "管理者は自身の肥料を作成できる" do
-    sign_in_as @admin_user
-    assert_difference("Fertilize.count") do
-      post fertilizes_path, params: { fertilize: {
-        name: "管理者の肥料",
-        n: 20.0,
-        p: 10.0,
-        k: 10.0,
-        is_reference: false
-      } }
-    end
-
-    assert_redirected_to fertilize_path(Fertilize.last)
-    fertilize = Fertilize.last
-    assert_equal @admin_user.id, fertilize.user_id
-    assert_equal false, fertilize.is_reference
-  end
-
-  # ========== update アクションのテスト ==========
-
-  test "一般ユーザーは自身の肥料をupdateできる" do
-    sign_in_as @user
-    patch fertilize_path(@user_fertilize), params: { fertilize: {
-      name: @user_fertilize.name,
-      n: 25.0
-    } }
-
-    assert_redirected_to fertilize_path(@user_fertilize)
-    @user_fertilize.reload
-    assert_equal 25.0, @user_fertilize.n
-  end
-
-  test "一般ユーザーは参照肥料をupdateできない" do
+  test "update の権限拒否は redirect + flash へマッピングされる" do
     sign_in_as @user
     old_n = @reference_fertilize.n
 
@@ -191,46 +90,6 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     assert_equal old_n, @reference_fertilize.n
   end
 
-  test "一般ユーザーは他のユーザーの肥料をupdateできない" do
-    sign_in_as @user
-    old_n = @other_user_fertilize.n
-
-    patch fertilize_path(@other_user_fertilize), params: { fertilize: {
-      name: @other_user_fertilize.name,
-      n: 30.0
-    } }
-
-    assert_redirected_to fertilizes_path
-    assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
-
-    @other_user_fertilize.reload
-    assert_equal old_n, @other_user_fertilize.n
-  end
-
-  test "管理者は参照肥料をupdateできる" do
-    sign_in_as @admin_user
-    patch fertilize_path(@reference_fertilize), params: { fertilize: {
-      name: @reference_fertilize.name,
-      n: 30.0
-    } }
-
-    assert_redirected_to fertilize_path(@reference_fertilize)
-    @reference_fertilize.reload
-    assert_equal 30.0, @reference_fertilize.n
-  end
-
-  test "管理者は自身の肥料をupdateできる" do
-    sign_in_as @admin_user
-    patch fertilize_path(@admin_fertilize), params: { fertilize: {
-      name: "Updated Test Fertilize 4",
-      n: 30.0
-    } }
-
-    assert_redirected_to fertilize_path(@admin_fertilize)
-    @admin_fertilize.reload
-    assert_equal 30.0, @admin_fertilize.n
-  end
-
   test "一般ユーザーの is_reference 変更失敗は redirect + flash へマッピングされる" do
     sign_in_as @user
     patch fertilize_path(@user_fertilize), params: { fertilize: {
@@ -242,8 +101,20 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("fertilizes.flash.reference_flag_admin_only"), flash[:alert]
   end
 
-  # ========== destroy アクションのテスト ==========
-  # undo JSON と認可失敗の HTTP マッピングは境界契約。成功・認可網羅は FertilizeDestroyInteractorTest。
+  test "destroy_via_html_redirects_with_undo_notice" do
+    sign_in_as @user
+    fertilize = create(:fertilize, :user_owned, user: @user, name: "テスト肥料")
+
+    assert_difference -> { Fertilize.count }, -1 do
+      assert_difference "DeletionUndoEvent.count", +1 do
+        delete fertilize_path(fertilize)
+        assert_redirected_to fertilizes_path
+      end
+    end
+
+    expected_notice = I18n.t("deletion_undo.redirect_notice", resource: fertilize.name)
+    assert_equal expected_notice, flash[:notice]
+  end
 
   test "一般ユーザーは参照肥料をdestroyできない" do
     sign_in_as @user

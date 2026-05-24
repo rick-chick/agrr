@@ -3,8 +3,8 @@
 require "test_helper"
 require "time"
 
-# 参照農薬の閲覧拒否などは PesticideDetailInteractor 単体で表明。
-# ここでは index の表示フィルタと nested 作成の永続化挙動（Interactor 外の境界）を優先する。
+# HTML 応答形（redirect / 一覧描画）の境界のみ。認可・永続化の網羅は
+# test/domain/pesticide/interactors/* と test/controllers/api/v1/masters/pesticides_controller_test.rb。
 
 class PesticidesControllerTest < ActionDispatch::IntegrationTest
   include ActionView::RecordIdentifier
@@ -51,12 +51,11 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     refute_includes body, other_pesticide.name
   end
 
-  test "should create pesticide" do
+  test "create は redirect する（配線）" do
     assert_difference("Pesticide.count") do
       post pesticides_path, params: { pesticide: {
         name: "テスト農薬",
         active_ingredient: "テスト成分",
-        description: "テスト用",
         crop_id: @crop.id,
         pest_id: @pest.id,
         is_reference: false
@@ -64,83 +63,6 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to pesticide_path(Pesticide.last)
-    pesticide = Pesticide.last
-    assert_equal "テスト農薬", pesticide.name
-  end
-
-  test "should create pesticide with usage_constraint" do
-    # 現状の Create Interactor は nested attributes を扱わないため Pesticide のみ作成される
-    assert_difference("Pesticide.count", 1) do
-      post pesticides_path, params: { pesticide: {
-        name: "テスト農薬",
-        active_ingredient: "テスト成分",
-        crop_id: @crop.id,
-        pest_id: @pest.id,
-        is_reference: false,
-        pesticide_usage_constraint_attributes: {
-          min_temperature: 5.0,
-          max_temperature: 35.0,
-          max_wind_speed_m_s: 3.0,
-          max_application_count: 3,
-          harvest_interval_days: 1
-        }
-      } }
-    end
-
-    pesticide = Pesticide.last
-    assert_equal "テスト農薬", pesticide.name
-  end
-
-  test "should create pesticide with application_detail" do
-    # 現状の Create Interactor は nested attributes を扱わないため Pesticide のみ作成される
-    assert_difference("Pesticide.count", 1) do
-      post pesticides_path, params: { pesticide: {
-        name: "テスト農薬",
-        active_ingredient: "テスト成分",
-        crop_id: @crop.id,
-        pest_id: @pest.id,
-        is_reference: false,
-        pesticide_application_detail_attributes: {
-          dilution_ratio: "1000倍",
-          amount_per_m2: 0.1,
-          amount_unit: "ml",
-          application_method: "散布"
-        }
-      } }
-    end
-
-    pesticide = Pesticide.last
-    assert_equal "テスト農薬", pesticide.name
-  end
-
-  test "should update pesticide" do
-    # ユーザー農薬を作成
-    pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
-
-    patch pesticide_path(pesticide), params: { pesticide: {
-      name: "更新された農薬名",
-      active_ingredient: "更新された成分"
-    } }
-    assert_redirected_to pesticide_path(pesticide)
-    pesticide.reload
-    assert_equal "更新された農薬名", pesticide.name
-    assert_equal "更新された成分", pesticide.active_ingredient
-  end
-
-  test "should update pesticide with usage_constraint" do
-    # ユーザー農薬を作成
-    pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest)
-    constraint = create(:pesticide_usage_constraint, pesticide: pesticide, min_temperature: 10.0)
-
-    # 現状の Update Interactor は nested attributes を扱わないため、リダイレクトのみ検証
-    patch pesticide_path(pesticide), params: { pesticide: {
-      name: pesticide.name,
-      pesticide_usage_constraint_attributes: {
-        id: constraint.id,
-        min_temperature: 5.0
-      }
-    } }
-    assert_redirected_to pesticide_path(pesticide)
   end
 
   # is_reference（admin のみ設定・変更可）の認可は PesticideCreate/UpdateInteractor が
@@ -208,23 +130,6 @@ class PesticidesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to pesticides_path
     assert_equal I18n.t("pesticides.flash.reference_only_admin"), flash[:alert]
-  end
-
-  test "should allow admin to create reference pesticide" do
-    admin_user = create(:user, admin: true)
-    sign_in_as admin_user
-
-    assert_difference("Pesticide.count") do
-      post pesticides_path, params: { pesticide: {
-        name: "参照農薬",
-        crop_id: @crop.id,
-        pest_id: @pest.id,
-        is_reference: true
-      } }
-    end
-
-    assert_redirected_to pesticide_path(Pesticide.last)
-    assert Pesticide.last.is_reference?
   end
 
   # ========== region 認可 ==========
