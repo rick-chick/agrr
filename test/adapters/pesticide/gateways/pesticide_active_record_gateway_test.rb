@@ -16,10 +16,10 @@ class Adapters::Pesticide::Gateways::PesticideActiveRecordGatewayTest < ActiveSu
   test "build_pesticide_master_form_snapshot_for_new builds nested associations on new record" do
     snapshot = @gateway.build_pesticide_master_form_snapshot_for_new(assign_attributes: { name: "n" })
 
-    form = Forms::PesticideMasterForm.from_snapshot(snapshot)
-    assert_equal "n", form.name
-    assert form.pesticide_usage_constraint
-    assert form.pesticide_application_detail
+    assert_equal "n", snapshot.name
+    assert snapshot.new_record?
+    assert snapshot.pesticide_usage_constraint_attributes.present?
+    assert snapshot.pesticide_application_detail_attributes.present?
   end
 
   test "list crop pick rows uses CropPolicy index_list_filter via crop gateway" do

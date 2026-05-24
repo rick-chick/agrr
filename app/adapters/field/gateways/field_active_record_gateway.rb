@@ -72,19 +72,6 @@ module Adapters
           raise Domain::Shared::Exceptions::AssociationInUse
         end
 
-        def find_field_loaded_in_farm!(farm_id, field_id)
-          find_farm_model!(farm_id)
-          field = begin
-            ::Field.where(farm_id: farm_id).find(field_id)
-          rescue ActiveRecord::RecordNotFound
-            raise Domain::Shared::Exceptions::RecordNotFound, "Field not found"
-          end
-          Domain::Field::Dtos::AuthorizedFieldLoadedInFarm.new(
-            field_entity: Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(field),
-            master_form_snapshot: Adapters::Farm::Mappers::FieldMasterFormSnapshotMapper.from_record(field)
-          )
-        end
-
         private
 
         def field_entity_from_id(field_id)

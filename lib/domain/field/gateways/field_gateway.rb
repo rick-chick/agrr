@@ -23,11 +23,6 @@ module Domain
         def delete(field_id)
           raise NotImplementedError, "Subclasses must implement destroy"
         end
-
-        def find_field_loaded_in_farm!(farm_id, field_id)
-          raise NotImplementedError, "Subclasses must implement find_field_loaded_in_farm!"
-        end
-
       end
     end
   end

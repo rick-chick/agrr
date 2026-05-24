@@ -131,17 +131,6 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
         end
 
-        def build_blank_farm_for_master_form!(user_id:)
-          ::User.find(user_id).farms.build
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def blank_farm_master_form_snapshot_for_new!(user_id:)
-          farm = build_blank_farm_for_master_form!(user_id: user_id)
-          Adapters::Farm::Mappers::FarmMasterFormSnapshotMapper.from_record(farm)
-        end
-
         def update_for_user(_user, id, attrs)
           farm = find_farm_model!(id)
           raise Domain::Shared::Exceptions::RecordInvalid, farm.errors.full_messages.join(", ") unless farm.update(attrs.to_h.symbolize_keys)
