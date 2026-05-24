@@ -25,21 +25,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     Rails.logger.debug "🌍 [PublicPlans#new] locale=#{I18n.locale}, region=#{region}, farms=#{@farms.count}"
   end
 
-  # Step 3: 作物選択
-  def select_crop
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanWizardSelectCropHtmlPresenter.new(view: self)
-    Domain::PublicPlan::Interactors::PublicPlanWizardSelectCropInteractor.new(
-      public_plan_gateway: CompositionRoot.public_plan_gateway,
-      crop_gateway: CompositionRoot.crop_gateway,
-      output_port: presenter,
-      logger: CompositionRoot.logger
-    ).call(
-      farm_id: params[:farm_id].presence || session_data[:farm_id],
-      farm_size_id: params[:farm_size_id]
-    )
-    return if performed?
-  end
-
   # Step 4: 作付け計画作成（計算開始）
   def create
     input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
@@ -167,10 +152,6 @@ class PublicPlansController < CultivationPlanHtmlBaseController
       logger: CompositionRoot.logger,
       translator: CompositionRoot.translator
     ).call(plan_id: params[:plan_id], user: current_user)
-  end
-
-  def select_crop_redirect_path
-    :select_crop_public_plans_path
   end
 
   def optimizing_redirect_path

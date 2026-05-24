@@ -74,20 +74,25 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
     assert_select "h2" # ビューにh2タグが存在することを確認
     assert_select ".enhanced-selection-card" # 農場選択カードが表示される
 
-    # Step 3: 作物選択画面の表示（家庭菜園サイズを選択）
-    get select_crop_public_plans_path(farm_size_id: "home_garden", farm_id: @hokkaido_farm.id)
+    # Step 4: 計画作成（SPA と同じ API 経路）
+    post api_v1_public_plans_plans_path,
+         params: {
+           farm_id: @hokkaido_farm.id,
+           farm_size_id: "home_garden",
+           crop_ids: [ @spinach_crop.id ]
+         },
+         as: :json
     assert_response :success
-    assert_select "h2" # ビューにh2タグが存在することを確認
-    assert_select ".crop-card" # 作物カードが表示される
-
-    # Step 4: 計画作成（ほうれん草を選択）
-    post public_plans_path, params: { crop_ids: [ @spinach_crop.id ] }
-
-    # 計画が作成され、最適化画面にリダイレクトされる
-    assert_redirected_to "/public_plans/optimizing"
+    plan_id = JSON.parse(response.body)["plan_id"]
+    session[:public_plan] = {
+      farm_id: @hokkaido_farm.id,
+      farm_size_id: "home_garden",
+      total_area: 30,
+      plan_id: plan_id
+    }
 
     # 作成された計画を取得
-    cultivation_plan = CultivationPlan.last
+    cultivation_plan = CultivationPlan.find(plan_id)
     assert_not_nil cultivation_plan
     assert_equal @hokkaido_farm.id, cultivation_plan.farm_id
     assert_equal 30, cultivation_plan.total_area  # 家庭菜園サイズ
@@ -95,7 +100,7 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
     assert_equal "pending", cultivation_plan.status
 
     # Step 5: 最適化画面の表示
-    get optimizing_public_plans_path
+    get optimizing_public_plans_path(plan_id: plan_id)
     assert_response :success
     assert_select ".compact-header-title" # ヘッダータイトルが存在することを確認
     assert_select ".fixed-progress-bar" # プログレスバーが表示される
@@ -126,14 +131,9 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
 
   private
 
-  def select_crop_public_plans_path(farm_size_id:, farm_id: nil)
-    query = "farm_size_id=#{farm_size_id}"
-    query += "&farm_id=#{farm_id}" if farm_id
-    "/public_plans/select_crop?#{query}"
-  end
-
-  def optimizing_public_plans_path
-    "/public_plans/optimizing"
+  def optimizing_public_plans_path(plan_id: nil)
+    path = "/public_plans/optimizing"
+    plan_id ? "#{path}?plan_id=#{plan_id}" : path
   end
 
   def results_public_plans_path(plan_id:)

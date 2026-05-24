@@ -15,12 +15,8 @@ module Adapters
           @view.redirect_to @view.optimizing_public_plans_path
         end
 
-        def on_no_crops_failure(view_context)
-          Adapters::PublicPlan::Presenters::PublicPlanWizardSelectCropNoCropsHtmlPresenter.new(view: @view).render_failure!(
-            farm: view_context.farm,
-            farm_size: view_context.farm_size,
-            crops: view_context.crops
-          )
+        def on_no_crops_failure(_view_context)
+          @view.redirect_to @view.public_plans_path, alert: I18n.t("public_plans.errors.select_crop")
         end
 
         def on_failure(failure_dto)

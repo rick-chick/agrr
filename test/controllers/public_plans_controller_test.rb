@@ -8,8 +8,11 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
   test "create does not store crop_ids in session" do
     farm = Farm.reference.first || Farm.create!(user: User.anonymous_user, name: "Ref Farm", is_reference: true, region: "jp", latitude: 35.0, longitude: 139.0)
 
-    # Step3: 作物選択画面を通過（farm_size_id必須）
-    get :select_crop, params: { farm_size_id: "home_garden", farm_id: farm.id }
+    @request.session[:public_plan] = {
+      farm_id: farm.id,
+      farm_size_id: "home_garden",
+      total_area: 30
+    }
 
     # Step4: 計画作成（create）
     crop = Crop.reference.first || Crop.create!(name: "Ref Crop", is_reference: true, region: "jp")
@@ -20,14 +23,13 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
     assert_nil public_plan[:crop_ids]
   end
 
-  test "作物未選択のままcreateにPOSTすると422でselect_cropを再描画" do
+  test "作物未選択のままcreateにPOSTするとpublic_plansへリダイレクト" do
     farm = Farm.reference.where(region: "jp").first ||
            Farm.create!(user: User.anonymous_user, name: "最適化テスト農場", is_reference: true, region: "jp", latitude: 35.6762, longitude: 139.6503)
 
     # セッションデータを直接設定（select_farm_size/select_cropのGETリクエストをスキップ）
     @request.session[:public_plan] = { farm_id: farm.id, farm_size_id: "home_garden", total_area: 30 }
 
-    # インタラクタとビューレンダリングをスタブ（DBクエリとERB処理をスキップ）
     Domain::PublicPlan::Interactors::PublicPlanCreateInteractor.stub(:new, ->(**kw) {
       output_port = kw[:output_port]
       Object.new.tap do |obj|
@@ -42,22 +44,9 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
         }
       end
     }) do
-      controller = @controller
-      Adapters::PublicPlan::Presenters::PublicPlanWizardSelectCropNoCropsHtmlPresenter.stub(:new, ->(**_kw) {
-        Object.new.tap do |obj|
-          obj.define_singleton_method(:render_failure!) { |_args|
-            controller.flash.now[:alert] = I18n.t("public_plans.errors.select_crop")
-            controller.render(inline: "<h2>stubbed</h2><p class='alert'>#{I18n.t('public_plans.errors.select_crop')}</p>", status: :unprocessable_entity)
-          }
-        end
-      }) do
-
-        # 作物未選択でPOST
-        post :create, params: { crop_ids: [] }
-        assert_response :unprocessable_entity
-        assert_select "h2"
-        assert_includes @response.body, I18n.t("public_plans.errors.select_crop")
-      end
+      post :create, params: { crop_ids: [] }
+      assert_redirected_to public_plans_path
+      assert_equal I18n.t("public_plans.errors.select_crop"), flash[:alert]
     end
   end
 
@@ -229,19 +218,25 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h2" # ビューにh2タグが存在することを確認
 
-    # Step 3: 作物選択画面の表示（farm_id はクエリ、HTML select_farm_size 削除後）
-    get select_crop_public_plans_path(farm_size_id: "home_garden", farm_id: @japan_farm.id)
+    # Step 4: 計画作成（SPA と同じ API 経路）
+    post api_v1_public_plans_plans_path,
+         params: {
+           farm_id: @japan_farm.id,
+           farm_size_id: "home_garden",
+           crop_ids: [ @spinach_crop.id ]
+         },
+         as: :json
     assert_response :success
-    assert_select "h2" # ビューにh2タグが存在することを確認
-
-    # Step 4: 計画作成（セッション経由）
-    post public_plans_path, params: { crop_ids: [ @spinach_crop.id ] }
-
-    # 計画が作成され、最適化画面にリダイレクトされる
-    assert_redirected_to "/public_plans/optimizing"
+    plan_id = JSON.parse(response.body)["plan_id"]
+    session[:public_plan] = {
+      farm_id: @japan_farm.id,
+      farm_size_id: "home_garden",
+      total_area: 30,
+      plan_id: plan_id
+    }
 
     # 作成された計画を取得
-    cultivation_plan = CultivationPlan.last
+    cultivation_plan = CultivationPlan.find(plan_id)
     assert_not_nil cultivation_plan
     assert_equal @japan_farm.id, cultivation_plan.farm_id
     assert_equal 30, cultivation_plan.total_area
@@ -249,7 +244,7 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     assert_equal "pending", cultivation_plan.status
 
     # Step 5: 最適化画面の表示
-    get optimizing_public_plans_path
+    get optimizing_public_plans_path(plan_id: plan_id)
     assert_response :success
     assert_select ".compact-header-title" # ヘッダータイトルが存在することを確認
 
@@ -296,16 +291,6 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     cultivation_plan.reload
     assert_equal "failed", cultivation_plan.status
   end
-
-  test "エラーハンドリング（作物が選択されていない）" do
-    # セッションを設定してから作物選択画面にアクセス
-    get select_crop_public_plans_path(farm_size_id: "home_garden")
-    # セッションが無効なため、リダイレクトされる
-    assert_redirected_to public_plans_path
-    assert_equal I18n.t("public_plans.errors.restart"), flash[:alert]
-  end
-
-
 
   test "地域コードの変換が正しく動作する" do
     assert_equal "jp", Domain::Shared::Mappers::LocaleToRegionMapper.call(:ja)
@@ -518,14 +503,9 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
 
   private
 
-  def select_crop_public_plans_path(farm_size_id:, farm_id: nil)
-    query = "farm_size_id=#{farm_size_id}"
-    query += "&farm_id=#{farm_id}" if farm_id
-    "/public_plans/select_crop?#{query}"
-  end
-
-  def optimizing_public_plans_path
-    "/public_plans/optimizing"
+  def optimizing_public_plans_path(plan_id: nil)
+    path = "/public_plans/optimizing"
+    plan_id ? "#{path}?plan_id=#{plan_id}" : path
   end
 
   def results_public_plans_path(plan_id:)
