@@ -54,18 +54,7 @@ module Domain
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
-          user_b = @user_lookup.find(@user_id)
-          access_filter_b = Domain::Shared::Policies::CropPolicy.record_access_filter(user_b)
-          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(
-            access_filter_b,
-            @gateway.find_by_id(input_dto.crop_id)
-          )
-          snapshot = @gateway.merge_edit_crop_params_for_master_form!(
-            user: user_b,
-            crop_id: input_dto.crop_id,
-            attributes: input_dto.to_nested_crop_attributes_hash,
-          )
-          @output_port.on_failure(Domain::Crop::Dtos::CropMasterFormFailure.new(message: e.message, master_form_snapshot: snapshot))
+          @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))
         end
       end
     end

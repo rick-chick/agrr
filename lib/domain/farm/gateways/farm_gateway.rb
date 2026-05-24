@@ -16,18 +16,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_reference_farms"
         end
 
-        def list_user_owned_farm_rows(user_id:)
-          raise NotImplementedError, "Subclasses must implement list_user_owned_farm_rows"
-        end
-
-        def list_user_and_reference_farm_rows(user_id:)
-          raise NotImplementedError, "Subclasses must implement list_user_and_reference_farm_rows"
-        end
-
-        def list_reference_farm_rows
-          raise NotImplementedError, "Subclasses must implement list_reference_farm_rows"
-        end
-
         def find_by_id(farm_id)
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
@@ -119,11 +107,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement farm_weather_data_access_context_for_admin_lookup"
         end
 
-        # 作付計画表: ユーザー所有農場のみ、名前順（HTML 選択 UI）
-        # @return [Array<Domain::Farm::Dtos::FarmIdName>]
-        def planning_schedule_user_owned_farms(user:)
-          raise NotImplementedError, "Subclasses must implement planning_schedule_user_owned_farms"
-        end
       end
     end
   end

@@ -262,53 +262,6 @@ module Adapters
           end
         end
 
-        test "delete_task_schedule_blueprint_bundle_in_crop! returns not_found when blueprint id does not exist" do
-          user = @crop.user
-          result = @gateway.delete_task_schedule_blueprint_bundle_in_crop!(user, @crop.id, 9_999_999)
-
-          assert result[:not_found]
-          assert_equal false, result[:blueprint_deleted]
-          assert_equal false, result[:template_deleted]
-        end
-
-        test "update_task_schedule_blueprint_position_for_user updates gdd_trigger when edit allowed" do
-          user = @crop.user
-          task = create(:agricultural_task, :user_owned, user: user)
-          bp = create(:crop_task_schedule_blueprint,
-                      crop: @crop,
-                      agricultural_task: task,
-                      stage_order: 0,
-                      gdd_trigger: 0.0,
-                      task_type: TaskScheduleItem::FIELD_WORK_TYPE,
-                      source: "manual",
-                      priority: 1)
-
-          out = @gateway.update_task_schedule_blueprint_position_for_user(
-            user: user,
-            crop_id: @crop.id,
-            blueprint_id: bp.id,
-            gdd_trigger: 15.5,
-            priority: nil,
-          )
-
-          assert out[:ok]
-          assert_in_delta 15.5, out[:payload][:gdd_trigger], 0.001
-        end
-
-        test "update_task_schedule_blueprint_position_for_user returns not_found for missing blueprint on editable crop" do
-          user = @crop.user
-          out = @gateway.update_task_schedule_blueprint_position_for_user(
-            user: user,
-            crop_id: @crop.id,
-            blueprint_id: 9_999_999,
-            gdd_trigger: 1.0,
-            priority: nil,
-          )
-
-          assert_equal false, out[:ok]
-          assert_equal :not_found, out[:status]
-        end
-
         test "create_masters_crop_task_template_association creates association with overrides" do
           user = @crop.user
           task = create(:agricultural_task, :user_owned, user: user, name: "元のタスク名")

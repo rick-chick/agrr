@@ -110,18 +110,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_crop_loaded_bundle!"
         end
 
-        # マスタCRUD: HTML 新規フォーム用の空スナップショット（永続化しない）
-        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def blank_crop_master_form_snapshot
-          raise NotImplementedError, "Subclasses must implement blank_crop_master_form_snapshot"
-        end
-
-        # マスタCRUD: update 失敗時の再描画用に認可済み作物へパラメータをマージ（永続化しない）
-        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:)
-          raise NotImplementedError, "Subclasses must implement merge_edit_crop_params_for_master_form!"
-        end
-
         # マスター API: 作物と農業タスクの関連付けを作成。
         def create_masters_crop_task_template_association(input_dto)
           raise NotImplementedError, "Subclasses must implement create_masters_crop_task_template_association"
@@ -152,26 +140,6 @@ module Domain
 
         def find_crop_task_template_in_crop!(crop_id, template_id, for_edit:)
           raise NotImplementedError, "Subclasses must implement find_crop_task_template_in_crop!"
-        end
-
-        # ブループリント削除（app/services へ委譲）。RecordNotFound はここで握りつぶし not_found を返す。
-        def delete_task_schedule_blueprint_bundle_in_crop!(user, crop_id, blueprint_id)
-          raise NotImplementedError, "Subclasses must implement delete_task_schedule_blueprint_bundle_in_crop!"
-        end
-
-        # Crops::TaskScheduleBlueprintsController — 位置更新（実装は AR アダプタで例外を吸収し Hash を返す）
-        def update_task_schedule_blueprint_position_mutation(crop:, blueprint:, gdd_trigger:, priority:)
-          raise NotImplementedError, "Subclasses must implement update_task_schedule_blueprint_position_mutation"
-        end
-
-        # 編集認可済み作物＋ブループリント ID で位置更新（Interactor は user_id / ID のみ渡す）
-        def update_task_schedule_blueprint_position_for_user(user:, crop_id:, blueprint_id:, gdd_trigger:, priority:)
-          raise NotImplementedError, "Subclasses must implement update_task_schedule_blueprint_position_for_user"
-        end
-
-        # Crops::TaskScheduleBlueprintsController — 削除後の crop 読取と UI 用データ
-        def find_by_crop_id(crop_id:, blueprint_id_for_response:)
-          raise NotImplementedError, "Subclasses must implement find_by_crop_id"
         end
 
         def find_crop_show_detail(crop_id)

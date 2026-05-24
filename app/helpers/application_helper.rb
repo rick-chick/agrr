@@ -3,66 +3,11 @@
 module ApplicationHelper
   # JavaScriptから参照するi18nメッセージをdata属性として返す
   def js_i18n_data
-    {
-      # fields.js validation messages
-      fields_validation_coordinates_numeric: t("fields.js.validation.coordinates_must_be_numeric"),
-      fields_validation_latitude_range: t("fields.js.validation.latitude_range"),
-      fields_validation_longitude_range: t("fields.js.validation.longitude_range"),
-
-      # crop_palette_drag.js messages
-      crop_palette_plan_id_missing: t("js.crop_palette.plan_id_missing"),
-      crop_palette_communication_error: t("js.crop_palette.communication_error"),
-
-      # custom_gantt_chart.js messages
-      js_gantt_optimization_failed: t("js.gantt.optimization_failed"),
-      js_gantt_update_failed: t("js.gantt.update_failed"),
-      js_gantt_fetch_error: t("js.gantt.fetch_error"),
-      js_gantt_field_info_error: t("js.gantt.field_info_error"),
-      js_gantt_communication_error: t("js.gantt.communication_error"),
-      js_gantt_invalid_area: t("js.gantt.invalid_area"),
-      js_gantt_field_add_failed: t("js.gantt.field_add_failed"),
-      js_gantt_field_delete_failed: t("js.gantt.field_delete_failed"),
-      js_gantt_add_field_button: t("js.gantt.add_field_button"),
-      js_gantt_adding_field_loading: t("js.gantt.adding_field_loading"),
-      copy_to_clipboard_success: t("js.copy_to_clipboard.success"),
-      copy_to_clipboard_failure: t("js.copy_to_clipboard.failure"),
-      copy_to_clipboard_fallback: t("js.copy_to_clipboard.fallback"),
-      fields_map_load_failed: t("js.fields.map_load_failed"),
-      fields_retry: t("js.fields.retry"),
-      crop_ai_enter_name: t("js.crop_ai.enter_name"),
-      crop_ai_fetching: t("js.crop_ai.fetching"),
-      crop_ai_button_fetching: t("js.crop_ai.button_fetching"),
-      crop_ai_button_idle: t("js.crop_ai.button_idle"),
-      crop_ai_fetch_failed: t("js.crop_ai.fetch_failed"),
-      crop_ai_network_error: t("js.crop_ai.network_error"),
-      crop_ai_created_success: t("js.crop_ai.created_success"),
-      plans_gantt_not_loaded: t("js.plans.gantt_not_loaded"),
-      plans_data_missing: t("js.plans.data_missing"),
-      plans_load_failed: t("js.plans.load_failed"),
-      timeline_update_failed: t("js.timeline.update_failed"),
-      timeline_date_required: t("js.timeline.date_required"),
-      timeline_complete_failed: t("js.timeline.complete_failed"),
-      timeline_cancel_failed: t("js.timeline.cancel_failed"),
-      timeline_name_required: t("js.timeline.name_required"),
-      timeline_create_failed: t("js.timeline.create_failed"),
-      timeline_crop_required: t("js.timeline.crop_required"),
-      timeline_notes_placeholder: t("js.timeline.notes_placeholder"),
-
-      # plans_show.js messages
-      js_plans_load_error: t("js.plans.load_error")
-    }
+    {}
   end
 
-  # 動的なパラメータ付きメッセージ用（JavaScript側で補間）
   def js_i18n_templates
-    {
-      crop_palette_crop_types_limit: t("js.crop_palette.crop_types_limit", max_types: "__MAX_TYPES__", current_types: "__CURRENT_TYPES__"),
-      crop_palette_crop_add_failed: t("js.crop_palette.crop_add_failed", message: "__MESSAGE__"),
-
-      # custom_gantt_chart.js templates
-      js_gantt_confirm_delete_field: t("js.gantt.confirm_delete_field", field_name: "__FIELD_NAME__"),
-      js_gantt_confirm_delete_crop: t("js.gantt.confirm_delete_crop", crop_name: "__CROP_NAME__")
-    }
+    {}
   end
 
   # Rails locale を research 用パスに変換する
@@ -138,8 +83,6 @@ module ApplicationHelper
       "components/cards",
       "components/layouts",
       "components/footer",
-      "components/crop_selection",
-      "components/farm-cards",
       "components/undo_toast",
       "components/cookie_consent"
     ]
@@ -171,7 +114,6 @@ module ApplicationHelper
       concat javascript_include_tag("i18n_helper", "data-turbo-track": "reload", defer: true)
 
       if include_shared_systems
-        concat javascript_include_tag("svg_drag_utils", "data-turbo-track": "reload", defer: true)
         concat javascript_include_tag("shared/notification_system", "data-turbo-track": "reload", defer: true)
         concat javascript_include_tag("shared/dialog_system", "data-turbo-track": "reload", defer: true)
         concat javascript_include_tag("shared/loading_system", "data-turbo-track": "reload", defer: true)
@@ -196,5 +138,49 @@ module ApplicationHelper
   def spa_private_plan_new_path
     origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
     "#{origin}/plans/new"
+  end
+
+  def spa_private_plans_path
+    "#{spa_frontend_origin}/plans"
+  end
+
+  def spa_public_plans_new_path
+    "#{spa_frontend_origin}/public-plans/new"
+  end
+
+  def spa_frontend_origin
+    ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
+  end
+
+  def spa_masters_farms_path
+    "#{spa_frontend_origin}/farms"
+  end
+
+  def spa_masters_crops_path
+    "#{spa_frontend_origin}/crops"
+  end
+
+  def spa_masters_fertilizes_path
+    "#{spa_frontend_origin}/fertilizes"
+  end
+
+  def spa_masters_pesticides_path
+    "#{spa_frontend_origin}/pesticides"
+  end
+
+  def spa_masters_pests_path
+    "#{spa_frontend_origin}/pests"
+  end
+
+  def spa_masters_agricultural_tasks_path
+    "#{spa_frontend_origin}/agricultural_tasks"
+  end
+
+  def spa_masters_interaction_rules_path
+    "#{spa_frontend_origin}/interaction_rules"
+  end
+
+  def spa_api_keys_path
+    "#{spa_frontend_origin}/api-keys"
   end
 end

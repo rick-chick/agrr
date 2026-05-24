@@ -17,11 +17,7 @@ class Adapters::CultivationPlan::Presenters::TaskScheduleTimelineHtmlPresenter <
 
   def on_failure(error_dto)
     msg = error_dto.respond_to?(:message) ? error_dto.message : error_dto.to_s
-    if @view.request.format.json?
-      @view.render json: { errors: [ msg ] }, status: :not_found
-    else
-      @view.redirect_to @view.plans_path, alert: msg
-    end
+    @view.render json: { errors: [ msg ] }, status: :not_found
   end
 
   def as_json(_options = nil)

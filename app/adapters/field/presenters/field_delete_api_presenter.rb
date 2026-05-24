@@ -18,7 +18,7 @@ module Adapters
             undo_path: undo_path,
             auto_hide_after: event.auto_hide_after,
             resource: event.metadata["resource_label"],
-            redirect_path: @view.farm_fields_path(event.metadata["farm_id"]),
+            redirect_path: field_destroy_redirect_path(event.metadata["farm_id"]),
             resource_dom_id: resource_dom_id_for(event)
           }
           @view.render_response(json: json, status: :ok)
@@ -31,6 +31,11 @@ module Adapters
         end
 
         private
+
+        def field_destroy_redirect_path(farm_id)
+          origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
+          "#{origin}/farms/#{farm_id}"
+        end
 
         def resource_dom_id_for(event)
           stored = event.metadata["resource_dom_id"]

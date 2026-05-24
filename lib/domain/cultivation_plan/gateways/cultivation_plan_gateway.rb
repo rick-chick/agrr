@@ -126,21 +126,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement task_schedule_timeline_snapshot"
         end
 
-        # 作付計画表: 農場に紐づく圃場名の集約（計画横断）。ハッシュは id / name / area / farm_name を含む。
-        def aggregated_planning_schedule_fields(user:, farm_id:)
-          raise NotImplementedError, "Subclasses must implement aggregated_planning_schedule_fields"
-        end
-
-        # 作付計画表: ほ場名・期間でフィルタした作付行（ハッシュ配列）
-        def planning_schedule_cultivations_for_field(user:, farm_id:, field_name:, period_start:, period_end:)
-          raise NotImplementedError, "Subclasses must implement planning_schedule_cultivations_for_field"
-        end
-
-        # 作付計画表: 農場・期間で一括取得した作付行（ハッシュ配列）。N+1回避用。
-        def planning_schedule_cultivations_for_farm(user:, farm_id:, period_start:, period_end:)
-          raise NotImplementedError, "Subclasses must implement planning_schedule_cultivations_for_farm"
-        end
-
         # API 公開プラン保存: 既存公開計画 id から PlanSaveSession 用の session_data 相当を組み立てる（なければ nil）
         def session_data_for_public_plan_save_from_plan_id(plan_id:)
           raise NotImplementedError, "Subclasses must implement session_data_for_public_plan_save_from_plan_id"

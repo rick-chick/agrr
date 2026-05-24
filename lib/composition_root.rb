@@ -775,10 +775,6 @@ module CompositionRoot
       )
     end
 
-    def crop_task_template_toggle_gateway
-      @crop_task_template_toggle_gateway ||= Adapters::Crop::Gateways::CropTaskTemplateToggleActiveRecordGateway.new
-    end
-
     def crop_ai_daemon_query_gateway
       @crop_ai_daemon_query_gateway ||= Adapters::Agrr::Gateways::CropAiQueryDaemonGateway.new(
         logger: logger,

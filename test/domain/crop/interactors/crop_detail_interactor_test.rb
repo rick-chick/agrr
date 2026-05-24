@@ -40,7 +40,6 @@ module Domain
 
           assert_instance_of Domain::Crop::Dtos::CropDetailOutput, received
           assert_equal crop, received.crop
-          assert_instance_of Domain::Shared::Dtos::ResourceDisplayCapabilities, received.html_display
           user_lookup.verify
           output_port.verify
         end

@@ -28,8 +28,10 @@ Rails.application.routes.draw do
   # Locale switching with default locale optimization
   scope "(:locale)", locale: /ja|us|in/, defaults: { locale: "ja" } do
     namespace :admin do
-      # 管理画面のルート
-      root to: redirect("/crops")
+      root to: redirect(
+        "#{ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first}/crops",
+        allow_other_host: true
+      )
     end
     # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -45,52 +47,7 @@ Rails.application.routes.draw do
 
     post "undo_deletion", to: "deletion_undos#create", as: :undo_deletion
 
-    # HTML マスタ（Rails コントローラ・ナビで _path を参照するため）
-    resources :farms, only: %i[index show create update destroy] do
-      resources :fields, controller: "fields", only: %i[index show create update destroy]
-      get "weather_data", to: "farms/weather_data#index", as: "weather_data"
-    end
-    resources :crops do
-      member do
-        post :generate_task_schedule_blueprints
-        post :toggle_task_template
-      end
-      resources :task_schedule_blueprints, only: [ :destroy ], controller: "crops/task_schedule_blueprints" do
-        member do
-          patch :update_position
-        end
-      end
-    end
-    resources :fertilizes, only: %i[index show create update destroy]
-    resources :pesticides, only: %i[index show create update destroy]
-    resources :pests, only: %i[index show create update destroy]
-    resources :agricultural_tasks, only: %i[index show create update destroy]
-    resources :interaction_rules
-
-    # APIキー管理（HTML）
-    get "api_keys", to: "api_keys#show", as: "api_keys"
-    post "api_keys/generate", to: "api_keys#generate", as: "generate_api_key"
-    post "api_keys/regenerate", to: "api_keys#regenerate", as: "regenerate_api_key"
-
-    # HTML Plans（ナビ等で plans_path / public_plans_path を参照するため）
-    resources :plans, only: [ :index, :destroy ] do
-      member do
-        post :copy
-      end
-      resource :task_schedule, only: [ :show ], controller: "plans/task_schedules"
-      resources :task_schedule_items, only: [ :create, :update, :destroy ], controller: "plans/task_schedule_items" do
-        member do
-          post :complete
-        end
-      end
-    end
-    get "public_plans", to: "public_plans#new", as: "public_plans"
-    post "public_plans", to: "public_plans#create"
-
-    # HTML Planning Schedules（ナビで fields_selection_planning_schedules_path を参照するため）
-    get "planning_schedules/fields_selection", to: "planning_schedules#fields_selection", as: "fields_selection_planning_schedules"
-    get "planning_schedules/schedule", to: "planning_schedules#schedule", as: "schedule_planning_schedules"
-
+    # HTML マスタ（Phase 5 完了: 業務 HTML ルートなし）
     # ActionCable for WebSocket
     mount ActionCable.server => "/cable"
 

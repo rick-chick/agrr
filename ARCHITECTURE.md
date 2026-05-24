@@ -17,7 +17,7 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 | Contract-first API  | `lib/domain` ports/DTOs plus integration and domain tests encoding observable API behavior   |
 
 
-**Architecture (primary):** Decoupled **Angular SPA + Rails API**. Server-rendered Rails HTML exists for some master CRUD flows and delegates to the same domain layer (`lib/domain`) via HTML presenters (`app/adapters/<context>/presenters/`).
+**Architecture (primary):** Decoupled **Angular SPA + Rails JSON API** for business features. Remaining server-rendered HTML is limited to **OAuth login**, **health**, **deletion undo**, **ActionCable**, **API docs**, and **dev/test** helpers—not master CRUD or planning UI. Domain logic lives in `lib/domain`; HTTP adapters use API presenters (`*_api_presenter.rb`). Legacy `*_html_presenter.rb` files may remain only where they still serve JSON-shaped responses (e.g. task schedule timeline) or auth/undo edges until renamed.
 
 
 

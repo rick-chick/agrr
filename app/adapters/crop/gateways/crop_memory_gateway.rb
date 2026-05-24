@@ -72,14 +72,9 @@ module Adapters
           )
         end
 
-        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def blank_crop_master_form_snapshot
-          Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(::Crop.new)
-        end
-
         private
 
-        # edit フォーム用にネストの空関連を補う（永続はゲートウェイ内のみ）
+        # edit フォーム用にネストの空関連を補う（CropLoadAuthorized の for_edit 用）
         def prepare_crop_record_for_edit_master_form_internal!(crop)
           crop.crop_stages.each do |stage|
             stage.build_nutrient_requirement unless stage.nutrient_requirement
@@ -87,14 +82,6 @@ module Adapters
         end
 
         public
-
-        # @return [Domain::Crop::Dtos::CropMasterFormSnapshot]
-        def merge_edit_crop_params_for_master_form!(user:, crop_id:, attributes:)
-          crop = find_crop_model!(crop_id)
-          crop.assign_attributes(attributes)
-          crop.valid?
-          Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop, error_messages: crop.errors.full_messages)
-        end
 
         def create_masters_crop_task_template_association(input_dto)
           crop = find_crop_model!(input_dto.crop_id.to_i)
@@ -184,108 +171,10 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound
         end
 
-        def delete_task_schedule_blueprint_bundle_in_crop!(_user, crop_id, blueprint_id)
-          crop = find_crop_model!(crop_id)
-          bp = crop.crop_task_schedule_blueprints.find(blueprint_id)
-          blueprint_id_for_response = bp.id
-          result = ::Adapters::Crop::TaskScheduleBlueprintDeletion.new(crop: crop, blueprint: bp).call
-          crop.reload
-          result.merge(crop: crop, blueprint_id_for_response: blueprint_id_for_response)
-        rescue ActiveRecord::RecordNotFound
-          { not_found: true, blueprint_deleted: false, template_deleted: false }
-        end
-
-        # Crops::TaskScheduleBlueprintsController 用: 位置更新と priority 再採番（AR 境界例外は本メソッド内で吸収）
-        # @return [Hash] :ok (boolean), :status (Symbol), :payload (Hash on success), :error (String on failure)
-        def update_task_schedule_blueprint_position_mutation(crop:, blueprint:, gdd_trigger:, priority:)
-          blueprint.gdd_trigger = gdd_trigger if gdd_trigger
-          blueprint.priority = priority if priority
-
-          unless blueprint.save
-            return {
-              ok: false,
-              status: :unprocessable_entity,
-              error: blueprint.errors.full_messages.join(", ")
-            }
-          end
-
-          reorder_crop_task_schedule_blueprint_priorities!(crop)
-          blueprint.reload
-
-          {
-            ok: true,
-            status: :ok,
-            payload: {
-              id: blueprint.id,
-              gdd_trigger: blueprint.gdd_trigger.to_f,
-              priority: blueprint.priority,
-              message: I18n.t("crops.flash.blueprint_position_updated")
-            }
-          }
-        rescue ActiveRecord::StatementInvalid,
-               ActiveRecord::ConnectionNotEstablished,
-               ActiveRecord::RecordNotDestroyed,
-               JSON::GeneratorError,
-               ActionView::Template::Error => e
-          Rails.logger.error("❌ [CropMemoryGateway] Failed to update blueprint position: #{e.class} #{e.message}")
-          Rails.logger.error(e.backtrace.join("\n"))
-          { ok: false, status: :internal_server_error, error: I18n.t("crops.flash.blueprint_update_failed") }
-        end
-
-        def update_task_schedule_blueprint_position_for_user(user:, crop_id:, blueprint_id:, gdd_trigger:, priority:)
-          crop = find_crop_model!(crop_id.to_i)
-          bp = crop.crop_task_schedule_blueprints.find(blueprint_id.to_i)
-          update_task_schedule_blueprint_position_mutation(crop: crop, blueprint: bp, gdd_trigger: gdd_trigger, priority: priority)
-        rescue ActiveRecord::RecordNotFound
-          { ok: false, status: :not_found, error: I18n.t("crops.flash.blueprint_not_found") }
-        end
-
-        # ブループリント削除後の crop 読取と UI 用タスク一覧（レンダリング前の失敗を吸収）
-        def find_by_crop_id(crop_id:, blueprint_id_for_response:)
-          crop = find_crop_model!(crop_id)
-          crop.reload
-          blueprints = crop.crop_task_schedule_blueprints.includes(:agricultural_task).ordered
-          available_records = available_agricultural_tasks_for_crop(crop)
-          selected_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
-          {
-            ok: true,
-            output: Domain::Crop::Dtos::CropTaskScheduleBlueprintDestroyOutput.new(
-              blueprint_id: blueprint_id_for_response,
-              crop_master_form_snapshot: Adapters::Crop::Mappers::CropMasterFormSnapshotMapper.from_record(crop),
-              task_schedule_blueprint_cards: Adapters::Crop::Mappers::CropTaskScheduleBlueprintCardMapper.from_records(blueprints),
-              available_agricultural_tasks: available_records.map do |task|
-                Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(task)
-              end,
-              selected_task_ids: selected_ids
-            ),
-            blueprint_id_for_response: blueprint_id_for_response
-          }
-        rescue ActiveRecord::StatementInvalid,
-               ActiveRecord::ConnectionNotEstablished,
-               ActiveRecord::RecordNotDestroyed,
-               ActiveRecord::RecordInvalid,
-               JSON::GeneratorError,
-               ActionView::Template::Error => e
-          Rails.logger.error("❌ [CropMemoryGateway] Failed after blueprint delete: #{e.class} #{e.message}")
-          Rails.logger.error(e.backtrace.join("\n"))
-          { ok: false, blueprint_id_for_response: blueprint_id_for_response }
-        end
-
         def find_crop_show_detail(crop_id)
           crop = crop_record_with_association_preloads!(crop_id)
-          task_schedule_blueprints = crop.crop_task_schedule_blueprints
-                                          .includes(:agricultural_task)
-                                          .ordered
-          available_tasks = available_agricultural_tasks_for_crop(crop)
-          selected_task_ids = crop.crop_task_templates.pluck(:agricultural_task_id).compact.uniq
-          associated_pests = crop.pests.order(created_at: :desc).to_a.map { |p| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(p) }
-
           Domain::Crop::Dtos::CropDetailOutput.new(
-            crop: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop),
-            task_schedule_blueprints: task_schedule_blueprints,
-            available_agricultural_tasks: available_tasks,
-            selected_task_ids: selected_task_ids,
-            associated_pests: associated_pests
+            crop: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
           )
         end
 
@@ -688,14 +577,6 @@ module Adapters
           ::Crop.includes(CROP_ASSOCIATION_PRELOAD_INCLUDES).find(id)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def reorder_crop_task_schedule_blueprint_priorities!(crop)
-          blueprints = crop.crop_task_schedule_blueprints
-                            .order(:gdd_trigger, :priority, :id)
-          blueprints.each_with_index do |bp, index|
-            bp.update_column(:priority, index + 1) if bp.priority != index + 1
-          end
         end
 
       end

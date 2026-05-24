@@ -19,18 +19,6 @@ module Adapters
           list_reference_farms_for_region(nil)
         end
 
-        def list_user_owned_farm_rows(user_id:)
-          ::Farm.where(user_id: user_id, is_reference: false).includes(:fields).map { |r| farm_record_to_farm_list_row_dto(r) }
-        end
-
-        def list_user_and_reference_farm_rows(user_id:)
-          ::Farm.where("user_id = ? OR is_reference = ?", user_id, true).includes(:fields).map { |r| farm_record_to_farm_list_row_dto(r) }
-        end
-
-        def list_reference_farm_rows
-          ::Farm.reference.includes(:fields).map { |r| farm_record_to_farm_list_row_dto(r) }
-        end
-
         def find_by_id(farm_id)
           farm = ::Farm.find(farm_id)
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm)
@@ -114,12 +102,6 @@ module Adapters
           ::Farm.user_owned.by_user(user)
         end
 
-        def planning_schedule_user_owned_farms(user:)
-          user_owned_records(user).order(:name).map do |f|
-            Domain::Farm::Dtos::FarmIdName.new(id: f.id, name: f.name)
-          end
-        end
-
         def count_user_owned_non_reference_farms(user_id:)
           ::Farm.where(user_id: user_id, is_reference: false).count
         end
@@ -197,25 +179,6 @@ module Adapters
             longitude: record.longitude,
             weather_location_id: record.weather_location_id,
             predicted_weather_data: record.predicted_weather_data
-          )
-        end
-
-        def farm_record_to_farm_list_row_dto(record)
-          Domain::Farm::Dtos::FarmListRow.new(
-            id: record.id,
-            display_name: record.name,
-            latitude: record.latitude,
-            longitude: record.longitude,
-            region: record.region,
-            user_id: record.user_id,
-            is_reference: record.is_reference,
-            field_count: record.fields.size,
-            weather_data_status: record.weather_data_status,
-            weather_data_progress: record.weather_data_progress,
-            weather_data_total_years: record.weather_data_total_years,
-            weather_data_last_error: record.weather_data_last_error,
-            created_at: record.created_at,
-            updated_at: record.updated_at
           )
         end
 

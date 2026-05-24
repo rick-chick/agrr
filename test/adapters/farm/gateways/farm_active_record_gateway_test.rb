@@ -101,32 +101,6 @@ class Adapters::Farm::Gateways::FarmActiveRecordGatewayTest < ActiveSupport::Tes
     assert_includes farms.map(&:id), user_farm.id
   end
 
-  test "list_user_owned_farm_rows returns rows without reference farms" do
-    user_farm = create(:farm, user: @user, is_reference: false, name: "Mine")
-    create(:field, farm: user_farm)
-    rows = @gateway.list_user_owned_farm_rows(user_id: @user.id)
-    assert_equal 1, rows.size
-    assert_equal user_farm.id, rows.first.id
-    assert_equal 1, rows.first.field_count
-  end
-
-  test "list_user_and_reference_farm_rows includes user farms and reference farms" do
-    user_farm = create(:farm, user: @user, is_reference: false, name: "Mine")
-    ref = create(:farm, user: User.anonymous_user, is_reference: true, name: "Ref")
-    rows = @gateway.list_user_and_reference_farm_rows(user_id: @user.id)
-    ids = rows.map(&:id)
-    assert_includes ids, user_farm.id
-    assert_includes ids, ref.id
-  end
-
-  test "list_reference_farm_rows returns only reference farm rows" do
-    create(:farm, user: @user, is_reference: false)
-    ref = create(:farm, user: User.anonymous_user, is_reference: true, name: "Ref")
-    rows = @gateway.list_reference_farm_rows
-    assert rows.all? { |r| r.is_reference }
-    assert_includes rows.map(&:id), ref.id
-  end
-
   test "farm_weather_data_access_context_for_owned_farm returns dto for owner" do
     farm = create(:farm, user: @user)
     wl = create(:weather_location)

@@ -240,6 +240,121 @@ module Api
           assert_equal new_start_date, after_cultivation["start_date"],
             "adjust後のstart_dateが新しい日付と一致すること（期待: #{new_start_date}, 実際: #{after_cultivation['start_date']}）"
         end
+
+        test "adjust move keeps task schedules and items on plan" do
+          task_schedule = create(:task_schedule,
+            cultivation_plan: @cultivation_plan,
+            field_cultivation: @field_cultivation,
+            category: "general",
+            status: TaskSchedule::STATUSES[:active])
+          create(:task_schedule_item,
+            task_schedule: task_schedule,
+            name: "潅水",
+            scheduled_date: Date.current + 40.days)
+
+          assert TaskSchedule.exists?(task_schedule.id)
+          assert_equal @field_cultivation.id, task_schedule.reload.field_cultivation_id
+
+          post "/api/v1/plans/cultivation_plans/#{@cultivation_plan.id}/adjust",
+               params: {
+                 moves: [
+                   {
+                     allocation_id: @field_cultivation.id,
+                     action: "move",
+                     to_field_id: @field.id,
+                     to_start_date: (Date.current + 35.days).iso8601
+                   }
+                 ]
+               },
+               headers: { "Accept" => "application/json" },
+               as: :json
+
+          assert_response :success
+          response_data = JSON.parse(response.body)
+          assert response_data["success"], "adjust APIが成功すること: #{response_data.inspect}"
+
+          plan = @cultivation_plan.reload
+          assert plan.field_cultivations.any?
+          assert plan.task_schedules.any?, "task_scheduleが存在すること（現在: #{plan.task_schedules.count}件）"
+
+          task_schedule_items = TaskScheduleItem.joins(:task_schedule)
+            .where(task_schedules: { cultivation_plan_id: plan.id })
+          assert task_schedule_items.any?, "task_schedule_itemが存在すること（現在: #{task_schedule_items.count}件）"
+        end
+
+        test "adjust move on annual plan keeps task schedules and items" do
+          annual_farm = create(:farm, user: @user, weather_location: @weather_location)
+          annual_plan = create(:cultivation_plan, :annual_planning,
+            user: @user,
+            farm: annual_farm,
+            plan_type: "private")
+          annual_field = create(:cultivation_plan_field,
+            cultivation_plan: annual_plan,
+            name: "圃場1",
+            area: 100.0)
+          annual_plan_crop = create(:cultivation_plan_crop,
+            cultivation_plan: annual_plan,
+            crop: @crop,
+            name: @crop.name)
+          annual_field_cultivation = create(:field_cultivation,
+            cultivation_plan: annual_plan,
+            cultivation_plan_field: annual_field,
+            cultivation_plan_crop: annual_plan_crop,
+            start_date: Date.current + 30.days,
+            completion_date: Date.current + 90.days,
+            area: 50.0)
+          task_schedule = create(:task_schedule,
+            cultivation_plan: annual_plan,
+            field_cultivation: annual_field_cultivation,
+            category: "general",
+            status: TaskSchedule::STATUSES[:active])
+          create(:task_schedule_item,
+            task_schedule: task_schedule,
+            name: "潅水",
+            scheduled_date: Date.current + 40.days)
+
+          prediction_end_date = annual_plan.planning_end_date || (Date.current + 1.year).end_of_year
+          mock_prediction_data = mock_weather_data(
+            @weather_location.latitude,
+            @weather_location.longitude,
+            Date.current,
+            prediction_end_date
+          )
+          annual_plan.update!(
+            predicted_weather_data: {
+              "data" => mock_prediction_data["data"],
+              "target_end_date" => prediction_end_date.to_s,
+              "prediction_start_date" => Date.current.to_s,
+              "prediction_days" => mock_prediction_data["data"].count
+            }
+          )
+
+          post "/api/v1/plans/cultivation_plans/#{annual_plan.id}/adjust",
+               params: {
+                 moves: [
+                   {
+                     allocation_id: annual_field_cultivation.id,
+                     action: "move",
+                     to_field_id: annual_field.id,
+                     to_start_date: (Date.current + 35.days).iso8601
+                   }
+                 ]
+               },
+               headers: { "Accept" => "application/json" },
+               as: :json
+
+          assert_response :success
+          response_data = JSON.parse(response.body)
+          assert response_data["success"], "adjust APIが成功すること: #{response_data.inspect}"
+
+          annual_plan.reload
+          assert annual_plan.field_cultivations.any?
+          assert annual_plan.task_schedules.any?, "task_scheduleが存在すること（現在: #{annual_plan.task_schedules.count}件）"
+
+          task_schedule_items = TaskScheduleItem.joins(:task_schedule)
+            .where(task_schedules: { cultivation_plan_id: annual_plan.id })
+          assert task_schedule_items.any?, "task_schedule_itemが存在すること（現在: #{task_schedule_items.count}件）"
+        end
       end
     end
   end
