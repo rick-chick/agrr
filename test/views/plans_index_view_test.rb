@@ -33,8 +33,9 @@ class PlansIndexViewTest < ActiveSupport::TestCase
   test "index は各 plan_row の詳細リンクを描画する" do
     html = render_index([ plan_row(id: 11), plan_row(id: 22) ])
 
-    assert_includes html, %(href="#{Rails.application.routes.url_helpers.plan_path(11)}")
-    assert_includes html, %(href="#{Rails.application.routes.url_helpers.plan_path(22)}")
+    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
+    assert_includes html, %(href="#{origin}/plans/11")
+    assert_includes html, %(href="#{origin}/plans/22")
   end
 
   test "index はカードタイトルに農場名を描画しステータスバッジを描画しない" do

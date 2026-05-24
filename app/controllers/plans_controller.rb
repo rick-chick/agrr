@@ -115,29 +115,6 @@ class PlansController < CultivationPlanHtmlBaseController
     return if performed?
   end
 
-  # Step 5: 計画詳細（結果表示）
-  def show
-    plan_id = parse_positive_route_id(params[:id])
-    unless plan_id
-      redirect_to plans_path, alert: I18n.t("plans.errors.not_found") and return
-    end
-
-    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanShowHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PrivatePlanShowInteractor.new(
-      output_port: presenter,
-      user_id: current_user.id,
-      plan_id: plan_id,
-      gateway: CompositionRoot.cultivation_plan_gateway,
-      translator: CompositionRoot.translator,
-      logger: CompositionRoot.logger,
-      user_lookup: CompositionRoot.user_lookup,
-      clock: Time.zone
-    ).call
-    return if performed?
-
-    Rails.logger.debug "📊 [Plans#show] User: #{current_user.id}, Plan: #{@private_plan_show.id}"
-  end
-
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。
   # 計画コピー（前年度の計画を新年度にコピー）
   def copy
@@ -158,6 +135,14 @@ class PlansController < CultivationPlanHtmlBaseController
       translator: CompositionRoot.translator,
       user_lookup: CompositionRoot.user_lookup
     ).call(params[:id])
+  end
+
+  def spa_plan_detail_url(plan_id)
+    "#{spa_frontend_origin}/plans/#{plan_id}"
+  end
+
+  def spa_frontend_origin
+    ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
   end
 
   private
@@ -212,7 +197,7 @@ class PlansController < CultivationPlanHtmlBaseController
   end
 
   def completion_redirect_path
-    :plan_path
+    :spa_plan_detail_url
   end
 
   def channel_class

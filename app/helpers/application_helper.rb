@@ -178,4 +178,9 @@ module ApplicationHelper
       end
     end
   end
+
+  def spa_private_plan_url(plan_id)
+    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
+    "#{origin}/plans/#{plan_id}"
+  end
 end

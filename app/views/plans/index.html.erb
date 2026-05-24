@@ -70,7 +70,7 @@
             <!-- アクション -->
             <div class="plan-card-actions">
               <% if plan.completed? %>
-                <%= link_to plan_path(plan.id),
+                <%= link_to spa_private_plan_url(plan.id),
                     class: "plan-card-action-btn primary" do %>
                   <%= t('plans.index.plan_card.view') %>
                 <% end %>
@@ -104,7 +104,7 @@
                   <%= t('plans.index.plan_card.delete') %>
                 <% end %>
               <% elsif plan.pending? %>
-                <%= link_to plan_path(plan.id),
+                <%= link_to spa_private_plan_url(plan.id),
                     class: "plan-card-action-btn primary" do %>
                   <%= t('plans.index.plan_card.view') %>
                 <% end %>

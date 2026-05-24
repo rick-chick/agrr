@@ -82,7 +82,8 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
   test "optimize redirects back with alert when already optimizing" do
     plan = create(:cultivation_plan, user: @user, status: "optimizing")
     post optimize_plan_path(plan)
-    assert_redirected_to plan_path(plan)
+    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
+    assert_redirected_to "#{origin}/plans/#{plan.id}"
     assert_equal I18n.t("plans.errors.already_optimized"), flash[:alert]
   end
 
@@ -99,51 +100,17 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     assert_equal I18n.t("plans.errors.not_found"), flash[:alert]
   end
 
-  test "optimizing redirects to plan show when plan already completed" do
+  test "optimizing redirects to SPA plan detail when plan already completed" do
     plan = create(:cultivation_plan, user: @user, farm: @farm, status: "completed")
     get optimizing_plan_path(plan)
-    assert_redirected_to plan_path(plan)
+    assert_redirected_to "#{ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').first.strip}/plans/#{plan.id}"
   end
 
-  test "optimizing redirects to plan show with alert when plan already failed" do
+  test "optimizing redirects to SPA plan detail with alert when plan already failed" do
     plan = create(:cultivation_plan, user: @user, farm: @farm, status: "failed")
     get optimizing_plan_path(plan)
-    assert_redirected_to plan_path(plan)
+    assert_redirected_to "#{ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').first.strip}/plans/#{plan.id}"
     assert_equal I18n.t("plans.optimizing.error.title"), flash[:alert]
-  end
-
-  # SCOPE: show（PrivatePlanShowInteractor / PrivatePlanShowHtmlPresenter）
-  test "show renders successfully for owned non-optimizing plan" do
-    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "completed")
-    get plan_path(plan)
-    assert_response :success
-    assert_select "#cultivation_plan_#{plan.id}"
-    assert_select "h1.content-card-header-title", text: plan.display_name
-  end
-
-  test "show redirects to optimizing when plan status is optimizing" do
-    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "optimizing")
-    get plan_path(plan)
-    assert_redirected_to optimizing_plan_path(plan.id)
-  end
-
-  test "show redirects to plans index when plan belongs to another user" do
-    other = create(:user)
-    farm = create(:farm, user: other)
-    plan = create(:cultivation_plan, user: other, farm: farm)
-    get plan_path(plan)
-    assert_redirected_to plans_path
-    assert_equal I18n.t("plans.errors.not_found"), flash[:alert]
-  end
-
-  test "show redirects to plans index when id is not a positive integer" do
-    plan = create(:cultivation_plan, user: @user, farm: @farm)
-    get plan_path(plan)
-    assert_response :success
-
-    get "/plans/0"
-    assert_redirected_to plans_path
-    assert_equal I18n.t("plans.errors.not_found"), flash[:alert]
   end
 
   # SCOPE: copy 正常/異常

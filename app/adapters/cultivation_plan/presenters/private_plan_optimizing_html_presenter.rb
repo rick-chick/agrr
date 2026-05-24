@@ -10,13 +10,14 @@ module Adapters
 
         def on_success(dto)
           if dto.completed?
-            @view.redirect_to @view.plan_path(dto.id)
+            @view.redirect_to @view.spa_plan_detail_url(dto.id), allow_other_host: true
             return
           end
 
           if dto.failed?
             @view.redirect_to(
-              @view.plan_path(dto.id),
+              @view.spa_plan_detail_url(dto.id),
+              allow_other_host: true,
               alert: I18n.t("plans.optimizing.error.title")
             )
             return
