@@ -14,8 +14,9 @@ module Adapters
               allow_other_host: true,
               alert: I18n.t("plans.errors.already_optimized")
           else
-            @view.redirect_to @view.optimizing_plan_path(dto.plan_id),
-                              notice: I18n.t("plans.messages.optimization_started")
+            @view.redirect_to @view.spa_plan_optimizing_url(dto.plan_id),
+              allow_other_host: true,
+              notice: I18n.t("plans.messages.optimization_started")
           end
         end
 

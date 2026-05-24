@@ -74,48 +74,6 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanActiveRecordGatewayTes
     assert_empty found_crops
   end
 
-  test "private_plan_optimizing_snapshot returns read model for owned private plan" do
-    user = create(:user)
-    farm = create(:farm, user: user, name: "表示農場")
-    plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "optimizing",
-                  plan_year: 2024, optimization_phase_message: "phase1")
-    crop = create(:crop, user: user, is_reference: false)
-    create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
-    create(:cultivation_plan_crop, cultivation_plan: plan, crop: create(:crop, user: user, is_reference: false))
-
-    read = @gateway.private_plan_optimizing_snapshot(plan_id: plan.id, user: user)
-    dto = Domain::CultivationPlan::Mappers::PrivatePlanOptimizingMapper.call(read)
-
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizingSnapshot, read
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanOptimizing, dto
-    assert_equal plan.id, dto.id
-    assert_equal 2024, dto.plan_year
-    assert_equal farm.display_name, dto.farm_display_name
-    assert_equal 2, dto.cultivation_plan_crops_count
-    assert_equal "phase1", dto.optimization_phase_message
-    assert_equal "optimizing", dto.status
-    assert_not dto.completed?
-  end
-
-  test "private_plan_optimizing_snapshot raises domain RecordNotFound when plan belongs to another user" do
-    owner = create(:user)
-    other = create(:user)
-    farm = create(:farm, user: owner)
-    plan = create(:cultivation_plan, farm: farm, user: owner, plan_type: "private")
-
-    assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.private_plan_optimizing_snapshot(plan_id: plan.id, user: other)
-    end
-  end
-
-  test "private_plan_optimizing_snapshot raises domain RecordNotFound when id missing" do
-    user = create(:user)
-
-    assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.private_plan_optimizing_snapshot(plan_id: 9_999_999, user: user)
-    end
-  end
-
   test "public_plan_optimizing_snapshot returns read model for public plan" do
     farm = create(:farm, name: "公開テスト農場")
     plan = create(:cultivation_plan, :public_plan, farm: farm, status: "optimizing",

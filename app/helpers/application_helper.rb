@@ -183,4 +183,8 @@ module ApplicationHelper
     origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
     "#{origin}/plans/#{plan_id}"
   end
+
+  def spa_private_plan_optimizing_url(plan_id)
+    "#{spa_private_plan_url(plan_id)}/optimizing"
+  end
 end

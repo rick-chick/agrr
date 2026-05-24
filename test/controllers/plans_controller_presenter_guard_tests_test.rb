@@ -75,7 +75,8 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
   test "optimize redirects to optimizing when not already optimizing" do
     plan = create(:cultivation_plan, user: @user, status: "pending")
     post optimize_plan_path(plan)
-    assert_redirected_to optimizing_plan_path(plan.id)
+    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
+    assert_redirected_to "#{origin}/plans/#{plan.id}/optimizing"
     assert_equal I18n.t("plans.messages.optimization_started"), flash[:notice]
   end
 
@@ -85,32 +86,6 @@ class PlansControllerPresenterGuardTests < ActionDispatch::IntegrationTest
     origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").first.strip
     assert_redirected_to "#{origin}/plans/#{plan.id}"
     assert_equal I18n.t("plans.errors.already_optimized"), flash[:alert]
-  end
-
-  test "optimizing renders successfully" do
-    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "pending")
-    get optimizing_plan_path(plan)
-    assert_response :success
-    assert_select "body", true
-  end
-
-  test "optimizing redirects when plan id param is not a positive integer" do
-    get optimizing_plan_path(0)
-    assert_redirected_to plans_path
-    assert_equal I18n.t("plans.errors.not_found"), flash[:alert]
-  end
-
-  test "optimizing redirects to SPA plan detail when plan already completed" do
-    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "completed")
-    get optimizing_plan_path(plan)
-    assert_redirected_to "#{ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').first.strip}/plans/#{plan.id}"
-  end
-
-  test "optimizing redirects to SPA plan detail with alert when plan already failed" do
-    plan = create(:cultivation_plan, user: @user, farm: @farm, status: "failed")
-    get optimizing_plan_path(plan)
-    assert_redirected_to "#{ENV.fetch('FRONTEND_URL', 'http://localhost:4200').split(',').first.strip}/plans/#{plan.id}"
-    assert_equal I18n.t("plans.optimizing.error.title"), flash[:alert]
   end
 
   # SCOPE: copy 正常/異常

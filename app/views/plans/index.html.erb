@@ -87,7 +87,7 @@
                   <%= t('plans.index.plan_card.delete') %>
                 <% end %>
               <% elsif plan.optimizing? %>
-                <%= link_to optimizing_plan_path(plan.id),
+                <%= link_to spa_private_plan_optimizing_url(plan.id),
                     class: "plan-card-action-btn primary" do %>
                   <%= t('plans.index.plan_card.view') %>
                 <% end %>

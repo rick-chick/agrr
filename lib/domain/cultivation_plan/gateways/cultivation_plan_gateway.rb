@@ -114,12 +114,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement private_plan_optimization_redirect_snapshot"
         end
 
-        # プライベート計画「最適化進捗」HTML 用（認可つき）。読み取りスナップショットのみ（PageDto は Assembler 側）。
-        # @return [Domain::CultivationPlan::Dtos::PrivatePlanOptimizingSnapshot]
-        def private_plan_optimizing_snapshot(plan_id:, user:)
-          raise NotImplementedError, "Subclasses must implement private_plan_optimizing_snapshot"
-        end
-
         # 公開（無認可）計画「最適化進捗」HTML 用。`plan_type` が public の計画のみ。
         # @return [Domain::CultivationPlan::Dtos::PublicPlanOptimizingSnapshot]
         def public_plan_optimizing_snapshot(plan_id:)

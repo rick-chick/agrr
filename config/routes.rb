@@ -81,7 +81,6 @@ Rails.application.routes.draw do
       end
       member do
         post :optimize
-        get :optimizing
         post :copy
       end
       resource :task_schedule, only: [ :show ], controller: "plans/task_schedules"
