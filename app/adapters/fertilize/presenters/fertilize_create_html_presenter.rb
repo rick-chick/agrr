@@ -28,11 +28,7 @@ module Adapters
             return
           end
 
-          if failure_dto.is_a?(Domain::Fertilize::Dtos::FertilizeCreateFailure)
-            @view.instance_variable_set(:@fertilize, Forms::FertilizeMasterForm.from_snapshot(failure_dto.master_form_snapshot))
-          end
-          @view.flash.now[:alert] = msg
-          @view.render :new, status: :unprocessable_entity
+          @view.redirect_to @view.fertilizes_path, alert: msg
         end
       end
     end

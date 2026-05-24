@@ -10,13 +10,6 @@ class Adapters::Fertilize::Gateways::FertilizeActiveRecordGatewayTest < ActiveSu
     )
   end
 
-  test "build_blank_fertilize_for_master_form returns new unsaved fertilize" do
-    fertilize = @gateway.build_blank_fertilize_for_master_form
-
-    assert_instance_of ::Fertilize, fertilize
-    assert fertilize.new_record?
-  end
-
   test "list_index_for_filter returns only named user-owned non-reference fertilizes for regular user" do
     user = create(:user)
     other = create(:user)

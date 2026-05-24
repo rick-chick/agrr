@@ -105,10 +105,6 @@ module Adapters
           ::Fertilize.find_by(name: name, is_reference: false, user_id: user_id)
         end
 
-        def build_blank_fertilize_for_master_form
-          ::Fertilize.new
-        end
-
         def build_after_create_failure_fertilize_for_master_form!(user:, attributes:)
           sym = attributes.respond_to?(:symbolize_keys) ? attributes.symbolize_keys : attributes.to_h.symbolize_keys
           fertilize = ::Fertilize.new(
@@ -124,10 +120,6 @@ module Adapters
           )
           fertilize.valid?
           fertilize
-        end
-
-        def blank_fertilize_master_form_snapshot
-          Adapters::Fertilize::Mappers::FertilizeMasterFormSnapshotMapper.from_record(build_blank_fertilize_for_master_form)
         end
 
         def fertilize_master_form_snapshot_after_create_failure!(user:, attributes:)

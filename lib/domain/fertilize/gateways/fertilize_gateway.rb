@@ -37,12 +37,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
-        # 新規マスタフォーム用スナップショット（永続化しない）
-        # @return [Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot]
-        def blank_fertilize_master_form_snapshot
-          raise NotImplementedError, "Subclasses must implement blank_fertilize_master_form_snapshot"
-        end
-
         # 作成検証失敗時のスナップショット（永続化しない）
         # @return [Domain::Fertilize::Dtos::FertilizeMasterFormSnapshot]
         def fertilize_master_form_snapshot_after_create_failure!(user:, attributes:)

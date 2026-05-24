@@ -63,7 +63,7 @@ Rails.application.routes.draw do
         end
       end
     end
-    resources :fertilizes
+    resources :fertilizes, only: %i[index show create update destroy]
     resources :pesticides
     resources :pests
     resources :agricultural_tasks

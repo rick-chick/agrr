@@ -288,14 +288,6 @@ class FertilizesControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("fertilizes.flash.no_permission"), flash[:alert]
   end
 
-  # ========== new アクションのテスト ==========
-
-  test "should get new" do
-    sign_in_as @user
-    get new_fertilize_path
-    assert_response :success
-  end
-
   # ========== region 認可 ==========
   #
   # region（admin のみ設定・更新可）の認可は FertilizePolicy.normalize_attrs_for_* が

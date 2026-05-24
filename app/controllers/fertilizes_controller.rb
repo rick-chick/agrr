@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class FertilizesController < ApplicationController
-  before_action :set_fertilize, only: [ :edit, :update ]
-
   # GET /fertilizes
   def index
     presenter = Adapters::Fertilize::Presenters::FertilizeListHtmlPresenter.new(view: self)
@@ -17,17 +15,6 @@ class FertilizesController < ApplicationController
     interactor = Domain::Fertilize::Interactors::FertilizeDetailInteractor.new(output_port: presenter,
       user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
     interactor.call(params[:id])
-  end
-
-  # GET /fertilizes/new
-  def new
-    presenter = Adapters::Fertilize::Presenters::FertilizeNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Fertilize::Interactors::FertilizeNewMasterFormInteractor.new(output_port: presenter,
-      gateway: CompositionRoot.fertilize_gateway).call
-  end
-
-  # GET /fertilizes/:id/edit
-  def edit
   end
 
   # POST /fertilizes
@@ -56,16 +43,7 @@ class FertilizesController < ApplicationController
 
   private
 
-  def set_fertilize
-    presenter = Adapters::Fertilize::Presenters::FertilizeLoadForViewHtmlPresenter.new(view: self)
-    interactor = Domain::Fertilize::Interactors::FertilizeLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.fertilize_gateway, user_lookup: CompositionRoot.user_lookup)
-    interactor.call(params[:id])
-  end
-
   def fertilize_params
-    # region / is_reference は mass-assignment 許可のみ。admin 限定の認可は
-    # FertilizePolicy.normalize_attrs_for_* と FertilizeCreate/UpdateInteractor が判定する。
     permitted = [
       :name,
       :n,
