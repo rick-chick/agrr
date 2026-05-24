@@ -30,7 +30,7 @@ class AuthControllerTest < ActionController::TestCase
     }
 
     get :google_oauth2_callback
-    assert_redirected_to process_saved_plan_public_plans_path
+    assert_redirected_to "http://localhost:4200/public-plans/results?planId=1", allow_other_host: true
   end
 
   def test_callback_redirects_to_return_to_when_set

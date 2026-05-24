@@ -60,7 +60,8 @@ class AuthController < ApplicationController
       }
 
       if session[:public_plan_save_data]
-        redirect_to process_saved_plan_public_plans_path and return
+        redirect_to_spa_public_plan_results_after_save!(session.delete(:public_plan_save_data))
+        return
       end
 
       if session[:return_to].present?
@@ -178,6 +179,14 @@ class AuthController < ApplicationController
 
   def build_origin(uri)
     "#{uri.scheme}://#{uri.host}#{":#{uri.port}" if uri.port && uri.port != uri.default_port}"
+  end
+
+  def redirect_to_spa_public_plan_results_after_save!(save_data)
+    plan_id = save_data[:plan_id] || save_data["plan_id"]
+    origin = frontend_allowed_origins.first || "http://localhost:4200"
+    redirect_to "#{origin}/public-plans/results?planId=#{plan_id}",
+                allow_other_host: true,
+                notice: I18n.t("auth.flash.login_success")
   end
 
   public :clear_session_cookie

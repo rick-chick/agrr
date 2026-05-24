@@ -49,8 +49,12 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
       assert_equal I18n.t("public_plans.errors.select_crop"), flash[:alert]
     end
   end
+end
 
-  test "POST /api/v1/public_plans/save_plan - 保存失敗の場合エラーレスポンスを返す" do
+class PublicPlansApiSaveSessionTest < ActionController::TestCase
+  tests Api::V1::PublicPlansController
+
+  test "POST api save_plan returns error when save fails" do
     # テストユーザーを作成（農場上限に達している）
     user = User.create!(
       email: "api_test4_opt@example.com",
@@ -96,47 +100,6 @@ class PublicPlansControllerSessionTest < ActionController::TestCase
       assert_not response_body["success"]
       assert_not_nil response_body["error"]
       assert_includes response_body["error"], "作成できるFarmは4件までです"
-    end
-  end
-
-  test "GET /public_plans/results - public planの結果を表示" do
-    # ActionController::TestCaseでインタラクタをスタブして高速化（~0.5s vs ~0.8s）
-    read_model = Domain::CultivationPlan::Dtos::PublicPlanResultsSnapshot.new(
-      plan_id: 1,
-      status_completed: true,
-      planning_start_date: Date.new(2026, 1, 1),
-      planning_end_date: Date.new(2026, 12, 31),
-      farm_name: "テスト農場",
-      total_area: 30.0,
-      field_cultivations_count: 1,
-      total_cost: 30000.0,
-      total_revenue: 30000.0,
-      total_profit: 0.0,
-      gantt_cultivation_rows: [{ id: 1, name: "テスト栽培", start_date: "2026-02-01", end_date: "2026-07-01" }],
-      gantt_field_rows: [{ id: 1, name: "テスト圃場" }],
-      crop_palette_embed: { used_crop_ids: [1], crops: [{ id: 1, name: "テスト作物", variety: "テスト品種" }] },
-      show_schedule_warning: false
-    )
-
-    Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.stub(:new, proc { |**kwargs|
-      Object.new.tap do |o|
-        o.define_singleton_method(:call) do |**_|
-          kwargs[:output_port].on_success(read_model)
-        end
-      end
-    }) do
-      # ActionController::TestCaseではアクションを直接呼び出し（ルーティング・ミドルウェアをスキップ）
-      get :results, params: { id: 1 }
-
-      assert_response :success
-
-      # ガントチャートデータが含まれているか確認（HTMLにデータ属性が含まれている）
-      assert_match /data-cultivations/, @response.body
-      assert_match /data-fields/, @response.body
-      assert_match /data-plan-start-date/, @response.body
-      assert_match /data-plan-end-date/, @response.body
-      assert_match /data-cultivation-plan-id/, @response.body
-      assert_match /data-plan-type/, @response.body
     end
   end
 
@@ -243,22 +206,19 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
     assert_equal "public", cultivation_plan.plan_type
     assert_equal "pending", cultivation_plan.status
 
-    # Step 5: 最適化画面の表示
-    get optimizing_public_plans_path(plan_id: plan_id)
-    assert_response :success
-    assert_select ".compact-header-title" # ヘッダータイトルが存在することを確認
-
-    # Step 6: 最適化処理の実行（バックグラウンドジョブ）
-    # 注意: 実際の最適化処理は複雑な依存関係があるため、ここではスキップ
-    # 代わりに、最適化画面が表示されることを確認
-
-    # Step 7: 結果画面の表示（完了済みの場合）
-    if cultivation_plan.status == "completed"
-      get results_public_plans_path(plan_id: cultivation_plan.id)
-      assert_response :success
-      assert_select "h2" # ビューにh2タグが存在することを確認
-      assert_select ".crop-palette-card" # 作物パレットカードが表示される
+    # Step 5–6: 最適化ジョブ（HTML optimizing/results 削除後は API + SPA が正）
+    OptimizationJob.stub(:perform_now, ->(*args) {
+      opts = args.first || {}
+      pid = opts[:cultivation_plan_id] || opts["cultivation_plan_id"]
+      CultivationPlan.find(pid).update!(status: "failed") if pid
+      raise Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor::WeatherDataNotFoundError
+    }) do
+      assert_raises(Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor::WeatherDataNotFoundError) do
+        OptimizationJob.perform_now(cultivation_plan_id: cultivation_plan.id, channel_class: "OptimizationChannel")
+      end
     end
+    cultivation_plan.reload
+    assert_equal "failed", cultivation_plan.status
   end
 
   test "最適化処理の実際の動作をテスト（気象データ不足のバグを発見）" do
@@ -501,20 +461,6 @@ class PublicPlansControllerTest < ActionDispatch::IntegrationTest
   # InteractorをスタブしてDBクエリとフルインテグレーションオーバーヘッドを回避
   # test "GET /public_plans/results - public planの結果を表示" do
 
-  private
-
-  def optimizing_public_plans_path(plan_id: nil)
-    path = "/public_plans/optimizing"
-    plan_id ? "#{path}?plan_id=#{plan_id}" : path
-  end
-
-  def results_public_plans_path(plan_id:)
-    "/public_plans/results?plan_id=#{plan_id}"
-  end
-
-  def public_plans_results_path
-    "/public_plans/results"
-  end
 end
 
 class PublicPlansControllerFarmSizesTest < ActiveSupport::TestCase

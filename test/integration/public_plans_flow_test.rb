@@ -99,13 +99,7 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
     assert_equal "public", cultivation_plan.plan_type
     assert_equal "pending", cultivation_plan.status
 
-    # Step 5: 最適化画面の表示
-    get optimizing_public_plans_path(plan_id: plan_id)
-    assert_response :success
-    assert_select ".compact-header-title" # ヘッダータイトルが存在することを確認
-    assert_select ".fixed-progress-bar" # プログレスバーが表示される
-
-    # Step 6: 最適化処理の実行（バックグラウンドジョブ）
+    # Step 5–6: 最適化処理の実行（HTML optimizing 削除後）
     # 天気予測は成功するが、最適化処理でAGRRデーモンが起動していないバグが発見される
     # 最適化ジョブは重いので、実行はスタブして期待例外をすばやく発生させる
     OptimizationJob.stub(:perform_now, ->(*args) {
@@ -131,12 +125,4 @@ class PublicPlansFlowTest < ActionDispatch::IntegrationTest
 
   private
 
-  def optimizing_public_plans_path(plan_id: nil)
-    path = "/public_plans/optimizing"
-    plan_id ? "#{path}?plan_id=#{plan_id}" : path
-  end
-
-  def results_public_plans_path(plan_id:)
-    "/public_plans/results?plan_id=#{plan_id}"
-  end
 end

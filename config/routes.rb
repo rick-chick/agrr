@@ -93,10 +93,6 @@ Rails.application.routes.draw do
     end
     get "public_plans", to: "public_plans#new", as: "public_plans"
     post "public_plans", to: "public_plans#create"
-    post "public_plans/save_plan", to: "public_plans#save_plan", as: "save_plan_public_plans"
-    get "public_plans/process_saved_plan", to: "public_plans#process_saved_plan", as: "process_saved_plan_public_plans"
-    get "public_plans/optimizing", to: "public_plans#optimizing", as: "optimizing_public_plans"
-    get "public_plans/results", to: "public_plans#results", as: "public_plans_results"
 
     # HTML Planning Schedules（ナビで fields_selection_planning_schedules_path を参照するため）
     get "planning_schedules/fields_selection", to: "planning_schedules#fields_selection", as: "fields_selection_planning_schedules"

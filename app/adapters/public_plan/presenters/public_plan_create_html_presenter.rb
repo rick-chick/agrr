@@ -9,10 +9,9 @@ module Adapters
         end
 
         def on_success(success_dto)
-          key = @view.class.session_key
-          sess = (@view.session[key] || {}).with_indifferent_access
-          @view.session[key] = sess.merge(plan_id: success_dto.plan_id)
-          @view.redirect_to @view.optimizing_public_plans_path
+          plan_id = success_dto.plan_id
+          origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
+          @view.redirect_to "#{origin}/public-plans/optimizing?planId=#{plan_id}", allow_other_host: true
         end
 
         def on_no_crops_failure(_view_context)

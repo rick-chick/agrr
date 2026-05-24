@@ -25,7 +25,11 @@ module Adapters
 
         def on_success_process_saved_plan(session_id:, expires_at:)
           assign_session_cookie(session_id, expires_at)
-          @view.redirect_to @view.process_saved_plan_public_plans_path
+          save_data = @view.session[:public_plan_save_data]
+          @view.session.delete(:public_plan_save_data)
+          plan_id = save_data[:plan_id] || save_data["plan_id"]
+          origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
+          @view.redirect_to "#{origin}/public-plans/results?planId=#{plan_id}", allow_other_host: true
         end
 
         def on_success_return_to(url:, session_id:, expires_at:, user_name:)

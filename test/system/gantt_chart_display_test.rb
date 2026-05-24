@@ -272,7 +272,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
   end
 
   test "public plans gantt chart has correct data attributes" do
-    login_and_visit public_plans_results_path(locale: :ja, id: @public_plan.id)
+    login_and_visit "/public-plans/results?planId=#{@public_plan.id}"
 
     # ページが読み込まれるまで待つ
     assert_selector "h1", text: /計画|Crop Plan|Plan/, wait: 10
@@ -296,7 +296,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
   end
 
   test "public plans gantt chart UI structure" do
-    login_and_visit public_plans_results_path(locale: :ja, id: @public_plan.id)
+    login_and_visit "/public-plans/results?planId=#{@public_plan.id}"
 
     # サーバーレンダリング要素の確認（JavaScript不要）
     assert_selector "#gantt-chart-container", wait: 10, visible: :all
@@ -318,7 +318,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
     private_cultivations = JSON.parse(private_container["data-cultivations"])
 
     # Public計画のガントチャートを確認
-    login_and_visit public_plans_results_path(locale: :ja, id: @public_plan.id)
+    login_and_visit "/public-plans/results?planId=#{@public_plan.id}"
 
     assert_selector "#gantt-chart-container", wait: 10, visible: :all
     assert_selector ".gantt-section", wait: 5, visible: :all
@@ -379,7 +379,7 @@ class GanttChartDisplayTest < ApplicationSystemTestCase
   end
 
   test "大量データでもレンダリング状態とUXメッセージが表示される" do
-    login_and_visit public_plans_results_path(locale: :ja, id: @public_plan.id)
+    login_and_visit "/public-plans/results?planId=#{@public_plan.id}"
 
     assert_selector "#gantt-chart-container", wait: 10, visible: :all
     assert_no_selector "#gantt-loading-indicator", wait: 1

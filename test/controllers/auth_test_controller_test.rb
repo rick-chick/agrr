@@ -63,8 +63,8 @@ class AuthTestControllerTest < ActionController::TestCase
 
     get :mock_login_as, params: { user: "developer" }
     assert_response :redirect
-    assert_match %r{public_plans/process_saved_plan}, response.redirect_url,
-      "Expected redirect to process_saved_plan (got #{response.redirect_url})"
+    assert_match %r{localhost:4200/public-plans/results\?planId=1}, response.redirect_url,
+      "Expected redirect to SPA public plan results (got #{response.redirect_url})"
   end
 
   def test_mock_login_as_without_mock_data_returns_translated_alert

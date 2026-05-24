@@ -11,7 +11,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
   self.session_key = :public_plan
   self.redirect_path_method = :public_plans_path
 
-  # Step 1: 栽培地域（参照農場）選択
+  # Step 1: 栽培地域（参照農場）選択（レガシー HTML。SPA は /public-plans/new）
   def new
     region = Domain::Shared::Mappers::LocaleToRegionMapper.call(I18n.locale)
     presenter = Adapters::PublicPlan::Presenters::ReferenceFarmsHtmlPresenter.new(view: self)
@@ -25,7 +25,7 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     Rails.logger.debug "🌍 [PublicPlans#new] locale=#{I18n.locale}, region=#{region}, farms=#{@farms.count}"
   end
 
-  # Step 4: 作付け計画作成（計算開始）
+  # Step 4: 作付け計画作成（レガシー HTML POST。SPA は API wizard#create）
   def create
     input_dto = Domain::PublicPlan::Dtos::PublicPlanCreateInput.new(
       farm_id: session_data[:farm_id],
@@ -49,125 +49,18 @@ class PublicPlansController < CultivationPlanHtmlBaseController
     ).call(input_dto)
   end
 
-  # Step 5: 最適化進捗画面（広告表示）
-  def optimizing
-    plan_id = public_plan_wizard_plan_id
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanOptimizingHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PublicPlanOptimizingInteractor.new(
-      output_port: presenter,
-      plan_id: plan_id,
-      gateway: CompositionRoot.cultivation_plan_gateway,
-      translator: CompositionRoot.translator,
-      logger: CompositionRoot.logger
-    ).call
-    return if performed?
-  end
-
-  # Step 6: 結果表示
-  def results
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanResultsHtmlPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PublicPlanResultsInteractor.new(
-      output_port: presenter,
-      gateway: CompositionRoot.cultivation_plan_gateway,
-      clock: Time.zone
-    ).call(plan_id: public_plan_wizard_plan_id)
-    return if performed?
-  end
-
-  # 保存ボタンクリック時の処理（HTML用）およびAPI用
-  def save_plan
-    if request.format.json?
-      handle_api_save_plan
-      return
-    end
-
-    plan_id = public_plan_wizard_plan_id
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanWizardSaveDispatchHtmlPresenter.new(
-      view: self,
-      clear_stashed_save_data_on_success: false
-    )
-    Domain::CultivationPlan::Interactors::PublicPlanWizardSaveDispatchInteractor.new(
-      output_port: presenter,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-      public_plan_save_gateway: CompositionRoot.public_plan_save_gateway,
-      logger: CompositionRoot.logger,
-      translator: CompositionRoot.translator
-    ).call(
-      plan_id: plan_id,
-      farm_id: session_data[:farm_id],
-      crop_ids: session_data[:crop_ids],
-      user: current_user
-    )
-  end
-
-  # ログイン後の保存処理
-  def process_saved_plan
-    return unless session[:public_plan_save_data]
-
-    run_public_plan_save_from_session_html(
-      user: current_user,
-      session_data: session[:public_plan_save_data],
-      clear_stashed_save_data_on_success: true
-    )
-  end
-
   private
 
-  def public_plan_wizard_plan_id
-    Domain::PublicPlan::Mappers::PublicPlanWizardPlanIdMapper.normalize(
-      params[:id],
-      params[:plan_id],
-      params[:planId],
-      session_data[:plan_id]
-    )
+  def job_completion_redirect_path
+    "#{spa_frontend_origin}/public-plans/results"
   end
 
-  def run_public_plan_save_from_session_html(user:, session_data:, clear_stashed_save_data_on_success:)
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanSaveFromSessionHtmlPresenter.new(
-      view: self,
-      clear_stashed_save_data_on_success: clear_stashed_save_data_on_success
-    )
-    Domain::CultivationPlan::Interactors::PublicPlanSaveFromSessionInteractor.new(
-      output_port: presenter,
-      public_plan_save_gateway: CompositionRoot.public_plan_save_gateway,
-      logger: CompositionRoot.logger,
-      translator: CompositionRoot.translator
-    ).call(user: user, session_data: session_data)
-  end
-
-  def handle_api_save_plan
-    Rails.logger.info "🔍 [handle_api_save_plan] Called"
-
-    unless current_user
-      Rails.logger.warn "❌ [handle_api_save_plan] User not authenticated"
-      render json: { success: false, error: "Authentication required" }, status: :unauthorized
-      return
-    end
-
-    presenter = Adapters::PublicPlan::Presenters::PublicPlanSaveFromSessionApiApiPresenter.new(view: self)
-    Domain::CultivationPlan::Interactors::PublicPlanSaveByPlanIdInteractor.new(
-      output_port: presenter,
-      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-      public_plan_save_gateway: CompositionRoot.public_plan_save_gateway,
-      logger: CompositionRoot.logger,
-      translator: CompositionRoot.translator
-    ).call(plan_id: params[:plan_id], user: current_user)
-  end
-
-  def optimizing_redirect_path
-    :optimizing_public_plans_path
-  end
-
-  def completion_redirect_path
-    :public_plans_results_path
+  def spa_frontend_origin
+    ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
   end
 
   def channel_class
     OptimizationChannel
-  end
-
-  def job_completion_redirect_path
-    public_plans_results_path
   end
 
 end
