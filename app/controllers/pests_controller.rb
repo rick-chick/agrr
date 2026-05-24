@@ -68,27 +68,10 @@ class PestsController < ApplicationController
 
   # DELETE /pests/:id
   def destroy
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::Pest::Presenters::PestDestroyHtmlPresenter.new(view: self)
-        Domain::Pest::Interactors::PestDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id,
-          translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-      end
-
-      format.json do
-        Adapters::DeletionUndo::HtmlMasterScheduleInvoker.call(
-          view: self,
-          actor_id: current_user.id,
-          resource_type: "Pest",
-          resource_id: params[:id].to_i,
-          toast_message: nil,
-          fallback_location: pests_path,
-          in_use_message_key: "pests.flash.cannot_delete_in_use",
-          delete_error_message_key: "pests.flash.delete_error"
-        )
-      end
-    end
+    presenter = Adapters::Pest::Presenters::PestDestroyHtmlPresenter.new(view: self)
+    Domain::Pest::Interactors::PestDestroyInteractor.new(output_port: presenter,
+      user_id: current_user.id,
+      translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
   end
 
   private

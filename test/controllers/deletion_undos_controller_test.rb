@@ -62,4 +62,86 @@ class DeletionUndosControllerTest < ActionDispatch::IntegrationTest
     assert_equal "restored", event.state
     assert Fertilize.exists?(fertilize.id), "Undo 後に Fertilize が復元されていません"
   end
+
+  test "restore_after_masters_api_destroy_of_pest" do
+    pest = create(:pest, :user_owned, user: @user)
+
+    assert_difference -> { Pest.count }, -1 do
+      delete api_v1_masters_pest_path(pest), headers: @api_headers
+      assert_response :success
+    end
+
+    undo_token = @response.parsed_body.fetch("undo_token")
+    assert_not Pest.exists?(pest.id), "削除後に Pest が残っています"
+
+    assert_difference -> { Pest.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
+      assert_response :success
+    end
+
+    assert_equal "restored", @response.parsed_body.fetch("status")
+    assert Pest.exists?(pest.id), "Undo 後に Pest が復元されていません"
+  end
+
+  test "restore_after_masters_api_destroy_of_pesticide" do
+    crop = create(:crop, :user_owned, user: @user)
+    pest = create(:pest, :user_owned, user: @user)
+    pesticide = create(:pesticide, :user_owned, user: @user, crop: crop, pest: pest)
+
+    assert_difference -> { Pesticide.count }, -1 do
+      delete api_v1_masters_pesticide_path(pesticide), headers: @api_headers
+      assert_response :success
+    end
+
+    undo_token = @response.parsed_body.fetch("undo_token")
+    assert_not Pesticide.exists?(pesticide.id)
+
+    assert_difference -> { Pesticide.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
+      assert_response :success
+    end
+
+    assert_equal "restored", @response.parsed_body.fetch("status")
+    assert Pesticide.exists?(pesticide.id)
+  end
+
+  test "restore_after_masters_api_destroy_of_agricultural_task" do
+    task = create(:agricultural_task, :user_owned, user: @user)
+
+    assert_difference -> { AgriculturalTask.count }, -1 do
+      delete api_v1_masters_agricultural_task_path(task), headers: @api_headers
+      assert_response :success
+    end
+
+    undo_token = @response.parsed_body.fetch("undo_token")
+    assert_not AgriculturalTask.exists?(task.id)
+
+    assert_difference -> { AgriculturalTask.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
+      assert_response :success
+    end
+
+    assert_equal "restored", @response.parsed_body.fetch("status")
+    assert AgriculturalTask.exists?(task.id)
+  end
+
+  test "restore_after_masters_api_destroy_of_crop" do
+    crop = create(:crop, :user_owned, user: @user)
+
+    assert_difference -> { Crop.count }, -1 do
+      delete api_v1_masters_crop_path(crop), headers: @api_headers
+      assert_response :success
+    end
+
+    undo_token = @response.parsed_body.fetch("undo").fetch("undo_token")
+    assert_not Crop.exists?(crop.id)
+
+    assert_difference -> { Crop.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
+      assert_response :success
+    end
+
+    assert_equal "restored", @response.parsed_body.fetch("status")
+    assert Crop.exists?(crop.id)
+  end
 end

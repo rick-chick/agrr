@@ -186,62 +186,6 @@ class PestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("pests.undo.toast", name: pest.name), event.toast_message
   end
 
-  test "destroy_returns_undo_token_json" do
-    pest = create(:pest, :user_owned, user: @user)
-
-    assert_difference -> { Pest.count }, -1 do
-      assert_difference -> { DeletionUndoEvent.count }, +1 do
-        delete pest_path(pest), as: :json
-        assert_response :success
-      end
-    end
-
-    body = JSON.parse(@response.body)
-    %w[undo_token undo_deadline toast_message undo_path auto_hide_after resource redirect_path resource_dom_id].each do |key|
-      value = body.fetch(key)
-      assert value.present?, "#{key} が空です"
-    end
-
-    undo_token = body.fetch("undo_token")
-    event = DeletionUndoEvent.find(undo_token)
-    assert_equal "Pest", event.resource_type
-    assert_equal pest.id.to_s, event.resource_id
-    assert_equal "scheduled", event.state
-    assert_equal undo_deletion_path(undo_token: undo_token), body.fetch("undo_path")
-    assert_equal I18n.t("pests.undo.toast", name: pest.name), body.fetch("toast_message")
-    assert_equal pest.name, body.fetch("resource")
-    assert_equal pests_path(locale: I18n.locale), body.fetch("redirect_path")
-    assert_equal dom_id(pest), body.fetch("resource_dom_id")
-
-    # TODO: HTMLレスポンス向けのUndoトースト表示テストを追加する
-  end
-
-  test "undo_endpoint_restores_pest" do
-    pest = create(:pest, :user_owned, user: @user)
-
-    delete pest_path(pest), as: :json
-    assert_response :success
-
-    body = JSON.parse(@response.body)
-    undo_token = body.fetch("undo_token")
-    event = DeletionUndoEvent.find(undo_token)
-    assert_equal "scheduled", event.state
-    assert_not Pest.exists?(pest.id), "削除後にPestが残っています"
-
-    assert_difference -> { Pest.count }, +1 do
-      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
-      assert_response :success
-    end
-
-    undo_body = JSON.parse(@response.body)
-    assert_equal "restored", undo_body.fetch("status")
-    assert_equal undo_token, undo_body.fetch("undo_token")
-
-    event.reload
-    assert_equal "restored", event.state
-    assert Pest.exists?(pest.id), "Undo後にPestが復元されていません"
-  end
-
   # is_reference（admin のみ設定・変更可）の認可は PestCreate/UpdateInteractor が
   # 判定する → test/domain/pest/interactors/pest_{create,update}_interactor_test.rb。
   # 以下の controller テストは認可失敗の HTTP 応答（redirect + flash）の境界のみ検証する。
