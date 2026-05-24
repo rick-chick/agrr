@@ -29,6 +29,12 @@ module Adapters
             return existing_farm
           end
 
+          existing_count = @ctx.user.farms.where(is_reference: false).count
+          if Domain::Farm::Policies::FarmCreateLimitPolicy.limit_exceeded?(existing_non_reference_count: existing_count)
+            raise Domain::Shared::Exceptions::RecordInvalid,
+                  I18n.t("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded")
+          end
+
           new_farm = @ctx.user.farms.build(
             name: "#{reference_farm.name} (コピー #{Time.current.strftime('%Y%m%d_%H%M%S')})",
             latitude: reference_farm.latitude,
@@ -42,9 +48,6 @@ module Adapters
           unless new_farm.save
             error_message = new_farm.errors.full_messages.join(", ")
             Rails.logger.error "❌ [PlanSaveService] Farm creation failed: #{error_message}"
-            if new_farm.errors.details[:user].any? { |e| e[:error] == :farm_limit_exceeded }
-              raise Domain::Shared::Exceptions::RecordInvalid, I18n.t("activerecord.errors.models.farm.attributes.user.farm_limit_exceeded")
-            end
             raise Domain::Shared::Exceptions::RecordInvalid, error_message
           end
 

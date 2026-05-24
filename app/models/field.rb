@@ -30,16 +30,6 @@ class Field < ApplicationRecord
     name.presence || "##{id}"
   end
 
-  # Export field configuration for agrr CLI
-  def to_agrr_config
-    {
-      field_id: id.to_s,
-      name: name,
-      area: area,
-      daily_fixed_cost: daily_fixed_cost
-    }
-  end
-
   # ActiveRecordのdom_idヘルパーを使えるようにする
   def dom_id(record, prefix = nil)
     ActionView::RecordIdentifier.dom_id(record, prefix)

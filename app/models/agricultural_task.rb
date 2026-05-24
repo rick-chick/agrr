@@ -51,27 +51,6 @@ class AgriculturalTask < ApplicationRecord
   scope :user_owned, -> { where(is_reference: false) }
   scope :recent, -> { order(created_at: :desc) }
 
-  # agrr CLI の agricultural-tasks フォーマットに変換
-  # @return [Hash] agrr CLI が期待するタスクのハッシュ
-  def to_agrr_format
-    {
-      "task_id" => id.to_s,
-      "name" => name,
-      "description" => description,
-      "time_per_sqm" => time_per_sqm&.to_f,
-      "weather_dependency" => weather_dependency,
-      "required_tools" => required_tools || [],
-      "skill_level" => skill_level
-    }.compact
-  end
-
-  # 複数のタスクをagrr CLI形式の配列に変換
-  # @param tasks [ActiveRecord::Relation<AgriculturalTask>] タスクのコレクション
-  # @return [Array<Hash>] agrr CLI形式のタスク配列
-  def self.to_agrr_format_array(tasks)
-    tasks.map(&:to_agrr_format)
-  end
-
   private
 
   def name_uniqueness_scope

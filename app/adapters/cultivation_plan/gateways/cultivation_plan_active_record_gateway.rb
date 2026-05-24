@@ -255,7 +255,7 @@ module Adapters
               id: cpc.id,
               name: cpc.name,
               crop_id: cpc.crop_id,
-              agrr_requirement: crop.to_agrr_requirement,
+              agrr_requirement: Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(crop),
               revenue_per_area: crop.revenue_per_area,
               crop_name: crop.name
             )

@@ -62,7 +62,6 @@ class FarmLimitIntegrationTest < ActiveSupport::TestCase
   end
 
   test "should prevent creating 5th farm" do
-    # 農場を4つ作成
     4.times do |i|
       Farm.create!(
         user: @user,
@@ -73,17 +72,11 @@ class FarmLimitIntegrationTest < ActiveSupport::TestCase
       )
     end
 
-    # 5つ目の農場作成を試行
-    farm5 = Farm.new(
-      user: @user,
-      name: "テスト農場 5",
-      latitude: 35.5,
-      longitude: 135.5,
-      is_reference: false
+    count = @user.farms.where(is_reference: false).count
+    assert_equal 4, count
+    assert Domain::Farm::Policies::FarmCreateLimitPolicy.limit_exceeded?(
+      existing_non_reference_count: count
     )
-
-    assert_not farm5.valid?, "5th farm should not be valid"
-    assert_includes farm5.errors[:user], "作成できるFarmは4件までです"
   end
 
   test "should allow unlimited reference farms" do
@@ -176,15 +169,9 @@ class FarmLimitIntegrationTest < ActiveSupport::TestCase
 
     assert_equal 4, @user.farms.where(is_reference: false).count
 
-    # 5つ目の農場作成を試行
-    farm5 = Farm.new(
-      user: @user,
-      name: "制限テスト農場",
-      latitude: 35.5,
-      longitude: 135.5,
-      is_reference: false
+    count = @user.farms.where(is_reference: false).count
+    assert Domain::Farm::Policies::FarmCreateLimitPolicy.limit_exceeded?(
+      existing_non_reference_count: count
     )
-
-    assert_not farm5.valid?, "5th farm should not be valid"
   end
 end

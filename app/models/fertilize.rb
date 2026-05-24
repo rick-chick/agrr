@@ -37,24 +37,6 @@ class Fertilize < ApplicationRecord
   scope :by_region, ->(region) { where(region: region) }
   scope :recent, -> { order(created_at: :desc) }
 
-  # ヘルパーメソッド
-  def has_nutrient?(nutrient)
-    case nutrient.to_sym
-    when :n
-      n.present? && n > 0
-    when :p
-      p.present? && p > 0
-    when :k
-      k.present? && k > 0
-    else
-      false
-    end
-  end
-
-  def npk_summary
-    [ n, p, k ].compact.map { |v| v.to_i }.join("-")
-  end
-
   # 参照肥料は user を持たない（システム所有）
   def user_must_be_nil_for_reference
     return unless is_reference? && user_id.present?

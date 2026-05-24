@@ -47,26 +47,9 @@ class User < ApplicationRecord
     end
   end
 
-  # Avatar URL processing for OAuth
-  def self.process_avatar_url(url)
-    return url unless url.present?
-    return url unless url.start_with?("/assets/")
-
-    # Extract filename from /assets/filename.ext path
-    url.sub("/assets/", "")
-  end
-
   # Admin methods
   def admin?
     admin
-  end
-
-  def make_admin!
-    update!(admin: true)
-  end
-
-  def remove_admin!
-    update!(admin: false)
   end
 
   # API Key methods
@@ -88,10 +71,6 @@ class User < ApplicationRecord
 
   def regenerate_api_key!
     generate_api_key!
-  end
-
-  def has_api_key?
-    api_key.present?
   end
 
   # Class method to find user by API key

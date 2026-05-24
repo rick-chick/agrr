@@ -91,7 +91,7 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_reference_crop_entities"
         end
 
-        # エントリスケジュール: Crop#to_agrr_requirement 用に AR を逐次 yield（Relation は公開しない）
+        # エントリスケジュール: agrr requirement 組み立て用に AR を逐次 yield（Relation は公開しない）
         def each_reference_crop_for_entry_schedule(region, &block)
           raise NotImplementedError, "Subclasses must implement each_reference_crop_for_entry_schedule"
         end

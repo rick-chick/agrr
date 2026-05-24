@@ -65,7 +65,9 @@ module Adapters
           weather_for_file = weather_hash_for_agrr
           return failed_result(:insufficient_weather) if weather_for_file.blank?
 
-          crop_requirement = self.class.scale_stage_gdd_for_optimize_period(@crop.to_agrr_requirement)
+          crop_requirement = self.class.scale_stage_gdd_for_optimize_period(
+            Adapters::Crop::Mappers::CropAgrrRequirementMapper.build_from(@crop)
+          )
           gateway = ::Adapters::Agrr::Gateways::OptimizationDaemonGateway.new
           parsed = gateway.optimize(
             crop_name: @crop.name,

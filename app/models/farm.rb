@@ -45,9 +45,8 @@ class Farm < ApplicationRecord
   validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
   validates :source_farm_id, uniqueness: { scope: :user_id }, allow_nil: true
 
-  # ユーザー農場の件数制限（4件まで）
+  # ユーザー農場の件数制限は Domain::Farm::Policies::FarmCreateLimitPolicy（Interactor）で実施
   validates :user, presence: true
-  validate :user_farm_count_limit, unless: :is_reference?
 
   # 参照農場はアノニマスユーザーにのみ設定可能（複数の参照農場を許可）
   validate :reference_farm_must_belong_to_anonymous_user
@@ -60,10 +59,6 @@ class Farm < ApplicationRecord
   scope :user_owned, -> { where(is_reference: false) }
 
   # Instance methods
-  def coordinates
-    [ latitude, longitude ]
-  end
-
   def has_coordinates?
     latitude.present? && longitude.present?
   end
@@ -80,22 +75,6 @@ class Farm < ApplicationRecord
   def weather_data_progress
     return 0 if weather_data_total_years.zero?
     (weather_data_fetched_years.to_f / weather_data_total_years * 100).round
-  end
-
-  # 天気データ取得状態の表示
-  def weather_data_status_text
-    case weather_data_status
-    when "pending"
-      I18n.t("models.farm.weather_status.pending")
-    when "fetching"
-      I18n.t("models.farm.weather_status.fetching", progress: weather_data_progress)
-    when "completed"
-      I18n.t("models.farm.weather_status.completed")
-    when "failed"
-      I18n.t("models.farm.weather_status.failed")
-    else
-      I18n.t("models.farm.weather_status.unknown")
-    end
   end
 
   # 天気データ取得を開始
@@ -169,19 +148,6 @@ class Farm < ApplicationRecord
   def reference_farm_must_belong_to_anonymous_user
     if is_reference && user && !user.anonymous?
       errors.add(:is_reference, :reference_only_anonymous)
-    end
-  end
-
-  # ユーザー農場の件数制限（4件まで）
-  def user_farm_count_limit
-    return if user.nil? || is_reference?
-
-    existing_farms_count = user.farms.where(is_reference: false).count
-    # 新規作成の場合は既存の件数、更新の場合は既存の件数-1（自分自身を除く）
-    current_count = new_record? ? existing_farms_count : existing_farms_count - 1
-
-    if current_count >= 4
-      errors.add(:user, :farm_limit_exceeded)
     end
   end
 

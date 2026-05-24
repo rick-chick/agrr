@@ -70,17 +70,6 @@ class InteractionRule < ApplicationRecord
     }.compact
   end
 
-  # JSON出力をカスタマイズ
-  def as_json(options = {})
-    result = super(options.merge(
-      only: [ :id, :rule_type, :source_group, :target_group, :impact_ratio, :is_directional, :description, :user_id, :is_reference ],
-      methods: []
-    ))
-    # impact_ratioをFloatに変換（DBから取得すると文字列になる場合がある）
-    result["impact_ratio"] = result["impact_ratio"].to_f if result["impact_ratio"]
-    result
-  end
-
   # 複数のルールをagrr CLI形式の配列に変換
   # @param rules [ActiveRecord::Relation<InteractionRule>] ルールのコレクション
   # @return [Array<Hash>] agrr CLI形式のルール配列

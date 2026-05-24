@@ -54,28 +54,6 @@ class FertilizeTest < ActiveSupport::TestCase
     assert fertilize.valid?
   end
 
-  test "has_nutrient? should return true when nutrient is present and > 0" do
-    fertilize = create(:fertilize, :urea)
-    assert fertilize.has_nutrient?(:n)
-    assert_not fertilize.has_nutrient?(:p)
-    assert_not fertilize.has_nutrient?(:k)
-  end
-
-  test "has_nutrient? should return false when nutrient is nil or 0" do
-    fertilize = create(:fertilize, n: 0, p: nil)
-    assert_not fertilize.has_nutrient?(:n)
-    assert_not fertilize.has_nutrient?(:p)
-  end
-
-  test "npk_summary should return formatted string" do
-    fertilize = create(:fertilize, n: 20, p: 10, k: 5)
-    assert_equal "20-10-5", fertilize.npk_summary
-  end
-
-  test "npk_summary should handle nil values" do
-    fertilize = create(:fertilize, n: 20, p: nil, k: 10)
-    assert_equal "20-10", fertilize.npk_summary
-  end
 
   test "reference scope should return only reference fertilizes" do
     create(:fertilize, is_reference: true, user_id: nil)

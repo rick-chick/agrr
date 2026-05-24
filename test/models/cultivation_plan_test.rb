@@ -200,10 +200,6 @@ class CultivationPlanTest < ActiveSupport::TestCase
     assert_equal expected_name, plan.display_name
   end
 
-  test "should require weather prediction" do
-    plan = build(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
-    assert plan.requires_weather_prediction?
-  end
 
   test "destroying plan removes dependent schedules and items without foreign key errors" do
     plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
@@ -421,24 +417,6 @@ class CultivationPlanTest < ActiveSupport::TestCase
     plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
     plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
     plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
-    field_cultivation = create(
-      :field_cultivation,
-      cultivation_plan: plan,
-      cultivation_plan_field: plan_field,
-      cultivation_plan_crop: plan_crop,
-      start_date: Date.new(2025, 4, 1),
-      completion_date: Date.new(2025, 10, 31)
-    )
-
-    range = plan.calculated_planning_range
-    # plan_yearが設定されている場合は保存されているカラムを優先
-    assert_equal plan.planning_start_date, range[:start_date]
-    assert_equal plan.planning_end_date, range[:end_date]
-  end
-
-  test "planning_start_date returns nil when column is nil (for validation)" do
-    plan = create(:cultivation_plan, farm: @farm, user: @user, plan_year: @plan_year)
-    plan_field = create(:cultivation_plan_field, cultivation_plan: plan)
     plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan)
     field_cultivation = create(
       :field_cultivation,

@@ -27,23 +27,4 @@ class FreeCropPlan < ApplicationRecord
 
   # Serialization
   serialize :plan_data, coder: JSON
-
-  # Methods
-  def start_calculation!
-    update!(status: "calculating")
-  end
-
-  def complete_calculation!(data)
-    update!(
-      status: "completed",
-      plan_data: data
-    )
-  end
-
-  def mark_failed!(error_message)
-    update!(
-      status: "failed",
-      plan_data: { error: error_message }
-    )
-  end
 end

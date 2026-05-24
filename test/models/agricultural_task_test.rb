@@ -73,55 +73,6 @@ class AgriculturalTaskTest < ActiveSupport::TestCase
     assert_includes AgriculturalTask.user_owned, user_task
   end
 
-  test "to_agrr_format should convert to agrr CLI format" do
-    task = create(:agricultural_task,
-      name: "土壌準備",
-      description: "畑の土壌を耕す",
-      time_per_sqm: 0.1,
-      weather_dependency: "low",
-      required_tools: [ "トラクター", "耕運機" ],
-      skill_level: "beginner"
-    )
-
-    agrr_format = task.to_agrr_format
-
-    assert_equal task.id.to_s, agrr_format["task_id"]
-    assert_equal "土壌準備", agrr_format["name"]
-    assert_equal "畑の土壌を耕す", agrr_format["description"]
-    assert_equal 0.1, agrr_format["time_per_sqm"]
-    assert_equal "low", agrr_format["weather_dependency"]
-    assert_equal [ "トラクター", "耕運機" ], agrr_format["required_tools"]
-    assert_equal "beginner", agrr_format["skill_level"]
-  end
-
-  test "to_agrr_format should handle nil values" do
-    task = create(:agricultural_task,
-      name: "テストタスク",
-      description: nil,
-      time_per_sqm: nil,
-      weather_dependency: nil,
-      required_tools: [],
-      skill_level: nil
-    )
-
-    agrr_format = task.to_agrr_format
-
-    assert_equal task.id.to_s, agrr_format["task_id"]
-    assert_equal "テストタスク", agrr_format["name"]
-    assert_nil agrr_format["description"]
-    assert_nil agrr_format["time_per_sqm"]
-  end
-
-  test "to_agrr_format_array should convert multiple tasks" do
-    task1 = create(:agricultural_task, name: "タスク1")
-    task2 = create(:agricultural_task, name: "タスク2")
-
-    array = AgriculturalTask.to_agrr_format_array([ task1, task2 ])
-
-    assert_equal 2, array.length
-    assert_equal task1.id.to_s, array[0]["task_id"]
-    assert_equal task2.id.to_s, array[1]["task_id"]
-  end
 
   # ========== name 一意性のテスト ==========
 

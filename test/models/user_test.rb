@@ -24,13 +24,6 @@ class UserTest < ActiveSupport::TestCase
     assert_equal new_key, user.reload.api_key
   end
 
-  test "should check if user has api key" do
-    user = create(:user)
-    assert_not user.has_api_key?
-
-    user.generate_api_key!
-    assert user.has_api_key?
-  end
 
   test "should find user by api key" do
     user = create(:user)

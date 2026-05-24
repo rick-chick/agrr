@@ -17,51 +17,14 @@ class WeatherLocation < ApplicationRecord
   # Scopes
   scope :by_coordinates, ->(lat, lon) { where(latitude: lat, longitude: lon) }
 
-  # Class methods
-  def self.find_or_create_by_coordinates(latitude:, longitude:, elevation: nil, timezone: nil)
-    # 既存のレコードを検索
-    location = find_by(latitude: latitude, longitude: longitude)
-    return location if location
-
-    # 存在しない場合は作成（競合状態を考慮）
-    create!(
-      latitude: latitude,
-      longitude: longitude,
-      elevation: elevation,
-      timezone: timezone || "UTC"
-    )
-  rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
-    # 別のジョブが同時に作成した場合は再取得
-    find_by!(latitude: latitude, longitude: longitude)
-  end
-
-  # Instance methods
-  def coordinates
-    [ latitude, longitude ]
-  end
-
-  def coordinates_string
-    "#{latitude},#{longitude}"
-  end
-
   # 指定期間の気象データを取得
   def weather_data_for_period(start_date, end_date)
     weather_data_storage_gateway.weather_data_for_period(weather_location_id: id, start_date: start_date, end_date: end_date)
   end
 
-  # 指定期間に気象データが存在するか
-  def has_weather_data_for_period?(start_date, end_date)
-    weather_data_storage_gateway.weather_data_count(weather_location_id: id, start_date: start_date, end_date: end_date) == (end_date - start_date).to_i + 1
-  end
-
   # 最新の天気データの日付を取得
   def latest_weather_date
     weather_data_storage_gateway.latest_date(weather_location_id: id)
-  end
-
-  # 最古の天気データの日付を取得
-  def earliest_weather_date
-    weather_data_storage_gateway.earliest_date(weather_location_id: id)
   end
 
   private

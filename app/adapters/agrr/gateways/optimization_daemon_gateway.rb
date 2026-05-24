@@ -19,7 +19,7 @@ module Adapters
           field_file = write_temp_file(field_config, prefix: "field")
 
           # Cropモデルから作物プロファイルを生成（呼び出し側で crop_requirement を渡せば上書き）
-          crop_requirement ||= crop.to_agrr_requirement
+          crop_requirement ||= Adapters::Crop::Mappers::CropAgrrRequirementMapper.build_from(crop)
           crop_file = write_temp_file(crop_requirement, prefix: "crop_profile")
           Rails.logger.info "📝 [AGRR] Crop requirement: #{crop_requirement.to_json}"
 

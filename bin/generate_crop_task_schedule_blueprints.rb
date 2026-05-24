@@ -227,7 +227,7 @@ def build_blueprints(crop, schedule_gateway, fertilize_gateway)
     return []
   end
 
-  stage_requirements = crop.to_agrr_requirement.fetch('stage_requirements')
+  stage_requirements = Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(crop).fetch("stage_requirements")
   agricultural_tasks = CropTaskTemplate.to_agrr_format_array(templates)
 
   schedule_response = schedule_gateway.generate(

@@ -77,12 +77,10 @@ module Api
         end
 
         test "create returns plan_id and enqueues job chain on success" do
-          weather_location = WeatherLocation.find_or_create_by_coordinates(
-            latitude: 36.0,
-            longitude: 140.0,
-            elevation: 50.0,
-            timezone: "Asia/Tokyo"
-          )
+          weather_location = WeatherLocation.find_or_create_by!(latitude: 36.0, longitude: 140.0) do |wl|
+            wl.elevation = 50.0
+            wl.timezone = "Asia/Tokyo"
+          end
           farm = create(:farm, region: "jp", latitude: 36.0, longitude: 140.0, weather_location: weather_location)
           crop = create(:crop, :reference, region: "jp")
 
@@ -121,12 +119,10 @@ module Api
         end
 
         test "create returns 422 when farm_size is invalid" do
-          weather_location = WeatherLocation.find_or_create_by_coordinates(
-            latitude: 36.0,
-            longitude: 140.0,
-            elevation: 50.0,
-            timezone: "Asia/Tokyo"
-          )
+          weather_location = WeatherLocation.find_or_create_by!(latitude: 36.0, longitude: 140.0) do |wl|
+            wl.elevation = 50.0
+            wl.timezone = "Asia/Tokyo"
+          end
           farm = create(:farm, region: "jp", latitude: 36.0, longitude: 140.0, weather_location: weather_location)
           crop = create(:crop, :reference, region: "jp")
 
@@ -142,12 +138,10 @@ module Api
         end
 
         test "create returns 422 when no crops selected" do
-          weather_location = WeatherLocation.find_or_create_by_coordinates(
-            latitude: 36.0,
-            longitude: 140.0,
-            elevation: 50.0,
-            timezone: "Asia/Tokyo"
-          )
+          weather_location = WeatherLocation.find_or_create_by!(latitude: 36.0, longitude: 140.0) do |wl|
+            wl.elevation = 50.0
+            wl.timezone = "Asia/Tokyo"
+          end
           farm = create(:farm, region: "jp", latitude: 36.0, longitude: 140.0, weather_location: weather_location)
 
           post api_v1_public_plans_plans_path, params: {
@@ -171,12 +165,10 @@ module Api
         end
 
         test "create then optimization job failure updates plan status" do
-          weather_location = WeatherLocation.find_or_create_by_coordinates(
-            latitude: 35.6762,
-            longitude: 139.6503,
-            elevation: 10.0,
-            timezone: "Asia/Tokyo"
-          )
+          weather_location = WeatherLocation.find_or_create_by!(latitude: 35.6762, longitude: 139.6503) do |wl|
+            wl.elevation = 10.0
+            wl.timezone = "Asia/Tokyo"
+          end
           farm = create(:farm, :reference,
             name: "関東農場",
             latitude: 35.6762,

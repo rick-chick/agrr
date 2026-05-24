@@ -46,7 +46,7 @@ module Adapters
             name: crop.name,
             crop_task_templates: templates,
             crop_task_schedule_blueprints: blueprints,
-            agrr_requirement: crop.to_agrr_requirement
+            agrr_requirement: Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(crop)
           )
         end
 

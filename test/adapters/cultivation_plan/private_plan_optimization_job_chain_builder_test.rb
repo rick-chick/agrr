@@ -5,12 +5,10 @@ require "test_helper"
 class PrivatePlanOptimizationJobChainBuilderTest < ActiveSupport::TestCase
   setup do
     @user = create(:user)
-    @weather_location = WeatherLocation.find_or_create_by_coordinates(
-      latitude: 36.0,
-      longitude: 140.0,
-      elevation: 50.0,
-      timezone: "Asia/Tokyo"
-    )
+    @weather_location = WeatherLocation.find_or_create_by!(latitude: 36.0, longitude: 140.0) do |wl|
+      wl.elevation = 50.0
+      wl.timezone = "Asia/Tokyo"
+    end
     @farm = create(:farm, user: @user, latitude: 36.0, longitude: 140.0, region: "jp", weather_location: @weather_location)
     @plan = create(:cultivation_plan, farm: @farm, user: @user, plan_type: "private")
   end

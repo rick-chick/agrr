@@ -50,7 +50,6 @@ class CultivationPlan < ApplicationRecord
     failed: "failed"
   }, default: "pending", prefix: true
 
-  # @deprecated plan_typeは非推奨です。代わりにrequires_weather_prediction?メソッドを使用してください
   enum :plan_type, {
     public: "public",
     private: "private"
@@ -85,10 +84,6 @@ class CultivationPlan < ApplicationRecord
 
   def complete!
     update!(status: :completed)
-  end
-
-  def fail!(error_message)
-    update!(status: :failed, error_message: error_message)
   end
 
   # フェーズ更新メソッド
@@ -146,14 +141,6 @@ class CultivationPlan < ApplicationRecord
     broadcast_phase_update(channel_class)
   end
 
-  def this_year_cultivations
-    field_cultivations.this_year
-  end
-
-  def next_year_cultivations
-    field_cultivations.next_year
-  end
-
   # 計画の表示名
   def display_name
     if plan_type_private?
@@ -182,14 +169,6 @@ class CultivationPlan < ApplicationRecord
     end
   end
 
-  # 天気予測が必要かどうかを判定
-  # @return [Boolean] 天気予測が必要な場合はtrue
-  def requires_weather_prediction?
-    # 現在は全ての計画で天気予測が必要
-    # 将来的にフラグベースの制御に変更可能
-    true
-  end
-
   # @deprecated 年度という概念は削除されました。このメソッドは後方互換性のため残していますが、使用しないでください。
   # 計画年度から計画期間を計算（2年間）
   def self.calculate_planning_dates(plan_year)
@@ -205,14 +184,6 @@ class CultivationPlan < ApplicationRecord
       start_date: Date.current,
       end_date: Date.new(Date.current.year + 1, 12, 31)
     }
-  end
-
-  # @deprecated 年度という概念は削除されました。このメソッドは後方互換性のため残していますが、使用しないでください。
-  # 計画期間を設定
-  def set_planning_dates_from_year!
-    return unless plan_year.present?
-    dates = self.class.calculate_planning_dates(plan_year)
-    update!(planning_start_date: dates[:start_date], planning_end_date: dates[:end_date])
   end
 
   # 計画期間をメソッドとして計算
@@ -276,13 +247,6 @@ class CultivationPlan < ApplicationRecord
       # 作付計画がない場合のデフォルト値（最適化前など）
       default_planning_end_date
     end
-  end
-
-  def calculated_planning_range
-    {
-      start_date: calculated_planning_start_date,
-      end_date: calculated_planning_end_date
-    }
   end
 
   # 互換性のためのエイリアス（段階的移行用）

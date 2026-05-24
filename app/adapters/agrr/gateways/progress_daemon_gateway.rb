@@ -13,7 +13,7 @@ module Adapters
           Rails.logger.info "📊 [AGRR Progress] Calculating progress: crop=#{crop.name}, start=#{start_date}"
 
           # Cropモデルから作物プロファイルを生成
-          crop_requirement = crop.to_agrr_requirement
+          crop_requirement = Adapters::Crop::Mappers::CropAgrrRequirementMapper.build_from(crop)
           crop_file = write_temp_file(crop_requirement, prefix: "crop_profile")
           weather_file = write_temp_file(weather_data, prefix: "weather")
 

@@ -169,7 +169,7 @@ namespace :weather do
       total_records += records.count
       total_year_files += years.size
       location_count += 1
-      puts "  Location #{location.id} (#{location.coordinates_string}): #{records.count} records → #{years.size} year file(s)"
+      puts "  Location #{location.id} (#{location.latitude},#{location.longitude}): #{records.count} records → #{years.size} year file(s)"
     end
 
     puts "=" * 80

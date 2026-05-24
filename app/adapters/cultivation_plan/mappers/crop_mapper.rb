@@ -34,6 +34,7 @@ module Adapters
               @ctx.result.add_skip(:crops, user_crop.id)
               user_crops << user_crop
             else
+              enforce_crop_create_limit!
               user_crop = @ctx.user.crops.create!(
                 name: reference_crop.name,
                 variety: reference_crop.variety,
@@ -94,6 +95,17 @@ module Adapters
         rescue => e
           Rails.logger.error I18n.t("services.plan_save_service.errors.crop_stage_copy_failed", errors: e.message)
           raise e
+        end
+
+        def enforce_crop_create_limit!
+          existing_count = @ctx.user.crops.where(is_reference: false).count
+          return unless Domain::Crop::Policies::CropCreateLimitPolicy.limit_exceeded?(
+            existing_non_reference_count: existing_count,
+            is_reference: false
+          )
+
+          raise Domain::Shared::Exceptions::RecordInvalid,
+                I18n.t("activerecord.errors.models.crop.attributes.user.crop_limit_exceeded")
         end
       end
     end

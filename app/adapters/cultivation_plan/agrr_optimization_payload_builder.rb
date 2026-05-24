@@ -82,7 +82,7 @@ module Adapters
         entries = @cultivation_plan.cultivation_plan_crops.map do |plan_crop|
           crop = plan_crop.crop
           has_growth_stages = crop.crop_stages.exists?
-          requirement = has_growth_stages ? crop.to_agrr_requirement : nil
+          requirement = has_growth_stages ? Adapters::Crop::Mappers::CropAgrrRequirementMapper.build(crop) : nil
 
           {
             crop_id: crop.id.to_s,

@@ -2186,6 +2186,67 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionTest < ActiveSupport::
     assert_includes result.error_message, "作成できるFarmは4件までです", "Error message should mention farm limit"
   end
 
+  test "should prevent crop creation when user has reached crop limit" do
+    reference_crop = Crop.reference.where(region: "jp").first
+    if reference_crop.nil?
+      reference_crop = Crop.create!(
+        user: nil,
+        name: "参照作物（上限テスト）",
+        variety: "一般",
+        is_reference: true,
+        area_per_unit: 0.25,
+        revenue_per_area: 5000.0,
+        region: "jp"
+      )
+    end
+
+    20.times do |i|
+      Crop.create!(
+        user: @user,
+        name: "既存作物 #{i + 1}",
+        is_reference: false,
+        region: "jp"
+      )
+    end
+
+    session_data = {
+      farm_id: @farm.id,
+      crop_ids: [ reference_crop.id ],
+      field_data: [ { name: "テスト圃場", area: 100.0, coordinates: [ 35.0, 139.0 ] } ]
+    }
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 100.0,
+      status: "completed",
+      plan_type: "public",
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year
+    )
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: reference_crop,
+      name: reference_crop.name,
+      variety: reference_crop.variety,
+      area_per_unit: reference_crop.area_per_unit,
+      revenue_per_area: reference_crop.revenue_per_area
+    )
+    session_data[:plan_id] = plan.id
+
+    result = Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
+      user: @user,
+      session_data: session_data,
+      logger: @plan_save_session_logger,
+      cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+      crop_stage_copy_gateway: CompositionRoot.crop_stage_copy_gateway,
+      clock: CompositionRoot.clock
+    ).call
+
+    assert_not result.success, "PlanSaveService should fail when crop limit is reached"
+    assert_includes result.error_message, "作成できるCropは20件までです"
+  end
+
   test "should prevent duplicate interaction rules for same crop combination" do
     # テスト用にjp地域の農場を取得または作成
     jp_farm = Farm.reference.where(region: "jp").first
