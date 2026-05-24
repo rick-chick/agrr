@@ -144,4 +144,45 @@ class DeletionUndosControllerTest < ActionDispatch::IntegrationTest
     assert_equal "restored", @response.parsed_body.fetch("status")
     assert Crop.exists?(crop.id)
   end
+
+  test "restore_after_masters_api_destroy_of_field" do
+    farm = create(:farm, :user_owned, user: @user)
+    field = create(:field, farm: farm, user: @user)
+
+    assert_difference -> { Field.count }, -1 do
+      delete api_v1_masters_field_path(field), headers: @api_headers
+      assert_response :success
+    end
+
+    undo_token = @response.parsed_body.fetch("undo_token")
+    assert_not Field.exists?(field.id)
+
+    assert_difference -> { Field.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
+      assert_response :success
+    end
+
+    assert_equal "restored", @response.parsed_body.fetch("status")
+    assert Field.exists?(field.id)
+  end
+
+  test "restore_after_masters_api_destroy_of_farm" do
+    farm = create(:farm, :user_owned, user: @user)
+
+    assert_difference -> { Farm.count }, -1 do
+      delete api_v1_masters_farm_path(farm), headers: @api_headers
+      assert_response :success
+    end
+
+    undo_token = @response.parsed_body.fetch("undo").fetch("undo_token")
+    assert_not Farm.exists?(farm.id)
+
+    assert_difference -> { Farm.count }, +1 do
+      post undo_deletion_path, params: { undo_token: undo_token }, as: :json
+      assert_response :success
+    end
+
+    assert_equal "restored", @response.parsed_body.fetch("status")
+    assert Farm.exists?(farm.id)
+  end
 end

@@ -76,36 +76,16 @@ class FieldsController < ApplicationController
 
   # DELETE /farms/:farm_id/fields/:id
   def destroy
-    respond_to do |format|
-      format.html do
-        presenter = Adapters::Field::Presenters::FieldDestroyHtmlPresenter.new(view: self)
-        interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id, gateway: CompositionRoot.field_gateway,
-          translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
-        interactor.call(params[:id])
-      end
-      format.json do
-        presenter = Adapters::Field::Presenters::FieldDeleteApiPresenter.new(view: self)
-        interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
-          user_id: current_user.id, gateway: CompositionRoot.field_gateway,
-          translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
-        interactor.call(params[:id])
-      end
-    end
+    presenter = Adapters::Field::Presenters::FieldDestroyHtmlPresenter.new(view: self)
+    interactor = Domain::Field::Interactors::FieldDestroyInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.field_gateway,
+      translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
+    interactor.call(params[:id])
     return if performed?
-  end
-
-  # FieldDeleteApiPresenter (format.json) が参照する View インターフェース
-  def render_response(json:, status:)
-    render json: json, status: status
   end
 
   def render_form(action, status: :ok, locals: {})
     render(action, status: status, locals: locals)
-  end
-
-  def undo_deletion_path(undo_token:)
-    Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
   end
 
 end
