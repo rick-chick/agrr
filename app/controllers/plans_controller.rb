@@ -61,32 +61,6 @@ class PlansController < CultivationPlanHtmlBaseController
     Rails.logger.debug "✅ [Plans#select_crop] Session saved: #{session[:plan_data].inspect}"
   end
 
-  # Step 3: 計画作成（最適化はしない）
-  def create
-    presenter = Adapters::CultivationPlan::Presenters::PrivatePlanCreateFromSessionHtmlPresenter.new(
-      view: self,
-      session_key: self.class.session_key
-    )
-    input_dto = Domain::CultivationPlan::Dtos::PrivatePlanCreateFromSessionInput.new(
-      farm_id: parse_positive_route_id(session_data[:farm_id]),
-      crop_ids: crop_ids,
-      plan_name: session_data[:plan_name],
-      total_area: session_data[:total_area],
-      user: current_user
-    )
-    CompositionRoot.private_plan_create_from_session_interactor(
-      output_port: presenter,
-      session_id_generator: -> { session.id.to_s },
-      routes: Adapters::Application::PlanPathRoutesFromController.new(self),
-      caller_label: self.class.name,
-      select_crop_context_runner: CompositionRoot.private_plan_select_crop_context_runner(
-        view: self,
-        user_id: current_user.id
-      )
-    ).call(input_dto)
-    return if performed?
-  end
-
   # @deprecated 年度という概念は削除されました。コピー機能は無効化されています。
   # 計画コピー（前年度の計画を新年度にコピー）
   def copy

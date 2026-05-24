@@ -326,29 +326,6 @@ module CompositionRoot
       )
     end
 
-    def private_plan_post_create_job_chain(routes:, caller_label:)
-      Adapters::CultivationPlan::PrivatePlanPostCreateJobChain.new(
-        job_chain_builder: private_plan_optimization_job_chain_builder,
-        job_chain_async_dispatcher: job_chain_async_dispatcher,
-        routes: routes,
-        channel_class: PlansOptimizationChannel,
-        caller_label: caller_label
-      )
-    end
-
-    def private_plan_create_from_session_interactor(output_port:, session_id_generator:, routes:, caller_label:, select_crop_context_runner:)
-      Domain::CultivationPlan::Interactors::PrivatePlanCreateFromSessionInteractor.new(
-        output_port: output_port,
-        cultivation_plan_gateway: cultivation_plan_gateway,
-        logger: logger,
-        translator: translator,
-        clock: Time.zone,
-        session_id_generator: session_id_generator,
-        post_create_job_chain: private_plan_post_create_job_chain(routes: routes, caller_label: caller_label),
-        select_crop_context_runner: select_crop_context_runner
-      )
-    end
-
     def plan_allocation_gateway
       @plan_allocation_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationActiveRecordGateway.new
     end
