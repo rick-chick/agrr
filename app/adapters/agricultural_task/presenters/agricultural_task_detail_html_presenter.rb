@@ -22,7 +22,7 @@ module Adapters
             return
           end
 
-          @view.flash.now[:alert] = error_dto.message
+          @view.flash[:alert] = error_dto.message
           @view.redirect_to @view.agricultural_tasks_path
         end
       end

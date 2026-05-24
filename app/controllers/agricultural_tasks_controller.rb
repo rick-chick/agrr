@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class AgriculturalTasksController < ApplicationController
-  before_action :set_agricultural_task, only: [ :show, :edit, :update ]
+  before_action :set_agricultural_task, only: [ :edit, :update ]
   before_action :load_edit_form_crop_selection, only: [ :edit, :update ]
 
   # GET /agricultural_tasks
@@ -79,15 +79,9 @@ class AgriculturalTasksController < ApplicationController
   private
 
   def set_agricultural_task
-    if action_requires_edit_permission?
-      presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskLoadForEditHtmlPresenter.new(view: self)
-      interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
-        user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
-    else
-      presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskLoadForViewHtmlPresenter.new(view: self)
-      interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForViewInteractor.new(output_port: presenter,
-        user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
-    end
+    presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskLoadForEditHtmlPresenter.new(view: self)
+    interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
+      user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(params[:id])
   end
