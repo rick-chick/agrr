@@ -46,7 +46,7 @@ Rails.application.routes.draw do
     post "undo_deletion", to: "deletion_undos#create", as: :undo_deletion
 
     # HTML マスタ（Rails コントローラ・ナビで _path を参照するため）
-    resources :farms do
+    resources :farms, only: %i[index show create update destroy] do
       resources :fields, controller: "fields", only: %i[index show create update destroy]
       get "weather_data", to: "farms/weather_data#index", as: "weather_data"
     end

@@ -15,7 +15,7 @@ module Adapters
         def on_failure(error_dto)
           @view.flash.now[:alert] = error_dto.message
           # @farm はコントローラでセットされている前提（またはここで再構築）
-          @view.render_form(:new, status: :unprocessable_entity)
+          @view.redirect_to @view.farms_path, alert: error_dto.message
         end
       end
     end

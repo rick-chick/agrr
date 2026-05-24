@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class FarmsController < ApplicationController
-  before_action :load_farm_for_edit, only: [ :edit, :update, :destroy ]
-
   # GET /farms
   def index
     input_dto = Domain::Farm::Dtos::FarmListInput.new(is_admin: admin_user?)
@@ -24,18 +22,6 @@ class FarmsController < ApplicationController
       translator: translator, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup)
 
     interactor.call(params[:id])
-  end
-
-  # GET /farms/new
-  def new
-    presenter = Adapters::Farm::Presenters::FarmNewMasterFormHtmlPresenter.new(view: self)
-    Domain::Farm::Interactors::FarmNewMasterFormInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.farm_gateway).call
-  end
-
-  # GET /farms/:id/edit
-  def edit
-    # Farm is already loaded by set_farm
   end
 
   # POST /farms
@@ -78,10 +64,6 @@ class FarmsController < ApplicationController
     super(path, notice: notice, alert: alert)
   end
 
-  def render_form(action, status: :ok, locals: {})
-    render(action, status: status, locals: locals)
-  end
-
   def farm_path(farm)
     Rails.application.routes.url_helpers.farm_path(farm)
   end
@@ -92,16 +74,7 @@ class FarmsController < ApplicationController
 
   private
 
-  def load_farm_for_edit
-    presenter = Adapters::Farm::Presenters::FarmLoadForEditHtmlPresenter.new(view: self)
-    Domain::Farm::Interactors::FarmLoadAuthorizedModelForEditInteractor.new(output_port: presenter,
-      user_id: current_user.id, gateway: CompositionRoot.farm_gateway, user_lookup: CompositionRoot.user_lookup).call(params[:id])
-  end
-
   def farm_params
-    # region は mass-assignment 許可のみ。admin 限定の認可は
-    # FarmPolicy.normalize_attrs_for_* が判定する。
-    params.require(:farm).permit(:name, :latitude, :longitude, :region)
+    params.require(:farm).permit(:name, :latitude, :longitude, :region, :is_reference)
   end
-
 end
