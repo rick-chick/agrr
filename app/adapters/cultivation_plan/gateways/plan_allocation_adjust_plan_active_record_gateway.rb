@@ -10,8 +10,9 @@ module Adapters
           { field_cultivations: [ :cultivation_plan_field, { cultivation_plan_crop: :crop } ] }
         ].freeze
 
-        def initialize(logger:)
+        def initialize(logger:, weather_data_gateway:)
           @logger = logger
+          @weather_data_gateway = weather_data_gateway
           @session_plan = nil
         end
 
@@ -81,7 +82,11 @@ module Adapters
           wl = @session_plan.farm.weather_location
           return [] if wl.blank?
 
-          wl.weather_data_for_period(historical_start, historical_end).filter_map do |datum|
+          @weather_data_gateway.weather_data_for_period(
+            weather_location_id: wl.id,
+            start_date: historical_start,
+            end_date: historical_end
+          ).filter_map do |datum|
             next if datum.temperature_max.nil? || datum.temperature_min.nil?
 
             Domain::WeatherData::Dtos::HistoricalWeatherObservation.new(

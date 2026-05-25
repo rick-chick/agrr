@@ -301,7 +301,10 @@ module CompositionRoot
         logger: logger,
         translator: translator,
         clock: clock,
-        plan_gateway: Adapters::CultivationPlan::Gateways::PlanAllocationAdjustPlanActiveRecordGateway.new(logger: logger),
+        plan_gateway: Adapters::CultivationPlan::Gateways::PlanAllocationAdjustPlanActiveRecordGateway.new(
+          logger: logger,
+          weather_data_gateway: weather_data_gateway
+        ),
         weather_prediction_gateway: adjust_weather_prediction_gateway,
         agrr_adjust_gateway: agrr_adjust_gateway,
         save_adjusted_result_interactor: save_adjusted_agrr_result_interactor,
