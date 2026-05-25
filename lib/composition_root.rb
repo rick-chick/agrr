@@ -477,15 +477,38 @@ module CompositionRoot
         )
     end
 
+    def plan_save_farm_gateway
+      @plan_save_farm_gateway ||=
+        Adapters::CultivationPlan::Gateways::PlanSaveFarmActiveRecordGateway.new
+    end
+
+    def plan_save_ensure_user_farm_interactor
+      @plan_save_ensure_user_farm_interactor ||=
+        Domain::CultivationPlan::Interactors::PlanSaveEnsureUserFarmInteractor.new(
+          plan_save_farm_gateway: plan_save_farm_gateway,
+          logger: logger,
+          translator: translator,
+          clock: clock
+        )
+    end
+
+    def plan_save_persist_orchestrator
+      @plan_save_persist_orchestrator ||=
+        Domain::CultivationPlan::Interactors::PlanSavePersistOrchestrator.new(
+          ensure_user_farm_interactor: plan_save_ensure_user_farm_interactor
+        )
+    end
+
     def public_plan_save_persistence_port
       @public_plan_save_persistence_port ||=
         Adapters::CultivationPlan::Gateways::PublicPlanSavePersistenceActiveRecordAdapter.new(
           logger: logger,
-          clock: clock,
           cultivation_plan_gateway: cultivation_plan_gateway,
           crop_stage_copy_interactor: crop_stage_copy_interactor,
           blueprint_copy_factory: plan_save_blueprint_copy_factory,
-          template_copy_gateway: public_plan_template_copy_gateway
+          template_copy_gateway: public_plan_template_copy_gateway,
+          plan_save_persist_orchestrator: plan_save_persist_orchestrator,
+          plan_save_farm_gateway: plan_save_farm_gateway
         )
     end
 

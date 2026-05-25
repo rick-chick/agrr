@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "set"
-
 module Adapters
   module CultivationPlan
     module Sessions
@@ -26,10 +24,6 @@ module Adapters
             success
           end
 
-          def skipped?
-            @skipped_items.values.any?(&:present?)
-          end
-
           def add_skip(category, value)
             (@skipped_items[category] ||= []) << value
           end
@@ -41,21 +35,23 @@ module Adapters
           user:,
           session_data:,
           logger:,
-          clock:,
           cultivation_plan_gateway:,
           crop_stage_copy_interactor:,
           blueprint_copy_factory:,
           template_copy_gateway:,
+          plan_save_persist_orchestrator:,
+          plan_save_farm_gateway:,
           own_transaction: true
         )
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
           @session_data = session_data
           @logger = logger
-          @clock = clock
           @cultivation_plan_gateway = cultivation_plan_gateway
           @crop_stage_copy_interactor = crop_stage_copy_interactor
           @blueprint_copy_factory = blueprint_copy_factory
           @template_copy_gateway = template_copy_gateway
+          @plan_save_persist_orchestrator = plan_save_persist_orchestrator
+          @plan_save_farm_gateway = plan_save_farm_gateway
           @own_transaction = own_transaction
           @result = Result.new
         end
@@ -86,9 +82,14 @@ module Adapters
         def run_persist_steps
           ctx = PlanSaveContext.new(user: @user, session_data: @session_data, result: @result)
           ctx.crop_stage_copy_interactor = @crop_stage_copy_interactor
-          farm_mapper = Mappers::FarmMapper.new(ctx)
 
-          farm = farm_mapper.create_or_get_user_farm
+          farm_output = @plan_save_persist_orchestrator.ensure_user_farm!(
+            user_id: @user.id,
+            session_data: @session_data
+          )
+          ctx.farm_reused = farm_output.farm_reused
+          ctx.result.add_skip(:farm, farm_output.farm_id) if farm_output.farm_reused
+          farm = ::Farm.find(farm_output.farm_id)
 
           fields = Mappers::FieldMapper.new(ctx).create_user_fields(farm)
           crops = Mappers::CropMapper.new(ctx).create_user_crops_from_plan
@@ -98,7 +99,11 @@ module Adapters
           fertilizes = Mappers::FertilizeMapper.new(ctx).copy_fertilizes_for_region(farm.region)
           pesticides = Mappers::PesticideMapper.new(ctx).copy_pesticides_for_region(farm.region)
 
-          existing_plan = farm_mapper.find_existing_private_plan(farm)
+          existing_plan_id = @plan_save_farm_gateway.find_plan_id_by_user_and_farm(
+            user_id: @user.id,
+            farm_id: farm.id
+          )
+          existing_plan = existing_plan_id && ::CultivationPlan.find_by(id: existing_plan_id)
 
           if existing_plan
             @logger.info "♻️ [PlanSaveService] Existing private plan detected (##{existing_plan.id}), skipping plan copy"

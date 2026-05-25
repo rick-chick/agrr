@@ -10,6 +10,10 @@ module Domain
         def today
           raise NotImplementedError, "#{self.class}#today"
         end
+
+        def now
+          raise NotImplementedError, "#{self.class}#now"
+        end
       end
     end
   end

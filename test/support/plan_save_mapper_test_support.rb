@@ -72,6 +72,32 @@ module PlanSaveMapperTestSupport
     ).tap { |ctx| ctx.crop_stage_copy_interactor = CompositionRoot.crop_stage_copy_interactor }
   end
 
+  # Mapper / gateway 単体用: ユーザー農場を AR で用意（domain の ensure 経路は使わない）
+  # @param reuse_existing [Boolean] true のとき既存農場を再利用し ctx.farm_reused と skip を設定
+  def stub_user_farm_for_mapper_test(ctx, reuse_existing: false)
+    raw_farm_id = ctx.session_data[:farm_id] || ctx.session_data["farm_id"]
+    reference_farm = Farm.find(raw_farm_id)
+    existing = ctx.user.farms.find_by(source_farm_id: reference_farm.id)
+
+    if existing
+      if reuse_existing
+        ctx.farm_reused = true
+        ctx.result.add_skip(:farm, existing.id)
+      end
+      return existing
+    end
+
+    ctx.user.farms.create!(
+      name: "#{reference_farm.name} (mapper test #{SecureRandom.hex(3)})",
+      latitude: reference_farm.latitude,
+      longitude: reference_farm.longitude,
+      region: reference_farm.region,
+      is_reference: false,
+      weather_location_id: reference_farm.weather_location_id,
+      source_farm_id: reference_farm.id
+    )
+  end
+
   # 圃場・作付・CPC を持つ参照公開計画（PlanCopyActiveRecordGateway 用）
   def build_public_plan_with_field_cultivation(farm:, ref_crop:, plan_name: "Gateway plan")
     plan = CultivationPlan.create!(

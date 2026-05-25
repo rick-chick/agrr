@@ -1,6 +1,6 @@
 # Gateway ドメインロジック移行（境界）
 
-命名違反の一覧は [gateway-naming-violations.md](./gateway-naming-violations.md)。本書は **ARCHITECTURE.md R3 / R0 / R10** に基づく「Gateway に残してはいけないロジック」の移行記録と PR チェックリスト。
+命名違反の一覧は [gateway-naming-violations.md](./gateway-naming-violations.md)。**禁止の正解像は [ARCHITECTURE.md](../ARCHITECTURE.md) のみ**（Gateway boundary、五動詞、[Disallowed gateway public method name patterns](../ARCHITECTURE.md#disallowed-gateway-public-method-name-patterns)、R0 / R3 / R10）。本書は移行記録と PR 用チェックリスト（規約の二重定義はしない）。
 
 ## 正規フロー（コピー元）
 
@@ -15,6 +15,7 @@
 
 - 読取: `RetrieveCultivationPlanInteractor` + `CultivationPlanWorkbenchSnapshotMapper`
 - 認可 + count: `CropCreateInteractor` + `CropCreateLimitPolicy`
+- PlanSave farm step: `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway`
 - フェーズ更新: `AdvanceCultivationPlanPhaseInteractor` + `OptimizationCompletion`（Interactor 連鎖なし）
 
 ## フェーズ完了状況
@@ -34,9 +35,9 @@
 
 各 PR で ARCHITECTURE ゲートと併用すること。
 
-| チェック | 禁止 |
+| チェック | 参照 |
 |----------|------|
-| Gateway 新規 public メソッド | 五動詞以外（`apply_*`, `save_*!`, `initialize_*`, `find_or_create`, `*_bundle`, 画面 blob 用 `*_snapshot`） |
+| Gateway 新規 public メソッド | [ARCHITECTURE.md — Gateway method naming / Disallowed patterns](../ARCHITECTURE.md#disallowed-gateway-public-method-name-patterns) |
 | Interactor | 別 Interactor の `call`；`CompositionRoot.*`；Policy への gateway 渡し |
 | Policy | gateway / ActiveRecord / `find` / `count` |
 | Presenter | gateway / `find_model` / 副作用 |
@@ -51,4 +52,4 @@
 
 ## 機械チェック
 
-`test/architecture/gateway_public_method_naming_test.rb` が adapter gateway の public メソッド名を監視する（既存違反は ALLOWLIST で段階削減）。
+[`test/architecture/gateway_public_method_naming_test.rb`](../test/architecture/gateway_public_method_naming_test.rb) が ARCHITECTURE.md の Disallowed patterns と同一の正規表現を適用する。

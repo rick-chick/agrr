@@ -27,7 +27,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result
     )
-    user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
+    user_farm = stub_user_farm_for_mapper_test(ctx)
 
     gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
       ctx: ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
@@ -56,7 +56,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result
     )
-    user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
+    user_farm = stub_user_farm_for_mapper_test(ctx)
     crops = Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
     user_crop_id = ctx.ref_cpc_id_to_user_crop_id[cpc.id]
     assert user_crop_id.present?
@@ -122,7 +122,7 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
       session_data: { farm_id: ref_farm.id, plan_id: ref_plan.id, field_data: [] },
       result: result
     )
-    user_farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
+    user_farm = stub_user_farm_for_mapper_test(ctx)
     crops = Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
     tasks = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(user_farm.region)
     user_task = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)

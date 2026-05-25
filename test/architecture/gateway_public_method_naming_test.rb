@@ -3,7 +3,7 @@
 require "test_helper"
 
 # Guards against re-introducing known use-case-encoding gateway method names.
-# See docs/gateway-domain-logic-migration.md
+# Patterns MUST match ARCHITECTURE.md § "Disallowed gateway public method name patterns".
 class GatewayPublicMethodNamingTest < ActiveSupport::TestCase
   FORBIDDEN_NAME_PATTERNS = [
     /\Ainitialize_plan/,

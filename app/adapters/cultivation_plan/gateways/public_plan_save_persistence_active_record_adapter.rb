@@ -6,18 +6,20 @@ module Adapters
       class PublicPlanSavePersistenceActiveRecordAdapter < Domain::CultivationPlan::Ports::PublicPlanSavePersistencePort
         def initialize(
           logger:,
-          clock:,
           cultivation_plan_gateway:,
           crop_stage_copy_interactor:,
           blueprint_copy_factory:,
-          template_copy_gateway:
+          template_copy_gateway:,
+          plan_save_persist_orchestrator:,
+          plan_save_farm_gateway:
         )
           @logger = logger
-          @clock = clock
           @cultivation_plan_gateway = cultivation_plan_gateway
           @crop_stage_copy_interactor = crop_stage_copy_interactor
           @blueprint_copy_factory = blueprint_copy_factory
           @template_copy_gateway = template_copy_gateway
+          @plan_save_persist_orchestrator = plan_save_persist_orchestrator
+          @plan_save_farm_gateway = plan_save_farm_gateway
         end
 
         def execute_save!(workspace:)
@@ -26,11 +28,12 @@ module Adapters
             user: user,
             session_data: workspace.session_hash,
             logger: @logger,
-            clock: @clock,
             cultivation_plan_gateway: @cultivation_plan_gateway,
             crop_stage_copy_interactor: @crop_stage_copy_interactor,
             blueprint_copy_factory: @blueprint_copy_factory,
             template_copy_gateway: @template_copy_gateway,
+            plan_save_persist_orchestrator: @plan_save_persist_orchestrator,
+            plan_save_farm_gateway: @plan_save_farm_gateway,
             own_transaction: false
           )
           result = session.call

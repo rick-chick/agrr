@@ -11,6 +11,10 @@ module Adapters
         def today
           Time.zone.today
         end
+
+        def now
+          Time.zone.now
+        end
       end
     end
   end

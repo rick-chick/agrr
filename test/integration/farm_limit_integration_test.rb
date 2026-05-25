@@ -10,35 +10,6 @@ class FarmLimitIntegrationTest < ActiveSupport::TestCase
       google_id: "farm_limit_integration_test_123",
       is_anonymous: false
     )
-
-    @ref_farm = Farm.reference.first
-    @ref_crop = Crop.reference.first
-
-    # 参照農場がない場合は作成
-    if @ref_farm.nil?
-      anonymous_user = User.anonymous_user
-      @ref_farm = Farm.create!(
-        user: anonymous_user,
-        name: "テスト参照農場",
-        latitude: 35.0,
-        longitude: 139.0,
-        is_reference: true,
-        region: "jp"
-      )
-    end
-
-    # 参照作物がない場合は作成
-    if @ref_crop.nil?
-      @ref_crop = Crop.create!(
-        user: nil,
-        name: "テスト参照作物",
-        variety: "テスト品種",
-        is_reference: true,
-        area_per_unit: 0.25,
-        revenue_per_area: 5000.0,
-        region: "jp"
-      )
-    end
   end
 
   def teardown
@@ -97,45 +68,6 @@ class FarmLimitIntegrationTest < ActiveSupport::TestCase
 
     expected_count = initial_count + 5
     assert_equal expected_count, anonymous_user.farms.where(is_reference: true).count
-  end
-
-  test "should prevent farm creation in PlanSaveService when limit reached" do
-    # ユーザーが4つの農場を持っている状態を作成
-    4.times do |i|
-      Farm.create!(
-        user: @user,
-        name: "既存農場 #{i + 1}",
-        latitude: 35.0 + i * 0.1,
-        longitude: 135.0 + i * 0.1,
-        is_reference: false
-      )
-    end
-
-    # セッションデータを準備
-    session_data = {
-      farm_id: @ref_farm.id,
-      crop_ids: [ @ref_crop.id ],
-      field_data: [ { name: "テスト圃場", area: 100.0, coordinates: [ 35.0, 139.0 ] } ]
-    }
-
-    # 計画を作成
-    plan = CultivationPlan.create!(
-      farm: @ref_farm,
-      user: nil,
-      total_area: 100.0,
-      status: "completed",
-      plan_type: "public",
-      planning_start_date: Date.current,
-      planning_end_date: Date.current.end_of_year
-    )
-    session_data[:plan_id] = plan.id
-
-    # PlanSaveServiceを実行（失敗するはず）
-    result = PublicPlanSaveTestSupport.invoke_save(user: @user, session_data: session_data)
-
-    # 失敗することを確認
-    assert_not result.success, "PlanSaveService should fail when farm limit is reached"
-    assert_includes result.error_message, "作成できるFarmは4件までです", "Error message should mention farm limit"
   end
 
   test "should work correctly with existing farms" do

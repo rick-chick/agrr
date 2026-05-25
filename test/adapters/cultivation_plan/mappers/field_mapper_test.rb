@@ -19,7 +19,7 @@ class Adapters::CultivationPlan::Mappers::FieldMapperTest < ActiveSupport::TestC
       },
       result: result
     )
-    farm = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx).create_or_get_user_farm
+    farm = stub_user_farm_for_mapper_test(ctx)
 
     fields = Adapters::CultivationPlan::Mappers::FieldMapper.new(ctx).create_user_fields(farm)
     assert_equal 1, fields.size
@@ -39,13 +39,13 @@ class Adapters::CultivationPlan::Mappers::FieldMapperTest < ActiveSupport::TestC
 
     result1 = plan_save_result
     ctx1 = build_plan_save_context(user: user, session_data: session_data, result: result1)
-    farm1 = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx1).create_or_get_user_farm
+    farm1 = stub_user_farm_for_mapper_test(ctx1)
     fields1 = Adapters::CultivationPlan::Mappers::FieldMapper.new(ctx1).create_user_fields(farm1)
     field_id = fields1.first.id
 
     result2 = plan_save_result
     ctx2 = build_plan_save_context(user: user, session_data: session_data, result: result2)
-    farm2 = Adapters::CultivationPlan::Mappers::FarmMapper.new(ctx2).create_or_get_user_farm
+    farm2 = stub_user_farm_for_mapper_test(ctx2, reuse_existing: true)
     assert ctx2.farm_reused
 
     fields = Adapters::CultivationPlan::Mappers::FieldMapper.new(ctx2).create_user_fields(farm2)

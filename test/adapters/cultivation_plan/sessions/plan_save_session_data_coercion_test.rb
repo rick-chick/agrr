@@ -23,7 +23,7 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionDataCoercionTest < Act
     assert_equal [ "35", "139" ], row["coordinates"]
   end
 
-  test "session_payload_to_hash accepts Parameters and yields symbol-key friendly plain hash for from_session_hash" do
+  test "session_payload_to_hash converts Parameters to plain hash" do
     params = ActionController::Parameters.new(
       plan_id: 99,
       farm_id: 5,
@@ -32,9 +32,11 @@ class Adapters::CultivationPlan::Sessions::PlanSaveSessionDataCoercionTest < Act
     )
 
     h = Adapters::CultivationPlan::Sessions::PlanSaveSessionDataCoercion.session_payload_to_hash(params)
-    dto = Domain::CultivationPlan::Dtos::PublicPlanSaveSessionData.from_session_hash(h)
 
-    assert_equal 99, dto.plan_id
-    assert_equal 5, dto.farm_id
+    assert_kind_of Hash, h
+    assert_equal 99, h["plan_id"]
+    assert_equal 5, h["farm_id"]
+    assert_equal [], h["crop_ids"]
+    assert_equal [], h["field_data"]
   end
 end

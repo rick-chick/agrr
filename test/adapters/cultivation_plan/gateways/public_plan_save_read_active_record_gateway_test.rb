@@ -50,18 +50,6 @@ module Adapters
           assert_equal 1, rows.size
           assert_equal "F1", rows.first.name
         end
-
-        test "session data mapper builds session dto from snapshots" do
-          header = @gateway.find_header(plan_id: @plan.id)
-          rows = @gateway.list_field_rows(plan_id: @plan.id)
-          dto = Domain::CultivationPlan::Mappers::PublicPlanSaveSessionDataMapper.from_snapshots(
-            header: header,
-            field_rows: rows
-          )
-          assert_equal @plan.id, dto.plan_id
-          assert_equal @farm.id, dto.farm_id
-          assert_equal 1, dto.field_data.size
-        end
       end
     end
   end

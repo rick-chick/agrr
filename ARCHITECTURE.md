@@ -165,6 +165,7 @@ sequenceDiagram
 |---|---|
 | Request mapper | `Adapters::CultivationPlan::AdjustMovesFromRequest` → `PlanAllocationAdjustInput` in `CultivationPlanRestBaseController#adjust` |
 | Orchestration + pure Policy | `CropCreateInteractor` + `CropCreateLimitPolicy` (Interactor calls `gateway.count`; Policy receives counts only) |
+| PlanSave persist step (farm) | `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway` (`find_plan_id_by_user_and_farm` — not `find_private_*`) |
 | Domain combine | `CultivationPlanWorkbenchSnapshotMapper` (read snapshots → `CultivationPlanWorkbenchSnapshot`) |
 | Response shape | `RetrieveCultivationPlanApiPresenter` + `CultivationPlanWorkbenchPayloadMapper` (adapter mapper only) |
 
@@ -305,6 +306,15 @@ The framework-dependent layer distinguishes two roles:
 
 Example: `Domain::Shared::Ports::LoggerPort` (interface) ↔ `Adapters::Shared::Ports::RailsLoggerAdapter` at `app/adapters/shared/ports/rails_logger_adapter.rb`. Ports are file-named with the `_adapter` suffix - distinct from gateways - because they emit one-way to a framework driver rather than mediating entity I/O.
 
+**`ClockPort`** (`lib/domain/shared/ports/clock_port.rb`) — inject from the edge; Interactors must not call `Date.current` / `Time.current` / `Time.zone` directly ([R1](#r1-framework-free)).
+
+| Method | Use |
+|---|---|
+| `today` | Calendar date in the app time zone (e.g. planning windows, `as_of`) |
+| `now` | Current time for timestamps (e.g. copy suffixes, `rescheduled_at`, performance markers) |
+
+Implementation: `Adapters::Shared::Ports::RailsClockAdapter` (`Time.zone.today` / `Time.zone.now`).
+
 #### Gateway method naming (the five verbs)
 
 | Verb | Return | Use |
@@ -322,6 +332,7 @@ Example: `Domain::Shared::Ports::LoggerPort` (interface) ↔ `Adapters::Shared::
 - `fetch_*` - only for external HTTP / process I/O (e.g. `fetch_historical_weather_data` from a remote API). Not for DB reads.
 - `upsert_*` - when both insert and update are explicit semantics for one operation.
 - `soft_delete_with_undo(id, user)` - dedicated soft-delete method. Not a replacement for `delete(id)`.
+- `count_by_*(criteria)` → `Integer` — identity-scoped **row count** for Interactor → Policy scalar pass-through (resource limits). Prefer `count_by_user_id(user_id:)` over loading rows. Existing gateways may use `count_<description>` (e.g. `count_user_owned_non_reference_farms`); new methods follow `count_by_*`.
 - **Related entity retrieval** — The five verbs (`find_by_*`, `list_by_*`, `create`, `update`, `delete`) may be used to load entities associated with another entity, as long as the entity name is not encoded in the method. The criteria expresses the relationship, not the target entity type.
 
   | ✅ Allowed | ❌ Disallowed | Reason |
@@ -332,7 +343,26 @@ Example: `Domain::Shared::Ports::LoggerPort` (interface) ↔ `Adapters::Shared::
 
   The gateway returns its own entity type; the Interactor decides what the result represents in the use-case context.
 
-**Disallowed**: `get_<entity>(id)`, `load_<entity>(id)`, `find_<entity>_by_<criteria>`, `list_<entity>_by_<criteria>`, `query_*`, `by_*` as the whole method name, DB reads under `fetch_*`, using both `save` and `create`/`update` for the same write operation.
+**Disallowed**: `get_<entity>(id)`, `load_<entity>(id)`, `find_<entity>_by_<criteria>`, `list_<entity>_by_<criteria>`, `query_*`, `by_*` as the whole method name, DB reads under `fetch_*`, using both `save` and `create`/`update` for the same write operation. Use-case-encoding names such as `create_user_farm_from_reference` — prefer `create(...)` with explicit keyword arguments.
+
+#### Disallowed gateway public method name patterns
+
+Normative list for **new** adapter gateway public methods. [`test/architecture/gateway_public_method_naming_test.rb`](../test/architecture/gateway_public_method_naming_test.rb) enforces the same patterns (do not maintain a second list elsewhere).
+
+| Pattern (regex) | Why |
+|---|---|
+| `\Ainitialize_plan` | Use-case initialization belongs in Interactor |
+| `\Afind_private_` | Encodes authorization path; Interactor chooses `find_by_*` + criteria (e.g. `plan_type` in SQL), not method name |
+| `\Afind_.*_bundle` | Presenter-shaped / multi-entity bundle |
+| `\Afind_or_create_` | Orchestration in Interactor |
+| `\Asave_adjust_result!` | Use-case save in Interactor |
+| `\Aapply_field_cultivations` | Use-case mutation in Interactor |
+| `\Acopy_for_user_crops` / `\Acopy_reference_stages` | Multi-step copy in Interactor |
+| `\Aagrr_rules_for_cultivation_plan_id` | Rule assembly in domain |
+| `\Aoptimization_plan_snapshot` / `\Atask_schedule_timeline_snapshot` / `\Aprivate_plan_index_plan_rows` | Screen/use-case snapshot in Interactor + domain mapper |
+| `\Alink_pest_to_crop` / `\Aupdate_pest_crop_associations` | Association rules in Interactor |
+
+**Policy / domain** methods (e.g. `PlanAccess.find_private_owned!`) are not gateway methods and are out of scope for this table.
 
 #### Interactor naming
 
@@ -392,7 +422,7 @@ This rule is the single source of truth for authorization and validation respons
 - ❌ `Rails.logger`, `Rails.env`, `Rails.application` etc. from domain code
 - ❌ `ActiveRecord::`* types in domain flow — map persistence failures to `Domain::Shared::Exceptions::`* in adapters only
 - ❌ ActiveRecord APIs on objects in interactors (`record.association.where`, `pluck`, `includes`); passing AR models inward through gateways — map to **DTOs/entities** at the use-case boundary
-- ❌ `Date.current`, `Time.current`, `Time.zone`, `n.days`/`n.months`/`n.years` without explicit clock or date arguments
+- ❌ `Date.current`, `Time.current`, `Time.zone`, `n.days`/`n.months`/`n.years` without injected [`ClockPort`](#port-file-naming) (`today` / `now`) or explicit date/time arguments
 - ❌ `SomeAdapter.new` or `Adapters::...` inside `lib/domain` — construct at the edge (`lib/composition_root.rb`, controllers, jobs) and inject **interfaces** only
 - ❌ `*Port.default`, `*Gateway.default` or other hidden globals — dependencies must be **constructor-injected** from the edge
 - ❌ Hiding Rails/AR in a base interactor, mixin, or shared superclass
