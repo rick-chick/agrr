@@ -8,11 +8,6 @@ class WeatherDatum < ApplicationRecord
   validates :date, presence: true
   validates :date, uniqueness: { scope: :weather_location_id }
 
-  # Scopes
-  scope :by_date_range, ->(start_date, end_date) { where(date: start_date..end_date) }
-  scope :by_year, ->(year) { where('strftime("%Y", date) = ?', year.to_s) }
-  scope :recent, -> { order(date: :desc) }
-
   def to_dto
     Domain::WeatherData::Dtos::WeatherData.new(
       date: date,

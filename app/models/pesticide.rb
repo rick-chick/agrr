@@ -37,7 +37,6 @@ class Pesticide < ApplicationRecord
 
   scope :reference, -> { where(is_reference: true) }
   scope :user_owned, -> { where(is_reference: false) }
-  scope :by_region, ->(region) { where(region: region) }
   scope :recent, -> { order(created_at: :desc) }
 
   # 参照農薬は user を持たない（システム所有）

@@ -19,8 +19,6 @@ class DeletionUndoEvent < ApplicationRecord
   before_validation :ensure_auto_hide_metadata, on: :create
   before_validation :ensure_id, on: :create
 
-  scope :active, -> { scheduled.where("expires_at > ?", Time.current) }
-
   def undo_token
     id
   end

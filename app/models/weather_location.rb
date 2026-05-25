@@ -14,14 +14,6 @@ class WeatherLocation < ApplicationRecord
   validates :timezone, presence: true
   validates :latitude, uniqueness: { scope: :longitude }
 
-  # Scopes
-  scope :by_coordinates, ->(lat, lon) { where(latitude: lat, longitude: lon) }
-
-  # 指定期間の気象データを取得
-  def weather_data_for_period(start_date, end_date)
-    weather_data_storage_gateway.weather_data_for_period(weather_location_id: id, start_date: start_date, end_date: end_date)
-  end
-
   # 最新の天気データの日付を取得
   def latest_weather_date
     weather_data_storage_gateway.latest_date(weather_location_id: id)

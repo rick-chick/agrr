@@ -20,11 +20,6 @@ class FreeCropPlan < ApplicationRecord
   validates :session_id, length: { maximum: 255 }
   validates :area_sqm, presence: true, numericality: { greater_than: 0, only_integer: true }
 
-  # Scopes
-  scope :by_session, ->(session_id) { where(session_id: session_id) }
-  scope :recent, -> { order(created_at: :desc) }
-  scope :completed, -> { where(status: "completed") }
-
   # Serialization
   serialize :plan_data, coder: JSON
 end

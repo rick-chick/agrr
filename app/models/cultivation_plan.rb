@@ -56,23 +56,10 @@ class CultivationPlan < ApplicationRecord
   }, default: "public", prefix: true
 
   # == Scopes ==============================================================
-  scope :anonymous, -> { where(user_id: nil) }
-  scope :by_session, ->(session_id) { where(session_id: session_id) }
   scope :recent, -> { order(created_at: :desc) }
   scope :by_user, ->(user) { where(user: user) }
-  # @deprecated 年度という概念は削除されました。このスコープは後方互換性のため残していますが、使用しないでください。
-  scope :by_plan_year, ->(year) { where(plan_year: year) }
-  scope :by_plan_name, ->(name) { where(plan_name: name) }
-  # @deprecated 年度という概念は削除されました。このスコープは後方互換性のため残していますが、使用しないでください。
-  scope :for_user_and_year, ->(user, year) { plan_type_private.by_user(user).by_plan_year(year) }
 
   # == Instance Methods ====================================================
-
-  def optimization_progress
-    Domain::CultivationPlan::Calculators::CultivationPlanOptimizationProgressCalculator.progress_percent(
-      field_cultivations: field_cultivations
-    )
-  end
 
   # 計画の表示名
   def display_name
@@ -106,11 +93,6 @@ class CultivationPlan < ApplicationRecord
   # 計画年度から計画期間を計算（2年間）
   def self.calculate_planning_dates(plan_year)
     Domain::CultivationPlan::Calculators::PlanningDateCalculator.calculate_planning_dates(plan_year)
-  end
-
-  # public計画用の計画期間を計算（今日から来年の12月31日まで）
-  def self.calculate_public_planning_dates
-    Domain::CultivationPlan::Calculators::PlanningDateCalculator.calculate_public_planning_dates(as_of: Date.current)
   end
 
   # 計画期間をメソッドとして計算

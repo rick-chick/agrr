@@ -39,45 +39,4 @@ class PestControlMethodTest < ActiveSupport::TestCase
     end
   end
 
-  test "chemical scope should return chemical methods" do
-    chemical = create(:pest_control_method, :chemical, pest: @pest)
-    biological = create(:pest_control_method, :biological, pest: @pest)
-
-    chemicals = PestControlMethod.chemical
-
-    assert_includes chemicals, chemical
-    assert_not_includes chemicals, biological
-  end
-
-  test "biological scope should return biological methods" do
-    chemical = create(:pest_control_method, :chemical, pest: @pest)
-    biological = create(:pest_control_method, :biological, pest: @pest)
-
-    biologicals = PestControlMethod.biological
-
-    assert_includes biologicals, biological
-    assert_not_includes biologicals, chemical
-  end
-
-  test "cultural scope should return cultural methods" do
-    cultural = create(:pest_control_method, :cultural, pest: @pest)
-    physical = create(:pest_control_method, :physical, pest: @pest)
-
-    culturals = PestControlMethod.cultural
-
-    assert_includes culturals, cultural
-    assert_not_includes culturals, physical
-  end
-
-  test "physical scope should return physical methods" do
-    physical = create(:pest_control_method, :physical, pest: @pest)
-    chemical = create(:pest_control_method, :chemical, pest: @pest)
-
-    physicals = PestControlMethod.physical
-
-    assert_includes physicals, physical
-    assert_not_includes physicals, chemical
-  end
-
-
 end

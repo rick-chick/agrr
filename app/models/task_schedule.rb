@@ -18,6 +18,4 @@ class TaskSchedule < ApplicationRecord
 
   validates :category, inclusion: { in: CATEGORIES }
   validates :status, inclusion: { in: STATUSES.values }
-
-  scope :active, -> { where(status: STATUSES[:active]) }
 end

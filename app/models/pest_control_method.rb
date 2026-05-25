@@ -14,9 +14,4 @@ class PestControlMethod < ApplicationRecord
   validates :pest, presence: true
   validates :method_type, presence: true, inclusion: { in: %w[chemical biological cultural physical] }
   validates :method_name, presence: true
-
-  scope :chemical, -> { where(method_type: "chemical") }
-  scope :biological, -> { where(method_type: "biological") }
-  scope :cultural, -> { where(method_type: "cultural") }
-  scope :physical, -> { where(method_type: "physical") }
 end
