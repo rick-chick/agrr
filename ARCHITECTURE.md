@@ -1,7 +1,7 @@
 # AGRR Architecture Documentation
 
 ## System Overview
-
+Rails is deprecated in this project. Adapter should be thin, domain should be pure and fat, so that this  project can move to Rust. 
 AGRR is an agricultural planning and optimization system with a decoupled Angular SPA and a Ruby on Rails 8 JSON API.
 
 **Technology stack**

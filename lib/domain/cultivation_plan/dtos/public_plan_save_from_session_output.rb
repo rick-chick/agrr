@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # save_from_session_runner（PlanSaveSession）の戻り値。Adapter はこの形へ正規化する。
+      # PublicPlanSavePersistencePort の戻り値。Adapter は PlanSaveSession 結果をこの形へ正規化する。
       class PublicPlanSaveFromSessionOutput
         attr_reader :error_message, :new_cultivation_plan_id, :skipped_items
 

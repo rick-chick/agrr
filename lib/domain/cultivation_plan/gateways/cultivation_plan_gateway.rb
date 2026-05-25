@@ -108,11 +108,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement apply_optimization_result"
         end
 
-        # API 公開プラン保存: 既存公開計画 id から PlanSaveSession 用の session_data 相当を組み立てる（なければ nil）
-        def session_data_for_public_plan_save_from_plan_id(plan_id:)
-          raise NotImplementedError, "Subclasses must implement session_data_for_public_plan_save_from_plan_id"
-        end
-
       end
     end
   end

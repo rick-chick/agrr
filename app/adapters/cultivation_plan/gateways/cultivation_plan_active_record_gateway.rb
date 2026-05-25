@@ -210,24 +210,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordInvalid, e.message
         end
 
-        def session_data_for_public_plan_save_from_plan_id(plan_id:)
-          plan = ::CultivationPlan.find_by(id: plan_id)
-          return nil unless plan
-
-          {
-            plan_id: plan.id,
-            farm_id: plan.farm_id,
-            crop_ids: plan.crops.pluck(:id),
-            field_data: plan.cultivation_plan_fields.map do |field|
-              {
-                name: field.name,
-                area: field.area,
-                coordinates: [ 35.0, 139.0 ]
-              }
-            end
-          }
-        end
-
         private
 
         def normalize_farm_for_plan!(farm)

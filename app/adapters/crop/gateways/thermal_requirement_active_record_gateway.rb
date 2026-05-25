@@ -3,7 +3,7 @@
 module Adapters
   module Crop
     module Gateways
-      class ThermalRequirementMemoryGateway < Domain::Crop::Gateways::ThermalRequirementGateway
+      class ThermalRequirementActiveRecordGateway < Domain::Crop::Gateways::ThermalRequirementGateway
         include CropStageRequirementEntitySupport
 
         def find_by_crop_stage_id(crop_stage_id)

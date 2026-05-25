@@ -3,7 +3,7 @@
 module Adapters
   module Crop
     module Gateways
-      class SunshineRequirementMemoryGateway < Domain::Crop::Gateways::SunshineRequirementGateway
+      class SunshineRequirementActiveRecordGateway < Domain::Crop::Gateways::SunshineRequirementGateway
         include CropStageRequirementEntitySupport
 
         def find_by_crop_stage_id(crop_stage_id)

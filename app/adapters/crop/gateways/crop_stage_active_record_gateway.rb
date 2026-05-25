@@ -3,7 +3,7 @@
 module Adapters
   module Crop
     module Gateways
-      class CropStageMemoryGateway < Domain::Crop::Gateways::CropStageGateway
+      class CropStageActiveRecordGateway < Domain::Crop::Gateways::CropStageGateway
         include CropStageRequirementEntitySupport
 
         def find_by_id(crop_stage_id)

@@ -82,29 +82,29 @@ module CompositionRoot
     end
 
     def crop_gateway
-      @crop_gateway ||= Adapters::Crop::Gateways::CropMemoryGateway.new(
+      @crop_gateway ||= Adapters::Crop::Gateways::CropActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway
       )
     end
 
     def crop_stage_gateway
-      @crop_stage_gateway ||= Adapters::Crop::Gateways::CropStageMemoryGateway.new
+      @crop_stage_gateway ||= Adapters::Crop::Gateways::CropStageActiveRecordGateway.new
     end
 
     def temperature_requirement_gateway
-      @temperature_requirement_gateway ||= Adapters::Crop::Gateways::TemperatureRequirementMemoryGateway.new
+      @temperature_requirement_gateway ||= Adapters::Crop::Gateways::TemperatureRequirementActiveRecordGateway.new
     end
 
     def thermal_requirement_gateway
-      @thermal_requirement_gateway ||= Adapters::Crop::Gateways::ThermalRequirementMemoryGateway.new
+      @thermal_requirement_gateway ||= Adapters::Crop::Gateways::ThermalRequirementActiveRecordGateway.new
     end
 
     def sunshine_requirement_gateway
-      @sunshine_requirement_gateway ||= Adapters::Crop::Gateways::SunshineRequirementMemoryGateway.new
+      @sunshine_requirement_gateway ||= Adapters::Crop::Gateways::SunshineRequirementActiveRecordGateway.new
     end
 
     def nutrient_requirement_gateway
-      @nutrient_requirement_gateway ||= Adapters::Crop::Gateways::NutrientRequirementMemoryGateway.new
+      @nutrient_requirement_gateway ||= Adapters::Crop::Gateways::NutrientRequirementActiveRecordGateway.new
     end
 
     def crop_stage_copy_interactor
@@ -456,18 +456,37 @@ module CompositionRoot
       @prediction_gateway ||= Adapters::Agrr::Gateways::PredictionDaemonGateway.new
     end
 
-    def public_plan_save_from_session_runner
-      lambda do |user:, session_data:, logger:|
-        Adapters::CultivationPlan::Sessions::PlanSaveSession.new(
-          user: user,
-          session_data: session_data,
+    def public_plan_save_read_gateway
+      @public_plan_save_read_gateway ||=
+        Adapters::CultivationPlan::Gateways::PublicPlanSaveReadActiveRecordGateway.new
+    end
+
+    def plan_save_blueprint_copy_factory
+      @plan_save_blueprint_copy_factory ||=
+        Adapters::CultivationPlan::Ports::PlanSaveBlueprintCopyFactory.new(
+          blueprint_gateway: crop_task_schedule_blueprint_gateway,
+          logger: logger
+        )
+    end
+
+    def public_plan_template_copy_gateway
+      @public_plan_template_copy_gateway ||=
+        Adapters::CultivationPlan::Gateways::PublicPlanTemplateCopyActiveRecordGateway.new(
+          logger: logger,
+          clock: clock
+        )
+    end
+
+    def public_plan_save_persistence_port
+      @public_plan_save_persistence_port ||=
+        Adapters::CultivationPlan::Gateways::PublicPlanSavePersistenceActiveRecordAdapter.new(
           logger: logger,
           clock: clock,
           cultivation_plan_gateway: cultivation_plan_gateway,
           crop_stage_copy_interactor: crop_stage_copy_interactor,
-          blueprint_copy_interactor: crop_task_schedule_blueprint_copy_interactor_for_plan_save
-        ).call
-      end
+          blueprint_copy_factory: plan_save_blueprint_copy_factory,
+          template_copy_gateway: public_plan_template_copy_gateway
+        )
     end
 
     def plan_copy_gateway
@@ -477,17 +496,6 @@ module CompositionRoot
     def crop_task_schedule_blueprint_gateway
       @crop_task_schedule_blueprint_gateway ||=
         Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new
-    end
-
-    def crop_task_schedule_blueprint_copy_interactor_for_plan_save
-      # PlanSaveSession 内で ctx ごとに task mapping を組み立てるため、ファクトリを返す
-      lambda do |ctx|
-        Domain::CultivationPlan::Interactors::CropTaskScheduleBlueprintCopyInteractor.new(
-          blueprint_gateway: crop_task_schedule_blueprint_gateway,
-          task_mapping_port: Adapters::CultivationPlan::Ports::PlanSaveUserAgriculturalTaskMappingAdapter.new(ctx),
-          logger: logger
-        )
-      end
     end
 
     def cultivation_plan_plan_initializer
@@ -700,11 +708,11 @@ module CompositionRoot
       )
     end
 
-    # AI 作成・更新では FertilizeMemoryGateway を呼び出しごとに new し、1 リクエスト内の create/update で共有する。
-    # プロセス全体でメモ化される `fertilize_gateway`（純 AR）とはキャッシュ方針が異なり、リクエスト間でゲートウェイ状態を持ち越さない。
-    # 空名レコードを list 経路から外す従来仕様のため、純 AR ゲートウェイとは振る舞いが異なる。
+    # AI 作成・更新では FertilizeAiActiveRecordGateway を呼び出しごとに new し、1 リクエスト内の create/update で共有する。
+    # プロセス全体でメモ化される `fertilize_gateway` とはキャッシュ方針が異なり、リクエスト間でゲートウェイ状態を持ち越さない。
+    # 空名レコードを list 経路から外す従来仕様のため、通常の FertilizeActiveRecordGateway とは振る舞いが異なる。
     def fertilize_ai_interactors_for(user_id:)
-      gw = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new(
+      gw = Adapters::Fertilize::Gateways::FertilizeAiActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway,
         translator: translator
       )

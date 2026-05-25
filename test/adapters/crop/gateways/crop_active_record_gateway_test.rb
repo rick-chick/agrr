@@ -5,15 +5,15 @@ require "test_helper"
 module Adapters
   module Crop
     module Gateways
-      class CropMemoryGatewayTest < ActiveSupport::TestCase
+      class CropActiveRecordGatewayTest < ActiveSupport::TestCase
         def setup
-          @gateway = CropMemoryGateway.new(
+          @gateway = CropActiveRecordGateway.new(
             deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
           )
-          @temperature_requirement_gateway = Adapters::Crop::Gateways::TemperatureRequirementMemoryGateway.new
-          @thermal_requirement_gateway = Adapters::Crop::Gateways::ThermalRequirementMemoryGateway.new
-          @sunshine_requirement_gateway = Adapters::Crop::Gateways::SunshineRequirementMemoryGateway.new
-          @nutrient_requirement_gateway = Adapters::Crop::Gateways::NutrientRequirementMemoryGateway.new
+          @temperature_requirement_gateway = Adapters::Crop::Gateways::TemperatureRequirementActiveRecordGateway.new
+          @thermal_requirement_gateway = Adapters::Crop::Gateways::ThermalRequirementActiveRecordGateway.new
+          @sunshine_requirement_gateway = Adapters::Crop::Gateways::SunshineRequirementActiveRecordGateway.new
+          @nutrient_requirement_gateway = Adapters::Crop::Gateways::NutrientRequirementActiveRecordGateway.new
           @crop = create(:crop)
         end
 

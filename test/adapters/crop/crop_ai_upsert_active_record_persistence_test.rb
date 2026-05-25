@@ -96,7 +96,7 @@ module Adapters
           ]
         }
 
-        gateway = Adapters::Crop::Gateways::CropMemoryGateway.new(
+        gateway = Adapters::Crop::Gateways::CropActiveRecordGateway.new(
           deletion_undo_gateway: CompositionRoot.deletion_undo_gateway
         )
         create_interactor = Adapters::Crop::CropCreateForAiAdapter.new(

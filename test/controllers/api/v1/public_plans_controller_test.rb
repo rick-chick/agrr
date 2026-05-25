@@ -21,7 +21,7 @@ module Api
         # Interactor is stubbed so plan_id doesn't need to reference real DB record
         Domain::CultivationPlan::Interactors::PublicPlanSaveInteractor.stub(:new, proc { |**kwargs|
           Object.new.tap do |o|
-            o.define_singleton_method(:call) { |**_| kwargs[:output_port].on_success }
+            o.define_singleton_method(:call) { |*_args| kwargs[:output_port].on_success }
           end
         }) do
           post :save_plan, params: { plan_id: 99999 }
@@ -35,9 +35,8 @@ module Api
       test "POST /api/v1/public_plans/save_plan - 存在しない計画の場合404を返す" do
         @request.env["HTTP_ACCEPT"] = "application/json"
 
-        # cultivation_plan_gatewayがnilを返すようにスタブ（計画が存在しないケース）
-        CompositionRoot.stubs(:cultivation_plan_gateway).returns(
-          Object.new.tap { |o| o.define_singleton_method(:session_data_for_public_plan_save_from_plan_id) { |**_| nil } }
+        CompositionRoot.stubs(:public_plan_save_read_gateway).returns(
+          Object.new.tap { |o| o.define_singleton_method(:find_header) { |**_| nil } }
         )
 
         post :save_plan, params: { plan_id: 99999 }
@@ -53,7 +52,7 @@ module Api
         fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailure
         Domain::CultivationPlan::Interactors::PublicPlanSaveInteractor.stub(:new, proc { |**kwargs|
           Object.new.tap do |o|
-            o.define_singleton_method(:call) { |**_| kwargs[:output_port].on_failure(fdto.new(kind: fdto::KIND_MISSING_PLAN_ID)) }
+            o.define_singleton_method(:call) { |*_args| kwargs[:output_port].on_failure(fdto.new(kind: fdto::KIND_MISSING_PLAN_ID)) }
           end
         }) do
           post :save_plan, params: {}
@@ -71,7 +70,7 @@ module Api
         fdto = Domain::CultivationPlan::Dtos::PublicPlanSaveFailure
         Domain::CultivationPlan::Interactors::PublicPlanSaveInteractor.stub(:new, proc { |**kwargs|
           Object.new.tap do |o|
-            o.define_singleton_method(:call) { |**_|
+            o.define_singleton_method(:call) { |*_args|
               kwargs[:output_port].on_failure(
                 fdto.new(kind: fdto::KIND_SAVE_FAILED, message: "作成できるFarmは4件までです")
               )

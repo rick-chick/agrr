@@ -183,6 +183,24 @@
 
 ---
 
+## 解消済み: `_memory_gateway` 接尾辞誤用（AR のみでインメモリではない）
+
+`ARCHITECTURE.md` の `_memory_gateway` はインメモリ実装用。次は **ActiveRecord 実装のため `_active_record_gateway` にリネーム済み**（2026-05-24）。
+
+| 旧 | 新 |
+|---|---|
+| `CropMemoryGateway` | `CropActiveRecordGateway` |
+| `CropStageMemoryGateway` | `CropStageActiveRecordGateway` |
+| `TemperatureRequirementMemoryGateway` | `TemperatureRequirementActiveRecordGateway` |
+| `ThermalRequirementMemoryGateway` | `ThermalRequirementActiveRecordGateway` |
+| `SunshineRequirementMemoryGateway` | `SunshineRequirementActiveRecordGateway` |
+| `NutrientRequirementMemoryGateway` | `NutrientRequirementActiveRecordGateway` |
+| `FertilizeMemoryGateway`（AI 用サブクラス） | `FertilizeAiActiveRecordGateway` |
+
+**規約どおりの `_memory_gateway`（変更なし）**: `FieldCultivationClimateProgressMemoryGateway`（テスト環境のみ・モック progress、DB なし）。
+
+---
+
 ## D. Models → Domain 移行: 五動詞外 Gateway メソッド（モデル委譲）
 
 `app/models` の業務ロジックを domain（Interactor / Policy / Calculator）へ移す際、次は **廃止対象**（Interactor が `update(id, attrs)` のみ呼ぶ）。

@@ -23,7 +23,7 @@
 |-------|------|----------|
 | 0 | Advance から nested Interactor 除去 | `OptimizationCompletion` モジュール |
 | 1 | CultivationPlan 読取 | `CultivationPlanPrivateReadGateway`（`find_plan_read_rows_by_plan_id` 等）+ Policy/Mapper |
-| 2 | 計画初期化・コピー・公開保存 | `CultivationPlanInitializeInteractor`, `PlanCopyInteractor`, `PublicPlanSaveInteractor` |
+| 2 | 計画初期化・コピー・公開保存 | `CultivationPlanInitializeInteractor`, `PlanCopyInteractor`, `PublicPlanSaveInteractor`（統合テスト: `test/integration/cultivation_plan/public_plan_save_test.rb`） |
 | 3 | Crop 認可・テンプレ | Policy に gateway なし、`CropTaskTemplateGateway` |
 | 4 | TaskScheduleItem | `TaskScheduleItemCreatePolicy`, `AmountUnitConversionCalculator` |
 | 5 | Adjust 保存・ペイロード | `SaveAdjustedAgrrResultInteractor`, `AdjustResultSavePolicy` |

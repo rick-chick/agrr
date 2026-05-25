@@ -3,8 +3,8 @@
 module Adapters
   module Fertilize
     module Gateways
-      # AI 作成フロー等で使う。永続化は DB（ActiveRecord）で、一覧は親の list_index を利用する。
-      class FertilizeMemoryGateway < FertilizeActiveRecordGateway
+      # AI 作成フロー用。永続化は DB（ActiveRecord）。一覧は親の list_index を利用する。
+      class FertilizeAiActiveRecordGateway < FertilizeActiveRecordGateway
         def find_by_id(fertilize_id)
           fertilize = ::Fertilize.find(fertilize_id)
           Adapters::Fertilize::Mappers::FertilizeMapper.fertilize_entity_from_record(fertilize)

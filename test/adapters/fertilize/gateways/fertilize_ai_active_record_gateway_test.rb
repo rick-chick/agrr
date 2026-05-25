@@ -2,9 +2,9 @@
 
 require "test_helper"
 
-class Adapters::Fertilize::Gateways::FertilizeMemoryGatewayTest < ActiveSupport::TestCase
+class Adapters::Fertilize::Gateways::FertilizeAiActiveRecordGatewayTest < ActiveSupport::TestCase
       def setup
-        @gateway = Adapters::Fertilize::Gateways::FertilizeMemoryGateway.new(
+        @gateway = Adapters::Fertilize::Gateways::FertilizeAiActiveRecordGateway.new(
           deletion_undo_gateway: CompositionRoot.deletion_undo_gateway,
           translator: CompositionRoot.translator
         )

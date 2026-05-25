@@ -3,51 +3,57 @@
 module Domain
   module CultivationPlan
     module Interactors
-      # 既存の公開計画 id から保存用ペイロードを組み立て、edge 注入 runner で保存する。
+      # 公開計画をユーザーアカウントへ保存する（オーケストレーション本体）。
       class PublicPlanSaveInteractor
         def initialize(
           output_port:,
-          cultivation_plan_gateway:,
-          save_from_session_runner:,
+          txn_gateway:,
+          read_gateway:,
+          farm_gateway:,
+          persistence_port:,
           logger:,
           translator:
         )
           @output_port = output_port
-          @cultivation_plan_gateway = cultivation_plan_gateway
-          @save_from_session_runner = save_from_session_runner
+          @txn_gateway = txn_gateway
+          @read_gateway = read_gateway
+          @farm_gateway = farm_gateway
+          @persistence_port = persistence_port
           @logger = logger
           @translator = translator
         end
 
-        def call(plan_id:, user:)
+        # @param input [Dtos::PublicPlanSaveInput]
+        def call(input)
           fdto = Dtos::PublicPlanSaveFailure
-          if plan_id.blank?
+          unless input.plan_id_present?
             @output_port.on_failure(fdto.new(kind: fdto::KIND_MISSING_PLAN_ID))
             return
           end
 
-          save_data = @cultivation_plan_gateway.session_data_for_public_plan_save_from_plan_id(
-            plan_id: plan_id.to_i
-          )
-          unless save_data
+          session_data = resolve_session_data(input)
+          unless session_data
             @output_port.on_failure(fdto.new(kind: fdto::KIND_PLAN_NOT_FOUND))
             return
           end
 
-          result = @save_from_session_runner.call(user: user, session_data: save_data)
-          if result.respond_to?(:success?) && result.success?
+          workspace = Dtos::PublicPlanSaveWorkspace.new(
+            user_id: input.user_id,
+            session_data: session_data
+          )
+
+          output = persist_workspace!(workspace)
+
+          if output.success?
             @output_port.on_success
             return
           end
 
-          msg = result.respond_to?(:error_message) ? result.error_message : nil
+          msg = output.error_message
           fallback = @translator.t("public_plans.save.error")
-          text = (msg.nil? || msg.to_s.empty?) ? fallback : msg.to_s
+          text = msg.nil? || msg.to_s.empty? ? fallback : msg.to_s
           @output_port.on_failure(
-            Dtos::PublicPlanSaveFailure.new(
-              kind: Dtos::PublicPlanSaveFailure::KIND_SAVE_FAILED,
-              message: text
-            )
+            fdto.new(kind: fdto::KIND_SAVE_FAILED, message: text)
           )
         rescue Domain::Shared::Exceptions::InvalidTaskScheduleItem => e
           @logger.error("❌ [PublicPlanSaveInteractor] #{e.class}: #{e.message}")
@@ -64,6 +70,35 @@ module Domain
               kind: Dtos::PublicPlanSaveFailure::KIND_SAVE_FAILED,
               message: e.message
             )
+          )
+        end
+
+        private
+
+        # オーケストレーション: farm → fields → crops → region masters → 既存 plan 判定 → plan copy → blueprint → schedules
+        # （永続化詳細は PublicPlanSavePersistencePort / PlanSaveSession + TemplateCopyGateway）
+        def persist_workspace!(workspace)
+          output = nil
+          @txn_gateway.within_transaction do
+            output = @persistence_port.execute_save!(workspace: workspace)
+          end
+          output
+        end
+
+        def resolve_session_data(input)
+          return input.session_data if input.session_data
+
+          plan_id = input.plan_id.to_i
+          header = @read_gateway.find_header(plan_id: plan_id)
+          return nil unless header
+
+          reference_farm = @farm_gateway.find_by_id(header.farm_id)
+          return nil unless reference_farm
+
+          field_rows = @read_gateway.list_field_rows(plan_id: plan_id)
+          Mappers::PublicPlanSaveSessionDataMapper.from_snapshots(
+            header: header,
+            field_rows: field_rows
           )
         end
       end

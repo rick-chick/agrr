@@ -5,9 +5,9 @@ require "test_helper"
 module Adapters
   module Crop
     module Gateways
-      class CropStageMemoryGatewayTest < ActiveSupport::TestCase
+      class CropStageActiveRecordGatewayTest < ActiveSupport::TestCase
         setup do
-          @gateway = Adapters::Crop::Gateways::CropStageMemoryGateway.new
+          @gateway = Adapters::Crop::Gateways::CropStageActiveRecordGateway.new
           @crop = create(:crop)
         end
 

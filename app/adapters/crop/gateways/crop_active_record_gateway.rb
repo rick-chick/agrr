@@ -3,7 +3,7 @@
 module Adapters
   module Crop
     module Gateways
-      class CropMemoryGateway < Domain::Crop::Gateways::CropGateway
+      class CropActiveRecordGateway < Domain::Crop::Gateways::CropGateway
         include CropStageRequirementEntitySupport
         def initialize(deletion_undo_gateway:)
           @deletion_undo_gateway = deletion_undo_gateway
