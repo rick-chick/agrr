@@ -51,9 +51,12 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(new_farm)
         end
 
-        def find_plan_id_by_user_and_farm(user_id:, farm_id:)
-          plan = ::CultivationPlan.find_by(plan_type: "private", farm_id: farm_id, user_id: user_id)
-          plan&.id
+        def find_owned_farm_record(user_id:, farm_id:)
+          ::Farm.find_by(id: farm_id, user_id: user_id)
+        end
+
+        def find_owned_private_plan_record(user_id:, farm_id:)
+          ::CultivationPlan.find_by(plan_type: "private", farm_id: farm_id, user_id: user_id)
         end
       end
     end

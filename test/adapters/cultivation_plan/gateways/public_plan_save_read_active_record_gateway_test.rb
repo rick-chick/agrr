@@ -33,6 +33,23 @@ module Adapters
             area: 5.0,
             daily_fixed_cost: 0
           )
+          @ref_crop = ::Crop.create!(
+            user: nil,
+            name: "ReadGwCrop",
+            variety: "v",
+            is_reference: true,
+            area_per_unit: 0.2,
+            revenue_per_area: 100.0,
+            region: "jp"
+          )
+          @cpc = ::CultivationPlanCrop.create!(
+            cultivation_plan: @plan,
+            crop: @ref_crop,
+            name: @ref_crop.name,
+            variety: @ref_crop.variety,
+            area_per_unit: @ref_crop.area_per_unit,
+            revenue_per_area: @ref_crop.revenue_per_area
+          )
         end
 
         test "find_header returns snapshot for existing plan" do
@@ -49,6 +66,15 @@ module Adapters
           rows = @gateway.list_field_rows(plan_id: @plan.id)
           assert_equal 1, rows.size
           assert_equal "F1", rows.first.name
+        end
+
+        test "list_crop_reference_rows returns crop reference snapshots" do
+          rows = @gateway.list_crop_reference_rows(plan_id: @plan.id)
+          assert_equal 1, rows.size
+          row = rows.first
+          assert_equal @cpc.id, row.cultivation_plan_crop_id
+          assert_equal @ref_crop.id, row.reference_crop_id
+          assert_equal "ReadGwCrop", row.name
         end
       end
     end

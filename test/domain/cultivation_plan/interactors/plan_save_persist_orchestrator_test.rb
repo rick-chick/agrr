@@ -9,7 +9,8 @@ module Domain
         test "ensure_user_farm delegates to interactor with farm_id from session hash" do
           expected_output = Dtos::PlanSaveEnsureUserFarmOutput.new(
             farm_id: 77,
-            farm_reused: false
+            farm_reused: false,
+            farm_region: "jp"
           )
           interactor = mock("ensure_user_farm_interactor")
           interactor.expects(:call).with do |input|
@@ -30,13 +31,12 @@ module Domain
           interactor.expects(:call).with do |input|
             input.reference_farm_id == 12
           end.returns(
-            Dtos::PlanSaveEnsureUserFarmOutput.new(farm_id: 1, farm_reused: true)
+            Dtos::PlanSaveEnsureUserFarmOutput.new(farm_id: 1, farm_reused: true, farm_region: "jp")
           )
 
           session = Dtos::PublicPlanSaveSessionData.new(
             plan_id: 1,
             farm_id: 12,
-            crop_ids: [],
             field_data: []
           )
           PlanSavePersistOrchestrator.new(ensure_user_farm_interactor: interactor).ensure_user_farm!(

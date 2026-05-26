@@ -10,7 +10,6 @@ module Adapters
         end
 
         def copy_pesticides_for_region(region)
-          crop_mapper = CropMapper.new(@ctx)
           pest_mapper = PestMapper.new(@ctx)
 
           reference_scope = ::Pesticide.reference.includes(
@@ -32,7 +31,7 @@ module Adapters
               next
             end
 
-            user_crop_id = crop_mapper.user_crop_id_for_reference_crop(reference_pesticide.crop_id)
+            user_crop_id = @ctx.user_crop_id_for_reference_crop(reference_pesticide.crop_id)
             user_pest_id = pest_mapper.user_pest_id_for_reference_pest(reference_pesticide.pest_id)
 
             unless user_crop_id && user_pest_id

@@ -10,8 +10,7 @@ module Adapters
         end
 
         def copy_agricultural_tasks_for_region(region)
-          crop_mapper = CropMapper.new(@ctx)
-          reference_crop_ids = crop_mapper.get_reference_crop_ids
+          reference_crop_ids = @ctx.get_reference_crop_ids
           return [] if reference_crop_ids.empty?
 
           reference_scope = ::AgriculturalTask.reference
@@ -29,7 +28,7 @@ module Adapters
             existing_task = @ctx.user.agricultural_tasks.find_by(source_agricultural_task_id: reference_task.id)
 
             if existing_task
-              copy_agricultural_task_crop_relationships(reference_task, existing_task, crop_mapper)
+              copy_agricultural_task_crop_relationships(reference_task, existing_task)
               @ctx.result.add_skip(:agricultural_tasks, existing_task.id)
               user_tasks << existing_task
               @ctx.reference_agricultural_task_id_to_user_task_id[reference_task.id] = existing_task.id
@@ -56,7 +55,7 @@ module Adapters
               raise Domain::Shared::Exceptions::RecordInvalid, error_message
             end
 
-            copy_agricultural_task_crop_relationships(reference_task, new_task, crop_mapper)
+            copy_agricultural_task_crop_relationships(reference_task, new_task)
 
             user_tasks << new_task
             @ctx.reference_agricultural_task_id_to_user_task_id[reference_task.id] = new_task.id
@@ -91,9 +90,9 @@ module Adapters
 
         private
 
-        def copy_agricultural_task_crop_relationships(reference_task, new_task, crop_mapper)
+        def copy_agricultural_task_crop_relationships(reference_task, new_task)
           reference_task.crop_task_templates.each do |template|
-            user_crop_id = crop_mapper.user_crop_id_for_reference_crop(template.crop_id)
+            user_crop_id = @ctx.user_crop_id_for_reference_crop(template.crop_id)
             next unless user_crop_id
 
             ensure_crop_task_template!(crop_id: user_crop_id, task: new_task)

@@ -33,10 +33,17 @@ module Domain
           raise NotImplementedError
         end
 
+        # Template-copy 境界: ユーザー所有の農場 AR（存在しなければ nil）
         # @param user_id [Integer]
         # @param farm_id [Integer]
-        # @return [Integer, nil] ユーザー・農場に紐づく private 計画 id（存在しなければ nil）
-        def find_plan_id_by_user_and_farm(user_id:, farm_id:)
+        def find_owned_farm_record(user_id:, farm_id:)
+          raise NotImplementedError
+        end
+
+        # Template-copy 境界: ユーザー・農場に紐づく private 計画 AR（存在しなければ nil）
+        # @param user_id [Integer]
+        # @param farm_id [Integer]
+        def find_owned_private_plan_record(user_id:, farm_id:)
           raise NotImplementedError
         end
       end

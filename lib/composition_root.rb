@@ -502,6 +502,36 @@ module CompositionRoot
         )
     end
 
+    def plan_save_field_gateway
+      @plan_save_field_gateway ||=
+        Adapters::CultivationPlan::Gateways::PlanSaveFieldActiveRecordGateway.new
+    end
+
+    def plan_save_ensure_user_fields_interactor
+      @plan_save_ensure_user_fields_interactor ||=
+        Domain::CultivationPlan::Interactors::PlanSaveEnsureUserFieldsInteractor.new(
+          plan_save_field_gateway: plan_save_field_gateway,
+          logger: logger,
+          translator: translator
+        )
+    end
+
+    def plan_save_user_crop_gateway
+      @plan_save_user_crop_gateway ||=
+        Adapters::CultivationPlan::Gateways::PlanSaveUserCropActiveRecordGateway.new
+    end
+
+    def plan_save_ensure_user_crops_interactor
+      @plan_save_ensure_user_crops_interactor ||=
+        Domain::CultivationPlan::Interactors::PlanSaveEnsureUserCropsInteractor.new(
+          read_gateway: public_plan_save_read_gateway,
+          user_crop_gateway: plan_save_user_crop_gateway,
+          crop_gateway: crop_gateway,
+          logger: logger,
+          translator: translator
+        )
+    end
+
     def public_plan_save_persistence_port
       @public_plan_save_persistence_port ||=
         Adapters::CultivationPlan::Gateways::PublicPlanSavePersistenceActiveRecordAdapter.new(
@@ -511,7 +541,11 @@ module CompositionRoot
           blueprint_copy_factory: plan_save_blueprint_copy_factory,
           template_copy_gateway: public_plan_template_copy_gateway,
           plan_save_persist_orchestrator: plan_save_persist_orchestrator,
-          plan_save_farm_gateway: plan_save_farm_gateway
+          plan_save_farm_gateway: plan_save_farm_gateway,
+          plan_save_ensure_user_fields_interactor: plan_save_ensure_user_fields_interactor,
+          plan_save_ensure_user_crops_interactor: plan_save_ensure_user_crops_interactor,
+          plan_save_field_gateway: plan_save_field_gateway,
+          plan_save_user_crop_gateway: plan_save_user_crop_gateway
         )
     end
 

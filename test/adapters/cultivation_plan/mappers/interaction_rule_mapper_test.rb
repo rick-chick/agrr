@@ -28,7 +28,7 @@ class Adapters::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSupp
       session_data: { plan_id: plan.id },
       result: result
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop: ref_crop)
 
     rules = Adapters::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(ref_farm.region)
     assert_equal 1, rules.size
@@ -59,7 +59,7 @@ class Adapters::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSupp
       session_data: { plan_id: plan.id },
       result: plan_save_result
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx1, ref_crop: ref_crop)
     Adapters::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx1).copy_interaction_rules_for_region(ref_farm.region)
     existing = user.interaction_rules.find_by(source_interaction_rule_id: ref_rule.id)
 
@@ -69,7 +69,7 @@ class Adapters::CultivationPlan::Mappers::InteractionRuleMapperTest < ActiveSupp
       session_data: { plan_id: plan.id },
       result: result2
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx2, ref_crop: ref_crop)
     Adapters::CultivationPlan::Mappers::InteractionRuleMapper.new(ctx2).copy_interaction_rules_for_region(ref_farm.region)
 
     existing_crop = user.crops.find_by(source_crop_id: ref_crop.id)

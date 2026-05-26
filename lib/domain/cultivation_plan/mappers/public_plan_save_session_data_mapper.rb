@@ -11,7 +11,6 @@ module Domain
           Dtos::PublicPlanSaveSessionData.new(
             plan_id: header.plan_id,
             farm_id: header.farm_id,
-            crop_ids: header.crop_ids,
             field_data: field_rows
           )
         end

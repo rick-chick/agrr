@@ -25,7 +25,7 @@ class Adapters::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCa
       session_data: { plan_id: plan.id },
       result: result
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop: ref_crop)
 
     pests = Adapters::CultivationPlan::Mappers::PestMapper.new(ctx).copy_pests_for_region(ref_farm.region)
     assert_equal 1, pests.size
@@ -53,7 +53,7 @@ class Adapters::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCa
       session_data: { plan_id: plan.id },
       result: plan_save_result
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx1, ref_crop: ref_crop)
     Adapters::CultivationPlan::Mappers::PestMapper.new(ctx1).copy_pests_for_region(ref_farm.region)
     existing = user.pests.find_by(source_pest_id: ref_pest.id)
 
@@ -63,7 +63,7 @@ class Adapters::CultivationPlan::Mappers::PestMapperTest < ActiveSupport::TestCa
       session_data: { plan_id: plan.id },
       result: result2
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx2, ref_crop: ref_crop)
     Adapters::CultivationPlan::Mappers::PestMapper.new(ctx2).copy_pests_for_region(ref_farm.region)
 
     existing_crop = user.crops.find_by(source_crop_id: ref_crop.id)

@@ -6,18 +6,15 @@ module Domain
   module CultivationPlan
     module Dtos
       # 公開プラン保存フローのセッション／ゲートウェイ境界用ペイロード（無型 Hash を渡さない）。
-      # 属性は整数・配列・圃場行 DTO・created_at（UTC Time またはセッション用 ISO8601 文字列）に限定する。
-      # Params の変換は Adapter（PlanSaveSessionDataCoercion）で Hash に潰してから渡す。
+      # 作物は plan_id 経由で read_gateway.list_crop_reference_rows に委ねる（crop_ids は保持しない）。
       class PublicPlanSaveSessionData
-        attr_reader :plan_id, :farm_id, :crop_ids, :field_data, :created_at
+        attr_reader :plan_id, :farm_id, :field_data, :created_at
 
-        # @param crop_ids [Array<Integer>]
         # @param field_data [Array<PublicPlanSaveFieldDatum>]
         # @param created_at [Time, String, nil] Time は UTC に正規化して保持。String は from_session_hash / initialize 時にパース。
-        def initialize(plan_id:, farm_id:, crop_ids: [], field_data: [], created_at: nil)
+        def initialize(plan_id:, farm_id:, field_data: [], created_at: nil)
           @plan_id = plan_id.to_i
           @farm_id = farm_id&.to_i
-          @crop_ids = crop_ids.freeze
           @field_data = field_data.freeze
           @created_at = coerce_created_at_attr(created_at)
           freeze
@@ -33,7 +30,6 @@ module Domain
           return nil if missing_plan_id?(plan_id)
 
           farm_id = fetch_key(h, :farm_id)
-          crop_ids = Array(fetch_key(h, :crop_ids)).map(&:to_i)
 
           raw_fields = fetch_key(h, :field_data)
           field_data = Array(raw_fields).filter_map do |row|
@@ -46,7 +42,6 @@ module Domain
           new(
             plan_id: plan_id.to_i,
             farm_id: farm_id&.to_i,
-            crop_ids: crop_ids,
             field_data: field_data,
             created_at: created_at
           )
@@ -58,7 +53,6 @@ module Domain
           {
             plan_id: plan_id,
             farm_id: farm_id,
-            crop_ids: crop_ids,
             field_data: field_data.map(&:to_session_row),
             created_at: created_at_iso8601_string
           }.compact

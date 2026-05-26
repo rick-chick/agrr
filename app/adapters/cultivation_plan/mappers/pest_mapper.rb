@@ -10,8 +10,7 @@ module Adapters
         end
 
         def copy_pests_for_region(region)
-          crop_mapper = CropMapper.new(@ctx)
-          reference_crop_ids = crop_mapper.get_reference_crop_ids
+          reference_crop_ids = @ctx.get_reference_crop_ids
           return [] if reference_crop_ids.empty?
 
           reference_scope = ::Pest.reference
@@ -35,7 +34,7 @@ module Adapters
             existing_pest = @ctx.user.pests.reload.find_by(source_pest_id: reference_pest.id)
 
             if existing_pest
-              copy_pest_crop_relationships(reference_pest, existing_pest, crop_mapper)
+              copy_pest_crop_relationships(reference_pest, existing_pest)
               @ctx.result.add_skip(:pests, existing_pest.id)
               user_pests << existing_pest
               @ctx.reference_pest_id_to_user_pest_id[reference_pest.id] = existing_pest.id
@@ -64,7 +63,7 @@ module Adapters
               if is_uniqueness_error
                 existing_pest = @ctx.user.pests.reload.find_by(source_pest_id: reference_pest.id)
                 if existing_pest
-                  copy_pest_crop_relationships(reference_pest, existing_pest, crop_mapper)
+                  copy_pest_crop_relationships(reference_pest, existing_pest)
                   @ctx.result.add_skip(:pests, existing_pest.id)
                   user_pests << existing_pest
                   @ctx.reference_pest_id_to_user_pest_id[reference_pest.id] = existing_pest.id
@@ -83,7 +82,7 @@ module Adapters
 
             copy_pest_profiles(reference_pest, new_pest)
             copy_pest_control_methods(reference_pest, new_pest)
-            copy_pest_crop_relationships(reference_pest, new_pest, crop_mapper)
+            copy_pest_crop_relationships(reference_pest, new_pest)
 
             user_pests << new_pest
             @ctx.reference_pest_id_to_user_pest_id[reference_pest.id] = new_pest.id
@@ -135,9 +134,9 @@ module Adapters
           end
         end
 
-        def copy_pest_crop_relationships(reference_pest, new_pest, crop_mapper)
+        def copy_pest_crop_relationships(reference_pest, new_pest)
           reference_pest.crop_pests.each do |crop_pest|
-            user_crop_id = crop_mapper.user_crop_id_for_reference_crop(crop_pest.crop_id)
+            user_crop_id = @ctx.user_crop_id_for_reference_crop(crop_pest.crop_id)
             next unless user_crop_id
 
             ::CropPest.find_or_create_by!(crop_id: user_crop_id, pest: new_pest)

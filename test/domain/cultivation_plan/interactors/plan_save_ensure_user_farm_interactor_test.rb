@@ -51,6 +51,7 @@ module Domain
 
           assert_equal 77, out.farm_id
           assert out.farm_reused
+          assert_equal "kanto", out.farm_region
         end
 
         test "creates user farm from reference when none exists" do
@@ -79,6 +80,7 @@ module Domain
 
           assert_equal 88, out.farm_id
           assert_not out.farm_reused
+          assert_equal "kanto", out.farm_region
         end
 
         test "raises RecordInvalid when farm create limit exceeded" do

@@ -84,52 +84,6 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
     assert_match(/Couldn't find Farm|存在しない|見つかりません/i, result.error_message.to_s)
   end
 
-  test "creates missing user crop in CPC loop when reference_crops_scope excludes it" do
-    # 参照計画上には 'us' の作物を含めるが、reference_crops_scope は region: [jp, nil] で除外される
-    us_reference_crop = Crop.create!(
-      user: nil,
-      name: "US参照作物",
-      variety: "USV",
-      is_reference: true,
-      area_per_unit: 0.5,
-      revenue_per_area: 7000.0,
-      region: "us"
-    )
-
-    plan = CultivationPlan.create!(
-      farm: @farm,
-      user: nil,
-      total_area: 50.0,
-      plan_type: "public",
-      plan_year: Date.current.year,
-      plan_name: "CPC欠落作物作成検証",
-      planning_start_date: Date.current,
-      planning_end_date: Date.current.end_of_year,
-      status: "completed"
-    )
-    CultivationPlanCrop.create!(
-      cultivation_plan: plan,
-      crop: us_reference_crop,
-      name: us_reference_crop.name,
-      variety: us_reference_crop.variety,
-      area_per_unit: us_reference_crop.area_per_unit,
-      revenue_per_area: us_reference_crop.revenue_per_area
-    )
-
-    session_data = {
-      plan_id: plan.id,
-      farm_id: @farm.id,
-      field_data: []
-    }
-
-    result = PublicPlanSaveTestSupport.invoke_save(user: @user, session_data: session_data)
-    assert result.success, result.error_message
-
-    # CPCループで create! されたか（source_crop_id が us 作物）
-    created = @user.crops.find_by(source_crop_id: us_reference_crop.id)
-    assert_not_nil created, "CPCループで不足作物がcreate!されるべき"
-  end
-
   test "fills source_interaction_rule_id for existing user rule without it" do
     # 参照ルール
     reference_rule = InteractionRule.create!(
@@ -2118,11 +2072,10 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
     # セッションデータを準備
     session_data = {
       farm_id: @farm.id,
-      crop_ids: [ @crops[0].id ],
       field_data: [ { name: "テスト圃場", area: 100.0, coordinates: [ 35.0, 139.0 ] } ]
     }
 
-    # 計画を作成
+    # 計画を作成（作物 ensure は plan_id + CPC 経路のため CPC は不要）
     plan = CultivationPlan.create!(
       farm: @farm,
       user: nil,
@@ -2167,7 +2120,6 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
 
     session_data = {
       farm_id: @farm.id,
-      crop_ids: [ reference_crop.id ],
       field_data: [ { name: "テスト圃場", area: 100.0, coordinates: [ 35.0, 139.0 ] } ]
     }
 

@@ -69,7 +69,44 @@ module PlanSaveMapperTestSupport
       user: user,
       session_data: session_data,
       result: result
-    ).tap { |ctx| ctx.crop_stage_copy_interactor = CompositionRoot.crop_stage_copy_interactor }
+    )
+  end
+
+  # 1-3（crop ensure）以外の mapper/gateway テスト用: ctx に作物 ID マップだけ載せる（Interactor は呼ばない）
+  # @param ref_crop [Crop] 参照作物
+  # @param cpc_id [Integer, nil] CultivationPlanCrop#id（省略時は plan_id + ref_crop から解決）
+  # @return [Crop] ユーザー作物 AR
+  def stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop:, cpc_id: nil)
+    plan_id = ctx.session_data[:plan_id] || ctx.session_data["plan_id"]
+    resolved_cpc_id = cpc_id || CultivationPlanCrop.find_by(cultivation_plan_id: plan_id, crop_id: ref_crop.id)&.id
+
+    user_crop = ctx.user.crops.find_by(source_crop_id: ref_crop.id)
+    if user_crop
+      ctx.result.add_skip(:crops, user_crop.id)
+    else
+      user_crop = ctx.user.crops.create!(
+        name: ref_crop.name,
+        variety: ref_crop.variety,
+        area_per_unit: ref_crop.area_per_unit,
+        revenue_per_area: ref_crop.revenue_per_area,
+        groups: ref_crop.groups,
+        is_reference: false,
+        region: ref_crop.region,
+        source_crop_id: ref_crop.id
+      )
+    end
+
+    ctx.reference_crop_id_to_user_crop_id = { ref_crop.id => user_crop.id }
+    ctx.ref_cpc_id_to_user_crop_id = resolved_cpc_id ? { resolved_cpc_id => user_crop.id } : {}
+    groups = [ ref_crop.name ]
+    groups.concat(Array(ref_crop.groups)) if ref_crop.groups.present?
+    ctx.reference_crop_groups = groups.compact.uniq
+    user_crop
+  end
+
+  # PlanCopy gateway 等が AR 配列を要するとき
+  def stub_plan_save_user_crops_for_mapper_test(ctx, ref_crop:, cpc_id: nil)
+    [ stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop: ref_crop, cpc_id: cpc_id) ]
   end
 
   # Mapper / gateway 単体用: ユーザー農場を AR で用意（domain の ensure 経路は使わない）

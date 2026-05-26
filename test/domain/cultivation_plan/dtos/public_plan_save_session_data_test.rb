@@ -10,7 +10,6 @@ module Domain
           dto = PublicPlanSaveSessionData.from_session_hash(
             "plan_id" => 99,
             "farm_id" => 5,
-            "crop_ids" => [],
             "field_data" => []
           )
 

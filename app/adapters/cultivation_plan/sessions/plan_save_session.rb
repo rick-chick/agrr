@@ -41,6 +41,10 @@ module Adapters
           template_copy_gateway:,
           plan_save_persist_orchestrator:,
           plan_save_farm_gateway:,
+          plan_save_ensure_user_fields_interactor:,
+          plan_save_ensure_user_crops_interactor:,
+          plan_save_field_gateway:,
+          plan_save_user_crop_gateway:,
           own_transaction: true
         )
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
@@ -52,6 +56,10 @@ module Adapters
           @template_copy_gateway = template_copy_gateway
           @plan_save_persist_orchestrator = plan_save_persist_orchestrator
           @plan_save_farm_gateway = plan_save_farm_gateway
+          @plan_save_ensure_user_fields_interactor = plan_save_ensure_user_fields_interactor
+          @plan_save_ensure_user_crops_interactor = plan_save_ensure_user_crops_interactor
+          @plan_save_field_gateway = plan_save_field_gateway
+          @plan_save_user_crop_gateway = plan_save_user_crop_gateway
           @own_transaction = own_transaction
           @result = Result.new
         end
@@ -81,7 +89,6 @@ module Adapters
 
         def run_persist_steps
           ctx = PlanSaveContext.new(user: @user, session_data: @session_data, result: @result)
-          ctx.crop_stage_copy_interactor = @crop_stage_copy_interactor
 
           farm_output = @plan_save_persist_orchestrator.ensure_user_farm!(
             user_id: @user.id,
@@ -89,21 +96,53 @@ module Adapters
           )
           ctx.farm_reused = farm_output.farm_reused
           ctx.result.add_skip(:farm, farm_output.farm_id) if farm_output.farm_reused
-          farm = ::Farm.find(farm_output.farm_id)
+          farm = @plan_save_farm_gateway.find_owned_farm_record(
+            user_id: @user.id,
+            farm_id: farm_output.farm_id
+          )
+          unless farm
+            raise Domain::Shared::Exceptions::RecordNotFound,
+                  "User farm not found: #{farm_output.farm_id}"
+          end
+          farm_region = farm_output.farm_region
 
-          fields = Mappers::FieldMapper.new(ctx).create_user_fields(farm)
-          crops = Mappers::CropMapper.new(ctx).create_user_crops_from_plan
-          pests = Mappers::PestMapper.new(ctx).copy_pests_for_region(farm.region)
-          agricultural_tasks = Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(farm.region)
-          interaction_rules = Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(farm.region)
-          fertilizes = Mappers::FertilizeMapper.new(ctx).copy_fertilizes_for_region(farm.region)
-          pesticides = Mappers::PesticideMapper.new(ctx).copy_pesticides_for_region(farm.region)
+          field_output = @plan_save_ensure_user_fields_interactor.call(
+            Domain::CultivationPlan::Dtos::PlanSaveEnsureUserFieldsInput.new(
+              user_id: @user.id,
+              farm_id: farm_output.farm_id,
+              farm_reused: farm_output.farm_reused,
+              field_data: field_data_from_session
+            )
+          )
+          field_output.skipped_field_ids.each { |id| @result.add_skip(:fields, id) }
+          fields = @plan_save_field_gateway.list_by_ids(ids: field_output.field_ids, user_id: @user.id)
 
-          existing_plan_id = @plan_save_farm_gateway.find_plan_id_by_user_and_farm(
+          plan_id = @session_data[:plan_id] || @session_data["plan_id"]
+          crop_output = @plan_save_ensure_user_crops_interactor.call(
+            Domain::CultivationPlan::Dtos::PlanSaveEnsureUserCropsInput.new(
+              user_id: @user.id,
+              plan_id: plan_id
+            )
+          )
+          crop_output.skipped_crop_ids.each { |id| @result.add_skip(:crops, id) }
+          ctx.reference_crop_id_to_user_crop_id = crop_output.reference_crop_id_to_user_crop_id
+          ctx.ref_cpc_id_to_user_crop_id = crop_output.ref_cpc_id_to_user_crop_id
+          ctx.reference_crop_groups = crop_output.reference_crop_groups
+
+          copy_crop_stages_for_pairs!(crop_output.stage_copy_pairs)
+
+          crops = @plan_save_user_crop_gateway.list_by_ids(ids: crop_output.user_crop_ids)
+
+          pests = Mappers::PestMapper.new(ctx).copy_pests_for_region(farm_region)
+          agricultural_tasks = Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(farm_region)
+          interaction_rules = Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(farm_region)
+          fertilizes = Mappers::FertilizeMapper.new(ctx).copy_fertilizes_for_region(farm_region)
+          pesticides = Mappers::PesticideMapper.new(ctx).copy_pesticides_for_region(farm_region)
+
+          existing_plan = @plan_save_farm_gateway.find_owned_private_plan_record(
             user_id: @user.id,
             farm_id: farm.id
           )
-          existing_plan = existing_plan_id && ::CultivationPlan.find_by(id: existing_plan_id)
 
           if existing_plan
             @logger.info "♻️ [PlanSaveService] Existing private plan detected (##{existing_plan.id}), skipping plan copy"
@@ -139,6 +178,31 @@ module Adapters
           @logger.info I18n.t("services.plan_save_service.messages.service_completed")
           @result.success = true
           @result.new_plan = new_plan
+        end
+
+        def copy_crop_stages_for_pairs!(pairs)
+          pairs.each do |pair|
+            @crop_stage_copy_interactor.call(
+              Domain::Crop::Dtos::CropStageCopyInput.new(
+                reference_crop_id: pair.reference_crop_id,
+                new_crop_id: pair.new_crop_id
+              )
+            )
+          end
+        rescue StandardError => e
+          @logger.error(
+            I18n.t("services.plan_save_service.errors.crop_stage_copy_failed", errors: e.message)
+          )
+          raise e
+        end
+
+        def field_data_from_session
+          raw = @session_data[:field_data] || @session_data["field_data"]
+          return [] unless raw&.any?
+
+          raw.filter_map do |row|
+            Domain::CultivationPlan::Dtos::PublicPlanSaveFieldDatum.from_row(row)
+          end
         end
       end
     end

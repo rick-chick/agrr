@@ -23,13 +23,11 @@ module Domain
           @plan_id = 99
           @header = Dtos::PublicPlanSaveHeaderSnapshot.new(
             plan_id: @plan_id,
-            farm_id: 7,
-            crop_ids: [ 1, 2 ]
+            farm_id: 7
           )
           @session_data = Dtos::PublicPlanSaveSessionData.new(
             plan_id: @plan_id,
             farm_id: 7,
-            crop_ids: [ 1, 2 ],
             field_data: []
           )
         end

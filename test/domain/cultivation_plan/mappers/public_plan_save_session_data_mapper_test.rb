@@ -9,8 +9,7 @@ module Domain
         test "from_snapshots builds session dto from header and field rows" do
           header = Dtos::PublicPlanSaveHeaderSnapshot.new(
             plan_id: 99,
-            farm_id: 7,
-            crop_ids: [ 1, 2 ]
+            farm_id: 7
           )
           field_rows = [
             Dtos::PublicPlanSaveFieldDatum.new(
@@ -27,7 +26,6 @@ module Domain
 
           assert_equal 99, dto.plan_id
           assert_equal 7, dto.farm_id
-          assert_equal [ 1, 2 ], dto.crop_ids
           assert_equal 1, dto.field_data.size
           assert_equal "F1", dto.field_data.first.name
         end

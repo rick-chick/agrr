@@ -14,6 +14,12 @@ module Domain
         def list_field_rows(plan_id:)
           raise NotImplementedError
         end
+
+        # @param plan_id [Integer]
+        # @return [Array<Dtos::PublicPlanSaveCropReferenceRow>]
+        def list_crop_reference_rows(plan_id:)
+          raise NotImplementedError
+        end
       end
     end
   end

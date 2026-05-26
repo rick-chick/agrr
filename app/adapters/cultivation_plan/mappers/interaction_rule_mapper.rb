@@ -10,7 +10,7 @@ module Adapters
         end
 
         def copy_interaction_rules_for_region(region)
-          reference_crop_groups = CropMapper.new(@ctx).get_reference_crop_groups
+          reference_crop_groups = @ctx.get_reference_crop_groups
           return [] if reference_crop_groups.empty?
 
           reference_scope = ::InteractionRule.reference.where(rule_type: "continuous_cultivation")

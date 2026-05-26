@@ -34,7 +34,7 @@ class Adapters::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::T
       session_data: { plan_id: plan.id },
       result: result
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop: ref_crop)
     Adapters::CultivationPlan::Mappers::PestMapper.new(ctx).copy_pests_for_region(ref_farm.region)
 
     list = Adapters::CultivationPlan::Mappers::PesticideMapper.new(ctx).copy_pesticides_for_region(ref_farm.region)
@@ -72,7 +72,7 @@ class Adapters::CultivationPlan::Mappers::PesticideMapperTest < ActiveSupport::T
         session_data: { plan_id: plan.id },
         result: res
       )
-      Adapters::CultivationPlan::Mappers::CropMapper.new(c).create_user_crops_from_plan
+      stub_plan_save_crop_mappings_for_mapper_test(c, ref_crop: ref_crop)
       Adapters::CultivationPlan::Mappers::PestMapper.new(c).copy_pests_for_region(ref_farm.region)
       Adapters::CultivationPlan::Mappers::PesticideMapper.new(c).copy_pesticides_for_region(ref_farm.region)
     end

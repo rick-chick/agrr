@@ -11,7 +11,11 @@ module Adapters
           blueprint_copy_factory:,
           template_copy_gateway:,
           plan_save_persist_orchestrator:,
-          plan_save_farm_gateway:
+          plan_save_farm_gateway:,
+          plan_save_ensure_user_fields_interactor:,
+          plan_save_ensure_user_crops_interactor:,
+          plan_save_field_gateway:,
+          plan_save_user_crop_gateway:
         )
           @logger = logger
           @cultivation_plan_gateway = cultivation_plan_gateway
@@ -20,6 +24,10 @@ module Adapters
           @template_copy_gateway = template_copy_gateway
           @plan_save_persist_orchestrator = plan_save_persist_orchestrator
           @plan_save_farm_gateway = plan_save_farm_gateway
+          @plan_save_ensure_user_fields_interactor = plan_save_ensure_user_fields_interactor
+          @plan_save_ensure_user_crops_interactor = plan_save_ensure_user_crops_interactor
+          @plan_save_field_gateway = plan_save_field_gateway
+          @plan_save_user_crop_gateway = plan_save_user_crop_gateway
         end
 
         def execute_save!(workspace:)
@@ -34,6 +42,10 @@ module Adapters
             template_copy_gateway: @template_copy_gateway,
             plan_save_persist_orchestrator: @plan_save_persist_orchestrator,
             plan_save_farm_gateway: @plan_save_farm_gateway,
+            plan_save_ensure_user_fields_interactor: @plan_save_ensure_user_fields_interactor,
+            plan_save_ensure_user_crops_interactor: @plan_save_ensure_user_crops_interactor,
+            plan_save_field_gateway: @plan_save_field_gateway,
+            plan_save_user_crop_gateway: @plan_save_user_crop_gateway,
             own_transaction: false
           )
           result = session.call

@@ -31,7 +31,7 @@ class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSup
       session_data: { plan_id: plan.id },
       result: result
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop: ref_crop)
 
     tasks = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(ref_farm.region)
     assert_equal 1, tasks.size
@@ -65,7 +65,7 @@ class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSup
       session_data: { plan_id: plan.id },
       result: plan_save_result
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx1).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx1, ref_crop: ref_crop)
     Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx1).copy_agricultural_tasks_for_region(ref_farm.region)
     existing = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
 
@@ -75,7 +75,7 @@ class Adapters::CultivationPlan::Mappers::AgriculturalTaskMapperTest < ActiveSup
       session_data: { plan_id: plan.id },
       result: result2
     )
-    Adapters::CultivationPlan::Mappers::CropMapper.new(ctx2).create_user_crops_from_plan
+    stub_plan_save_crop_mappings_for_mapper_test(ctx2, ref_crop: ref_crop)
     Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx2).copy_agricultural_tasks_for_region(ref_farm.region)
 
     existing_crop = user.crops.find_by(source_crop_id: ref_crop.id)

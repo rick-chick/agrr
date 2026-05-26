@@ -41,7 +41,8 @@ module Domain
             @logger.info("♻️ [PlanSaveService] Reusing existing farm: #{existing_farm.name}")
             return Dtos::PlanSaveEnsureUserFarmOutput.new(
               farm_id: existing_farm.id,
-              farm_reused: true
+              farm_reused: true,
+              farm_region: existing_farm.region
             )
           end
 
@@ -66,7 +67,8 @@ module Domain
 
           Dtos::PlanSaveEnsureUserFarmOutput.new(
             farm_id: new_farm.id,
-            farm_reused: false
+            farm_reused: false,
+            farm_region: new_farm.region
           )
         end
       end
