@@ -468,7 +468,8 @@ module CompositionRoot
       @plan_save_blueprint_copy_factory ||=
         Adapters::CultivationPlan::Ports::PlanSaveBlueprintCopyFactory.new(
           blueprint_gateway: crop_task_schedule_blueprint_gateway,
-          logger: logger
+          logger: logger,
+          plan_save_user_agricultural_task_gateway: plan_save_user_agricultural_task_gateway
         )
     end
 
@@ -476,7 +477,8 @@ module CompositionRoot
       @public_plan_template_copy_gateway ||=
         Adapters::CultivationPlan::Gateways::PublicPlanTemplateCopyActiveRecordGateway.new(
           logger: logger,
-          clock: clock
+          clock: clock,
+          plan_save_user_agricultural_task_gateway: plan_save_user_agricultural_task_gateway
         )
     end
 
@@ -577,6 +579,21 @@ module CompositionRoot
         )
     end
 
+    def plan_save_user_agricultural_task_gateway
+      @plan_save_user_agricultural_task_gateway ||=
+        Adapters::CultivationPlan::Gateways::PlanSaveUserAgriculturalTaskActiveRecordGateway.new
+    end
+
+    def plan_save_ensure_user_agricultural_tasks_interactor
+      @plan_save_ensure_user_agricultural_tasks_interactor ||=
+        Domain::CultivationPlan::Interactors::PlanSaveEnsureUserAgriculturalTasksInteractor.new(
+          read_gateway: public_plan_save_read_gateway,
+          user_agricultural_task_gateway: plan_save_user_agricultural_task_gateway,
+          logger: logger,
+          translator: translator
+        )
+    end
+
     def public_plan_save_persistence_port
       @public_plan_save_persistence_port ||=
         Adapters::CultivationPlan::Gateways::PublicPlanSavePersistenceActiveRecordAdapter.new(
@@ -591,7 +608,8 @@ module CompositionRoot
           plan_save_ensure_user_crops_interactor: plan_save_ensure_user_crops_interactor,
           plan_save_ensure_user_pests_interactor: plan_save_ensure_user_pests_interactor,
           plan_save_ensure_user_fertilizes_interactor: plan_save_ensure_user_fertilizes_interactor,
-          plan_save_ensure_user_pesticides_interactor: plan_save_ensure_user_pesticides_interactor
+          plan_save_ensure_user_pesticides_interactor: plan_save_ensure_user_pesticides_interactor,
+          plan_save_ensure_user_agricultural_tasks_interactor: plan_save_ensure_user_agricultural_tasks_interactor
         )
     end
 

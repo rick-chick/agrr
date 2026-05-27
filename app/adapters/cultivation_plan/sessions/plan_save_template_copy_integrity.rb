@@ -52,6 +52,27 @@ module Adapters
           load_persisted_records(::Pesticide, "Pesticide", ids: ids)
         end
 
+        # @param ids [Array<Integer>]
+        # @param user_id [Integer]
+        # @return [Array<AgriculturalTask>]
+        def agricultural_task_records_for_template_copy(ids:, user_id:)
+          normalized_ids = Array(ids).map(&:to_i)
+          return [] if normalized_ids.empty?
+
+          uid = user_id.to_i
+          records = ::AgriculturalTask.where(id: normalized_ids, user_id: uid).to_a
+          by_id = records.index_by(&:id)
+
+          normalized_ids.map do |id|
+            record = by_id[id]
+            unless record&.persisted?
+              raise "AgriculturalTask record not found or not persisted: #{id}"
+            end
+
+            record
+          end
+        end
+
         # @param model_class [Class]
         # @param label [String]
         # @param ids [Array<Integer>]

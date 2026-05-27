@@ -4,7 +4,7 @@ require "test_helper"
 require "stringio"
 
 class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < ActiveSupport::TestCase
-  include PlanSaveMapperTestSupport
+  include PlanSaveTestSupport
 
   test "copy_cultivation_plan creates private plan owned by user" do
     user = unique_test_user
@@ -124,12 +124,24 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     )
     user_farm = stub_user_farm_for_plan_save_test(ctx)
     crops = stub_plan_save_user_crops_for_plan_save_test(ctx, ref_crop: ref_crop, cpc_id: _cpc.id)
-    tasks = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(user_farm.region)
-    user_task = user.agricultural_tasks.find_by(source_agricultural_task_id: ref_task.id)
-    assert_not_nil user_task
+    user_ag_gateway = Adapters::CultivationPlan::Gateways::PlanSaveUserAgriculturalTaskActiveRecordGateway.new
+    ag_output = ensure_agricultural_tasks_for_plan_save_test(
+      ctx: ctx,
+      user: user,
+      region: user_farm.region,
+      user_ag_gateway: user_ag_gateway
+    )
+    user_task_id = ag_output.reference_agricultural_task_id_to_user_task_id[ref_task.id]
+    tasks = Adapters::CultivationPlan::Sessions::PlanSaveTemplateCopyIntegrity.agricultural_task_records_for_template_copy(
+      ids: ag_output.user_agricultural_task_ids,
+      user_id: user.id
+    )
 
     gateway = ::Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGateway.new(
-      ctx: ctx, logger: CapturingLogger.new, clock: CompositionRoot.clock
+      ctx: ctx,
+      logger: CapturingLogger.new,
+      clock: CompositionRoot.clock,
+      plan_save_user_agricultural_task_gateway: user_ag_gateway
     )
     new_plan = gateway.copy_cultivation_plan(user_farm, crops)
     gateway.establish_master_data_relationships(user_farm, crops, [], [], tasks, [], [], [])
@@ -140,6 +152,6 @@ class Adapters::CultivationPlan::Gateways::PlanCopyActiveRecordGatewayTest < Act
     new_plan.task_schedules.reload
     assert_equal 1, new_plan.task_schedules.count
     item = new_plan.task_schedules.first.task_schedule_items.first
-    assert_equal user_task.id, item.agricultural_task_id
+    assert_equal user_task_id, item.agricultural_task_id
   end
 end

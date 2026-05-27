@@ -46,6 +46,7 @@ module Adapters
           plan_save_ensure_user_pests_interactor:,
           plan_save_ensure_user_fertilizes_interactor:,
           plan_save_ensure_user_pesticides_interactor:,
+          plan_save_ensure_user_agricultural_tasks_interactor:,
           own_transaction: true
         )
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
@@ -62,6 +63,7 @@ module Adapters
           @plan_save_ensure_user_pests_interactor = plan_save_ensure_user_pests_interactor
           @plan_save_ensure_user_fertilizes_interactor = plan_save_ensure_user_fertilizes_interactor
           @plan_save_ensure_user_pesticides_interactor = plan_save_ensure_user_pesticides_interactor
+          @plan_save_ensure_user_agricultural_tasks_interactor = plan_save_ensure_user_agricultural_tasks_interactor
           @own_transaction = own_transaction
           @result = Result.new
         end
@@ -152,7 +154,20 @@ module Adapters
           pests = Sessions::PlanSaveTemplateCopyIntegrity.pest_records_for_template_copy(
             ids: pest_output.user_pest_ids
           )
-          agricultural_tasks = Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(farm_region)
+          ag_output = @plan_save_ensure_user_agricultural_tasks_interactor.call(
+            Domain::CultivationPlan::Dtos::PlanSaveEnsureUserAgriculturalTasksInput.new(
+              user_id: @user.id,
+              region: farm_region,
+              reference_crop_id_to_user_crop_id: crop_output.reference_crop_id_to_user_crop_id
+            )
+          )
+          ag_output.skipped_agricultural_task_ids.each { |id| @result.add_skip(:agricultural_tasks, id) }
+          ctx.reference_agricultural_task_id_to_user_task_id =
+            ag_output.reference_agricultural_task_id_to_user_task_id
+          agricultural_tasks = Sessions::PlanSaveTemplateCopyIntegrity.agricultural_task_records_for_template_copy(
+            ids: ag_output.user_agricultural_task_ids,
+            user_id: @user.id
+          )
           interaction_rules = Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(farm_region)
 
           fertilize_output = @plan_save_ensure_user_fertilizes_interactor.call(

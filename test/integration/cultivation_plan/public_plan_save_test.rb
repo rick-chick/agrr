@@ -1775,7 +1775,7 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
     new_plan = result.new_plan
     assert_not_nil new_plan
 
-    # 推測原因1: copy_agricultural_tasks_for_regionで参照タスクがコピーされているか確認
+    # 推測原因1: PlanSaveEnsureUserAgriculturalTasksInteractor で参照タスクがユーザーコピーされているか確認
     user_task = @user.agricultural_tasks.find_by(source_agricultural_task_id: reference_task.id)
     assert_not_nil user_task, "参照タスク(#{reference_task.id})がユーザータスクにコピーされていません"
     assert_equal @user.id, user_task.user_id, "コピーされたタスクのuser_idが正しくありません"

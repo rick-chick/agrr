@@ -138,13 +138,18 @@ module Adapters
           end
         end
 
-        def initialize(ctx: nil, logger: nil, clock: nil)
+        def initialize(ctx: nil, logger: nil, clock: nil, plan_save_user_agricultural_task_gateway: nil)
           @ctx = ctx
           @logger = logger
           @clock = clock
+          @plan_save_user_agricultural_task_gateway = plan_save_user_agricultural_task_gateway
           return unless ctx
 
-          @task_mapper = Adapters::CultivationPlan::Mappers::AgriculturalTaskMapper.new(ctx)
+          @task_resolver = Adapters::CultivationPlan::PlanSaveTaskScheduleAgriculturalTaskResolver.new(
+            user_id: ctx.user.id,
+            reference_agricultural_task_id_to_user_task_id: ctx.reference_agricultural_task_id_to_user_task_id,
+            plan_save_user_agricultural_task_gateway: plan_save_user_agricultural_task_gateway
+          )
           @calc = Domain::CultivationPlan::Calculators::PlanningDateCalculator
         end
 
@@ -337,7 +342,7 @@ module Adapters
             )
 
             reference_schedule.task_schedule_items.each do |reference_item|
-              mapped_task_id = @task_mapper.mapped_agricultural_task_id(reference_item)
+              mapped_task_id = @task_resolver.mapped_agricultural_task_id(reference_item)
 
               if reference_item.gdd_trigger.nil?
                 raise Adapters::CultivationPlan::Sessions::PlanSaveSession::InvalidTaskScheduleItemError,

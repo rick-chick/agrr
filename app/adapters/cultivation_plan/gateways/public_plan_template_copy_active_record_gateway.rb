@@ -4,9 +4,10 @@ module Adapters
   module CultivationPlan
     module Gateways
       class PublicPlanTemplateCopyActiveRecordGateway < Domain::CultivationPlan::Gateways::PublicPlanTemplateCopyGateway
-        def initialize(logger:, clock:)
+        def initialize(logger:, clock:, plan_save_user_agricultural_task_gateway:)
           @logger = logger
           @clock = clock
+          @plan_save_user_agricultural_task_gateway = plan_save_user_agricultural_task_gateway
         end
 
         def copy_cultivation_plan(ctx:, farm:, crops:)
@@ -30,7 +31,12 @@ module Adapters
         private
 
         def plan_copy_gateway(ctx)
-          PlanCopyActiveRecordGateway.new(ctx: ctx, logger: @logger, clock: @clock)
+          PlanCopyActiveRecordGateway.new(
+            ctx: ctx,
+            logger: @logger,
+            clock: @clock,
+            plan_save_user_agricultural_task_gateway: @plan_save_user_agricultural_task_gateway
+          )
         end
       end
     end

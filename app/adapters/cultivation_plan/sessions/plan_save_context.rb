@@ -3,7 +3,7 @@
 module Adapters
   module CultivationPlan
     module Sessions
-      # PlanSaveSession 実行中の共有状態（マッパー / ゲートウェイ間で受け渡し）。
+      # PlanSaveSession 実行中の共有状態（Interactor 出力・残存 mapper・ゲートウェイ間で受け渡し）。
       class PlanSaveContext
         attr_accessor :user, :session_data, :result, :farm_reused,
                       :reference_crop_id_to_user_crop_id, :ref_cpc_id_to_user_crop_id,
@@ -19,14 +19,6 @@ module Adapters
           @ref_cpc_id_to_user_crop_id = {}
           @reference_crop_groups = []
           @reference_agricultural_task_id_to_user_task_id = {}
-        end
-
-        def user_crop_id_for_reference_crop(reference_crop_id)
-          @reference_crop_id_to_user_crop_id[reference_crop_id]
-        end
-
-        def get_reference_crop_ids
-          @reference_crop_id_to_user_crop_id.keys
         end
 
         def get_reference_crop_groups

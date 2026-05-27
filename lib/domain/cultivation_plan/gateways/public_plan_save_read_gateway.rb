@@ -45,6 +45,12 @@ module Domain
         def exists_fertilize_name?(name:)
           raise NotImplementedError
         end
+
+        # @param region [String, nil]
+        # @return [Array<Dtos::PublicPlanSaveAgriculturalTaskReferenceRow>]
+        def list_agricultural_task_reference_rows(region:)
+          raise NotImplementedError
+        end
       end
     end
   end

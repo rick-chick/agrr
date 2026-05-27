@@ -3,7 +3,7 @@
 require "test_helper"
 
 class CultivationPlan::PlanCopyInteractorIntegrationTest < ActiveSupport::TestCase
-  include PlanSaveMapperTestSupport
+  include PlanSaveTestSupport
 
   test "copy_private_plan_for_year creates private plan with relations" do
     user = unique_test_user

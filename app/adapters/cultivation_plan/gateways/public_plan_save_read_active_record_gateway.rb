@@ -89,7 +89,52 @@ module Adapters
           ::Fertilize.exists?(name: name)
         end
 
+        def list_agricultural_task_reference_rows(region:)
+          reference_scope = ::AgriculturalTask.reference
+          if region.present?
+            reference_scope = reference_scope.where(region: [ region, nil ])
+          end
+
+          reference_scope.includes(crop_task_templates: :crop).map do |task|
+            agricultural_task_reference_row_from_record(task)
+          end
+        end
+
         private
+
+        def agricultural_task_reference_row_from_record(task)
+          template_links = task.crop_task_templates.map do |template|
+            Domain::CultivationPlan::Dtos::PublicPlanSaveCropTaskTemplateLinkRow.new(
+              reference_crop_id: template.crop_id,
+              name: template.name,
+              description: template.description,
+              time_per_sqm: template.time_per_sqm,
+              weather_dependency: template.weather_dependency,
+              required_tools: template.required_tools,
+              skill_level: template.skill_level,
+              task_type: template.task_type,
+              task_type_id: template.task_type_id,
+              is_reference: template.is_reference
+            )
+          end
+
+          linked_crop_ids = template_links.map(&:reference_crop_id).uniq
+
+          Domain::CultivationPlan::Dtos::PublicPlanSaveAgriculturalTaskReferenceRow.new(
+            reference_agricultural_task_id: task.id,
+            name: task.name,
+            description: task.description,
+            time_per_sqm: task.time_per_sqm,
+            weather_dependency: task.weather_dependency,
+            required_tools: task.required_tools,
+            skill_level: task.skill_level,
+            task_type: task.task_type,
+            task_type_id: task.task_type_id,
+            region: task.region,
+            linked_reference_crop_ids: linked_crop_ids,
+            template_links: template_links
+          )
+        end
 
         def pesticide_reference_row_from_record(pesticide)
           usage_constraint = if (constraint = pesticide.pesticide_usage_constraint)
