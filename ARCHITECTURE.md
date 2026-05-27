@@ -166,6 +166,7 @@ sequenceDiagram
 | Request mapper | `Adapters::CultivationPlan::AdjustMovesFromRequest` → `PlanAllocationAdjustInput` in `CultivationPlanRestBaseController#adjust` |
 | Orchestration + pure Policy | `CropCreateInteractor` + `CropCreateLimitPolicy` (Interactor calls `gateway.count`; Policy receives counts only) |
 | PlanSave persist step (farm) | `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway` (`find_owned_private_plan_record` — not `find_private_*` in the method name) |
+| PlanSave persist step (crop / pest) | `PlanSaveEnsureUserCropsInteractor` / `PlanSaveEnsureUserPestsInteractor` + `PublicPlanSaveReadGateway` 行 DTO + `PlanSaveUserCropGateway` / `PlanSaveUserPestGateway` |
 | Domain combine | `CultivationPlanWorkbenchSnapshotMapper` (read snapshots → `CultivationPlanWorkbenchSnapshot`) |
 | Response shape | `RetrieveCultivationPlanApiPresenter` + `CultivationPlanWorkbenchPayloadMapper` (adapter mapper only) |
 

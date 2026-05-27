@@ -26,6 +26,10 @@ module Adapters
           @reference_crop_id_to_user_crop_id[reference_crop_id]
         end
 
+        def user_pest_id_for_reference_pest(reference_pest_id)
+          @reference_pest_id_to_user_pest_id[reference_pest_id]
+        end
+
         def get_reference_crop_ids
           @reference_crop_id_to_user_crop_id.keys
         end

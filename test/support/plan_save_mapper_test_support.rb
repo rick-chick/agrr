@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# PlanSaveContext + CultivationPlan mappers 単体テスト用の共通セットアップ
+# PlanSaveContext + CultivationPlan mappers 単体テスト用の共通セットアップ。
+# crop/pest の ensure Interactor は呼ばず、ctx に ID マップだけ載せる（Pesticide 等の mapper 契約テスト用）。
 module PlanSaveMapperTestSupport
   def unique_test_user
     User.create!(
@@ -72,7 +73,7 @@ module PlanSaveMapperTestSupport
     )
   end
 
-  # 1-3（crop ensure）以外の mapper/gateway テスト用: ctx に作物 ID マップだけ載せる（Interactor は呼ばない）
+  # mapper/gateway 単体用: ctx に作物 ID マップだけ載せる（PlanSaveEnsureUserCropsInteractor は呼ばない）
   # @param ref_crop [Crop] 参照作物
   # @param cpc_id [Integer, nil] CultivationPlanCrop#id（省略時は plan_id + ref_crop から解決）
   # @return [Crop] ユーザー作物 AR
@@ -107,6 +108,39 @@ module PlanSaveMapperTestSupport
   # PlanCopy gateway 等が AR 配列を要するとき
   def stub_plan_save_user_crops_for_mapper_test(ctx, ref_crop:, cpc_id: nil)
     [ stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop: ref_crop, cpc_id: cpc_id) ]
+  end
+
+  # mapper 単体用: ctx に害虫 ID マップだけ載せる（EnsureUserPestsInteractor は呼ばない）
+  # @param ref_pest [Pest] 参照害虫
+  # @param ref_crop [Crop] 参照作物（crop マップに含まれること）
+  # @return [Pest] ユーザー害虫 AR
+  def stub_plan_save_pest_mappings_for_mapper_test(ctx, ref_pest:, ref_crop:)
+    user_crop_id = ctx.reference_crop_id_to_user_crop_id[ref_crop.id]
+    unless user_crop_id
+      raise ArgumentError, "stub_plan_save_crop_mappings_for_mapper_test must run first"
+    end
+
+    user_pest = ctx.user.pests.find_by(source_pest_id: ref_pest.id)
+    if user_pest
+      ctx.result.add_skip(:pests, user_pest.id)
+    else
+      user_pest = ctx.user.pests.create!(
+        name: ref_pest.name,
+        name_scientific: ref_pest.name_scientific,
+        family: ref_pest.family,
+        order: ref_pest.order,
+        description: ref_pest.description,
+        occurrence_season: ref_pest.occurrence_season,
+        region: ref_pest.region,
+        is_reference: false,
+        source_pest_id: ref_pest.id
+      )
+      CropPest.find_or_create_by!(crop_id: user_crop_id, pest: user_pest)
+    end
+
+    ctx.reference_pest_id_to_user_pest_id =
+      ctx.reference_pest_id_to_user_pest_id.merge(ref_pest.id => user_pest.id)
+    user_pest
   end
 
   # Mapper / gateway 単体用: ユーザー農場を AR で用意（domain の ensure 経路は使わない）

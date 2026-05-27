@@ -45,6 +45,66 @@ module Adapters
             )
           end
         end
+
+        def list_pest_reference_rows(plan_id:, region:)
+          return [] unless ::CultivationPlan.exists?(id: plan_id)
+
+          reference_scope = ::Pest.reference
+          if region.present?
+            reference_scope = reference_scope.where(region: [ region, nil ])
+          end
+
+          reference_scope = reference_scope.includes(
+            :pest_temperature_profile,
+            :pest_thermal_requirement,
+            :pest_control_methods,
+            :crop_pests
+          )
+
+          reference_scope.map { |pest| pest_reference_row_from_record(pest) }
+        end
+
+        private
+
+        def pest_reference_row_from_record(pest)
+          temperature_profile = if (profile = pest.pest_temperature_profile)
+                                  Domain::CultivationPlan::Dtos::PublicPlanSavePestTemperatureProfileRow.new(
+                                    base_temperature: profile.base_temperature,
+                                    max_temperature: profile.max_temperature
+                                  )
+                                end
+
+          thermal_requirement = if (thermal = pest.pest_thermal_requirement)
+                                  Domain::CultivationPlan::Dtos::PublicPlanSavePestThermalRequirementRow.new(
+                                    required_gdd: thermal.required_gdd,
+                                    first_generation_gdd: thermal.first_generation_gdd
+                                  )
+                                end
+
+          control_methods = pest.pest_control_methods.sort_by(&:id).map do |method|
+            Domain::CultivationPlan::Dtos::PublicPlanSavePestControlMethodRow.new(
+              method_type: method.method_type,
+              method_name: method.method_name,
+              description: method.description,
+              timing_hint: method.timing_hint
+            )
+          end
+
+          Domain::CultivationPlan::Dtos::PublicPlanSavePestReferenceRow.new(
+            reference_pest_id: pest.id,
+            name: pest.name,
+            name_scientific: pest.name_scientific,
+            family: pest.family,
+            order: pest.order,
+            description: pest.description,
+            occurrence_season: pest.occurrence_season,
+            region: pest.region,
+            linked_reference_crop_ids: pest.crop_pests.map(&:crop_id),
+            temperature_profile: temperature_profile,
+            thermal_requirement: thermal_requirement,
+            control_methods: control_methods
+          )
+        end
       end
     end
   end

@@ -16,6 +16,7 @@
 - 読取: `RetrieveCultivationPlanInteractor` + `CultivationPlanWorkbenchSnapshotMapper`
 - 認可 + count: `CropCreateInteractor` + `CropCreateLimitPolicy`
 - PlanSave farm step: `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway`
+- PlanSave pest step: `PlanSaveEnsureUserPestsInteractor` + `PublicPlanSaveReadGateway#list_pest_reference_rows` + `PlanSaveUserPestGateway`
 - フェーズ更新: `AdvanceCultivationPlanPhaseInteractor` + `OptimizationCompletion`（Interactor 連鎖なし）
 
 ## フェーズ完了状況

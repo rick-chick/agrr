@@ -10,8 +10,6 @@ module Adapters
         end
 
         def copy_pesticides_for_region(region)
-          pest_mapper = PestMapper.new(@ctx)
-
           reference_scope = ::Pesticide.reference.includes(
             :pesticide_usage_constraint,
             :pesticide_application_detail,
@@ -32,7 +30,7 @@ module Adapters
             end
 
             user_crop_id = @ctx.user_crop_id_for_reference_crop(reference_pesticide.crop_id)
-            user_pest_id = pest_mapper.user_pest_id_for_reference_pest(reference_pesticide.pest_id)
+            user_pest_id = @ctx.user_pest_id_for_reference_pest(reference_pesticide.pest_id)
 
             unless user_crop_id && user_pest_id
               Rails.logger.warn "⚠️ [PlanSaveService] Skipping pesticide copy due to missing crop/pest mapping (pesticide_id=#{reference_pesticide.id})"

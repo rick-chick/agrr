@@ -20,6 +20,13 @@ module Domain
         def list_crop_reference_rows(plan_id:)
           raise NotImplementedError
         end
+
+        # @param plan_id [Integer]
+        # @param region [String, nil]
+        # @return [Array<Dtos::PublicPlanSavePestReferenceRow>]
+        def list_pest_reference_rows(plan_id:, region:)
+          raise NotImplementedError
+        end
       end
     end
   end

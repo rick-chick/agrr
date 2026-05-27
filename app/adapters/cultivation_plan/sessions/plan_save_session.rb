@@ -43,8 +43,10 @@ module Adapters
           plan_save_farm_gateway:,
           plan_save_ensure_user_fields_interactor:,
           plan_save_ensure_user_crops_interactor:,
+          plan_save_ensure_user_pests_interactor:,
           plan_save_field_gateway:,
           plan_save_user_crop_gateway:,
+          plan_save_user_pest_gateway:,
           own_transaction: true
         )
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
@@ -58,8 +60,10 @@ module Adapters
           @plan_save_farm_gateway = plan_save_farm_gateway
           @plan_save_ensure_user_fields_interactor = plan_save_ensure_user_fields_interactor
           @plan_save_ensure_user_crops_interactor = plan_save_ensure_user_crops_interactor
+          @plan_save_ensure_user_pests_interactor = plan_save_ensure_user_pests_interactor
           @plan_save_field_gateway = plan_save_field_gateway
           @plan_save_user_crop_gateway = plan_save_user_crop_gateway
+          @plan_save_user_pest_gateway = plan_save_user_pest_gateway
           @own_transaction = own_transaction
           @result = Result.new
         end
@@ -133,7 +137,17 @@ module Adapters
 
           crops = @plan_save_user_crop_gateway.list_by_ids(ids: crop_output.user_crop_ids)
 
-          pests = Mappers::PestMapper.new(ctx).copy_pests_for_region(farm_region)
+          pest_output = @plan_save_ensure_user_pests_interactor.call(
+            Domain::CultivationPlan::Dtos::PlanSaveEnsureUserPestsInput.new(
+              user_id: @user.id,
+              plan_id: plan_id,
+              region: farm_region,
+              reference_crop_id_to_user_crop_id: crop_output.reference_crop_id_to_user_crop_id
+            )
+          )
+          pest_output.skipped_pest_ids.each { |id| @result.add_skip(:pests, id) }
+          ctx.reference_pest_id_to_user_pest_id = pest_output.reference_pest_id_to_user_pest_id
+          pests = @plan_save_user_pest_gateway.list_by_ids(ids: pest_output.user_pest_ids)
           agricultural_tasks = Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(farm_region)
           interaction_rules = Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(farm_region)
           fertilizes = Mappers::FertilizeMapper.new(ctx).copy_fertilizes_for_region(farm_region)

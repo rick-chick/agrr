@@ -14,8 +14,10 @@ module Adapters
           plan_save_farm_gateway:,
           plan_save_ensure_user_fields_interactor:,
           plan_save_ensure_user_crops_interactor:,
+          plan_save_ensure_user_pests_interactor:,
           plan_save_field_gateway:,
-          plan_save_user_crop_gateway:
+          plan_save_user_crop_gateway:,
+          plan_save_user_pest_gateway:
         )
           @logger = logger
           @cultivation_plan_gateway = cultivation_plan_gateway
@@ -26,8 +28,10 @@ module Adapters
           @plan_save_farm_gateway = plan_save_farm_gateway
           @plan_save_ensure_user_fields_interactor = plan_save_ensure_user_fields_interactor
           @plan_save_ensure_user_crops_interactor = plan_save_ensure_user_crops_interactor
+          @plan_save_ensure_user_pests_interactor = plan_save_ensure_user_pests_interactor
           @plan_save_field_gateway = plan_save_field_gateway
           @plan_save_user_crop_gateway = plan_save_user_crop_gateway
+          @plan_save_user_pest_gateway = plan_save_user_pest_gateway
         end
 
         def execute_save!(workspace:)
@@ -44,8 +48,10 @@ module Adapters
             plan_save_farm_gateway: @plan_save_farm_gateway,
             plan_save_ensure_user_fields_interactor: @plan_save_ensure_user_fields_interactor,
             plan_save_ensure_user_crops_interactor: @plan_save_ensure_user_crops_interactor,
+            plan_save_ensure_user_pests_interactor: @plan_save_ensure_user_pests_interactor,
             plan_save_field_gateway: @plan_save_field_gateway,
             plan_save_user_crop_gateway: @plan_save_user_crop_gateway,
+            plan_save_user_pest_gateway: @plan_save_user_pest_gateway,
             own_transaction: false
           )
           result = session.call

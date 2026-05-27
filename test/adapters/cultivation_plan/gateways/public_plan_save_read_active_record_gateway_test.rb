@@ -76,6 +76,22 @@ module Adapters
           assert_equal @ref_crop.id, row.reference_crop_id
           assert_equal "ReadGwCrop", row.name
         end
+
+        test "list_pest_reference_rows returns pest snapshots with linked crop ids" do
+          ref_pest = ::Pest.create!(
+            user: nil,
+            name: "ReadGwPest",
+            is_reference: true,
+            region: "jp"
+          )
+          CropPest.create!(crop: @ref_crop, pest: ref_pest)
+
+          rows = @gateway.list_pest_reference_rows(plan_id: @plan.id, region: "jp")
+          row = rows.find { |r| r.reference_pest_id == ref_pest.id }
+          assert_not_nil row
+          assert_equal "ReadGwPest", row.name
+          assert_includes row.linked_reference_crop_ids, @ref_crop.id
+        end
       end
     end
   end
