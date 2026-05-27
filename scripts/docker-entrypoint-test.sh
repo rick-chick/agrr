@@ -101,9 +101,9 @@ if [ -f "${APP_ROOT}/.npmrc" ]; then
 fi
 
 # アセットビルド実行（システムテスト用）
-# 注意: devDependencies（esbuildなど）が必要なため、npm installを実行
+# devDependencies（esbuild 等）込み。npm install は lock を更新し得るため ci を使う（ホスト .:/app マウント）。
 echo "==> Installing npm dependencies (including devDependencies)..."
-npm install
+npm ci
 echo "==> Building assets for system tests..."
 npm run build
 

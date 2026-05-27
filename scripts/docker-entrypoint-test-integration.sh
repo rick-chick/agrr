@@ -91,7 +91,7 @@ fi
 
 # JavaScript依存関係をインストール（devDependenciesを含む）
 echo "==> Installing JavaScript dependencies for integration tests..."
-npm install
+npm ci
 
 # アセットビルド実行（システムテスト用）
 echo "==> Building assets for system tests..."
