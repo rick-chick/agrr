@@ -14,12 +14,14 @@ module Domain
           output:,
           logger:,
           optimization_host:,
+          plan_gateway:,
           plan_crop_gateway:,
           find_best_candidate:
         )
           @output = output
           @logger = logger
           @optimization_host = optimization_host
+          @plan_gateway = plan_gateway
           @plan_crop_gateway = plan_crop_gateway
           @find_best_candidate = find_best_candidate
         end
@@ -28,8 +30,14 @@ module Domain
         # @param ui_filter_context [Hash] 候補探索ログ用（空可）
         def call(auth:, plan_id:, crop_id:, field_id:, display_range:, crop_resolver:, ui_filter_context: {})
           plan_crop_id = nil
+          user_id = auth.private? ? auth.user_id : nil
 
-          @optimization_host.attach_plan_for_candidates!(auth: auth, plan_id: plan_id)
+          plan = @plan_gateway.find_by_id(plan_id)
+          if RestPlanAccess.access_denied?(plan: plan, auth: auth)
+            return @output.on_not_found
+          end
+
+          @optimization_host.attach_plan_for_candidates!(plan_id: plan_id, user_id: user_id)
 
           crop_entity = crop_resolver.crop_for_add_crop(crop_id)
           unless crop_entity
@@ -37,11 +45,15 @@ module Domain
             return
           end
 
-          plan_crop_snapshot = @plan_crop_gateway.create(auth: auth, plan_id: plan_id, crop_entity: crop_entity)
+          plan_crop_snapshot = @plan_crop_gateway.create(
+            plan_id: plan_id,
+            crop_entity: crop_entity,
+            user_id: user_id
+          )
           plan_crop_id = plan_crop_snapshot.id
           plan_crop_display_name = plan_crop_snapshot.display_name
 
-          @optimization_host.attach_plan_for_candidates!(auth: auth, plan_id: plan_id)
+          @optimization_host.attach_plan_for_candidates!(plan_id: plan_id, user_id: user_id)
 
           best = @find_best_candidate.call(
             auth: auth,

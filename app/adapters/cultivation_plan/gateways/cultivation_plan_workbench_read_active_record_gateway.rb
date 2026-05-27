@@ -5,11 +5,31 @@ module Adapters
     module Gateways
       class CultivationPlanWorkbenchReadActiveRecordGateway <
           Domain::CultivationPlan::Gateways::CultivationPlanWorkbenchReadGateway
-        def load_rows(auth:, plan_id:)
-          cultivation_plan = ::Adapters::CultivationPlan::Persistence::PlanScopes.find_record!(auth, plan_id)
+        def load_rows_by_plan_id_and_user_id(plan_id:, user_id:)
+          cultivation_plan = Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_and_user_id(
+            plan_id: plan_id,
+            user_id: user_id
+          )
+          rows_from_plan(cultivation_plan)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
 
+        def load_rows_by_plan_id(plan_id:)
+          cultivation_plan = Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_public(
+            plan_id: plan_id
+          )
+          rows_from_plan(cultivation_plan)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
+        end
+
+        private
+
+        def rows_from_plan(cultivation_plan)
           plan_header = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchPlanHeader.new(
             id: cultivation_plan.id,
+            user_id: cultivation_plan.user_id,
             plan_year: cultivation_plan.plan_year,
             plan_name: cultivation_plan.plan_name,
             plan_type: cultivation_plan.plan_type,
@@ -66,8 +86,6 @@ module Adapters
             cultivations: cultivation_rows,
             farm_region: cultivation_plan.farm&.region
           )
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
       end
     end

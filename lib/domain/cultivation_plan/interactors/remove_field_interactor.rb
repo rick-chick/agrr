@@ -13,7 +13,11 @@ module Domain
         end
 
         def call(auth:, plan_id:, field_id_param:)
-          plan = @plan_gateway.find_by_id_for_rest(auth: auth, plan_id: plan_id)
+          plan = @plan_gateway.find_by_id(plan_id)
+          if RestPlanAccess.access_denied?(plan: plan, auth: auth)
+            return @output.on_not_found
+          end
+
           field_id = field_id_param.to_i
           field_row = @field_mutation_gateway.find_field(plan_id: plan.id, field_id: field_id)
 

@@ -9,12 +9,20 @@ module Domain
           @logger = logger
         end
 
-        # @param auth [Domain::CultivationPlan::Dtos::CultivationPlanRestAuth]
+        # @param plan_id [Integer, String]
+        # @param user_id [Integer]
+        # @return [Array<Domain::CultivationPlan::Dtos::CultivationPlanAdjustPlanCropGrowthSnapshot>]
+        # @raise [Domain::Shared::Exceptions::RecordNotFound]
+        # @raise [Domain::Shared::Exceptions::RecordInvalid]
+        def list_by_plan_id_and_user_id(plan_id:, user_id:)
+          raise NotImplementedError
+        end
+
         # @param plan_id [Integer, String]
         # @return [Array<Domain::CultivationPlan::Dtos::CultivationPlanAdjustPlanCropGrowthSnapshot>]
         # @raise [Domain::Shared::Exceptions::RecordNotFound]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
-        def list_by_plan_id(auth:, plan_id:)
+        def list_by_plan_id(plan_id:)
           raise NotImplementedError
         end
 

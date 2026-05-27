@@ -9,6 +9,7 @@ module Domain
         test "to_snapshot merges rows and available crops" do
           plan = Dtos::CultivationPlanWorkbenchPlanHeader.new(
             id: 1,
+            user_id: 1,
             plan_year: 2026,
             plan_name: "p",
             plan_type: "public",

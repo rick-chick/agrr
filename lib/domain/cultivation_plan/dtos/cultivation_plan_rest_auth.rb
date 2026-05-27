@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # REST 栽培計画 API（private / public）の認可モード。Gateway がスコープ付き find に使う。
+      # REST 栽培計画 API（private / public）の認可モード。Interactor が Gateway 呼び分けと Policy に使う。
       class CultivationPlanRestAuth
         attr_reader :mode, :user_id
 

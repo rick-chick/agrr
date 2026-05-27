@@ -696,8 +696,17 @@ module CompositionRoot
       log = logger
       gw = agrr_candidates_gateway
 
-      plan_loader = lambda do |auth:, plan_id:|
-        ::Adapters::CultivationPlan::Persistence::PlanScopes.find_record!(auth, plan_id)
+      plan_loader = lambda do |plan_id:, user_id: nil|
+        if user_id
+          ::Adapters::CultivationPlan::Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_and_user_id(
+            plan_id: plan_id,
+            user_id: user_id
+          )
+        else
+          ::Adapters::CultivationPlan::Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_public(
+            plan_id: plan_id
+          )
+        end
       end
 
       allocation_configs = lambda do |plan|

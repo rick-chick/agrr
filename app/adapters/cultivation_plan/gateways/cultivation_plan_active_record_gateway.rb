@@ -82,13 +82,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def find_by_id_for_rest(auth:, plan_id:)
-          m = ::Adapters::CultivationPlan::Persistence::PlanScopes.find_record!(auth, plan_id)
-          Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(m)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
         # 栽培計画を削除し、::Adapters::DeletionUndo::Manager を使用して Undo トークンを返す
         #
         # @param plan_id [Integer] 削除する計画のID

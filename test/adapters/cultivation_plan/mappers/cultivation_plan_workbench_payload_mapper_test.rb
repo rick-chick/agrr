@@ -6,6 +6,7 @@ class CultivationPlanWorkbenchPayloadMapperTest < ActiveSupport::TestCase
   test "to_json_body builds REST workbench envelope from snapshot" do
     plan = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchPlanHeader.new(
       id: 1,
+      user_id: 1,
       plan_year: 2026,
       plan_name: "p",
       plan_type: "private",

@@ -3,8 +3,8 @@
 module Adapters
   module CultivationPlan
     module Persistence
-      # REST 栽培計画の AR Relation / preload。認可判断は Interactor + PlanReadAuthorization。
-      module PlanScopes
+      # REST 栽培計画の AR preload / narrow find（auth 非受け。認可は Interactor + Policy）。
+      module CultivationPlanRestPlanPreload
         module_function
 
         CROP_WITH_STAGES = { crop: :crop_stages }.freeze
@@ -22,18 +22,22 @@ module Adapters
           { field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ] }
         ].freeze
 
-        # @param auth [Domain::CultivationPlan::Dtos::CultivationPlanRestAuth]
         # @param plan_id [Integer, String]
+        # @param user_id [Integer]
         # @return [::CultivationPlan]
         # @raise [ActiveRecord::RecordNotFound]
-        def find_record!(auth, plan_id)
+        def find_by_plan_id_and_user_id(plan_id:, user_id:)
           pid = plan_id.to_i
-          if auth.private?
-            user = ::User.find(auth.user_id)
-            ::CultivationPlan.plan_type_private.by_user(user).preload(PRIVATE_PRELOAD).find(pid)
-          else
-            ::CultivationPlan.plan_type_public.includes(PUBLIC_INCLUDES).find(pid)
-          end
+          user = ::User.find(user_id)
+          ::CultivationPlan.plan_type_private.by_user(user).preload(PRIVATE_PRELOAD).find(pid)
+        end
+
+        # @param plan_id [Integer, String]
+        # @return [::CultivationPlan] plan_type public のみ
+        # @raise [ActiveRecord::RecordNotFound]
+        def find_by_plan_id_public(plan_id:)
+          pid = plan_id.to_i
+          ::CultivationPlan.plan_type_public.includes(PUBLIC_INCLUDES).find(pid)
         end
       end
     end

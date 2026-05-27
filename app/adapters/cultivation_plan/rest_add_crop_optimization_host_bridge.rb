@@ -8,8 +8,15 @@ module Adapters
         @controller = controller
       end
 
-      def attach_plan_for_candidates!(auth:, plan_id:)
-        ::Adapters::CultivationPlan::Persistence::PlanScopes.find_record!(auth, plan_id)
+      def attach_plan_for_candidates!(plan_id:, user_id: nil)
+        if user_id
+          Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_and_user_id(
+            plan_id: plan_id,
+            user_id: user_id
+          )
+        else
+          Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_public(plan_id: plan_id)
+        end
       end
 
       def adjust_with_moves!(plan_id:, moves:)

@@ -4,7 +4,6 @@ module Domain
   module CultivationPlan
     module Policies
       # ORM 非依存の栽培計画読み取り可否（private 本人 / public）。
-      # 永続スコープの SQL 写像は Adapters::CultivationPlan::Persistence::PlanScopes。
       module PlanReadAuthorization
         module_function
 

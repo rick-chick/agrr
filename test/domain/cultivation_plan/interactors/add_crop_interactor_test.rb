@@ -15,8 +15,16 @@ module Domain
           @logger.stubs(:warn)
           @host = mock
           @host.stubs(:attach_plan_for_candidates!)
+          @plan_gateway = mock
           @plan_crop = mock
           @find_best = mock
+          @plan = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: 9,
+            farm_id: 1,
+            user_id: 1,
+            total_area: 0,
+            plan_type: "private"
+          )
         end
 
         def interactor
@@ -24,6 +32,7 @@ module Domain
             output: @output,
             logger: @logger,
             optimization_host: @host,
+            plan_gateway: @plan_gateway,
             plan_crop_gateway: @plan_crop,
             find_best_candidate: @find_best
           )
@@ -48,9 +57,10 @@ module Domain
 
         test "dispatches success" do
           crop = crop_entity
-          @host.expects(:attach_plan_for_candidates!).twice.with(auth: @auth, plan_id: 9)
+          @plan_gateway.expects(:find_by_id).with(9).returns(@plan)
+          @host.expects(:attach_plan_for_candidates!).twice.with(plan_id: 9, user_id: 1)
           @resolver.expects(:crop_for_add_crop).with("1").returns(crop)
-          @plan_crop.expects(:create).with(auth: @auth, plan_id: 9, crop_entity: crop).returns(plan_crop_snapshot)
+          @plan_crop.expects(:create).with(plan_id: 9, crop_entity: crop, user_id: 1).returns(plan_crop_snapshot)
           @find_best.expects(:call).with(
             auth: @auth,
             plan_id: 9,
@@ -75,7 +85,31 @@ module Domain
           )
         end
 
+        test "dispatches not_found when policy denies plan" do
+          denied_plan = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: 1,
+            farm_id: 1,
+            user_id: 2,
+            total_area: 0,
+            plan_type: "private"
+          )
+          @plan_gateway.expects(:find_by_id).with(1).returns(denied_plan)
+          @output.expects(:on_not_found).once
+          @host.expects(:attach_plan_for_candidates!).never
+          @plan_crop.expects(:create).never
+
+          interactor.call(
+            auth: @auth,
+            plan_id: 1,
+            crop_id: "1",
+            field_id: nil,
+            display_range: {},
+            crop_resolver: @resolver
+          )
+        end
+
         test "dispatches not_found on attach" do
+          @plan_gateway.expects(:find_by_id).with(1).returns(@plan)
           @host.expects(:attach_plan_for_candidates!).raises(Domain::Shared::Exceptions::RecordNotFound)
           @output.expects(:on_not_found).once
           @plan_crop.expects(:create).never
@@ -92,6 +126,7 @@ module Domain
 
         test "dispatches prediction_incomplete and rolls back plan crop" do
           crop = crop_entity
+          @plan_gateway.expects(:find_by_id).returns(@plan)
           @resolver.expects(:crop_for_add_crop).returns(crop)
           @plan_crop.expects(:create).returns(plan_crop_snapshot)
           @find_best.expects(:call).raises(
@@ -117,6 +152,7 @@ module Domain
             message: "adj",
             http_status: :bad_request
           )
+          @plan_gateway.expects(:find_by_id).returns(@plan)
           @resolver.expects(:crop_for_add_crop).returns(crop)
           @plan_crop.expects(:create).returns(plan_crop_snapshot)
           @find_best.expects(:call).returns(field_id: "2", start_date: Date.new(2026, 1, 1))

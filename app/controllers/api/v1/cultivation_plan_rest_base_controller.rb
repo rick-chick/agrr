@@ -16,6 +16,7 @@ module Api
           ),
           logger: cultivation_plan_rest_logger,
           optimization_host: cultivation_plan_rest_add_crop_optimizer_bridge,
+          plan_gateway: CompositionRoot.cultivation_plan_gateway,
           plan_crop_gateway: CompositionRoot.cultivation_plan_rest_plan_crop_gateway,
           find_best_candidate: CompositionRoot.find_best_add_crop_candidate_interactor
         ).call(

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "domain_lib_test_helper"
-require_relative "../../support/lib_domain_active_record_reference_scanner"
+require_relative "../support/lib_domain_active_record_reference_scanner"
 
 class LibDomainNoActiveRecordReferencesTest < DomainLibTestCase
   BARRIER = <<~MSG.strip

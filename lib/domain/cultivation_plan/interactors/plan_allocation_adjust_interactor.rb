@@ -165,10 +165,14 @@ module Domain
         private
 
         def pass_growth_read_gate!(input)
-          snapshots = @adjust_plan_growth_read_gateway.list_by_plan_id(
-            auth: input.auth,
-            plan_id: input.plan_id
-          )
+          snapshots = if input.auth.private?
+                        @adjust_plan_growth_read_gateway.list_by_plan_id_and_user_id(
+                          plan_id: input.plan_id,
+                          user_id: input.auth.user_id
+                        )
+                      else
+                        @adjust_plan_growth_read_gateway.list_by_plan_id(plan_id: input.plan_id)
+                      end
           crop_rows = Mappers::CultivationPlanAdjustCropGrowthRowMapper.from_snapshots(snapshots)
 
           crop_rows.each do |row|

@@ -34,14 +34,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
-        # REST: identity スコープ付き 1 件（Entity）。認可は呼び出し側 Policy。
-        # @param auth [Domain::CultivationPlan::Dtos::CultivationPlanRestAuth]
-        # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
-        # @raise [Domain::Shared::Exceptions::RecordNotFound]
-        def find_by_id_for_rest(auth:, plan_id:)
-          raise NotImplementedError, "Subclasses must implement find_by_id_for_rest"
-        end
-
         # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
         def update(plan_id, attrs)
           raise NotImplementedError, "Subclasses must implement update"

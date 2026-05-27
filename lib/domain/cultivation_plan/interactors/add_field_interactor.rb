@@ -13,7 +13,11 @@ module Domain
         end
 
         def call(auth:, plan_id:, field_name:, field_area:, daily_fixed_cost:)
-          plan = @plan_gateway.find_by_id_for_rest(auth: auth, plan_id: plan_id)
+          plan = @plan_gateway.find_by_id(plan_id)
+          if RestPlanAccess.access_denied?(plan: plan, auth: auth)
+            return @output.on_not_found
+          end
+
           field_area_f = field_area&.to_f
 
           if Policies::CultivationPlanFieldPolicy.invalid_field_area?(field_area: field_area_f)
