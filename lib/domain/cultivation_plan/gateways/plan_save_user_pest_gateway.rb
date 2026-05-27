@@ -41,13 +41,6 @@ module Domain
         def link_crop_pest(crop_id:, pest_id:)
           raise NotImplementedError
         end
-
-        # Template-copy 境界: 指定 id の害虫 AR
-        # @param ids [Array<Integer>]
-        # @return [Array<Object>]
-        def list_by_ids(ids:)
-          raise NotImplementedError
-        end
       end
     end
   end

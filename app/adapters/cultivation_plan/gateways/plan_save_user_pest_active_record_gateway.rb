@@ -47,14 +47,6 @@ module Adapters
           ::CropPest.find_or_create_by!(crop_id: crop_id, pest: pest)
         end
 
-        def list_by_ids(ids:)
-          return [] if ids.empty?
-
-          records = ::Pest.where(id: ids).to_a
-          by_id = records.index_by(&:id)
-          ids.filter_map { |id| by_id[id] }
-        end
-
         private
 
         def pest_duck(record)

@@ -33,15 +33,6 @@ module Adapters
           assert entities.all? { |e| e.is_a?(Domain::Field::Entities::FieldEntity) }
         end
 
-        test "list_by_ids returns fields in caller order scoped to user" do
-          f1 = @farm.fields.create!(user: @user, name: "A", area: 1.0)
-          f2 = @farm.fields.create!(user: @user, name: "B", area: 2.0)
-
-          ordered = @gateway.list_by_ids(ids: [ f2.id, f1.id ], user_id: @user.id)
-
-          assert_equal [ f2.id, f1.id ], ordered.map(&:id)
-        end
-
         test "create persists field with description from attributes" do
           entity = @gateway.create(
             farm_id: @farm.id,

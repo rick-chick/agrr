@@ -44,9 +44,7 @@ module Adapters
           plan_save_ensure_user_fields_interactor:,
           plan_save_ensure_user_crops_interactor:,
           plan_save_ensure_user_pests_interactor:,
-          plan_save_field_gateway:,
-          plan_save_user_crop_gateway:,
-          plan_save_user_pest_gateway:,
+          plan_save_ensure_user_fertilizes_interactor:,
           own_transaction: true
         )
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
@@ -61,9 +59,7 @@ module Adapters
           @plan_save_ensure_user_fields_interactor = plan_save_ensure_user_fields_interactor
           @plan_save_ensure_user_crops_interactor = plan_save_ensure_user_crops_interactor
           @plan_save_ensure_user_pests_interactor = plan_save_ensure_user_pests_interactor
-          @plan_save_field_gateway = plan_save_field_gateway
-          @plan_save_user_crop_gateway = plan_save_user_crop_gateway
-          @plan_save_user_pest_gateway = plan_save_user_pest_gateway
+          @plan_save_ensure_user_fertilizes_interactor = plan_save_ensure_user_fertilizes_interactor
           @own_transaction = own_transaction
           @result = Result.new
         end
@@ -119,7 +115,10 @@ module Adapters
             )
           )
           field_output.skipped_field_ids.each { |id| @result.add_skip(:fields, id) }
-          fields = @plan_save_field_gateway.list_by_ids(ids: field_output.field_ids, user_id: @user.id)
+          fields = Sessions::PlanSaveTemplateCopyIntegrity.field_records_for_template_copy(
+            ids: field_output.field_ids,
+            user_id: @user.id
+          )
 
           plan_id = @session_data[:plan_id] || @session_data["plan_id"]
           crop_output = @plan_save_ensure_user_crops_interactor.call(
@@ -135,7 +134,9 @@ module Adapters
 
           copy_crop_stages_for_pairs!(crop_output.stage_copy_pairs)
 
-          crops = @plan_save_user_crop_gateway.list_by_ids(ids: crop_output.user_crop_ids)
+          crops = Sessions::PlanSaveTemplateCopyIntegrity.crop_records_for_template_copy(
+            ids: crop_output.user_crop_ids
+          )
 
           pest_output = @plan_save_ensure_user_pests_interactor.call(
             Domain::CultivationPlan::Dtos::PlanSaveEnsureUserPestsInput.new(
@@ -147,10 +148,23 @@ module Adapters
           )
           pest_output.skipped_pest_ids.each { |id| @result.add_skip(:pests, id) }
           ctx.reference_pest_id_to_user_pest_id = pest_output.reference_pest_id_to_user_pest_id
-          pests = @plan_save_user_pest_gateway.list_by_ids(ids: pest_output.user_pest_ids)
+          pests = Sessions::PlanSaveTemplateCopyIntegrity.pest_records_for_template_copy(
+            ids: pest_output.user_pest_ids
+          )
           agricultural_tasks = Mappers::AgriculturalTaskMapper.new(ctx).copy_agricultural_tasks_for_region(farm_region)
           interaction_rules = Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(farm_region)
-          fertilizes = Mappers::FertilizeMapper.new(ctx).copy_fertilizes_for_region(farm_region)
+
+          fertilize_output = @plan_save_ensure_user_fertilizes_interactor.call(
+            Domain::CultivationPlan::Dtos::PlanSaveEnsureUserFertilizesInput.new(
+              user_id: @user.id,
+              region: farm_region
+            )
+          )
+          fertilize_output.skipped_fertilize_ids.each { |id| @result.add_skip(:fertilizes, id) }
+          fertilizes = Sessions::PlanSaveTemplateCopyIntegrity.fertilize_records_for_template_copy(
+            ids: fertilize_output.user_fertilize_ids
+          )
+
           pesticides = Mappers::PesticideMapper.new(ctx).copy_pesticides_for_region(farm_region)
 
           existing_plan = @plan_save_farm_gateway.find_owned_private_plan_record(

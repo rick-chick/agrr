@@ -86,20 +86,6 @@ module Adapters
           @gateway.link_crop_pest(crop_id: crop.id, pest_id: pest.id)
           assert CropPest.exists?(crop_id: crop.id, pest_id: pest.id)
         end
-
-        test "list_by_ids preserves caller order" do
-          p2 = @gateway.create(
-            user_id: @user.id,
-            attributes: { name: "P2", is_reference: false, region: "jp", source_pest_id: nil }
-          )
-          p1 = @gateway.create(
-            user_id: @user.id,
-            attributes: { name: "P1", is_reference: false, region: "jp", source_pest_id: nil }
-          )
-
-          ordered = @gateway.list_by_ids(ids: [ p2.id, p1.id ])
-          assert_equal [ p2.id, p1.id ], ordered.map(&:id)
-        end
       end
     end
   end

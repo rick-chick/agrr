@@ -37,14 +37,6 @@ module Adapters
           field_entity_from_record(field)
         end
 
-        def list_by_ids(ids:, user_id:)
-          return [] if ids.empty?
-
-          records = ::Field.where(id: ids, user_id: user_id).to_a
-          by_id = records.index_by(&:id)
-          ids.filter_map { |id| by_id[id] }
-        end
-
         private
 
         def field_entity_from_record(record)

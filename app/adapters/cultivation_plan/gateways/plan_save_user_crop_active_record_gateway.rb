@@ -27,14 +27,6 @@ module Adapters
           crop_duck(crop)
         end
 
-        def list_by_ids(ids:)
-          return [] if ids.empty?
-
-          records = ::Crop.where(id: ids).to_a
-          by_id = records.index_by(&:id)
-          ids.filter_map { |id| by_id[id] }
-        end
-
         private
 
         def crop_duck(record)

@@ -92,6 +92,48 @@ module Adapters
           assert_equal "ReadGwPest", row.name
           assert_includes row.linked_reference_crop_ids, @ref_crop.id
         end
+
+        test "list_fertilize_reference_rows returns reference fertilizes for region" do
+          ref_f = ::Fertilize.create!(
+            user: nil,
+            name: "ReadGwFert#{SecureRandom.hex(4)}",
+            n: 1,
+            p: 2,
+            k: 3,
+            is_reference: true,
+            region: "jp"
+          )
+          us_only = ::Fertilize.create!(
+            user: nil,
+            name: "ReadGwFertUs#{SecureRandom.hex(4)}",
+            n: 1,
+            p: 1,
+            k: 1,
+            is_reference: true,
+            region: "us"
+          )
+
+          rows = @gateway.list_fertilize_reference_rows(region: "jp")
+          row = rows.find { |r| r.reference_fertilize_id == ref_f.id }
+          assert_not_nil row
+          assert_equal ref_f.name, row.name
+          assert_equal ref_f.n, row.n
+          assert_nil rows.find { |r| r.reference_fertilize_id == us_only.id }
+        end
+
+        test "exists_fertilize_name? reflects global name uniqueness" do
+          name = "ReadGwFertExists#{SecureRandom.hex(4)}"
+          assert_not @gateway.exists_fertilize_name?(name: name)
+
+          ::Fertilize.create!(
+            user: nil,
+            name: name,
+            is_reference: true,
+            region: "jp"
+          )
+
+          assert @gateway.exists_fertilize_name?(name: name)
+        end
       end
     end
   end

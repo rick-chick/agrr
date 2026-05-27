@@ -27,6 +27,18 @@ module Domain
         def list_pest_reference_rows(plan_id:, region:)
           raise NotImplementedError
         end
+
+        # @param region [String, nil]
+        # @return [Array<Dtos::PublicPlanSaveFertilizeReferenceRow>]
+        def list_fertilize_reference_rows(region:)
+          raise NotImplementedError
+        end
+
+        # @param name [String]
+        # @return [Boolean]
+        def exists_fertilize_name?(name:)
+          raise NotImplementedError
+        end
       end
     end
   end

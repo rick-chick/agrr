@@ -51,28 +51,6 @@ module Adapters
           )
           assert_equal created.id, found.id
         end
-
-        test "list_by_ids preserves caller order" do
-          c2 = @user.crops.create!(
-            name: "B",
-            variety: "v",
-            is_reference: false,
-            area_per_unit: 0.2,
-            revenue_per_area: 100.0,
-            region: "jp"
-          )
-          c1 = @user.crops.create!(
-            name: "A",
-            variety: "v",
-            is_reference: false,
-            area_per_unit: 0.2,
-            revenue_per_area: 100.0,
-            region: "jp"
-          )
-
-          ordered = @gateway.list_by_ids(ids: [ c2.id, c1.id ])
-          assert_equal [ c2.id, c1.id ], ordered.map(&:id)
-        end
       end
     end
   end

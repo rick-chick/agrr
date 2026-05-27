@@ -20,14 +20,6 @@ module Domain
         def create(farm_id:, user_id:, attributes:)
           raise NotImplementedError
         end
-
-        # Template-copy 境界: 指定 id の圃場 AR（ユーザー所有に限定）
-        # @param ids [Array<Integer>]
-        # @param user_id [Integer]
-        # @return [Array<Object>] 呼び出し側 ids の順序を保持
-        def list_by_ids(ids:, user_id:)
-          raise NotImplementedError
-        end
       end
     end
   end

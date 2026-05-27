@@ -64,7 +64,33 @@ module Adapters
           reference_scope.map { |pest| pest_reference_row_from_record(pest) }
         end
 
+        def list_fertilize_reference_rows(region:)
+          reference_scope = ::Fertilize.reference
+          if region.present?
+            reference_scope = reference_scope.where(region: [ region, nil ])
+          end
+
+          reference_scope.order(:id).map { |fertilize| fertilize_reference_row_from_record(fertilize) }
+        end
+
+        def exists_fertilize_name?(name:)
+          ::Fertilize.exists?(name: name)
+        end
+
         private
+
+        def fertilize_reference_row_from_record(fertilize)
+          Domain::CultivationPlan::Dtos::PublicPlanSaveFertilizeReferenceRow.new(
+            reference_fertilize_id: fertilize.id,
+            name: fertilize.name,
+            n: fertilize.n,
+            p: fertilize.p,
+            k: fertilize.k,
+            description: fertilize.description,
+            package_size: fertilize.package_size,
+            region: fertilize.region
+          )
+        end
 
         def pest_reference_row_from_record(pest)
           temperature_profile = if (profile = pest.pest_temperature_profile)

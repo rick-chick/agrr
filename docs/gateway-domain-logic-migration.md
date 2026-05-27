@@ -16,7 +16,9 @@
 - 読取: `RetrieveCultivationPlanInteractor` + `CultivationPlanWorkbenchSnapshotMapper`
 - 認可 + count: `CropCreateInteractor` + `CropCreateLimitPolicy`
 - PlanSave farm step: `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway`
-- PlanSave pest step: `PlanSaveEnsureUserPestsInteractor` + `PublicPlanSaveReadGateway#list_pest_reference_rows` + `PlanSaveUserPestGateway`
+- PlanSave field step: `PlanSaveEnsureUserFieldsInteractor` + `PlanSaveFieldGateway`（永続化のみ）；template-copy は `PlanSaveTemplateCopyIntegrity#field_records_for_template_copy`
+- PlanSave crop/pest step: `PlanSaveEnsureUserCropsInteractor` / `PlanSaveEnsureUserPestsInteractor` + Read 行 DTO + User gateway（永続化のみ）；template-copy は `PlanSaveTemplateCopyIntegrity#crop_records_for_template_copy` / `#pest_records_for_template_copy`
+- PlanSave fertilize step: `PlanSaveEnsureUserFertilizesInteractor` + `PublicPlanSaveReadGateway#list_fertilize_reference_rows` / `#exists_fertilize_name?` + `PlanSaveUserFertilizeGateway`（`list_by_ids` なし）
 - フェーズ更新: `AdvanceCultivationPlanPhaseInteractor` + `OptimizationCompletion`（Interactor 連鎖なし）
 
 ## フェーズ完了状況

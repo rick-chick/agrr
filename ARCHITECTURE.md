@@ -166,7 +166,9 @@ sequenceDiagram
 | Request mapper | `Adapters::CultivationPlan::AdjustMovesFromRequest` → `PlanAllocationAdjustInput` in `CultivationPlanRestBaseController#adjust` |
 | Orchestration + pure Policy | `CropCreateInteractor` + `CropCreateLimitPolicy` (Interactor calls `gateway.count`; Policy receives counts only) |
 | PlanSave persist step (farm) | `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway` (`find_owned_private_plan_record` — not `find_private_*` in the method name) |
-| PlanSave persist step (crop / pest) | `PlanSaveEnsureUserCropsInteractor` / `PlanSaveEnsureUserPestsInteractor` + `PublicPlanSaveReadGateway` 行 DTO + `PlanSaveUserCropGateway` / `PlanSaveUserPestGateway` |
+| PlanSave persist step (field) | `PlanSaveEnsureUserFieldsInteractor` + `PlanSaveFieldGateway`（`list_by_farm_id` / `create` のみ）；template-copy は `PlanSaveTemplateCopyIntegrity#field_records_for_template_copy`（`user_id` でスコープ） |
+| PlanSave persist step (crop / pest) | `PlanSaveEnsureUserCropsInteractor` / `PlanSaveEnsureUserPestsInteractor` + `PublicPlanSaveReadGateway` 行 DTO + `PlanSaveUserCropGateway` / `PlanSaveUserPestGateway`（find/create 等のみ；template-copy 手渡しは `PlanSaveTemplateCopyIntegrity#crop_records_for_template_copy` / `#pest_records_for_template_copy`） |
+| PlanSave persist step (fertilize) | `PlanSaveEnsureUserFertilizesInteractor` + `PublicPlanSaveReadGateway`（`list_fertilize_reference_rows` / `exists_fertilize_name?`）+ `PlanSaveUserFertilizeGateway`（find/create のみ；template-copy 手渡しは adapter の `PlanSaveTemplateCopyIntegrity#fertilize_records_for_template_copy` — domain gateway に `list_by_ids` なし） |
 | Domain combine | `CultivationPlanWorkbenchSnapshotMapper` (read snapshots → `CultivationPlanWorkbenchSnapshot`) |
 | Response shape | `RetrieveCultivationPlanApiPresenter` + `CultivationPlanWorkbenchPayloadMapper` (adapter mapper only) |
 

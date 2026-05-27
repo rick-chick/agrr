@@ -3,18 +3,15 @@
 module Domain
   module CultivationPlan
     module Gateways
-      # 公開プラン保存: ユーザー作物の検索・作成（狭い永続化ポート）。
-      class PlanSaveUserCropGateway
-        # @param user_id [Integer]
-        # @param source_crop_id [Integer]
+      class PlanSaveUserFertilizeGateway
         # @return [Object, nil] duck: #id
-        def find_by_user_id_and_source_crop_id(user_id:, source_crop_id:)
+        def find_by_user_id_and_source_fertilize_id(user_id:, source_fertilize_id:)
           raise NotImplementedError
         end
 
         # @param user_id [Integer]
         # @param attributes [Hash]
-        # @return [Object] duck: #id
+        # @return [Object] duck: #id, #name
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
         def create(user_id:, attributes:)
           raise NotImplementedError

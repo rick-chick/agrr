@@ -547,6 +547,21 @@ module CompositionRoot
         )
     end
 
+    def plan_save_user_fertilize_gateway
+      @plan_save_user_fertilize_gateway ||=
+        Adapters::CultivationPlan::Gateways::PlanSaveUserFertilizeActiveRecordGateway.new
+    end
+
+    def plan_save_ensure_user_fertilizes_interactor
+      @plan_save_ensure_user_fertilizes_interactor ||=
+        Domain::CultivationPlan::Interactors::PlanSaveEnsureUserFertilizesInteractor.new(
+          read_gateway: public_plan_save_read_gateway,
+          user_fertilize_gateway: plan_save_user_fertilize_gateway,
+          logger: logger,
+          translator: translator
+        )
+    end
+
     def public_plan_save_persistence_port
       @public_plan_save_persistence_port ||=
         Adapters::CultivationPlan::Gateways::PublicPlanSavePersistenceActiveRecordAdapter.new(
@@ -560,9 +575,7 @@ module CompositionRoot
           plan_save_ensure_user_fields_interactor: plan_save_ensure_user_fields_interactor,
           plan_save_ensure_user_crops_interactor: plan_save_ensure_user_crops_interactor,
           plan_save_ensure_user_pests_interactor: plan_save_ensure_user_pests_interactor,
-          plan_save_field_gateway: plan_save_field_gateway,
-          plan_save_user_crop_gateway: plan_save_user_crop_gateway,
-          plan_save_user_pest_gateway: plan_save_user_pest_gateway
+          plan_save_ensure_user_fertilizes_interactor: plan_save_ensure_user_fertilizes_interactor
         )
     end
 
