@@ -11,12 +11,11 @@ module Adapters
 
         test "on_success maps output fields to AddCropAdjustResult" do
           collector = AddCropAdjustResultCollector.new
-          collector.on_success(output: Output.new(message: "ok", skipped: true))
+          collector.on_success(output: Output.new(message: "ok", skipped: false))
 
           result = collector.add_crop_adjust_result
           assert result.success?
           assert_equal "ok", result.message
-          assert result.skipped
         end
 
         test "on_failure maps failure message and http status from mapper" do

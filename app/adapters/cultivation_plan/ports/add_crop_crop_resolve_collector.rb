@@ -3,16 +3,16 @@
 module Adapters
   module CultivationPlan
     module Ports
-      # CropFind*Interactor の output_port: 解決した作物エンティティを保持する。
+      # CropFind*Interactor の output_port: 解決した作物（Entity / AR）を保持する。
       class AddCropCropResolveCollector
-        attr_reader :crop_entity
+        attr_reader :resolved_crop
 
         def on_success(crop)
-          @crop_entity = crop
+          @resolved_crop = crop
         end
 
         def on_failure(_error)
-          @crop_entity = nil
+          @resolved_crop = nil
         end
       end
     end

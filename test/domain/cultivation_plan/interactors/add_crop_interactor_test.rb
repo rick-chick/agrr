@@ -40,8 +40,8 @@ module Domain
           )
         end
 
-        def crop_entity
-          stub(
+        def crop_snapshot
+          Domain::Crop::Dtos::AddCropCropSnapshot.new(
             id: 1,
             name: "ナス",
             variety: "v",
@@ -70,9 +70,9 @@ module Domain
         end
 
         test "dispatches success" do
-          crop = crop_entity
+          crop = crop_snapshot
           @plan_gateway.expects(:find_by_id).with(9).returns(@plan)
-          @add_crop_crop_resolve.expects(:call).with(auth: @auth, crop_id: "1").returns(crop)
+          @add_crop_crop_resolve.expects(:call).with(crop_id: "1").returns(crop)
           @plan_crop.expects(:create).with(plan_id: 9, crop_entity: crop, user_id: 1).returns(plan_crop_snapshot)
           @find_best.expects(:call).with(
             auth: @auth,
@@ -112,7 +112,7 @@ module Domain
 
         test "dispatches crop_not_found when resolve returns nil" do
           @plan_gateway.expects(:find_by_id).returns(@plan)
-          @add_crop_crop_resolve.expects(:call).with(auth: @auth, crop_id: "1").returns(nil)
+          @add_crop_crop_resolve.expects(:call).with(crop_id: "1").returns(nil)
           @output.expects(:on_crop_not_found).once
           @plan_crop.expects(:create).never
 
@@ -120,7 +120,7 @@ module Domain
         end
 
         test "dispatches prediction_incomplete and rolls back plan crop" do
-          crop = crop_entity
+          crop = crop_snapshot
           @plan_gateway.expects(:find_by_id).returns(@plan)
           @add_crop_crop_resolve.expects(:call).returns(crop)
           @plan_crop.expects(:create).returns(plan_crop_snapshot)
@@ -133,8 +133,8 @@ module Domain
           call_interactor(plan_id: 1, field_id: nil)
         end
 
-        test "dispatches adjust_failed with legacy payload" do
-          crop = crop_entity
+        test "dispatches adjust_failed with AddCropAdjustResult" do
+          crop = crop_snapshot
           adjust = Domain::CultivationPlan::Dtos::AddCropAdjustResult.new(
             success: false,
             message: "adj",
@@ -146,9 +146,7 @@ module Domain
           @find_best.expects(:call).returns(field_id: "2", start_date: Date.new(2026, 1, 1))
           @plan_allocation_adjust.expects(:call)
           @add_crop_adjust_result_sink.expects(:add_crop_adjust_result).returns(adjust)
-          @output.expects(:on_adjust_failed).with(
-            adjust_payload: { success: false, message: "adj", status: :bad_request }
-          )
+          @output.expects(:on_adjust_failed).with(adjust_result: adjust)
 
           call_interactor(plan_id: 1, field_id: nil)
         end

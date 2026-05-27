@@ -11,7 +11,7 @@ module Domain
         ].freeze
 
         # @param plan_allocation_adjust [Domain::CultivationPlan::Ports::PlanAllocationAdjustInputPort]
-        # @param add_crop_crop_resolve [Domain::CultivationPlan::Ports::AddCropCropResolveInputPort]
+        # @param add_crop_crop_resolve [Domain::CultivationPlan::Ports::AddCropCropResolveInputPort] → AddCropCropSnapshot
         # @param add_crop_adjust_result_sink [#add_crop_adjust_result] adjust の output_port（同一リクエスト用 collector）
         def initialize(
           output:,
@@ -43,15 +43,15 @@ module Domain
             return @output.on_not_found
           end
 
-          crop_entity = @add_crop_crop_resolve.call(auth: auth, crop_id: crop_id)
-          unless crop_entity
+          crop_snapshot = @add_crop_crop_resolve.call(crop_id: crop_id)
+          unless crop_snapshot
             @output.on_crop_not_found
             return
           end
 
           plan_crop_snapshot = @plan_crop_gateway.create(
             plan_id: plan_id,
-            crop_entity: crop_entity,
+            crop_entity: crop_snapshot,
             user_id: user_id
           )
           plan_crop_id = plan_crop_snapshot.id
@@ -60,7 +60,7 @@ module Domain
           best = @find_best_candidate.call(
             auth: auth,
             plan_id: plan_id,
-            crop: crop_entity,
+            crop: crop_snapshot,
             field_id: field_id,
             display_range: display_range,
             ui_filter_context: ui_filter_context
@@ -76,11 +76,11 @@ module Domain
             {
               allocation_id: nil,
               action: "add",
-              crop_id: crop_entity.id.to_s,
+              crop_id: crop_snapshot.id.to_s,
               to_field_id: best[:field_id],
               to_start_date: best[:start_date],
-              to_area: crop_entity.area_per_unit,
-              variety: crop_entity.variety
+              to_area: crop_snapshot.area_per_unit,
+              variety: crop_snapshot.variety
             }
           ]
 
@@ -95,7 +95,7 @@ module Domain
               plan_crop_display_name: plan_crop_display_name
             )
           else
-            @output.on_adjust_failed(adjust_payload: adjust_result_to_legacy_hash(adjust_result))
+            @output.on_adjust_failed(adjust_result: adjust_result)
           end
         rescue Domain::Shared::Exceptions::RecordNotFound
           rollback_plan_crop(plan_crop_id) if plan_crop_id
@@ -121,14 +121,6 @@ module Domain
           @plan_crop_gateway.delete(id: plan_crop_id)
         rescue Domain::Shared::Exceptions::RecordNotFound
           nil
-        end
-
-        def adjust_result_to_legacy_hash(result)
-          {
-            success: result.success?,
-            message: result.message,
-            status: result.http_status
-          }.compact
         end
       end
     end

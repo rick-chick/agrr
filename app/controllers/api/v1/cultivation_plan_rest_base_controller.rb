@@ -131,11 +131,6 @@ module Api
         self.class.name.include?("::PublicPlans::") ? "public_plans" : "plans"
       end
 
-      def i18n_t(key)
-        scope = @cultivation_plan&.plan_type == "private" ? "plans" : "public_plans"
-        I18n.t("#{scope}.#{key}")
-      end
-
       def ui_filter_context
         filter_keys = %i[display_start_date display_end_date filters ui_filters field_id crop_id]
         filter_keys.each_with_object({}) do |key, context|
@@ -157,7 +152,6 @@ module Api
       def parse_display_date(value)
         Adapters::Shared::Iso8601CalendarDate.parse(value, logger: Rails.logger)
       end
-
     end
   end
 end

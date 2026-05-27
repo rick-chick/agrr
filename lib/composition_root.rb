@@ -300,6 +300,7 @@ module CompositionRoot
       if auth.private?
         Adapters::CultivationPlan::Ports::AddCropCropResolvePrivate.new(
           crop_gateway: crop_gateway,
+          user_id: auth.user_id,
           user_lookup: user_lookup,
           logger: logger
         )

@@ -24,8 +24,8 @@ module Domain
           raise NotImplementedError
         end
 
-        # @param adjust_payload [Hash] plan_allocation_adjust の戻り（success / message / status 等）
-        def on_adjust_failed(adjust_payload:)
+        # @param adjust_result [Domain::CultivationPlan::Dtos::AddCropAdjustResult]
+        def on_adjust_failed(adjust_result:)
           raise NotImplementedError
         end
 

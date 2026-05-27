@@ -10,8 +10,7 @@ module Adapters
         def on_success(output:)
           @add_crop_adjust_result = Domain::CultivationPlan::Dtos::AddCropAdjustResult.new(
             success: true,
-            message: output.message,
-            skipped: output.skipped
+            message: output.message
           )
         end
 

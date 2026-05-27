@@ -9,14 +9,15 @@ module Adapters
           @logger = logger
         end
 
-        def call(_auth:, crop_id:)
+        def call(crop_id:)
           collector = AddCropCropResolveCollector.new
           Domain::Crop::Interactors::CropFindPublicPlanAddCropRecordInteractor.new(
             output_port: collector,
             gateway: @crop_gateway,
             logger: @logger
           ).call(crop_id)
-          collector.crop_entity
+          source = collector.resolved_crop
+          source ? Adapters::Crop::Mappers::AddCropCropSnapshotMapper.from_source(source) : nil
         end
       end
     end

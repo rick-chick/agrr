@@ -44,8 +44,13 @@ module Adapters
           }, status: :unprocessable_entity
         end
 
-        def on_adjust_failed(adjust_payload:)
-          @view.render json: adjust_payload, status: adjust_payload[:status] || :internal_server_error
+        def on_adjust_failed(adjust_result:)
+          payload = {
+            success: false,
+            message: adjust_result.message
+          }
+          status = adjust_result.http_status || :internal_server_error
+          @view.render json: payload, status: status
         end
 
         def on_record_invalid(message:)
