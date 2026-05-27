@@ -10,25 +10,31 @@ module Domain
           Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError
         ].freeze
 
+        # @param plan_allocation_adjust [Domain::CultivationPlan::Ports::PlanAllocationAdjustInputPort]
+        # @param add_crop_crop_resolve [Domain::CultivationPlan::Ports::AddCropCropResolveInputPort]
+        # @param add_crop_adjust_result_sink [#add_crop_adjust_result] adjust の output_port（同一リクエスト用 collector）
         def initialize(
           output:,
           logger:,
-          optimization_host:,
+          plan_allocation_adjust:,
+          add_crop_crop_resolve:,
+          add_crop_adjust_result_sink:,
           plan_gateway:,
           plan_crop_gateway:,
           find_best_candidate:
         )
           @output = output
           @logger = logger
-          @optimization_host = optimization_host
+          @plan_allocation_adjust = plan_allocation_adjust
+          @add_crop_crop_resolve = add_crop_crop_resolve
+          @add_crop_adjust_result_sink = add_crop_adjust_result_sink
           @plan_gateway = plan_gateway
           @plan_crop_gateway = plan_crop_gateway
           @find_best_candidate = find_best_candidate
         end
 
-        # @param crop_resolver [#crop_for_add_crop] エッジで実装（Concern の作物解決）。
         # @param ui_filter_context [Hash] 候補探索ログ用（空可）
-        def call(auth:, plan_id:, crop_id:, field_id:, display_range:, crop_resolver:, ui_filter_context: {})
+        def call(auth:, plan_id:, crop_id:, field_id:, display_range:, ui_filter_context: {})
           plan_crop_id = nil
           user_id = auth.private? ? auth.user_id : nil
 
@@ -37,9 +43,7 @@ module Domain
             return @output.on_not_found
           end
 
-          @optimization_host.attach_plan_for_candidates!(plan_id: plan_id, user_id: user_id)
-
-          crop_entity = crop_resolver.crop_for_add_crop(crop_id)
+          crop_entity = @add_crop_crop_resolve.call(auth: auth, crop_id: crop_id)
           unless crop_entity
             @output.on_crop_not_found
             return
@@ -52,8 +56,6 @@ module Domain
           )
           plan_crop_id = plan_crop_snapshot.id
           plan_crop_display_name = plan_crop_snapshot.display_name
-
-          @optimization_host.attach_plan_for_candidates!(plan_id: plan_id, user_id: user_id)
 
           best = @find_best_candidate.call(
             auth: auth,
@@ -82,7 +84,10 @@ module Domain
             }
           ]
 
-          adjust_result = @optimization_host.adjust_with_moves!(plan_id: plan_id, moves: moves)
+          @plan_allocation_adjust.call(
+            Dtos::PlanAllocationAdjustInput.new(plan_id: plan_id, moves: moves)
+          )
+          adjust_result = @add_crop_adjust_result_sink.add_crop_adjust_result
 
           if adjust_result.success?
             @output.on_success(

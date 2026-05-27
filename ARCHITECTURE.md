@@ -42,15 +42,15 @@ Business logic lives under `lib/domain/`. `lib/core/` holds external binaries an
 
 ### API Layer
 
-One JSON action = **one or more interactor calls**, each with **its own presenter** as `output_port`.
+One JSON action = **one top-level** `Interactor#call`, with **one output port** for that action (usually a Presenter). **Sub-steps** inside the same user-facing use case invoke sibling interactors via **Input port** injection; each sub-step is built at the edge with **its own** `output_port` for that invocation (Presenter, collector, etc.).
 
 #### Roles and Dependencies
 
 1. **Controller** — HTTP entry point. Uses a **request mapper** (Form or adapter mapper) to build input DTOs from `params`, instantiates Presenter and Interactor, injects gateways from `CompositionRoot`, then `interactor.call(input_dto)`.
 2. **Presenter** (`app/adapters/<context>/presenters/...`) — Output port implementation. Receives `on_success(dto)` / `on_failure(dto)` and maps to HTTP responses.
 3. **Output port** (`lib/domain/.../ports/...`) — Callback contract (`on_success` / `on_failure`) that Interactors call; Presenters implement it.
-4. **Input port** (`lib/domain/.../ports/...`, optional) — Defines the shape of `call`. When absent, `call(input_dto)` applies.
-5. **Interactor** (`lib/domain/.../interactors/...`) — Use case. Calls injected Gateway interfaces, decides success/failure, calls `output_port.on_success` / `on_failure`.
+4. **Input port** (`lib/domain/.../ports/...`, optional) — Narrow contract for invoking a **sibling sub-step** (`call(input_dto)`). The orchestrator depends on the port type, not the concrete `Interactor`. The sub-step `Interactor` **implements** the Input port and is **built at the edge** with its own `output_port`. See [Composite use cases and Input port injection](#composite-use-cases-and-input-port-injection).
+5. **Interactor** (`lib/domain/.../interactors/...`) — Use case. Calls injected gateways and optional **Input ports** (nested sub-steps); decides success/failure; calls `output_port.on_success` / `on_failure`.
 6. **Gateway interface** (`lib/domain/.../gateways/...`) — Domain-side contract for retrieval, persistence, etc.
 7. **Gateway implementation** (`app/adapters/<context>/gateways/...`) — Implements Gateway interfaces using SQLite / ActiveRecord / HTTP. Injected by `CompositionRoot`.
 
@@ -105,7 +105,7 @@ flowchart TB
 1. Strong-params → **request mapper or Form** → **input DTO** (see [Canonical use-case responsibility split](#canonical-use-case-responsibility-split); keep `ActionController` types out of Interactors).
 2. Instantiate API presenter (output port implementation): `presenter = PresenterClass.new(view: self)`.
 3. Instantiate gateway(s) from `CompositionRoot`.
-4. `InteractorClass.new(output_port: presenter, gateway: gw, ...).call(input_dto)`.
+4. `InteractorClass.new(output_port: presenter, gateway: gw, ...).call(input_dto)`. For [composite use cases](#composite-use-cases-and-input-port-injection), also `build_*_interactor(output_port:)` for each sub-step and inject as Input port (and collector if needed).
 5. Let the interactor finish through the **output port** for both success and modeled failures-do not wrap `interactor.call` in `rescue` for those paths.
 
 
@@ -164,6 +164,10 @@ sequenceDiagram
 | Step | Example |
 |---|---|
 | Request mapper | `Adapters::CultivationPlan::AdjustMovesFromRequest` → `PlanAllocationAdjustInput` in `CultivationPlanRestBaseController#adjust` |
+| REST adjust | `CompositionRoot.build_plan_allocation_adjust_interactor(output_port: PlanAllocationAdjustApiPresenter)` + `PlanAllocationAdjustInput`（`auth` あり） |
+| REST add_crop | `build_add_crop_crop_resolve(auth:)` → `AddCropCropResolveInputPort`；`build_plan_allocation_adjust_interactor(output_port: AddCropAdjustResultCollector)` を `PlanAllocationAdjustInputPort` として注入 |
+| Input port nesting | `PlanAllocationAdjustInputPort` + `build_plan_allocation_adjust_interactor` — see [Composite use cases and Input port injection](#composite-use-cases-and-input-port-injection) |
+| REST add_crop (orchestrator) | `AddCropInteractor` + `AddCropCropResolveInputPort` + `PlanAllocationAdjustInputPort` + `AddCropAdjustResultCollector` |
 | Orchestration + pure Policy | `CropCreateInteractor` + `CropCreateLimitPolicy` (Interactor calls `gateway.count`; Policy receives counts only) |
 | PlanSave persist step (farm) | `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway`（戻り値 `PlanSaveReferenceFarmSnapshot` / `PlanSaveUserFarmSnapshot`；`find_owned_private_plan_record` — not `find_private_*` in the method name） |
 | PlanSave persist step (field) | `PlanSaveEnsureUserFieldsInteractor` + `PlanSaveFieldGateway`（`list_by_farm_id` / `create`；戻り値 `PlanSaveFieldSnapshot`）；template-copy は `PlanSaveTemplateCopyIntegrity#field_records_for_template_copy`（`user_id` でスコープ） |
@@ -184,7 +188,7 @@ sequenceDiagram
 
 Domain modules live under `lib/domain/`.
 
-Each bounded context typically has: `entities/`, `dtos/`, `gateways/` (interfaces), `interactors/`, `policies/` (intrinsic validation rules; extrinsic validation rules **are defined here**, Interactors fetch data via gateways and pass to Policies for validation), `ports/` (output ports for interactors), and `mappers/` (**domain mappers** — pure DTO/Entity transformations; created as needed). Infrastructure ports (logger, clock, translator, etc.) live under `lib/domain/shared/ports/`. Cross-context gateways that exchange entities/DTOs (e.g. `UserLookupGateway`) live under `lib/domain/shared/gateways/`.
+Each bounded context typically has: `entities/`, `dtos/`, `gateways/` (interfaces), `interactors/`, `policies/` (intrinsic validation rules; extrinsic validation rules **are defined here**, Interactors fetch data via gateways and pass to Policies for validation), `ports/` (**output ports** for interactors; **input ports** for sibling sub-steps — see [Composite use cases and Input port injection](#composite-use-cases-and-input-port-injection)), and `mappers/` (**domain mappers** — pure DTO/Entity transformations; created as needed). Infrastructure ports (logger, clock, translator, etc.) live under `lib/domain/shared/ports/`. Cross-context gateways that exchange entities/DTOs (e.g. `UserLookupGateway`) live under `lib/domain/shared/gateways/`.
 
 Source of truth: the directory listing of `lib/domain/`. When adding a new bounded context, create the standard subdirectory structure under `lib/domain/<context>/` as described in [Domain Modules](#domain-modules).
 
@@ -216,9 +220,76 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 ### Gateway injection
 
-Gateways are constructor-injected into Interactors from `CompositionRoot`. The keyword argument name reflects the gateway's role in the interactor (e.g. `farm_gateway:`, `deletion_undo_gateway:`). Interactors receive gateway instances — they never instantiate or locate gateways internally. When a use case requires multiple gateways, all are passed at construction time; interactors do not call other interactors (composition is gateway-level).
+Gateways are constructor-injected into Interactors from `CompositionRoot`. The keyword argument name reflects the gateway's role in the interactor (e.g. `farm_gateway:`, `deletion_undo_gateway:`). Interactors receive gateway instances — they never instantiate or locate gateways internally. When a use case requires multiple gateways, all are passed at construction time.
 
-Interactor constructor signatures **must** explicitly list all required gateways as keyword arguments, mirroring the `output_port:` convention already established for Presenters. This makes the dependency graph visible at the call site and simplifies test wiring ([Testing](#testing)).
+Interactor constructor signatures **must** explicitly list all required gateways and **Input ports** as keyword arguments, mirroring the `output_port:` convention already established for Presenters. This makes the dependency graph visible at the call site and simplifies test wiring ([Testing](#testing)).
+
+**Sibling sub-steps** (another Interactor inside the same user-facing use case) use [Input port injection](#composite-use-cases-and-input-port-injection), not extra gateways and not `CompositionRoot` inside adapters.
+
+### Composite use cases and Input port injection
+
+When one user-facing use case must run another use case as an orchestrated **sub-step** in the same HTTP action (e.g. add crop, then adjust allocation), compose with **Input port injection** — this is the approved form of **Interactor nesting**.
+
+#### Pattern (required for new sub-steps)
+
+1. **Input port** — `lib/domain/<context>/ports/<sub_step>_input_port.rb` declares `call(<SubStep>Input)`.
+2. **Sub-step Interactor** — `class <SubStep>Interactor < <SubStep>InputPort` implements the port; uses gateways and its own `output_port` (constructor).
+3. **Edge build** — controller/job calls `CompositionRoot.build_<sub_step>_interactor(output_port: ...)` once per invocation. Each build gets a **fresh** `output_port` (API Presenter, or an adapter collector for orchestrator consumption).
+4. **Orchestrator** — receives the built instance as a constructor dependency typed as the **Input port** (e.g. `plan_allocation_adjust:`), and calls `@plan_allocation_adjust.call(input)` only through that interface.
+5. **Sub-step results** — when the orchestrator must branch on success/failure, pass the same collector used as `output_port` (e.g. `add_crop_adjust_result_sink:`) or map sub-step output DTOs in the orchestrator. Do not reuse the orchestrator's HTTP Presenter as the sub-step `output_port`.
+
+```mermaid
+flowchart LR
+  Ctrl[Controller job]
+  Orch[Orchestrator Interactor]
+  IP[SubStep InputPort]
+  Sub[SubStep Interactor]
+  Col[SubStep output_port collector or Presenter]
+  Build[CompositionRoot build_sub_step_interactor]
+
+  Ctrl --> Build
+  Build -->|output_port| Sub
+  Ctrl -->|inject port impl| Orch
+  Ctrl -->|optional same collector| Orch
+  Orch -->|call input| IP
+  Sub -.->|implements| IP
+  Sub -->|on_success on_failure| Col
+  Orch -->|read result| Col
+```
+
+#### What is allowed
+
+| Mechanism | Use |
+|---|---|
+| **Gateways** | Persistence / I/O within a single Interactor |
+| **Input port → sub-step Interactor** | Same bounded context; sub-step built at edge via `build_*_interactor` |
+| **Injected callable on sub-step** | Legacy inner collaborators (e.g. `save_adjusted_result_interactor:` on `PlanAllocationAdjustInteractor`) — **new** inner steps should get an Input port when exposed to another Interactor |
+| **One orchestrator `call` per HTTP action** | Controller calls the top-level Interactor once; rollback/compensation stays inside it |
+
+#### What is forbidden
+
+| Anti-pattern | Why |
+|---|---|
+| `CompositionRoot.*` in `lib/domain` or in adapters (host/bridge wrappers) | Service locator; violates R1/R4 |
+| Orchestrator `new`ing sub-step Interactor or holding `*InteractorFactory` | Wiring belongs at edge |
+| Orchestrator depending on concrete sub-step Interactor class instead of Input port | Hides substitution in tests; couples layers |
+| **Presenter / Form / ViewModel** calling any `Interactor#call` | R6 — display layer does not run use cases |
+| Controller calling **two top-level** interactors when one orchestrator should own rollback | Splits compensation across HTTP edge |
+| Sharing one `output_port` instance between orchestrator HTTP response and sub-step without a deliberate collector contract | Collides Presenter with sub-step callbacks |
+
+#### Unit of work (clarified)
+
+- **User-facing use case** — one controller/job action ⇒ **one** top-level `Interactor#call` ⇒ **one** output port for the HTTP/HTML response (the Presenter).
+- **Sub-step** — each `#call` on an Input port is a **nested** interactors execution with a **separate** `output_port` chosen at build time; it does **not** create a second user-facing use case or a second controller action.
+- **Standalone sub-step API** (e.g. REST `adjust` only) — same sub-step Interactor, different `output_port` at build time (API Presenter instead of collector).
+
+#### Reference implementations
+
+| Case | Wiring |
+|---|---|
+| REST `adjust` | `build_plan_allocation_adjust_interactor(output_port: PlanAllocationAdjustApiPresenter)` |
+| REST `add_crop` | `build_add_crop_crop_resolve(auth:)` + `build_plan_allocation_adjust_interactor(output_port: AddCropAdjustResultCollector)` injected into `AddCropInteractor` |
+| Inner save after adjust | `PlanAllocationAdjustInteractor` + injected `save_adjusted_result_interactor` (callable; migrate to Input port when reused across orchestrators) |
 
 ### Presenters
 
@@ -374,8 +445,10 @@ Normative list for **new** adapter gateway public methods. [`test/architecture/g
 
 - **File**: `lib/domain/<context>/interactors/<entity>_<action>_interactor.rb` (e.g. `crop_create_interactor.rb`, `farm_detail_interactor.rb`).
 - **Execution method**: **`call(input)`** only. `execute` and `perform` are forbidden. Jobs that wrap an interactor translate `perform` → `interactor.call`. **`output_port` is passed via constructor keyword argument.**
-- **One use case ⇒ one interactor**: HTML and API share the same interactor - see [Output Port Contract](#output-port-contract) §1. No `*HtmlInteractor` / `*ApiInteractor` split.
-- **Interactor responsibilities**: Orchestrates validation and business logic. Fetches data via Gateways, passes results to Policies for validation, then executes business rules. Extrinsic validation (uniqueness, resource limits) is the Interactor's responsibility.
+- **One user-facing use case ⇒ one top-level interactor**: HTML and API share the same orchestrator — see [R5](#r5-output-port-contract). No `*HtmlInteractor` / `*ApiInteractor` split. Sub-steps use [Input port injection](#composite-use-cases-and-input-port-injection), not a second top-level interactor from the controller.
+- **Input port file**: `lib/domain/<context>/ports/<sub_step>_input_port.rb` (e.g. `plan_allocation_adjust_input_port.rb`). Sub-step Interactor implements it: `class PlanAllocationAdjustInteractor < PlanAllocationAdjustInputPort`.
+- **Edge build helper**: `CompositionRoot.build_<sub_step>_interactor(output_port:, clock:)` — not a Factory class visible to orchestrators.
+- **Interactor responsibilities**: Orchestrates validation and business logic. Fetches data via gateways; may call sibling sub-steps via **Input ports**; passes data to Policies for validation; extrinsic validation (uniqueness, resource limits) is the Interactor's responsibility.
 
 #### Domain DTO naming
 
@@ -450,19 +523,23 @@ This rule is the single source of truth for authorization and validation respons
 
 ### Use Cases
 
-**R4. Use-case ownership** — Interactors orchestrate validation (via Policies per [R0](#r0-authorization-and-validation)), business rules, and gateway orchestration. One use case ⇒ one interactor; HTML and API share the same interactor. `call(input)` is the only execution method. `output_port` passed via constructor keyword argument.
+**R4. Use-case ownership** — Interactors orchestrate validation (via Policies per [R0](#r0-authorization-and-validation)), business rules, gateway orchestration, and optional **sub-steps via Input ports** ([Composite use cases and Input port injection](#composite-use-cases-and-input-port-injection)). One **user-facing** use case ⇒ one **top-level** interactor; HTML and API share it. `call(input)` is the only execution method. `output_port` passed via constructor keyword argument.
 
+- ✅ Inject sibling sub-steps as **Input port** types; edge builds `Interactor` implementations via `CompositionRoot.build_*_interactor(output_port:)`
 - ❌ Raw `params`, `redirect_to`, `render`, HTTP status codes, flash
 - ❌ View-only shaping — logic for specific layout/field order belongs in presenters; do not bloat DTOs to "align HTML and JSON"
-- ❌ `CompositionRoot.*` calls from interactors — wiring stays at the application edge (controllers, jobs) using `CompositionRoot`
+- ❌ `CompositionRoot.*`, `*InteractorFactory`, or `new` on sibling Interactors inside `lib/domain` or adapters — wiring stays at the application edge (controllers, jobs)
+- ❌ Orchestrator depending on concrete sub-step Interactor class instead of Input port
 - ❌ Delivery channel or screen shape in names (`*HtmlInteractor`, `*_html_success`, `*JsonBundle*`)
 - ❌ `execute` or `perform` as execution method — use `call(input)` only
 - ❌ Interactors that only reshuffle what a controller previously did (trivial interactors)
 
 **R5. Output port contract** — Success and modeled failures go through `output_port.on_success` / `on_failure` with explicit DTOs. The interactor decides outcomes; the presenter shapes HTTP.
 
-- Unit of work is **one `Interactor#call` = one use case**. Same business use case ⇒ same interactor for HTML and API; format differences belong in **presenters only**. Multiple concerns composed into one response (e.g. farm detail + weather) become a single interactor calling multiple gateways.
-- The output port lists what **the use case produces** as DTOs/entities. Anything missing is **filled by the Interactor calling gateway methods, or by a domain mapper** — **no fetch/load in the presenter**.
+- **Top-level unit of work** — one controller/job action ⇒ **one** orchestrator `Interactor#call` = one user-facing use case. Same use case ⇒ same top-level interactor for HTML and API; format differences belong in **presenters only**.
+- **Nested sub-steps** — sibling interactors invoked through **Input ports** inside that call are allowed; each sub-step build at the edge has its **own** `output_port` for that invocation. They do not count as a second user-facing use case.
+- Multiple read concerns in **one** response (e.g. farm detail + weather) ⇒ one orchestrator calling multiple **gateways**, not multiple top-level controller calls.
+- The **top-level** output port lists what **the user-facing use case produces**. Sub-step outcomes are consumed via sub-step `output_port` implementations (collector or Presenter) or mapped DTOs in the orchestrator — **no fetch/load in the presenter**.
 - ❌ `on_failure` then `raise` for the controller to rescue (second HTTP path)
 - ❌ Presenter or view re-validates or recomputes outcomes instead of consuming interactor output DTO
 
@@ -474,7 +551,9 @@ This rule is the single source of truth for authorization and validation respons
 - ❌ `*Gateway.default` or gateways used for `find_model` — loaded data belongs in Interactor output, carried as DTOs/entities on the port; not via controller-defined lambdas
 - ❌ Authorization outcomes, validation rules, or "can this happen?" decisions
 - ❌ Side effects from `on_success`/`on_failure`: `perform_later`, job dispatchers, external services, cache writes, date/cache branching
-- ❌ **Calling another interactor** — single-context composition uses a **single interactor** calling multiple gateways; cross-context orchestration is done by the **Controller** calling multiple interactors
+- ❌ **Presenters**, **Forms**, **ViewModels**, or **host/bridge adapters** calling `Interactor#call` on any interactor (top-level or nested)
+- ✅ **Orchestrator interactors** calling a sibling sub-step through an injected **Input port** whose implementation is built at the edge — see [Composite use cases and Input port injection](#composite-use-cases-and-input-port-injection)
+- ❌ **Controller** calling multiple **top-level** interactors when one orchestrator should own rollback/compensation — use Input port nesting instead
 - ❌ Forms performing authorization, uniqueness checks, or cross-record validation
 - ❌ ViewModels calling gateways, `find_model`, or any I/O
 - ❌ Mappers branching on business rules
@@ -490,6 +569,7 @@ This rule is the single source of truth for authorization and validation respons
 - ❌ Third-party SDK/process clients, retry loops, JSON parsing as control flow, cross-record aggregation, authorization branches, conditional `*Job.perform_later`, `Rails.cache.fetch` whose result selects domain output
 - ❌ New CRUD or integration endpoints that don't route through an interactor
 - ❌ Coupled orchestration left in `app/services/` or `lib/` outside `lib/domain/<context>/` — renaming the folder does not change the layer
+- ❌ Host/bridge adapters or `*InteractorFactory` classes that call `CompositionRoot.*` to run a use case — inject `CompositionRoot.build_*_interactor(...)` at the controller/job and pass the result as an **Input port** (see [Composite use cases and Input port injection](#composite-use-cases-and-input-port-injection))
 
 ### Refactor Hygiene
 
@@ -517,7 +597,7 @@ This rule is the single source of truth for authorization and validation respons
 1. **Interactor (+ tests)** — gateway-only data load; port arguments match the new contract
 2. **Gateway impl.** — implement the adapter the Interactor depends on
 3. **Presenter** — HTTP/view mapping only; remove `CompositionRoot` / `find_model` / gateway injection from presenters (including via callables)
-4. **Controller** — `CompositionRoot` injection into the interactor and presenter construction only; do not pass gateways into presenters
+4. **Controller** — `CompositionRoot` injection into the top-level interactor (gateways, Input ports from `build_*_interactor`, presenter) only; do not pass gateways into presenters
 5. **Views** — if `@model` assumed AR, replace with **DTO attributes and helpers** in the **same PR or the commit immediately before/after** — do **not** bring AR back through the presenter for convenience
 
 **Definition of done** — `app/adapters/<context>/presenters/**/*.rb` contains **no** `CompositionRoot` and **no** `find_model`. Each target use case has an **Interactor test** that fixes **types and required fields** reaching the port. **System/controller tests** (where needed) prove HTML/JSON behavior is unchanged.

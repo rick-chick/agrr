@@ -24,14 +24,6 @@ module Api
           )
         end
 
-        def get_crop_for_add_crop(crop_id)
-          presenter = Adapters::Crop::Presenters::CropRecordApiPresenter.new(view: self)
-          Domain::Crop::Interactors::CropFindUserNonReferenceRecordInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.crop_gateway, logger: CompositionRoot.logger, user_lookup: CompositionRoot.user_lookup).call(crop_id)
-
-          @crop_record
-        end
-
       end
     end
   end

@@ -8,7 +8,7 @@ module Domain
   module CultivationPlan
     module Interactors
       # 栽培計画の割当を agrr adjust で再最適化する（保存済み天気予測を再利用）。
-      class PlanAllocationAdjustInteractor
+      class PlanAllocationAdjustInteractor < Domain::CultivationPlan::Ports::PlanAllocationAdjustInputPort
         WEATHER_PHASE_EXCEPTIONS = [
           Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
           Domain::WeatherData::Interactors::WeatherPredictionInteractor::InsufficientPredictionDataError,

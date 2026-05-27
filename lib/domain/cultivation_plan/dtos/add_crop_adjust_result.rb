@@ -3,7 +3,7 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # plan_allocation_adjust の add_crop 向け結果（レガシー Hash の代替）。
+      # plan_allocation_adjust サブステップの結果（add_crop オーケストレータが読む）。
       class AddCropAdjustResult
         attr_reader :success, :message, :http_status, :skipped
 

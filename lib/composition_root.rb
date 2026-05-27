@@ -296,8 +296,24 @@ module CompositionRoot
       )
     end
 
-    def plan_allocation_adjust_interactor_factory(clock: Time.zone)
-      Adapters::CultivationPlan::PlanAllocationAdjustInteractorFactory.new(
+    def build_add_crop_crop_resolve(auth:)
+      if auth.private?
+        Adapters::CultivationPlan::Ports::AddCropCropResolvePrivate.new(
+          crop_gateway: crop_gateway,
+          user_lookup: user_lookup,
+          logger: logger
+        )
+      else
+        Adapters::CultivationPlan::Ports::AddCropCropResolvePublic.new(
+          crop_gateway: crop_gateway,
+          logger: logger
+        )
+      end
+    end
+
+    def build_plan_allocation_adjust_interactor(output_port:, clock: Time.zone)
+      Domain::CultivationPlan::Interactors::PlanAllocationAdjustInteractor.new(
+        output_port: output_port,
         logger: logger,
         translator: translator,
         clock: clock,
@@ -324,15 +340,6 @@ module CompositionRoot
           root_path: Rails.root
         )
       end
-    end
-
-    # add_crop / integration 向けレガシー Hash 戻り（adapter collector 経由）
-    def plan_allocation_adjust_legacy(plan_id:, moves:, clock: Time.zone)
-      collector = Adapters::CultivationPlan::Ports::PlanAllocationAdjustLegacyHashCollector.new
-      plan_allocation_adjust_interactor_factory(clock: clock).build(output_port: collector).call(
-        Domain::CultivationPlan::Dtos::PlanAllocationAdjustInput.new(plan_id: plan_id, moves: moves)
-      )
-      collector.to_h
     end
 
     def private_plan_optimization_job_chain_builder
@@ -686,10 +693,6 @@ module CompositionRoot
     def find_best_add_crop_candidate_interactor(clock: Time.zone)
       @find_best_add_crop_candidate_interactor_cache ||= {}
       @find_best_add_crop_candidate_interactor_cache[clock] ||= build_find_best_add_crop_candidate_interactor(clock: clock)
-    end
-
-    def find_best_add_crop_candidate_service(clock: Time.zone)
-      find_best_add_crop_candidate_interactor(clock: clock)
     end
 
     def build_find_best_add_crop_candidate_interactor(clock: Time.zone)

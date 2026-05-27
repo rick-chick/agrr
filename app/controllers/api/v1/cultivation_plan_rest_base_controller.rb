@@ -3,19 +3,25 @@
 module Api
   module V1
     # 栽培計画 REST（plans / public_plans）の共通アクション基底。
-    # サブクラスで `cultivation_plan_rest_plan_data_available_crop_rows_gateway` と
-    # `get_crop_for_add_crop` を実装する。
+    # サブクラスで `cultivation_plan_rest_plan_data_available_crop_rows_gateway` を実装する。
     class CultivationPlanRestBaseController < ApplicationController
       # POST /api/v1/{plans|public_plans}/cultivation_plans/:id/add_crop
       # 作物追加: candidatesで最適日付を自動決定し、adjustで追加する
       def add_crop
+        add_crop_adjust_sink = Adapters::CultivationPlan::Ports::AddCropAdjustResultCollector.new
         Domain::CultivationPlan::Interactors::AddCropInteractor.new(
           output: Adapters::CultivationPlan::Presenters::AddCropApiPresenter.new(
             view: self,
             translation_scope: api_cultivation_plan_translation_scope
           ),
           logger: cultivation_plan_rest_logger,
-          optimization_host: cultivation_plan_rest_add_crop_optimizer_bridge,
+          plan_allocation_adjust: CompositionRoot.build_plan_allocation_adjust_interactor(
+            output_port: add_crop_adjust_sink
+          ),
+          add_crop_crop_resolve: CompositionRoot.build_add_crop_crop_resolve(
+            auth: cultivation_plan_rest_auth
+          ),
+          add_crop_adjust_result_sink: add_crop_adjust_sink,
           plan_gateway: CompositionRoot.cultivation_plan_gateway,
           plan_crop_gateway: CompositionRoot.cultivation_plan_rest_plan_crop_gateway,
           find_best_candidate: CompositionRoot.find_best_add_crop_candidate_interactor
@@ -25,7 +31,6 @@ module Api
           crop_id: params[:crop_id],
           field_id: params[:field_id],
           display_range: display_range_from_params,
-          crop_resolver: cultivation_plan_rest_add_crop_crop_resolver_bridge,
           ui_filter_context: ui_filter_context
         )
       end
@@ -91,7 +96,7 @@ module Api
       # 不要な天気予測を実行しないことで高速化されています
       def adjust
         moves = Adapters::CultivationPlan::AdjustMovesFromRequest.normalize(params[:moves] || [])
-        CompositionRoot.plan_allocation_adjust_interactor_factory.build(
+        CompositionRoot.build_plan_allocation_adjust_interactor(
           output_port: Adapters::CultivationPlan::Presenters::PlanAllocationAdjustApiPresenter.new(view: self)
         ).call(
           Domain::CultivationPlan::Dtos::PlanAllocationAdjustInput.new(
@@ -119,14 +124,6 @@ module Api
       # Api::V1::Plans と PublicPlans で available_crops の解決規則が異なる
       def cultivation_plan_rest_plan_data_available_crop_rows_gateway
         raise NotImplementedError, "#{self.class}#cultivation_plan_rest_plan_data_available_crop_rows_gateway must be implemented"
-      end
-
-      def cultivation_plan_rest_add_crop_optimizer_bridge
-        @cultivation_plan_rest_add_crop_optimizer_bridge ||= Adapters::CultivationPlan::RestAddCropOptimizationHostBridge.new(self)
-      end
-
-      def cultivation_plan_rest_add_crop_crop_resolver_bridge
-        Adapters::CultivationPlan::RestAddCropCropResolverBridge.new(self)
       end
 
       # Api::V1::Plans::* と PublicPlans::* で I18n スコープを切り替える
@@ -161,12 +158,6 @@ module Api
         Adapters::Shared::Iso8601CalendarDate.parse(value, logger: Rails.logger)
       end
 
-      # add_crop で使用する作物を取得する（具象コントローラで実装）
-      # @param crop_id [String, Integer] 作物ID
-      # @return [Crop, nil] 作物オブジェクト
-      def get_crop_for_add_crop(crop_id)
-        raise NotImplementedError, "#{self.class}#get_crop_for_add_crop must be implemented"
-      end
     end
   end
 end

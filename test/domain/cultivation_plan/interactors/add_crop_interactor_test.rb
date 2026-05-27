@@ -8,13 +8,13 @@ module Domain
       class AddCropInteractorTest < DomainLibTestCase
         setup do
           @output = mock
-          @resolver = mock
+          @add_crop_crop_resolve = mock
           @auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
           @logger = mock
           @logger.stubs(:error)
           @logger.stubs(:warn)
-          @host = mock
-          @host.stubs(:attach_plan_for_candidates!)
+          @plan_allocation_adjust = mock
+          @add_crop_adjust_result_sink = mock
           @plan_gateway = mock
           @plan_crop = mock
           @find_best = mock
@@ -31,7 +31,9 @@ module Domain
           AddCropInteractor.new(
             output: @output,
             logger: @logger,
-            optimization_host: @host,
+            plan_allocation_adjust: @plan_allocation_adjust,
+            add_crop_crop_resolve: @add_crop_crop_resolve,
+            add_crop_adjust_result_sink: @add_crop_adjust_result_sink,
             plan_gateway: @plan_gateway,
             plan_crop_gateway: @plan_crop,
             find_best_candidate: @find_best
@@ -55,11 +57,22 @@ module Domain
           )
         end
 
+        def call_interactor(**overrides)
+          defaults = {
+            auth: @auth,
+            plan_id: 9,
+            crop_id: "1",
+            field_id: "2",
+            display_range: {},
+            ui_filter_context: {}
+          }
+          interactor.call(**defaults.merge(overrides))
+        end
+
         test "dispatches success" do
           crop = crop_entity
           @plan_gateway.expects(:find_by_id).with(9).returns(@plan)
-          @host.expects(:attach_plan_for_candidates!).twice.with(plan_id: 9, user_id: 1)
-          @resolver.expects(:crop_for_add_crop).with("1").returns(crop)
+          @add_crop_crop_resolve.expects(:call).with(auth: @auth, crop_id: "1").returns(crop)
           @plan_crop.expects(:create).with(plan_id: 9, crop_entity: crop, user_id: 1).returns(plan_crop_snapshot)
           @find_best.expects(:call).with(
             auth: @auth,
@@ -69,20 +82,16 @@ module Domain
             display_range: {},
             ui_filter_context: {}
           ).returns(field_id: "2", start_date: Date.new(2026, 1, 1))
-          @host.expects(:adjust_with_moves!).returns(
+          @plan_allocation_adjust.expects(:call).with do |input|
+            input.plan_id == 9 && input.moves.size == 1 && input.moves.first[:action] == "add"
+          end
+          @add_crop_adjust_result_sink.expects(:add_crop_adjust_result).returns(
             Domain::CultivationPlan::Dtos::AddCropAdjustResult.new(success: true)
           )
           @plan_crop.expects(:delete).never
           @output.expects(:on_success).with(plan_crop_id: 9, plan_crop_display_name: "ナス")
 
-          interactor.call(
-            auth: @auth,
-            plan_id: 9,
-            crop_id: "1",
-            field_id: "2",
-            display_range: {},
-            crop_resolver: @resolver
-          )
+          call_interactor
         end
 
         test "dispatches not_found when policy denies plan" do
@@ -95,39 +104,25 @@ module Domain
           )
           @plan_gateway.expects(:find_by_id).with(1).returns(denied_plan)
           @output.expects(:on_not_found).once
-          @host.expects(:attach_plan_for_candidates!).never
           @plan_crop.expects(:create).never
+          @add_crop_crop_resolve.expects(:call).never
 
-          interactor.call(
-            auth: @auth,
-            plan_id: 1,
-            crop_id: "1",
-            field_id: nil,
-            display_range: {},
-            crop_resolver: @resolver
-          )
+          call_interactor(plan_id: 1, field_id: nil)
         end
 
-        test "dispatches not_found on attach" do
-          @plan_gateway.expects(:find_by_id).with(1).returns(@plan)
-          @host.expects(:attach_plan_for_candidates!).raises(Domain::Shared::Exceptions::RecordNotFound)
-          @output.expects(:on_not_found).once
+        test "dispatches crop_not_found when resolve returns nil" do
+          @plan_gateway.expects(:find_by_id).returns(@plan)
+          @add_crop_crop_resolve.expects(:call).with(auth: @auth, crop_id: "1").returns(nil)
+          @output.expects(:on_crop_not_found).once
           @plan_crop.expects(:create).never
 
-          interactor.call(
-            auth: @auth,
-            plan_id: 1,
-            crop_id: "1",
-            field_id: nil,
-            display_range: {},
-            crop_resolver: @resolver
-          )
+          call_interactor(plan_id: 1, field_id: nil)
         end
 
         test "dispatches prediction_incomplete and rolls back plan crop" do
           crop = crop_entity
           @plan_gateway.expects(:find_by_id).returns(@plan)
-          @resolver.expects(:crop_for_add_crop).returns(crop)
+          @add_crop_crop_resolve.expects(:call).returns(crop)
           @plan_crop.expects(:create).returns(plan_crop_snapshot)
           @find_best.expects(:call).raises(
             Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError.new("x")
@@ -135,14 +130,7 @@ module Domain
           @plan_crop.expects(:delete).with(id: 9)
           @output.expects(:on_prediction_incomplete).with(technical_details: "x")
 
-          interactor.call(
-            auth: @auth,
-            plan_id: 1,
-            crop_id: "1",
-            field_id: nil,
-            display_range: {},
-            crop_resolver: @resolver
-          )
+          call_interactor(plan_id: 1, field_id: nil)
         end
 
         test "dispatches adjust_failed with legacy payload" do
@@ -153,22 +141,16 @@ module Domain
             http_status: :bad_request
           )
           @plan_gateway.expects(:find_by_id).returns(@plan)
-          @resolver.expects(:crop_for_add_crop).returns(crop)
+          @add_crop_crop_resolve.expects(:call).returns(crop)
           @plan_crop.expects(:create).returns(plan_crop_snapshot)
           @find_best.expects(:call).returns(field_id: "2", start_date: Date.new(2026, 1, 1))
-          @host.expects(:adjust_with_moves!).returns(adjust)
+          @plan_allocation_adjust.expects(:call)
+          @add_crop_adjust_result_sink.expects(:add_crop_adjust_result).returns(adjust)
           @output.expects(:on_adjust_failed).with(
             adjust_payload: { success: false, message: "adj", status: :bad_request }
           )
 
-          interactor.call(
-            auth: @auth,
-            plan_id: 1,
-            crop_id: "1",
-            field_id: nil,
-            display_range: {},
-            crop_resolver: @resolver
-          )
+          call_interactor(plan_id: 1, field_id: nil)
         end
       end
     end
