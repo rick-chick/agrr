@@ -54,22 +54,14 @@ module DomainLibTestSupport
     gateway
   end
 
-  def stub_plan_access_find_private_owned!(user, plan_id, plan: nil, error: nil)
-    expectation = Domain::CultivationPlan::Policies::PlanAccess.expects(:find_private_owned!).with(user, plan_id)
-    if error
-      expectation.raises(error)
-    else
-      expectation.returns(plan || stub(plan_type_private?: true, user_id: user.id))
-    end
-  end
-
-  def stub_field_access_find_owned!(user, field_id, field: nil, error: nil)
-    expectation = Domain::Field::Policies::FieldAccess.expects(:find_owned!).with(user, field_id)
-    if error
-      expectation.raises(error)
-    else
-      expectation.returns(field || stub)
-    end
+  def domain_private_plan_entity(id:, user_id:, farm_id: 1, total_area: 100.0)
+    Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+      id: id,
+      farm_id: farm_id,
+      user_id: user_id,
+      total_area: total_area,
+      plan_type: "private"
+    )
   end
 
   def build_deletion_undo_schedule_interactor(output_port:, gateway:, actor_id: 1, resource_type: "Crop", resource_id: 9)

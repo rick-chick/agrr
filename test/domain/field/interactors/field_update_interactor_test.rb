@@ -15,7 +15,6 @@ class FieldUpdateInteractorTest < DomainLibTestCase
     user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
-    stub_field_access_find_owned!(user, 5)
 
     gateway = mock
     gateway.expects(:field_with_farm).with(5).returns(with_farm)
@@ -38,7 +37,6 @@ class FieldUpdateInteractorTest < DomainLibTestCase
     user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
-    stub_field_access_find_owned!(user, 5)
 
     gateway = mock
     gateway.expects(:field_with_farm).raises(Domain::Shared::Exceptions::RecordNotFound.new("Field not found"))
@@ -60,19 +58,20 @@ class FieldUpdateInteractorTest < DomainLibTestCase
   end
 
   test "call forwards policy permission denied to on_failure as exception" do
-    err = Domain::Shared::Policies::PolicyPermissionDenied.new
     dto = Domain::Field::Dtos::FieldUpdateInput.new(id: 5, name: "X")
     user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
-    stub_field_access_find_owned!(user, 5, error: err)
-
+    other_farm = domain_record_entity_stub(user_id: 99, is_reference: false)
     gateway = mock
-    gateway.expects(:field_with_farm).never
+    gateway.expects(:field_with_farm).with(5).returns(stub(farm: other_farm))
     gateway.expects(:update).never
 
     output = mock
-    output.expects(:on_failure).with(err)
+    output.expects(:on_failure).with do |err|
+      assert_instance_of Domain::Shared::Policies::PolicyPermissionDenied, err
+      true
+    end
 
     interactor = Domain::Field::Interactors::FieldUpdateInteractor.new(
       output_port: output,

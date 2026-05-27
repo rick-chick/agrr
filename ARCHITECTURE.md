@@ -368,7 +368,7 @@ Normative list for **new** adapter gateway public methods. [`test/architecture/g
 | `\Aoptimization_plan_snapshot` / `\Atask_schedule_timeline_snapshot` / `\Aprivate_plan_index_plan_rows` | Screen/use-case snapshot in Interactor + domain mapper |
 | `\Alink_pest_to_crop` / `\Aupdate_pest_crop_associations` | Association rules in Interactor |
 
-**Policy / domain** methods (e.g. `PlanAccess.find_private_owned!`) are not gateway methods and are out of scope for this table.
+**Policy / domain** methods (e.g. `PrivateCultivationPlanAccessPolicy.assert_private_owned!`) are not gateway methods and are out of scope for this table.
 
 #### Interactor naming
 

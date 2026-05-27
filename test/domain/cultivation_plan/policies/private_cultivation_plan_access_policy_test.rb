@@ -41,6 +41,15 @@ module Domain
 
           assert PrivateCultivationPlanAccessPolicy.access_denied?(plan: plan, user_id: 5)
         end
+
+        test "assert_private_owned! raises PolicyPermissionDenied when access_denied?" do
+          user = domain_user_stub(id: 1)
+          plan = private_plan_entity(user_id: 2)
+
+          assert_raises(Domain::Shared::Policies::PolicyPermissionDenied) do
+            PrivateCultivationPlanAccessPolicy.assert_private_owned!(user, plan)
+          end
+        end
       end
     end
   end

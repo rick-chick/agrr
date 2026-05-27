@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 # lib/domain を Rails なしで読み込み、ドメインロジックのみをテストする。
-# lib/domain に ActiveRecord 等を持ち込むコードがある場合は Zeitwerk 読込時に失敗させる（ignore で隠さない）。
+# lib/domain の AR 混入は test/domain/architecture/lib_domain_no_active_record_references_test.rb が静的スキャンで検知する。
+# 実行時に AR 定数を解決するコードパスは、Rails 未起動のため NameError 等で落ちる場合がある（Policy 直叩きはテストで stub されがち）。
 #
 # ActiveSupport に依存しない（core_ext / testing の require なし）。
 # ※ `minitest/pride` は active_support を読み込むため domain-lib-test では使用しない。

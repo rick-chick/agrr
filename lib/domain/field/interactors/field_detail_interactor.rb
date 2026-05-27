@@ -14,8 +14,8 @@ module Domain
         def call(input)
           user = @user_lookup.find(@user_id)
           result = @gateway.field_with_farm(input.field_id)
+          Domain::Field::Policies::FieldAccess.assert_owned!(user, farm: result.farm)
           Domain::Field::Policies::FieldAccess.assert_field_edit_on_farm_allowed!(user, result.farm)
-          Domain::Field::Policies::FieldAccess.find_owned!(user, input.field_id)
           @output_port.on_success(result)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(failure_dto(e.message, input))

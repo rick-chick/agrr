@@ -13,8 +13,8 @@ module Domain
 
         def call(update_input_dto)
           user = @user_lookup.find(@user_id)
-          Domain::Field::Policies::FieldAccess.find_owned!(user, update_input_dto.id)
           with_farm = @gateway.field_with_farm(update_input_dto.id)
+          Domain::Field::Policies::FieldAccess.assert_owned!(user, farm: with_farm.farm)
           Domain::Field::Policies::FieldAccess.assert_field_edit_on_farm_allowed!(user, with_farm.farm)
           field = @gateway.update(update_input_dto.id, update_input_dto)
           @output_port.on_success(field)

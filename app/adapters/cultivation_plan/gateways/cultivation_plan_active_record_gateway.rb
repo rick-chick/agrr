@@ -78,6 +78,8 @@ module Adapters
         def find_by_id(plan_id)
           m = ::CultivationPlan.find(plan_id)
           Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(m)
+        rescue ActiveRecord::RecordNotFound => e
+          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def find_by_id_for_rest(auth:, plan_id:)

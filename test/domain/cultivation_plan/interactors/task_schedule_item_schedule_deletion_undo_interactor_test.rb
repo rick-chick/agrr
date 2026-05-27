@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "domain_lib_test_helper"
-require "adapters/shared/ports/rails_translator_adapter"
 
 module Domain
   module CultivationPlan
@@ -11,7 +10,7 @@ module Domain
           @mutation_output_port = mock("mutation_output_port")
           @mutation_gateway = mock("mutation_gateway")
           @deletion_undo_interactor = mock("deletion_undo_interactor")
-          @translator = Adapters::Shared::Ports::RailsTranslatorAdapter.new
+          @translator = mock("translator")
           @interactor = TaskScheduleItemScheduleDeletionUndoInteractor.new(
             mutation_output_port: @mutation_output_port,
             mutation_gateway: @mutation_gateway,
@@ -26,7 +25,8 @@ module Domain
             resource_id: 42,
             item_name: "灌水"
           }
-          expected_toast = @translator.t("plans.task_schedule_items.undo.toast", name: row[:item_name])
+          expected_toast = "灌水を削除しました"
+          @translator.expects(:t).with("plans.task_schedule_items.undo.toast", name: row[:item_name]).returns(expected_toast)
 
           @mutation_gateway.expects(:deletion_undo_schedule_row_for_item!).with(10, 20, 30).returns(row)
           @deletion_undo_interactor.expects(:call).with do |dto|

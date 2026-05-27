@@ -14,7 +14,8 @@ module Domain
 
         def call(plan_id)
           user = @user_lookup.find(@user_id)
-          Domain::CultivationPlan::Policies::PlanAccess.find_private_owned!(user, plan_id)
+          plan = @gateway.find_by_id(plan_id)
+          Domain::CultivationPlan::Policies::PrivateCultivationPlanAccessPolicy.assert_private_owned!(user, plan)
           display_name = @gateway.private_owned_plan_display_name(user: user, plan_id: plan_id)
           toast_message = @translator.t("plans.undo.toast", name: display_name)
           undo_response = @gateway.delete(plan_id, user, toast_message: toast_message)

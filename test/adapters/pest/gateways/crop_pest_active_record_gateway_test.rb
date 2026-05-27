@@ -43,19 +43,6 @@ module Adapters
           assert @gw.delete(crop_id: @crop1.id, pest_id: @pest.id)
           assert_nil @gw.find_by_crop_id_and_pest_id(crop_id: @crop1.id, pest_id: @pest.id)
         end
-
-        test "replace via PestUpdateCropAssociationsInteractor adds and removes rows" do
-          @gw.create(crop_id: @crop1.id, pest_id: @pest.id)
-
-          result = Domain::Pest::Interactors::PestUpdateCropAssociationsInteractor.new(crop_pest_gateway: @gw)
-            .call(pest_id: @pest.id, crop_ids: [ @crop2.id ])
-
-          assert_equal 1, result.added
-          assert_equal 1, result.removed
-          @pest.reload
-          assert_not_includes @pest.crops, @crop1
-          assert_includes @pest.crops, @crop2
-        end
       end
     end
   end

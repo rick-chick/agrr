@@ -78,12 +78,6 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.field_entity_from_record(find_field_model!(field_id))
         end
 
-        def find_user!(user_id)
-          ::User.find(user_id)
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "User not found"
-        end
-
         def find_field_model!(id)
           ::Field.find(id)
         rescue ActiveRecord::RecordNotFound => e

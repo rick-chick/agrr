@@ -17,7 +17,6 @@ class FieldDetailInteractorTest < DomainLibTestCase
     user = domain_user_stub(id: 20, admin: false)
     user_lookup = mock
     user_lookup.expects(:find).with(20).returns(user)
-    stub_field_access_find_owned!(user, 5)
 
     gateway = mock
     gateway.expects(:field_with_farm).with(5).returns(result)
