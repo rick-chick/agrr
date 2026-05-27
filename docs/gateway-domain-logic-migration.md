@@ -21,6 +21,7 @@
 - PlanSave fertilize step: `PlanSaveEnsureUserFertilizesInteractor` + `PublicPlanSaveReadGateway#list_fertilize_reference_rows` / `#exists_fertilize_name?` + `PlanSaveUserFertilizeGateway`（戻り値 `PlanSaveUserFertilizeSnapshot`；`list_by_ids` なし）
 - PlanSave pesticide step: `PlanSaveEnsureUserPesticidesInteractor` + `PublicPlanSaveReadGateway#list_pesticide_reference_rows` + `PlanSaveUserPesticideGateway#create`（optional 子 kwargs；`PlanSaveUserPesticideSnapshot`）；template-copy は `PlanSaveTemplateCopyIntegrity#pesticide_records_for_template_copy`
 - PlanSave agricultural_task step: `PlanSaveEnsureUserAgriculturalTasksInteractor` + `PublicPlanSaveReadGateway#list_agricultural_task_reference_rows` + `PlanSaveUserAgriculturalTaskGateway`（find/create + crop_task_template find/create；`PlanSaveUserAgriculturalTaskSnapshot`）；template-copy は `PlanSaveTemplateCopyIntegrity#agricultural_task_records_for_template_copy`（`user_id` スコープ）
+- PlanSave interaction_rule step: `PlanSaveEnsureUserInteractionRulesInteractor` + `PublicPlanSaveReadGateway#list_interaction_rule_reference_rows` + `PlanSaveUserInteractionRuleGateway`（`find_by_*` / `create` / `update`；`PlanSaveUserInteractionRuleSnapshot`）；template-copy は `PlanSaveTemplateCopyIntegrity#interaction_rule_records_for_template_copy`（`user_id` スコープ）
 - フェーズ更新: `AdvanceCultivationPlanPhaseInteractor` + `OptimizationCompletion`（Interactor 連鎖なし）
 
 ## フェーズ完了状況

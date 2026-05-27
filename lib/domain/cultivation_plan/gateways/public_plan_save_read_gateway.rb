@@ -51,6 +51,12 @@ module Domain
         def list_agricultural_task_reference_rows(region:)
           raise NotImplementedError
         end
+
+        # @param region [String, nil]
+        # @return [Array<Dtos::PublicPlanSaveInteractionRuleReferenceRow>]
+        def list_interaction_rule_reference_rows(region:)
+          raise NotImplementedError
+        end
       end
     end
   end

@@ -100,6 +100,15 @@ module Adapters
           end
         end
 
+        def list_interaction_rule_reference_rows(region:)
+          reference_scope = ::InteractionRule.reference.where(rule_type: "continuous_cultivation")
+          if region.present?
+            reference_scope = reference_scope.where(region: [ region, nil ])
+          end
+
+          reference_scope.order(:id).map { |rule| interaction_rule_reference_row_from_record(rule) }
+        end
+
         private
 
         def agricultural_task_reference_row_from_record(task)
@@ -220,6 +229,19 @@ module Adapters
             temperature_profile: temperature_profile,
             thermal_requirement: thermal_requirement,
             control_methods: control_methods
+          )
+        end
+
+        def interaction_rule_reference_row_from_record(rule)
+          Domain::CultivationPlan::Dtos::PublicPlanSaveInteractionRuleReferenceRow.new(
+            reference_interaction_rule_id: rule.id,
+            rule_type: rule.rule_type,
+            source_group: rule.source_group,
+            target_group: rule.target_group,
+            impact_ratio: rule.impact_ratio,
+            is_directional: rule.is_directional,
+            region: rule.region,
+            description: rule.description
           )
         end
       end

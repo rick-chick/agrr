@@ -47,6 +47,7 @@ module Adapters
           plan_save_ensure_user_fertilizes_interactor:,
           plan_save_ensure_user_pesticides_interactor:,
           plan_save_ensure_user_agricultural_tasks_interactor:,
+          plan_save_ensure_user_interaction_rules_interactor:,
           own_transaction: true
         )
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
@@ -64,6 +65,7 @@ module Adapters
           @plan_save_ensure_user_fertilizes_interactor = plan_save_ensure_user_fertilizes_interactor
           @plan_save_ensure_user_pesticides_interactor = plan_save_ensure_user_pesticides_interactor
           @plan_save_ensure_user_agricultural_tasks_interactor = plan_save_ensure_user_agricultural_tasks_interactor
+          @plan_save_ensure_user_interaction_rules_interactor = plan_save_ensure_user_interaction_rules_interactor
           @own_transaction = own_transaction
           @result = Result.new
         end
@@ -134,7 +136,6 @@ module Adapters
           crop_output.skipped_crop_ids.each { |id| @result.add_skip(:crops, id) }
           ctx.reference_crop_id_to_user_crop_id = crop_output.reference_crop_id_to_user_crop_id
           ctx.ref_cpc_id_to_user_crop_id = crop_output.ref_cpc_id_to_user_crop_id
-          ctx.reference_crop_groups = crop_output.reference_crop_groups
 
           copy_crop_stages_for_pairs!(crop_output.stage_copy_pairs)
 
@@ -168,7 +169,18 @@ module Adapters
             ids: ag_output.user_agricultural_task_ids,
             user_id: @user.id
           )
-          interaction_rules = Mappers::InteractionRuleMapper.new(ctx).copy_interaction_rules_for_region(farm_region)
+          ir_output = @plan_save_ensure_user_interaction_rules_interactor.call(
+            Domain::CultivationPlan::Dtos::PlanSaveEnsureUserInteractionRulesInput.new(
+              user_id: @user.id,
+              region: farm_region,
+              reference_crop_groups: crop_output.reference_crop_groups
+            )
+          )
+          ir_output.skipped_interaction_rule_ids.each { |id| @result.add_skip(:interaction_rules, id) }
+          interaction_rules = Sessions::PlanSaveTemplateCopyIntegrity.interaction_rule_records_for_template_copy(
+            ids: ir_output.user_interaction_rule_ids,
+            user_id: @user.id
+          )
 
           fertilize_output = @plan_save_ensure_user_fertilizes_interactor.call(
             Domain::CultivationPlan::Dtos::PlanSaveEnsureUserFertilizesInput.new(

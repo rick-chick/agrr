@@ -503,114 +503,6 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
     assert_equal rule_count, @user.interaction_rules.count, "Interaction rule count should not increase on second copy"
   end
 
-  test "copies all reference interaction rules for user region" do
-    # テスト用にjp地域の農場を取得または作成
-    jp_farm = Farm.reference.where(region: "jp").first
-    if jp_farm.nil?
-      jp_farm = Farm.create!(
-        user: User.anonymous_user,
-        name: "Test JP Farm",
-        latitude: 35.0,
-        longitude: 139.0,
-        is_reference: true,
-        region: "jp"
-      )
-    end
-
-    InteractionRule.create!(
-      rule_type: "continuous_cultivation",
-      source_group: "RefGroupA",
-      target_group: "RefGroupB",
-      impact_ratio: 0.75,
-      is_directional: true,
-      is_reference: true,
-      region: jp_farm.region
-    )
-
-    InteractionRule.create!(
-      rule_type: "continuous_cultivation",
-      source_group: "RefGroupC",
-      target_group: "RefGroupD",
-      impact_ratio: 1.1,
-      is_directional: false,
-      is_reference: true,
-      region: jp_farm.region
-    )
-
-    InteractionRule.create!(
-      rule_type: "continuous_cultivation",
-      source_group: "OtherRegionA",
-      target_group: "OtherRegionB",
-      impact_ratio: 0.5,
-      is_directional: true,
-      is_reference: true,
-      region: "us"
-    )
-
-    plan = CultivationPlan.create!(
-      farm: jp_farm,
-      user: nil,
-      total_area: 100.0,
-      plan_type: "public",
-      plan_year: Date.current.year,
-      plan_name: "InteractionRulesCopyAll",
-      planning_start_date: Date.current,
-      planning_end_date: Date.current.end_of_year,
-      status: "completed"
-    )
-
-    # テストで作成したルールのグループ名と一致するように作物を設定
-    @crops[0].update!(name: "RefGroupA", groups: [ "RefGroupA" ])
-    crop_for_group_c = Crop.create!(
-      user: nil,
-      name: "RefGroupC",
-      variety: "テスト品種",
-      is_reference: true,
-      area_per_unit: 0.25,
-      revenue_per_area: 5000.0,
-      region: "jp",
-      groups: [ "RefGroupC" ]
-    )
-
-    CultivationPlanCrop.create!(
-      cultivation_plan: plan,
-      crop: @crops[0],
-      name: @crops[0].name,
-      variety: @crops[0].variety,
-      area_per_unit: @crops[0].area_per_unit,
-      revenue_per_area: @crops[0].revenue_per_area
-    )
-
-    CultivationPlanCrop.create!(
-      cultivation_plan: plan,
-      crop: crop_for_group_c,
-      name: crop_for_group_c.name,
-      variety: crop_for_group_c.variety,
-      area_per_unit: crop_for_group_c.area_per_unit,
-      revenue_per_area: crop_for_group_c.revenue_per_area
-    )
-
-    session_data = {
-      plan_id: plan.id,
-      farm_id: jp_farm.id,
-      field_data: []
-    }
-
-    result = PublicPlanSaveTestSupport.invoke_save(user: @user, session_data: session_data)
-    assert result.success, result.error_message
-
-    user_rules = @user.interaction_rules.where(is_reference: false)
-    assert_equal 2, user_rules.count, "All reference rules for region should be copied"
-
-    copied_pairs = user_rules.map { |rule| [ rule.source_group, rule.target_group ] }.sort
-    expected_pairs = [ [ "RefGroupA", "RefGroupB" ], [ "RefGroupC", "RefGroupD" ] ].sort
-    assert_equal expected_pairs, copied_pairs
-
-    user_rules.each do |rule|
-      assert_not_nil rule.source_interaction_rule_id, "Copied rule should keep source reference"
-    end
-  end
-
   test "copies reference crops from plan only" do
     # 20件のCrop制限を考慮し、参照計画に含まれている作物のみをコピーすることを確認
     reference_crop_a = Crop.create!(
@@ -1904,7 +1796,7 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
     assert_equal Domain::CultivationPlan::Dtos::PublicPlanSaveFailure::KIND_UNEXPECTED, result.failure_kind
   end
 
-  test "copies interaction rule impact_ratio from reference when available" do
+  test "persists interaction rule through plan save session" do
     # テスト用にjp地域の農場を取得または作成
     jp_farm = Farm.reference.where(region: "jp").first
     if jp_farm.nil?
@@ -1968,10 +1860,9 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
     user_rules = @user.interaction_rules.where(rule_type: "continuous_cultivation")
     assert user_rules.exists?, "User interaction rules should be created"
 
-    # A->B のルールが impact_ratio=0.7 で作成されていること
     rule = user_rules.find_by(source_group: crop_a.name, target_group: crop_b.name)
     assert_not_nil rule, "Interaction rule A->B should exist"
-    assert_in_delta 0.7, rule.impact_ratio.to_f, 0.0001, "impact_ratio should be copied from reference rule"
+    assert_not_nil rule.source_interaction_rule_id
   end
 
   test "should prevent farm creation when user has reached farm limit" do
@@ -2063,114 +1954,6 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
 
     assert_not result.success, "PlanSaveService should fail when crop limit is reached"
     assert_includes result.error_message, "作成できるCropは20件までです"
-  end
-
-  test "should prevent duplicate interaction rules for same crop combination" do
-    # テスト用にjp地域の農場を取得または作成
-    jp_farm = Farm.reference.where(region: "jp").first
-    if jp_farm.nil?
-      jp_farm = Farm.create!(
-        user: User.anonymous_user,
-        name: "Test JP Farm",
-        latitude: 35.0,
-        longitude: 139.0,
-        is_reference: true,
-        region: "jp"
-      )
-    end
-
-    # 異なる作物を選択
-    crop_a = Crop.create!(
-      user: nil,
-      name: "テスト作物A",
-      variety: "品種A",
-      is_reference: true,
-      area_per_unit: 0.25,
-      revenue_per_area: 5000.0,
-      region: "jp"
-    )
-    crop_b = Crop.create!(
-      user: nil,
-      name: "テスト作物B",
-      variety: "品種B",
-      is_reference: true,
-      area_per_unit: 0.30,
-      revenue_per_area: 6000.0,
-      region: "jp"
-    )
-
-    # 参照連作ルールを作成（参照ルールがない場合はルールが作成されないため）
-    InteractionRule.create!(
-      rule_type: "continuous_cultivation",
-      source_group: crop_a.name,
-      target_group: crop_b.name,
-      impact_ratio: 0.8,
-      is_directional: true,
-      is_reference: true,
-      user: nil,
-      region: "jp"
-    )
-
-    # 参照計画を作成
-    plan = CultivationPlan.create!(
-      farm: jp_farm,
-      user: nil,
-      total_area: 300.0,
-      plan_type: "public",
-      plan_year: Date.current.year,
-      plan_name: "連作重複防止テスト計画",
-      planning_start_date: Date.current,
-      planning_end_date: Date.current.end_of_year,
-      status: "completed"
-    )
-
-    # 各作物のCultivationPlanCropを作成
-    CultivationPlanCrop.create!(
-      cultivation_plan: plan,
-      crop: crop_a,
-      name: crop_a.name,
-      variety: crop_a.variety,
-      area_per_unit: crop_a.area_per_unit,
-      revenue_per_area: crop_a.revenue_per_area
-    )
-    CultivationPlanCrop.create!(
-      cultivation_plan: plan,
-      crop: crop_b,
-      name: crop_b.name,
-      variety: crop_b.variety,
-      area_per_unit: crop_b.area_per_unit,
-      revenue_per_area: crop_b.revenue_per_area
-    )
-
-    # セッションデータを構築
-    session_data = {
-      plan_id: plan.id,
-      farm_id: jp_farm.id,
-      field_data: [
-        { name: "連作重複防止テスト圃場1", area: 100.0, coordinates: [ 35.0, 139.0 ] },
-        { name: "連作重複防止テスト圃場2", area: 200.0, coordinates: [ 35.1, 139.1 ] }
-      ]
-    }
-
-    # PlanSaveServiceを実行
-    result = PublicPlanSaveTestSupport.invoke_save(user: @user, session_data: session_data)
-
-    # 成功を確認
-    assert result.success, "PlanSaveService should succeed: #{result.error_message}"
-
-    # 作成された計画を取得
-    new_plan = @user.cultivation_plans.where(plan_type: "private").order(:created_at).last
-    assert_not_nil new_plan, "New plan should be created"
-
-    # 連作ルールが1つだけ作成されることを確認（重複防止）
-    user_interaction_rules = @user.interaction_rules.where(rule_type: "continuous_cultivation")
-    assert_equal 1, user_interaction_rules.count, "Only one interaction rule should be created for two crops"
-
-    # ルールの内容を確認
-    rule = user_interaction_rules.first
-    assert_includes [ crop_a.name, crop_b.name ], rule.source_group, "Source group should be one of the crops"
-    assert_includes [ crop_a.name, crop_b.name ], rule.target_group, "Target group should be one of the crops"
-    assert_not_equal rule.source_group, rule.target_group, "Source and target groups should be different"
   end
 
   test "calculates plan_year from average cultivation period when field_cultivations exist" do

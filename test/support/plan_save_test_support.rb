@@ -157,9 +157,6 @@ module PlanSaveTestSupport
 
     ctx.reference_crop_id_to_user_crop_id = { ref_crop.id => user_crop.id }
     ctx.ref_cpc_id_to_user_crop_id = resolved_cpc_id ? { resolved_cpc_id => user_crop.id } : {}
-    groups = [ ref_crop.name ]
-    groups.concat(Array(ref_crop.groups)) if ref_crop.groups.present?
-    ctx.reference_crop_groups = groups.compact.uniq
     user_crop
   end
 

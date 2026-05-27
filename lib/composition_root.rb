@@ -594,6 +594,21 @@ module CompositionRoot
         )
     end
 
+    def plan_save_user_interaction_rule_gateway
+      @plan_save_user_interaction_rule_gateway ||=
+        Adapters::CultivationPlan::Gateways::PlanSaveUserInteractionRuleActiveRecordGateway.new
+    end
+
+    def plan_save_ensure_user_interaction_rules_interactor
+      @plan_save_ensure_user_interaction_rules_interactor ||=
+        Domain::CultivationPlan::Interactors::PlanSaveEnsureUserInteractionRulesInteractor.new(
+          read_gateway: public_plan_save_read_gateway,
+          user_interaction_rule_gateway: plan_save_user_interaction_rule_gateway,
+          logger: logger,
+          translator: translator
+        )
+    end
+
     def public_plan_save_persistence_port
       @public_plan_save_persistence_port ||=
         Adapters::CultivationPlan::Gateways::PublicPlanSavePersistenceActiveRecordAdapter.new(
@@ -609,7 +624,8 @@ module CompositionRoot
           plan_save_ensure_user_pests_interactor: plan_save_ensure_user_pests_interactor,
           plan_save_ensure_user_fertilizes_interactor: plan_save_ensure_user_fertilizes_interactor,
           plan_save_ensure_user_pesticides_interactor: plan_save_ensure_user_pesticides_interactor,
-          plan_save_ensure_user_agricultural_tasks_interactor: plan_save_ensure_user_agricultural_tasks_interactor
+          plan_save_ensure_user_agricultural_tasks_interactor: plan_save_ensure_user_agricultural_tasks_interactor,
+          plan_save_ensure_user_interaction_rules_interactor: plan_save_ensure_user_interaction_rules_interactor
         )
     end
 

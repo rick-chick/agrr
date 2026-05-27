@@ -184,6 +184,47 @@ module Adapters
 
           assert @gateway.exists_fertilize_name?(name: name)
         end
+
+        test "list_interaction_rule_reference_rows returns continuous_cultivation reference rules for region" do
+          ref_rule = ::InteractionRule.create!(
+            user: nil,
+            rule_type: "continuous_cultivation",
+            source_group: "ReadGwSrc",
+            target_group: "ReadGwTgt",
+            impact_ratio: 0.6,
+            is_directional: true,
+            is_reference: true,
+            region: "jp"
+          )
+          us_only = ::InteractionRule.create!(
+            user: nil,
+            rule_type: "continuous_cultivation",
+            source_group: "ReadGwUsSrc",
+            target_group: "ReadGwUsTgt",
+            impact_ratio: 0.5,
+            is_directional: true,
+            is_reference: true,
+            region: "us"
+          )
+          other_type = ::InteractionRule.create!(
+            user: nil,
+            rule_type: "other_type",
+            source_group: "ReadGwOther",
+            target_group: "ReadGwOtherTgt",
+            impact_ratio: 0.5,
+            is_directional: true,
+            is_reference: true,
+            region: "jp"
+          )
+
+          rows = @gateway.list_interaction_rule_reference_rows(region: "jp")
+          row = rows.find { |r| r.reference_interaction_rule_id == ref_rule.id }
+          assert_not_nil row
+          assert_equal "ReadGwSrc", row.source_group
+          assert_equal "ReadGwTgt", row.target_group
+          assert_nil rows.find { |r| r.reference_interaction_rule_id == us_only.id }
+          assert_nil rows.find { |r| r.reference_interaction_rule_id == other_type.id }
+        end
       end
     end
   end
