@@ -57,6 +57,8 @@ module Adapters
             user_id: @user.id,
             source_pest_id: @reference.id
           )
+          assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveUserPestSnapshot, created
+          assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveUserPestSnapshot, found
           assert_equal created.id, found.id
 
           pest = ::Pest.find(created.id)

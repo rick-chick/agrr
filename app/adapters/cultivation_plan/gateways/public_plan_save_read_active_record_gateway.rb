@@ -64,6 +64,18 @@ module Adapters
           reference_scope.map { |pest| pest_reference_row_from_record(pest) }
         end
 
+        def list_pesticide_reference_rows(region:)
+          reference_scope = ::Pesticide.reference.includes(
+            :pesticide_usage_constraint,
+            :pesticide_application_detail
+          )
+          if region.present?
+            reference_scope = reference_scope.where(region: [ region, nil ])
+          end
+
+          reference_scope.order(:id).map { |pesticide| pesticide_reference_row_from_record(pesticide) }
+        end
+
         def list_fertilize_reference_rows(region:)
           reference_scope = ::Fertilize.reference
           if region.present?
@@ -78,6 +90,40 @@ module Adapters
         end
 
         private
+
+        def pesticide_reference_row_from_record(pesticide)
+          usage_constraint = if (constraint = pesticide.pesticide_usage_constraint)
+                               Domain::CultivationPlan::Dtos::PublicPlanSavePesticideUsageConstraintRow.new(
+                                 min_temperature: constraint.min_temperature,
+                                 max_temperature: constraint.max_temperature,
+                                 max_wind_speed_m_s: constraint.max_wind_speed_m_s,
+                                 max_application_count: constraint.max_application_count,
+                                 harvest_interval_days: constraint.harvest_interval_days,
+                                 other_constraints: constraint.other_constraints
+                               )
+                             end
+
+          application_detail = if (detail = pesticide.pesticide_application_detail)
+                                 Domain::CultivationPlan::Dtos::PublicPlanSavePesticideApplicationDetailRow.new(
+                                   dilution_ratio: detail.dilution_ratio,
+                                   amount_per_m2: detail.amount_per_m2,
+                                   amount_unit: detail.amount_unit,
+                                   application_method: detail.application_method
+                                 )
+                               end
+
+          Domain::CultivationPlan::Dtos::PublicPlanSavePesticideReferenceRow.new(
+            reference_pesticide_id: pesticide.id,
+            reference_crop_id: pesticide.crop_id,
+            reference_pest_id: pesticide.pest_id,
+            name: pesticide.name,
+            active_ingredient: pesticide.active_ingredient,
+            description: pesticide.description,
+            region: pesticide.region,
+            usage_constraint: usage_constraint,
+            application_detail: application_detail
+          )
+        end
 
         def fertilize_reference_row_from_record(fertilize)
           Domain::CultivationPlan::Dtos::PublicPlanSaveFertilizeReferenceRow.new(

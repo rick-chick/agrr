@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "ostruct"
-
 module Adapters
   module CultivationPlan
     module Gateways
@@ -10,7 +8,7 @@ module Adapters
           record = ::Crop.find_by(user_id: user_id, source_crop_id: source_crop_id)
           return nil unless record
 
-          crop_duck(record)
+          crop_snapshot(record)
         end
 
         def create(user_id:, attributes:)
@@ -24,13 +22,13 @@ module Adapters
             raise Domain::Shared::Exceptions::RecordInvalid, crop.errors.full_messages.join(", ")
           end
 
-          crop_duck(crop)
+          crop_snapshot(crop)
         end
 
         private
 
-        def crop_duck(record)
-          ::OpenStruct.new(id: record.id)
+        def crop_snapshot(record)
+          Domain::CultivationPlan::Dtos::PlanSaveUserCropSnapshot.new(id: record.id)
         end
       end
     end

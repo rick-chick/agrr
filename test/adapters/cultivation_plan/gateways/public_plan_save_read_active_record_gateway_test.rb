@@ -93,6 +93,56 @@ module Adapters
           assert_includes row.linked_reference_crop_ids, @ref_crop.id
         end
 
+        test "list_pesticide_reference_rows returns reference pesticides with nested rows" do
+          ref_pest = ::Pest.create!(
+            user: nil,
+            name: "ReadGwPzPest#{SecureRandom.hex(4)}",
+            is_reference: true,
+            region: "jp"
+          )
+          ref_pesticide = ::Pesticide.create!(
+            user: nil,
+            crop: @ref_crop,
+            pest: ref_pest,
+            name: "ReadGwPz#{SecureRandom.hex(4)}",
+            active_ingredient: "AI",
+            is_reference: true,
+            region: "jp"
+          )
+          ref_pesticide.create_pesticide_usage_constraint!(
+            min_temperature: 5.0,
+            max_temperature: 35.0,
+            max_application_count: 2
+          )
+          ref_pesticide.create_pesticide_application_detail!(
+            dilution_ratio: "500倍",
+            amount_per_m2: 2.0,
+            amount_unit: "g",
+            application_method: "灌注"
+          )
+          us_only = ::Pesticide.create!(
+            user: nil,
+            crop: @ref_crop,
+            pest: ref_pest,
+            name: "ReadGwPzUs#{SecureRandom.hex(4)}",
+            is_reference: true,
+            region: "us"
+          )
+
+          rows = @gateway.list_pesticide_reference_rows(region: "jp")
+          row = rows.find { |r| r.reference_pesticide_id == ref_pesticide.id }
+          assert_not_nil row
+          assert_equal ref_pesticide.name, row.name
+          assert_equal @ref_crop.id, row.reference_crop_id
+          assert_equal ref_pest.id, row.reference_pest_id
+          assert_equal "AI", row.active_ingredient
+          assert_not_nil row.usage_constraint
+          assert_equal 5.0, row.usage_constraint.min_temperature
+          assert_not_nil row.application_detail
+          assert_equal "500倍", row.application_detail.dilution_ratio
+          assert_nil rows.find { |r| r.reference_pesticide_id == us_only.id }
+        end
+
         test "list_fertilize_reference_rows returns reference fertilizes for region" do
           ref_f = ::Fertilize.create!(
             user: nil,

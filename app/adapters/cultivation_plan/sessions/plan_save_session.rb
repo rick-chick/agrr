@@ -45,6 +45,7 @@ module Adapters
           plan_save_ensure_user_crops_interactor:,
           plan_save_ensure_user_pests_interactor:,
           plan_save_ensure_user_fertilizes_interactor:,
+          plan_save_ensure_user_pesticides_interactor:,
           own_transaction: true
         )
           @user = user.is_a?(::User) ? user : ::User.find(user.id)
@@ -60,6 +61,7 @@ module Adapters
           @plan_save_ensure_user_crops_interactor = plan_save_ensure_user_crops_interactor
           @plan_save_ensure_user_pests_interactor = plan_save_ensure_user_pests_interactor
           @plan_save_ensure_user_fertilizes_interactor = plan_save_ensure_user_fertilizes_interactor
+          @plan_save_ensure_user_pesticides_interactor = plan_save_ensure_user_pesticides_interactor
           @own_transaction = own_transaction
           @result = Result.new
         end
@@ -147,7 +149,6 @@ module Adapters
             )
           )
           pest_output.skipped_pest_ids.each { |id| @result.add_skip(:pests, id) }
-          ctx.reference_pest_id_to_user_pest_id = pest_output.reference_pest_id_to_user_pest_id
           pests = Sessions::PlanSaveTemplateCopyIntegrity.pest_records_for_template_copy(
             ids: pest_output.user_pest_ids
           )
@@ -165,7 +166,18 @@ module Adapters
             ids: fertilize_output.user_fertilize_ids
           )
 
-          pesticides = Mappers::PesticideMapper.new(ctx).copy_pesticides_for_region(farm_region)
+          pesticide_output = @plan_save_ensure_user_pesticides_interactor.call(
+            Domain::CultivationPlan::Dtos::PlanSaveEnsureUserPesticidesInput.new(
+              user_id: @user.id,
+              region: farm_region,
+              reference_crop_id_to_user_crop_id: crop_output.reference_crop_id_to_user_crop_id,
+              reference_pest_id_to_user_pest_id: pest_output.reference_pest_id_to_user_pest_id
+            )
+          )
+          pesticide_output.skipped_pesticide_ids.each { |id| @result.add_skip(:pesticides, id) }
+          pesticides = Sessions::PlanSaveTemplateCopyIntegrity.pesticide_records_for_template_copy(
+            ids: pesticide_output.user_pesticide_ids
+          )
 
           existing_plan = @plan_save_farm_gateway.find_owned_private_plan_record(
             user_id: @user.id,

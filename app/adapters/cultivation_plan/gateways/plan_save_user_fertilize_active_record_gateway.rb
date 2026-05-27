@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "ostruct"
-
 module Adapters
   module CultivationPlan
     module Gateways
@@ -10,7 +8,7 @@ module Adapters
           record = ::Fertilize.find_by(user_id: user_id, source_fertilize_id: source_fertilize_id)
           return nil unless record
 
-          fertilize_duck(record)
+          fertilize_snapshot(record)
         end
 
         def create(user_id:, attributes:)
@@ -24,13 +22,16 @@ module Adapters
             raise Domain::Shared::Exceptions::RecordInvalid, fertilize.errors.full_messages.join(", ")
           end
 
-          fertilize_duck(fertilize)
+          fertilize_snapshot(fertilize)
         end
 
         private
 
-        def fertilize_duck(record)
-          ::OpenStruct.new(id: record.id, name: record.name)
+        def fertilize_snapshot(record)
+          Domain::CultivationPlan::Dtos::PlanSaveUserFertilizeSnapshot.new(
+            id: record.id,
+            name: record.name
+          )
         end
       end
     end

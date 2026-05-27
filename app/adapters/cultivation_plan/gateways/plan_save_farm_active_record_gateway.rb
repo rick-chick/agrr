@@ -8,14 +8,14 @@ module Adapters
           record = ::Farm.find_by(id: farm_id)
           return nil unless record
 
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(record)
+          reference_farm_snapshot(record)
         end
 
         def find_user_farm_by_source(user_id:, source_farm_id:)
           record = ::Farm.find_by(user_id: user_id, source_farm_id: source_farm_id)
           return nil unless record
 
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(record)
+          user_farm_snapshot(record)
         end
 
         def count_non_reference_farms(user_id:)
@@ -48,7 +48,7 @@ module Adapters
             raise Domain::Shared::Exceptions::RecordInvalid, new_farm.errors.full_messages.join(", ")
           end
 
-          Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(new_farm)
+          user_farm_snapshot(new_farm)
         end
 
         def find_owned_farm_record(user_id:, farm_id:)
@@ -57,6 +57,27 @@ module Adapters
 
         def find_owned_private_plan_record(user_id:, farm_id:)
           ::CultivationPlan.find_by(plan_type: "private", farm_id: farm_id, user_id: user_id)
+        end
+
+        private
+
+        def reference_farm_snapshot(record)
+          Domain::CultivationPlan::Dtos::PlanSaveReferenceFarmSnapshot.new(
+            id: record.id,
+            name: record.name,
+            latitude: record.latitude,
+            longitude: record.longitude,
+            region: record.region,
+            weather_location_id: record.weather_location_id
+          )
+        end
+
+        def user_farm_snapshot(record)
+          Domain::CultivationPlan::Dtos::PlanSaveUserFarmSnapshot.new(
+            id: record.id,
+            name: record.name,
+            region: record.region
+          )
         end
       end
     end

@@ -29,8 +29,8 @@ module Domain
           )
         end
 
-        test "reuses existing user farm linked to reference" do
-          ref = OpenStruct.new(
+        def reference_farm_snapshot
+          Dtos::PlanSaveReferenceFarmSnapshot.new(
             id: 10,
             name: "参照農場",
             latitude: 35.0,
@@ -38,7 +38,15 @@ module Domain
             region: "kanto",
             weather_location_id: 3
           )
-          existing = OpenStruct.new(id: 77, name: "参照農場 (既存)", region: "kanto")
+        end
+
+        def user_farm_snapshot(id:, name:, region: "kanto")
+          Dtos::PlanSaveUserFarmSnapshot.new(id: id, name: name, region: region)
+        end
+
+        test "reuses existing user farm linked to reference" do
+          ref = reference_farm_snapshot
+          existing = user_farm_snapshot(id: 77, name: "参照農場 (既存)")
 
           gateway = mock("plan_save_farm_gateway")
           gateway.expects(:find_reference_farm).with(farm_id: 10).returns(ref)
@@ -55,15 +63,8 @@ module Domain
         end
 
         test "creates user farm from reference when none exists" do
-          ref = OpenStruct.new(
-            id: 10,
-            name: "参照農場",
-            latitude: 35.0,
-            longitude: 135.0,
-            region: "kanto",
-            weather_location_id: 3
-          )
-          created = OpenStruct.new(id: 88, name: "参照農場 (コピー 20260525_123456)", region: "kanto")
+          ref = reference_farm_snapshot
+          created = user_farm_snapshot(id: 88, name: "参照農場 (コピー 20260525_123456)")
 
           gateway = mock("plan_save_farm_gateway")
           gateway.expects(:find_reference_farm).with(farm_id: 10).returns(ref)
@@ -84,14 +85,7 @@ module Domain
         end
 
         test "raises RecordInvalid when farm create limit exceeded" do
-          ref = OpenStruct.new(
-            id: 10,
-            name: "参照農場",
-            latitude: 35.0,
-            longitude: 135.0,
-            region: "kanto",
-            weather_location_id: 3
-          )
+          ref = reference_farm_snapshot
 
           gateway = mock("plan_save_farm_gateway")
           gateway.expects(:find_reference_farm).with(farm_id: 10).returns(ref)

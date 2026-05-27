@@ -38,20 +38,6 @@ module Domain
           Dtos::PlanSaveEnsureUserFertilizesInput.new(user_id: 1, region: "jp")
         end
 
-        test "passes region to list_fertilize_reference_rows" do
-          read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_fertilize_reference_rows).with(region: "us").returns([])
-
-          user_fertilize_gateway = mock("user_fertilize_gateway")
-
-          build_interactor(
-            read_gateway: read_gateway,
-            user_fertilize_gateway: user_fertilize_gateway
-          ).call(
-            Dtos::PlanSaveEnsureUserFertilizesInput.new(user_id: 1, region: "us")
-          )
-        end
-
         test "creates user fertilize with copy suffix name" do
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_fertilize_reference_rows).with(region: "jp").returns(
@@ -71,7 +57,7 @@ module Domain
               source_fertilize_id: 200,
               is_reference: false
             )
-          ).returns(OpenStruct.new(id: 88, name: "肥料A (コピー)"))
+          ).returns(Dtos::PlanSaveUserFertilizeSnapshot.new(id: 88, name: "肥料A (コピー)"))
 
           out = build_interactor(
             read_gateway: read_gateway,
@@ -90,7 +76,7 @@ module Domain
           user_fertilize_gateway.expects(:find_by_user_id_and_source_fertilize_id).with(
             user_id: 1,
             source_fertilize_id: 200
-          ).returns(OpenStruct.new(id: 77, name: "既存肥料"))
+          ).returns(Dtos::PlanSaveUserFertilizeSnapshot.new(id: 77, name: "既存肥料"))
           user_fertilize_gateway.expects(:create).never
           read_gateway.expects(:exists_fertilize_name?).never
 
@@ -111,7 +97,7 @@ module Domain
           user_fertilize_gateway.expects(:find_by_user_id_and_source_fertilize_id).twice.with(
             user_id: 1,
             source_fertilize_id: 200
-          ).returns(OpenStruct.new(id: 77, name: "既存肥料"))
+          ).returns(Dtos::PlanSaveUserFertilizeSnapshot.new(id: 77, name: "既存肥料"))
           user_fertilize_gateway.expects(:create).never
 
           interactor = build_interactor(
@@ -144,7 +130,7 @@ module Domain
               source_fertilize_id: 200,
               is_reference: false
             )
-          ).returns(OpenStruct.new(id: 90, name: "肥料B (コピー 2)"))
+          ).returns(Dtos::PlanSaveUserFertilizeSnapshot.new(id: 90, name: "肥料B (コピー 2)"))
 
           out = build_interactor(
             read_gateway: read_gateway,

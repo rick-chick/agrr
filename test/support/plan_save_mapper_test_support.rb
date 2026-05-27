@@ -1,82 +1,12 @@
 # frozen_string_literal: true
 
-# PlanSaveContext + CultivationPlan mappers 単体テスト用の共通セットアップ。
-# crop/pest の ensure Interactor は呼ばず、ctx に ID マップだけ載せる（Pesticide 等の mapper 契約テスト用）。
+require_relative "plan_save_test_support"
+
+# 残存 PlanSave mapper 契約テスト用（ctx に ID マップだけ載せる）。
 module PlanSaveMapperTestSupport
-  def unique_test_user
-    User.create!(
-      email: "mapper_test_#{SecureRandom.hex(8)}@example.com",
-      name: "Mapper Test #{SecureRandom.hex(4)}",
-      google_id: "mapper_google_#{SecureRandom.hex(8)}",
-      is_anonymous: false
-    )
-  end
+  include PlanSaveTestSupport
 
-  def plan_save_result
-    Adapters::CultivationPlan::Sessions::PlanSaveSession::Result.new
-  end
-
-  def ensure_reference_farm(region: "jp")
-    existing = Farm.reference.where(region: region).first
-    return existing if existing
-
-    Farm.create!(
-      user: User.anonymous_user,
-      name: "Mapper Ref Farm #{SecureRandom.hex(4)}",
-      latitude: 35.0,
-      longitude: 139.0,
-      is_reference: true,
-      region: region
-    )
-  end
-
-  def build_public_reference_plan(farm:, ref_crop:, plan_name: "Mapper plan")
-    CultivationPlan.create!(
-      farm: farm,
-      user: nil,
-      total_area: 10.0,
-      plan_type: "public",
-      plan_year: Date.current.year,
-      plan_name: plan_name,
-      planning_start_date: Date.current,
-      planning_end_date: Date.current.end_of_year,
-      status: "completed"
-    ).tap do |plan|
-      CultivationPlanCrop.create!(
-        cultivation_plan: plan,
-        crop: ref_crop,
-        name: ref_crop.name,
-        variety: ref_crop.variety,
-        area_per_unit: ref_crop.area_per_unit,
-        revenue_per_area: ref_crop.revenue_per_area
-      )
-    end
-  end
-
-  def build_reference_crop(name:, region: "jp")
-    Crop.create!(
-      user: nil,
-      name: name,
-      variety: "v",
-      is_reference: true,
-      area_per_unit: 0.2,
-      revenue_per_area: 1000.0,
-      region: region
-    )
-  end
-
-  def build_plan_save_context(user:, session_data:, result:)
-    Adapters::CultivationPlan::Sessions::PlanSaveContext.new(
-      user: user,
-      session_data: session_data,
-      result: result
-    )
-  end
-
-  # mapper/gateway 単体用: ctx に作物 ID マップだけ載せる（PlanSaveEnsureUserCropsInteractor は呼ばない）
-  # @param ref_crop [Crop] 参照作物
-  # @param cpc_id [Integer, nil] CultivationPlanCrop#id（省略時は plan_id + ref_crop から解決）
-  # @return [Crop] ユーザー作物 AR
+  # mapper 単体用: ctx に作物 ID マップだけ載せる（PlanSaveEnsureUserCropsInteractor は呼ばない）
   def stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop:, cpc_id: nil)
     plan_id = ctx.session_data[:plan_id] || ctx.session_data["plan_id"]
     resolved_cpc_id = cpc_id || CultivationPlanCrop.find_by(cultivation_plan_id: plan_id, crop_id: ref_crop.id)&.id
@@ -105,109 +35,11 @@ module PlanSaveMapperTestSupport
     user_crop
   end
 
-  # PlanCopy gateway 等が AR 配列を要するとき
-  def stub_plan_save_user_crops_for_mapper_test(ctx, ref_crop:, cpc_id: nil)
+  def stub_plan_save_user_crops_for_plan_save_test(ctx, ref_crop:, cpc_id: nil)
     [ stub_plan_save_crop_mappings_for_mapper_test(ctx, ref_crop: ref_crop, cpc_id: cpc_id) ]
   end
 
-  # mapper 単体用: ctx に害虫 ID マップだけ載せる（EnsureUserPestsInteractor は呼ばない）
-  # @param ref_pest [Pest] 参照害虫
-  # @param ref_crop [Crop] 参照作物（crop マップに含まれること）
-  # @return [Pest] ユーザー害虫 AR
-  def stub_plan_save_pest_mappings_for_mapper_test(ctx, ref_pest:, ref_crop:)
-    user_crop_id = ctx.reference_crop_id_to_user_crop_id[ref_crop.id]
-    unless user_crop_id
-      raise ArgumentError, "stub_plan_save_crop_mappings_for_mapper_test must run first"
-    end
-
-    user_pest = ctx.user.pests.find_by(source_pest_id: ref_pest.id)
-    if user_pest
-      ctx.result.add_skip(:pests, user_pest.id)
-    else
-      user_pest = ctx.user.pests.create!(
-        name: ref_pest.name,
-        name_scientific: ref_pest.name_scientific,
-        family: ref_pest.family,
-        order: ref_pest.order,
-        description: ref_pest.description,
-        occurrence_season: ref_pest.occurrence_season,
-        region: ref_pest.region,
-        is_reference: false,
-        source_pest_id: ref_pest.id
-      )
-      CropPest.find_or_create_by!(crop_id: user_crop_id, pest: user_pest)
-    end
-
-    ctx.reference_pest_id_to_user_pest_id =
-      ctx.reference_pest_id_to_user_pest_id.merge(ref_pest.id => user_pest.id)
-    user_pest
-  end
-
-  # Mapper / gateway 単体用: ユーザー農場を AR で用意（domain の ensure 経路は使わない）
-  # @param reuse_existing [Boolean] true のとき既存農場を再利用し ctx.farm_reused と skip を設定
-  def stub_user_farm_for_mapper_test(ctx, reuse_existing: false)
-    raw_farm_id = ctx.session_data[:farm_id] || ctx.session_data["farm_id"]
-    reference_farm = Farm.find(raw_farm_id)
-    existing = ctx.user.farms.find_by(source_farm_id: reference_farm.id)
-
-    if existing
-      if reuse_existing
-        ctx.farm_reused = true
-        ctx.result.add_skip(:farm, existing.id)
-      end
-      return existing
-    end
-
-    ctx.user.farms.create!(
-      name: "#{reference_farm.name} (mapper test #{SecureRandom.hex(3)})",
-      latitude: reference_farm.latitude,
-      longitude: reference_farm.longitude,
-      region: reference_farm.region,
-      is_reference: false,
-      weather_location_id: reference_farm.weather_location_id,
-      source_farm_id: reference_farm.id
-    )
-  end
-
-  # 圃場・作付・CPC を持つ参照公開計画（PlanCopyActiveRecordGateway 用）
-  def build_public_plan_with_field_cultivation(farm:, ref_crop:, plan_name: "Gateway plan")
-    plan = CultivationPlan.create!(
-      farm: farm,
-      user: nil,
-      total_area: 10.0,
-      plan_type: "public",
-      plan_year: Date.current.year,
-      plan_name: plan_name,
-      planning_start_date: Date.current,
-      planning_end_date: Date.current.end_of_year,
-      status: "completed"
-    )
-    cpf = CultivationPlanField.create!(
-      cultivation_plan: plan,
-      name: "Fld#{SecureRandom.hex(3)}",
-      area: 10.0,
-      daily_fixed_cost: 0
-    )
-    cpc = CultivationPlanCrop.create!(
-      cultivation_plan: plan,
-      crop: ref_crop,
-      name: ref_crop.name,
-      variety: ref_crop.variety,
-      area_per_unit: ref_crop.area_per_unit,
-      revenue_per_area: ref_crop.revenue_per_area
-    )
-    fc = FieldCultivation.create!(
-      cultivation_plan: plan,
-      cultivation_plan_field: cpf,
-      cultivation_plan_crop: cpc,
-      area: 10.0,
-      status: :pending
-    )
-    [ plan, cpf, cpc, fc ]
-  end
-
   # 指定カテゴリごとのスキップ id が一致し、それ以外のカテゴリは空であることを表明する
-  # 例: assert_skipped_exact(result2, { farm: [1], fields: [2] })
   def assert_skipped_exact(result, expected_slices)
     actual = result.skipped_items
     expected_slices.each do |cat, ids|

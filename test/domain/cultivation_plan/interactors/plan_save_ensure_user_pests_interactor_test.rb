@@ -84,7 +84,7 @@ module Domain
           user_pest_gateway.expects(:find_by_user_id_and_source_pest_id).twice.with(
             user_id: 1,
             source_pest_id: 100
-          ).returns(OpenStruct.new(id: 55, name: "害虫A"))
+          ).returns(Dtos::PlanSaveUserPestSnapshot.new(id: 55, name: "害虫A"))
           user_pest_gateway.expects(:link_crop_pest).twice.with(crop_id: 77, pest_id: 55)
           user_pest_gateway.expects(:create).never
 
@@ -112,7 +112,7 @@ module Domain
           user_pest_gateway.expects(:find_by_user_id_and_source_pest_id).with(
             user_id: 1,
             source_pest_id: 100
-          ).returns(OpenStruct.new(id: 55, name: "害虫A"))
+          ).returns(Dtos::PlanSaveUserPestSnapshot.new(id: 55, name: "害虫A"))
           user_pest_gateway.expects(:link_crop_pest).with(crop_id: 77, pest_id: 55)
           user_pest_gateway.expects(:create).never
 
@@ -159,7 +159,7 @@ module Domain
               is_reference: false,
               region: "jp"
             )
-          ).returns(OpenStruct.new(id: 66, name: "害虫B"))
+          ).returns(Dtos::PlanSaveUserPestSnapshot.new(id: 66, name: "害虫B"))
           user_pest_gateway.expects(:create_temperature_profile).with(
             pest_id: 66,
             attributes: { base_temperature: 10.0, max_temperature: 35.0 }
@@ -188,7 +188,7 @@ module Domain
           user_pest_gateway = mock("user_pest_gateway")
           user_pest_gateway.expects(:find_by_user_id_and_source_pest_id).twice.returns(
             nil,
-            OpenStruct.new(id: 88, name: "害虫A")
+            Dtos::PlanSaveUserPestSnapshot.new(id: 88, name: "害虫A")
           )
           user_pest_gateway.expects(:create).raises(
             Domain::Shared::Exceptions::RecordInvalid,
@@ -221,7 +221,7 @@ module Domain
           user_pest_gateway.expects(:create).with(
             user_id: 1,
             attributes: has_entries(region: "jp", source_pest_id: 100)
-          ).returns(OpenStruct.new(id: 70, name: "害虫"))
+          ).returns(Dtos::PlanSaveUserPestSnapshot.new(id: 70, name: "害虫"))
           user_pest_gateway.expects(:link_crop_pest).with(crop_id: 77, pest_id: 70)
 
           build_interactor(

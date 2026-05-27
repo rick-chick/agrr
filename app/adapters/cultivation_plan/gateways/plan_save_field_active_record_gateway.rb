@@ -8,7 +8,7 @@ module Adapters
           ::Field
             .where(farm_id: farm_id, user_id: user_id)
             .order(:id)
-            .map { |record| field_entity_from_record(record) }
+            .map { |record| field_snapshot(record) }
         end
 
         def create(farm_id:, user_id:, attributes:)
@@ -34,23 +34,18 @@ module Adapters
             raise Domain::Shared::Exceptions::RecordInvalid, field.errors.full_messages.join(", ")
           end
 
-          field_entity_from_record(field)
+          field_snapshot(field)
         end
 
         private
 
-        def field_entity_from_record(record)
-          Domain::Field::Entities::FieldEntity.new(
+        def field_snapshot(record)
+          Domain::CultivationPlan::Dtos::PlanSaveFieldSnapshot.new(
             id: record.id,
-            farm_id: record.farm_id,
-            user_id: record.user_id,
             name: record.name,
-            description: record.description,
-            created_at: record.created_at,
-            updated_at: record.updated_at,
             area: record.area,
-            daily_fixed_cost: record.daily_fixed_cost,
-            region: record.region
+            farm_id: record.farm_id,
+            user_id: record.user_id
           )
         end
       end

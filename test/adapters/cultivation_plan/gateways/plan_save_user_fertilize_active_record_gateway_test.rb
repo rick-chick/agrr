@@ -50,6 +50,8 @@ module Adapters
             user_id: @user.id,
             source_fertilize_id: @reference.id
           )
+          assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveUserFertilizeSnapshot, created
+          assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveUserFertilizeSnapshot, found
           assert_equal created.id, found.id
           assert_equal copy_name, found.name
         end

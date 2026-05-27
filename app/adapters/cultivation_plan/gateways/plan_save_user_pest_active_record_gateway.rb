@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "ostruct"
-
 module Adapters
   module CultivationPlan
     module Gateways
@@ -10,7 +8,7 @@ module Adapters
           record = ::Pest.find_by(user_id: user_id, source_pest_id: source_pest_id)
           return nil unless record
 
-          pest_duck(record)
+          pest_snapshot(record)
         end
 
         def create(user_id:, attributes:)
@@ -24,7 +22,7 @@ module Adapters
             raise Domain::Shared::Exceptions::RecordInvalid, pest.errors.full_messages.join(", ")
           end
 
-          pest_duck(pest)
+          pest_snapshot(pest)
         end
 
         def create_temperature_profile(pest_id:, attributes:)
@@ -49,8 +47,11 @@ module Adapters
 
         private
 
-        def pest_duck(record)
-          ::OpenStruct.new(id: record.id, name: record.name)
+        def pest_snapshot(record)
+          Domain::CultivationPlan::Dtos::PlanSaveUserPestSnapshot.new(
+            id: record.id,
+            name: record.name
+          )
         end
       end
     end

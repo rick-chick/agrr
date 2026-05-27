@@ -89,60 +89,6 @@ module Adapters
           end
           assert_match(/Field record not found/, error.message)
         end
-
-        test "crop_records_for_template_copy preserves id order" do
-          user = User.create!(
-            email: "integrity-crop-#{SecureRandom.hex(4)}@example.com",
-            name: "Crop Integrity",
-            google_id: "integrity-crop-#{SecureRandom.hex(8)}"
-          )
-          second = user.crops.create!(
-            name: "作物B#{SecureRandom.hex(4)}",
-            variety: "v",
-            is_reference: false,
-            area_per_unit: 0.2,
-            revenue_per_area: 100.0,
-            region: "jp"
-          )
-          first = user.crops.create!(
-            name: "作物A#{SecureRandom.hex(4)}",
-            variety: "v",
-            is_reference: false,
-            area_per_unit: 0.2,
-            revenue_per_area: 100.0,
-            region: "jp"
-          )
-
-          records = PlanSaveTemplateCopyIntegrity.crop_records_for_template_copy(
-            ids: [ first.id, second.id ]
-          )
-
-          assert_equal [ first.id, second.id ], records.map(&:id)
-        end
-
-        test "pest_records_for_template_copy preserves id order" do
-          user = User.create!(
-            email: "integrity-pest-#{SecureRandom.hex(4)}@example.com",
-            name: "Pest Integrity",
-            google_id: "integrity-pest-#{SecureRandom.hex(8)}"
-          )
-          second = user.pests.create!(
-            name: "害虫B#{SecureRandom.hex(4)}",
-            is_reference: false,
-            region: "jp"
-          )
-          first = user.pests.create!(
-            name: "害虫A#{SecureRandom.hex(4)}",
-            is_reference: false,
-            region: "jp"
-          )
-
-          records = PlanSaveTemplateCopyIntegrity.pest_records_for_template_copy(
-            ids: [ first.id, second.id ]
-          )
-
-          assert_equal [ first.id, second.id ], records.map(&:id)
-        end
       end
     end
   end

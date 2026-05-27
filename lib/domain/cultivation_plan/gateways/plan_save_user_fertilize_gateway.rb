@@ -4,14 +4,14 @@ module Domain
   module CultivationPlan
     module Gateways
       class PlanSaveUserFertilizeGateway
-        # @return [Object, nil] duck: #id
+        # @return [Dtos::PlanSaveUserFertilizeSnapshot, nil]
         def find_by_user_id_and_source_fertilize_id(user_id:, source_fertilize_id:)
           raise NotImplementedError
         end
 
         # @param user_id [Integer]
         # @param attributes [Hash]
-        # @return [Object] duck: #id, #name
+        # @return [Dtos::PlanSaveUserFertilizeSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
         def create(user_id:, attributes:)
           raise NotImplementedError

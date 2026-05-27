@@ -15,7 +15,8 @@ module Adapters
           plan_save_ensure_user_fields_interactor:,
           plan_save_ensure_user_crops_interactor:,
           plan_save_ensure_user_pests_interactor:,
-          plan_save_ensure_user_fertilizes_interactor:
+          plan_save_ensure_user_fertilizes_interactor:,
+          plan_save_ensure_user_pesticides_interactor:
         )
           @logger = logger
           @cultivation_plan_gateway = cultivation_plan_gateway
@@ -28,6 +29,7 @@ module Adapters
           @plan_save_ensure_user_crops_interactor = plan_save_ensure_user_crops_interactor
           @plan_save_ensure_user_pests_interactor = plan_save_ensure_user_pests_interactor
           @plan_save_ensure_user_fertilizes_interactor = plan_save_ensure_user_fertilizes_interactor
+          @plan_save_ensure_user_pesticides_interactor = plan_save_ensure_user_pesticides_interactor
         end
 
         def execute_save!(workspace:)
@@ -46,6 +48,7 @@ module Adapters
             plan_save_ensure_user_crops_interactor: @plan_save_ensure_user_crops_interactor,
             plan_save_ensure_user_pests_interactor: @plan_save_ensure_user_pests_interactor,
             plan_save_ensure_user_fertilizes_interactor: @plan_save_ensure_user_fertilizes_interactor,
+            plan_save_ensure_user_pesticides_interactor: @plan_save_ensure_user_pesticides_interactor,
             own_transaction: false
           )
           result = session.call

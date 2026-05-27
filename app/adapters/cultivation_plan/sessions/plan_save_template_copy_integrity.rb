@@ -46,6 +46,12 @@ module Adapters
           load_persisted_records(::Fertilize, "Fertilize", ids: ids)
         end
 
+        # @param ids [Array<Integer>]
+        # @return [Array<Pesticide>]
+        def pesticide_records_for_template_copy(ids:)
+          load_persisted_records(::Pesticide, "Pesticide", ids: ids)
+        end
+
         # @param model_class [Class]
         # @param label [String]
         # @param ids [Array<Integer>]

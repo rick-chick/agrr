@@ -3,30 +3,43 @@
 require "test_helper"
 
 class Adapters::CultivationPlan::Gateways::PlanSaveFarmActiveRecordGatewayTest < ActiveSupport::TestCase
-  include PlanSaveMapperTestSupport
+  include PlanSaveTestSupport
 
   setup do
     @gateway = Adapters::CultivationPlan::Gateways::PlanSaveFarmActiveRecordGateway.new
   end
 
-  test "create_user_farm_from_reference persists copy and returns FarmEntity" do
+  test "create_user_farm_from_reference persists copy and returns PlanSaveUserFarmSnapshot" do
     user = unique_test_user
     ref = ensure_reference_farm
 
     assert_difference -> { Farm.where(user_id: user.id, is_reference: false).count }, 1 do
-      entity = @gateway.create_user_farm_from_reference(
+      snapshot = @gateway.create_user_farm_from_reference(
         user_id: user.id,
         reference_farm_id: ref.id,
         copy_name_suffix: "20260525_123456"
       )
 
-      assert_instance_of Domain::Farm::Entities::FarmEntity, entity
-      assert_equal user.id, entity.user_id
-      assert_not entity.is_reference
-      assert_includes entity.name, "コピー 20260525_123456"
-      assert_equal ref.latitude, entity.latitude
-      assert_equal ref.longitude, entity.longitude
+      assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveUserFarmSnapshot, snapshot
+      assert_includes snapshot.name, "コピー 20260525_123456"
+
+      record = Farm.find(snapshot.id)
+      assert_equal user.id, record.user_id
+      assert_not record.is_reference
+      assert_equal ref.latitude, record.latitude
+      assert_equal ref.longitude, record.longitude
     end
+  end
+
+  test "find_reference_farm returns PlanSaveReferenceFarmSnapshot" do
+    ref = ensure_reference_farm
+
+    snapshot = @gateway.find_reference_farm(farm_id: ref.id)
+
+    assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveReferenceFarmSnapshot, snapshot
+    assert_equal ref.id, snapshot.id
+    assert_equal ref.name, snapshot.name
+    assert_equal ref.region, snapshot.region
   end
 
   test "find_reference_farm returns nil when missing" do

@@ -7,14 +7,14 @@ module Domain
       class PlanSaveUserCropGateway
         # @param user_id [Integer]
         # @param source_crop_id [Integer]
-        # @return [Object, nil] duck: #id
+        # @return [Dtos::PlanSaveUserCropSnapshot, nil]
         def find_by_user_id_and_source_crop_id(user_id:, source_crop_id:)
           raise NotImplementedError
         end
 
         # @param user_id [Integer]
         # @param attributes [Hash]
-        # @return [Object] duck: #id
+        # @return [Dtos::PlanSaveUserCropSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
         def create(user_id:, attributes:)
           raise NotImplementedError

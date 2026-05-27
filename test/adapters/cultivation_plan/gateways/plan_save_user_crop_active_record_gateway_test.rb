@@ -49,6 +49,8 @@ module Adapters
             user_id: @user.id,
             source_crop_id: @reference.id
           )
+          assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveUserCropSnapshot, created
+          assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveUserCropSnapshot, found
           assert_equal created.id, found.id
         end
       end

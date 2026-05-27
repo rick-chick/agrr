@@ -29,6 +29,12 @@ module Domain
         end
 
         # @param region [String, nil]
+        # @return [Array<Dtos::PublicPlanSavePesticideReferenceRow>]
+        def list_pesticide_reference_rows(region:)
+          raise NotImplementedError
+        end
+
+        # @param region [String, nil]
         # @return [Array<Dtos::PublicPlanSaveFertilizeReferenceRow>]
         def list_fertilize_reference_rows(region:)
           raise NotImplementedError

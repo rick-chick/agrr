@@ -45,7 +45,7 @@ module Domain
           user_crop_gateway.expects(:find_by_user_id_and_source_crop_id).with(
             user_id: 1,
             source_crop_id: 10
-          ).returns(OpenStruct.new(id: 77))
+          ).returns(Dtos::PlanSaveUserCropSnapshot.new(id: 77))
           user_crop_gateway.expects(:create).never
 
           crop_gateway = mock("crop_gateway")
@@ -77,7 +77,7 @@ module Domain
               source_crop_id: 10,
               is_reference: false
             )
-          ).returns(OpenStruct.new(id: 88))
+          ).returns(Dtos::PlanSaveUserCropSnapshot.new(id: 88))
 
           crop_gateway = mock("crop_gateway")
           crop_gateway.expects(:count_user_owned_non_reference_crops).with(user_id: 1).returns(2)
@@ -124,7 +124,7 @@ module Domain
               region: "us",
               is_reference: false
             )
-          ).returns(OpenStruct.new(id: 55))
+          ).returns(Dtos::PlanSaveUserCropSnapshot.new(id: 55))
 
           crop_gateway = mock("crop_gateway")
           crop_gateway.expects(:count_user_owned_non_reference_crops).with(user_id: 1).returns(0)

@@ -7,7 +7,7 @@ module Domain
       class PlanSaveFieldGateway
         # @param farm_id [Integer]
         # @param user_id [Integer]
-        # @return [Array<Object>] duck: #id, #name, #area, #farm_id, #user_id
+        # @return [Array<Dtos::PlanSaveFieldSnapshot>]
         def list_by_farm_id(farm_id:, user_id:)
           raise NotImplementedError
         end
@@ -15,7 +15,7 @@ module Domain
         # @param farm_id [Integer]
         # @param user_id [Integer]
         # @param attributes [Hash] :name, :area, :description (optional)
-        # @return [Object] duck: #id
+        # @return [Dtos::PlanSaveFieldSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
         def create(farm_id:, user_id:, attributes:)
           raise NotImplementedError

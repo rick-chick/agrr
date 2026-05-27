@@ -3,7 +3,7 @@
 require "test_helper"
 
 class Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGatewayTest < ActiveSupport::TestCase
-  include PlanSaveMapperTestSupport
+  include PlanSaveTestSupport
 
   setup do
     @gateway = ::Adapters::CultivationPlan::Gateways::CropTaskScheduleBlueprintActiveRecordGateway.new

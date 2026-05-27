@@ -23,18 +23,18 @@ module Adapters
           )
         end
 
-        test "list_by_farm_id returns field entities ordered by id" do
+        test "list_by_farm_id returns field snapshots ordered by id" do
           f1 = @farm.fields.create!(user: @user, name: "A", area: 1.0)
           f2 = @farm.fields.create!(user: @user, name: "B", area: 2.0)
 
-          entities = @gateway.list_by_farm_id(farm_id: @farm.id, user_id: @user.id)
+          snapshots = @gateway.list_by_farm_id(farm_id: @farm.id, user_id: @user.id)
 
-          assert_equal [ f1.id, f2.id ], entities.map(&:id)
-          assert entities.all? { |e| e.is_a?(Domain::Field::Entities::FieldEntity) }
+          assert_equal [ f1.id, f2.id ], snapshots.map(&:id)
+          assert snapshots.all? { |e| e.is_a?(Domain::CultivationPlan::Dtos::PlanSaveFieldSnapshot) }
         end
 
         test "create persists field with description from attributes" do
-          entity = @gateway.create(
+          snapshot = @gateway.create(
             farm_id: @farm.id,
             user_id: @user.id,
             attributes: {
@@ -44,7 +44,9 @@ module Adapters
             }
           )
 
-          record = ::Field.find(entity.id)
+          assert_instance_of Domain::CultivationPlan::Dtos::PlanSaveFieldSnapshot, snapshot
+
+          record = ::Field.find(snapshot.id)
           assert_equal "区画A", record.name
           assert_in_delta 12.5, record.area.to_f, 0.001
           assert_equal "lat/lng", record.description

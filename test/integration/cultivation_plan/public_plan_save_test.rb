@@ -1124,6 +1124,8 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
       region: @farm.region
     )
 
+    CropPest.create!(crop: reference_crop, pest: reference_pest)
+
     reference_pesticide = Pesticide.create!(
       user: nil,
       crop: reference_crop,

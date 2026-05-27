@@ -26,10 +26,20 @@ module Domain
           Dtos::PublicPlanSaveFieldDatum.new(name: name, area: area, coordinates: coordinates)
         end
 
+        def field_snapshot(id:)
+          Dtos::PlanSaveFieldSnapshot.new(
+            id: id,
+            name: "区画",
+            area: 1.0,
+            farm_id: 5,
+            user_id: 1
+          )
+        end
+
         test "reuses existing fields and records skips when farm_reused" do
           existing = [
-            OpenStruct.new(id: 10),
-            OpenStruct.new(id: 11)
+            field_snapshot(id: 10),
+            field_snapshot(id: 11)
           ]
 
           gateway = mock("plan_save_field_gateway")
@@ -60,7 +70,7 @@ module Domain
               area: 12.5,
               description: "services.plan_save_service.messages.coordinates|{:lat=>35.0, :lng=>139.0}"
             }
-          ).returns(OpenStruct.new(id: 99))
+          ).returns(field_snapshot(id: 99))
 
           out = build_interactor(gateway: gateway).call(
             Dtos::PlanSaveEnsureUserFieldsInput.new(

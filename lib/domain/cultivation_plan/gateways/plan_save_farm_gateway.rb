@@ -6,14 +6,14 @@ module Domain
       # 公開プラン保存フロー専用の狭い農場永続化ポート（参照農場の解決・ユーザー農場の再利用／作成）。
       class PlanSaveFarmGateway
         # @param farm_id [Integer, nil]
-        # @return [Object, nil] duck: #id, #name, #latitude, #longitude, #region, #weather_location_id
+        # @return [Dtos::PlanSaveReferenceFarmSnapshot, nil]
         def find_reference_farm(farm_id:)
           raise NotImplementedError
         end
 
         # @param user_id [Integer]
         # @param source_farm_id [Integer]
-        # @return [Object, nil] duck: #id, #name, #region
+        # @return [Dtos::PlanSaveUserFarmSnapshot, nil]
         def find_user_farm_by_source(user_id:, source_farm_id:)
           raise NotImplementedError
         end
@@ -27,7 +27,7 @@ module Domain
         # @param user_id [Integer]
         # @param reference_farm_id [Integer]
         # @param copy_name_suffix [String] 例: Time#strftime("%Y%m%d_%H%M%S")（UTC）
-        # @return [Object] duck: #id, #name, #region
+        # @return [Dtos::PlanSaveUserFarmSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
         def create_user_farm_from_reference(user_id:, reference_farm_id:, copy_name_suffix:)
           raise NotImplementedError

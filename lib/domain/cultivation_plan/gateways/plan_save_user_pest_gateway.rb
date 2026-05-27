@@ -5,14 +5,14 @@ module Domain
     module Gateways
       # 公開プラン保存: ユーザー害虫の検索・作成・関連付け（狭い永続化ポート）。
       class PlanSaveUserPestGateway
-        # @return [Object, nil] duck: #id
+        # @return [Dtos::PlanSaveUserPestSnapshot, nil]
         def find_by_user_id_and_source_pest_id(user_id:, source_pest_id:)
           raise NotImplementedError
         end
 
         # @param user_id [Integer]
         # @param attributes [Hash]
-        # @return [Object] duck: #id, #name
+        # @return [Dtos::PlanSaveUserPestSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
         def create(user_id:, attributes:)
           raise NotImplementedError

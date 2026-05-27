@@ -8,7 +8,7 @@ module Adapters
         attr_accessor :user, :session_data, :result, :farm_reused,
                       :reference_crop_id_to_user_crop_id, :ref_cpc_id_to_user_crop_id,
                       :reference_crop_groups,
-                      :reference_pest_id_to_user_pest_id, :reference_agricultural_task_id_to_user_task_id
+                      :reference_agricultural_task_id_to_user_task_id
 
         def initialize(user:, session_data:, result:)
           @user = user
@@ -18,16 +18,11 @@ module Adapters
           @reference_crop_id_to_user_crop_id = {}
           @ref_cpc_id_to_user_crop_id = {}
           @reference_crop_groups = []
-          @reference_pest_id_to_user_pest_id = {}
           @reference_agricultural_task_id_to_user_task_id = {}
         end
 
         def user_crop_id_for_reference_crop(reference_crop_id)
           @reference_crop_id_to_user_crop_id[reference_crop_id]
-        end
-
-        def user_pest_id_for_reference_pest(reference_pest_id)
-          @reference_pest_id_to_user_pest_id[reference_pest_id]
         end
 
         def get_reference_crop_ids
