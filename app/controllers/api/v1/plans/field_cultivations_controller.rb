@@ -43,9 +43,7 @@ module Api
         private
 
         def field_cultivation_plan_api_gateway
-          CompositionRoot.field_cultivation_climate_gateway_for(
-            CompositionRoot.user_lookup.find(current_user.id)
-          )
+          CompositionRoot.field_cultivation_climate_source_gateway_for
         end
 
         def field_cultivation_api_show_interactor

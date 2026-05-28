@@ -137,6 +137,40 @@ module Domain
           output_port.verify
         end
 
+        test "routes Forbidden through the output port when private plan is owned by another user" do
+          fc_id = 42
+          source_gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            source_gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 99)
+          )
+          source_gateway.define_singleton_method(:find_by_field_cultivation_id) do |_id|
+            flunk "find_by_field_cultivation_id must not run when access is denied"
+          end
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_error, nil) { |arg| received = arg }
+
+          interactor = build_interactor(
+            fc_id: fc_id,
+            source_gateway: source_gateway,
+            crop_gateway: Object.new
+          )
+          interactor.instance_variable_set(:@output_port, output_port)
+
+          interactor.call(
+            Domain::FieldCultivation::Dtos::FieldCultivationClimateDataInput.new(
+              field_cultivation_id: fc_id
+            )
+          )
+
+          assert_instance_of Domain::Shared::Dtos::Error, received
+          assert_equal "Forbidden", received.message
+          output_port.verify
+        end
+
         test "routes RecordNotFound through the output port" do
           fc_id = 42
           source_gateway = Object.new

@@ -873,14 +873,7 @@ module CompositionRoot
       )
     end
 
-    # FieldCultivation API 用ファサード（認可・CRUD）
-    def field_cultivation_climate_gateway_for(current_user_dto)
-      Adapters::FieldCultivation::Gateways::FieldCultivationClimateActiveRecordGateway.new(
-        context_gateway: field_cultivation_climate_source_gateway_for(current_user_dto)
-      )
-    end
-
-    def field_cultivation_climate_source_gateway_for(_current_user_dto = nil)
+    def field_cultivation_climate_source_gateway_for
       @field_cultivation_climate_source_gateway ||= Adapters::FieldCultivation::Gateways::FieldCultivationClimateSourceActiveRecordGateway.new
     end
 

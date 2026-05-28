@@ -128,12 +128,6 @@ module Api
           assert_equal @field_cultivation.area, data["area"]
         end
 
-        test "show アクションで存在しないIDの場合は404を返す" do
-          get "/api/v1/public_plans/field_cultivations/99999"
-
-          assert_response :not_found
-        end
-
         test "update アクションが正常に動作する（認証不要）" do
           new_start_date = Date.current + 10.days
           new_completion_date = Date.current + 70.days
@@ -152,21 +146,6 @@ module Api
           assert_equal new_start_date.to_s, data["field_cultivation"]["start_date"]
           assert_equal new_completion_date.to_s, data["field_cultivation"]["completion_date"]
 
-          @field_cultivation.reload
-          assert_equal new_start_date, @field_cultivation.start_date
-          assert_equal new_completion_date, @field_cultivation.completion_date
-        end
-
-        test "update アクションで存在しないIDの場合は404を返す" do
-          patch "/api/v1/public_plans/field_cultivations/99999",
-                params: {
-                  field_cultivation: {
-                    start_date: Date.current + 10.days,
-                    completion_date: Date.current + 70.days
-                  }
-                }
-
-          assert_response :not_found
         end
 
         private

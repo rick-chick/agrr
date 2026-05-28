@@ -41,6 +41,38 @@ module Domain
           output_port.verify
         end
 
+        test "calls on_failure with Forbidden when private plan is owned by another user" do
+          fc_id = 7
+          gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            gateway,
+            fc_id,
+            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 99)
+          )
+          gateway.define_singleton_method(:find_api_summary) do |_kwargs|
+            flunk "find_api_summary must not run when access is denied"
+          end
+
+          user_lookup = Minitest::Mock.new
+          user_lookup.expect(:find, domain_user_stub(id: 1), [ 1 ])
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_failure, nil) { |arg| received = arg }
+
+          FieldCultivationShowInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            user_id: 1,
+            user_lookup: user_lookup
+          ).call(field_cultivation_id: fc_id)
+
+          assert_instance_of Domain::Shared::Dtos::Error, received
+          assert_equal "Forbidden", received.message
+          output_port.verify
+          user_lookup.verify
+        end
+
         test "calls on_failure with Error when gateway raises RecordNotFound" do
           fc_id = 99
           gateway = Object.new

@@ -44,6 +44,44 @@ module Domain
           output_port.verify
         end
 
+        test "calls on_failure with Forbidden when private plan is owned by another user" do
+          input = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInput.new(
+            field_cultivation_id: 1,
+            start_date: Date.new(2026, 1, 1),
+            completion_date: Date.new(2026, 1, 1) + 5,
+            public_plan: false
+          )
+
+          gateway = Object.new
+          attach_plan_access_context_to_gateway(
+            gateway,
+            input.field_cultivation_id,
+            context: private_field_cultivation_plan_context(input.field_cultivation_id, plan_user_id: 99)
+          )
+          gateway.define_singleton_method(:update_field_cultivation_schedule) do |_kwargs|
+            flunk "update must not run when access is denied"
+          end
+
+          user_lookup = Minitest::Mock.new
+          user_lookup.expect(:find, domain_user_stub(id: 1), [ 1 ])
+
+          received = nil
+          output_port = Minitest::Mock.new
+          output_port.expect(:on_failure, nil) { |arg| received = arg }
+
+          FieldCultivationUpdateInteractor.new(
+            output_port: output_port,
+            gateway: gateway,
+            user_id: 1,
+            user_lookup: user_lookup
+          ).call(input)
+
+          assert_instance_of Domain::Shared::Dtos::Error, received
+          assert_equal "Forbidden", received.message
+          output_port.verify
+          user_lookup.verify
+        end
+
         test "calls on_failure with Error when gateway raises RecordNotFound" do
           input = Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateInput.new(
             field_cultivation_id: 1,

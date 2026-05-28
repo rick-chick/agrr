@@ -126,27 +126,6 @@ module Api
           end
         end
 
-        test "他のユーザーの計画にはアクセスできない" do
-          other_user = create(:user)
-          other_session = Session.create_for_user(other_user)
-          cookies[:session_id] = other_session.session_id
-
-          predicted_data = {
-            "latitude" => @farm.latitude,
-            "longitude" => @farm.longitude,
-            "timezone" => "Asia/Tokyo",
-            "data" => []
-          }
-          @cultivation_plan.update!(predicted_weather_data: predicted_data)
-
-          get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data"
-
-          # find_field_cultivationでRecordNotFoundが発生するため、500エラーまたは404エラーが返る
-          assert_includes [ 404, 500 ], response.status
-          data = JSON.parse(response.body)
-          assert_not data["success"]
-        end
-
         test "show アクションが正常に動作する" do
           get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}"
 
@@ -156,17 +135,6 @@ module Api
           assert_equal @field_cultivation.field_display_name, data["field_name"]
           assert_equal @field_cultivation.crop_display_name, data["crop_name"]
           assert_equal @field_cultivation.area, data["area"]
-        end
-
-        test "show アクションで他のユーザーの計画にはアクセスできない" do
-          other_user = create(:user)
-          other_session = Session.create_for_user(other_user)
-          cookies[:session_id] = other_session.session_id
-
-          get "/api/v1/plans/field_cultivations/#{@field_cultivation.id}"
-
-          # find_field_cultivationでRecordNotFoundが発生するため、500エラーまたは404エラーが返る
-          assert_includes [ 404, 500 ], response.status
         end
 
         test "update アクションが正常に動作する" do
@@ -187,26 +155,6 @@ module Api
           assert_equal new_start_date.to_s, data["field_cultivation"]["start_date"]
           assert_equal new_completion_date.to_s, data["field_cultivation"]["completion_date"]
 
-          @field_cultivation.reload
-          assert_equal new_start_date, @field_cultivation.start_date
-          assert_equal new_completion_date, @field_cultivation.completion_date
-        end
-
-        test "update アクションで他のユーザーの計画にはアクセスできない" do
-          other_user = create(:user)
-          other_session = Session.create_for_user(other_user)
-          cookies[:session_id] = other_session.session_id
-
-          patch "/api/v1/plans/field_cultivations/#{@field_cultivation.id}",
-                params: {
-                  field_cultivation: {
-                    start_date: Date.current + 10.days,
-                    completion_date: Date.current + 70.days
-                  }
-                }
-
-          # find_field_cultivationでRecordNotFoundが発生するため、500エラーまたは404エラーが返る
-          assert_includes [ 404, 500 ], response.status
         end
 
         private

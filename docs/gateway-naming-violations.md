@@ -38,14 +38,13 @@
 | 旧クラス | `ShellStdoutCaptureGateway` |
 | 解消 | `app/adapters/backdoor/gateways/shell_stdout_capture_cli_gateway.rb` / `ShellStdoutCaptureCliGateway` |
 
-### A-3. ~~`field_cultivation_climate_gateway.rb`~~（解消方向）
+### ~~A-3. `field_cultivation_climate_gateway.rb`~~（解消済み）
 
 | 項目 | 値 |
 |---|---|
 | 旧クラス | `FieldCultivationClimateGateway`（単一巨大 gateway） |
-| 現状 | `FieldCultivationClimateSourceActiveRecordGateway` / `FieldCultivationClimateProgress*Gateway` + `FieldCultivationClimateDataInteractor`（2026 以降の分割） |
-| 残タスク | adapter 内 snapshot 組立・認可コンテキストの read は [gateway-domain-logic-migration.md §P1 / §P4](./gateway-domain-logic-migration.md#adapter-残存ドメインロジック洗い出し) |
-| ファイル名 | `field_cultivation_climate_active_record_gateway.rb` が残る場合は `_active_record_gateway` 接尾辞の整理対象（実体は source/progress と重複しないか要確認） |
+| 解消 | `FieldCultivationClimateSourceActiveRecordGateway` / `FieldCultivationClimateProgress*Gateway` + `FieldCultivationClimateDataInteractor`。委譲のみの `FieldCultivationClimateActiveRecordGateway` は削除（2026-05-28） |
+| 残（別エピック） | adapter 内 snapshot 組立は [gateway-domain-logic-migration.md §P4](./gateway-domain-logic-migration.md#p4---厚い-read-snapshot-組立移行候補)。`find_plan_access_context` の AR 組立は §P1 |
 
 ### ~~A-4. `agrr_prediction_gateway_adapter.rb`~~（解消済み）
 | 項目 | 値 |
@@ -165,7 +164,7 @@
 
 | 優先度 | カテゴリ | 件数 | 内容 |
 |---|---|---|---|
-| **P1** | ファイル命名違反 | 2 + 部分 1 | 未解消: A-3（climate ファサード `field_cultivation_climate_active_record_gateway.rb`）。A-1〜2,4,6〜10 は命名解消済み（A-5, C-6 含む） |
+| **P1** | ファイル命名違反 | 部分 1 | A-1〜10 命名解消済み（A-3: ファサード・`field_cultivation_climate_gateway_for` 削除含む、2026-05-28）。C-5 は §P4 残が別エピック |
 | **P2** | メソッド命名違反 | 32 | `find_<entity>_by_*`, `destroy`, `create_<entity>` |
 | **P3** | ゲートウェイ境界違反 | 5 | 認可・フォーム準備・マルチエンティティ・プレゼンター形状複合（C-6 解消済み） |
 

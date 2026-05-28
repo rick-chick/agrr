@@ -28,14 +28,49 @@ module Adapters
           CompositionRoot.field_cultivation_climate_source_gateway_for
         end
 
+        test "find_plan_access_context returns plan access dto" do
+          context = climate_source_gateway.find_plan_access_context(@field_cultivation.id)
+
+          assert_equal @field_cultivation.id, context.field_cultivation_id
+          refute context.plan_type_public
+          assert context.plan_type_private
+          assert_equal @user.id, context.plan_user_id
+        end
+
         test "find_by_field_cultivation_id returns source snapshot" do
           source = climate_source_gateway.find_by_field_cultivation_id(@field_cultivation.id)
 
           assert_equal @field_cultivation.id, source.field_cultivation_id
           assert_equal @farm.weather_location.id, source.weather_location_id
           assert_equal @crop.id, source.plan_crop_crop_id
-          assert Domain::Shared::ValidationHelpers.present?(source.predicted_weather_data) ||
-                 !Domain::Shared::ValidationHelpers.present?(source.predicted_weather_data)
+        end
+
+        test "find_api_summary returns api summary dto" do
+          summary = climate_source_gateway.find_api_summary(field_cultivation_id: @field_cultivation.id)
+
+          assert_equal @field_cultivation.id, summary.id
+          assert_equal @field_cultivation.field_display_name, summary.field_name
+          assert_equal @field_cultivation.crop_display_name, summary.crop_name
+          assert_equal @field_cultivation.area, summary.area
+        end
+
+        test "update_field_cultivation_schedule persists schedule and returns output dto" do
+          new_start = Date.current + 10.days
+          new_end = Date.current + 70.days
+
+          output = climate_source_gateway.update_field_cultivation_schedule(
+            field_cultivation_id: @field_cultivation.id,
+            start_date: new_start,
+            completion_date: new_end
+          )
+
+          assert_equal @field_cultivation.id, output.field_cultivation_id
+          assert_equal new_start, output.start_date
+          assert_equal new_end, output.completion_date
+
+          @field_cultivation.reload
+          assert_equal new_start, @field_cultivation.start_date
+          assert_equal new_end, @field_cultivation.completion_date
         end
 
         test "find_weather_prediction_targets_by_plan_id returns domain DTOs" do
