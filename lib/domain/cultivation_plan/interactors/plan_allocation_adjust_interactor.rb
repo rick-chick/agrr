@@ -35,6 +35,7 @@ module Domain
           logger:,
           translator:,
           clock:,
+          plan_gateway:,
           plan_allocation_adjust_read_gateway:,
           weather_prediction_gateway:,
           plan_allocation_adjust_gateway:,
@@ -48,6 +49,7 @@ module Domain
           @logger = logger
           @translator = translator
           @clock = clock
+          @plan_gateway = plan_gateway
           @plan_allocation_adjust_read_gateway = plan_allocation_adjust_read_gateway
           @weather_prediction_gateway = weather_prediction_gateway
           @plan_allocation_adjust_gateway = plan_allocation_adjust_gateway
@@ -176,17 +178,15 @@ module Domain
         private
 
         def load_adjust_read_context!(plan_id, auth: nil)
-          @adjust_read_snapshot =
-            if auth&.private?
-              @plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id_and_user_id(
-                plan_id: plan_id,
-                user_id: auth.user_id
-              )
-            elsif auth
-              @plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id_public(plan_id: plan_id)
-            else
-              @plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id(plan_id: plan_id)
+          if auth
+            plan = @plan_gateway.find_by_id(plan_id)
+            if RestPlanAccess.access_denied?(plan: plan, auth: auth)
+              raise Domain::Shared::Exceptions::RecordNotFound
             end
+          end
+
+          @adjust_read_snapshot =
+            @plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id(plan_id: plan_id)
         end
 
         def pass_rest_adjust_preflight!(input)

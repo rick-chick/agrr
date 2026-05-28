@@ -31,6 +31,55 @@ module Domain
           def now = fixed
         end
 
+        def owned_plan
+          Entities::CultivationPlanEntity.new(
+            id: 2,
+            farm_id: 1,
+            user_id: 1,
+            total_area: 0,
+            plan_type: "private"
+          )
+        end
+
+        def other_users_plan
+          Entities::CultivationPlanEntity.new(
+            id: 2,
+            farm_id: 1,
+            user_id: 99,
+            total_area: 0,
+            plan_type: "private"
+          )
+        end
+
+        def public_plan
+          Entities::CultivationPlanEntity.new(
+            id: 2,
+            farm_id: 1,
+            user_id: nil,
+            total_area: 0,
+            plan_type: "public"
+          )
+        end
+
+        def build_interactor(**overrides)
+          defaults = {
+            output_port: mock,
+            logger: FakeLogger.new,
+            translator: FakeTranslator.new(nil),
+            clock: FakeClock.new(Time.utc(2026, 1, 1)),
+            plan_gateway: mock,
+            plan_allocation_adjust_read_gateway: mock,
+            weather_prediction_gateway: mock,
+            plan_allocation_adjust_gateway: mock,
+            field_cultivation_sync: mock,
+            agrr_adjust_result_sync_mapper: mock,
+            optimization_events_gateway: mock,
+            debug_dump_gateway: Domain::CultivationPlan::Gateways::PlanAllocationAdjustDebugDumpNullGateway.new,
+            interaction_rule_random_hex: -> { "abcd1234" }
+          }
+          PlanAllocationAdjustInteractor.new(**defaults.merge(overrides))
+        end
+
         def build_adjust_read_snapshot(crop_name:, has_growth_stages:)
           Snapshot.new(
             plan_id: 2,
@@ -79,19 +128,10 @@ module Domain
               failure.message.include?("api.errors.optimization.adjust_failed")
           end
 
-          interactor = PlanAllocationAdjustInteractor.new(
+          interactor = build_interactor(
             output_port: output,
-            logger: FakeLogger.new,
-            translator: FakeTranslator.new(nil),
             clock: FakeClock.new(fixed_time),
-            plan_allocation_adjust_read_gateway: mock,
-            weather_prediction_gateway: mock,
-            plan_allocation_adjust_gateway: agrr_gateway,
-            field_cultivation_sync: mock,
-            agrr_adjust_result_sync_mapper: mock,
-            optimization_events_gateway: mock,
-            debug_dump_gateway: Domain::CultivationPlan::Gateways::PlanAllocationAdjustDebugDumpNullGateway.new,
-            interaction_rule_random_hex: -> { "abcd1234" }
+            plan_allocation_adjust_gateway: agrr_gateway
           )
 
           interactor.send(
@@ -110,33 +150,76 @@ module Domain
           )
         end
 
-        test "call loads adjust read snapshot via user scope for private auth" do
+        test "call loads adjust read snapshot after RestPlanAccess for private auth" do
           output = mock
           read_gateway = mock
-          logger = FakeLogger.new
-          translator = FakeTranslator.new(nil)
+          plan_gateway = mock
           auth = Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
           snapshot = build_adjust_read_snapshot(crop_name: "C", has_growth_stages: true)
-          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id_and_user_id)
-                      .with(plan_id: 2, user_id: 1)
-                      .returns(snapshot)
+          plan_gateway.expects(:find_by_id).with(2).returns(owned_plan)
+          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id).with(plan_id: 2).returns(snapshot)
           output.expects(:on_success).with do |output:|
             output.skipped == true && output.message.include?("調整不要")
           end
 
-          PlanAllocationAdjustInteractor.new(
+          build_interactor(
             output_port: output,
-            logger: logger,
+            plan_gateway: plan_gateway,
+            plan_allocation_adjust_read_gateway: read_gateway
+          ).call(
+            Dtos::PlanAllocationAdjustInput.new(
+              plan_id: 2,
+              moves: [],
+              auth: auth
+            )
+          )
+        end
+
+        test "call dispatches not_found when private auth and plan owned by another user" do
+          output = mock
+          read_gateway = mock
+          plan_gateway = mock
+          translator = FakeTranslator.new(nil)
+          auth = Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
+          plan_gateway.expects(:find_by_id).with(2).returns(other_users_plan)
+          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id).never
+          output.expects(:on_failure).with do |failure:|
+            failure.kind == Failure::KIND_NOT_FOUND
+          end
+          output.expects(:on_success).never
+
+          build_interactor(
+            output_port: output,
             translator: translator,
-            clock: FakeClock.new(Time.utc(2026, 1, 1)),
-            plan_allocation_adjust_read_gateway: read_gateway,
-            weather_prediction_gateway: mock,
-            plan_allocation_adjust_gateway: mock,
-            field_cultivation_sync: mock,
-            agrr_adjust_result_sync_mapper: mock,
-            optimization_events_gateway: mock,
-            debug_dump_gateway: Domain::CultivationPlan::Gateways::PlanAllocationAdjustDebugDumpNullGateway.new,
-            interaction_rule_random_hex: -> { "abcd1234" }
+            plan_gateway: plan_gateway,
+            plan_allocation_adjust_read_gateway: read_gateway
+          ).call(
+            Dtos::PlanAllocationAdjustInput.new(
+              plan_id: 2,
+              moves: [],
+              auth: auth
+            )
+          )
+        end
+
+        test "call dispatches not_found when public auth and plan is private" do
+          output = mock
+          read_gateway = mock
+          plan_gateway = mock
+          translator = FakeTranslator.new(nil)
+          auth = Dtos::CultivationPlanRestAuth.new(mode: :public)
+          plan_gateway.expects(:find_by_id).with(2).returns(other_users_plan)
+          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id).never
+          output.expects(:on_failure).with do |failure:|
+            failure.kind == Failure::KIND_NOT_FOUND
+          end
+          output.expects(:on_success).never
+
+          build_interactor(
+            output_port: output,
+            translator: translator,
+            plan_gateway: plan_gateway,
+            plan_allocation_adjust_read_gateway: read_gateway
           ).call(
             Dtos::PlanAllocationAdjustInput.new(
               plan_id: 2,
@@ -149,6 +232,7 @@ module Domain
         test "call dispatches crop_missing_growth_stages when plan crop has no growth stages" do
           output = mock
           read_gateway = mock
+          plan_gateway = mock
           translator = mock
           translator.expects(:translate).with(
             "api.errors.cultivation_plan.crop_missing_growth_stages",
@@ -156,26 +240,19 @@ module Domain
           ).returns("missing stages")
           auth = Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
           snapshot = build_adjust_read_snapshot(crop_name: "X", has_growth_stages: false)
-          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id_and_user_id).returns(snapshot)
+          plan_gateway.expects(:find_by_id).with(2).returns(owned_plan)
+          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id).returns(snapshot)
           output.expects(:on_failure).with do |failure:|
             failure.kind == Failure::KIND_CROP_MISSING_GROWTH_STAGES &&
               failure.message == "missing stages"
           end
           output.expects(:on_success).never
 
-          PlanAllocationAdjustInteractor.new(
+          build_interactor(
             output_port: output,
-            logger: FakeLogger.new,
             translator: translator,
-            clock: FakeClock.new(Time.utc(2026, 1, 1)),
-            plan_allocation_adjust_read_gateway: read_gateway,
-            weather_prediction_gateway: mock,
-            plan_allocation_adjust_gateway: mock,
-            field_cultivation_sync: mock,
-            agrr_adjust_result_sync_mapper: mock,
-            optimization_events_gateway: mock,
-            debug_dump_gateway: Domain::CultivationPlan::Gateways::PlanAllocationAdjustDebugDumpNullGateway.new,
-            interaction_rule_random_hex: -> { "abcd1234" }
+            plan_gateway: plan_gateway,
+            plan_allocation_adjust_read_gateway: read_gateway
           ).call(
             Dtos::PlanAllocationAdjustInput.new(
               plan_id: 2,

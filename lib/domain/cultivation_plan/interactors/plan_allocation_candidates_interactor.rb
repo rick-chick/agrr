@@ -29,10 +29,7 @@ module Domain
         # @param ui_filter_context [Hash] ログ用（空可）
         # @return [Hash, nil] 最良候補 { field_id:, start_date:, profit: } または nil
         def call(auth:, plan_id:, crop:, field_id:, display_range:, ui_filter_context: {})
-          plan = @plan_loader.call(
-            plan_id: plan_id,
-            user_id: auth.private? ? auth.user_id : nil
-          )
+          plan = @plan_loader.call(plan_id: plan_id)
           configs = @allocation_configs.call(plan)
           current_allocation = configs.fetch(:current_allocation)
           fields = configs.fetch(:fields)

@@ -325,6 +325,7 @@ module CompositionRoot
         logger: logger,
         translator: translator,
         clock: clock,
+        plan_gateway: cultivation_plan_gateway,
         plan_allocation_adjust_read_gateway: plan_allocation_adjust_read_gateway,
         weather_prediction_gateway: adjust_weather_prediction_gateway,
         plan_allocation_adjust_gateway: plan_allocation_adjust_gateway,
@@ -712,17 +713,10 @@ module CompositionRoot
     def build_plan_allocation_candidates_interactor(clock: Time.zone)
       log = logger
 
-      plan_loader = lambda do |plan_id:, user_id: nil|
-        if user_id
-          ::Adapters::CultivationPlan::Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_and_user_id(
-            plan_id: plan_id,
-            user_id: user_id
-          )
-        else
-          ::Adapters::CultivationPlan::Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_public(
-            plan_id: plan_id
-          )
-        end
+      plan_loader = lambda do |plan_id:, **|
+        ::Adapters::CultivationPlan::Persistence::CultivationPlanRestPlanPreload.find_by_plan_id(
+          plan_id: plan_id
+        )
       end
 
       allocation_configs = lambda do |plan|
@@ -1014,6 +1008,7 @@ module CompositionRoot
     def task_schedule_item_create_interactor(output_port:)
       Domain::CultivationPlan::Interactors::TaskScheduleItemCreateInteractor.new(
         output_port: output_port,
+        plan_gateway: cultivation_plan_gateway,
         gateway: task_schedule_item_mutation_gateway
       )
     end
@@ -1021,6 +1016,7 @@ module CompositionRoot
     def task_schedule_item_update_interactor(output_port:)
       Domain::CultivationPlan::Interactors::TaskScheduleItemUpdateInteractor.new(
         output_port: output_port,
+        plan_gateway: cultivation_plan_gateway,
         gateway: task_schedule_item_mutation_gateway,
         clock: Time.zone
       )
@@ -1029,6 +1025,7 @@ module CompositionRoot
     def task_schedule_item_complete_interactor(output_port:)
       Domain::CultivationPlan::Interactors::TaskScheduleItemCompleteInteractor.new(
         output_port: output_port,
+        plan_gateway: cultivation_plan_gateway,
         gateway: task_schedule_item_mutation_gateway,
         clock: Time.zone
       )
@@ -1045,6 +1042,7 @@ module CompositionRoot
     def task_schedule_item_schedule_deletion_undo_interactor(mutation_output_port:, undo_output_port:, translator:)
       Domain::CultivationPlan::Interactors::TaskScheduleItemScheduleDeletionUndoInteractor.new(
         mutation_output_port: mutation_output_port,
+        plan_gateway: cultivation_plan_gateway,
         mutation_gateway: task_schedule_item_mutation_gateway,
         deletion_undo_interactor: deletion_undo_schedule_interactor(output_port: undo_output_port),
         translator: translator

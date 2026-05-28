@@ -170,6 +170,8 @@ module Domain
 
           assert_nil @output_port.success_dto
           assert_equal "t:plans.errors.not_found", @output_port.failure_dto.message
+          assert_nil private_read_gateway.received_plan_id,
+            "timeline read gateway must not run when access is denied"
         end
 
         private

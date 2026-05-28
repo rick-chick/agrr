@@ -73,7 +73,7 @@ module Domain
           crop = crop_snapshot
           @plan_gateway.expects(:find_by_id).with(9).returns(@plan)
           @add_crop_crop_resolve.expects(:call).with(crop_id: "1").returns(crop)
-          @plan_crop.expects(:create).with(plan_id: 9, crop_entity: crop, user_id: 1).returns(plan_crop_snapshot)
+          @plan_crop.expects(:create).with(plan_id: 9, crop_entity: crop).returns(plan_crop_snapshot)
           @plan_allocation_candidates.expects(:call).with(
             auth: @auth,
             plan_id: 9,
@@ -83,7 +83,10 @@ module Domain
             ui_filter_context: {}
           ).returns(field_id: "2", start_date: Date.new(2026, 1, 1))
           @plan_allocation_adjust.expects(:call).with do |input|
-            input.plan_id == 9 && input.moves.size == 1 && input.moves.first[:action] == "add"
+            input.plan_id == 9 &&
+              input.auth == @auth &&
+              input.moves.size == 1 &&
+              input.moves.first[:action] == "add"
           end
           @add_crop_adjust_result_sink.expects(:add_crop_adjust_result).returns(
             Domain::CultivationPlan::Dtos::AddCropAdjustResult.new(success: true)

@@ -5,12 +5,11 @@ module Domain
     module Gateways
       # REST add_crop: cultivation_plan_crops の永続化のみ。認可は Interactor + Policy。
       class CultivationPlanPlanCropGateway
-        # @param user_id [Integer, nil] 指定時は private 計画を user スコープで narrow find してから create
         # @param crop_entity [Domain::Crop::Dtos::AddCropCropSnapshot, #id, #name, #variety, #area_per_unit, #revenue_per_area]
         # @return [Domain::CultivationPlan::Dtos::CultivationPlanCropSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordNotFound]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
-        def create(plan_id:, crop_entity:, user_id: nil)
+        def create(plan_id:, crop_entity:)
           raise NotImplementedError
         end
 

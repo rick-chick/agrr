@@ -27,8 +27,8 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordInvalid, e.message
         end
 
-        def create(plan_id:, crop_entity:, user_id: nil)
-          cultivation_plan = rest_plan_record(plan_id: plan_id, user_id: user_id)
+        def create(plan_id:, crop_entity:)
+          cultivation_plan = Persistence::CultivationPlanRestPlanPreload.find_by_plan_id(plan_id: plan_id)
           crop = ::Crop.find(crop_entity.id)
 
           plan_crop = cultivation_plan.cultivation_plan_crops.create!(
@@ -56,19 +56,6 @@ module Adapters
           record.destroy!
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        private
-
-        def rest_plan_record(plan_id:, user_id:)
-          if user_id
-            Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_and_user_id(
-              plan_id: plan_id,
-              user_id: user_id
-            )
-          else
-            Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_public(plan_id: plan_id)
-          end
         end
       end
     end

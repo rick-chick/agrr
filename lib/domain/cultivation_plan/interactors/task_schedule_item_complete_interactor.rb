@@ -4,19 +4,26 @@ module Domain
   module CultivationPlan
     module Interactors
       class TaskScheduleItemCompleteInteractor
-        def initialize(output_port:, gateway:, clock:)
+        def initialize(output_port:, plan_gateway:, gateway:, clock:)
           @output_port = output_port
+          @plan_gateway = plan_gateway
           @gateway = gateway
           @clock = clock
         end
 
         def call(user_id:, plan_id:, item_id:, completion_params:)
+          unless TaskSchedulePrivatePlanAccess.access_allowed?(
+            plan_gateway: @plan_gateway, plan_id: plan_id, user_id: user_id
+          )
+            @output_port.on_not_found
+            return
+          end
+
           input = Domain::CultivationPlan::Dtos::TaskScheduleItemCompleteInput.from_completion_params(
             completion_params,
             clock: @clock
           )
           payload = @gateway.complete_item_for_plan!(
-            user_id,
             plan_id,
             item_id,
             actual_date: input.actual_date,

@@ -18,10 +18,6 @@ module Domain
           mode == :private
         end
 
-        def public?
-          mode == :public
-        end
-
         def self.for_api_controller(controller)
           if controller.class.name.include?("::PublicPlans::")
             new(mode: :public, user_id: nil)

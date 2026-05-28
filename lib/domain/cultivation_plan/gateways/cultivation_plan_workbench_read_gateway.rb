@@ -7,12 +7,6 @@ module Domain
       class CultivationPlanWorkbenchReadGateway
         # @return [Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordNotFound]
-        def load_snapshot_by_plan_id_and_user_id(plan_id:, user_id:)
-          raise NotImplementedError
-        end
-
-        # @return [Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot]
-        # @raise [Domain::Shared::Exceptions::RecordNotFound]
         def load_snapshot_by_plan_id(plan_id:)
           raise NotImplementedError
         end

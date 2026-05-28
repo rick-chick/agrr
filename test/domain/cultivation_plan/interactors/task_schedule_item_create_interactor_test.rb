@@ -8,9 +8,18 @@ module Domain
       class TaskScheduleItemCreateInteractorTest < DomainLibTestCase
         setup do
           @gateway = mock
+          @plan_gateway = mock
           @output_port = mock
+          @plan = Entities::CultivationPlanEntity.new(
+            id: 2,
+            farm_id: 1,
+            user_id: 1,
+            total_area: 0,
+            plan_type: "private"
+          )
           @interactor = TaskScheduleItemCreateInteractor.new(
             output_port: @output_port,
+            plan_gateway: @plan_gateway,
             gateway: @gateway
           )
         end
@@ -29,9 +38,10 @@ module Domain
           }
           payload = { id: 1, name: "作業A" }
 
-          @gateway.expects(:find_field_cultivation_for_create!).with(1, 2, 10).returns(field)
+          @plan_gateway.expects(:find_by_id).with(2).returns(@plan)
+          @gateway.expects(:find_field_cultivation_for_create!).with(2, 10).returns(field)
           @gateway.expects(:find_crop_task_template_for_mutation).with(nil).returns(nil)
-          @gateway.expects(:create).with(user_id: 1, plan_id: 2, attributes: kind_of(Hash)).returns(payload)
+          @gateway.expects(:create).with(plan_id: 2, attributes: kind_of(Hash)).returns(payload)
           @output_port.expects(:on_created).with(payload)
 
           @interactor.call(user_id: 1, plan_id: 2, attributes: attrs)
@@ -44,6 +54,7 @@ module Domain
             crop_id: 3
           )
 
+          @plan_gateway.expects(:find_by_id).with(2).returns(@plan)
           @gateway.expects(:find_field_cultivation_for_create!).returns(field)
           @gateway.expects(:find_crop_task_template_for_mutation).returns(nil)
           @gateway.expects(:create).never

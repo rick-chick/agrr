@@ -4,15 +4,22 @@ module Domain
   module CultivationPlan
     module Interactors
       class TaskScheduleItemCreateInteractor
-        def initialize(output_port:, gateway:)
+        def initialize(output_port:, plan_gateway:, gateway:)
           @output_port = output_port
+          @plan_gateway = plan_gateway
           @gateway = gateway
         end
 
         def call(user_id:, plan_id:, attributes:)
+          unless TaskSchedulePrivatePlanAccess.access_allowed?(
+            plan_gateway: @plan_gateway, plan_id: plan_id, user_id: user_id
+          )
+            @output_port.on_not_found
+            return
+          end
+
           attrs = Domain::Shared.symbolize_keys(attributes.to_h)
           field_cultivation = @gateway.find_field_cultivation_for_create!(
-            user_id,
             plan_id,
             attrs[:field_cultivation_id]
           )
@@ -31,7 +38,7 @@ module Domain
             attrs,
             template: template
           )
-          @output_port.on_created(@gateway.create(user_id: user_id, plan_id: plan_id, attributes: create_attrs))
+          @output_port.on_created(@gateway.create(plan_id: plan_id, attributes: create_attrs))
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_record_invalid(
             errors: Domain::Shared::ValidationErrorHash.from(e.errors),

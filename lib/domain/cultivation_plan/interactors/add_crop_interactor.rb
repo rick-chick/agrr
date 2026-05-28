@@ -36,7 +36,6 @@ module Domain
         # @param ui_filter_context [Hash] 候補探索ログ用（空可）
         def call(auth:, plan_id:, crop_id:, field_id:, display_range:, ui_filter_context: {})
           plan_crop_id = nil
-          user_id = auth.private? ? auth.user_id : nil
 
           plan = @plan_gateway.find_by_id(plan_id)
           if RestPlanAccess.access_denied?(plan: plan, auth: auth)
@@ -51,8 +50,7 @@ module Domain
 
           plan_crop_snapshot = @plan_crop_gateway.create(
             plan_id: plan_id,
-            crop_entity: crop_snapshot,
-            user_id: user_id
+            crop_entity: crop_snapshot
           )
           plan_crop_id = plan_crop_snapshot.id
           plan_crop_display_name = plan_crop_snapshot.display_name
@@ -85,7 +83,7 @@ module Domain
           ]
 
           @plan_allocation_adjust.call(
-            Dtos::PlanAllocationAdjustInput.new(plan_id: plan_id, moves: moves)
+            Dtos::PlanAllocationAdjustInput.new(plan_id: plan_id, moves: moves, auth: auth)
           )
           adjust_result = @add_crop_adjust_result_sink.add_crop_adjust_result
 

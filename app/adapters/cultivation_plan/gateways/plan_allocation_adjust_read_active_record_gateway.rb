@@ -17,15 +17,7 @@ module Adapters
         end
 
         def find_adjust_read_snapshot_by_plan_id(plan_id:)
-          snapshot_from_plan(load_plan_unscoped(plan_id))
-        end
-
-        def find_adjust_read_snapshot_by_plan_id_and_user_id(plan_id:, user_id:)
-          snapshot_from_plan(load_plan_for_rest_private(plan_id: plan_id, user_id: user_id))
-        end
-
-        def find_adjust_read_snapshot_by_plan_id_public(plan_id:)
-          snapshot_from_plan(load_plan_for_rest_public(plan_id: plan_id))
+          snapshot_from_plan(load_plan(plan_id))
         end
 
         def list_historical_weather_rows(weather_location_id:, historical_start:, historical_end:)
@@ -67,21 +59,8 @@ module Adapters
           )
         end
 
-        def load_plan_unscoped(plan_id)
+        def load_plan(plan_id)
           ::CultivationPlan.includes(*ADJUST_INCLUDES).find(plan_id)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def load_plan_for_rest_private(plan_id:, user_id:)
-          user = ::User.find(user_id)
-          ::CultivationPlan.plan_type_private.by_user(user).includes(*ADJUST_INCLUDES).find(plan_id.to_i)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def load_plan_for_rest_public(plan_id:)
-          ::CultivationPlan.plan_type_public.includes(*ADJUST_INCLUDES).find(plan_id.to_i)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end

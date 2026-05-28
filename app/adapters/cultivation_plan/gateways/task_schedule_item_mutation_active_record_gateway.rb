@@ -9,8 +9,8 @@ module Adapters
           @logger = logger
         end
 
-        def find_field_cultivation_for_create!(user_id, plan_id, field_cultivation_id)
-          plan = cultivation_plan_for_user!(user_id, plan_id)
+        def find_field_cultivation_for_create!(plan_id, field_cultivation_id)
+          plan = cultivation_plan!(plan_id)
           field_cultivation = plan.field_cultivations.find(field_cultivation_id)
           crop_id = field_cultivation.cultivation_plan_crop&.crop_id
           Domain::CultivationPlan::Dtos::TaskScheduleFieldCultivationSnapshot.new(
@@ -40,8 +40,8 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound
         end
 
-        def find_item_amount_snapshot!(user_id, plan_id, item_id)
-          item = ar_item_for_plan(user_id, plan_id, item_id)
+        def find_item_amount_snapshot!(plan_id, item_id)
+          item = ar_item_for_plan(plan_id, item_id)
           raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
 
           Domain::CultivationPlan::Dtos::TaskScheduleItemAmountSnapshot.new(
@@ -51,12 +51,11 @@ module Adapters
           )
         end
 
-        def create(user_id:, plan_id:, attributes:)
-          user_id = user_id.to_i
+        def create(plan_id:, attributes:)
           plan_id = plan_id.to_i
           attrs = attributes.to_h.symbolize_keys
           created = ::TaskScheduleItem.transaction do
-            plan = cultivation_plan_for_user!(user_id, plan_id)
+            plan = cultivation_plan!(plan_id)
             field_cultivation = plan.field_cultivations.find(attrs[:field_cultivation_id])
             category = "general"
 
@@ -80,29 +79,26 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound
         end
 
-        def update_item_for_plan!(user_id, plan_id, item_id, attributes)
-          user_id = user_id.to_i
+        def update_item_for_plan!(plan_id, item_id, attributes)
           plan_id = plan_id.to_i
-          item = ar_item_for_plan(user_id, plan_id, item_id)
+          item = ar_item_for_plan(plan_id, item_id)
           raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
 
           update_record_item!(item, attributes)
         end
 
-        def complete_item_for_plan!(user_id, plan_id, item_id, actual_date:, actual_notes:, completed_at:)
-          user_id = user_id.to_i
+        def complete_item_for_plan!(plan_id, item_id, actual_date:, actual_notes:, completed_at:)
           plan_id = plan_id.to_i
-          item = ar_item_for_plan(user_id, plan_id, item_id)
+          item = ar_item_for_plan(plan_id, item_id)
           raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
 
           complete_record_item!(item, actual_date: actual_date, actual_notes: actual_notes, completed_at: completed_at)
         end
 
-        def deletion_undo_schedule_row_for_item!(user_id, plan_id, item_id)
-          user_id = user_id.to_i
+        def deletion_undo_schedule_row_for_item!(plan_id, item_id)
           plan_id = plan_id.to_i
           item_id = item_id.to_i
-          item = ar_item_for_plan(user_id, plan_id, item_id)
+          item = ar_item_for_plan(plan_id, item_id)
           raise Domain::Shared::Exceptions::RecordNotFound if item.nil?
 
           {
@@ -114,22 +110,18 @@ module Adapters
 
         private
 
-        def cultivation_plan_for_user!(user_id, plan_id)
-          plan = ::CultivationPlan
-            .plan_type_private
-            .find_by(user_id: user_id, id: plan_id)
-          raise Domain::Shared::Exceptions::RecordNotFound if plan.nil?
-
-          plan
+        def cultivation_plan!(plan_id)
+          ::CultivationPlan.find(plan_id.to_i)
+        rescue ActiveRecord::RecordNotFound
+          raise Domain::Shared::Exceptions::RecordNotFound
         end
 
-        def ar_item_for_plan(user_id, plan_id, item_id)
+        def ar_item_for_plan(plan_id, item_id)
           ::TaskScheduleItem
             .joins(task_schedule: :cultivation_plan)
-            .merge(::CultivationPlan.plan_type_private)
             .where(
               task_schedules: { cultivation_plan_id: plan_id },
-              cultivation_plans: { id: plan_id, user_id: user_id }
+              cultivation_plans: { id: plan_id }
             )
             .find_by(id: item_id)
         end

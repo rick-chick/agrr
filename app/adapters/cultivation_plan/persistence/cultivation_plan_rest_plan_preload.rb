@@ -9,35 +9,19 @@ module Adapters
 
         CROP_WITH_STAGES = { crop: :crop_stages }.freeze
 
-        PRIVATE_PRELOAD = [
+        REST_PLAN_INCLUDES = [
+          :farm,
           :cultivation_plan_fields,
           { cultivation_plan_crops: CROP_WITH_STAGES },
           { field_cultivations: [ :cultivation_plan_field, { cultivation_plan_crop: CROP_WITH_STAGES } ] }
         ].freeze
 
-        PUBLIC_INCLUDES = [
-          :farm,
-          :cultivation_plan_fields,
-          { cultivation_plan_crops: CROP_WITH_STAGES },
-          { field_cultivations: [ :cultivation_plan_field, :cultivation_plan_crop ] }
-        ].freeze
-
         # @param plan_id [Integer, String]
-        # @param user_id [Integer]
         # @return [::CultivationPlan]
         # @raise [ActiveRecord::RecordNotFound]
-        def find_by_plan_id_and_user_id(plan_id:, user_id:)
+        def find_by_plan_id(plan_id:)
           pid = plan_id.to_i
-          user = ::User.find(user_id)
-          ::CultivationPlan.plan_type_private.by_user(user).preload(PRIVATE_PRELOAD).find(pid)
-        end
-
-        # @param plan_id [Integer, String]
-        # @return [::CultivationPlan] plan_type public のみ
-        # @raise [ActiveRecord::RecordNotFound]
-        def find_by_plan_id_public(plan_id:)
-          pid = plan_id.to_i
-          ::CultivationPlan.plan_type_public.includes(PUBLIC_INCLUDES).find(pid)
+          ::CultivationPlan.includes(REST_PLAN_INCLUDES).find(pid)
         end
       end
     end

@@ -116,6 +116,7 @@ module Domain
       class RetrieveCultivationPlanInteractorTest < DomainLibTestCase
         setup do
           @output = mock
+          @plan_gateway = mock
           @read_gateway = mock
           @available_gateway = mock
           @logger = mock
@@ -123,7 +124,30 @@ module Domain
           @auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :public)
         end
 
+        def build_retrieve_interactor
+          RetrieveCultivationPlanInteractor.new(
+            output_port: @output,
+            plan_gateway: @plan_gateway,
+            workbench_read_gateway: @read_gateway,
+            available_crop_rows_gateway: @available_gateway,
+            logger: @logger
+          )
+        end
+
+        def plan_entity(id:, user_id:, plan_type:)
+          Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
+            id: id,
+            farm_id: 1,
+            user_id: user_id,
+            total_area: 0,
+            plan_type: plan_type
+          )
+        end
+
         test "dispatches success body for public plan" do
+          @plan_gateway.expects(:find_by_id).with(3).returns(
+            plan_entity(id: 3, user_id: nil, plan_type: "public")
+          )
           plan = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchPlanHeader.new(
             id: 1,
             user_id: nil,
@@ -155,83 +179,39 @@ module Domain
               s.available_crop_rows == []
           end
 
-          RetrieveCultivationPlanInteractor.new(
-            output_port: @output,
-            workbench_read_gateway: @read_gateway,
-            available_crop_rows_gateway: @available_gateway,
-            logger: @logger
-          ).call(auth: @auth, plan_id: 3)
+          build_retrieve_interactor.call(auth: @auth, plan_id: 3)
         end
 
         test "dispatches not_found when public auth loads private plan row" do
-          plan = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchPlanHeader.new(
-            id: 1,
-            user_id: 5,
-            plan_year: 2026,
-            plan_name: "p",
-            plan_type: "private",
-            status: "draft",
-            total_area: 0.0,
-            planning_start_date: nil,
-            planning_end_date: nil,
-            total_profit: 0.0,
-            total_revenue: 0.0,
-            total_cost: 0.0
+          @plan_gateway.expects(:find_by_id).with(3).returns(
+            plan_entity(id: 3, user_id: 5, plan_type: "private")
           )
-          base_snapshot = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
-            plan: plan,
-            fields: [],
-            crops: [],
-            cultivations: [],
-            available_crop_rows: [],
-            farm_region: "jp"
-          )
-          @read_gateway.expects(:load_snapshot_by_plan_id).with(plan_id: 3).returns(base_snapshot)
+          @read_gateway.expects(:load_snapshot_by_plan_id).never
           @output.expects(:on_not_found)
           @available_gateway.expects(:list_by_farm_region).never
 
-          RetrieveCultivationPlanInteractor.new(
-            output_port: @output,
-            workbench_read_gateway: @read_gateway,
-            available_crop_rows_gateway: @available_gateway,
-            logger: @logger
-          ).call(auth: @auth, plan_id: 3)
+          build_retrieve_interactor.call(auth: @auth, plan_id: 3)
         end
 
-        test "dispatches not_found when private auth and workbench rows fail policy" do
+        test "dispatches not_found when private auth denies plan access" do
           private_auth = Domain::CultivationPlan::Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
-          plan = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchPlanHeader.new(
-            id: 1,
-            user_id: 2,
-            plan_year: 2026,
-            plan_name: "p",
-            plan_type: "private",
-            status: "draft",
-            total_area: 0.0,
-            planning_start_date: nil,
-            planning_end_date: nil,
-            total_profit: 0.0,
-            total_revenue: 0.0,
-            total_cost: 0.0
+          @plan_gateway.expects(:find_by_id).with(3).returns(
+            plan_entity(id: 3, user_id: 2, plan_type: "private")
           )
-          base_snapshot = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
-            plan: plan,
-            fields: [],
-            crops: [],
-            cultivations: [],
-            available_crop_rows: [],
-            farm_region: "jp"
-          )
-          @read_gateway.expects(:load_snapshot_by_plan_id_and_user_id).with(plan_id: 3, user_id: 1).returns(base_snapshot)
+          @read_gateway.expects(:load_snapshot_by_plan_id).never
           @output.expects(:on_not_found)
           @available_gateway.expects(:list_by_farm_region).never
 
-          RetrieveCultivationPlanInteractor.new(
-            output_port: @output,
-            workbench_read_gateway: @read_gateway,
-            available_crop_rows_gateway: @available_gateway,
-            logger: @logger
-          ).call(auth: private_auth, plan_id: 3)
+          build_retrieve_interactor.call(auth: private_auth, plan_id: 3)
+        end
+
+        test "dispatches not_found when plan entity missing without loading workbench snapshot" do
+          @plan_gateway.expects(:find_by_id).with(3).raises(Domain::Shared::Exceptions::RecordNotFound)
+          @read_gateway.expects(:load_snapshot_by_plan_id).never
+          @output.expects(:on_not_found)
+          @available_gateway.expects(:list_by_farm_region).never
+
+          build_retrieve_interactor.call(auth: @auth, plan_id: 3)
         end
       end
     end

@@ -89,6 +89,23 @@ module Api
           sign_in_as @user
         end
 
+        test "data endpoint returns 404 when cultivation plan belongs to another user" do
+          other = create(:user)
+          other_farm = create(:farm, user: other)
+          other_plan = create(:cultivation_plan,
+            farm: other_farm,
+            user: other,
+            plan_type: "private",
+            status: "completed")
+
+          get "/api/v1/plans/cultivation_plans/#{other_plan.id}/data",
+              headers: { "Accept" => "application/json" }
+
+          assert_response :not_found
+          json = JSON.parse(response.body)
+          assert_not json["success"]
+        end
+
         test "data endpoint returns 500 when calculated_planning_start_date fails with includes" do
           # includesでロードされたコレクションに対してpluckを呼び出すとエラーが発生する可能性がある
           get "/api/v1/plans/cultivation_plans/#{@cultivation_plan.id}/data",

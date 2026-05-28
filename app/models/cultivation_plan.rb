@@ -57,7 +57,6 @@ class CultivationPlan < ApplicationRecord
 
   # == Scopes ==============================================================
   scope :recent, -> { order(created_at: :desc) }
-  scope :by_user, ->(user) { where(user: user) }
 
   # == Instance Methods ====================================================
 

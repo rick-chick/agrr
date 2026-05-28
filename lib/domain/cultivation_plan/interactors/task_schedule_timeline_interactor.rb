@@ -37,12 +37,13 @@ module Domain
             return
           end
 
-          read_model = @private_read_gateway.find_task_schedule_timeline_by_plan_id(plan_id: @plan_id)
-          plan = @cultivation_plan_gateway.find_by_id(@plan_id)
-          if Policies::PrivateCultivationPlanAccessPolicy.access_denied?(plan: plan, user_id: user.id)
+          unless TaskSchedulePrivatePlanAccess.access_allowed?(
+            plan_gateway: @cultivation_plan_gateway, plan_id: @plan_id, user_id: user.id
+          )
             raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
           end
 
+          read_model = @private_read_gateway.find_task_schedule_timeline_by_plan_id(plan_id: @plan_id)
           dto = Mappers::TaskScheduleTimelineMapper.call(read_model, today: @clock.today)
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError
