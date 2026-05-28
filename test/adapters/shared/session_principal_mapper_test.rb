@@ -12,11 +12,6 @@ class Adapters::Shared::SessionPrincipalMapperTest < ActiveSupport::TestCase
     assert_equal user.id, principal.id
     assert_equal user.email, principal.email
     assert_equal user.name, principal.name
-    if user.api_key.nil?
-      assert_nil principal.api_key
-    else
-      assert_equal user.api_key, principal.api_key
-    end
     assert principal.admin?
     refute principal.anonymous?
     assert principal.authenticated?

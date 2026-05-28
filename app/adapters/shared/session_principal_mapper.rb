@@ -13,8 +13,7 @@ module Adapters
           email: user.email,
           name: user.name,
           admin: user.admin?,
-          anonymous: user.anonymous?,
-          api_key: user.api_key
+          anonymous: user.anonymous?
         )
       end
     end

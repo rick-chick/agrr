@@ -79,8 +79,7 @@ module Domain
             email: "u@example.com",
             name: "User",
             admin: false,
-            anonymous: !authenticated,
-            api_key: nil
+            anonymous: !authenticated
           )
         end
       end
