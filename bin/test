@@ -26,6 +26,14 @@ if [ $# -eq 0 ]; then
   echo ""
   echo "🚀 lib/domain（Rails-free）テストを実行します..."
   AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-domain-lib.sh"
+  if command -v cargo >/dev/null 2>&1 || [ -f "${HOME}/.cargo/env" ]; then
+    echo ""
+    echo "🚀 lib/domain Rust（cargo test）を実行します..."
+    AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rust-domain.sh"
+  else
+    echo ""
+    echo "⏭️  cargo 未インストールのため Rust domain テストをスキップ（CI: rust-domain-test workflow）"
+  fi
 else
   AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rails.sh" "$@"
 fi

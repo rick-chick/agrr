@@ -139,6 +139,9 @@ db/cache_schema.rb.tmp
 
 
 
+# Rust / Cargo build artifacts
+/target/
+
 tmp/
 .cursor/
 .dockerignore

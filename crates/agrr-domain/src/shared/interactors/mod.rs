@@ -1,0 +1,3 @@
+pub mod masters_api_credentials_resolve_interactor;
+
+pub use masters_api_credentials_resolve_interactor::MastersApiCredentialsResolveInteractor;

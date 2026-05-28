@@ -1,0 +1,5 @@
+mod adjust_historical_prediction_mapper;
+mod open_meteo_weather_mapper;
+
+pub use adjust_historical_prediction_mapper::AdjustHistoricalPredictionMapper;
+pub use open_meteo_weather_mapper::OpenMeteoWeatherMapper;

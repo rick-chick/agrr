@@ -1,0 +1,3 @@
+mod scheduler_weather_update_trigger_failure;
+
+pub use scheduler_weather_update_trigger_failure::SchedulerWeatherUpdateTriggerFailure;

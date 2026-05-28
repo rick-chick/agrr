@@ -27,7 +27,7 @@ module Domain
               by_name = stages.find { |s| s.name.to_s.match?(TRANSPLANT_NAME_PATTERN) }
               return by_name if by_name
 
-              stages.second
+              stages[1]
             end
           end
         end

@@ -1,0 +1,66 @@
+//! Ruby: `Domain::WeatherData::Gateways::WeatherDataGateway`
+
+use serde_json::Value;
+use time::Date;
+
+use crate::weather_data::dtos::WeatherData;
+
+/// Minimal weather location record returned by gateway lookups.
+#[derive(Debug, Clone)]
+pub struct WeatherLocationRecord {
+    pub id: i64,
+}
+
+/// Ruby: `Domain::WeatherData::Gateways::WeatherDataGateway`
+pub trait WeatherDataGateway: Send + Sync {
+    fn weather_data_for_period(
+        &self,
+        weather_location_id: i64,
+        start_date: Date,
+        end_date: Date,
+    ) -> Vec<WeatherData>;
+
+    fn weather_data_count(
+        &self,
+        weather_location_id: i64,
+        start_date: Option<Date>,
+        end_date: Option<Date>,
+    ) -> i64;
+
+    fn historical_data_count(
+        &self,
+        weather_location_id: i64,
+        start_date: Date,
+        end_date: Date,
+    ) -> i64;
+
+    fn earliest_date(&self, weather_location_id: i64) -> Option<Date>;
+
+    fn latest_date(&self, weather_location_id: i64) -> Option<Date>;
+
+    fn upsert_weather_data(
+        &self,
+        weather_data_dtos: &[WeatherData],
+        weather_location_id: i64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+
+    fn find_by_coordinates(
+        &self,
+        latitude: f64,
+        longitude: f64,
+    ) -> Option<WeatherLocationRecord>;
+
+    fn find_or_create_weather_location(
+        &self,
+        latitude: f64,
+        longitude: f64,
+        elevation: Option<f64>,
+        timezone: Option<&str>,
+    ) -> Result<WeatherLocationRecord, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn update_predicted_weather_data(
+        &self,
+        weather_location_id: i64,
+        payload: &Value,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+}

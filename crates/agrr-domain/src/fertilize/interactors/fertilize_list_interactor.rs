@@ -1,0 +1,190 @@
+//! Ruby: `Domain::Fertilize::Interactors::FertilizeListInteractor`
+
+use crate::fertilize::gateways::FertilizeGateway;
+use crate::fertilize::ports::{FertilizeListOutputPort, ListFailure};
+use crate::shared::dtos::Error;
+use crate::shared::exceptions::RecordInvalidError;
+use crate::shared::gateways::UserLookupGateway;
+use crate::shared::mappers::referencable_list_row_mapper::map_records;
+use crate::shared::policies::fertilize_policy;
+use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
+
+pub struct FertilizeListInteractor<'a, G, O, U> {
+    output_port: &'a mut O,
+    gateway: &'a G,
+    user_id: i64,
+    user_lookup: &'a U,
+}
+
+impl<'a, G, O, U> FertilizeListInteractor<'a, G, O, U>
+where
+    G: FertilizeGateway,
+    O: FertilizeListOutputPort,
+    U: UserLookupGateway,
+{
+    pub fn new(
+        output_port: &'a mut O,
+        user_id: i64,
+        gateway: &'a G,
+        user_lookup: &'a U,
+    ) -> Self {
+        Self {
+            output_port,
+            gateway,
+            user_id,
+            user_lookup,
+        }
+    }
+
+    pub fn call(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let user = self.user_lookup.find(self.user_id);
+        let filter = fertilize_policy::index_list_filter(&user);
+        match self.gateway.list_index_for_filter(&filter) {
+            Ok(records) => {
+                let rows = map_records(&user, records);
+                self.output_port.on_success(rows);
+                Ok(())
+            }
+            Err(err) => {
+                if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
+                    self.output_port.on_failure(ListFailure::Policy(PolicyPermissionDenied));
+                    return Ok(());
+                }
+                if err.downcast_ref::<crate::shared::exceptions::RecordNotFoundError>().is_some()
+                {
+                    self.output_port.on_failure(ListFailure::Error(Error::new(
+                        "Record not found".to_string(),
+                    )));
+                    return Ok(());
+                }
+                match err.downcast::<RecordInvalidError>() {
+                    Ok(record_invalid) => {
+                        self.output_port.on_failure(ListFailure::Error(Error::new(
+                            record_invalid.to_string(),
+                        )));
+                        Ok(())
+                    }
+                    Err(err) => Err(err),
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::fertilize::entities::{FertilizeEntity, FertilizeEntityAttrs};
+    use crate::shared::user::User;
+    use crate::shared::value_objects::reference_index_list_filter::{
+        ReferenceIndexListFilter, ReferenceIndexListMode,
+    };
+
+    struct StubLookup(User);
+    impl UserLookupGateway for StubLookup {
+        fn find(&self, _: i64) -> User {
+            self.0
+        }
+    }
+
+    struct ListGateway {
+        entities: Vec<FertilizeEntity>,
+    }
+
+    impl FertilizeGateway for ListGateway {
+        fn find_by_id(
+            &self,
+            _: i64,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn list_index_for_filter(
+            &self,
+            filter: &ReferenceIndexListFilter,
+        ) -> Result<Vec<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            assert_eq!(filter.mode, ReferenceIndexListMode::OwnedNonReference);
+            assert_eq!(filter.user_id, 42);
+            Ok(self.entities.clone())
+        }
+
+        fn create_for_user(
+            &self,
+            _: &User,
+            _: crate::shared::attr::AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn update_for_user(
+            &self,
+            _: &User,
+            _: i64,
+            _: crate::shared::attr::AttrMap,
+        ) -> Result<FertilizeEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+
+        fn soft_delete_with_undo(
+            &self,
+            _: &User,
+            _: i64,
+            _: i64,
+            _: &dyn crate::shared::ports::TranslatorPort,
+        ) -> Result<
+            crate::fertilize::gateways::SoftDeleteWithUndoOutcome,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+
+        fn find_by_name(
+            &self,
+            _: i64,
+            _: &str,
+        ) -> Result<Option<FertilizeEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+    }
+
+    struct SpyOutput {
+        count: Option<usize>,
+        failure: Option<ListFailure>,
+    }
+
+    impl FertilizeListOutputPort for SpyOutput {
+        fn on_success(&mut self, rows: Vec<crate::shared::dtos::ReferencableListRow<FertilizeEntity>>) {
+            self.count = Some(rows.len());
+        }
+        fn on_failure(&mut self, error: ListFailure) {
+            self.failure = Some(error);
+        }
+    }
+
+    fn entity(user_id: i64) -> FertilizeEntity {
+        FertilizeEntity::new(FertilizeEntityAttrs {
+            id: Some(1),
+            user_id: Some(user_id),
+            name: "F".into(),
+            ..Default::default()
+        })
+        .expect("valid")
+    }
+
+    // Ruby: test "call passes fertilize entities to output port"
+    #[test]
+    fn passes_entities_to_output_port() {
+        let gateway = ListGateway {
+            entities: vec![entity(42), entity(42)],
+        };
+        let mut output = SpyOutput {
+            count: None,
+            failure: None,
+        };
+        let lookup = StubLookup(User::new(42, false));
+        let mut interactor =
+            FertilizeListInteractor::new(&mut output, 42, &gateway, &lookup);
+        interactor.call().expect("handled");
+        assert_eq!(output.count, Some(2));
+    }
+}

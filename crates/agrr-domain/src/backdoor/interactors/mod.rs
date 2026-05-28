@@ -1,0 +1,3 @@
+mod backdoor_clear_database_interactor;
+
+pub use backdoor_clear_database_interactor::BackdoorClearDatabaseInteractor;

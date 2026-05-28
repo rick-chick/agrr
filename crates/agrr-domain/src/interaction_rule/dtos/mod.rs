@@ -1,0 +1,9 @@
+mod interaction_rule_create_input;
+mod interaction_rule_destroy_output;
+mod interaction_rule_detail_output;
+mod interaction_rule_update_input;
+
+pub use interaction_rule_create_input::InteractionRuleCreateInput;
+pub use interaction_rule_destroy_output::InteractionRuleDestroyOutput;
+pub use interaction_rule_detail_output::InteractionRuleDetailOutput;
+pub use interaction_rule_update_input::InteractionRuleUpdateInput;

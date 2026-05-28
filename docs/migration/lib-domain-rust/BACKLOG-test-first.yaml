@@ -1,0 +1,116 @@
+# Rust 移植前に Ruby domain-lib テストが必要な項目（正）
+# phase: ruby_test_pending | ruby_test_done | rust_dev | rust_parity_done
+# sync: PROGRAM.md「R0」、TEST-STRATEGY.md
+
+program_version: 1
+policy: "未テストの lib/domain 表面は Ruby test/domain 追加 → GREEN → Rust パリティ"
+
+items:
+  # --- Wave-3/4 フォローアップ（Rust で deferred 明示済み）---
+  - id: farm-start-weather-fetch
+    context: farm
+    ruby: lib/domain/farm/interactors/start_farm_weather_data_fetch_interactor.rb
+    phase: ruby_test_done
+  - id: farm-record-weather-block
+    context: farm
+    ruby: lib/domain/farm/interactors/record_farm_weather_block_completed_interactor.rb
+    phase: ruby_test_done
+  - id: farm-mark-weather-failed
+    context: farm
+    ruby: lib/domain/farm/interactors/mark_farm_weather_data_failed_interactor.rb
+    phase: ruby_test_done
+  - id: farm-list-reference-region
+    context: farm
+    ruby: lib/domain/farm/interactors/farm_list_reference_for_region_interactor.rb
+    phase: ruby_test_done
+
+  - id: crop-list-reference-entities
+    context: crop
+    ruby: lib/domain/crop/interactors/crop_list_reference_entities_interactor.rb
+    phase: ruby_test_done
+
+  - id: weather-internal-farm-list
+    context: weather_data
+    ruby: lib/domain/weather_data/interactors/internal_farm_weather_data_list_interactor.rb
+    phase: ruby_test_done
+  - id: weather-internal-farm-status
+    context: weather_data
+    ruby: lib/domain/weather_data/interactors/internal_farm_weather_status_interactor.rb
+    phase: ruby_test_done
+  - id: weather-optimization-job-chain
+    context: weather_data
+    ruby: lib/domain/weather_data/optimization_job_chain_weather_computation.rb
+    phase: ruby_test_done
+
+  - id: pest-ai-update
+    context: pest
+    ruby: lib/domain/pest/interactors/pest_ai_update_interactor.rb
+    phase: ruby_test_done
+  - id: pest-masters-crop-pests-index
+    context: pest
+    ruby: lib/domain/pest/interactors/masters_crop_pests_index_interactor.rb
+    phase: ruby_test_done
+
+  # --- Wave-5 cultivation_plan（専用 interactor テストなし）---
+  - id: cp-add-field
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/interactors/add_field_interactor.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/interactors/add_field_interactor_test.rb"
+  - id: cp-remove-field
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/interactors/remove_field_interactor.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/interactors/remove_field_interactor_test.rb"
+  - id: cp-retrieve-plan
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/interactors/retrieve_cultivation_plan_interactor.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/interactors/retrieve_cultivation_plan_interactor_test.rb"
+  - id: cp-private-owned-list
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/interactors/private_owned_plans_list_interactor.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/interactors/private_owned_plans_list_interactor_test.rb"
+  - id: cp-private-owned-detail
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/interactors/private_owned_plan_detail_interactor.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/interactors/private_owned_plan_detail_interactor_test.rb"
+  - id: cp-task-schedule-item-update
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/interactors/task_schedule_item_update_interactor.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/interactors/task_schedule_item_update_interactor_test.rb"
+  - id: cp-plan-allocation-candidates
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/interactors/plan_allocation_candidates_interactor.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/interactors/plan_allocation_candidates_interactor_test.rb (AddCrop は mock のみ)"
+
+  # --- Wave-5 cultivation_plan policies / calculators (R0) ---
+  - id: cp-cultivation-plan-phase-policy
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/policies/cultivation_plan_phase_policy.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/policies/cultivation_plan_phase_policy_test.rb"
+  - id: cp-task-schedule-item-update-policy
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/policies/task_schedule_item_update_policy.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/policies/task_schedule_item_update_policy_test.rb"
+  - id: cp-cultivation-plan-optimization-progress-calculator
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/calculators/cultivation_plan_optimization_progress_calculator.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/calculators/cultivation_plan_optimization_progress_calculator_test.rb"
+  - id: cp-task-schedule-item-complete
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/interactors/task_schedule_item_complete_interactor.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/interactors/task_schedule_item_complete_interactor_test.rb"
+  - id: cp-entry-schedule-weather-payload-normalizer
+    context: cultivation_plan
+    ruby: lib/domain/cultivation_plan/normalizers/entry_schedule_weather_payload_normalizer.rb
+    phase: ruby_test_done
+    notes: "test/domain/cultivation_plan/normalizers/entry_schedule_weather_payload_normalizer_test.rb"

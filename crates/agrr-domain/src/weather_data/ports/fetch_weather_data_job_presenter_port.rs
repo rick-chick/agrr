@@ -1,0 +1,9 @@
+//! Ruby: `Domain::WeatherData::Presenters::FetchWeatherDataJobPresenter`
+
+/// Ruby: fetch weather job presenter port
+pub trait FetchWeatherDataJobPresenterPort {
+    fn info(&self, message: &str);
+    fn warn(&self, message: &str);
+    fn error(&self, message: &str);
+    fn debug(&self, message: &str);
+}

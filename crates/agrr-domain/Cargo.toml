@@ -1,0 +1,16 @@
+[package]
+name = "agrr-domain"
+description = "Pure domain logic migrated from lib/domain (AGRR)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+rust_decimal.workspace = true
+time.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

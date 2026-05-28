@@ -1,0 +1,154 @@
+use crate::shared::attr::AttrMap;
+use crate::shared::policies::referencable_resource_policy::{
+    normalize_referencable_attrs_for_create, normalize_referencable_attrs_for_update,
+};
+use crate::shared::reference_record_access_filter::{
+    RecordAccessPolicy, ReferenceRecordAccessFilter,
+};
+use crate::shared::user::User;
+use crate::shared::value_objects::reference_index_list_filter::{
+    ReferenceIndexListFilter, ReferenceIndexListMode,
+};
+
+/// Bridges [`ReferenceRecordAccessFilter`] to fertilize policy functions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct FertilizeRecordAccessPolicy;
+
+impl RecordAccessPolicy for FertilizeRecordAccessPolicy {
+    fn view_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool {
+        view_allowed(user, is_reference, record_user_id)
+    }
+
+    fn edit_allowed(user: &User, is_reference: bool, record_user_id: Option<i64>) -> bool {
+        edit_allowed(user, is_reference, record_user_id)
+    }
+}
+
+pub fn record_access_filter(user: User) -> ReferenceRecordAccessFilter<FertilizeRecordAccessPolicy> {
+    ReferenceRecordAccessFilter::new(user)
+}
+
+/// Ruby: `Domain::Shared::Policies::FertilizePolicy`
+pub fn view_allowed(user: &User, is_reference: bool, user_id: Option<i64>) -> bool {
+    if user.admin {
+        return true;
+    }
+    user_id == Some(user.id) && !is_reference
+}
+
+pub fn edit_allowed(user: &User, is_reference: bool, user_id: Option<i64>) -> bool {
+    user.admin || (!is_reference && user_id == Some(user.id))
+}
+
+pub fn index_list_filter(user: &User) -> ReferenceIndexListFilter {
+    let mode = if user.admin {
+        ReferenceIndexListMode::ReferenceOrOwned
+    } else {
+        ReferenceIndexListMode::OwnedNonReference
+    };
+    ReferenceIndexListFilter::new(mode, user.id)
+}
+
+pub fn normalize_attrs_for_create(user: &User, attrs: AttrMap) -> AttrMap {
+    normalize_referencable_attrs_for_create(user, attrs, false)
+}
+
+pub fn normalize_attrs_for_update(
+    user: &User,
+    current_attrs: AttrMap,
+    requested_attrs: AttrMap,
+) -> AttrMap {
+    normalize_referencable_attrs_for_update(user, current_attrs, requested_attrs)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::shared::attr::{attr_map_from_pairs, AttrValue};
+    use crate::shared::user::User;
+
+    fn user(id: i64, admin: bool) -> User {
+        User::new(id, admin)
+    }
+
+    // Ruby: test "normalize_attrs_for_create for regular user"
+    #[test]
+    fn normalize_attrs_for_create_for_regular_user() {
+        let regular = user(9, false);
+        let h = normalize_attrs_for_create(
+            &regular,
+            attr_map_from_pairs([
+                ("name", AttrValue::from("F")),
+                ("is_reference", AttrValue::Bool(false)),
+            ]),
+        );
+        assert_eq!(h.get("user_id"), Some(&AttrValue::Int(9)));
+        assert_eq!(h.get("is_reference"), Some(&AttrValue::Bool(false)));
+    }
+
+    // Ruby: test "view_allowed? for own non-reference"
+    #[test]
+    fn view_allowed_for_own_non_reference() {
+        let regular = user(9, false);
+        assert!(view_allowed(&regular, false, Some(9)));
+    }
+
+    // Ruby: test "view_allowed? denies reference for non-admin"
+    #[test]
+    fn view_allowed_denies_reference_for_non_admin() {
+        let regular = user(9, false);
+        assert!(!view_allowed(&regular, true, None));
+    }
+
+    // Ruby: test "normalize_attrs_for_create は admin の region を保持する"
+    #[test]
+    fn normalize_attrs_for_create_admin_keeps_region() {
+        let admin = user(1, true);
+        let h = normalize_attrs_for_create(
+            &admin,
+            attr_map_from_pairs([
+                ("region", AttrValue::from("us")),
+                ("is_reference", AttrValue::Bool(false)),
+            ]),
+        );
+        assert_eq!(h.get("region"), Some(&AttrValue::from("us")));
+    }
+
+    // Ruby: test "normalize_attrs_for_create は一般ユーザーの region を破棄する"
+    #[test]
+    fn normalize_attrs_for_create_regular_user_strips_region() {
+        let regular = user(9, false);
+        let h = normalize_attrs_for_create(
+            &regular,
+            attr_map_from_pairs([
+                ("region", AttrValue::from("us")),
+                ("is_reference", AttrValue::Bool(false)),
+            ]),
+        );
+        assert!(!h.contains_key("region"));
+    }
+
+    // Ruby: test "normalize_attrs_for_update は admin の region を保持する"
+    #[test]
+    fn normalize_attrs_for_update_admin_keeps_region() {
+        let admin = user(1, true);
+        let h = normalize_attrs_for_update(
+            &admin,
+            attr_map_from_pairs([("is_reference", AttrValue::Bool(false))]),
+            attr_map_from_pairs([("region", AttrValue::from("in"))]),
+        );
+        assert_eq!(h.get("region"), Some(&AttrValue::from("in")));
+    }
+
+    // Ruby: test "normalize_attrs_for_update は一般ユーザーの region を破棄する"
+    #[test]
+    fn normalize_attrs_for_update_regular_user_strips_region() {
+        let regular = user(9, false);
+        let h = normalize_attrs_for_update(
+            &regular,
+            attr_map_from_pairs([("is_reference", AttrValue::Bool(false))]),
+            attr_map_from_pairs([("region", AttrValue::from("us"))]),
+        );
+        assert!(!h.contains_key("region"));
+    }
+}

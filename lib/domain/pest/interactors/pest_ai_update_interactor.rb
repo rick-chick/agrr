@@ -69,7 +69,7 @@ module Domain
             control_methods: pest_data["control_methods"] || []
           }
 
-          result = @update_interactor.call(pest_entity.id, attrs.symbolize_keys)
+          result = @update_interactor.call(pest_entity.id, Domain::Shared.symbolize_keys(attrs))
 
           unless result.success?
             @logger.error "❌ [AI Pest] Failed to update: #{result.error}"
