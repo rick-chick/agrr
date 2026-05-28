@@ -13,9 +13,8 @@ module Domain
 
         def call(crop_id)
           user = @user_lookup.find(@user_id)
-          access_filter = Domain::Shared::Policies::CropPolicy.record_access_filter(user)
           crop_entity = @gateway.find_by_id(crop_id)
-          Domain::Shared::ReferenceRecordAuthorization.assert_edit_allowed!(access_filter, crop_entity)
+          Policies::CropMastersNestedAccess.assert_edit_allowed_for_masters!(user, crop_entity)
           @output_port.on_success(crop_entity)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_not_found

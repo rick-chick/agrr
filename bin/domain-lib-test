@@ -5,6 +5,7 @@
 # Usage:
 #   bundle exec bin/domain-lib-test
 #   bundle exec bin/domain-lib-test test/domain/crop/interactors/crop_list_interactor_test.rb
+#   bundle exec bin/domain-lib-test test/domain/crop/
 
 ENV["RAILS_ENV"] ||= "test"
 
@@ -17,12 +18,14 @@ tests =
   if ARGV.empty?
     DomainLibTestConvention.all_domain_test_paths(root)
   else
-    ARGV.map { |t| File.absolute_path(t, root) }
+    begin
+      DomainLibTestConvention.resolve_test_paths(root, ARGV)
+    rescue DomainLibTestConvention::MissingPathError => e
+      abort "domain-lib-test: 指定されたパスが見つかりません: #{e.entry}"
+    rescue DomainLibTestConvention::EmptyDirectoryError => e
+      abort "domain-lib-test: 指定ディレクトリに *_test.rb がありません: #{e.entry}"
+    end
   end
-
-unless tests.all? { |p| File.file?(p) }
-  abort "domain-lib-test: 指定されたパスのファイルが見つかりません: #{tests.inspect}"
-end
 
 DomainLibTestConvention.assert_ok!(tests, root: root)
 

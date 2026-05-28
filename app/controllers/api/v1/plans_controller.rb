@@ -41,6 +41,9 @@ module Api
         Domain::CultivationPlan::Interactors::PrivatePlanInitializeFromSelectionInteractor.new(
           output_port: presenter,
           cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
+          farm_gateway: CompositionRoot.farm_gateway,
+          crop_gateway: CompositionRoot.crop_gateway,
+          field_gateway: CompositionRoot.field_gateway,
           plan_initializer: CompositionRoot.cultivation_plan_plan_initializer,
           logger: CompositionRoot.logger,
           translator: translator,

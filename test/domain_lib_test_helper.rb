@@ -9,7 +9,7 @@
 # （ドメインコードに ActiveSupport 定数が紛れ込んでも検知できなくなる）
 #
 # 使い方（test/domain/* の先頭 require は本ファイルのみ。test_helper 禁止）:
-#   .cursor/skills/test-common/scripts/run-test-domain-lib.sh [test/domain/...]
+#   .cursor/skills/test-common/scripts/run-test-domain-lib.sh [test/domain/...]  # ファイルまたはディレクトリ
 #   bundle exec bin/domain-lib-test
 #
 ENV["RAILS_ENV"] ||= "test"

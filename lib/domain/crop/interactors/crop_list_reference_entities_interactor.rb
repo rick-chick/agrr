@@ -12,7 +12,7 @@ module Domain
         end
 
         def call(region: nil)
-          crops = @gateway.list_reference_crop_entities(region: region)
+          crops = @gateway.list_by_is_reference(is_reference: true, region: region)
           @output_port.on_success(crops)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @output_port.on_failure(Domain::Shared::Dtos::Error.new(e.message))

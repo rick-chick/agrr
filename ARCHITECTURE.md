@@ -218,6 +218,8 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 **Decision boundary:** Gateway methods are narrow persistence / HTTP / process I/O. Cross-context orchestration, multi-step business flow, authorization and validation decisions follow [R0](#r0-authorization-and-validation). Examples on the wrong side of the boundary include authorization encoded as a scope chooser (`scope_for_admin_or_user`, `is_admin ? A.where(...) : B.where(...)`), role-aware visibility filters, conditional dispatch across multiple I/O calls, uniqueness checks, resource limit checks, and methods that bundle several persistence operations into a single use-case-encoding entry point. A gateway that returns different domain shapes depending on caller identity has crossed the boundary.
 
+**Migration backlog (non-normative):** Known adapter-side domain logic and naming debt are tracked in [`docs/gateway-domain-logic-migration.md`](docs/gateway-domain-logic-migration.md) and [`docs/gateway-naming-violations.md`](docs/gateway-naming-violations.md). Those documents do not amend this section.
+
 ### Gateway injection
 
 Gateways are constructor-injected into Interactors from `CompositionRoot`. The keyword argument name reflects the gateway's role in the interactor (e.g. `farm_gateway:`, `deletion_undo_gateway:`). Interactors receive gateway instances — they never instantiate or locate gateways internally. When a use case requires multiple gateways, all are passed at construction time.

@@ -78,17 +78,11 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_index_for_filter"
         end
 
-        def list_user_owned_non_reference_crops_ordered_by_name(user)
-          raise NotImplementedError, "Subclasses must implement list_user_owned_non_reference_crops_ordered_by_name"
-        end
-
-        # 公開栽培計画 REST add_crop: 参照作物レコードを id で解決（なければ nil）
-        def find_reference_crop_record_for_public_plan_add_crop(crop_id)
-          raise NotImplementedError, "Subclasses must implement find_reference_crop_record_for_public_plan_add_crop"
-        end
-
-        def list_reference_crop_entities(region: nil)
-          raise NotImplementedError, "Subclasses must implement list_reference_crop_entities"
+        # @param is_reference [Boolean]
+        # @param region [String, nil]
+        # @return [Array<Domain::Crop::Entities::CropEntity>]
+        def list_by_is_reference(is_reference:, region: nil)
+          raise NotImplementedError, "Subclasses must implement list_by_is_reference"
         end
 
         # @return [Array<Domain::Crop::Entities::CropEntity>]
@@ -97,12 +91,14 @@ module Domain
         end
 
         # エントリスケジュール: agrr requirement 組み立て用に AR を逐次 yield（Relation は公開しない）
-        def each_reference_crop_for_entry_schedule(region, &block)
-          raise NotImplementedError, "Subclasses must implement each_reference_crop_for_entry_schedule"
+        # エントリスケジュール一覧: region のみで AR を逐次 yield（参照可否は Interactor + Policy）
+        def each_crop_record_with_stages_by_region(region, &block)
+          raise NotImplementedError, "Subclasses must implement each_crop_record_with_stages_by_region"
         end
 
-        def find_reference_crop_for_entry_schedule!(region, crop_id)
-          raise NotImplementedError, "Subclasses must implement find_reference_crop_for_entry_schedule!"
+        # エントリスケジュール最適化用: id のみで AR を includes 付き取得（参照可否は Interactor + Policy）
+        def find_crop_record_with_stages!(crop_id)
+          raise NotImplementedError, "Subclasses must implement find_crop_record_with_stages!"
         end
 
         # マスター API: 作物に紐づく農業タスクテンプレート一覧 JSON 行（永続はゲートウェイ内のみ）
@@ -128,10 +124,16 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end
 
-        # AI 害虫の affected_crops 名前フォールバック用。
-        # @return [Integer, nil]
-        def resolve_crop_id_by_name(user_id:, crop_name:)
-          raise NotImplementedError, "Subclasses must implement resolve_crop_id_by_name"
+        # @param ids [Array<Integer, String>]
+        # @return [Array<Domain::Crop::Entities::CropEntity>] ids の順序で存在する行のみ
+        def list_by_ids(ids)
+          raise NotImplementedError, "Subclasses must implement list_by_ids"
+        end
+
+        # @param name [String]
+        # @return [Array<Domain::Crop::Entities::CropEntity>]
+        def list_by_name(name:)
+          raise NotImplementedError, "Subclasses must implement list_by_name"
         end
 
         def count_user_owned_non_reference_crops(user_id:)

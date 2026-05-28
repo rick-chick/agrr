@@ -59,9 +59,23 @@ module Domain
 
         test "resolves crop id by name when ids absent" do
           ref_crop = CropStub.new(id: 5, user_id: nil, region: nil, is_reference: true, name: "RefTomato")
+          ref_entity = Domain::Crop::Entities::CropEntity.new(
+            id: 5,
+            user_id: nil,
+            name: "RefTomato",
+            variety: nil,
+            is_reference: true,
+            area_per_unit: 1.0,
+            revenue_per_area: 1.0,
+            region: "jp",
+            groups: [],
+            crop_stages: [],
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
+          )
 
           @pest_gateway.expects(:find_by_id).with(10).returns(@pest)
-          @crop_gateway.expects(:resolve_crop_id_by_name).with(user_id: 1, crop_name: "RefTomato").returns(5)
+          @crop_gateway.expects(:list_by_name).with(name: "RefTomato").returns([ ref_entity ])
           @crop_gateway.expects(:find_by_id).with(5).returns(ref_crop)
           @crop_pest_gateway.expects(:find_by_crop_id_and_pest_id).with(crop_id: 5, pest_id: 10).returns(nil)
           @crop_pest_gateway.expects(:create).with(crop_id: 5, pest_id: 10)

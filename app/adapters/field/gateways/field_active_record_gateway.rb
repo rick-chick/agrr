@@ -12,6 +12,10 @@ module Adapters
           @translator = translator
         end
 
+        def get_total_area_by_farm_id(farm_id:)
+          ::Field.where(farm_id: farm_id).sum(:area).to_f
+        end
+
         def farm_fields_list(farm_id)
           farm = find_farm_model!(farm_id)
           farm_entity = @farm_gateway.find_by_id(farm_id)

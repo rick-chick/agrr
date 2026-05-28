@@ -13,40 +13,26 @@ module Adapters
           index_relation_for_filter(filter).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
-        def list_user_owned_non_reference_crops_ordered_by_name(user)
-          user_owned_non_reference_scope(user).order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
-        end
-
-        def find_reference_crop_record_for_public_plan_add_crop(crop_id)
-          return nil if crop_id.blank?
-
-          ::Crop.reference.find_by(id: crop_id.to_i)
-        end
-
-        def list_reference_crop_entities(region: nil)
-          scope = ::Crop.reference
+        def list_by_is_reference(is_reference:, region: nil)
+          scope = ::Crop.where(is_reference: is_reference)
           scope = scope.where(region: region) if region.present?
           scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
         def list_by_user_id(user_id:, region: nil)
-          scope = ::Crop.where(is_reference: false, user_id: user_id)
+          scope = ::Crop.where(user_id: user_id)
           scope = scope.where(region: region) if region.present?
           scope.order(:name).map { |record| Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record) }
         end
 
-        def each_reference_crop_for_entry_schedule(region)
-          ::Crop.reference
-            .yield_self { |s| region.present? ? s.where(region: region) : s }
-            .includes(crop_stages: :temperature_requirement)
-            .order(:name)
-            .find_each { |crop| yield crop }
+        def each_crop_record_with_stages_by_region(region, &block)
+          scope = ::Crop.includes(crop_stages: :temperature_requirement).order(:name)
+          scope = scope.where(region: region) if region.present?
+          scope.find_each { |crop| yield crop }
         end
 
-        def find_reference_crop_for_entry_schedule!(region, crop_id)
-          scope = ::Crop.reference
-          scope = scope.where(region: region) if region.present?
-          scope.includes(crop_stages: :temperature_requirement).find(crop_id)
+        def find_crop_record_with_stages!(crop_id)
+          ::Crop.includes(crop_stages: :temperature_requirement).find(crop_id)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
@@ -96,13 +82,23 @@ module Adapters
           Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(find_crop_model!(id))
         end
 
-        def resolve_crop_id_by_name(user_id:, crop_name:)
-          name = crop_name.to_s.strip
-          return nil if name.blank?
+        def list_by_ids(ids)
+          id_list = Array(ids).map(&:to_i).uniq.reject(&:zero?)
+          return [] if id_list.empty?
 
-          record = ::Crop.reference.find_by(name: name)
-          record ||= ::Crop.user_owned.where(user_id: user_id).find_by(name: name)
-          record&.id
+          by_id = ::Crop.where(id: id_list).index_by(&:id)
+          id_list.filter_map { |crop_id| by_id[crop_id] }.map do |record|
+            Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record)
+          end
+        end
+
+        def list_by_name(name:)
+          normalized = name.to_s.strip
+          return [] if normalized.blank?
+
+          ::Crop.where(name: normalized).map do |record|
+            Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(record)
+          end
         end
 
         def entry_schedule_ordered_stage_rows(crop_id:)
@@ -409,18 +405,7 @@ module Adapters
         end
 
         def index_relation_for_filter(filter)
-          case filter.mode
-          when :reference_or_owned
-            ::Crop.where("is_reference = ? OR user_id = ?", true, filter.user_id)
-          when :owned_non_reference
-            ::Crop.where(user_id: filter.user_id, is_reference: false)
-          else
-            raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
-          end
-        end
-
-        def user_owned_non_reference_scope(user)
-          ::Crop.where(user_id: user.id, is_reference: false)
+          Adapters::Shared::Concerns::ReferenceIndexListFilterRelation.apply(::Crop, filter)
         end
 
         def find_crop_model!(id)

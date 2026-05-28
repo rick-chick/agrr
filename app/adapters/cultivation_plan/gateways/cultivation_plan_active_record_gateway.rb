@@ -28,12 +28,6 @@ module Adapters
           )
         end
 
-        def total_field_area_for_farm(farm_id, user)
-          return 0.0 unless ::Farm.find_by(id: farm_id, user_id: user.id)
-
-          ::Field.where(farm_id: farm_id).sum(:area).to_f
-        end
-
         # @param attrs [Domain::CultivationPlan::Dtos::CultivationPlanCreateAttrs]
         # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
         def create(attrs:)
@@ -62,17 +56,6 @@ module Adapters
         def find_existing(farm, user)
           plan = ::CultivationPlan.find_by(farm_id: farm.id, user_id: user.id, plan_type: "private")
           Adapters::CultivationPlan::Mappers::CultivationPlanEntityMapper.entity_from_model(plan)
-        end
-
-        def find_by_farm_id(farm_id, user)
-          f = ::Farm.find_by(id: farm_id, user_id: user.id)
-          f && Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(f)
-        end
-
-        def list_by_ids(crop_ids, user)
-          ::Crop.where(id: crop_ids, user_id: user.id, is_reference: false).map do |c|
-            Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(c)
-          end
         end
 
         def find_by_id(plan_id)

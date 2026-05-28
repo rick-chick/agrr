@@ -13,7 +13,8 @@ module Adapters
         # farm_region は private 一覧では不使用
         def list_by_farm_region(auth:, farm_region: nil)
           user = @user_lookup.find(auth.user_id)
-          crops = @crop_gateway.list_user_owned_non_reference_crops_ordered_by_name(user)
+          filter = Domain::Shared::Policies::CropPolicy.index_list_filter(user)
+          crops = @crop_gateway.list_index_for_filter(filter).sort_by(&:name)
           rows_from_entities(crops)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[CropRowsAvailablePrivate] #{e.message}")

@@ -8,19 +8,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement find_existing"
         end
 
-        def find_by_farm_id(farm_id, user)
-          raise NotImplementedError, "Subclasses must implement find_by_farm_id"
-        end
-
-        def list_by_ids(crop_ids, user)
-          raise NotImplementedError, "Subclasses must implement list_by_ids"
-        end
-
-        # @return [Float]
-        def total_field_area_for_farm(farm_id, user)
-          raise NotImplementedError, "Subclasses must implement total_field_area_for_farm"
-        end
-
         def private_owned_plan_display_name(user:, plan_id:)
           raise NotImplementedError, "Subclasses must implement private_owned_plan_display_name"
         end

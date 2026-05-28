@@ -11,7 +11,7 @@ module Adapters
 
         # 公開一覧は farm_region に依存（auth は呼び出し側で渡すのみ）。
         def list_by_farm_region(auth:, farm_region: nil)
-          crops = @crop_gateway.list_reference_crop_entities(region: farm_region)
+          crops = @crop_gateway.list_by_is_reference(is_reference: true, region: farm_region)
           rows_from_entities(crops)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[CropRowsAvailablePublic] #{e.message}")

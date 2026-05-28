@@ -8,6 +8,9 @@ module Domain
         def initialize(
           output_port:,
           cultivation_plan_gateway:,
+          farm_gateway:,
+          crop_gateway:,
+          field_gateway:,
           plan_initializer:,
           logger:,
           translator:,
@@ -17,6 +20,9 @@ module Domain
         )
           @output_port = output_port
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @farm_gateway = farm_gateway
+          @crop_gateway = crop_gateway
+          @field_gateway = field_gateway
           @plan_initializer = plan_initializer
           @logger = logger
           @translator = translator
@@ -36,7 +42,7 @@ module Domain
             return
           end
 
-          farm = @cultivation_plan_gateway.find_by_farm_id(input_dto.farm_id, input_dto.user)
+          farm = resolve_owned_farm(input_dto)
           unless farm
             @output_port.on_failure(
               Dtos::PrivatePlanInitializeFromSelectionFailure.new(
@@ -47,8 +53,8 @@ module Domain
             return
           end
 
-          crops = @cultivation_plan_gateway.list_by_ids(input_dto.crop_ids, input_dto.user)
-          if crops.empty?
+          crops = resolve_private_plan_crops(input_dto)
+          if crops.nil?
             @output_port.on_failure(
               Dtos::PrivatePlanInitializeFromSelectionFailure.new(
                 http_status: :not_found,
@@ -71,7 +77,7 @@ module Domain
 
           plan_name = input_dto.plan_name || farm.name
           session_id = @session_id_generator.call
-          total_area = @cultivation_plan_gateway.total_field_area_for_farm(farm.id, input_dto.user)
+          total_area = @field_gateway.get_total_area_by_farm_id(farm_id: farm.id)
 
           result = @plan_initializer.call(
             farm: farm,
@@ -112,6 +118,40 @@ module Domain
               message: e.message
             )
           )
+        end
+
+        private
+
+        def resolve_owned_farm(input_dto)
+          farm = @farm_gateway.find_by_id(input_dto.farm_id)
+          unless Domain::Shared::Policies::FarmPolicy.owned_visible?(
+            input_dto.user,
+            is_reference: farm.is_reference,
+            user_id: farm.user_id
+          )
+            return nil
+          end
+
+          farm
+        rescue Domain::Shared::Exceptions::RecordNotFound
+          nil
+        end
+
+        def resolve_private_plan_crops(input_dto)
+          requested_ids = Array(input_dto.crop_ids).map(&:to_i).uniq.reject(&:zero?)
+          return [] if requested_ids.empty?
+
+          entities = @crop_gateway.list_by_ids(requested_ids)
+          accessible = entities.select do |crop|
+            Domain::Shared::Policies::CropPolicy.edit_allowed?(
+              input_dto.user,
+              is_reference: crop.is_reference,
+              user_id: crop.user_id
+            )
+          end
+          return nil if accessible.map(&:id).sort != requested_ids.sort
+
+          accessible
         end
       end
     end

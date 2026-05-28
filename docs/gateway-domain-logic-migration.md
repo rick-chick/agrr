@@ -99,11 +99,7 @@ flowchart LR
 
 ### §P1 — 認可・可視性（移行候補）
 
-| ファイル | メソッド / モジュール | 内容 |
-|----------|----------------------|------|
-| `pesticide/gateways/pesticide_active_record_gateway.rb` | `index_relation_for_filter`, `selectable_scope` | reference OR owned の一覧スコープ |
-| `cultivation_plan/gateways/cultivation_plan_active_record_gateway.rb` | `find_by_farm_id`, `list_by_ids`, `total_field_area_for_farm` 等 | `user_id` / `is_reference` 込みの find |
-| `crop/gateways/crop_active_record_gateway.rb` | `find_reference_crop_*`, `list_by_ids` 等 | 公開プラン・所有作物の参照条件 |
+（2026-05 時点で下表「マスタ横断 §P1」および `resolve_crop_id_by_name` まで完了。残りは `public_plan_active_record_gateway` の farm/crop find 等 — 別エピック）
 
 ### §P1 — 移行済み（REST 計画 read / mutation）
 
@@ -114,6 +110,15 @@ flowchart LR
 | `cultivation_plan/gateways/plan_allocation_adjust_read_active_record_gateway.rb` | `PlanAllocationAdjustInteractor` + `RestPlanAccess`（REST adjust） | `find_adjust_read_snapshot_by_plan_id` |
 | `cultivation_plan/gateways/task_schedule_item_mutation_active_record_gateway.rb` | `TaskScheduleItem*Interactor` + `TaskSchedulePrivatePlanAccess` | `plan_id` narrow find / join |
 | `cultivation_plan/gateways/cultivation_plan_private_read_active_record_gateway.rb`（timeline read） | `TaskScheduleTimelineInteractor` + `TaskSchedulePrivatePlanAccess`（read 前） | `find_task_schedule_timeline_by_plan_id` |
+
+### §P1 — 移行済み（マスタ横断・私有計画初期化）
+
+| ファイル | 認可の所在 | Gateway（narrow I/O のみ） |
+|----------|------------|---------------------------|
+| `pesticide/gateways/pesticide_active_record_gateway.rb` | `PesticideListInteractor` + `PesticidePolicy.index_list_filter`；`MastersCropPesticidesIndexInteractor` + `PesticidePolicy.masters_crop_pesticides_index_filter` | `list_index_for_filter` / `list_by_crop_id_for_filter`（`ReferenceIndexListFilterRelation` で VO 写像） |
+| `cultivation_plan/interactors/private_plan_initialize_from_selection_interactor.rb` | `FarmPolicy.owned_visible?` + `CropPolicy.edit_allowed?`（全 ID 一致） | `FarmGateway#find_by_id`、`CropGateway#list_by_ids`、`FieldGateway#get_total_area_by_farm_id`（`CultivationPlanGateway` から farm/crop 横断 find 削除） |
+| `crop/gateways/crop_active_record_gateway.rb` | `CropReferenceRecordPolicy` / `CropPolicy` / `CropMastersNestedAccess` / `CropResolveByNamePolicy` | `find_by_id`、`list_by_name`、`list_by_is_reference`、`list_by_user_id`、`find_crop_record_with_stages!`、`each_crop_record_with_stages_by_region` |
+| `crop/interactors` + `pest/interactors` | `MastersCropPesticidesIndexInteractor` + `CropMastersNestedAccess`；`PestAssociateAffectedCropsInteractor` + `CropResolveByNamePolicy` | 旧 `resolve_crop_id_by_name`（Gateway 内 reference/owned スコープ）廃止 |
 
 ### §P2 — 業務検証・整合性（移行候補）
 

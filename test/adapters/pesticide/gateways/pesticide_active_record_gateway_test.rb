@@ -32,6 +32,23 @@ class Adapters::Pesticide::Gateways::PesticideActiveRecordGatewayTest < ActiveSu
     assert_equal [ owned.id ], ids
   end
 
+  test "list_by_crop_id_for_filter scopes by crop and filter mode" do
+    user = create(:user)
+    crop_u = create(:crop, :user_owned, user: user)
+    pest_u = create(:pest, :user_owned, user: user)
+    on_crop = create(:pesticide, :user_owned, user: user, crop: crop_u, pest: pest_u, name: "On crop")
+    other_crop = create(:crop, :user_owned, user: user)
+    create(:pesticide, :user_owned, user: user, crop: other_crop, pest: pest_u, name: "Other crop")
+    crop_r = create(:crop, :reference)
+    pest_r = create(:pest, :reference)
+    create(:pesticide, :reference, crop: crop_r, pest: pest_r, name: "Ref")
+
+    filter = Domain::Shared::Policies::PesticidePolicy.index_list_filter(user)
+    ids = @gateway.list_by_crop_id_for_filter(crop_id: crop_u.id, filter: filter).map(&:id)
+
+    assert_equal [ on_crop.id ], ids
+  end
+
   test "list_index_for_filter reference_or_owned includes reference and admin-owned rows" do
     admin = create(:user, admin: true)
     crop_a = create(:crop, :user_owned, user: admin)

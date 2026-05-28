@@ -5,6 +5,6 @@
 - **マイグレーション・データ移行**: [`migration/`](migration/)
 - **テスト運用**: [`testing/`](testing/)
 - **アセットパイプライン（Rails HTML 側）**: [`asset-pipeline.md`](asset-pipeline.md)
-- **その他**: [`gateway-naming-violations.md`](gateway-naming-violations.md)
+- **Gateway 移行（命名・adapter 残存ドメインロジック）**: [`gateway-domain-logic-migration.md`](gateway-domain-logic-migration.md)（正: [`gateway-naming-violations.md`](gateway-naming-violations.md) は命名中心）
 
 API・ドメインの振る舞いの正は **`ARCHITECTURE.md`** と **`lib/domain` のポート/DTO**、および **該当テスト** とする（旧 `docs/contracts/`・`docs/adr/` は廃止）。

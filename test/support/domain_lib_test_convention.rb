@@ -37,6 +37,37 @@ module DomainLibTestConvention
     Dir.glob(File.join(root, "test/domain/**/*_test.rb")).sort
   end
 
+  # bin/domain-lib-test の引数（ファイルまたはディレクトリ）を *_test.rb の絶対パスへ展開する。
+  def resolve_test_paths(root, entries)
+    entries.flat_map { |entry| resolve_test_path_entry(root, entry) }.uniq.sort
+  end
+
+  def resolve_test_path_entry(root, entry)
+    absolute = File.expand_path(entry, root)
+    if File.directory?(absolute)
+      matched = Dir.glob(File.join(absolute, "**", "*_test.rb")).sort
+      raise EmptyDirectoryError, entry if matched.empty?
+
+      matched
+    elsif File.file?(absolute)
+      [absolute]
+    else
+      raise MissingPathError, entry
+    end
+  end
+
+  class PathResolutionError < StandardError
+    attr_reader :entry
+
+    def initialize(entry)
+      @entry = entry
+      super(entry)
+    end
+  end
+
+  class MissingPathError < PathResolutionError; end
+  class EmptyDirectoryError < PathResolutionError; end
+
   def scan(paths, root:)
     test_helper_violations = []
     missing_helper_violations = []

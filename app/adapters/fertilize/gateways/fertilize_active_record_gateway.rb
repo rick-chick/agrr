@@ -100,14 +100,7 @@ module Adapters
         private
 
         def index_relation_for_filter(filter)
-          case filter.mode
-          when :reference_or_owned
-            ::Fertilize.where("is_reference = ? OR user_id = ?", true, filter.user_id)
-          when :owned_non_reference
-            ::Fertilize.where(user_id: filter.user_id, is_reference: false)
-          else
-            raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
-          end
+          Adapters::Shared::Concerns::ReferenceIndexListFilterRelation.apply(::Fertilize, filter)
         end
 
         def find_fertilize_model!(id)

@@ -24,7 +24,7 @@ module Domain
 
         def null_crop_gateways
           crop_gateway = Object.new
-          crop_gateway.define_singleton_method(:list_reference_crop_entities) { |**| [] }
+          crop_gateway.define_singleton_method(:list_by_is_reference) { |**| [] }
           crop_gateway.define_singleton_method(:list_by_user_id) { |**| [] }
           crop_gateway.define_singleton_method(:find_by_id) { |*| raise Domain::Shared::Exceptions::RecordNotFound, "not found" }
           template_gateway = Object.new
@@ -229,7 +229,10 @@ module Domain
           end
 
           crop_gateway = Minitest::Mock.new
-          crop_gateway.expect(:list_by_user_id, [stub(id: 1), stub(id: 3)]) do |**kwargs|
+          crop_gateway.expect(:list_by_user_id, [
+            stub(id: 1, user_id: user_id, is_reference: false),
+            stub(id: 3, user_id: user_id, is_reference: false)
+          ]) do |**kwargs|
             kwargs[:user_id] == user_id && kwargs[:region] == "jp"
           end
           crop_gateway.expect(:find_by_id, stub(id: 3), [3])

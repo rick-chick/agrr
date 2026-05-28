@@ -77,10 +77,11 @@ module Adapters
           Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(pesticide.reload)
         end
 
-        def list_for_crop_with_user(crop_id:, user:)
-          ::Pesticide.where(crop_id: crop_id, id: selectable_scope(user).select(:id)).recent.map do |record|
-            Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record)
-          end
+        def list_by_crop_id_for_filter(crop_id:, filter:)
+          index_relation_for_filter(filter)
+            .where(crop_id: crop_id)
+            .recent
+            .map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
         def soft_delete_with_undo(user:, pesticide_id:, auto_hide_after: 5000, translator:)
@@ -105,18 +106,7 @@ module Adapters
         private
 
         def index_relation_for_filter(filter)
-          case filter.mode
-          when :reference_or_owned
-            ::Pesticide.where("is_reference = ? OR user_id = ?", true, filter.user_id)
-          when :owned_non_reference
-            ::Pesticide.where(user_id: filter.user_id, is_reference: false)
-          else
-            raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
-          end
-        end
-
-        def selectable_scope(user)
-          ::Pesticide.where("is_reference = ? OR user_id = ?", true, user.id)
+          Adapters::Shared::Concerns::ReferenceIndexListFilterRelation.apply(::Pesticide, filter)
         end
 
         def find_pesticide_model!(id)

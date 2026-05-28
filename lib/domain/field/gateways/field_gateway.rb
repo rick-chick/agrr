@@ -4,6 +4,11 @@ module Domain
   module Field
     module Gateways
       class FieldGateway
+        # @return [Float]
+        def get_total_area_by_farm_id(farm_id:)
+          raise NotImplementedError, "Subclasses must implement get_total_area_by_farm_id"
+        end
+
         def farm_fields_list(farm_id)
           raise NotImplementedError, "Subclasses must implement farm_fields_list"
         end

@@ -29,7 +29,7 @@ module Domain
           if crop_ids.empty?
             crop_ids = resolve_crop_ids_from_names(
               Domain::Pest::Mappers::PestAiAffectedCropsPayloadMapper.extract_crop_names(affected_crops),
-              user_id: user.id
+              user: user
             )
             @logger.info "🔗 [AI Pest] Crop IDs after name fallback: #{crop_ids.inspect}"
           end
@@ -53,9 +53,13 @@ module Domain
 
         private
 
-        def resolve_crop_ids_from_names(crop_names, user_id:)
+        def resolve_crop_ids_from_names(crop_names, user:)
           crop_names.filter_map do |name|
-            id = @crop_gateway.resolve_crop_id_by_name(user_id: user_id, crop_name: name)
+            candidates = @crop_gateway.list_by_name(name: name)
+            id = Domain::Crop::Policies::CropResolveByNamePolicy.select_id_for_pest_ai_name_fallback(
+              user: user,
+              candidates: candidates
+            )
             if id
               @logger.info "✅ [AI Pest] Fallback matched crop by name: #{name} -> ID=#{id}"
             else

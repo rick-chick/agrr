@@ -69,7 +69,9 @@ module Domain
 
         def build_crop_list_items(farm, payload_hash)
           items = []
-          @crop_gateway.each_reference_crop_for_entry_schedule(farm.region) do |crop|
+          @crop_gateway.each_crop_record_with_stages_by_region(farm.region) do |crop|
+            next unless Domain::Crop::Policies::CropReferenceRecordPolicy.reference_crop?(crop)
+
             result = @optimization_runner.call(
               crop: crop,
               weather_payload: payload_hash,

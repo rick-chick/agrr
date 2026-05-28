@@ -45,9 +45,12 @@ module Domain
             updated_at: Time.utc(2026, 1, 1)
           )
           @gateway = mock("cultivation_plan_gateway")
+          @farm_gateway = mock("farm_gateway")
+          @crop_gateway = mock("crop_gateway")
+          @field_gateway = mock("field_gateway")
           @plan_initializer = mock("plan_initializer")
           @output_port = mock("output_port")
-           @logger = ::Logger.new(File::NULL)
+          @logger = ::Logger.new(File::NULL)
           @translator = FakeTranslator.new
           @clock = Object.new
           def @clock.today
@@ -61,6 +64,9 @@ module Domain
           PrivatePlanInitializeFromSelectionInteractor.new(
             output_port: @output_port,
             cultivation_plan_gateway: @gateway,
+            farm_gateway: @farm_gateway,
+            crop_gateway: @crop_gateway,
+            field_gateway: @field_gateway,
             plan_initializer: @plan_initializer,
             logger: @logger,
             translator: @translator,
@@ -82,7 +88,29 @@ module Domain
 
         test "on_failure not_found when farm missing" do
           dto = Dtos::PrivatePlanInitializeFromSelectionInput.new(farm_id: 99, crop_ids: [ 10 ], user: @user)
-          @gateway.expects(:find_by_farm_id).with(99, @user).returns(nil)
+          @farm_gateway.expects(:find_by_id).with(99).raises(Domain::Shared::Exceptions::RecordNotFound)
+          @output_port.expects(:on_failure).with do |f|
+            assert_equal :not_found, f.http_status
+            true
+          end
+          interactor.call(dto)
+        end
+
+        test "on_failure not_found when farm is not visible to user" do
+          dto = Dtos::PrivatePlanInitializeFromSelectionInput.new(farm_id: 2, crop_ids: [ 10 ], user: @user)
+          other_farm = Domain::Farm::Entities::FarmEntity.new(
+            id: 2,
+            name: "Other",
+            latitude: 35.0,
+            longitude: 139.0,
+            region: "jp",
+            user_id: 99,
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1),
+            is_reference: false
+          )
+          @farm_gateway.expects(:find_by_id).with(2).returns(other_farm)
+          @crop_gateway.expects(:list_by_ids).never
           @output_port.expects(:on_failure).with do |f|
             assert_equal :not_found, f.http_status
             true
@@ -92,8 +120,33 @@ module Domain
 
         test "on_failure not_found when no crops resolved" do
           dto = Dtos::PrivatePlanInitializeFromSelectionInput.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
-          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
-          @gateway.expects(:list_by_ids).returns([])
+          @farm_gateway.expects(:find_by_id).with(1).returns(@farm_entity)
+          @crop_gateway.expects(:list_by_ids).with([ 10 ]).returns([])
+          @output_port.expects(:on_failure).with do |f|
+            assert_equal :not_found, f.http_status
+            true
+          end
+          interactor.call(dto)
+        end
+
+        test "on_failure not_found when crop not editable by user" do
+          dto = Dtos::PrivatePlanInitializeFromSelectionInput.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
+          ref_crop = Domain::Crop::Entities::CropEntity.new(
+            id: 10,
+            user_id: nil,
+            name: "R",
+            variety: "V",
+            is_reference: true,
+            area_per_unit: 1.0,
+            revenue_per_area: 1.0,
+            region: "jp",
+            groups: [],
+            crop_stages: [],
+            created_at: Time.utc(2026, 1, 1),
+            updated_at: Time.utc(2026, 1, 1)
+          )
+          @farm_gateway.expects(:find_by_id).with(1).returns(@farm_entity)
+          @crop_gateway.expects(:list_by_ids).with([ 10 ]).returns([ ref_crop ])
           @output_port.expects(:on_failure).with do |f|
             assert_equal :not_found, f.http_status
             true
@@ -111,8 +164,8 @@ module Domain
             cultivation_plan_crops_count: 0, cultivation_plan_fields_count: 0,
             created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1)
           )
-          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
-          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
+          @farm_gateway.expects(:find_by_id).returns(@farm_entity)
+          @crop_gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(existing)
           @output_port.expects(:on_failure).with do |f|
             assert_equal :unprocessable_entity, f.http_status
@@ -133,10 +186,10 @@ module Domain
             created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1)
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
-          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
-          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
+          @farm_gateway.expects(:find_by_id).returns(@farm_entity)
+          @crop_gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
-          @gateway.expects(:total_field_area_for_farm).with(1, @user).returns(100.0)
+          @field_gateway.expects(:get_total_area_by_farm_id).with(farm_id: 1).returns(100.0)
           @plan_initializer.expects(:call).with(
             farm: @farm_entity,
             total_area: 100.0,
@@ -161,10 +214,10 @@ module Domain
         test "on_failure unprocessable when initialize returns errors" do
           dto = Dtos::PrivatePlanInitializeFromSelectionInput.new(farm_id: 1, crop_ids: [ 10 ], user: @user)
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: nil, errors: [ "boom" ])
-          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
-          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
+          @farm_gateway.expects(:find_by_id).returns(@farm_entity)
+          @crop_gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
-          @gateway.expects(:total_field_area_for_farm).returns(10.0)
+          @field_gateway.expects(:get_total_area_by_farm_id).with(farm_id: 1).returns(10.0)
           @plan_initializer.expects(:call).returns(result)
           @job_enqueuer.expects(:enqueue_after_create).never
           @output_port.expects(:on_failure).with do |f|
@@ -187,10 +240,10 @@ module Domain
             created_at: Time.utc(2026, 1, 1), updated_at: Time.utc(2026, 1, 1)
           )
           result = CultivationPlanInitializeInteractor::Result.new(cultivation_plan: created, errors: [])
-          @gateway.expects(:find_by_farm_id).returns(@farm_entity)
-          @gateway.expects(:list_by_ids).returns([ @crop_entity ])
+          @farm_gateway.expects(:find_by_id).returns(@farm_entity)
+          @crop_gateway.expects(:list_by_ids).returns([ @crop_entity ])
           @gateway.expects(:find_existing).returns(nil)
-          @gateway.expects(:total_field_area_for_farm).returns(10.0)
+          @field_gateway.expects(:get_total_area_by_farm_id).with(farm_id: 1).returns(10.0)
           @plan_initializer.expects(:call).returns(result)
           @job_enqueuer.expects(:enqueue_after_create).raises(StandardError, "queue down")
           @output_port.expects(:on_success).never

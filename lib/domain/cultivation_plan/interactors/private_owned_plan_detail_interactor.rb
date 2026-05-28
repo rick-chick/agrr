@@ -34,7 +34,8 @@ module Domain
             raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
           end
 
-          palette_crop_entities = @crop_gateway.list_user_owned_non_reference_crops_ordered_by_name(user)
+          filter = Domain::Shared::Policies::CropPolicy.index_list_filter(user)
+          palette_crop_entities = @crop_gateway.list_index_for_filter(filter).sort_by(&:name)
           detail = Mappers::PrivatePlanDetailMapper.to_detail(
             snapshot: snapshot,
             palette_crop_entities: palette_crop_entities

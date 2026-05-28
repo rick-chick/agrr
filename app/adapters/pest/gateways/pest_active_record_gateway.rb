@@ -129,14 +129,7 @@ module Adapters
         private
 
         def index_relation_for_filter(filter)
-          case filter.mode
-          when :reference_or_owned
-            ::Pest.where("is_reference = ? OR user_id = ?", true, filter.user_id)
-          when :owned_non_reference
-            ::Pest.where(user_id: filter.user_id, is_reference: false)
-          else
-            raise ArgumentError, "unknown ReferenceIndexListFilter mode: #{filter.mode.inspect}"
-          end
+          Adapters::Shared::Concerns::ReferenceIndexListFilterRelation.apply(::Pest, filter)
         end
 
         def find_pest_model!(id)

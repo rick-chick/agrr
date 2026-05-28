@@ -18,6 +18,11 @@ module Domain
           Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: mode, user_id: user.id)
         end
 
+        # 作物マスタ配下の農薬一覧: 作物へのアクセスは別 Interactor で検証済み。参照 + 自所有を表示。
+        def self.masters_crop_pesticides_index_filter(user)
+          Domain::Shared::ValueObjects::ReferenceIndexListFilter.new(mode: :reference_or_owned, user_id: user.id)
+        end
+
         def self.record_access_filter(user)
           Domain::Shared::ReferenceRecordAccessFilter.new(user: user, policy_module: self)
         end

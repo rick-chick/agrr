@@ -38,10 +38,10 @@ module Domain
           raise NotImplementedError, "Subclasses must implement soft_delete_with_undo"
         end
 
-        # Crop に紐づく、user に閲覧可能な Pesticide エンティティを最近順で返す。
-        # @return [Array<Domain::Pesticide::Entities::PesticideEntity>] entities or AR records
-        def list_for_crop_with_user(crop_id:, user:)
-          raise NotImplementedError, "Subclasses must implement list_for_crop_with_user"
+        # @param filter [Domain::Shared::ValueObjects::ReferenceIndexListFilter]
+        # @return [Array<Domain::Pesticide::Entities::PesticideEntity>]
+        def list_by_crop_id_for_filter(crop_id:, filter:)
+          raise NotImplementedError, "Subclasses must implement list_by_crop_id_for_filter"
         end
 
       end

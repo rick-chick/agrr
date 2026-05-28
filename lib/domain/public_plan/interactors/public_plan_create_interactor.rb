@@ -97,7 +97,7 @@ module Domain
 
         def list_reference_crops_for_no_crops(farm)
           region = farm.region
-          @crop_gateway.list_reference_crop_entities(region: region)
+          @crop_gateway.list_by_is_reference(is_reference: true, region: region)
         rescue Domain::Shared::Exceptions::RecordInvalid => e
           @logger.warn "❌ [PublicPlanCreateInteractor] list_reference_crops: #{e.message}"
           []

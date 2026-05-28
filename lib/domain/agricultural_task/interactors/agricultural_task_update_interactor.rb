@@ -78,7 +78,7 @@ module Domain
           task_entity = nil
           @gateway.within_transaction do
             task_entity = @gateway.update(update_input_dto.id, normalized)
-            sync_crop_task_templates!(task_entity, sync_ids) unless sync_ids.nil?
+            sync_crop_task_templates!(task_entity, sync_ids, user) unless sync_ids.nil?
           end
 
           @output_port.on_success(task_entity)
@@ -104,10 +104,10 @@ module Domain
           end
         end
 
-        def sync_crop_task_templates!(task_entity, selected_crop_ids)
+        def sync_crop_task_templates!(task_entity, selected_crop_ids, user)
           policy = Domain::AgriculturalTask::Policies::CropTaskTemplateSyncPolicy
           region_filter = policy.crop_associate_region_filter(region: task_entity.region)
-          scope_crop_ids = associate_scope_crop_ids(task_entity, region_filter)
+          scope_crop_ids = associate_scope_crop_ids(task_entity, region_filter, user)
           scope_crop_id_set = scope_crop_ids.to_set
           allowed_crop_ids = policy.allowed_crop_ids(
             scope_crop_ids: scope_crop_ids,
@@ -148,11 +148,19 @@ module Domain
           end
         end
 
-        def associate_scope_crop_ids(task_entity, region_filter)
+        def associate_scope_crop_ids(task_entity, region_filter, user)
           if task_entity.reference?
-            @crop_gateway.list_reference_crop_entities(region: region_filter).map(&:id)
+            @crop_gateway.list_by_is_reference(is_reference: true, region: region_filter).map(&:id)
           else
-            @crop_gateway.list_by_user_id(user_id: task_entity.user_id, region: region_filter).map(&:id)
+            @crop_gateway.list_by_user_id(user_id: task_entity.user_id, region: region_filter)
+              .select do |crop|
+                Domain::Shared::Policies::CropPolicy.edit_allowed?(
+                  user,
+                  is_reference: Domain::Shared::ReferenceRecordAuthorization.referencable_is_reference(crop),
+                  user_id: crop.user_id
+                )
+              end
+              .map(&:id)
           end
         end
 

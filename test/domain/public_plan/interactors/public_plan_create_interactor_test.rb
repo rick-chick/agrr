@@ -43,7 +43,7 @@ module Domain
             @error = error
           end
 
-          def list_reference_crop_entities(region: nil)
+          def list_by_is_reference(is_reference:, region: nil)
             raise @error if @error
 
             @crops

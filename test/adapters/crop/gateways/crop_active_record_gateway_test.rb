@@ -275,6 +275,19 @@ module Adapters
           assert_equal [ owned.id ], ids
         end
 
+        test "list_by_ids returns entities in requested order for existing ids" do
+          user = create(:user)
+          crop1 = create(:crop, user: user, is_reference: false)
+          crop2 = create(:crop, user: user, is_reference: false)
+          ref = create(:crop, :reference)
+
+          ids = @gateway.list_by_ids([ crop2.id, crop1.id ]).map(&:id)
+          assert_equal [ crop2.id, crop1.id ], ids
+
+          ref_only = @gateway.list_by_ids([ ref.id ]).map(&:id)
+          assert_equal [ ref.id ], ref_only
+        end
+
         test "list_index_for_filter reference_or_owned returns reference rows and rows owned by user_id" do
           admin = create(:user, admin: true)
           ref = create(:crop, :reference)
