@@ -16,7 +16,7 @@
 - 読取: `RetrieveCultivationPlanInteractor`（`CultivationPlanGateway#find_by_id` → `RestPlanAccess` → `load_snapshot_by_plan_id`）+ `CultivationPlanRestPlanPreload#find_by_plan_id`
 - REST 変更系: `AddFieldInteractor` 等 + `find_by_id` + `RestPlanAccess`（旧 `PlanScopes` / `find_by_id_for_rest` は廃止）
 - REST add_crop / adjust: Input port nesting — [ARCHITECTURE.md — Composite use cases and Input port injection](../ARCHITECTURE.md#composite-use-cases-and-input-port-injection)（`AddCropCropResolveInputPort` + `PlanAllocationAdjustInputPort` + `build_*` at edge）
-- adjust 後の field_cultivation 同期: `FieldCultivationSyncInteractor` + `FieldCultivationSyncPlanSnapshot` / `FieldCultivationSyncTargetSnapshot` + `FieldCultivationSyncApply`（未参照 `cultivation_plan_crop_ids_to_delete` は `FieldCultivationSyncUnreferencedPlanCropIds`）；agrr JSON → `AgrrAdjustResultFieldCultivationSyncMapper`（adapter）；`FieldCultivationSyncGateway#sync_by_plan_id`
+- adjust 後の field_cultivation 同期: `FieldCultivationSyncInteractor` + `FieldCultivationSyncPlanSnapshot` / `FieldCultivationSyncTargetSnapshot` + `FieldCultivationSyncApply`（未参照 plan crop 削除 ID は `FieldCultivationSyncUnreferencedPlanCropIds` → `sync_apply.cultivation_plan_crop_ids_to_delete`）；agrr JSON → `AgrrAdjustResultFieldCultivationSyncMapper`（adapter）；`FieldCultivationSyncGateway#sync_by_plan_id`
 - 認可 + count: `CropCreateInteractor` + `CropCreateLimitPolicy`
 - PlanSave farm step: `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway`（戻り値 `PlanSaveReferenceFarmSnapshot` / `PlanSaveUserFarmSnapshot`）
 - PlanSave field step: `PlanSaveEnsureUserFieldsInteractor` + `PlanSaveFieldGateway`（戻り値 `PlanSaveFieldSnapshot`；template-copy は `PlanSaveTemplateCopyIntegrity#field_records_for_template_copy`）
@@ -36,7 +36,7 @@
 | 2 | 計画初期化・コピー・公開保存 | `CultivationPlanInitializeInteractor`, `PlanCopyInteractor`, `PublicPlanSaveInteractor`（統合テスト: `test/integration/cultivation_plan/public_plan_save_test.rb`） |
 | 3 | Crop 認可・テンプレ | Policy に gateway なし、`CropTaskTemplateGateway` |
 | 4 | TaskScheduleItem | `TaskScheduleItemCreatePolicy`, `AmountUnitConversionCalculator` |
-| 5 | Adjust 同期・ペイロード | `FieldCultivationSyncInteractor`, `PlanAllocationAdjustReadGateway`（`find_adjust_read_snapshot_by_plan_id`）+ REST 時 `PlanAllocationAdjustInteractor` + `RestPlanAccess`, `PlanAllocationAdjustReadSnapshot`（`plan_crop_entries#has_growth_stages` で REST 前検証）, `PlanAllocationAdjustAgrrPayloadMapper`, `WeatherPredictionTargets`, `AgrrAdjustResultFieldCultivationSyncMapper` |
+| 5 | Adjust 同期・ペイロード | **同期（移行済み）**: `FieldCultivationSyncInteractor` + `FieldCultivationSyncGateway`；agrr JSON → `AgrrAdjustResultFieldCultivationSyncMapper`（許容）。**read/adjust**: `PlanAllocationAdjustReadSnapshot` + `PlanAllocationAdjustReadSnapshotParts`（`*Snapshot` DTO、Row/Entity なし）。adapter mapper は AR 生値・weather のみ |
 | 6 | Pest 関連・ステージ複製 | `CropPestGateway`, `CropStageCopyInteractor` |
 | 7 | agrr wire / EntrySchedule | `InteractionRuleAgrrFormatBuilderPort`, `EntryScheduleOptimizeInteractor` |
 
@@ -125,7 +125,6 @@ flowchart LR
 | ファイル | 内容 | 備考 |
 |----------|------|------|
 | `crop/mappers/crop_agrr_requirement_mapper.rb` | 生育ステージ・温度/積算の欠落で `ArgumentError` | `CropAgrrRequirementBuilderPort` 実装の本体。Phase 5 後も adapter に残存 |
-| `cultivation_plan/mappers/plan_allocation_adjust_read_snapshot_mapper.rb` | `has_growth_stages`、`cultivation_days` 算出、条件付き `agrr_requirement` | REST 前検証の一部は domain `PlanAllocationAdjustReadSnapshotParts` へ分割済み。組立の多くは adapter |
 | `cultivation_plan/gateways/cultivation_plan_active_record_gateway.rb` | `find_crop_id!` → `CultivationPlanCropMissingError` | 整合性メッセージ付き raise |
 | `crop/crop_ai_upsert_active_record_persistence.rb` | `validate_stage_requirements!`、ステージ永続化オーケストレーション | AI 経路の永続化ブロック |
 | `cultivation_plan/sessions/plan_save_template_copy_integrity.rb` | template-copy 用 ID の存在・user スコープ | domain 例外型へ（`PlanSaveTemplateCopyIntegrity` は domain モジュール名と揃える） |
@@ -146,6 +145,7 @@ flowchart LR
 
 | ファイル | 内容 |
 |----------|------|
+| `cultivation_plan/mappers/plan_allocation_adjust_read_snapshot_mapper.rb` | AR 走査・weather 写像・`PlanAllocationAdjustReadSnapshot` 組立（業務算出は `PlanAllocationAdjustReadSnapshotParts` / `*Snapshot` DTO に移行済み） |
 | `cultivation_plan/gateways/cultivation_plan_private_read_active_record_gateway.rb` | `find_task_schedule_timeline_by_plan_id` の `build_task_schedule_*`、`list_private_plan_index_rows_by_user_id` の集計・並べ |
 | `cultivation_plan/gateways/cultivation_plan_workbench_read_active_record_gateway.rb` | workbench snapshot 組立 |
 | `cultivation_plan/mappers/task_schedule_generation_context_mapper.rb` | タスクスケジュール生成 context（agrr requirement 込み） |
@@ -187,15 +187,23 @@ flowchart LR
 |----------|------|
 | `cultivation_plan/presenters/task_schedule_timeline_html_presenter.rb` | 週次バケット・肥料/一般の分類・ソート（domain timeline mapper と役割が重なる） |
 
+### §Phase 5 — 移行済み（adjust 後 field_cultivation 同期）
+
+| ファイル | ドメインの所在 | Gateway / adapter |
+|----------|----------------|-------------------|
+| `field_cultivation/gateways/field_cultivation_sync_active_record_gateway.rb` | `FieldCultivationSyncInteractor`, `FieldCultivationSyncApplyMapper`, `FieldCultivationSyncPlanCropResolver`, `FieldCultivationSyncUnreferencedPlanCropIds`, `FieldCultivationSyncPolicy` | `find_sync_plan_snapshot_by_plan_id`, `sync_by_plan_id`（preload + 永続化のみ） |
+| `cultivation_plan/mappers/agrr_adjust_result_field_cultivation_sync_mapper.rb` | —（wire のみ） | agrr JSON → `FieldCultivationSyncInput`（上記 [許容](#許容新規業務判断を増やさない) 表） |
+| （廃止）`SaveAdjustedAgrrResult*` 系 | `PlanAllocationAdjustInteractor` 配下の `field_cultivation_sync` Input port 注入 | コードベースから削除済み |
+
+配線: `CompositionRoot#field_cultivation_sync_gateway` → `build_field_cultivation_sync_interactor`；`build_plan_allocation_adjust_interactor` が adjust 成功後に `FieldCultivationSyncInputPort#call`（`AgrrAdjustResultFieldCultivationSyncMapper.to_sync_input`）。
+
 ### Phase 5 との差分（進行中リファクタ）
 
-次は **domain 側に寄ったが adapter に残る** 典型（ブランチ差分と整合）:
+**残**: adjust read の adapter 厚みは §P4（AR 走査・weather 写像）に近い。§P2 の業務算出は `PlanAllocationAdjustReadSnapshotParts` へ移行済み（2026-05-28）。
 
 | 項目 | domain | adapter に残るもの |
 |------|--------|-------------------|
-| adjust 後同期 | `FieldCultivationSyncInteractor`, sync DTO/Policy, `FieldCultivationSyncUnreferencedPlanCropIds` | `AgrrAdjustResultFieldCultivationSyncMapper`（許容） |
-| adjust read | `PlanAllocationAdjustReadSnapshot`, `PlanAllocationAdjustAgrrPayloadMapper` | `PlanAllocationAdjustReadSnapshotMapper` の `has_growth_stages` / days 算出（§P2） |
-| 廃止方向 | `SaveAdjustedAgrrResult*` 系 | — |
+| adjust read | `PlanAllocationAdjustReadSnapshot`, `PlanAllocationAdjustAgrrPayloadMapper`, `PlanAllocationAdjustReadSnapshotParts` | `PlanAllocationAdjustReadSnapshotMapper` の AR 走査・weather 写像・DTO 組立（builder は Proc で edge 注入） |
 
 ### PR 時の追記ルール
 

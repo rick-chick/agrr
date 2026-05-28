@@ -3,8 +3,8 @@
 module Domain
   module CultivationPlan
     module Dtos
-      # AR 読み取り後の 1 作付行（Agrr current allocation 行組み立て用）。
-      class AgrrAdjustFieldCultivationSourceRow
+      # plan_allocation_adjust: agrr current allocation 向けの正規化済み作付スナップショット。
+      class PlanAllocationAdjustFieldCultivationAllocationSnapshot
         attr_reader :field_cultivation_id,
                     :field_id,
                     :crop_id,

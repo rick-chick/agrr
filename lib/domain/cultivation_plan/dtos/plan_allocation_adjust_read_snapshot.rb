@@ -5,7 +5,7 @@ module Domain
     module Dtos
       # plan_allocation_adjust 用: Gateway が返す計画読取スナップショット（唯一の読取契約 DTO）。
       class PlanAllocationAdjustReadSnapshot
-        PlanFieldEntry = Struct.new(
+        PlanFieldSnapshot = Struct.new(
           :id,
           :name,
           :area,
@@ -13,7 +13,7 @@ module Domain
           keyword_init: true
         )
 
-        PlanCropEntry = Struct.new(
+        PlanCropSnapshot = Struct.new(
           :crop_id,
           :crop_name,
           :groups,
@@ -23,9 +23,9 @@ module Domain
         )
 
         attr_reader :plan_id,
-                    :field_source_rows,
-                    :plan_fields,
-                    :plan_crop_entries,
+                    :field_source_snapshots,
+                    :plan_field_snapshots,
+                    :plan_crop_snapshots,
                     :cultivation_planning_periods,
                     :planning_period_boundaries,
                     :cultivation_plan_weather_dto,
@@ -35,9 +35,9 @@ module Domain
 
         def initialize(
           plan_id:,
-          field_source_rows:,
-          plan_fields:,
-          plan_crop_entries:,
+          field_source_snapshots:,
+          plan_field_snapshots:,
+          plan_crop_snapshots:,
           cultivation_planning_periods:,
           planning_period_boundaries:,
           cultivation_plan_weather_dto:,
@@ -46,9 +46,9 @@ module Domain
           farm_without_weather_location:
         )
           @plan_id = plan_id
-          @field_source_rows = Array(field_source_rows).freeze
-          @plan_fields = Array(plan_fields).freeze
-          @plan_crop_entries = Array(plan_crop_entries).freeze
+          @field_source_snapshots = Array(field_source_snapshots).freeze
+          @plan_field_snapshots = Array(plan_field_snapshots).freeze
+          @plan_crop_snapshots = Array(plan_crop_snapshots).freeze
           @cultivation_planning_periods = Array(cultivation_planning_periods).freeze
           @planning_period_boundaries = planning_period_boundaries
           @cultivation_plan_weather_dto = cultivation_plan_weather_dto

@@ -24,22 +24,19 @@
 
 ---
 
-## A. ファイル命名違反 (10件)
+## A. ファイル命名違反（未解消 2件 + 部分 1件、解消済み 7件）
 
-### A-1. `app/adapters/public_plan/gateways/entry_schedule_cursor_decode_gateway.rb`
+### ~~A-1. `entry_schedule_cursor_decode_gateway.rb`~~（解消済み）
 | 項目 | 値 |
 |---|---|
-| クラス | `EntryScheduleCursorDecodeGateway` |
-| 違反 | アダプター接尾辞なし。Base64/JSONデコードは純計算でI/Oではない |
-| 判定 | **ゲートウェイとして不適格**。ユーティリティクラスへ移動すべき |
-| 修正 | ゲートウェイから除外。`app/adapters/public_plan/entry_schedule_cursor_decoder.rb` / `EntryScheduleCursorDecoder` |
+| 旧クラス | `EntryScheduleCursorDecodeGateway`（ゲートウェイ不適格） |
+| 解消 | `app/adapters/public_plan/entry_schedule_cursor_decoder.rb` / `EntryScheduleCursorDecoder`（I/O なしのデコーダ） |
 
-### A-2. `app/adapters/backdoor/gateways/shell_stdout_capture_gateway.rb`
+### ~~A-2. `shell_stdout_capture_gateway.rb`~~（解消済み）
 | 項目 | 値 |
 |---|---|
-| クラス | `ShellStdoutCaptureGateway` |
-| 違反 | アダプター接尾辞なし。シェルコマンド実行はプロセスI/O → `_cli_gateway` |
-| 修正 | `shell_stdout_capture_cli_gateway.rb` / `ShellStdoutCaptureCliGateway` |
+| 旧クラス | `ShellStdoutCaptureGateway` |
+| 解消 | `app/adapters/backdoor/gateways/shell_stdout_capture_cli_gateway.rb` / `ShellStdoutCaptureCliGateway` |
 
 ### A-3. ~~`field_cultivation_climate_gateway.rb`~~（解消方向）
 
@@ -50,13 +47,11 @@
 | 残タスク | adapter 内 snapshot 組立・認可コンテキストの read は [gateway-domain-logic-migration.md §P1 / §P4](./gateway-domain-logic-migration.md#adapter-残存ドメインロジック洗い出し) |
 | ファイル名 | `field_cultivation_climate_active_record_gateway.rb` が残る場合は `_active_record_gateway` 接尾辞の整理対象（実体は source/progress と重複しないか要確認） |
 
-### A-4. `app/adapters/weather_data/gateways/agrr_prediction_gateway_adapter.rb`
+### ~~A-4. `agrr_prediction_gateway_adapter.rb`~~（解消済み）
 | 項目 | 値 |
 |---|---|
-| クラス | `AgrrPredictionGatewayAdapter` |
-| 違反 | `_gateway_adapter`は禁止接尾辞。`PredictionDaemonGateway`への薄いラッパー |
-| 判定 | **不要なラッパー**。呼び出し側で`PredictionDaemonGateway`を直接参照すべき |
-| 修正 | 削除。呼び出し側を`PredictionDaemonGateway`へ変更 |
+| 旧クラス | `AgrrPredictionGatewayAdapter`（禁止接尾辞 `_gateway_adapter`） |
+| 解消 | ラッパー削除。呼び出し側は `PredictionDaemonGateway` を直接参照 |
 
 ### ~~A-5. `masters_api_session_resolve_*`~~（解消済み）
 | 項目 | 値 |
@@ -64,36 +59,32 @@
 | 旧クラス | `MastersApiSessionResolveActiveRecordGateway`（削除） |
 | 解消 | `Domain::Shared::Interactors::MastersApiCredentialsResolveInteractor` + `ApiKeyPrincipalActiveRecordGateway` + `SessionCookiePrincipalActiveRecordGateway`。`Api::V1::Masters::BaseController` は配線のみ |
 
-### A-6. `app/adapters/shared/gateways/sql_like_active_record_gateway.rb`
+### ~~A-6. `sql_like_active_record_gateway.rb`~~（解消済み）
 | 項目 | 値 |
 |---|---|
-| クラス | `SqlLikeActiveRecordGateway` |
-| 違反 | `Domain::Shared::Ports::SqlLikeSanitizePort`を実装している→インフラストラクチャポート。ゲートウェイではない |
-| 判定 | **ポート/ゲートウェイの区別違反**。ポートアダプターとして再配置 |
-| 修正 | `app/adapters/shared/ports/sql_like_active_record_adapter.rb` / `SqlLikeActiveRecordAdapter` |
+| 旧クラス | `SqlLikeActiveRecordGateway`（ゲートウェイ誤配置） |
+| 解消 | `app/adapters/shared/ports/sql_like_active_record_adapter.rb` / `SqlLikeActiveRecordAdapter`（`SqlLikeSanitizePort` 実装） |
 
-### A-7. `app/adapters/cultivation_plan/gateways/plan_copy_gateway.rb`
+### ~~A-7. `plan_copy_gateway.rb`~~（命名解消済み・境界は残）
 | 項目 | 値 |
 |---|---|
-| クラス | `PlanCopyGateway` |
-| 違反 | アダプター接尾辞なし。ActiveRecordを使用 |
-| 判定 | **ゲートウェイ境界違反**（マルチエンティティオーケストレーション）。インタラクターとして再設計すべき |
-| 修正（命名のみ） | `plan_copy_active_record_gateway.rb` / `PlanCopyActiveRecordGateway`（再設計は別タスク） |
+| 旧クラス | `PlanCopyGateway` |
+| 解消（命名） | `plan_copy_active_record_gateway.rb` / `PlanCopyActiveRecordGateway` + `PlanCopyInteractor` |
+| 残 | マルチエンティティ永続化の境界整理は [gateway-domain-logic-migration.md](./gateway-domain-logic-migration.md) §P3 等 |
 
-### A-8. `app/adapters/cultivation_plan/gateways/crop_task_schedule_blueprint_gateway.rb`
+### ~~A-8. `crop_task_schedule_blueprint_gateway.rb`~~（命名解消済み・境界は残）
 | 項目 | 値 |
 |---|---|
-| クラス | `CropTaskScheduleBlueprintGateway` |
-| 違反 | アダプター接尾辞なし。ActiveRecordを使用 |
-| 判定 | **ゲートウェイ境界違反**（マルチエンティティオーケストレーション）。インタラクターとして再設計すべき |
-| 修正（命名のみ） | `crop_task_schedule_blueprint_active_record_gateway.rb` / `CropTaskScheduleBlueprintActiveRecordGateway`（再設計は別タスク） |
+| 旧クラス | `CropTaskScheduleBlueprintGateway` |
+| 解消（命名） | `crop_task_schedule_blueprint_active_record_gateway.rb` / `CropTaskScheduleBlueprintActiveRecordGateway` + `CropTaskScheduleBlueprintCopyInteractor` |
+| 残 | 同上（オーケストレーションの domain 寄せは別タスク） |
 
-### A-9, A-10. `plan_data_available_crop_rows_private/public_active_record_gateway.rb`
+### ~~A-9, A-10. `plan_data_available_crop_rows_*`~~（命名解消済み・DTO は残課題）
 | 項目 | 値 |
 |---|---|
-| クラス | `PlanDataAvailableCropRowsPrivateActiveRecordGateway` / `PlanDataAvailableCropRowsPublicActiveRecordGateway` |
-| 違反 | `private`/`public`中接辞は禁止（プレゼンテーションチャネル名）。またインターフェースは`Array<Hash>`を返す→エンティティ/DTOを返すべき |
-| 修正 | `crop_rows_available_private_active_record_gateway.rb` / `CropRowsAvailablePrivateActiveRecordGateway`<br>`crop_rows_available_public_active_record_gateway.rb` / `CropRowsAvailablePublicActiveRecordGateway` |
+| 旧クラス | `PlanDataAvailableCropRowsPrivateActiveRecordGateway` / `PlanDataAvailableCropRowsPublicActiveRecordGateway` |
+| 解消（命名） | `crop_rows_available_private_active_record_gateway.rb` / `CropRowsAvailablePrivateActiveRecordGateway`<br>`crop_rows_available_public_active_record_gateway.rb` / `CropRowsAvailablePublicActiveRecordGateway` + `CropRowsAvailableRow` DTO |
+| 残 | 返却型の Hash 排除などは境界・DTO 整備タスクで継続 |
 
 ---
 
@@ -174,7 +165,7 @@
 
 | 優先度 | カテゴリ | 件数 | 内容 |
 |---|---|---|---|
-| **P1** | ファイル命名違反 | 9 | 接尾辞なし/禁止接尾辞/禁止中接辞/誤配置（A-5 解消済み） |
+| **P1** | ファイル命名違反 | 2 + 部分 1 | 未解消: A-3（climate ファサード `field_cultivation_climate_active_record_gateway.rb`）。A-1〜2,4,6〜10 は命名解消済み（A-5, C-6 含む） |
 | **P2** | メソッド命名違反 | 32 | `find_<entity>_by_*`, `destroy`, `create_<entity>` |
 | **P3** | ゲートウェイ境界違反 | 5 | 認可・フォーム準備・マルチエンティティ・プレゼンター形状複合（C-6 解消済み） |
 

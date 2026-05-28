@@ -6,8 +6,8 @@ module Adapters
       class PlanAllocationAdjustReadActiveRecordGateway < Domain::CultivationPlan::Gateways::PlanAllocationAdjustReadGateway
         ADJUST_INCLUDES = [
           :cultivation_plan_fields,
-          { cultivation_plan_crops: :crop },
-          { field_cultivations: [ :cultivation_plan_field, { cultivation_plan_crop: :crop } ] },
+          { cultivation_plan_crops: { crop: :crop_stages } },
+          { field_cultivations: [ :cultivation_plan_field, { cultivation_plan_crop: { crop: :crop_stages } } ] },
           { farm: :weather_location }
         ].freeze
 

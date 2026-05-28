@@ -10,7 +10,7 @@ module Domain
       class PlanAllocationAdjustInteractorTest < DomainLibTestCase
         Failure = Dtos::PlanAllocationAdjustFailure
         Snapshot = Dtos::PlanAllocationAdjustReadSnapshot
-        PlanCropEntry = Snapshot::PlanCropEntry
+        PlanCropSnapshot = Snapshot::PlanCropSnapshot
 
         FakeTranslator = Struct.new(:dummy) do
           def translate(key, **options)
@@ -83,10 +83,10 @@ module Domain
         def build_adjust_read_snapshot(crop_name:, has_growth_stages:)
           Snapshot.new(
             plan_id: 2,
-            field_source_rows: [],
-            plan_fields: [],
-            plan_crop_entries: [
-              PlanCropEntry.new(
+            field_source_snapshots: [],
+            plan_field_snapshots: [],
+            plan_crop_snapshots: [
+              PlanCropSnapshot.new(
                 crop_id: 1,
                 crop_name: crop_name,
                 groups: [],

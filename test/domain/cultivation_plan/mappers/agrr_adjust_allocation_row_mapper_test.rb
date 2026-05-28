@@ -6,8 +6,11 @@ module Domain
   module CultivationPlan
     module Mappers
       class AgrrAdjustAllocationRowMapperTest < DomainLibTestCase
-        test "build_current_allocation excludes ids and rows without growth stages" do
-          included = Dtos::AgrrAdjustFieldCultivationSourceRow.new(
+        AllocationSnapshot = Dtos::PlanAllocationAdjustFieldCultivationAllocationSnapshot
+        FieldSourceSnapshot = Dtos::PlanAllocationAdjustFieldSourceSnapshot
+
+        test "build_current_allocation excludes ids and cultivations without growth stages" do
+          included = AllocationSnapshot.new(
             field_cultivation_id: 10,
             field_id: 1,
             crop_id: "5",
@@ -22,7 +25,7 @@ module Domain
             accumulated_gdd: 1.0,
             has_growth_stages: true
           )
-          excluded_id = Dtos::AgrrAdjustFieldCultivationSourceRow.new(
+          excluded_id = AllocationSnapshot.new(
             field_cultivation_id: 11,
             field_id: 1,
             crop_id: "6",
@@ -37,7 +40,7 @@ module Domain
             accumulated_gdd: 0.0,
             has_growth_stages: true
           )
-          no_stages = Dtos::AgrrAdjustFieldCultivationSourceRow.new(
+          no_stages = AllocationSnapshot.new(
             field_cultivation_id: 12,
             field_id: 1,
             crop_id: "7",
@@ -52,7 +55,7 @@ module Domain
             accumulated_gdd: 0.0,
             has_growth_stages: false
           )
-          field_row = Dtos::AgrrAdjustFieldSourceRow.new(
+          field_snapshot = FieldSourceSnapshot.new(
             field_id: 1,
             field_name: "North",
             field_area: 100.0,
@@ -61,7 +64,7 @@ module Domain
 
           payload = AgrrAdjustAllocationRowMapper.build_current_allocation(
             cultivation_plan_id: 99,
-            field_rows: [ field_row ],
+            field_snapshots: [ field_snapshot ],
             exclude_ids: [ 11 ]
           )
 

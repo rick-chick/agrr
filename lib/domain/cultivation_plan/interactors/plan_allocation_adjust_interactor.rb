@@ -220,7 +220,7 @@ module Domain
         end
 
         def validate_plan_crop_growth_stages!
-          @adjust_read_snapshot.plan_crop_entries.each do |entry|
+          @adjust_read_snapshot.plan_crop_snapshots.each do |entry|
             next if entry.has_growth_stages
 
             emit_failure(
