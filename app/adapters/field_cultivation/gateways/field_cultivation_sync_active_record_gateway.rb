@@ -10,15 +10,32 @@ module Adapters
         end
 
         def find_sync_plan_snapshot_by_plan_id(plan_id:)
-          cultivation_plan = ::CultivationPlan.find(plan_id)
+          cultivation_plan = ::CultivationPlan.includes(
+            :cultivation_plan_fields,
+            cultivation_plan_crops: :crop,
+            field_cultivations: { cultivation_plan_crop: :crop }
+          ).find(plan_id)
+
           plan_fields_by_id = cultivation_plan.cultivation_plan_fields.index_by(&:id)
-          plan_crops_by_crop_id = cultivation_plan.cultivation_plan_crops.index_by { |pc| pc.crop.id.to_s }
+          plan_crop_rows = cultivation_plan.cultivation_plan_crops.map do |plan_crop|
+            Domain::FieldCultivation::Dtos::FieldCultivationSyncPlanCropEntry.new(
+              plan_crop_id: plan_crop.id,
+              crop_id: plan_crop.crop.id
+            )
+          end
+          existing_field_cultivations_by_id = cultivation_plan.field_cultivations.index_by(&:id).transform_values do |fc|
+            Domain::FieldCultivation::Dtos::FieldCultivationSyncExistingFieldCultivationEntry.new(
+              field_cultivation_id: fc.id,
+              cultivation_plan_crop_id: fc.cultivation_plan_crop_id,
+              crop_id: fc.cultivation_plan_crop.crop.id
+            )
+          end
 
           Domain::FieldCultivation::Dtos::FieldCultivationSyncPlanSnapshot.new(
             plan_id: cultivation_plan.id,
             plan_fields_by_id: plan_fields_by_id.transform_values(&:id),
-            plan_crops_by_crop_id: plan_crops_by_crop_id.transform_values(&:id),
-            existing_field_cultivation_ids: cultivation_plan.field_cultivations.pluck(:id)
+            plan_crop_rows: plan_crop_rows,
+            existing_field_cultivations_by_id: existing_field_cultivations_by_id
           )
         end
 
@@ -56,7 +73,11 @@ module Adapters
               ::FieldCultivation.where(id: sync_apply.field_cultivation_ids_to_delete).delete_all
             end
 
-            delete_unreferenced_plan_crops!(cultivation_plan, sync_apply.referenced_crop_ids)
+            if sync_apply.cultivation_plan_crop_ids_to_delete.any?
+              @logger.info "🗑️ [FieldCultivationSync] 未参照 plan_crop 削除: " \
+                            "#{sync_apply.cultivation_plan_crop_ids_to_delete.size}件"
+              ::CultivationPlanCrop.where(id: sync_apply.cultivation_plan_crop_ids_to_delete).delete_all
+            end
 
             summary = sync_apply.cultivation_plan_summary
             cultivation_plan.update!(
@@ -92,18 +113,6 @@ module Adapters
           }
         end
 
-        def delete_unreferenced_plan_crops!(cultivation_plan, referenced_crop_ids)
-          return if referenced_crop_ids.empty?
-
-          retained_plan_crop_ids = cultivation_plan.cultivation_plan_crops.select do |pc|
-            referenced_crop_ids.include?(pc.crop.id.to_s)
-          end.map(&:id)
-          unreferenced_plan_crops = cultivation_plan.cultivation_plan_crops.where.not(id: retained_plan_crop_ids)
-          return unless unreferenced_plan_crops.exists?
-
-          @logger.info "🗑️ [FieldCultivationSync] 未参照 plan_crop 削除: #{unreferenced_plan_crops.pluck(:name).join(', ')}"
-          unreferenced_plan_crops.delete_all
-        end
       end
     end
   end

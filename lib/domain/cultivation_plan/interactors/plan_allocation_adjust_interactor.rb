@@ -574,8 +574,7 @@ module Domain
                 "controllers.agrr_optimization.errors.field_missing",
                 field_id: error.field_id
               )
-            when ref_error::KIND_PLAN_CROP_MISSING,
-                 ref_error::KIND_CROP_MISSING
+            when ref_error::KIND_PLAN_CROP_MISSING
               @translator.translate(
                 "controllers.agrr_optimization.errors.plan_crop_missing",
                 crop_id: error.crop_id

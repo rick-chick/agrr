@@ -16,7 +16,7 @@
 - 読取: `RetrieveCultivationPlanInteractor`（`CultivationPlanGateway#find_by_id` → `RestPlanAccess` → `load_snapshot_by_plan_id`）+ `CultivationPlanRestPlanPreload#find_by_plan_id`
 - REST 変更系: `AddFieldInteractor` 等 + `find_by_id` + `RestPlanAccess`（旧 `PlanScopes` / `find_by_id_for_rest` は廃止）
 - REST add_crop / adjust: Input port nesting — [ARCHITECTURE.md — Composite use cases and Input port injection](../ARCHITECTURE.md#composite-use-cases-and-input-port-injection)（`AddCropCropResolveInputPort` + `PlanAllocationAdjustInputPort` + `build_*` at edge）
-- adjust 後の field_cultivation 同期: `FieldCultivationSyncInteractor` + `FieldCultivationSyncPlanSnapshot` / `FieldCultivationSyncTargetSnapshot` + `FieldCultivationSyncApply`；agrr JSON → `AgrrAdjustResultFieldCultivationSyncMapper`（adapter）；`FieldCultivationSyncGateway#sync_by_plan_id`
+- adjust 後の field_cultivation 同期: `FieldCultivationSyncInteractor` + `FieldCultivationSyncPlanSnapshot` / `FieldCultivationSyncTargetSnapshot` + `FieldCultivationSyncApply`（未参照 `cultivation_plan_crop_ids_to_delete` は `FieldCultivationSyncUnreferencedPlanCropIds`）；agrr JSON → `AgrrAdjustResultFieldCultivationSyncMapper`（adapter）；`FieldCultivationSyncGateway#sync_by_plan_id`
 - 認可 + count: `CropCreateInteractor` + `CropCreateLimitPolicy`
 - PlanSave farm step: `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway`（戻り値 `PlanSaveReferenceFarmSnapshot` / `PlanSaveUserFarmSnapshot`）
 - PlanSave field step: `PlanSaveEnsureUserFieldsInteractor` + `PlanSaveFieldGateway`（戻り値 `PlanSaveFieldSnapshot`；template-copy は `PlanSaveTemplateCopyIntegrity#field_records_for_template_copy`）
@@ -124,7 +124,6 @@ flowchart LR
 | `cultivation_plan/gateways/cultivation_plan_active_record_gateway.rb` | `find_crop_id!` → `CultivationPlanCropMissingError` | 整合性メッセージ付き raise |
 | `crop/crop_ai_upsert_active_record_persistence.rb` | `validate_stage_requirements!`、ステージ永続化オーケストレーション | AI 経路の永続化ブロック |
 | `cultivation_plan/sessions/plan_save_template_copy_integrity.rb` | template-copy 用 ID の存在・user スコープ | domain 例外型へ（`PlanSaveTemplateCopyIntegrity` は domain モジュール名と揃える） |
-| `field_cultivation/gateways/field_cultivation_sync_active_record_gateway.rb` | `delete_unreferenced_plan_crops!` | `FieldCultivationSyncInteractor` 適用後の付随削除。domain Policy または Interactor 内判断へ |
 | `contact_messages/services/contact_message_rate_limiter.rb` | IP 単位レート制限 | domain Policy + インフラ Port が理想 |
 | `deletion_undo/manager.rb` | 期限・復元トランザクション・ドメイン例外 | Undo ユースケース Interactor へ（`CompositionRoot` デフォルト解決あり） |
 
@@ -189,7 +188,7 @@ flowchart LR
 
 | 項目 | domain | adapter に残るもの |
 |------|--------|-------------------|
-| adjust 後同期 | `FieldCultivationSyncInteractor`, sync DTO/Policy | `AgrrAdjustResultFieldCultivationSyncMapper`（許容）, `delete_unreferenced_plan_crops!`（§P2） |
+| adjust 後同期 | `FieldCultivationSyncInteractor`, sync DTO/Policy, `FieldCultivationSyncUnreferencedPlanCropIds` | `AgrrAdjustResultFieldCultivationSyncMapper`（許容） |
 | adjust read | `PlanAllocationAdjustReadSnapshot`, `PlanAllocationAdjustAgrrPayloadMapper` | `PlanAllocationAdjustReadSnapshotMapper` の `has_growth_stages` / days 算出（§P2） |
 | 廃止方向 | `SaveAdjustedAgrrResult*` 系 | — |
 

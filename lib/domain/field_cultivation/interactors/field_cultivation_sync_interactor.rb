@@ -27,7 +27,8 @@ module Domain
 
           @logger.info "🛠️ [FieldCultivationSync] to_update: #{sync_apply.field_cultivations_to_update.size}, " \
                         "to_create: #{sync_apply.field_cultivations_to_create.size}, " \
-                        "to_delete: #{sync_apply.field_cultivation_ids_to_delete.size}"
+                        "to_delete: #{sync_apply.field_cultivation_ids_to_delete.size}, " \
+                        "plan_crop_delete: #{sync_apply.cultivation_plan_crop_ids_to_delete.size}"
 
           @sync_gateway.sync_by_plan_id(plan_id: plan_id, sync_apply: sync_apply)
         end

@@ -33,7 +33,10 @@ module Domain
             field_schedule.allocations.each do |allocation|
               referenced_crop_ids.add(allocation.crop_id)
 
-              plan_crop_id = plan_snapshot.plan_crops_by_crop_id[allocation.crop_id]
+              plan_crop_id = FieldCultivationSyncPlanCropResolver.resolve_plan_crop_id(
+                plan_snapshot: plan_snapshot,
+                allocation: allocation
+              )
               unless plan_crop_id
                 raise Errors::FieldCultivationSyncReferenceError.new(
                   kind: Errors::FieldCultivationSyncReferenceError::KIND_PLAN_CROP_MISSING,

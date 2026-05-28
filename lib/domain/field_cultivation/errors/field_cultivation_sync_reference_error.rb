@@ -6,8 +6,8 @@ module Domain
       # field / crop / plan_crop 解決失敗、日付パース失敗（同期フェーズ）。
       class FieldCultivationSyncReferenceError < StandardError
         KIND_FIELD_MISSING = :field_missing
-        KIND_CROP_MISSING = :crop_missing
         KIND_PLAN_CROP_MISSING = :plan_crop_missing
+        KIND_PLAN_CROP_AMBIGUOUS = :plan_crop_ambiguous
         KIND_START_DATE_INVALID = :start_date_invalid
         KIND_COMPLETION_DATE_INVALID = :completion_date_invalid
 

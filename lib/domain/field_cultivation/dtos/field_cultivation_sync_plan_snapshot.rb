@@ -7,15 +7,21 @@ module Domain
       class FieldCultivationSyncPlanSnapshot
         attr_reader :plan_id,
                     :plan_fields_by_id,
-                    :plan_crops_by_crop_id,
-                    :existing_field_cultivation_ids
+                    :plan_crop_rows,
+                    :existing_field_cultivations_by_id
 
-        def initialize(plan_id:, plan_fields_by_id:, plan_crops_by_crop_id:, existing_field_cultivation_ids:)
+        # @param plan_crop_rows [Array<FieldCultivationSyncPlanCropEntry>]
+        # @param existing_field_cultivations_by_id [Hash{Integer => FieldCultivationSyncExistingFieldCultivationEntry}]
+        def initialize(plan_id:, plan_fields_by_id:, plan_crop_rows:, existing_field_cultivations_by_id:)
           @plan_id = plan_id
           @plan_fields_by_id = plan_fields_by_id.freeze
-          @plan_crops_by_crop_id = plan_crops_by_crop_id.freeze
-          @existing_field_cultivation_ids = existing_field_cultivation_ids.freeze
+          @plan_crop_rows = Array(plan_crop_rows).freeze
+          @existing_field_cultivations_by_id = existing_field_cultivations_by_id.freeze
           freeze
+        end
+
+        def existing_field_cultivation_ids
+          existing_field_cultivations_by_id.keys
         end
       end
     end
