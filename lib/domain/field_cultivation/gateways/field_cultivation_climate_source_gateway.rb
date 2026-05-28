@@ -6,7 +6,7 @@ module Domain
       class FieldCultivationClimateSourceGateway < FieldCultivationGateway
         # @return [Domain::FieldCultivation::Dtos::FieldCultivationClimateSourceSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordNotFound]
-        def find_by_field_cultivation_id(field_cultivation_id)
+        def find_climate_source_snapshot_by_field_cultivation_id(field_cultivation_id)
           raise NotImplementedError
         end
 

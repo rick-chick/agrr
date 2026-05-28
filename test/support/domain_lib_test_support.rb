@@ -30,8 +30,8 @@ module DomainLibTestSupport
     record
   end
 
-  def public_field_cultivation_plan_context(field_cultivation_id)
-    Domain::FieldCultivation::Dtos::FieldCultivationPlanAccessContext.new(
+  def public_field_cultivation_plan_access_snapshot(field_cultivation_id)
+    Domain::FieldCultivation::Dtos::FieldCultivationPlanAccessSnapshot.new(
       field_cultivation_id: field_cultivation_id,
       plan_type_public: true,
       plan_type_private: false,
@@ -39,8 +39,8 @@ module DomainLibTestSupport
     )
   end
 
-  def private_field_cultivation_plan_context(field_cultivation_id, plan_user_id: 1)
-    Domain::FieldCultivation::Dtos::FieldCultivationPlanAccessContext.new(
+  def private_field_cultivation_plan_access_snapshot(field_cultivation_id, plan_user_id: 1)
+    Domain::FieldCultivation::Dtos::FieldCultivationPlanAccessSnapshot.new(
       field_cultivation_id: field_cultivation_id,
       plan_type_public: false,
       plan_type_private: true,
@@ -48,9 +48,9 @@ module DomainLibTestSupport
     )
   end
 
-  def attach_plan_access_context_to_gateway(gateway, field_cultivation_id, context: nil)
-    ctx = context || public_field_cultivation_plan_context(field_cultivation_id)
-    gateway.define_singleton_method(:find_plan_access_context) { |_id| ctx }
+  def attach_plan_access_snapshot_to_gateway(gateway, field_cultivation_id, snapshot: nil)
+    snap = snapshot || public_field_cultivation_plan_access_snapshot(field_cultivation_id)
+    gateway.define_singleton_method(:find_plan_access_snapshot_by_field_cultivation_id) { |_id| snap }
     gateway
   end
 

@@ -23,7 +23,7 @@ module Domain
 
           call_args = nil
           gateway = Object.new
-          attach_plan_access_context_to_gateway(gateway, fc_id)
+          attach_plan_access_snapshot_to_gateway(gateway, fc_id)
           gateway.define_singleton_method(:find_api_summary) do |field_cultivation_id:|
             call_args = field_cultivation_id
             dto
@@ -44,10 +44,10 @@ module Domain
         test "calls on_failure with Forbidden when private plan is owned by another user" do
           fc_id = 7
           gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 99)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 99)
           )
           gateway.define_singleton_method(:find_api_summary) do |_kwargs|
             flunk "find_api_summary must not run when access is denied"
@@ -76,7 +76,7 @@ module Domain
         test "calls on_failure with Error when gateway raises RecordNotFound" do
           fc_id = 99
           gateway = Object.new
-          attach_plan_access_context_to_gateway(gateway, fc_id)
+          attach_plan_access_snapshot_to_gateway(gateway, fc_id)
           gateway.define_singleton_method(:find_api_summary) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end

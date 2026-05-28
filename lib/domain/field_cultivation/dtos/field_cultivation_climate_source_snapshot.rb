@@ -3,7 +3,7 @@
 module Domain
   module FieldCultivation
     module Dtos
-      # Gateway 読取直後の圃場栽培・計画メタ（作物解決・ステージ組立前）。
+      # 気象データユースケース用スナップショット（作物解決・ステージ組立前）。
       class FieldCultivationClimateSourceSnapshot
         attr_reader :field_cultivation_id, :field_name, :crop_name,
                     :start_date, :completion_date,

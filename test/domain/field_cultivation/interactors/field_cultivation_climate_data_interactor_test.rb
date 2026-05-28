@@ -91,12 +91,12 @@ module Domain
           source = build_source(fc_id: fc_id)
 
           source_gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             source_gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 1)
           )
-          source_gateway.define_singleton_method(:find_by_field_cultivation_id) do |id|
+          source_gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) do |id|
             raise "unexpected id" unless id == fc_id
 
             source
@@ -140,13 +140,13 @@ module Domain
         test "routes Forbidden through the output port when private plan is owned by another user" do
           fc_id = 42
           source_gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             source_gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 99)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 99)
           )
-          source_gateway.define_singleton_method(:find_by_field_cultivation_id) do |_id|
-            flunk "find_by_field_cultivation_id must not run when access is denied"
+          source_gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) do |_id|
+            flunk "find_climate_source_snapshot_by_field_cultivation_id must not run when access is denied"
           end
 
           received = nil
@@ -174,12 +174,12 @@ module Domain
         test "routes RecordNotFound through the output port" do
           fc_id = 42
           source_gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             source_gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 1)
           )
-          source_gateway.define_singleton_method(:find_by_field_cultivation_id) do |_id|
+          source_gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) do |_id|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 
@@ -210,12 +210,12 @@ module Domain
           source = build_source(fc_id: fc_id, weather_location_id: nil)
 
           source_gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             source_gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 1)
           )
-          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+          source_gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) { |_id| source }
 
           received = nil
           output_port = Minitest::Mock.new
@@ -243,12 +243,12 @@ module Domain
           source = build_source(fc_id: fc_id, start_date: nil, completion_date: nil)
 
           source_gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             source_gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 1)
           )
-          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+          source_gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) { |_id| source }
 
           received = nil
           output_port = Minitest::Mock.new
@@ -276,12 +276,12 @@ module Domain
           source = build_source(fc_id: fc_id)
 
           source_gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             source_gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 1)
           )
-          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+          source_gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) { |_id| source }
 
           crop_entity = build_crop_entity(is_reference: false, user_id: 99)
           crop_gateway = Object.new
@@ -316,12 +316,12 @@ module Domain
           )
 
           source_gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             source_gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 1)
           )
-          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+          source_gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) { |_id| source }
 
           crop_entity = build_crop_entity
           crop_gateway = Object.new
@@ -357,12 +357,12 @@ module Domain
           source = build_source(fc_id: fc_id, predicted_weather_data: nil)
 
           source_gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             source_gateway,
             fc_id,
-            context: private_field_cultivation_plan_context(fc_id, plan_user_id: 1)
+            snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 1)
           )
-          source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
+          source_gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) { |_id| source }
           source_gateway.define_singleton_method(:find_weather_prediction_targets_by_plan_id) do |_plan_id|
             Domain::WeatherData::Dtos::WeatherPredictionTargets.new(
               weather_location: Domain::WeatherData::Dtos::WeatherLocation.new(

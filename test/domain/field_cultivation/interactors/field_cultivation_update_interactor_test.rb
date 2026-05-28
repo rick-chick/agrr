@@ -21,7 +21,7 @@ module Domain
 
           seen = {}
           gateway = Object.new
-          attach_plan_access_context_to_gateway(gateway, input.field_cultivation_id)
+          attach_plan_access_snapshot_to_gateway(gateway, input.field_cultivation_id)
           gateway.define_singleton_method(:update_field_cultivation_schedule) do |field_cultivation_id:, start_date:, completion_date:, cultivation_days:|
             seen[:field_cultivation_id] = field_cultivation_id
             seen[:start_date] = start_date
@@ -53,10 +53,10 @@ module Domain
           )
 
           gateway = Object.new
-          attach_plan_access_context_to_gateway(
+          attach_plan_access_snapshot_to_gateway(
             gateway,
             input.field_cultivation_id,
-            context: private_field_cultivation_plan_context(input.field_cultivation_id, plan_user_id: 99)
+            snapshot: private_field_cultivation_plan_access_snapshot(input.field_cultivation_id, plan_user_id: 99)
           )
           gateway.define_singleton_method(:update_field_cultivation_schedule) do |_kwargs|
             flunk "update must not run when access is denied"
@@ -91,7 +91,7 @@ module Domain
           )
 
           gateway = Object.new
-          attach_plan_access_context_to_gateway(gateway, input.field_cultivation_id)
+          attach_plan_access_snapshot_to_gateway(gateway, input.field_cultivation_id)
           gateway.define_singleton_method(:update_field_cultivation_schedule) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordNotFound, "missing"
           end
@@ -116,7 +116,7 @@ module Domain
           )
 
           gateway = Object.new
-          attach_plan_access_context_to_gateway(gateway, input.field_cultivation_id)
+          attach_plan_access_snapshot_to_gateway(gateway, input.field_cultivation_id)
           gateway.define_singleton_method(:update_field_cultivation_schedule) do |_kwargs|
             raise Domain::Shared::Exceptions::RecordInvalid.new(nil, errors: [ "bad" ])
           end

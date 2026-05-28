@@ -47,7 +47,9 @@ module Domain
             assert_public_field_cultivation_plan_access!(@climate_source_gateway, input_dto.field_cultivation_id)
           end
 
-          source = @climate_source_gateway.find_by_field_cultivation_id(input_dto.field_cultivation_id)
+          source = @climate_source_gateway.find_climate_source_snapshot_by_field_cultivation_id(
+            input_dto.field_cultivation_id
+          )
           assert_climate_preconditions!(source)
 
           crop_entity = resolve_crop_entity(source: source, user_dto: user_dto)
