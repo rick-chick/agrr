@@ -152,10 +152,6 @@ module Api
             interactor.call(input_dto)
           end
 
-          def render_response(json:, status:)
-            render json: json, status: status
-          end
-
           private
 
           def template_params

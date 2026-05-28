@@ -60,10 +60,6 @@ module Api
               interactor.call(input_dto)
             end
 
-            def render_response(json:, status:)
-              render(json: json, status: status)
-            end
-
             def render_no_content
               head :no_content
             end

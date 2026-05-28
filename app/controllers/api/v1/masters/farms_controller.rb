@@ -64,11 +64,6 @@ module Api
           interactor.call(params[:id])
         end
 
-        # View の実装: render は controller.render への委譲のみ
-        def render_response(json:, status:)
-          render(json: json, status: status)
-        end
-
         # FarmDeleteView: undo 用 JSON の undo_path 組み立て
         def undo_deletion_path(undo_token:)
           Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)

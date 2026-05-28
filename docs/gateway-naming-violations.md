@@ -41,13 +41,14 @@
 | 違反 | アダプター接尾辞なし。シェルコマンド実行はプロセスI/O → `_cli_gateway` |
 | 修正 | `shell_stdout_capture_cli_gateway.rb` / `ShellStdoutCaptureCliGateway` |
 
-### A-3. `app/adapters/field_cultivation/gateways/field_cultivation_climate_gateway.rb`
+### A-3. ~~`field_cultivation_climate_gateway.rb`~~（解消方向）
+
 | 項目 | 値 |
 |---|---|
-| クラス | `FieldCultivationClimateGateway` |
-| 違反 | `_climate_gateway`は許可接尾辞外。また`Domain::FieldCultivation::Gateways::FieldCultivationGateway`を継承しているが、認可チェック・マルチゲートウェイオーケストレーション・複合DTOアセンブリを行う巨大なクラス |
-| 判定 | **ゲートウェイ境界違反**。インタラクターとして再設計すべき |
-| 修正 | 削除。機能はインタラクターに分割。ゲートウェイは`field_cultivation_active_record_gateway.rb`に統合 |
+| 旧クラス | `FieldCultivationClimateGateway`（単一巨大 gateway） |
+| 現状 | `FieldCultivationClimateSourceActiveRecordGateway` / `FieldCultivationClimateProgress*Gateway` + `FieldCultivationClimateDataInteractor`（2026 以降の分割） |
+| 残タスク | adapter 内 snapshot 組立・認可コンテキストの read は [gateway-domain-logic-migration.md §P1 / §P4](./gateway-domain-logic-migration.md#adapter-残存ドメインロジック洗い出し) |
+| ファイル名 | `field_cultivation_climate_active_record_gateway.rb` が残る場合は `_active_record_gateway` 接尾辞の整理対象（実体は source/progress と重複しないか要確認） |
 
 ### A-4. `app/adapters/weather_data/gateways/agrr_prediction_gateway_adapter.rb`
 | 項目 | 値 |
@@ -57,13 +58,11 @@
 | 判定 | **不要なラッパー**。呼び出し側で`PredictionDaemonGateway`を直接参照すべき |
 | 修正 | 削除。呼び出し側を`PredictionDaemonGateway`へ変更 |
 
-### A-5. `app/adapters/shared/gateways/masters_api_session_resolve_gateway.rb`
+### ~~A-5. `masters_api_session_resolve_*`~~（解消済み）
 | 項目 | 値 |
 |---|---|
-| クラス | `MastersApiSessionResolveGateway` |
-| 違反 | アダプター接尾辞なし。マルチゲートウェイ合成を行う（`SessionCookieUserActiveRecordGateway` + AR直接参照） |
-| 判定 | **ゲートウェイ境界違反**。インタラクターとして再設計すべき |
-| 修正 | ゲートウェイから除外。インタラクターとして再設計 |
+| 旧クラス | `MastersApiSessionResolveActiveRecordGateway`（削除） |
+| 解消 | `Domain::Shared::Interactors::MastersApiCredentialsResolveInteractor` + `ApiKeyPrincipalActiveRecordGateway` + `SessionCookiePrincipalActiveRecordGateway`。`Api::V1::Masters::BaseController` は配線のみ |
 
 ### A-6. `app/adapters/shared/gateways/sql_like_active_record_gateway.rb`
 | 項目 | 値 |
@@ -158,14 +157,16 @@
 
 ## C. ゲートウェイ境界違反 (6件)
 
+**adapter 実装の残存ドメインロジック一覧（ファイルパス・優先度 P1–P5）**は [gateway-domain-logic-migration.md — adapter 残存ドメインロジック](./gateway-domain-logic-migration.md#adapter-残存ドメインロジック洗い出し) を正とする。本節は **interface / 旧構成** の境界違反メモ。
+
 | # | ファイル | 違反内容 | 修正方針 |
 |---|---|---|---|
 | C-1 | `lib/domain/crop/gateways/crop_gateway.rb` | 認可チェック(`find_authorized_*`)、HTMLフォーム準備(`prepare_*_for_edit_form!`)、マルチエンティティ関連付け(`link_pest_to_crop`等)、プレゼンター形状複合(`find_*_loaded_bundle!`) | インタラクターに分割。ゲートウェイは純粋な永続化I/Oのみ |
 | C-2 | `lib/domain/farm/gateways/farm_gateway.rb` | 認可チェック(`find_authorized_*`)、プレゼンター形状複合(`find_authorized_farm_loaded_bundle!`, `farm_list_rows_bundle`) | インタラクターに分割 |
 | C-3 | `lib/domain/pest/gateways/pest_gateway.rb` | 認可チェック、HTMLフォーム準備、マルチエンティティ関連付け | インタラクターに分割 |
 | C-4 | `lib/domain/cultivation_plan/gateways/cultivation_plan_gateway.rb` | 認可チェック、プレゼンター形状複合(`find_*_bundle!`, `*_snapshot`)、マルチエンティティ操作 | インタラクターに分割 |
-| C-5 | `app/adapters/field_cultivation/gateways/field_cultivation_climate_gateway.rb` | 認可チェック(`authorized_field_cultivation`)、マルチゲートウェイオーケストレーション、複合DTOアセンブリ | インタラクターとして再設計 |
-| C-6 | `app/adapters/shared/gateways/masters_api_session_resolve_gateway.rb` | マルチゲートウェイ合成 | インタラクターとして再設計 |
+| C-5 | ~~`field_cultivation_climate_gateway.rb`~~ → `field_cultivation_climate_source_active_record_gateway.rb` 等 | **部分解消**: 気象は `FieldCultivationClimateDataInteractor` + `FieldCultivationClimateSourceGateway`（read snapshot）+ progress gateway に分割。旧「巨大 climate gateway」は廃止方向 | 残りは [gateway-domain-logic-migration.md §P4](./gateway-domain-logic-migration.md#p4---厚い-read-snapshot-組立移行候補) の snapshot 組立・§P1 の plan access context |
+| ~~C-6~~ | ~~`masters_api_session_resolve_*`~~ | **解消**: `MastersApiCredentialsResolveInteractor` + 狭い principal gateway 2 本 | — |
 
 ---
 
@@ -173,9 +174,9 @@
 
 | 優先度 | カテゴリ | 件数 | 内容 |
 |---|---|---|---|
-| **P1** | ファイル命名違反 | 10 | 接尾辞なし/禁止接尾辞/禁止中接辞/誤配置 |
+| **P1** | ファイル命名違反 | 9 | 接尾辞なし/禁止接尾辞/禁止中接辞/誤配置（A-5 解消済み） |
 | **P2** | メソッド命名違反 | 32 | `find_<entity>_by_*`, `destroy`, `create_<entity>` |
-| **P3** | ゲートウェイ境界違反 | 6 | 認可・フォーム準備・マルチエンティティ・プレゼンター形状複合 |
+| **P3** | ゲートウェイ境界違反 | 5 | 認可・フォーム準備・マルチエンティティ・プレゼンター形状複合（C-6 解消済み） |
 
 **P1（ファイル命名）**はリネーム+参照更新で対応可能。
 **P2（メソッド命名）**はインターフェース+全アダプター+全インタラクターの更新が必要。

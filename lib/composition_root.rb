@@ -448,10 +448,12 @@ module CompositionRoot
       @session_cookie_user_gateway ||= Adapters::Shared::Gateways::SessionCookieUserActiveRecordGateway.new
     end
 
-    def masters_api_session_resolve_gateway
-      @masters_api_session_resolve_gateway ||= Adapters::Shared::Gateways::MastersApiSessionResolveActiveRecordGateway.new(
-        session_cookie_resolver: session_cookie_user_gateway
-      )
+    def api_key_principal_gateway
+      @api_key_principal_gateway ||= Adapters::Shared::Gateways::ApiKeyPrincipalActiveRecordGateway.new
+    end
+
+    def session_cookie_principal_gateway
+      @session_cookie_principal_gateway ||= Adapters::Shared::Gateways::SessionCookiePrincipalActiveRecordGateway.new
     end
 
     def user_api_key_rotation_gateway

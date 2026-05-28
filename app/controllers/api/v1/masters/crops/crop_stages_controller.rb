@@ -60,10 +60,6 @@ module Api::V1::Masters::Crops
       interactor.call(input_dto)
     end
 
-    def render_response(json:, status:)
-      render(json: json, status: status)
-    end
-
     private
 
     def valid_create_params?

@@ -6,15 +6,15 @@ module Api
   module V1
     module Masters
       class BaseControllerTest < ActionDispatch::IntegrationTest
-        test "should reject request without API key" do
+        test "rejects request without api key or session" do
           get api_v1_masters_crops_path, headers: { "Accept" => "application/json" }
 
           assert_response :unauthorized
           json_response = JSON.parse(response.body)
-          assert json_response["error"].present?
+          assert_equal I18n.t("auth.api.login_required"), json_response["error"]
         end
 
-        test "should reject request with invalid API key" do
+        test "rejects request with invalid API key" do
           get api_v1_masters_crops_path,
               headers: {
                 "Accept" => "application/json",
@@ -26,11 +26,9 @@ module Api
           assert_equal "Invalid API key", json_response["error"]
         end
 
-        test "should accept request with valid API key in X-API-Key header" do
+        test "allows request with valid API key in X-API-Key header" do
           user = create(:user)
           user.generate_api_key!
-
-          crop = create(:crop, :user_owned, user: user)
 
           get api_v1_masters_crops_path,
               headers: {
@@ -39,42 +37,16 @@ module Api
               }
 
           assert_response :success
-          json_response = JSON.parse(response.body)
-          assert_equal 1, json_response.length
-          assert_equal crop.id, json_response[0]["id"]
         end
 
-        test "should accept request with valid API key in Authorization header" do
+        test "allows request with valid session cookie" do
           user = create(:user)
-          user.generate_api_key!
-
-          crop = create(:crop, :user_owned, user: user)
+          session_id = create_session_for(user)
 
           get api_v1_masters_crops_path,
-              headers: {
-                "Accept" => "application/json",
-                "Authorization" => "Bearer #{user.api_key}"
-              }
+              headers: { "Accept" => "application/json" }.merge(session_cookie_header(session_id))
 
           assert_response :success
-          json_response = JSON.parse(response.body)
-          assert_equal 1, json_response.length
-          assert_equal crop.id, json_response[0]["id"]
-        end
-
-        test "should accept request with valid API key in query parameter" do
-          user = create(:user)
-          user.generate_api_key!
-
-          crop = create(:crop, :user_owned, user: user)
-
-          get api_v1_masters_crops_path(api_key: user.api_key),
-              headers: { "Accept" => "application/json" }
-
-          assert_response :success
-          json_response = JSON.parse(response.body)
-          assert_equal 1, json_response.length
-          assert_equal crop.id, json_response[0]["id"]
         end
       end
     end

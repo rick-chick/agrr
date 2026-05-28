@@ -15,29 +15,36 @@ module Api
 
         before_action :authenticate_api_key_or_session!
 
+        def assign_authenticated_principal(principal)
+          @current_user = principal
+        end
+
+        def halt_masters_api_authentication!
+          @masters_api_auth_halted = true
+        end
+
+        def render_response(json:, status:)
+          render(json: json, status: status)
+        end
+
         private
 
         def authenticate_api_key_or_session!
-          gw = CompositionRoot.masters_api_session_resolve_gateway
-          api_key = extract_api_key
-          if api_key.present?
-            user = gw.user_for_api_key(api_key)
-            unless user
-              render json: { error: "Invalid API key" }, status: :unauthorized
-              return false
-            end
-            @current_user = user
-            return true
-          end
+          @masters_api_auth_halted = false
+          presenter = Adapters::Shared::Presenters::MastersApiCredentialsResolvePresenter.new(view: self)
+          Domain::Shared::Interactors::MastersApiCredentialsResolveInteractor.new(
+            output_port: presenter,
+            api_key_principal_gateway: CompositionRoot.api_key_principal_gateway,
+            session_cookie_principal_gateway: CompositionRoot.session_cookie_principal_gateway
+          ).call(
+            Domain::Shared::Dtos::MastersApiCredentialsResolveInput.new(
+              api_key: extract_api_key,
+              session_id: cookies[:session_id]
+            )
+          )
+          return false if @masters_api_auth_halted
 
-          session_user = gw.user_for_session_cookie(cookies[:session_id])
-          if session_user && !session_user.anonymous?
-            @current_user = session_user
-            return true
-          end
-
-          render json: { error: I18n.t("auth.api.login_required") }, status: :unauthorized
-          false
+          true
         end
 
         def extract_api_key
@@ -64,8 +71,6 @@ module Api
         def current_user
           @current_user
         end
-
-        private
 
         def translator
           @translator ||= CompositionRoot.translator

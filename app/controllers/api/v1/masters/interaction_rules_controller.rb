@@ -72,10 +72,6 @@ module Api
           ).call(params[:id])
         end
 
-        def render_response(json:, status:)
-          render(json: json, status: status)
-        end
-
         def undo_deletion_path(undo_token:)
           Rails.application.routes.url_helpers.undo_deletion_path(undo_token: undo_token)
         end
