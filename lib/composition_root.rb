@@ -219,24 +219,37 @@ module CompositionRoot
       )
     end
 
-    def agrr_optimization_payload_builder(cultivation_plan)
-      Adapters::CultivationPlan::AgrrOptimizationPayloadBuilder.new(
-        cultivation_plan,
-        logger: logger,
-        crop_agrr_requirement_builder: crop_agrr_requirement_builder
-      )
+    def plan_allocation_adjust_agrr_allocation_configs(plan_id:)
+      log = logger
+      snapshot = plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id(plan_id: plan_id)
+      {
+        current_allocation: Domain::CultivationPlan::Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_current_allocation(
+          snapshot: snapshot,
+          exclude_ids: [],
+          logger: log
+        ),
+        fields: Domain::CultivationPlan::Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_fields_config(snapshot: snapshot),
+        crops: Domain::CultivationPlan::Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_crops_config(
+          snapshot: snapshot,
+          logger: log
+        ),
+        interaction_rules: Domain::CultivationPlan::Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_interaction_rules(
+          snapshot: snapshot,
+          random_hex: -> { SecureRandom.hex(4) }
+        )
+      }
     end
 
-    def save_adjusted_agrr_result_gateway
-      @save_adjusted_agrr_result_gateway ||= Adapters::CultivationPlan::Gateways::SaveAdjustedAgrrResultActiveRecordGateway.new(
+    def field_cultivation_sync_gateway
+      @field_cultivation_sync_gateway ||= Adapters::FieldCultivation::Gateways::FieldCultivationSyncActiveRecordGateway.new(
         logger: logger,
         clock: Time.zone
       )
     end
 
-    def save_adjusted_agrr_result_interactor
-      @save_adjusted_agrr_result_interactor ||= Domain::CultivationPlan::Interactors::SaveAdjustedAgrrResultInteractor.new(
-        save_gateway: save_adjusted_agrr_result_gateway,
+    def build_field_cultivation_sync_interactor
+      Domain::FieldCultivation::Interactors::FieldCultivationSyncInteractor.new(
+        sync_gateway: field_cultivation_sync_gateway,
         logger: logger
       )
     end
@@ -256,12 +269,6 @@ module CompositionRoot
     def cultivation_plan_rest_workbench_read_gateway
       @cultivation_plan_rest_workbench_read_gateway ||=
         Adapters::CultivationPlan::Gateways::CultivationPlanWorkbenchReadActiveRecordGateway.new
-    end
-
-    def cultivation_plan_rest_adjust_plan_growth_read_gateway
-      Adapters::CultivationPlan::Gateways::CultivationPlanAdjustPlanGrowthReadActiveRecordGateway.new(
-        logger: logger
-      )
     end
 
     def cultivation_plan_rest_plan_crop_gateway
@@ -318,16 +325,21 @@ module CompositionRoot
         logger: logger,
         translator: translator,
         clock: clock,
-        plan_gateway: Adapters::CultivationPlan::Gateways::PlanAllocationAdjustPlanActiveRecordGateway.new(
-          logger: logger,
-          weather_data_gateway: weather_data_gateway
-        ),
+        plan_allocation_adjust_read_gateway: plan_allocation_adjust_read_gateway,
         weather_prediction_gateway: adjust_weather_prediction_gateway,
-        agrr_adjust_gateway: agrr_adjust_gateway,
-        save_adjusted_result_interactor: save_adjusted_agrr_result_interactor,
+        plan_allocation_adjust_gateway: plan_allocation_adjust_gateway,
+        field_cultivation_sync: build_field_cultivation_sync_interactor,
+        agrr_adjust_result_sync_mapper: Adapters::CultivationPlan::Mappers::AgrrAdjustResultFieldCultivationSyncMapper.method(:to_sync_input),
         optimization_events_gateway: cultivation_plan_rest_optimization_events_gateway,
-        adjust_plan_growth_read_gateway: cultivation_plan_rest_adjust_plan_growth_read_gateway,
-        debug_dump_gateway: plan_allocation_adjust_debug_dump_gateway(clock: clock)
+        debug_dump_gateway: plan_allocation_adjust_debug_dump_gateway(clock: clock),
+        interaction_rule_random_hex: -> { SecureRandom.hex(4) }
+      )
+    end
+
+    def plan_allocation_adjust_read_gateway
+      @plan_allocation_adjust_read_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationAdjustReadActiveRecordGateway.new(
+        weather_data_gateway: weather_data_gateway,
+        crop_agrr_requirement_builder: crop_agrr_requirement_builder
       )
     end
 
@@ -356,8 +368,8 @@ module CompositionRoot
       )
     end
 
-    def plan_allocation_gateway
-      @plan_allocation_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationActiveRecordGateway.new
+    def plan_allocation_allocate_gateway
+      @plan_allocation_allocate_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationAllocateAgrrDaemonGateway.new
     end
 
     def interaction_rule_gateway
@@ -682,23 +694,23 @@ module CompositionRoot
       @contact_message_gateway ||= Adapters::ContactMessages::Gateways::ContactMessageActiveRecordGateway.new
     end
 
-    def agrr_adjust_gateway
-      @agrr_adjust_gateway ||= Adapters::CultivationPlan::Gateways::PlanAdjustActiveRecordGateway.new
+    def plan_allocation_adjust_gateway
+      @plan_allocation_adjust_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationAdjustAgrrDaemonGateway.new
     end
 
-    def agrr_candidates_gateway
-      @agrr_candidates_gateway ||= Adapters::Agrr::Gateways::CandidatesDaemonGateway.new
+    def plan_allocation_candidates_gateway
+      @plan_allocation_candidates_gateway ||=
+        Adapters::CultivationPlan::Gateways::PlanAllocationCandidatesAgrrDaemonGateway.new
     end
 
-    # add_crop 候補探索（Api::V1::CultivationPlanRestBaseController 経路の主導線）
-    def find_best_add_crop_candidate_interactor(clock: Time.zone)
-      @find_best_add_crop_candidate_interactor_cache ||= {}
-      @find_best_add_crop_candidate_interactor_cache[clock] ||= build_find_best_add_crop_candidate_interactor(clock: clock)
+    # 計画割当の agrr candidates（add_crop 等から利用）
+    def plan_allocation_candidates_interactor(clock: Time.zone)
+      @plan_allocation_candidates_interactor_cache ||= {}
+      @plan_allocation_candidates_interactor_cache[clock] ||= build_plan_allocation_candidates_interactor(clock: clock)
     end
 
-    def build_find_best_add_crop_candidate_interactor(clock: Time.zone)
+    def build_plan_allocation_candidates_interactor(clock: Time.zone)
       log = logger
-      gw = agrr_candidates_gateway
 
       plan_loader = lambda do |plan_id:, user_id: nil|
         if user_id
@@ -714,13 +726,7 @@ module CompositionRoot
       end
 
       allocation_configs = lambda do |plan|
-        b = agrr_optimization_payload_builder(plan)
-        {
-          current_allocation: b.build_current_allocation(exclude_ids: []),
-          fields: b.build_fields_config,
-          crops: b.build_crops_config,
-          interaction_rules: b.build_interaction_rules
-        }
+        plan_allocation_adjust_agrr_allocation_configs(plan_id: plan.id)
       end
 
       weather_for_candidates = lambda do |weather_location:, farm:, cultivation_plan:, target_end_date:|
@@ -771,38 +777,13 @@ module CompositionRoot
         nil
       end
 
-      candidates_invoker = lambda do |current_allocation:, fields:, crops:, crop:, weather_data:, planning_start:, planning_end:, interaction_rules:|
-        interactor = Domain::CultivationPlan::Interactors::AgrrCandidatesInteractor.new(
-          gateway: gw,
-          logger: log
-        )
-        ir = interaction_rules.empty? ? nil : interaction_rules
-        interactor.call(
-          current_allocation: current_allocation,
-          fields: fields,
-          crops: crops,
-          target_crop_id: crop.id,
-          weather_data: weather_data,
-          planning_start: planning_start,
-          planning_end: planning_end,
-          interaction_rules: ir
-        )
-      rescue Adapters::Agrr::Gateways::BaseGatewayV2::ExecutionError,
-             Adapters::Agrr::Gateways::BaseGatewayV2::ParseError,
-             Adapters::Agrr::Gateways::BaseGatewayV2::NoAllocationCandidatesError,
-             JSON::ParserError,
-             SystemCallError => e
-        log.error "❌ [Candidates] Failed to run candidates: #{e.message}"
-        []
-      end
-
-      Domain::CultivationPlan::Interactors::FindBestAddCropCandidateInteractor.new(
+      Domain::CultivationPlan::Interactors::PlanAllocationCandidatesInteractor.new(
         logger: log,
         today: -> { clock.today },
         plan_loader: plan_loader,
         allocation_configs: allocation_configs,
         weather_for_candidates: weather_for_candidates,
-        candidates_invoker: candidates_invoker
+        plan_allocation_candidates_gateway: plan_allocation_candidates_gateway
       )
     end
 

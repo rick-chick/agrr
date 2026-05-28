@@ -47,7 +47,7 @@ module Adapters
         def find_weather_prediction_targets_by_plan_id(plan_id)
           plan = ::CultivationPlan.includes(farm: :weather_location).find(plan_id)
           farm = plan.farm
-          Domain::FieldCultivation::Dtos::FieldCultivationWeatherPredictionTargets.new(
+          Domain::WeatherData::Dtos::WeatherPredictionTargets.new(
             weather_location: Adapters::WeatherData::Mappers::WeatherLocationMapper.weather_location_dto_from_record(farm.weather_location),
             farm: Adapters::WeatherData::Mappers::FarmWeatherPredictionMapper.farm_weather_prediction_dto_from_record(farm)
           )

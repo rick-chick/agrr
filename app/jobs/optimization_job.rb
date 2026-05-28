@@ -31,7 +31,7 @@ class OptimizationJob < ApplicationJob
     optimizer = Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor.new(
       plan_id: cultivation_plan_id,
       channel_class: channel_class,
-      allocation_gateway: CompositionRoot.plan_allocation_gateway,
+      plan_allocation_allocate_gateway: CompositionRoot.plan_allocation_allocate_gateway,
       interaction_rule_gateway: CompositionRoot.interaction_rule_gateway,
       interaction_rule_agrr_format_builder: CompositionRoot.interaction_rule_agrr_format_builder,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,

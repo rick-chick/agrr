@@ -5,7 +5,7 @@ module Adapters
     module Gateways
       class CultivationPlanPrivateReadActiveRecordGateway <
           Domain::CultivationPlan::Gateways::CultivationPlanPrivateReadGateway
-        def find_plan_read_rows_by_plan_id(plan_id:)
+        def find_plan_read_snapshot_by_plan_id(plan_id:)
           Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
             plan = ::CultivationPlan
                      .includes(
@@ -44,7 +44,7 @@ module Adapters
 
             palette_used_crop_ids = plan.cultivation_plan_crops.map { |cpc| cpc.crop&.id }.compact
 
-            Domain::CultivationPlan::Dtos::PrivatePlanReadRowsSnapshot.new(
+            Domain::CultivationPlan::Dtos::PrivatePlanReadSnapshot.new(
               id: plan.id,
               display_name: plan.display_name,
               farm_display_name: plan.farm.display_name,
@@ -156,38 +156,9 @@ module Adapters
           end
         end
 
-        def find_optimization_read_by_plan_id(plan_id:)
+        def find_optimization_snapshot_by_plan_id(plan_id:)
           plan = ::CultivationPlan.find(plan_id)
-          wl = plan.farm&.weather_location
-          farm = plan.farm
-          wl_read = if wl
-            Domain::CultivationPlan::Dtos::OptimizationPlanReadRows::WeatherLocationRead.new(
-              id: wl.id,
-              latitude: wl.latitude,
-              longitude: wl.longitude,
-              elevation: wl.elevation,
-              timezone: wl.timezone,
-              predicted_weather_data: wl.predicted_weather_data
-            )
-          end
-          fm_read = if farm
-            Domain::CultivationPlan::Dtos::OptimizationPlanReadRows::FarmWeatherRead.new(
-              id: farm.id,
-              weather_location_id: farm.weather_location_id,
-              predicted_weather_data: farm.predicted_weather_data
-            )
-          end
-          Domain::CultivationPlan::Dtos::OptimizationPlanReadRows.new(
-            plan_id: plan.id,
-            plan_type: plan.plan_type,
-            calculated_planning_start_date: plan.calculated_planning_start_date,
-            calculated_planning_end_date: plan.calculated_planning_end_date,
-            prediction_target_end_date: plan.prediction_target_end_date,
-            predicted_weather_data: plan.predicted_weather_data,
-            total_area: plan.total_area,
-            weather_location: wl_read,
-            farm_weather: fm_read
-          )
+          Mappers::OptimizationPlanReadSnapshotMapper.from_cultivation_plan(plan)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end

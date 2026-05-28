@@ -24,7 +24,7 @@ module Api
           add_crop_adjust_result_sink: add_crop_adjust_sink,
           plan_gateway: CompositionRoot.cultivation_plan_gateway,
           plan_crop_gateway: CompositionRoot.cultivation_plan_rest_plan_crop_gateway,
-          find_best_candidate: CompositionRoot.find_best_add_crop_candidate_interactor
+          plan_allocation_candidates: CompositionRoot.plan_allocation_candidates_interactor
         ).call(
           auth: cultivation_plan_rest_auth,
           plan_id: params[:id].to_i,

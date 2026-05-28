@@ -14,7 +14,7 @@ module Domain
           raise NotImplementedError
         end
 
-        # @return [Domain::FieldCultivation::Dtos::FieldCultivationWeatherPredictionTargets]
+        # @return [Domain::WeatherData::Dtos::WeatherPredictionTargets]
         def find_weather_prediction_targets_by_plan_id(plan_id)
           raise NotImplementedError
         end

@@ -13,9 +13,10 @@
 
 参照実装:
 
-- 読取: `RetrieveCultivationPlanInteractor` + `CultivationPlanWorkbenchSnapshotMapper` + `CultivationPlanRestPlanPreload`（`load_rows_by_plan_id_and_user_id` / `load_rows_by_plan_id`）+ `RestPlanAccess` / `PlanReadAuthorization`
+- 読取: `RetrieveCultivationPlanInteractor` + `CultivationPlanWorkbenchReadGateway`（`load_snapshot_by_plan_id_and_user_id` / `load_snapshot_by_plan_id` → `CultivationPlanWorkbenchSnapshot`）+ `CultivationPlanRestPlanPreload` + `RestPlanAccess` / `PlanReadAuthorization`
 - REST 変更系: `AddFieldInteractor` 等 + `find_by_id` + `RestPlanAccess`（旧 `PlanScopes` / `find_by_id_for_rest` は廃止）
 - REST add_crop / adjust: Input port nesting — [ARCHITECTURE.md — Composite use cases and Input port injection](../ARCHITECTURE.md#composite-use-cases-and-input-port-injection)（`AddCropCropResolveInputPort` + `PlanAllocationAdjustInputPort` + `build_*` at edge）
+- adjust 後の field_cultivation 同期: `FieldCultivationSyncInteractor` + `FieldCultivationSyncPlanSnapshot` / `FieldCultivationSyncTargetSnapshot` + `FieldCultivationSyncApply`；agrr JSON → `AgrrAdjustResultFieldCultivationSyncMapper`（adapter）；`FieldCultivationSyncGateway#sync_by_plan_id`
 - 認可 + count: `CropCreateInteractor` + `CropCreateLimitPolicy`
 - PlanSave farm step: `PlanSaveEnsureUserFarmInteractor` + `FarmCreateLimitPolicy` + `PlanSaveFarmGateway`（戻り値 `PlanSaveReferenceFarmSnapshot` / `PlanSaveUserFarmSnapshot`）
 - PlanSave field step: `PlanSaveEnsureUserFieldsInteractor` + `PlanSaveFieldGateway`（戻り値 `PlanSaveFieldSnapshot`；template-copy は `PlanSaveTemplateCopyIntegrity#field_records_for_template_copy`）
@@ -31,11 +32,11 @@
 | Phase | 内容 | 主な成果 |
 |-------|------|----------|
 | 0 | Advance から nested Interactor 除去 | `OptimizationCompletion` モジュール |
-| 1 | CultivationPlan 読取 | `CultivationPlanPrivateReadGateway`（`find_plan_read_rows_by_plan_id` 等）+ Policy/Mapper |
+| 1 | CultivationPlan 読取 | `CultivationPlanPrivateReadGateway`（`find_plan_read_snapshot_by_plan_id` / `find_optimization_snapshot_by_plan_id`）+ Policy/Mapper |
 | 2 | 計画初期化・コピー・公開保存 | `CultivationPlanInitializeInteractor`, `PlanCopyInteractor`, `PublicPlanSaveInteractor`（統合テスト: `test/integration/cultivation_plan/public_plan_save_test.rb`） |
 | 3 | Crop 認可・テンプレ | Policy に gateway なし、`CropTaskTemplateGateway` |
 | 4 | TaskScheduleItem | `TaskScheduleItemCreatePolicy`, `AmountUnitConversionCalculator` |
-| 5 | Adjust 保存・ペイロード | `SaveAdjustedAgrrResultInteractor`, `AdjustResultSavePolicy` |
+| 5 | Adjust 同期・ペイロード | `FieldCultivationSyncInteractor`, `PlanAllocationAdjustReadGateway`（`find_adjust_read_snapshot_by_plan_id` / `_and_user_id` / `_public`）, `PlanAllocationAdjustReadSnapshot`（`plan_crop_entries#has_growth_stages` で REST 前検証）, `PlanAllocationAdjustAgrrPayloadMapper`, `WeatherPredictionTargets`, `AgrrAdjustResultFieldCultivationSyncMapper` |
 | 6 | Pest 関連・ステージ複製 | `CropPestGateway`, `CropStageCopyInteractor` |
 | 7 | agrr wire / EntrySchedule | `InteractionRuleAgrrFormatBuilderPort`, `EntryScheduleOptimizeInteractor` |
 

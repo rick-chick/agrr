@@ -41,7 +41,7 @@ module Adapters
         test "find_weather_prediction_targets_by_plan_id returns domain DTOs" do
           targets = climate_source_gateway.find_weather_prediction_targets_by_plan_id(@plan.id)
 
-          assert_instance_of Domain::FieldCultivation::Dtos::FieldCultivationWeatherPredictionTargets, targets
+          assert_instance_of Domain::WeatherData::Dtos::WeatherPredictionTargets, targets
           assert_instance_of Domain::WeatherData::Dtos::WeatherLocation, targets.weather_location
           assert_instance_of Domain::WeatherData::Dtos::FarmWeatherPrediction, targets.farm
           assert_equal @farm.weather_location.id, targets.weather_location.id

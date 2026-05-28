@@ -35,30 +35,32 @@ module Domain
           logger:,
           translator:,
           clock:,
-          plan_gateway:,
+          plan_allocation_adjust_read_gateway:,
           weather_prediction_gateway:,
-          agrr_adjust_gateway:,
-          save_adjusted_result_interactor:,
+          plan_allocation_adjust_gateway:,
+          field_cultivation_sync:,
+          agrr_adjust_result_sync_mapper:,
           optimization_events_gateway:,
-          adjust_plan_growth_read_gateway:,
-          debug_dump_gateway:
+          debug_dump_gateway:,
+          interaction_rule_random_hex:
         )
           @output_port = output_port
           @logger = logger
           @translator = translator
           @clock = clock
-          @plan_gateway = plan_gateway
+          @plan_allocation_adjust_read_gateway = plan_allocation_adjust_read_gateway
           @weather_prediction_gateway = weather_prediction_gateway
-          @agrr_adjust_gateway = agrr_adjust_gateway
-          @save_adjusted_result_interactor = save_adjusted_result_interactor
+          @plan_allocation_adjust_gateway = plan_allocation_adjust_gateway
+          @field_cultivation_sync = field_cultivation_sync
+          @agrr_adjust_result_sync_mapper = agrr_adjust_result_sync_mapper
           @optimization_events_gateway = optimization_events_gateway
-          @adjust_plan_growth_read_gateway = adjust_plan_growth_read_gateway
           @debug_dump_gateway = debug_dump_gateway
+          @interaction_rule_random_hex = interaction_rule_random_hex
         end
 
         # @param input [Domain::CultivationPlan::Dtos::PlanAllocationAdjustInput]
         def call(input)
-          return unless pass_growth_read_gate!(input) if input.rest_adjust?
+          return unless pass_rest_adjust_preflight!(input) if input.rest_adjust?
 
           plan_id = input.plan_id
           moves = input.moves
@@ -75,21 +77,28 @@ module Domain
             )
           end
 
-          @plan_gateway.begin_adjust_session!(plan_id)
+          load_adjust_read_context!(plan_id) unless @adjust_read_snapshot
 
           perf_db_load = @clock.now
           @logger.info "⏱️ [PERF] DB読み込み完了: #{((perf_db_load - perf_start) * 1000).round(2)}ms"
 
           perf_before_allocation = @clock.now
-          current_allocation = @plan_gateway.build_current_allocation(exclude_ids: [])
+          current_allocation = Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_current_allocation(
+            snapshot: @adjust_read_snapshot,
+            exclude_ids: [],
+            logger: @logger
+          )
           perf_after_allocation = @clock.now
           @logger.info "⏱️ [PERF] 割り当てデータ構築: #{((perf_after_allocation - perf_before_allocation) * 1000).round(2)}ms"
 
-          fields = @plan_gateway.build_fields_config
+          fields = Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_fields_config(snapshot: @adjust_read_snapshot)
           perf_after_fields = @clock.now
           @logger.info "⏱️ [PERF] 圃場設定構築: #{((perf_after_fields - perf_after_allocation) * 1000).round(2)}ms"
 
-          crops = @plan_gateway.build_crops_config
+          crops = Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_crops_config(
+            snapshot: @adjust_read_snapshot,
+            logger: @logger
+          )
           perf_after_crops = @clock.now
           @logger.info "⏱️ [PERF] 作物設定構築: #{((perf_after_crops - perf_after_fields) * 1000).round(2)}ms"
 
@@ -100,7 +109,7 @@ module Domain
             crops: crops
           )
 
-          if @plan_gateway.farm_without_weather_location?
+          if @adjust_read_snapshot.farm_without_weather_location?
             return emit_failure(
               Failure.new(
                 kind: Failure::KIND_NO_WEATHER_LOCATION,
@@ -114,15 +123,19 @@ module Domain
           return emit_failure(period_failure) if period_failure
 
           weather_data, weather_failure = fetch_and_merge_weather_data(
-            effective_planning_end,
-            effective_planning_start
+            plan_id: plan_id,
+            effective_planning_end: effective_planning_end,
+            effective_planning_start: effective_planning_start
           )
           return emit_failure(weather_failure) if weather_failure
 
           weather_data = normalize_nested_weather_data(weather_data)
 
           perf_before_rules = @clock.now
-          interaction_rules = @plan_gateway.build_interaction_rules
+          interaction_rules = Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_interaction_rules(
+            snapshot: @adjust_read_snapshot,
+            random_hex: @interaction_rule_random_hex
+          )
           perf_after_rules = @clock.now
           @logger.info "⏱️ [PERF] 交互作用ルール構築: #{((perf_after_rules - perf_before_rules) * 1000).round(2)}ms"
 
@@ -158,39 +171,27 @@ module Domain
               message: e.message
             )
           )
-        ensure
-          @plan_gateway.end_adjust_session!
         end
 
         private
 
-        def pass_growth_read_gate!(input)
-          snapshots = if input.auth.private?
-                        @adjust_plan_growth_read_gateway.list_by_plan_id_and_user_id(
-                          plan_id: input.plan_id,
-                          user_id: input.auth.user_id
-                        )
-                      else
-                        @adjust_plan_growth_read_gateway.list_by_plan_id(plan_id: input.plan_id)
-                      end
-          crop_rows = Mappers::CultivationPlanAdjustCropGrowthRowMapper.from_snapshots(snapshots)
-
-          crop_rows.each do |row|
-            next unless row.growth_stage_count.zero?
-
-            emit_failure(
-              Failure.new(
-                kind: Failure::KIND_CROP_MISSING_GROWTH_STAGES,
-                message: @translator.translate(
-                  "api.errors.cultivation_plan.crop_missing_growth_stages",
-                  crop_name: row.crop_name
-                )
+        def load_adjust_read_context!(plan_id, auth: nil)
+          @adjust_read_snapshot =
+            if auth&.private?
+              @plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id_and_user_id(
+                plan_id: plan_id,
+                user_id: auth.user_id
               )
-            )
-            return false
-          end
+            elsif auth
+              @plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id_public(plan_id: plan_id)
+            else
+              @plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id(plan_id: plan_id)
+            end
+        end
 
-          true
+        def pass_rest_adjust_preflight!(input)
+          load_adjust_read_context!(input.plan_id, auth: input.auth)
+          validate_plan_crop_growth_stages!
         rescue Domain::Shared::Exceptions::RecordNotFound
           emit_failure(
             Failure.new(
@@ -208,7 +209,7 @@ module Domain
           )
           false
         rescue StandardError => e
-          @logger.error "❌ [Adjust growth read] #{e.class}: #{e.message}"
+          @logger.error "❌ [Adjust read] #{e.class}: #{e.message}"
           emit_failure(
             Failure.new(
               kind: Failure::KIND_UNEXPECTED,
@@ -218,15 +219,34 @@ module Domain
           false
         end
 
+        def validate_plan_crop_growth_stages!
+          @adjust_read_snapshot.plan_crop_entries.each do |entry|
+            next if entry.has_growth_stages
+
+            emit_failure(
+              Failure.new(
+                kind: Failure::KIND_CROP_MISSING_GROWTH_STAGES,
+                message: @translator.translate(
+                  "api.errors.cultivation_plan.crop_missing_growth_stages",
+                  crop_name: entry.crop_name
+                )
+              )
+            )
+            return false
+          end
+
+          true
+        end
+
         def emit_failure(failure)
           @output_port.on_failure(failure: failure)
         end
 
         def resolve_effective_planning_period(current_allocation, moves)
-          cultivation_periods = @plan_gateway.list_field_cultivation_planning_periods.map do |period|
+          cultivation_periods = @adjust_read_snapshot.cultivation_planning_periods.map do |period|
             { start_date: period.start_date, completion_date: period.completion_date }
           end
-          boundaries = @plan_gateway.planning_period_boundaries
+          boundaries = @adjust_read_snapshot.planning_period_boundaries
           start_d, end_d = Calculators::EffectivePlanningPeriodCalculator.calculate(
             current_allocation: current_allocation,
             moves: moves,
@@ -291,10 +311,10 @@ module Domain
           end
         end
 
-        def fetch_and_merge_weather_data(effective_planning_end, effective_planning_start)
-          wl_farm = @plan_gateway.weather_prediction_association_records
-          weather_location = wl_farm[:weather_location]
-          farm = wl_farm[:farm]
+        def fetch_and_merge_weather_data(plan_id:, effective_planning_end:, effective_planning_start:)
+          targets = @adjust_read_snapshot.weather_prediction_targets
+          weather_location = targets.weather_location
+          farm = targets.farm
 
           unless weather_location
             raise Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError,
@@ -306,7 +326,7 @@ module Domain
             farm: farm
           )
 
-          plan_weather_dto = @plan_gateway.cultivation_plan_weather_dto
+          plan_weather_dto = @adjust_read_snapshot.cultivation_plan_weather_dto
 
           existing_prediction = weather_prediction_service.get_existing_prediction(
             target_end_date: effective_planning_end,
@@ -327,7 +347,8 @@ module Domain
 
           historical_data_start = effective_planning_start
           historical_data_end = @clock.today - 1
-          historical_rows = @plan_gateway.historical_weather_rows(
+          historical_rows = @plan_allocation_adjust_read_gateway.list_historical_weather_rows(
+            weather_location_id: weather_location.id,
             historical_start: historical_data_start,
             historical_end: historical_data_end
           )
@@ -339,7 +360,7 @@ module Domain
             else
               @logger.info "✅ [Adjust] Historical weather data loaded: #{historical_rows.count} records (#{historical_data_start} to #{historical_data_end})"
 
-              facts = @plan_gateway.weather_location_facts
+              facts = @adjust_read_snapshot.weather_location_facts
               current_year_formatted = Domain::WeatherData::Mappers::AdjustHistoricalPredictionMapper.build_historical_agrr_series(
                 latitude: facts[:latitude],
                 longitude: facts[:longitude],
@@ -357,10 +378,11 @@ module Domain
             end
 
           weather_data = extend_prediction_if_needed!(
-            weather_prediction_service,
-            weather_data,
-            effective_planning_end,
-            historical_rows
+            plan_id: plan_id,
+            weather_prediction_service: weather_prediction_service,
+            weather_data: weather_data,
+            effective_planning_end: effective_planning_end,
+            historical_rows: historical_rows
           )
 
           [ weather_data, nil ]
@@ -375,7 +397,8 @@ module Domain
           ]
         end
 
-        def extend_prediction_if_needed!(weather_prediction_service, weather_data, effective_planning_end, historical_rows)
+        def extend_prediction_if_needed!(plan_id:, weather_prediction_service:, weather_data:, effective_planning_end:,
+                                         historical_rows:)
           merged_dates = Array(weather_data["data"]).map { |d| Date.parse(d["time"]) rescue nil }.compact
           merged_end_date = merged_dates.max
 
@@ -383,8 +406,8 @@ module Domain
 
           @logger.warn "⚠️ [Adjust] Merged weather data ends at #{merged_end_date}, but effective_planning_end is #{effective_planning_end}. Extending prediction..."
 
-          @plan_gateway.find_by_id
-          plan_weather_dto = @plan_gateway.cultivation_plan_weather_dto
+          load_adjust_read_context!(plan_id) unless @adjust_read_snapshot
+          plan_weather_dto = @adjust_read_snapshot.cultivation_plan_weather_dto
 
           extended_weather_info = weather_prediction_service.predict_for_cultivation_plan(
             plan_weather: plan_weather_dto,
@@ -396,7 +419,7 @@ module Domain
             if historical_rows.empty?
               extended_prediction_data
             else
-              facts = @plan_gateway.weather_location_facts
+              facts = @adjust_read_snapshot.weather_location_facts
               current_year_formatted = Domain::WeatherData::Mappers::AdjustHistoricalPredictionMapper.build_historical_agrr_series(
                 latitude: facts[:latitude],
                 longitude: facts[:longitude],
@@ -442,7 +465,7 @@ module Domain
           @logger.info "⏱️ [PERF] AdjustGateway.adjust() 呼び出し開始"
           @logger.info "📅 [Adjust] 計画期間: #{effective_planning_start} 〜 #{effective_planning_end} (制約として使用しない)"
 
-          result = @agrr_adjust_gateway.adjust(
+          result = @plan_allocation_adjust_gateway.adjust(
             current_allocation: current_allocation,
             moves: moves,
             fields: fields,
@@ -460,8 +483,8 @@ module Domain
 
           if result && result[:field_schedules].present?
             perf_before_save = @clock.now
-            save_input = Dtos::SaveAdjustedAgrrResultInput.from_agrr_adjust_result_hash(result)
-            @save_adjusted_result_interactor.call(plan_id: plan_id, result: save_input)
+            sync_input = @agrr_adjust_result_sync_mapper.call(result)
+            @field_cultivation_sync.call(plan_id: plan_id, sync_input: sync_input)
             perf_after_save = @clock.now
             @logger.info "⏱️ [PERF] DB保存完了: #{((perf_after_save - perf_before_save) * 1000).round(2)}ms"
 
@@ -481,7 +504,7 @@ module Domain
               status: "adjusted"
             )
 
-            summary = @plan_gateway.plan_summary_for_adjust_response(plan_id: plan_id)
+            summary = @plan_allocation_adjust_read_gateway.plan_summary_for_adjust_response(plan_id: plan_id)
             @output_port.on_success(
               output: Output.new(
                 message: @translator.translate("optimization.messages.adjust_completed"),
@@ -497,13 +520,13 @@ module Domain
               )
             )
           end
-        rescue Errors::AdjustResultEmptyError,
-               Errors::AdjustResultDuplicateAllocationError => e
-          @logger.error "❌ [Adjust] Save validation failed: #{e.message}"
-          emit_failure(save_validation_failure(e))
-        rescue Errors::AdjustResultSaveReferenceError => e
-          @logger.error "❌ [Adjust] Save reference error: #{e.message}"
-          emit_failure(save_reference_failure(e))
+        rescue Domain::FieldCultivation::Errors::FieldCultivationSyncEmptyError,
+               Domain::FieldCultivation::Errors::FieldCultivationSyncDuplicateAllocationError => e
+          @logger.error "❌ [Adjust] Field cultivation sync validation failed: #{e.message}"
+          emit_failure(sync_validation_failure(e))
+        rescue Domain::FieldCultivation::Errors::FieldCultivationSyncReferenceError => e
+          @logger.error "❌ [Adjust] Field cultivation sync reference error: #{e.message}"
+          emit_failure(sync_reference_failure(e))
         rescue ArgumentError => e
           @logger.error "❌ [Adjust] Invalid date format: #{e.message}"
           emit_failure(
@@ -522,14 +545,14 @@ module Domain
           )
         end
 
-        def save_validation_failure(error)
+        def sync_validation_failure(error)
           case error
-          when Errors::AdjustResultEmptyError
+          when Domain::FieldCultivation::Errors::FieldCultivationSyncEmptyError
             Failure.new(
               kind: Failure::KIND_RESULT_EMPTY,
               message: @translator.translate("api.errors.optimization.result_empty")
             )
-          when Errors::AdjustResultDuplicateAllocationError
+          when Domain::FieldCultivation::Errors::FieldCultivationSyncDuplicateAllocationError
             Failure.new(
               kind: Failure::KIND_UNEXPECTED,
               message: @translator.translate(
@@ -542,27 +565,28 @@ module Domain
           end
         end
 
-        def save_reference_failure(error)
+        def sync_reference_failure(error)
+          ref_error = Domain::FieldCultivation::Errors::FieldCultivationSyncReferenceError
           message =
             case error.kind
-            when Errors::AdjustResultSaveReferenceError::KIND_FIELD_MISSING
+            when ref_error::KIND_FIELD_MISSING
               @translator.translate(
                 "controllers.agrr_optimization.errors.field_missing",
                 field_id: error.field_id
               )
-            when Errors::AdjustResultSaveReferenceError::KIND_PLAN_CROP_MISSING,
-                 Errors::AdjustResultSaveReferenceError::KIND_CROP_MISSING
+            when ref_error::KIND_PLAN_CROP_MISSING,
+                 ref_error::KIND_CROP_MISSING
               @translator.translate(
                 "controllers.agrr_optimization.errors.plan_crop_missing",
                 crop_id: error.crop_id
               )
-            when Errors::AdjustResultSaveReferenceError::KIND_START_DATE_INVALID
+            when ref_error::KIND_START_DATE_INVALID
               @translator.translate(
                 "controllers.agrr_optimization.errors.start_date_invalid",
                 value: error.raw_value.inspect,
                 allocation_id: error.allocation_id
               )
-            when Errors::AdjustResultSaveReferenceError::KIND_COMPLETION_DATE_INVALID
+            when ref_error::KIND_COMPLETION_DATE_INVALID
               @translator.translate(
                 "controllers.agrr_optimization.errors.completion_date_invalid",
                 value: error.raw_value.inspect,

@@ -138,14 +138,15 @@ module Domain
             total_revenue: 0.0,
             total_cost: 0.0
           )
-          rows = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchRowsSnapshot.new(
+          base_snapshot = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
             plan: plan,
             fields: [],
             crops: [],
             cultivations: [],
+            available_crop_rows: [],
             farm_region: "jp"
           )
-          @read_gateway.expects(:load_rows_by_plan_id).with(plan_id: 3).returns(rows)
+          @read_gateway.expects(:load_snapshot_by_plan_id).with(plan_id: 3).returns(base_snapshot)
           @available_gateway.expects(:list_by_farm_region).with(auth: @auth, farm_region: "jp").returns([])
           @output.expects(:on_success).with do |kwargs|
             s = kwargs[:snapshot]
@@ -177,14 +178,15 @@ module Domain
             total_revenue: 0.0,
             total_cost: 0.0
           )
-          rows = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchRowsSnapshot.new(
+          base_snapshot = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
             plan: plan,
             fields: [],
             crops: [],
             cultivations: [],
+            available_crop_rows: [],
             farm_region: "jp"
           )
-          @read_gateway.expects(:load_rows_by_plan_id).with(plan_id: 3).returns(rows)
+          @read_gateway.expects(:load_snapshot_by_plan_id).with(plan_id: 3).returns(base_snapshot)
           @output.expects(:on_not_found)
           @available_gateway.expects(:list_by_farm_region).never
 
@@ -212,14 +214,15 @@ module Domain
             total_revenue: 0.0,
             total_cost: 0.0
           )
-          rows = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchRowsSnapshot.new(
+          base_snapshot = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
             plan: plan,
             fields: [],
             crops: [],
             cultivations: [],
+            available_crop_rows: [],
             farm_region: "jp"
           )
-          @read_gateway.expects(:load_rows_by_plan_id_and_user_id).with(plan_id: 3, user_id: 1).returns(rows)
+          @read_gateway.expects(:load_snapshot_by_plan_id_and_user_id).with(plan_id: 3, user_id: 1).returns(base_snapshot)
           @output.expects(:on_not_found)
           @available_gateway.expects(:list_by_farm_region).never
 

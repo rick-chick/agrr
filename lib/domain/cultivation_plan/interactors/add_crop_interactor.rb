@@ -21,7 +21,7 @@ module Domain
           add_crop_adjust_result_sink:,
           plan_gateway:,
           plan_crop_gateway:,
-          find_best_candidate:
+          plan_allocation_candidates:
         )
           @output = output
           @logger = logger
@@ -30,7 +30,7 @@ module Domain
           @add_crop_adjust_result_sink = add_crop_adjust_result_sink
           @plan_gateway = plan_gateway
           @plan_crop_gateway = plan_crop_gateway
-          @find_best_candidate = find_best_candidate
+          @plan_allocation_candidates = plan_allocation_candidates
         end
 
         # @param ui_filter_context [Hash] 候補探索ログ用（空可）
@@ -57,7 +57,7 @@ module Domain
           plan_crop_id = plan_crop_snapshot.id
           plan_crop_display_name = plan_crop_snapshot.display_name
 
-          best = @find_best_candidate.call(
+          best = @plan_allocation_candidates.call(
             auth: auth,
             plan_id: plan_id,
             crop: crop_snapshot,

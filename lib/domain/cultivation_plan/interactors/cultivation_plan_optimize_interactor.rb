@@ -11,7 +11,7 @@ module Domain
         def initialize(
           plan_id:,
           channel_class:,
-          allocation_gateway:,
+          plan_allocation_allocate_gateway:,
           interaction_rule_gateway:,
           interaction_rule_agrr_format_builder:,
           cultivation_plan_gateway:,
@@ -23,7 +23,7 @@ module Domain
         )
           @plan_id = plan_id
           @channel_class = channel_class
-          @allocation_gateway = allocation_gateway
+          @plan_allocation_allocate_gateway = plan_allocation_allocate_gateway
           @interaction_rule_gateway = interaction_rule_gateway
           @interaction_rule_agrr_format_builder = interaction_rule_agrr_format_builder
           @cultivation_plan_gateway = cultivation_plan_gateway
@@ -85,7 +85,7 @@ module Domain
 
             planning_start, planning_end = calculate_planning_period
 
-            allocation_result = @allocation_gateway.allocate(
+            allocation_result = @plan_allocation_allocate_gateway.allocate(
               fields: fields_data,
               crops: crops_data,
               weather_data: weather_info[:data],
@@ -126,8 +126,7 @@ module Domain
         private
 
         def load_snapshot!
-          rows = @private_read_gateway.find_optimization_read_by_plan_id(plan_id: @plan_id)
-          @snapshot = Mappers::OptimizationPlanSnapshotMapper.to_snapshot(rows)
+          @snapshot = @private_read_gateway.find_optimization_snapshot_by_plan_id(plan_id: @plan_id)
         end
 
         def calculate_planning_period

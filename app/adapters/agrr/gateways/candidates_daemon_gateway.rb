@@ -63,29 +63,22 @@ module Adapters
 
             # candidatesコマンドはstdoutではなく--outputファイルに結果を書き出すため、
             # stdoutのJSONパースをスキップする
-            parsed_result = begin
-              execute_command(*command_args, parse_json: false)
+            execute_command(*command_args, parse_json: false)
 
-              # デバッグ用にoutputファイルも保存
-              unless Rails.env.production?
-                if File.exist?(output_file.path) && File.size(output_file.path) > 0
-                  FileUtils.cp(output_file.path, debug_dir.join("candidates_output_#{ts}.json"))
-                  Rails.logger.info "📁 [AGRR Candidates] Debug output saved to: #{debug_dir}/candidates_output_#{ts}.json"
-                else
-                  Rails.logger.info "📁 [AGRR Candidates] Output file is empty (no candidates)"
-                end
+            # デバッグ用にoutputファイルも保存
+            unless Rails.env.production?
+              if File.exist?(output_file.path) && File.size(output_file.path) > 0
+                FileUtils.cp(output_file.path, debug_dir.join("candidates_output_#{ts}.json"))
+                Rails.logger.info "📁 [AGRR Candidates] Debug output saved to: #{debug_dir}/candidates_output_#{ts}.json"
+              else
+                Rails.logger.info "📁 [AGRR Candidates] Output file is empty (no candidates)"
               end
-
-              parsed = parse_candidates_result(output_file)
-
-              Rails.logger.info "✅ [AGRR Candidates] Found #{parsed.length} candidate(s)"
-              parsed
-            rescue Adapters::Agrr::Gateways::BaseGatewayV2::NoAllocationCandidatesError => e
-              Rails.logger.info "ℹ️ [AGRR Candidates] No allocation candidates: #{e.message}"
-              []
             end
 
-            parsed_result
+            parsed = parse_candidates_result(output_file)
+
+            Rails.logger.info "✅ [AGRR Candidates] Found #{parsed.length} candidate(s)"
+            parsed
           ensure
             allocation_file.close
             allocation_file.unlink

@@ -330,7 +330,7 @@ module Domain
           )
           source_gateway.define_singleton_method(:find_by_field_cultivation_id) { |_id| source }
           source_gateway.define_singleton_method(:find_weather_prediction_targets_by_plan_id) do |_plan_id|
-            Domain::FieldCultivation::Dtos::FieldCultivationWeatherPredictionTargets.new(
+            Domain::WeatherData::Dtos::WeatherPredictionTargets.new(
               weather_location: Domain::WeatherData::Dtos::WeatherLocation.new(
                 id: 1,
                 latitude: 35.0,

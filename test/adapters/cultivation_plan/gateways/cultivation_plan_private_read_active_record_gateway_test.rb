@@ -47,7 +47,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     assert_equal 0, row_b.fields_count
   end
 
-  test "find_plan_read_rows_by_plan_id returns read rows without palette crops" do
+  test "find_plan_read_snapshot_by_plan_id returns read rows without palette crops" do
     user = create(:user)
     farm = create(:farm, user: user, name: "My Farm")
     plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "completed",
@@ -55,9 +55,9 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     crop = create(:crop, user: user, is_reference: false, name: "Carrot", variety: "V1")
     create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
 
-    rows = @gateway.find_plan_read_rows_by_plan_id(plan_id: plan.id)
+    rows = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
 
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanReadRowsSnapshot, rows
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanReadSnapshot, rows
     assert_equal plan.id, rows.id
     assert_equal plan.display_name, rows.display_name
     assert_equal farm.display_name, rows.farm_display_name
@@ -66,7 +66,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     assert_equal [], rows.cultivation_plan_fields
   end
 
-  test "find_plan_read_rows_by_plan_id maps fields and field cultivations into read structs" do
+  test "find_plan_read_snapshot_by_plan_id maps fields and field cultivations into read structs" do
     user = create(:user)
     farm = create(:farm, user: user)
     plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "pending")
@@ -81,7 +81,7 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
                 completion_date: Date.new(2025, 6, 1),
                 optimization_result: { "profit" => 42 })
 
-    rows = @gateway.find_plan_read_rows_by_plan_id(plan_id: plan.id)
+    rows = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
 
     assert_equal 1, rows.field_cultivations_count
     assert_equal 1, rows.cultivation_plan_fields_count
@@ -95,33 +95,33 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     assert_equal "North", fr.name
   end
 
-  test "find_plan_read_rows_by_plan_id returns rows for plan owned by another user without scoping" do
+  test "find_plan_read_snapshot_by_plan_id returns rows for plan owned by another user without scoping" do
     owner = create(:user)
     other = create(:user)
     farm = create(:farm, user: owner)
     plan = create(:cultivation_plan, farm: farm, user: owner, plan_type: "private")
 
-    rows = @gateway.find_plan_read_rows_by_plan_id(plan_id: plan.id)
+    rows = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
 
     assert_equal plan.id, rows.id
     assert other.id != owner.id
   end
 
-  test "find_plan_read_rows_by_plan_id raises domain RecordNotFound when id missing" do
+  test "find_plan_read_snapshot_by_plan_id raises domain RecordNotFound when id missing" do
     assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.find_plan_read_rows_by_plan_id(plan_id: 9_999_999)
+      @gateway.find_plan_read_snapshot_by_plan_id(plan_id: 9_999_999)
     end
   end
 
-  test "find_optimization_read_by_plan_id returns read rows for mapper" do
+  test "find_optimization_snapshot_by_plan_id returns optimization snapshot" do
     user = create(:user)
     farm = create(:farm, user: user)
     plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
 
-    rows = @gateway.find_optimization_read_by_plan_id(plan_id: plan.id)
+    snapshot = @gateway.find_optimization_snapshot_by_plan_id(plan_id: plan.id)
 
-    assert_instance_of Domain::CultivationPlan::Dtos::OptimizationPlanReadRows, rows
-    assert_equal plan.id, rows.plan_id
-    assert rows.plan_type_private?
+    assert_instance_of Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot, snapshot
+    assert_equal plan.id, snapshot.plan_id
+    assert snapshot.plan_type_private
   end
 end

@@ -5,28 +5,28 @@ module Adapters
     module Gateways
       class CultivationPlanWorkbenchReadActiveRecordGateway <
           Domain::CultivationPlan::Gateways::CultivationPlanWorkbenchReadGateway
-        def load_rows_by_plan_id_and_user_id(plan_id:, user_id:)
+        def load_snapshot_by_plan_id_and_user_id(plan_id:, user_id:)
           cultivation_plan = Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_and_user_id(
             plan_id: plan_id,
             user_id: user_id
           )
-          rows_from_plan(cultivation_plan)
+          snapshot_from_plan(cultivation_plan)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        def load_rows_by_plan_id(plan_id:)
+        def load_snapshot_by_plan_id(plan_id:)
           cultivation_plan = Persistence::CultivationPlanRestPlanPreload.find_by_plan_id_public(
             plan_id: plan_id
           )
-          rows_from_plan(cultivation_plan)
+          snapshot_from_plan(cultivation_plan)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         private
 
-        def rows_from_plan(cultivation_plan)
+        def snapshot_from_plan(cultivation_plan)
           plan_header = Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchPlanHeader.new(
             id: cultivation_plan.id,
             user_id: cultivation_plan.user_id,
@@ -79,11 +79,12 @@ module Adapters
             )
           end
 
-          Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchRowsSnapshot.new(
+          Domain::CultivationPlan::Dtos::CultivationPlanWorkbenchSnapshot.new(
             plan: plan_header,
             fields: field_rows,
             crops: crop_rows,
             cultivations: cultivation_rows,
+            available_crop_rows: [],
             farm_region: cultivation_plan.farm&.region
           )
         end

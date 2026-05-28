@@ -8,15 +8,16 @@ module Domain::CultivationPlan::Interactors
       fixed_today = Date.new(2026, 7, 20)
       target_end = Date.new(2027, 12, 31)
 
-      read_rows = Domain::CultivationPlan::Dtos::OptimizationPlanReadRows.new(
+      snapshot = Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot.new(
         plan_id: 42,
-        plan_type: "public",
+        plan_type_private: false,
         calculated_planning_start_date: nil,
         calculated_planning_end_date: nil,
         prediction_target_end_date: target_end,
         predicted_weather_data: nil,
         total_area: 0,
-        weather_location: Domain::CultivationPlan::Dtos::OptimizationPlanReadRows::WeatherLocationRead.new(
+        weather_location_present: true,
+        weather_location_input: Domain::WeatherData::Dtos::WeatherLocation.new(
           id: 1,
           latitude: 0,
           longitude: 0,
@@ -24,11 +25,11 @@ module Domain::CultivationPlan::Interactors
           timezone: "UTC",
           predicted_weather_data: nil
         ),
-        farm_weather: nil
+        farm_weather_input: nil
       )
 
       private_read_gateway = mock
-      private_read_gateway.stubs(:find_optimization_read_by_plan_id).with(plan_id: 42).returns(read_rows)
+      private_read_gateway.stubs(:find_optimization_snapshot_by_plan_id).with(plan_id: 42).returns(snapshot)
 
       gateway = mock
       gateway.stubs(:field_cultivations_present?).with(42).returns(false)
@@ -39,7 +40,7 @@ module Domain::CultivationPlan::Interactors
       optimizer = CultivationPlanOptimizeInteractor.new(
         plan_id: 42,
         channel_class: "OptimizationChannel",
-        allocation_gateway: nil,
+        plan_allocation_allocate_gateway: nil,
         interaction_rule_gateway: nil,
         interaction_rule_agrr_format_builder: nil,
         cultivation_plan_gateway: gateway,

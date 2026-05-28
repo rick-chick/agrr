@@ -23,7 +23,8 @@ class CultivationPlanWorkbenchPayloadMapperTest < ActiveSupport::TestCase
       fields: [],
       crops: [],
       cultivations: [],
-      available_crop_rows: []
+      available_crop_rows: [],
+      farm_region: "jp"
     )
 
     body = Adapters::CultivationPlan::Mappers::CultivationPlanWorkbenchPayloadMapper.to_json_body(snapshot)

@@ -16,7 +16,7 @@ module Domain
           optimizer = CultivationPlanOptimizeInteractor.new(
             plan_id: 9,
             channel_class: "OptimizationChannel",
-            allocation_gateway: nil,
+            plan_allocation_allocate_gateway: nil,
             interaction_rule_gateway: rule_gateway,
             interaction_rule_agrr_format_builder: builder,
             cultivation_plan_gateway: nil,
@@ -54,7 +54,7 @@ module Domain
           optimizer = CultivationPlanOptimizeInteractor.new(
             plan_id: 9,
             channel_class: "OptimizationChannel",
-            allocation_gateway: nil,
+            plan_allocation_allocate_gateway: nil,
             interaction_rule_gateway: rule_gateway,
             interaction_rule_agrr_format_builder: builder,
             cultivation_plan_gateway: nil,

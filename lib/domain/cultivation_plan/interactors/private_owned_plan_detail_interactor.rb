@@ -28,7 +28,7 @@ module Domain
         def call(plan_id:)
           user = @user_lookup.find(@user_id)
           plan_id = plan_id.to_i
-          rows = @private_read_gateway.find_plan_read_rows_by_plan_id(plan_id: plan_id)
+          snapshot = @private_read_gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan_id)
           plan = @cultivation_plan_gateway.find_by_id(plan_id)
           if Policies::PrivateCultivationPlanAccessPolicy.access_denied?(plan: plan, user_id: user.id)
             raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
@@ -36,7 +36,7 @@ module Domain
 
           palette_crop_entities = @crop_gateway.list_user_owned_non_reference_crops_ordered_by_name(user)
           detail = Mappers::PrivatePlanDetailMapper.to_detail(
-            rows: rows,
+            snapshot: snapshot,
             palette_crop_entities: palette_crop_entities
           )
           @output_port.on_success(detail)

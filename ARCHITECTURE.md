@@ -263,7 +263,7 @@ flowchart LR
 |---|---|
 | **Gateways** | Persistence / I/O within a single Interactor |
 | **Input port → sub-step Interactor** | Same bounded context; sub-step built at edge via `build_*_interactor` |
-| **Injected callable on sub-step** | Legacy inner collaborators (e.g. `save_adjusted_result_interactor:` on `PlanAllocationAdjustInteractor`) — **new** inner steps should get an Input port when exposed to another Interactor |
+| **Injected callable on sub-step** | Edge-only mappers (e.g. `agrr_adjust_result_sync_mapper:` on `PlanAllocationAdjustInteractor`). **New** inner steps exposed to another Interactor use an Input port (e.g. `FieldCultivationSyncInputPort`) |
 | **One orchestrator `call` per HTTP action** | Controller calls the top-level Interactor once; rollback/compensation stays inside it |
 
 #### What is forbidden
@@ -289,7 +289,7 @@ flowchart LR
 |---|---|
 | REST `adjust` | `build_plan_allocation_adjust_interactor(output_port: PlanAllocationAdjustApiPresenter)` |
 | REST `add_crop` | `build_add_crop_crop_resolve(auth:)` + `build_plan_allocation_adjust_interactor(output_port: AddCropAdjustResultCollector)` injected into `AddCropInteractor` |
-| Inner save after adjust | `PlanAllocationAdjustInteractor` + injected `save_adjusted_result_interactor` (callable; migrate to Input port when reused across orchestrators) |
+| Inner sync after adjust | `PlanAllocationAdjustInteractor` + `FieldCultivationSyncInputPort` + edge `AgrrAdjustResultFieldCultivationSyncMapper` |
 
 ### Presenters
 
@@ -408,6 +408,7 @@ Implementation: `Adapters::Shared::Ports::RailsClockAdapter` (`Time.zone.today` 
 - `get_<state>` - *narrow, non-entity* scalar getter (progress percentage, fetched-year list). Never for entities.
 - `fetch_*` - only for external HTTP / process I/O (e.g. `fetch_historical_weather_data` from a remote API). Not for DB reads.
 - `upsert_*` - when both insert and update are explicit semantics for one operation.
+- `sync_by_*(criteria)` — replace a **child collection** under the criteria (e.g. `sync_by_plan_id(plan_id:, sync_apply:)`) in one transaction. Criteria is the parent scope only. Interactor builds `*PlanSnapshot` (current) + `*TargetSnapshot` (desired) via domain mappers, diffs to `*SyncApply`, gateway applies it.
 - `soft_delete_with_undo(id, user)` - dedicated soft-delete method. Not a replacement for `delete(id)`.
 - `count_by_*(criteria)` → `Integer` — identity-scoped **row count** for Interactor → Policy scalar pass-through (resource limits). Prefer `count_by_user_id(user_id:)` over loading rows. Existing gateways may use `count_<description>` (e.g. `count_user_owned_non_reference_farms`); new methods follow `count_by_*`.
 - **Related entity retrieval** — The five verbs (`find_by_*`, `list_by_*`, `create`, `update`, `delete`) may be used to load entities associated with another entity, as long as the entity name is not encoded in the method. The criteria expresses the relationship, not the target entity type.

@@ -5,9 +5,9 @@ module Domain
     module Gateways
       # 私有計画の読み取り専用永続化（認可は Interactor + Policy。plan_id / user_id のみ）。
       class CultivationPlanPrivateReadGateway
-        # @return [Domain::CultivationPlan::Dtos::PrivatePlanReadRowsSnapshot]
+        # @return [Domain::CultivationPlan::Dtos::PrivatePlanReadSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordNotFound]
-        def find_plan_read_rows_by_plan_id(plan_id:)
+        def find_plan_read_snapshot_by_plan_id(plan_id:)
           raise NotImplementedError
         end
 
@@ -22,9 +22,9 @@ module Domain
           raise NotImplementedError
         end
 
-        # @return [Domain::CultivationPlan::Dtos::OptimizationPlanReadRows]
+        # @return [Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot]
         # @raise [Domain::Shared::Exceptions::RecordNotFound]
-        def find_optimization_read_by_plan_id(plan_id:)
+        def find_optimization_snapshot_by_plan_id(plan_id:)
           raise NotImplementedError
         end
       end

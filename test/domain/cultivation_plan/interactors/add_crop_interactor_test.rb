@@ -17,7 +17,7 @@ module Domain
           @add_crop_adjust_result_sink = mock
           @plan_gateway = mock
           @plan_crop = mock
-          @find_best = mock
+          @plan_allocation_candidates = mock
           @plan = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: 9,
             farm_id: 1,
@@ -36,7 +36,7 @@ module Domain
             add_crop_adjust_result_sink: @add_crop_adjust_result_sink,
             plan_gateway: @plan_gateway,
             plan_crop_gateway: @plan_crop,
-            find_best_candidate: @find_best
+            plan_allocation_candidates: @plan_allocation_candidates
           )
         end
 
@@ -74,7 +74,7 @@ module Domain
           @plan_gateway.expects(:find_by_id).with(9).returns(@plan)
           @add_crop_crop_resolve.expects(:call).with(crop_id: "1").returns(crop)
           @plan_crop.expects(:create).with(plan_id: 9, crop_entity: crop, user_id: 1).returns(plan_crop_snapshot)
-          @find_best.expects(:call).with(
+          @plan_allocation_candidates.expects(:call).with(
             auth: @auth,
             plan_id: 9,
             crop: crop,
@@ -124,7 +124,7 @@ module Domain
           @plan_gateway.expects(:find_by_id).returns(@plan)
           @add_crop_crop_resolve.expects(:call).returns(crop)
           @plan_crop.expects(:create).returns(plan_crop_snapshot)
-          @find_best.expects(:call).raises(
+          @plan_allocation_candidates.expects(:call).raises(
             Domain::WeatherData::Interactors::WeatherPredictionInteractor::WeatherDataNotFoundError.new("x")
           )
           @plan_crop.expects(:delete).with(id: 9)
@@ -143,7 +143,7 @@ module Domain
           @plan_gateway.expects(:find_by_id).returns(@plan)
           @add_crop_crop_resolve.expects(:call).returns(crop)
           @plan_crop.expects(:create).returns(plan_crop_snapshot)
-          @find_best.expects(:call).returns(field_id: "2", start_date: Date.new(2026, 1, 1))
+          @plan_allocation_candidates.expects(:call).returns(field_id: "2", start_date: Date.new(2026, 1, 1))
           @plan_allocation_adjust.expects(:call)
           @add_crop_adjust_result_sink.expects(:add_crop_adjust_result).returns(adjust)
           @output.expects(:on_adjust_failed).with(adjust_result: adjust)
