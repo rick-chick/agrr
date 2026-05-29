@@ -4,9 +4,10 @@ module Domain
   module Farm
     module Interactors
       class FarmDetailInteractor < Domain::Farm::Ports::FarmDetailInputPort
-        def initialize(output_port:, user_id:, gateway:, translator:, user_lookup:)
+        def initialize(output_port:, user_id:, gateway:, show_detail_read_gateway:, translator:, user_lookup:)
           @output_port = output_port
           @gateway = gateway
+          @show_detail_read_gateway = show_detail_read_gateway
           @user_id = user_id
           @translator = translator
           @user_lookup = user_lookup
@@ -17,7 +18,8 @@ module Domain
           access_filter = Domain::Shared::Policies::FarmPolicy.record_access_filter(user)
           farm_entity = @gateway.find_by_id(farm_id)
           Domain::Shared::ReferenceRecordAuthorization.assert_view_allowed!(access_filter, farm_entity)
-          farm_detail_dto = @gateway.farm_detail_with_fields(farm_id)
+          show_detail_snapshot = @show_detail_read_gateway.find_show_detail_snapshot(farm_id: farm_id)
+          farm_detail_dto = Mappers::FarmShowDetailMapper.from_snapshot(show_detail_snapshot)
           @output_port.on_success(farm_detail_dto)
         rescue Domain::Shared::Policies::PolicyPermissionDenied => e
           @output_port.on_failure(e)

@@ -56,13 +56,6 @@ module Adapters
           index_relation_for_filter(filter).map { |record| Adapters::Pesticide::Mappers::PesticideMapper.pesticide_entity_from_record(record) }
         end
 
-        def find_pesticide_show_detail(id)
-          pesticide = ::Pesticide.includes(:crop, :pest, :pesticide_usage_constraint, :pesticide_application_detail).find(id)
-          Adapters::Pesticide::Mappers::PesticideMapper.detail_output_dto_from_record(pesticide)
-        rescue ActiveRecord::RecordNotFound
-          raise Domain::Shared::Exceptions::RecordNotFound, "Pesticide not found"
-        end
-
         def create_for_user(user, attrs)
           pesticide = ::Pesticide.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, pesticide.errors.full_messages.join(", ") unless pesticide.save

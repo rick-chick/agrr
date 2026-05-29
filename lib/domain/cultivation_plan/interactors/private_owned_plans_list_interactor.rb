@@ -16,7 +16,16 @@ module Domain
 
         def call
           user = @user_lookup.find(@user_id)
-          rows = @private_read_gateway.list_private_plan_index_rows_by_user_id(user_id: user.id)
+          plan_snapshots = @private_read_gateway.list_private_plan_index_plan_snapshots(user_id: user.id)
+          plan_ids = plan_snapshots.map(&:id)
+          crops_count_hash = @private_read_gateway.count_cultivation_plan_crops_by_plan_ids(plan_ids: plan_ids)
+          fields_count_hash = @private_read_gateway.count_cultivation_plan_fields_by_plan_ids(plan_ids: plan_ids)
+          plan_row_snapshots = Mappers::PrivatePlanIndexRowsMapper.plan_row_snapshots_with_counts(
+            plan_snapshots,
+            crops_count_hash: crops_count_hash,
+            fields_count_hash: fields_count_hash
+          )
+          rows = Mappers::PrivatePlanIndexRowsMapper.to_index_rows(plan_row_snapshots)
           @output_port.on_success(rows)
         rescue Domain::Shared::Exceptions::RecordNotFound => e
           @logger.warn("[PrivateOwnedPlansListInteractor] #{e.class}: #{e.message}")

@@ -22,12 +22,18 @@ module Domain
           seen = {}
           gateway = Object.new
           attach_plan_access_snapshot_to_gateway(gateway, input.field_cultivation_id)
+          update_wire = Struct.new(:field_cultivation_id, :start_date, :completion_date, :cultivation_days).new(
+            success.field_cultivation_id,
+            success.start_date,
+            success.completion_date,
+            success.cultivation_days
+          )
           gateway.define_singleton_method(:update_field_cultivation_schedule) do |field_cultivation_id:, start_date:, completion_date:, cultivation_days:|
             seen[:field_cultivation_id] = field_cultivation_id
             seen[:start_date] = start_date
             seen[:completion_date] = completion_date
             seen[:cultivation_days] = cultivation_days
-            success
+            update_wire
           end
 
           received = nil
@@ -40,7 +46,10 @@ module Domain
           assert_equal input.start_date, seen[:start_date]
           assert_equal input.completion_date, seen[:completion_date]
           assert_nil seen[:cultivation_days]
-          assert_equal success, received
+          assert_equal success.field_cultivation_id, received.field_cultivation_id
+          assert_equal success.start_date, received.start_date
+          assert_equal success.completion_date, received.completion_date
+          assert_equal success.cultivation_days, received.cultivation_days
           output_port.verify
         end
 

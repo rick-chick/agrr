@@ -18,7 +18,9 @@ module Api
           input_valid?(:show) || return
           presenter = Adapters::Pesticide::Presenters::PesticideDetailApiPresenter.new(view: self)
           interactor = Domain::Pesticide::Interactors::PesticideDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.pesticide_gateway, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id,
+            show_detail_read_gateway: CompositionRoot.pesticide_show_detail_read_gateway,
+            user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 

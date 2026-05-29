@@ -107,15 +107,10 @@ module Adapters
           Adapters::Farm::Mappers::FarmMapper.farm_entity_from_record(farm.reload)
         end
 
-        def farm_detail_with_fields(id)
-          farm = find_farm_with_fields!(id)
-          Adapters::Farm::Mappers::FarmMapper.detail_dto_from_farm_record(farm)
-        end
-
         def find_delete_usage(farm_id)
           farm = find_farm_model!(farm_id)
-          wire = Mappers::FarmDeleteUsageWireMapper.from_model(farm)
-          Domain::Farm::Mappers::FarmDeleteUsageMapper.from_wire(wire)
+          usage_snapshot = Mappers::FarmDeleteUsageSnapshotMapper.from_model(farm)
+          Domain::Farm::Mappers::FarmDeleteUsageMapper.from_snapshot(usage_snapshot)
         end
 
         def soft_delete_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:)
@@ -166,12 +161,6 @@ module Adapters
             weather_location_id: record.weather_location_id,
             predicted_weather_data: record.predicted_weather_data
           )
-        end
-
-        def find_farm_with_fields!(id)
-          ::Farm.includes(:fields).find(id)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
         def find_farm_model!(id)

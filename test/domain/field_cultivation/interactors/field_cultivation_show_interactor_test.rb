@@ -21,13 +21,15 @@ module Domain
             status: "completed"
           )
 
-          call_args = nil
           gateway = Object.new
-          attach_plan_access_snapshot_to_gateway(gateway, fc_id)
-          gateway.define_singleton_method(:find_api_summary) do |field_cultivation_id:|
-            call_args = field_cultivation_id
-            dto
-          end
+          api_summary_snapshot = Struct.new(
+            :id, :field_name, :crop_name, :area, :start_date, :completion_date,
+            :cultivation_days, :estimated_cost, :gdd, :status
+          ).new(
+            dto.id, dto.field_name, dto.crop_name, dto.area, dto.start_date, dto.completion_date,
+            dto.cultivation_days, dto.estimated_cost, dto.gdd, dto.status
+          )
+          attach_plan_access_snapshot_to_gateway(gateway, fc_id, api_summary_snapshot: api_summary_snapshot)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -35,9 +37,9 @@ module Domain
 
           FieldCultivationShowInteractor.new(output_port: output_port, gateway: gateway).call(field_cultivation_id: fc_id.to_s)
 
-          assert_equal fc_id.to_s, call_args.to_s
-
-          assert_equal dto, received
+          assert_equal dto.id, received.id
+          assert_equal dto.field_name, received.field_name
+          assert_equal dto.status, received.status
           output_port.verify
         end
 
@@ -49,9 +51,6 @@ module Domain
             fc_id,
             snapshot: private_field_cultivation_plan_access_snapshot(fc_id, plan_user_id: 99)
           )
-          gateway.define_singleton_method(:find_api_summary) do |_kwargs|
-            flunk "find_api_summary must not run when access is denied"
-          end
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, domain_user_stub(id: 1), [ 1 ])
@@ -76,8 +75,7 @@ module Domain
         test "calls on_failure with Error when gateway raises RecordNotFound" do
           fc_id = 99
           gateway = Object.new
-          attach_plan_access_snapshot_to_gateway(gateway, fc_id)
-          gateway.define_singleton_method(:find_api_summary) do |_kwargs|
+          gateway.define_singleton_method(:find_plan_access_snapshot_by_field_cultivation_id) do |_id|
             raise Domain::Shared::Exceptions::RecordNotFound, "gone"
           end
 

@@ -25,6 +25,10 @@ module Domain
             plan_id: @plan_id,
             farm_id: 7
           )
+          @header_wire = Dtos::PublicPlanSaveHeaderSnapshot.new(
+            plan_id: @plan_id,
+            farm_id: 7
+          )
           @session_data = Dtos::PublicPlanSaveSessionData.new(
             plan_id: @plan_id,
             farm_id: 7,
@@ -48,7 +52,7 @@ module Domain
           @output_port.expects(:on_failure).with do |f|
             f.kind == Dtos::PublicPlanSaveFailure::KIND_MISSING_PLAN_ID
           end
-          @read_gateway.expects(:find_header).never
+          @read_gateway.expects(:find_header_snapshot).never
 
           build_interactor.call(
             Dtos::PublicPlanSaveInput.new(plan_id: nil, user_id: @user_id)
@@ -56,7 +60,7 @@ module Domain
         end
 
         test "on_failure when plan header is not found" do
-          @read_gateway.expects(:find_header).with(plan_id: @plan_id).returns(nil)
+          @read_gateway.expects(:find_header_snapshot).with(plan_id: @plan_id).returns(nil)
           @output_port.expects(:on_failure).with do |f|
             f.kind == Dtos::PublicPlanSaveFailure::KIND_PLAN_NOT_FOUND
           end
@@ -67,7 +71,7 @@ module Domain
         end
 
         test "on_failure when reference farm is not found" do
-          @read_gateway.expects(:find_header).with(plan_id: @plan_id).returns(@header)
+          @read_gateway.expects(:find_header_snapshot).with(plan_id: @plan_id).returns(@header_wire)
           @farm_gateway.expects(:find_by_id).with(7).returns(nil)
           @output_port.expects(:on_failure).with do |f|
             f.kind == Dtos::PublicPlanSaveFailure::KIND_PLAN_NOT_FOUND
@@ -79,7 +83,7 @@ module Domain
         end
 
         test "on_success when persistence succeeds" do
-          @read_gateway.expects(:find_header).with(plan_id: @plan_id).returns(@header)
+          @read_gateway.expects(:find_header_snapshot).with(plan_id: @plan_id).returns(@header_wire)
           @read_gateway.expects(:list_field_rows).with(plan_id: @plan_id).returns([])
           @farm_gateway.expects(:find_by_id).with(7).returns(stub(id: 7))
 
@@ -94,7 +98,7 @@ module Domain
         end
 
         test "uses input session_data without read gateway" do
-          @read_gateway.expects(:find_header).never
+          @read_gateway.expects(:find_header_snapshot).never
           success_output = Dtos::PublicPlanSaveFromSessionOutput.new(success: true)
           @txn_gateway.expects(:within_transaction).yields
           @persistence_port.expects(:execute_save!).returns(success_output)
@@ -110,7 +114,7 @@ module Domain
         end
 
         test "on_failure KIND_SAVE_FAILED when persistence returns failure" do
-          @read_gateway.expects(:find_header).returns(@header)
+          @read_gateway.expects(:find_header_snapshot).returns(@header_wire)
           @read_gateway.expects(:list_field_rows).returns([])
           @farm_gateway.expects(:find_by_id).returns(stub(id: 7))
 
@@ -130,7 +134,7 @@ module Domain
         end
 
         test "on_failure KIND_UNEXPECTED for InvalidTaskScheduleItem" do
-          @read_gateway.expects(:find_header).returns(@header)
+          @read_gateway.expects(:find_header_snapshot).returns(@header_wire)
           @read_gateway.expects(:list_field_rows).returns([])
           @farm_gateway.expects(:find_by_id).returns(stub(id: 7))
           @txn_gateway.expects(:within_transaction).raises(
@@ -146,7 +150,7 @@ module Domain
         end
 
         test "on_failure KIND_SAVE_FAILED for RecordInvalid" do
-          @read_gateway.expects(:find_header).returns(@header)
+          @read_gateway.expects(:find_header_snapshot).returns(@header_wire)
           @read_gateway.expects(:list_field_rows).returns([])
           @farm_gateway.expects(:find_by_id).returns(stub(id: 7))
           @txn_gateway.expects(:within_transaction).raises(

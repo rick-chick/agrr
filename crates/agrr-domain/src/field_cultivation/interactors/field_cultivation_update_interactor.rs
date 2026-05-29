@@ -64,12 +64,15 @@ where
         &mut self,
         input: FieldCultivationApiUpdateInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let plan_access_snapshot = self
+            .gateway
+            .find_plan_access_snapshot_by_field_cultivation_id(input.field_cultivation_id)?;
+
         if let (Some(user_id), Some(lookup)) = (self.user_id, self.user_lookup) {
             let user = lookup.find(user_id);
             if let Err(err) = assert_field_cultivation_plan_access(
                 &user,
-                self.gateway,
-                input.field_cultivation_id,
+                &plan_access_snapshot,
                 true,
             ) {
                 if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
@@ -81,10 +84,9 @@ where
                 }
                 return Err(err);
             }
-        } else if let Err(err) = assert_public_field_cultivation_plan_access(
-            self.gateway,
-            input.field_cultivation_id,
-        ) {
+        } else if let Err(err) =
+            assert_public_field_cultivation_plan_access(&plan_access_snapshot)
+        {
             if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
                 self.output_port
                     .on_failure(FieldCultivationUpdateFailure::Message(Error::new("Forbidden")));

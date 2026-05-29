@@ -15,16 +15,20 @@ module Domain
           progress_gateway:,
           task_schedule_gateway:,
           clock:,
-          cultivation_plan_gateway:
+          cultivation_plan_gateway:,
+          task_schedule_read_gateway:,
+          crop_agrr_requirement_builder:
         )
           @progress_gateway = progress_gateway
           @task_schedule_gateway = task_schedule_gateway
           @clock = clock
           @cultivation_plan_gateway = cultivation_plan_gateway
+          @task_schedule_read_gateway = task_schedule_read_gateway
+          @crop_agrr_requirement_builder = crop_agrr_requirement_builder
         end
 
         def generate!(cultivation_plan_id:)
-          ctx = @cultivation_plan_gateway.find_with_field_cultivations_for_task_schedule(cultivation_plan_id)
+          ctx = build_generation_context(cultivation_plan_id)
           plan = ctx.plan
 
           unless plan.predicted_weather_data.present?
@@ -42,7 +46,41 @@ module Domain
 
         private
 
-        attr_reader :progress_gateway, :task_schedule_gateway, :clock, :cultivation_plan_gateway
+        attr_reader :progress_gateway,
+                    :task_schedule_gateway,
+                    :clock,
+                    :cultivation_plan_gateway,
+                    :task_schedule_read_gateway,
+                    :crop_agrr_requirement_builder
+
+        def build_generation_context(cultivation_plan_id)
+          plan_row = @task_schedule_read_gateway.find_plan_row(plan_id: cultivation_plan_id)
+          field_rows = @task_schedule_read_gateway.list_field_cultivation_rows(plan_id: cultivation_plan_id)
+
+          crop_ids = field_rows.map(&:crop_id).compact.uniq
+          crop_rows_by_id = crop_ids.each_with_object({}) do |crop_id, hash|
+            hash[crop_id] = @task_schedule_read_gateway.find_crop_row(crop_id: crop_id)
+          end
+          template_rows_by_crop_id = crop_ids.each_with_object({}) do |crop_id, hash|
+            hash[crop_id] = @task_schedule_read_gateway.list_crop_task_template_rows(crop_id: crop_id)
+          end
+          blueprint_rows_by_crop_id = crop_ids.each_with_object({}) do |crop_id, hash|
+            hash[crop_id] = @task_schedule_read_gateway.list_crop_task_schedule_blueprint_rows(crop_id: crop_id)
+          end
+          agrr_requirement_by_crop_id = crop_ids.each_with_object({}) do |crop_id, hash|
+            source = @task_schedule_read_gateway.find_crop_agrr_requirement_source(crop_id: crop_id)
+            hash[crop_id] = @crop_agrr_requirement_builder.build_from(source)
+          end
+
+          Domain::CultivationPlan::Mappers::TaskScheduleGenerationContextMapper.assemble(
+            plan_row: plan_row,
+            field_cultivation_rows: field_rows,
+            crop_rows_by_id: crop_rows_by_id,
+            template_rows_by_crop_id: template_rows_by_crop_id,
+            blueprint_rows_by_crop_id: blueprint_rows_by_crop_id,
+            agrr_requirement_by_crop_id: agrr_requirement_by_crop_id
+          )
+        end
 
         def generate_for_field(plan, field_cultivation, blueprint_cache)
           crop = field_cultivation.crop
@@ -115,9 +153,10 @@ module Domain
 
         def progress_for_crop(crop, start_date, weather_data)
           progress_gateway.calculate_progress(
-            crop: crop,
+            crop_requirement: crop.to_agrr_requirement,
             start_date: start_date,
-            weather_data: weather_data
+            weather_data: weather_data,
+            crop: crop
           )
         end
 

@@ -28,7 +28,8 @@ module Domain
         def call(plan_id:)
           user = @user_lookup.find(@user_id)
           plan_id = plan_id.to_i
-          snapshot = @private_read_gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan_id)
+          rest_plan_snapshot = @private_read_gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan_id)
+          snapshot = Mappers::PrivatePlanReadSnapshotMapper.from_snapshot(rest_plan_snapshot)
           plan = @cultivation_plan_gateway.find_by_id(plan_id)
           if Policies::PrivateCultivationPlanAccessPolicy.access_denied?(plan: plan, user_id: user.id)
             raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"

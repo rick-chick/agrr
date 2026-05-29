@@ -15,11 +15,14 @@ module Domain
         end
 
         def call(input_dto)
+          plan_access_snapshot = @gateway.find_plan_access_snapshot_by_field_cultivation_id(
+            input_dto.field_cultivation_id
+          )
           if @user_id.present?
             user = @user_lookup.find(@user_id)
-            assert_field_cultivation_plan_access!(user, @gateway, input_dto.field_cultivation_id, for_edit: true)
+            assert_field_cultivation_plan_access!(user, plan_access_snapshot, for_edit: true)
           else
-            assert_public_field_cultivation_plan_access!(@gateway, input_dto.field_cultivation_id)
+            assert_public_field_cultivation_plan_access!(plan_access_snapshot)
           end
 
           cultivation_days = nil
@@ -29,12 +32,13 @@ module Domain
             cultivation_days = (end_d - start_d).to_i + 1 if start_d && end_d
           end
 
-          dto = @gateway.update_field_cultivation_schedule(
+          update_snapshot = @gateway.update_field_cultivation_schedule(
             field_cultivation_id: input_dto.field_cultivation_id,
             start_date: input_dto.start_date,
             completion_date: input_dto.completion_date,
             cultivation_days: cultivation_days
           )
+          dto = Mappers::FieldCultivationApiUpdateOutputMapper.from_snapshot(update_snapshot)
 
           if input_dto.public_plan?
             message = public_plan_update_message

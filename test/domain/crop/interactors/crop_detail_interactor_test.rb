@@ -6,24 +6,48 @@ module Domain
   module Crop
     module Interactors
       class CropDetailInteractorTest < DomainLibTestCase
-        test "calls on_success with crop detail dto when gateway succeeds" do
+        CropWire = Data.define(
+          :id,
+          :user_id,
+          :name,
+          :variety,
+          :is_reference,
+          :area_per_unit,
+          :revenue_per_area,
+          :region,
+          :groups,
+          :created_at,
+          :updated_at,
+          :crop_stages,
+          :pests
+        )
+
+        test "calls on_success with crop detail dto when read gateway returns wire" do
           user_id = 10
           crop_id = 22
           user = stub(id: user_id, admin?: false)
-          crop = stub(is_reference: false, user_id: user_id, reference?: false)
-          crop_detail_dto = stub(
-            crop: crop,
-            task_schedule_blueprints: [],
-            available_agricultural_tasks: [],
-            selected_task_ids: [],
-            associated_pests: []
+          now = Time.utc(2026, 1, 1)
+          wire = CropWire.new(
+            id: crop_id,
+            user_id: user_id,
+            name: "トマト",
+            variety: nil,
+            is_reference: false,
+            area_per_unit: nil,
+            revenue_per_area: nil,
+            region: nil,
+            groups: [],
+            created_at: now,
+            updated_at: now,
+            crop_stages: [],
+            pests: []
           )
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = mock
-          gateway.expects(:find_crop_show_detail).with(crop_id).returns(crop_detail_dto)
+          show_detail_read_gateway = mock
+          show_detail_read_gateway.expects(:find_show_detail_snapshot).with(crop_id: crop_id).returns(wire)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -32,14 +56,15 @@ module Domain
           interactor = CropDetailInteractor.new(
             output_port: output_port,
             user_id: user_id,
-            gateway: gateway,
+            show_detail_read_gateway: show_detail_read_gateway,
             user_lookup: user_lookup
           )
 
           interactor.call(crop_id)
 
           assert_instance_of Domain::Crop::Dtos::CropDetailOutput, received
-          assert_equal crop, received.crop
+          assert_equal crop_id, received.crop.id
+          assert_equal user_id, received.crop.user_id
           user_lookup.verify
           output_port.verify
         end
@@ -48,14 +73,28 @@ module Domain
           user_id = 10
           crop_id = 22
           user = stub(id: user_id, admin?: false)
-          crop = stub(is_reference: false, user_id: 99, reference?: false)
-          crop_detail_dto = stub(crop: crop)
+          now = Time.utc(2026, 1, 1)
+          wire = CropWire.new(
+            id: crop_id,
+            user_id: 99,
+            name: "トマト",
+            variety: nil,
+            is_reference: false,
+            area_per_unit: nil,
+            revenue_per_area: nil,
+            region: nil,
+            groups: [],
+            created_at: now,
+            updated_at: now,
+            crop_stages: [],
+            pests: []
+          )
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = mock
-          gateway.expects(:find_crop_show_detail).with(crop_id).returns(crop_detail_dto)
+          show_detail_read_gateway = mock
+          show_detail_read_gateway.expects(:find_show_detail_snapshot).with(crop_id: crop_id).returns(wire)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -64,7 +103,7 @@ module Domain
           interactor = CropDetailInteractor.new(
             output_port: output_port,
             user_id: user_id,
-            gateway: gateway,
+            show_detail_read_gateway: show_detail_read_gateway,
             user_lookup: user_lookup
           )
 

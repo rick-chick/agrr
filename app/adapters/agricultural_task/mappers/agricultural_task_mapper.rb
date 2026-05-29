@@ -21,30 +21,6 @@ module Adapters
             updated_at: record.updated_at
           )
         end
-
-        def self.detail_output_dto_from_record(record)
-          crops = record.crops.order(:name).map do |c|
-            Domain::Crop::Entities::CropEntity.new(
-              id: c.id,
-              user_id: c.user_id,
-              name: c.name,
-              variety: c.variety,
-              is_reference: c.is_reference,
-              area_per_unit: c.area_per_unit,
-              revenue_per_area: c.revenue_per_area,
-              region: c.region,
-              groups: [],
-              crop_stages: [],
-              created_at: c.created_at,
-              updated_at: c.updated_at
-            )
-          end
-
-          Domain::AgriculturalTask::Dtos::AgriculturalTaskDetailOutput.new(
-            task: agricultural_task_entity_from_record(record),
-            associated_crops: crops
-          )
-        end
       end
     end
   end

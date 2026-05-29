@@ -15,7 +15,8 @@ module Domain
         # @return [Dtos::PlanSaveEnsureUserFertilizesOutput]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
         def call(input_dto)
-          rows = @read_gateway.list_fertilize_reference_rows(region: input_dto.region)
+          rows = @read_gateway
+                   .list_fertilize_reference_rows(region: input_dto.region)
 
           user_fertilize_ids = []
           skipped_fertilize_ids = []

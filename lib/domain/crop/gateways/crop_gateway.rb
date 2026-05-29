@@ -115,10 +115,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement delete_masters_crop_task_template!"
         end
 
-        def find_crop_show_detail(crop_id)
-          raise NotImplementedError, "Subclasses must implement find_crop_show_detail"
-        end
-
         # @return [Domain::Crop::Entities::CropEntity]
         def find_by_id(id)
           raise NotImplementedError, "Subclasses must implement find_by_id"

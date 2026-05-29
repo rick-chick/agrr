@@ -43,7 +43,7 @@ module Domain
             raise Domain::Shared::Exceptions::RecordNotFound, "Cultivation plan not found"
           end
 
-          read_model = @private_read_gateway.find_task_schedule_timeline_by_plan_id(plan_id: @plan_id)
+          read_model = @private_read_gateway.find_task_schedule_timeline_snapshot_by_plan_id(plan_id: @plan_id)
           dto = Mappers::TaskScheduleTimelineMapper.call(read_model, today: @clock.today)
           @output_port.on_success(dto)
         rescue NoMethodError, NameError, ArgumentError, SyntaxError

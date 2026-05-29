@@ -29,7 +29,7 @@ module Domain::CultivationPlan::Interactors
       )
 
       private_read_gateway = mock
-      private_read_gateway.stubs(:find_optimization_snapshot_by_plan_id).with(plan_id: 42).returns(snapshot)
+      private_read_gateway.stubs(:find_optimization_plan_read_snapshot_by_plan_id).with(plan_id: 42).returns(snapshot)
 
       gateway = mock
       gateway.stubs(:field_cultivations_present?).with(42).returns(false)

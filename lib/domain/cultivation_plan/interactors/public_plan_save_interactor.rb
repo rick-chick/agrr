@@ -89,7 +89,7 @@ module Domain
           return input.session_data if input.session_data
 
           plan_id = input.plan_id.to_i
-          header = @read_gateway.find_header(plan_id: plan_id)
+          header = @read_gateway.find_header_snapshot(plan_id: plan_id)
           return nil unless header
 
           reference_farm = @farm_gateway.find_by_id(header.farm_id)

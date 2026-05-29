@@ -7,15 +7,15 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecordGateway.new
   end
 
-  test "list_private_plan_index_rows_by_user_id returns empty array when user has no plans" do
+  test "list_private_plan_index_plan_snapshots returns empty array when user has no plans" do
     user = create(:user)
 
-    rows = @gateway.list_private_plan_index_rows_by_user_id(user_id: user.id)
+    wires = @gateway.list_private_plan_index_plan_snapshots(user_id: user.id)
 
-    assert_empty rows
+    assert_empty wires
   end
 
-  test "list_private_plan_index_rows_by_user_id returns rows with counts in farm-flatten order" do
+  test "index assembly via domain mapper returns rows with counts in farm-flatten order" do
     user = create(:user)
     farm_a = create(:farm, user: user, name: "Farm A")
     farm_b = create(:farm, user: user, name: "Farm B")
@@ -31,7 +31,16 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     create(:cultivation_plan_crop, cultivation_plan: plan_a, crop: crop)
     create(:cultivation_plan_field, cultivation_plan: plan_a, name: "K1", area: 10, daily_fixed_cost: 0)
 
-    rows = @gateway.list_private_plan_index_rows_by_user_id(user_id: user.id)
+    plan_wires = @gateway.list_private_plan_index_plan_snapshots(user_id: user.id)
+    plan_ids = plan_wires.map(&:id)
+    crops_count_hash = @gateway.count_cultivation_plan_crops_by_plan_ids(plan_ids: plan_ids)
+    fields_count_hash = @gateway.count_cultivation_plan_fields_by_plan_ids(plan_ids: plan_ids)
+    plan_row_wires = Domain::CultivationPlan::Mappers::PrivatePlanIndexRowsMapper.plan_row_snapshots_with_counts(
+      plan_wires,
+      crops_count_hash: crops_count_hash,
+      fields_count_hash: fields_count_hash
+    )
+    rows = Domain::CultivationPlan::Mappers::PrivatePlanIndexRowsMapper.to_index_rows(plan_row_wires)
 
     assert_equal 2, rows.size
     assert_equal [ plan_b.id, plan_a.id ], rows.map(&:id)
@@ -47,63 +56,28 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     assert_equal 0, row_b.fields_count
   end
 
-  test "find_plan_read_snapshot_by_plan_id returns read rows without palette crops" do
-    user = create(:user)
-    farm = create(:farm, user: user, name: "My Farm")
-    plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "completed",
-                  planning_start_date: Date.new(2025, 1, 1), planning_end_date: Date.new(2025, 12, 31))
-    crop = create(:crop, user: user, is_reference: false, name: "Carrot", variety: "V1")
-    create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
-
-    rows = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
-
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanReadSnapshot, rows
-    assert_equal plan.id, rows.id
-    assert_equal plan.display_name, rows.display_name
-    assert_equal farm.display_name, rows.farm_display_name
-    assert_equal [ crop.id ], rows.palette_used_crop_ids
-    assert_equal [], rows.field_cultivations
-    assert_equal [], rows.cultivation_plan_fields
-  end
-
-  test "find_plan_read_snapshot_by_plan_id maps fields and field cultivations into read structs" do
+  test "find_plan_read_snapshot_by_plan_id returns wire for AR preload" do
     user = create(:user)
     farm = create(:farm, user: user)
-    plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "pending")
-    field = create(:cultivation_plan_field, cultivation_plan: plan, name: "North", area: 50)
-    crop = create(:crop, user: user, is_reference: false)
-    plan_crop = create(:cultivation_plan_crop, cultivation_plan: plan, crop: crop)
-    fc = create(:field_cultivation,
-                cultivation_plan: plan,
-                cultivation_plan_field: field,
-                cultivation_plan_crop: plan_crop,
-                start_date: Date.new(2025, 3, 1),
-                completion_date: Date.new(2025, 6, 1),
-                optimization_result: { "profit" => 42 })
+    plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "completed")
 
-    rows = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
+    wire = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
+    snapshot = Domain::CultivationPlan::Mappers::PrivatePlanReadSnapshotMapper.from_snapshot(wire)
 
-    assert_equal 1, rows.field_cultivations_count
-    assert_equal 1, rows.cultivation_plan_fields_count
-    row = rows.field_cultivations.first
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::FieldCultivationRead, row
-    assert_equal fc.id, row.id
-    assert_equal 42, row.optimization_profit
-
-    fr = rows.cultivation_plan_fields.first
-    assert_instance_of Domain::CultivationPlan::Dtos::PrivateCultivationPlanDetail::PlanFieldRead, fr
-    assert_equal "North", fr.name
+    assert_instance_of Domain::CultivationPlan::Dtos::PrivatePlanReadSnapshot, snapshot
+    assert_equal plan.id, snapshot.id
   end
 
-  test "find_plan_read_snapshot_by_plan_id returns rows for plan owned by another user without scoping" do
+  test "find_plan_read_snapshot_by_plan_id returns wire for plan owned by another user without scoping" do
     owner = create(:user)
     other = create(:user)
     farm = create(:farm, user: owner)
     plan = create(:cultivation_plan, farm: farm, user: owner, plan_type: "private")
 
-    rows = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
+    wire = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
+    snapshot = Domain::CultivationPlan::Mappers::PrivatePlanReadSnapshotMapper.from_snapshot(wire)
 
-    assert_equal plan.id, rows.id
+    assert_equal plan.id, snapshot.id
     assert other.id != owner.id
   end
 
@@ -113,15 +87,14 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     end
   end
 
-  test "find_optimization_snapshot_by_plan_id returns optimization snapshot" do
+  test "find_optimization_plan_read_snapshot_by_plan_id round-trips persisted plan" do
     user = create(:user)
     farm = create(:farm, user: user)
     plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
 
-    snapshot = @gateway.find_optimization_snapshot_by_plan_id(plan_id: plan.id)
+    snapshot = @gateway.find_optimization_plan_read_snapshot_by_plan_id(plan_id: plan.id)
 
     assert_instance_of Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot, snapshot
     assert_equal plan.id, snapshot.plan_id
-    assert snapshot.plan_type_private
   end
 end

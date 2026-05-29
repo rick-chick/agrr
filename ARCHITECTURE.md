@@ -12,12 +12,12 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 | Frontend            | Angular 21 SPA (Clean Architecture-oriented layers under `frontend/src/app/`)                  |
 | Frontend hosting    | Google Cloud Storage + Cloud CDN (see `.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh`) |
 | Backend             | Ruby on Rails 8 on **Google Cloud Run** (see `.cursor/skills/deploy-server/scripts/gcp-deploy.sh`)     |
-| Database            | SQLite3 (Solid Cache / Solid Cable / Solid Queue as applicable), **Litestream** replica to GCS |
+| Database            | SQLite3 (**primary** / **cache** DBs; Solid Cache; Solid Cable DB during Rails WS migration), **Litestream** replica to GCS. Background jobs: Active Job **`:async`** in-process (**Solid Queue not used**). Operational source of truth: [`docs/migration/app-rust-stack/PROVISIONAL-STACK.md`](docs/migration/app-rust-stack/PROVISIONAL-STACK.md) |
 | Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads                 |
 | Contract-first API  | `lib/domain` ports/DTOs plus integration and domain tests encoding observable API behavior   |
 
 
-**Architecture (primary):** Decoupled **Angular SPA + Rails JSON API** for business features. Remaining server-rendered HTML is limited to **OAuth login**, **health**, **deletion undo**, **ActionCable**, **API docs**, and **dev/test** helpers—not master CRUD or planning UI. Domain logic lives in `lib/domain`; HTTP adapters use API presenters (`*_api_presenter.rb`). Legacy `*_html_presenter.rb` files may remain only where they still serve JSON-shaped responses (e.g. task schedule timeline) or auth/undo edges until renamed.
+**Architecture (primary):** Decoupled **Angular SPA + Rails JSON API** for business features. Remaining server-rendered HTML is limited to **OAuth login**, **health**, **deletion undo** (migrate to Angular before P7; see app-rust-stack), **ActionCable**, **API docs**, and **dev/test** helpers—not master CRUD or planning UI. Domain logic lives in `lib/domain`; HTTP adapters use API presenters (`*_api_presenter.rb`). Legacy `*_html_presenter.rb` files may remain only where they still serve JSON-shaped responses (e.g. task schedule timeline) or auth/undo edges until renamed.
 
 
 
@@ -149,8 +149,8 @@ sequenceDiagram
 | **Request mapper** (adapter) | `params` / `ActionController::Parameters` → `<Usecase>Input` (types, coercion, nesting). See placement below | Policy; gateway; authorization; business rules; I/O |
 | **Interactor** | Gateway order: read → Policy → write → domain mapper → output port | Pass gateway into Policy; read raw `params`; ActiveRecord; `{ kind: }` switches for modeled outcomes |
 | **Policy** | Decide from passed values only | Gateway; `find` / `count`; ActiveRecord ([R0](#r0-authorization-and-validation)) |
-| **Gateway** | Five-verb I/O; map AR → Entity/Snapshot in the adapter ([Gateway Boundary](#gateway-boundary)) | Authorization; rules; `{ kind: }`; presenter-shaped composites; JSON keyed for one screen |
-| **Domain mapper** | Combine snapshots → output DTO / port payload ([Mappers](#mappers)) | I/O |
+| **Gateway** | Five-verb I/O; adapter maps AR → **domain read snapshot** at the boundary ([Gateway Boundary](#gateway-boundary)) | Authorization; rules; `{ kind: }`; presenter-shaped composites; adapter-only intermediate types to Interactor |
+| **Domain mapper** | Combine **snapshots** → output DTO via `from_snapshots` ([Mappers](#mappers)) | I/O; adapter types |
 | **Presenter + adapter mapper** | Output DTO → HTTP status / JSON / view shape | Gateway calls; load data for the use case |
 
 **Request mapper placement (Controller → Interactor):**
@@ -219,6 +219,148 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 **Decision boundary:** Gateway methods are narrow persistence / HTTP / process I/O. Cross-context orchestration, multi-step business flow, authorization and validation decisions follow [R0](#r0-authorization-and-validation). Examples on the wrong side of the boundary include authorization encoded as a scope chooser (`scope_for_admin_or_user`, `is_admin ? A.where(...) : B.where(...)`), role-aware visibility filters, conditional dispatch across multiple I/O calls, uniqueness checks, resource limit checks, and methods that bundle several persistence operations into a single use-case-encoding entry point. A gateway that returns different domain shapes depending on caller identity has crossed the boundary.
 
 **Migration backlog (non-normative):** Known adapter-side domain logic and naming debt are tracked in [`docs/gateway-domain-logic-migration.md`](docs/gateway-domain-logic-migration.md) and [`docs/gateway-naming-violations.md`](docs/gateway-naming-violations.md). Those documents do not amend this section.
+
+#### Read snapshot assembly: domain composes, adapter does narrow I/O
+
+When moving **thick adapter assembly** (parent + child loaded and merged in one gateway) into the domain, the target shape is **not** “one gateway returns the screen blob.” It is:
+
+| Layer | Responsibility |
+|---|---|
+| **Interactor** | Calls **separate gateway interfaces** per table/aggregate (parent gateway, child gateway, …); runs Policy; decides call order. Receives **`lib/domain` read snapshots only**. Invokes a **domain mapper** to combine snapshots into the output-port DTO. |
+| **Gateway interface** (`lib/domain/.../gateways/`) | Return type is a **read snapshot** DTO under `lib/domain/<context>/dtos/*_snapshot.rb` (or a list of them). |
+| **Adapter gateway** | Narrow I/O for **one table** per method; maps AR → **domain read snapshot** before returning to the Interactor. Does not return presenter-shaped composites. |
+| **Adapter snapshot mapper** (`app/adapters/.../mappers/*_snapshot_mapper.rb`) | AR → **domain read snapshot** (one table per mapper). Runs **inside** the adapter gateway implementation only. |
+| **Adapter preload** | May batch rows for performance, but **must not** merge parent and child into a use-case output. Do not use `includes(:child)` solely to assemble a screen blob in the adapter. |
+| **Domain mapper** (`lib/domain/.../mappers/`) | Pure combine: `from_snapshots(parent_snapshot:, child_snapshots:, …)` or snapshot → output-port DTO. **No I/O**, no adapter types. |
+
+**Read snapshot (normative):**
+
+- **Read snapshot** — domain-meaningful DTO in `lib/domain/<context>/dtos/*_snapshot.rb`; the only shape gateways return to Interactors.
+- **Re-map in domain:** Parent and child are fetched in **separate** Interactor → gateway calls; each returns its own snapshot. A **domain mapper** then combines them (`from_snapshots`, not a single gateway blob).
+- **No intermediate adapter DTO for reads:** Do not introduce AR→adapter-wire→snapshot chains; **AR → domain read snapshot** in the gateway implementation is sufficient.
+
+**Anti-patterns (forbidden for new code):**
+
+- One preload with `includes(:children)`, nested adapter-only DTOs, gateway returning output-port-shaped DTO (e.g. thick `find_show_detail` in a persistence gateway).
+- Gateway interface or Interactor methods named `*_wire_*` or domain mappers `from_wire`.
+- Extra adapter mapping stages between AR and the domain read snapshot when a single snapshot mapper suffices.
+
+**Reference (target):** `FieldCultivationPreloadedReadBundleMapper.from_snapshots` + gateways returning `FieldCultivationPlanAccessSnapshot` / `FieldCultivationClimateSourceSnapshot` (adapter: `FieldCultivationClimateSourceSnapshotMapper`). **Workbench (target):** `plan_gateway.find_by_id` → Policy → `workbench_read_gateway.load_rest_plan_snapshot_by_plan_id` → `available_crop_rows_gateway.list_by_farm_region` → `CultivationPlanWorkbenchSnapshotMapper.from_snapshots` (adapter: `CultivationPlanRestPlanSnapshotMapper` — AR → domain snapshot).
+
+##### Anti-pattern: thick adapter assembly
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Ctrl as Controller
+  participant Int as Interactor
+  participant GW as Gateway adapter
+  participant Pre as Preload
+  participant AR as ActiveRecord
+  participant Wire as Wire mapper parent+child
+  participant DomMap as Domain mapper
+  participant Port as Output port
+
+  Ctrl->>Int: call(parent_id)
+  Note over Int: Interactor calls gateway once
+
+  Int->>GW: find_show_detail(id)
+  GW->>Pre: find!(id)
+  Pre->>AR: Parent.includes(:children).find(id)
+  Note over AR,Pre: Parent and child tables fetched together
+
+  AR-->>Pre: AR graph with children
+  Pre-->>GW: AR graph
+  GW->>Wire: from_model(parent)
+  Note over Wire: One mapper maps parent and child columns into nested wire
+
+  Wire-->>GW: ParentWire with nested children
+  GW->>DomMap: from_wire(wire)
+  Note over DomMap: Wire or from_wire in lib/domain forbidden
+  DomMap-->>GW: UseCaseOutput
+  GW-->>Int: UseCaseOutput
+  Int->>Port: on_success(dto)
+```
+
+##### Target: domain composes via separate gateways (snapshots only)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Ctrl as Controller
+  participant Int as Interactor
+  participant PGW as ParentGateway IF
+  participant CGW as ChildGateway IF
+  participant AP as Parent AR gateway impl
+  participant AC as Child AR gateway impl
+  participant PS as Parent snapshot mapper app
+  participant CS as Child snapshot mapper app
+  participant DomMap as Domain mapper
+  participant Port as Output port
+
+  Ctrl->>Int: call(auth, parent_id)
+
+  Note over Int: Policy in domain only
+
+  Int->>PGW: find_snapshot(parent_id)
+  PGW->>AP: find parent row only
+  AP->>PS: from_model(parent row)
+  PS-->>PGW: ParentSnapshot
+  PGW-->>Int: ParentSnapshot
+
+  Int->>CGW: list_snapshots_by_parent_id(parent_id)
+  CGW->>AC: list child rows only
+  AC->>CS: from_models(child rows)
+  CS-->>CGW: ChildSnapshot[]
+  CGW-->>Int: ChildSnapshot[]
+
+  Note over Int,DomMap: Interactor sees domain read snapshots only
+
+  Int->>DomMap: from_snapshots(parent, children)
+  DomMap-->>Int: UseCaseOutput
+  Int->>Port: on_success(dto)
+```
+
+##### Responsibility by layer (compact)
+
+```mermaid
+sequenceDiagram
+  box rgb(255,240,240) app/adapters I/O
+    participant GW_P as Parent gateway impl
+    participant GW_C as Child gateway impl
+    participant S_P as Parent snapshot mapper
+    participant S_C as Child snapshot mapper
+  end
+  box rgb(240,255,240) lib/domain snapshots and assembly
+    participant Int as Interactor
+    participant Pol as Policy
+    participant M as Domain mapper
+  end
+
+  Int->>GW_P: find_snapshot(parent_id)
+  GW_P->>S_P: from_model(parent row)
+  S_P-->>Int: ParentSnapshot
+
+  Int->>Pol: allowed?(parent, auth)
+  Pol-->>Int: ok or deny
+
+  Int->>GW_C: list_snapshots_by_parent_id(parent_id)
+  GW_C->>S_C: from_models(child rows)
+  S_C-->>Int: ChildSnapshot[]
+
+  Int->>M: from_snapshots(parent, children)
+  M-->>Int: UseCaseOutput DTO
+```
+
+| | Thick adapter assembly | Domain assembly (required for new reads) |
+|---|---|---|
+| Interactor → gateway | One call | Parent gateway + child gateway + … |
+| SQL / preload | `includes(children)` in adapter | Table-scoped narrow read per gateway |
+| Adapter mapping | One mapper, multiple tables / nested adapter DTO | **One snapshot mapper per table** (AR → domain read snapshot) |
+| Type crossing into Interactor | Adapter-only DTO or output DTO from gateway | **`lib/domain` read snapshot** per call |
+| Parent/child merge | Adapter (gateway return value) | **Domain mapper `from_snapshots`** after separate fetches |
+| Domain mapper input | Adapter types or `from_wire` | **`from_snapshots`** / snapshot → output DTO |
+| Gateway return | Near presenter/output-port shape | Domain read snapshot per table |
 
 ### Gateway injection
 
@@ -329,8 +471,8 @@ The output port is the contract for transmitting use-case success/failure via DT
 Mappers are **Plain Ruby objects** that perform pure type transformations. They are used in **three** roles along the use-case path ([Canonical use-case responsibility split](#canonical-use-case-responsibility-split)):
 
 - **Request mappers** (`app/adapters/<context>/mappers/` or `app/adapters/<context>/presenters/forms/`) — Called by **Controllers** at the HTTP edge. `params` / request → `<Usecase>Input`. **No I/O**, no Policy, no gateway. Keeps `ActionController::Parameters` and strong-params details out of Interactors. Forms are the default request mapper for write flows; standalone mapper modules suit shared or non-form normalization (e.g. `AdjustMovesFromRequest`).
-- **Domain mappers** (`lib/domain/<context>/mappers/`) — Called by **Interactors**. Entity ↔ DTO, snapshot ↔ DTO, DTO ↔ DTO. **No I/O**, no Gateway/Policy calls. Extract to mapper even for simple field copying; do not inline conversion inside Interactors.
-- **Adapter mappers** (`app/adapters/<context>/mappers/`) — Called by **Presenters** (response path). Domain output → JSON Hash / HTML display shape.
+- **Domain mappers** (`lib/domain/<context>/mappers/`) — Called by **Interactors**. Entity ↔ DTO, snapshot ↔ DTO, DTO ↔ DTO; combine read snapshots via `from_snapshots` ([Read snapshot assembly](#read-snapshot-assembly-domain-composes-adapter-does-narrow-io)). **No I/O**, no Gateway/Policy calls, no adapter types. Extract to mapper even for simple field copying; do not inline conversion inside Interactors.
+- **Adapter mappers** (`app/adapters/<context>/mappers/`) — **Snapshot mappers** (AR → `lib/domain` read snapshot; inside gateway implementations) and **response mappers** (called by Presenters: domain output → JSON Hash / HTML display shape).
 
 **Rule:** `lib/domain/<context>/assemblers/` is not allowed. Composition must be handled within Interactors or through domain mappers.
 
@@ -340,7 +482,7 @@ Mappers are **Plain Ruby objects** that perform pure type transformations. They 
 - **Domain mapper**: `lib/domain/<context>/mappers/<name>_mapper.rb` — `Domain::<Context>::Mappers::<Name>Mapper`
 - **Adapter mapper (response)**: `app/adapters/<context>/mappers/<name>_mapper.rb` — `Adapters::<Context>::Mappers::<Name>Mapper`
 
-**Boundary:** Mappers perform pure transformations only. No business rules, authorization decisions, or I/O. Request mappers: HTTP-shaped input → Input DTO. Domain mappers: DTOs, Entities, Snapshots only. Adapter mappers: domain port payloads → wire/view shape.
+**Boundary:** Mappers perform pure transformations only. No business rules, authorization decisions, or I/O. Request mappers: HTTP-shaped input → Input DTO. Domain mappers: DTOs, Entities, Snapshots only. Adapter response mappers: domain port payloads → HTTP/view shape.
 
 ### Naming and placement conventions
 

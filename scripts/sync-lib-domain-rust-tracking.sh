@@ -63,7 +63,7 @@ in_progress_count=0
   pct_done=$((done_count * 100 / ctx_total))
   pct_wip=$((in_progress_count * 100 / ctx_total))
   echo "- done: **${done_count}/${ctx_total}** (${pct_done}%)"
-  echo "- in_progress (design〜ffi_bridge): **${in_progress_count}/${ctx_total}** (${pct_wip}%)"
+  echo "- in_progress (design〜test): **${in_progress_count}/${ctx_total}** (${pct_wip}%)"
   echo "- not_started: **$((ctx_total - done_count - in_progress_count))/${ctx_total}**"
   echo ""
   echo "## ウェーブ"

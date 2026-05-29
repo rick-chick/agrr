@@ -14,13 +14,15 @@ module Domain
           end
         end
 
-        def fertilize_row(fertilize_id: 200, name: "肥料A")
+        def fertilize_wire(fertilize_id: 200, name: "肥料A")
           Dtos::PublicPlanSaveFertilizeReferenceRow.new(
             reference_fertilize_id: fertilize_id,
             name: name,
             n: 10,
             p: 5,
             k: 8,
+            description: nil,
+            package_size: nil,
             region: "jp"
           )
         end
@@ -41,7 +43,7 @@ module Domain
         test "creates user fertilize with copy suffix name" do
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_fertilize_reference_rows).with(region: "jp").returns(
-            [ fertilize_row ]
+            [ fertilize_wire ]
           )
           read_gateway.expects(:exists_fertilize_name?).with(name: "肥料A (コピー)").returns(false)
 
@@ -70,7 +72,7 @@ module Domain
 
         test "reuses existing user fertilize and records skip" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_fertilize_reference_rows).returns([ fertilize_row ])
+          read_gateway.expects(:list_fertilize_reference_rows).returns([ fertilize_wire ])
 
           user_fertilize_gateway = mock("user_fertilize_gateway")
           user_fertilize_gateway.expects(:find_by_user_id_and_source_fertilize_id).with(
@@ -91,7 +93,7 @@ module Domain
 
         test "second call with same row reuses existing and accumulates skipped_fertilize_ids" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_fertilize_reference_rows).twice.returns([ fertilize_row ])
+          read_gateway.expects(:list_fertilize_reference_rows).twice.returns([ fertilize_wire ])
 
           user_fertilize_gateway = mock("user_fertilize_gateway")
           user_fertilize_gateway.expects(:find_by_user_id_and_source_fertilize_id).twice.with(
@@ -117,7 +119,7 @@ module Domain
 
         test "resolves unique name when first candidate is taken" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_fertilize_reference_rows).returns([ fertilize_row(name: "肥料B") ])
+          read_gateway.expects(:list_fertilize_reference_rows).returns([ fertilize_wire(name: "肥料B") ])
           read_gateway.expects(:exists_fertilize_name?).with(name: "肥料B (コピー)").returns(true)
           read_gateway.expects(:exists_fertilize_name?).with(name: "肥料B (コピー 2)").returns(false)
 

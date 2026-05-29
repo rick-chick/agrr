@@ -6,12 +6,10 @@ module Domain
   module Pest
     module Mappers
       class PestDeleteUsageMapperTest < DomainLibTestCase
-        Wire = Data.define(:pesticides_count)
+        test "from_snapshot maps pesticides_count to PestDeleteUsage" do
+          snapshot = Dtos::PestDeleteUsageSnapshot.new(pesticides_count: 5)
 
-        test "from_wire maps pesticides_count to PestDeleteUsage" do
-          wire = Wire.new(pesticides_count: 5)
-
-          dto = PestDeleteUsageMapper.from_wire(wire)
+          dto = PestDeleteUsageMapper.from_snapshot(snapshot)
 
           assert_instance_of Dtos::PestDeleteUsage, dto
           assert_equal 5, dto.pesticides_count

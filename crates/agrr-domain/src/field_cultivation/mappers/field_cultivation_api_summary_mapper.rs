@@ -1,35 +1,19 @@
 //! Ruby: `Domain::FieldCultivation::Mappers::FieldCultivationApiSummaryMapper`
 
-use time::Date;
+use crate::field_cultivation::dtos::{FieldCultivationApiSummary, FieldCultivationApiSummarySnapshot};
 
-use crate::field_cultivation::dtos::FieldCultivationApiSummary;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct FieldCultivationApiSummaryWire {
-    pub id: i64,
-    pub field_name: String,
-    pub crop_name: String,
-    pub area: f64,
-    pub start_date: Date,
-    pub completion_date: Date,
-    pub cultivation_days: i32,
-    pub estimated_cost: f64,
-    pub gdd: Option<f64>,
-    pub status: String,
-}
-
-pub fn from_wire(wire: &FieldCultivationApiSummaryWire) -> FieldCultivationApiSummary {
+pub fn from_snapshot(snapshot: &FieldCultivationApiSummarySnapshot) -> FieldCultivationApiSummary {
     FieldCultivationApiSummary {
-        id: wire.id,
-        field_name: wire.field_name.clone(),
-        crop_name: wire.crop_name.clone(),
-        area: wire.area,
-        start_date: wire.start_date,
-        completion_date: wire.completion_date,
-        cultivation_days: wire.cultivation_days,
-        estimated_cost: wire.estimated_cost,
-        gdd: wire.gdd,
-        status: wire.status.clone(),
+        id: snapshot.id,
+        field_name: snapshot.field_name.clone(),
+        crop_name: snapshot.crop_name.clone(),
+        area: snapshot.area,
+        start_date: snapshot.start_date,
+        completion_date: snapshot.completion_date,
+        cultivation_days: snapshot.cultivation_days,
+        estimated_cost: snapshot.estimated_cost,
+        gdd: snapshot.gdd,
+        status: snapshot.status.clone(),
     }
 }
 
@@ -38,8 +22,8 @@ mod tests {
     use super::*;
     use time::macros::date;
 
-    fn sample_wire(gdd: Option<f64>) -> FieldCultivationApiSummaryWire {
-        FieldCultivationApiSummaryWire {
+    fn sample_snapshot(gdd: Option<f64>) -> FieldCultivationApiSummarySnapshot {
+        FieldCultivationApiSummarySnapshot {
             id: 42,
             field_name: "North plot".into(),
             crop_name: "Tomato".into(),
@@ -54,9 +38,9 @@ mod tests {
     }
 
     #[test]
-    fn from_wire_maps_required_fields() {
-        let wire = sample_wire(Some(875.25));
-        let dto = from_wire(&wire);
+    fn from_snapshot_maps_required_fields() {
+        let snapshot = sample_snapshot(Some(875.25));
+        let dto = from_snapshot(&snapshot);
 
         assert_eq!(dto.id, 42);
         assert_eq!(dto.field_name, "North plot");
@@ -70,14 +54,14 @@ mod tests {
     }
 
     #[test]
-    fn from_wire_preserves_gdd_when_present() {
-        let dto = from_wire(&sample_wire(Some(875.25)));
+    fn from_snapshot_preserves_gdd_when_present() {
+        let dto = from_snapshot(&sample_snapshot(Some(875.25)));
         assert_eq!(dto.gdd, Some(875.25));
     }
 
     #[test]
-    fn from_wire_preserves_none_gdd() {
-        let dto = from_wire(&sample_wire(None));
+    fn from_snapshot_preserves_none_gdd() {
+        let dto = from_snapshot(&sample_snapshot(None));
         assert_eq!(dto.gdd, None);
     }
 }

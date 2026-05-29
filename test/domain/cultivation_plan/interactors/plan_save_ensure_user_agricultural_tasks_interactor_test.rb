@@ -14,21 +14,33 @@ module Domain
           end
         end
 
-        def template_link(reference_crop_id: 10, name: "作業A")
+        def template_link_wire(reference_crop_id: 10, name: "作業A")
           Dtos::PublicPlanSaveCropTaskTemplateLinkRow.new(
             reference_crop_id: reference_crop_id,
             name: name,
+            description: nil,
             time_per_sqm: 1.5,
+            weather_dependency: nil,
+            required_tools: nil,
+            skill_level: nil,
+            task_type: nil,
+            task_type_id: nil,
             is_reference: false
           )
         end
 
-        def agricultural_task_row(task_id: 300, crop_ids: [ 10 ], name: "作業A")
-          links = crop_ids.map { |crop_id| template_link(reference_crop_id: crop_id, name: name) }
+        def agricultural_task_wire(task_id: 300, crop_ids: [ 10 ], name: "作業A")
+          links = crop_ids.map { |crop_id| template_link_wire(reference_crop_id: crop_id, name: name) }
           Dtos::PublicPlanSaveAgriculturalTaskReferenceRow.new(
             reference_agricultural_task_id: task_id,
             name: name,
+            description: nil,
             time_per_sqm: 1.5,
+            weather_dependency: nil,
+            required_tools: nil,
+            skill_level: nil,
+            task_type: nil,
+            task_type_id: nil,
             region: "jp",
             linked_reference_crop_ids: crop_ids,
             template_links: links
@@ -76,7 +88,7 @@ module Domain
         end
 
         test "creates user agricultural task and crop task template when intersecting plan crops" do
-          row = agricultural_task_row
+          row = agricultural_task_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_agricultural_task_reference_rows).with(region: "jp").returns([ row ])
 
@@ -114,7 +126,7 @@ module Domain
         end
 
         test "skips existing user agricultural task but still syncs crop task templates" do
-          row = agricultural_task_row
+          row = agricultural_task_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_agricultural_task_reference_rows).returns([ row ])
 
@@ -144,7 +156,7 @@ module Domain
         end
 
         test "skips row that does not intersect plan crops" do
-          row = agricultural_task_row(crop_ids: [ 99 ])
+          row = agricultural_task_wire(crop_ids: [ 99 ])
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_agricultural_task_reference_rows).returns([ row ])
 
@@ -161,7 +173,7 @@ module Domain
         end
 
         test "does not create crop task template when link already exists" do
-          row = agricultural_task_row
+          row = agricultural_task_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_agricultural_task_reference_rows).returns([ row ])
 

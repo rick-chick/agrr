@@ -1,7 +1,7 @@
 # lib/domain → Rust 移行進捗（機械可読）
 # TRACKING.md は scripts/sync-lib-domain-rust-tracking.sh で再生成する。
 #
-# phase: not_started | design | dev | test | ffi_bridge | done
+# phase: not_started | design | dev | test | done
 # rust_module: crates/agrr-domain/src/<path> または "—"
 
 program_version: 1
@@ -21,7 +21,6 @@ waves:
       - auth
       - backdoor
       - contact_messages
-      - file_blob
       - internal_jobs
   - id: wave-3-medium
     name: 中型 BC
@@ -50,7 +49,7 @@ contexts:
     wave: wave-1-shared
     phase: done
     rust_module: crates/agrr-domain/src/shared
-    notes: "P1 G2+G3 完了（ADR 延期: HttpJsonEnvelope, TurboStreamSubscription）。FFI は P6"
+    notes: "P1 G2+G3 完了（ADR 延期: HttpJsonEnvelope, TurboStreamSubscription）"
     slices:
       policies: done
       type_converters: done
@@ -68,12 +67,12 @@ contexts:
 
   api_keys:
     wave: wave-2-small
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/api_keys
 
   auth:
     wave: wave-2-small
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/auth
     slices:
       dtos: done
@@ -83,7 +82,7 @@ contexts:
 
   backdoor:
     wave: wave-2-small
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/backdoor
     slices:
       dtos: done
@@ -93,7 +92,7 @@ contexts:
 
   contact_messages:
     wave: wave-2-small
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/contact_messages
     slices:
       entities: done
@@ -102,19 +101,9 @@ contexts:
       ports: done
       interactors: done
 
-  file_blob:
-    wave: wave-2-small
-    phase: test
-    rust_module: crates/agrr-domain/src/file_blob
-    slices:
-      dtos: done
-      gateways: done
-      ports: done
-      interactors: done
-
   internal_jobs:
     wave: wave-2-small
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/internal_jobs
     slices:
       dtos: done
@@ -124,7 +113,7 @@ contexts:
 
   deletion_undo:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/deletion_undo
     slices:
       entities: done
@@ -135,12 +124,12 @@ contexts:
 
   interaction_rule:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/interaction_rule
 
   public_plan:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/public_plan
     slices:
       catalog: done
@@ -152,12 +141,12 @@ contexts:
 
   field:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/field
 
   agricultural_task:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/agricultural_task
     slices:
       constants: done
@@ -170,7 +159,7 @@ contexts:
 
   fertilize:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/fertilize
     slices:
       entities: done
@@ -182,7 +171,7 @@ contexts:
 
   pesticide:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/pesticide
     slices:
       entities: done
@@ -194,7 +183,7 @@ contexts:
 
   farm:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/farm
     slices:
       entities: done
@@ -203,11 +192,12 @@ contexts:
       ports: done
       policies: done
       calculators: done
+      mappers: done
       interactors: done
 
   pest:
     wave: wave-3-medium
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/pest
     slices:
       entities: done
@@ -221,12 +211,17 @@ contexts:
 
   field_cultivation:
     wave: wave-4-large
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/field_cultivation
+    slices:
+      mappers: done
+      interactors: done
+      policies: done
+      gateways: done
 
   weather_data:
     wave: wave-4-large
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/weather_data
     slices:
       dtos: done
@@ -239,14 +234,18 @@ contexts:
 
   crop:
     wave: wave-4-large
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/crop
+    slices:
+      mappers: done
+      interactors: done
+      gateways: done
 
   cultivation_plan:
     wave: wave-5-cultivation-plan
-    phase: test
+    phase: done
     rust_module: crates/agrr-domain/src/cultivation_plan
-    notes: "S3 完了: private_plan_initialize・public_plan_save・plan_allocation_adjust call（天気/sync は段階移植）。cargo 623 / domain-lib 219 GREEN。P6 FFI 待ち"
+    notes: "G4 完了。Ruby §P4 climate read 移行済み（2026-05-29）。P6 Sqlite は参照実装のみ（R4/URL map 未）。sync/progress §P4 は別弾"
     slices:
       policies_calculators: done
       mappers_dtos: done

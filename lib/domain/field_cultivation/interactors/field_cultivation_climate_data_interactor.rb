@@ -41,14 +41,18 @@ module Domain
         def call(input_dto)
           user_dto = @user_id.present? ? @user_lookup.find(@user_id) : nil
 
+          field_cultivation_id = input_dto.field_cultivation_id
+          plan_access_snapshot = @climate_source_gateway.find_plan_access_snapshot_by_field_cultivation_id(
+            field_cultivation_id
+          )
           if user_dto
-            assert_field_cultivation_plan_access!(user_dto, @climate_source_gateway, input_dto.field_cultivation_id)
+            assert_field_cultivation_plan_access!(user_dto, plan_access_snapshot)
           else
-            assert_public_field_cultivation_plan_access!(@climate_source_gateway, input_dto.field_cultivation_id)
+            assert_public_field_cultivation_plan_access!(plan_access_snapshot)
           end
 
           source = @climate_source_gateway.find_climate_source_snapshot_by_field_cultivation_id(
-            input_dto.field_cultivation_id
+            field_cultivation_id
           )
           assert_climate_preconditions!(source)
 

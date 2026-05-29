@@ -6,21 +6,20 @@ module Domain
       module FieldCultivationApiSummaryMapper
         module_function
 
-        # @param wire [#id, #field_name, #crop_name, #area, #start_date, #completion_date,
-        #            #cultivation_days, #estimated_cost, #gdd, #status]
+        # @param snapshot [Dtos::FieldCultivationApiSummarySnapshot]
         # @return [Domain::FieldCultivation::Dtos::FieldCultivationApiSummary]
-        def from_wire(wire)
+        def from_snapshot(snapshot)
           Dtos::FieldCultivationApiSummary.new(
-            id: wire.id,
-            field_name: wire.field_name,
-            crop_name: wire.crop_name,
-            area: wire.area,
-            start_date: wire.start_date,
-            completion_date: wire.completion_date,
-            cultivation_days: wire.cultivation_days,
-            estimated_cost: wire.estimated_cost,
-            gdd: wire.gdd,
-            status: wire.status
+            id: snapshot.id,
+            field_name: snapshot.field_name,
+            crop_name: snapshot.crop_name,
+            area: snapshot.area,
+            start_date: snapshot.start_date,
+            completion_date: snapshot.completion_date,
+            cultivation_days: snapshot.cultivation_days,
+            estimated_cost: snapshot.estimated_cost,
+            gdd: snapshot.gdd,
+            status: snapshot.status
           )
         end
       end

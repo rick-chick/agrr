@@ -15,7 +15,8 @@ module Domain
         # @return [Dtos::PlanSaveEnsureUserPesticidesOutput]
         # @raise [Domain::Shared::Exceptions::RecordInvalid]
         def call(input_dto)
-          rows = @read_gateway.list_pesticide_reference_rows(region: input_dto.region)
+          rows = @read_gateway
+                   .list_pesticide_reference_rows(region: input_dto.region)
 
           user_pesticide_ids = []
           skipped_pesticide_ids = []

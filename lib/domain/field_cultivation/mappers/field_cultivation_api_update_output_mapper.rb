@@ -6,14 +6,14 @@ module Domain
       module FieldCultivationApiUpdateOutputMapper
         module_function
 
-        # @param wire [#field_cultivation_id, #start_date, #completion_date, #cultivation_days]
+        # @param snapshot [Dtos::FieldCultivationApiUpdateOutputSnapshot]
         # @return [Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateOutput]
-        def from_wire(wire)
+        def from_snapshot(snapshot)
           Dtos::FieldCultivationApiUpdateOutput.new(
-            field_cultivation_id: wire.field_cultivation_id,
-            start_date: wire.start_date,
-            completion_date: wire.completion_date,
-            cultivation_days: wire.cultivation_days
+            field_cultivation_id: snapshot.field_cultivation_id,
+            start_date: snapshot.start_date,
+            completion_date: snapshot.completion_date,
+            cultivation_days: snapshot.cultivation_days
           )
         end
       end

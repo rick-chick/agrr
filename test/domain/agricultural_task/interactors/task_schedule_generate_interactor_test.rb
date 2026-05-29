@@ -14,12 +14,16 @@ module Domain
 
         # --- fake entities（AR モデル相当の形だけを満たす素の値オブジェクト）---
         Blueprint = Struct.new(
-          :task_type, :gdd_trigger, :gdd_tolerance, :description, :stage_name,
+          :id, :task_type, :gdd_trigger, :gdd_tolerance, :description, :stage_name,
           :stage_order, :priority, :source, :weather_dependency, :time_per_sqm,
           :amount, :amount_unit, :agricultural_task, keyword_init: true
         )
         RelatedTask = Struct.new(:id, :name, :description, :weather_dependency, :time_per_sqm, keyword_init: true)
-        Crop = Struct.new(:id, :name, :crop_task_templates, :crop_task_schedule_blueprints, keyword_init: true)
+        Crop = Struct.new(:id, :name, :crop_task_templates, :crop_task_schedule_blueprints, keyword_init: true) do
+          def to_agrr_requirement
+            { "crop" => { "name" => name } }
+          end
+        end
         FieldCultivation = Struct.new(:id, :crop, :start_date, keyword_init: true)
         Plan = Struct.new(:id, :predicted_weather_data, :field_cultivations, :calculated_planning_start_date, keyword_init: true)
         Ctx = Struct.new(:plan, keyword_init: true)
@@ -27,16 +31,89 @@ module Domain
 
         # --- memory gateways ---
         class FakeCultivationPlanGateway
-          def initialize(ctx)
-            @ctx = ctx
-          end
-
-          def find_with_field_cultivations_for_task_schedule(_plan_id)
-            @ctx
-          end
-
           def within_transaction
             yield
+          end
+        end
+
+        PlanRowSnapshot = Data.define(:id, :predicted_weather_data, :calculated_planning_start_date)
+        FieldCultivationRowWire = Data.define(:id, :start_date, :crop_id)
+        CropRowWire = Data.define(:id, :name)
+        TemplateRowWire = Data.define(:agricultural_task)
+        BlueprintRowWire = Data.define(
+          :id, :task_type, :gdd_trigger, :gdd_tolerance, :description, :stage_name,
+          :stage_order, :priority, :source, :weather_dependency, :time_per_sqm,
+          :amount, :amount_unit, :agricultural_task
+        )
+
+        class FakeTaskScheduleReadGateway
+          def initialize(test_case)
+            @test = test_case
+          end
+
+          def find_plan_row(plan_id:)
+            plan = @test.instance_variable_get(:@plan)
+            PlanRowSnapshot.new(
+              id: plan.id,
+              predicted_weather_data: plan.predicted_weather_data,
+              calculated_planning_start_date: plan.calculated_planning_start_date
+            )
+          end
+
+          def list_field_cultivation_rows(plan_id:)
+            fc = @test.instance_variable_get(:@field_cultivation)
+            crop = fc.crop
+            [
+              FieldCultivationRowWire.new(
+                id: fc.id,
+                start_date: fc.start_date,
+                crop_id: crop&.id
+              )
+            ]
+          end
+
+          def find_crop_row(crop_id:)
+            crop = @test.instance_variable_get(:@crop)
+            CropRowWire.new(id: crop.id, name: crop.name)
+          end
+
+          def list_crop_task_template_rows(crop_id:)
+            crop = @test.instance_variable_get(:@crop)
+            crop.crop_task_templates.map do |template|
+              TemplateRowWire.new(agricultural_task: template.agricultural_task)
+            end
+          end
+
+          def list_crop_task_schedule_blueprint_rows(crop_id:)
+            crop = @test.instance_variable_get(:@crop)
+            crop.crop_task_schedule_blueprints.map do |blueprint|
+              BlueprintRowWire.new(
+                id: blueprint.id,
+                task_type: blueprint.task_type,
+                gdd_trigger: blueprint.gdd_trigger,
+                gdd_tolerance: blueprint.gdd_tolerance,
+                description: blueprint.description,
+                stage_name: blueprint.stage_name,
+                stage_order: blueprint.stage_order,
+                priority: blueprint.priority,
+                source: blueprint.source,
+                weather_dependency: blueprint.weather_dependency,
+                time_per_sqm: blueprint.time_per_sqm,
+                amount: blueprint.amount,
+                amount_unit: blueprint.amount_unit,
+                agricultural_task: blueprint.agricultural_task
+              )
+            end
+          end
+
+          def find_crop_agrr_requirement_source(crop_id:)
+            @test.instance_variable_get(:@crop)
+          end
+        end
+
+        class FakeCropAgrrRequirementBuilder
+          def build_from(_source)
+            { "crop" => { "name" => "stub" } }
           end
         end
 
@@ -75,8 +152,13 @@ module Domain
             @received_payloads = []
           end
 
-          def calculate_progress(crop:, start_date:, weather_data:)
-            @received_payloads << { crop: crop, start_date: start_date, weather_data: weather_data }
+          def calculate_progress(crop_requirement:, start_date:, weather_data:, crop: nil)
+            @received_payloads << {
+              crop_requirement: crop_requirement,
+              start_date: start_date,
+              weather_data: weather_data,
+              crop: crop
+            }
             @response
           end
         end
@@ -87,19 +169,19 @@ module Domain
           @topdress_task = RelatedTask.new(id: 13, name: "追肥", description: nil, weather_dependency: nil, time_per_sqm: nil)
 
           @general_blueprint = Blueprint.new(
-            task_type: Types::FIELD_WORK, gdd_trigger: BigDecimal("0.0"), gdd_tolerance: BigDecimal("5.0"),
+            id: 1, task_type: Types::FIELD_WORK, gdd_trigger: BigDecimal("0.0"), gdd_tolerance: BigDecimal("5.0"),
             description: nil, stage_name: "土壌準備", stage_order: 1, priority: 1, source: "agrr_schedule",
             weather_dependency: "low", time_per_sqm: BigDecimal("0.1"), amount: nil, amount_unit: nil,
             agricultural_task: @soil_task
           )
           @basal_blueprint = Blueprint.new(
-            task_type: Types::BASAL_FERTILIZATION, gdd_trigger: BigDecimal("0.0"), gdd_tolerance: BigDecimal("5.0"),
+            id: 2, task_type: Types::BASAL_FERTILIZATION, gdd_trigger: BigDecimal("0.0"), gdd_tolerance: BigDecimal("5.0"),
             description: nil, stage_name: "定植前", stage_order: 0, priority: 1, source: "agrr_schedule",
             weather_dependency: nil, time_per_sqm: nil, amount: nil, amount_unit: nil,
             agricultural_task: @basal_task
           )
           @topdress_blueprint = Blueprint.new(
-            task_type: Types::TOPDRESS_FERTILIZATION, gdd_trigger: BigDecimal("160.0"), gdd_tolerance: BigDecimal("10.0"),
+            id: 3, task_type: Types::TOPDRESS_FERTILIZATION, gdd_trigger: BigDecimal("160.0"), gdd_tolerance: BigDecimal("10.0"),
             description: nil, stage_name: "生育期", stage_order: 2, priority: 2, source: "agrr_schedule",
             weather_dependency: nil, time_per_sqm: nil, amount: BigDecimal("4.0"), amount_unit: nil,
             agricultural_task: @topdress_task
@@ -117,7 +199,9 @@ module Domain
           @ctx = Ctx.new(plan: @plan)
 
           @task_schedule_gateway = CapturingTaskScheduleGateway.new
-          @cultivation_plan_gateway = FakeCultivationPlanGateway.new(@ctx)
+          @cultivation_plan_gateway = FakeCultivationPlanGateway.new
+          @task_schedule_read_gateway = FakeTaskScheduleReadGateway.new(self)
+          @crop_agrr_requirement_builder = FakeCropAgrrRequirementBuilder.new
           @clock = FixedClock.new(Time.utc(2025, 1, 1, 0, 0, 0))
         end
 
@@ -228,7 +312,9 @@ module Domain
             progress_gateway: progress_gateway,
             task_schedule_gateway: @task_schedule_gateway,
             clock: @clock,
-            cultivation_plan_gateway: @cultivation_plan_gateway
+            cultivation_plan_gateway: @cultivation_plan_gateway,
+            task_schedule_read_gateway: @task_schedule_read_gateway,
+            crop_agrr_requirement_builder: @crop_agrr_requirement_builder
           )
         end
 

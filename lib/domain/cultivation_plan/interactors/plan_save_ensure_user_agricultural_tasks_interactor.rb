@@ -21,7 +21,8 @@ module Domain
           end
 
           reference_crop_ids = input_dto.reference_crop_ids
-          rows = @read_gateway.list_agricultural_task_reference_rows(region: input_dto.region)
+          rows = @read_gateway
+                   .list_agricultural_task_reference_rows(region: input_dto.region)
 
           user_agricultural_task_ids = []
           skipped_agricultural_task_ids = []

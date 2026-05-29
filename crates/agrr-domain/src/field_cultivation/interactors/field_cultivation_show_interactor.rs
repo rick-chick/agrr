@@ -50,12 +50,23 @@ where
         &mut self,
         field_cultivation_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let plan_access_snapshot = match self
+            .gateway
+            .find_plan_access_snapshot_by_field_cultivation_id(field_cultivation_id)
+        {
+            Ok(snapshot) => snapshot,
+            Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
+                self.output_port.on_failure(Error::new(err.to_string()));
+                return Ok(());
+            }
+            Err(err) => return Err(err),
+        };
+
         if let (Some(user_id), Some(lookup)) = (self.user_id, self.user_lookup) {
             let user = lookup.find(user_id);
             if let Err(err) = assert_field_cultivation_plan_access(
                 &user,
-                self.gateway,
-                field_cultivation_id,
+                &plan_access_snapshot,
                 false,
             ) {
                 if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
@@ -65,7 +76,7 @@ where
                 return Err(err);
             }
         } else if let Err(err) =
-            assert_public_field_cultivation_plan_access(self.gateway, field_cultivation_id)
+            assert_public_field_cultivation_plan_access(&plan_access_snapshot)
         {
             if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
                 self.output_port.on_failure(Error::new("Forbidden"));
@@ -74,17 +85,20 @@ where
             return Err(err);
         }
 
-        match self.gateway.find_api_summary(field_cultivation_id) {
-            Ok(dto) => {
-                self.output_port.on_success(dto);
-                Ok(())
-            }
+        let api_summary = match self
+            .gateway
+            .find_api_summary_by_field_cultivation_id(field_cultivation_id)
+        {
+            Ok(summary) => summary,
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
                 self.output_port.on_failure(Error::new(err.to_string()));
-                Ok(())
+                return Ok(());
             }
-            Err(err) => Err(err),
-        }
+            Err(err) => return Err(err),
+        };
+
+        self.output_port.on_success(api_summary);
+        Ok(())
     }
 }
 
@@ -94,7 +108,6 @@ mod tests {
     use crate::field_cultivation::dtos::{
         FieldCultivationApiSummary, FieldCultivationPlanAccessSnapshot,
     };
-    use crate::field_cultivation::gateways::FieldCultivationPlanAccessGateway;
     use time::macros::date;
 
     struct StubGateway {
@@ -103,18 +116,19 @@ mod tests {
         fail_not_found: bool,
     }
 
-    impl FieldCultivationPlanAccessGateway for StubGateway {
+    impl FieldCultivationGateway for StubGateway {
         fn find_plan_access_snapshot_by_field_cultivation_id(
             &self,
             _: i64,
         ) -> Result<FieldCultivationPlanAccessSnapshot, Box<dyn std::error::Error + Send + Sync>>
         {
+            if self.fail_not_found {
+                return Err(Box::new(RecordNotFoundError));
+            }
             Ok(self.access.clone())
         }
-    }
 
-    impl FieldCultivationGateway for StubGateway {
-        fn find_api_summary(
+        fn find_api_summary_by_field_cultivation_id(
             &self,
             _: i64,
         ) -> Result<FieldCultivationApiSummary, Box<dyn std::error::Error + Send + Sync>> {
@@ -192,7 +206,18 @@ mod tests {
     fn forbidden_for_private_plan_non_owner() {
         let gateway = StubGateway {
             access: FieldCultivationPlanAccessSnapshot::new(7, false, true, Some(99)),
-            summary: None,
+            summary: Some(FieldCultivationApiSummary {
+                id: 7,
+                field_name: "F".into(),
+                crop_name: "C".into(),
+                area: 1.0,
+                start_date: date!(2026 - 01 - 01),
+                completion_date: date!(2026 - 01 - 02),
+                cultivation_days: 2,
+                estimated_cost: 3.0,
+                gdd: None,
+                status: "completed".into(),
+            }),
             fail_not_found: false,
         };
         let mut output = SpyOutput {

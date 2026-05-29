@@ -3,7 +3,7 @@
 module Adapters
   module FieldCultivation
     module Mappers
-      # ActiveRecord → domain Snapshot（wire のみ。業務判断なし）。
+      # ActiveRecord → domain Snapshot（業務判断なし）。
       module FieldCultivationClimateSourceSnapshotMapper
         module_function
 

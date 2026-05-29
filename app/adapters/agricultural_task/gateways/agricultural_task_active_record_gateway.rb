@@ -29,13 +29,6 @@ module Adapters
           scope.recent.map { |record| Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(record) }
         end
 
-        def find_agricultural_task_show_detail(id)
-          task = ::AgriculturalTask.includes(:crops).find(id)
-          Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.detail_output_dto_from_record(task)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
         def find_by_id(id)
           Adapters::AgriculturalTask::Mappers::AgriculturalTaskMapper.agricultural_task_entity_from_record(find_agricultural_task_model!(id))
         end

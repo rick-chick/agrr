@@ -22,10 +22,6 @@ module Domain
         end
 
         # 詳細 DTO（関連込み）。認可は Interactor 側（R0）。
-        def find_pest_show_detail(id)
-          raise NotImplementedError, "Subclasses must implement find_pest_show_detail"
-        end
-
         # ネスト害虫用。認可は Interactor（NestedCropPestsAccess）側。
         def create_for_user(user, attrs)
           raise NotImplementedError, "Subclasses must implement create_for_user"

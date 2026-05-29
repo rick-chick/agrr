@@ -48,9 +48,23 @@ module DomainLibTestSupport
     )
   end
 
-  def attach_plan_access_snapshot_to_gateway(gateway, field_cultivation_id, snapshot: nil)
+  def attach_plan_access_snapshot_to_gateway(
+    gateway,
+    field_cultivation_id,
+    snapshot: nil,
+    climate_source_snapshot: nil,
+    api_summary_snapshot: nil
+  )
     snap = snapshot || public_field_cultivation_plan_access_snapshot(field_cultivation_id)
     gateway.define_singleton_method(:find_plan_access_snapshot_by_field_cultivation_id) { |_id| snap }
+    if climate_source_snapshot
+      gateway.define_singleton_method(:find_climate_source_snapshot_by_field_cultivation_id) do |_id|
+        climate_source_snapshot
+      end
+    end
+    if api_summary_snapshot
+      gateway.define_singleton_method(:find_api_summary_by_field_cultivation_id) { |_id| api_summary_snapshot }
+    end
     gateway
   end
 

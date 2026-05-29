@@ -126,7 +126,7 @@ module Domain
         private
 
         def load_snapshot!
-          @snapshot = @private_read_gateway.find_optimization_snapshot_by_plan_id(plan_id: @plan_id)
+          @snapshot = @private_read_gateway.find_optimization_plan_read_snapshot_by_plan_id(plan_id: @plan_id)
         end
 
         def calculate_planning_period

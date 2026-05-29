@@ -25,7 +25,11 @@ module Api
 
           presenter = Adapters::Farm::Presenters::FarmDetailApiPresenter.new(view: self)
           interactor = Domain::Farm::Interactors::FarmDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.farm_gateway, translator: CompositionRoot.translator, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id,
+            gateway: CompositionRoot.farm_gateway,
+            show_detail_read_gateway: CompositionRoot.farm_show_detail_read_gateway,
+            translator: CompositionRoot.translator,
+            user_lookup: CompositionRoot.user_lookup)
 
           interactor.call(params[:id])
         end

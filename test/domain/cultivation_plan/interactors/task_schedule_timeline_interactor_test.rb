@@ -30,7 +30,7 @@ module Domain
             @read_model = read_model
           end
 
-          def find_task_schedule_timeline_by_plan_id(plan_id:)
+          def find_task_schedule_timeline_snapshot_by_plan_id(plan_id:)
             @received_plan_id = plan_id
             @read_model
           end

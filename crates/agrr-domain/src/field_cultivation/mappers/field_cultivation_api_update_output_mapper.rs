@@ -1,21 +1,17 @@
 //! Ruby: `Domain::FieldCultivation::Mappers::FieldCultivationApiUpdateOutputMapper`
 
-use crate::field_cultivation::dtos::FieldCultivationApiUpdateOutput;
+use crate::field_cultivation::dtos::{
+    FieldCultivationApiUpdateOutput, FieldCultivationApiUpdateOutputSnapshot,
+};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FieldCultivationApiUpdateOutputWire {
-    pub field_cultivation_id: i64,
-    pub start_date: String,
-    pub completion_date: String,
-    pub cultivation_days: Option<i32>,
-}
-
-pub fn from_wire(wire: &FieldCultivationApiUpdateOutputWire) -> FieldCultivationApiUpdateOutput {
+pub fn from_snapshot(
+    snapshot: &FieldCultivationApiUpdateOutputSnapshot,
+) -> FieldCultivationApiUpdateOutput {
     FieldCultivationApiUpdateOutput {
-        field_cultivation_id: wire.field_cultivation_id,
-        start_date: wire.start_date.clone(),
-        completion_date: wire.completion_date.clone(),
-        cultivation_days: wire.cultivation_days,
+        field_cultivation_id: snapshot.field_cultivation_id,
+        start_date: snapshot.start_date.clone(),
+        completion_date: snapshot.completion_date.clone(),
+        cultivation_days: snapshot.cultivation_days,
         message: None,
     }
 }
@@ -24,8 +20,8 @@ pub fn from_wire(wire: &FieldCultivationApiUpdateOutputWire) -> FieldCultivation
 mod tests {
     use super::*;
 
-    fn sample_wire(cultivation_days: Option<i32>) -> FieldCultivationApiUpdateOutputWire {
-        FieldCultivationApiUpdateOutputWire {
+    fn sample_snapshot(cultivation_days: Option<i32>) -> FieldCultivationApiUpdateOutputSnapshot {
+        FieldCultivationApiUpdateOutputSnapshot {
             field_cultivation_id: 7,
             start_date: "2026-05-01".into(),
             completion_date: "2026-07-30".into(),
@@ -34,8 +30,8 @@ mod tests {
     }
 
     #[test]
-    fn from_wire_maps_schedule_fields() {
-        let dto = from_wire(&sample_wire(Some(90)));
+    fn from_snapshot_maps_schedule_fields() {
+        let dto = from_snapshot(&sample_snapshot(Some(90)));
 
         assert_eq!(dto.field_cultivation_id, 7);
         assert_eq!(dto.start_date, "2026-05-01");
@@ -46,8 +42,8 @@ mod tests {
     }
 
     #[test]
-    fn from_wire_preserves_none_cultivation_days() {
-        let dto = from_wire(&sample_wire(None));
+    fn from_snapshot_preserves_none_cultivation_days() {
+        let dto = from_snapshot(&sample_snapshot(None));
 
         assert_eq!(dto.cultivation_days, None);
     }

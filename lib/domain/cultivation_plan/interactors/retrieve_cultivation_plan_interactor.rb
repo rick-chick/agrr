@@ -24,20 +24,14 @@ module Domain
             return @output_port.on_not_found
           end
 
-          base_snapshot = @workbench_read_gateway.load_snapshot_by_plan_id(plan_id: plan_id)
-
+          rest_plan_snapshot = @workbench_read_gateway.load_rest_plan_snapshot_by_plan_id(plan_id: plan_id)
           available_crop_rows = @available_crop_rows_gateway.list_by_farm_region(
             auth: auth,
-            farm_region: base_snapshot.farm_region
+            farm_region: rest_plan_snapshot.farm_region
           )
-
-          snapshot = Dtos::CultivationPlanWorkbenchSnapshot.new(
-            plan: base_snapshot.plan,
-            fields: base_snapshot.fields,
-            crops: base_snapshot.crops,
-            cultivations: base_snapshot.cultivations,
-            available_crop_rows: available_crop_rows,
-            farm_region: base_snapshot.farm_region
+          snapshot = Mappers::CultivationPlanWorkbenchSnapshotMapper.from_snapshots(
+            rest_plan_snapshot: rest_plan_snapshot,
+            available_crop_rows: available_crop_rows
           )
           @output_port.on_success(snapshot: snapshot)
         rescue Domain::Shared::Exceptions::RecordNotFound

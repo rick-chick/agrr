@@ -126,7 +126,7 @@ docker compose up
 | フレームワーク | Rails 8(JSON API + 一部 HTML マスタ) |
 | フロント SPA | Angular 21(`frontend/`、Clean Architecture 志向のレイヤ構成) |
 | フロント配信 | Google Cloud Storage + Cloud CDN(`.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh`) |
-| データベース | SQLite(Solid Queue, Solid Cache, Solid Cable) |
+| データベース | SQLite（primary / cache、Solid Cache、移行期 Solid Cable）。ジョブ: Active Job `:async`（Solid Queue 未使用）。Litestream → GCS。運用の正: [app-rust-stack](docs/migration/app-rust-stack/PROVISIONAL-STACK.md) |
 | バックアップ | Litestream(GCS レプリカ) |
 | バックエンド実行 | Google Cloud Run(`.cursor/skills/deploy-server/scripts/gcp-deploy.sh`) |
 | レガシーアセット | Propshaft + jsbundling-rails + Hotwire(Turbo/Stimulus)は段階的撤去予定(ルート `package.json` / `app/javascript/`) |

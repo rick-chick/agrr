@@ -23,10 +23,11 @@ module Domain
           end
 
           reference_crop_ids = input_dto.reference_crop_ids
-          rows = @read_gateway.list_pest_reference_rows(
-            plan_id: input_dto.plan_id,
-            region: input_dto.region
-          )
+          rows = @read_gateway
+                   .list_pest_reference_rows(
+                     plan_id: input_dto.plan_id,
+                     region: input_dto.region
+                   )
 
           user_pest_ids = []
           skipped_pest_ids = []

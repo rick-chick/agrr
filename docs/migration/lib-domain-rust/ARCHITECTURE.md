@@ -5,7 +5,7 @@
 | Ruby (`lib/domain`) | Rust (`crates/agrr-domain`) | 備考 |
 |---------------------|----------------------------|------|
 | `entities/` | `src/<ctx>/entities/` | `Copy` / owned データ |
-| `dtos/` | `src/<ctx>/dtos/` | `serde` 可（FFI/将来 API） |
+| `dtos/` | `src/<ctx>/dtos/` | `serde` 可（テスト・シリアライズ） |
 | `policies/` | `src/<ctx>/policies/` | 純関数・`User` 等のスカラー入力 |
 | `mappers/` | `src/<ctx>/mappers/` | I/O なし |
 | `interactors/` | `src/<ctx>/interactors/` | Gateway trait を引数で受け取る |
@@ -27,15 +27,12 @@ crates/
       lib.rs
       shared/
       <bounded_context>/
-  agrr-domain-ffi/         # P6: cdylib + magnus（未作成）
-ext/
-  agrr_domain/             # P6: Ruby extension エントリ（未作成）
 ```
 
 ### モジュール公開
 
 - クレートルート: `agrr_domain::shared::...`, `agrr_domain::crop::...`
-- Ruby 定数 `Domain::Crop::...` との対応は **FFI 層でマッピング**（P6）。P0–P5 は Rust テストのみ。
+- 移行期の Ruby `Domain::...` は `lib/domain` に残す。本プログラムは **`agrr-domain` の実装と R0–R2 パリティ**まで。本番接続は [`app-rust-stack`](../app-rust-stack/)（Axum + Rust adapter）。
 
 ## 型の約束
 
@@ -79,20 +76,18 @@ impl<G: CropGateway> CropListInteractor<G> {
 
 テストでは `G` に mockall または手書き Fake を使用。
 
-## Ruby 境界（P6 以降）
+## 非採用（Ruby 本番接続）
 
-| 方式 | 用途 |
-|------|------|
-| **magnus**（推奨） | Cloud Run 同一プロセスで Interactor を段階差し替え |
-| **JSON 子プロセス** | agrr デーモンと同様の隔離が必要な場合のみ |
-
-FFI 境界で渡すのは **スカラー・JSON 文字列・Vec** に限定。ActiveRecord を Rust に渡さない。
+| 案 | 判定 |
+|----|------|
+| magnus / `ext/agrr_domain` による Ruby プロセス内 FFI | **非採用** — P0–P5 は `agrr-domain` 実装と R0–R2 パリティのみ。移行期の本番経路は Ruby `lib/domain` + Rails adapter |
+| 同一プロセスでの段階的 Interactor 差し替え（FFI デリゲート） | **非採用** — ルート単位のストラングラーは [`app-rust-stack`](../app-rust-stack/)（Axum + Rust adapter、P6–P7） |
 
 ## 依存クレート（初期）
 
-- `serde`, `serde_json` — DTO シリアライズ（テスト・将来 FFI）
+- `serde`, `serde_json` — DTO シリアライズ（テスト・デバッグ）
 - `thiserror` — ドメインエラー
-- `chrono` — 日付（`clock_port` 代替；TZ は edge 注入）
+- `time` — 日付（`ClockPort`；TZ は edge 注入）
 - `rust_decimal` — BigDecimal 代替（`TypeConverters::BigDecimalConverter` 対応時）
 
 ## 命名

@@ -6,10 +6,10 @@ module Domain
       module PestDeleteUsageMapper
         module_function
 
-        # @param wire [#pesticides_count]
+        # @param snapshot [Domain::Pest::Dtos::PestDeleteUsageSnapshot]
         # @return [Domain::Pest::Dtos::PestDeleteUsage]
-        def from_wire(wire)
-          Dtos::PestDeleteUsage.new(pesticides_count: wire.pesticides_count)
+        def from_snapshot(snapshot)
+          Dtos::PestDeleteUsage.new(pesticides_count: snapshot.pesticides_count)
         end
       end
     end

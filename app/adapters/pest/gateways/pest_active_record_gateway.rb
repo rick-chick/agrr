@@ -24,13 +24,6 @@ module Adapters
           ordered.map { |record| Adapters::Pest::Mappers::PestMapper.pest_entity_from_record(record) }
         end
 
-        def find_pest_show_detail(id)
-          pest = ::Pest.includes(:pest_temperature_profile, :pest_thermal_requirement, :pest_control_methods, :crops).find(id)
-          Adapters::Pest::Mappers::PestMapper.detail_output_dto_from_record(pest)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
         def create_for_user(user, attrs)
           pest = ::Pest.new(attrs.to_h.symbolize_keys)
           raise Domain::Shared::Exceptions::RecordInvalid, pest.errors.full_messages.join(", ") unless pest.save
@@ -53,8 +46,8 @@ module Adapters
 
         def find_delete_usage(pest_id)
           pest = find_pest_model!(pest_id)
-          wire = Mappers::PestDeleteUsageWireMapper.from_model(pest)
-          Domain::Pest::Mappers::PestDeleteUsageMapper.from_wire(wire)
+          usage_snapshot = Mappers::PestDeleteUsageSnapshotMapper.from_model(pest)
+          Domain::Pest::Mappers::PestDeleteUsageMapper.from_snapshot(usage_snapshot)
         end
 
         def soft_delete_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:)

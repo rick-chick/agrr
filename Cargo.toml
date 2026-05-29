@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["crates/agrr-domain"]
+members = [
+    "crates/agrr-domain",
+    "crates/agrr-adapters-sqlite",
+    "crates/agrr-server",
+]
 
 [workspace.package]
 version = "0.1.0"

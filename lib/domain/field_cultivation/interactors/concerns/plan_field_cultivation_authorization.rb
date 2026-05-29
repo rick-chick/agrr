@@ -7,8 +7,7 @@ module Domain
         module PlanFieldCultivationAuthorization
           private
 
-          def assert_field_cultivation_plan_access!(user, gateway, field_cultivation_id, for_edit: false)
-            access_snapshot = gateway.find_plan_access_snapshot_by_field_cultivation_id(field_cultivation_id)
+          def assert_field_cultivation_plan_access!(user, access_snapshot, for_edit: false)
             if for_edit
               Domain::FieldCultivation::Policies::PlanFieldCultivationAccess.assert_edit_allowed!(user, access_snapshot)
             else
@@ -16,8 +15,7 @@ module Domain
             end
           end
 
-          def assert_public_field_cultivation_plan_access!(gateway, field_cultivation_id)
-            access_snapshot = gateway.find_plan_access_snapshot_by_field_cultivation_id(field_cultivation_id)
+          def assert_public_field_cultivation_plan_access!(access_snapshot)
             raise Domain::Shared::Policies::PolicyPermissionDenied unless access_snapshot.plan_type_public?
           end
         end

@@ -14,7 +14,7 @@ module Domain
           end
         end
 
-        def pesticide_row(
+        def pesticide_wire(
           pesticide_id: 300,
           crop_id: 10,
           pest_id: 20,
@@ -25,15 +25,21 @@ module Domain
           usage_constraint = if with_constraint
                                Dtos::PublicPlanSavePesticideUsageConstraintRow.new(
                                  min_temperature: 5.0,
-                                 max_temperature: 35.0
+                                 max_temperature: 35.0,
+                                 max_wind_speed_m_s: nil,
+                                 max_application_count: nil,
+                                 harvest_interval_days: nil,
+                                 other_constraints: nil
                                )
                              end
           application_detail = if with_detail
-                                 Dtos::PublicPlanSavePesticideApplicationDetailRow.new(
-                                   dilution_ratio: "1000倍",
-                                   amount_per_m2: 0.5
-                                 )
-                               end
+                                   Dtos::PublicPlanSavePesticideApplicationDetailRow.new(
+                                     dilution_ratio: "1000倍",
+                                     amount_per_m2: 0.5,
+                                     amount_unit: nil,
+                                     application_method: nil
+                                   )
+                                 end
 
           Dtos::PublicPlanSavePesticideReferenceRow.new(
             reference_pesticide_id: pesticide_id,
@@ -41,6 +47,7 @@ module Domain
             reference_pest_id: pest_id,
             name: name,
             active_ingredient: "成分",
+            description: nil,
             region: "jp",
             usage_constraint: usage_constraint,
             application_detail: application_detail
@@ -70,7 +77,7 @@ module Domain
         end
 
         test "creates user pesticide when crop and pest maps resolve" do
-          row = pesticide_row
+          row = pesticide_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_pesticide_reference_rows).with(region: "jp").returns([ row ])
 
@@ -96,7 +103,7 @@ module Domain
         end
 
         test "logs pesticide_created on new create" do
-          row = pesticide_row
+          row = pesticide_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_pesticide_reference_rows).returns([ row ])
 
@@ -115,7 +122,7 @@ module Domain
         end
 
         test "reuses existing user pesticide and records skip in both id arrays" do
-          row = pesticide_row
+          row = pesticide_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_pesticide_reference_rows).returns([ row ])
 
@@ -136,7 +143,7 @@ module Domain
         end
 
         test "skips row when crop or pest map is missing" do
-          row = pesticide_row(crop_id: 99, pest_id: 88)
+          row = pesticide_wire(crop_id: 99, pest_id: 88)
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_pesticide_reference_rows).returns([ row ])
 

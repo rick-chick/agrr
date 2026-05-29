@@ -40,7 +40,9 @@ module Api
           input_valid?(:show) || return
           presenter = Adapters::Crop::Presenters::CropDetailApiPresenter.new(view: self)
           interactor = Domain::Crop::Interactors::CropDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.crop_gateway, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id,
+            show_detail_read_gateway: CompositionRoot.crop_show_detail_read_gateway,
+            user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 

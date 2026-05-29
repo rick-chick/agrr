@@ -114,11 +114,25 @@ impl FieldCultivationClimateDataInputPort for FieldCultivationClimateDataInterac
             _ => None,
         };
 
+        let plan_access_snapshot = match self
+            .climate_source_gateway
+            .find_plan_access_snapshot_by_field_cultivation_id(input.field_cultivation_id)
+        {
+            Ok(snapshot) => snapshot,
+            Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
+                self.logger.warn(&format!(
+                    "[FieldCultivationClimateDataInteractor] Field cultivation not found: {err}"
+                ));
+                self.handle_domain_error(err.to_string());
+                return Ok(());
+            }
+            Err(err) => return Err(err),
+        };
+
         if let Some(ref user) = user_dto {
             if let Err(err) = assert_field_cultivation_plan_access(
                 user,
-                self.climate_source_gateway,
-                input.field_cultivation_id,
+                &plan_access_snapshot,
                 false,
             ) {
                 if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
@@ -127,10 +141,9 @@ impl FieldCultivationClimateDataInputPort for FieldCultivationClimateDataInterac
                 }
                 return Err(err);
             }
-        } else if let Err(err) = assert_public_field_cultivation_plan_access(
-            self.climate_source_gateway,
-            input.field_cultivation_id,
-        ) {
+        } else if let Err(err) =
+            assert_public_field_cultivation_plan_access(&plan_access_snapshot)
+        {
             if err.downcast_ref::<PolicyPermissionDenied>().is_some() {
                 self.handle_policy_denied();
                 return Ok(());
@@ -142,7 +155,7 @@ impl FieldCultivationClimateDataInputPort for FieldCultivationClimateDataInterac
             .climate_source_gateway
             .find_climate_source_snapshot_by_field_cultivation_id(input.field_cultivation_id)
         {
-            Ok(s) => s,
+            Ok(snapshot) => snapshot,
             Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
                 self.logger.warn(&format!(
                     "[FieldCultivationClimateDataInteractor] Field cultivation not found: {err}"

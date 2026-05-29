@@ -4,6 +4,7 @@
 - **設計メモ**: [`design/`](design/)
 - **マイグレーション・データ移行**: [`migration/`](migration/)
 - **lib/domain → Rust 移行プログラム**: [`migration/lib-domain-rust/`](migration/lib-domain-rust/)（進捗: [TRACKING.md](migration/lib-domain-rust/TRACKING.md)）
+- **アプリ RUST 化 — 終着スタック（Axum / ストラングラー）**: [`migration/app-rust-stack/`](migration/app-rust-stack/)（[PROVISIONAL-STACK.md](migration/app-rust-stack/PROVISIONAL-STACK.md)）
 - **テスト運用**: [`testing/`](testing/)
 - **アセットパイプライン（Rails HTML 側）**: [`asset-pipeline.md`](asset-pipeline.md)
 - **Gateway 移行（命名・adapter 残存ドメインロジック）**: [`gateway-domain-logic-migration.md`](gateway-domain-logic-migration.md)（正: [`gateway-naming-violations.md`](gateway-naming-violations.md) は命名中心）

@@ -52,23 +52,23 @@ module Adapters
           )
         end
 
-        test "find_header returns snapshot for existing plan" do
-          header = @gateway.find_header(plan_id: @plan.id)
+        test "find_header_snapshot returns snapshot for existing plan" do
+          header = @gateway.find_header_snapshot(plan_id: @plan.id)
           assert_equal @plan.id, header.plan_id
           assert_equal @farm.id, header.farm_id
         end
 
-        test "find_header returns nil for missing plan" do
-          assert_nil @gateway.find_header(plan_id: -1)
+        test "find_header_snapshot returns nil for missing plan" do
+          assert_nil @gateway.find_header_snapshot(plan_id: -1)
         end
 
-        test "list_field_rows returns field datums" do
+        test "list_field_rows returns field row wires" do
           rows = @gateway.list_field_rows(plan_id: @plan.id)
           assert_equal 1, rows.size
           assert_equal "F1", rows.first.name
         end
 
-        test "list_crop_reference_rows returns crop reference snapshots" do
+        test "list_crop_reference_rows returns crop reference wires" do
           rows = @gateway.list_crop_reference_rows(plan_id: @plan.id)
           assert_equal 1, rows.size
           row = rows.first
@@ -77,7 +77,7 @@ module Adapters
           assert_equal "ReadGwCrop", row.name
         end
 
-        test "list_pest_reference_rows returns pest snapshots with linked crop ids" do
+        test "list_pest_reference_rows returns pest wires with linked crop ids" do
           ref_pest = ::Pest.create!(
             user: nil,
             name: "ReadGwPest",
@@ -130,7 +130,7 @@ module Adapters
           )
 
           rows = @gateway.list_pesticide_reference_rows(region: "jp")
-          row = rows.find { |r| r.reference_pesticide_id == ref_pesticide.id }
+          row = rows.find { |w| w.reference_pesticide_id == ref_pesticide.id }
           assert_not_nil row
           assert_equal ref_pesticide.name, row.name
           assert_equal @ref_crop.id, row.reference_crop_id
@@ -140,7 +140,7 @@ module Adapters
           assert_equal 5.0, row.usage_constraint.min_temperature
           assert_not_nil row.application_detail
           assert_equal "500倍", row.application_detail.dilution_ratio
-          assert_nil rows.find { |r| r.reference_pesticide_id == us_only.id }
+          assert_nil rows.find { |w| w.reference_pesticide_id == us_only.id }
         end
 
         test "list_fertilize_reference_rows returns reference fertilizes for region" do
@@ -185,7 +185,7 @@ module Adapters
           assert @gateway.exists_fertilize_name?(name: name)
         end
 
-        test "list_interaction_rule_reference_rows returns continuous_cultivation reference rules for region" do
+        test "list_interaction_rule_reference_rows returns reference rules for region without rule_type filter" do
           ref_rule = ::InteractionRule.create!(
             user: nil,
             rule_type: "continuous_cultivation",
@@ -223,7 +223,7 @@ module Adapters
           assert_equal "ReadGwSrc", row.source_group
           assert_equal "ReadGwTgt", row.target_group
           assert_nil rows.find { |r| r.reference_interaction_rule_id == us_only.id }
-          assert_nil rows.find { |r| r.reference_interaction_rule_id == other_type.id }
+          assert_not_nil rows.find { |r| r.reference_interaction_rule_id == other_type.id }
         end
       end
     end

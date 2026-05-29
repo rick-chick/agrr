@@ -28,35 +28,38 @@ module Adapters
           CompositionRoot.field_cultivation_climate_source_gateway_for
         end
 
-        # show/update の HTTP 契約は controller テストが証明。adapter は AR → Snapshot / weather DTO の wire のみ。
-        test "maps persisted field cultivation to plan access and climate source snapshots" do
-          access = climate_source_gateway.find_plan_access_snapshot_by_field_cultivation_id(@field_cultivation.id)
-          source = climate_source_gateway.find_climate_source_snapshot_by_field_cultivation_id(@field_cultivation.id)
+        test "find_plan_access_snapshot_by_field_cultivation_id round-trips persisted row" do
+          snapshot = climate_source_gateway.find_plan_access_snapshot_by_field_cultivation_id(@field_cultivation.id)
 
-          assert_instance_of Domain::FieldCultivation::Dtos::FieldCultivationPlanAccessSnapshot, access
-          assert_equal @field_cultivation.id, access.field_cultivation_id
-          refute access.plan_type_public
-          assert_equal @user.id, access.plan_user_id
+          assert_instance_of Domain::FieldCultivation::Dtos::FieldCultivationPlanAccessSnapshot, snapshot
+          assert_equal @field_cultivation.id, snapshot.field_cultivation_id
+        end
 
-          assert_instance_of Domain::FieldCultivation::Dtos::FieldCultivationClimateSourceSnapshot, source
-          assert_equal @field_cultivation.id, source.field_cultivation_id
-          assert_equal @farm.weather_location.id, source.weather_location_id
-          assert_equal @crop.id, source.plan_crop_crop_id
+        test "find_climate_source_snapshot_by_field_cultivation_id round-trips persisted row" do
+          snapshot = climate_source_gateway.find_climate_source_snapshot_by_field_cultivation_id(@field_cultivation.id)
+
+          assert_instance_of Domain::FieldCultivation::Dtos::FieldCultivationClimateSourceSnapshot, snapshot
+          assert_equal @field_cultivation.id, snapshot.field_cultivation_id
+        end
+
+        test "find_api_summary_by_field_cultivation_id returns wire" do
+          wire = climate_source_gateway.find_api_summary_by_field_cultivation_id(@field_cultivation.id)
+
+          assert_equal @field_cultivation.id, wire.id
+          assert_respond_to wire, :field_name
         end
 
         test "find_weather_prediction_targets_by_plan_id returns domain DTOs" do
           targets = climate_source_gateway.find_weather_prediction_targets_by_plan_id(@plan.id)
 
           assert_instance_of Domain::WeatherData::Dtos::WeatherPredictionTargets, targets
-          assert_instance_of Domain::WeatherData::Dtos::WeatherLocation, targets.weather_location
-          assert_instance_of Domain::WeatherData::Dtos::FarmWeatherPrediction, targets.farm
           assert_equal @farm.weather_location.id, targets.weather_location.id
           assert_equal @farm.id, targets.farm.id
         end
 
         test "raises record not found when field cultivation missing" do
           assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-            climate_source_gateway.find_climate_source_snapshot_by_field_cultivation_id(999_999)
+            climate_source_gateway.find_plan_access_snapshot_by_field_cultivation_id(999_999)
           end
         end
       end

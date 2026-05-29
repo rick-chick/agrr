@@ -22,10 +22,10 @@ module Domain
           )
         end
 
-        test "from_wire maps schedule fields to FieldCultivationApiUpdateOutput" do
+        test "from_snapshot maps schedule fields to FieldCultivationApiUpdateOutput" do
           wire = sample_wire
 
-          dto = FieldCultivationApiUpdateOutputMapper.from_wire(wire)
+          dto = FieldCultivationApiUpdateOutputMapper.from_snapshot(wire)
 
           assert_instance_of Dtos::FieldCultivationApiUpdateOutput, dto
           assert_equal 7, dto.field_cultivation_id
@@ -36,10 +36,10 @@ module Domain
           refute dto.public_plan_response?
         end
 
-        test "from_wire preserves nil cultivation_days" do
+        test "from_snapshot preserves nil cultivation_days" do
           wire = sample_wire(cultivation_days: nil)
 
-          dto = FieldCultivationApiUpdateOutputMapper.from_wire(wire)
+          dto = FieldCultivationApiUpdateOutputMapper.from_snapshot(wire)
 
           assert_nil dto.cultivation_days
         end

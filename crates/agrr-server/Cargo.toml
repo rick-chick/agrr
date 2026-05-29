@@ -1,0 +1,20 @@
+[package]
+name = "agrr-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "AGRR Rust HTTP edge (P6 strangler)"
+
+[[bin]]
+name = "agrr-server"
+path = "src/main.rs"
+
+[dependencies]
+agrr-domain = { path = "../agrr-domain" }
+agrr-adapters-sqlite = { path = "../agrr-adapters-sqlite" }
+axum = "0.8"
+rusqlite = { version = "0.32", features = ["bundled"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = { workspace = true }

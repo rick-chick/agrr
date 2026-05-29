@@ -37,14 +37,6 @@ module Adapters
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
-        CROP_ASSOCIATION_PRELOAD_INCLUDES = {
-          crop_stages: [ :temperature_requirement, :thermal_requirement, :sunshine_requirement, :nutrient_requirement ],
-          agricultural_tasks: [],
-          crop_task_templates: [ :agricultural_task ],
-          crop_task_schedule_blueprints: [ :agricultural_task ],
-          pests: []
-        }.freeze
-
         def masters_crop_agricultural_task_templates_index_rows(crop_id:)
           crop = find_crop_model!(crop_id.to_i)
           crop.crop_task_templates.includes(:agricultural_task).map { |t| masters_crop_task_template_api_row(t) }
@@ -69,13 +61,6 @@ module Adapters
           :ok
         rescue ActiveRecord::RecordNotFound
           raise Domain::Shared::Exceptions::RecordNotFound, "AgriculturalTask association not found"
-        end
-
-        def find_crop_show_detail(crop_id)
-          crop = crop_record_with_association_preloads!(crop_id)
-          Domain::Crop::Dtos::CropDetailOutput.new(
-            crop: Adapters::Crop::Mappers::CropMapper.crop_entity_from_record(crop)
-          )
         end
 
         def find_by_id(id)
@@ -142,8 +127,8 @@ module Adapters
 
         def find_delete_usage(crop_id)
           crop = find_crop_model!(crop_id)
-          wire = Mappers::CropDeleteUsageWireMapper.from_model(crop)
-          Domain::Crop::Mappers::CropDeleteUsageMapper.from_wire(wire)
+          usage_snapshot = Mappers::CropDeleteUsageSnapshotMapper.from_model(crop)
+          Domain::Crop::Mappers::CropDeleteUsageMapper.from_snapshot(usage_snapshot)
         end
 
         def soft_delete_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:)
@@ -452,12 +437,6 @@ module Adapters
             daily_uptake_k: dto[:daily_uptake_k],
             region: dto[:region]
           }.compact
-        end
-
-        def crop_record_with_association_preloads!(id)
-          ::Crop.includes(CROP_ASSOCIATION_PRELOAD_INCLUDES).find(id)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
 
       end

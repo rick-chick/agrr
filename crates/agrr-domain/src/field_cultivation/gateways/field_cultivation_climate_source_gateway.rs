@@ -1,10 +1,15 @@
 use crate::field_cultivation::dtos::{
-    FieldCultivationClimateSourceSnapshot, WeatherPredictionTargets,
+    FieldCultivationClimateSourceSnapshot, FieldCultivationPlanAccessSnapshot,
+    WeatherPredictionTargets,
 };
-use crate::field_cultivation::gateways::FieldCultivationPlanAccessGateway;
 
 /// Ruby: `FieldCultivationClimateSourceGateway`
-pub trait FieldCultivationClimateSourceGateway: FieldCultivationPlanAccessGateway {
+pub trait FieldCultivationClimateSourceGateway: Send + Sync {
+    fn find_plan_access_snapshot_by_field_cultivation_id(
+        &self,
+        field_cultivation_id: i64,
+    ) -> Result<FieldCultivationPlanAccessSnapshot, Box<dyn std::error::Error + Send + Sync>>;
+
     fn find_climate_source_snapshot_by_field_cultivation_id(
         &self,
         field_cultivation_id: i64,

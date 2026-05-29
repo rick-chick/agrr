@@ -14,7 +14,7 @@ module Domain
           end
         end
 
-        def reference_row(cpc_id: 1, crop_id: 10, name: "トマト")
+        def reference_row_wire(cpc_id: 1, crop_id: 10, name: "トマト")
           Dtos::PublicPlanSaveCropReferenceRow.new(
             cultivation_plan_crop_id: cpc_id,
             reference_crop_id: crop_id,
@@ -39,7 +39,7 @@ module Domain
 
         test "reuses existing user crop and does not enqueue stage copy" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_crop_reference_rows).with(plan_id: 5).returns([ reference_row ])
+          read_gateway.expects(:list_crop_reference_rows).with(plan_id: 5).returns([ reference_row_wire ])
 
           user_crop_gateway = mock("user_crop_gateway")
           user_crop_gateway.expects(:find_by_user_id_and_source_crop_id).with(
@@ -66,7 +66,7 @@ module Domain
 
         test "creates user crop and returns stage copy pair" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_crop_reference_rows).with(plan_id: 5).returns([ reference_row ])
+          read_gateway.expects(:list_crop_reference_rows).with(plan_id: 5).returns([ reference_row_wire ])
 
           user_crop_gateway = mock("user_crop_gateway")
           user_crop_gateway.expects(:find_by_user_id_and_source_crop_id).returns(nil)
@@ -141,7 +141,7 @@ module Domain
 
         test "raises RecordInvalid when crop limit exceeded" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_crop_reference_rows).returns([ reference_row ])
+          read_gateway.expects(:list_crop_reference_rows).returns([ reference_row_wire ])
 
           user_crop_gateway = mock("user_crop_gateway")
           user_crop_gateway.expects(:find_by_user_id_and_source_crop_id).returns(nil)

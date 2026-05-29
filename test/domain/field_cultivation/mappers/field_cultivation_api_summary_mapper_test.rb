@@ -34,10 +34,10 @@ module Domain
           )
         end
 
-        test "from_wire maps required fields to FieldCultivationApiSummary" do
+        test "from_snapshot maps required fields to FieldCultivationApiSummary" do
           wire = sample_wire(gdd: 875.25)
 
-          dto = FieldCultivationApiSummaryMapper.from_wire(wire)
+          dto = FieldCultivationApiSummaryMapper.from_snapshot(wire)
 
           assert_instance_of Dtos::FieldCultivationApiSummary, dto
           assert_equal 42, dto.id
@@ -51,18 +51,18 @@ module Domain
           assert_equal "completed", dto.status
         end
 
-        test "from_wire preserves gdd when wire carries total_gdd" do
+        test "from_snapshot preserves gdd when wire carries total_gdd" do
           wire = sample_wire(gdd: 875.25)
 
-          dto = FieldCultivationApiSummaryMapper.from_wire(wire)
+          dto = FieldCultivationApiSummaryMapper.from_snapshot(wire)
 
           assert_in_delta 875.25, dto.gdd
         end
 
-        test "from_wire preserves nil gdd when wire has no total_gdd" do
+        test "from_snapshot preserves nil gdd when wire has no total_gdd" do
           wire = sample_wire(gdd: nil)
 
-          dto = FieldCultivationApiSummaryMapper.from_wire(wire)
+          dto = FieldCultivationApiSummaryMapper.from_snapshot(wire)
 
           assert_nil dto.gdd
         end

@@ -11,23 +11,6 @@ module Adapters
           @crop_agrr_requirement_builder = crop_agrr_requirement_builder
         end
 
-        def find_with_field_cultivations_for_task_schedule(plan_id)
-          plan = ::CultivationPlan.includes(
-            field_cultivations: {
-              cultivation_plan_crop: {
-                crop: {
-                  crop_task_templates: :agricultural_task,
-                  crop_task_schedule_blueprints: :agricultural_task
-                }
-              }
-            }
-          ).find(plan_id)
-          Adapters::CultivationPlan::Mappers::TaskScheduleGenerationContextMapper.from_plan_model(
-            plan,
-            crop_agrr_requirement_builder: @crop_agrr_requirement_builder
-          )
-        end
-
         # @param attrs [Domain::CultivationPlan::Dtos::CultivationPlanCreateAttrs]
         # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
         def create(attrs:)

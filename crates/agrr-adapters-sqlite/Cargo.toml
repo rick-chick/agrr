@@ -1,0 +1,16 @@
+[package]
+name = "agrr-adapters-sqlite"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "SQLite gateway implementations for agrr-domain traits (P6)"
+
+[dependencies]
+agrr-domain = { path = "../agrr-domain" }
+rusqlite = { version = "0.32", features = ["bundled"] }
+thiserror.workspace = true
+serde_json.workspace = true
+time = { workspace = true, features = ["parsing", "formatting"] }
+
+[dev-dependencies]
+time = { workspace = true }

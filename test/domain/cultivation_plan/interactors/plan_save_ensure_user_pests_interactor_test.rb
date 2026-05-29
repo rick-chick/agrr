@@ -14,12 +14,28 @@ module Domain
           end
         end
 
-        def pest_row(pest_id: 100, crop_ids: [ 10 ], name: "害虫A")
+        def pest_wire(
+          pest_id: 100,
+          crop_ids: [ 10 ],
+          name: "害虫A",
+          region: "jp",
+          temperature_profile: nil,
+          thermal_requirement: nil,
+          control_methods: []
+        )
           Dtos::PublicPlanSavePestReferenceRow.new(
             reference_pest_id: pest_id,
             name: name,
+            name_scientific: nil,
+            family: nil,
+            order: nil,
+            description: nil,
+            occurrence_season: nil,
+            region: region,
             linked_reference_crop_ids: crop_ids,
-            region: "jp"
+            temperature_profile: temperature_profile,
+            thermal_requirement: thermal_requirement,
+            control_methods: control_methods
           )
         end
 
@@ -62,7 +78,7 @@ module Domain
         test "skips row without crop intersection" do
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_pest_reference_rows).with(plan_id: 5, region: "jp").returns(
-            [ pest_row(pest_id: 100, crop_ids: [ 99 ]) ]
+            [ pest_wire(pest_id: 100, crop_ids: [ 99 ]) ]
           )
 
           user_pest_gateway = mock("user_pest_gateway")
@@ -78,7 +94,7 @@ module Domain
 
         test "second call with same row reuses existing and accumulates skipped_pest_ids" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_pest_reference_rows).twice.returns([ pest_row ])
+          read_gateway.expects(:list_pest_reference_rows).twice.returns([ pest_wire ])
 
           user_pest_gateway = mock("user_pest_gateway")
           user_pest_gateway.expects(:find_by_user_id_and_source_pest_id).twice.with(
@@ -106,7 +122,7 @@ module Domain
 
         test "reuses existing user pest and links crops" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_pest_reference_rows).returns([ pest_row ])
+          read_gateway.expects(:list_pest_reference_rows).returns([ pest_wire ])
 
           user_pest_gateway = mock("user_pest_gateway")
           user_pest_gateway.expects(:find_by_user_id_and_source_pest_id).with(
@@ -127,11 +143,8 @@ module Domain
         end
 
         test "creates user pest with child records" do
-          row = Dtos::PublicPlanSavePestReferenceRow.new(
-            reference_pest_id: 100,
+          row = pest_wire(
             name: "害虫B",
-            linked_reference_crop_ids: [ 10 ],
-            region: "jp",
             temperature_profile: Dtos::PublicPlanSavePestTemperatureProfileRow.new(
               base_temperature: 10.0,
               max_temperature: 35.0
@@ -183,7 +196,7 @@ module Domain
 
         test "recovers from uniqueness violation via find" do
           read_gateway = mock("read_gateway")
-          read_gateway.expects(:list_pest_reference_rows).returns([ pest_row ])
+          read_gateway.expects(:list_pest_reference_rows).returns([ pest_wire ])
 
           user_pest_gateway = mock("user_pest_gateway")
           user_pest_gateway.expects(:find_by_user_id_and_source_pest_id).twice.returns(
@@ -206,12 +219,7 @@ module Domain
         end
 
         test "attributes_for_create uses input region when row region is nil" do
-          row = Dtos::PublicPlanSavePestReferenceRow.new(
-            reference_pest_id: 100,
-            name: "害虫",
-            region: nil,
-            linked_reference_crop_ids: [ 10 ]
-          )
+          row = pest_wire(name: "害虫", region: nil)
 
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_pest_reference_rows).returns([ row ])

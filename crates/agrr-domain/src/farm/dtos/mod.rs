@@ -1,6 +1,7 @@
 mod farm_create_input;
 mod farm_create_limit_exceeded_failure;
 mod farm_delete_usage;
+mod farm_delete_usage_snapshot;
 mod farm_destroy_output;
 mod farm_detail_output;
 mod farm_list_input;
@@ -12,6 +13,7 @@ mod start_farm_weather_data_fetch_input;
 pub use farm_create_input::FarmCreateInput;
 pub use farm_create_limit_exceeded_failure::FarmCreateLimitExceededFailure;
 pub use farm_delete_usage::FarmDeleteUsage;
+pub use farm_delete_usage_snapshot::FarmDeleteUsageSnapshot;
 pub use farm_destroy_output::FarmDestroyOutput;
 pub use farm_detail_output::FarmDetailOutput;
 pub use farm_list_input::FarmListInput;

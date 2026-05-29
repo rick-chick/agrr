@@ -6,20 +6,14 @@ module Domain
   module Crop
     module Mappers
       class CropDeleteUsageMapperTest < DomainLibTestCase
-        Wire = Data.define(
-          :cultivation_plan_crops_count,
-          :free_crop_plans_count,
-          :pesticides_count
-        )
-
-        test "from_wire maps counts to CropDeleteUsage" do
-          wire = Wire.new(
+        test "from_snapshot maps counts to CropDeleteUsage" do
+          snapshot = Dtos::CropDeleteUsageSnapshot.new(
             cultivation_plan_crops_count: 2,
             free_crop_plans_count: 3,
             pesticides_count: 1
           )
 
-          dto = CropDeleteUsageMapper.from_wire(wire)
+          dto = CropDeleteUsageMapper.from_snapshot(snapshot)
 
           assert_instance_of Dtos::CropDeleteUsage, dto
           assert_equal 2, dto.cultivation_plan_crops_count

@@ -73,6 +73,11 @@ module CompositionRoot
       )
     end
 
+    def farm_show_detail_read_gateway
+      @farm_show_detail_read_gateway ||=
+        Adapters::Farm::Gateways::FarmShowDetailReadActiveRecordGateway.new
+    end
+
     def field_gateway
       @field_gateway ||= Adapters::Field::Gateways::FieldActiveRecordGateway.new(
         farm_gateway: farm_gateway,
@@ -85,6 +90,11 @@ module CompositionRoot
       @crop_gateway ||= Adapters::Crop::Gateways::CropActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway
       )
+    end
+
+    def crop_show_detail_read_gateway
+      @crop_show_detail_read_gateway ||=
+        Adapters::Crop::Gateways::CropShowDetailReadActiveRecordGateway.new
     end
 
     def crop_stage_gateway
@@ -123,6 +133,11 @@ module CompositionRoot
       )
     end
 
+    def pest_show_detail_read_gateway
+      @pest_show_detail_read_gateway ||=
+        Adapters::Pest::Gateways::PestShowDetailReadActiveRecordGateway.new
+    end
+
     def pesticide_gateway
       @pesticide_gateway ||= Adapters::Pesticide::Gateways::PesticideActiveRecordGateway.new(
         deletion_undo_gateway: deletion_undo_gateway,
@@ -130,6 +145,11 @@ module CompositionRoot
         crop_gateway: crop_gateway,
         pest_gateway: pest_gateway
       )
+    end
+
+    def pesticide_show_detail_read_gateway
+      @pesticide_show_detail_read_gateway ||=
+        Adapters::Pesticide::Gateways::PesticideShowDetailReadActiveRecordGateway.new
     end
 
     def fertilize_gateway
@@ -146,6 +166,11 @@ module CompositionRoot
       )
     end
 
+    def agricultural_task_show_detail_read_gateway
+      @agricultural_task_show_detail_read_gateway ||=
+        Adapters::AgriculturalTask::Gateways::AgriculturalTaskShowDetailReadActiveRecordGateway.new
+    end
+
     def crop_task_template_gateway
       @crop_task_template_gateway ||= Adapters::AgriculturalTask::Gateways::CropTaskTemplateActiveRecordGateway.new
     end
@@ -160,6 +185,11 @@ module CompositionRoot
 
     def crop_agrr_requirement_builder
       @crop_agrr_requirement_builder ||= Adapters::Crop::Ports::CropAgrrRequirementBuilderAdapter.new
+    end
+
+    def task_schedule_generation_read_gateway
+      @task_schedule_generation_read_gateway ||=
+        Adapters::CultivationPlan::Gateways::TaskScheduleGenerationReadActiveRecordGateway.new
     end
 
     def cultivation_plan_gateway
@@ -708,7 +738,7 @@ module CompositionRoot
       log = logger
 
       plan_loader = lambda do |plan_id:, **|
-        ::Adapters::CultivationPlan::Persistence::CultivationPlanRestPlanPreload.find_by_plan_id(
+        ::Adapters::CultivationPlan::Gateways::CultivationPlanRestPlanPreload.find_by_plan_id(
           plan_id: plan_id
         )
       end
@@ -1041,7 +1071,9 @@ module CompositionRoot
         progress_gateway: agrr_progress_gateway,
         task_schedule_gateway: task_schedule_gateway,
         clock: clock,
-        cultivation_plan_gateway: cultivation_plan_gateway
+        cultivation_plan_gateway: cultivation_plan_gateway,
+        task_schedule_read_gateway: task_schedule_generation_read_gateway,
+        crop_agrr_requirement_builder: crop_agrr_requirement_builder
       )
     end
 

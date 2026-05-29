@@ -1,4 +1,3 @@
-mod plan_access_gateway;
 mod field_cultivation_climate_progress_gateway;
 mod field_cultivation_climate_source_gateway;
 mod field_cultivation_crop_gateway;
@@ -8,7 +7,6 @@ mod field_cultivation_sync_gateway;
 mod field_cultivation_weather_data_gateway;
 mod field_cultivation_weather_prediction_gateway;
 
-pub use plan_access_gateway::FieldCultivationPlanAccessGateway;
 pub use field_cultivation_climate_progress_gateway::FieldCultivationClimateProgressGateway;
 pub use field_cultivation_climate_source_gateway::FieldCultivationClimateSourceGateway;
 pub use field_cultivation_crop_gateway::FieldCultivationCropGateway;

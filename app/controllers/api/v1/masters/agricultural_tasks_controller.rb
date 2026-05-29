@@ -18,7 +18,9 @@ module Api
           input_valid?(:show) || return
           presenter = Adapters::AgriculturalTask::Presenters::AgriculturalTaskDetailApiPresenter.new(view: self)
           interactor = Domain::AgriculturalTask::Interactors::AgriculturalTaskDetailInteractor.new(output_port: presenter,
-            user_id: current_user.id, gateway: CompositionRoot.agricultural_task_gateway, user_lookup: CompositionRoot.user_lookup)
+            user_id: current_user.id,
+            show_detail_read_gateway: CompositionRoot.agricultural_task_show_detail_read_gateway,
+            user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 

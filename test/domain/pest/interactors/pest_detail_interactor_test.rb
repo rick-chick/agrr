@@ -6,24 +6,61 @@ module Domain
   module Pest
     module Interactors
       class PestDetailInteractorTest < DomainLibTestCase
+        PestWire = Data.define(
+          :id,
+          :user_id,
+          :name,
+          :name_scientific,
+          :family,
+          :order,
+          :description,
+          :occurrence_season,
+          :region,
+          :is_reference,
+          :created_at,
+          :updated_at
+        )
+
+        PestShowDetailWire = Data.define(
+          :pest,
+          :temperature_profile,
+          :thermal_requirement,
+          :control_methods,
+          :crops
+        )
+
         test "calls on_success with detail dto when view is allowed" do
           user_id = 10
           pest_id = 3
           user = stub(id: user_id, admin?: false)
-          pest_entity = stub(is_reference: true, user_id: nil)
+          now = Time.utc(2026, 1, 1)
+          pest_wire = PestWire.new(
+            id: pest_id,
+            user_id: nil,
+            name: "害虫",
+            name_scientific: nil,
+            family: nil,
+            order: nil,
+            description: nil,
+            occurrence_season: nil,
+            region: nil,
+            is_reference: true,
+            created_at: now,
+            updated_at: now
+          )
+          wire = PestShowDetailWire.new(
+            pest: pest_wire,
+            temperature_profile: nil,
+            thermal_requirement: nil,
+            control_methods: [],
+            crops: []
+          )
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = mock
-          detail_dto = stub(
-            pest: pest_entity,
-            temperature_profile: :temp,
-            thermal_requirement: :thermal,
-            control_methods: [ :cm ],
-            associated_crops: [ :crop ]
-          )
-          gateway.expects(:find_pest_show_detail).with(pest_id).returns(detail_dto)
+          show_detail_read_gateway = mock
+          show_detail_read_gateway.expects(:find_show_detail_snapshot).with(pest_id: pest_id).returns(wire)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -35,18 +72,15 @@ module Domain
             output_port: output_port,
             user_id: user_id,
             translator: translator,
-            gateway: gateway,
+            show_detail_read_gateway: show_detail_read_gateway,
             user_lookup: user_lookup
           )
 
           interactor.call(pest_id)
 
           assert_instance_of Domain::Pest::Dtos::PestDetailOutput, received
-          assert_equal pest_entity, received.pest
-          assert_equal :temp, received.temperature_profile
-          assert_equal :thermal, received.thermal_requirement
-          assert_equal [ :cm ], received.control_methods
-          assert_equal [ :crop ], received.associated_crops
+          assert_equal pest_id, received.pest.id
+          assert received.pest.is_reference
           user_lookup.verify
           output_port.verify
         end
@@ -55,14 +89,34 @@ module Domain
           user_id = 10
           pest_id = 3
           user = stub(id: user_id, admin?: false)
-          pest_entity = stub(is_reference: false, user_id: 99)
+          now = Time.utc(2026, 1, 1)
+          pest_wire = PestWire.new(
+            id: pest_id,
+            user_id: 99,
+            name: "害虫",
+            name_scientific: nil,
+            family: nil,
+            order: nil,
+            description: nil,
+            occurrence_season: nil,
+            region: nil,
+            is_reference: false,
+            created_at: now,
+            updated_at: now
+          )
+          wire = PestShowDetailWire.new(
+            pest: pest_wire,
+            temperature_profile: nil,
+            thermal_requirement: nil,
+            control_methods: [],
+            crops: []
+          )
 
           user_lookup = Minitest::Mock.new
           user_lookup.expect(:find, user, [ user_id ])
 
-          gateway = mock
-          detail_dto = stub(pest: pest_entity)
-          gateway.expects(:find_pest_show_detail).with(pest_id).returns(detail_dto)
+          show_detail_read_gateway = mock
+          show_detail_read_gateway.expects(:find_show_detail_snapshot).with(pest_id: pest_id).returns(wire)
 
           received = nil
           output_port = Minitest::Mock.new
@@ -75,7 +129,7 @@ module Domain
             output_port: output_port,
             user_id: user_id,
             translator: translator,
-            gateway: gateway,
+            show_detail_read_gateway: show_detail_read_gateway,
             user_lookup: user_lookup
           )
 

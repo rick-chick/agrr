@@ -45,11 +45,22 @@ module Domain
         end
 
         test "dispatches success with private plan index rows" do
-          rows = [ index_row(id: 1), index_row(id: 2) ]
+          plan_wire = Dtos::PlanIndexPlanSnapshot.new(
+            id: 1,
+            farm_display_name: "Farm",
+            total_area: 10.0,
+            status: "draft",
+            display_name: "Plan 1",
+            created_at: Time.utc(2026, 1, 1)
+          )
 
           @user_lookup.expects(:find).with(@user_id).returns(@user)
-          @private_read_gateway.expects(:list_private_plan_index_rows_by_user_id).with(user_id: @user_id).returns(rows)
-          @output_port.expects(:on_success).with(rows)
+          @private_read_gateway.expects(:list_private_plan_index_plan_snapshots).with(user_id: @user_id).returns([ plan_wire ])
+          @private_read_gateway.expects(:count_cultivation_plan_crops_by_plan_ids).with(plan_ids: [ 1 ]).returns({ 1 => 1 })
+          @private_read_gateway.expects(:count_cultivation_plan_fields_by_plan_ids).with(plan_ids: [ 1 ]).returns({ 1 => 2 })
+          @output_port.expects(:on_success).with do |rows|
+            rows.size == 1 && rows.first.id == 1 && rows.first.crops_count == 1 && rows.first.fields_count == 2
+          end
 
           @interactor.call
         end
@@ -58,7 +69,7 @@ module Domain
           error_dto = mock
 
           @user_lookup.expects(:find).raises(Domain::Shared::Exceptions::RecordNotFound.new("missing user"))
-          @private_read_gateway.expects(:list_private_plan_index_rows_by_user_id).never
+          @private_read_gateway.expects(:list_private_plan_index_plan_snapshots).never
           Domain::Shared::Dtos::Error
             .expects(:new).with(I18n.t("plans.errors.session_invalid")).returns(error_dto)
           @output_port.expects(:on_failure).with(error_dto)
@@ -70,7 +81,7 @@ module Domain
           error_dto = mock
 
           @user_lookup.expects(:find).returns(@user)
-          @private_read_gateway.expects(:list_private_plan_index_rows_by_user_id).raises(
+          @private_read_gateway.expects(:list_private_plan_index_plan_snapshots).raises(
             Domain::Shared::Exceptions::RecordInvalid.new("invalid row")
           )
           Domain::Shared::Dtos::Error.expects(:new).with("invalid row").returns(error_dto)

@@ -63,10 +63,6 @@ module Domain
         end
 
         # 農場と圃場一覧を Entity/DTO で返す（Interactor 用。認可は Interactor 側）
-        def farm_detail_with_fields(id)
-          raise NotImplementedError, "Subclasses must implement farm_detail_with_fields"
-        end
-
         # @return [Domain::Farm::Dtos::FarmDeleteUsage]
         def find_delete_usage(farm_id)
           raise NotImplementedError, "Subclasses must implement find_delete_usage"

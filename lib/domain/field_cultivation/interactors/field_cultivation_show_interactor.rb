@@ -14,14 +14,16 @@ module Domain
         end
 
         def call(field_cultivation_id:)
+          plan_access_snapshot = @gateway.find_plan_access_snapshot_by_field_cultivation_id(field_cultivation_id)
           if @user_id.present?
             user = @user_lookup.find(@user_id)
-            assert_field_cultivation_plan_access!(user, @gateway, field_cultivation_id)
+            assert_field_cultivation_plan_access!(user, plan_access_snapshot)
           else
-            assert_public_field_cultivation_plan_access!(@gateway, field_cultivation_id)
+            assert_public_field_cultivation_plan_access!(plan_access_snapshot)
           end
-          dto = @gateway.find_api_summary(field_cultivation_id: field_cultivation_id)
-          @output_port.on_success(dto)
+          api_summary_snapshot = @gateway.find_api_summary_by_field_cultivation_id(field_cultivation_id)
+          api_summary = Mappers::FieldCultivationApiSummaryMapper.from_snapshot(api_summary_snapshot)
+          @output_port.on_success(api_summary)
         rescue Domain::Shared::Policies::PolicyPermissionDenied
           @output_port.on_failure(Domain::Shared::Dtos::Error.new("Forbidden"))
         rescue Domain::Shared::Exceptions::RecordNotFound => e

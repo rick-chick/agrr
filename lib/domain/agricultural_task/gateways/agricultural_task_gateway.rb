@@ -17,10 +17,6 @@ module Domain
         end
 
         # 詳細 DTO。認可は Interactor 側（R0）。
-        def find_agricultural_task_show_detail(id)
-          raise NotImplementedError, "Subclasses must implement find_agricultural_task_show_detail"
-        end
-
         def find_by_id(id)
           raise NotImplementedError, "Subclasses must implement find_by_id"
         end

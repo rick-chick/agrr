@@ -14,15 +14,16 @@ module Domain
           end
         end
 
-        def interaction_rule_row(
+        def interaction_rule_wire(
           reference_id: 100,
           source_group: "GroupA",
           target_group: "GroupB",
-          region: "jp"
+          region: "jp",
+          rule_type: "continuous_cultivation"
         )
           Dtos::PublicPlanSaveInteractionRuleReferenceRow.new(
             reference_interaction_rule_id: reference_id,
-            rule_type: "continuous_cultivation",
+            rule_type: rule_type,
             source_group: source_group,
             target_group: target_group,
             impact_ratio: 0.5,
@@ -70,10 +71,34 @@ module Domain
           assert_empty out.skipped_interaction_rule_ids
         end
 
+        test "skips non-continuous_cultivation rule types from read gateway" do
+          read_gateway = mock("read_gateway")
+          read_gateway.expects(:list_interaction_rule_reference_rows).returns(
+            [
+              interaction_rule_wire(rule_type: "other_type"),
+              interaction_rule_wire(rule_type: "continuous_cultivation", source_group: "GroupA", target_group: "GroupB")
+            ]
+          )
+
+          user_gateway = mock("user_interaction_rule_gateway")
+          user_gateway.expects(:find_by_user_id_and_source_interaction_rule_id).once.returns(nil)
+          user_gateway.expects(:find_by_user_id_and_rule_type_and_source_group_and_target_group_and_region).once.returns(nil)
+          user_gateway.expects(:create).once.returns(
+            Dtos::PlanSaveUserInteractionRuleSnapshot.new(id: 50)
+          )
+
+          out = build_interactor(
+            read_gateway: read_gateway,
+            user_interaction_rule_gateway: user_gateway
+          ).call(default_input)
+
+          assert_equal [ 50 ], out.user_interaction_rule_ids
+        end
+
         test "skips rows that do not intersect reference_crop_groups" do
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_interaction_rule_reference_rows).with(region: "jp").returns(
-            [ interaction_rule_row(source_group: "Other", target_group: "Elsewhere") ]
+            [ interaction_rule_wire(source_group: "Other", target_group: "Elsewhere") ]
           )
 
           user_gateway = mock("user_interaction_rule_gateway")
@@ -90,8 +115,8 @@ module Domain
         end
 
         test "creates user interaction rules for each matching reference row" do
-          row_a = interaction_rule_row(reference_id: 100, source_group: "GroupA", target_group: "GroupB")
-          row_b = interaction_rule_row(reference_id: 101, source_group: "GroupC", target_group: "GroupD")
+          row_a = interaction_rule_wire(reference_id: 100, source_group: "GroupA", target_group: "GroupB")
+          row_b = interaction_rule_wire(reference_id: 101, source_group: "GroupC", target_group: "GroupD")
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_interaction_rule_reference_rows).returns([ row_a, row_b ])
 
@@ -119,7 +144,7 @@ module Domain
         end
 
         test "creates user interaction rule when no existing match" do
-          row = interaction_rule_row
+          row = interaction_rule_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_interaction_rule_reference_rows).returns([ row ])
 
@@ -156,7 +181,7 @@ module Domain
         end
 
         test "reuses existing rule by source id and records skip" do
-          row = interaction_rule_row
+          row = interaction_rule_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_interaction_rule_reference_rows).returns([ row ])
 
@@ -178,7 +203,7 @@ module Domain
         end
 
         test "updates source link when matched by natural key without source id" do
-          row = interaction_rule_row
+          row = interaction_rule_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_interaction_rule_reference_rows).returns([ row ])
 
@@ -206,7 +231,7 @@ module Domain
         end
 
         test "does not update when natural key match already has source id" do
-          row = interaction_rule_row
+          row = interaction_rule_wire
           read_gateway = mock("read_gateway")
           read_gateway.expects(:list_interaction_rule_reference_rows).returns([ row ])
 

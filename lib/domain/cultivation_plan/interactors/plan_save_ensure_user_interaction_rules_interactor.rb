@@ -20,7 +20,9 @@ module Domain
             return empty_output
           end
 
-          rows = @read_gateway.list_interaction_rule_reference_rows(region: input_dto.region)
+          rows = @read_gateway
+                   .list_interaction_rule_reference_rows(region: input_dto.region)
+                   .select { |row| Policies::PublicPlanSaveInteractionRuleFilter.continuous_cultivation?(row.rule_type) }
           crop_groups = input_dto.reference_crop_groups
 
           user_interaction_rule_ids = []

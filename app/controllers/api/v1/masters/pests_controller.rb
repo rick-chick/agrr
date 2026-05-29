@@ -19,7 +19,9 @@ module Api
           presenter = Adapters::Pest::Presenters::PestDetailApiPresenter.new(view: self)
           interactor = Domain::Pest::Interactors::PestDetailInteractor.new(output_port: presenter,
             user_id: current_user.id,
-            translator: translator, gateway: CompositionRoot.pest_gateway, user_lookup: CompositionRoot.user_lookup)
+            translator: translator,
+            show_detail_read_gateway: CompositionRoot.pest_show_detail_read_gateway,
+            user_lookup: CompositionRoot.user_lookup)
           interactor.call(params[:id])
         end
 

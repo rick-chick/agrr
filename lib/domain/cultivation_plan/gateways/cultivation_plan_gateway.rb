@@ -31,11 +31,6 @@ module Domain
           raise NotImplementedError, "Subclasses must implement list_by_plan_id"
         end
 
-        # @return [Domain::CultivationPlan::Dtos::TaskScheduleGenerationContext]
-        def find_with_field_cultivations_for_task_schedule(plan_id)
-          raise NotImplementedError, "Subclasses must implement find_with_field_cultivations_for_task_schedule"
-        end
-
         # @param attrs [Domain::CultivationPlan::Dtos::CultivationPlanCreateAttrs]
         # @return [Domain::CultivationPlan::Entities::CultivationPlanEntity]
         def create(attrs:)

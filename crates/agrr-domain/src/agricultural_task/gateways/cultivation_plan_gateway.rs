@@ -58,13 +58,8 @@ pub struct TaskScheduleBlueprint {
     pub agricultural_task: Option<TaskScheduleRelatedTask>,
 }
 
-/// Ruby: cultivation plan gateway for task schedule generation
+/// Ruby: `CultivationPlanGateway` — transaction boundary for task schedule generation
 pub trait CultivationPlanGateway: Send + Sync {
-    fn find_with_field_cultivations_for_task_schedule(
-        &self,
-        cultivation_plan_id: i64,
-    ) -> Result<TaskSchedulePlanContext, Box<dyn std::error::Error + Send + Sync>>;
-
     fn within_transaction<F, T>(&self, block: F) -> T
     where
         F: FnOnce() -> T;

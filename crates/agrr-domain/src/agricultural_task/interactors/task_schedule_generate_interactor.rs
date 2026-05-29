@@ -10,9 +10,10 @@ use crate::agricultural_task::constants::task_schedule_item_statuses::PLANNED;
 use crate::agricultural_task::dtos::TaskScheduleReplaceItem;
 use crate::agricultural_task::gateways::{
     CultivationPlanGateway, TaskScheduleBlueprint, TaskScheduleCrop, TaskScheduleFieldCultivation,
-    TaskSchedulePlan, TaskScheduleRelatedTask,
+    TaskScheduleGenerationReadGateway, TaskSchedulePlan, TaskScheduleRelatedTask,
 };
 use crate::agricultural_task::gateways::{ProgressGateway, TaskScheduleGateway};
+use crate::agricultural_task::mappers::task_schedule_generation_context_mapper;
 use crate::shared::helpers::deep_dup;
 use crate::shared::ports::ClockPort;
 use crate::shared::type_converters::cast_big_decimal_json;
@@ -26,18 +27,20 @@ pub type ProgressDataMissingError = TaskScheduleGenerateError;
 pub type GddTriggerMissingError = TaskScheduleGenerateError;
 pub type TemplateMissingError = TaskScheduleGenerateError;
 
-pub struct TaskScheduleGenerateInteractor<'a, PG, TG, CP, C> {
+pub struct TaskScheduleGenerateInteractor<'a, PG, TG, CP, RG, C> {
     progress_gateway: &'a PG,
     task_schedule_gateway: &'a TG,
     clock: &'a C,
     cultivation_plan_gateway: &'a CP,
+    task_schedule_read_gateway: &'a RG,
 }
 
-impl<'a, PG, TG, CP, C> TaskScheduleGenerateInteractor<'a, PG, TG, CP, C>
+impl<'a, PG, TG, CP, RG, C> TaskScheduleGenerateInteractor<'a, PG, TG, CP, RG, C>
 where
     PG: ProgressGateway,
     TG: TaskScheduleGateway,
     CP: CultivationPlanGateway,
+    RG: TaskScheduleGenerationReadGateway,
     C: ClockPort,
 {
     pub fn new(
@@ -45,12 +48,14 @@ where
         task_schedule_gateway: &'a TG,
         clock: &'a C,
         cultivation_plan_gateway: &'a CP,
+        task_schedule_read_gateway: &'a RG,
     ) -> Self {
         Self {
             progress_gateway,
             task_schedule_gateway,
             clock,
             cultivation_plan_gateway,
+            task_schedule_read_gateway,
         }
     }
 
@@ -58,9 +63,7 @@ where
         &self,
         cultivation_plan_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let ctx = self
-            .cultivation_plan_gateway
-            .find_with_field_cultivations_for_task_schedule(cultivation_plan_id)?;
+        let ctx = self.build_generation_context(cultivation_plan_id)?;
         let plan = ctx.plan;
 
         if !weather_data_present(&plan.predicted_weather_data) {
@@ -80,6 +83,64 @@ where
         })?;
 
         Ok(())
+    }
+
+    fn build_generation_context(
+        &self,
+        cultivation_plan_id: i64,
+    ) -> Result<crate::agricultural_task::gateways::TaskSchedulePlanContext, Box<dyn std::error::Error + Send + Sync>>
+    {
+        let plan_row = self
+            .task_schedule_read_gateway
+            .find_plan_row(cultivation_plan_id)?;
+        let field_rows = self
+            .task_schedule_read_gateway
+            .list_field_cultivation_rows(cultivation_plan_id)?;
+
+        let mut crop_ids = Vec::new();
+        for row in &field_rows {
+            if let Some(crop_id) = row.crop_id {
+                if !crop_ids.contains(&crop_id) {
+                    crop_ids.push(crop_id);
+                }
+            }
+        }
+
+        let mut crop_rows_by_id = std::collections::HashMap::new();
+        let mut template_rows_by_crop_id = std::collections::HashMap::new();
+        let mut blueprint_rows_by_crop_id = std::collections::HashMap::new();
+        let mut agrr_requirement_by_crop_id = std::collections::HashMap::new();
+
+        for crop_id in crop_ids {
+            crop_rows_by_id.insert(
+                crop_id,
+                self.task_schedule_read_gateway.find_crop_row(crop_id)?,
+            );
+            template_rows_by_crop_id.insert(
+                crop_id,
+                self.task_schedule_read_gateway
+                    .list_crop_task_template_rows(crop_id)?,
+            );
+            blueprint_rows_by_crop_id.insert(
+                crop_id,
+                self.task_schedule_read_gateway
+                    .list_crop_task_schedule_blueprint_rows(crop_id)?,
+            );
+            agrr_requirement_by_crop_id.insert(
+                crop_id,
+                self.task_schedule_read_gateway
+                    .build_crop_agrr_requirement(crop_id)?,
+            );
+        }
+
+        Ok(task_schedule_generation_context_mapper::assemble(
+            plan_row,
+            field_rows,
+            crop_rows_by_id,
+            template_rows_by_crop_id,
+            blueprint_rows_by_crop_id,
+            agrr_requirement_by_crop_id,
+        ))
     }
 
     fn generate_for_field(
@@ -456,23 +517,146 @@ mod tests {
         }
     }
 
-    struct FakeCultivationPlanGateway {
-        ctx: TaskSchedulePlanContext,
-    }
+    struct FakeCultivationPlanGateway;
 
     impl CultivationPlanGateway for FakeCultivationPlanGateway {
-        fn find_with_field_cultivations_for_task_schedule(
-            &self,
-            _: i64,
-        ) -> Result<TaskSchedulePlanContext, Box<dyn std::error::Error + Send + Sync>> {
-            Ok(self.ctx.clone())
-        }
-
         fn within_transaction<F, T>(&self, block: F) -> T
         where
             F: FnOnce() -> T,
         {
             block()
+        }
+    }
+
+    struct FakeTaskScheduleReadGateway {
+        ctx: TaskSchedulePlanContext,
+    }
+
+    impl TaskScheduleGenerationReadGateway for FakeTaskScheduleReadGateway {
+        fn find_plan_row(
+            &self,
+            _: i64,
+        ) -> Result<
+            crate::agricultural_task::gateways::TaskSchedulePlanRow,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            Ok(crate::agricultural_task::gateways::TaskSchedulePlanRow {
+                id: self.ctx.plan.id,
+                predicted_weather_data: self.ctx.plan.predicted_weather_data.clone(),
+                calculated_planning_start_date: self.ctx.plan.calculated_planning_start_date,
+            })
+        }
+
+        fn list_field_cultivation_rows(
+            &self,
+            _: i64,
+        ) -> Result<
+            Vec<crate::agricultural_task::gateways::TaskScheduleFieldCultivationRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            Ok(self
+                .ctx
+                .plan
+                .field_cultivations
+                .iter()
+                .map(|fc| crate::agricultural_task::gateways::TaskScheduleFieldCultivationRow {
+                    id: fc.id,
+                    start_date: fc.start_date,
+                    crop_id: fc.crop.as_ref().map(|c| c.id),
+                })
+                .collect())
+        }
+
+        fn find_crop_row(
+            &self,
+            crop_id: i64,
+        ) -> Result<
+            crate::agricultural_task::gateways::TaskScheduleCropRow,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            let crop = self
+                .ctx
+                .plan
+                .field_cultivations
+                .iter()
+                .filter_map(|fc| fc.crop.as_ref())
+                .find(|c| c.id == crop_id)
+                .ok_or_else(|| "crop not found".to_string())?;
+            Ok(crate::agricultural_task::gateways::TaskScheduleCropRow {
+                id: crop.id,
+                name: crop.name.clone(),
+            })
+        }
+
+        fn list_crop_task_template_rows(
+            &self,
+            crop_id: i64,
+        ) -> Result<
+            Vec<crate::agricultural_task::gateways::TaskScheduleTemplateRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            let crop = self
+                .ctx
+                .plan
+                .field_cultivations
+                .iter()
+                .filter_map(|fc| fc.crop.as_ref())
+                .find(|c| c.id == crop_id)
+                .ok_or_else(|| "crop not found".to_string())?;
+            Ok(crop
+                .crop_task_templates
+                .iter()
+                .map(|t| crate::agricultural_task::gateways::TaskScheduleTemplateRow {
+                    agricultural_task: t.agricultural_task.clone(),
+                })
+                .collect())
+        }
+
+        fn list_crop_task_schedule_blueprint_rows(
+            &self,
+            crop_id: i64,
+        ) -> Result<
+            Vec<crate::agricultural_task::gateways::TaskScheduleBlueprintRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            let crop = self
+                .ctx
+                .plan
+                .field_cultivations
+                .iter()
+                .filter_map(|fc| fc.crop.as_ref())
+                .find(|c| c.id == crop_id)
+                .ok_or_else(|| "crop not found".to_string())?;
+            Ok(crop
+                .crop_task_schedule_blueprints
+                .iter()
+                .enumerate()
+                .map(|(index, blueprint)| {
+                    crate::agricultural_task::gateways::TaskScheduleBlueprintRow {
+                        id: (index + 1) as i64,
+                        task_type: blueprint.task_type.clone(),
+                        gdd_trigger: blueprint.gdd_trigger,
+                        gdd_tolerance: blueprint.gdd_tolerance,
+                        description: blueprint.description.clone(),
+                        stage_name: blueprint.stage_name.clone(),
+                        stage_order: blueprint.stage_order,
+                        priority: blueprint.priority,
+                        source: blueprint.source.clone(),
+                        weather_dependency: blueprint.weather_dependency.clone(),
+                        time_per_sqm: blueprint.time_per_sqm,
+                        amount: blueprint.amount,
+                        amount_unit: blueprint.amount_unit.clone(),
+                        agricultural_task: blueprint.agricultural_task.clone(),
+                    }
+                })
+                .collect())
+        }
+
+        fn build_crop_agrr_requirement(
+            &self,
+            _: i64,
+        ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(serde_json::json!({ "crop": { "name": "stub" } }))
         }
     }
 
@@ -702,7 +886,8 @@ mod tests {
     #[test]
     fn generate_produces_general_and_fertilizer_schedules() {
         let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
-        let cultivation_plan_gateway = FakeCultivationPlanGateway { ctx };
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -712,6 +897,7 @@ mod tests {
             &task_schedule_gateway,
             &clock,
             &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
         );
         interactor.generate(99).expect("generate");
 
@@ -736,7 +922,8 @@ mod tests {
                 crop.crop_task_schedule_blueprints.clear();
             }
         }
-        let cultivation_plan_gateway = FakeCultivationPlanGateway { ctx };
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -746,6 +933,7 @@ mod tests {
             &task_schedule_gateway,
             &clock,
             &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
         );
         let err = interactor.generate(99).unwrap_err();
         assert!(err.to_string().contains("作業テンプレートが登録されていません"));
@@ -755,7 +943,8 @@ mod tests {
     #[test]
     fn generate_raises_progress_missing_when_no_records() {
         let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
-        let cultivation_plan_gateway = FakeCultivationPlanGateway { ctx };
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
         let progress_gateway = StubProgressGateway {
             response: serde_json::json!({ "progress_records": [] }),
             received: Mutex::new(vec![]),
@@ -765,6 +954,7 @@ mod tests {
             &task_schedule_gateway,
             &clock,
             &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
         );
         let err = interactor.generate(99).unwrap_err();
         assert!(err.to_string().contains("GDD進捗データが空です"));
@@ -774,7 +964,8 @@ mod tests {
     #[test]
     fn progress_gateway_receives_filtered_weather() {
         let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
-        let cultivation_plan_gateway = FakeCultivationPlanGateway { ctx };
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -784,6 +975,7 @@ mod tests {
             &task_schedule_gateway,
             &clock,
             &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
         );
         interactor.generate(99).expect("generate");
         let payload = progress_gateway.received.lock().unwrap().last().unwrap().clone();
@@ -809,7 +1001,8 @@ mod tests {
                 crop.crop_task_schedule_blueprints[0].gdd_trigger = None;
             }
         }
-        let cultivation_plan_gateway = FakeCultivationPlanGateway { ctx };
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -819,6 +1012,7 @@ mod tests {
             &task_schedule_gateway,
             &clock,
             &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
         );
         let err = interactor.generate(99).unwrap_err();
         assert!(err.to_string().contains("GDDトリガーが設定されていません"));

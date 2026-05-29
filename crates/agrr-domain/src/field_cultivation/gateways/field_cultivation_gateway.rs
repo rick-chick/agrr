@@ -1,11 +1,16 @@
+use crate::field_cultivation::dtos::FieldCultivationApiUpdateOutput;
 use crate::field_cultivation::dtos::{
-    FieldCultivationApiSummary, FieldCultivationApiUpdateOutput,
+    FieldCultivationApiSummary, FieldCultivationPlanAccessSnapshot,
 };
-use crate::field_cultivation::gateways::FieldCultivationPlanAccessGateway;
 
 /// Ruby: `Domain::FieldCultivation::Gateways::FieldCultivationGateway`
-pub trait FieldCultivationGateway: FieldCultivationPlanAccessGateway {
-    fn find_api_summary(
+pub trait FieldCultivationGateway: Send + Sync {
+    fn find_plan_access_snapshot_by_field_cultivation_id(
+        &self,
+        field_cultivation_id: i64,
+    ) -> Result<FieldCultivationPlanAccessSnapshot, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn find_api_summary_by_field_cultivation_id(
         &self,
         field_cultivation_id: i64,
     ) -> Result<FieldCultivationApiSummary, Box<dyn std::error::Error + Send + Sync>>;
