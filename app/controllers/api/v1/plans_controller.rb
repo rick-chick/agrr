@@ -21,7 +21,7 @@ module Api
         Domain::CultivationPlan::Interactors::PrivateOwnedPlanDetailInteractor.new(
           output_port: presenter,
           user_id: current_user.id,
-          private_read_gateway: CompositionRoot.cultivation_plan_private_read_gateway,
+          rest_plan_read_gateway: CompositionRoot.cultivation_plan_rest_plan_read_gateway,
           cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
           crop_gateway: CompositionRoot.crop_gateway,
           translator: translator,

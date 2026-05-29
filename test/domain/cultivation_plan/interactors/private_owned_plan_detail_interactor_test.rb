@@ -15,7 +15,7 @@ module Domain
         setup do
           @user_id = 1
           @user = stub(id: @user_id, admin?: false)
-          @private_read_gateway = mock
+          @rest_plan_read_gateway = mock
           @cultivation_plan_gateway = mock
           @crop_gateway = mock
           @output_port = mock
@@ -26,7 +26,7 @@ module Domain
           @interactor = PrivateOwnedPlanDetailInteractor.new(
             output_port: @output_port,
             user_id: @user_id,
-            private_read_gateway: @private_read_gateway,
+            rest_plan_read_gateway: @rest_plan_read_gateway,
             cultivation_plan_gateway: @cultivation_plan_gateway,
             crop_gateway: @crop_gateway,
             translator: FakeTranslator.new(nil),
@@ -76,9 +76,12 @@ module Domain
           filter = Domain::Shared::Policies::CropPolicy.index_list_filter(@user)
 
           @user_lookup.expects(:find).with(@user_id).returns(@user)
-          read_snapshot = stub
-          Mappers::PrivatePlanReadSnapshotMapper.expects(:from_snapshot).with(read_snapshot).returns(snapshot)
-          @private_read_gateway.expects(:find_plan_read_snapshot_by_plan_id).with(plan_id: plan_id).returns(read_snapshot)
+          rest_snapshot = stub
+          Mappers::CultivationPlanRestPlanSnapshotMapper.expects(:load_snapshot).with(
+            read_gateway: @rest_plan_read_gateway,
+            plan_id: plan_id
+          ).returns(rest_snapshot)
+          Mappers::PrivatePlanReadSnapshotMapper.expects(:from_snapshot).with(rest_snapshot).returns(snapshot)
           @cultivation_plan_gateway.expects(:find_by_id).with(plan_id).returns(
             domain_private_plan_entity(id: plan_id, user_id: @user_id)
           )
@@ -98,11 +101,14 @@ module Domain
           plan_id = 5
 
           @user_lookup.expects(:find).returns(@user)
-          read_snapshot = stub
-          Mappers::PrivatePlanReadSnapshotMapper.expects(:from_snapshot).with(read_snapshot).returns(
+          rest_snapshot = stub
+          Mappers::CultivationPlanRestPlanSnapshotMapper.expects(:load_snapshot).with(
+            read_gateway: @rest_plan_read_gateway,
+            plan_id: plan_id
+          ).returns(rest_snapshot)
+          Mappers::PrivatePlanReadSnapshotMapper.expects(:from_snapshot).with(rest_snapshot).returns(
             read_snapshot(plan_id: plan_id)
           )
-          @private_read_gateway.expects(:find_plan_read_snapshot_by_plan_id).with(plan_id: plan_id).returns(read_snapshot)
           @cultivation_plan_gateway.expects(:find_by_id).returns(
             domain_private_plan_entity(id: plan_id, user_id: 99)
           )
@@ -114,7 +120,7 @@ module Domain
 
         test "dispatches not_found when read snapshot missing" do
           @user_lookup.expects(:find).returns(@user)
-          @private_read_gateway.expects(:find_plan_read_snapshot_by_plan_id).raises(
+          Mappers::CultivationPlanRestPlanSnapshotMapper.expects(:load_snapshot).raises(
             Domain::Shared::Exceptions::RecordNotFound.new("missing")
           )
           @cultivation_plan_gateway.expects(:find_by_id).never

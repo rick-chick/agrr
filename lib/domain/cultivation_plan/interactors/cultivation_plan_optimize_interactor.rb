@@ -15,7 +15,7 @@ module Domain
           interaction_rule_gateway:,
           interaction_rule_agrr_format_builder:,
           cultivation_plan_gateway:,
-          private_read_gateway:,
+          optimization_plan_read_gateway:,
           advance_phase_interactor:,
           logger:,
           weather_prediction_interactor_factory:,
@@ -27,7 +27,7 @@ module Domain
           @interaction_rule_gateway = interaction_rule_gateway
           @interaction_rule_agrr_format_builder = interaction_rule_agrr_format_builder
           @cultivation_plan_gateway = cultivation_plan_gateway
-          @private_read_gateway = private_read_gateway
+          @optimization_plan_read_gateway = optimization_plan_read_gateway
           @advance_phase_interactor = advance_phase_interactor
           @logger = logger
           @weather_prediction_interactor_factory = weather_prediction_interactor_factory
@@ -126,7 +126,10 @@ module Domain
         private
 
         def load_snapshot!
-          @snapshot = @private_read_gateway.find_optimization_plan_read_snapshot_by_plan_id(plan_id: @plan_id)
+          @snapshot = Mappers::OptimizationPlanReadSnapshotMapper.load_snapshot(
+            read_gateway: @optimization_plan_read_gateway,
+            plan_id: @plan_id
+          )
         end
 
         def calculate_planning_period

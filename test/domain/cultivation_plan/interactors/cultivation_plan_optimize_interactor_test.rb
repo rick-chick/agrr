@@ -28,8 +28,11 @@ module Domain::CultivationPlan::Interactors
         farm_weather_input: nil
       )
 
-      private_read_gateway = mock
-      private_read_gateway.stubs(:find_optimization_plan_read_snapshot_by_plan_id).with(plan_id: 42).returns(snapshot)
+      optimization_plan_read_gateway = mock
+      Domain::CultivationPlan::Mappers::OptimizationPlanReadSnapshotMapper
+        .stubs(:load_snapshot)
+        .with(read_gateway: optimization_plan_read_gateway, plan_id: 42)
+        .returns(snapshot)
 
       gateway = mock
       gateway.stubs(:field_cultivations_present?).with(42).returns(false)
@@ -44,7 +47,7 @@ module Domain::CultivationPlan::Interactors
         interaction_rule_gateway: nil,
         interaction_rule_agrr_format_builder: nil,
         cultivation_plan_gateway: gateway,
-        private_read_gateway: private_read_gateway,
+        optimization_plan_read_gateway: optimization_plan_read_gateway,
         advance_phase_interactor: advance_phase,
         logger: CapturingLogger.new,
         weather_prediction_interactor_factory: ->(**) {},

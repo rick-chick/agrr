@@ -20,8 +20,8 @@ use crate::field_cultivation::interactors::plan_field_cultivation_authorization:
 };
 use crate::field_cultivation::mappers::{
     build_observed_agrr_payload, build_observed_agrr_payload_simple, build_output,
-    extract_weather_records, merge_cached_with_observed, merge_training_and_future,
-    to_context_snapshot, to_cultivation_plan_weather, valid_weather_payload,
+    climate_crop_agrr_requirement_from_entity, extract_weather_records, merge_cached_with_observed,
+    merge_training_and_future, to_context_snapshot, to_cultivation_plan_weather, valid_weather_payload,
     weather_location_meta_from_source,
 };
 use crate::field_cultivation::policies::{
@@ -328,8 +328,9 @@ fn build_climate_output(
         context.start_date,
         context.completion_date,
     );
+    let crop_requirement = climate_crop_agrr_requirement_from_entity(crop_entity);
     let progress_result = interactor.climate_progress_gateway.calculate_progress(
-        crop_entity,
+        &crop_requirement,
         context.start_date,
         weather_payload,
     );

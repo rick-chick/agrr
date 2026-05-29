@@ -37,6 +37,8 @@ module Domain
           clock:,
           plan_gateway:,
           plan_allocation_adjust_read_gateway:,
+          crop_gateway:,
+          crop_agrr_requirement_builder:,
           weather_prediction_gateway:,
           plan_allocation_adjust_gateway:,
           field_cultivation_sync:,
@@ -51,6 +53,8 @@ module Domain
           @clock = clock
           @plan_gateway = plan_gateway
           @plan_allocation_adjust_read_gateway = plan_allocation_adjust_read_gateway
+          @crop_gateway = crop_gateway
+          @crop_agrr_requirement_builder = crop_agrr_requirement_builder
           @weather_prediction_gateway = weather_prediction_gateway
           @plan_allocation_adjust_gateway = plan_allocation_adjust_gateway
           @field_cultivation_sync = field_cultivation_sync
@@ -185,8 +189,12 @@ module Domain
             end
           end
 
-          @adjust_read_snapshot =
-            @plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id(plan_id: plan_id)
+          @adjust_read_snapshot = Mappers::PlanAllocationAdjustReadSnapshotMapper.load_snapshot(
+            read_gateway: @plan_allocation_adjust_read_gateway,
+            crop_gateway: @crop_gateway,
+            crop_agrr_requirement_builder: @crop_agrr_requirement_builder,
+            plan_id: plan_id
+          )
         end
 
         def pass_rest_adjust_preflight!(input)

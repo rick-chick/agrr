@@ -35,7 +35,7 @@ class OptimizationJob < ApplicationJob
       interaction_rule_gateway: CompositionRoot.interaction_rule_gateway,
       interaction_rule_agrr_format_builder: CompositionRoot.interaction_rule_agrr_format_builder,
       cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
-      private_read_gateway: CompositionRoot.cultivation_plan_private_read_gateway,
+      optimization_plan_read_gateway: CompositionRoot.cultivation_plan_optimization_plan_read_gateway,
       advance_phase_interactor: CompositionRoot.advance_cultivation_plan_phase_interactor,
       logger: CompositionRoot.logger,
       weather_prediction_interactor_factory: lambda { |weather_location:, farm:|

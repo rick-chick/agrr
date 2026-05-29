@@ -9,36 +9,6 @@ module Adapters
           @clock = clock
         end
 
-        def find_sync_plan_snapshot_by_plan_id(plan_id:)
-          cultivation_plan = ::CultivationPlan.includes(
-            :cultivation_plan_fields,
-            cultivation_plan_crops: :crop,
-            field_cultivations: { cultivation_plan_crop: :crop }
-          ).find(plan_id)
-
-          plan_fields_by_id = cultivation_plan.cultivation_plan_fields.index_by(&:id)
-          plan_crop_rows = cultivation_plan.cultivation_plan_crops.map do |plan_crop|
-            Domain::FieldCultivation::Dtos::FieldCultivationSyncPlanCropEntry.new(
-              plan_crop_id: plan_crop.id,
-              crop_id: plan_crop.crop.id
-            )
-          end
-          existing_field_cultivations_by_id = cultivation_plan.field_cultivations.index_by(&:id).transform_values do |fc|
-            Domain::FieldCultivation::Dtos::FieldCultivationSyncExistingFieldCultivationEntry.new(
-              field_cultivation_id: fc.id,
-              cultivation_plan_crop_id: fc.cultivation_plan_crop_id,
-              crop_id: fc.cultivation_plan_crop.crop.id
-            )
-          end
-
-          Domain::FieldCultivation::Dtos::FieldCultivationSyncPlanSnapshot.new(
-            plan_id: cultivation_plan.id,
-            plan_fields_by_id: plan_fields_by_id.transform_values(&:id),
-            plan_crop_rows: plan_crop_rows,
-            existing_field_cultivations_by_id: existing_field_cultivations_by_id
-          )
-        end
-
         def sync_by_plan_id(plan_id:, sync_apply:)
           cultivation_plan = ::CultivationPlan.find(plan_id)
           @logger.info "💾 [FieldCultivationSync] updates=#{sync_apply.field_cultivations_to_update.size} " \

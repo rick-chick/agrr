@@ -69,6 +69,8 @@ module Domain
             clock: FakeClock.new(Time.utc(2026, 1, 1)),
             plan_gateway: mock,
             plan_allocation_adjust_read_gateway: mock,
+            crop_gateway: mock,
+            crop_agrr_requirement_builder: mock,
             weather_prediction_gateway: mock,
             plan_allocation_adjust_gateway: mock,
             field_cultivation_sync: mock,
@@ -157,7 +159,12 @@ module Domain
           auth = Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
           snapshot = build_adjust_read_snapshot(crop_name: "C", has_growth_stages: true)
           plan_gateway.expects(:find_by_id).with(2).returns(owned_plan)
-          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id).with(plan_id: 2).returns(snapshot)
+          Mappers::PlanAllocationAdjustReadSnapshotMapper.expects(:load_snapshot).with(
+            read_gateway: read_gateway,
+            crop_gateway: kind_of(Object),
+            crop_agrr_requirement_builder: kind_of(Object),
+            plan_id: 2
+          ).returns(snapshot)
           output.expects(:on_success).with do |output:|
             output.skipped == true && output.message.include?("調整不要")
           end
@@ -182,7 +189,7 @@ module Domain
           translator = FakeTranslator.new(nil)
           auth = Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
           plan_gateway.expects(:find_by_id).with(2).returns(other_users_plan)
-          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id).never
+          Mappers::PlanAllocationAdjustReadSnapshotMapper.expects(:load_snapshot).never
           output.expects(:on_failure).with do |failure:|
             failure.kind == Failure::KIND_NOT_FOUND
           end
@@ -209,7 +216,7 @@ module Domain
           translator = FakeTranslator.new(nil)
           auth = Dtos::CultivationPlanRestAuth.new(mode: :public)
           plan_gateway.expects(:find_by_id).with(2).returns(other_users_plan)
-          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id).never
+          Mappers::PlanAllocationAdjustReadSnapshotMapper.expects(:load_snapshot).never
           output.expects(:on_failure).with do |failure:|
             failure.kind == Failure::KIND_NOT_FOUND
           end
@@ -241,7 +248,7 @@ module Domain
           auth = Dtos::CultivationPlanRestAuth.new(mode: :private, user_id: 1)
           snapshot = build_adjust_read_snapshot(crop_name: "X", has_growth_stages: false)
           plan_gateway.expects(:find_by_id).with(2).returns(owned_plan)
-          read_gateway.expects(:find_adjust_read_snapshot_by_plan_id).returns(snapshot)
+          Mappers::PlanAllocationAdjustReadSnapshotMapper.expects(:load_snapshot).returns(snapshot)
           output.expects(:on_failure).with do |failure:|
             failure.kind == Failure::KIND_CROP_MISSING_GROWTH_STAGES &&
               failure.message == "missing stages"

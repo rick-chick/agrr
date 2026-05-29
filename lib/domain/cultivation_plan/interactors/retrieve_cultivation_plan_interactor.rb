@@ -7,13 +7,13 @@ module Domain
         def initialize(
           output_port:,
           plan_gateway:,
-          workbench_read_gateway:,
+          rest_plan_read_gateway:,
           available_crop_rows_gateway:,
           logger:
         )
           @output_port = output_port
           @plan_gateway = plan_gateway
-          @workbench_read_gateway = workbench_read_gateway
+          @rest_plan_read_gateway = rest_plan_read_gateway
           @available_crop_rows_gateway = available_crop_rows_gateway
           @logger = logger
         end
@@ -24,7 +24,10 @@ module Domain
             return @output_port.on_not_found
           end
 
-          rest_plan_snapshot = @workbench_read_gateway.load_rest_plan_snapshot_by_plan_id(plan_id: plan_id)
+          rest_plan_snapshot = Mappers::CultivationPlanRestPlanSnapshotMapper.load_snapshot(
+            read_gateway: @rest_plan_read_gateway,
+            plan_id: plan_id
+          )
           available_crop_rows = @available_crop_rows_gateway.list_by_farm_region(
             auth: auth,
             farm_region: rest_plan_snapshot.farm_region

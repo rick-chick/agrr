@@ -19,6 +19,7 @@ module Domain
           cultivation_plan_gateway:,
           anchors_resolver:,
           climate_progress_gateway:,
+          crop_agrr_requirement_builder:,
           clock:,
           translator:
         )
@@ -34,6 +35,7 @@ module Domain
           @cultivation_plan_gateway = cultivation_plan_gateway
           @anchors_resolver = anchors_resolver
           @climate_progress_gateway = climate_progress_gateway
+          @crop_agrr_requirement_builder = crop_agrr_requirement_builder
           @clock = clock
           @translator = translator
         end
@@ -174,10 +176,13 @@ module Domain
             context.start_date,
             context.completion_date
           )
+          crop_record = @crop_gateway.find_crop_record_with_stages!(crop_entity.id)
+          crop_requirement = @crop_agrr_requirement_builder.build_from(crop_record)
           progress_result = @climate_progress_gateway.calculate_progress(
-            crop_entity: crop_entity,
+            crop_requirement: crop_requirement,
             start_date: context.start_date,
-            weather_payload: weather_payload
+            weather_payload: weather_payload,
+            crop: crop_record
           )
 
           Mappers::FieldCultivationClimateDataMapper.build_output(

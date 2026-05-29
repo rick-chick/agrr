@@ -45,7 +45,10 @@ module LibDomainActiveRecordReferenceScanner
 
   FORBIDDEN_PATTERNS = [
     /\bActiveRecord::/,
-    /\bApplicationRecord\b/
+    /\bApplicationRecord\b/,
+    /\bAdapters::/,
+    /\bRails\.(?!root)/, # Rails.logger 等の直参照（コメントは executable_source で除外済み）
+    /\bData\.define\s*\(/ # docs/migration/lib-domain-rust/ARCHITECTURE.md — Rust struct 1:1 前提
   ].freeze
 
   module_function

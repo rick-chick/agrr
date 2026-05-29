@@ -8,7 +8,7 @@ module Domain
         def initialize(
           output_port:,
           user_id:,
-          private_read_gateway:,
+          rest_plan_read_gateway:,
           cultivation_plan_gateway:,
           crop_gateway:,
           translator:,
@@ -17,7 +17,7 @@ module Domain
         )
           @output_port = output_port
           @user_id = user_id
-          @private_read_gateway = private_read_gateway
+          @rest_plan_read_gateway = rest_plan_read_gateway
           @cultivation_plan_gateway = cultivation_plan_gateway
           @crop_gateway = crop_gateway
           @translator = translator
@@ -28,7 +28,10 @@ module Domain
         def call(plan_id:)
           user = @user_lookup.find(@user_id)
           plan_id = plan_id.to_i
-          rest_plan_snapshot = @private_read_gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan_id)
+          rest_plan_snapshot = Mappers::CultivationPlanRestPlanSnapshotMapper.load_snapshot(
+            read_gateway: @rest_plan_read_gateway,
+            plan_id: plan_id
+          )
           snapshot = Mappers::PrivatePlanReadSnapshotMapper.from_snapshot(rest_plan_snapshot)
           plan = @cultivation_plan_gateway.find_by_id(plan_id)
           if Policies::PrivateCultivationPlanAccessPolicy.access_denied?(plan: plan, user_id: user.id)

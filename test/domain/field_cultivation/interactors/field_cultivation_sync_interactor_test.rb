@@ -12,21 +12,38 @@ module Domain
         end
 
         class RecordingSyncGateway < Gateways::FieldCultivationSyncGateway
-          attr_reader :applied_syncs, :loaded_plan_ids
+          attr_reader :applied_syncs
 
-          def initialize(plan_snapshot:)
-            @plan_snapshot = plan_snapshot
+          def initialize
             @applied_syncs = []
-            @loaded_plan_ids = []
-          end
-
-          def find_sync_plan_snapshot_by_plan_id(plan_id:)
-            @loaded_plan_ids << plan_id
-            @plan_snapshot
           end
 
           def sync_by_plan_id(plan_id:, sync_apply:)
             @applied_syncs << [ plan_id, sync_apply ]
+          end
+        end
+
+        class RecordingSyncPlanReadGateway < Gateways::FieldCultivationSyncPlanReadGateway
+          attr_reader :loaded_plan_ids
+
+          def initialize(plan_snapshot:)
+            @plan_snapshot = plan_snapshot
+            @loaded_plan_ids = []
+          end
+
+          def list_sync_plan_field_ids_by_plan_id(plan_id:)
+            @loaded_plan_ids << plan_id
+            @plan_snapshot.plan_fields_by_id.keys
+          end
+
+          def list_sync_plan_crop_entries_by_plan_id(plan_id:)
+            @loaded_plan_ids << plan_id
+            @plan_snapshot.plan_crop_rows
+          end
+
+          def list_sync_existing_field_cultivation_entries_by_plan_id(plan_id:)
+            @loaded_plan_ids << plan_id
+            @plan_snapshot.existing_field_cultivations_by_id.values
           end
         end
 
@@ -60,35 +77,44 @@ module Domain
               )
             }
           )
-          gateway = RecordingSyncGateway.new(plan_snapshot: plan_snapshot)
-          interactor = FieldCultivationSyncInteractor.new(sync_gateway: gateway, logger: FakeLogger.new)
+          sync_gateway = RecordingSyncGateway.new
+          read_gateway = RecordingSyncPlanReadGateway.new(plan_snapshot: plan_snapshot)
+          interactor = FieldCultivationSyncInteractor.new(
+            sync_gateway: sync_gateway,
+            sync_plan_read_gateway: read_gateway,
+            logger: FakeLogger.new
+          )
 
           interactor.call(plan_id: 1, sync_input: sync_input)
 
-          assert_equal [ 1 ], gateway.loaded_plan_ids
-          assert_equal 1, gateway.applied_syncs.size
-          plan_id, sync_apply = gateway.applied_syncs.first
+          assert_equal [ 1, 1, 1 ], read_gateway.loaded_plan_ids
+          assert_equal 1, sync_gateway.applied_syncs.size
+          plan_id, sync_apply = sync_gateway.applied_syncs.first
           assert_equal 1, plan_id
           assert_instance_of Dtos::FieldCultivationSyncApply, sync_apply
         end
 
         test "does not call sync when policy validation fails" do
           sync_input = Dtos::FieldCultivationSyncInput.new(field_schedules: [])
-          gateway = RecordingSyncGateway.new(
-            plan_snapshot: Dtos::FieldCultivationSyncPlanSnapshot.new(
-              plan_id: 1,
-              plan_fields_by_id: {},
-              plan_crop_rows: [],
-              existing_field_cultivations_by_id: {}
-            )
+          plan_snapshot = Dtos::FieldCultivationSyncPlanSnapshot.new(
+            plan_id: 1,
+            plan_fields_by_id: {},
+            plan_crop_rows: [],
+            existing_field_cultivations_by_id: {}
           )
-          interactor = FieldCultivationSyncInteractor.new(sync_gateway: gateway, logger: FakeLogger.new)
+          sync_gateway = RecordingSyncGateway.new
+          read_gateway = RecordingSyncPlanReadGateway.new(plan_snapshot: plan_snapshot)
+          interactor = FieldCultivationSyncInteractor.new(
+            sync_gateway: sync_gateway,
+            sync_plan_read_gateway: read_gateway,
+            logger: FakeLogger.new
+          )
 
           assert_raises(Errors::FieldCultivationSyncEmptyError) do
             interactor.call(plan_id: 1, sync_input: sync_input)
           end
-          assert_empty gateway.loaded_plan_ids
-          assert_empty gateway.applied_syncs
+          assert_empty read_gateway.loaded_plan_ids
+          assert_empty sync_gateway.applied_syncs
         end
       end
     end

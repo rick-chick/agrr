@@ -6,7 +6,7 @@ use crate::cultivation_plan::errors::{
     AllocationExecutionError, AllocationNoCandidatesError, CultivationPlanCropMissingError,
 };
 use crate::cultivation_plan::gateways::{
-    CultivationPlanOptimizationGateway, CultivationPlanPrivateReadGateway,
+    CultivationPlanOptimizationGateway, CultivationPlanPrivateSnapshotReadGateway,
     PlanAllocationAllocateGateway,
 };
 use crate::shared::exceptions::RecordInvalidError;
@@ -38,7 +38,7 @@ impl<'a, A, C, L, O, P> CultivationPlanOptimizeInteractor<'a, A, C, L, O, P>
 where
     A: PlanAllocationAllocateGateway,
     C: CultivationPlanOptimizationGateway,
-    P: CultivationPlanPrivateReadGateway,
+    P: CultivationPlanPrivateSnapshotReadGateway,
     L: LoggerPort,
     O: ClockPort,
 {

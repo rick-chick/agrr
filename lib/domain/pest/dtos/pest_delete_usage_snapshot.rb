@@ -3,7 +3,14 @@
 module Domain
   module Pest
     module Dtos
-      PestDeleteUsageSnapshot = Data.define(:pesticides_count)
+      class PestDeleteUsageSnapshot
+        attr_reader :pesticides_count
+
+        def initialize(pesticides_count:)
+          @pesticides_count = pesticides_count
+          freeze
+        end
+      end
     end
   end
 end

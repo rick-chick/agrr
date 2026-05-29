@@ -1,7 +1,9 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::PrivateOwnedPlanDetailInteractor`
 
 use crate::crop::gateways::CropGateway;
-use crate::cultivation_plan::gateways::{CultivationPlanGateway, CultivationPlanPrivateReadGateway};
+use crate::cultivation_plan::gateways::{
+    CultivationPlanGateway, CultivationPlanPrivateSnapshotReadGateway,
+};
 use crate::cultivation_plan::mappers::private_plan_detail_to_detail;
 use crate::cultivation_plan::policies::private_cultivation_plan_access_policy;
 use crate::cultivation_plan::ports::PrivateOwnedPlanDetailOutputPort;
@@ -26,7 +28,7 @@ pub struct PrivateOwnedPlanDetailInteractor<'a, O, PR, CP, CG, U, T, L> {
 impl<'a, O, PR, CP, CG, U, T, L> PrivateOwnedPlanDetailInteractor<'a, O, PR, CP, CG, U, T, L>
 where
     O: PrivateOwnedPlanDetailOutputPort,
-    PR: CultivationPlanPrivateReadGateway,
+    PR: CultivationPlanPrivateSnapshotReadGateway,
     CP: CultivationPlanGateway,
     CG: CropGateway,
     U: UserLookupGateway,

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # lib/domain を Rails なしで読み込み、ドメインロジックのみをテストする。
-# lib/domain の AR 混入は test/domain/lib_domain_no_active_record_references_test.rb が静的スキャンで検知する。
+# lib/domain の AR / Data.define 混入は test/domain/lib_domain_no_active_record_references_test.rb が静的スキャンで検知する（docs/migration/lib-domain-rust/ARCHITECTURE.md）。
 # 実行時に AR 定数を解決するコードパスは、Rails 未起動のため NameError 等で落ちる場合がある（Policy 直叩きはテストで stub されがち）。
 #
 # ActiveSupport に依存しない（core_ext / testing の require なし）。

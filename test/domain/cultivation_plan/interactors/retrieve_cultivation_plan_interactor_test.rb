@@ -20,7 +20,7 @@ module Domain
           RetrieveCultivationPlanInteractor.new(
             output_port: @output,
             plan_gateway: @plan_gateway,
-            workbench_read_gateway: @read_gateway,
+            rest_plan_read_gateway: @read_gateway,
             available_crop_rows_gateway: @available_gateway,
             logger: @logger
           )
@@ -69,7 +69,10 @@ module Domain
             plan_entity(id: 3, user_id: nil, plan_type: "public")
           )
           rest_plan_snapshot = stub(farm_region: "jp")
-          @read_gateway.expects(:load_rest_plan_snapshot_by_plan_id).with(plan_id: 3).returns(rest_plan_snapshot)
+          Mappers::CultivationPlanRestPlanSnapshotMapper.expects(:load_snapshot).with(
+            read_gateway: @read_gateway,
+            plan_id: 3
+          ).returns(rest_plan_snapshot)
           @available_gateway.expects(:list_by_farm_region).with(auth: @public_auth, farm_region: "jp").returns(crop_rows)
           Mappers::CultivationPlanWorkbenchSnapshotMapper.expects(:from_snapshots).with(
             rest_plan_snapshot: rest_plan_snapshot,
@@ -99,7 +102,7 @@ module Domain
           @plan_gateway.expects(:find_by_id).with(3).returns(
             plan_entity(id: 3, user_id: 5, plan_type: "private")
           )
-          @read_gateway.expects(:load_rest_plan_snapshot_by_plan_id).never
+          Mappers::CultivationPlanRestPlanSnapshotMapper.expects(:load_snapshot).never
           @available_gateway.expects(:list_by_farm_region).never
           @output.expects(:on_not_found)
 
@@ -111,7 +114,7 @@ module Domain
           @plan_gateway.expects(:find_by_id).with(3).returns(
             plan_entity(id: 3, user_id: 2, plan_type: "private")
           )
-          @read_gateway.expects(:load_rest_plan_snapshot_by_plan_id).never
+          Mappers::CultivationPlanRestPlanSnapshotMapper.expects(:load_snapshot).never
           @available_gateway.expects(:list_by_farm_region).never
           @output.expects(:on_not_found)
 
@@ -120,7 +123,7 @@ module Domain
 
         test "dispatches not_found when plan entity missing without loading workbench" do
           @plan_gateway.expects(:find_by_id).with(3).raises(Domain::Shared::Exceptions::RecordNotFound)
-          @read_gateway.expects(:load_rest_plan_snapshot_by_plan_id).never
+          Mappers::CultivationPlanRestPlanSnapshotMapper.expects(:load_snapshot).never
           @available_gateway.expects(:list_by_farm_region).never
           @output.expects(:on_not_found)
 
@@ -131,7 +134,7 @@ module Domain
           @plan_gateway.expects(:find_by_id).returns(
             plan_entity(id: 3, user_id: nil, plan_type: "public")
           )
-          @read_gateway.expects(:load_rest_plan_snapshot_by_plan_id).raises(StandardError.new("read failed"))
+          Mappers::CultivationPlanRestPlanSnapshotMapper.expects(:load_snapshot).raises(StandardError.new("read failed"))
           @logger.expects(:error).with(includes("read failed"))
           @output.expects(:on_unexpected).with(message: "read failed")
 

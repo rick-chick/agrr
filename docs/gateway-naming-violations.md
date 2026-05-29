@@ -44,7 +44,7 @@
 |---|---|
 | 旧クラス | `FieldCultivationClimateGateway`（単一巨大 gateway） |
 | 解消 | `FieldCultivationClimateSourceActiveRecordGateway` / `FieldCultivationClimateProgress*Gateway` + `FieldCultivationClimateDataInteractor`。委譲のみの `FieldCultivationClimateActiveRecordGateway` は削除（2026-05-28） |
-| 残（§P4） | `climate_progress` read・`sync` snapshot 組立など BC 内の別 read（[gateway-domain-logic-migration.md §P4 移行候補](./gateway-domain-logic-migration.md#p4---厚い-read-snapshot-組立移行候補)）。climate source read は narrow snapshot gateway へ移行済み（`plan_access` / `climate_source` / `api_summary`、2026-05-29） |
+| 残（§P4） | なし（field_cultivation: sync read / climate_progress、2026-05-29）。climate source read は移行済み（`plan_access` / `climate_source` / `api_summary`） |
 
 ### ~~A-4. `agrr_prediction_gateway_adapter.rb`~~（解消済み）
 | 項目 | 値 |
@@ -154,7 +154,7 @@
 | C-2 | `lib/domain/farm/gateways/farm_gateway.rb` | 認可チェック(`find_authorized_*`)、プレゼンター形状複合(`find_authorized_farm_loaded_bundle!`, `farm_list_rows_bundle`) | インタラクターに分割 |
 | C-3 | `lib/domain/pest/gateways/pest_gateway.rb` | 認可チェック、HTMLフォーム準備、マルチエンティティ関連付け | インタラクターに分割 |
 | C-4 | `lib/domain/cultivation_plan/gateways/cultivation_plan_gateway.rb` | 認可チェック、プレゼンター形状複合(`find_*_bundle!`, `*_snapshot`)、マルチエンティティ操作 | インタラクターに分割 |
-| C-5 | ~~`field_cultivation_climate_gateway.rb`~~ → `field_cultivation_climate_source_active_record_gateway.rb` 等 | **解消（read）**: `FieldCultivationClimateDataInteractor` + narrow snapshot gateways（`FieldCultivationPlanAccessSnapshot` / `FieldCultivationClimateSourceSnapshot` / `FieldCultivationApiSummarySnapshot`）。旧 `find_plan_access` / `find_climate_source` / `find_api_summary` は削除（2026-05-29） | 残: `climate_progress`・sync snapshot 等は [§P4 移行候補](./gateway-domain-logic-migration.md#p4---厚い-read-snapshot-組立移行候補) |
+| C-5 | ~~`field_cultivation_climate_gateway.rb`~~ → `field_cultivation_climate_source_active_record_gateway.rb` 等 | **解消**: climate source read + `climate_progress`（crop requirement は Interactor + builder）+ sync plan read 3 分割（2026-05-29 §P4） | — |
 | ~~C-6~~ | ~~`masters_api_session_resolve_*`~~ | **解消**: `MastersApiCredentialsResolveInteractor` + 狭い principal gateway 2 本 | — |
 
 ---

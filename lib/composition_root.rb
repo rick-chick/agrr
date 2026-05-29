@@ -251,7 +251,12 @@ module CompositionRoot
 
     def plan_allocation_adjust_agrr_allocation_configs(plan_id:)
       log = logger
-      snapshot = plan_allocation_adjust_read_gateway.find_adjust_read_snapshot_by_plan_id(plan_id: plan_id)
+      snapshot = Domain::CultivationPlan::Mappers::PlanAllocationAdjustReadSnapshotMapper.load_snapshot(
+        read_gateway: plan_allocation_adjust_read_gateway,
+        crop_gateway: crop_gateway,
+        crop_agrr_requirement_builder: crop_agrr_requirement_builder,
+        plan_id: plan_id
+      )
       {
         current_allocation: Domain::CultivationPlan::Mappers::PlanAllocationAdjustAgrrPayloadMapper.to_current_allocation(
           snapshot: snapshot,
@@ -270,6 +275,11 @@ module CompositionRoot
       }
     end
 
+    def field_cultivation_sync_plan_read_gateway
+      @field_cultivation_sync_plan_read_gateway ||=
+        Adapters::FieldCultivation::Gateways::FieldCultivationSyncPlanReadActiveRecordGateway.new
+    end
+
     def field_cultivation_sync_gateway
       @field_cultivation_sync_gateway ||= Adapters::FieldCultivation::Gateways::FieldCultivationSyncActiveRecordGateway.new(
         logger: logger,
@@ -280,6 +290,7 @@ module CompositionRoot
     def build_field_cultivation_sync_interactor
       Domain::FieldCultivation::Interactors::FieldCultivationSyncInteractor.new(
         sync_gateway: field_cultivation_sync_gateway,
+        sync_plan_read_gateway: field_cultivation_sync_plan_read_gateway,
         logger: logger
       )
     end
@@ -296,9 +307,19 @@ module CompositionRoot
         Adapters::CultivationPlan::Gateways::CultivationPlanFieldMutationActiveRecordGateway.new
     end
 
-    def cultivation_plan_rest_workbench_read_gateway
-      @cultivation_plan_rest_workbench_read_gateway ||=
-        Adapters::CultivationPlan::Gateways::CultivationPlanWorkbenchReadActiveRecordGateway.new
+    def cultivation_plan_rest_plan_read_gateway
+      @cultivation_plan_rest_plan_read_gateway ||=
+        Adapters::CultivationPlan::Gateways::CultivationPlanRestPlanReadActiveRecordGateway.new
+    end
+
+    def cultivation_plan_task_schedule_timeline_read_gateway
+      @cultivation_plan_task_schedule_timeline_read_gateway ||=
+        Adapters::CultivationPlan::Gateways::TaskScheduleTimelineReadActiveRecordGateway.new
+    end
+
+    def cultivation_plan_optimization_plan_read_gateway
+      @cultivation_plan_optimization_plan_read_gateway ||=
+        Adapters::CultivationPlan::Gateways::OptimizationPlanReadActiveRecordGateway.new
     end
 
     def cultivation_plan_rest_plan_crop_gateway
@@ -357,6 +378,8 @@ module CompositionRoot
         clock: clock,
         plan_gateway: cultivation_plan_gateway,
         plan_allocation_adjust_read_gateway: plan_allocation_adjust_read_gateway,
+        crop_gateway: crop_gateway,
+        crop_agrr_requirement_builder: crop_agrr_requirement_builder,
         weather_prediction_gateway: adjust_weather_prediction_gateway,
         plan_allocation_adjust_gateway: plan_allocation_adjust_gateway,
         field_cultivation_sync: build_field_cultivation_sync_interactor,
@@ -369,8 +392,7 @@ module CompositionRoot
 
     def plan_allocation_adjust_read_gateway
       @plan_allocation_adjust_read_gateway ||= Adapters::CultivationPlan::Gateways::PlanAllocationAdjustReadActiveRecordGateway.new(
-        weather_data_gateway: weather_data_gateway,
-        crop_agrr_requirement_builder: crop_agrr_requirement_builder
+        weather_data_gateway: weather_data_gateway
       )
     end
 
@@ -927,6 +949,7 @@ module CompositionRoot
         cultivation_plan_gateway: cultivation_plan_gateway,
         anchors_resolver: anchors_resolver,
         climate_progress_gateway: field_cultivation_climate_progress_gateway,
+        crop_agrr_requirement_builder: crop_agrr_requirement_builder,
         clock: clock,
         translator: translator
       )

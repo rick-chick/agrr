@@ -11,7 +11,7 @@ module Api
             output_port: presenter,
             user_id: current_user.id,
             plan_id: params[:id],
-            private_read_gateway: CompositionRoot.cultivation_plan_private_read_gateway,
+            timeline_read_gateway: CompositionRoot.cultivation_plan_task_schedule_timeline_read_gateway,
             cultivation_plan_gateway: CompositionRoot.cultivation_plan_gateway,
             translator: CompositionRoot.translator,
             logger: CompositionRoot.logger,

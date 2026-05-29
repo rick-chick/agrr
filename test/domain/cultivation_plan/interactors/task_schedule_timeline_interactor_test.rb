@@ -23,19 +23,6 @@ module Domain
         FieldRow = Struct.new(:field_cultivation_id, :task_options, keyword_init: true)
         TaskOption = Struct.new(:template_id, keyword_init: true)
 
-        class FakePrivateReadGateway
-          attr_reader :received_plan_id
-
-          def initialize(read_model)
-            @read_model = read_model
-          end
-
-          def find_task_schedule_timeline_snapshot_by_plan_id(plan_id:)
-            @received_plan_id = plan_id
-            @read_model
-          end
-        end
-
         class FakeCultivationPlanGateway
           def initialize(plan_entity)
             @plan_entity = plan_entity
@@ -105,10 +92,14 @@ module Domain
             fields: [ FieldRow.new(field_cultivation_id: 7, task_options: [ TaskOption.new(template_id: 31) ]) ],
             scheduled_dates: [ Date.new(2025, 1, 10) ]
           )
-          private_read_gateway = FakePrivateReadGateway.new(read_model)
+          timeline_read_gateway = mock
+          Mappers::TaskScheduleTimelineReadSnapshotMapper.expects(:load_snapshot).with(
+            read_gateway: timeline_read_gateway,
+            plan_id: @plan_id
+          ).returns(read_model)
 
           build_interactor(
-            private_read_gateway: private_read_gateway,
+            timeline_read_gateway: timeline_read_gateway,
             user_lookup: FakeUserLookup.new(user: Struct.new(:id).new(@user_id))
           ).call
 
@@ -123,25 +114,26 @@ module Domain
           assert_includes dto.scheduled_dates, Date.new(2025, 1, 10)
         end
 
-        test "passes plan_id to the private read gateway" do
+        test "passes plan_id to timeline read snapshot load" do
           read_model = ReadModel.new(plan: PlanRef.new(id: @plan_id), fields: [], scheduled_dates: [])
-          private_read_gateway = FakePrivateReadGateway.new(read_model)
+          timeline_read_gateway = mock
+          Mappers::TaskScheduleTimelineReadSnapshotMapper.expects(:load_snapshot).with(
+            read_gateway: timeline_read_gateway,
+            plan_id: @plan_id
+          ).returns(read_model)
 
           build_interactor(
-            private_read_gateway: private_read_gateway,
+            timeline_read_gateway: timeline_read_gateway,
             user_lookup: FakeUserLookup.new(user: Struct.new(:id).new(@user_id))
           ).call
-
-          assert_equal @plan_id, private_read_gateway.received_plan_id
         end
 
         test "calls on_failure when the user cannot be resolved" do
-          private_read_gateway = FakePrivateReadGateway.new(
-            ReadModel.new(plan: nil, fields: [], scheduled_dates: [])
-          )
+          timeline_read_gateway = mock
+          Mappers::TaskScheduleTimelineReadSnapshotMapper.expects(:load_snapshot).never
 
           build_interactor(
-            private_read_gateway: private_read_gateway,
+            timeline_read_gateway: timeline_read_gateway,
             user_lookup: FakeUserLookup.new(raise_not_found: true)
           ).call
 
@@ -152,8 +144,8 @@ module Domain
         end
 
         test "calls on_failure when private plan access is denied" do
-          read_model = ReadModel.new(plan: PlanRef.new(id: @plan_id), fields: [], scheduled_dates: [])
-          private_read_gateway = FakePrivateReadGateway.new(read_model)
+          timeline_read_gateway = mock
+          Mappers::TaskScheduleTimelineReadSnapshotMapper.expects(:load_snapshot).never
           other_user_plan = Domain::CultivationPlan::Entities::CultivationPlanEntity.new(
             id: @plan_id,
             farm_id: 1,
@@ -163,25 +155,23 @@ module Domain
           )
 
           build_interactor(
-            private_read_gateway: private_read_gateway,
+            timeline_read_gateway: timeline_read_gateway,
             cultivation_plan_gateway: FakeCultivationPlanGateway.new(other_user_plan),
             user_lookup: FakeUserLookup.new(user: Struct.new(:id).new(@user_id))
           ).call
 
           assert_nil @output_port.success_dto
           assert_equal "t:plans.errors.not_found", @output_port.failure_dto.message
-          assert_nil private_read_gateway.received_plan_id,
-            "timeline read gateway must not run when access is denied"
         end
 
         private
 
-        def build_interactor(private_read_gateway:, user_lookup:, cultivation_plan_gateway: nil)
+        def build_interactor(timeline_read_gateway:, user_lookup:, cultivation_plan_gateway: nil)
           TaskScheduleTimelineInteractor.new(
             output_port: @output_port,
             user_id: @user_id,
             plan_id: @plan_id,
-            private_read_gateway: private_read_gateway,
+            timeline_read_gateway: timeline_read_gateway,
             cultivation_plan_gateway: cultivation_plan_gateway || FakeCultivationPlanGateway.new(@plan_entity),
             translator: @translator,
             logger: @logger,

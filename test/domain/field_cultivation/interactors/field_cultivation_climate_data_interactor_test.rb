@@ -45,7 +45,8 @@ module Domain
         end
 
         def build_interactor(fc_id:, source_gateway:, crop_gateway:, weather_data_gateway: nil, weather_prediction_gateway: nil,
-                             prediction_gateway: nil, cultivation_plan_gateway: nil, anchors_resolver: nil, progress_gateway: nil)
+                             prediction_gateway: nil, cultivation_plan_gateway: nil, anchors_resolver: nil, progress_gateway: nil,
+                             crop_agrr_requirement_builder: nil)
           FieldCultivationClimateDataInteractor.new(
             output_port: nil,
             logger: SilencingLoggerStub.new,
@@ -59,9 +60,16 @@ module Domain
             cultivation_plan_gateway: cultivation_plan_gateway || Object.new,
             anchors_resolver: anchors_resolver || default_anchors_resolver,
             climate_progress_gateway: progress_gateway || Object.new,
+            crop_agrr_requirement_builder: crop_agrr_requirement_builder || default_crop_agrr_requirement_builder,
             clock: Struct.new(:today).new(Date.new(2026, 3, 1)),
             translator: translator_stub
           )
+        end
+
+        def default_crop_agrr_requirement_builder
+          builder = Object.new
+          builder.define_singleton_method(:build_from) { |crop_source| { "crop" => { "id" => crop_source.id } } }
+          builder
         end
 
         def default_anchors_resolver
@@ -80,6 +88,11 @@ module Domain
 
         def attach_crop_find_by_id_gateway(crop_gateway, crop_entity)
           crop_gateway.define_singleton_method(:find_by_id) do |crop_id|
+            raise Domain::Shared::Exceptions::RecordNotFound unless crop_id == crop_entity.id
+
+            crop_entity
+          end
+          crop_gateway.define_singleton_method(:find_crop_record_with_stages!) do |crop_id|
             raise Domain::Shared::Exceptions::RecordNotFound unless crop_id == crop_entity.id
 
             crop_entity

@@ -41,7 +41,9 @@ pub use cultivation_plan_gateway::CultivationPlanGateway;
 pub use cultivation_plan_optimization_gateway::CultivationPlanOptimizationGateway;
 pub use cultivation_plan_optimization_events_gateway::CultivationPlanOptimizationEventsGateway;
 pub use cultivation_plan_plan_crop_gateway::CultivationPlanPlanCropGateway;
-pub use cultivation_plan_private_read_gateway::CultivationPlanPrivateReadGateway;
+pub use cultivation_plan_private_read_gateway::{
+    CultivationPlanPrivateReadGateway, CultivationPlanPrivateSnapshotReadGateway,
+};
 pub use cultivation_plan_workbench_read_gateway::CultivationPlanWorkbenchReadGateway;
 pub use entry_schedule_crop_gateway::EntryScheduleCropGateway;
 pub use entry_schedule_optimization_gateway::EntryScheduleOptimizationGateway;

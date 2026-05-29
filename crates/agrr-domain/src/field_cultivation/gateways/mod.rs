@@ -4,6 +4,7 @@ mod field_cultivation_crop_gateway;
 mod field_cultivation_gateway;
 mod field_cultivation_plan_predicted_weather_gateway;
 mod field_cultivation_sync_gateway;
+mod field_cultivation_sync_plan_read_gateway;
 mod field_cultivation_weather_data_gateway;
 mod field_cultivation_weather_prediction_gateway;
 
@@ -13,6 +14,7 @@ pub use field_cultivation_crop_gateway::FieldCultivationCropGateway;
 pub use field_cultivation_gateway::FieldCultivationGateway;
 pub use field_cultivation_plan_predicted_weather_gateway::FieldCultivationPlanPredictedWeatherGateway;
 pub use field_cultivation_sync_gateway::FieldCultivationSyncGateway;
+pub use field_cultivation_sync_plan_read_gateway::FieldCultivationSyncPlanReadGateway;
 pub use field_cultivation_weather_data_gateway::FieldCultivationWeatherDataGateway;
 pub use field_cultivation_weather_prediction_gateway::{
     FieldCultivationPredictionGateway, FieldCultivationWeatherPredictionServiceGateway,

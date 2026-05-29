@@ -12,6 +12,31 @@ module Domain
           @scheduled_dates = scheduled_dates
         end
 
+        class FieldContextSnapshot
+          attr_reader :field_cultivation_id, :id, :name, :crop_name, :area_sqm, :crop_id, :task_options
+
+          def initialize(field_cultivation_id:, id:, name:, crop_name:, area_sqm:, crop_id:, task_options:)
+            @field_cultivation_id = field_cultivation_id
+            @id = id
+            @name = name
+            @crop_name = crop_name
+            @area_sqm = area_sqm
+            @crop_id = crop_id
+            @task_options = task_options
+            freeze
+          end
+        end
+
+        class ScheduleRowSnapshot
+          attr_reader :field_cultivation_id, :schedule
+
+          def initialize(field_cultivation_id:, schedule:)
+            @field_cultivation_id = field_cultivation_id
+            @schedule = schedule
+            freeze
+          end
+        end
+
         class PlanRead
           attr_reader :id, :display_name, :status, :planning_start_date, :planning_end_date, :timeline_generated_at,
                       :farm_display_name, :total_area

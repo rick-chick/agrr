@@ -28,7 +28,7 @@ module Adapters
         end
 
         def create(plan_id:, crop_entity:)
-          cultivation_plan = CultivationPlanRestPlanPreload.find_by_plan_id(plan_id: plan_id)
+          cultivation_plan = ::CultivationPlan.find(plan_id)
           crop = ::Crop.find(crop_entity.id)
 
           plan_crop = cultivation_plan.cultivation_plan_crops.create!(

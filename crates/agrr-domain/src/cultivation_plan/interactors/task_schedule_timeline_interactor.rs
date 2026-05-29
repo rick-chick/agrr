@@ -1,6 +1,8 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::TaskScheduleTimelineInteractor`
 
-use crate::cultivation_plan::gateways::{CultivationPlanGateway, CultivationPlanPrivateReadGateway};
+use crate::cultivation_plan::gateways::{
+    CultivationPlanGateway, CultivationPlanPrivateSnapshotReadGateway,
+};
 use crate::cultivation_plan::mappers::task_schedule_timeline_mapper::TaskScheduleTimelineMapper;
 use crate::cultivation_plan::ports::TaskScheduleTimelineOutputPort;
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
@@ -25,7 +27,7 @@ impl<'a, O, G, R, U, L, T, C> TaskScheduleTimelineInteractor<'a, O, G, R, U, L, 
 where
     O: TaskScheduleTimelineOutputPort,
     G: CultivationPlanGateway,
-    R: CultivationPlanPrivateReadGateway,
+    R: CultivationPlanPrivateSnapshotReadGateway,
     U: UserLookupGateway,
     L: LoggerPort,
     T: TranslatorPort,

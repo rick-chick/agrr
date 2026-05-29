@@ -7,22 +7,6 @@ module Adapters
           Domain::CultivationPlan::Gateways::CultivationPlanPrivateReadGateway
         PlanIndexPlanSnapshot = Domain::CultivationPlan::Dtos::PlanIndexPlanSnapshot
 
-        def find_plan_read_snapshot_by_plan_id(plan_id:)
-          Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
-            plan = CultivationPlanRestPlanPreload.find_by_plan_id(plan_id: plan_id)
-            Mappers::CultivationPlanRestPlanSnapshotMapper.from_cultivation_plan(plan)
-          end
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
-        def find_task_schedule_timeline_snapshot_by_plan_id(plan_id:)
-          load_result = TaskScheduleTimelinePreload.load(plan_id: plan_id)
-          Mappers::TaskScheduleTimelineSnapshotMapper.from_load_result(load_result)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
-        end
-
         def list_private_plan_index_plan_snapshots(user_id:)
           Adapters::Shared::MapArPersistenceErrors.with_mapped_ar_persistence_failure do
             plans = ::CultivationPlan
@@ -62,13 +46,6 @@ module Adapters
           return {} if id_list.empty?
 
           ::CultivationPlanField.where(cultivation_plan_id: id_list).group(:cultivation_plan_id).count
-        end
-
-        def find_optimization_plan_read_snapshot_by_plan_id(plan_id:)
-          plan = ::CultivationPlan.includes(farm: :weather_location).find(plan_id)
-          Mappers::OptimizationPlanReadSnapshotMapper.from_cultivation_plan(plan)
-        rescue ActiveRecord::RecordNotFound => e
-          raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end
       end
     end

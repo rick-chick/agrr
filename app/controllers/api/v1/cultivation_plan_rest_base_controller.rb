@@ -84,7 +84,7 @@ module Api
             translation_scope: api_cultivation_plan_translation_scope
           ),
           plan_gateway: CompositionRoot.cultivation_plan_gateway,
-          workbench_read_gateway: CompositionRoot.cultivation_plan_rest_workbench_read_gateway,
+          rest_plan_read_gateway: CompositionRoot.cultivation_plan_rest_plan_read_gateway,
           available_crop_rows_gateway: cultivation_plan_rest_plan_data_available_crop_rows_gateway,
           logger: cultivation_plan_rest_logger
         ).call(auth: cultivation_plan_rest_auth, plan_id: params[:id].to_i)

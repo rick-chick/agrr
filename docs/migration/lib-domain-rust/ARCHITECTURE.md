@@ -36,6 +36,16 @@ crates/
 
 ## 型の約束
 
+### Ruby `lib/domain` の DTO（Rust パリティの前提）
+
+**`Data.define` は使わない。** Read snapshot・row DTO は次の形に統一する（[`PROGRAM.md`](./PROGRAM.md) の「契約は既存のまま」＝フィールド名を変えず、**型の形**だけ揃える）。
+
+- `class` + `attr_reader` + keyword `initialize`（不変にしたい型は `freeze`）
+- 1 ファイル 1 主要 class が基本（`plan_allocation_adjust_read_plan_field_row_snapshot.rb` → `PlanAllocationAdjustReadPlanFieldRowSnapshot`）
+- モジュール内の `Rows::Foo = Data.define(...)` や匿名 Data バケツは **禁止**（Rust 側 `pub struct` への 1:1 対応・インベントリ・レビューが不能になる）
+
+Rust 化（G2）では、上記 class と**同じフィールド名**の `pub struct` を `crates/agrr-domain/src/<context>/dtos/` に置く。
+
 ### `User`
 
 Ruby の `user.admin?` / `user.id` / `anonymous?` を Rust では明示 struct にする。

@@ -5,6 +5,8 @@ use serde_json::Value;
 use time::Date;
 
 pub trait PlanAllocationAdjustReadGateway: Send + Sync {
+    /// Ruby: `find_adjust_plan_rows_snapshot_by_plan_id` + domain `load_snapshot`.
+    /// Rust interactor tests still stub the composite snapshot directly.
     fn find_adjust_read_snapshot_by_plan_id(
         &self,
         plan_id: i64,

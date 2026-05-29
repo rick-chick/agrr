@@ -3,55 +3,30 @@
 module Adapters
   module CultivationPlan
     module Mappers
-      # TaskScheduleTimelinePreload → Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot
-      module TaskScheduleTimelineSnapshotMapper
+      module TaskScheduleTimelineFieldReadSnapshotMapper
         Dtos = Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot
 
         module_function
 
-        # @param load_result [Adapters::CultivationPlan::Gateways::TaskScheduleTimelinePreload::LoadResult]
-        # @return [Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot]
-        def from_load_result(load_result)
-          plan = load_result.plan
-          plan_read = Dtos::PlanRead.new(
-            id: plan.id,
-            display_name: plan.display_name,
-            status: plan.status,
-            planning_start_date: plan.planning_start_date,
-            planning_end_date: plan.planning_end_date,
-            timeline_generated_at: load_result.timeline_generated_at,
-            farm_display_name: plan.farm.display_name,
-            total_area: plan.total_area
-          )
-
-          fields = load_result.schedules.group_by(&:field_cultivation).map do |field_cultivation, field_schedules|
-            field_from(field_cultivation, field_schedules)
-          end
-
-          Domain::CultivationPlan::Dtos::TaskScheduleTimelineSnapshot.new(
-            plan: plan_read,
-            fields: fields,
-            scheduled_dates: load_result.scheduled_dates
-          )
-        end
-
-        def field_from(field_cultivation, schedules)
-          task_options = task_options_from(field_cultivation)
-          schedule_reads = schedules.map { |schedule| schedule_from(schedule) }
-
-          Dtos::FieldRead.new(
+        def field_context_from(field_cultivation)
+          Dtos::FieldContextSnapshot.new(
+            field_cultivation_id: field_cultivation&.id,
             id: field_cultivation&.id,
             name: field_cultivation&.cultivation_plan_field&.name,
             crop_name: field_cultivation&.cultivation_plan_crop&.name ||
               field_cultivation&.cultivation_plan_crop&.crop&.name,
             area_sqm: field_cultivation&.area,
-            field_cultivation_id: field_cultivation&.id,
             crop_id: field_cultivation&.cultivation_plan_crop_id,
-            task_options: task_options,
-            schedules: schedule_reads
+            task_options: task_options_from(field_cultivation)
           )
         end
-        private_class_method :field_from
+
+        def schedule_row_from(schedule)
+          Dtos::ScheduleRowSnapshot.new(
+            field_cultivation_id: schedule.field_cultivation_id,
+            schedule: schedule_from(schedule)
+          )
+        end
 
         def schedule_from(schedule)
           items = schedule.task_schedule_items.map { |item| item_from(item, schedule.field_cultivation_id) }
@@ -111,7 +86,8 @@ module Adapters
             Dtos::TaskOptionRead.new(
               template_id: template.id,
               name: template.name,
-              task_type: template.task_type || TaskScheduleItem::FIELD_WORK_TYPE,
+              task_type: template.task_type ||
+                Domain::AgriculturalTask::Constants::ScheduleItemTypes::FIELD_WORK,
               agricultural_task_id: template.agricultural_task_id,
               description: template.description,
               weather_dependency: template.weather_dependency,

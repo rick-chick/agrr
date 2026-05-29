@@ -10,7 +10,19 @@ module Domain
 
         module_function
 
-        # @param plan_rows_snapshot [Domain::CultivationPlan::Dtos::PlanAllocationAdjustReadPlanRowsSnapshot::Plan]
+        def load_snapshot(read_gateway:, crop_gateway:, crop_agrr_requirement_builder:, plan_id:)
+          plan_rows = PlanAllocationAdjustReadPlanRowsSnapshotMapper.load_plan_rows(
+            read_gateway: read_gateway,
+            plan_id: plan_id
+          )
+          agrr_builders = plan_rows.plan_crops.map do |plan_crop_row|
+            crop_id = plan_crop_row.crop_id
+            -> { crop_agrr_requirement_builder.build_from(crop_gateway.find_crop_record_with_stages!(crop_id)) }
+          end
+          from_snapshots(plan_rows_snapshot: plan_rows, plan_crop_agrr_builders: agrr_builders)
+        end
+
+        # @param plan_rows_snapshot [Domain::CultivationPlan::Dtos::PlanAllocationAdjustReadPlanRowsSnapshot]
         # @param plan_crop_agrr_builders [Array<#call>] plan_rows_snapshot.plan_crops と同順
         def from_snapshots(plan_rows_snapshot:, plan_crop_agrr_builders:)
           plan_field_snapshots = plan_rows_snapshot.plan_fields.map do |field|

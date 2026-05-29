@@ -4,8 +4,6 @@ require "test_helper"
 
 class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecordGatewayTest < ActiveSupport::TestCase
   PlanIndexPlanSnapshot = Domain::CultivationPlan::Dtos::PlanIndexPlanSnapshot
-  RestPlanSnapshot = Domain::CultivationPlan::Dtos::CultivationPlanRestPlanSnapshot
-
   def setup
     @gateway = Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecordGateway.new
   end
@@ -55,45 +53,4 @@ class Adapters::CultivationPlan::Gateways::CultivationPlanPrivateReadActiveRecor
     assert_nil fields_count_hash[plan_b.id]
   end
 
-  test "find_plan_read_snapshot_by_plan_id returns CultivationPlanRestPlanSnapshot" do
-    user = create(:user)
-    farm = create(:farm, user: user)
-    plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private", status: "completed")
-
-    snapshot = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
-
-    assert_instance_of RestPlanSnapshot, snapshot
-    assert_equal plan.id, snapshot.id
-    assert_equal user.id, snapshot.user_id
-    assert_equal "private", snapshot.plan_type
-  end
-
-  test "find_plan_read_snapshot_by_plan_id returns snapshot for plan owned by another user without scoping" do
-    owner = create(:user)
-    other = create(:user)
-    farm = create(:farm, user: owner)
-    plan = create(:cultivation_plan, farm: farm, user: owner, plan_type: "private")
-
-    snapshot = @gateway.find_plan_read_snapshot_by_plan_id(plan_id: plan.id)
-
-    assert_equal plan.id, snapshot.id
-    assert other.id != owner.id
-  end
-
-  test "find_plan_read_snapshot_by_plan_id raises domain RecordNotFound when id missing" do
-    assert_raises(Domain::Shared::Exceptions::RecordNotFound) do
-      @gateway.find_plan_read_snapshot_by_plan_id(plan_id: 9_999_999)
-    end
-  end
-
-  test "find_optimization_plan_read_snapshot_by_plan_id round-trips persisted plan" do
-    user = create(:user)
-    farm = create(:farm, user: user)
-    plan = create(:cultivation_plan, farm: farm, user: user, plan_type: "private")
-
-    snapshot = @gateway.find_optimization_plan_read_snapshot_by_plan_id(plan_id: plan.id)
-
-    assert_instance_of Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot, snapshot
-    assert_equal plan.id, snapshot.plan_id
-  end
 end

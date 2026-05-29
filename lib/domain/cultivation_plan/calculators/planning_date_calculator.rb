@@ -4,14 +4,6 @@ module Domain
   module CultivationPlan
     module Calculators
       class PlanningDateCalculator
-        # @deprecated plan_year ベースの 2 年窓（後方互換）
-        def self.calculate_planning_dates_for_year(plan_year)
-          {
-            start_date: Date.new(plan_year, 1, 1),
-            end_date: Date.new(plan_year + 1, 12, 31)
-          }
-        end
-
         # @param as_of [Date]
         def self.calculate_public_planning_dates(as_of:)
           {
@@ -91,13 +83,6 @@ module Domain
           {
             start_date: Date.new(plan_year, 1, 1),
             end_date: Date.new(plan_year + 1, 12, 31)
-          }
-        end
-
-        def self.calculate_public_planning_dates(as_of:)
-          {
-            start_date: as_of,
-            end_date: Date.new(as_of.year + 1, 12, 31)
           }
         end
 
