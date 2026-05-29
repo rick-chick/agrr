@@ -6,15 +6,8 @@ module Domain
   module FieldCultivation
     module Mappers
       class FieldCultivationApiUpdateOutputMapperTest < DomainLibTestCase
-        Wire = Data.define(
-          :field_cultivation_id,
-          :start_date,
-          :completion_date,
-          :cultivation_days
-        )
-
-        def sample_wire(cultivation_days: 90)
-          Wire.new(
+        def sample_snapshot(cultivation_days: 90)
+          Dtos::FieldCultivationApiUpdateOutputSnapshot.new(
             field_cultivation_id: 7,
             start_date: Date.new(2026, 5, 1),
             completion_date: Date.new(2026, 7, 30),
@@ -23,9 +16,9 @@ module Domain
         end
 
         test "from_snapshot maps schedule fields to FieldCultivationApiUpdateOutput" do
-          wire = sample_wire
+          snapshot = sample_snapshot
 
-          dto = FieldCultivationApiUpdateOutputMapper.from_snapshot(wire)
+          dto = FieldCultivationApiUpdateOutputMapper.from_snapshot(snapshot)
 
           assert_instance_of Dtos::FieldCultivationApiUpdateOutput, dto
           assert_equal 7, dto.field_cultivation_id
@@ -37,9 +30,9 @@ module Domain
         end
 
         test "from_snapshot preserves nil cultivation_days" do
-          wire = sample_wire(cultivation_days: nil)
+          snapshot = sample_snapshot(cultivation_days: nil)
 
-          dto = FieldCultivationApiUpdateOutputMapper.from_snapshot(wire)
+          dto = FieldCultivationApiUpdateOutputMapper.from_snapshot(snapshot)
 
           assert_nil dto.cultivation_days
         end

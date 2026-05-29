@@ -16,15 +16,13 @@ module Domain
           task_schedule_gateway:,
           clock:,
           cultivation_plan_gateway:,
-          task_schedule_read_gateway:,
-          crop_agrr_requirement_builder:
+          task_schedule_read_gateway:
         )
           @progress_gateway = progress_gateway
           @task_schedule_gateway = task_schedule_gateway
           @clock = clock
           @cultivation_plan_gateway = cultivation_plan_gateway
           @task_schedule_read_gateway = task_schedule_read_gateway
-          @crop_agrr_requirement_builder = crop_agrr_requirement_builder
         end
 
         def generate!(cultivation_plan_id:)
@@ -50,8 +48,7 @@ module Domain
                     :task_schedule_gateway,
                     :clock,
                     :cultivation_plan_gateway,
-                    :task_schedule_read_gateway,
-                    :crop_agrr_requirement_builder
+                    :task_schedule_read_gateway
 
         def build_generation_context(cultivation_plan_id)
           plan_row = @task_schedule_read_gateway.find_plan_row(plan_id: cultivation_plan_id)
@@ -68,8 +65,7 @@ module Domain
             hash[crop_id] = @task_schedule_read_gateway.list_crop_task_schedule_blueprint_rows(crop_id: crop_id)
           end
           agrr_requirement_by_crop_id = crop_ids.each_with_object({}) do |crop_id, hash|
-            source = @task_schedule_read_gateway.find_crop_agrr_requirement_source(crop_id: crop_id)
-            hash[crop_id] = @crop_agrr_requirement_builder.build_from(source)
+            hash[crop_id] = @task_schedule_read_gateway.build_crop_agrr_requirement(crop_id: crop_id)
           end
 
           Domain::CultivationPlan::Mappers::TaskScheduleGenerationContextMapper.assemble(

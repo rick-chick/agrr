@@ -245,7 +245,7 @@ When moving **thick adapter assembly** (parent + child loaded and merged in one 
 - Gateway interface or Interactor methods named `*_wire_*` or domain mappers `from_wire`.
 - Extra adapter mapping stages between AR and the domain read snapshot when a single snapshot mapper suffices.
 
-**Reference (target):** `FieldCultivationPreloadedReadBundleMapper.from_snapshots` + gateways returning `FieldCultivationPlanAccessSnapshot` / `FieldCultivationClimateSourceSnapshot` (adapter: `FieldCultivationClimateSourceSnapshotMapper`). **Workbench (target):** `plan_gateway.find_by_id` → Policy → `workbench_read_gateway.load_rest_plan_snapshot_by_plan_id` → `available_crop_rows_gateway.list_by_farm_region` → `CultivationPlanWorkbenchSnapshotMapper.from_snapshots` (adapter: `CultivationPlanRestPlanSnapshotMapper` — AR → domain snapshot).
+**Reference (target):** separate gateway calls returning `FieldCultivationPlanAccessSnapshot` / `FieldCultivationClimateSourceSnapshot` / `FieldCultivationApiSummarySnapshot` (adapter: `FieldCultivationClimateSourceSnapshotMapper`, `FieldCultivationApiSummarySnapshotMapper`); domain `FieldCultivationApiSummaryMapper.from_snapshot` for output DTO. **Workbench (target):** `plan_gateway.find_by_id` → Policy → `workbench_read_gateway.load_rest_plan_snapshot_by_plan_id` → `available_crop_rows_gateway.list_by_farm_region` → `CultivationPlanWorkbenchSnapshotMapper.from_snapshots` (adapter: `CultivationPlanRestPlanSnapshotMapper` — AR → domain snapshot).
 
 ##### Anti-pattern: thick adapter assembly
 

@@ -22,12 +22,17 @@ module Domain
           )
 
           gateway = Object.new
-          api_summary_snapshot = Struct.new(
-            :id, :field_name, :crop_name, :area, :start_date, :completion_date,
-            :cultivation_days, :estimated_cost, :gdd, :status
-          ).new(
-            dto.id, dto.field_name, dto.crop_name, dto.area, dto.start_date, dto.completion_date,
-            dto.cultivation_days, dto.estimated_cost, dto.gdd, dto.status
+          api_summary_snapshot = Domain::FieldCultivation::Dtos::FieldCultivationApiSummarySnapshot.new(
+            id: dto.id,
+            field_name: dto.field_name,
+            crop_name: dto.crop_name,
+            area: dto.area,
+            start_date: dto.start_date,
+            completion_date: dto.completion_date,
+            cultivation_days: dto.cultivation_days,
+            estimated_cost: dto.estimated_cost,
+            gdd: dto.gdd,
+            status: dto.status
           )
           attach_plan_access_snapshot_to_gateway(gateway, fc_id, api_summary_snapshot: api_summary_snapshot)
 

@@ -7,9 +7,9 @@ module Adapters
         module_function
 
         # @param field_cultivation [FieldCultivation]
-        # @return [Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateOutput]
+        # @return [Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateOutputSnapshot]
         def from_model(field_cultivation)
-          Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateOutput.new(
+          Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateOutputSnapshot.new(
             field_cultivation_id: field_cultivation.id,
             start_date: field_cultivation.start_date,
             completion_date: field_cultivation.completion_date,

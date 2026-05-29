@@ -62,14 +62,10 @@ module Domain
 
 
 
-        # CropAgrrRequirementBuilderPort 向け（adapter は stages 付き Crop のみ読む）
-
-        # @return [Object] build_from に渡せる crop source
-
-        def find_crop_agrr_requirement_source(crop_id:)
-
-          raise NotImplementedError, "Subclasses must implement find_crop_agrr_requirement_source"
-
+        # agrr CLI crop-requirement-file 形式（adapter 内で AR → Hash。domain に AR を渡さない）
+        # @return [Hash] 文字列キーの crop requirement
+        def build_crop_agrr_requirement(crop_id:)
+          raise NotImplementedError, "Subclasses must implement build_crop_agrr_requirement"
         end
 
       end

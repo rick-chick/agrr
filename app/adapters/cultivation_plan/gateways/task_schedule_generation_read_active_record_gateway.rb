@@ -50,8 +50,9 @@ module Adapters
             .map { |row| Mappers::TaskScheduleGenerationBlueprintRowSnapshotMapper.from_model(row) }
         end
 
-        def find_crop_agrr_requirement_source(crop_id:)
-          ::Crop.includes(CROP_STAGE_INCLUDES).find(crop_id)
+        def build_crop_agrr_requirement(crop_id:)
+          crop = ::Crop.includes(CROP_STAGE_INCLUDES).find(crop_id)
+          Adapters::Crop::Mappers::CropAgrrRequirementMapper.build_from(crop)
         rescue ActiveRecord::RecordNotFound => e
           raise Domain::Shared::Exceptions::RecordNotFound, e.message
         end

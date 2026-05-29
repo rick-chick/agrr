@@ -1072,8 +1072,7 @@ module CompositionRoot
         task_schedule_gateway: task_schedule_gateway,
         clock: clock,
         cultivation_plan_gateway: cultivation_plan_gateway,
-        task_schedule_read_gateway: task_schedule_generation_read_gateway,
-        crop_agrr_requirement_builder: crop_agrr_requirement_builder
+        task_schedule_read_gateway: task_schedule_generation_read_gateway
       )
     end
 

@@ -106,14 +106,8 @@ module Domain
             end
           end
 
-          def find_crop_agrr_requirement_source(crop_id:)
-            @test.instance_variable_get(:@crop)
-          end
-        end
-
-        class FakeCropAgrrRequirementBuilder
-          def build_from(_source)
-            { "crop" => { "name" => "stub" } }
+          def build_crop_agrr_requirement(crop_id:)
+            { "crop" => { "crop_id" => crop_id.to_s, "name" => "stub" } }
           end
         end
 
@@ -201,7 +195,6 @@ module Domain
           @task_schedule_gateway = CapturingTaskScheduleGateway.new
           @cultivation_plan_gateway = FakeCultivationPlanGateway.new
           @task_schedule_read_gateway = FakeTaskScheduleReadGateway.new(self)
-          @crop_agrr_requirement_builder = FakeCropAgrrRequirementBuilder.new
           @clock = FixedClock.new(Time.utc(2025, 1, 1, 0, 0, 0))
         end
 
@@ -313,8 +306,7 @@ module Domain
             task_schedule_gateway: @task_schedule_gateway,
             clock: @clock,
             cultivation_plan_gateway: @cultivation_plan_gateway,
-            task_schedule_read_gateway: @task_schedule_read_gateway,
-            crop_agrr_requirement_builder: @crop_agrr_requirement_builder
+            task_schedule_read_gateway: @task_schedule_read_gateway
           )
         end
 
