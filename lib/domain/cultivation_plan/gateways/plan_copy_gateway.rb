@@ -45,11 +45,6 @@ module Domain
         def create_field_cultivation(plan_id:, cultivation_plan_field_id:, cultivation_plan_crop_id:, area:, status:)
           raise NotImplementedError
         end
-
-        # @return [Integer] コピーした添付件数
-        def copy_attachments(source_plan_id:, target_plan_id:)
-          raise NotImplementedError
-        end
       end
     end
   end

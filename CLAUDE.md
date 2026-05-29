@@ -63,7 +63,7 @@ SQLite / ActiveRecord / HTTP
 
 ### 主要なドメイン文脈（`lib/domain/<context>/`）
 
-`agricultural_task`, `api_keys`, `auth`, `backdoor`, `contact_messages`, `crop`, `cultivation_plan`, `deletion_undo`, `farm`, `fertilize`, `field`, `field_cultivation`, `file_blob`, `interaction_rule`, `internal_jobs`, `pest`, `pesticide`, `public_plan`, `user`, `weather_data`, `shared`。各文脈は `entities/`, `dtos/`, `gateways/`(interface), `interactors/`, `ports/`。
+`agricultural_task`, `api_keys`, `auth`, `backdoor`, `contact_messages`, `crop`, `cultivation_plan`, `deletion_undo`, `farm`, `fertilize`, `field`, `field_cultivation`, `interaction_rule`, `internal_jobs`, `pest`, `pesticide`, `public_plan`, `user`, `weather_data`, `shared`。各文脈は `entities/`, `dtos/`, `gateways/`(interface), `interactors/`, `ports/`。
 
 ### 重要な禁止（よくある違反）
 

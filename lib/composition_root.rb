@@ -460,14 +460,6 @@ module CompositionRoot
       @user_api_key_rotation_gateway ||= Adapters::ApiKeys::Gateways::UserApiKeyRotationActiveRecordGateway.new
     end
 
-    def file_blob_gateway
-      @file_blob_gateway ||= Adapters::FileBlob::Gateways::FileBlobActiveRecordGateway.new(
-        rails_blob_url_generator: lambda do |blob|
-          Rails.application.routes.url_helpers.rails_blob_url(blob, only_path: false)
-        end
-      )
-    end
-
     def backdoor_diagnostics_gateway
       @backdoor_diagnostics_gateway ||= Adapters::Backdoor::Gateways::BackdoorDiagnosticsActiveRecordGateway.new
     end
@@ -1069,7 +1061,9 @@ module CompositionRoot
 
     def fertilize_ai_query_gateway
       @fertilize_ai_query_gateway ||= Adapters::Fertilize::FertilizeAiGatewayResolver.new(
-        config_gateway: Rails.configuration.x.fertilize_ai_gateway
+        config_gateway: Rails.configuration.x.fertilize_ai_gateway,
+        logger: logger,
+        translator: translator
       ).resolve
     end
 

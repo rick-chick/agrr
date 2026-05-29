@@ -68,8 +68,6 @@ Rails.application.routes.draw do
         get "plans/:id", to: "plans#show"
         post "plans", to: "plans#create"
         delete "plans/:id", to: "plans#destroy"
-        # File management endpoints
-        resources :files, only: [ :index, :show, :create, :destroy ]
         # AI作物情報取得・保存エンドポイント
         post "crops/ai_create", to: "crops#ai_create"
         # AI肥料情報取得・保存エンドポイント

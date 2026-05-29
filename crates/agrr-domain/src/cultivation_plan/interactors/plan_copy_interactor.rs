@@ -53,13 +53,6 @@ where
             new_plan.id, input.new_year
         ));
 
-        let copied_attachments = self.plan_copy_gateway.copy_attachments(
-            input.source_cultivation_plan_id,
-            new_plan.id,
-        )?;
-        self.logger
-            .info(&format!("✅ Copied {copied_attachments} attachments"));
-
         let source_fields = self
             .plan_copy_gateway
             .list_fields(input.source_cultivation_plan_id)?;

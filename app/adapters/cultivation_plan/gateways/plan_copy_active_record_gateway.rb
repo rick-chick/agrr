@@ -111,27 +111,6 @@ module Adapters
           )
         end
 
-        def copy_attachments(source_plan_id:, target_plan_id:)
-          source_plan = ::CultivationPlan.find(source_plan_id)
-          new_plan = ::CultivationPlan.find(target_plan_id)
-          self.class.copy_attachments_for_plan_copy(source_plan: source_plan, new_plan: new_plan)
-        end
-
-        def self.copy_attachments_for_plan_copy(source_plan:, new_plan:)
-          attachments = ::ActiveStorage::Attachment.where(record: source_plan)
-          attachments_count = attachments.count
-
-          attachments.find_each do |attachment|
-            ::ActiveStorage::Attachment.create!(
-              name: attachment.name,
-              record: new_plan,
-              blob: attachment.blob
-            )
-          end
-
-          attachments_count
-        end
-
         def self.cultivation_period_pairs_from_plan(reference_plan)
           reference_plan.field_cultivations.where.not(start_date: nil, completion_date: nil).map do |fc|
             { start_date: fc.start_date, completion_date: fc.completion_date }

@@ -59,7 +59,6 @@ module Domain
             assert_equal "ws-1", attrs.session_id
             true
           end.returns(OpenStruct.new(id: 99))
-          gateway.expects(:copy_attachments).with(source_plan_id: 1, target_plan_id: 99).returns(0)
           gateway.expects(:list_fields).with(source_plan_id: 1).returns([ field_stub(id: 10) ])
           gateway.expects(:create_field).returns(field_stub(id: 20))
           gateway.expects(:list_crops).with(source_plan_id: 1).returns([ crop_stub(id: 11) ])
@@ -91,7 +90,6 @@ module Domain
           gateway = mock("plan_copy_gateway")
           gateway.stubs(:find_plan).returns(source_plan_stub)
           gateway.stubs(:create_plan).returns(OpenStruct.new(id: 99))
-          gateway.stubs(:copy_attachments).returns(0)
           gateway.stubs(:list_fields).returns([])
           gateway.stubs(:list_crops).returns([])
           gateway.stubs(:list_field_cultivations).returns([])

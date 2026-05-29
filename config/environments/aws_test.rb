@@ -42,7 +42,6 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = "X-Accel-Redirect" # for NGINX
 
   # Store uploaded files on Amazon S3 for test environment (see config/storage.yml for options).
-  config.active_storage.service = :amazon_test
 
   # Mount Action Cable outside main process or domain.
   # config.action_cable.mount_path = nil

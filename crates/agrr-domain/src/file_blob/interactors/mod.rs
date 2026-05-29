@@ -1,9 +1,0 @@
-mod file_blob_create_interactor;
-mod file_blob_destroy_interactor;
-mod file_blob_list_interactor;
-mod file_blob_show_interactor;
-
-pub use file_blob_create_interactor::FileBlobCreateInteractor;
-pub use file_blob_destroy_interactor::FileBlobDestroyInteractor;
-pub use file_blob_list_interactor::FileBlobListInteractor;
-pub use file_blob_show_interactor::FileBlobShowInteractor;

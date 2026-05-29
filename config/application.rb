@@ -18,6 +18,9 @@ module Agrr
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
 
+    # User uploads are not used; keep Active Storage engine defaults without /rails/active_storage routes.
+    config.active_storage.draw_routes = false
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

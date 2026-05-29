@@ -32,12 +32,6 @@ module Domain
           new_plan = @plan_copy_gateway.create_plan(attrs: create_attrs)
           @logger.info "✅ Created new plan ##{new_plan.id} (year: #{input.new_year})"
 
-          copied_attachments = @plan_copy_gateway.copy_attachments(
-            source_plan_id: input.source_cultivation_plan_id,
-            target_plan_id: new_plan.id
-          )
-          @logger.info "✅ Copied #{copied_attachments} attachments"
-
           source_fields = @plan_copy_gateway.list_fields(source_plan_id: input.source_cultivation_plan_id)
           new_fields = source_fields.map do |source_field|
             @plan_copy_gateway.create_field(

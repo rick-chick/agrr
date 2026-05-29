@@ -17,12 +17,6 @@ pub trait PlanCopyGateway: Send + Sync {
         attrs: &PlanCopyCreateAttrs,
     ) -> Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>>;
 
-    fn copy_attachments(
-        &self,
-        source_plan_id: i64,
-        target_plan_id: i64,
-    ) -> Result<i32, Box<dyn std::error::Error + Send + Sync>>;
-
     fn list_fields(
         &self,
         source_plan_id: i64,

@@ -44,7 +44,7 @@
 |---|---|
 | 旧クラス | `FieldCultivationClimateGateway`（単一巨大 gateway） |
 | 解消 | `FieldCultivationClimateSourceActiveRecordGateway` / `FieldCultivationClimateProgress*Gateway` + `FieldCultivationClimateDataInteractor`。委譲のみの `FieldCultivationClimateActiveRecordGateway` は削除（2026-05-28） |
-| 残（別エピック） | `find_api_summary` 等の DTO 組立・二重 find。climate/plan access Snapshot の AR wire は [gateway-domain-logic-migration.md §P4](./gateway-domain-logic-migration.md#p4---厚い-read-snapshot-組立移行候補) の `field_cultivation_climate_source_snapshot_mapper.rb` |
+| 残（§P4） | preload なし `find`、認可 read と climate read の二重取得。`find_api_summary` / schedule update の DTO 組立は **部分移行済み**（`field_cultivation_api_summary_wire_mapper.rb` + `field_cultivation_api_summary_mapper.rb` 等 — [gateway-domain-logic-migration.md §P4](./gateway-domain-logic-migration.md#p4---厚い-read-snapshot-組立移行候補)） |
 
 ### ~~A-4. `agrr_prediction_gateway_adapter.rb`~~（解消済み）
 | 項目 | 値 |
@@ -95,13 +95,12 @@
 |---|---|---|---|
 | B-1.1 | `lib/domain/pest/gateways/pest_gateway.rb` | `find_user_owned_non_reference_pest_by_name` | `find_by_name` |
 | B-1.2 | `lib/domain/fertilize/gateways/fertilize_gateway.rb` | `find_user_owned_non_reference_fertilize_record_by_name` | `find_by_name` |
-| B-1.3 | `lib/domain/file_blob/gateways/file_blob_gateway.rb` | `find_row_by_id` | `find_by_id` |
-| B-1.4 | `lib/domain/field_cultivation/gateways/field_cultivation_gateway.rb` | `find_climate_data_by_field_cultivation` | `find_climate_data` |
-| B-1.5 | `lib/domain/field_cultivation/gateways/field_cultivation_gateway.rb` | `find_api_summary_by_field_cultivation` | `find_api_summary` |
-| B-1.6 | `lib/domain/crop/gateways/crop_gateway.rb` | `list_crop_stages_by_crop_id` | `list_by_crop_id` |
-| B-1.7 | `lib/domain/crop/gateways/crop_gateway.rb` | `find_crop_stage_by_id` | `find_by_id` |
-| B-1.8 | `lib/domain/weather_data/gateways/weather_data_gateway.rb` | `find_weather_location_by_coordinates` | `find_by_coordinates` |
-| B-1.9 | `lib/domain/cultivation_plan/gateways/cultivation_plan_gateway.rb` | `find_plan_crop_id_by_crop_id!` | `find_crop_id!` |
+| B-1.3 | `lib/domain/field_cultivation/gateways/field_cultivation_gateway.rb` | `find_climate_data_by_field_cultivation` | `find_climate_data` |
+| B-1.4 | `lib/domain/field_cultivation/gateways/field_cultivation_gateway.rb` | `find_api_summary_by_field_cultivation` | `find_api_summary` |
+| B-1.5 | `lib/domain/crop/gateways/crop_gateway.rb` | `list_crop_stages_by_crop_id` | `list_by_crop_id` |
+| B-1.6 | `lib/domain/crop/gateways/crop_gateway.rb` | `find_crop_stage_by_id` | `find_by_id` |
+| B-1.7 | `lib/domain/weather_data/gateways/weather_data_gateway.rb` | `find_weather_location_by_coordinates` | `find_by_coordinates` |
+| B-1.8 | `lib/domain/cultivation_plan/gateways/cultivation_plan_gateway.rb` | `find_plan_crop_id_by_crop_id!` | `find_crop_id!` |
 
 ### B-2. `destroy` → `delete` 違反
 
@@ -155,7 +154,7 @@
 | C-2 | `lib/domain/farm/gateways/farm_gateway.rb` | 認可チェック(`find_authorized_*`)、プレゼンター形状複合(`find_authorized_farm_loaded_bundle!`, `farm_list_rows_bundle`) | インタラクターに分割 |
 | C-3 | `lib/domain/pest/gateways/pest_gateway.rb` | 認可チェック、HTMLフォーム準備、マルチエンティティ関連付け | インタラクターに分割 |
 | C-4 | `lib/domain/cultivation_plan/gateways/cultivation_plan_gateway.rb` | 認可チェック、プレゼンター形状複合(`find_*_bundle!`, `*_snapshot`)、マルチエンティティ操作 | インタラクターに分割 |
-| C-5 | ~~`field_cultivation_climate_gateway.rb`~~ → `field_cultivation_climate_source_active_record_gateway.rb` 等 | **部分解消**: 気象は `FieldCultivationClimateDataInteractor` + source/progress gateway。旧巨大 climate gateway 廃止 | 残りは [gateway-domain-logic-migration.md §P4](./gateway-domain-logic-migration.md#p4---厚い-read-snapshot-組立移行候補)（`find_api_summary`、二重 find 等） |
+| C-5 | ~~`field_cultivation_climate_gateway.rb`~~ → `field_cultivation_climate_source_active_record_gateway.rb` 等 | **部分解消**: 気象は `FieldCultivationClimateDataInteractor` + source/progress gateway。旧巨大 climate gateway 廃止。`find_api_summary` DTO 組立は domain mapper へ移行済み | 残りは [gateway-domain-logic-migration.md §P4](./gateway-domain-logic-migration.md#p4---厚い-read-snapshot-組立移行候補)（二重 find・preload 等） |
 | ~~C-6~~ | ~~`masters_api_session_resolve_*`~~ | **解消**: `MastersApiCredentialsResolveInteractor` + 狭い principal gateway 2 本 | — |
 
 ---

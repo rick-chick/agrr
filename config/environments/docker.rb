@@ -34,7 +34,6 @@ Rails.application.configure do
   end
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.variant_processor = :mini_magick
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
@@ -73,9 +72,6 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions (Rails 6.1 doesn't have this)
   # config.action_controller.raise_on_missing_callback_actions = true
-
-  # Use local file storage for docker environment
-  config.active_storage.service = :local
 
   # Use async adapter for background jobs in docker (Solid Queue 廃止)
   config.active_job.queue_adapter = :async

@@ -35,10 +35,6 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = "X-Sendfile" # for Apache
   # config.action_dispatch.x_sendfile_header = "X-Accel-Redirect" # for NGINX
 
-  # Store uploaded files on local disk for App Runner deployment
-  # Use S3 only when AWS_S3_BUCKET is explicitly set
-  config.active_storage.service = ENV["AWS_S3_BUCKET"].present? ? :amazon_env : :local
-
   # Mount Action Cable outside main process or domain.
   # config.action_cable.mount_path = nil
   # config.action_cable.url = "wss://example.com/cable"
