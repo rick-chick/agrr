@@ -114,9 +114,8 @@ module Adapters
 
         def find_delete_usage(farm_id)
           farm = find_farm_model!(farm_id)
-          Domain::Farm::Dtos::FarmDeleteUsage.new(
-            free_crop_plans_count: farm.free_crop_plans.count
-          )
+          wire = Mappers::FarmDeleteUsageWireMapper.from_model(farm)
+          Domain::Farm::Mappers::FarmDeleteUsageMapper.from_wire(wire)
         end
 
         def soft_delete_with_undo(user:, farm_id:, auto_hide_after: 5000, toast_message:)

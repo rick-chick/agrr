@@ -142,11 +142,8 @@ module Adapters
 
         def find_delete_usage(crop_id)
           crop = find_crop_model!(crop_id)
-          Domain::Crop::Dtos::CropDeleteUsage.new(
-            cultivation_plan_crops_count: crop.cultivation_plan_crops.count,
-            free_crop_plans_count: crop.free_crop_plans.count,
-            pesticides_count: crop.pesticides.count
-          )
+          wire = Mappers::CropDeleteUsageWireMapper.from_model(crop)
+          Domain::Crop::Mappers::CropDeleteUsageMapper.from_wire(wire)
         end
 
         def soft_delete_with_undo(user:, crop_id:, auto_hide_after: 5000, translator:)

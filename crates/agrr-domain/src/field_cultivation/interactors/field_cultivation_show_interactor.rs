@@ -170,7 +170,7 @@ mod tests {
             completion_date: date!(2026 - 01 - 02),
             cultivation_days: 2,
             estimated_cost: 3.0,
-            gdd: 4.0,
+            gdd: Some(4.0),
             status: "completed".into(),
         };
         let gateway = StubGateway {

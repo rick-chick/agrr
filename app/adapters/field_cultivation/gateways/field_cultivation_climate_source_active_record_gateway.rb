@@ -6,6 +6,8 @@ module Adapters
       class FieldCultivationClimateSourceActiveRecordGateway <
           Domain::FieldCultivation::Gateways::FieldCultivationClimateSourceGateway
         SnapshotMapper = Mappers::FieldCultivationClimateSourceSnapshotMapper
+        ApiSummaryWireMapper = Mappers::FieldCultivationApiSummaryWireMapper
+        ApiUpdateOutputWireMapper = Mappers::FieldCultivationApiUpdateOutputWireMapper
 
         def find_plan_access_snapshot_by_field_cultivation_id(field_cultivation_id)
           fc = find_field_cultivation_model!(field_cultivation_id)
@@ -30,18 +32,8 @@ module Adapters
 
         def find_api_summary(field_cultivation_id:)
           fc = find_field_cultivation_model!(field_cultivation_id)
-          Domain::FieldCultivation::Dtos::FieldCultivationApiSummary.new(
-            id: fc.id,
-            field_name: fc.field_display_name,
-            crop_name: fc.crop_display_name,
-            area: fc.area,
-            start_date: fc.start_date,
-            completion_date: fc.completion_date,
-            cultivation_days: fc.cultivation_days,
-            estimated_cost: fc.estimated_cost,
-            gdd: fc.optimization_result&.dig("raw", "total_gdd"),
-            status: fc.status
-          )
+          wire = ApiSummaryWireMapper.from_model(fc)
+          Domain::FieldCultivation::Mappers::FieldCultivationApiSummaryMapper.from_wire(wire)
         end
 
         def update_field_cultivation_schedule(field_cultivation_id:, start_date:, completion_date:, cultivation_days: nil)
@@ -52,12 +44,8 @@ module Adapters
             raise Domain::Shared::Exceptions::RecordInvalid.new(nil, errors: fc.errors.full_messages)
           end
 
-          Domain::FieldCultivation::Dtos::FieldCultivationApiUpdateOutput.new(
-            field_cultivation_id: fc.id,
-            start_date: fc.start_date,
-            completion_date: fc.completion_date,
-            cultivation_days: fc.cultivation_days
-          )
+          wire = ApiUpdateOutputWireMapper.from_model(fc)
+          Domain::FieldCultivation::Mappers::FieldCultivationApiUpdateOutputMapper.from_wire(wire)
         end
 
         private

@@ -10,6 +10,6 @@ pub struct FieldCultivationApiSummary {
     pub completion_date: Date,
     pub cultivation_days: i32,
     pub estimated_cost: f64,
-    pub gdd: f64,
+    pub gdd: Option<f64>,
     pub status: String,
 }

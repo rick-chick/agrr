@@ -146,13 +146,15 @@ flowchart LR
 | ファイル | 内容 |
 |----------|------|
 | `cultivation_plan/mappers/plan_allocation_adjust_read_snapshot_mapper.rb` | AR 走査・weather 写像・`PlanAllocationAdjustReadSnapshot` 組立（業務算出は `PlanAllocationAdjustReadSnapshotParts` / `*Snapshot` DTO に移行済み） |
-| `field_cultivation/gateways/field_cultivation_climate_source_active_record_gateway.rb` | 残: `find_api_summary`・schedule update の DTO 直組み、preload なし `find`、認可 read と climate read の二重取得。plan access / climate source の Snapshot 組立は adapter `field_cultivation/mappers/field_cultivation_climate_source_snapshot_mapper.rb`（AR wire のみ） |
+| `field_cultivation/gateways/field_cultivation_climate_source_active_record_gateway.rb` | 残: preload なし `find`、認可 read と climate read の二重取得。plan access / climate source の Snapshot 組立は adapter `field_cultivation/mappers/field_cultivation_climate_source_snapshot_mapper.rb`（AR wire のみ）。**部分移行済み**: `find_api_summary` は `field_cultivation_api_summary_wire_mapper.rb` + `field_cultivation_api_summary_mapper.rb`；`update_field_cultivation_schedule` は `field_cultivation_api_update_output_wire_mapper.rb` + `field_cultivation_api_update_output_mapper.rb` |
 | `cultivation_plan/gateways/cultivation_plan_private_read_active_record_gateway.rb` | `find_task_schedule_timeline_by_plan_id` の `build_task_schedule_*`、`list_private_plan_index_rows_by_user_id` の集計・並べ |
 | `cultivation_plan/gateways/cultivation_plan_workbench_read_active_record_gateway.rb` | workbench snapshot 組立 |
 | `cultivation_plan/mappers/task_schedule_generation_context_mapper.rb` | タスクスケジュール生成 context（agrr requirement 込み） |
 | `cultivation_plan/gateways/public_plan_save_read_active_record_gateway.rb` | 参照マスタ行の業務フィルタ（例: `rule_type: "continuous_cultivation"`） |
-| `crop/gateways/crop_active_record_gateway.rb` 等 | `find_*_show_detail`, `find_delete_usage` |
-| `farm` / `pest` / `agricultural_task` / `pesticide` gateways | 同上パターンの複合 read |
+| `crop/gateways/crop_active_record_gateway.rb` 等 | `find_*_show_detail`（`find_delete_usage` は crop/farm/pest で部分移行済み — 下記） |
+| `farm` / `pest` / `agricultural_task` / `pesticide` gateways | 同上パターンの複合 read（`find_delete_usage` は master crop/farm/pest のみ部分移行済み） |
+
+**部分移行済み（`find_delete_usage`）**: `crop_active_record_gateway` / `farm_active_record_gateway` / `pest_active_record_gateway` — adapter `*_delete_usage_wire_mapper.rb`（AR 件数）+ domain `*_delete_usage_mapper.rb`。`find_*_show_detail` は未移行。
 
 **部分移行済み**: `TaskScheduleTimelineInteractor` + `lib/domain/cultivation_plan/mappers/task_schedule_timeline_mapper.rb` は read_model → 表示 DTO のみ。スナップショット構築は依然 `CultivationPlanPrivateReadActiveRecordGateway`。
 
@@ -164,7 +166,7 @@ flowchart LR
 | `weather_data/weather_prediction_interactor_factory.rb` | `WeatherPredictionInteractor` 組立 |
 | `public_plan/entry_schedule_optimization_runner_adapter.rb` | `CompositionRoot.entry_schedule_optimize_interactor(...).call` |
 | `deletion_undo/manager.rb` | 省略時 `CompositionRoot.deletion_undo_gateway` |
-| `fertilize/fertilize_ai_gateway_resolver.rb` | `CompositionRoot.logger` / `translator` |
+| `fertilize/fertilize_ai_gateway_resolver.rb` | ~~`CompositionRoot.logger` / `translator`~~ **移行済み**: `CompositionRoot#fertilize_ai_query_gateway` が constructor 注入 |
 | `cultivation_plan/ports/add_crop_crop_resolve_{private,public}.rb` | Crop find Interactor を port 実装から `call` |
 | `crop|pest|fertilize/*_for_ai_adapter.rb` | AI 経路で Interactor 直起動 |
 | `crop/crop_ai_upsert_active_record_persistence.rb` | create interactor 呼び出し含む |
@@ -205,7 +207,7 @@ flowchart LR
 | 項目 | domain | adapter に残るもの |
 |------|--------|-------------------|
 | adjust read | `PlanAllocationAdjustReadSnapshot`, `PlanAllocationAdjustAgrrPayloadMapper`, `PlanAllocationAdjustReadSnapshotParts` | `PlanAllocationAdjustReadSnapshotMapper` の AR 走査・weather 写像・DTO 組立（`agrr_requirement` は Parts + edge 注入 builder） |
-| climate source read | `FieldCultivationClimateSourceSnapshot`, `FieldCultivationPlanAccessSnapshot`, `FieldCultivationClimateContextSnapshotMapper` 他 | `FieldCultivationClimateSourceActiveRecordGateway` の AR find・`find_api_summary` 直組み；wire は `Adapters::FieldCultivation::Mappers::FieldCultivationClimateSourceSnapshotMapper` |
+| climate source read | `FieldCultivationClimateSourceSnapshot`, `FieldCultivationPlanAccessSnapshot`, `FieldCultivationClimateContextSnapshotMapper`, `FieldCultivationApiSummaryMapper`, `FieldCultivationApiUpdateOutputMapper` 他 | `FieldCultivationClimateSourceActiveRecordGateway` の AR find；climate snapshot wire は `FieldCultivationClimateSourceSnapshotMapper`、`find_api_summary` wire は `FieldCultivationApiSummaryWireMapper`、`update_field_cultivation_schedule` wire は `FieldCultivationApiUpdateOutputWireMapper` |
 
 ### PR 時の追記ルール
 

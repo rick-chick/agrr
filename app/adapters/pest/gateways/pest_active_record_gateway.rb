@@ -53,9 +53,8 @@ module Adapters
 
         def find_delete_usage(pest_id)
           pest = find_pest_model!(pest_id)
-          Domain::Pest::Dtos::PestDeleteUsage.new(
-            pesticides_count: pest.pesticides.count
-          )
+          wire = Mappers::PestDeleteUsageWireMapper.from_model(pest)
+          Domain::Pest::Mappers::PestDeleteUsageMapper.from_wire(wire)
         end
 
         def soft_delete_with_undo(user:, pest_id:, auto_hide_after: 5000, translator:)
