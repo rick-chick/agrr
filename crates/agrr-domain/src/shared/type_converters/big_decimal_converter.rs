@@ -33,20 +33,7 @@ pub fn cast_big_decimal_json(value: Option<&serde_json::Value>) -> Option<Decima
 }
 
 #[cfg(test)]
-mod tests {
+mod type_converters_big_decimal_converter_test_inline {
     use super::*;
-    use rust_decimal::Decimal;
-    use std::str::FromStr;
-
-    #[test]
-    fn preserves_decimal_and_handles_empty() {
-        let bd = Decimal::from_str("1.25").unwrap();
-        assert_eq!(cast_big_decimal_decimal(Some(bd)), Some(bd));
-        assert_eq!(
-            cast_big_decimal(Some("3")),
-            Some(Decimal::from_str("3").unwrap())
-        );
-        assert_eq!(cast_big_decimal(None), None);
-        assert_eq!(cast_big_decimal(Some("")), None);
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/shared/type_converters_big_decimal_converter_test.rs"));
 }

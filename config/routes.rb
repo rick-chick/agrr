@@ -35,25 +35,28 @@ Rails.application.routes.draw do
     end
     # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-    # Authentication routes
-    get "/auth/login", to: "auth#login", as: "auth_login"
-    # Google OAuth routes (OmniAuth middleware handles /auth/google_oauth2)
-    get "/auth/google_oauth2/callback", to: "auth#google_oauth2_callback"
-    get "/auth/failure", to: "auth#failure"
-    delete "/auth/logout", to: "auth#logout", as: "auth_logout"
+    unless AgrrRustApi.enabled?
+      # Authentication routes (agrr-server when AGRR_RUST_API=1)
+      get "/auth/login", to: "auth#login", as: "auth_login"
+      # Google OAuth routes (OmniAuth middleware handles /auth/google_oauth2)
+      get "/auth/google_oauth2/callback", to: "auth#google_oauth2_callback"
+      get "/auth/failure", to: "auth#failure"
+      delete "/auth/logout", to: "auth#logout", as: "auth_logout"
+
+      post "undo_deletion", to: "deletion_undos#create", as: :undo_deletion
+
+      mount ActionCable.server => "/cable"
+    end
 
     # API Documentation
     get "/api/docs", to: "api_docs#index", as: "api_docs"
 
-    post "undo_deletion", to: "deletion_undos#create", as: :undo_deletion
-
     # HTML マスタ（Phase 5 完了: 業務 HTML ルートなし）
-    # ActionCable for WebSocket
-    mount ActionCable.server => "/cable"
 
-    # API routes
-    namespace :api do
-      namespace :v1 do
+    unless AgrrRustApi.enabled?
+      # API routes (agrr-server when AGRR_RUST_API=1)
+      namespace :api do
+        namespace :v1 do
         # Health check endpoint
         get "health", to: "base#health_check"
         # Auth endpoints
@@ -175,6 +178,7 @@ Rails.application.routes.draw do
         end
       end
     end
+  end # unless AgrrRustApi.enabled?
 
     # Static pages（ナビ・cookie consent で privacy_path 等を参照）
     get "privacy", to: "pages#privacy", as: "privacy"

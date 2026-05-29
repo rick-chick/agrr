@@ -22,7 +22,8 @@ module Adapters
             email: user.email,
             avatar_url: user.avatar_url,
             admin: user.admin?,
-            anonymous: user.anonymous?
+            anonymous: user.anonymous?,
+            api_key: user.api_key
           )
         end
       end

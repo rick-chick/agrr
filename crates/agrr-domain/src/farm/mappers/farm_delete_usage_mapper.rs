@@ -7,17 +7,7 @@ pub fn from_snapshot(snapshot: &FarmDeleteUsageSnapshot) -> FarmDeleteUsage {
 }
 
 #[cfg(test)]
-mod tests {
+mod mappers_farm_delete_usage_mapper_test_inline {
     use super::*;
-
-    #[test]
-    fn from_snapshot_maps_free_crop_plans_count() {
-        let snapshot = FarmDeleteUsageSnapshot {
-            free_crop_plans_count: 4,
-        };
-
-        let dto = from_snapshot(&snapshot);
-
-        assert_eq!(dto.free_crop_plans_count, 4);
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/farm/mappers_farm_delete_usage_mapper_test.rs"));
 }

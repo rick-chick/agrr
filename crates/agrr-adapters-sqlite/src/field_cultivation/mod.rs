@@ -1,3 +1,13 @@
 mod climate_source_gateway;
+mod crop_gateway;
+mod field_cultivation_sync_gateway;
+mod field_cultivation_sync_plan_read_gateway;
+mod plan_predicted_weather_gateway;
+mod weather_data_gateway;
 
 pub use climate_source_gateway::FieldCultivationClimateSourceSqliteGateway;
+pub use crop_gateway::FieldCultivationCropSqliteGateway;
+pub use field_cultivation_sync_gateway::FieldCultivationSyncSqliteGateway;
+pub use field_cultivation_sync_plan_read_gateway::FieldCultivationSyncPlanReadSqliteGateway;
+pub use plan_predicted_weather_gateway::FieldCultivationPlanPredictedWeatherSqliteGateway;
+pub use weather_data_gateway::FieldCultivationWeatherDataSqliteGateway;

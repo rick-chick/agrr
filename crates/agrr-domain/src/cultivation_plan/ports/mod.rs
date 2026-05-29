@@ -1,14 +1,14 @@
-mod add_crop_ports;
-mod cultivation_plan_destroy_input_port;
-mod deletion_undo_schedule_port;
-mod cultivation_plan_destroy_output_port;
-mod field_mutation_output_ports;
-mod plan_allocation_adjust_output_port;
-mod private_plan_initialize_ports;
-mod private_plan_output_ports;
-mod public_plan_save_ports;
-mod retrieve_cultivation_plan_output_port;
-mod task_schedule_ports;
+pub(crate) mod add_crop_ports;
+pub(crate) mod cultivation_plan_destroy_input_port;
+pub(crate) mod deletion_undo_schedule_port;
+pub(crate) mod cultivation_plan_destroy_output_port;
+pub(crate) mod field_mutation_output_ports;
+pub(crate) mod plan_allocation_adjust_output_port;
+pub(crate) mod private_plan_initialize_ports;
+pub(crate) mod private_plan_output_ports;
+pub(crate) mod public_plan_save_ports;
+pub(crate) mod retrieve_cultivation_plan_output_port;
+pub(crate) mod task_schedule_ports;
 
 pub use add_crop_ports::{
     AddCropAdjustResultSink, AddCropCropResolveInputPort, AddCropOutputPort,

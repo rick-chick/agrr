@@ -1,8 +1,8 @@
-mod field_create_input;
-mod field_destroy_output;
-mod field_detail_failure;
-mod field_detail_input;
-mod field_update_input;
+pub(crate) mod field_create_input;
+pub(crate) mod field_destroy_output;
+pub(crate) mod field_detail_failure;
+pub(crate) mod field_detail_input;
+pub(crate) mod field_update_input;
 
 pub use field_create_input::FieldCreateInput;
 pub use field_destroy_output::FieldDestroyOutput;

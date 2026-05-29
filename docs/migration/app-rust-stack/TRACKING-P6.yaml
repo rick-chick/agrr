@@ -1,0 +1,62 @@
+# P6 BC 切替進捗 — 終着: Rails 廃止・API フォールバックなし
+# 正: P6-COMPLETION-CRITERIA.md, BLOCKERS-RESPONSE.md
+
+program: app-rust-stack-p6
+updated: 2026-05-29
+policy:
+  rails_api_fallback: forbidden
+  unimplemented_api: rust_501_api_not_migrated
+  dev_stack: scripts/rust-only-dev-stack.sh
+
+wave_e:
+  contract_tests:
+    - auth_me_contract_test.rb
+    - auth_logout_contract_test.rb
+    - internal_jobs_contract_test.rb
+    - private_plan_optimization_job_chain_contract_test.rb
+    - optimization_channel_rust_contract_test.rb
+    - field_cultivation_patch_contract_test.rb
+    - plan_adjust_db_sync_contract_test.rb
+    - deletion_undo_restore_contract_test.rb
+    - public_plan_save_contract_test.rb
+    - public_plans_wizard_contract_test.rb
+    - backdoor_api_contract_test.rb
+    - masters_farms_contract_test.rb
+    - masters_crops_contract_test.rb
+  nginx_checklist: NGINX-STRANGLER-HOST-CHECKLIST.md
+  rust_contract_runner: scripts/run-rust-contract-tests.sh
+  angular_routing_audit: scripts/verify-angular-api-rust-routing.sh
+
+critical_path:
+  - id: auth
+    phase: done
+    notes: "Rust OAuth + auth_api; AGRR_RUST_API gates Rails routes; nginx /auth + /api/v1/auth/*"
+  - id: websocket_jobs
+    phase: done
+    notes: "In-process optimization chain + shared CableHub broadcast; stub removed"
+  - id: cultivation_plan
+    phase: done
+    notes: "Mutations + reads on Rust; FieldCultivationSync after adjust (sqlite gateways)"
+  - id: internal_jobs
+    phase: done
+    notes: "trigger_weather_update in-process chain on Rust"
+
+waves:
+  wave-2-remaining:
+    - { context: api_keys, phase: done }
+    - { context: backdoor, phase: done, notes: "Angular unused; Rust 501 catch-all; Rails gated by AGRR_RUST_API" }
+    - { context: contact_messages, phase: done }
+  wave-3:
+    - { context: deletion_undo, phase: done }
+    - { context: interaction_rule, phase: done }
+    - { context: public_plan, phase: done, notes: "wizard + save_plan + adjust on Rust" }
+    - { context: field, phase: done }
+    - { context: agricultural_task, phase: done }
+    - { context: fertilize, phase: done }
+    - { context: pesticide, phase: done }
+    - { context: farm, phase: done }
+    - { context: pest, phase: done }
+  wave-4:
+    - { context: field_cultivation, phase: done, notes: "show/PATCH/climate GET; patch contract" }
+    - { context: weather_data, phase: done, notes: "scheduler via internal_jobs in-process chain; GCS adapter for reads" }
+    - { context: crop, phase: done }

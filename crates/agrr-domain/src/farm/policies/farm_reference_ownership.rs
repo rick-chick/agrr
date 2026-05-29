@@ -8,25 +8,7 @@ impl FarmReferenceOwnershipPolicy {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::FarmReferenceOwnershipPolicy;
-
-    // Ruby: test "reference_farm_user_valid? は非参照農場なら常に true"
-    #[test]
-    fn reference_farm_user_valid_non_reference_always_true() {
-        assert!(FarmReferenceOwnershipPolicy::reference_farm_user_valid(
-            false, false
-        ));
-    }
-
-    // Ruby: test "reference_farm_user_valid? は参照農場はアノニマス所有者のみ"
-    #[test]
-    fn reference_farm_user_valid_reference_requires_anonymous_owner() {
-        assert!(FarmReferenceOwnershipPolicy::reference_farm_user_valid(
-            true, true
-        ));
-        assert!(!FarmReferenceOwnershipPolicy::reference_farm_user_valid(
-            true, false
-        ));
-    }
+mod policies_farm_reference_ownership_test_inline {
+    use super::*;
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/farm/policies_farm_reference_ownership_test.rs"));
 }

@@ -1,7 +1,7 @@
-mod actor_lookup_port;
-mod deletion_undo_restore_output_port;
-mod deletion_undo_schedule_output_port;
-mod deletion_undo_schedule_success_payload_output_port;
+pub(crate) mod actor_lookup_port;
+pub(crate) mod deletion_undo_restore_output_port;
+pub(crate) mod deletion_undo_schedule_output_port;
+pub(crate) mod deletion_undo_schedule_success_payload_output_port;
 
 pub use actor_lookup_port::ActorLookupPort;
 pub use deletion_undo_restore_output_port::DeletionUndoRestoreOutputPort;

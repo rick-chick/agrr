@@ -1,3 +1,3 @@
-mod field_entity;
+pub(crate) mod field_entity;
 
 pub use field_entity::FieldEntity;

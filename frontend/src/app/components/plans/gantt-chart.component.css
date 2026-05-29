@@ -302,3 +302,11 @@
 .cultivation-delete-control {
   cursor: pointer;
 }
+
+.cultivation-delete-control circle {
+  pointer-events: all;
+}
+
+.bar-label {
+  pointer-events: none;
+}

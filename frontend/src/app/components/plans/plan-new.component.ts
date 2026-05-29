@@ -21,7 +21,7 @@ const initialControl: PlanNewViewState = {
     <main class="page-main">
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'plans.new.title' | translate }}</h1>
-        <p class="page-description">{{ 'plans.new.description' | translate }}</p>
+        <p class="page-description">{{ 'plans.new.subtitle' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
@@ -31,9 +31,9 @@ const initialControl: PlanNewViewState = {
         } @else {
           <form class="form" (ngSubmit)="onFarmSelect($event)">
             <div class="form-group">
-              <label for="farm-select" class="form-label">{{ 'plans.new.select_farm_label' | translate }}</label>
+              <label for="farm-select" class="form-label">{{ 'plans.new.farm_label' | translate }}</label>
               <select id="farm-select" name="farmId" class="form-control" required>
-                <option value="">{{ 'plans.new.select_farm_placeholder' | translate }}</option>
+                <option value="">{{ 'plans.new.farm_hint' | translate }}</option>
                 @for (farm of control.farms; track farm.id) {
                   <option [value]="farm.id">{{ farm.name }}</option>
                 }
@@ -41,7 +41,7 @@ const initialControl: PlanNewViewState = {
             </div>
             <div class="form-actions">
               <a routerLink="/plans" class="btn-secondary">{{ 'common.cancel' | translate }}</a>
-              <button type="submit" class="btn-primary">{{ 'common.next' | translate }}</button>
+              <button type="submit" class="btn-primary">{{ 'plans.new.next_button' | translate }}</button>
             </div>
           </form>
         }

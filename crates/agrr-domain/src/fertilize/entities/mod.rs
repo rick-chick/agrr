@@ -1,3 +1,3 @@
-mod fertilize_entity;
+pub(crate) mod fertilize_entity;
 
 pub use fertilize_entity::{FertilizeEntity, FertilizeEntityAttrs};

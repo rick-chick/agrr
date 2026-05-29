@@ -51,12 +51,55 @@ impl FieldCultivationClimateSourceGateway for FieldCultivationClimateSourceSqlit
 
     fn find_weather_prediction_targets_by_plan_id(
         &self,
-        _plan_id: i64,
+        plan_id: i64,
     ) -> Result<WeatherPredictionTargets, Box<dyn std::error::Error + Send + Sync>> {
-        Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Unsupported,
-            "find_weather_prediction_targets_by_plan_id: implement per BC cutover PR",
-        )))
+        let conn = self.open_connection()?;
+        let sql = r#"
+            SELECT
+              wl.id AS wl_id,
+              wl.latitude,
+              wl.longitude,
+              wl.elevation,
+              wl.timezone,
+              f.id AS farm_id,
+              f.name AS farm_name,
+              f.latitude AS farm_latitude,
+              f.longitude AS farm_longitude,
+              f.region AS farm_region,
+              f.weather_data_status,
+              f.weather_data_fetched_years,
+              f.weather_data_total_years
+            FROM cultivation_plans cp
+            INNER JOIN farms f ON f.id = cp.farm_id
+            LEFT JOIN weather_locations wl ON wl.id = f.weather_location_id
+            WHERE cp.id = ?1
+        "#;
+        conn.query_row(sql, [plan_id], |row| {
+            let wl_id: Option<i64> = row.get("wl_id")?;
+            let weather_location = serde_json::json!({
+                "id": wl_id,
+                "latitude": row.get::<_, Option<f64>>("latitude")?,
+                "longitude": row.get::<_, Option<f64>>("longitude")?,
+                "elevation": row.get::<_, Option<f64>>("elevation")?,
+                "timezone": row.get::<_, Option<String>>("timezone")?,
+            });
+            let farm = serde_json::json!({
+                "id": row.get::<_, i64>("farm_id")?,
+                "name": row.get::<_, String>("farm_name")?,
+                "latitude": row.get::<_, f64>("farm_latitude")?,
+                "longitude": row.get::<_, f64>("farm_longitude")?,
+                "region": row.get::<_, Option<String>>("farm_region")?,
+                "weather_data_status": row.get::<_, Option<String>>("weather_data_status")?,
+                "weather_data_fetched_years": row.get::<_, Option<i64>>("weather_data_fetched_years")?,
+                "weather_data_total_years": row.get::<_, Option<i64>>("weather_data_total_years")?,
+                "weather_location_id": wl_id,
+            });
+            Ok(WeatherPredictionTargets {
+                weather_location,
+                farm,
+            })
+        })
+        .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { Box::new(e) })
     }
 }
 
@@ -82,15 +125,28 @@ impl FieldCultivationGateway for FieldCultivationClimateSourceSqliteGateway {
 
     fn update_field_cultivation_schedule(
         &self,
-        _field_cultivation_id: i64,
-        _start_date: &str,
-        _completion_date: &str,
-        _cultivation_days: Option<i32>,
+        field_cultivation_id: i64,
+        start_date: &str,
+        completion_date: &str,
+        cultivation_days: Option<i32>,
     ) -> Result<FieldCultivationApiUpdateOutput, Box<dyn std::error::Error + Send + Sync>> {
-        Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Unsupported,
-            "update_field_cultivation_schedule: single-writer cutover only",
-        )))
+        let conn = self.open_connection()?;
+        let updated = conn.execute(
+            "UPDATE field_cultivations SET start_date = ?1, completion_date = ?2, \
+             cultivation_days = COALESCE(?3, cultivation_days), updated_at = datetime('now') \
+             WHERE id = ?4",
+            rusqlite::params![start_date, completion_date, cultivation_days, field_cultivation_id],
+        )?;
+        if updated == 0 {
+            return Err(Box::new(agrr_domain::shared::exceptions::RecordNotFoundError));
+        }
+        Ok(FieldCultivationApiUpdateOutput {
+            field_cultivation_id,
+            start_date: start_date.to_string(),
+            completion_date: completion_date.to_string(),
+            cultivation_days,
+            message: None,
+        })
     }
 }
 
@@ -154,14 +210,8 @@ impl FieldCultivationClimateRow {
     }
 
     fn api_summary(&self) -> Result<FieldCultivationApiSummary, rusqlite::Error> {
-        let start_date = self
-            .start_date
-            .ok_or(rusqlite::Error::InvalidParameterName("start_date".into()))?;
-        let completion_date = self
-            .completion_date
-            .ok_or(rusqlite::Error::InvalidParameterName(
-                "completion_date".into(),
-            ))?;
+        let start_date = self.start_date.ok_or(rusqlite::Error::QueryReturnedNoRows)?;
+        let completion_date = self.completion_date.ok_or(rusqlite::Error::QueryReturnedNoRows)?;
         Ok(FieldCultivationApiSummary {
             id: self.fc_id,
             field_name: self.field_name.clone(),
@@ -198,8 +248,8 @@ fn load_field_cultivation_row(
           wl.id AS weather_location_id,
           wl.timezone AS weather_location_timezone,
           cp.id AS plan_id,
-          cp.prediction_target_end_date,
-          cp.calculated_planning_end_date,
+          cp.planning_end_date AS prediction_target_end_date,
+          cp.planning_end_date AS calculated_planning_end_date,
           cp.predicted_weather_data,
           cpc.crop_id AS plan_crop_crop_id,
           fc.area,

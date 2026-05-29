@@ -5,13 +5,7 @@ pub fn public_plan(plan_type: &str) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
+mod policies_plan_read_authorization_test_inline {
     use super::*;
-
-    // Ruby: test "public_plan? matches plan_type public string"
-    #[test]
-    fn public_plan_matches_plan_type_public_string() {
-        assert!(public_plan("public"));
-        assert!(!public_plan("private"));
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/cultivation_plan/policies_plan_read_authorization_test.rs"));
 }

@@ -45,7 +45,7 @@ fn view_allowed_denies_other_user_non_reference_crop() {
 ## CI
 
 - ワークフロー: `.github/workflows/rust-domain-test.yml`
-- `main` / PR で `cargo test --workspace`
+- `main` / PR で `cargo test -p agrr-domain`（`run-test-rust-domain.sh` と同じ。ワークスペース全体は adapter crate 用）
 - Rails テストとは **ジョブ分離**（Rust toolchain セットアップを軽量に）
 
 ## 完了判定（コンテキスト単位）

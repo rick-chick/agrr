@@ -63,6 +63,25 @@ module Domain
           end
         end
 
+        test "calls on_failure with PolicyPermissionDenied when edit is denied" do
+          non_admin = UserStub.new(id: 1, admin?: false)
+          input_dto = Domain::Pest::Dtos::PestUpdateInput.new(pest_id: 1, name: "x")
+          current = mock
+          current.stubs(:reference?).returns(false)
+          current.stubs(:user_id).returns(99)
+
+          @mock_user_lookup.expects(:find).with(@user_id).returns(non_admin)
+          @mock_gateway.expects(:find_by_id).with(1).returns(current)
+          @mock_gateway.expects(:update_for_user).never
+
+          received = nil
+          @mock_output_port.expects(:on_failure).with { |arg| received = arg; true }
+
+          @interactor.call(input_dto)
+
+          assert_instance_of Domain::Shared::Policies::PolicyPermissionDenied, received
+        end
+
         test "一般ユーザーが is_reference を変更しようとすると on_failure（reference_flag_admin_only）" do
           non_admin = UserStub.new(id: 1, admin?: false)
           input_dto = Domain::Pest::Dtos::PestUpdateInput.new(pest_id: 1, is_reference: true)

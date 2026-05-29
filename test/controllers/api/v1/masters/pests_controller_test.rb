@@ -2,7 +2,8 @@
 
 require "test_helper"
 
-# 他ユーザーの害虫詳細の認可拒否は PestDetailInteractor 単体で表明。ここは HTTP 成功経路のみ。
+# 認可・削除不可・他ユーザー update/destroy の分岐は Pest*Interactor 単体で表明。
+# ここは HTTP 成功経路と index の 422 契約のみ。
 module Api
   module V1
     module Masters
@@ -114,29 +115,6 @@ module Api
           assert_equal "更新された名前", json_response["name"]
         end
 
-        test "should not update other user's pest" do
-          other_user = create(:user)
-          other_pest = create(:pest, :user_owned, user: other_user, name: "他のユーザーの害虫")
-
-          patch api_v1_masters_pest_path(other_pest),
-                params: {
-                  pest: {
-                    name: "変更しようとした名前"
-                  }
-                },
-                headers: {
-                  "Accept" => "application/json",
-                  "X-API-Key" => @api_key
-                }
-
-          assert_response :unprocessable_entity
-          json_response = JSON.parse(response.body)
-          assert json_response.key?("errors")
-
-          other_pest.reload
-          assert_equal "他のユーザーの害虫", other_pest.name
-        end
-
         test "should destroy pest" do
           pest = create(:pest, :user_owned, user: @user)
 
@@ -155,38 +133,6 @@ module Api
           assert json_response.key?("undo_path")
         end
 
-        test "should not destroy pest when pesticides exist" do
-          pest = create(:pest, :user_owned, user: @user)
-          crop = create(:crop, :user_owned, user: @user)
-          create(:pesticide, :user_owned, user: @user, crop: crop, pest: pest)
-
-          assert_no_difference("Pest.count") do
-            delete api_v1_masters_pest_path(pest),
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-          end
-
-          assert_response :unprocessable_entity
-          json_response = JSON.parse(response.body)
-          assert_equal I18n.t("pests.flash.cannot_delete_in_use"), json_response["error"]
-        end
-
-        test "should not destroy other user's pest" do
-          other_user = create(:user)
-          other_pest = create(:pest, :user_owned, user: other_user)
-
-          assert_no_difference("Pest.count") do
-            delete api_v1_masters_pest_path(other_pest),
-                   headers: {
-                     "Accept" => "application/json",
-                     "X-API-Key" => @api_key
-                   }
-          end
-
-          assert_response :forbidden
-        end
       end
     end
   end

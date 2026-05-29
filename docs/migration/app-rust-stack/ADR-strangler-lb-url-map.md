@@ -18,8 +18,8 @@
 |------|------|
 | パブリックホスト | `agrr.net`（必要なら `www.agrr.net` も同一 map） |
 | Rust 向けプレフィックス（終着・切替対象の枠） | `/api/*`、 `/cable`、 `/auth/*` |
-| 未移行の既定 | **Rails** Cloud Run バックエンド（`defaultService` または該当プレフィックスのフォールバック） |
-| 切替単位 | **BC / ルート群** — URL map にルールを 1 本ずつ追加（Big Bang で全 `/api/*` を一度に Rust にしない） |
+| 未移行の既定 | **禁止（フォールバックなし）** — 未実装パスは `agrr-server` が **501** `api_not_migrated`。Rails `defaultService` で API を受けない |
+| 切替単位 | **BC / ルート群** — URL map に **Rust 向け**ルールを追加。移行完了後は `/api/*` `/cable` `/auth/*` をすべて `rust-backend` へ |
 | SPA 静的 | 現行どおり **GCS + CDN**（変更なし） |
 | OAuth Console | **変更不要**（ホスト・パス維持） |
 
@@ -28,10 +28,10 @@
 | バックエンド（論理名） | 実体 | 役割 |
 |------------------------|------|------|
 | `frontend-backend` | GCS バケット（CDN） | `*.js` / `*.css` / SPA fallback |
-| `rails-backend` | 現行 Cloud Run（Rails） | 未移行 API・auth・cable・`/up`・残 HTML |
-| `rust-backend` | **新規** Cloud Run（`agrr-server`） | URL map で振られたパスのみ |
+| `rails-backend` | 現行 Cloud Run（Rails） | **廃止予定** — 本番カットオーバー後はトラフィック 0。開発も `AGRR_RUST_API=1` で API は Rust のみ |
+| `rust-backend` | Cloud Run（`agrr-server`） | **全 API** `/api/*`・`/cable`・`/auth/*`・`/up` |
 
-P7 完了後は `rails-backend` を map から外し、Rust 単体 + 静的のみ。
+P7 完了後は `rails-backend` サービス削除、Rust 単体 + 静的のみ。
 
 ### パス振分（正）
 

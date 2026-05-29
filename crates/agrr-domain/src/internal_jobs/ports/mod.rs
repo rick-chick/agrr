@@ -1,3 +1,3 @@
-mod scheduler_weather_update_trigger_output_port;
+pub(crate) mod scheduler_weather_update_trigger_output_port;
 
 pub use scheduler_weather_update_trigger_output_port::SchedulerWeatherUpdateTriggerOutputPort;

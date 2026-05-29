@@ -38,14 +38,7 @@ pub enum ErrorsInput<'a> {
 }
 
 #[cfg(test)]
-mod tests {
+mod validation_validation_error_hash_test_inline {
     use super::*;
-
-    #[test]
-    fn from_validation_errors() {
-        let mut ve = ValidationErrors::new();
-        ve.add("name", "required");
-        let h = from_errors(ErrorsInput::ValidationErrors(&ve));
-        assert_eq!(h.get("name").map(|v| v.as_slice()), Some(&["required".to_string()][..]));
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/shared/validation_validation_error_hash_test.rs"));
 }

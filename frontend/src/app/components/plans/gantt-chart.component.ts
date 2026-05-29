@@ -245,10 +245,10 @@ interface VisibleRange {
                             class="bar-bg"
                             style="cursor: grab;" />
                       <text
-                            [attr.x]="params.x + (params.width - 24) / 2"
+                            [attr.x]="params.width > 72 ? params.x + (params.width - 32) / 2 : params.x + 10"
                             [attr.y]="config.barPadding + config.barHeight / 2 + 5"
                             class="bar-label"
-                            text-anchor="middle"
+                            [attr.text-anchor]="params.width > 72 ? 'middle' : 'start'"
                             font-size="12"
                             font-weight="600"
                             fill="#1F2937"
@@ -259,14 +259,14 @@ interface VisibleRange {
                         class="cultivation-delete-control"
                         (click)="confirmRemoveCultivation(cultivation); $event.stopPropagation()">
                         <circle
-                          [attr.cx]="params.x + params.width - 12"
+                          [attr.cx]="params.x + params.width - 14"
                           [attr.cy]="config.barPadding + config.barHeight / 2"
-                          r="8"
+                          r="9"
                           fill="white"
                           stroke="#ef4444"
                           stroke-width="2" />
                         <text
-                          [attr.x]="params.x + params.width - 12"
+                          [attr.x]="params.x + params.width - 14"
                           [attr.y]="config.barPadding + config.barHeight / 2 + 4"
                           font-size="12"
                           text-anchor="middle"

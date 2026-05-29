@@ -33,18 +33,7 @@ fn cast_boolean_str(s: &str) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
+mod type_converters_boolean_converter_test_inline {
     use super::*;
-
-    #[test]
-    fn cast_truthy_strings() {
-        assert!(cast_boolean_str("true"));
-        assert!(cast_boolean_str("1"));
-    }
-
-    #[test]
-    fn cast_falsy_nil_and_empty() {
-        assert!(!cast_boolean(&serde_json::Value::Null));
-        assert!(!cast_boolean_str(""));
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/shared/type_converters_boolean_converter_test.rs"));
 }

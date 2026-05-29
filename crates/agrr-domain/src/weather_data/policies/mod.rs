@@ -1,5 +1,5 @@
-mod weather_data_fetch_window_policy;
-mod weather_prediction_horizon_policy;
+pub(crate) mod weather_data_fetch_window_policy;
+pub(crate) mod weather_prediction_horizon_policy;
 
 pub use weather_data_fetch_window_policy::{WeatherDataFetchWindowPolicy, WeatherFetchRange};
 pub use weather_prediction_horizon_policy::WeatherPredictionHorizonPolicy;

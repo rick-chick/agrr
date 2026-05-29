@@ -1,4 +1,4 @@
-mod farm_gateway;
+pub(crate) mod farm_gateway;
 #[cfg(test)]
 pub mod farm_gateway_stub;
 

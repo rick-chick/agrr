@@ -15,13 +15,7 @@ impl ReferenceFlagChangeDeniedFailure {
 }
 
 #[cfg(test)]
-mod tests {
+mod dtos_reference_flag_change_denied_failure_test_inline {
     use super::*;
-
-    #[test]
-    fn exposes_message_and_resource_id() {
-        let dto = ReferenceFlagChangeDeniedFailure::new("admin only", 42);
-        assert_eq!(dto.message, "admin only");
-        assert_eq!(dto.resource_id, 42);
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/shared/dtos_reference_flag_change_denied_failure_test.rs"));
 }

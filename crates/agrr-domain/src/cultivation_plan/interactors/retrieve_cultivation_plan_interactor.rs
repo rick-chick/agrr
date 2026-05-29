@@ -1,41 +1,42 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::RetrieveCultivationPlanInteractor`
 
-use crate::cultivation_plan::dtos::{CultivationPlanRestAuth, CultivationPlanWorkbenchSnapshot};
+use crate::cultivation_plan::dtos::CultivationPlanRestAuth;
 use crate::cultivation_plan::gateways::{
-    CropRowsAvailableGateway, CultivationPlanGateway, CultivationPlanWorkbenchReadGateway,
+    CropRowsAvailableGateway, CultivationPlanGateway, CultivationPlanRestPlanReadGateway,
 };
 use crate::cultivation_plan::interactors::rest_plan_access;
+use crate::cultivation_plan::mappers::{load_rest_plan_snapshot, workbench_from_snapshots};
 use crate::cultivation_plan::ports::RetrieveCultivationPlanOutputPort;
 use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::ports::LoggerPort;
 
-pub struct RetrieveCultivationPlanInteractor<'a, O, PG, WG, AG, L> {
+pub struct RetrieveCultivationPlanInteractor<'a, O, PG, RG, AG, L> {
     output_port: &'a mut O,
     plan_gateway: &'a PG,
-    workbench_read_gateway: &'a WG,
+    rest_plan_read_gateway: &'a RG,
     available_crop_rows_gateway: &'a AG,
     logger: &'a L,
 }
 
-impl<'a, O, PG, WG, AG, L> RetrieveCultivationPlanInteractor<'a, O, PG, WG, AG, L>
+impl<'a, O, PG, RG, AG, L> RetrieveCultivationPlanInteractor<'a, O, PG, RG, AG, L>
 where
     O: RetrieveCultivationPlanOutputPort,
     PG: CultivationPlanGateway,
-    WG: CultivationPlanWorkbenchReadGateway,
+    RG: CultivationPlanRestPlanReadGateway,
     AG: CropRowsAvailableGateway,
     L: LoggerPort,
 {
     pub fn new(
         output_port: &'a mut O,
         plan_gateway: &'a PG,
-        workbench_read_gateway: &'a WG,
+        rest_plan_read_gateway: &'a RG,
         available_crop_rows_gateway: &'a AG,
         logger: &'a L,
     ) -> Self {
         Self {
             output_port,
             plan_gateway,
-            workbench_read_gateway,
+            rest_plan_read_gateway,
             available_crop_rows_gateway,
             logger,
         }
@@ -60,28 +61,15 @@ where
             return Ok(());
         }
 
-        let mut base_snapshot = self
-            .workbench_read_gateway
-            .load_snapshot_by_plan_id(plan_id)?;
+        let rest_plan_snapshot = load_rest_plan_snapshot(self.rest_plan_read_gateway, plan_id)?;
 
         let auth_value = serde_json::to_value(auth).unwrap_or(serde_json::Value::Null);
-        let rows = self.available_crop_rows_gateway.list_by_farm_region(
+        let available_crop_rows = self.available_crop_rows_gateway.list_by_farm_region(
             &auth_value,
-            Some(&base_snapshot.farm_region),
+            Some(&rest_plan_snapshot.farm_region),
         )?;
-        base_snapshot.available_crop_rows = rows
-            .into_iter()
-            .map(|row| serde_json::to_value(row).unwrap_or(serde_json::Value::Null))
-            .collect();
 
-        let snapshot = CultivationPlanWorkbenchSnapshot {
-            plan: base_snapshot.plan,
-            fields: base_snapshot.fields,
-            crops: base_snapshot.crops,
-            cultivations: base_snapshot.cultivations,
-            available_crop_rows: base_snapshot.available_crop_rows,
-            farm_region: base_snapshot.farm_region,
-        };
+        let snapshot = workbench_from_snapshots(rest_plan_snapshot, available_crop_rows);
 
         self.output_port.on_success(snapshot);
         Ok(())

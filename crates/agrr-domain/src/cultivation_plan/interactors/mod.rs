@@ -1,40 +1,37 @@
-mod add_crop_interactor;
-mod add_field_interactor;
-mod advance_cultivation_plan_phase_interactor;
-mod crop_task_schedule_blueprint_copy_interactor;
-mod cultivation_plan_destroy_interactor;
-mod cultivation_plan_initialize_interactor;
-mod cultivation_plan_optimize_interactor;
+pub(crate) mod add_crop_interactor;
+pub(crate) mod add_field_interactor;
+pub(crate) mod advance_cultivation_plan_phase_interactor;
+pub(crate) mod crop_task_schedule_blueprint_copy_interactor;
+pub(crate) mod cultivation_plan_destroy_interactor;
+pub(crate) mod cultivation_plan_initialize_interactor;
+pub(crate) mod cultivation_plan_optimize_interactor;
 pub mod entry_schedule;
-mod entry_schedule_optimize_interactor;
-mod plan_allocation_adjust_interactor;
-mod plan_allocation_candidates_interactor;
-mod plan_copy_interactor;
-mod plan_save_ensure_user_agricultural_tasks_interactor;
-mod plan_save_ensure_user_crops_interactor;
-mod plan_save_ensure_user_farm_interactor;
-mod plan_save_ensure_user_fertilizes_interactor;
-mod plan_save_ensure_user_fields_interactor;
-mod plan_save_ensure_user_interaction_rules_interactor;
-mod plan_save_ensure_user_pesticides_interactor;
-mod plan_save_ensure_user_pests_interactor;
-mod plan_save_persist_orchestrator;
-mod private_owned_plan_detail_interactor;
-mod private_owned_plans_list_interactor;
-mod private_plan_initialize_from_selection_interactor;
-mod public_plan_save_interactor;
-mod remove_field_interactor;
-mod rest_plan_access;
-mod retrieve_cultivation_plan_interactor;
-mod task_schedule_item_complete_interactor;
-mod task_schedule_item_create_interactor;
-mod task_schedule_item_schedule_deletion_undo_interactor;
-mod task_schedule_item_update_interactor;
-mod task_schedule_private_plan_access;
-mod task_schedule_timeline_interactor;
-
-#[cfg(test)]
-mod plan_save_test_support;
+pub(crate) mod entry_schedule_optimize_interactor;
+pub(crate) mod plan_allocation_adjust_interactor;
+pub(crate) mod plan_allocation_candidates_interactor;
+pub(crate) mod plan_copy_interactor;
+pub(crate) mod plan_save_ensure_user_agricultural_tasks_interactor;
+pub(crate) mod plan_save_ensure_user_crops_interactor;
+pub(crate) mod plan_save_ensure_user_farm_interactor;
+pub(crate) mod plan_save_ensure_user_fertilizes_interactor;
+pub(crate) mod plan_save_ensure_user_fields_interactor;
+pub(crate) mod plan_save_ensure_user_interaction_rules_interactor;
+pub(crate) mod plan_save_ensure_user_pesticides_interactor;
+pub(crate) mod plan_save_ensure_user_pests_interactor;
+pub(crate) mod plan_save_persist_orchestrator;
+pub(crate) mod private_owned_plan_detail_interactor;
+pub(crate) mod private_owned_plans_list_interactor;
+pub(crate) mod private_plan_initialize_from_selection_interactor;
+pub(crate) mod public_plan_save_interactor;
+pub(crate) mod remove_field_interactor;
+pub(crate) mod rest_plan_access;
+pub(crate) mod retrieve_cultivation_plan_interactor;
+pub(crate) mod task_schedule_item_complete_interactor;
+pub(crate) mod task_schedule_item_create_interactor;
+pub(crate) mod task_schedule_item_schedule_deletion_undo_interactor;
+pub(crate) mod task_schedule_item_update_interactor;
+pub(crate) mod task_schedule_private_plan_access;
+pub(crate) mod task_schedule_timeline_interactor;
 
 pub use add_crop_interactor::AddCropInteractor;
 pub use add_field_interactor::AddFieldInteractor;
@@ -45,7 +42,9 @@ pub use cultivation_plan_initialize_interactor::CultivationPlanInitializeInterac
 pub use cultivation_plan_optimize_interactor::{
     CultivationPlanOptimizeInteractor, WeatherDataNotFoundError,
 };
-pub use entry_schedule_optimize_interactor::EntryScheduleOptimizeInteractor;
+pub use entry_schedule_optimize_interactor::{
+    EntryScheduleOptimizeCrop, EntryScheduleOptimizeInteractor,
+};
 pub use plan_allocation_adjust_interactor::PlanAllocationAdjustInteractor;
 pub use plan_allocation_candidates_interactor::PlanAllocationCandidatesInteractor;
 pub use plan_copy_interactor::PlanCopyInteractor;
@@ -73,3 +72,8 @@ pub use task_schedule_item_schedule_deletion_undo_interactor::TaskScheduleItemSc
 pub use task_schedule_item_update_interactor::TaskScheduleItemUpdateInteractor;
 pub use task_schedule_private_plan_access::access_allowed as task_schedule_private_plan_access_allowed;
 pub use task_schedule_timeline_interactor::TaskScheduleTimelineInteractor;
+
+#[cfg(test)]
+pub mod plan_save_test_support {
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/cultivation_plan/plan_save_test_support.rs"));
+}

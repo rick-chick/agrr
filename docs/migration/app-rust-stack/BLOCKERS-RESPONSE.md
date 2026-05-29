@@ -143,4 +143,8 @@ flowchart TD
 - [`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md) — ストラングラー配線（確定）  
 - [`PROVISIONAL-STACK.md`](./PROVISIONAL-STACK.md) — 終着スタック仮決定  
 - [`README.md`](./README.md) — 索引  
+- [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md) — P6/P7「完了」の定義  
+- [`P6-BC-CUTOVER-TEMPLATE.md`](./P6-BC-CUTOVER-TEMPLATE.md) — BC 切替 PR チェックリスト  
+- [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) — P6 進捗  
+- [`../../../test/contract/README.md`](../../../test/contract/README.md) — R4 実行・CI  
 - [`../lib-domain-rust/TRACKING.md`](../lib-domain-rust/TRACKING.md) — ドメイン進捗

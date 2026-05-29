@@ -1,9 +1,9 @@
-mod field_cultivation_climate_crop_view_policy;
-mod field_cultivation_climate_fallback_horizon_policy;
-mod field_cultivation_climate_observed_merge_range_policy;
-mod field_cultivation_climate_preconditions_policy;
-mod field_cultivation_sync_policy;
-mod plan_field_cultivation_access;
+pub(crate) mod field_cultivation_climate_crop_view_policy;
+pub(crate) mod field_cultivation_climate_fallback_horizon_policy;
+pub(crate) mod field_cultivation_climate_observed_merge_range_policy;
+pub(crate) mod field_cultivation_climate_preconditions_policy;
+pub(crate) mod field_cultivation_sync_policy;
+pub(crate) mod plan_field_cultivation_access;
 
 pub use field_cultivation_climate_crop_view_policy::view_allowed as climate_crop_view_allowed;
 pub use field_cultivation_climate_fallback_horizon_policy::{

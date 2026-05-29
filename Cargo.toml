@@ -3,6 +3,8 @@ resolver = "2"
 members = [
     "crates/agrr-domain",
     "crates/agrr-adapters-sqlite",
+    "crates/agrr-adapters-gcs",
+    "crates/agrr-adapters-agrr",
     "crates/agrr-server",
 ]
 

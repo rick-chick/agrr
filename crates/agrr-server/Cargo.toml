@@ -12,9 +12,23 @@ path = "src/main.rs"
 [dependencies]
 agrr-domain = { path = "../agrr-domain" }
 agrr-adapters-sqlite = { path = "../agrr-adapters-sqlite" }
-axum = "0.8"
+agrr-adapters-gcs = { path = "../agrr-adapters-gcs" }
+agrr-adapters-agrr = { path = "../agrr-adapters-agrr" }
+axum = { version = "0.8", features = ["ws", "macros"] }
+axum-extra = { version = "0.10", features = ["cookie"] }
+cookie = "0.18"
+oauth2 = { version = "4", features = ["reqwest"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+serde = { workspace = true }
+serde_json.workspace = true
+time = { workspace = true, features = ["formatting", "parsing", "serde"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "signal"] }
+tower-http = { version = "0.6", features = ["trace", "cors"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-serde = { workspace = true }
+url = "2"
+base64 = "0.22"
+
+[dev-dependencies]
+tempfile = "3"

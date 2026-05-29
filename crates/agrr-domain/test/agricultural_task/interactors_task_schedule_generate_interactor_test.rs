@@ -1,0 +1,521 @@
+// Tests for `interactors/task_schedule_generate_interactor.rs` (Ruby parity under test/domain/agricultural_task/).
+
+    use crate::agricultural_task::gateways::TaskSchedulePlanContext;
+    use rust_decimal::Decimal;
+    use std::str::FromStr;
+    use std::sync::Mutex;
+
+    struct FixedClock {
+        now: OffsetDateTime,
+    }
+
+    impl ClockPort for FixedClock {
+        fn today(&self) -> Date {
+            self.now.date()
+        }
+
+        fn now(&self) -> OffsetDateTime {
+            self.now
+        }
+    }
+
+    struct FakeCultivationPlanGateway;
+
+    impl CultivationPlanGateway for FakeCultivationPlanGateway {
+        fn within_transaction<F, T>(&self, block: F) -> T
+        where
+            F: FnOnce() -> T,
+        {
+            block()
+        }
+    }
+
+    struct FakeTaskScheduleReadGateway {
+        ctx: TaskSchedulePlanContext,
+    }
+
+    impl TaskScheduleGenerationReadGateway for FakeTaskScheduleReadGateway {
+        fn find_plan_row(
+            &self,
+            _: i64,
+        ) -> Result<
+            crate::agricultural_task::gateways::TaskSchedulePlanRow,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            Ok(crate::agricultural_task::gateways::TaskSchedulePlanRow {
+                id: self.ctx.plan.id,
+                predicted_weather_data: self.ctx.plan.predicted_weather_data.clone(),
+                calculated_planning_start_date: self.ctx.plan.calculated_planning_start_date,
+            })
+        }
+
+        fn list_field_cultivation_rows(
+            &self,
+            _: i64,
+        ) -> Result<
+            Vec<crate::agricultural_task::gateways::TaskScheduleFieldCultivationRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            Ok(self
+                .ctx
+                .plan
+                .field_cultivations
+                .iter()
+                .map(|fc| crate::agricultural_task::gateways::TaskScheduleFieldCultivationRow {
+                    id: fc.id,
+                    start_date: fc.start_date,
+                    crop_id: fc.crop.as_ref().map(|c| c.id),
+                })
+                .collect())
+        }
+
+        fn find_crop_row(
+            &self,
+            crop_id: i64,
+        ) -> Result<
+            crate::agricultural_task::gateways::TaskScheduleCropRow,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            let crop = self
+                .ctx
+                .plan
+                .field_cultivations
+                .iter()
+                .filter_map(|fc| fc.crop.as_ref())
+                .find(|c| c.id == crop_id)
+                .ok_or_else(|| "crop not found".to_string())?;
+            Ok(crate::agricultural_task::gateways::TaskScheduleCropRow {
+                id: crop.id,
+                name: crop.name.clone(),
+            })
+        }
+
+        fn list_crop_task_template_rows(
+            &self,
+            crop_id: i64,
+        ) -> Result<
+            Vec<crate::agricultural_task::gateways::TaskScheduleTemplateRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            let crop = self
+                .ctx
+                .plan
+                .field_cultivations
+                .iter()
+                .filter_map(|fc| fc.crop.as_ref())
+                .find(|c| c.id == crop_id)
+                .ok_or_else(|| "crop not found".to_string())?;
+            Ok(crop
+                .crop_task_templates
+                .iter()
+                .map(|t| crate::agricultural_task::gateways::TaskScheduleTemplateRow {
+                    agricultural_task: t.agricultural_task.clone(),
+                })
+                .collect())
+        }
+
+        fn list_crop_task_schedule_blueprint_rows(
+            &self,
+            crop_id: i64,
+        ) -> Result<
+            Vec<crate::agricultural_task::gateways::TaskScheduleBlueprintRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            let crop = self
+                .ctx
+                .plan
+                .field_cultivations
+                .iter()
+                .filter_map(|fc| fc.crop.as_ref())
+                .find(|c| c.id == crop_id)
+                .ok_or_else(|| "crop not found".to_string())?;
+            Ok(crop
+                .crop_task_schedule_blueprints
+                .iter()
+                .enumerate()
+                .map(|(index, blueprint)| {
+                    crate::agricultural_task::gateways::TaskScheduleBlueprintRow {
+                        id: (index + 1) as i64,
+                        task_type: blueprint.task_type.clone(),
+                        gdd_trigger: blueprint.gdd_trigger,
+                        gdd_tolerance: blueprint.gdd_tolerance,
+                        description: blueprint.description.clone(),
+                        stage_name: blueprint.stage_name.clone(),
+                        stage_order: blueprint.stage_order,
+                        priority: blueprint.priority,
+                        source: blueprint.source.clone(),
+                        weather_dependency: blueprint.weather_dependency.clone(),
+                        time_per_sqm: blueprint.time_per_sqm,
+                        amount: blueprint.amount,
+                        amount_unit: blueprint.amount_unit.clone(),
+                        agricultural_task: blueprint.agricultural_task.clone(),
+                    }
+                })
+                .collect())
+        }
+
+        fn build_crop_agrr_requirement(
+            &self,
+            _: i64,
+        ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(serde_json::json!({ "crop": { "name": "stub" } }))
+        }
+    }
+
+    struct CapturingTaskScheduleGateway {
+        replaced: Mutex<Vec<ReplaceCall>>,
+        cleared: Mutex<Vec<ClearCall>>,
+    }
+
+    #[derive(Debug, Clone)]
+    struct ReplaceCall {
+        cultivation_plan_id: i64,
+        field_cultivation_id: i64,
+        category: String,
+        generated_at: OffsetDateTime,
+        items: Vec<TaskScheduleReplaceItem>,
+    }
+
+    #[derive(Debug, Clone)]
+    struct ClearCall {
+        cultivation_plan_id: i64,
+        field_cultivation_id: i64,
+        category: String,
+    }
+
+    impl CapturingTaskScheduleGateway {
+        fn new() -> Self {
+            Self {
+                replaced: Mutex::new(vec![]),
+                cleared: Mutex::new(vec![]),
+            }
+        }
+    }
+
+    impl TaskScheduleGateway for CapturingTaskScheduleGateway {
+        fn delete_all_for_field_category(
+            &self,
+            cultivation_plan_id: i64,
+            field_cultivation_id: i64,
+            category: &str,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.cleared.lock().unwrap().push(ClearCall {
+                cultivation_plan_id,
+                field_cultivation_id,
+                category: category.to_string(),
+            });
+            Ok(())
+        }
+
+        fn replace_schedule_for_field_category(
+            &self,
+            cultivation_plan_id: i64,
+            field_cultivation_id: i64,
+            category: &str,
+            generated_at: OffsetDateTime,
+            items: Vec<TaskScheduleReplaceItem>,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.replaced.lock().unwrap().push(ReplaceCall {
+                cultivation_plan_id,
+                field_cultivation_id,
+                category: category.to_string(),
+                generated_at,
+                items,
+            });
+            Ok(())
+        }
+    }
+
+    struct StubProgressGateway {
+        response: serde_json::Value,
+        received: Mutex<Vec<ProgressPayload>>,
+    }
+
+    #[derive(Debug, Clone)]
+    struct ProgressPayload {
+        crop_id: i64,
+        start_date: Option<Date>,
+        weather_data: serde_json::Value,
+    }
+
+    impl ProgressGateway for StubProgressGateway {
+        fn calculate_progress(
+            &self,
+            crop: &TaskScheduleCrop,
+            start_date: Option<Date>,
+            weather_data: &serde_json::Value,
+        ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+            self.received.lock().unwrap().push(ProgressPayload {
+                crop_id: crop.id,
+                start_date,
+                weather_data: weather_data.clone(),
+            });
+            Ok(self.response.clone())
+        }
+    }
+
+    fn dec(s: &str) -> Decimal {
+        Decimal::from_str(s).unwrap()
+    }
+
+    fn soil_task() -> TaskScheduleRelatedTask {
+        TaskScheduleRelatedTask {
+            id: 11,
+            name: "土壌準備".into(),
+            description: Some("soil".into()),
+            weather_dependency: Some("low".into()),
+            time_per_sqm: Some(dec("0.1")),
+        }
+    }
+
+    fn mocked_weather_data() -> serde_json::Value {
+        serde_json::json!({
+            "location": { "latitude": 35.0, "longitude": 135.0, "timezone": "Asia/Tokyo" },
+            "data": [
+                { "time": "2025-03-20T00:00:00", "temperature_2m_mean": 10.0 },
+                { "time": "2025-03-25T00:00:00", "temperature_2m_mean": 12.0 },
+                { "time": "2025-04-01T00:00:00", "temperature_2m_mean": 15.0 },
+                { "time": "2025-04-05T00:00:00", "temperature_2m_mean": 18.0 },
+                { "time": "2025-04-10T00:00:00", "temperature_2m_mean": 20.0 }
+            ]
+        })
+    }
+
+    fn progress_response() -> serde_json::Value {
+        serde_json::json!({
+            "progress_records": [
+                { "date": "2025-04-01T00:00:00", "cumulative_gdd": 0.0 },
+                { "date": "2025-04-04T00:00:00", "cumulative_gdd": 120.0 },
+                { "date": "2025-04-06T00:00:00", "cumulative_gdd": 165.0 }
+            ],
+            "total_gdd": 600.0
+        })
+    }
+
+    fn build_test_fixtures() -> (
+        TaskSchedulePlanContext,
+        CapturingTaskScheduleGateway,
+        FixedClock,
+    ) {
+        let general_blueprint = TaskScheduleBlueprint {
+            task_type: FIELD_WORK.into(),
+            gdd_trigger: Some(dec("0.0")),
+            gdd_tolerance: Some(dec("5.0")),
+            description: None,
+            stage_name: Some("土壌準備".into()),
+            stage_order: Some(1),
+            priority: Some(1),
+            source: Some("agrr_schedule".into()),
+            weather_dependency: Some("low".into()),
+            time_per_sqm: Some(dec("0.1")),
+            amount: None,
+            amount_unit: None,
+            agricultural_task: Some(soil_task()),
+        };
+        let basal_blueprint = TaskScheduleBlueprint {
+            task_type: BASAL_FERTILIZATION.into(),
+            gdd_trigger: Some(dec("0.0")),
+            gdd_tolerance: Some(dec("5.0")),
+            description: None,
+            stage_name: Some("定植前".into()),
+            stage_order: Some(0),
+            priority: Some(1),
+            source: Some("agrr_schedule".into()),
+            weather_dependency: None,
+            time_per_sqm: None,
+            amount: None,
+            amount_unit: None,
+            agricultural_task: Some(TaskScheduleRelatedTask {
+                id: 12,
+                name: "基肥".into(),
+                description: None,
+                weather_dependency: None,
+                time_per_sqm: None,
+            }),
+        };
+        let topdress_blueprint = TaskScheduleBlueprint {
+            task_type: TOPDRESS_FERTILIZATION.into(),
+            gdd_trigger: Some(dec("160.0")),
+            gdd_tolerance: Some(dec("10.0")),
+            description: None,
+            stage_name: Some("生育期".into()),
+            stage_order: Some(2),
+            priority: Some(2),
+            source: Some("agrr_schedule".into()),
+            weather_dependency: None,
+            time_per_sqm: None,
+            amount: Some(dec("4.0")),
+            amount_unit: None,
+            agricultural_task: Some(TaskScheduleRelatedTask {
+                id: 13,
+                name: "追肥".into(),
+                description: None,
+                weather_dependency: None,
+                time_per_sqm: None,
+            }),
+        };
+
+        let crop = TaskScheduleCrop {
+            id: 1,
+            name: "トマト".into(),
+            crop_task_templates: vec![],
+            crop_task_schedule_blueprints: vec![
+                general_blueprint,
+                basal_blueprint,
+                topdress_blueprint,
+            ],
+        };
+        let field_cultivation = TaskScheduleFieldCultivation {
+            id: 7,
+            crop: Some(crop),
+            start_date: Date::from_calendar_date(2025, time::Month::April, 1).ok(),
+        };
+        let plan = TaskSchedulePlan {
+            id: 99,
+            predicted_weather_data: mocked_weather_data(),
+            field_cultivations: vec![field_cultivation],
+            calculated_planning_start_date: None,
+        };
+        let ctx = TaskSchedulePlanContext { plan };
+        let task_schedule_gateway = CapturingTaskScheduleGateway::new();
+        let clock = FixedClock {
+            now: OffsetDateTime::from_unix_timestamp(1_735_689_600).unwrap(),
+        };
+        (ctx, task_schedule_gateway, clock)
+    }
+
+    // Ruby: test "generate! produces general + fertilizer schedules with blueprint-derived items"
+    #[test]
+    fn generate_produces_general_and_fertilizer_schedules() {
+        let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        interactor.generate(99).expect("generate");
+
+        let replaced = task_schedule_gateway.replaced.lock().unwrap();
+        assert_eq!(replaced.len(), 2);
+        let general = replaced.iter().find(|r| r.category == "general").unwrap();
+        let fertilizer = replaced.iter().find(|r| r.category == "fertilizer").unwrap();
+        assert_eq!(general.items.len(), 1);
+        assert_eq!(general.items[0].task_type, FIELD_WORK);
+        assert_eq!(general.items[0].agricultural_task_id, Some(11));
+        assert_eq!(general.items[0].scheduled_date, Date::from_calendar_date(2025, time::Month::April, 1).unwrap());
+        assert_eq!(fertilizer.items.len(), 2);
+        assert_eq!(fertilizer.items.last().unwrap().scheduled_date, Date::from_calendar_date(2025, time::Month::April, 6).unwrap());
+    }
+
+    // Ruby: test "generate! raises TemplateMissingError when crop has no blueprints"
+    #[test]
+    fn generate_raises_template_missing_when_no_blueprints() {
+        let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
+            if let Some(crop) = fc.crop.as_mut() {
+                crop.crop_task_schedule_blueprints.clear();
+            }
+        }
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        let err = interactor.generate(99).unwrap_err();
+        assert!(err.to_string().contains("作業テンプレートが登録されていません"));
+    }
+
+    // Ruby: test "generate! raises ProgressDataMissingError when progress has no records"
+    #[test]
+    fn generate_raises_progress_missing_when_no_records() {
+        let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let progress_gateway = StubProgressGateway {
+            response: serde_json::json!({ "progress_records": [] }),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        let err = interactor.generate(99).unwrap_err();
+        assert!(err.to_string().contains("GDD進捗データが空です"));
+    }
+
+    // Ruby: test "progress gateway receives weather data filtered from the start date"
+    #[test]
+    fn progress_gateway_receives_filtered_weather() {
+        let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        interactor.generate(99).expect("generate");
+        let payload = progress_gateway.received.lock().unwrap().last().unwrap().clone();
+        let times: Vec<_> = payload
+            .weather_data
+            .get("data")
+            .and_then(|v| v.as_array())
+            .unwrap()
+            .iter()
+            .filter_map(|e| e.get("time").and_then(|t| t.as_str()))
+            .collect();
+        assert!(!times.is_empty());
+        let start = Date::from_calendar_date(2025, time::Month::April, 1).unwrap();
+        assert!(times.iter().all(|t| safe_parse_date(t).unwrap() >= start));
+    }
+
+    // Ruby: test "generate! raises GddTriggerMissingError when a blueprint has no gdd trigger"
+    #[test]
+    fn generate_raises_gdd_trigger_missing() {
+        let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
+            if let Some(crop) = fc.crop.as_mut() {
+                crop.crop_task_schedule_blueprints[0].gdd_trigger = None;
+            }
+        }
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        let err = interactor.generate(99).unwrap_err();
+        assert!(err.to_string().contains("GDDトリガーが設定されていません"));
+    }

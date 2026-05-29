@@ -1,7 +1,7 @@
-mod interaction_rule_create_input;
-mod interaction_rule_destroy_output;
-mod interaction_rule_detail_output;
-mod interaction_rule_update_input;
+pub(crate) mod interaction_rule_create_input;
+pub(crate) mod interaction_rule_destroy_output;
+pub(crate) mod interaction_rule_detail_output;
+pub(crate) mod interaction_rule_update_input;
 
 pub use interaction_rule_create_input::InteractionRuleCreateInput;
 pub use interaction_rule_destroy_output::InteractionRuleDestroyOutput;

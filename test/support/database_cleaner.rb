@@ -14,8 +14,12 @@ module DatabaseCleanerSetup
       return super
     end
 
-    # 通常のテストではtransactionを使用
-    DatabaseCleaner[:active_record].strategy = :transaction
+    # R4 rust: agrr-server reads SQLite outside the Rails test transaction.
+    if defined?(ContractTestCase) && is_a?(ContractTestCase) && ENV.fetch("CONTRACT_RUNTIME", "rails") == "rust"
+      DatabaseCleaner[:active_record].strategy = :truncation
+    else
+      DatabaseCleaner[:active_record].strategy = :transaction
+    end
     DatabaseCleaner[:active_record].start
     super
   end

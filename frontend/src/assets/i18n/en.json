@@ -181,17 +181,44 @@
     "submit": "Submit",
     "close": "Close",
     "loading": "Loading...",
+    "next": "Next",
     "true": "Yes",
     "false": "No"
+  },
+  "weather": {
+    "page": {
+      "heading": "Weather data"
+    },
+    "temperature": {
+      "chart": {
+        "title": "Temperature chart",
+        "dataset_label": "Temperature (°C)"
+      }
+    }
   },
   "nav": {
     "home": "Home",
     "farms": "Farm Management",
     "crops": "Crop Management",
+    "fertilizes": "Fertilizer Management",
+    "pests": "Pest Management",
+    "pesticides": "Pesticide Management",
+    "agricultural_tasks": "Task Management",
+    "interaction_rules": "Rotation Rules",
     "plans": "Crop Plans",
+    "plan": "Crop Plans",
+    "menu_masters": "Masters",
+    "new_plan": "Free Crop Plan",
+    "reports": "Research",
+    "menu_more": "More",
+    "main": "Main navigation",
+    "open_menu": "Open menu",
+    "close_menu": "Close menu",
     "public_plans": "Free Crop Plans",
     "about": "About AGRR",
     "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
     "login": "Login",
     "logout": "Logout",
     "admin": "Admin",
@@ -1234,6 +1261,7 @@
     },
     "index": {
       "title": "Pesticides",
+      "description": "Manage pesticides linked to crops and pests.",
       "new_pesticide": "Add New Pesticide",
       "reference_pesticides": "Reference Pesticides (Common Data)",
       "active_ingredient": "Active Ingredient",
@@ -1301,6 +1329,8 @@
     },
     "index": {
       "title": "Tasks",
+      "description": "Manage cultivation task templates.",
+      "skill_label": "Skill level",
       "new_agricultural_task": "Add Task",
       "time_per_sqm": "Time per ㎡",
       "reference_task": "Reference Task",
@@ -1459,6 +1489,7 @@
     },
     "index": {
       "title": "Pests",
+      "description": "Manage pests linked to crops.",
       "new_pest": "Add New Pest",
       "reference_pests": "Reference Pests (Common Data)",
       "scientific_name": "Scientific Name",
@@ -1565,6 +1596,7 @@
     },
     "index": {
       "title": "Fertilizers",
+      "description": "Manage fertilizer master data.",
       "new_fertilize": "Add New Fertilizer",
       "reference_fertilizes": "Reference Fertilizers (Common Data)",
       "actions": {
@@ -1617,6 +1649,8 @@
     },
     "index": {
       "title": "Farms",
+      "description": "Manage farms used as units for crop plans.",
+      "reference_badge": "Reference",
       "new_farm": "Add New Farm",
       "reference_farms": "Reference Farms (Growing Regions)",
       "my_farms": "My Farms",
@@ -1843,6 +1877,7 @@
     },
     "index": {
       "title": "Crop Rotation Rules",
+      "description": "Manage rotation and succession impact rules between crop groups.",
       "new_rule": "Add New Rule",
       "system_rules": "System Standard Rules",
       "my_rules": "My Rules",

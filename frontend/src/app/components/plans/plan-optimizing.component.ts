@@ -18,7 +18,7 @@ const initialControl: PlanOptimizingViewState = {
   imports: [CommonModule, RouterLink, TranslateModule],
   providers: [...PLAN_OPTIMIZING_PROVIDERS],
   template: `
-    <main class="page-main">
+    <main class="page-main page-main--fit">
       <section class="page">
         <a [routerLink]="['/plans', planId]">{{ 'plans.optimizing_live.back_to_plan' | translate }}</a>
         <h2>{{ 'plans.optimizing_live.heading' | translate }}</h2>

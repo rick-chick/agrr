@@ -1,11 +1,11 @@
-mod ai_create_interactor_port;
-mod ai_update_interactor_port;
-mod fertilize_ai_create_output_port;
-mod fertilize_create_output_port;
-mod fertilize_destroy_output_port;
-mod fertilize_detail_output_port;
-mod fertilize_list_output_port;
-mod fertilize_update_output_port;
+pub(crate) mod ai_create_interactor_port;
+pub(crate) mod ai_update_interactor_port;
+pub(crate) mod fertilize_ai_create_output_port;
+pub(crate) mod fertilize_create_output_port;
+pub(crate) mod fertilize_destroy_output_port;
+pub(crate) mod fertilize_detail_output_port;
+pub(crate) mod fertilize_list_output_port;
+pub(crate) mod fertilize_update_output_port;
 
 pub use ai_create_interactor_port::{AiCreateInteractorPort, AiCreateResult};
 pub use ai_update_interactor_port::{AiUpdateInteractorPort, AiUpdateResult};

@@ -11,18 +11,7 @@ pub fn locale_to_region(locale: impl AsRef<str>) -> &'static str {
 }
 
 #[cfg(test)]
-mod tests {
+mod mappers_locale_to_region_mapper_test_inline {
     use super::*;
-
-    #[test]
-    fn maps_known_locales() {
-        assert_eq!(locale_to_region("ja"), "jp");
-        assert_eq!(locale_to_region("us"), "us");
-        assert_eq!(locale_to_region("in"), "in");
-    }
-
-    #[test]
-    fn defaults_unknown_locale_to_jp() {
-        assert_eq!(locale_to_region("unknown"), "jp");
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/shared/mappers_locale_to_region_mapper_test.rs"));
 }

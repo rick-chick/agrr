@@ -23,37 +23,34 @@ const initialControl: ApiKeyViewState = {
   providers: [...API_KEY_PROVIDERS],
   template: `
     <div class="page-content-container">
-      <div class="page-header">
+      <header class="page-header">
         <h1>{{ 'api_keys.title' | translate }}</h1>
-      </div>
+      </header>
 
       <div class="info-box">
         <p class="info-box-content">{{ 'api_keys.warning' | translate }}</p>
 
         @if (control.apiKey) {
-          <div class="form-group mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">{{ 'api_keys.label' | translate }}</label>
-            <div class="flex gap-2">
+          <div class="form-group">
+            <label class="form-group-label" for="api-key-value">{{ 'api_keys.label' | translate }}</label>
+            <div class="api-key-input-row">
               <input
+                id="api-key-value"
                 type="text"
-                class="flex-1 p-2 border rounded bg-gray-50"
+                class="api-key-input"
                 [value]="control.apiKey"
                 readonly
               >
-              <button
-                type="button"
-                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
-                (click)="copyToClipboard()"
-              >
+              <button type="button" class="btn-secondary" (click)="copyToClipboard()">
                 {{ control.copyButtonLabel }}
               </button>
             </div>
           </div>
 
-          <div class="flex gap-4">
+          <div class="api-key-actions">
             <button
               type="button"
-              class="btn-primary api-key-regenerate"
+              class="btn-primary"
               (click)="regenerate()"
               [disabled]="control.generating"
             >
@@ -61,13 +58,13 @@ const initialControl: ApiKeyViewState = {
             </button>
           </div>
         } @else {
-          <div class="bg-blue-50 p-4 rounded mb-6">
-            <p class="text-blue-700">{{ 'api_keys.notices.missing' | translate }}</p>
+          <div class="api-key-notice">
+            <p>{{ 'api_keys.notices.missing' | translate }}</p>
           </div>
 
           <button
             type="button"
-            class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            class="btn-primary"
             (click)="generate()"
             [disabled]="control.generating"
           >
@@ -76,30 +73,30 @@ const initialControl: ApiKeyViewState = {
         }
 
         @if (control.error) {
-          <p class="text-red-600 mt-2">{{ control.error }}</p>
+          <p class="api-key-error" role="alert">{{ control.error }}</p>
         }
       </div>
 
       @if (control.loading) {
-        <p class="master-loading text-gray-500">{{ 'common.loading' | translate }}</p>
+        <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else {
-        <div class="info-box mt-8">
+        <div class="info-box info-box--usage">
           <h2 class="info-box-title">{{ 'api_keys.usage.heading' | translate }}</h2>
 
-          <div class="mb-6">
-            <h3 class="font-bold mb-2">{{ 'api_keys.usage.headers.header' | translate }}</h3>
-            <pre class="bg-gray-800 text-white p-4 rounded overflow-x-auto"><code>X-API-Key: {{ control.apiKey || 'YOUR_API_KEY' }}</code></pre>
-            <p class="my-2 text-center text-gray-500">{{ 'api_keys.usage.headers.or' | translate }}</p>
-            <pre class="bg-gray-800 text-white p-4 rounded overflow-x-auto"><code>Authorization: Bearer {{ control.apiKey || 'YOUR_API_KEY' }}</code></pre>
+          <div class="usage-section">
+            <h3 class="usage-section-title">{{ 'api_keys.usage.headers.header' | translate }}</h3>
+            <pre class="api-key-code"><code>X-API-Key: {{ control.apiKey || 'YOUR_API_KEY' }}</code></pre>
+            <p class="usage-or">{{ 'api_keys.usage.headers.or' | translate }}</p>
+            <pre class="api-key-code"><code>Authorization: Bearer {{ control.apiKey || 'YOUR_API_KEY' }}</code></pre>
           </div>
 
-          <div class="mb-6">
-            <h3 class="font-bold mb-2">{{ 'api_keys.usage.query.heading' | translate }}</h3>
-            <pre class="bg-gray-800 text-white p-4 rounded overflow-x-auto"><code>GET /api/v1/masters/crops?api_key={{ control.apiKey || 'YOUR_API_KEY' }}</code></pre>
+          <div class="usage-section">
+            <h3 class="usage-section-title">{{ 'api_keys.usage.query.heading' | translate }}</h3>
+            <pre class="api-key-code"><code>GET /api/v1/masters/crops?api_key={{ control.apiKey || 'YOUR_API_KEY' }}</code></pre>
           </div>
 
-          <div class="mt-6">
-            <a href="/api/docs" target="_blank" class="highlight-box-button">
+          <div class="api-key-actions">
+            <a href="/api/docs" target="_blank" rel="noopener noreferrer" class="highlight-box-button">
               {{ 'api_keys.usage.reference_button' | translate }}
             </a>
           </div>

@@ -1,12 +1,12 @@
-mod fertilize_ai_create_failure;
-mod fertilize_ai_create_output;
-mod fertilize_create_input;
-mod fertilize_destroy_output;
-mod fertilize_detail_output;
-mod fertilize_display;
-mod fertilize_update_failure;
-mod fertilize_update_input;
-mod http_status;
+pub(crate) mod fertilize_ai_create_failure;
+pub(crate) mod fertilize_ai_create_output;
+pub(crate) mod fertilize_create_input;
+pub(crate) mod fertilize_destroy_output;
+pub(crate) mod fertilize_detail_output;
+pub(crate) mod fertilize_display;
+pub(crate) mod fertilize_update_failure;
+pub(crate) mod fertilize_update_input;
+pub(crate) mod http_status;
 
 pub use fertilize_ai_create_failure::FertilizeAiCreateFailure;
 pub use fertilize_ai_create_output::FertilizeAiCreateOutput;

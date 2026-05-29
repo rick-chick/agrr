@@ -1,6 +1,6 @@
-mod contact_message_rate_limiter_port;
-mod create_contact_message_output_port;
-mod recaptcha_verifier_port;
+pub(crate) mod contact_message_rate_limiter_port;
+pub(crate) mod create_contact_message_output_port;
+pub(crate) mod recaptcha_verifier_port;
 
 pub use contact_message_rate_limiter_port::{
     ContactMessageRateLimiterPort, RateLimitTrackResult,

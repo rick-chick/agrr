@@ -90,15 +90,7 @@ pub enum ErrorsLike<'a> {
 }
 
 #[cfg(test)]
-mod tests {
+mod validation_validation_errors_test_inline {
     use super::*;
-
-    #[test]
-    fn add_and_full_messages() {
-        let mut e = ValidationErrors::new();
-        e.add("name", "can't be blank");
-        assert_eq!(e.get("name"), vec!["can't be blank"]);
-        assert_eq!(e.full_messages(), vec!["can't be blank"]);
-        assert!(e.any());
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/shared/validation_validation_errors_test.rs"));
 }

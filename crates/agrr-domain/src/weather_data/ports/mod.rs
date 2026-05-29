@@ -1,12 +1,12 @@
-mod farm_weather_data_access_output_port;
-mod farm_weather_prediction_payload_parse_port;
-mod fetch_weather_data_job_presenter_port;
-mod fetch_weather_job_ports;
-mod internal_farm_weather_data_list_output_port;
-mod internal_farm_weather_status_output_port;
-mod internal_weather_fetch_start_output_port;
-mod predict_weather_standalone_enqueue_port;
-mod weather_prediction_anchors_port;
+pub(crate) mod farm_weather_data_access_output_port;
+pub(crate) mod farm_weather_prediction_payload_parse_port;
+pub(crate) mod fetch_weather_data_job_presenter_port;
+pub(crate) mod fetch_weather_job_ports;
+pub(crate) mod internal_farm_weather_data_list_output_port;
+pub(crate) mod internal_farm_weather_status_output_port;
+pub(crate) mod internal_weather_fetch_start_output_port;
+pub(crate) mod predict_weather_standalone_enqueue_port;
+pub(crate) mod weather_prediction_anchors_port;
 
 pub use farm_weather_data_access_output_port::{
     FarmWeatherDataAccessOutputPort, FarmWeatherFarmSummary, FarmWeatherIndexRow,

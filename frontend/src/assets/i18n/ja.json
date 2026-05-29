@@ -102,6 +102,7 @@
     },
     "index": {
       "title": "農薬一覧",
+      "description": "作物・害虫に紐づく農薬マスタを管理します。",
       "new_pesticide": "新しい農薬を追加",
       "reference_pesticides": "参照農薬（共通データ）",
       "active_ingredient": "有効成分",
@@ -169,6 +170,8 @@
     },
     "index": {
       "title": "作業一覧",
+      "description": "栽培作業のテンプレートを管理します。",
+      "skill_label": "スキルレベル",
       "new_agricultural_task": "新しい作業を追加",
       "time_per_sqm": "作業時間",
       "reference_task": "参照作業",
@@ -359,6 +362,7 @@
     },
     "index": {
       "title": "作物一覧",
+      "description": "栽培する作物のマスタを管理します。",
       "new_crop": "新しい作物を追加",
       "reference_crops": "参照作物（共通データ）",
       "my_crops": "自分の作物",
@@ -698,6 +702,7 @@
     },
     "index": {
       "title": "害虫一覧",
+      "description": "作物に関連する害虫マスタを管理します。",
       "new_pest": "新しい害虫を追加",
       "reference_pests": "参照害虫（共通データ）",
       "scientific_name": "学名",
@@ -804,6 +809,7 @@
     },
     "index": {
       "title": "肥料一覧",
+      "description": "施肥計画で使う肥料マスタを管理します。",
       "new_fertilize": "新しい肥料を追加",
       "reference_fertilizes": "参照肥料（共通データ）",
       "actions": {
@@ -862,6 +868,8 @@
     },
     "index": {
       "title": "農場一覧",
+      "description": "作付け計画の単位となる農場を管理します。",
+      "reference_badge": "参照",
       "new_farm": "新しい農場を追加",
       "reference_farms": "参照農場（栽培地域）",
       "my_farms": "自分の農場",
@@ -1125,6 +1133,7 @@
     },
     "index": {
       "title": "連作ルール一覧",
+      "description": "作物の連作・輪作に関する影響ルールを管理します。",
       "new_rule": "新しいルールを追加",
       "system_rules": "システム標準ルール",
       "my_rules": "マイルール",
@@ -1295,6 +1304,7 @@
     "submit": "送信",
     "close": "閉じる",
     "loading": "読み込み中...",
+    "next": "次へ",
     "true": "はい",
     "false": "いいえ"
   },
@@ -2096,14 +2106,40 @@
       }
     }
   },
+  "weather": {
+    "page": {
+      "heading": "気象データ"
+    },
+    "temperature": {
+      "chart": {
+        "title": "気温チャート",
+        "dataset_label": "気温（°C）"
+      }
+    }
+  },
   "nav": {
     "home": "ホーム",
-    "farms": "圃場管理",
+    "farms": "農場管理",
     "crops": "作物管理",
+    "fertilizes": "肥料管理",
+    "pests": "害虫管理",
+    "pesticides": "農薬管理",
+    "agricultural_tasks": "作業管理",
+    "interaction_rules": "連作ルール",
     "plans": "作付け計画",
+    "plan": "作付け計画",
+    "menu_masters": "マスタ",
+    "new_plan": "無料作付け計画",
+    "reports": "研究レポート",
+    "menu_more": "その他",
+    "main": "メインナビゲーション",
+    "open_menu": "メニューを開く",
+    "close_menu": "メニューを閉じる",
     "public_plans": "無料作付け計画",
     "about": "AGRRについて",
     "contact": "お問い合わせ",
+    "privacy": "プライバシーポリシー",
+    "terms": "利用規約",
     "login": "ログイン",
     "logout": "ログアウト",
     "admin": "管理画面",

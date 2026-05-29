@@ -1,10 +1,10 @@
-mod crop_gateway;
-mod crop_masters_task_template_gateway;
-mod crop_stage_gateway;
-mod nutrient_requirement_gateway;
-mod sunshine_requirement_gateway;
-mod temperature_requirement_gateway;
-mod thermal_requirement_gateway;
+pub(crate) mod crop_gateway;
+pub(crate) mod crop_masters_task_template_gateway;
+pub(crate) mod crop_stage_gateway;
+pub(crate) mod nutrient_requirement_gateway;
+pub(crate) mod sunshine_requirement_gateway;
+pub(crate) mod temperature_requirement_gateway;
+pub(crate) mod thermal_requirement_gateway;
 
 #[cfg(test)]
 pub mod crop_gateway_stub;

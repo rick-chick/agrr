@@ -38,16 +38,7 @@ fn cast_integer_str(s: &str) -> Option<i64> {
 }
 
 #[cfg(test)]
-mod tests {
+mod type_converters_integer_converter_test_inline {
     use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn cast_digit_strings_and_rejects_non_digits() {
-        assert_eq!(cast_integer(Some(&json!("42"))), Some(42));
-        assert_eq!(cast_integer(Some(&json!("-3"))), Some(-3));
-        assert_eq!(cast_integer(Some(&json!("12.5"))), None);
-        assert_eq!(cast_integer(None), None);
-        assert_eq!(cast_integer(Some(&json!(7))), Some(7));
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/shared/type_converters_integer_converter_test.rs"));
 }

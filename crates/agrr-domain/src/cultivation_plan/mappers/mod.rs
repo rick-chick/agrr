@@ -1,24 +1,31 @@
-mod agrr_adjust_allocation_row_mapper;
-mod agrr_adjust_result_field_cultivation_sync_mapper;
-mod cultivation_plan_phase_broadcast_payload_mapper;
-mod optimization_plan_snapshot_mapper;
-mod private_plan_detail_mapper;
-mod plan_allocation_adjust_agrr_payload_mapper;
-mod plan_allocation_adjust_read_snapshot_parts;
-mod plan_save_agricultural_task_attributes_mapper;
-mod plan_save_crop_task_template_attributes_mapper;
-mod plan_save_fertilize_attributes_mapper;
-mod plan_save_fertilize_unique_name;
-mod plan_save_field_create_attributes_mapper;
-mod plan_save_interaction_rule_attributes_mapper;
-mod plan_save_pest_attributes_mapper;
-mod plan_save_pesticide_attributes_mapper;
-mod public_plan_save_session_data_mapper;
+pub(crate) mod agrr_adjust_allocation_row_mapper;
+pub(crate) mod agrr_adjust_result_field_cultivation_sync_mapper;
+pub(crate) mod cultivation_plan_phase_broadcast_payload_mapper;
+pub(crate) mod cultivation_plan_rest_plan_snapshot_mapper;
+pub(crate) mod cultivation_plan_workbench_snapshot_mapper;
+pub(crate) mod optimization_plan_snapshot_mapper;
+pub(crate) mod private_plan_detail_mapper;
+pub(crate) mod plan_allocation_adjust_agrr_payload_mapper;
+pub(crate) mod plan_allocation_adjust_read_snapshot_parts;
+pub(crate) mod plan_save_agricultural_task_attributes_mapper;
+pub(crate) mod plan_save_crop_task_template_attributes_mapper;
+pub(crate) mod plan_save_fertilize_attributes_mapper;
+pub(crate) mod plan_save_fertilize_unique_name;
+pub(crate) mod plan_save_field_create_attributes_mapper;
+pub(crate) mod plan_save_interaction_rule_attributes_mapper;
+pub(crate) mod plan_save_pest_attributes_mapper;
+pub(crate) mod plan_save_pesticide_attributes_mapper;
+pub(crate) mod public_plan_save_session_data_mapper;
 pub mod task_schedule_timeline_mapper;
 
 pub use agrr_adjust_allocation_row_mapper::build_current_allocation;
 pub use agrr_adjust_result_field_cultivation_sync_mapper::AgrrAdjustResultFieldCultivationSyncMapper;
 pub use cultivation_plan_phase_broadcast_payload_mapper::to_port_payload;
+pub use cultivation_plan_rest_plan_snapshot_mapper::{from_snapshots as rest_plan_snapshot_from_snapshots, load_snapshot as load_rest_plan_snapshot};
+pub use cultivation_plan_workbench_snapshot_mapper::{
+    from_rest_plan_snapshot as workbench_from_rest_plan_snapshot,
+    from_snapshots as workbench_from_snapshots,
+};
 pub use optimization_plan_snapshot_mapper::to_snapshot;
 pub use private_plan_detail_mapper::to_detail as private_plan_detail_to_detail;
 pub use plan_allocation_adjust_agrr_payload_mapper::{

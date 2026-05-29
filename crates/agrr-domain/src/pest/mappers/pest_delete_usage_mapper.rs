@@ -7,17 +7,7 @@ pub fn from_snapshot(snapshot: &PestDeleteUsageSnapshot) -> PestDeleteUsage {
 }
 
 #[cfg(test)]
-mod tests {
+mod mappers_pest_delete_usage_mapper_test_inline {
     use super::*;
-
-    #[test]
-    fn from_snapshot_maps_pesticides_count() {
-        let snapshot = PestDeleteUsageSnapshot {
-            pesticides_count: 5,
-        };
-
-        let dto = from_snapshot(&snapshot);
-
-        assert_eq!(dto.pesticides_count, 5);
-    }
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/pest/mappers_pest_delete_usage_mapper_test.rs"));
 }

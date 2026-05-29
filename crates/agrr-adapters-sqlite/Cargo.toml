@@ -10,7 +10,9 @@ agrr-domain = { path = "../agrr-domain" }
 rusqlite = { version = "0.32", features = ["bundled"] }
 thiserror.workspace = true
 serde_json.workspace = true
+rust_decimal.workspace = true
 time = { workspace = true, features = ["parsing", "formatting"] }
+getrandom = "0.2"
 
 [dev-dependencies]
 time = { workspace = true }

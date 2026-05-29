@@ -1,8 +1,8 @@
-mod interaction_rule_create_interactor;
-mod interaction_rule_destroy_interactor;
-mod interaction_rule_detail_interactor;
-mod interaction_rule_list_interactor;
-mod interaction_rule_update_interactor;
+pub(crate) mod interaction_rule_create_interactor;
+pub(crate) mod interaction_rule_destroy_interactor;
+pub(crate) mod interaction_rule_detail_interactor;
+pub(crate) mod interaction_rule_list_interactor;
+pub(crate) mod interaction_rule_update_interactor;
 
 pub use interaction_rule_create_interactor::InteractionRuleCreateInteractor;
 pub use interaction_rule_destroy_interactor::InteractionRuleDestroyInteractor;

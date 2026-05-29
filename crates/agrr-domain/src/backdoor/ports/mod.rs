@@ -1,3 +1,3 @@
-mod backdoor_clear_database_output_port;
+pub(crate) mod backdoor_clear_database_output_port;
 
 pub use backdoor_clear_database_output_port::BackdoorClearDatabaseOutputPort;

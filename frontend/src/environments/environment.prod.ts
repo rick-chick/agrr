@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  enableDevMockLogin: false,
   enableGoogleAnalytics: true,
   googleAnalyticsMeasurementId: 'G-WNLSL6W4ZT',
   /** Google 広告の Google タグ ID（コンソールの gtag スニペットと同一） */

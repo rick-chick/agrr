@@ -19,7 +19,7 @@ const initialControl: PlanTaskScheduleViewState = {
   imports: [CommonModule, RouterLink, TaskScheduleTimelineComponent, TranslateModule],
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
-    <main class="page-main">
+    <main class="page-main page-main--fit">
       <section class="page">
         <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedule.back_to_plan' | translate }}</a>
         @if (control.loading) {

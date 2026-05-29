@@ -1,9 +1,9 @@
-mod pesticide_application_detail_snapshot;
-mod pesticide_create_input;
-mod pesticide_destroy_output;
-mod pesticide_detail_output;
-mod pesticide_update_input;
-mod pesticide_usage_constraint_snapshot;
+pub(crate) mod pesticide_application_detail_snapshot;
+pub(crate) mod pesticide_create_input;
+pub(crate) mod pesticide_destroy_output;
+pub(crate) mod pesticide_detail_output;
+pub(crate) mod pesticide_update_input;
+pub(crate) mod pesticide_usage_constraint_snapshot;
 
 pub use pesticide_application_detail_snapshot::PesticideApplicationDetailSnapshot;
 pub use pesticide_create_input::PesticideCreateInput;

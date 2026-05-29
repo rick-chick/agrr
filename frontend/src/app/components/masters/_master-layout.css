@@ -7,7 +7,24 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.page-main > .page-header,
+.page-main > .section-card,
+.page-main > .form-card,
+.page-main > .detail-card {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+/* 短いコンテンツ画面（最適化中・タスク予定など）でフッター手前の空白を抑える */
+.page-main--fit {
+  min-height: auto;
 }
 
 @media (max-width: 768px) {
@@ -42,14 +59,17 @@
   margin-bottom: var(--space-4);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-card);
-  /* ヘッダー行 + .card-list を縦に積み、子の高さで枠が伸びる（min-height:100% 由来の欠陥を防ぐ） */
+  /* ヘッダー行 + .card-list を縦に積み、子の高さで枠が伸びる */
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  gap: var(--space-4);
+  overflow: visible;
+  min-height: 0;
 }
 
 .page-main > .section-card {
-  align-self: stretch;
+  flex: 0 1 auto;
 }
 
 /* 編集・詳細画面でのみ幅制限（一覧は幅制限なしで card-list の 1〜3 列を活かす） */
@@ -78,8 +98,13 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: 0;
   flex-shrink: 0;
+}
+
+/* ヘッダー行の直後は .card-list（section-card の gap で間隔を取る） */
+.section-card__header-actions + .card-list {
+  margin-top: 0;
 }
 
 /* ===== 2. 一覧（カードリスト） ===== */
@@ -90,21 +115,21 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  width: 100%;
   /* stretch だと行高さと min-height:% の相互作用で枠が潰れることがある */
   align-items: start;
-  flex: 1 1 auto;
   min-width: 0;
 }
 
 @media (min-width: 768px) {
   .card-list {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1024px) {
   .card-list {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -112,6 +137,7 @@
   margin: 0;
   display: flex;
   min-width: 0;
+  min-height: 0;
 }
 
 /* パターンA: カード全体がリンク（従来・他一覧で使用） */
@@ -140,10 +166,12 @@ a.item-card:focus-visible {
 article.item-card {
   display: flex;
   flex-wrap: wrap;
-  align-items: stretch;
+  align-items: flex-start;
   flex: 1 1 auto;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
+  min-height: 5.5rem;
   box-sizing: border-box;
   gap: var(--space-3);
   padding: var(--space-4);
@@ -151,6 +179,13 @@ article.item-card {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (min-width: 640px) {
+  article.item-card {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
 }
 
 article.item-card:hover {
@@ -180,6 +215,8 @@ article.item-card:hover {
   font-weight: var(--font-weight-medium);
   display: block;
   margin-bottom: var(--space-1);
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .item-card__meta {
@@ -191,9 +228,20 @@ article.item-card:hover {
 .item-card__actions {
   display: flex;
   flex-shrink: 0;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
   align-items: center;
-  align-self: center;
+  align-self: flex-end;
+  justify-content: flex-end;
+  margin-inline-start: auto;
+}
+
+@media (min-width: 640px) {
+  .item-card__actions {
+    align-self: center;
+    margin-inline-start: 0;
+    flex-wrap: nowrap;
+  }
 }
 
 /* 一覧行内のアクション（従来・list-item-actions 使用箇所で互換） */

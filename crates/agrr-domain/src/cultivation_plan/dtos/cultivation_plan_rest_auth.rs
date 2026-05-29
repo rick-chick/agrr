@@ -1,12 +1,12 @@
 //! Ruby: `Domain::CultivationPlan::Dtos::CultivationPlanRestAuth`
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum CultivationPlanRestAuthMode {
     Private,
     Public,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CultivationPlanRestAuth {
     pub mode: CultivationPlanRestAuthMode,
     pub user_id: Option<i64>,

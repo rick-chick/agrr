@@ -1,0 +1,251 @@
+import { expect, test } from '@playwright/test';
+import { waitForPageStable } from '../page-stable';
+import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
+import {
+  assertHostHealthy,
+  disableCookieBanner,
+  loadResolvedCaptureIds,
+  resolveGotoUrl,
+  smokeDescribe,
+  smokeManifest,
+} from './smoke-helpers';
+import type { ResolvedCaptureIds } from '../resolve-capture-urls';
+
+const MASTER_RESOURCES = [
+  { segment: 'farms', listHost: 'app-farm-list', newHost: 'app-farm-create' },
+  { segment: 'crops', listHost: 'app-crop-list', newHost: 'app-crop-create' },
+  { segment: 'fertilizes', listHost: 'app-fertilize-list', newHost: 'app-fertilize-create' },
+  { segment: 'pests', listHost: 'app-pest-list', newHost: 'app-pest-create' },
+  { segment: 'pesticides', listHost: 'app-pesticide-list', newHost: 'app-pesticide-create' },
+  {
+    segment: 'agricultural_tasks',
+    listHost: 'app-agricultural-task-list',
+    newHost: 'app-agricultural-task-create',
+  },
+  {
+    segment: 'interaction_rules',
+    listHost: 'app-interaction-rule-list',
+    newHost: 'app-interaction-rule-create',
+  },
+] as const;
+
+function findRoute(pattern: string) {
+  const r = smokeManifest.routes.find((row) => row.pattern === pattern);
+  if (!r) throw new Error(`route-manifest missing pattern: ${pattern}`);
+  return r;
+}
+
+smokeDescribe('operation smoke (key user flows)', () => {
+  let resolvedCaptureIds: ResolvedCaptureIds | null = null;
+
+  test.beforeAll(async () => {
+    resolvedCaptureIds = await loadResolvedCaptureIds();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await disableCookieBanner(page);
+  });
+
+  test('home CTA opens public plan wizard', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('app-home')).toBeVisible();
+    await page.locator('app-home .primary-button').first().click();
+    await expect(page).toHaveURL(/\/public-plans\/new/);
+    await expect(page.locator('app-public-plan-create')).toBeVisible();
+    await assertHostHealthy(page, 'app-public-plan-create');
+  });
+
+  test('navbar navigates to plans and master farms', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.nav-link', { hasText: /計画|Plans|योजना/ }).first().click();
+    await expect(page).toHaveURL(/\/plans$/);
+    await expect(page.locator('app-plan-list')).toBeVisible();
+
+    await page.locator('app-nav-dropdown').first().click();
+    await page.locator('#nav-masters-panel a[href="/farms"]').click();
+    await expect(page).toHaveURL(/\/farms$/);
+    await expect(page.locator('app-farm-list')).toBeVisible();
+  });
+
+  test('public plan wizard: farm selection advances to farm size', async ({ page }) => {
+    const r = findRoute('public-plans/new');
+    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
+    await waitForPageStable(page, r);
+    await assertHostHealthy(page, 'app-public-plan-create');
+
+    const farmCard = page.locator('app-public-plan-create .enhanced-selection-card').first();
+    if ((await farmCard.count()) === 0) {
+      test.skip(true, 'no public farms in dev DB');
+    }
+    await farmCard.click();
+    await expect(page).toHaveURL(/\/public-plans\/select-farm-size/);
+    await expect(page.locator('app-public-plan-select-farm-size')).toBeVisible();
+  });
+
+  test('contact form submits successfully', async ({ page }) => {
+    await page.goto('/contact');
+    await expect(page.locator('app-contact')).toBeVisible();
+
+    await page.locator('#email').fill(`e2e-smoke-${Date.now()}@example.com`);
+    await page.locator('#message').fill('E2E smoke: contact form happy path.');
+    await page.locator('app-contact-form button[type="submit"]').click();
+
+    await expect(page.locator('.contact-form__message--success')).toBeVisible({ timeout: 30_000 });
+  });
+
+  test('private plan creation form is interactive', async ({ page }) => {
+    const r = findRoute('plans/new');
+    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
+    await waitForPageStable(page, r);
+    await assertHostHealthy(page, 'app-plan-new');
+
+    const farmSelect = page.locator('app-plan-new #farm-select');
+    await expect(farmSelect).toBeVisible();
+    const options = farmSelect.locator('option[value]:not([value=""])');
+    if ((await options.count()) === 0) {
+      test.skip(true, 'no farms for private plan wizard');
+    }
+    await farmSelect.selectOption({ index: 1 });
+    await page.locator('app-plan-new button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/plans\/select-crop/);
+    await expect(page.locator('app-plan-select-crop')).toBeVisible();
+  });
+
+  test('plan detail gantt toolbar toggles crop palette without API mutation', async ({ page }) => {
+    const planRoute = findRoute('plans/:id');
+    const url = resolveGotoUrl(planRoute, resolvedCaptureIds);
+    await page.goto(url);
+    await waitForPageStable(page, planRoute);
+    await assertHostHealthy(page, 'app-plan-detail');
+
+    const gantt = page.locator('app-gantt-chart');
+    if ((await gantt.count()) === 0) {
+      test.skip(true, 'plan has no gantt data');
+    }
+    const toggle = gantt.locator('.gantt-action-bar .action-button').first();
+    await toggle.click();
+    await expect(gantt.locator('.crop-palette')).toBeVisible();
+    await toggle.click();
+    await expect(gantt.locator('.crop-palette')).toBeHidden();
+  });
+
+  test('api-keys page loads management actions', async ({ page }) => {
+    const r = findRoute('api-keys');
+    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
+    await waitForPageStable(page, r);
+    await assertHostHealthy(page, 'app-api-key');
+    await expect(page.locator('app-api-key .btn-primary').first()).toBeVisible();
+  });
+
+  test('weather page shows temperature chart host', async ({ page }) => {
+    const r = findRoute('weather');
+    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
+    await waitForPageStable(page, r);
+    await expect(page.locator('app-weather-page')).toBeVisible();
+    await expect(page.locator('app-temperature-chart canvas')).toBeVisible();
+  });
+
+  test('entry-schedule list can load crops when farms exist', async ({ page }) => {
+    const r = findRoute('entry-schedule');
+    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
+    await waitForPageStable(page, r);
+    await assertHostHealthy(page, 'app-entry-schedule-list');
+
+    const farmSelect = page.locator('#entry-farm-select');
+    const farmOptions = farmSelect.locator('option[value]:not([value=""])');
+    if ((await farmOptions.count()) === 0) {
+      test.skip(true, 'no farms for entry schedule');
+    }
+    await farmSelect.selectOption({ index: 1 });
+    await page.locator('app-entry-schedule-list button.btn-primary').click();
+    await expect(page.locator('app-entry-schedule-list .es-crop-grid, .placeholder-block')).toBeVisible({
+      timeout: 60_000,
+    });
+  });
+
+  for (const m of MASTER_RESOURCES) {
+    test(`master ${m.segment}: list and new form`, async ({ page }) => {
+      const listRoute = findRoute(m.segment);
+      await page.goto(resolveGotoUrl(listRoute, resolvedCaptureIds));
+      await waitForPageStable(page, listRoute);
+      await assertHostHealthy(page, m.listHost);
+      await expect(page.locator(`${m.listHost} .btn-primary`).first()).toBeVisible();
+
+      const newRoute = findRoute(`${m.segment}/new`);
+      await page.goto(resolveGotoUrl(newRoute, resolvedCaptureIds));
+      await waitForPageStable(page, newRoute);
+      await assertHostHealthy(page, m.newHost);
+      await expect(page.locator(`${m.newHost} button[type="submit"]`)).toBeVisible();
+    });
+
+    test(`master ${m.segment}: detail and edit`, async ({ page }) => {
+      const detailPattern = `${m.segment}/:id`;
+      const editPattern = `${m.segment}/:id/edit`;
+      const detailRoute = findRoute(detailPattern);
+      const editRoute = findRoute(editPattern);
+
+      const detailUrl = resolveGotoUrl(detailRoute, resolvedCaptureIds);
+      await page.goto(detailUrl);
+      await waitForPageStable(page, detailRoute);
+      const detailHost = HOST_SELECTOR_BY_PATTERN[detailPattern];
+      if (!detailHost) throw new Error(`missing host for ${detailPattern}`);
+      await assertHostHealthy(page, detailHost);
+      await expect(page.locator(`${detailHost} .btn-primary`).first()).toBeVisible();
+
+      await page.goto(resolveGotoUrl(editRoute, resolvedCaptureIds));
+      await waitForPageStable(page, editRoute);
+      const editHost = HOST_SELECTOR_BY_PATTERN[editPattern];
+      if (!editHost) throw new Error(`missing host for ${editPattern}`);
+      await assertHostHealthy(page, editHost);
+      await expect(page.locator(`${editHost} button[type="submit"]`)).toBeVisible();
+    });
+  }
+
+  test('task schedule timeline supports drag-and-drop reorder', async ({ page }) => {
+    const r = findRoute('plans/:id/task_schedule');
+    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
+    await waitForPageStable(page, r);
+    await assertHostHealthy(page, 'app-plan-task-schedule');
+
+    const item = page.locator('app-task-schedule-timeline .item').first();
+    if ((await item.count()) === 0) {
+      test.skip(true, 'no task schedule items');
+    }
+    const box = await item.boundingBox();
+    if (!box) {
+      test.skip(true, 'task item not visible');
+    }
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height + 40);
+    await page.mouse.up();
+    await expect(item).toBeVisible();
+  });
+
+  test('footer legal links render', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('app-footer a[href="/privacy"]').click();
+    await expect(page).toHaveURL(/\/privacy/);
+    await expect(page.locator('app-privacy')).toBeVisible();
+  });
+});
+
+/** mock セッションを外してログイン・404 を検証（smoke 実行時も常に走る） */
+test.describe('logged-out operation smoke', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test.beforeEach(async ({ page }) => {
+    await disableCookieBanner(page);
+  });
+
+  test('login page shows OAuth entry', async ({ page }) => {
+    await page.goto('/login');
+    await expect(page.locator('app-login')).toBeVisible();
+    await expect(page.locator('app-login .login-button')).toBeVisible();
+  });
+
+  test('unknown route shows not-found', async ({ page }) => {
+    await page.goto('/__e2e-route-manifest-not-found__');
+    await expect(page.locator('app-not-found')).toBeVisible();
+  });
+});

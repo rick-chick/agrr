@@ -30,9 +30,12 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "🚀 lib/domain Rust（cargo test）を実行します..."
     AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rust-domain.sh"
+    echo ""
+    echo "🚀 R4 contract（CONTRACT_RUNTIME=rust, co-located agrr-server）..."
+    AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/scripts/run-rust-contract-tests.sh"
   else
     echo ""
-    echo "⏭️  cargo 未インストールのため Rust domain テストをスキップ（CI: rust-domain-test workflow）"
+    echo "⏭️  cargo 未インストールのため Rust domain / R4 rust contract をスキップ（CI: rust-domain-test workflow）"
   fi
 else
   AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rails.sh" "$@"

@@ -1,12 +1,12 @@
 import { test, request, expect } from '@playwright/test';
 import { readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { waitForPageStable } from '../page-stable';
 import {
   assertPageValidity,
   type RouteRow,
   PUBLIC_PLAN_REDIRECT_TO_NEW,
   expectedPathnameFromResolvedGoto,
-  HOST_SELECTOR_BY_PATTERN,
 } from '../route-validity';
 import {
   applyResolvedUrl,
@@ -29,6 +29,12 @@ const AGENT_PNG_DIR = join(process.cwd(), 'e2e/agent-review/out');
  */
 const captureDescribe = process.env.E2E_CAPTURE_DEV_SESSION ? test.describe : test.describe.skip;
 
+/**
+ * モックログイン済みセッションでは authGuard が `/login` へ寄せず `app-login` が出ない。
+ * 既存 PNG（未ログイン時キャプチャ）を verify が参照するため、再撮影は skip する。
+ */
+const SKIP_CAPTURE_WITH_DEV_SESSION = new Set(['auth/login', 'login']);
+
 function routeLabel(r: RouteRow): string {
   return r.pattern === '' ? '(home)' : r.pattern;
 }
@@ -43,78 +49,6 @@ function pngBasename(r: RouteRow): string {
 async function captureForAgent(page: Parameters<typeof assertPageValidity>[0], r: RouteRow): Promise<void> {
   const path = join(AGENT_PNG_DIR, `${pngBasename(r)}.png`);
   await page.screenshot({ path, fullPage: true });
-}
-
-/** `.master-loading` がまだ DOM に無いうちに `toBeHidden` すると Playwright は即成功しうる（マッチ 0 件＝非表示扱い）。詳細・編集で撮れ損ねないよう、スピナー出現を短時間待ってから消滅待ちする。 */
-const MASTER_LOADING_SPIN_PROBE_EXCLUDE = new Set<string>(['plans/:id/optimizing']);
-
-function needsMasterLoadingSpinProbe(pattern: string): boolean {
-  if (MASTER_LOADING_SPIN_PROBE_EXCLUDE.has(pattern)) return false;
-  if (pattern.includes(':')) return true;
-  if (
-    /^(agricultural_tasks|crops|pests|fertilizes|pesticides|farms|interaction_rules|plans)$/.test(pattern)
-  ) {
-    return true;
-  }
-  if (
-    pattern === 'api-keys' ||
-    pattern === 'entry-schedule' ||
-    pattern === 'dashboard' ||
-    pattern === 'plans/new' ||
-    pattern === 'plans/select-crop'
-  ) {
-    return true;
-  }
-  if (pattern.endsWith('/edit')) return true;
-  return false;
-}
-
-/**
- * スナップショット直前に、非同期取得中の UI をできる限り安定させる。
- * 以前はホストコンポーネントの可視のみ待ち、一覧が「読み込み中」のまま撮影されることがあった。
- */
-async function waitForCaptureStable(page: Parameters<typeof assertPageValidity>[0], r: RouteRow): Promise<void> {
-  if (PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern)) {
-    await page
-      .locator('app-public-plan-create .loading-state')
-      .waitFor({ state: 'hidden', timeout: 60_000 });
-    return;
-  }
-
-  if (r.pattern === 'public-plans/results') {
-    await page
-      .locator('app-public-plan-results .loading-state')
-      .waitFor({ state: 'hidden', timeout: 60_000 });
-    return;
-  }
-
-  if (r.pattern === 'public-plans/new') {
-    await page
-      .locator('app-public-plan-create .loading-state')
-      .waitFor({ state: 'hidden', timeout: 60_000 });
-    return;
-  }
-
-  const host = HOST_SELECTOR_BY_PATTERN[r.pattern];
-  if (!host) return;
-
-  await page.waitForTimeout(400);
-  const loadingLine = page.locator(host).locator('.master-loading:not(.master-error)');
-
-  if (needsMasterLoadingSpinProbe(r.pattern)) {
-    try {
-      await expect
-        .poll(async () => await loadingLine.count(), {
-          timeout: 8_000,
-          intervals: [50, 100, 150, 300],
-        })
-        .toBeGreaterThan(0);
-    } catch {
-      /* スピナー無し・即時描画・404 即時など */
-    }
-  }
-
-  await expect(loadingLine).toBeHidden({ timeout: 60_000 });
 }
 
 captureDescribe('capture-for-agent (Rails + dev session)', () => {
@@ -147,6 +81,9 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
 
   for (const r of manifest.routes) {
     test(`capture-for-agent: ${routeLabel(r)}`, async ({ page }) => {
+      if (SKIP_CAPTURE_WITH_DEV_SESSION.has(r.pattern)) {
+        test.skip(true, 'login routes need logged-out session; keep existing agent-review PNG');
+      }
       const url =
         resolvedCaptureIds != null ? applyResolvedUrl(r.pattern, r.url, resolvedCaptureIds) : r.url;
       await page.goto(url);
@@ -156,7 +93,7 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
           : expectedPathnameFromResolvedGoto(url);
 
       await assertPageValidity(page, r, pathnameExpect);
-      await waitForCaptureStable(page, r);
+      await waitForPageStable(page, r);
       await captureForAgent(page, r);
     });
   }

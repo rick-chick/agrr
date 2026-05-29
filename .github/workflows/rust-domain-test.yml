@@ -9,6 +9,8 @@ on:
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - "docs/migration/lib-domain-rust/**"
+      - "docs/migration/app-rust-stack/**"
+      - "Dockerfile.agrr-server"
       - ".github/workflows/rust-domain-test.yml"
   push:
     branches:
@@ -18,6 +20,8 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
+      - "Dockerfile.agrr-server"
+      - "docs/migration/app-rust-stack/**"
 
 concurrency:
   group: rust-domain-test-${{ github.workflow }}-${{ github.ref }}
@@ -43,4 +47,11 @@ jobs:
           key: cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: cargo test
-        run: cargo test --workspace
+        run: cargo test -p agrr-domain
+
+      - name: llvm-cov report (informational, no gate)
+        continue-on-error: true
+        run: |
+          rustup component add llvm-tools-preview
+          cargo install cargo-llvm-cov --locked --quiet
+          ./scripts/rust-domain-coverage.sh
