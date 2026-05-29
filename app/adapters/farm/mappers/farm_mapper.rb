@@ -46,12 +46,6 @@ module Adapters
             updated_at: record.updated_at
           )
         end
-
-        def self.detail_dto_from_farm_record(farm)
-          farm_entity = farm_entity_from_record(farm, include_weather_data_fields: true)
-          field_entities = farm.fields.map { |f| field_entity_from_record(f) }
-          Domain::Farm::Dtos::FarmDetailOutput.new(farm: farm_entity, fields: field_entities)
-        end
       end
     end
   end

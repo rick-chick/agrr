@@ -96,7 +96,7 @@
 | B-1.1 | `lib/domain/pest/gateways/pest_gateway.rb` | `find_user_owned_non_reference_pest_by_name` | `find_by_name` |
 | B-1.2 | `lib/domain/fertilize/gateways/fertilize_gateway.rb` | `find_user_owned_non_reference_fertilize_record_by_name` | `find_by_name` |
 | B-1.3 | `lib/domain/field_cultivation/gateways/field_cultivation_gateway.rb` | `find_climate_data_by_field_cultivation` | （廃止）`FieldCultivationClimateDataInteractor` + climate source gateway |
-| B-1.4 | `lib/domain/field_cultivation/gateways/field_cultivation_gateway.rb` | `find_api_summary_by_field_cultivation` | （廃止）`find_preloaded_read_bundle` → `api_summary` |
+| B-1.4 | `lib/domain/field_cultivation/gateways/field_cultivation_gateway.rb` | `find_api_summary_by_field_cultivation_id` | （廃止）一括 preload bundle → `find_api_summary_by_field_cultivation_id`（snapshot） |
 | B-1.5 | `lib/domain/crop/gateways/crop_gateway.rb` | `list_crop_stages_by_crop_id` | `list_by_crop_id` |
 | B-1.6 | `lib/domain/crop/gateways/crop_gateway.rb` | `find_crop_stage_by_id` | `find_by_id` |
 | B-1.7 | `lib/domain/weather_data/gateways/weather_data_gateway.rb` | `find_weather_location_by_coordinates` | `find_by_coordinates` |
