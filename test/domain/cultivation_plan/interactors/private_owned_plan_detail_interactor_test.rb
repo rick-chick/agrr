@@ -76,9 +76,9 @@ module Domain
           filter = Domain::Shared::Policies::CropPolicy.index_list_filter(@user)
 
           @user_lookup.expects(:find).with(@user_id).returns(@user)
-          read_wire = stub
-          Mappers::PrivatePlanReadSnapshotMapper.expects(:from_snapshot).with(read_wire).returns(snapshot)
-          @private_read_gateway.expects(:find_plan_read_snapshot_by_plan_id).with(plan_id: plan_id).returns(read_wire)
+          read_snapshot = stub
+          Mappers::PrivatePlanReadSnapshotMapper.expects(:from_snapshot).with(read_snapshot).returns(snapshot)
+          @private_read_gateway.expects(:find_plan_read_snapshot_by_plan_id).with(plan_id: plan_id).returns(read_snapshot)
           @cultivation_plan_gateway.expects(:find_by_id).with(plan_id).returns(
             domain_private_plan_entity(id: plan_id, user_id: @user_id)
           )
@@ -98,11 +98,11 @@ module Domain
           plan_id = 5
 
           @user_lookup.expects(:find).returns(@user)
-          read_wire = stub
-          Mappers::PrivatePlanReadSnapshotMapper.expects(:from_snapshot).with(read_wire).returns(
+          read_snapshot = stub
+          Mappers::PrivatePlanReadSnapshotMapper.expects(:from_snapshot).with(read_snapshot).returns(
             read_snapshot(plan_id: plan_id)
           )
-          @private_read_gateway.expects(:find_plan_read_snapshot_by_plan_id).with(plan_id: plan_id).returns(read_wire)
+          @private_read_gateway.expects(:find_plan_read_snapshot_by_plan_id).with(plan_id: plan_id).returns(read_snapshot)
           @cultivation_plan_gateway.expects(:find_by_id).returns(
             domain_private_plan_entity(id: plan_id, user_id: 99)
           )

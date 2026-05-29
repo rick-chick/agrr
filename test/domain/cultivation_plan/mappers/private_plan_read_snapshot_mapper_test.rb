@@ -6,10 +6,8 @@ module Domain
   module CultivationPlan
     module Mappers
       class PrivatePlanReadSnapshotMapperTest < DomainLibTestCase
-        Wire = Dtos::CultivationPlanRestPlanSnapshot
-
         test "from_snapshot maps profit via GanttChartRowHashes and plan metadata" do
-          wire = Dtos::CultivationPlanRestPlanSnapshot.new(
+          rest_plan_snapshot = Dtos::CultivationPlanRestPlanSnapshot.new(
             id: 1,
             user_id: 2,
             plan_year: 2026,
@@ -50,7 +48,7 @@ module Domain
             palette_crop_ids: [ 7, 8 ]
           )
 
-          snapshot = PrivatePlanReadSnapshotMapper.from_snapshot(wire)
+          snapshot = PrivatePlanReadSnapshotMapper.from_snapshot(rest_plan_snapshot)
 
           assert_equal 1, snapshot.id
           assert_equal "Plan A (2026)", snapshot.display_name

@@ -45,7 +45,7 @@ module Domain
         end
 
         test "dispatches success with private plan index rows" do
-          plan_wire = Dtos::PlanIndexPlanSnapshot.new(
+          plan_snapshot = Dtos::PlanIndexPlanSnapshot.new(
             id: 1,
             farm_display_name: "Farm",
             total_area: 10.0,
@@ -55,7 +55,7 @@ module Domain
           )
 
           @user_lookup.expects(:find).with(@user_id).returns(@user)
-          @private_read_gateway.expects(:list_private_plan_index_plan_snapshots).with(user_id: @user_id).returns([ plan_wire ])
+          @private_read_gateway.expects(:list_private_plan_index_plan_snapshots).with(user_id: @user_id).returns([ plan_snapshot ])
           @private_read_gateway.expects(:count_cultivation_plan_crops_by_plan_ids).with(plan_ids: [ 1 ]).returns({ 1 => 1 })
           @private_read_gateway.expects(:count_cultivation_plan_fields_by_plan_ids).with(plan_ids: [ 1 ]).returns({ 1 => 2 })
           @output_port.expects(:on_success).with do |rows|
