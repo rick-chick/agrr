@@ -2,7 +2,6 @@
 
 use crate::pool::SqlitePool;
 use crate::shared::internal_api_farm_lookup::{find_farm, InternalApiFarmLookupResult};
-use agrr_domain::farm::calculators::FarmWeatherProgressCalculator;
 use agrr_domain::farm::entities::FarmEntity;
 use agrr_domain::weather_data::dtos::{
     InternalFarmWeatherDataListOutput, InternalFarmWeatherDataListResult,

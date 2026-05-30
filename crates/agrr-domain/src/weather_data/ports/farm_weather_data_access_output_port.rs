@@ -2,8 +2,6 @@
 
 use time::Date;
 
-use crate::weather_data::dtos::FarmWeatherDataAccessContext;
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct FarmWeatherIndexRow {
     pub date: Date,
@@ -61,10 +59,4 @@ pub trait FarmWeatherDataAccessOutputPort {
     fn on_insufficient_historical_data(&mut self);
 
     fn on_enqueue_failed(&mut self, error_message: String);
-}
-
-/// Convenience for tests — not used by interactor directly.
-#[allow(dead_code)]
-pub fn context_from_dto(ctx: &FarmWeatherDataAccessContext) -> FarmWeatherDataAccessContext {
-    ctx.clone()
 }

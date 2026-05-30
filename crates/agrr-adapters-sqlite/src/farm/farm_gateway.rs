@@ -23,13 +23,6 @@ impl FarmSqliteGateway {
     }
 }
 
-fn unsupported(method: &str) -> Box<dyn std::error::Error + Send + Sync> {
-    Box::new(std::io::Error::new(
-        std::io::ErrorKind::Unsupported,
-        format!("{method} not supported in P6 farm read slice"),
-    ))
-}
-
 fn map_farm_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<FarmEntity> {
     let is_reference: i64 = row.get(6)?;
     Ok(FarmEntity {

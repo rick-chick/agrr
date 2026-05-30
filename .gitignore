@@ -97,6 +97,11 @@ Thumbs.db
 db/seeds.rb.backup
 db/seeds/**/*.backup
 
+# Schema dumps are generated locally (docker entrypoint removes tracked copies)
+db/schema.rb
+db/cache_schema.rb
+db/cable_schema.rb
+
 # Schema backup during migration refactoring
 db/schema.rb.tmp
 db/cache_schema.rb.tmp

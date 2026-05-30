@@ -77,7 +77,7 @@ struct AddCropPresenter {
     body: Option<AddCropOutcome>,
 }
 
-enum AddCropOutcome {
+pub(crate) enum AddCropOutcome {
     Success(serde_json::Value),
     NotFound(&'static str),
     CropNotFound,
@@ -307,7 +307,7 @@ struct AddFieldPresenter {
     body: Option<AddFieldOutcome>,
 }
 
-enum AddFieldOutcome {
+pub(crate) enum AddFieldOutcome {
     Success(Value),
     NotFound,
     InvalidParams,
@@ -409,7 +409,7 @@ struct RemoveFieldPresenter {
     body: Option<RemoveFieldOutcome>,
 }
 
-enum RemoveFieldOutcome {
+pub(crate) enum RemoveFieldOutcome {
     Success(Value),
     NotFound,
     FieldNotFound,

@@ -24,8 +24,8 @@ if ENV["RAILS_ENV"] && ENV["RAILS_ENV"] != "test"
     🔄 前回DBが壊れた場合の復旧方法:
        docker compose down
        docker volume rm agrr_storage_dev_data
-       git checkout db/schema.rb
        docker compose up -d web
+       # マイグレーションは entrypoint が db:migrate で適用（db/schema.rb はリポジトリに含めない）
   MSG
   exit 1
 end

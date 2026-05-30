@@ -10,7 +10,7 @@ use agrr_domain::contact_messages::ports::{
     ContactMessageRateLimiterPort, CreateContactMessageOutputPort, RateLimitTrackResult,
     RecaptchaVerifierPort, RecaptchaVerifyResult,
 };
-use axum::{extract::State, http::StatusCode, routing::{get, post}, Json, Router};
+use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
 use serde::Deserialize;
 
 pub fn routes() -> Router<AppState> {

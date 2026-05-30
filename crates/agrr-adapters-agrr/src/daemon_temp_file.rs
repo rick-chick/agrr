@@ -1,7 +1,7 @@
 //! Temp JSON files for agrr CLI (requires `.json` extension).
 
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use serde_json::Value;
 use tempfile::NamedTempFile;
@@ -17,10 +17,6 @@ pub fn write_temp_json(data: &Value, prefix: &str) -> Result<NamedTempFile, std:
     )?;
     file.as_file().sync_all()?;
     Ok(file)
-}
-
-pub fn path_buf(file: &NamedTempFile) -> PathBuf {
-    file.path().to_path_buf()
 }
 
 pub fn path_string(file: &NamedTempFile) -> String {

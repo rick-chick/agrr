@@ -84,17 +84,6 @@ fn check_daemon() -> Check {
     }
 }
 
-fn daemon_stdout_json(response: &Value) -> Option<Value> {
-    if response.get("data").is_some() {
-        return Some(response.clone());
-    }
-    let stdout = response.get("stdout")?.as_str()?;
-    if stdout.trim().is_empty() {
-        return None;
-    }
-    serde_json::from_str(stdout).ok()
-}
-
 fn check_weather_api(lat: f64, lon: f64, pool: &SqlitePool, wl_id: Option<i64>) -> Check {
     let clock = SystemClock;
     let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock);
