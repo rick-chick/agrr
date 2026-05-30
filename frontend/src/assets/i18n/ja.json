@@ -8,7 +8,7 @@
           "forbidden": "作業予定へのアクセス権限がありません",
           "parameter_missing": "リクエストに必要なパラメーターが不足しています",
           "cancel_failed": "作業予定のキャンセルに失敗しました。もう一度お試しください。",
-          "undo_failed": "削除の取り消しを準備できませんでした: %{message}",
+          "undo_failed": "削除の取り消しを準備できませんでした: {{message}}",
           "invalid_template": "選択した作業テンプレートはこの圃場では使用できません"
         }
       }
@@ -25,9 +25,9 @@
     }
   },
   "deletion_undo": {
-    "toast_message": "%{resource} を削除しました。元に戻すことができます。",
+    "toast_message": "{{resource}} を削除しました。元に戻すことができます。",
     "schedule_forbidden": "この操作を行う権限がありません。",
-    "redirect_notice": "%{resource} を削除しました。",
+    "redirect_notice": "{{resource}} を削除しました。",
     "restored": "削除を取り消しました。",
     "undo_button": "元に戻す",
     "close_button": "閉じる",
@@ -37,7 +37,7 @@
   },
   "pesticides": {
     "undo": {
-      "toast": "%{name} を削除しました。元に戻すことができます。"
+      "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
     "form": {
       "crop_label": "作物",
@@ -86,7 +86,7 @@
       "submit_update": "農薬を更新",
       "cancel": "キャンセル",
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "flash": {
@@ -94,7 +94,7 @@
       "updated": "農薬が更新されました。",
       "destroyed": "農薬が削除されました。",
       "cannot_delete_in_use": "この農薬は他のデータで使用されているため削除できません。",
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "reference_only_admin": "参照農薬は管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
@@ -123,7 +123,7 @@
       "title": "新しい農薬を追加"
     },
     "edit": {
-      "title": "%{name}を編集"
+      "title": "{{name}}を編集"
     },
     "show": {
       "reference_pesticide": "参照農薬",
@@ -155,14 +155,14 @@
   },
   "agricultural_tasks": {
     "undo": {
-      "toast": "%{name} を削除しました。元に戻すことができます。"
+      "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
     "flash": {
       "created": "作業が作成されました。",
       "updated": "作業が更新されました。",
       "destroyed": "作業が削除されました。",
       "cannot_delete_in_use": "この作業は他のデータで使用されているため削除できません。",
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "reference_only_admin": "参照作業は管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
@@ -201,7 +201,7 @@
       "title": "新しい作業を追加"
     },
     "edit": {
-      "title": "%{name}を編集"
+      "title": "{{name}}を編集"
     },
     "form": {
       "submit_create": "作業を作成",
@@ -249,7 +249,7 @@
   },
   "crops": {
     "undo": {
-      "toast": "%{name} を削除しました。元に戻すことができます。"
+      "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
     "form": {
       "name_label": "名前",
@@ -280,7 +280,7 @@
       "submit_update": "作物を更新",
       "cancel": "キャンセル",
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "stage": {
@@ -354,7 +354,7 @@
         "field": "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。",
         "other": "この作物は他のデータで使用されているため削除できません。"
       },
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "reference_only_admin": "参照作物は管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
@@ -366,7 +366,7 @@
       "new_crop": "新しい作物を追加",
       "reference_crops": "参照作物（共通データ）",
       "my_crops": "自分の作物",
-      "count": "%{count}件",
+      "count": "{{count}}件",
       "actions": {
         "show": "詳細",
         "edit": "編集",
@@ -388,13 +388,13 @@
       "title": "新しい作物を追加"
     },
     "edit": {
-      "title": "%{name}を編集",
+      "title": "{{name}}を編集",
       "form": {
         "submit": "作物を更新",
         "cancel": "キャンセル"
       },
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       },
       "stages_title": "生育ステージ",
       "add_stage": "+ 生育ステージを追加",
@@ -467,8 +467,8 @@
       "daily_uptake_k": "カリウム (K) 吸収量",
       "task_schedule_blueprints_title": "作業予定",
       "task_schedule_blueprints_description_html": "AIが提案した作業予定です。内容を確認し、必要があれば作業詳細画面から調整してください。",
-      "task_schedule_blueprints_axis_gdd_total": "GDD累積量（総計 %{total}）",
-      "task_schedule_blueprints_order_tooltip": "順番 %{order}",
+      "task_schedule_blueprints_axis_gdd_total": "GDD累積量（総計 {{total}}）",
+      "task_schedule_blueprints_order_tooltip": "順番 {{order}}",
       "task_schedule_blueprints_missing_task": "関連作業が未設定",
       "no_task_schedule_blueprints": "作業予定はまだ設定されていません。",
       "task_type_label": "作業種別",
@@ -481,9 +481,9 @@
       "origin_ai_label": "AI提案",
       "origin_manual_label": "手動作業",
       "manual_task_type_label": "利用可能なテンプレート",
-      "manual_task_count": "%{count}件",
+      "manual_task_count": "{{count}}件",
       "available_task_templates_title": "利用可能な作業テンプレート",
-      "available_task_count": "%{count}件",
+      "available_task_count": "{{count}}件",
       "source_reference_label": "参照データ",
       "source_user_label": "ユーザー作成",
       "manual_task_hint": "AIによる提案に紐付けておくとスケジュール最適化で利用されます。",
@@ -521,7 +521,7 @@
         "submit_update": "作物を更新",
         "cancel": "キャンセル",
         "errors": {
-          "title": "%{count}件のエラーがあります："
+          "title": "{{count}}件のエラーがあります："
         }
       },
       "area_unit": "㎡",
@@ -567,7 +567,7 @@
         "back_to_list": "一覧に戻る"
       },
       "edit": {
-        "title": "%{pest_name}を編集",
+        "title": "{{pest_name}}を編集",
         "back_to_list": "一覧に戻る"
       },
       "show": {
@@ -657,7 +657,7 @@
   },
   "pests": {
     "undo": {
-      "toast": "%{name} を削除しました。元に戻すことができます。"
+      "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
     "form": {
       "pest_id_label": "害虫ID",
@@ -715,7 +715,7 @@
       "submit_update": "害虫を更新",
       "cancel": "キャンセル",
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "flash": {
@@ -723,7 +723,7 @@
       "updated": "害虫が更新されました。",
       "destroyed": "害虫が削除されました。",
       "cannot_delete_in_use": "この害虫は他のデータで使用されているため削除できません。",
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "reference_only_admin": "参照害虫は管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
@@ -753,7 +753,7 @@
       "title": "新しい害虫を追加"
     },
     "edit": {
-      "title": "%{name}を編集"
+      "title": "{{name}}を編集"
     },
     "show": {
       "reference_pest": "参照害虫",
@@ -792,7 +792,7 @@
   },
   "fertilizes": {
     "undo": {
-      "toast": "%{name} を削除しました。元に戻すことができます。"
+      "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
     "form": {
       "name_label": "名前",
@@ -822,7 +822,7 @@
       "submit_update": "肥料を更新",
       "cancel": "キャンセル",
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "flash": {
@@ -830,7 +830,7 @@
       "updated": "肥料が更新されました。",
       "destroyed": "肥料が削除されました。",
       "cannot_delete_in_use": "この肥料は他のデータで使用されているため削除できません。",
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "reference_only_admin": "参照肥料は管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
@@ -858,7 +858,7 @@
       "title": "新しい肥料を追加"
     },
     "edit": {
-      "title": "%{name}を編集"
+      "title": "{{name}}を編集"
     },
     "show": {
       "reference_fertilize": "参照肥料",
@@ -879,19 +879,19 @@
   },
   "farms": {
     "undo": {
-      "toast": "%{name} を削除しました。元に戻すことができます。"
+      "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
     "flash": {
       "created": "農場が正常に作成されました。",
       "updated": "農場が正常に更新されました。",
       "destroyed": "農場が削除されました。",
-      "cannot_delete": "この農場は%{count}件の作付け計画で使用されているため削除できません。",
+      "cannot_delete": "この農場は{{count}}件の作付け計画で使用されているため削除できません。",
       "cannot_delete_in_use": {
         "plan": "この農場は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。",
         "field": "この農場には圃場が登録されているため削除できません。まず圃場を削除してください。",
         "other": "この農場は他のデータで使用されているため削除できません。"
       },
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "not_found": "指定された農場が見つかりません。",
       "no_permission": "権限がありません。"
     },
@@ -902,7 +902,7 @@
       "new_farm": "新しい農場を追加",
       "reference_farms": "参照農場（栽培地域）",
       "my_farms": "自分の農場",
-      "count": "%{count}件",
+      "count": "{{count}}件",
       "empty": {
         "icon": "🚜",
         "title": "まだ農場が登録されていません",
@@ -954,7 +954,7 @@
         "coordinates_validation_error": "緯度は-90〜90、経度は-180〜180の範囲で入力してください。"
       },
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "edit": {
@@ -970,7 +970,7 @@
         "cancel": "キャンセル"
       },
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "show": {
@@ -1011,7 +1011,7 @@
       "latitude": "緯度",
       "longitude": "経度",
       "location_not_set": "位置情報が設定されていません",
-      "fields_count": "圃場数: %{count}個",
+      "fields_count": "圃場数: {{count}}個",
       "weather_data": "天気データ:",
       "processing_complete": "データ処理完了間近です...",
       "detail": "詳細",
@@ -1027,7 +1027,7 @@
       "location": "位置",
       "location_not_set": "位置情報が設定されていません",
       "fields_count": "圃場数",
-      "fields_count_value": "%{count}個",
+      "fields_count_value": "{{count}}個",
       "created_at": "作成日",
       "updated_at": "更新日",
       "temperature_data": "温度データ",
@@ -1038,7 +1038,7 @@
       "period_365": "過去1年",
       "period_next_365": "来年末まで（予測）",
       "processing_complete": "データ処理完了間近です...",
-      "fetching_progress": "天気データを取得中です... (%{progress}%)",
+      "fetching_progress": "天気データを取得中です... ({{progress}}%)",
       "fetch_failed": "天気データの取得に失敗しました。",
       "preparing": "天気データを準備中です...",
       "temperature_chart_title": "温度推移",
@@ -1053,13 +1053,13 @@
     "weather_data": {
       "no_weather_data": "この農場の天気データがまだ取得されていません。",
       "insufficient_historical_data": "予測に必要な履歴データが不足しています。",
-      "job_queue_failed": "予測ジョブのキューイングに失敗しました: %{error}",
+      "job_queue_failed": "予測ジョブのキューイングに失敗しました: {{error}}",
       "farm_not_found": "指定された農場が見つかりません。"
     }
   },
   "fields": {
     "undo": {
-      "toast": "%{name} を削除しました。元に戻すことができます。"
+      "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
     "js": {
       "validation": {
@@ -1073,7 +1073,7 @@
       "updated": "圃場が正常に更新されました。",
       "destroyed": "圃場が削除されました。",
       "cannot_delete_in_use": "この圃場は他のデータで使用されているため削除できません。",
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "farm_not_found": "指定された農場が見つかりません。",
       "not_found": "指定された圃場が見つかりません。",
       "no_permission": "権限がありません。"
@@ -1119,7 +1119,7 @@
         "cancel": "キャンセル"
       },
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "edit": {
@@ -1143,7 +1143,7 @@
         "cancel": "キャンセル"
       },
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "show": {
@@ -1154,7 +1154,7 @@
       "name": "名前",
       "area": "面積",
       "daily_cost": "日次固定費用",
-      "daily_cost_value": "¥%{amount} / 日",
+      "daily_cost_value": "¥{{amount}} / 日",
       "created_at": "作成日",
       "updated_at": "更新日",
       "info": "圃場情報",
@@ -1167,14 +1167,14 @@
   },
   "interaction_rules": {
     "undo": {
-      "toast": "%{source} → %{target} のルールを削除しました。元に戻すことができます。"
+      "toast": "{{source}} → {{target}} のルールを削除しました。元に戻すことができます。"
     },
     "flash": {
       "created": "ルールが正常に作成されました。",
       "updated": "ルールが正常に更新されました。",
       "destroyed": "ルールが削除されました。",
       "cannot_delete_in_use": "このルールは他のデータで使用されているため削除できません。",
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "reference_only_admin": "参照ルールは管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
@@ -1248,7 +1248,7 @@
       "submit_update": "ルールを更新",
       "cancel": "キャンセル",
       "errors": {
-        "title": "%{count}件のエラーがあります："
+        "title": "{{count}}件のエラーがあります："
       }
     },
     "show": {
@@ -1264,8 +1264,8 @@
       "description": "説明",
       "created_at": "作成日時",
       "updated_at": "更新日時",
-      "decrease": "%{percent}%減少",
-      "increase": "+%{percent}%増加",
+      "decrease": "{{percent}}%減少",
+      "increase": "+{{percent}}%増加",
       "no_impact": "影響なし",
       "edit": "編集",
       "delete": "削除",
@@ -1368,17 +1368,17 @@
   },
   "models": {
     "farm": {
-      "default_name": "農場 #%{id}",
+      "default_name": "農場 #{{id}}",
       "weather_status": {
         "pending": "取得待ち",
-        "fetching": "取得中 (%{progress}%)",
+        "fetching": "取得中 ({{progress}}%)",
         "completed": "完了",
         "failed": "失敗",
         "unknown": "不明"
       }
     },
     "cultivation_plan_field": {
-      "default_name": "圃場 #%{id}"
+      "default_name": "圃場 #{{id}}"
     },
     "cultivation_plan": {
       "phases": {
@@ -1420,10 +1420,10 @@
       "common": {
         "location_required": "位置情報を入力してください",
         "weather_service_unavailable": "天気サービスは一時的に利用できません",
-        "weather_fetch_failed": "天気データの取得に失敗しました: %{message}",
-        "forecast_fetch_failed": "予報データの取得に失敗しました: %{message}",
+        "weather_fetch_failed": "天気データの取得に失敗しました: {{message}}",
+        "forecast_fetch_failed": "予報データの取得に失敗しました: {{message}}",
         "weather_invalid_response": "天気サービスからの応答が不正です",
-        "invalid_date_format": "日付形式が不正です: %{message}",
+        "invalid_date_format": "日付形式が不正です: {{message}}",
         "not_found": "リソースが見つかりません",
         "farm_not_found": "農場が見つかりません",
         "weather_location_not_found": "天気取得地点が見つかりません",
@@ -1440,7 +1440,7 @@
         "name_required": "作物名を入力してください",
         "invalid_payload": "作物情報が不正な形式です",
         "fetch_failed": "作物情報の取得に失敗しました",
-        "fetch_failed_with_reason": "作物情報の取得に失敗しました: %{message}",
+        "fetch_failed_with_reason": "作物情報の取得に失敗しました: {{message}}",
         "reference_only_admin": "参照作物の作成は管理者のみ可能です",
         "reference_flag_admin_only": "参照フラグの変更は管理者のみ可能です"
       },
@@ -1448,7 +1448,7 @@
         "name_required": "肥料名を入力してください",
         "invalid_payload": "肥料情報が不正な形式です",
         "fetch_failed": "肥料情報の取得に失敗しました",
-        "fetch_failed_with_reason": "肥料情報の取得に失敗しました: %{message}"
+        "fetch_failed_with_reason": "肥料情報の取得に失敗しました: {{message}}"
       },
       "pests": {
         "pest_id_required": "pest_idを指定してください",
@@ -1458,12 +1458,12 @@
         "not_associated": "この作物には関連付けられていません"
       },
       "optimization": {
-        "calculate_period_failed": "計画期間の計算に失敗しました: %{message}",
+        "calculate_period_failed": "計画期間の計算に失敗しました: {{message}}",
         "result_empty": "調整結果が空です",
-        "adjust_failed": "調整に失敗しました: %{message}"
+        "adjust_failed": "調整に失敗しました: {{message}}"
       },
       "cultivation_plan": {
-        "crop_missing_growth_stages": "作物「%{crop_name}」に成長段階が設定されていません。成長段階を設定してから調整を行ってください。"
+        "crop_missing_growth_stages": "作物「{{crop_name}}」に成長段階が設定されていません。成長段階を設定してから調整を行ってください。"
       }
     },
     "entry_schedule": {
@@ -1487,20 +1487,20 @@
         }
       },
       "flow": {
-        "summary": "%{phases}の流れ（地域の予測に基づく目安）",
+        "summary": "{{phases}}の流れ（地域の予測に基づく目安）",
         "summary_fallback": "この条件では生育の流れを短く示せませんでした。",
-        "detail_chunk": "%{label} %{range}",
-        "month_range": "%{start}〜%{end}"
+        "detail_chunk": "{{label}} {{range}}",
+        "month_range": "{{start}}〜{{end}}"
       },
       "timeline": {
-        "month_summary": "%{labels}の目安"
+        "month_summary": "{{labels}}の目安"
       },
       "disclaimer": {
         "short": "表示は目安です。結果を保証するものではありません。未入力の一般目安を含む場合があります。"
       },
       "reason": {
-        "list": "ステージ「%{sowing}」「%{transplant}」の温度帯に基づき、予測気象を走査しました（%{days}日分）。",
-        "agrr": "栽培期間の最適化結果: %{start}〜%{completion}（生育約%{days}日、GDD %{gdd}）。4フェーズの帯はその期間を4等分した目安です。",
+        "list": "ステージ「{{sowing}}」「{{transplant}}」の温度帯に基づき、予測気象を走査しました（{{days}}日分）。",
+        "agrr": "栽培期間の最適化結果: {{start}}〜{{completion}}（生育約{{days}}日、GDD {{gdd}}）。4フェーズの帯はその期間を4等分した目安です。",
         "agrr_failed": {
           "generic": "栽培期間を算出できませんでした。",
           "daemon_unavailable": "最適化処理に接続できません（バックエンドの処理が利用できない可能性）。時間をおいて再度お試しください。",
@@ -1524,13 +1524,13 @@
         "weather_data_fetch_started": "天気データの取得を開始しました"
       },
       "crops": {
-        "updated_with_latest": "作物「%{name}」を最新情報で更新しました",
-        "created_by_ai": "AIで作物「%{name}」の情報を取得して作成しました"
+        "updated_with_latest": "作物「{{name}}」を最新情報で更新しました",
+        "created_by_ai": "AIで作物「{{name}}」の情報を取得して作成しました"
       },
       "fertilizes": {
-        "updated_with_latest": "肥料「%{name}」を最新情報で更新しました",
-        "created_by_ai": "AIで肥料「%{name}」の情報を取得して作成しました",
-        "updated_by_ai": "肥料「%{name}」を更新しました"
+        "updated_with_latest": "肥料「{{name}}」を最新情報で更新しました",
+        "created_by_ai": "AIで肥料「{{name}}」の情報を取得して作成しました",
+        "updated_by_ai": "肥料「{{name}}」を更新しました"
       },
       "crop_not_found": "作物情報が見つかりません",
       "no_cultivation_period": "栽培期間が設定されていません",
@@ -1550,7 +1550,7 @@
       "fetching": "AIで作物情報を取得しています...",
       "button_fetching": "🤖 AIで情報を取得中...",
       "button_idle": "🤖 AIで作物情報を取得・保存",
-      "created_success": "✓ 作物「%{name}」の情報を取得して保存しました！",
+      "created_success": "✓ 作物「{{name}}」の情報を取得して保存しました！",
       "fetch_failed": "作物情報の取得に失敗しました",
       "network_error": "ネットワークエラーが発生しました"
     },
@@ -1591,8 +1591,8 @@
       "enter_name": "肥料名を入力してください",
       "fetching": "AIで肥料情報を取得しています...",
       "button_fetching": "🤖 AIで情報を取得中...",
-      "created_success": "✓ 肥料「%{name}」の情報を取得して保存しました！",
-      "updated_success": "✓ 肥料「%{name}」の情報を取得して更新しました！",
+      "created_success": "✓ 肥料「{{name}}」の情報を取得して保存しました！",
+      "updated_success": "✓ 肥料「{{name}}」の情報を取得して更新しました！",
       "fetch_failed": "肥料情報の取得に失敗しました",
       "network_error": "ネットワークエラーが発生しました"
     },
@@ -1600,15 +1600,15 @@
       "enter_name": "害虫名を入力してください",
       "fetching": "AIで害虫情報を取得しています...",
       "button_fetching": "🤖 AIで情報を取得中...",
-      "created_success": "✓ 害虫「%{name}」の情報を取得して保存しました！",
-      "updated_success": "✓ 害虫「%{name}」の情報を取得して更新しました！",
+      "created_success": "✓ 害虫「{{name}}」の情報を取得して保存しました！",
+      "updated_success": "✓ 害虫「{{name}}」の情報を取得して更新しました！",
       "fetch_failed": "害虫情報の取得に失敗しました",
       "network_error": "ネットワークエラーが発生しました"
     },
     "crop_palette": {
       "plan_id_missing": "エラー: 計画IDが取得できません",
-      "crop_types_limit": "作物の種類は最大%{max_types}種類までです。\n現在: %{current_types}",
-      "crop_add_failed": "作物の追加に失敗しました: %{message}",
+      "crop_types_limit": "作物の種類は最大{{max_types}}種類までです。\n現在: {{current_types}}",
+      "crop_add_failed": "作物の追加に失敗しました: {{message}}",
       "communication_error": "通信エラーが発生しました。もう一度お試しください。"
     },
     "gantt": {
@@ -1619,8 +1619,8 @@
       "communication_error": "通信エラーが発生しました。\nもう一度お試しください。",
       "add_field_button": "圃場追加",
       "adding_field_loading": "圃場を追加中...",
-      "confirm_delete_field": "%{field_name}を削除しますか？\n（この圃場に作物がないため削除できます）",
-      "confirm_delete_crop": "%{crop_name}を削除しますか？",
+      "confirm_delete_field": "{{field_name}}を削除しますか？\n（この圃場に作物がないため削除できます）",
+      "confirm_delete_crop": "{{crop_name}}を削除しますか？",
       "invalid_area": "有効な面積を入力してください",
       "field_add_failed": "圃場の追加に失敗しました",
       "field_delete_failed": "圃場の削除に失敗しました",
@@ -1647,7 +1647,7 @@
         "title": "作物編集",
         "stages_title": "生育ステージ",
         "add_stage": "ステージ追加",
-        "stage_title": "ステージ %{order}",
+        "stage_title": "ステージ {{order}}",
         "stage_name": "ステージ名",
         "stage_order": "順序",
         "requirements_title": "要件",
@@ -1674,7 +1674,7 @@
     },
     "messages": {
       "jsPlansLoadError": "データの読み込みに失敗しました",
-      "jsPlansLoadErrorWithMessage": "データの読み込みに失敗しました: %{message}",
+      "jsPlansLoadErrorWithMessage": "データの読み込みに失敗しました: {{message}}",
       "jsGanttNotLoaded": "ガントチャート機能が読み込まれていません"
     },
     "climate_chart": {
@@ -1700,7 +1700,7 @@
       "daily_uptake_k_placeholder": "例：0.8"
     },
     "crop_selection": {
-      "max_crops_message": "作物は最大%{max}種類まで選択できます",
+      "max_crops_message": "作物は最大{{max}}種類まで選択できます",
       "hint_select": "作物を選択してください"
     },
     "cultivation_results": {
@@ -1714,7 +1714,7 @@
       "temp_axis_label": "気温 (℃)",
       "gdd_label": "積算温度",
       "gdd_axis_label": "積算温度 (℃日)",
-      "gdd_target_label": "目標: %{target}℃日",
+      "gdd_target_label": "目標: {{target}}℃日",
       "no_risks": "なし ✓"
     }
   },
@@ -1724,13 +1724,13 @@
       "cannot_remove_field_with_cultivations": "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。",
       "cannot_remove_last_field": "最後の圃場は削除できません",
       "max_fields_limit": "圃場は最大5個までしか追加できません",
-      "field_add_failed": "圃場の追加に失敗しました: %{message}",
+      "field_add_failed": "圃場の追加に失敗しました: {{message}}",
       "select_region": "栽培地域を選択してください。",
       "select_farm_size": "農場サイズを選択してください。",
       "invalid_farm_size": "農場サイズが無効です。",
       "select_crop": "作物を1つ以上選択してください。",
       "restart": "最初からやり直してください。",
-      "create_failed": "計画作成に失敗しました: %{errors}",
+      "create_failed": "計画作成に失敗しました: {{errors}}",
       "not_found": "作付け計画が見つかりません。",
       "schedule_generation_failed": "作業予定の登録に失敗しました",
       "crop_not_found": "作物が見つかりません。",
@@ -1802,11 +1802,11 @@
     "optimizing": {
       "title": "計画",
       "status_badge": "最適化中",
-      "crops_count": "%{count}種類の作物",
+      "crops_count": "{{count}}種類の作物",
       "error_message": "最適化状況の取得に失敗しました。\n\n以下のいずれかをお試しください：\n• ページをリロード（F5キー）\n• ブラウザのキャッシュをクリア\n• しばらく時間をおいてから再度アクセス\n\n問題が解決しない場合は、新しい計画を作成してください。",
       "progress": {
-        "elapsed_time": "⏳ %{time}秒",
-        "elapsed_time_minute": "%{minutes}分%{seconds}秒",
+        "elapsed_time": "⏳ {{time}}秒",
+        "elapsed_time_minute": "{{minutes}}分{{seconds}}秒",
         "duration_hint": "約1分程度かかります",
         "default_message": "最適化を準備しています..."
       },
@@ -1851,15 +1851,15 @@
         "region": "地域",
         "total_area": "総面積",
         "field_count": "圃場数",
-        "field_count_value": "%{count}圃場",
+        "field_count_value": "{{count}}圃場",
         "total_cost": "総コスト",
         "total_revenue": "総収益",
         "total_profit": "総利益",
-        "subtitle": "%{count}圃場の最適な栽培期間が決定しました"
+        "subtitle": "{{count}}圃場の最適な栽培期間が決定しました"
       },
       "gantt": {
         "title": "栽培スケジュール",
-        "month_format": "%{month}月"
+        "month_format": "{{month}}月"
       },
       "crop_palette": {
         "title": "作物を追加",
@@ -1945,22 +1945,22 @@
       "cannot_remove_field_with_cultivations": "この圃場には栽培スケジュールが含まれています。先に作物を削除してください。",
       "cannot_remove_last_field": "最後の圃場は削除できません。",
       "max_fields_limit": "圃場は最大5個までしか追加できません",
-      "field_add_failed": "圃場の追加に失敗しました: %{message}",
+      "field_add_failed": "圃場の追加に失敗しました: {{message}}",
       "select_farm": "農場を選択してください。",
       "select_crop": "作物を1つ以上選択してください。",
       "restart": "最初からやり直してください。",
       "session_invalid": "セッションが無効です。再度ログインしてください。",
-      "create_failed": "計画作成に失敗しました: %{errors}",
+      "create_failed": "計画作成に失敗しました: {{errors}}",
       "not_found": "作付け計画が見つかりません。",
       "farm_not_found": "農場が見つかりません。",
       "crop_not_found": "作物が見つかりません。",
       "unauthorized": "この計画にアクセスする権限がありません。",
-      "plan_already_exists": "%{year}年の計画は既に存在します。",
+      "plan_already_exists": "{{year}}年の計画は既に存在します。",
       "plan_already_exists_annual": "この農場の計画は既に存在します。",
-      "copy_failed": "計画のコピーに失敗しました: %{errors}",
+      "copy_failed": "計画のコピーに失敗しました: {{errors}}",
       "copy_not_available_for_annual_planning": "通年計画ではコピー機能は利用できません。",
       "delete_failed": "計画の削除に失敗しました。",
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "already_optimized": "この計画は既に最適化されています。",
       "invalid_field_params": "圃場の情報が不正です。",
       "no_candidates_found": "この作物の最適な作付け日程が見つかりませんでした。天気データの範囲を拡張しましたが、候補が得られませんでした。",
@@ -1970,7 +1970,7 @@
     "messages": {
       "field_removed": "圃場を削除しました。",
       "plan_created": "計画を作成しました。",
-      "plan_copied": "%{year}年の計画をコピーしました。",
+      "plan_copied": "{{year}}年の計画をコピーしました。",
       "plan_copied_annual": "計画をコピーしました。",
       "plan_deleted": "計画を削除しました。",
       "crop_added": "作物を追加しました。",
@@ -2041,11 +2041,11 @@
       }
     },
     "undo": {
-      "toast": "%{name} を削除しました。元に戻すことができます。"
+      "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
     "task_schedule_items": {
       "undo": {
-        "toast": "%{name} の予定を削除しました。元に戻すことができます。"
+        "toast": "{{name}} の予定を削除しました。元に戻すことができます。"
       }
     },
     "index": {
@@ -2055,7 +2055,7 @@
       "try_public_plans": "無料プランから始める",
       "no_plans": "まだ計画がありません",
       "no_plans_hint": "新しい計画を作成して栽培スケジュールを最適化しましょう。",
-      "year_label": "%{year}年度",
+      "year_label": "{{year}}年度",
       "status": {
         "pending": "作成待ち",
         "optimizing": "最適化中",
@@ -2065,8 +2065,8 @@
       "plan_card": {
         "farm": "農場",
         "total_area": "総面積",
-        "crops_count": "%{count}作物",
-        "fields_count": "%{count}圃場",
+        "crops_count": "{{count}}作物",
+        "fields_count": "{{count}}圃場",
         "view": "詳細を見る",
         "copy": "次年度にコピー",
         "delete": "削除",
@@ -2081,14 +2081,14 @@
       "plan_name_placeholder": "例: メイン計画",
       "farm_label": "農場",
       "farm_hint": "農場を選択してください",
-      "suggested_plan_name_hint": "計画名のデフォルトは「%{name}」です（次のステップで農場名が使われます）。",
+      "suggested_plan_name_hint": "計画名のデフォルトは「{{name}}」です（次のステップで農場名が使われます）。",
       "no_farms": "農場がありません",
       "no_farms_hint": "まず農場を作成してください",
       "create_farm_link": "農場を作成する",
       "next_button": "次へ: 作物選択",
       "empty_message": "現在、利用可能な農場がありません。",
       "plan_year_label": "計画年度",
-      "plan_year_hint": "計画年度は%{start_year}年1月〜%{end_year}年12月の2年間です"
+      "plan_year_hint": "計画年度は{{start_year}}年1月〜{{end_year}}年12月の2年間です"
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
@@ -2112,13 +2112,13 @@
     "optimizing": {
       "title": "計画",
       "status_badge": "最適化中",
-      "year_label": "%{year}年度",
+      "year_label": "{{year}}年度",
       "year_label_annual": "通年",
-      "crops_count": "%{count}種類の作物",
+      "crops_count": "{{count}}種類の作物",
       "error_message": "最適化状況の取得に失敗しました。\n\n以下のいずれかをお試しください：\n• ページをリロード（F5キー）\n• ブラウザのキャッシュをクリア\n• しばらく時間をおいてから再度アクセス\n\n問題が解決しない場合は、新しい計画を作成してください。",
       "progress": {
-        "elapsed_time": "⏳ %{time}秒",
-        "elapsed_time_minute": "%{minutes}分%{seconds}秒",
+        "elapsed_time": "⏳ {{time}}秒",
+        "elapsed_time_minute": "{{minutes}}分{{seconds}}秒",
         "duration_hint": "約1分程度かかります",
         "default_message": "最適化を準備しています..."
       },
@@ -2144,18 +2144,18 @@
       "delete": "削除",
       "confirms": {
         "optimize": "この計画を最適化しますか？",
-        "copy_next_year": "次年度（%{year}年度）にこの計画をコピーしますか？"
+        "copy_next_year": "次年度（{{year}}年度）にこの計画をコピーしますか？"
       },
       "header": {
-        "title": "%{year}年度 作付け計画",
+        "title": "{{year}}年度 作付け計画",
         "badge": "完了",
         "farm": "農場",
         "total_area": "総面積",
         "field_count": "圃場数",
-        "field_count_value": "%{count}圃場",
+        "field_count_value": "{{count}}圃場",
         "planning_period": "計画期間",
-        "planning_period_value": "%{start}〜%{end}",
-        "subtitle": "%{count}圃場の最適な栽培期間が決定しました"
+        "planning_period_value": "{{start}}〜{{end}}",
+        "subtitle": "{{count}}圃場の最適な栽培期間が決定しました"
       },
       "gantt": {
         "title": "栽培スケジュール"
@@ -2184,18 +2184,18 @@
       }
     },
     "task_schedules": {
-      "title": "%{name}の作業予定",
+      "title": "{{name}}の作業予定",
       "back_to_plan": "← 計画詳細に戻る",
-      "timeline_generated_at": "生成日時: %{datetime}",
+      "timeline_generated_at": "生成日時: {{datetime}}",
       "timeline_generated_unknown": "生成日時: 未取得",
       "nav_prev_week": "前の週",
       "nav_next_week": "次の週",
       "nav_today": "今週",
-      "week_label": "%{start} 〜 %{end}",
+      "week_label": "{{start}} 〜 {{end}}",
       "no_schedules": "作業予定がまだ生成されていません。",
       "plan_level_field": "計画全体",
       "field_header": {
-        "crop_area": "%{crop} / %{area}㎡"
+        "crop_area": "{{crop}} / {{area}}㎡"
       },
       "general_label": "一般作業",
       "fertilizer_label": "施肥",
@@ -2320,26 +2320,26 @@
   "flash": {
     "actions": {
       "create": {
-        "notice": "%{resource_name}を作成しました"
+        "notice": "{{resource_name}}を作成しました"
       },
       "update": {
-        "notice": "%{resource_name}を更新しました"
+        "notice": "{{resource_name}}を更新しました"
       },
       "destroy": {
-        "notice": "%{resource_name}を削除しました"
+        "notice": "{{resource_name}}を削除しました"
       }
     },
     "farms": {
-      "deleted": "%{name}を削除しました"
+      "deleted": "{{name}}を削除しました"
     }
   },
   "activerecord": {
     "errors": {
       "messages": {
-        "record_invalid": "バリデーションに失敗しました: %{errors}",
+        "record_invalid": "バリデーションに失敗しました: {{errors}}",
         "restrict_dependent_destroy": {
-          "has_one": "%{record}が存在しているので削除できません",
-          "has_many": "%{record}が存在しているので削除できません"
+          "has_one": "{{record}}が存在しているので削除できません",
+          "has_many": "{{record}}が存在しているので削除できません"
         }
       },
       "models": {
@@ -2392,7 +2392,7 @@
             "area_sqm": {
               "blank": "を入力してください",
               "not_a_number": "は数値で入力してください",
-              "greater_than": "は%{count}より大きい値にしてください"
+              "greater_than": "は{{count}}より大きい値にしてください"
             }
           }
         },
@@ -2500,113 +2500,113 @@
     "invalid_user_type": "不正なユーザー種別です",
     "mock_logout_success": "モックログアウトに成功しました",
     "not_logged_in": "ログインしていません",
-    "create_user_failed": "ユーザー作成に失敗しました: %{errors}",
-    "mock_login_success": "モックログインに成功しました（%{name}）!"
+    "create_user_failed": "ユーザー作成に失敗しました: {{errors}}",
+    "mock_login_success": "モックログインに成功しました（{{name}}）!"
   },
   "services": {
     "plan_save_service": {
       "messages": {
-        "coordinates": "座標: %{lat}, %{lng}",
-        "farm_created": "農場を作成しました: %{farm_name}",
-        "crop_created": "作物を作成しました: %{crop_name}",
-        "fertilize_created": "肥料を作成しました: %{fertilize_name}",
-        "pest_created": "害虫を作成しました: %{pest_name}",
-        "agricultural_task_created": "作業を作成しました: %{task_name}",
-        "pesticide_created": "農薬を作成しました: %{pesticide_name}",
-        "field_created": "圃場を作成しました: %{field_name}",
-        "plan_created": "計画を作成しました: %{plan_id}",
-        "interaction_rule_created": "相互作用ルールを作成しました: %{source_group} → %{target_group}",
-        "crop_stage_copied": "作物ステージをコピーしました: %{stage_name}",
-        "temperature_requirement_copied": "温度要件をコピーしました: %{stage_name}",
-        "sunshine_requirement_copied": "日照要件をコピーしました: %{stage_name}",
-        "thermal_requirement_copied": "積算温度要件をコピーしました: %{stage_name}",
-        "nutrient_requirement_copied": "栄養要件をコピーしました: %{stage_name}",
-        "cultivation_plan_field_copied": "計画圃場をコピーしました: %{field_name}",
-        "cultivation_plan_crop_copied": "計画作物をコピーしました: %{crop_name}",
-        "field_cultivation_copied": "圃場栽培をコピーしました: %{field_name} × %{crop_name}",
+        "coordinates": "座標: {{lat}}, {{lng}}",
+        "farm_created": "農場を作成しました: {{farm_name}}",
+        "crop_created": "作物を作成しました: {{crop_name}}",
+        "fertilize_created": "肥料を作成しました: {{fertilize_name}}",
+        "pest_created": "害虫を作成しました: {{pest_name}}",
+        "agricultural_task_created": "作業を作成しました: {{task_name}}",
+        "pesticide_created": "農薬を作成しました: {{pesticide_name}}",
+        "field_created": "圃場を作成しました: {{field_name}}",
+        "plan_created": "計画を作成しました: {{plan_id}}",
+        "interaction_rule_created": "相互作用ルールを作成しました: {{source_group}} → {{target_group}}",
+        "crop_stage_copied": "作物ステージをコピーしました: {{stage_name}}",
+        "temperature_requirement_copied": "温度要件をコピーしました: {{stage_name}}",
+        "sunshine_requirement_copied": "日照要件をコピーしました: {{stage_name}}",
+        "thermal_requirement_copied": "積算温度要件をコピーしました: {{stage_name}}",
+        "nutrient_requirement_copied": "栄養要件をコピーしました: {{stage_name}}",
+        "cultivation_plan_field_copied": "計画圃場をコピーしました: {{field_name}}",
+        "cultivation_plan_crop_copied": "計画作物をコピーしました: {{crop_name}}",
+        "field_cultivation_copied": "圃場栽培をコピーしました: {{field_name}} × {{crop_name}}",
         "service_completed": "PlanSaveServiceが正常に完了しました"
       },
       "errors": {
-        "farm_not_found": "参照農場が見つかりません (ID: %{farm_id})",
-        "farm_creation_failed": "%{errors}",
-        "crop_not_found": "参照作物が見つかりません (ID: %{crop_id})",
-        "crop_creation_failed": "%{errors}",
-        "crop_stage_copy_failed": "作物ステージのコピーに失敗しました: %{errors}",
-        "temperature_requirement_copy_failed": "温度要件のコピーに失敗しました: %{errors}",
-        "sunshine_requirement_copy_failed": "日照要件のコピーに失敗しました: %{errors}",
-        "thermal_requirement_copy_failed": "積算温度要件のコピーに失敗しました: %{errors}",
-        "field_creation_failed": "圃場の作成に失敗しました: %{errors}",
-        "interaction_rule_creation_failed": "相互作用ルールの作成に失敗しました: %{errors}",
-        "plan_not_found": "参照計画が見つかりません (ID: %{plan_id})",
-        "plan_creation_failed": "計画の作成に失敗しました: %{errors}",
-        "plan_relations_copy_failed": "計画関連データのコピーに失敗しました: %{errors}",
-        "session_data_invalid": "セッションデータが無効です: %{data}",
+        "farm_not_found": "参照農場が見つかりません (ID: {{farm_id}})",
+        "farm_creation_failed": "{{errors}}",
+        "crop_not_found": "参照作物が見つかりません (ID: {{crop_id}})",
+        "crop_creation_failed": "{{errors}}",
+        "crop_stage_copy_failed": "作物ステージのコピーに失敗しました: {{errors}}",
+        "temperature_requirement_copy_failed": "温度要件のコピーに失敗しました: {{errors}}",
+        "sunshine_requirement_copy_failed": "日照要件のコピーに失敗しました: {{errors}}",
+        "thermal_requirement_copy_failed": "積算温度要件のコピーに失敗しました: {{errors}}",
+        "field_creation_failed": "圃場の作成に失敗しました: {{errors}}",
+        "interaction_rule_creation_failed": "相互作用ルールの作成に失敗しました: {{errors}}",
+        "plan_not_found": "参照計画が見つかりません (ID: {{plan_id}})",
+        "plan_creation_failed": "計画の作成に失敗しました: {{errors}}",
+        "plan_relations_copy_failed": "計画関連データのコピーに失敗しました: {{errors}}",
+        "session_data_invalid": "セッションデータが無効です: {{data}}",
         "user_not_found": "ユーザーが見つかりません",
-        "transaction_failed": "データベーストランザクションが失敗しました: %{error}",
-        "unknown_error": "予期しないエラーが発生しました: %{error}"
+        "transaction_failed": "データベーストランザクションが失敗しました: {{error}}",
+        "unknown_error": "予期しないエラーが発生しました: {{error}}"
       },
       "debug": {
-        "session_data_received": "セッションデータを受信しました: %{data}",
-        "farm_id_extracted": "農場IDを抽出しました: %{farm_id}",
-        "crop_ids_extracted": "作物IDを抽出しました: %{crop_ids}",
-        "field_data_extracted": "圃場データを抽出しました: %{field_data}",
-        "plan_id_extracted": "計画IDを抽出しました: %{plan_id}",
-        "reference_farm_found": "参照農場を発見しました: %{farm_name}",
-        "reference_crops_found": "参照作物を発見しました: %{count}個",
-        "reference_plan_found": "参照計画を発見しました: %{plan_name}",
-        "user_crops_created": "ユーザー作物を作成しました: %{count}個",
-        "user_fields_created": "ユーザー圃場を作成しました: %{count}個",
-        "new_plan_created": "新しい計画を作成しました: %{plan_id}",
-        "plan_relations_copied": "計画関連データをコピーしました: 圃場%{fields}個, 作物%{crops}個, 栽培%{cultivations}個"
+        "session_data_received": "セッションデータを受信しました: {{data}}",
+        "farm_id_extracted": "農場IDを抽出しました: {{farm_id}}",
+        "crop_ids_extracted": "作物IDを抽出しました: {{crop_ids}}",
+        "field_data_extracted": "圃場データを抽出しました: {{field_data}}",
+        "plan_id_extracted": "計画IDを抽出しました: {{plan_id}}",
+        "reference_farm_found": "参照農場を発見しました: {{farm_name}}",
+        "reference_crops_found": "参照作物を発見しました: {{count}}個",
+        "reference_plan_found": "参照計画を発見しました: {{plan_name}}",
+        "user_crops_created": "ユーザー作物を作成しました: {{count}}個",
+        "user_fields_created": "ユーザー圃場を作成しました: {{count}}個",
+        "new_plan_created": "新しい計画を作成しました: {{plan_id}}",
+        "plan_relations_copied": "計画関連データをコピーしました: 圃場{{fields}}個, 作物{{crops}}個, 栽培{{cultivations}}個"
       }
     },
     "errors": {
       "messages": {
-        "record_invalid": "バリデーションに失敗しました: %{errors}",
+        "record_invalid": "バリデーションに失敗しました: {{errors}}",
         "restrict_dependent_destroy": {
-          "has_one": "%{record}が存在しているので削除できません",
-          "has_many": "%{record}が存在しているので削除できません"
+          "has_one": "{{record}}が存在しているので削除できません",
+          "has_many": "{{record}}が存在しているので削除できません"
         }
       }
     }
   },
   "errors": {
     "template": {
-      "header": "%{model}に%{count}件のエラーがあります"
+      "header": "{{model}}に{{count}}件のエラーがあります"
     },
-    "format": "%{attribute}%{message}",
+    "format": "{{attribute}}{{message}}",
     "messages": {
       "required": "を入力してください",
       "blank": "を入力してください",
       "empty": "を入力してください",
       "invalid": "は不正な値です",
-      "confirmation": "と%{attribute}の入力が一致しません",
+      "confirmation": "と{{attribute}}の入力が一致しません",
       "accepted": "を受諾してください",
-      "too_long": "は%{count}文字以内で入力してください",
-      "too_short": "は%{count}文字以上で入力してください",
-      "wrong_length": "は%{count}文字で入力してください",
+      "too_long": "は{{count}}文字以内で入力してください",
+      "too_short": "は{{count}}文字以上で入力してください",
+      "wrong_length": "は{{count}}文字で入力してください",
       "not_a_number": "は数値で入力してください",
       "not_an_integer": "は整数で入力してください",
-      "greater_than": "は%{count}より大きい値にしてください",
-      "greater_than_or_equal_to": "は%{count}以上の値にしてください",
-      "equal_to": "は%{count}にしてください",
-      "less_than": "は%{count}より小さい値にしてください",
-      "less_than_or_equal_to": "は%{count}以下の値にしてください",
-      "other_than": "は%{count}以外の値にしてください",
+      "greater_than": "は{{count}}より大きい値にしてください",
+      "greater_than_or_equal_to": "は{{count}}以上の値にしてください",
+      "equal_to": "は{{count}}にしてください",
+      "less_than": "は{{count}}より小さい値にしてください",
+      "less_than_or_equal_to": "は{{count}}以下の値にしてください",
+      "other_than": "は{{count}}以外の値にしてください",
       "odd": "は奇数にしてください",
       "even": "は偶数にしてください",
       "taken": "はすでに存在します",
       "inclusion": "は一覧にありません",
       "exclusion": "は予約されています",
       "present": "は入力しないでください",
-      "model_invalid": "バリデーションに失敗しました: %{errors}",
-      "required_dependency": "に必要な%{dependency}が設定されていません"
+      "model_invalid": "バリデーションに失敗しました: {{errors}}",
+      "required_dependency": "に必要な{{dependency}}が設定されていません"
     }
   },
   "jobs": {
     "fetch_weather_data": {
-      "retry_limit_exceeded": "リトライ上限に達しました: %{error}",
-      "validation_error": "データ検証エラー: %{error}"
+      "retry_limit_exceeded": "リトライ上限に達しました: {{error}}",
+      "validation_error": "データ検証エラー: {{error}}"
     },
     "weather_prediction": {
       "completed": "気象データの予測が完了しました"
@@ -2614,14 +2614,14 @@
     "optimize_cultivation_plan": {
       "completed": "最適化が完了しました",
       "failed": "最適化に失敗しました",
-      "unexpected_error": "予期しないエラーが発生しました: %{message}",
+      "unexpected_error": "予期しないエラーが発生しました: {{message}}",
       "errors": {
         "growth_incomplete": "選択された作物が指定期間内に成長完了できません。より長い評価期間を設定するか、異なる作物を選択してください。",
         "no_valid_candidates": "作付けできる作物が見つかりませんでした。以下の理由が考えられます：\n• 選択した作物が期間内に成長完了できない\n• 圃場の広さが不足している\n• 気象条件が適していない\n\nより長い栽培期間を設定するか、異なる作物を選択してください。",
         "missing_field": "入力データに必須フィールドが不足しています。システム管理者にお問い合わせください。",
         "file_error": "ファイルの読み込みに失敗しました。システム管理者にお問い合わせください。",
         "invalid_format": "入力データの形式が不正です。システム管理者にお問い合わせください。",
-        "optimization_failed": "最適化処理に失敗しました: %{message}"
+        "optimization_failed": "最適化処理に失敗しました: {{message}}"
       }
     }
   },
@@ -2860,7 +2860,7 @@
       },
       "section8": {
         "title": "8. お問い合わせ",
-        "content_html": "プライバシーポリシーに関するお問い合わせは、%{contact_link}よりご連絡ください。",
+        "content_html": "プライバシーポリシーに関するお問い合わせは、{{contact_link}}よりご連絡ください。",
         "contact_link_text": "お問い合わせページ"
       },
       "last_updated": "最終更新日: 2025年10月17日",
@@ -2982,11 +2982,11 @@
       "terms": "利用規約",
       "contact_title": "お問い合わせ",
       "contact_form": "お問い合わせフォーム",
-      "copyright": "© %{year} AGRR. All rights reserved."
+      "copyright": "© {{year}} AGRR. All rights reserved."
     },
     "cookie_consent": {
       "title": "Cookieの利用について",
-      "description_html": "本サイトでは、広告配信とアクセス解析のためにCookieを利用します。設定はいつでも変更できます。詳細は%{privacy_link}をご確認ください。",
+      "description_html": "本サイトでは、広告配信とアクセス解析のためにCookieを利用します。設定はいつでも変更できます。詳細は{{privacy_link}}をご確認ください。",
       "privacy_link_text": "プライバシーポリシー",
       "accept": "同意する",
       "reject": "拒否する"
@@ -3138,9 +3138,9 @@
       "field_label": "ほ場",
       "period_label": "期間",
       "year_range": {
-        "previous_with_years": "← %{years}年分前へ",
-        "label": "%{start}年度 〜 %{end}年度（%{years}年分）",
-        "next_with_years": "%{years}年分次へ →"
+        "previous_with_years": "← {{years}}年分前へ",
+        "label": "{{start}}年度 〜 {{end}}年度（{{years}}年分）",
+        "next_with_years": "{{years}}年分次へ →"
       },
       "year_navigation": {
         "previous": "前",
