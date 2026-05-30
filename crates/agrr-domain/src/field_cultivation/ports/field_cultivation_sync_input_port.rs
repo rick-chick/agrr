@@ -1,6 +1,6 @@
 use crate::field_cultivation::dtos::FieldCultivationSyncInput;
 
-pub trait FieldCultivationSyncInputPort {
+pub trait FieldCultivationSyncInputPort: Send + Sync {
     fn call(
         &mut self,
         plan_id: i64,

@@ -277,8 +277,10 @@ impl PesticideGateway for PesticideSqliteGateway {
         filter: &ReferenceIndexListFilter,
     ) -> Result<Vec<PesticideEntity>, Box<dyn std::error::Error + Send + Sync>> {
         let (where_sql, user_id) = where_clause(filter);
+        // `where_sql` uses `?1` for user_id; crop_id already binds as `?1`.
+        let filter_sql = where_sql.replace("?1", "?2");
         let sql = format!(
-            "SELECT {} FROM pesticides WHERE crop_id = ?1 AND {where_sql} ORDER BY created_at DESC",
+            "SELECT {} FROM pesticides WHERE crop_id = ?1 AND {filter_sql} ORDER BY created_at DESC",
             Self::SELECT_COLS
         );
         self.pool.with_read_box(|conn| {

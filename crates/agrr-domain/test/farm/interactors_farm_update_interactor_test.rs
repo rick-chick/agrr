@@ -1,5 +1,12 @@
 // Tests for `interactors/farm_update_interactor.rs` (Ruby parity under test/domain/farm/).
 
+    use crate::farm::entities::FarmEntity;
+    use crate::farm::gateways::FarmGateway;
+    use crate::farm::ports::{FarmUpdateOutputPort, UpdateFailure};
+    use crate::shared::attr::AttrMap;
+    use crate::shared::gateways::UserLookupGateway;
+    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+
     use crate::shared::user::User;
 
     struct StubLookup(User);

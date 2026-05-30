@@ -1,3 +1,318 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:f6c1ef0608ec28b9f7d596c55dc6bc4a6fdce49d5a90fcc50b7aba4d68bac806
-size 7889
+{
+  "generatedAt": "2026-05-30T03:34:08.064Z",
+  "note": "path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は `npm run e2e:capture-for-agent`（Rails development + AuthTest モックログインで付与したセッション、`e2e/.auth/dev-session.json`）で全ルートを ja/en/in の3言語キャプチャする。requiresAuth はルート定義上のフラグ。",
+  "routes": [
+    {
+      "pattern": "",
+      "url": "/",
+      "requiresAuth": false,
+      "source": "core.routes.ts"
+    },
+    {
+      "pattern": "**",
+      "url": "/__e2e-route-manifest-not-found__",
+      "requiresAuth": false,
+      "source": "pages.routes.ts"
+    },
+    {
+      "pattern": "about",
+      "url": "/about",
+      "requiresAuth": false,
+      "source": "pages.routes.ts"
+    },
+    {
+      "pattern": "auth/login",
+      "url": "/auth/login",
+      "requiresAuth": false,
+      "source": "core.routes.ts"
+    },
+    {
+      "pattern": "contact",
+      "url": "/contact",
+      "requiresAuth": false,
+      "source": "pages.routes.ts"
+    },
+    {
+      "pattern": "entry-schedule",
+      "url": "/entry-schedule",
+      "requiresAuth": false,
+      "source": "entry-schedule.routes.ts"
+    },
+    {
+      "pattern": "entry-schedule/crop/:cropId",
+      "url": "/entry-schedule/crop/1?farmId=1",
+      "requiresAuth": false,
+      "source": "entry-schedule.routes.ts"
+    },
+    {
+      "pattern": "login",
+      "url": "/login",
+      "requiresAuth": false,
+      "source": "core.routes.ts"
+    },
+    {
+      "pattern": "privacy",
+      "url": "/privacy",
+      "requiresAuth": false,
+      "source": "pages.routes.ts"
+    },
+    {
+      "pattern": "public-plans/new",
+      "url": "/public-plans/new",
+      "requiresAuth": false,
+      "source": "public-plans.routes.ts"
+    },
+    {
+      "pattern": "public-plans/optimizing",
+      "url": "/public-plans/optimizing?planId=1",
+      "requiresAuth": false,
+      "source": "public-plans.routes.ts"
+    },
+    {
+      "pattern": "public-plans/results",
+      "url": "/public-plans/results?planId=1",
+      "requiresAuth": false,
+      "source": "public-plans.routes.ts"
+    },
+    {
+      "pattern": "public-plans/select-crop",
+      "url": "/public-plans/select-crop",
+      "requiresAuth": false,
+      "source": "public-plans.routes.ts"
+    },
+    {
+      "pattern": "public-plans/select-farm-size",
+      "url": "/public-plans/select-farm-size",
+      "requiresAuth": false,
+      "source": "public-plans.routes.ts"
+    },
+    {
+      "pattern": "terms",
+      "url": "/terms",
+      "requiresAuth": false,
+      "source": "pages.routes.ts"
+    },
+    {
+      "pattern": "agricultural_tasks",
+      "url": "/agricultural_tasks",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "agricultural_tasks/:id",
+      "url": "/agricultural_tasks/1",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "agricultural_tasks/:id/edit",
+      "url": "/agricultural_tasks/1/edit",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "agricultural_tasks/new",
+      "url": "/agricultural_tasks/new",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "api-keys",
+      "url": "/api-keys",
+      "requiresAuth": true,
+      "source": "settings.routes.ts"
+    },
+    {
+      "pattern": "crops",
+      "url": "/crops",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "crops/:id",
+      "url": "/crops/1",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "crops/:id/edit",
+      "url": "/crops/1/edit",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "crops/new",
+      "url": "/crops/new",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "dashboard",
+      "url": "/dashboard",
+      "requiresAuth": true,
+      "source": "core.routes.ts"
+    },
+    {
+      "pattern": "farms",
+      "url": "/farms",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "farms/:id",
+      "url": "/farms/1",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "farms/:id/edit",
+      "url": "/farms/1/edit",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "farms/new",
+      "url": "/farms/new",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "fertilizes",
+      "url": "/fertilizes",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "fertilizes/:id",
+      "url": "/fertilizes/1",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "fertilizes/:id/edit",
+      "url": "/fertilizes/1/edit",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "fertilizes/new",
+      "url": "/fertilizes/new",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "interaction_rules",
+      "url": "/interaction_rules",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "interaction_rules/:id",
+      "url": "/interaction_rules/1",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "interaction_rules/:id/edit",
+      "url": "/interaction_rules/1/edit",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "interaction_rules/new",
+      "url": "/interaction_rules/new",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "pesticides",
+      "url": "/pesticides",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "pesticides/:id",
+      "url": "/pesticides/1",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "pesticides/:id/edit",
+      "url": "/pesticides/1/edit",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "pesticides/new",
+      "url": "/pesticides/new",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "pests",
+      "url": "/pests",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "pests/:id",
+      "url": "/pests/1",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "pests/:id/edit",
+      "url": "/pests/1/edit",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "pests/new",
+      "url": "/pests/new",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "plans",
+      "url": "/plans",
+      "requiresAuth": true,
+      "source": "plans.routes.ts"
+    },
+    {
+      "pattern": "plans/:id",
+      "url": "/plans/1",
+      "requiresAuth": true,
+      "source": "plans.routes.ts"
+    },
+    {
+      "pattern": "plans/:id/optimizing",
+      "url": "/plans/1/optimizing",
+      "requiresAuth": true,
+      "source": "plans.routes.ts"
+    },
+    {
+      "pattern": "plans/:id/task_schedule",
+      "url": "/plans/1/task_schedule",
+      "requiresAuth": true,
+      "source": "plans.routes.ts"
+    },
+    {
+      "pattern": "plans/new",
+      "url": "/plans/new",
+      "requiresAuth": true,
+      "source": "plans.routes.ts"
+    },
+    {
+      "pattern": "plans/select-crop",
+      "url": "/plans/select-crop",
+      "requiresAuth": true,
+      "source": "plans.routes.ts"
+    },
+    {
+      "pattern": "weather",
+      "url": "/weather",
+      "requiresAuth": true,
+      "source": "weather.routes.ts"
+    }
+  ]
+}

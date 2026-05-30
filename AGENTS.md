@@ -14,6 +14,11 @@
 - NG
 1. 範囲指定なしで read ツールの使用
 
+## Git（エージェント禁止・常時）
+- **禁止（ユーザー明示まで）**: `git checkout` / `git switch` / `git reset` / `git restore` / `git clean`、force push
+- **可**: `git status` / `diff` / `log` / `show` / `add` / `commit`（依頼時）
+- 詳細: `.cursor/rules/git-operational-constraints.mdc`（`alwaysApply: true`）
+
 ## アーキテクチャ
 バグ調査、コードを開始する前に`ARCHITECTURE.md`を読む
 

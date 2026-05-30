@@ -21,15 +21,19 @@
 | `location /` → `rails_backend` for API | 完了定義違反 |
 | 個別 `/api/v1/...` のみ列挙して残りを Rails | 廃止 — `/api/` 一括で Rust |
 
-## 実装ギャップ（501 になりうる — Rust 側で実装）
+## パリティ確認
 
-- `POST /api/v1/public_plans/plans`（wizard create）— 要確認
-- `POST` AI create 系（`crops/ai_create` 等）— Angular 未使用なら 501 可
-- `backdoor` — スコープ外なら 501
+- ルート台帳: `tmp/api-v1-routes-ledger.md`（手動更新）
+- 回帰: `scripts/run-rust-contract-tests.sh`（`test/contract/*` — PATCH・公開 mutation・AI smoke・internal 気象・backdoor 含む）
+
+## contact_messages（仕様メモ）
+
+- Rails routes に `GET index` があるが controller action なし
+- Rust `GET /api/v1/contact_messages` は空配列 `[]`（データ非公開）
 
 ## 検証
 
 ```bash
-./scripts/verify-angular-api-rust-routing.sh  # フロントパスと route 文字列
+./scripts/run-rust-contract-tests.sh  # R4 契約（Angular が叩く API の網羅）
 AGRR_SERVER_CONTRACT_REBUILD=1 COVERAGE=false ./scripts/run-rust-contract-tests.sh
 ```

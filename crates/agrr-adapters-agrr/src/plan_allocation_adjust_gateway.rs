@@ -4,10 +4,12 @@
 use agrr_domain::cultivation_plan::errors::AdjustExecutionError;
 use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustGateway;
 use serde_json::Value;
-use tempfile::NamedTempFile;
+use std::path::PathBuf;
 use time::Date;
 
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_response::parse_daemon_json_payload;
+use crate::daemon_temp_file::write_temp_json_path;
 
 pub struct PlanAllocationAdjustAgrrDaemonGateway {
     client: AgrrDaemonClient,
@@ -24,21 +26,13 @@ impl PlanAllocationAdjustAgrrDaemonGateway {
         Self { client }
     }
 
-    fn write_temp_json(data: &Value, prefix: &str) -> Result<NamedTempFile, AdjustExecutionError> {
-        let file = NamedTempFile::with_prefix(prefix).map_err(|e| {
-            AdjustExecutionError::new(format!("temp file: {e}"))
-        })?;
-        std::io::Write::write_all(
-            &mut file.as_file(),
-            serde_json::to_string(data)
-                .map_err(|e| AdjustExecutionError::new(e.to_string()))?
-                .as_bytes(),
-        )
-        .map_err(|e| AdjustExecutionError::new(e.to_string()))?;
-        file.as_file()
-            .sync_all()
-            .map_err(|e| AdjustExecutionError::new(e.to_string()))?;
-        Ok(file)
+    fn write_temp_json(data: &Value, prefix: &str) -> Result<PathBuf, AdjustExecutionError> {
+        write_temp_json_path(data, prefix)
+            .map_err(|e| AdjustExecutionError::new(e.to_string()))
+    }
+
+    fn remove_temp_path(path: &PathBuf) {
+        let _ = std::fs::remove_file(path);
     }
 }
 
@@ -59,66 +53,76 @@ impl PlanAllocationAdjustGateway for PlanAllocationAdjustAgrrDaemonGateway {
     ) -> Result<Value, AdjustExecutionError> {
         let _ = (objective, max_time, enable_parallel);
 
-        let allocation_file = Self::write_temp_json(current_allocation, "current_allocation")?;
-        let moves_file = Self::write_temp_json(&Value::Object(serde_json::Map::from_iter([(
-            "moves".into(),
-            Value::Array(moves.to_vec()),
-        )])), "moves")?;
-        let fields_file = Self::write_temp_json(
+        let allocation_path = Self::write_temp_json(current_allocation, "current_allocation")?;
+        let moves_path = Self::write_temp_json(
+            &Value::Object(serde_json::Map::from_iter([(
+                "moves".into(),
+                Value::Array(moves.to_vec()),
+            )])),
+            "moves",
+        )?;
+        let fields_path = Self::write_temp_json(
             &Value::Object(serde_json::Map::from_iter([(
                 "fields".into(),
                 Value::Array(fields.to_vec()),
             )])),
             "fields",
         )?;
-        let crops_file = Self::write_temp_json(
+        let crops_path = Self::write_temp_json(
             &Value::Object(serde_json::Map::from_iter([(
                 "crops".into(),
                 Value::Array(crops.to_vec()),
             )])),
             "crops",
         )?;
-        let weather_file = Self::write_temp_json(weather_data, "weather")?;
+        let weather_path = Self::write_temp_json(weather_data, "weather")?;
 
-        let allocation_path = allocation_file.path().to_string_lossy().into_owned();
-        let moves_path = moves_file.path().to_string_lossy().into_owned();
-        let fields_path = fields_file.path().to_string_lossy().into_owned();
-        let crops_path = crops_file.path().to_string_lossy().into_owned();
-        let weather_path = weather_file.path().to_string_lossy().into_owned();
-
-        let mut args = vec![
+        let mut args: Vec<String> = vec![
             "optimize".into(),
             "adjust".into(),
             "--current-allocation".into(),
-            allocation_path,
+            allocation_path.to_string_lossy().into_owned(),
             "--moves".into(),
-            moves_path,
+            moves_path.to_string_lossy().into_owned(),
             "--fields-file".into(),
-            fields_path,
+            fields_path.to_string_lossy().into_owned(),
             "--crops-file".into(),
-            crops_path,
+            crops_path.to_string_lossy().into_owned(),
             "--planning-start".into(),
             planning_start.to_string(),
             "--planning-end".into(),
             planning_end.to_string(),
             "--weather-file".into(),
-            weather_path,
+            weather_path.to_string_lossy().into_owned(),
             "--format".into(),
             "json".into(),
         ];
 
-        if let Some(rules) = interaction_rules {
-            let rules_file = Self::write_temp_json(rules, "interaction_rules")?;
+        let rules_path = if let Some(rules) = interaction_rules {
+            let rules_path = Self::write_temp_json(rules, "interaction_rules")?;
             args.push("--interaction-rules-file".into());
-            args.push(rules_file.path().to_string_lossy().into_owned());
-        }
+            args.push(rules_path.to_string_lossy().into_owned());
+            Some(rules_path)
+        } else {
+            None
+        };
 
-        let response = self
+        let wrapper = self
             .client
             .execute_daemon_args(&args)
             .map_err(map_daemon_error)?;
+        let payload = parse_daemon_json_payload(&wrapper).map_err(map_daemon_error)?;
 
-        parse_adjust_result(&response)
+        let result = parse_adjust_result(&payload);
+        Self::remove_temp_path(&allocation_path);
+        Self::remove_temp_path(&moves_path);
+        Self::remove_temp_path(&fields_path);
+        Self::remove_temp_path(&crops_path);
+        Self::remove_temp_path(&weather_path);
+        if let Some(path) = rules_path {
+            Self::remove_temp_path(&path);
+        }
+        result
     }
 }
 

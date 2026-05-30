@@ -381,7 +381,8 @@
       },
       "debug": {
         "label": "デバッグ:"
-      }
+      },
+      "list_heading": "作物一覧"
     },
     "new": {
       "title": "新しい作物を追加"
@@ -394,7 +395,32 @@
       },
       "errors": {
         "title": "%{count}件のエラーがあります："
-      }
+      },
+      "stages_title": "生育ステージ",
+      "add_stage": "+ 生育ステージを追加",
+      "stage_title": "ステージ {{order}}",
+      "stage_name": "ステージ名",
+      "stage_order": "順序",
+      "requirements_title": "要件",
+      "temperature_requirement": "温度要件",
+      "base_temperature": "最低限界温度",
+      "optimal_min": "最適温度（最小）",
+      "optimal_max": "最適温度（最大）",
+      "low_stress_threshold": "低温ストレス閾値",
+      "high_stress_threshold": "高温ストレス閾値",
+      "frost_threshold": "霜害閾値",
+      "sterility_risk_threshold": "不稔リスク閾値",
+      "max_temperature": "最大限界温度",
+      "thermal_requirement": "熱要件（GDD）",
+      "required_gdd": "必要積算温度",
+      "sunshine_requirement": "日照要件",
+      "minimum_sunshine_hours": "最低日照時間",
+      "target_sunshine_hours": "目標日照時間",
+      "nutrient_requirement": "栄養素要件",
+      "daily_uptake_n": "窒素 (N) 日吸収量",
+      "daily_uptake_p": "リン (P) 日吸収量",
+      "daily_uptake_k": "カリウム (K) 日吸収量",
+      "region": "地域"
     },
     "show": {
       "reference_crop": "参照作物",
@@ -497,7 +523,10 @@
         "errors": {
           "title": "%{count}件のエラーがあります："
         }
-      }
+      },
+      "area_unit": "㎡",
+      "revenue_unit": "円/㎡",
+      "region": "地域"
     },
     "pests": {
       "flash": {
@@ -921,7 +950,8 @@
           "loading": "地図を読み込み中..."
         },
         "submit": "農場を作成",
-        "cancel": "キャンセル"
+        "cancel": "キャンセル",
+        "coordinates_validation_error": "緯度は-90〜90、経度は-180〜180の範囲で入力してください。"
       },
       "errors": {
         "title": "%{count}件のエラーがあります："
@@ -956,7 +986,26 @@
       "no_fields": "まだ圃場が登録されていません。",
       "add_first_field": "最初の圃場を追加",
       "back_to_list": "農場一覧に戻る",
-      "detail": "詳細"
+      "detail": "詳細",
+      "confirm_delete_field": "本当にこの圃場を削除しますか？",
+      "weather_status": "天気データの状態",
+      "weather_progress": "進捗",
+      "map": "地図",
+      "location": "地域",
+      "field_form": {
+        "add_title": "圃場を追加",
+        "edit_title": "圃場を編集",
+        "name_label": "圃場名",
+        "name_placeholder": "例: 北圃場",
+        "area_label": "面積 (ha)",
+        "area_placeholder": "例: 1.5",
+        "daily_fixed_cost_label": "日次固定費用",
+        "daily_fixed_cost_placeholder": "例: 5000",
+        "region_label": "地域",
+        "region_placeholder": "例: 関東",
+        "submit_create": "圃場を作成",
+        "submit_update": "圃場を更新"
+      }
     },
     "card": {
       "latitude": "緯度",
@@ -1159,7 +1208,8 @@
         "title": "まだルールが登録されていません",
         "description": "最初のルールを追加して始めましょう。",
         "button": "ルールを追加"
-      }
+      },
+      "list_heading": "ルール一覧"
     },
     "new": {
       "title": "新しいルール作成",
@@ -1306,7 +1356,15 @@
     "loading": "読み込み中...",
     "next": "次へ",
     "true": "はい",
-    "false": "いいえ"
+    "false": "いいえ",
+    "detail": "詳細",
+    "api_error": {
+      "unauthorized": "ログインが必要です。",
+      "forbidden": "この操作を行う権限がありません。",
+      "not_found": "リソースが見つかりません。",
+      "network": "サーバーに接続できません。ネットワークを確認してください。",
+      "generic": "リクエストに失敗しました。しばらくしてから再度お試しください。"
+    }
   },
   "models": {
     "farm": {
@@ -1369,7 +1427,11 @@
         "not_found": "リソースが見つかりません",
         "farm_not_found": "農場が見つかりません",
         "weather_location_not_found": "天気取得地点が見つかりません",
-        "env_only": "このエンドポイントは開発・テスト環境でのみ利用できます"
+        "env_only": "このエンドポイントは開発・テスト環境でのみ利用できます",
+        "files": {
+          "no_file": "ファイルが指定されていません",
+          "not_found": "ファイルが見つかりません"
+        }
       },
       "crop_not_found": "作物情報が見つかりません",
       "no_weather_data": "気象データがありません",
@@ -1569,7 +1631,16 @@
       "prompt_field_area": "圃場の面積 (㎡) を入力してください。",
       "adding_field": "圃場を追加しています...",
       "deleting_field": "圃場を削除しています...",
-      "error_occurred": "エラーが発生しました。時間をおいて再度お試しください。"
+      "error_occurred": "エラーが発生しました。時間をおいて再度お試しください。",
+      "add_crop_button": "作物を追加",
+      "crop_palette_cancel": "キャンセル",
+      "crop_palette_title": "作物を追加",
+      "crop_palette_no_crops": "追加できる作物がありません",
+      "field_form_name_label": "圃場名",
+      "field_form_name_placeholder": "例: A圃場",
+      "field_form_area_label": "面積 (㎡)",
+      "field_form_area_placeholder": "例: 100",
+      "field_form_submit": "圃場を追加"
     },
     "crops": {
       "edit": {
@@ -1611,6 +1682,40 @@
       "load_failed": "データの読み込みに失敗しました。",
       "chart_create_failed": "チャートの生成に失敗しました。",
       "gdd_chart_create_failed": "GDDチャートの生成に失敗しました。"
+    },
+    "crop_form": {
+      "stage_name_placeholder": "例：発芽期、栄養成長期",
+      "order_placeholder": "0",
+      "base_temperature_placeholder": "例：5.0",
+      "optimal_min_placeholder": "例：15.0",
+      "optimal_max_placeholder": "例：25.0",
+      "low_stress_placeholder": "例：10.0",
+      "high_stress_placeholder": "例：30.0",
+      "frost_threshold_placeholder": "例：0.0",
+      "sterility_risk_placeholder": "例：35.0",
+      "minimum_sunshine_placeholder": "例：4.0",
+      "target_sunshine_placeholder": "例：8.0",
+      "daily_uptake_n_placeholder": "例：0.5",
+      "daily_uptake_p_placeholder": "例：0.2",
+      "daily_uptake_k_placeholder": "例：0.8"
+    },
+    "crop_selection": {
+      "max_crops_message": "作物は最大%{max}種類まで選択できます",
+      "hint_select": "作物を選択してください"
+    },
+    "cultivation_results": {
+      "load_error": "データの取得に失敗しました",
+      "data_error": "データの読み込みに失敗しました",
+      "temp_max_label": "最高気温",
+      "temp_mean_label": "平均気温",
+      "temp_min_label": "最低気温",
+      "optimal_range_label": "最適温度範囲",
+      "date_label": "日付",
+      "temp_axis_label": "気温 (℃)",
+      "gdd_label": "積算温度",
+      "gdd_axis_label": "積算温度 (℃日)",
+      "gdd_target_label": "目標: %{target}℃日",
+      "no_risks": "なし ✓"
     }
   },
   "public_plans": {
@@ -1813,6 +1918,25 @@
         "gdd_label": "積算温度",
         "gdd_axis": "積算温度 (℃日)"
       }
+    },
+    "select_farm": {
+      "available_farms": "利用可能な農場",
+      "title": "農場を選択",
+      "subtitle": "農場をクリックしてください"
+    },
+    "regions": {
+      "jp": {
+        "name": "日本",
+        "description": "Japan"
+      },
+      "us": {
+        "name": "アメリカ",
+        "description": "United States"
+      },
+      "in": {
+        "name": "インド",
+        "description": "India"
+      }
     }
   },
   "plans": {
@@ -1840,7 +1964,8 @@
       "already_optimized": "この計画は既に最適化されています。",
       "invalid_field_params": "圃場の情報が不正です。",
       "no_candidates_found": "この作物の最適な作付け日程が見つかりませんでした。天気データの範囲を拡張しましたが、候補が得られませんでした。",
-      "prediction_data_incomplete": "天気予測データが不足しているため処理を完了できません。しばらくしてから再度お試しください。"
+      "prediction_data_incomplete": "天気予測データが不足しているため処理を完了できません。しばらくしてから再度お試しください。",
+      "select_year_and_farm": "年度と農場を選択してください。"
     },
     "messages": {
       "field_removed": "圃場を削除しました。",
@@ -1866,6 +1991,18 @@
       "chart_create_failed": "チャートの作成に失敗しました",
       "gdd_chart_create_failed": "GDDチャートの作成に失敗しました"
     },
+    "field_climate": {
+      "chart": {
+        "temperature": "気温（℃）",
+        "min_temp": "最低気温",
+        "mean_temp": "平均気温",
+        "max_temp": "最高気温",
+        "daily_gdd": "日次GDD",
+        "cumulative_gdd": "積算GDD",
+        "required_cumulative_gdd": "必要積算GDD",
+        "tooltip_format": "{{value}}"
+      }
+    },
     "title": "個人計画",
     "default_plan_name": "メイン計画",
     "steps": {
@@ -1885,6 +2022,22 @@
       },
       "fallback": {
         "message": "画面幅が狭いため簡易表示に切り替えています。デバイスを回転するか拡大して詳細をご確認ください。"
+      },
+      "optimizing": "最適化中...",
+      "no_plan_data": "計画データがありません。",
+      "no_field_data": "圃場データがありません。",
+      "no_data": "表示するデータがありません。",
+      "adjust_failed": "調整に失敗しました。",
+      "range": {
+        "prev_month": "前月",
+        "next_month": "次月"
+      },
+      "labels": {
+        "year": "年",
+        "month": "月",
+        "day": "日",
+        "week": "週",
+        "quarter": "四半期"
       }
     },
     "undo": {
@@ -1933,7 +2086,9 @@
       "no_farms_hint": "まず農場を作成してください",
       "create_farm_link": "農場を作成する",
       "next_button": "次へ: 作物選択",
-      "empty_message": "現在、利用可能な農場がありません。"
+      "empty_message": "現在、利用可能な農場がありません。",
+      "plan_year_label": "計画年度",
+      "plan_year_hint": "計画年度は%{start_year}年1月〜%{end_year}年12月の2年間です"
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
@@ -2104,6 +2259,14 @@
           "create_failed": "追加に失敗しました"
         }
       }
+    },
+    "optimizing_live": {
+      "back_to_plan": "計画に戻る",
+      "heading": "最適化中",
+      "progress_label": "進捗: {{progress}}%"
+    },
+    "detail": {
+      "select_cultivation_hint": "ガント上の栽培を選択すると詳細が表示されます。"
     }
   },
   "weather": {
@@ -2143,7 +2306,9 @@
     "login": "ログイン",
     "logout": "ログアウト",
     "admin": "管理画面",
-    "language": "言語"
+    "language": "言語",
+    "weather": "気象",
+    "api_keys": "APIキー"
   },
   "footer": {
     "about": "AGRRについて",
@@ -2606,8 +2771,8 @@
         "location": "所在地: 日本",
         "initiative": "取り組み: 市民農園での栽培経験に加え、公開されている農業技術資料・論文を参照し、作物別の栽培要件や計画づくりの知見を整理して発信しています。",
         "contact_form": "お問い合わせフォーム",
-        "contact_html": "連絡先: %{email_link}（%{contact_link} もご利用ください）",
-        "ads_notice_html": "広告: 本サイトでは Google AdSense を利用し、広告配信に Cookie を用いることがあります。詳細は%{privacy_link}をご確認ください。",
+        "contact_html": "連絡先: {{email_link}}（{{contact_link}} もご利用ください）",
+        "ads_notice_html": "広告: 本サイトでは Google AdSense を利用し、広告配信に Cookie を用いることがあります。詳細は{{privacy_link}}をご確認ください。",
         "privacy_link_text": "プライバシーポリシー",
         "sources_and_updates": "各記事末尾に主な参考文献や公開資料のリンクを記載し、内容は随時見直して最新の研究や実測データに基づき更新します。"
       },
@@ -2698,7 +2863,10 @@
         "content_html": "プライバシーポリシーに関するお問い合わせは、%{contact_link}よりご連絡ください。",
         "contact_link_text": "お問い合わせページ"
       },
-      "last_updated": "最終更新日: 2025年10月17日"
+      "last_updated": "最終更新日: 2025年10月17日",
+      "contact": {
+        "content_html": "プライバシーポリシーに関するお問い合わせは、{{contact_link}}よりご連絡ください。"
+      }
     },
     "terms": {
       "title": "利用規約",
@@ -2765,10 +2933,15 @@
       },
       "article10": {
         "title": "第10条（お問い合わせ）",
-        "content_html": "本規約に関するお問い合わせは、%{contact_link}よりご連絡ください。",
+        "content_html": "本規約に関するお問い合わせは、{{contact_link}}よりご連絡ください。",
         "contact_link_text": "お問い合わせページ"
       },
       "effective_date": "制定日: 2025年10月17日"
+    },
+    "notFound": {
+      "title": "ページが見つかりません",
+      "message": "お探しのページは存在しないか、移動した可能性があります。",
+      "backHome": "ホームに戻る"
     }
   },
   "shared": {
@@ -2791,7 +2964,8 @@
       "menu_toggle": "メニュー",
       "reports": "レポート",
       "api_keys": "APIキー管理",
-      "api_docs": "API"
+      "api_docs": "API",
+      "planning_schedules": "計画表"
     },
     "crop_palette": {
       "toggle": "作物を追加",
@@ -2816,6 +2990,174 @@
       "privacy_link_text": "プライバシーポリシー",
       "accept": "同意する",
       "reject": "拒否する"
+    },
+    "policy": {
+      "no_permission": "このリソースにアクセスする権限がありません。"
+    }
+  },
+  "home": {
+    "index": {
+      "hero": {
+        "title": "気象とAIで、作付け計画をもっとシンプルに",
+        "subtitle_html": "AGRRは圃場・作物・気象データを活かし、輪作を考慮した栽培計画の立案と最適化を支援します。",
+        "cta_button": "無料で作付け計画を始める"
+      },
+      "features": {
+        "title": "主な機能",
+        "subtitle": "計画立案からスケジュール管理まで、ひとつの画面で。",
+        "growth_prediction": {
+          "title": "生育予測",
+          "description": "気象データと作物特性から、栽培期間やステージの目安を把握できます。",
+          "icon": "📈"
+        },
+        "weather": {
+          "title": "気象データ活用",
+          "description": "過去・予測の気象情報を参照し、時期選定の判断材料にできます。",
+          "icon": "🌤️"
+        },
+        "optimization": {
+          "title": "作付け計画の最適化",
+          "description": "圃場条件と連作ルールを踏まえ、ガントチャートで計画を視覚化・調整できます。",
+          "icon": "📊"
+        },
+        "ai": {
+          "icon": "🤖",
+          "title": "AI作物提案",
+          "description": "AIが地域の気候や土壌条件に最適な作物を提案。収益性も考慮します。"
+        },
+        "field_management": {
+          "icon": "🗺️",
+          "title": "圃場管理",
+          "description": "複数の圃場を地図上で管理。各圃場の状態を一目で把握できます。"
+        },
+        "cloud": {
+          "icon": "☁️",
+          "title": "クラウド管理",
+          "description": "データはクラウドで安全に管理。どこからでもアクセス可能です。"
+        }
+      },
+      "title": "AGRR - 農業をもっとスマートに | 農業計画支援システム",
+      "description": "AGRRは気象データとAIを活用した農業作付け計画支援システムです。無料で作付け計画を作成でき、圃場管理から栽培計画の最適化まで、持続可能な農業をサポートします。",
+      "cta": {
+        "title": "今すぐ始めましょう",
+        "description_html": "ログイン不要で作付け計画を試せます。<br>より高度な機能をご利用の場合は、アカウント登録をお願いします。",
+        "button_primary": "作付け計画を作成",
+        "button_secondary": "AGRRについて詳しく"
+      }
+    }
+  },
+  "contact_form": {
+    "name": "お名前",
+    "email": "メールアドレス",
+    "subject": "件名",
+    "message": "メッセージ",
+    "submit": "送信",
+    "success": {
+      "message": "お問い合わせを受け付けました。",
+      "toast": "お問い合わせありがとうございます。"
+    },
+    "errors": {
+      "send_failed": "送信に失敗しました。",
+      "validation_failed": "入力内容を確認してください。"
+    },
+    "validation": {
+      "message_required": "メッセージは必須です。",
+      "message_too_long": "メッセージが長すぎます。",
+      "name_too_long": "名前が長すぎます。",
+      "subject_too_long": "件名が長すぎます。",
+      "email_required": "メールアドレスは必須です。",
+      "email_invalid": "メールアドレスの形式が正しくありません。"
+    }
+  },
+  "entrySchedule": {
+    "title": "作物スケジュール",
+    "detailTitle": "作物スケジュール詳細",
+    "back": "一覧に戻る",
+    "loading": "読み込み中...",
+    "retry": "再試行",
+    "selectFarm": "農場を選択",
+    "noFarms": "利用可能な農場がありません",
+    "show": "表示",
+    "blockSelectFarm": "農場を選択して作物一覧を表示してください。",
+    "eligibleYes": "対象",
+    "eligibleNo": "対象外",
+    "expand": "詳細を開く",
+    "collapse": "詳細を閉じる",
+    "loadMore": "さらに読み込む",
+    "listDisclaimer": "表示は目安です。結果を保証するものではありません。",
+    "error": "データの取得に失敗しました。",
+    "timeout": "タイムアウトしました。再試行してください。",
+    "predictionFresh": "予測更新",
+    "predictionUntil": "予測終了日",
+    "whyTitle": "なぜこの時期か",
+    "windows": "適期ウィンドウ",
+    "phases": "生育フェーズ",
+    "timeline": "タイムライン",
+    "nextTask": "次の作業",
+    "nextTaskPlaceholder": "次の作業はまだありません。",
+    "stages": "ステージ",
+    "table": {
+      "detail": "詳細"
+    },
+    "viz": {
+      "ganttTitle": "適期ガント",
+      "detailGanttIntro": "播種・定植の目安帯を表示しています。",
+      "listChartIntro": "播種・定植の目安帯",
+      "listChartFoot": "帯の左端はおおよその開始目安です。",
+      "detailGanttFoot": "帯の左端はおおよその開始目安です。",
+      "ganttAria": "{{name}} の適期チャート",
+      "axisYear": "{{year}}年",
+      "bandStartHint": "開始目安",
+      "noWindow": "表示できる適期帯がありません",
+      "monthTick": "{{n}}月",
+      "sowBand": "播種",
+      "transplantBand": "定植"
+    }
+  },
+  "status": {
+    "checking": "確認中..."
+  },
+  "planning_schedules": {
+    "fields_selection": {
+      "title": "ほ場選択",
+      "subtitle": "作付け計画表に表示するほ場を選択してください",
+      "farm_label": "農場選択",
+      "fields_label": "ほ場選択（デフォルトで全選択）",
+      "period_label": "表示期間",
+      "period_default": "今年から5年分",
+      "select_all": "すべて選択",
+      "deselect_all": "すべて解除",
+      "show_schedule": "選択したほ場で計画表を表示",
+      "no_fields": "ほ場がありません",
+      "no_farms": "農場がありません"
+    },
+    "schedule": {
+      "title": "作付け計画表",
+      "subtitle": "数年に渡る作付け計画を確認",
+      "display_period_label": "表示期間",
+      "field_label": "ほ場",
+      "period_label": "期間",
+      "year_range": {
+        "previous_with_years": "← %{years}年分前へ",
+        "label": "%{start}年度 〜 %{end}年度（%{years}年分）",
+        "next_with_years": "%{years}年分次へ →"
+      },
+      "year_navigation": {
+        "previous": "前",
+        "next": "次"
+      },
+      "granularity": {
+        "month": "月",
+        "quarter": "四半期",
+        "half": "半期"
+      },
+      "no_cultivation": "作付けなし",
+      "select_fields": "ほ場を選択",
+      "change_fields": "ほ場を変更"
+    },
+    "errors": {
+      "select_fields": "ほ場を選択してください",
+      "farm_not_found": "農場が見つかりません"
     }
   }
 }

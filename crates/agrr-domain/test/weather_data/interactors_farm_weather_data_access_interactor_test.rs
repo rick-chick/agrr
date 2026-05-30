@@ -1,11 +1,13 @@
 // Tests for `interactors/farm_weather_data_access_interactor.rs` (Ruby parity under test/domain/weather_data/).
 
+    use crate::shared::ports::{ClockPort, LoggerPort};
+    use time::{Date, Month, OffsetDateTime, Time};
+
     use crate::weather_data::ports::{
         FarmWeatherDataAccessOutputPort, FarmWeatherFarmSummary, FarmWeatherIndexRow,
         FarmWeatherPeriod, FarmWeatherPredictionPeriod, PredictWeatherStandaloneEnqueueResult,
     };
     use std::sync::{Arc, Mutex};
-    use time::{Month, OffsetDateTime, Time};
 
     struct RecordingOutputPort {
         calls: Arc<Mutex<Vec<String>>>,

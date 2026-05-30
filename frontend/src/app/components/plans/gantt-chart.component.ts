@@ -1436,7 +1436,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
           this.cropStartDate = null;
           this.refreshPlanData(planId);
         } else {
-          this.handleOperationError(response.message);
+          this.handleOperationError(response.message, response.technical_details);
         }
       },
       error: (error: HttpErrorResponse) => {
@@ -1599,10 +1599,16 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     return `${prefix}/${planId}/${action}`;
   }
 
-  private handleOperationError(message?: string) {
+  private handleOperationError(message?: string, technicalDetails?: string) {
+    let text = message
+      ? this.translate.instant(message)
+      : this.translate.instant('plans.gantt.adjust_failed');
+    if (technicalDetails) {
+      text = `${text} (${technicalDetails})`;
+    }
     this.flashMessageService.show({
       type: 'error',
-      text: message ?? this.translate.instant('plans.gantt.adjust_failed')
+      text
     });
     this.isAddCropLoading = false;
     this.isFieldFormLoading = false;

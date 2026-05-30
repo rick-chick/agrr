@@ -5,7 +5,13 @@
         PlanAllocationAdjustReadSnapshot,
     };
     use crate::cultivation_plan::entities::CultivationPlanEntity;
-    use crate::cultivation_plan::gateways::PlanAllocationAdjustDebugDumpNullGateway;
+    use crate::cultivation_plan::gateways::{
+        AdjustWeatherPredictionGateway, PlanAllocationAdjustDebugDumpNullGateway,
+        WeatherPredictionService,
+    };
+    use crate::field_cultivation::dtos::FieldCultivationSyncInput;
+    use crate::field_cultivation::ports::FieldCultivationSyncInputPort;
+    use crate::weather_data::dtos::{CultivationPlanWeather, FarmWeatherPrediction, WeatherLocation};
     use crate::shared::ports::translator_port::TranslateOptions;
     use serde_json::json;
     use std::sync::{Arc, Mutex};
@@ -189,6 +195,54 @@
         }
     }
 
+    struct StubWeatherGateway;
+
+    struct StubWeatherService;
+
+    impl AdjustWeatherPredictionGateway for StubWeatherGateway {
+        fn prediction_service(
+            &self,
+            _: &WeatherLocation,
+            _: Option<&FarmWeatherPrediction>,
+        ) -> Result<Box<dyn WeatherPredictionService>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(Box::new(StubWeatherService))
+        }
+    }
+
+    impl WeatherPredictionService for StubWeatherService {
+        fn get_existing_prediction(
+            &self,
+            _: time::Date,
+            _: &CultivationPlanWeather,
+        ) -> Option<serde_json::Value> {
+            Some(serde_json::json!({
+                "data": [{
+                    "time": "2026-01-01",
+                    "temperature_2m_max": 20.0,
+                    "temperature_2m_min": 10.0,
+                    "temperature_2m_mean": 15.0,
+                    "precipitation_sum": 0.0
+                }]
+            }))
+        }
+
+        fn predict_for_cultivation_plan(
+            &self,
+            _: &CultivationPlanWeather,
+            _: Option<time::Date>,
+        ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(serde_json::json!({
+                "data": [{
+                    "time": "2026-01-01",
+                    "temperature_2m_max": 20.0,
+                    "temperature_2m_min": 10.0,
+                    "temperature_2m_mean": 15.0,
+                    "precipitation_sum": 0.0
+                }]
+            }))
+        }
+    }
+
     struct StubAdjustGateway;
     impl PlanAllocationAdjustGateway for StubAdjustGateway {
         fn adjust(
@@ -207,6 +261,18 @@
         ) -> Result<serde_json::Value, crate::cultivation_plan::errors::AdjustExecutionError>
         {
             unimplemented!()
+        }
+    }
+
+    struct StubFieldCultivationSync;
+
+    impl FieldCultivationSyncInputPort for StubFieldCultivationSync {
+        fn call(
+            &mut self,
+            _: i64,
+            _: FieldCultivationSyncInput,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
         }
     }
 
@@ -262,6 +328,7 @@
             called: Arc::clone(&read_called),
         };
         let events_gateway = StubEventsGateway;
+        let mut field_cultivation_sync = StubFieldCultivationSync;
         let mut interactor = PlanAllocationAdjustInteractor::new(
             &mut output,
             &logger,
@@ -272,6 +339,8 @@
             &StubAdjustGateway,
             &events_gateway,
             &PlanAllocationAdjustDebugDumpNullGateway,
+            &StubWeatherGateway,
+            &mut field_cultivation_sync,
             "abcd1234",
         );
 
@@ -312,6 +381,7 @@
             called: Arc::clone(&read_called),
         };
         let events_gateway = StubEventsGateway;
+        let mut field_cultivation_sync = StubFieldCultivationSync;
         let mut interactor = PlanAllocationAdjustInteractor::new(
             &mut output,
             &logger,
@@ -322,6 +392,8 @@
             &StubAdjustGateway,
             &events_gateway,
             &PlanAllocationAdjustDebugDumpNullGateway,
+            &StubWeatherGateway,
+            &mut field_cultivation_sync,
             "abcd1234",
         );
 
@@ -360,6 +432,7 @@
             called: Arc::new(Mutex::new(false)),
         };
         let events_gateway = StubEventsGateway;
+        let mut field_cultivation_sync = StubFieldCultivationSync;
         let mut interactor = PlanAllocationAdjustInteractor::new(
             &mut output,
             &logger,
@@ -370,6 +443,8 @@
             &StubAdjustGateway,
             &events_gateway,
             &PlanAllocationAdjustDebugDumpNullGateway,
+            &StubWeatherGateway,
+            &mut field_cultivation_sync,
             "abcd1234",
         );
 

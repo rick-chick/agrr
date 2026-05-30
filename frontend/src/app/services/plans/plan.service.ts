@@ -57,10 +57,11 @@ export type AddCropRequest = {
   display_end_date?: string;
 };
 
-type AddCropResponse = {
+export type AddCropResponse = {
   success: boolean;
   message?: string;
-  crop: {
+  technical_details?: string;
+  crop?: {
     id: number;
     name: string;
   };

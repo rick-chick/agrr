@@ -129,16 +129,41 @@ impl<'a> WeatherPredictionInteractor<'a> {
         }
     }
 
+    /// Ruby: `get_existing_prediction(target_end_date:, cultivation_plan_weather:)` (+ farm cache).
     pub fn get_existing_prediction(
         &self,
         target_end_date: Option<Date>,
+        cultivation_plan_weather: Option<&CultivationPlanWeather>,
+        farm_predicted_weather: Option<&Value>,
     ) -> Option<ExistingPredictionResult> {
-        let target = self.normalize_target_end_date(target_end_date);
+        let default_target = cultivation_plan_weather.and_then(|plan| {
+            plan.prediction_target_end_date
+                .or(plan.calculated_planning_end_date)
+        });
+        let target = self.normalize_target_end_date(target_end_date.or(default_target));
+
         if let Some(result) =
             cached_prediction_result(self.weather_location.predicted_weather_data(), target)
         {
             return Some(result);
         }
+
+        if let Some(plan) = cultivation_plan_weather {
+            if let Some(data) = plan.predicted_weather_data() {
+                if plan_predicted_weather_has_data(data) {
+                    if let Some(result) = cached_prediction_result(Some(data), target) {
+                        return Some(result);
+                    }
+                }
+            }
+        }
+
+        if let Some(farm_data) = farm_predicted_weather {
+            if let Some(result) = cached_prediction_result(Some(farm_data), target) {
+                return Some(result);
+            }
+        }
+
         None
     }
 
@@ -402,6 +427,13 @@ fn merge_weather_data(historical: &Value, future: &Value) -> Value {
         "timezone": historical["timezone"].clone(),
         "data": hist,
     })
+}
+
+fn plan_predicted_weather_has_data(payload: &Value) -> bool {
+    payload
+        .get("data")
+        .and_then(|d| d.as_array())
+        .is_some_and(|arr| !arr.is_empty())
 }
 
 fn cached_prediction_result(payload: Option<&Value>, target_end_date: Date) -> Option<ExistingPredictionResult> {

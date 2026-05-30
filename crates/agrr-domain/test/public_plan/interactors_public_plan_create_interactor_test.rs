@@ -1,5 +1,9 @@
 // Tests for `interactors/public_plan_create_interactor.rs` (Ruby parity under test/domain/public_plan/).
 
+    use crate::shared::exceptions::RecordInvalidError;
+    use crate::shared::ports::{ClockPort, LoggerPort};
+    use time::{Date, Month, OffsetDateTime, Time};
+
     use crate::public_plan::dtos::{PublicPlanCrop, PublicPlanFarm};
     use crate::public_plan::ports::PlanInitializerResult;
     use std::sync::{Arc, Mutex};

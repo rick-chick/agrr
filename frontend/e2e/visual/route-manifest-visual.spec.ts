@@ -1,4 +1,4 @@
-import { test, request, expect } from '@playwright/test';
+import { test, request } from '@playwright/test';
 import { readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { waitForPageStable } from '../page-stable';
@@ -13,6 +13,13 @@ import {
   buildResolvedCaptureIds,
   type ResolvedCaptureIds,
 } from '../resolve-capture-urls';
+import {
+  CAPTURE_LOCALES,
+  agentPngFilename,
+  installCaptureLocale,
+  waitForCaptureLocaleReady,
+  type CaptureLocale,
+} from '../capture-locale-playwright';
 
 type Manifest = { routes: RouteRow[]; generatedAt: string; note: string };
 
@@ -39,19 +46,19 @@ function routeLabel(r: RouteRow): string {
   return r.pattern === '' ? '(home)' : r.pattern;
 }
 
-/** ファイル名に使えるスラッグ（並列実行でも pattern ごとに一意） */
-function pngBasename(r: RouteRow): string {
-  if (r.pattern === '') return 'home';
-  if (r.pattern === '**') return 'not-found';
-  return r.pattern.replace(/[^\w.-]+/g, '_');
-}
-
-async function captureForAgent(page: Parameters<typeof assertPageValidity>[0], r: RouteRow): Promise<void> {
-  const path = join(AGENT_PNG_DIR, `${pngBasename(r)}.png`);
+async function captureForAgent(
+  page: Parameters<typeof assertPageValidity>[0],
+  r: RouteRow,
+  locale: CaptureLocale,
+): Promise<void> {
+  const path = join(AGENT_PNG_DIR, agentPngFilename(r.pattern, locale));
   await page.screenshot({ path, fullPage: true });
 }
 
 captureDescribe('capture-for-agent (Rails + dev session)', () => {
+  // 1 ルートあたり ja/en/in の 3 回 goto + 安定待ちのためデフォルト 30s では不足
+  test.describe.configure({ timeout: 180_000 });
+
   /** API 一覧から実在 id を取得して manifest の `1` を差し替え */
   let resolvedCaptureIds: ResolvedCaptureIds | null = null;
 
@@ -72,13 +79,6 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
     }
   });
 
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      const w = window as Window & { __disableCookieControl?: boolean };
-      w.__disableCookieControl = true;
-    });
-  });
-
   for (const r of manifest.routes) {
     test(`capture-for-agent: ${routeLabel(r)}`, async ({ page }) => {
       if (SKIP_CAPTURE_WITH_DEV_SESSION.has(r.pattern)) {
@@ -86,15 +86,19 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
       }
       const url =
         resolvedCaptureIds != null ? applyResolvedUrl(r.pattern, r.url, resolvedCaptureIds) : r.url;
-      await page.goto(url);
       const pathnameExpect =
         PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern) || r.pattern === 'auth/login'
           ? undefined
           : expectedPathnameFromResolvedGoto(url);
 
-      await assertPageValidity(page, r, pathnameExpect);
-      await waitForPageStable(page, r);
-      await captureForAgent(page, r);
+      for (const locale of CAPTURE_LOCALES) {
+        await installCaptureLocale(page, locale);
+        await page.goto(url);
+        await assertPageValidity(page, r, pathnameExpect);
+        await waitForCaptureLocaleReady(page, locale);
+        await waitForPageStable(page, r);
+        await captureForAgent(page, r, locale);
+      }
     });
   }
 });

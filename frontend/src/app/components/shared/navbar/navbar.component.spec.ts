@@ -34,4 +34,39 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
     expect(component.reportUrl).toBe(`${window.location.origin}/research/en/`);
   });
+
+  it('maps developer mock user to locale-aware short label', () => {
+    translate.setTranslation('en', {
+      auth: { login: { dev_login_as_developer: 'Login as Developer' } },
+    });
+    translate.setDefaultLang('ja');
+    translate.use('en');
+    fixture.detectChanges();
+    expect(
+      component.displayUserName({
+        id: 1,
+        name: '開発者',
+        email: 'developer@agrr.dev',
+        avatar_url: null,
+        admin: true,
+      }),
+    ).toBe('Developer');
+  });
+
+  it('maps developer mock user to Hindi short label', () => {
+    translate.setTranslation('in', {
+      auth: { login: { dev_login_as_developer: 'डेवलपर के रूप में लॉगिन' } },
+    });
+    translate.use('in');
+    fixture.detectChanges();
+    expect(
+      component.displayUserName({
+        id: 1,
+        name: '開発者',
+        email: 'developer@agrr.dev',
+        avatar_url: null,
+        admin: true,
+      }),
+    ).toBe('डेवलपर');
+  });
 });

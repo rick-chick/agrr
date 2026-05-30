@@ -23,6 +23,14 @@ pub fn path_string(file: &NamedTempFile) -> String {
     file.path().to_string_lossy().into_owned()
 }
 
+/// Write JSON to a persisted path with the handle closed (for agrr `--*-file` / `--output` args).
+pub fn write_temp_json_path(data: &Value, prefix: &str) -> Result<std::path::PathBuf, std::io::Error> {
+    let file = write_temp_json(data, prefix)?;
+    let (handle, path) = file.keep()?;
+    drop(handle);
+    Ok(path)
+}
+
 pub fn read_json_file(path: &Path) -> Result<Value, String> {
     let text = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
     serde_json::from_str(&text).map_err(|e| e.to_string())

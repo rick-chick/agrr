@@ -2,7 +2,7 @@
 # 正: P6-COMPLETION-CRITERIA.md, BLOCKERS-RESPONSE.md
 
 program: app-rust-stack-p6
-updated: 2026-05-29
+updated: 2026-05-30
 policy:
   rails_api_fallback: forbidden
   unimplemented_api: rust_501_api_not_migrated
@@ -23,9 +23,16 @@ wave_e:
     - backdoor_api_contract_test.rb
     - masters_farms_contract_test.rb
     - masters_crops_contract_test.rb
+    - masters_patch_contract_test.rb
+    - masters_crop_nested_contract_test.rb
+    - public_plans_api_contract_test.rb
+    - public_plan_cultivation_mutations_contract_test.rb
+    - internal_farm_weather_contract_test.rb
+    - ai_api_contract_test.rb
+    - api_v1_health_contract_test.rb
   nginx_checklist: NGINX-STRANGLER-HOST-CHECKLIST.md
   rust_contract_runner: scripts/run-rust-contract-tests.sh
-  angular_routing_audit: scripts/verify-angular-api-rust-routing.sh
+  angular_routing_audit: scripts/run-rust-contract-tests.sh
 
 critical_path:
   - id: auth
@@ -44,7 +51,7 @@ critical_path:
 waves:
   wave-2-remaining:
     - { context: api_keys, phase: done }
-    - { context: backdoor, phase: done, notes: "Angular unused; Rust 501 catch-all; Rails gated by AGRR_RUST_API" }
+    - { context: backdoor, phase: done, notes: "7 routes on Rust; clear_db via Interactor; status/users/db_stats edge→sqlite gateway (Rails parity); Rails gated by AGRR_RUST_API" }
     - { context: contact_messages, phase: done }
   wave-3:
     - { context: deletion_undo, phase: done }

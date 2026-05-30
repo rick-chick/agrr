@@ -1,6 +1,11 @@
 // Tests for `interactors/fertilize_create_interactor.rs` (Ruby parity under test/domain/fertilize/).
 
     use crate::fertilize::entities::{FertilizeEntity, FertilizeEntityAttrs};
+    use crate::fertilize::gateways::FertilizeGateway;
+    use crate::fertilize::ports::{CreateFailure, FertilizeCreateOutputPort};
+    use crate::shared::attr::AttrMap;
+    use crate::shared::gateways::UserLookupGateway;
+    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
     use crate::shared::user::User;
 
     struct StubLookup(User);

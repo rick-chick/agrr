@@ -1,7 +1,13 @@
 // Tests for `interactors/pest_ai_update_interactor.rs` (Ruby parity under test/domain/pest/).
 
     use crate::pest::entities::PestEntity;
-    use crate::pest::ports::PestAiUpdateResult;
+    use crate::pest::gateways::PestGateway;
+    use crate::pest::ports::{PestAiUpdateInteractorPort, PestAiUpdateResult};
+    use crate::shared::attr::AttrMap;
+    use crate::shared::gateways::UserLookupGateway;
+    use crate::shared::exceptions::RecordNotFoundError;
+    use crate::shared::ports::logger_port::LoggerPort;
+    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
     use crate::shared::user::User;
     use std::sync::Mutex;
 

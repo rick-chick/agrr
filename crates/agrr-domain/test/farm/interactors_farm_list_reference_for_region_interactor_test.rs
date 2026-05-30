@@ -1,5 +1,11 @@
 // Tests for `interactors/farm_list_reference_for_region_interactor.rs` (Ruby parity under test/domain/farm/).
 
+    use crate::farm::entities::FarmEntity;
+    use crate::farm::gateways::FarmGateway;
+    use crate::farm::ports::FarmListReferenceForRegionOutputPort;
+    use crate::shared::gateways::UserLookupGateway;
+    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+
     use crate::shared::attr::AttrMap;
     use crate::shared::exceptions::RecordInvalidError;
     use crate::shared::user::User;

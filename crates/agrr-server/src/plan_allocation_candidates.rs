@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use agrr_adapters_agrr::PlanAllocationCandidatesAgrrDaemonGateway;
-use agrr_adapters_sqlite::PlanAllocationAdjustReadSqliteGateway;
+use agrr_adapters_sqlite::{PlanAllocationAdjustReadSqliteGateway, SqlitePool};
 use agrr_domain::crop::dtos::AddCropCropSnapshot;
 use agrr_domain::cultivation_plan::dtos::CultivationPlanRestAuth;
 use agrr_domain::cultivation_plan::errors::AllocationNoCandidatesError;
@@ -14,28 +14,33 @@ use agrr_domain::cultivation_plan::mappers::PlanAllocationAdjustAgrrPayloadMappe
 use agrr_domain::cultivation_plan::ports::{PlanAllocationCandidateBest, PlanAllocationCandidatesPort};
 use agrr_domain::cultivation_plan::helpers::parse_iso_date;
 use agrr_domain::shared::ports::{ClockPort, LoggerPort};
+use agrr_domain::weather_data::WeatherPredictionError;
 use serde_json::Value;
 use time::Date;
 
-use crate::adapters::{NoopLogger, SystemClock};
+use crate::adapters::{StderrLogger, SystemClock};
+use crate::adjust_weather_prediction::resolve_weather_for_candidates;
 
 pub struct PlanAllocationCandidatesService<'a> {
+    pool: SqlitePool,
     read_gateway: &'a PlanAllocationAdjustReadSqliteGateway,
     candidates_gateway: &'a PlanAllocationCandidatesAgrrDaemonGateway,
     clock: SystemClock,
-    logger: NoopLogger,
+    logger: StderrLogger,
 }
 
 impl<'a> PlanAllocationCandidatesService<'a> {
     pub fn new(
+        pool: SqlitePool,
         read_gateway: &'a PlanAllocationAdjustReadSqliteGateway,
         candidates_gateway: &'a PlanAllocationCandidatesAgrrDaemonGateway,
     ) -> Self {
         Self {
+            pool,
             read_gateway,
             candidates_gateway,
             clock: SystemClock,
-            logger: NoopLogger,
+            logger: StderrLogger,
         }
     }
 }
@@ -48,21 +53,26 @@ impl PlanAllocationCandidatesPort for PlanAllocationCandidatesService<'_> {
         crop: &AddCropCropSnapshot,
         field_id: &str,
         display_range: &HashMap<String, Value>,
-        _ui_filter_context: &HashMap<String, Value>,
-    ) -> Option<PlanAllocationCandidateBest> {
-        let snapshot = match self.read_gateway.find_adjust_read_snapshot_by_plan_id(plan_id) {
-            Ok(s) => s,
-            Err(err) => {
+        ui_filter_context: &HashMap<String, Value>,
+    ) -> Result<
+        Option<PlanAllocationCandidateBest>,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
+        let snapshot = self
+            .read_gateway
+            .find_adjust_read_snapshot_by_plan_id(plan_id)
+            .map_err(|err| {
                 self.logger
                     .error(&format!("❌ [Candidates] snapshot load failed: {err}"));
-                return None;
-            }
-        };
+                err
+            })?;
 
         if snapshot.farm_without_weather_location {
             self.logger.error("❌ [Candidates] No weather location found");
-            return None;
+            return Err(Box::new(WeatherPredictionError::WeatherLocationRequired));
         }
+
+        log_candidate_window(display_range, ui_filter_context, &self.logger);
 
         let current_allocation =
             PlanAllocationAdjustAgrrPayloadMapper::to_current_allocation(&snapshot, &[], &self.logger);
@@ -104,12 +114,20 @@ impl PlanAllocationCandidatesPort for PlanAllocationCandidatesService<'_> {
                 .unwrap_or(candidates_start)
         });
         let candidates_end = display_end.map(|d| d.max(base_end)).unwrap_or(base_end);
+        let target_end_date = display_end.unwrap_or(candidates_end);
 
-        let weather_data = snapshot
-            .cultivation_plan_weather_dto
-            .predicted_weather_data()
-            .cloned()?;
-        let weather_value = normalize_weather_payload(weather_data)?;
+        self.logger.info(&format!(
+            "📅 [Candidates] Planning period: {candidates_start} ~ {candidates_end} (weather_target_end={target_end_date})"
+        ));
+
+        let weather_value = resolve_weather_for_candidates(
+            &self.pool,
+            plan_id,
+            &snapshot.cultivation_plan_weather_dto,
+            target_end_date,
+            &self.logger,
+        )
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
 
         let candidates = match self.candidates_gateway.candidates(
             &current_allocation,
@@ -125,36 +143,63 @@ impl PlanAllocationCandidatesPort for PlanAllocationCandidatesService<'_> {
             Err(err) if err.downcast_ref::<AllocationNoCandidatesError>().is_some() => {
                 self.logger
                     .info(&format!("ℹ️ [Candidates] No allocation candidates: {err}"));
-                return None;
+                return Ok(None);
             }
             Err(err) => {
                 self.logger
                     .error(&format!("❌ [Candidates] agrr candidates failed: {err}"));
-                return None;
+                return Err(err);
             }
         };
 
-        select_best_candidate(&candidates, field_id, candidates_start, &self.logger)
+        Ok(select_best_candidate(
+            &candidates,
+            field_id,
+            candidates_start,
+            &self.logger,
+        ))
     }
 }
 
-fn normalize_weather_payload(data: Value) -> Option<Value> {
-    if let Some(inner) = data.get("data").and_then(|d| d.get("data")) {
-        if inner.is_array() {
-            return Some(serde_json::json!({ "data": inner }));
-        }
+fn log_candidate_window(
+    display_range: &HashMap<String, Value>,
+    ui_filter_context: &HashMap<String, Value>,
+    logger: &StderrLogger,
+) {
+    let display_start = display_range
+        .get("start_date")
+        .or_else(|| display_range.get(":start_date"))
+        .and_then(|v| v.as_str());
+    let display_end = display_range
+        .get("end_date")
+        .or_else(|| display_range.get(":end_date"))
+        .and_then(|v| v.as_str());
+    if display_start.is_some() || display_end.is_some() {
+        logger.info(&format!(
+            "📅 [Candidates] UI表示範囲: start={} end={}",
+            display_start.unwrap_or("N/A"),
+            display_end.unwrap_or("N/A")
+        ));
+    } else {
+        logger.info("📅 [Candidates] UI表示範囲: not provided");
     }
-    if data.get("data").map(|d| d.is_array()).unwrap_or(false) {
-        return Some(data);
-    }
-    None
+    let filters = if ui_filter_context.is_empty() {
+        "none".to_string()
+    } else {
+        ui_filter_context
+            .iter()
+            .map(|(k, v)| format!("{k}={v}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    logger.info(&format!("📋 [Candidates] UI filters: {filters}"));
 }
 
 fn select_best_candidate(
     candidates: &[Value],
     preferred_field_id: &str,
     lower_bound: Date,
-    logger: &NoopLogger,
+    logger: &StderrLogger,
 ) -> Option<PlanAllocationCandidateBest> {
     let preferred: Option<i64> = preferred_field_id.parse().ok();
     let mut valid: Vec<&Value> = candidates
@@ -175,6 +220,7 @@ fn select_best_candidate(
     ));
 
     if valid.is_empty() {
+        logger.warn("⚠️ [Candidates] No candidates after date filter");
         return None;
     }
 

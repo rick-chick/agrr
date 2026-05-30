@@ -1,5 +1,9 @@
 // Tests for `interactors/task_schedule_generate_interactor.rs` (Ruby parity under test/domain/agricultural_task/).
 
+    use crate::cultivation_plan::interactors::entry_schedule::crop_stage_snapshot::CropStageSnapshot;
+    use crate::shared::ports::{ClockPort, LoggerPort};
+    use time::{Date, OffsetDateTime};
+
     use crate::agricultural_task::gateways::TaskSchedulePlanContext;
     use rust_decimal::Decimal;
     use std::str::FromStr;

@@ -3,7 +3,10 @@
 use std::collections::HashMap;
 
 use crate::add_crop_support::{AddCropAdjustResultCollector, AddCropCropResolvePrivate};
-use crate::adapters::{NoopLogger, NoopOptimizationEventsGateway, PassthroughTranslator, SystemClock};
+use crate::adapters::{
+    NoopOptimizationEventsGateway, PassthroughTranslator, StderrLogger, SystemClock,
+};
+use crate::adjust_weather_prediction::SqliteAdjustWeatherPredictionGateway;
 use crate::plan_allocation_candidates::PlanAllocationCandidatesService;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
@@ -24,9 +27,7 @@ use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustDebugDumpNullGa
 use agrr_domain::cultivation_plan::interactors::{
     AddCropInteractor, AddFieldInteractor, PlanAllocationAdjustInteractor, RemoveFieldInteractor,
 };
-use agrr_domain::cultivation_plan::mappers::AgrrAdjustResultFieldCultivationSyncMapper;
 use agrr_domain::field_cultivation::interactors::FieldCultivationSyncInteractor;
-use agrr_domain::field_cultivation::ports::FieldCultivationSyncInputPort;
 use agrr_domain::cultivation_plan::ports::{
     AddCropCropResolveInputPort, AddCropOutputPort, AddFieldOutputPort,
     PlanAllocationAdjustInputPort, PlanAllocationAdjustOutputPort, RemoveFieldOutputPort,
@@ -159,11 +160,13 @@ pub(crate) fn map_add_crop_outcome(
                 .http_status
                 .and_then(|s| StatusCode::from_u16(s as u16).ok())
                 .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+            let technical_details = adjust.message.filter(|m| !m.is_empty());
             Err((
                 status,
                 Json(json!({
                     "success": false,
-                    "message": adjust.message.unwrap_or_else(|| "adjust failed".into())
+                    "message": "plans.gantt.adjust_failed",
+                    "technical_details": technical_details
                 })),
             ))
         }
@@ -197,14 +200,18 @@ where
     let plan_crop_gateway = CultivationPlanPlanCropSqliteGateway::new(pool.clone());
     let read_gateway = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
     let candidates_agrr = PlanAllocationCandidatesAgrrDaemonGateway::from_env();
-    let candidates_service =
-        PlanAllocationCandidatesService::new(&read_gateway, &candidates_agrr);
+    let candidates_service = PlanAllocationCandidatesService::new(
+        pool.clone(),
+        &read_gateway,
+        &candidates_agrr,
+    );
     let adjust_sink = AddCropAdjustResultCollector::new();
     let mut adjust_output = adjust_sink.output_adapter();
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
+    let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
     let events = NoopOptimizationEventsGateway;
     let debug_dump = PlanAllocationAdjustDebugDumpNullGateway;
-    let logger = NoopLogger;
+    let logger = StderrLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
     let rule_seed = format!(
@@ -214,6 +221,10 @@ where
             .unwrap()
             .as_nanos() as u32
     );
+    let sync_gateway = FieldCultivationSyncSqliteGateway::new(pool.clone());
+    let sync_read = FieldCultivationSyncPlanReadSqliteGateway::new(pool.clone());
+    let mut field_cultivation_sync =
+        FieldCultivationSyncInteractor::new(&sync_gateway, &sync_read, &logger);
 
     let mut adjust_interactor = PlanAllocationAdjustInteractor::new(
         &mut adjust_output,
@@ -225,6 +236,8 @@ where
         &adjust_gateway,
         &events,
         &debug_dump,
+        &weather_prediction_gateway,
+        &mut field_cultivation_sync,
         &rule_seed,
     );
 
@@ -362,7 +375,7 @@ pub(crate) async fn run_add_field(
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool);
     let events = NoopOptimizationEventsGateway;
-    let logger = NoopLogger;
+    let logger = StderrLogger;
     let mut presenter = AddFieldPresenter { body: None };
     let mut interactor = AddFieldInteractor::new(
         &mut presenter,
@@ -465,7 +478,7 @@ pub(crate) async fn run_remove_field(
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool);
     let events = NoopOptimizationEventsGateway;
-    let logger = NoopLogger;
+    let logger = StderrLogger;
     let mut presenter = RemoveFieldPresenter { body: None };
     let mut interactor = RemoveFieldInteractor::new(
         &mut presenter,
@@ -615,9 +628,10 @@ pub(crate) async fn run_adjust_plan(
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let read_gateway = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
+    let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
     let events = NoopOptimizationEventsGateway;
     let debug_dump = PlanAllocationAdjustDebugDumpNullGateway;
-    let logger = NoopLogger;
+    let logger = StderrLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
     let rule_seed = format!(
@@ -627,6 +641,10 @@ pub(crate) async fn run_adjust_plan(
             .unwrap()
             .as_nanos() as u32
     );
+    let sync_gateway = FieldCultivationSyncSqliteGateway::new(pool.clone());
+    let sync_read = FieldCultivationSyncPlanReadSqliteGateway::new(pool.clone());
+    let mut field_cultivation_sync =
+        FieldCultivationSyncInteractor::new(&sync_gateway, &sync_read, &logger);
     let mut presenter = AdjustPresenter {
         body: None,
         adjust_result: None,
@@ -641,6 +659,8 @@ pub(crate) async fn run_adjust_plan(
         &adjust_gateway,
         &events,
         &debug_dump,
+        &weather_prediction_gateway,
+        &mut field_cultivation_sync,
         &rule_seed,
     );
     let moves = normalize_moves(body.moves);
@@ -658,28 +678,7 @@ pub(crate) async fn run_adjust_plan(
         })?;
 
     match presenter.body {
-        Some(AdjustOutcome::Success(v)) => {
-            if let Some(ref agrr_result) = presenter.adjust_result {
-                if agrr_result.get("field_schedules").is_some() {
-                    let sync_input =
-                        AgrrAdjustResultFieldCultivationSyncMapper::to_sync_input(agrr_result);
-                    let sync_gateway = FieldCultivationSyncSqliteGateway::new(pool.clone());
-                    let sync_read = FieldCultivationSyncPlanReadSqliteGateway::new(pool);
-                    let mut sync_interactor = FieldCultivationSyncInteractor::new(
-                        &sync_gateway,
-                        &sync_read,
-                        &logger,
-                    );
-                    if let Err(e) = sync_interactor.call(plan_id, sync_input) {
-                        return Err((
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(json!({"success": false, "message": e.to_string()})),
-                        ));
-                    }
-                }
-            }
-            Ok(Json(v))
-        }
+        Some(AdjustOutcome::Success(v)) => Ok(Json(v)),
         Some(AdjustOutcome::Failure(status, v)) => Err((status, Json(v))),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,

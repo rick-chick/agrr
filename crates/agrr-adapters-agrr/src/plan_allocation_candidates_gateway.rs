@@ -5,10 +5,10 @@ use std::path::PathBuf;
 use agrr_domain::cultivation_plan::errors::{AllocationExecutionError, AllocationNoCandidatesError};
 use agrr_domain::cultivation_plan::gateways::PlanAllocationCandidatesGateway;
 use serde_json::Value;
-use tempfile::NamedTempFile;
 use time::Date;
 
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_temp_file::write_temp_json_path;
 
 pub struct PlanAllocationCandidatesAgrrDaemonGateway {
     client: AgrrDaemonClient,
@@ -21,21 +21,12 @@ impl PlanAllocationCandidatesAgrrDaemonGateway {
         }
     }
 
-    fn write_temp_json(data: &Value, prefix: &str) -> Result<NamedTempFile, AllocationExecutionError> {
-        let file = NamedTempFile::with_prefix(prefix).map_err(|e| {
-            AllocationExecutionError::new(format!("temp file: {e}"))
-        })?;
-        std::io::Write::write_all(
-            &mut file.as_file(),
-            serde_json::to_string(data)
-                .map_err(|e| AllocationExecutionError::new(e.to_string()))?
-                .as_bytes(),
-        )
-        .map_err(|e| AllocationExecutionError::new(e.to_string()))?;
-        file.as_file()
-            .sync_all()
-            .map_err(|e| AllocationExecutionError::new(e.to_string()))?;
-        Ok(file)
+    fn write_temp_json(data: &Value, prefix: &str) -> Result<PathBuf, AllocationExecutionError> {
+        write_temp_json_path(data, prefix).map_err(|e| AllocationExecutionError::new(e.to_string()))
+    }
+
+    fn remove_temp_path(path: &PathBuf) {
+        let _ = std::fs::remove_file(path);
     }
 }
 
@@ -57,36 +48,33 @@ impl PlanAllocationCandidatesGateway for PlanAllocationCandidatesAgrrDaemonGatew
             .or_else(|| target_crop.as_i64().map(|n| n.to_string()))
             .ok_or_else(|| AllocationExecutionError::new("invalid target_crop"))?;
 
-        let allocation_file = Self::write_temp_json(current_allocation, "candidates_allocation")?;
-        let fields_file = Self::write_temp_json(
+        let allocation_path = Self::write_temp_json(current_allocation, "candidates_allocation")?;
+        let fields_path = Self::write_temp_json(
             &Value::Object(serde_json::Map::from_iter([(
                 "fields".into(),
                 Value::Array(fields.to_vec()),
             )])),
             "candidates_fields",
         )?;
-        let crops_file = Self::write_temp_json(
+        let crops_path = Self::write_temp_json(
             &Value::Object(serde_json::Map::from_iter([(
                 "crops".into(),
                 Value::Array(crops.to_vec()),
             )])),
             "candidates_crops",
         )?;
-        let weather_file = Self::write_temp_json(weather_data, "candidates_weather")?;
-        let output_file = tempfile::NamedTempFile::with_prefix("candidates_output").map_err(|e| {
-            AllocationExecutionError::new(e.to_string())
-        })?;
-        let output_path: PathBuf = output_file.path().to_path_buf();
+        let weather_path = Self::write_temp_json(weather_data, "candidates_weather")?;
+        let output_path = Self::write_temp_json(&Value::Object(serde_json::Map::new()), "candidates_output")?;
 
         let mut args = vec![
             "optimize".into(),
             "candidates".into(),
             "--allocation".into(),
-            allocation_file.path().to_string_lossy().into_owned(),
+            allocation_path.to_string_lossy().into_owned(),
             "--fields-file".into(),
-            fields_file.path().to_string_lossy().into_owned(),
+            fields_path.to_string_lossy().into_owned(),
             "--crops-file".into(),
-            crops_file.path().to_string_lossy().into_owned(),
+            crops_path.to_string_lossy().into_owned(),
             "--target-crop".into(),
             target_crop_id,
             "--planning-start".into(),
@@ -94,25 +82,37 @@ impl PlanAllocationCandidatesGateway for PlanAllocationCandidatesAgrrDaemonGatew
             "--planning-end".into(),
             planning_end.to_string(),
             "--weather-file".into(),
-            weather_file.path().to_string_lossy().into_owned(),
+            weather_path.to_string_lossy().into_owned(),
             "--output".into(),
             output_path.to_string_lossy().into_owned(),
             "--format".into(),
             "json".into(),
         ];
 
-        if let Some(rules) = interaction_rules {
-            let rules_file = Self::write_temp_json(rules, "candidates_rules")?;
+        let rules_path = if let Some(rules) = interaction_rules {
+            let rules_path = Self::write_temp_json(rules, "candidates_rules")?;
             args.push("--interaction-rules-file".into());
-            args.push(rules_file.path().to_string_lossy().into_owned());
-        }
+            args.push(rules_path.to_string_lossy().into_owned());
+            Some(rules_path)
+        } else {
+            None
+        };
 
         let _response = self
             .client
             .execute_daemon_args(&args)
             .map_err(map_daemon_error)?;
 
-        parse_candidates_output(&output_path)
+        let result = parse_candidates_output(&output_path);
+        Self::remove_temp_path(&allocation_path);
+        Self::remove_temp_path(&fields_path);
+        Self::remove_temp_path(&crops_path);
+        Self::remove_temp_path(&weather_path);
+        if let Some(path) = rules_path {
+            Self::remove_temp_path(&path);
+        }
+        Self::remove_temp_path(&output_path);
+        result
     }
 }
 

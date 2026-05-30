@@ -22,9 +22,7 @@ use agrr_domain::cultivation_plan::mappers::{
 use agrr_domain::field_cultivation::interactors::FieldCultivationSyncInteractor;
 use agrr_domain::field_cultivation::ports::FieldCultivationSyncInputPort;
 use agrr_domain::shared::ports::ClockPort;
-use agrr_domain::weather_data::dtos::{
-    CultivationPlanWeather, FetchWeatherDataPerformInput, WeatherLocation,
-};
+use agrr_domain::weather_data::dtos::FetchWeatherDataPerformInput;
 use agrr_domain::weather_data::interactors::FetchWeatherDataPerformInteractor;
 use agrr_domain::weather_data::interactors::WeatherPredictionInteractor;
 use agrr_domain::weather_data::ports::{
@@ -32,7 +30,6 @@ use agrr_domain::weather_data::ports::{
     RecordFarmWeatherBlockCompletedPort,
 };
 use agrr_domain::weather_data::OptimizationJobChainWeatherComputation;
-use serde_json::Value;
 use time::{Date, OffsetDateTime};
 use tracing::{error, warn};
 
@@ -202,7 +199,7 @@ pub fn run_weather_prediction_step(
     );
 
     let pool = state.sqlite.clone();
-    let wl = load_weather_location(&pool, plan_id)?;
+    let wl = crate::cultivation_plan_weather_load::load_weather_location(&pool, plan_id)?;
     let weather_data = WeatherDataSqliteGateway::new(pool.clone());
     let plan_predicted = FieldCultivationPlanPredictedWeatherSqliteGateway::new(pool.clone());
     let prediction = agrr_adapters_agrr::PredictionDaemonGateway::from_env();
@@ -221,7 +218,7 @@ pub fn run_weather_prediction_step(
     )
     .map_err(|e| format!("weather prediction init: {e}"))?;
 
-    let plan_weather = load_plan_weather(&pool, plan_id)?;
+    let plan_weather = crate::cultivation_plan_weather_load::load_plan_weather(&pool, plan_id)?;
     let _predict_days =
         OptimizationJobChainWeatherComputation::predict_days_to_next_year_end(end_date, &clock);
     interactor
@@ -381,54 +378,3 @@ pub fn run_plan_finalize_step(
     Ok(())
 }
 
-fn load_weather_location(
-    pool: &agrr_adapters_sqlite::SqlitePool,
-    plan_id: i64,
-) -> Result<WeatherLocation, String> {
-    pool.with_read(|conn| {
-        conn.query_row(
-            "SELECT wl.id, wl.latitude, wl.longitude, wl.elevation, wl.timezone \
-             FROM cultivation_plans cp \
-             INNER JOIN farms f ON f.id = cp.farm_id \
-             INNER JOIN weather_locations wl ON wl.id = f.weather_location_id \
-             WHERE cp.id = ?1",
-            rusqlite::params![plan_id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
-        )
-    })
-    .map_err(|e| e.to_string())
-    .map(|(id, lat, lon, elev, tz)| WeatherLocation::new(id, lat, lon, elev, tz, None))
-}
-
-fn load_plan_weather(
-    pool: &agrr_adapters_sqlite::SqlitePool,
-    plan_id: i64,
-) -> Result<CultivationPlanWeather, String> {
-    let (planning_end, predicted) = pool
-        .with_read(|conn| {
-            conn.query_row(
-                "SELECT planning_end_date, predicted_weather_data FROM cultivation_plans WHERE id = ?1",
-                rusqlite::params![plan_id],
-                |row| {
-                    Ok((
-                        row.get::<_, Option<String>>(0)?,
-                        row.get::<_, Option<String>>(1)?,
-                    ))
-                },
-            )
-        })
-        .map_err(|e| e.to_string())?;
-    let parse = |s: Option<String>| {
-        s.as_deref().and_then(|d| {
-            Date::parse(d, &time::format_description::well_known::Iso8601::DATE).ok()
-        })
-    };
-    let end = parse(planning_end);
-    let predicted_json = predicted.and_then(|s: String| serde_json::from_str::<Value>(&s).ok());
-    Ok(CultivationPlanWeather::new(
-        plan_id,
-        end,
-        end,
-        predicted_json,
-    ))
-}

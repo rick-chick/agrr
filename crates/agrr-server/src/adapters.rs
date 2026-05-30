@@ -14,6 +14,28 @@ impl LoggerPort for NoopLogger {
     fn debug(&self, _message: &str) {}
 }
 
+/// Writes domain logger lines to stderr (captured in `/tmp/agrr-strangler-pids/rust.log`).
+#[derive(Clone, Copy, Default)]
+pub struct StderrLogger;
+
+impl LoggerPort for StderrLogger {
+    fn info(&self, message: &str) {
+        eprintln!("{message}");
+    }
+
+    fn warn(&self, message: &str) {
+        eprintln!("WARN: {message}");
+    }
+
+    fn error(&self, message: &str) {
+        eprintln!("ERROR: {message}");
+    }
+
+    fn debug(&self, message: &str) {
+        eprintln!("DEBUG: {message}");
+    }
+}
+
 pub struct PassthroughTranslator;
 
 impl TranslatorPort for PassthroughTranslator {

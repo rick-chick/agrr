@@ -2,6 +2,8 @@
 
 pub mod adapters;
 pub mod add_crop_support;
+pub mod adjust_weather_prediction;
+pub mod cultivation_plan_weather_load;
 pub mod ai_api;
 pub mod fertilize_ai_adapters;
 pub mod pest_ai_adapters;

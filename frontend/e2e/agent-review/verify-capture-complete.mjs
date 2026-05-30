@@ -1,22 +1,17 @@
 #!/usr/bin/env node
 /**
- * route-manifest の全 pattern に対応する PNG が e2e/agent-review/out にあることを検証する。
+ * route-manifest の全 pattern × CAPTURE_LOCALES に対応する PNG が e2e/agent-review/out にあることを検証する。
  * `npm run e2e:capture-for-agent` の末尾で実行する。
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CAPTURE_LOCALES, agentPngFilename } from '../capture-locales.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const FRONTEND = join(__dirname, '..', '..');
 const manifestPath = join(FRONTEND, 'e2e', 'route-manifest.json');
 const outDir = join(__dirname, 'out');
-
-function pngBasename(pattern) {
-  if (pattern === '') return 'home';
-  if (pattern === '**') return 'not-found';
-  return pattern.replace(/[^\w.-]+/g, '_');
-}
 
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const routes = manifest.routes;
@@ -25,22 +20,35 @@ if (!Array.isArray(routes) || routes.length === 0) {
   process.exit(1);
 }
 
+/** dev-session キャプチャでは未撮影（route-manifest-visual.spec.ts と同一） */
+const SKIP_PATTERNS = new Set(['auth/login', 'login']);
+
+const routesToVerify = routes.filter((r) => !SKIP_PATTERNS.has(r.pattern));
+
 const missing = [];
-for (const r of routes) {
-  const f = join(outDir, `${pngBasename(r.pattern)}.png`);
-  if (!existsSync(f)) {
-    missing.push({ pattern: r.pattern, expected: f });
+for (const r of routesToVerify) {
+  for (const locale of CAPTURE_LOCALES) {
+    const name = agentPngFilename(r.pattern, locale);
+    const f = join(outDir, name);
+    if (!existsSync(f)) {
+      missing.push({ pattern: r.pattern, locale, expected: f });
+    }
   }
 }
 
+const expectedCount = routesToVerify.length * CAPTURE_LOCALES.length;
 if (missing.length > 0) {
   console.error(
-    `verify-capture-complete: 不足 ${missing.length} / ${routes.length} 件（route-manifest 対 PNG）`,
+    `verify-capture-complete: 不足 ${missing.length} / ${expectedCount} 件（route × locale）`,
   );
   for (const m of missing) {
-    console.error(`  - pattern=${JSON.stringify(m.pattern)} → ${m.expected}`);
+    console.error(
+      `  - pattern=${JSON.stringify(m.pattern)} locale=${m.locale} → ${m.expected}`,
+    );
   }
   process.exit(1);
 }
 
-console.log(`verify-capture-complete: OK ${routes.length} PNGs under ${outDir}`);
+console.log(
+  `verify-capture-complete: OK ${expectedCount} PNGs (${routesToVerify.length} routes × ${CAPTURE_LOCALES.join(', ')}; skip ${[...SKIP_PATTERNS].join(', ')}) under ${outDir}`,
+);

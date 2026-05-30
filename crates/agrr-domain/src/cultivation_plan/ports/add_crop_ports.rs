@@ -44,7 +44,10 @@ pub trait PlanAllocationCandidatesPort: Send + Sync {
         field_id: &str,
         display_range: &HashMap<String, Value>,
         ui_filter_context: &HashMap<String, Value>,
-    ) -> Option<PlanAllocationCandidateBest>;
+    ) -> Result<
+        Option<PlanAllocationCandidateBest>,
+        Box<dyn std::error::Error + Send + Sync>,
+    >;
 }
 
 #[derive(Debug, Clone, PartialEq)]

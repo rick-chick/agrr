@@ -103,9 +103,10 @@ P6 TRACKING 完了より **厳しい**条件。ローカルで次をすべて満
 | `GET/POST` マスタ `/api/v1/masters/*`（farms, crops, pests…） | Rust ✅ |
 | `POST /api/v1/public_plans/save_plan` | Rust ✅（wizard 一部 read も Rust） |
 | `PATCH .../field_cultivations/:id`、`/cable`、最適化ジョブチェーン | Rust ✅（in-process チェーン + CableHub） |
-| `weather_data`（スケジューラ）、`backdoor` | Rust ✅（internal_jobs チェーン / backdoor は Angular 未使用・501） |
+| `POST` AI（`crops|fertilizes|pests/ai_*`）、`internal/farms/*/weather_*` | Rust ✅ |
+| `weather_data`（スケジューラ）、`backdoor`（7 routes） | Rust ✅（internal_jobs チェーン / backdoor は Angular 未使用） |
 
-→ **dev strangler / rust-only で SPA 主要導線は Rust**。レベル 3 は **R4 全 GREEN + `verify-angular-api-rust-routing.sh` + Rails 未起動 E2E** で判定。
+→ **dev strangler / rust-only で SPA 主要導線は Rust**。レベル 3 は **R4 全 GREEN（`run-rust-contract-tests.sh`）+ Rails 未起動 E2E** で判定。
 
 ---
 

@@ -1,5 +1,12 @@
 // Tests for `interactors/farm_detail_interactor.rs` (Ruby parity under test/domain/farm/).
 
+    use crate::farm::dtos::FarmDetailOutput;
+    use crate::farm::entities::FarmEntity;
+    use crate::farm::gateways::FarmGateway;
+    use crate::farm::ports::{DetailFailure, FarmDetailOutputPort};
+    use crate::shared::gateways::UserLookupGateway;
+    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+
     use crate::farm::entities::FieldEntity;
     use crate::shared::attr::AttrMap;
     use crate::shared::user::User;

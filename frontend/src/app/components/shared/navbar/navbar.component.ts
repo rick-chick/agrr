@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { CurrentUser } from '../../../services/api.service';
+import { type CurrentUser } from '../../../services/api.service';
 import { getApiBaseUrl } from '../../../core/api-base-url';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
 
@@ -54,7 +54,7 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
         @if (loading) {
           <span class="status">{{ 'status.checking' | translate }}</span>
         } @else if (user) {
-          <span class="user-name">{{ user.name ?? 'User' }}</span>
+          <span class="user-name">{{ displayUserName(user) }}</span>
           <button class="logout-button" type="button" (click)="logout.emit()">
             {{ 'nav.logout' | translate }}
           </button>
@@ -112,5 +112,29 @@ export class NavbarComponent {
     const lang = this.translate.currentLang || this.translate.defaultLang || 'ja';
     const reportPath = lang === 'en' ? '/research/en/' : '/research/';
     return `${origin}${reportPath}`;
+  }
+
+  /** Dev mock users keep API name「開発者」; show locale-aware short label in the header. */
+  displayUserName(user: CurrentUser): string {
+    const mapped = this.devMockDisplayName(user.email);
+    if (mapped) return mapped;
+    return user.name ?? 'User';
+  }
+
+  private devMockDisplayName(email: string | null | undefined): string | null {
+    const keyByEmail: Record<string, string> = {
+      'developer@agrr.dev': 'auth.login.dev_login_as_developer',
+      'farmer@agrr.dev': 'auth.login.dev_login_as_farmer',
+      'researcher@agrr.dev': 'auth.login.dev_login_as_researcher',
+    };
+    const key = email ? keyByEmail[email.toLowerCase()] : undefined;
+    if (!key) return null;
+
+    const full = this.translate.instant(key);
+    const lang = this.translate.currentLang || this.translate.defaultLang || 'ja';
+    if (lang === 'ja') return full.replace(/でログイン$/, '');
+    if (lang === 'en') return full.replace(/^Login as /i, '');
+    if (lang === 'in') return full.replace(/ के रूप में लॉगिन$/, '');
+    return full;
   }
 }

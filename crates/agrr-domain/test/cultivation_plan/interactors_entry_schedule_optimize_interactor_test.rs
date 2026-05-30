@@ -1,8 +1,8 @@
 // Tests for `interactors/entry_schedule_optimize_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
 
-use serde_json::json;
-
+    use crate::cultivation_plan::interactors::entry_schedule::crop_stage_snapshot::CropStageSnapshot;
     use crate::cultivation_plan::interactors::entry_schedule::temperature_requirement_snapshot::TemperatureRequirementSnapshot;
+    use serde_json::json;
     use std::sync::{Arc, Mutex};
     use time::macros::date;
 

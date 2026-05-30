@@ -1,6 +1,11 @@
 // Tests for `interactors/pest_create_interactor.rs` (Ruby parity under test/domain/pest/).
 
     use crate::pest::entities::{PestEntity, PestEntityAttrs};
+    use crate::pest::gateways::PestGateway;
+    use crate::pest::ports::{CreateFailure, PestCreateOutputPort};
+    use crate::shared::attr::AttrMap;
+    use crate::shared::gateways::UserLookupGateway;
+    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
     use crate::shared::user::User;
 
     struct StubLookup(User);

@@ -1,9 +1,11 @@
 // Tests for `interactors/weather_prediction_interactor.rs` (Ruby parity under test/domain/weather_data/).
 
-    use crate::weather_data::dtos::WeatherPredictionAnchors;
+    use crate::shared::ports::ClockPort;
+    use time::{Date, Month, OffsetDateTime, Time};
+
+    use crate::weather_data::dtos::{CultivationPlanWeather, WeatherPredictionAnchors};
     use serde_json::json;
     use std::sync::{Arc, Mutex};
-    use time::{Month, Time};
 
     struct FixedClock {
         today: Date,
@@ -232,13 +234,59 @@
         )
         .expect("valid");
 
-        let result = interactor.get_existing_prediction(Some(
-            Date::from_calendar_date(2025, Month::January, 1).expect("valid"),
-        ));
+        let result = interactor.get_existing_prediction(
+            Some(Date::from_calendar_date(2025, Month::January, 1).expect("valid")),
+            None,
+            None,
+        );
         assert!(result.is_some());
         let result = result.expect("result");
         assert_eq!(result.data, payload);
         assert_eq!(result.prediction_start_date, "2025-01-01");
+    }
+
+    #[test]
+    fn get_existing_prediction_returns_cached_plan_prediction_when_location_cache_misses() {
+        let plan_payload = json!({
+            "data": [
+                {
+                    "time": "2025-06-01",
+                    "temperature_2m_max": 20.0,
+                    "temperature_2m_min": 10.0,
+                    "temperature_2m_mean": 15.0,
+                    "precipitation_sum": 0.0
+                }
+            ],
+            "prediction_start_date": "2025-01-01",
+            "prediction_end_date": "2025-12-31"
+        });
+        let plan_weather = CultivationPlanWeather::new(99, None, None, Some(plan_payload.clone()));
+        let plan_gateway = FakePlanGateway {
+            updated: Arc::new(Mutex::new(None)),
+        };
+        let weather_gateway = FakeWeatherDataGateway {
+            period_data: vec![],
+            persisted: Arc::new(Mutex::new(None)),
+        };
+        let clock = fixed_clock();
+        let interactor = WeatherPredictionInteractor::new(
+            weather_location_dto(None),
+            &plan_gateway,
+            &weather_gateway,
+            &NoopPredictionGateway,
+            &NoopLogger,
+            &clock,
+            &FakeAnchors,
+        )
+        .expect("valid");
+
+        let result = interactor.get_existing_prediction(
+            Some(Date::from_calendar_date(2025, Month::June, 1).expect("valid")),
+            Some(&plan_weather),
+            None,
+        );
+        assert!(result.is_some());
+        assert_eq!(result.expect("result").data, plan_payload);
     }
 
     #[test]

@@ -1,5 +1,11 @@
 // Tests for `interactors/crop_destroy_interactor.rs` (Ruby parity under test/domain/crop/).
 
+    use crate::crop::entities::CropEntity;
+    use crate::crop::gateways::CropGateway;
+    use crate::crop::ports::{CropDestroyOutputPort, DestroyFailure};
+    use crate::shared::gateways::UserLookupGateway;
+    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+
     use crate::crop::dtos::CropDeleteUsage;
     use crate::shared::user::User;
 

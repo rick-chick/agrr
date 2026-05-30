@@ -157,7 +157,7 @@ where
             field_id,
             display_range,
             ui_filter_context,
-        );
+        )?;
 
         let Some(best) = best else {
             self.rollback_plan_crop(*plan_crop_id);

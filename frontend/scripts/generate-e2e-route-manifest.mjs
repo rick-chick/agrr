@@ -6,18 +6,13 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CAPTURE_LOCALES, agentPngFilename } from '../e2e/capture-locales.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const FRONTEND = join(__dirname, '..');
 const ROUTES_DIR = join(FRONTEND, 'src/app/routes');
 const OUT = join(FRONTEND, 'e2e', 'route-manifest.json');
 const ROUTE_TO_PNG = join(FRONTEND, 'e2e', 'agent-review', 'route-to-png.md');
-
-function pngBasenameForPattern(pattern) {
-  if (pattern === '') return 'home';
-  if (pattern === '**') return 'not-found';
-  return pattern.replace(/[^\w.-]+/g, '_');
-}
 
 function patternToUrl(pattern) {
   if (pattern === '') return '/';
@@ -82,7 +77,7 @@ async function main() {
   const payload = {
     generatedAt: new Date().toISOString(),
     note:
-      'path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は `npm run e2e:capture-for-agent`（Rails development + AuthTest モックログインで付与したセッション、`e2e/.auth/dev-session.json`）で全ルートをキャプチャする。requiresAuth はルート定義上のフラグ。',
+      'path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は `npm run e2e:capture-for-agent`（Rails development + AuthTest モックログインで付与したセッション、`e2e/.auth/dev-session.json`）で全ルートを ja/en/in の3言語キャプチャする。requiresAuth はルート定義上のフラグ。',
     routes: deduped,
   };
 
@@ -96,28 +91,29 @@ async function main() {
     '',
     '## ファイル名規則（`e2e/visual/route-manifest-visual.spec.ts` と同一）',
     '',
-    '- `pattern` が空文字 → `home.png`',
-    '- `pattern` が `**` → `not-found.png`',
-    '- それ以外 → `pattern` のうち `[a-zA-Z0-9_.-]` 以外を `_` に置換し、`.png` を付与',
+    '- ベース名: `pattern` が空文字 → `home` / `**` → `not-found` / それ以外は `[a-zA-Z0-9_.-]` 以外を `_` に置換',
+    `- 出力: \`{ベース名}.{locale}.png\`（locale: ${CAPTURE_LOCALES.join(', ')}。in はヒンディー語・インド向け）`,
     '',
     '## 全ルート一覧',
     '',
-    '| # | pattern | url (E2E goto) | requiresAuth | out/*.png |',
-    '|---|---------|----------------|--------------|-----------|',
+    '| # | pattern | url (E2E goto) | requiresAuth | ja | en | in |',
+    '|---|---------|----------------|--------------|----|----|-----|',
   ];
   deduped.forEach((r, i) => {
-    const base = pngBasenameForPattern(r.pattern);
     const esc = (s) => String(s).replace(/\|/g, '\\|');
     const patDisp = r.pattern === '' ? '(home)' : r.pattern;
+    const pngCols = CAPTURE_LOCALES.map(
+      (locale) => `\`${esc(agentPngFilename(r.pattern, locale))}\``,
+    ).join(' | ');
     lines.push(
-      `| ${i + 1} | \`${esc(patDisp)}\` | \`${esc(r.url)}\` | ${r.requiresAuth ? 'yes' : 'no'} | \`${esc(base)}.png\` |`,
+      `| ${i + 1} | \`${esc(patDisp)}\` | \`${esc(r.url)}\` | ${r.requiresAuth ? 'yes' : 'no'} | ${pngCols} |`,
     );
   });
   lines.push('');
   lines.push('## キャプチャ前提');
   lines.push('');
   lines.push(
-    '- `e2e:capture-for-agent` は **`E2E_CAPTURE_DEV_SESSION=1`** で Rails（127.0.0.1:3000）と ng を起動し、globalSetup が **`e2e/.auth/dev-session.json`** を書き出したうえで各 `url` へ遷移し `out/*.png` を書き出す（`/api/v1/auth/me` はモックしない）。',
+    '- `e2e:capture-for-agent` は **`E2E_CAPTURE_DEV_SESSION=1`** で Rails（127.0.0.1:3000）と ng を起動し、globalSetup が **`e2e/.auth/dev-session.json`** を書き出したうえで各 `url` へ **ja / en / in** の順で遷移し `out/{ベース}.{locale}.png` を書き出す（`/api/v1/auth/me` はモックしない）。',
   );
   lines.push(
     '- `e2e/resolve-capture-urls.ts` が一覧 API から実在 id を取りマニフェストの placeholder を差し替える。DB が空や API 不全のときは画面が薄い・エラーになり得る。',

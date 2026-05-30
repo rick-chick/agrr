@@ -1,9 +1,13 @@
 // Tests for `interactors/fetch_weather_data_perform_interactor.rs` (Ruby parity under test/domain/weather_data/).
 
+    use crate::shared::ports::{ClockPort, LoggerPort};
+    use time::{Date, Month, OffsetDateTime, Time};
+
 use serde_json::json;
 
+    use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+    use crate::weather_data::gateways::{FetchWeatherFarmEntity, WeatherLocationRecord};
     use std::sync::{Arc, Mutex};
-    use time::{Month, Time};
 
     struct MockPresenter {
         errors: Arc<Mutex<Vec<String>>>,

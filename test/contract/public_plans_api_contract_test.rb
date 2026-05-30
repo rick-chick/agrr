@@ -1,52 +1,102 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require_relative "contract_test_case"
 
-# R4: public plan wizard + workbench read endpoints on strangler stack (agrr-server).
-class PublicPlansApiContractTest < ActionDispatch::IntegrationTest
+# R4: public plan wizard + workbench read endpoints on agrr-server (CONTRACT_RUNTIME=rust).
+class PublicPlansApiContractTest < ContractTestCase
+  setup do
+    @ref_farm = create(:farm, :reference, region: "jp")
+    @public_plan = create(:cultivation_plan, :public_plan, :completed, farm: @ref_farm)
+    @plan_field = create(:cultivation_plan_field,
+      cultivation_plan: @public_plan,
+      name: "Contract Field",
+      area: 100.0,
+      daily_fixed_cost: 10.0)
+    @crop = create(:crop, :reference, region: "jp")
+    create(:crop_stage, :germination, crop: @crop)
+    @plan_crop = create(:cultivation_plan_crop,
+      cultivation_plan: @public_plan,
+      crop: @crop,
+      name: @crop.name,
+      variety: @crop.variety)
+    create(:field_cultivation,
+      cultivation_plan: @public_plan,
+      cultivation_plan_field: @plan_field,
+      cultivation_plan_crop: @plan_crop,
+      start_date: Date.new(2026, 4, 1),
+      completion_date: Date.new(2026, 10, 31),
+      area: 10.0,
+      status: "completed")
+  end
+
   test "wizard farms index responds" do
-    get "/api/v1/public_plans/farms", params: { region: "jp" },
-        headers: { "Accept" => "application/json" }
+    if rust_contract?
+      response = rust_get("/api/v1/public_plans/farms?region=jp")
+      assert_equal 200, response.code.to_i, response.body
+      json = JSON.parse(response.body)
+    else
+      get "/api/v1/public_plans/farms", params: { region: "jp" },
+          headers: { "Accept" => "application/json" }
+      assert_response :success
+      json = JSON.parse(response.body)
+    end
 
-    assert_includes [200, 501], response.status,
-                    "farms must be routed to rust or explicit not-migrated"
-    return if response.status == 501
-
-    json = JSON.parse(response.body)
+    refute_equal 501, response.code.to_i if rust_contract?
     assert json.is_a?(Array)
   end
 
   test "wizard farm_sizes index responds with catalog entry" do
-    get "/api/v1/public_plans/farm_sizes", headers: { "Accept" => "application/json" }
+    if rust_contract?
+      response = rust_get("/api/v1/public_plans/farm_sizes")
+      assert_equal 200, response.code.to_i, response.body
+      json = JSON.parse(response.body)
+    else
+      get "/api/v1/public_plans/farm_sizes", headers: { "Accept" => "application/json" }
+      assert_response :success
+      json = JSON.parse(response.body)
+    end
 
-    assert_includes [200, 501], response.status
-    return if response.status == 501
-
-    json = JSON.parse(response.body)
+    refute_equal 501, response.code.to_i if rust_contract?
     assert json.is_a?(Array)
     home = json.find { |s| s["id"] == "home_garden" }
     assert home, "expected home_garden in farm_sizes catalog"
     assert_equal 30, home["area_sqm"]
   end
 
-  test "wizard crops index responds for reference farm when data exists" do
-    farm = Farm.where(is_reference: true).first
-    skip "no reference farm in contract DB" unless farm
+  test "wizard crops index responds for reference farm" do
+    if rust_contract?
+      response = rust_get("/api/v1/public_plans/crops?farm_id=#{@ref_farm.id}")
+      assert_equal 200, response.code.to_i, response.body
+      json = JSON.parse(response.body)
+    else
+      get "/api/v1/public_plans/crops",
+          params: { farm_id: @ref_farm.id },
+          headers: { "Accept" => "application/json" }
+      assert_response :success
+      json = JSON.parse(response.body)
+    end
 
-    get "/api/v1/public_plans/crops",
-        params: { farm_id: farm.id },
-        headers: { "Accept" => "application/json" }
-
-    assert_includes [200, 404, 501], response.status
+    refute_equal 501, response.code.to_i if rust_contract?
+    assert json.is_a?(Array)
   end
 
   test "public cultivation plan data route is reachable" do
-    plan = CultivationPlan.where(plan_type: "public").order(id: :desc).first
-    skip "no public cultivation plan in contract DB" unless plan
+    if rust_contract?
+      response = rust_get(
+        "/api/v1/public_plans/cultivation_plans/#{@public_plan.id}/data"
+      )
+      assert_equal 200, response.code.to_i, response.body
+      json = JSON.parse(response.body)
+    else
+      get "/api/v1/public_plans/cultivation_plans/#{@public_plan.id}/data",
+          headers: { "Accept" => "application/json" }
+      assert_response :success
+      json = JSON.parse(response.body)
+    end
 
-    get "/api/v1/public_plans/cultivation_plans/#{plan.id}/data",
-        headers: { "Accept" => "application/json" }
-
-    assert_includes [200, 404, 501], response.status
+    refute_equal 501, response.code.to_i if rust_contract?
+    assert json["success"]
+    assert_equal @public_plan.id, json.dig("data", "id")
   end
 end

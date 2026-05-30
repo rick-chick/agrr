@@ -1,3 +1,8 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:c7971b8074134ad528816eb983c0f4147d697021c46de75981f445590f8a7d15
-size 130
+{
+  "generatedAt": "2026-05-30T07:47:43.613Z",
+  "summary": {
+    "totalFindings": 0,
+    "bySeverity": {}
+  },
+  "findings": []
+}
