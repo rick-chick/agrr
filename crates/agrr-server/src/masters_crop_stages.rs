@@ -140,24 +140,77 @@ async fn show(
 }
 
 #[derive(Deserialize)]
-struct StageBody {
+struct StageRequest {
+    crop_stage: StageAttrs,
+}
+
+#[derive(Deserialize)]
+struct StageAttrs {
     name: Option<String>,
     order: Option<i64>,
+}
+
+fn stage_payload_from_attrs(attrs: &StageAttrs) -> Result<Value, (StatusCode, Json<Value>)> {
+    let name = attrs.name.as_deref().unwrap_or("").trim();
+    if name.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": "Invalid parameters"})),
+        ));
+    }
+    let order = attrs.order.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": "Invalid parameters"})),
+        )
+    })?;
+    Ok(json!({
+        "name": name,
+        "order": order,
+    }))
+}
+
+fn stage_update_payload_from_attrs(attrs: &StageAttrs) -> Result<Value, (StatusCode, Json<Value>)> {
+    let has_name = attrs.name.is_some();
+    let has_order = attrs.order.is_some();
+    if !has_name && !has_order {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": "Invalid parameters"})),
+        ));
+    }
+    if has_name && attrs.name.as_deref().unwrap_or("").trim().is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": "Invalid parameters"})),
+        ));
+    }
+    let mut payload = serde_json::Map::new();
+    if let Some(name) = attrs.name.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        payload.insert("name".into(), json!(name));
+    }
+    if let Some(order) = attrs.order {
+        payload.insert("order".into(), json!(order));
+    }
+    if payload.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": "Invalid parameters"})),
+        ));
+    }
+    Ok(Value::Object(payload))
 }
 
 async fn create(
     State(state): State<AppState>,
     jar: CookieJar,
     Path(crop_id): Path<i64>,
-    Json(body): Json<StageBody>,
+    Json(body): Json<StageRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
         .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
     ensure_crop_visible(&state, user_id, crop_id).await?;
-    let payload = json!({
-        "name": body.name,
-        "order": body.order,
-    });
+    let payload = stage_payload_from_attrs(&body.crop_stage)?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
     struct P {
@@ -192,15 +245,12 @@ async fn update(
     State(state): State<AppState>,
     jar: CookieJar,
     Path((crop_id, id)): Path<(i64, i64)>,
-    Json(body): Json<StageBody>,
+    Json(body): Json<StageRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
         .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
     ensure_crop_visible(&state, user_id, crop_id).await?;
-    let payload = json!({
-        "name": body.name,
-        "order": body.order,
-    });
+    let payload = stage_update_payload_from_attrs(&body.crop_stage)?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
     struct P {
