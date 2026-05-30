@@ -11,6 +11,7 @@ use agrr_domain::weather_data::dtos::{
     CultivationPlanWeather, FarmWeatherPrediction, WeatherLocation,
 };
 use agrr_domain::shared::ports::LoggerPort;
+use agrr_domain::weather_data::helpers::normalize_nested_weather_data;
 use agrr_domain::weather_data::interactors::WeatherPredictionInteractor;
 use agrr_domain::weather_data::WeatherPredictionError;
 use serde_json::Value;
@@ -91,7 +92,7 @@ impl WeatherPredictionService for OwnedWeatherPredictionService {
                     Some(cultivation_plan_weather),
                     self.farm_predicted.as_ref(),
                 )
-                .map(|r| r.data)
+                .map(|r| normalize_nested_weather_data(r.data))
         })
         .ok()
         .flatten()
@@ -105,11 +106,42 @@ impl WeatherPredictionService for OwnedWeatherPredictionService {
         self.with_interactor(|interactor| {
             interactor
                 .predict_for_cultivation_plan(cultivation_plan_weather, target_end_date)
-                .map(|info| info.data)
+                .map(|info| normalize_nested_weather_data(info.data))
         })
         .and_then(|r| r)
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
     }
+}
+
+/// Rails optimize: `get_existing_prediction` → `weather_info[:data]` (+ normalize).
+pub fn existing_prediction_weather_for_allocate(
+    pool: &SqlitePool,
+    weather_location: &WeatherLocation,
+    farm: Option<&FarmWeatherPrediction>,
+    plan_weather: &CultivationPlanWeather,
+    planning_end_date: Date,
+) -> Result<Value, String> {
+    let gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
+    let service = gateway
+        .prediction_service(weather_location, farm)
+        .map_err(|e| e.to_string())?;
+    let weather = service
+        .get_existing_prediction(planning_end_date, plan_weather)
+        .ok_or_else(|| {
+            "天気予測データが存在しません。計画作成時に天気予測が実行されていません。".to_string()
+        })?;
+    let days = weather
+        .get("data")
+        .and_then(|d| d.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
+    if days == 0 {
+        return Err(
+            "天気予測データが存在しません（data 行が空）。計画作成時に天気予測を実行してください。"
+                .into(),
+        );
+    }
+    Ok(weather)
 }
 
 /// Ruby CompositionRoot `weather_for_candidates` lambda (add_crop candidates).
@@ -164,11 +196,7 @@ fn normalize_weather_payload_for_agrr(
     weather_data: &mut Value,
     logger: &StderrLogger,
 ) -> Result<Value, WeatherPredictionError> {
-    if let Some(inner) = weather_data.get("data").and_then(|d| d.get("data")) {
-        if inner.is_array() {
-            *weather_data = serde_json::json!({ "data": inner });
-        }
-    }
+    *weather_data = normalize_nested_weather_data(weather_data.clone());
 
     let days = weather_data
         .get("data")

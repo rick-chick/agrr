@@ -3,7 +3,6 @@
 use serde_json::json;
 
     use crate::cultivation_plan::dtos::OptimizationApplyAttrs;
-    use time::macros::datetime;
 
     // Ruby: test "to_active_record_attributes nests optimization snapshot"
     #[test]
@@ -41,15 +40,7 @@ use serde_json::json;
     // Ruby: test "optimization_apply_attrs maps keys for update"
     #[test]
     fn optimization_apply_attrs_maps_keys_for_update() {
-        let dto = OptimizationApplyAttrs::new(
-            1.0,
-            2.0,
-            3.0,
-            datetime!(2026-01-01 00:00 UTC),
-            "greedy",
-            true,
-            "{}",
-        );
+        let dto = OptimizationApplyAttrs::new(1.0, 2.0, 3.0, 12.5, "greedy", true, "{}");
         let h = dto.to_active_record_attributes();
         assert!((h.get("total_profit").and_then(|v| v.as_f64()).unwrap() - 1.0).abs() < 0.001);
         assert_eq!(h.get("optimization_summary").and_then(|v| v.as_str()), Some("{}"));

@@ -3,6 +3,9 @@
 //! Ruby §P4 split gateways — implement trait-by-trait per cutover PR.
 
 mod cultivation_plan_gateway;
+mod cultivation_plan_optimization_sqlite_gateway;
+pub mod planning_horizon;
+mod optimization_plan_read_gateway;
 mod plan_allocation_adjust_read_gateway;
 mod field_mutation_gateway;
 mod plan_crop_gateway;
@@ -31,6 +34,8 @@ mod public_plan_save_read_gateway_test_fixture;
 mod public_plan_save_read_gateway_test;
 
 pub use cultivation_plan_gateway::CultivationPlanSqliteGateway;
+pub use cultivation_plan_optimization_sqlite_gateway::CultivationPlanOptimizationSqliteGateway;
+pub use optimization_plan_read_gateway::OptimizationPlanReadSqliteGateway;
 pub use plan_save_persistence::PublicPlanSavePersistenceSqliteAdapter;
 pub use public_plan_save_read_gateway::PublicPlanSaveReadSqliteGateway;
 pub use plan_allocation_adjust_read_gateway::PlanAllocationAdjustReadSqliteGateway;

@@ -12,13 +12,37 @@ use std::process::ExitCode;
 use agrr_adapters_agrr::{AgrrDaemonClient, PlanAllocationAllocateAgrrDaemonGateway, WeatherDaemonGateway};
 use agrr_domain::cultivation_plan::gateways::PlanAllocationAllocateGateway;
 use agrr_domain::weather_data::gateways::AgrrWeatherGateway;
-use agrr_adapters_sqlite::{PlanAllocationAdjustReadSqliteGateway, SqlitePool};
-use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustReadGateway;
-use agrr_domain::cultivation_plan::mappers::PlanAllocationAdjustAgrrPayloadMapper;
-use agrr_domain::shared::ports::ClockPort;
+use agrr_adapters_sqlite::{
+    CultivationPlanOptimizationSqliteGateway, OptimizationPlanReadSqliteGateway,
+    PlanAllocationAdjustReadSqliteGateway, SqlitePool,
+};
+use agrr_domain::cultivation_plan::calculators::OptimizationAllocationInputCalculator;
+use agrr_domain::cultivation_plan::dtos::OptimizationPlanSnapshot;
+use agrr_domain::weather_data::dtos::CultivationPlanWeather;
+use agrr_server::adjust_weather_prediction::existing_prediction_weather_for_allocate;
+use agrr_domain::cultivation_plan::gateways::{
+    CultivationPlanOptimizationGateway, PlanAllocationAdjustReadGateway,
+};
+use agrr_domain::cultivation_plan::mappers::load_optimization_plan_read_snapshot;
+use agrr_domain::shared::ports::{ClockPort, LoggerPort};
 use agrr_domain::weather_data::OptimizationJobChainWeatherComputation;
 use serde_json::{json, Value};
 use time::{Date, OffsetDateTime};
+
+struct SpikeLogger;
+
+impl LoggerPort for SpikeLogger {
+    fn info(&self, message: &str) {
+        eprintln!("  [info] {message}");
+    }
+    fn warn(&self, message: &str) {
+        eprintln!("  [warn] {message}");
+    }
+    fn error(&self, message: &str) {
+        eprintln!("  [error] {message}");
+    }
+    fn debug(&self, _message: &str) {}
+}
 
 struct SystemClock;
 
@@ -174,45 +198,6 @@ fn check_sqlite_historical_weather(
     }
 }
 
-/// AGRR allocate expects prediction-style keys (`time`, `temperature_2m_*`), not DB column names.
-fn weather_payload_for_agrr(
-    rows: Vec<Value>,
-    lat: f64,
-    lon: f64,
-    elevation: f64,
-    timezone: &str,
-) -> Value {
-    let data: Vec<Value> = rows
-        .into_iter()
-        .filter_map(|row| {
-            let date = row.get("date")?.as_str()?;
-            let tmax = row.get("temperature_max")?.as_f64()?;
-            let tmin = row.get("temperature_min")?.as_f64()?;
-            let tmean = row
-                .get("temperature_mean")
-                .and_then(|v| v.as_f64())
-                .unwrap_or((tmax + tmin) / 2.0);
-            Some(json!({
-                "time": date,
-                "temperature_2m_max": tmax,
-                "temperature_2m_min": tmin,
-                "temperature_2m_mean": tmean,
-                "precipitation_sum": row.get("precipitation").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "sunshine_duration": row.get("sunshine_hours").and_then(|v| v.as_f64()).map(|h| h * 3600.0).unwrap_or(0.0),
-                "wind_speed_10m_max": row.get("wind_speed").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "weather_code": row.get("weather_code").and_then(|v| v.as_i64()).unwrap_or(0),
-            }))
-        })
-        .collect();
-    json!({
-        "latitude": lat,
-        "longitude": lon,
-        "elevation": elevation,
-        "timezone": timezone,
-        "data": data,
-    })
-}
-
 fn probe_allocate_daemon_stderr(
     fields: &[Value],
     crops: &[Value],
@@ -355,93 +340,104 @@ fn allocate_via_daemon_stdout(
     serde_json::from_str(stdout).map_err(|e| format!("stdout json: {e}"))
 }
 
-fn check_agrr_payload_build(pool: &SqlitePool, plan_id: i64) -> Check {
-    let read = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
-    let snapshot = match read.find_adjust_read_snapshot_by_plan_id(plan_id) {
-        Ok(s) => s,
-        Err(e) => return Check::fail("agrr_payload_build", e.to_string()),
-    };
-    let fields = PlanAllocationAdjustAgrrPayloadMapper::to_fields_config(&snapshot);
-    let crops = PlanAllocationAdjustAgrrPayloadMapper::to_crops_config(&snapshot, None);
-    let with_stages = crops
-        .iter()
-        .filter(|c| {
-            c.get("stage_requirements")
-                .and_then(|s| s.as_array())
-                .is_some_and(|a| !a.is_empty())
-        })
-        .count();
-    if fields.is_empty() || crops.is_empty() {
-        return Check::fail(
-            "agrr_payload_build",
-            format!("fields={} crops={}", fields.len(), crops.len()),
-        );
+fn optimize_allocate_inputs(
+    pool: &SqlitePool,
+    plan_id: i64,
+) -> Result<(Vec<Value>, Vec<Value>, Value, Date, Date), String> {
+    let read = OptimizationPlanReadSqliteGateway::new(pool.clone());
+    let optimization = CultivationPlanOptimizationSqliteGateway::new(pool.clone());
+    let snapshot = load_optimization_plan_read_snapshot(&read, plan_id)
+        .map_err(|e| e.to_string())?;
+    let plan_crops = optimization
+        .cultivation_plan_crops_with_crop(plan_id)
+        .map_err(|e| e.to_string())?;
+    let total_area = snapshot.total_area.unwrap_or(0.0);
+    let (fields, crops) =
+        OptimizationAllocationInputCalculator::build(total_area, &plan_crops, &SpikeLogger);
+    let (planning_start, planning_end) = spike_planning_period(&snapshot)?;
+    let weather_location = snapshot
+        .weather_location_input
+        .as_ref()
+        .ok_or_else(|| "weather_location missing on plan".to_string())?;
+    let plan_weather = CultivationPlanWeather::new(
+        snapshot.plan_id,
+        snapshot.prediction_target_end_date,
+        snapshot.calculated_planning_end_date,
+        snapshot.predicted_weather_data.clone(),
+    );
+    let weather = existing_prediction_weather_for_allocate(
+        pool,
+        weather_location,
+        snapshot.farm_weather_input.as_ref(),
+        &plan_weather,
+        planning_end,
+    )?;
+    Ok((fields, crops, weather, planning_start, planning_end))
+}
+
+fn spike_planning_period(snapshot: &OptimizationPlanSnapshot) -> Result<(Date, Date), String> {
+    let clock = SystemClock;
+    let today = clock.today();
+    if snapshot.plan_type_private {
+        let start = Date::from_calendar_date(today.year(), time::Month::January, 1)
+            .map_err(|e| e.to_string())?;
+        let end = Date::from_calendar_date(today.year() + 1, time::Month::December, 31)
+            .map_err(|e| e.to_string())?;
+        return Ok((start, end));
     }
-    Check::pass(
-        "agrr_payload_build",
-        format!(
-            "fields={} crops={} crops_with_stages={}",
-            fields.len(),
-            crops.len(),
-            with_stages
-        ),
-    )
+    let end = snapshot
+        .prediction_target_end_date
+        .or(snapshot.calculated_planning_end_date)
+        .unwrap_or_else(|| {
+            Date::from_calendar_date(today.year() + 1, time::Month::December, 31).unwrap_or(today)
+        });
+    Ok((today, end))
+}
+
+fn check_agrr_payload_build(pool: &SqlitePool, plan_id: i64) -> Check {
+    match optimize_allocate_inputs(pool, plan_id) {
+        Ok((fields, crops, _, _, _)) => {
+            let with_stages = crops
+                .iter()
+                .filter(|c| {
+                    c.get("stage_requirements")
+                        .and_then(|s| s.as_array())
+                        .is_some_and(|a| !a.is_empty())
+                })
+                .count();
+            if fields.is_empty() || crops.is_empty() {
+                return Check::fail(
+                    "agrr_payload_build",
+                    format!("fields={} crops={}", fields.len(), crops.len()),
+                );
+            }
+            Check::pass(
+                "agrr_payload_build",
+                format!(
+                    "fields={} crops={} crops_with_stages={} (OptimizationAllocationInputCalculator)",
+                    fields.len(),
+                    crops.len(),
+                    with_stages
+                ),
+            )
+        }
+        Err(e) => Check::fail("agrr_payload_build", e),
+    }
 }
 
 fn check_allocate(pool: &SqlitePool, plan_id: i64) -> Check {
-    let read = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
-    let snapshot = match read.find_adjust_read_snapshot_by_plan_id(plan_id) {
-        Ok(s) => s,
-        Err(e) => return Check::fail("agrr_allocate", format!("read snapshot: {e}")),
-    };
+    let (fields, crops, weather, planning_start, planning_end) =
+        match optimize_allocate_inputs(pool, plan_id) {
+            Ok(v) => v,
+            Err(e) => return Check::fail("agrr_allocate", e),
+        };
 
-    let wl_id = coords_from_snapshot(&snapshot).and_then(|(_, _, id)| id);
-    let clock = SystemClock;
-    let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock);
-    // Use a recent window for the probe (full history is slow for agrr allocate).
-    let probe_start = window
-        .end_date
-        .saturating_sub(time::Duration::days(730));
-    let rows = match read.list_historical_weather_rows(wl_id, probe_start, window.end_date) {
-        Ok(r) => r,
-        Err(e) => return Check::fail("agrr_allocate", format!("historical weather: {e}")),
-    };
-    if rows.len() < 30 {
-        return Check::fail(
-            "agrr_allocate",
-            format!("insufficient historical rows ({}) for allocate probe", rows.len()),
-        );
-    }
-
-    let fields = PlanAllocationAdjustAgrrPayloadMapper::to_fields_config(&snapshot);
-    let crops = PlanAllocationAdjustAgrrPayloadMapper::to_crops_config(&snapshot, None);
     if fields.is_empty() || crops.is_empty() {
         return Check::fail(
             "agrr_allocate",
             format!("empty fields={} crops={}", fields.len(), crops.len()),
         );
     }
-
-    let (lat, lon, _) = coords_from_snapshot(&snapshot).unwrap_or((0.0, 0.0, None));
-    let elevation = snapshot
-        .weather_location_facts
-        .get("elevation")
-        .and_then(|v| v.as_f64())
-        .unwrap_or(0.0);
-    let timezone = snapshot
-        .weather_location_facts
-        .get("timezone")
-        .and_then(|v| v.as_str())
-        .unwrap_or("Asia/Tokyo");
-    let weather = weather_payload_for_agrr(rows, lat, lon, elevation, timezone);
-    let planning_start = snapshot
-        .planning_period_boundaries
-        .planning_start_date
-        .unwrap_or_else(|| Date::from_calendar_date(2026, time::Month::January, 1).unwrap());
-    let planning_end = snapshot
-        .planning_period_boundaries
-        .planning_end_date
-        .unwrap_or_else(|| Date::from_calendar_date(2026, time::Month::December, 31).unwrap());
 
     if let Some(diag) = probe_allocate_daemon_stderr(&fields, &crops, &weather, planning_start, planning_end) {
         eprintln!("  [diag] {diag}");
@@ -477,49 +473,14 @@ fn check_allocate_gateway(
     pool: &SqlitePool,
     plan_id: i64,
 ) -> Check {
-    let read = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
-    let snapshot = match read.find_adjust_read_snapshot_by_plan_id(plan_id) {
-        Ok(s) => s,
-        Err(e) => return Check::fail("allocate_gateway", format!("read snapshot: {e}")),
-    };
-    let fields = PlanAllocationAdjustAgrrPayloadMapper::to_fields_config(&snapshot);
-    let crops = PlanAllocationAdjustAgrrPayloadMapper::to_crops_config(&snapshot, None);
+    let (fields, crops, weather, planning_start, planning_end) =
+        match optimize_allocate_inputs(pool, plan_id) {
+            Ok(v) => v,
+            Err(e) => return Check::fail("allocate_gateway", e),
+        };
     if fields.is_empty() || crops.is_empty() {
         return Check::fail("allocate_gateway", "empty fields or crops");
     }
-    let weather = match snapshot.cultivation_plan_weather_dto.predicted_weather_data() {
-        Some(w) => w.clone(),
-        None => {
-            let clock = SystemClock;
-            let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock);
-            let probe_start = window.end_date.saturating_sub(time::Duration::days(730));
-            let wl_id = coords_from_snapshot(&snapshot).and_then(|(_, _, id)| id);
-            let rows = match read.list_historical_weather_rows(wl_id, probe_start, window.end_date) {
-                Ok(r) => r,
-                Err(e) => return Check::fail("allocate_gateway", e.to_string()),
-            };
-            let (lat, lon, _) = coords_from_snapshot(&snapshot).unwrap_or((0.0, 0.0, None));
-            let elevation = snapshot
-                .weather_location_facts
-                .get("elevation")
-                .and_then(|v| v.as_f64())
-                .unwrap_or(0.0);
-            let timezone = snapshot
-                .weather_location_facts
-                .get("timezone")
-                .and_then(|v| v.as_str())
-                .unwrap_or("Asia/Tokyo");
-            weather_payload_for_agrr(rows, lat, lon, elevation, timezone)
-        }
-    };
-    let planning_start = snapshot
-        .planning_period_boundaries
-        .planning_start_date
-        .unwrap_or_else(|| Date::from_calendar_date(2026, time::Month::January, 1).unwrap());
-    let planning_end = snapshot
-        .planning_period_boundaries
-        .planning_end_date
-        .unwrap_or_else(|| Date::from_calendar_date(2026, time::Month::December, 31).unwrap());
     let gw = PlanAllocationAllocateAgrrDaemonGateway::from_env();
     match gw.allocate(
         &fields,
@@ -529,7 +490,7 @@ fn check_allocate_gateway(
         planning_end,
         None,
         "maximize_profit",
-        Some(60),
+        None,
         false,
     ) {
         Ok(result) => {

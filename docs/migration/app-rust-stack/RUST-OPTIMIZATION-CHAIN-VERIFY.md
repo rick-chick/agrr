@@ -34,6 +34,7 @@ export AGRR_USE_MOCK=true
 cargo build -p agrr-server --bins
 
 # 技術検証（デーモン・SQLite・allocate プローブ）
+# agrr_payload_build / allocate は OptimizationAllocationInputCalculator 経路（Rails prepare_allocation_data 相当）
 cargo run -p agrr-server --bin optimization-chain-spike -- --plan-id 14
 
 # 1 プランのチェーン実行（ポーリング付き）
@@ -62,11 +63,13 @@ bash scripts/e2e-strangler-stack.sh
 |------|------|
 | `agrr daemon not running` | `ls -l /tmp/agrr.sock`、`USE_AGRR_DAEMON=true` |
 | `predicting_weather` で failed | `AGRR_USE_MOCK=true`、daemon の `block_on` エラーは `daemon_client` 修正済み |
-| `field_cultivations=0` で completed | allocate 候補 0 件（作物 `stage_requirements` 不足・期間・天気）。spike の `agrr_payload_build` を参照 |
+| `field_cultivations=0` で completed | allocate 候補 0 件（作物 `stage_requirements` 不足・期間・天気）。spike の `agrr_payload_build`（Calculator 経路）を参照 |
 | 進捗が動かない | 計画 `status` が `optimizing` か、Rust サーバーが起動しているか |
 
 ## 関連コード
 
 - `crates/agrr-server/src/optimization_job_chain.rs` — チェーン定義
-- `crates/agrr-server/src/optimization_chain_run.rs` — 各ステップ実装
+- `crates/agrr-server/src/optimization_chain_run.rs` — 各ステップ実装（optimize は Interactor 委譲）
+- `crates/agrr-server/src/cultivation_plan_optimize.rs` — `CultivationPlanOptimizeInteractor` 配線
+- `crates/agrr-domain/src/cultivation_plan/interactors/cultivation_plan_optimize_interactor.rs` — Rails `CultivationPlanOptimizeInteractor` 相当
 - `crates/agrr-server/src/cable.rs` — 購読直後スナップショット

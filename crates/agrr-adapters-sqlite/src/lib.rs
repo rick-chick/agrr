@@ -49,7 +49,7 @@ pub use crop::{
 pub use deletion_undo::DeletionUndoSqliteGateway;
 pub use fertilize::FertilizeSqliteGateway;
 pub use pesticide::{PesticideCropSqliteGateway, PesticideSqliteGateway};
-pub use interaction_rule::InteractionRuleSqliteGateway;
+pub use interaction_rule::{InteractionRulePlanReadSqliteGateway, InteractionRuleSqliteGateway};
 pub use agricultural_task::{
     AgTaskCropSqliteGateway, AgriculturalTaskSqliteGateway, CropTaskTemplateSqliteGateway,
 };
@@ -58,7 +58,8 @@ pub use cultivation_plan::{
     CultivationPlanFieldMutationSqliteGateway, CultivationPlanPlanCropSqliteGateway,
     CultivationPlanPrivateReadSqliteGateway, CultivationPlanPrivateSnapshotReadSqliteGateway,
     CropRowsAvailablePrivateSqliteGateway, CultivationPlanRestPlanReadDomainSqliteGateway,
-    CultivationPlanRestPlanReadSqliteGateway, CultivationPlanSqliteGateway,
+    CultivationPlanOptimizationSqliteGateway, CultivationPlanRestPlanReadSqliteGateway,
+    CultivationPlanSqliteGateway, OptimizationPlanReadSqliteGateway,
     PlanAllocationAdjustReadSqliteGateway,
     PublicPlanSavePersistenceSqliteAdapter, PublicPlanSaveReadSqliteGateway,
 };

@@ -1,4 +1,5 @@
 pub(crate) mod add_crop_ports;
+pub(crate) mod cultivation_plan_optimize_advance_phase_port;
 pub(crate) mod cultivation_plan_destroy_input_port;
 pub(crate) mod deletion_undo_schedule_port;
 pub(crate) mod cultivation_plan_destroy_output_port;
@@ -10,6 +11,7 @@ pub(crate) mod public_plan_save_ports;
 pub(crate) mod retrieve_cultivation_plan_output_port;
 pub(crate) mod task_schedule_ports;
 
+pub use cultivation_plan_optimize_advance_phase_port::CultivationPlanOptimizeAdvancePhasePort;
 pub use add_crop_ports::{
     AddCropAdjustResultSink, AddCropCropResolveInputPort, AddCropOutputPort,
     PlanAllocationAdjustInputPort, PlanAllocationCandidateBest, PlanAllocationCandidatesPort,

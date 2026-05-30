@@ -3,24 +3,15 @@
 use crate::adapters::{NoopLogger, SystemClock};
 use crate::state::AppState;
 use crate::weather_prediction_anchors::SystemWeatherPredictionAnchors;
-use agrr_adapters_agrr::{PlanAllocationAllocateAgrrDaemonGateway, WeatherDaemonGateway};
+use agrr_adapters_agrr::WeatherDaemonGateway;
 use agrr_adapters_sqlite::{
     CultivationPlanSqliteGateway, FieldCultivationPlanPredictedWeatherSqliteGateway,
-    FieldCultivationSyncPlanReadSqliteGateway, FieldCultivationSyncSqliteGateway,
-    PlanAllocationAdjustReadSqliteGateway, WeatherDataFarmSqliteGateway, WeatherDataSqliteGateway,
+    WeatherDataFarmSqliteGateway, WeatherDataSqliteGateway,
 };
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
 use agrr_domain::cultivation_plan::optimization_completion;
 use agrr_domain::cultivation_plan::policies::cultivation_plan_optimization_complete_policy;
 use agrr_domain::cultivation_plan::dtos::CultivationPlanPhaseName;
-use agrr_domain::cultivation_plan::gateways::{
-    PlanAllocationAdjustReadGateway, PlanAllocationAllocateGateway,
-};
-use agrr_domain::cultivation_plan::mappers::{
-    AgrrAdjustResultFieldCultivationSyncMapper, PlanAllocationAdjustAgrrPayloadMapper,
-};
-use agrr_domain::field_cultivation::interactors::FieldCultivationSyncInteractor;
-use agrr_domain::field_cultivation::ports::FieldCultivationSyncInputPort;
 use agrr_domain::shared::ports::ClockPort;
 use agrr_domain::weather_data::dtos::FetchWeatherDataPerformInput;
 use agrr_domain::weather_data::interactors::FetchWeatherDataPerformInteractor;
@@ -235,78 +226,20 @@ pub fn run_weather_prediction_step(
     Ok(())
 }
 
+/// Rails `OptimizationJob#perform` optimize body + job-level `phase_optimization_completed`.
 pub fn run_optimization_step(state: &AppState, plan_id: i64, channel: &str) -> Result<(), String> {
-    advance_phase(
-        state,
-        plan_id,
-        channel,
-        CultivationPlanPhaseName::PhaseOptimizing,
-        None,
-    );
+    crate::cultivation_plan_optimize::run_cultivation_plan_optimize_interactor(
+        state, plan_id, channel,
+    )?;
 
     let pool = state.sqlite.clone();
-    let read = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
-    let snapshot = read
-        .find_adjust_read_snapshot_by_plan_id(plan_id)
-        .map_err(|e| e.to_string())?;
-
-    let fields = PlanAllocationAdjustAgrrPayloadMapper::to_fields_config(&snapshot);
-    let crops = PlanAllocationAdjustAgrrPayloadMapper::to_crops_config(&snapshot, None);
-    if fields.is_empty() || crops.is_empty() {
-        return Err("optimization: empty fields or crops".into());
-    }
-
-    let weather = snapshot
-        .cultivation_plan_weather_dto
-        .predicted_weather_data()
-        .cloned()
-        .ok_or_else(|| "optimization: predicted_weather_data missing".to_string())?;
-
-    let planning_start = snapshot
-        .planning_period_boundaries
-        .planning_start_date
-        .unwrap_or_else(|| Date::from_calendar_date(2026, time::Month::January, 1).unwrap());
-    let planning_end = snapshot
-        .planning_period_boundaries
-        .planning_end_date
-        .unwrap_or_else(|| Date::from_calendar_date(2026, time::Month::December, 31).unwrap());
-
-    let allocate = PlanAllocationAllocateAgrrDaemonGateway::from_env();
-    let result = allocate
-        .allocate(
-            &fields,
-            &crops,
-            &weather,
-            planning_start,
-            planning_end,
-            None,
-            "maximize_profit",
-            Some(120),
-            false,
-        )
-        .map_err(|e| e.to_string())?;
-
-    if !agrr_domain::cultivation_plan::policies::cultivation_plan_optimization_complete_policy::allocation_has_field_schedules(&result) {
-        return Err("optimization: no field schedules in allocation result".into());
-    }
-
-    let sync_input = AgrrAdjustResultFieldCultivationSyncMapper::to_sync_input(&result);
-    let sync_gateway = FieldCultivationSyncSqliteGateway::new(pool.clone());
-    let sync_read = FieldCultivationSyncPlanReadSqliteGateway::new(pool.clone());
-    let logger = NoopLogger;
-    let mut sync_interactor =
-        FieldCultivationSyncInteractor::new(&sync_gateway, &sync_read, &logger);
-    sync_interactor
-        .call(plan_id, sync_input)
-        .map_err(|e| e.to_string())?;
-
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
-    let synced = plan_gateway
+    let field_cultivations = plan_gateway
         .list_by_plan_id(plan_id)
         .map_err(|e| e.to_string())?;
-    if synced.is_empty() {
+    if field_cultivations.is_empty() {
         return Err(
-            "optimization: allocation sync produced no field cultivations (check agrr field/crop ids)"
+            "optimization: interactor produced no field cultivations (check agrr field/crop ids)"
                 .into(),
         );
     }

@@ -1,3 +1,5 @@
 mod interaction_rule_gateway;
+mod interaction_rule_plan_read_gateway;
 
 pub use interaction_rule_gateway::InteractionRuleSqliteGateway;
+pub use interaction_rule_plan_read_gateway::InteractionRulePlanReadSqliteGateway;

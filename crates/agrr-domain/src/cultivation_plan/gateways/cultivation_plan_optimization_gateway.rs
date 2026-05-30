@@ -1,7 +1,8 @@
 //! Optimization write/read helpers on cultivation plans (Ruby: `CultivationPlanGateway` optimize section).
 
-use crate::cultivation_plan::dtos::CultivationPlanCropWithAgrr;
-use crate::shared::attr::AttrMap;
+use crate::cultivation_plan::dtos::{
+    CultivationPlanCropWithAgrr, FieldCultivationCreateAttrs, OptimizationApplyAttrs,
+};
 use serde_json::Value;
 
 pub trait CultivationPlanOptimizationGateway: Send + Sync {
@@ -23,8 +24,8 @@ pub trait CultivationPlanOptimizationGateway: Send + Sync {
     fn create_field_cultivation(
         &self,
         plan_id: i64,
-        attrs: AttrMap,
-    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
+        attrs: FieldCultivationCreateAttrs,
+    ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>>;
 
     fn upsert_cultivation_plan_field(
         &self,
@@ -43,7 +44,7 @@ pub trait CultivationPlanOptimizationGateway: Send + Sync {
     fn apply_optimization_result(
         &self,
         plan_id: i64,
-        attrs: AttrMap,
+        attrs: OptimizationApplyAttrs,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     fn update_predicted_weather_data(

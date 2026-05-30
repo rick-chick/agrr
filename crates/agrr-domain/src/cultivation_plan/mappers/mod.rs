@@ -3,6 +3,8 @@ pub(crate) mod agrr_adjust_result_field_cultivation_sync_mapper;
 pub(crate) mod cultivation_plan_phase_broadcast_payload_mapper;
 pub(crate) mod cultivation_plan_rest_plan_snapshot_mapper;
 pub(crate) mod cultivation_plan_workbench_snapshot_mapper;
+pub(crate) mod interaction_rule_agrr_mapper;
+pub(crate) mod optimization_plan_read_snapshot_mapper;
 pub(crate) mod optimization_plan_snapshot_mapper;
 pub(crate) mod private_plan_detail_mapper;
 pub(crate) mod plan_allocation_adjust_agrr_payload_mapper;
@@ -26,6 +28,8 @@ pub use cultivation_plan_workbench_snapshot_mapper::{
     from_rest_plan_snapshot as workbench_from_rest_plan_snapshot,
     from_snapshots as workbench_from_snapshots,
 };
+pub use interaction_rule_agrr_mapper::{to_agrr_format, to_agrr_format_array};
+pub use optimization_plan_read_snapshot_mapper::load_snapshot as load_optimization_plan_read_snapshot;
 pub use optimization_plan_snapshot_mapper::to_snapshot;
 pub use private_plan_detail_mapper::to_detail as private_plan_detail_to_detail;
 pub use plan_allocation_adjust_agrr_payload_mapper::{

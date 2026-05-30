@@ -4,6 +4,8 @@ pub(crate) mod crop_task_schedule_blueprint_gateway;
 pub(crate) mod cultivation_plan_field_mutation_gateway;
 pub(crate) mod cultivation_plan_gateway;
 pub(crate) mod cultivation_plan_optimization_gateway;
+pub(crate) mod interaction_rule_plan_read_gateway;
+pub(crate) mod optimization_plan_read_gateway;
 pub(crate) mod cultivation_plan_optimization_events_gateway;
 pub(crate) mod cultivation_plan_plan_crop_gateway;
 pub(crate) mod cultivation_plan_private_read_gateway;
@@ -40,6 +42,8 @@ pub use crop_task_schedule_blueprint_gateway::CropTaskScheduleBlueprintGateway;
 pub use cultivation_plan_field_mutation_gateway::CultivationPlanFieldMutationGateway;
 pub use cultivation_plan_gateway::CultivationPlanGateway;
 pub use cultivation_plan_optimization_gateway::CultivationPlanOptimizationGateway;
+pub use interaction_rule_plan_read_gateway::InteractionRulePlanReadGateway;
+pub use optimization_plan_read_gateway::OptimizationPlanReadGateway;
 pub use cultivation_plan_optimization_events_gateway::CultivationPlanOptimizationEventsGateway;
 pub use cultivation_plan_plan_crop_gateway::CultivationPlanPlanCropGateway;
 pub use cultivation_plan_private_read_gateway::{

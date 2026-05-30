@@ -7,4 +7,7 @@ pub mod cultivation_plan_optimization_progress_calculator;
 pub mod effective_planning_period_calculator;
 pub mod entry_schedule_stage_gdd_scaler;
 pub mod fields_allocation;
+pub mod optimization_allocation_input_calculator;
 pub mod planning_date_calculator;
+
+pub use optimization_allocation_input_calculator::OptimizationAllocationInputCalculator;

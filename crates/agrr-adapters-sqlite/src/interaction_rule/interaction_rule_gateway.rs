@@ -23,7 +23,7 @@ impl InteractionRuleSqliteGateway {
         Self { pool }
     }
 
-    fn row_to_entity(row: &rusqlite::Row<'_>) -> rusqlite::Result<InteractionRuleEntity> {
+    pub(crate) fn row_to_entity(row: &rusqlite::Row<'_>) -> rusqlite::Result<InteractionRuleEntity> {
         let is_reference: i64 = row.get(9)?;
         let is_directional: i64 = row.get(6)?;
         InteractionRuleEntity::new(InteractionRuleEntityAttrs {

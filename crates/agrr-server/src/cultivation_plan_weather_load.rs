@@ -1,9 +1,10 @@
 //! Load weather DTOs for cultivation-plan REST / optimization (Ruby AR preload parity).
 
+use agrr_adapters_sqlite::cultivation_plan::planning_horizon::derive_planning_horizon;
 use agrr_adapters_sqlite::SqlitePool;
 use agrr_domain::weather_data::dtos::{CultivationPlanWeather, FarmWeatherPrediction, WeatherLocation};
 use serde_json::Value;
-use time::Date;
+use time::OffsetDateTime;
 
 pub(crate) fn load_weather_location(
     pool: &SqlitePool,
@@ -73,26 +74,45 @@ pub(crate) fn load_plan_weather(
     pool: &SqlitePool,
     plan_id: i64,
 ) -> Result<CultivationPlanWeather, String> {
-    let (planning_end, predicted) = pool
+    let today = OffsetDateTime::now_utc().date();
+    let (horizon, predicted) = pool
         .with_read(|conn| {
             conn.query_row(
-                "SELECT planning_end_date, predicted_weather_data FROM cultivation_plans WHERE id = ?1",
+                "SELECT cp.plan_type, cp.plan_year, cp.planning_start_date, cp.planning_end_date, \
+                 (SELECT MIN(fc.start_date) FROM field_cultivations fc \
+                  WHERE fc.cultivation_plan_id = cp.id), \
+                 (SELECT MAX(fc.completion_date) FROM field_cultivations fc \
+                  WHERE fc.cultivation_plan_id = cp.id), \
+                 cp.predicted_weather_data \
+                 FROM cultivation_plans cp WHERE cp.id = ?1",
                 rusqlite::params![plan_id],
                 |row| {
-                    Ok((
-                        row.get::<_, Option<String>>(0)?,
-                        row.get::<_, Option<String>>(1)?,
-                    ))
+                    let plan_type: String = row.get(0)?;
+                    let plan_year: Option<i32> = row.get(1)?;
+                    let planning_start: Option<String> = row.get(2)?;
+                    let planning_end: Option<String> = row.get(3)?;
+                    let fc_min: Option<String> = row.get(4)?;
+                    let fc_max: Option<String> = row.get(5)?;
+                    let predicted: Option<String> = row.get(6)?;
+                    let horizon = derive_planning_horizon(
+                        &plan_type,
+                        plan_year,
+                        planning_start.as_deref(),
+                        planning_end.as_deref(),
+                        fc_min.as_deref(),
+                        fc_max.as_deref(),
+                        today,
+                    );
+                    Ok((horizon, predicted))
                 },
             )
         })
         .map_err(|e| e.to_string())?;
-    let parse = |s: Option<String>| {
-        s.as_deref().and_then(|d| {
-            Date::parse(d, &time::format_description::well_known::Iso8601::DATE).ok()
-        })
-    };
-    let end = parse(planning_end);
     let predicted_json = predicted.and_then(|s: String| serde_json::from_str::<Value>(&s).ok());
-    Ok(CultivationPlanWeather::new(plan_id, end, end, predicted_json))
+    Ok(CultivationPlanWeather::new(
+        plan_id,
+        horizon.prediction_target_end_date,
+        horizon.calculated_planning_end_date,
+        predicted_json,
+    ))
 }

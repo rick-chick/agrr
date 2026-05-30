@@ -189,18 +189,8 @@ where
         ))
     }
 
-    fn normalize_nested_weather_data(mut weather_data: Value) -> Value {
-        let nested = weather_data
-            .get("data")
-            .and_then(|d| d.get("data"))
-            .and_then(|d| d.as_array())
-            .cloned();
-        if let Some(inner) = nested {
-            if let Some(obj) = weather_data.as_object_mut() {
-                obj.insert("data".into(), json!(inner));
-            }
-        }
-        weather_data
+    fn normalize_nested_weather_data(weather_data: Value) -> Value {
+        crate::weather_data::helpers::normalize_nested_weather_data(weather_data)
     }
 
     fn clamp_planning_start_to_weather(
