@@ -34,7 +34,7 @@ const DEV_MOCK_LOGIN_CSS: Record<DevMockLoginUser, string> = {
   template: `
     <section class="login">
       <h1>{{ 'auth.login.title' | translate }}</h1>
-      <p>{{ 'auth.login.description' | translate }}</p>
+      <p>{{ 'auth.login.subtitle' | translate }}</p>
       <a class="login-button" [href]="loginUrl">{{ 'auth.login.google_button' | translate }}</a>
 
       @if (showDevMockLogin) {

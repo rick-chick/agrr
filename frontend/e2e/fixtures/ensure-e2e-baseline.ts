@@ -150,6 +150,37 @@ async function ensureMasterSegment(
   return firstIdFromList(rows);
 }
 
+/** plan POST は farm の圃場面積合計 > 0 が必要。baseline farm に圃場が無いとき 1 件作る。 */
+async function ensureFarmFieldForPlan(
+  api: APIRequestContext,
+  base: string,
+  farmId: number,
+): Promise<void> {
+  const listUrl = `${base}/api/v1/masters/farms/${farmId}/fields`;
+  const rows = await parseList(await api.get(listUrl));
+  const hasArea = rows.some((row) => {
+    const area = row['area'];
+    return typeof area === 'number' && area > 0;
+  });
+  if (hasArea) return;
+
+  const postRes = await api.post(listUrl, {
+    data: {
+      field: {
+        name: `${E2E_BASELINE_PREFIX} Field`,
+        area: 100,
+        daily_fixed_cost: 500,
+      },
+    },
+    headers: { Accept: 'application/json' },
+  });
+  if (!postRes.ok()) {
+    const status = postRes.status();
+    const text = await postRes.text().catch(() => '');
+    console.warn(`[ensureE2eBaseline] POST field failed (${status}): ${text.slice(0, 200)}`);
+  }
+}
+
 async function ensurePlan(
   api: APIRequestContext,
   base: string,
@@ -179,6 +210,8 @@ async function ensurePlan(
     console.warn('[ensureE2eBaseline] skip plan POST: missing farm_id or crop_id');
     return;
   }
+
+  await ensureFarmFieldForPlan(api, base, farmId);
 
   const postRes = await api.post(listUrl, {
     data: {

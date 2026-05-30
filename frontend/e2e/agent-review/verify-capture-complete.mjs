@@ -20,8 +20,8 @@ if (!Array.isArray(routes) || routes.length === 0) {
   process.exit(1);
 }
 
-/** dev-session キャプチャでは未撮影（route-manifest-visual.spec.ts と同一） */
-const SKIP_PATTERNS = new Set(['auth/login', 'login']);
+/** dev-session キャプチャでは auth 系は別 spec（login-capture-for-agent.spec.ts）で未ログイン撮影 */
+const SKIP_PATTERNS = new Set();
 
 const routesToVerify = routes.filter((r) => !SKIP_PATTERNS.has(r.pattern));
 

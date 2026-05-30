@@ -1,4 +1,4 @@
-import { test, request } from '@playwright/test';
+import { test } from '@playwright/test';
 import { readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { waitForPageStable } from '../page-stable';
@@ -8,11 +8,8 @@ import {
   PUBLIC_PLAN_REDIRECT_TO_NEW,
   expectedPathnameFromResolvedGoto,
 } from '../route-validity';
-import {
-  applyResolvedUrl,
-  buildResolvedCaptureIds,
-  type ResolvedCaptureIds,
-} from '../resolve-capture-urls';
+import { applyResolvedUrl, type ResolvedCaptureIds } from '../resolve-capture-urls';
+import { loadResolvedCaptureIdsWithBaseline } from '../smoke/smoke-helpers';
 import {
   CAPTURE_LOCALES,
   agentPngFilename,
@@ -70,13 +67,7 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
       return;
     }
 
-    const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
-    const api = await request.newContext({ storageState: storagePath });
-    try {
-      resolvedCaptureIds = await buildResolvedCaptureIds(api, apiOrigin);
-    } finally {
-      await api.dispose();
-    }
+    resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
   });
 
   for (const r of manifest.routes) {
