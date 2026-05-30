@@ -1,19 +1,16 @@
 import type { APIRequestContext } from '@playwright/test';
+import {
+  MASTER_SEGMENTS,
+  parseMasterList,
+  pickBaselineIdFromList,
+  pickBaselinePlanId,
+} from './shared/baseline-ids';
 
-/** GET /api/v1/masters/:segment から取った先頭 id（segment は URL セグメントと一致） */
-const MASTER_SEGMENTS = [
-  'agricultural_tasks',
-  'crops',
-  'farms',
-  'fertilizes',
-  'interaction_rules',
-  'pesticides',
-  'pests',
-] as const;
+export { MASTER_SEGMENTS } from './shared/baseline-ids';
 
 export type ResolvedCaptureIds = {
   masters: Record<string, number>;
-  /** GET /api/v1/plans の先頭（private） */
+  /** GET /api/v1/plans — E2E Baseline プレフィックス優先、なければ先頭 */
   privatePlanId: number | null;
   /** GET public cultivation_plans/:id/data が 200 になる id */
   publicPlanId: number | null;
@@ -47,17 +44,6 @@ async function fetchEntryScheduleCropIdForFarm(
   }
 }
 
-async function jsonArrayFirstId(res: Awaited<ReturnType<APIRequestContext['get']>>): Promise<number | null> {
-  if (!res.ok()) return null;
-  try {
-    const data = await res.json();
-    if (Array.isArray(data) && data[0]?.id != null) return Number(data[0].id);
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
 /**
  * 開発セッション付き API で一覧を取り、マニフェストの placeholder `1` を差し替えるための id を集める。
  */
@@ -70,21 +56,27 @@ export async function buildResolvedCaptureIds(
 
   await Promise.all(
     MASTER_SEGMENTS.map(async (seg) => {
-      const res = await api.get(`${base}/api/v1/masters/${seg}`);
-      const id = await jsonArrayFirstId(res);
-      if (id != null) masters[seg] = id;
+      try {
+        const res = await api.get(`${base}/api/v1/masters/${seg}`);
+        if (!res.ok()) return;
+        const rows = parseMasterList(await res.json());
+        const id = pickBaselineIdFromList(rows, seg);
+        if (id != null) masters[seg] = id;
+      } catch {
+        /* API 未起動・ネットワークエラー時は当該 segment のみ未解決 */
+      }
     }),
   );
 
   let privatePlanId: number | null = null;
-  const plansRes = await api.get(`${base}/api/v1/plans`);
-  if (plansRes.ok()) {
-    try {
-      const plans = await plansRes.json();
-      if (Array.isArray(plans) && plans[0]?.id != null) privatePlanId = Number(plans[0].id);
-    } catch {
-      /* ignore */
+  try {
+    const plansRes = await api.get(`${base}/api/v1/plans`);
+    if (plansRes.ok()) {
+      const plans = parseMasterList(await plansRes.json());
+      privatePlanId = pickBaselinePlanId(plans);
     }
+  } catch {
+    /* ignore */
   }
 
   const farmId = masters['farms'] ?? null;

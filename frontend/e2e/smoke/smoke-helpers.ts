@@ -1,6 +1,8 @@
 import { expect, request, test, type Page } from '@playwright/test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ensureE2eBaseline } from '../fixtures/ensure-e2e-baseline';
+import { countUserOwnedFarms, parseMasterList } from '../shared/baseline-ids';
 import {
   applyResolvedUrl,
   buildResolvedCaptureIds,
@@ -35,6 +37,9 @@ export async function assertHostHealthy(page: Page, hostSelector: string): Promi
   await expect(host.locator('.page-alert-error')).toBeHidden({ timeout: 5_000 });
   const visibleErrors = host.locator('.error-message:visible');
   await expect(visibleErrors).toHaveCount(0);
+  // HTTP 失敗は app-flash-message に出ることがある
+  const flashError = page.locator('app-flash-message .flash-message.error');
+  await expect(flashError).toHaveCount(0);
 }
 
 export function resolveGotoUrl(r: RouteRow, ids: ResolvedCaptureIds | null): string {
@@ -54,3 +59,34 @@ export async function loadResolvedCaptureIds(): Promise<ResolvedCaptureIds | nul
     await api.dispose();
   }
 }
+
+export { ensureE2eBaseline };
+
+/** dev session 時: API ベースライン確保後に ID を再解決する */
+export async function loadResolvedCaptureIdsWithBaseline(): Promise<ResolvedCaptureIds | null> {
+  let ids = await loadResolvedCaptureIds();
+  if (ids == null) return null;
+  await ensureE2eBaseline();
+  return loadResolvedCaptureIds();
+}
+
+const USER_FARM_LIMIT = 4;
+
+/** dev session 時: ユーザー所有農場（is_reference: false）の件数。セッション無しは null */
+export async function getUserOwnedFarmCount(): Promise<number | null> {
+  const storagePath = join(process.cwd(), 'e2e', '.auth', 'dev-session.json');
+  if (!existsSync(storagePath)) {
+    return null;
+  }
+  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+  const api = await request.newContext({ storageState: storagePath });
+  try {
+    const res = await api.get(`${apiOrigin}/api/v1/masters/farms`);
+    if (!res.ok()) return null;
+    return countUserOwnedFarms(parseMasterList(await res.json()));
+  } finally {
+    await api.dispose();
+  }
+}
+
+export { USER_FARM_LIMIT };

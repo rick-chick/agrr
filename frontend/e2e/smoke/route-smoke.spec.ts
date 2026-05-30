@@ -9,7 +9,7 @@ import {
 import {
   assertHostHealthy,
   disableCookieBanner,
-  loadResolvedCaptureIds,
+  loadResolvedCaptureIdsWithBaseline,
   resolveGotoUrl,
   SKIP_ROUTES_WITH_DEV_SESSION,
   smokeDescribe,
@@ -26,7 +26,7 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
   let resolvedCaptureIds: ResolvedCaptureIds | null = null;
 
   test.beforeAll(async () => {
-    resolvedCaptureIds = await loadResolvedCaptureIds();
+    resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
   });
 
   test.beforeEach(async ({ page }) => {

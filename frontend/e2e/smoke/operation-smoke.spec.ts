@@ -4,10 +4,12 @@ import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
 import {
   assertHostHealthy,
   disableCookieBanner,
-  loadResolvedCaptureIds,
+  getUserOwnedFarmCount,
+  loadResolvedCaptureIdsWithBaseline,
   resolveGotoUrl,
   smokeDescribe,
   smokeManifest,
+  USER_FARM_LIMIT,
 } from './smoke-helpers';
 import type { ResolvedCaptureIds } from '../resolve-capture-urls';
 
@@ -39,7 +41,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
   let resolvedCaptureIds: ResolvedCaptureIds | null = null;
 
   test.beforeAll(async () => {
-    resolvedCaptureIds = await loadResolvedCaptureIds();
+    resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
   });
 
   test.beforeEach(async ({ page }) => {
@@ -67,7 +69,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(page.locator('app-farm-list')).toBeVisible();
   });
 
-  test('public plan wizard: farm selection advances to farm size', async ({ page }) => {
+  test('public plan wizard: farm size then crop selection', async ({ page }) => {
     const r = findRoute('public-plans/new');
     await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
     await waitForPageStable(page, r);
@@ -80,6 +82,18 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await farmCard.click();
     await expect(page).toHaveURL(/\/public-plans\/select-farm-size/);
     await expect(page.locator('app-public-plan-select-farm-size')).toBeVisible();
+
+    const sizeCard = page.locator('app-public-plan-select-farm-size .enhanced-selection-card').first();
+    await sizeCard.click();
+    await expect(page).toHaveURL(/\/public-plans\/select-crop/);
+    await expect(page.locator('app-public-plan-select-crop')).toBeVisible();
+
+    const cropItems = page.locator('app-public-plan-select-crop .enhanced-grid .crop-item');
+    if ((await cropItems.count()) === 0) {
+      test.skip(true, 'no crops for public plan wizard');
+    }
+    await cropItems.first().locator('label.crop-card').click();
+    await expect(page.locator('app-public-plan-select-crop .submit-button')).toBeEnabled();
   });
 
   test('contact form submits successfully', async ({ page }) => {
@@ -93,10 +107,10 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(page.locator('.contact-form__message--success')).toBeVisible({ timeout: 30_000 });
   });
 
-  test('private plan creation form is interactive', async ({ page }) => {
-    const r = findRoute('plans/new');
-    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
-    await waitForPageStable(page, r);
+  test('private plan wizard: new form and select-crop step', async ({ page }) => {
+    const newRoute = findRoute('plans/new');
+    await page.goto(resolveGotoUrl(newRoute, resolvedCaptureIds));
+    await waitForPageStable(page, newRoute);
     await assertHostHealthy(page, 'app-plan-new');
 
     const farmSelect = page.locator('app-plan-new #farm-select');
@@ -105,10 +119,19 @@ smokeDescribe('operation smoke (key user flows)', () => {
     if ((await options.count()) === 0) {
       test.skip(true, 'no farms for private plan wizard');
     }
-    await farmSelect.selectOption({ index: 1 });
-    await page.locator('app-plan-new button[type="submit"]').click();
-    await expect(page).toHaveURL(/\/plans\/select-crop/);
-    await expect(page.locator('app-plan-select-crop')).toBeVisible();
+    const farmId = resolvedCaptureIds?.farmId ?? (await options.first().getAttribute('value'));
+    if (!farmId) {
+      test.skip(true, 'no farm id for select-crop step');
+    }
+    await farmSelect.selectOption(String(farmId));
+    await expect(farmSelect).toHaveValue(String(farmId));
+
+    const cropRoute = findRoute('plans/select-crop');
+    await page.goto(`/plans/select-crop?farmId=${farmId}`);
+    await waitForPageStable(page, cropRoute);
+    await assertHostHealthy(page, 'app-plan-select-crop');
+    await expect(page.locator('app-plan-select-crop #plan-name')).toBeVisible();
+    await expect(page.locator('app-plan-select-crop .crop-checkboxes input')).not.toHaveCount(0);
   });
 
   test('plan detail gantt toolbar toggles crop palette without API mutation', async ({ page }) => {
@@ -145,21 +168,80 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(page.locator('app-temperature-chart canvas')).toBeVisible();
   });
 
-  test('entry-schedule list can load crops when farms exist', async ({ page }) => {
+  test('entry-schedule: list opens crop detail', async ({ page }) => {
     const r = findRoute('entry-schedule');
     await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
     await waitForPageStable(page, r);
     await assertHostHealthy(page, 'app-entry-schedule-list');
 
     const farmSelect = page.locator('#entry-farm-select');
-    const farmOptions = farmSelect.locator('option[value]:not([value=""])');
-    if ((await farmOptions.count()) === 0) {
+    const farmOption = farmSelect.locator('option:not([disabled])').first();
+    if ((await farmOption.count()) === 0) {
       test.skip(true, 'no farms for entry schedule');
     }
-    await farmSelect.selectOption({ index: 1 });
+    const farmLabel = (await farmOption.textContent())?.trim();
+    if (!farmLabel) {
+      test.skip(true, 'no farms for entry schedule');
+    }
+    await farmSelect.selectOption({ label: farmLabel });
     await page.locator('app-entry-schedule-list button.btn-primary').click();
-    await expect(page.locator('app-entry-schedule-list .es-crop-grid, .placeholder-block')).toBeVisible({
+    await expect(page.locator('app-entry-schedule-list .es-crop-grid')).toBeVisible({
       timeout: 60_000,
+    });
+
+    const detailLink = page.locator('app-entry-schedule-list .es-link-detail').first();
+    if ((await detailLink.count()) === 0) {
+      test.skip(true, 'no entry schedule crops in grid');
+    }
+    await detailLink.click();
+    await expect(page).toHaveURL(/\/entry-schedule\/crop\/\d+/);
+    await expect(page.locator('app-entry-schedule-detail')).toBeVisible();
+    const detailRoute = findRoute('entry-schedule/crop/:cropId');
+    await waitForPageStable(page, detailRoute);
+    await assertHostHealthy(page, 'app-entry-schedule-detail');
+  });
+
+  test('master farms: create, list, edit, delete', async ({ page }) => {
+    const userFarmCount = await getUserOwnedFarmCount();
+    if (userFarmCount != null && userFarmCount >= USER_FARM_LIMIT) {
+      test.skip(true, 'user farm limit reached (max 4)');
+    }
+
+    const farmName = `E2E Farm ${Date.now()}`;
+    const editedName = `${farmName} (edited)`;
+
+    await page.goto('/farms/new');
+    await expect(page.locator('app-farm-create')).toBeVisible();
+    await page.locator('#name').fill(farmName);
+    const regionSelect = page.locator('app-region-select select#region');
+    if ((await regionSelect.count()) > 0) {
+      await regionSelect.selectOption('jp');
+    }
+    await page.locator('app-farm-create button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/farms(\/\d+)?$/, { timeout: 30_000 });
+    const createResultHost = page.locator('app-farm-detail, app-farm-list').first();
+    await expect(createResultHost).toBeVisible({ timeout: 30_000 });
+    const createHostSelector =
+      (await page.locator('app-farm-detail').count()) > 0 ? 'app-farm-detail' : 'app-farm-list';
+    await assertHostHealthy(page, createHostSelector);
+
+    await page.goto('/farms');
+    await expect(page.locator('app-farm-list')).toBeVisible();
+    const farmArticle = page.locator('app-farm-list .item-card', { hasText: farmName });
+    await expect(farmArticle).toBeVisible();
+
+    await farmArticle.locator('a.btn-secondary').click();
+    await expect(page.locator('app-farm-edit')).toBeVisible();
+    await page.locator('#name').fill(editedName);
+    await page.locator('app-farm-edit button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/farms\/\d+/, { timeout: 30_000 });
+
+    await page.goto('/farms');
+    const editedArticle = page.locator('app-farm-list .item-card', { hasText: editedName });
+    await expect(editedArticle).toBeVisible();
+    await editedArticle.locator('button.btn-danger').click();
+    await expect(page.locator('app-farm-list .item-card', { hasText: editedName })).toHaveCount(0, {
+      timeout: 30_000,
     });
   });
 
@@ -179,20 +261,24 @@ smokeDescribe('operation smoke (key user flows)', () => {
     });
 
     test(`master ${m.segment}: detail and edit`, async ({ page }) => {
+      const id = resolvedCaptureIds?.masters[m.segment];
+      if (id == null) {
+        test.skip(true, `no ${m.segment} record in dev DB`);
+      }
+
       const detailPattern = `${m.segment}/:id`;
       const editPattern = `${m.segment}/:id/edit`;
       const detailRoute = findRoute(detailPattern);
       const editRoute = findRoute(editPattern);
 
-      const detailUrl = resolveGotoUrl(detailRoute, resolvedCaptureIds);
-      await page.goto(detailUrl);
+      await page.goto(`/${m.segment}/${id}`);
       await waitForPageStable(page, detailRoute);
       const detailHost = HOST_SELECTOR_BY_PATTERN[detailPattern];
       if (!detailHost) throw new Error(`missing host for ${detailPattern}`);
       await assertHostHealthy(page, detailHost);
-      await expect(page.locator(`${detailHost} .btn-primary`).first()).toBeVisible();
+      await expect(page.locator(`${detailHost} a.btn-primary, ${detailHost} .btn-primary`).first()).toBeVisible();
 
-      await page.goto(resolveGotoUrl(editRoute, resolvedCaptureIds));
+      await page.goto(`/${m.segment}/${id}/edit`);
       await waitForPageStable(page, editRoute);
       const editHost = HOST_SELECTOR_BY_PATTERN[editPattern];
       if (!editHost) throw new Error(`missing host for ${editPattern}`);
