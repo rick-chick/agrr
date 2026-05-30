@@ -40,7 +40,7 @@ pub fn routes() -> Router<AppState> {
         )
         .route(
             "/api/v1/masters/crops/{crop_id}/crop_stages/{id}",
-            get(show).put(update).delete(destroy),
+            get(show).put(update).patch(update).delete(destroy),
         )
 }
 

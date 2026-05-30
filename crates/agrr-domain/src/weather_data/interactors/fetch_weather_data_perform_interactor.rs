@@ -1,14 +1,12 @@
 //! Ruby: `Domain::WeatherData::Interactors::FetchWeatherDataPerformInteractor`
 
-use serde_json::{json, Value};
-use time::{Date, OffsetDateTime};
+use serde_json::Value;
+use time::Date;
 
 use crate::shared::exceptions::RecordNotFoundError;
-use crate::shared::ports::LoggerPort;
 use crate::weather_data::dtos::{FetchWeatherDataPerformInput, WeatherData};
 use crate::weather_data::gateways::{
-    AgrrWeatherGateway, FetchWeatherFarmEntity, WeatherDataFarmGateway, WeatherDataGateway,
-    WeatherLocationRecord,
+    AgrrWeatherGateway, WeatherDataFarmGateway, WeatherDataGateway,
 };
 use crate::weather_data::helpers::parse_iso_date;
 use crate::weather_data::ports::{
@@ -45,7 +43,6 @@ pub struct FetchWeatherDataPerformInteractor<'a> {
     record_block_completed: &'a dyn RecordFarmWeatherBlockCompletedPort,
     agrr_weather_gateway: &'a dyn AgrrWeatherGateway,
     presenter: &'a dyn FetchWeatherDataJobPresenterPort,
-    logger: &'a dyn LoggerPort,
     skip_api_sleep: bool,
 }
 
@@ -57,7 +54,6 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
         record_block_completed: &'a dyn RecordFarmWeatherBlockCompletedPort,
         agrr_weather_gateway: &'a dyn AgrrWeatherGateway,
         presenter: &'a dyn FetchWeatherDataJobPresenterPort,
-        logger: &'a dyn LoggerPort,
     ) -> Self {
         Self {
             weather_data_gateway,
@@ -66,7 +62,6 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
             record_block_completed,
             agrr_weather_gateway,
             presenter,
-            logger,
             skip_api_sleep: false,
         }
     }

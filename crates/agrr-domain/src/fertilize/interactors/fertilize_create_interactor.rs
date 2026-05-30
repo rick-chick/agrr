@@ -1,10 +1,9 @@
 //! Ruby: `Domain::Fertilize::Interactors::FertilizeCreateInteractor`
 
 use crate::fertilize::dtos::FertilizeCreateInput;
-use crate::fertilize::entities::FertilizeEntity;
 use crate::fertilize::gateways::FertilizeGateway;
 use crate::fertilize::ports::{CreateFailure, FertilizeCreateOutputPort};
-use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
+use crate::shared::attr::{attr_map_from_pairs, AttrValue};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::UserLookupGateway;

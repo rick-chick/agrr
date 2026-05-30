@@ -1,7 +1,6 @@
 //! Ruby: `Domain::CultivationPlan::Gateways::CultivationPlanOptimizationEventsGateway`
 
 use crate::cultivation_plan::dtos::CultivationPlanFieldSnapshot;
-use serde_json::Value;
 
 pub trait CultivationPlanOptimizationEventsGateway: Send + Sync {
     fn broadcast_field_added(

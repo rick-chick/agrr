@@ -1,6 +1,5 @@
 use crate::crop::dtos::{
-    CropDeleteUsage, CropShowDetail, CropStageCreateInput, CropStageUpdateInput,
-    MastersCropTaskTemplateUpdateInput, NutrientRequirementUpdateInput,
+    CropDeleteUsage, CropShowDetail, CropStageCreateInput, CropStageUpdateInput, NutrientRequirementUpdateInput,
     SunshineRequirementUpdateInput, TemperatureRequirementUpdateInput, ThermalRequirementUpdateInput,
 };
 use crate::crop::entities::{CropEntity, CropStageEntity, NutrientRequirementEntity, SunshineRequirementEntity, TemperatureRequirementEntity, ThermalRequirementEntity};

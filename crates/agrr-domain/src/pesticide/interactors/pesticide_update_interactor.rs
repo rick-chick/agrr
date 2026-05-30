@@ -1,7 +1,6 @@
 //! Ruby: `Domain::Pesticide::Interactors::PesticideUpdateInteractor`
 
 use crate::pesticide::dtos::PesticideUpdateInput;
-use crate::pesticide::entities::PesticideEntity;
 use crate::pesticide::gateways::PesticideGateway;
 use crate::pesticide::ports::{PesticideUpdateOutputPort, UpdateFailure};
 use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};

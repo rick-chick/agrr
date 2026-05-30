@@ -4,10 +4,9 @@ use crate::agricultural_task::dtos::AgriculturalTaskDestroyOutput;
 use crate::agricultural_task::gateways::{AgriculturalTaskGateway, SoftDeleteUndoResult};
 use crate::agricultural_task::ports::{AgriculturalTaskDestroyOutputPort, DestroyFailure};
 use crate::shared::dtos::Error;
-use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::agricultural_task_policy;
-use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::reference_record_authorization;
 

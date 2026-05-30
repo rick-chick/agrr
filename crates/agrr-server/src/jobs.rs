@@ -6,7 +6,8 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::info;
 
-pub type JobFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
+/// `true` = continue chain; `false` = abort remaining steps (plan failed or already terminal).
+pub type JobFuture = Pin<Box<dyn Future<Output = bool> + Send>>;
 
 pub struct JobStep {
     pub name: &'static str,
@@ -20,12 +21,20 @@ pub struct JobChainDispatcher {
 impl JobChainDispatcher {
     pub fn new() -> Self {
         let (tx, mut rx) = mpsc::unbounded_channel::<JobStep>();
-        tokio::spawn(async move {
-            while let Some(step) = rx.recv().await {
-                info!(step = step.name, "job chain step start");
-                (step.run)().await;
-                info!(step = step.name, "job chain step done");
-            }
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .expect("job chain runtime");
+            rt.block_on(async move {
+                while let Some(step) = rx.recv().await {
+                    info!(step = step.name, "job chain step start");
+                    let continue_chain = (step.run)().await;
+                    info!(step = step.name, continue = continue_chain, "job chain step done");
+                    // Do not break the worker loop on failure: another plan's chain may already
+                    // be queued. Remaining steps for a failed plan no-op via plan_still_optimizing.
+                }
+            });
         });
         Self { tx }
     }

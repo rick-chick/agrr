@@ -1,6 +1,6 @@
 //! Ruby: `Domain::Pest::Interactors::PestAssociateAffectedCropsInteractor`
 
-use crate::pest::gateways::{CropGateway, CropRecord, PestGateway};
+use crate::pest::gateways::{CropGateway, PestGateway};
 use crate::pest::mappers::{extract_crop_ids, extract_crop_names};
 use crate::pest::policies::select_id_for_pest_ai_name_fallback;
 use crate::pest::services::{CropPestAssociationSync, FilterAssociableCropIds};

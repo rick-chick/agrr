@@ -6,6 +6,24 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# rustup の cargo はログインシェルに無いことが多い（~/.cargo/env を読む）
+if [[ -f "${HOME}/.cargo/env" ]]; then
+  # shellcheck source=/dev/null
+  source "${HOME}/.cargo/env"
+fi
+
+resolve_cargo() {
+  if command -v cargo >/dev/null 2>&1; then
+    command -v cargo
+    return 0
+  fi
+  if [[ -x "${HOME}/.cargo/bin/cargo" ]]; then
+    echo "${HOME}/.cargo/bin/cargo"
+    return 0
+  fi
+  return 1
+}
+
 PID_DIR="${TMPDIR:-/tmp}/agrr-strangler-pids"
 mkdir -p "$PID_DIR"
 NGINX_CONF="$ROOT/docker/nginx-strangler-host.conf"
@@ -39,8 +57,44 @@ if [[ ! -f "$AGRR_SQLITE_PATH" ]]; then
   exit 1
 fi
 
-echo "==> cargo build -p agrr-server (release)"
-cargo build -q -p agrr-server --release
+export AGRR_SOCKET_PATH="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
+AGRR_BIN="${AGRR_BIN:-$ROOT/lib/core/agrr}"
+
+ensure_agrr_daemon() {
+  if [[ -S "$AGRR_SOCKET_PATH" ]]; then
+    return 0
+  fi
+  if [[ ! -x "$AGRR_BIN" ]]; then
+    echo "agrr binary missing at $AGRR_BIN (build lib/core/agrr or set AGRR_BIN)"
+    exit 1
+  fi
+  echo "==> Starting agrr daemon ($AGRR_BIN)"
+  "$AGRR_BIN" daemon start >/dev/null 2>&1 || true
+  for _ in $(seq 1 45); do
+    [[ -S "$AGRR_SOCKET_PATH" ]] && return 0
+    sleep 1
+  done
+  echo "agrr daemon did not create $AGRR_SOCKET_PATH"
+  exit 1
+}
+
+ensure_agrr_daemon
+
+AGRR_SERVER_BIN="$ROOT/target/release/agrr-server"
+if [[ "${AGRR_SKIP_CARGO_BUILD:-}" == "1" && -x "$AGRR_SERVER_BIN" ]]; then
+  echo "==> skip cargo build (AGRR_SKIP_CARGO_BUILD=1, using $AGRR_SERVER_BIN)"
+else
+  CARGO="$(resolve_cargo)" || {
+    echo "cargo not found. Install Rust (recommended):"
+    echo "  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    echo "  source \"\$HOME/.cargo/env\""
+    echo "Or skip rebuild if binary exists:"
+    echo "  AGRR_SKIP_CARGO_BUILD=1 AGRR_RUST_API=1 ./scripts/e2e-strangler-stack.sh"
+    exit 1
+  }
+  echo "==> cargo build -p agrr-server (release) ($CARGO)"
+  "$CARGO" build -q -p agrr-server --release
+fi
 
 if [[ "${AGRR_RUST_API:-}" != "1" ]]; then
   echo "==> Rails on 127.0.0.1:3001 (set AGRR_RUST_API=1 for rust-only / no API fallback)"
@@ -52,11 +106,13 @@ else
   rm -f "$PID_DIR/rails.pid"
 fi
 
-echo "==> agrr-server on 127.0.0.1:8080"
+echo "==> agrr-server on 127.0.0.1:8080 (AGRR_USE_MOCK=${AGRR_USE_MOCK:-false}, socket=$AGRR_SOCKET_PATH)"
 # Mock login requires non-production AGRR_ENV (see runtime_env.rs).
 AGRR_ENV="${AGRR_ENV:-${RAILS_ENV:-development}}" \
   FRONTEND_URL="$FRONTEND_URL" \
   AGRR_SQLITE_PATH="$AGRR_SQLITE_PATH" \
+  AGRR_SOCKET_PATH="$AGRR_SOCKET_PATH" \
+  AGRR_USE_MOCK="${AGRR_USE_MOCK:-false}" \
   "$ROOT/target/release/agrr-server" >"$PID_DIR/rust.log" 2>&1 &
 echo $! >"$PID_DIR/rust.pid"
 

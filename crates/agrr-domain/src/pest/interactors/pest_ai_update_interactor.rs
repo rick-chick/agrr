@@ -7,7 +7,6 @@ use crate::pest::interactors::pest_ai_create_interactor::PestAiQueryGateway;
 use crate::pest::mappers::interpret_pest_ai_response;
 use crate::pest::ports::PestAiUpdateInteractorPort;
 use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
-use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::pest_policy;
 use crate::shared::ports::logger_port::LoggerPort;

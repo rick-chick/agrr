@@ -1,6 +1,8 @@
 // Tests for `interactors/pest_ai_create_interactor.rs` (Ruby parity under test/domain/pest/).
 
     use crate::pest::entities::PestEntity;
+    use crate::pest::ports::{PestAiCreateInteractorPort, PestAiCreateResult, PestAiUpdateInteractorPort, PestAiUpdateResult};
+    use crate::shared::attr::AttrMap;
     use crate::shared::user::User;
 
     struct StubLookup {
@@ -122,6 +124,28 @@
         }
     }
 
+    struct NoopCreate;
+    impl PestAiCreateInteractorPort for NoopCreate {
+        fn call(&self, _: AttrMap) -> PestAiCreateResult {
+            PestAiCreateResult {
+                success: false,
+                data: None,
+                error: Some("noop".into()),
+            }
+        }
+    }
+
+    struct NoopUpdate;
+    impl PestAiUpdateInteractorPort for NoopUpdate {
+        fn call(&self, _: i64, _: AttrMap) -> PestAiUpdateResult {
+            PestAiUpdateResult {
+                success: false,
+                data: None,
+                error: Some("noop".into()),
+            }
+        }
+    }
+
     struct NoopAssociateRunner;
     impl AssociateAffectedCropsRunner for NoopAssociateRunner {
         fn call(
@@ -157,6 +181,8 @@
             &lookup,
             &NoopPestGateway,
             &NoopAiGateway,
+            &NoopCreate,
+            &NoopUpdate,
             &NoopAssociateRunner,
             &NoopLogger,
             &StubTranslator,

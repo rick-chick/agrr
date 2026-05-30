@@ -1,7 +1,11 @@
 //! Public plan wizard + REST (`/api/v1/public_plans/*`) — P6 Wave C.
 
 use crate::adapters::{NoopLogger, SystemClock};
-use crate::cultivation_plans_mutations::{run_adjust_plan, AdjustBody};
+use crate::add_crop_support::AddCropCropResolvePublic;
+use crate::cultivation_plans_mutations::{
+    run_add_crop, run_add_field, run_remove_field, run_adjust_plan, AddCropBody, AddFieldBody,
+    AdjustBody,
+};
 use crate::optimization_job_chain::enqueue_private_plan_optimization_chain;
 use crate::state::AppState;
 use crate::workbench_payload;
@@ -39,7 +43,7 @@ use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    routing::{get, post},
+    routing::{delete, get, post},
     Json, Router,
 };
 use serde::Deserialize;
@@ -62,9 +66,66 @@ pub fn routes() -> Router<AppState> {
             post(public_adjust_plan),
         )
         .route(
+            "/api/v1/public_plans/cultivation_plans/{id}/add_crop",
+            post(public_add_crop),
+        )
+        .route(
+            "/api/v1/public_plans/cultivation_plans/{id}/add_field",
+            post(public_add_field),
+        )
+        .route(
+            "/api/v1/public_plans/cultivation_plans/{id}/remove_field/{field_id}",
+            delete(public_remove_field),
+        )
+        .route(
             "/api/v1/public_plans/entry_schedule/farms",
             get(entry_schedule_farms),
         )
+}
+
+async fn public_add_crop(
+    State(state): State<AppState>,
+    Path(plan_id): Path<i64>,
+    Json(body): Json<AddCropBody>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let pool = state.sqlite.clone();
+    let crop_gateway = CropSqliteGateway::new(pool);
+    let crop_resolve = AddCropCropResolvePublic::new(&crop_gateway);
+    run_add_crop(
+        &state,
+        CultivationPlanRestAuth::public(),
+        plan_id,
+        body,
+        crop_resolve,
+    )
+    .await
+}
+
+async fn public_add_field(
+    State(state): State<AppState>,
+    Path(plan_id): Path<i64>,
+    Json(body): Json<AddFieldBody>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    run_add_field(
+        &state,
+        CultivationPlanRestAuth::public(),
+        plan_id,
+        body,
+    )
+    .await
+}
+
+async fn public_remove_field(
+    State(state): State<AppState>,
+    Path((plan_id, field_id)): Path<(i64, String)>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    run_remove_field(
+        &state,
+        CultivationPlanRestAuth::public(),
+        plan_id,
+        &field_id,
+    )
+    .await
 }
 
 #[derive(Deserialize)]

@@ -4,10 +4,9 @@ use crate::fertilize::dtos::FertilizeDetailOutput;
 use crate::fertilize::gateways::FertilizeGateway;
 use crate::fertilize::ports::{DetailFailure, FertilizeDetailOutputPort};
 use crate::shared::dtos::Error;
-use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::fertilize_policy;
-use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::reference_record_authorization;
 

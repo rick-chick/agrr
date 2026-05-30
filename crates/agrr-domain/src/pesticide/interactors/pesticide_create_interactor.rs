@@ -1,7 +1,6 @@
 //! Ruby: `Domain::Pesticide::Interactors::PesticideCreateInteractor`
 
 use crate::pesticide::dtos::PesticideCreateInput;
-use crate::pesticide::entities::PesticideEntity;
 use crate::pesticide::gateways::PesticideGateway;
 use crate::pesticide::ports::{CreateFailure, PesticideCreateOutputPort};
 use crate::shared::attr::{AttrMap, AttrValue};

@@ -1,6 +1,5 @@
 //! Ruby: `Domain::Farm::Interactors::FarmListReferenceForRegionInteractor`
 
-use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::FarmGateway;
 use crate::farm::ports::FarmListReferenceForRegionOutputPort;
 use crate::shared::dtos::Error;

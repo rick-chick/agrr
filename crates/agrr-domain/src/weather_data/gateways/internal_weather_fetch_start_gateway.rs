@@ -1,6 +1,5 @@
 //! Ruby: `Domain::WeatherData::Gateways::InternalWeatherFetchStartGateway`
 
-use crate::weather_data::dtos::InternalWeatherFetchStartOutput;
 
 /// Ruby snapshot struct
 #[derive(Debug, Clone)]

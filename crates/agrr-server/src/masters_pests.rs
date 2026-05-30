@@ -31,7 +31,7 @@ pub fn routes() -> Router<AppState> {
         .route("/api/v1/masters/pests", get(index).post(create))
         .route(
             "/api/v1/masters/pests/{id}",
-            get(show).put(update).delete(destroy),
+            get(show).put(update).patch(update).delete(destroy),
         )
 }
 

@@ -10,6 +10,8 @@ pub struct AppState {
     pub google_client_id: Arc<String>,
     pub google_client_secret: Arc<String>,
     pub scheduler_auth_token: Arc<String>,
+    /// Ruby: `BackdoorConfig.token` from `AGRR_BACKDOOR_TOKEN`.
+    pub backdoor_token: Arc<String>,
     pub secure_cookies: bool,
     pub job_dispatcher: Arc<JobChainDispatcher>,
     pub cable_hub: Arc<CableHub>,
@@ -26,6 +28,7 @@ impl AppState {
             scheduler_auth_token: Arc::new(
                 std::env::var("SCHEDULER_AUTH_TOKEN").unwrap_or_default(),
             ),
+            backdoor_token: Arc::new(std::env::var("AGRR_BACKDOOR_TOKEN").unwrap_or_default()),
             secure_cookies: runtime_env::is_production(),
             job_dispatcher: Arc::new(JobChainDispatcher::new()),
             cable_hub: Arc::new(CableHub::default()),
@@ -36,5 +39,16 @@ impl AppState {
 impl Default for AppState {
     fn default() -> Self {
         Self::from_env()
+    }
+}
+
+impl AppState {
+    /// Ruby: `BackdoorConfig.enabled?`
+    pub fn backdoor_enabled(&self) -> bool {
+        !self.backdoor_token.is_empty()
+    }
+
+    pub fn backdoor_token_matches(&self, provided: &str) -> bool {
+        !self.backdoor_token.is_empty() && provided == self.backdoor_token.as_str()
     }
 }

@@ -1,11 +1,10 @@
 //! Ruby: `Domain::Pest::Interactors::PestCreateInteractor`
 
 use crate::pest::dtos::PestCreateInput;
-use crate::pest::entities::PestEntity;
 use crate::pest::gateways::{CropGateway, CropPestGateway, PestGateway};
 use crate::pest::ports::{CreateFailure, PestCreateOutputPort};
 use crate::pest::services::{CropPestAssociationSync, FilterAssociableCropIds};
-use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
+use crate::shared::attr::{attr_map_from_pairs, AttrValue};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::RecordInvalidError;
 use crate::shared::gateways::UserLookupGateway;

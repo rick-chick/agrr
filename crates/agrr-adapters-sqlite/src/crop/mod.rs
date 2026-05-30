@@ -1,9 +1,13 @@
 pub mod agrr_requirement;
+mod crop_ai_upsert_sqlite_persistence;
 mod crop_gateway;
+mod crop_masters_task_template_gateway;
 mod crop_stage_gateway;
 mod requirement_gateways;
 
+pub use crop_ai_upsert_sqlite_persistence::CropAiUpsertSqlitePersistence;
 pub use crop_gateway::CropSqliteGateway;
+pub use crop_masters_task_template_gateway::CropMastersTaskTemplateSqliteGateway;
 pub use crop_stage_gateway::CropStageSqliteGateway;
 pub use requirement_gateways::{
     NutrientRequirementSqliteGateway, SunshineRequirementSqliteGateway,

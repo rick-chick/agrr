@@ -101,7 +101,7 @@ where
                 Ok(())
             }
             Err(err) if err.downcast_ref::<InvalidTaskScheduleItemError>().is_some() => {
-                let e = err.downcast_ref::<InvalidTaskScheduleItemError>().unwrap();
+                let _e = err.downcast_ref::<InvalidTaskScheduleItemError>().unwrap();
                 self.logger.error(
                     "❌ [PublicPlanSaveInteractor] InvalidTaskScheduleItem",
                 );

@@ -1,7 +1,6 @@
 //! Ruby: `Domain::Farm::Interactors::FarmDestroyInteractor`
 
 use crate::farm::dtos::FarmDestroyOutput;
-use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::{FarmGateway, SoftDeleteWithUndoOutcome};
 use crate::farm::policies::{FarmDestroyBlockedReason, FarmDestroyPolicy};
 use crate::farm::ports::{DestroyFailure, FarmDestroyOutputPort};

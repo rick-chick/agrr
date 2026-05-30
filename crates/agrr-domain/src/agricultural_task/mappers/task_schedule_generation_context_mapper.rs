@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::agricultural_task::gateways::{
     TaskScheduleBlueprint, TaskScheduleBlueprintRow, TaskScheduleCrop, TaskScheduleCropRow,
     TaskScheduleCropTaskTemplate, TaskScheduleFieldCultivation, TaskScheduleFieldCultivationRow,
-    TaskSchedulePlan, TaskSchedulePlanContext, TaskSchedulePlanRow, TaskScheduleRelatedTask,
+    TaskSchedulePlan, TaskSchedulePlanContext, TaskSchedulePlanRow,
     TaskScheduleTemplateRow,
 };
 

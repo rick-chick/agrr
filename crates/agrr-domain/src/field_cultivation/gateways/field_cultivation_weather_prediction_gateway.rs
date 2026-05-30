@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::field_cultivation::dtos::{CultivationPlanWeatherInput, WeatherPredictionTargets};
+use crate::field_cultivation::dtos::CultivationPlanWeatherInput;
 
 pub trait FieldCultivationWeatherPredictionServiceGateway: Send + Sync {
     fn predict_for_cultivation_plan(

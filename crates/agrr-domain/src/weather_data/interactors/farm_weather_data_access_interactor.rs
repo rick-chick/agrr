@@ -1,8 +1,7 @@
 //! Ruby: `Domain::WeatherData::Interactors::FarmWeatherDataAccessInteractor`
 
-use time::Date;
 
-use crate::shared::ports::{ClockPort, LoggerPort};
+use crate::shared::ports::ClockPort;
 use crate::weather_data::dtos::{
     FarmWeatherDataAccessContext, FarmWeatherDataAccessInput, WeatherData,
 };
@@ -23,7 +22,6 @@ pub struct FarmWeatherDataAccessInteractor<'a, O> {
     weather_data_gateway: &'a dyn WeatherDataGateway,
     enqueue_port: &'a dyn PredictWeatherStandaloneEnqueuePort,
     prediction_payload_parse: &'a dyn FarmWeatherPredictionPayloadParsePort,
-    logger: &'a dyn LoggerPort,
     clock: &'a dyn ClockPort,
 }
 
@@ -37,7 +35,6 @@ where
         weather_data_gateway: &'a dyn WeatherDataGateway,
         enqueue_port: &'a dyn PredictWeatherStandaloneEnqueuePort,
         prediction_payload_parse: &'a dyn FarmWeatherPredictionPayloadParsePort,
-        logger: &'a dyn LoggerPort,
         clock: &'a dyn ClockPort,
     ) -> Self {
         Self {
@@ -46,7 +43,6 @@ where
             weather_data_gateway,
             enqueue_port,
             prediction_payload_parse,
-            logger,
             clock,
         }
     }

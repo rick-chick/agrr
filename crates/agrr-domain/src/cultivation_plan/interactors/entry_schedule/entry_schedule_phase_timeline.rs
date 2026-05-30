@@ -216,7 +216,7 @@ impl<'a, T: TranslatorPort> EntrySchedulePhaseTimeline<'a, T> {
         let f1 = (quarter_index + 1) as f64 / 4.0;
         let start_off = (total_days as f64 * f0).floor() as i64;
         let end_off = (total_days as f64 * f1).ceil() as i64 - 1;
-        let mut a = range_start + time::Duration::days(start_off);
+        let a = range_start + time::Duration::days(start_off);
         let mut b = range_start + time::Duration::days(end_off);
         if b > range_end {
             b = range_end;

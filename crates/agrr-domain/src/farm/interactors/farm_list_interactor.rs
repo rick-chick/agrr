@@ -1,7 +1,6 @@
 //! Ruby: `Domain::Farm::Interactors::FarmListInteractor`
 
 use crate::farm::dtos::FarmListInput;
-use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::FarmGateway;
 use crate::farm::ports::{FarmListOutputPort, FarmListSuccess, ListFailure};
 use crate::shared::dtos::Error;

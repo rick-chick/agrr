@@ -212,7 +212,6 @@ use serde_json::json;
         record: MockRecordBlock,
         agrr: MockAgrrGateway,
         presenter: MockPresenter,
-        logger: NoopLogger,
     }
 
     impl PerformHarness {
@@ -244,7 +243,6 @@ use serde_json::json;
                 presenter: MockPresenter {
                     errors: Arc::new(Mutex::new(vec![])),
                 },
-                logger: NoopLogger,
             }
         }
 
@@ -256,7 +254,6 @@ use serde_json::json;
                 &self.record,
                 &self.agrr,
                 &self.presenter,
-                &self.logger,
             )
             .with_skip_api_sleep()
         }
@@ -269,7 +266,6 @@ use serde_json::json;
                 &self.record,
                 &self.agrr,
                 &self.presenter,
-                &self.logger,
             )
         }
     }

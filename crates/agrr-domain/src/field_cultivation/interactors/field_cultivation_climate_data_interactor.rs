@@ -33,7 +33,7 @@ use crate::field_cultivation::ports::{
     WeatherPredictionAnchorsPort,
 };
 use crate::shared::dtos::Error;
-use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::user_lookup_gateway::UserLookupGateway;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::{ClockPort, LoggerPort, TranslatorPort};

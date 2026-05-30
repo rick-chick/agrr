@@ -250,7 +250,6 @@
             &weather_gateway,
             &FakeEnqueue,
             &FakeParse,
-            &NoopLogger,
             &clock,
         );
 
@@ -290,7 +289,6 @@
             &weather_gateway,
             &FakeEnqueue,
             &FakeParse,
-            &NoopLogger,
             &clock,
         );
 

@@ -1,11 +1,10 @@
 //! Ruby: `Domain::Farm::Interactors::FarmCreateInteractor`
 
 use crate::farm::dtos::{FarmCreateInput, FarmCreateLimitExceededFailure};
-use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::FarmGateway;
 use crate::farm::policies::{FarmCoordinateNormalizationPolicy, FarmCreateLimitPolicy};
 use crate::farm::ports::{CreateFailure, FarmCreateOutputPort};
-use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
+use crate::shared::attr::{attr_map_from_pairs, AttrValue};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::UserLookupGateway;

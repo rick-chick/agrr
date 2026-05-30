@@ -12,6 +12,9 @@ pub fn apply<G: CultivationPlanGateway + ?Sized>(
 ) -> Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>> {
     let plan = gateway.find_by_id(plan_id)?;
     let field_cultivations = gateway.list_by_plan_id(plan_id)?;
+    if field_cultivations.is_empty() {
+        return Ok(plan);
+    }
     let statuses: Vec<String> = field_cultivations
         .iter()
         .filter_map(|fc| fc.status.clone())

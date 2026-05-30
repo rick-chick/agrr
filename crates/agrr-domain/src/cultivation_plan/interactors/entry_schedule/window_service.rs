@@ -13,7 +13,6 @@ use crate::cultivation_plan::helpers::parse_iso_date;
 struct DailyRow {
     date: Date,
     t_min: f64,
-    t_max: f64,
     t_mean: f64,
 }
 
@@ -153,13 +152,12 @@ impl WindowService {
                     t_mean = Some((max + min) / 2.0);
                 }
             }
-            let (Some(t_max), Some(t_min), Some(t_mean)) = (t_max, t_min, t_mean) else {
+            let (Some(_t_max), Some(t_min), Some(t_mean)) = (t_max, t_min, t_mean) else {
                 continue;
             };
             rows.push(DailyRow {
                 date,
                 t_min,
-                t_max,
                 t_mean,
             });
         }

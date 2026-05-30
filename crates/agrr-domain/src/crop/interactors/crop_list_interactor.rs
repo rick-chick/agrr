@@ -1,6 +1,5 @@
 //! Ruby: `Domain::Crop::Interactors::CropListInteractor`
 
-use crate::crop::entities::CropEntity;
 use crate::crop::gateways::CropGateway;
 use crate::crop::ports::{CropListOutputPort, ListFailure};
 use crate::shared::dtos::Error;

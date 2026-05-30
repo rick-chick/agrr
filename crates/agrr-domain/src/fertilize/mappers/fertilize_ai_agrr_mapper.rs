@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 /// Normalize agrr fertilize JSON into persistence attributes.
 pub fn normalize_fertilize_payload(info: &Value) -> Option<BTreeMap<String, Value>> {

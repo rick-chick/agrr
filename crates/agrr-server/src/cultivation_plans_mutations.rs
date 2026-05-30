@@ -28,8 +28,8 @@ use agrr_domain::cultivation_plan::mappers::AgrrAdjustResultFieldCultivationSync
 use agrr_domain::field_cultivation::interactors::FieldCultivationSyncInteractor;
 use agrr_domain::field_cultivation::ports::FieldCultivationSyncInputPort;
 use agrr_domain::cultivation_plan::ports::{
-    AddCropOutputPort, AddFieldOutputPort, PlanAllocationAdjustInputPort,
-    PlanAllocationAdjustOutputPort, RemoveFieldOutputPort,
+    AddCropCropResolveInputPort, AddCropOutputPort, AddFieldOutputPort,
+    PlanAllocationAdjustInputPort, PlanAllocationAdjustOutputPort, RemoveFieldOutputPort,
 };
 use axum::{
     extract::{Path, State},
@@ -62,9 +62,11 @@ pub fn mutation_routes() -> Router<AppState> {
 }
 
 #[derive(Deserialize)]
-struct AddCropBody {
+pub(crate) struct AddCropBody {
     crop_id: serde_json::Value,
-    field_id: serde_json::Value,
+    /// Rails parity: optional; omitted when the client lets candidates pick any field.
+    #[serde(default)]
+    field_id: Option<serde_json::Value>,
     #[serde(default)]
     display_start_date: Option<String>,
     #[serde(default)]
@@ -127,7 +129,7 @@ impl AddCropOutputPort for AddCropPresenter {
     }
 }
 
-fn map_add_crop_outcome(
+pub(crate) fn map_add_crop_outcome(
     body: Option<AddCropOutcome>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     match body {
@@ -180,24 +182,23 @@ fn map_add_crop_outcome(
     }
 }
 
-async fn add_crop(
-    State(state): State<AppState>,
-    jar: CookieJar,
-    Path(plan_id): Path<i64>,
-    Json(body): Json<AddCropBody>,
-) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
+pub(crate) async fn run_add_crop<R>(
+    state: &AppState,
+    auth: CultivationPlanRestAuth,
+    plan_id: i64,
+    body: AddCropBody,
+    crop_resolve: R,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)>
+where
+    R: AddCropCropResolveInputPort,
+{
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let plan_crop_gateway = CultivationPlanPlanCropSqliteGateway::new(pool.clone());
     let read_gateway = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
-    let crop_gateway = CropSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
     let candidates_agrr = PlanAllocationCandidatesAgrrDaemonGateway::from_env();
     let candidates_service =
         PlanAllocationCandidatesService::new(&read_gateway, &candidates_agrr);
-    let crop_resolve = AddCropCropResolvePrivate::new(&crop_gateway, user_id, &user_lookup);
     let adjust_sink = AddCropAdjustResultCollector::new();
     let mut adjust_output = adjust_sink.output_adapter();
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
@@ -228,7 +229,11 @@ async fn add_crop(
     );
 
     let crop_id = value_to_string(&body.crop_id);
-    let field_id = value_to_string(&body.field_id);
+    let field_id = body
+        .field_id
+        .as_ref()
+        .map(value_to_string)
+        .unwrap_or_default();
     let mut display_range = HashMap::new();
     if let Some(start) = body.display_start_date.as_deref() {
         display_range.insert("start_date".into(), json!(start));
@@ -239,7 +244,6 @@ async fn add_crop(
     let ui_filter_context = HashMap::new();
 
     let mut presenter = AddCropPresenter { body: None };
-    let auth = CultivationPlanRestAuth::private(user_id);
     let mut interactor = AddCropInteractor::new(
         &mut presenter,
         &logger,
@@ -268,6 +272,22 @@ async fn add_crop(
     map_add_crop_outcome(presenter.body)
 }
 
+async fn add_crop(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(plan_id): Path<i64>,
+    Json(body): Json<AddCropBody>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar)
+        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
+    let pool = state.sqlite.clone();
+    let crop_gateway = CropSqliteGateway::new(pool.clone());
+    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let crop_resolve = AddCropCropResolvePrivate::new(&crop_gateway, user_id, &user_lookup);
+    let auth = CultivationPlanRestAuth::private(user_id);
+    run_add_crop(&state, auth, plan_id, body, crop_resolve).await
+}
+
 fn value_to_string(value: &serde_json::Value) -> String {
     match value {
         serde_json::Value::String(s) => s.clone(),
@@ -277,7 +297,7 @@ fn value_to_string(value: &serde_json::Value) -> String {
 }
 
 #[derive(Deserialize)]
-struct AddFieldBody {
+pub(crate) struct AddFieldBody {
     field_name: String,
     field_area: f64,
     daily_fixed_cost: Option<f64>,
@@ -332,21 +352,18 @@ impl AddFieldOutputPort for AddFieldPresenter {
     }
 }
 
-async fn add_field(
-    State(state): State<AppState>,
-    jar: CookieJar,
-    Path(plan_id): Path<i64>,
-    Json(body): Json<AddFieldBody>,
+pub(crate) async fn run_add_field(
+    state: &AppState,
+    auth: CultivationPlanRestAuth,
+    plan_id: i64,
+    body: AddFieldBody,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool);
     let events = NoopOptimizationEventsGateway;
     let logger = NoopLogger;
     let mut presenter = AddFieldPresenter { body: None };
-    let auth = CultivationPlanRestAuth::private(user_id);
     let mut interactor = AddFieldInteractor::new(
         &mut presenter,
         &plan_gateway,
@@ -369,6 +386,23 @@ async fn add_field(
             )
         })?;
     map_add_field_outcome(presenter.body)
+}
+
+async fn add_field(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(plan_id): Path<i64>,
+    Json(body): Json<AddFieldBody>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar)
+        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
+    run_add_field(
+        &state,
+        CultivationPlanRestAuth::private(user_id),
+        plan_id,
+        body,
+    )
+    .await
 }
 
 struct RemoveFieldPresenter {
@@ -421,20 +455,18 @@ impl RemoveFieldOutputPort for RemoveFieldPresenter {
     }
 }
 
-async fn remove_field(
-    State(state): State<AppState>,
-    jar: CookieJar,
-    Path((plan_id, field_id)): Path<(i64, String)>,
+pub(crate) async fn run_remove_field(
+    state: &AppState,
+    auth: CultivationPlanRestAuth,
+    plan_id: i64,
+    field_id: &str,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool);
     let events = NoopOptimizationEventsGateway;
     let logger = NoopLogger;
     let mut presenter = RemoveFieldPresenter { body: None };
-    let auth = CultivationPlanRestAuth::private(user_id);
     let mut interactor = RemoveFieldInteractor::new(
         &mut presenter,
         &plan_gateway,
@@ -443,7 +475,7 @@ async fn remove_field(
         &logger,
     );
     interactor
-        .call(&auth, plan_id, &field_id)
+        .call(&auth, plan_id, field_id)
         .map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -453,7 +485,23 @@ async fn remove_field(
     map_remove_field_outcome(presenter.body)
 }
 
-fn map_add_field_outcome(
+async fn remove_field(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path((plan_id, field_id)): Path<(i64, String)>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar)
+        .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
+    run_remove_field(
+        &state,
+        CultivationPlanRestAuth::private(user_id),
+        plan_id,
+        &field_id,
+    )
+    .await
+}
+
+pub(crate) fn map_add_field_outcome(
     body: Option<AddFieldOutcome>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     match body {
@@ -657,7 +705,7 @@ async fn adjust_plan(
     .await
 }
 
-fn map_remove_field_outcome(
+pub(crate) fn map_remove_field_outcome(
     body: Option<RemoveFieldOutcome>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     match body {
@@ -682,5 +730,22 @@ fn map_remove_field_outcome(
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"success": false, "message": "no response"})),
         )),
+    }
+}
+
+#[cfg(test)]
+mod add_crop_body_tests {
+    use super::AddCropBody;
+
+    #[test]
+    fn deserializes_without_field_id() {
+        let body: AddCropBody = serde_json::from_str(r#"{"crop_id":1}"#).unwrap();
+        assert!(body.field_id.is_none());
+    }
+
+    #[test]
+    fn deserializes_with_field_id() {
+        let body: AddCropBody = serde_json::from_str(r#"{"crop_id":1,"field_id":2}"#).unwrap();
+        assert_eq!(body.field_id.as_ref().unwrap().as_i64(), Some(2));
     }
 }

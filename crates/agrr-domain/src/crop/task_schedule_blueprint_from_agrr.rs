@@ -2,7 +2,7 @@
 use crate::agricultural_task::constants::schedule_item_types;
 use crate::shared::type_converters::{cast_big_decimal, cast_integer};
 use rust_decimal::Decimal;
-use serde_json::{json, Value};
+use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TaskScheduleBlueprintRow {

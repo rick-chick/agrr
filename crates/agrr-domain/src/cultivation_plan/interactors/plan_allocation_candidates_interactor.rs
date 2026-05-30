@@ -6,21 +6,17 @@ use time::Date;
 use crate::crop::dtos::AddCropCropSnapshot;
 use crate::cultivation_plan::dtos::CultivationPlanRestAuth;
 use crate::cultivation_plan::gateways::PlanAllocationCandidatesGateway;
-use crate::shared::ports::LoggerPort;
 
-pub struct PlanAllocationCandidatesInteractor<'a, G, L> {
-    logger: &'a L,
+pub struct PlanAllocationCandidatesInteractor<'a, G> {
     plan_allocation_candidates_gateway: &'a G,
 }
 
-impl<'a, G, L> PlanAllocationCandidatesInteractor<'a, G, L>
+impl<'a, G> PlanAllocationCandidatesInteractor<'a, G>
 where
     G: PlanAllocationCandidatesGateway,
-    L: LoggerPort,
 {
-    pub fn new(logger: &'a L, plan_allocation_candidates_gateway: &'a G) -> Self {
+    pub fn new(plan_allocation_candidates_gateway: &'a G) -> Self {
         Self {
-            logger,
             plan_allocation_candidates_gateway,
         }
     }

@@ -7,7 +7,6 @@ use crate::shared::dtos::Error;
 use crate::shared::exceptions::RecordInvalidError;
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::pesticide_policy;
-use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::reference_record_authorization;
 
 pub struct PesticideDetailInteractor<'a, G, O, U> {

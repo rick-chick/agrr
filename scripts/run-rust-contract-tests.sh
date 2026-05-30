@@ -65,6 +65,7 @@ docker compose --profile test run --rm \
     export AGRR_SQLITE_PATH=/app/storage/test.sqlite3
     export PORT=8080
     export SCHEDULER_AUTH_TOKEN="${SCHEDULER_AUTH_TOKEN:-test_scheduler_token_contract}"
+    export AGRR_BACKDOOR_TOKEN="${AGRR_BACKDOOR_TOKEN:-contract-token}"
     agrr-server >/tmp/agrr-server-contract.log 2>&1 &
     SERVER_PID=$!
     cleanup() { kill "$SERVER_PID" 2>/dev/null || true; }

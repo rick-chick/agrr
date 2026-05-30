@@ -7,16 +7,15 @@ use crate::agricultural_task::entities::AgriculturalTaskEntity;
 use crate::agricultural_task::gateways::{
     AgriculturalTaskGateway, CropGateway, CropTaskTemplateGateway,
 };
-use crate::agricultural_task::interactors::attr_helpers::{attr_is_reference, attr_user_id, str_present};
+use crate::agricultural_task::interactors::attr_helpers::str_present;
 use crate::agricultural_task::policies::CropTaskTemplateSyncPolicy;
 use crate::agricultural_task::ports::{AgriculturalTaskUpdateOutputPort, UpdateFailure};
 use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
 use crate::shared::dtos::{Error, ReferenceFlagChangeDeniedFailure};
-use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::agricultural_task_policy;
 use crate::shared::policies::crop_policy;
-use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::policies::referencable_resource_policy::{
     duplicate_name_record, reference_flag_change_allowed, reference_record_user_id_valid,
 };

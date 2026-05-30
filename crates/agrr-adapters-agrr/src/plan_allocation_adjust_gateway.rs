@@ -1,6 +1,5 @@
 //! Ruby: `PlanAllocationAdjustAgrrDaemonGateway`
 
-use std::path::PathBuf;
 
 use agrr_domain::cultivation_plan::errors::AdjustExecutionError;
 use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustGateway;
@@ -108,15 +107,10 @@ impl PlanAllocationAdjustGateway for PlanAllocationAdjustAgrrDaemonGateway {
             "json".into(),
         ];
 
-        let rules_file;
-        let rules_path: Option<String>;
         if let Some(rules) = interaction_rules {
-            rules_file = Self::write_temp_json(rules, "interaction_rules")?;
-            rules_path = Some(rules_file.path().to_string_lossy().into_owned());
+            let rules_file = Self::write_temp_json(rules, "interaction_rules")?;
             args.push("--interaction-rules-file".into());
-            args.push(rules_path.clone().unwrap());
-        } else {
-            rules_path = None;
+            args.push(rules_file.path().to_string_lossy().into_owned());
         }
 
         let response = self

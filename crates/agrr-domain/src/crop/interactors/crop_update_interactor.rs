@@ -1,7 +1,6 @@
 //! Ruby: `Domain::Crop::Interactors::CropUpdateInteractor`
 
 use crate::crop::dtos::CropUpdateInput;
-use crate::crop::entities::CropEntity;
 use crate::crop::gateways::CropGateway;
 use crate::crop::ports::{CropUpdateOutputPort, UpdateFailure};
 use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
@@ -9,7 +8,6 @@ use crate::shared::dtos::{Error, ReferenceFlagChangeDeniedFailure};
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::crop_policy;
-use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::policies::referencable_resource_policy::{
     reference_flag_change_allowed, reference_record_user_id_valid,
 };

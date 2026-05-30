@@ -5,28 +5,25 @@
 use crate::adapters::{PassthroughTranslator, SystemClock};
 use crate::cable::CableHub;
 use crate::jobs::JobStep;
+use crate::optimization_chain_run::{
+    load_chain_context, run_fetch_weather_step, run_optimization_step, run_plan_finalize_step,
+    run_weather_prediction_step,
+};
 use crate::state::AppState;
 use agrr_adapters_agrr::WeatherDaemonGateway;
-use agrr_domain::weather_data::gateways::AgrrWeatherGateway;
 use agrr_adapters_sqlite::CultivationPlanSqliteGateway;
 use agrr_domain::cultivation_plan::dtos::{
     AdvanceCultivationPlanPhaseInput, CultivationPlanPhaseName,
 };
+use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
 use agrr_domain::cultivation_plan::interactors::AdvanceCultivationPlanPhaseInteractor;
 use agrr_domain::shared::ports::CultivationPlanPhaseBroadcastPort;
+use agrr_domain::weather_data::gateways::AgrrWeatherGateway;
 use agrr_domain::weather_data::OptimizationJobChainWeatherComputation;
 use rusqlite::params;
 use serde_json::{json, Value};
 use std::sync::Arc;
-use time::Date;
 use tracing::{error, info, warn};
-
-struct ChainContext {
-    latitude: f64,
-    longitude: f64,
-    latest_weather_date: Option<Date>,
-    all_crops_have_blueprints: bool,
-}
 
 struct CablePhaseBroadcast {
     hub: Arc<CableHub>,
@@ -38,53 +35,24 @@ impl CultivationPlanPhaseBroadcastPort for CablePhaseBroadcast {
     }
 }
 
-fn load_chain_context(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> Option<ChainContext> {
+pub(crate) fn plan_still_optimizing(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> bool {
     pool.with_read(|conn| {
-        let row: Result<(i64, f64, f64, Option<String>), _> = conn.query_row(
-            "SELECT cp.farm_id, f.latitude, f.longitude, \
-             (SELECT MAX(wd.date) FROM weather_data wd \
-              INNER JOIN weather_locations wl ON wl.id = wd.weather_location_id \
-              WHERE wl.id = f.weather_location_id) \
-             FROM cultivation_plans cp \
-             INNER JOIN farms f ON f.id = cp.farm_id \
-             WHERE cp.id = ?1",
+        let status: String = conn.query_row(
+            "SELECT status FROM cultivation_plans WHERE id = ?1",
             params![plan_id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
-        );
-        let Ok((_farm_id, latitude, longitude, latest_str)) = row else {
-            return Ok(None);
-        };
-        let latest_weather_date = latest_str
-            .as_deref()
-            .and_then(|s| Date::parse(s, &time::format_description::well_known::Iso8601::DATE).ok());
-
-        let (crop_count, blueprint_count): (i64, i64) = conn.query_row(
-            "SELECT COUNT(DISTINCT cpc.crop_id), \
-             COUNT(DISTINCT CASE WHEN ctb.id IS NOT NULL THEN cpc.crop_id END) \
-             FROM cultivation_plan_crops cpc \
-             LEFT JOIN crop_task_schedule_blueprints ctb ON ctb.crop_id = cpc.crop_id \
-             WHERE cpc.cultivation_plan_id = ?1",
-            params![plan_id],
-            |row| Ok((row.get(0)?, row.get(1)?)),
+            |row| row.get(0),
         )?;
-        let all_crops_have_blueprints = crop_count > 0 && crop_count == blueprint_count;
-
-        Ok(Some(ChainContext {
-            latitude,
-            longitude,
-            latest_weather_date,
-            all_crops_have_blueprints,
-        }))
+        Ok(status == "optimizing")
     })
-    .ok()
-    .flatten()
+    .unwrap_or(false)
 }
 
-fn advance_phase(
+pub(crate) fn advance_phase(
     state: &AppState,
     plan_id: i64,
     channel: &str,
     phase_name: CultivationPlanPhaseName,
+    failure_subphase: Option<&str>,
 ) {
     let plan_gateway = CultivationPlanSqliteGateway::new(state.sqlite.clone());
     let translator = PassthroughTranslator;
@@ -97,11 +65,36 @@ fn advance_phase(
         plan_id,
         phase_name,
         channel_class: Some(channel.to_string()),
-        failure_subphase: None,
+        failure_subphase: failure_subphase.map(str::to_string),
     });
 }
 
-fn broadcast_completed(hub: &CableHub, plan_id: i64) {
+pub(crate) fn broadcast_completed(
+    hub: &CableHub,
+    plan_id: i64,
+    pool: &agrr_adapters_sqlite::SqlitePool,
+) {
+    let gateway = CultivationPlanSqliteGateway::new(pool.clone());
+    let Ok(plan) = gateway.find_by_id(plan_id) else {
+        return;
+    };
+    let Ok(field_cultivations) = gateway.list_by_plan_id(plan_id) else {
+        return;
+    };
+    let statuses: Vec<String> = field_cultivations
+        .iter()
+        .filter_map(|fc| fc.status.clone())
+        .collect();
+    let plan_status = plan.status.as_deref().unwrap_or("");
+    let all_fc_completed = !field_cultivations.is_empty()
+        && statuses.iter().all(|s| s == "completed");
+    if plan_status != "completed" || !all_fc_completed {
+        eprintln!(
+            "optimization chain: skip broadcast_completed plan_id={plan_id} status={plan_status} field_cultivations={}",
+            field_cultivations.len()
+        );
+        return;
+    }
     hub.broadcast_plan_message(
         plan_id,
         json!({
@@ -144,7 +137,14 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                 let state = state.clone();
                 let channel = channel.clone();
                 Box::pin(async move {
-                    advance_phase(&state, plan_id, &channel, CultivationPlanPhaseName::StartOptimizing);
+                    advance_phase(
+                        &state,
+                        plan_id,
+                        &channel,
+                        CultivationPlanPhaseName::StartOptimizing,
+                        None,
+                    );
+                    true
                 })
             }),
         });
@@ -153,34 +153,35 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     {
         let state = state_clone.clone();
         let channel = channel.clone();
+        let pool = pool.clone();
         let start = weather_window.start_date;
         let end = weather_window.end_date;
-        let lat = ctx.latitude;
-        let lon = ctx.longitude;
+        let ctx = ctx.clone();
         steps.push(JobStep {
             name: "fetch_weather_data",
             run: Arc::new(move || {
                 let state = state.clone();
                 let channel = channel.clone();
+                let pool = pool.clone();
+                let ctx = ctx.clone();
                 Box::pin(async move {
-                    advance_phase(
-                        &state,
-                        plan_id,
-                        &channel,
-                        CultivationPlanPhaseName::PhaseFetchingWeather,
-                    );
-                    let agrr = WeatherDaemonGateway::from_env();
-                    match agrr.fetch_by_date_range(lat, lon, start, end, "jma") {
-                        Ok(Some(_)) => {
+                    if !plan_still_optimizing(&pool, plan_id) {
+                        return false;
+                    }
+                    match run_fetch_weather_step(&state, plan_id, &channel, &ctx, start, end) {
+                        Ok(()) => true,
+                        Err(e) => {
+                            eprintln!("fetch_weather_data failed plan_id={plan_id}: {e}");
+                            warn!(plan_id, error = %e, "fetch_weather_data failed");
                             advance_phase(
                                 &state,
                                 plan_id,
                                 &channel,
-                                CultivationPlanPhaseName::PhaseWeatherDataFetched,
+                                CultivationPlanPhaseName::PhaseFailed,
+                                Some("fetching_weather"),
                             );
+                            false
                         }
-                        Ok(None) => warn!(plan_id, "fetch_weather_data: empty response"),
-                        Err(e) => warn!(plan_id, error = %e, "fetch_weather_data failed"),
                     }
                 })
             }),
@@ -190,31 +191,33 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     {
         let state = state_clone.clone();
         let channel = channel.clone();
+        let pool = pool.clone();
         let end = weather_window.end_date;
         steps.push(JobStep {
             name: "weather_prediction",
             run: Arc::new(move || {
                 let state = state.clone();
                 let channel = channel.clone();
+                let pool = pool.clone();
                 Box::pin(async move {
-                    advance_phase(
-                        &state,
-                        plan_id,
-                        &channel,
-                        CultivationPlanPhaseName::PhasePredictingWeather,
-                    );
-                    let predict_days =
-                        OptimizationJobChainWeatherComputation::predict_days_to_next_year_end(
-                            end,
-                            &SystemClock,
-                        );
-                    info!(plan_id, predict_days, "weather_prediction step");
-                    advance_phase(
-                        &state,
-                        plan_id,
-                        &channel,
-                        CultivationPlanPhaseName::PhaseWeatherPredictionCompleted,
-                    );
+                    if !plan_still_optimizing(&pool, plan_id) {
+                        return false;
+                    }
+                    match run_weather_prediction_step(&state, plan_id, &channel, end) {
+                        Ok(()) => true,
+                        Err(e) => {
+                            eprintln!("weather_prediction failed plan_id={plan_id}: {e}");
+                            warn!(plan_id, error = %e, "weather_prediction failed");
+                            advance_phase(
+                                &state,
+                                plan_id,
+                                &channel,
+                                CultivationPlanPhaseName::PhaseFailed,
+                                Some("predicting_weather"),
+                            );
+                            false
+                        }
+                    }
                 })
             }),
         });
@@ -223,25 +226,32 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     {
         let state = state_clone.clone();
         let channel = channel.clone();
+        let pool = pool.clone();
         steps.push(JobStep {
             name: "optimization",
             run: Arc::new(move || {
                 let state = state.clone();
                 let channel = channel.clone();
+                let pool = pool.clone();
                 Box::pin(async move {
-                    advance_phase(
-                        &state,
-                        plan_id,
-                        &channel,
-                        CultivationPlanPhaseName::PhaseOptimizing,
-                    );
-                    info!(plan_id, "optimization: allocate via agrr when optimization_snapshot gateway is wired");
-                    advance_phase(
-                        &state,
-                        plan_id,
-                        &channel,
-                        CultivationPlanPhaseName::PhaseOptimizationCompleted,
-                    );
+                    if !plan_still_optimizing(&pool, plan_id) {
+                        return false;
+                    }
+                    match run_optimization_step(&state, plan_id, &channel) {
+                        Ok(()) => true,
+                        Err(e) => {
+                            eprintln!("optimization failed plan_id={plan_id}: {e}");
+                            warn!(plan_id, error = %e, "optimization failed");
+                            advance_phase(
+                                &state,
+                                plan_id,
+                                &channel,
+                                CultivationPlanPhaseName::PhaseFailed,
+                                Some("optimizing"),
+                            );
+                            false
+                        }
+                    }
                 })
             }),
         });
@@ -250,19 +260,26 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     if ctx.all_crops_have_blueprints {
         let state = state_clone.clone();
         let channel = channel.clone();
+        let pool = pool.clone();
         steps.push(JobStep {
             name: "task_schedule_generation",
             run: Arc::new(move || {
                 let state = state.clone();
                 let channel = channel.clone();
+                let pool = pool.clone();
                 Box::pin(async move {
+                    if !plan_still_optimizing(&pool, plan_id) {
+                        return false;
+                    }
                     advance_phase(
                         &state,
                         plan_id,
                         &channel,
                         CultivationPlanPhaseName::PhaseTaskScheduleGenerating,
+                        None,
                     );
                     info!(plan_id, "task_schedule_generation: pending TaskSchedule gateways on rust");
+                    true
                 })
             }),
         });
@@ -281,25 +298,26 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                 let channel = channel.clone();
                 let state = state.clone();
                 Box::pin(async move {
-                    let _ = pool.with_write(|conn| {
-                        conn.execute(
-                            "UPDATE cultivation_plans SET status = 'completed', updated_at = datetime('now') WHERE id = ?1",
-                            params![plan_id],
-                        )
-                    });
-                    advance_phase(
-                        &state,
-                        plan_id,
-                        &channel,
-                        CultivationPlanPhaseName::PhaseCompleted,
-                    );
-                    broadcast_completed(&hub, plan_id);
-                    info!(plan_id, "optimization chain finalized");
+                    if !plan_still_optimizing(&pool, plan_id) {
+                        return false;
+                    }
+                    match run_plan_finalize_step(&state, plan_id, &channel, &hub) {
+                        Ok(()) => {
+                            info!(plan_id, "optimization chain finalized");
+                            true
+                        }
+                        Err(e) => {
+                            eprintln!("plan_finalize failed plan_id={plan_id}: {e}");
+                            warn!(plan_id, error = %e, "plan_finalize failed");
+                            false
+                        }
+                    }
                 })
             }),
         });
     }
 
+    eprintln!("optimization chain enqueued plan_id={plan_id} steps={}", steps.len());
     dispatcher.enqueue_chain(steps);
 }
 
@@ -340,6 +358,7 @@ pub fn enqueue_scheduler_weather_update_chain(state: &AppState) {
                             info!(farm_id, "scheduler: reference farm weather");
                             let _ = agrr.fetch_by_date_range(lat, lon, start, end, "jma");
                         }
+                        true
                     })
                 }
             }),
@@ -374,6 +393,7 @@ pub fn enqueue_scheduler_weather_update_chain(state: &AppState) {
                             info!(farm_id, "scheduler: user farm weather");
                             let _ = agrr.fetch_by_date_range(lat, lon, start, end, "jma");
                         }
+                        true
                     })
                 }
             }),

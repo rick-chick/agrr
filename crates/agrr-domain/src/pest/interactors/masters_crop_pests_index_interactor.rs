@@ -1,6 +1,5 @@
 //! Ruby: `Domain::Pest::Interactors::MastersCropPestsIndexInteractor`
 
-use crate::pest::entities::PestEntity;
 use crate::pest::gateways::{CropPestListOrder, PestGateway};
 use crate::pest::ports::MastersCropPestsIndexOutputPort;
 use crate::shared::gateways::UserLookupGateway;

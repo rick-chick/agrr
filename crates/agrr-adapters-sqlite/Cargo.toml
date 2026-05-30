@@ -9,6 +9,7 @@ description = "SQLite gateway implementations for agrr-domain traits (P6)"
 agrr-domain = { path = "../agrr-domain" }
 rusqlite = { version = "0.32", features = ["bundled"] }
 thiserror.workspace = true
+serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 rust_decimal.workspace = true
 time = { workspace = true, features = ["parsing", "formatting"] }

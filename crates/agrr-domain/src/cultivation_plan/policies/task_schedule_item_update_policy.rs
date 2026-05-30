@@ -2,7 +2,6 @@
 
 use std::collections::BTreeMap;
 
-use rust_decimal::Decimal;
 use time::{Date, OffsetDateTime};
 
 use crate::agricultural_task::constants::task_schedule_item_statuses::RESCHEDULED;

@@ -1,4 +1,4 @@
-use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
+use crate::shared::attr::{AttrMap, AttrValue};
 
 /// Ruby: `Domain::Field::Policies::FieldCreateAttributes`
 pub fn merge_for_build(user_id: i64, farm_id: i64, attrs: AttrMap) -> AttrMap {

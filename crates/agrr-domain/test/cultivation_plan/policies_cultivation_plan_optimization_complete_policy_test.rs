@@ -21,3 +21,15 @@
     fn should_not_mark_when_field_cultivations_empty() {
         assert!(!should_mark_plan_completed("optimizing", &[]));
     }
+
+    #[test]
+    fn allocation_has_field_schedules_when_non_empty() {
+        let v = serde_json::json!({ "field_schedules": [{ "field_id": 1 }] });
+        assert!(allocation_has_field_schedules(&v));
+    }
+
+    #[test]
+    fn allocation_has_field_schedules_false_when_empty_or_missing() {
+        assert!(!allocation_has_field_schedules(&serde_json::json!({ "field_schedules": [] })));
+        assert!(!allocation_has_field_schedules(&serde_json::json!({})));
+    }

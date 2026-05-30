@@ -1,7 +1,7 @@
 //! Ruby: `Domain::WeatherData::Interactors::WeatherPredictionInteractor`
 
 use serde_json::{json, Value};
-use time::{Date, OffsetDateTime};
+use time::Date;
 
 use crate::shared::ports::{ClockPort, LoggerPort};
 use crate::weather_data::dtos::{CultivationPlanWeather, WeatherData, WeatherLocation};
@@ -30,7 +30,7 @@ pub struct ExistingPredictionResult {
 }
 
 #[derive(Debug, Clone)]
-struct TrainingDataResult {
+pub(crate) struct TrainingDataResult {
     data: Vec<WeatherData>,
     end_date: Date,
 }
@@ -65,7 +65,7 @@ impl std::error::Error for WeatherPredictionError {}
 #[derive(Default, Clone)]
 pub struct WeatherPredictionTestOverrides {
     pub prepare_weather_data: Option<PreparedWeatherInfo>,
-    pub training_result: Option<TrainingDataResult>,
+    pub(crate) training_result: Option<TrainingDataResult>,
     pub prediction_data: Option<Value>,
 }
 

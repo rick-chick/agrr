@@ -30,10 +30,8 @@ class OptimizationChannel < ApplicationCable::Channel
 
     Rails.logger.info "✅ [OptimizationChannel#subscribed] Authorized! Streaming for plan_id=#{params[:cultivation_plan_id]}"
 
-    # 既に完了している場合は即座に通知
-    if cultivation_plan.status_completed?
-      transmit({ status: "completed", progress: 100 })
-    end
+    snapshot = Adapters::CultivationPlan::OptimizationSubscriptionSnapshot.payload_for(cultivation_plan)
+    transmit(snapshot) if snapshot.present?
   end
 
   def unsubscribed

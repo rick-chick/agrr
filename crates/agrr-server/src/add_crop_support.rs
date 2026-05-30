@@ -3,6 +3,9 @@
 use agrr_adapters_sqlite::{CropSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::crop::dtos::AddCropCropSnapshot;
 use agrr_domain::crop::entities::CropEntity;
+use agrr_domain::crop::interactors::crop_find_public_plan_add_crop_record_interactor::{
+    CropFindPublicPlanAddCropRecordInteractor, CropFindPublicPlanAddCropRecordOutputPort,
+};
 use agrr_domain::crop::interactors::crop_find_user_non_reference_record_interactor::{
     CropFindUserNonReferenceRecordInteractor, CropFindUserNonReferenceRecordOutputPort,
 };
@@ -43,6 +46,16 @@ struct CropResolveCollector {
     crop: Option<CropEntity>,
 }
 
+impl CropFindPublicPlanAddCropRecordOutputPort for CropResolveCollector {
+    fn on_success(&mut self, crop: CropEntity) {
+        self.crop = Some(crop);
+    }
+
+    fn on_failure(&mut self, _error: Error) {
+        self.crop = None;
+    }
+}
+
 impl CropFindUserNonReferenceRecordOutputPort for CropResolveCollector {
     fn on_success(&mut self, entity: CropEntity) {
         self.crop = Some(entity);
@@ -63,6 +76,34 @@ fn to_snapshot(entity: &CropEntity) -> AddCropCropSnapshot {
     }
 }
 
+pub struct AddCropCropResolvePublic<'a> {
+    crop_gateway: &'a CropSqliteGateway,
+    logger: &'a NoopLogger,
+}
+
+impl<'a> AddCropCropResolvePublic<'a> {
+    pub fn new(crop_gateway: &'a CropSqliteGateway) -> Self {
+        Self {
+            crop_gateway,
+            logger: &NoopLogger,
+        }
+    }
+}
+
+impl AddCropCropResolveInputPort for AddCropCropResolvePublic<'_> {
+    fn call(&self, crop_id: &str) -> Option<AddCropCropSnapshot> {
+        let crop_id: i64 = crop_id.parse().ok()?;
+        let mut collector = CropResolveCollector { crop: None };
+        let mut interactor = CropFindPublicPlanAddCropRecordInteractor::new(
+            &mut collector,
+            self.crop_gateway,
+            self.logger,
+        );
+        interactor.call(crop_id).ok()?;
+        collector.crop.as_ref().map(to_snapshot)
+    }
+}
+
 impl AddCropCropResolveInputPort for AddCropCropResolvePrivate<'_> {
     fn call(&self, crop_id: &str) -> Option<AddCropCropSnapshot> {
         let crop_id: i64 = crop_id.parse().ok()?;
@@ -79,7 +120,7 @@ impl AddCropCropResolveInputPort for AddCropCropResolvePrivate<'_> {
     }
 }
 
-struct AdjustResultCell {
+pub(crate) struct AdjustResultCell {
     result: Mutex<Option<AddCropAdjustResult>>,
 }
 

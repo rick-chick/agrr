@@ -7,7 +7,6 @@ use crate::fertilize::ports::AiUpdateInteractorPort;
 use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::fertilize_policy;
-use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::logger_port::LoggerPort;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::reference_record_authorization;

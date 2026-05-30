@@ -7,4 +7,6 @@ pub struct FieldCultivationSyncCultivationPlanSummary {
     pub optimization_time: Option<f64>,
     pub algorithm_used: Option<String>,
     pub is_optimal: Option<bool>,
+    /// Rails `FieldCultivationSyncCultivationPlanSummary#status` (default `"completed"` when rows exist).
+    pub status: String,
 }

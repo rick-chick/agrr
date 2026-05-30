@@ -1,7 +1,6 @@
 //! Ruby: `Domain::Fertilize::Interactors::FertilizeUpdateInteractor`
 
 use crate::fertilize::dtos::{FertilizeUpdateFailure, FertilizeUpdateInput};
-use crate::fertilize::entities::FertilizeEntity;
 use crate::fertilize::gateways::FertilizeGateway;
 use crate::fertilize::ports::{FertilizeUpdateOutputPort, UpdateFailure};
 use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};

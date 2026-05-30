@@ -2,7 +2,6 @@
 
 use crate::farm::calculators::FarmWeatherProgressCalculator;
 use crate::farm::dtos::FarmUpdateInput;
-use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::FarmGateway;
 use crate::farm::policies::{FarmCoordinateNormalizationPolicy, FarmReferenceOwnershipPolicy};
 use crate::farm::ports::{FarmUpdateOutputPort, UpdateFailure};

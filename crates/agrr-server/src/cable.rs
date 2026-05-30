@@ -4,7 +4,9 @@
 
 use crate::state::AppState;
 use agrr_adapters_sqlite::CultivationPlanSqliteGateway;
+use agrr_domain::cultivation_plan::calculators::cultivation_plan_optimization_progress_calculator;
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
+use agrr_domain::cultivation_plan::mappers::to_port_payload;
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -55,12 +57,109 @@ impl CableHub {
     }
 }
 
+fn optimization_snapshot_payload(
+    plan_gateway: &CultivationPlanSqliteGateway,
+    plan_id: i64,
+) -> Option<Value> {
+    let plan = plan_gateway.find_by_id(plan_id).ok()?;
+    let status = plan.status.as_deref().unwrap_or("");
+
+    if status == "completed" {
+        let field_cultivations = plan_gateway.list_by_plan_id(plan_id).ok()?;
+        if field_cultivations.is_empty()
+            || !field_cultivations
+                .iter()
+                .all(|fc| fc.status.as_deref() == Some("completed"))
+        {
+            let message = plan.optimization_phase_message.as_deref();
+            return Some(json!({
+                "status": "failed",
+                "progress": 0,
+                "phase": plan.optimization_phase,
+                "phase_message": message,
+                "message": message
+            }));
+        }
+        return Some(json!({
+            "status": "completed",
+            "progress": 100
+        }));
+    }
+
+    if status == "failed" {
+        let message = plan.optimization_phase_message.as_deref();
+        return Some(json!({
+            "status": "failed",
+            "progress": 0,
+            "phase": plan.optimization_phase,
+            "phase_message": message,
+            "message": message
+        }));
+    }
+
+    if status != "optimizing" {
+        return None;
+    }
+
+    let field_cultivations = plan_gateway.list_by_plan_id(plan_id).ok()?;
+    let progress =
+        cultivation_plan_optimization_progress_calculator::progress_percent(&field_cultivations);
+    let phase_message = plan.optimization_phase_message.as_deref();
+    Some(to_port_payload(&plan, progress, phase_message))
+}
+
+async fn send_pong(socket: &mut WebSocket) -> bool {
+    let pong = json!({ "type": "pong" });
+    socket
+        .send(Message::Text(pong.to_string().into()))
+        .await
+        .is_ok()
+}
+
+fn parse_plan_id_from_identifier(id_json: &Value) -> Option<i64> {
+    let raw = id_json.get("cultivation_plan_id")?;
+    raw.as_i64()
+        .or_else(|| raw.as_str().and_then(|s| s.parse().ok()))
+        .or_else(|| raw.as_f64().map(|f| f as i64))
+}
+
+async fn transmit_snapshot(
+    socket: &mut WebSocket,
+    identifier: &str,
+    plan_gateway: &CultivationPlanSqliteGateway,
+    plan_id: i64,
+) -> bool {
+    let Some(payload) = optimization_snapshot_payload(plan_gateway, plan_id) else {
+        return true;
+    };
+    let message = json!({
+        "identifier": identifier,
+        "message": payload
+    });
+    socket
+        .send(Message::Text(message.to_string().into()))
+        .await
+        .is_ok()
+}
+
 async fn cable_ws(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
     let hub = state.cable_hub.clone();
-    ws.on_upgrade(move |socket| handle_socket(socket, hub, state))
+    // actioncable-js は Sec-WebSocket-Protocol: actioncable-v1-json を送る。応答しないとハンドシェイク失敗。
+    ws.protocols(["actioncable-v1-json"])
+        .on_upgrade(move |socket| handle_socket(socket, hub, state))
 }
 
 async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppState) {
+    // actioncable-js は welcome 受信後に subscribe を送る。未送信だと購読が開始されない。
+    let welcome = json!({ "type": "welcome" });
+    if socket
+        .send(Message::Text(welcome.to_string().into()))
+        .await
+        .is_err()
+    {
+        return;
+    }
+
     let plan_gateway = CultivationPlanSqliteGateway::new(state.sqlite.clone());
     while let Some(Ok(msg)) = socket.recv().await {
         let Message::Text(text) = msg else {
@@ -69,6 +168,15 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
         let Ok(frame): Result<Value, _> = serde_json::from_str(&text) else {
             continue;
         };
+        if frame.get("type").and_then(|t| t.as_str()) == Some("ping") {
+            if !send_pong(&mut socket).await {
+                return;
+            }
+            continue;
+        }
+        if frame.get("command").and_then(|c| c.as_str()) == Some("pong") {
+            continue;
+        }
         if frame.get("command").and_then(|c| c.as_str()) != Some("subscribe") {
             continue;
         }
@@ -80,9 +188,7 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
             continue;
         };
         let channel = id_json.get("channel").and_then(|c| c.as_str()).unwrap_or("");
-        let plan_id = id_json
-            .get("cultivation_plan_id")
-            .and_then(|v| v.as_i64());
+        let plan_id = parse_plan_id_from_identifier(&id_json);
         if channel != "OptimizationChannel" && channel != "PlansOptimizationChannel" {
             continue;
         }
@@ -109,6 +215,9 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
         if socket.send(Message::Text(confirm.to_string().into())).await.is_err() {
             return;
         }
+        if !transmit_snapshot(&mut socket, identifier, &plan_gateway, plan_id).await {
+            return;
+        }
         let mut rx = hub.subscribe_plan(plan_id).await;
         loop {
             tokio::select! {
@@ -116,6 +225,15 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
                     match incoming {
                         None | Some(Err(_)) => return,
                         Some(Ok(Message::Close(_))) => return,
+                        Some(Ok(Message::Text(text))) => {
+                            if let Ok(frame) = serde_json::from_str::<Value>(&text) {
+                                if frame.get("type").and_then(|t| t.as_str()) == Some("ping") {
+                                    if !send_pong(&mut socket).await {
+                                        return;
+                                    }
+                                }
+                            }
+                        }
                         _ => {}
                     }
                 }

@@ -1,6 +1,5 @@
 //! agrr daemon: progress + predict for field cultivation climate.
 
-use std::path::PathBuf;
 
 use agrr_domain::field_cultivation::gateways::{
     FieldCultivationClimateProgressGateway, FieldCultivationPredictionGateway,

@@ -82,7 +82,11 @@ fn pick_string(h: &Value, key: &str) -> Option<String> {
 }
 
 fn pick_i64(h: &Value, key: &str) -> Option<i64> {
-    h.get(key).and_then(|v| v.as_i64())
+    match h.get(key)? {
+        Value::Number(n) => n.as_i64(),
+        Value::String(s) => s.parse().ok(),
+        _ => None,
+    }
 }
 
 fn pick_f64(h: &Value, key: &str) -> Option<f64> {

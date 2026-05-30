@@ -11,7 +11,6 @@ use crate::public_plan::ports::{
     PlanInitializerPort, PublicPlanCreateOutputPort, PublicPlanCropGateway,
 };
 use crate::shared::dtos::Error;
-use crate::shared::exceptions::RecordInvalidError;
 use crate::shared::ports::{ClockPort, LoggerPort};
 
 const CALLER_LABEL: &str = "Domain::PublicPlan::Interactors::PublicPlanCreateInteractor";
@@ -159,14 +158,15 @@ where
     }
 }
 
-/// Validates clock at construction time (Ruby: `initialize`).
-pub fn validate_clock(clock: &dyn ClockPort) -> Result<(), ClockRequiredError> {
-    let _ = clock.today();
-    Ok(())
-}
-
 #[cfg(test)]
 mod interactors_public_plan_create_interactor_test_inline {
     use super::*;
+
+    /// Validates clock at construction time (Ruby: `initialize`).
+    fn validate_clock(clock: &dyn ClockPort) -> Result<(), ClockRequiredError> {
+        let _ = clock.today();
+        Ok(())
+    }
+
     include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/public_plan/interactors_public_plan_create_interactor_test.rs"));
 }

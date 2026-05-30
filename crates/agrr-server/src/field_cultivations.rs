@@ -31,6 +31,13 @@ pub fn routes() -> Router<AppState> {
         )
 }
 
+pub fn public_routes() -> Router<AppState> {
+    Router::new().route(
+        "/api/v1/public_plans/field_cultivations/{id}",
+        get(show_public_field_cultivation).patch(update_public_field_cultivation),
+    )
+}
+
 #[derive(Serialize)]
 struct FieldCultivationShowItem {
     id: i64,
@@ -51,7 +58,7 @@ struct ShowPresenter {
 
 enum ShowOutcome {
     Success(FieldCultivationShowItem),
-    NotFound(String),
+    NotFound,
 }
 
 impl FieldCultivationApiShowOutputPort for ShowPresenter {
@@ -70,8 +77,8 @@ impl FieldCultivationApiShowOutputPort for ShowPresenter {
         }));
     }
 
-    fn on_failure(&mut self, error: Error) {
-        self.body = Some(ShowOutcome::NotFound(error.message));
+    fn on_failure(&mut self, _error: Error) {
+        self.body = Some(ShowOutcome::NotFound);
     }
 }
 
@@ -116,7 +123,7 @@ async fn show_field_cultivation(
 
     match presenter.body {
         Some(ShowOutcome::Success(item)) => Ok(Json(item)),
-        Some(ShowOutcome::NotFound(_)) => Err((
+        Some(ShowOutcome::NotFound) => Err((
             axum::http::StatusCode::NOT_FOUND,
             Json(serde_json::json!({"error": "not found"})),
         )),
@@ -170,6 +177,26 @@ impl FieldCultivationApiUpdateOutputPort for UpdatePresenter {
     }
 }
 
+fn map_update_outcome(
+    presenter: UpdatePresenter,
+) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
+    match presenter.body {
+        Some(UpdateOutcome::Success(json)) => Ok(Json(json)),
+        Some(UpdateOutcome::NotFound(msg)) => Err((
+            axum::http::StatusCode::NOT_FOUND,
+            Json(serde_json::json!({"error": msg})),
+        )),
+        Some(UpdateOutcome::Invalid(errors)) => Err((
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            Json(serde_json::json!({"success": false, "errors": errors})),
+        )),
+        None => Err((
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error": "no response"})),
+        )),
+    }
+}
+
 async fn update_field_cultivation(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -210,19 +237,77 @@ async fn update_field_cultivation(
         )
     })?;
 
+    map_update_outcome(presenter)
+}
+
+async fn show_public_field_cultivation(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<FieldCultivationShowItem>, (axum::http::StatusCode, Json<serde_json::Value>)> {
+    let pool = state.sqlite.clone();
+    let gateway =
+        FieldCultivationClimateSourceSqliteGateway::new(pool.database_path());
+    let mut presenter = ShowPresenter { body: None };
+    let mut interactor =
+        FieldCultivationShowInteractor::<_, _, UserLookupSqliteGateway>::new(
+            &mut presenter,
+            &gateway,
+        );
+    if let Err(err) = interactor.call(id) {
+        if err.downcast_ref::<RecordNotFoundError>().is_some()
+            || err.downcast_ref::<PolicyPermissionDenied>().is_some()
+        {
+            return Err((
+                axum::http::StatusCode::NOT_FOUND,
+                Json(serde_json::json!({"error": "not found"})),
+            ));
+        }
+        return Err((
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error": "internal"})),
+        ));
+    }
+
     match presenter.body {
-        Some(UpdateOutcome::Success(json)) => Ok(Json(json)),
-        Some(UpdateOutcome::NotFound(msg)) => Err((
+        Some(ShowOutcome::Success(item)) => Ok(Json(item)),
+        Some(ShowOutcome::NotFound) => Err((
             axum::http::StatusCode::NOT_FOUND,
-            Json(serde_json::json!({"error": msg})),
-        )),
-        Some(UpdateOutcome::Invalid(errors)) => Err((
-            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-            Json(serde_json::json!({"success": false, "errors": errors})),
+            Json(serde_json::json!({"error": "not found"})),
         )),
         None => Err((
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({"error": "no response"})),
         )),
     }
+}
+
+async fn update_public_field_cultivation(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Json(body): Json<UpdateFieldCultivationBody>,
+) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
+    let pool = state.sqlite.clone();
+    let gateway =
+        FieldCultivationClimateSourceSqliteGateway::new(pool.database_path());
+    let mut presenter = UpdatePresenter { body: None };
+    let mut interactor = FieldCultivationUpdateInteractor::<
+        _,
+        _,
+        UserLookupSqliteGateway,
+        crate::adapters::PassthroughTranslator,
+    >::new(&mut presenter, &gateway);
+    let input = FieldCultivationApiUpdateInput {
+        field_cultivation_id: id,
+        start_date: body.field_cultivation.start_date,
+        completion_date: body.field_cultivation.completion_date,
+        public_plan: true,
+    };
+    interactor.call(input).map_err(|_| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error": "internal"})),
+        )
+    })?;
+
+    map_update_outcome(presenter)
 }

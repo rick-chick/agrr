@@ -10,11 +10,19 @@ use agrr_domain::contact_messages::ports::{
     ContactMessageRateLimiterPort, CreateContactMessageOutputPort, RateLimitTrackResult,
     RecaptchaVerifierPort, RecaptchaVerifyResult,
 };
-use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
+use axum::{extract::State, http::StatusCode, routing::{get, post}, Json, Router};
 use serde::Deserialize;
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route("/api/v1/contact_messages", post(create))
+    Router::new().route(
+        "/api/v1/contact_messages",
+        post(create).get(index_contact_messages),
+    )
+}
+
+/// Rails routes `index` but has no controller action; empty list keeps parity without exposing data.
+async fn index_contact_messages() -> Json<Vec<serde_json::Value>> {
+    Json(vec![])
 }
 
 #[derive(Debug, Deserialize)]

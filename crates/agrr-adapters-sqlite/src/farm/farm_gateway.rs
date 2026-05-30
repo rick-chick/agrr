@@ -42,16 +42,18 @@ fn map_farm_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<FarmEntity> {
         created_at: row.get(7)?,
         updated_at: row.get(8)?,
         is_reference: is_reference != 0,
-        weather_data_status: None,
-        weather_data_fetched_years: None,
-        weather_data_total_years: None,
-        weather_data_last_error: None,
-        weather_location_id: None,
-        last_broadcast_at: None,
+        weather_data_status: row.get(9)?,
+        weather_data_fetched_years: row.get(10)?,
+        weather_data_total_years: row.get(11)?,
+        weather_data_last_error: row.get(12)?,
+        weather_location_id: row.get(13)?,
+        last_broadcast_at: row.get(14)?,
     })
 }
 
-const FARM_SELECT: &str = "SELECT id, name, latitude, longitude, region, user_id, is_reference, created_at, updated_at FROM farms";
+const FARM_SELECT: &str = "SELECT id, name, latitude, longitude, region, user_id, is_reference, created_at, updated_at, \
+    weather_data_status, weather_data_fetched_years, weather_data_total_years, weather_data_last_error, \
+    weather_location_id, last_broadcast_at FROM farms";
 
 impl FarmGateway for FarmSqliteGateway {
     fn list_user_owned_farms(
@@ -107,10 +109,73 @@ impl FarmGateway for FarmSqliteGateway {
 
     fn update_weather_progress(
         &self,
-        _farm_id: i64,
-        _attrs: AttrMap,
+        farm_id: i64,
+        attrs: AttrMap,
     ) -> Result<FarmEntity, Box<dyn std::error::Error + Send + Sync>> {
-        Err(unsupported("update_weather_progress"))
+        if !attrs.is_empty() {
+            self.pool.with_write_box(|conn| {
+                if let Some(v) = attrs.get("weather_data_status").and_then(attr_as_str) {
+                    conn.execute(
+                        "UPDATE farms SET weather_data_status = ?1, updated_at = datetime('now') WHERE id = ?2",
+                        params![v, farm_id],
+                    )?;
+                }
+                if let Some(v) = attrs.get("weather_data_fetched_years").and_then(attr_as_i64) {
+                    conn.execute(
+                        "UPDATE farms SET weather_data_fetched_years = ?1, updated_at = datetime('now') WHERE id = ?2",
+                        params![v, farm_id],
+                    )?;
+                }
+                if let Some(v) = attrs.get("weather_data_total_years").and_then(attr_as_i64) {
+                    conn.execute(
+                        "UPDATE farms SET weather_data_total_years = ?1, updated_at = datetime('now') WHERE id = ?2",
+                        params![v, farm_id],
+                    )?;
+                }
+                if let Some(v) = attrs.get("weather_data_last_error") {
+                    match v {
+                        AttrValue::Null => {
+                            conn.execute(
+                                "UPDATE farms SET weather_data_last_error = NULL, updated_at = datetime('now') WHERE id = ?1",
+                                params![farm_id],
+                            )?;
+                        }
+                        AttrValue::Str(s) => {
+                            conn.execute(
+                                "UPDATE farms SET weather_data_last_error = ?1, updated_at = datetime('now') WHERE id = ?2",
+                                params![s, farm_id],
+                            )?;
+                        }
+                        _ => {}
+                    }
+                }
+                if let Some(v) = attrs.get("weather_location_id") {
+                    match v {
+                        AttrValue::Null => {
+                            conn.execute(
+                                "UPDATE farms SET weather_location_id = NULL, updated_at = datetime('now') WHERE id = ?1",
+                                params![farm_id],
+                            )?;
+                        }
+                        AttrValue::Int(id) => {
+                            conn.execute(
+                                "UPDATE farms SET weather_location_id = ?1, updated_at = datetime('now') WHERE id = ?2",
+                                params![id, farm_id],
+                            )?;
+                        }
+                        _ => {}
+                    }
+                }
+                if let Some(v) = attrs.get("last_broadcast_at").and_then(attr_as_i64) {
+                    conn.execute(
+                        "UPDATE farms SET last_broadcast_at = ?1, updated_at = datetime('now') WHERE id = ?2",
+                        params![v as f64, farm_id],
+                    )?;
+                }
+                Ok(())
+            })?;
+        }
+        FarmGateway::find_by_id(self, farm_id)
     }
 
     fn list_reference_farms_for_region(
@@ -356,6 +421,13 @@ fn attr_as_f64(v: &AttrValue) -> Option<f64> {
     match v {
         AttrValue::Str(s) => s.parse().ok(),
         AttrValue::Int(i) => Some(*i as f64),
+        _ => None,
+    }
+}
+
+fn attr_as_i64(v: &AttrValue) -> Option<i64> {
+    match v {
+        AttrValue::Int(i) => Some(*i),
         _ => None,
     }
 }

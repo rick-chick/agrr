@@ -186,7 +186,6 @@ impl EntryScheduleWeatherLoaderPort for StubWeatherLoader {
 
 struct OptimizeRunner {
     pool: agrr_adapters_sqlite::SqlitePool,
-    crop_gateway: CropSqliteGateway,
     optimization: EntryScheduleOptimizationAgrrDaemonGateway,
     agrr_enabled: bool,
 }
@@ -372,7 +371,6 @@ async fn entry_schedule_crop_show(
     let agrr_enabled = AgrrDaemonClient::from_env().daemon_running();
     let runner = OptimizeRunner {
         pool: pool.clone(),
-        crop_gateway: CropSqliteGateway::new(pool),
         optimization: EntryScheduleOptimizationAgrrDaemonGateway::from_env(),
         agrr_enabled,
     };
@@ -421,7 +419,6 @@ async fn entry_schedule_crops(
     let agrr_enabled = AgrrDaemonClient::from_env().daemon_running();
     let runner = OptimizeRunner {
         pool: pool.clone(),
-        crop_gateway: CropSqliteGateway::new(pool),
         optimization: EntryScheduleOptimizationAgrrDaemonGateway::from_env(),
         agrr_enabled,
     };

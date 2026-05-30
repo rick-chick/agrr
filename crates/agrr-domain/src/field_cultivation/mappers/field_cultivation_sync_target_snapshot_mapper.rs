@@ -77,6 +77,12 @@ pub fn to_target_snapshot(
     referenced_crop_ids.sort();
     referenced_crop_ids.dedup();
 
+    let plan_status = if field_cultivation_rows.is_empty() {
+        "optimizing".to_string()
+    } else {
+        "completed".to_string()
+    };
+
     Ok(FieldCultivationSyncTargetSnapshot {
         field_cultivation_rows,
         cultivation_plan_summary: FieldCultivationSyncCultivationPlanSummary {
@@ -87,6 +93,7 @@ pub fn to_target_snapshot(
             optimization_time: sync_input.optimization_time,
             algorithm_used: sync_input.algorithm_used.clone(),
             is_optimal: sync_input.is_optimal,
+            status: plan_status,
         },
         referenced_crop_ids,
     })

@@ -1,6 +1,7 @@
 pub(crate) mod masters_crop_pests_create_output_port;
 pub(crate) mod masters_crop_pests_destroy_output_port;
 pub(crate) mod masters_crop_pests_index_output_port;
+pub(crate) mod pest_ai_create_interactor_port;
 pub(crate) mod pest_ai_create_output_port;
 pub(crate) mod pest_ai_update_interactor_port;
 pub(crate) mod pest_create_output_port;
@@ -12,6 +13,7 @@ pub(crate) mod pest_update_output_port;
 pub use masters_crop_pests_create_output_port::MastersCropPestsCreateOutputPort;
 pub use masters_crop_pests_destroy_output_port::MastersCropPestsDestroyOutputPort;
 pub use masters_crop_pests_index_output_port::MastersCropPestsIndexOutputPort;
+pub use pest_ai_create_interactor_port::{PestAiCreateInteractorPort, PestAiCreateResult};
 pub use pest_ai_create_output_port::PestAiCreateOutputPort;
 pub use pest_ai_update_interactor_port::{PestAiUpdateInteractorPort, PestAiUpdateResult};
 pub use pest_create_output_port::{CreateFailure, PestCreateOutputPort};

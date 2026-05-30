@@ -1,7 +1,7 @@
 //! Ruby: `Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor`
 
 use rust_decimal::Decimal;
-use time::{Date, OffsetDateTime};
+use time::Date;
 
 use crate::agricultural_task::constants::schedule_item_types::{
     BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
@@ -21,11 +21,6 @@ use crate::shared::type_converters::cast_big_decimal_json;
 #[derive(Debug, Clone, thiserror::Error)]
 #[error("{0}")]
 pub struct TaskScheduleGenerateError(pub String);
-
-pub type WeatherDataMissingError = TaskScheduleGenerateError;
-pub type ProgressDataMissingError = TaskScheduleGenerateError;
-pub type GddTriggerMissingError = TaskScheduleGenerateError;
-pub type TemplateMissingError = TaskScheduleGenerateError;
 
 pub struct TaskScheduleGenerateInteractor<'a, PG, TG, CP, RG, C> {
     progress_gateway: &'a PG,
@@ -463,7 +458,7 @@ fn filtered_weather_data(weather_data: &serde_json::Value, start_date: Option<Da
     let Some(start_date) = start_date else {
         return weather_data.clone();
     };
-    let Some(obj) = weather_data.as_object() else {
+    let Some(_obj) = weather_data.as_object() else {
         return weather_data.clone();
     };
 

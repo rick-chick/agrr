@@ -1,11 +1,10 @@
 //! Ruby: `Domain::Crop::Interactors::CropCreateInteractor`
 
 use crate::crop::dtos::{CropCreateInput, CropCreateLimitExceededFailure};
-use crate::crop::entities::CropEntity;
 use crate::crop::gateways::CropGateway;
 use crate::crop::policies::crop_create_limit_policy;
 use crate::crop::ports::{CreateFailure, CropCreateOutputPort};
-use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
+use crate::shared::attr::{attr_map_from_pairs, AttrValue};
 use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::UserLookupGateway;
@@ -57,7 +56,7 @@ where
             return Ok(());
         }
 
-        let mut attrs = crop_policy::normalize_attrs_for_create(
+        let attrs = crop_policy::normalize_attrs_for_create(
             &user,
             attr_map_from_pairs([
                 ("name", AttrValue::from(input.name.as_str())),

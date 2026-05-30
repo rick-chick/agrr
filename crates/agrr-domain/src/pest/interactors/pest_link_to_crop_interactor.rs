@@ -1,6 +1,5 @@
 //! Ruby: `Domain::Pest::Interactors::PestLinkToCropInteractor`
 
-use crate::pest::entities::PestEntity;
 use crate::pest::gateways::{CropGateway, CropPestGateway, PestGateway};
 use crate::shared::exceptions::RecordNotFoundError;
 

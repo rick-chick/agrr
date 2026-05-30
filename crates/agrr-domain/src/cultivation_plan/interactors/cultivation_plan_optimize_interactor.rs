@@ -6,11 +6,11 @@ use crate::cultivation_plan::errors::{
     AllocationExecutionError, AllocationNoCandidatesError, CultivationPlanCropMissingError,
 };
 use crate::cultivation_plan::gateways::{
-    CultivationPlanOptimizationGateway, CultivationPlanPrivateSnapshotReadGateway,
-    PlanAllocationAllocateGateway,
+    CultivationPlanPrivateSnapshotReadGateway, PlanAllocationAllocateGateway,
 };
+use crate::cultivation_plan::policies::cultivation_plan_optimization_complete_policy;
 use crate::shared::exceptions::RecordInvalidError;
-use crate::shared::ports::{ClockPort, LoggerPort};
+use crate::shared::ports::LoggerPort;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct WeatherDataNotFoundError {
@@ -25,38 +25,30 @@ impl fmt::Display for WeatherDataNotFoundError {
 
 impl std::error::Error for WeatherDataNotFoundError {}
 
-pub struct CultivationPlanOptimizeInteractor<'a, A, C, L, O, P> {
+pub struct CultivationPlanOptimizeInteractor<'a, A, L, P> {
     plan_id: i64,
     allocate_gateway: &'a A,
-    cultivation_plan_gateway: &'a C,
     private_read_gateway: &'a P,
     logger: &'a L,
-    clock: &'a O,
 }
 
-impl<'a, A, C, L, O, P> CultivationPlanOptimizeInteractor<'a, A, C, L, O, P>
+impl<'a, A, L, P> CultivationPlanOptimizeInteractor<'a, A, L, P>
 where
     A: PlanAllocationAllocateGateway,
-    C: CultivationPlanOptimizationGateway,
     P: CultivationPlanPrivateSnapshotReadGateway,
     L: LoggerPort,
-    O: ClockPort,
 {
     pub fn new(
         plan_id: i64,
         allocate_gateway: &'a A,
-        cultivation_plan_gateway: &'a C,
         private_read_gateway: &'a P,
         logger: &'a L,
-        clock: &'a O,
     ) -> Self {
         Self {
             plan_id,
             allocate_gateway,
-            cultivation_plan_gateway,
             private_read_gateway,
             logger,
-            clock,
         }
     }
 
@@ -102,7 +94,14 @@ where
             )
             ?;
 
-        let _ = allocation_result;
+        if !cultivation_plan_optimization_complete_policy::allocation_has_field_schedules(
+            &allocation_result,
+        ) {
+            return Err(Box::new(AllocationNoCandidatesError::new(
+                "no field schedules in allocation result",
+            )));
+        }
+
         self.logger
             .info(&format!("✅ CultivationPlan #{} optimization completed", self.plan_id));
         Ok(true)

@@ -18,13 +18,6 @@ impl CultivationPlanPlanCropSqliteGateway {
     }
 }
 
-fn unsupported(method: &str) -> Box<dyn std::error::Error + Send + Sync> {
-    Box::new(std::io::Error::new(
-        std::io::ErrorKind::Unsupported,
-        format!("{method} not supported in P6 plan crop write slice"),
-    ))
-}
-
 impl CultivationPlanPlanCropGateway for CultivationPlanPlanCropSqliteGateway {
     fn create_for_plan(
         &self,

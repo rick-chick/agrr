@@ -1,6 +1,5 @@
 //! Ruby: `Domain::CultivationPlan::Gateways::PlanAllocationCandidatesGateway`
 
-use crate::cultivation_plan::errors::{AllocationExecutionError, AllocationNoCandidatesError};
 use serde_json::Value;
 use time::Date;
 

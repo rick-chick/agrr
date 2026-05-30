@@ -1,7 +1,5 @@
 //! Ruby: `Domain::Farm::Interactors::FarmDetailInteractor`
 
-use crate::farm::dtos::FarmDetailOutput;
-use crate::farm::entities::FarmEntity;
 use crate::farm::gateways::FarmGateway;
 use crate::farm::ports::{DetailFailure, FarmDetailOutputPort};
 use crate::shared::dtos::Error;

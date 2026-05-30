@@ -377,7 +377,7 @@ impl PublicPlanSavePersistencePort for PublicPlanSavePersistenceSqliteAdapter {
             &logger,
             &translator,
         );
-        let field_output = fields_interactor.call(PlanSaveEnsureUserFieldsInput {
+        let _field_output = fields_interactor.call(PlanSaveEnsureUserFieldsInput {
             user_id,
             farm_id: farm_output.farm_id,
             farm_reused: farm_output.farm_reused,

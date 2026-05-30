@@ -1,7 +1,6 @@
 //! Ruby: `Domain::Crop::Interactors::CropDestroyInteractor`
 
 use crate::crop::dtos::CropDestroyOutput;
-use crate::crop::entities::CropEntity;
 use crate::crop::gateways::{CropGateway, SoftDeleteWithUndoOutcome};
 use crate::crop::policies::{CropDestroyBlockedReason, CropDestroyPolicy};
 use crate::crop::ports::{CropDestroyOutputPort, DestroyFailure};
@@ -9,7 +8,6 @@ use crate::shared::dtos::Error;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::crop_policy;
-use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::reference_record_authorization;
 

@@ -176,9 +176,9 @@ impl FieldCultivationSyncGateway for FieldCultivationSyncSqliteGateway {
             conn.execute(
                 "UPDATE cultivation_plans SET \
                  optimization_summary = ?1, total_profit = ?2, total_revenue = ?3, total_cost = ?4, \
-                 optimization_time = ?5, algorithm_used = ?6, is_optimal = ?7, status = 'completed', \
-                 updated_at = ?8 \
-                 WHERE id = ?9",
+                 optimization_time = ?5, algorithm_used = ?6, is_optimal = ?7, status = ?8, \
+                 updated_at = ?9 \
+                 WHERE id = ?10",
                 params![
                     summary.optimization_summary,
                     summary.total_profit,
@@ -187,6 +187,7 @@ impl FieldCultivationSyncGateway for FieldCultivationSyncSqliteGateway {
                     summary.optimization_time,
                     summary.algorithm_used,
                     summary.is_optimal.map(|b| if b { 1i64 } else { 0i64 }),
+                    summary.status,
                     now,
                     plan_id,
                 ],

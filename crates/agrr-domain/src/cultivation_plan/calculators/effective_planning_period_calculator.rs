@@ -47,7 +47,7 @@ pub fn calculate(
         return Ok((effective_start, effective_end));
     }
 
-    let mut effective_start = planning_start_date.unwrap_or(as_of);
+    let effective_start = planning_start_date.unwrap_or(as_of);
     let mut effective_end = planning_end_date.unwrap_or_else(|| two_years_later_end_of_year(effective_start));
     if effective_start > effective_end {
         effective_end = two_years_later_end_of_year(effective_start);

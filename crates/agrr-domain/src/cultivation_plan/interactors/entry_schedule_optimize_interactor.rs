@@ -10,7 +10,7 @@ use crate::cultivation_plan::gateways::{
     EntryScheduleCropGateway, EntryScheduleOptimizationGateway,
 };
 use crate::cultivation_plan::interactors::entry_schedule::{
-    stage_role_resolver::StageRoleResolver, DateRange, WindowServiceResult, CropStageSnapshot,
+    stage_role_resolver::StageRoleResolver, DateRange, WindowServiceResult,
 };
 use crate::cultivation_plan::normalizers::entry_schedule_weather_payload_normalizer;
 use crate::shared::hash::present;

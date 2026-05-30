@@ -22,13 +22,6 @@ impl CultivationPlanSqliteGateway {
     }
 }
 
-fn unsupported(method: &str) -> Box<dyn std::error::Error + Send + Sync> {
-    Box::new(std::io::Error::new(
-        std::io::ErrorKind::Unsupported,
-        format!("{method} not supported in P6 cultivation plan read slice"),
-    ))
-}
-
 impl CultivationPlanGateway for CultivationPlanSqliteGateway {
     fn find_by_id(
         &self,

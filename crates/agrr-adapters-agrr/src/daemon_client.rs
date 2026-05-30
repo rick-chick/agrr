@@ -10,8 +10,8 @@ pub enum AgrrDaemonError {
     NotRunning(String),
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("daemon command failed")]
-    CommandFailed,
+    #[error("daemon command failed: {0}")]
+    CommandFailed(String),
 }
 
 /// Minimal Unix-socket client matching Ruby `DaemonClient` surface for P6.
@@ -49,11 +49,15 @@ impl AgrrDaemonClient {
             std::io::Error::new(std::io::ErrorKind::InvalidData, e),
         ))?;
 
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .map_err(|e| AgrrDaemonError::Io(std::io::Error::other(e)))?;
-        let response = rt.block_on(self.execute_json_command(&line))?;
+        let response = if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            tokio::task::block_in_place(|| handle.block_on(self.execute_json_command(&line)))
+        } else {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .map_err(|e| AgrrDaemonError::Io(std::io::Error::other(e)))?;
+            rt.block_on(self.execute_json_command(&line))
+        }?;
         let value: Value = serde_json::from_str(&response).map_err(|e| {
             AgrrDaemonError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e))
         })?;
@@ -73,7 +77,9 @@ impl AgrrDaemonClient {
         stream.read_to_end(&mut buf).await?;
         let response = String::from_utf8_lossy(&buf).into_owned();
         if response.trim().is_empty() {
-            return Err(AgrrDaemonError::CommandFailed);
+            return Err(AgrrDaemonError::CommandFailed(
+                "empty response from daemon".into(),
+            ));
         }
         Ok(response)
     }

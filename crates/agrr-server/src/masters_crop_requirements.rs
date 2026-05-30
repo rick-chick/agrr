@@ -54,6 +54,7 @@ pub fn routes() -> Router<AppState> {
                     get(temperature_show)
                         .post(temperature_create)
                         .put(temperature_update)
+                        .patch(temperature_update)
                         .delete(temperature_destroy),
                 )
                 .route(
@@ -61,6 +62,7 @@ pub fn routes() -> Router<AppState> {
                     get(thermal_show)
                         .post(thermal_create)
                         .put(thermal_update)
+                        .patch(thermal_update)
                         .delete(thermal_destroy),
                 )
                 .route(
@@ -68,6 +70,7 @@ pub fn routes() -> Router<AppState> {
                     get(sunshine_show)
                         .post(sunshine_create)
                         .put(sunshine_update)
+                        .patch(sunshine_update)
                         .delete(sunshine_destroy),
                 )
                 .route(
@@ -75,6 +78,7 @@ pub fn routes() -> Router<AppState> {
                     get(nutrient_show)
                         .post(nutrient_create)
                         .put(nutrient_update)
+                        .patch(nutrient_update)
                         .delete(nutrient_destroy),
                 ),
         )

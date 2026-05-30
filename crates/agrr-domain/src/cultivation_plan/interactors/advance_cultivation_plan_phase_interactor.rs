@@ -1,7 +1,7 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::AdvanceCultivationPlanPhaseInteractor`
 
 use crate::cultivation_plan::calculators::cultivation_plan_optimization_progress_calculator;
-    use crate::cultivation_plan::dtos::{AdvanceCultivationPlanPhaseInput, CultivationPlanPhaseName};
+    use crate::cultivation_plan::dtos::AdvanceCultivationPlanPhaseInput;
 use crate::cultivation_plan::entities::CultivationPlanEntity;
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::cultivation_plan::mappers::to_port_payload;

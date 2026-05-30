@@ -1,7 +1,6 @@
 //! Ruby: `Domain::Pest::Interactors::PestUpdateInteractor`
 
 use crate::pest::dtos::PestUpdateInput;
-use crate::pest::entities::PestEntity;
 use crate::pest::gateways::{CropGateway, CropPestGateway, PestGateway};
 use crate::pest::ports::{PestUpdateOutputPort, UpdateFailure};
 use crate::pest::services::{CropPestAssociationSync, FilterAssociableCropIds};
@@ -10,7 +9,6 @@ use crate::shared::dtos::{Error, ReferenceFlagChangeDeniedFailure};
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::pest_policy;
-use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::policies::referencable_resource_policy::{
     reference_flag_change_allowed, reference_record_user_id_valid,
 };
