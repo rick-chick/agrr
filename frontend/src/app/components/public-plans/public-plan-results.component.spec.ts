@@ -1,35 +1,35 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { ChangeDetectorRef } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PublicPlanResultsComponent } from './public-plan-results.component';
 import { SavePublicPlanUseCase } from '../../usecase/public-plans/save-public-plan.usecase';
 import { LoadPublicPlanResultsUseCase } from '../../usecase/public-plans/load-public-plan-results.usecase';
 import { PublicPlanResultsPresenter } from '../../usecase/public-plans/public-plan-results.providers';
-import { LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT } from '../../usecase/public-plans/load-public-plan-results.output-port';
-import { SAVE_PUBLIC_PLAN_OUTPUT_PORT } from '../../usecase/public-plans/save-public-plan.output-port';
 import { PublicPlanResultsViewState } from './public-plan-results.view';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
-import { ChangeDetectorRef } from '@angular/core';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 describe('PublicPlanResultsComponent', () => {
   let component: PublicPlanResultsComponent;
-  let fixture: ComponentFixture<PublicPlanResultsComponent>;
   let saveUseCase: { execute: ReturnType<typeof vi.fn> };
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
-  let authService: { user: ReturnType<typeof vi.fn> };
-  let publicPlanStore: { state: { planId: number | null; farm: any } };
+  let authService: { user: ReturnType<typeof vi.fn>; loadCurrentUser: ReturnType<typeof vi.fn> };
+  let publicPlanStore: { state: { planId: number | null; farm: { name: string } } };
   let activatedRoute: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+  let flashMessage: { show: ReturnType<typeof vi.fn> };
+  let mockTranslate: { instant: ReturnType<typeof vi.fn> };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     saveUseCase = { execute: vi.fn(() => of(undefined)) };
     loadUseCase = { execute: vi.fn(() => of(undefined)) };
     mockPresenter = { setView: vi.fn() };
-    authService = { user: vi.fn() };
+    authService = { user: vi.fn(), loadCurrentUser: vi.fn(() => of(null)) };
     publicPlanStore = { state: { planId: null, farm: { name: 'Test Farm' } } };
     activatedRoute = {
       snapshot: {
@@ -37,32 +37,38 @@ describe('PublicPlanResultsComponent', () => {
       }
     };
     cdr = { markForCheck: vi.fn() };
+    flashMessage = { show: vi.fn() };
+    mockTranslate = {
+      instant: vi.fn((key: string) => {
+        if (key === 'public_plans.errors.restart') {
+          return 'Please start over.';
+        }
+        return key;
+      })
+    };
 
-    TestBed.overrideComponent(PublicPlanResultsComponent, {
-      set: {
-        styleUrls: [],
-        providers: [
-          { provide: LoadPublicPlanResultsUseCase, useValue: loadUseCase },
-          { provide: SavePublicPlanUseCase, useValue: saveUseCase },
-          { provide: PublicPlanResultsPresenter, useValue: mockPresenter },
-          { provide: LOAD_PUBLIC_PLAN_RESULTS_OUTPUT_PORT, useValue: mockPresenter },
-          { provide: SAVE_PUBLIC_PLAN_OUTPUT_PORT, useValue: mockPresenter },
-          { provide: ChangeDetectorRef, useValue: cdr }
-        ]
-      }
-    });
-
-    await TestBed.configureTestingModule({
-      imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
       providers: [
+        PublicPlanResultsComponent,
         { provide: ActivatedRoute, useValue: activatedRoute },
         { provide: AuthService, useValue: authService },
-        { provide: PublicPlanStore, useValue: publicPlanStore }
+        { provide: PublicPlanStore, useValue: publicPlanStore },
+        { provide: FlashMessageService, useValue: flashMessage },
+        { provide: LoadPublicPlanResultsUseCase, useValue: loadUseCase },
+        { provide: SavePublicPlanUseCase, useValue: saveUseCase },
+        { provide: PublicPlanResultsPresenter, useValue: mockPresenter },
+        { provide: ChangeDetectorRef, useValue: cdr },
+        { provide: TranslateService, useValue: mockTranslate }
       ]
-    }).compileComponents();
+    });
 
-    fixture = TestBed.createComponent(PublicPlanResultsComponent);
-    component = fixture.componentInstance;
+    component = TestBed.inject(PublicPlanResultsComponent);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    sessionStorage.clear();
   });
 
   it('implements View control getter/setter', () => {
@@ -73,24 +79,25 @@ describe('PublicPlanResultsComponent', () => {
     };
     component.control = state;
     expect(component.control).toEqual(state);
+    expect(cdr.markForCheck).toHaveBeenCalled();
   });
 
   describe('savePlan', () => {
     beforeEach(() => {
-      // Mock window.location.href
       Object.defineProperty(window, 'location', {
         value: { href: 'http://localhost:4200/public-plans/results?planId=123' },
-        writable: true
+        writable: true,
+        configurable: true
       });
     });
 
     it('redirects to login when user is not authenticated', () => {
       authService.user.mockReturnValue(null);
       activatedRoute.snapshot.queryParamMap.get.mockReturnValue('123');
-
       component.savePlan();
 
       expect(window.location.href).toContain('/auth/login?return_to=');
+      expect(sessionStorage.getItem('agrr_pending_public_plan_save')).toContain('"planId":123');
       expect(saveUseCase.execute).not.toHaveBeenCalled();
     });
 
@@ -113,7 +120,7 @@ describe('PublicPlanResultsComponent', () => {
       expect(saveUseCase.execute).toHaveBeenCalledWith({ planId: 456 });
     });
 
-    it('does not call saveUseCase.execute when planId is not available', () => {
+    it('shows flash when planId is not available', () => {
       authService.user.mockReturnValue({ id: 1, name: 'Test User' });
       activatedRoute.snapshot.queryParamMap.get.mockReturnValue(null);
       publicPlanStore.state.planId = null;
@@ -121,6 +128,44 @@ describe('PublicPlanResultsComponent', () => {
       component.savePlan();
 
       expect(saveUseCase.execute).not.toHaveBeenCalled();
+      expect(mockTranslate.instant).toHaveBeenCalledWith('public_plans.errors.restart');
+      expect(flashMessage.show).toHaveBeenCalledWith({
+        type: 'error',
+        text: 'Please start over.'
+      });
+    });
+  });
+
+  describe('pending save after login', () => {
+    it('runs save once when pending exists after loadCurrentUser', () => {
+      authService.user.mockReturnValue({ id: 1, name: 'Test User' });
+      authService.loadCurrentUser.mockReturnValue(of({ id: 1, name: 'Test User' }));
+      activatedRoute.snapshot.queryParamMap.get.mockReturnValue('123');
+      sessionStorage.setItem(
+        'agrr_pending_public_plan_save',
+        JSON.stringify({ planId: 123, at: new Date().toISOString() })
+      );
+
+      component.ngOnInit();
+
+      expect(saveUseCase.execute).toHaveBeenCalledTimes(1);
+      expect(saveUseCase.execute).toHaveBeenCalledWith({ planId: 123 });
+      expect(sessionStorage.getItem('agrr_pending_public_plan_save')).toBeNull();
+    });
+
+    it('does not run pending save twice on repeated ngOnInit', () => {
+      authService.user.mockReturnValue({ id: 1, name: 'Test User' });
+      authService.loadCurrentUser.mockReturnValue(of({ id: 1, name: 'Test User' }));
+      activatedRoute.snapshot.queryParamMap.get.mockReturnValue('123');
+      sessionStorage.setItem(
+        'agrr_pending_public_plan_save',
+        JSON.stringify({ planId: 123, at: new Date().toISOString() })
+      );
+
+      component.ngOnInit();
+      component.ngOnInit();
+
+      expect(saveUseCase.execute).toHaveBeenCalledTimes(1);
     });
   });
 

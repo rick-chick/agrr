@@ -780,7 +780,7 @@ fn load_crop_stage_by_id(
     conn: &rusqlite::Connection,
     crop_stage_id: i64,
 ) -> rusqlite::Result<CropStageEntity> {
-    conn.query_row(
+    let stage = conn.query_row(
         "SELECT id, crop_id, name, \"order\", created_at, updated_at FROM crop_stages WHERE id = ?1",
         params![crop_stage_id],
         |row| {
@@ -797,7 +797,20 @@ fn load_crop_stage_by_id(
                 updated_at: row.get(5)?,
             })
         },
-    )
+    )?;
+    hydrate_crop_stage_requirements(conn, stage)
+}
+
+/// Ruby `CropStageRequirementEntitySupport#crop_stage_entity_from_record` parity.
+fn hydrate_crop_stage_requirements(
+    conn: &rusqlite::Connection,
+    mut stage: CropStageEntity,
+) -> rusqlite::Result<CropStageEntity> {
+    stage.temperature_requirement = load_temperature(conn, stage.id).ok();
+    stage.thermal_requirement = load_thermal(conn, stage.id).ok();
+    stage.sunshine_requirement = load_sunshine(conn, stage.id).ok();
+    stage.nutrient_requirement = load_nutrient(conn, stage.id).ok();
+    Ok(stage)
 }
 
 pub(crate) fn parse_required_tools_json(raw: Option<String>) -> Vec<String> {
@@ -982,8 +995,13 @@ fn nested_req_map<'a>(payload: &'a Value, key: &str) -> &'a Map<String, Value> {
         .expect("requirement payload object")
 }
 
+/// Domain DTOs often encode decimals as JSON strings (`decimal_json` in stage copy).
 fn f64_field(m: &Map<String, Value>, key: &str) -> Option<f64> {
-    m.get(key).and_then(|v| v.as_f64())
+    match m.get(key)? {
+        Value::Number(n) => n.as_f64(),
+        Value::String(s) => s.parse().ok(),
+        _ => None,
+    }
 }
 
 fn str_field(m: &Map<String, Value>, key: &str) -> Option<String> {
@@ -1103,7 +1121,7 @@ pub(crate) fn load_crop_stages(
     })?;
     let mut out = Vec::new();
     for row in rows {
-        out.push(row?);
+        out.push(hydrate_crop_stage_requirements(conn, row?)?);
     }
     Ok(out)
 }

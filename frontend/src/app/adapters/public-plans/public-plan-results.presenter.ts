@@ -17,10 +17,18 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
     this.view = view;
   }
 
-  present(dto: CultivationPlanData | { message: string }): void {
+  present(
+    dto:
+      | CultivationPlanData
+      | { message: string; cultivation_plan_id?: number; plan_reused?: boolean }
+  ): void {
     if ('message' in dto && !('plan' in dto)) {
       this.flashMessage.show({ type: 'success', text: dto.message });
-      this.router.navigate(['/plans']);
+      if (dto.cultivation_plan_id) {
+        void this.router.navigate(['/plans', dto.cultivation_plan_id]);
+      } else {
+        void this.router.navigate(['/plans']);
+      }
       return;
     }
     if (!this.view) throw new Error('Presenter: view not set');
@@ -34,14 +42,23 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
 
   onError(dto: ErrorDto | { message: string }): void {
     const message = dto.message;
-    if (this.view) {
+    this.flashMessage.show({ type: 'error', text: message });
+    if (!this.view) {
+      return;
+    }
+    // 保存失敗時はガントを維持（読み込み失敗のみ全画面エラー）
+    if (this.view.control.data) {
       this.view.control = {
         ...this.view.control,
-        loading: false,
-        error: message,
-        data: null
+        loading: false
       };
+      return;
     }
-    this.flashMessage.show({ type: 'error', text: message });
+    this.view.control = {
+      ...this.view.control,
+      loading: false,
+      error: message,
+      data: null
+    };
   }
 }

@@ -25,6 +25,8 @@ pub(crate) mod private_plan_initialize_from_selection_input;
 pub(crate) mod private_plan_initialize_from_selection_output;
 pub(crate) mod public_plan_save_failure;
 pub(crate) mod public_plan_save_from_session_output;
+pub(crate) mod public_plan_save_skipped_items;
+pub(crate) mod public_plan_save_success;
 pub(crate) mod public_plan_save_input;
 pub(crate) mod public_plan_save_workspace;
 pub(crate) mod task_schedule_field_cultivation_snapshot;
@@ -156,6 +158,8 @@ pub use private_plan_rows::{
 };
 pub use public_plan_save_failure::PublicPlanSaveFailure;
 pub use public_plan_save_from_session_output::PublicPlanSaveFromSessionOutput;
+pub use public_plan_save_skipped_items::PublicPlanSaveSkippedItems;
+pub use public_plan_save_success::PublicPlanSaveSuccess;
 pub use public_plan_save_input::PublicPlanSaveInput;
 pub use public_plan_save_workspace::PublicPlanSaveWorkspace;
 pub use task_schedule_field_cultivation_snapshot::TaskScheduleFieldCultivationSnapshot;

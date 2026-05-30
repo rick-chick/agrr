@@ -13,6 +13,7 @@ describe('PublicPlanResultsPresenter', () => {
   let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     mockRouter = { navigate: vi.fn() } as Router & { navigate: ReturnType<typeof vi.fn> };
     mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
@@ -38,26 +39,56 @@ describe('PublicPlanResultsPresenter', () => {
   });
 
   describe('SavePublicPlanOutputPort', () => {
-    it('navigates to plans and shows success message on successful save', () => {
-      const dto = { message: 'Plan saved successfully' };
+    it('navigates to plan detail when cultivation_plan_id is returned', () => {
+      presenter.present({
+        message: 'Plan saved successfully',
+        plan_reused: false,
+        cultivation_plan_id: 99
+      });
 
-      presenter.present(dto);
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans']);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'success', text: 'Plan saved successfully' });
-      // View control should not be updated for save success
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 99]);
+      expect(mockFlashMessageService.show).toHaveBeenCalledWith({
+        type: 'success',
+        text: 'Plan saved successfully'
+      });
       expect(lastControl).toBeNull();
     });
 
-    it('updates view.control and shows error message on save error', () => {
-      const dto = { message: 'Failed to save plan' };
+    it('navigates to plans list when cultivation_plan_id is absent', () => {
+      presenter.present({ message: 'Plan saved successfully', plan_reused: false });
 
-      presenter.onError(dto);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans']);
+    });
+
+    it('navigates to existing plan detail when plan_reused', () => {
+      presenter.present({
+        message: 'Plan already exists',
+        plan_reused: true,
+        cultivation_plan_id: 42
+      });
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 42]);
+    });
+
+    it('keeps gantt data and only flashes on save error when data is already loaded', () => {
+      lastControl = {
+        loading: false,
+        error: null,
+        data: { id: 1 } as never
+      };
+
+      presenter.onError({ message: 'Failed to save plan' });
 
       expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Failed to save plan' });
-      expect(lastControl).not.toBeNull();
+      expect(lastControl!.data).toEqual({ id: 1 });
+      expect(lastControl!.error).toBeNull();
+    });
+
+    it('replaces view with error state on load error when data is absent', () => {
+      presenter.onError({ message: 'Failed to load plan' });
+
       expect(lastControl!.loading).toBe(false);
-      expect(lastControl!.error).toBe('Failed to save plan');
+      expect(lastControl!.error).toBe('Failed to load plan');
       expect(lastControl!.data).toBeNull();
     });
   });

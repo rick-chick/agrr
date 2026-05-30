@@ -1,7 +1,8 @@
 import { InjectionToken } from '@angular/core';
+import { SavePublicPlanSuccessDto } from './save-public-plan.dtos';
 
 export interface SavePublicPlanOutputPort {
-  present(dto: { message: string }): void;
+  present(dto: SavePublicPlanSuccessDto): void;
   onError(dto: { message: string }): void;
 }
 

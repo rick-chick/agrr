@@ -4,7 +4,8 @@ module Domain
   module CultivationPlan
     module Ports
       class PublicPlanSaveFromSessionOutputPort
-        def on_success
+        # @param success [Dtos::PublicPlanSaveSuccess, nil]
+        def on_success(success = nil)
           raise NotImplementedError
         end
 

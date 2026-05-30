@@ -9,8 +9,13 @@ module Adapters
           @view = view
         end
 
-        def on_success
-          @view.render json: { success: true }, status: :ok
+        def on_success(success = nil)
+          body = { success: true }
+          if success
+            body[:cultivation_plan_id] = success.cultivation_plan_id if success.cultivation_plan_id
+            body[:plan_reused] = success.plan_reused
+          end
+          @view.render json: body, status: :ok
         end
 
         def on_failure(failure)

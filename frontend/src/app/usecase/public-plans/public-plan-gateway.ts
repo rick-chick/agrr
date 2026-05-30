@@ -11,6 +11,8 @@ export interface CreatePublicPlanResponse {
 export interface SavePublicPlanResponse {
   success: boolean;
   error?: string;
+  cultivation_plan_id?: number;
+  plan_reused?: boolean;
 }
 
 export interface PublicPlanGateway {

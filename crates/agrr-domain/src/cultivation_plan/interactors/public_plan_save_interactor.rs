@@ -2,7 +2,7 @@
 
 use crate::cultivation_plan::dtos::{
     PublicPlanSaveFailure, PublicPlanSaveFromSessionOutput, PublicPlanSaveInput,
-    PublicPlanSaveSessionData, PublicPlanSaveWorkspace,
+    PublicPlanSaveSessionData, PublicPlanSaveSuccess, PublicPlanSaveWorkspace,
 };
 use crate::cultivation_plan::gateways::{PublicPlanSaveReadGateway, PublicPlanSaveTxnGateway};
 use crate::cultivation_plan::mappers::session_data_from_snapshots;
@@ -83,7 +83,14 @@ where
 
         match self.persist_workspace(&workspace) {
             Ok(output) if output.success => {
-                self.output_port.on_success();
+                let plan_reused = output
+                    .skipped_items
+                    .as_ref()
+                    .is_some_and(|s| !s.plan.is_empty());
+                self.output_port.on_success(PublicPlanSaveSuccess::new(
+                    output.new_cultivation_plan_id,
+                    plan_reused,
+                ));
                 Ok(())
             }
             Ok(output) => {

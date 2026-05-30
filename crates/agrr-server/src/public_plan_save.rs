@@ -7,7 +7,9 @@ use agrr_adapters_sqlite::{
     CultivationPlanSqliteGateway, FarmSqliteGateway, PublicPlanSavePersistenceSqliteAdapter,
     PublicPlanSaveReadSqliteGateway,
 };
-use agrr_domain::cultivation_plan::dtos::{PublicPlanSaveFailure, PublicPlanSaveInput};
+use agrr_domain::cultivation_plan::dtos::{
+    PublicPlanSaveFailure, PublicPlanSaveInput, PublicPlanSaveSuccess,
+};
 use agrr_domain::cultivation_plan::interactors::PublicPlanSaveInteractor;
 use agrr_domain::cultivation_plan::ports::PublicPlanSaveFromSessionOutputPort;
 use axum::{
@@ -35,9 +37,13 @@ struct SavePresenter {
 }
 
 impl PublicPlanSaveFromSessionOutputPort for SavePresenter {
-    fn on_success(&mut self) {
+    fn on_success(&mut self, success: PublicPlanSaveSuccess) {
         self.status = StatusCode::OK;
-        self.body = json!({"success": true});
+        self.body = json!({
+            "success": true,
+            "cultivation_plan_id": success.cultivation_plan_id,
+            "plan_reused": success.plan_reused,
+        });
     }
 
     fn on_failure(&mut self, failure: PublicPlanSaveFailure) {

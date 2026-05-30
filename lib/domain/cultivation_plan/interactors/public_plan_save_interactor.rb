@@ -45,7 +45,13 @@ module Domain
           output = persist_workspace!(workspace)
 
           if output.success?
-            @output_port.on_success
+            plan_reused = plan_reused?(output.skipped_items)
+            @output_port.on_success(
+              Dtos::PublicPlanSaveSuccess.new(
+                cultivation_plan_id: output.new_cultivation_plan_id,
+                plan_reused: plan_reused
+              )
+            )
             return
           end
 
@@ -83,6 +89,13 @@ module Domain
             output = @persistence_port.execute_save!(workspace: workspace)
           end
           output
+        end
+
+        def plan_reused?(skipped_items)
+          return false unless skipped_items.is_a?(Hash)
+
+          plan_skips = skipped_items[:plan] || skipped_items["plan"]
+          plan_skips.present?
         end
 
         def resolve_session_data(input)

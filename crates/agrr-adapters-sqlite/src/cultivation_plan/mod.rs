@@ -13,7 +13,22 @@ mod rest_plan_read;
 mod rest_plan_read_domain_gateway;
 mod task_schedule_timeline_read;
 mod public_plan_save_read_gateway;
+mod public_plan_save_read_sql;
+mod public_plan_save_reference_snapshot_sqlite;
+mod plan_save_gateways;
 mod plan_save_persistence;
+mod plan_save_plan_copy;
+mod plan_save_session;
+mod plan_save_support;
+
+#[cfg(test)]
+mod plan_save_integration_fixture;
+#[cfg(test)]
+mod plan_save_session_integration_test;
+#[cfg(test)]
+mod public_plan_save_read_gateway_test_fixture;
+#[cfg(test)]
+mod public_plan_save_read_gateway_test;
 
 pub use cultivation_plan_gateway::CultivationPlanSqliteGateway;
 pub use plan_save_persistence::PublicPlanSavePersistenceSqliteAdapter;

@@ -1,11 +1,12 @@
 //! Public plan save output / persistence ports.
 
 use crate::cultivation_plan::dtos::{
-    PublicPlanSaveFailure, PublicPlanSaveFromSessionOutput, PublicPlanSaveWorkspace,
+    PublicPlanSaveFailure, PublicPlanSaveFromSessionOutput, PublicPlanSaveSuccess,
+    PublicPlanSaveWorkspace,
 };
 
 pub trait PublicPlanSaveFromSessionOutputPort {
-    fn on_success(&mut self);
+    fn on_success(&mut self, success: PublicPlanSaveSuccess);
     fn on_failure(&mut self, failure: PublicPlanSaveFailure);
 }
 

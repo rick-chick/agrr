@@ -1,7 +1,8 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { take } from 'rxjs';
 import { PublicPlanResultsView, PublicPlanResultsViewState } from './public-plan-results.view';
 import { LoadPublicPlanResultsUseCase } from '../../usecase/public-plans/load-public-plan-results.usecase';
 import { SavePublicPlanUseCase } from '../../usecase/public-plans/save-public-plan.usecase';
@@ -13,6 +14,11 @@ import { GanttChartComponent } from '../plans/gantt-chart.component';
 import { PlanFieldClimateComponent } from '../plans/plan-field-climate.component';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { FlashMessageService } from '../../services/flash-message.service';
+import {
+  consumePendingPublicPlanSave,
+  setPendingPublicPlanSave
+} from '../../services/public-plans/pending-public-plan-save';
 import { getApiBaseUrl } from '../../core/api-base-url';
 
 /**
@@ -101,12 +107,16 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   private readonly presenter = inject(PublicPlanResultsPresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly flashMessage = inject(FlashMessageService);
+  private readonly translate = inject(TranslateService);
 
   protected readonly auth = inject(AuthService);
 
   readonly planType: 'private' | 'public' = 'public';
   selectedCultivationId: number | null = null;
   selectedPlanType: 'private' | 'public' = this.planType;
+
+  private pendingSaveTriggered = false;
 
   private _control: PublicPlanResultsViewState = initialControl;
   get control(): PublicPlanResultsViewState {
@@ -119,7 +129,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
 
   ngOnInit(): void {
     this.presenter.setView(this);
-    const planId = Number(this.route.snapshot.queryParamMap.get('planId'));
+    const planId = this.resolvePlanId();
     if (!planId) {
       this.control = {
         ...this.control,
@@ -130,20 +140,54 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
       return;
     }
     this.useCase.execute({ planId });
+    this.auth
+      .loadCurrentUser()
+      .pipe(take(1))
+      .subscribe(() => this.maybeRunPendingSave(planId));
   }
 
   savePlan(): void {
+    const planId = this.resolvePlanId();
+    if (!planId) {
+      this.flashMessage.show({
+        type: 'error',
+        text: this.translate.instant('public_plans.errors.restart')
+      });
+      return;
+    }
+
     if (!this.auth.user()) {
+      setPendingPublicPlanSave(planId);
       const apiBase = getApiBaseUrl() || window.location.origin;
       const returnTo = encodeURIComponent(window.location.href);
       window.location.href = `${apiBase}/auth/login?return_to=${returnTo}`;
       return;
     }
-    // Call save API if logged in
-    const planId = Number(this.route.snapshot.queryParamMap.get('planId')) || this.publicPlanStore.state.planId;
-    if (planId) {
-      this.saveUseCase.execute({ planId });
+
+    this.saveUseCase.execute({ planId });
+  }
+
+  private maybeRunPendingSave(fallbackPlanId: number): void {
+    if (!this.auth.user() || this.pendingSaveTriggered) {
+      return;
     }
+    const pending = consumePendingPublicPlanSave();
+    if (!pending) {
+      return;
+    }
+    const planId =
+      pending.planId === fallbackPlanId ? pending.planId : fallbackPlanId;
+    this.pendingSaveTriggered = true;
+    this.saveUseCase.execute({ planId });
+  }
+
+  private resolvePlanId(): number {
+    const fromQuery = Number(this.route.snapshot.queryParamMap.get('planId'));
+    if (!Number.isNaN(fromQuery) && fromQuery > 0) {
+      return fromQuery;
+    }
+    const fromStore = this.publicPlanStore.state.planId;
+    return fromStore && fromStore > 0 ? fromStore : 0;
   }
 
   handleCultivationSelection(event: { cultivationId: number; planType: 'private' | 'public' }): void {

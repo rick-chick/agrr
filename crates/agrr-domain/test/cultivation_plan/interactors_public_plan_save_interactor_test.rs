@@ -2,6 +2,7 @@
 
     use crate::cultivation_plan::dtos::{
         PublicPlanSaveFieldDatum, PublicPlanSaveHeaderSnapshot, PublicPlanSaveSessionData,
+        PublicPlanSaveSuccess,
     };
     use crate::farm::entities::FarmEntity;
     use crate::shared::exceptions::InvalidTaskScheduleItemError;
@@ -31,7 +32,7 @@
         failure: Arc<Mutex<Option<PublicPlanSaveFailure>>>,
     }
     impl PublicPlanSaveFromSessionOutputPort for SpyOutput {
-        fn on_success(&mut self) {
+        fn on_success(&mut self, _: PublicPlanSaveSuccess) {
             *self.success.lock().unwrap() = true;
         }
         fn on_failure(&mut self, failure: PublicPlanSaveFailure) {
@@ -258,7 +259,10 @@
         };
         let farm_gw = StubFarm { farm: Some(farm()) };
         let persistence = StubPersistence {
-            output: Ok(PublicPlanSaveFromSessionOutput::success()),
+            output: Ok(PublicPlanSaveFromSessionOutput::success_with(
+                Some(1),
+                Default::default(),
+            )),
         };
         let logger = FakeLogger;
         let translator = FakeTranslator;
@@ -297,7 +301,10 @@
         };
         let farm_gw = StubFarm { farm: Some(farm()) };
         let persistence = StubPersistence {
-            output: Ok(PublicPlanSaveFromSessionOutput::success()),
+            output: Ok(PublicPlanSaveFromSessionOutput::success_with(
+                Some(1),
+                Default::default(),
+            )),
         };
         let logger = FakeLogger;
         let translator = FakeTranslator;

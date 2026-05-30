@@ -87,10 +87,38 @@ module Domain
           @read_gateway.expects(:list_field_rows).with(plan_id: @plan_id).returns([])
           @farm_gateway.expects(:find_by_id).with(7).returns(stub(id: 7))
 
-          success_output = Dtos::PublicPlanSaveFromSessionOutput.new(success: true)
+          success_output = Dtos::PublicPlanSaveFromSessionOutput.new(
+            success: true,
+            new_cultivation_plan_id: 501
+          )
           @txn_gateway.expects(:within_transaction).yields
           @persistence_port.expects(:execute_save!).returns(success_output)
-          @output_port.expects(:on_success)
+          @output_port.expects(:on_success).with do |dto|
+            dto.is_a?(Dtos::PublicPlanSaveSuccess) &&
+              dto.cultivation_plan_id == 501 &&
+              dto.plan_reused == false
+          end
+
+          build_interactor.call(
+            Dtos::PublicPlanSaveInput.new(plan_id: @plan_id, user_id: @user_id)
+          )
+        end
+
+        test "on_success sets plan_reused when skipped_items includes plan" do
+          @read_gateway.expects(:find_header_snapshot).returns(@header_wire)
+          @read_gateway.expects(:list_field_rows).returns([])
+          @farm_gateway.expects(:find_by_id).returns(stub(id: 7))
+
+          success_output = Dtos::PublicPlanSaveFromSessionOutput.new(
+            success: true,
+            new_cultivation_plan_id: 88,
+            skipped_items: { plan: [88] }
+          )
+          @txn_gateway.expects(:within_transaction).yields
+          @persistence_port.expects(:execute_save!).returns(success_output)
+          @output_port.expects(:on_success).with do |dto|
+            dto.plan_reused == true && dto.cultivation_plan_id == 88
+          end
 
           build_interactor.call(
             Dtos::PublicPlanSaveInput.new(plan_id: @plan_id, user_id: @user_id)
@@ -102,7 +130,7 @@ module Domain
           success_output = Dtos::PublicPlanSaveFromSessionOutput.new(success: true)
           @txn_gateway.expects(:within_transaction).yields
           @persistence_port.expects(:execute_save!).returns(success_output)
-          @output_port.expects(:on_success)
+          @output_port.expects(:on_success).with(instance_of(Dtos::PublicPlanSaveSuccess))
 
           build_interactor.call(
             Dtos::PublicPlanSaveInput.new(

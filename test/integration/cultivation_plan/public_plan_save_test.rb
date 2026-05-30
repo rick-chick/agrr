@@ -382,6 +382,66 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
     assert_includes second_result.skipped_items[:crops], original_crop.id, "Crop should be reported as skipped"
   end
 
+  test "reuses existing private plan when same public plan is saved twice" do
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 100.0,
+      plan_type: "public",
+      plan_year: Date.current.year,
+      plan_name: "Plan再利用テスト計画",
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: "completed"
+    )
+
+    CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: @crops[0],
+      name: @crops[0].name,
+      variety: @crops[0].variety,
+      area_per_unit: @crops[0].area_per_unit,
+      revenue_per_area: @crops[0].revenue_per_area
+    )
+
+    session_data = {
+      plan_id: plan.id,
+      farm_id: @farm.id,
+      field_data: [
+        { name: "再利用圃場", area: 100.0 }
+      ]
+    }
+
+    private_plan_count_before = @user.cultivation_plans.where(plan_type: "private").count
+
+    first_result = PublicPlanSaveTestSupport.invoke_save(user: @user, session_data: session_data)
+    assert first_result.success, "Initial copy should succeed: #{first_result.error_message}"
+    assert_empty first_result.skipped_items[:plan], "First copy should not skip plan"
+
+    user_farm = @user.farms.where(source_farm_id: @farm.id).first
+    assert_not_nil user_farm, "User farm copied from reference should exist"
+
+    existing_plan = @user.cultivation_plans.find_by(
+      plan_type: "private",
+      farm_id: user_farm.id,
+      user_id: @user.id
+    )
+    assert_not_nil existing_plan, "Private plan should exist after first copy"
+    assert_equal private_plan_count_before + 1,
+                 @user.cultivation_plans.where(plan_type: "private").count,
+                 "Private plan count should increase on first copy"
+
+    second_result = PublicPlanSaveTestSupport.invoke_save(user: @user, session_data: session_data)
+    assert second_result.success, "Second copy should also succeed: #{second_result.error_message}"
+    assert_includes second_result.skipped_items[:plan], existing_plan.id,
+                    "Second copy should skip plan copy when private plan already exists"
+    assert_equal private_plan_count_before + 1,
+                 @user.cultivation_plans.where(plan_type: "private").count,
+                 "Private plan count should not increase on second copy"
+    assert_equal existing_plan.id, second_result.new_plan.id,
+                 "Second copy should return the existing private plan"
+  end
+
   test "reuses existing user crop when same reference crop is copied twice" do
     plan = CultivationPlan.create!(
       farm: @farm,
@@ -2163,5 +2223,73 @@ class PublicPlanSaveIntegrationTest < ActiveSupport::TestCase
     expected_year = current_year
     assert_equal expected_year, new_plan.plan_year,
       "Plan year should be calculated from average cultivation period spanning multiple years"
+  end
+
+  test "API save path with session_data nil copies field cultivations when public plan has cultivations" do
+    reference_crop = Crop.create!(
+      user: nil,
+      name: "API保存検証作物",
+      variety: "V1",
+      is_reference: true,
+      area_per_unit: 0.25,
+      revenue_per_area: 5000.0,
+      region: @farm.region
+    )
+
+    plan = CultivationPlan.create!(
+      farm: @farm,
+      user: nil,
+      total_area: 100.0,
+      plan_type: "public",
+      plan_year: Date.current.year,
+      plan_name: "API保存検証",
+      planning_start_date: Date.current,
+      planning_end_date: Date.current.end_of_year,
+      status: "completed"
+    )
+
+    cpc = CultivationPlanCrop.create!(
+      cultivation_plan: plan,
+      crop: reference_crop,
+      name: reference_crop.name,
+      variety: reference_crop.variety,
+      area_per_unit: reference_crop.area_per_unit,
+      revenue_per_area: reference_crop.revenue_per_area
+    )
+
+    plan_field = CultivationPlanField.create!(
+      cultivation_plan: plan,
+      name: "API検証圃場",
+      area: 100,
+      daily_fixed_cost: 10
+    )
+
+    FieldCultivation.create!(
+      cultivation_plan: plan,
+      cultivation_plan_field: plan_field,
+      cultivation_plan_crop: cpc,
+      area: 50,
+      start_date: Date.current,
+      completion_date: Date.current + 30,
+      cultivation_days: 31,
+      estimated_cost: 1000,
+      status: "completed"
+    )
+
+    assert_equal 1, plan.field_cultivations.count, "public plan fixture must include a cultivation"
+
+    result = PublicPlanSaveTestSupport.invoke_save_api(user: @user, plan_id: plan.id)
+    assert result.success, result.error_message
+
+    new_plan = result.new_plan
+    assert_not_nil new_plan
+    assert_equal "private", new_plan.plan_type
+
+    assert new_plan.cultivation_plan_crops.any?, "private plan must include plan crops"
+    assert new_plan.field_cultivations.any?, "private plan must include field cultivations (gantt bars)"
+
+    fc = new_plan.field_cultivations.first
+    assert_equal "API保存検証作物", fc.cultivation_plan_crop.name
+    assert_equal @user.id, fc.cultivation_plan_crop.crop.user_id
   end
 end

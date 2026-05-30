@@ -27,7 +27,7 @@ module PublicPlanSaveTestSupport
   end
 
   class CapturingOutputPort < Domain::CultivationPlan::Ports::PublicPlanSaveFromSessionOutputPort
-    attr_reader :failure_dto
+    attr_reader :failure_dto, :success_dto
 
     def initialize
       @success_called = false
@@ -37,8 +37,9 @@ module PublicPlanSaveTestSupport
       @success_called
     end
 
-    def on_success
+    def on_success(success = nil)
       @success_called = true
+      @success_dto = success
     end
 
     def on_failure(failure)
@@ -60,6 +61,30 @@ module PublicPlanSaveTestSupport
   end
 
   module_function
+
+  # POST /api/v1/public_plans/save_plan と同じ経路（session_data は Interactor が DB から解決）
+  def invoke_save_api(user:, plan_id:)
+    input = Domain::CultivationPlan::Dtos::PublicPlanSaveInput.new(
+      plan_id: plan_id,
+      user_id: user.id,
+      session_data: nil
+    )
+
+    output_port = CapturingOutputPort.new
+    persistence_port = CapturingPersistencePort.new(CompositionRoot.public_plan_save_persistence_port)
+
+    Domain::CultivationPlan::Interactors::PublicPlanSaveInteractor.new(
+      output_port: output_port,
+      txn_gateway: CompositionRoot.cultivation_plan_gateway,
+      read_gateway: CompositionRoot.public_plan_save_read_gateway,
+      farm_gateway: CompositionRoot.farm_gateway,
+      persistence_port: persistence_port,
+      logger: CompositionRoot.logger,
+      translator: CompositionRoot.translator
+    ).call(input)
+
+    build_save_result(output_port: output_port, persistence_output: persistence_port.last_output, user: user)
+  end
 
   def invoke_save(user:, session_data:)
     session_dto = normalize_session_data(session_data)
