@@ -18,6 +18,9 @@ export class AgrrTranslateParser extends TranslateDefaultParser {
         return text;
       }
       const replacement = this.formatValue(value);
+      if (replacement === undefined) {
+        return text;
+      }
       return text.replaceAll(`%{${key}}`, replacement);
     }, withNgx);
   }
