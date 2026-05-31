@@ -16,6 +16,7 @@ pub mod farm;
 pub mod fertilize;
 pub mod pesticide;
 pub mod interaction_rule;
+pub mod internal_jobs;
 pub mod agricultural_task;
 pub mod field;
 pub mod field_cultivation;
@@ -64,6 +65,7 @@ pub use cultivation_plan::{
     PublicPlanSavePersistenceSqliteAdapter, PublicPlanSaveReadSqliteGateway,
 };
 pub use farm::FarmSqliteGateway;
+pub use internal_jobs::SchedulerWeatherFarmListSqliteGateway;
 pub use field::FieldSqliteGateway;
 pub use public_plan::{
     CropRowsAvailablePublicSqliteGateway, PublicPlanCropSqliteGateway, PublicPlanSqliteGateway,

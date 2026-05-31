@@ -1,14 +1,15 @@
 //! HTTP API routes (BC slices) not yet owned by feature modules.
 
-use crate::optimization_job_chain::enqueue_scheduler_weather_update_chain;
+use crate::scheduler_weather_update::trigger_scheduler_weather_update;
 use crate::state::AppState;
 use axum::{
-    extract::State,
+    extract::{Query, State},
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
+use serde::Deserialize;
 use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 
@@ -38,42 +39,58 @@ async fn api_v1_health() -> Json<serde_json::Value> {
     }))
 }
 
+#[derive(Debug, Deserialize)]
+struct SchedulerTokenQuery {
+    token: Option<String>,
+}
+
+fn extract_scheduler_token(headers: &HeaderMap, query: &SchedulerTokenQuery) -> Option<String> {
+    if let Some(token) = headers
+        .get("X-Scheduler-Token")
+        .and_then(|v| v.to_str().ok())
+        .map(str::to_string)
+    {
+        return Some(token);
+    }
+    if let Some(token) = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.strip_prefix("Bearer "))
+        .map(str::to_string)
+    {
+        return Some(token);
+    }
+    query.token.clone()
+}
+
 async fn trigger_weather_update(
     State(state): State<AppState>,
     headers: HeaderMap,
+    Query(query): Query<SchedulerTokenQuery>,
 ) -> impl IntoResponse {
-    let token = headers
-        .get("X-Scheduler-Token")
-        .and_then(|v| v.to_str().ok())
-        .or_else(|| {
-            headers
-                .get(header::AUTHORIZATION)
-                .and_then(|v| v.to_str().ok())
-                .and_then(|v| v.strip_prefix("Bearer "))
-        });
-    let Some(token) = token else {
+    if state.scheduler_auth_token.is_empty() {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({"error": "Authentication not configured"})),
+        )
+            .into_response();
+    }
+
+    let Some(provided_token) = extract_scheduler_token(&headers, &query) else {
         return (
             StatusCode::UNAUTHORIZED,
             Json(serde_json::json!({"error": "Missing authentication token"})),
         )
             .into_response();
     };
-    if state.scheduler_auth_token.is_empty() || token != state.scheduler_auth_token.as_str() {
+
+    if provided_token != state.scheduler_auth_token.as_str() {
         return (
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({"error": "Invalid authentication token"})),
         )
             .into_response();
     }
-    enqueue_scheduler_weather_update_chain(&state);
-    (
-        StatusCode::OK,
-        Json(serde_json::json!({
-            "success": true,
-            "message": "Weather update jobs enqueued",
-            "timestamp": time::OffsetDateTime::now_utc().unix_timestamp()
-        })),
-    )
-        .into_response()
-}
 
+    trigger_scheduler_weather_update(&state)
+}

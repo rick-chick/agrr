@@ -49,6 +49,7 @@ pub mod plans;
 pub mod public_plan_save;
 pub mod public_plans;
 pub mod routes;
+pub mod scheduler_weather_update;
 pub mod runtime_env;
 pub mod session_auth;
 pub mod state;

@@ -1,0 +1,3 @@
+mod scheduler_weather_farm_list_gateway;
+
+pub use scheduler_weather_farm_list_gateway::SchedulerWeatherFarmListSqliteGateway;

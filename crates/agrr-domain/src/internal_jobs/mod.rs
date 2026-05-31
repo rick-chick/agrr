@@ -3,9 +3,11 @@ pub mod gateways;
 pub mod interactors;
 pub mod ports;
 
-pub use dtos::SchedulerWeatherUpdateTriggerFailure;
+pub use dtos::{SchedulerWeatherFarmRow, SchedulerWeatherUpdateTriggerFailure};
 pub use gateways::{
-    EnqueueWeatherUpdateJobsResult, WeatherUpdateJobsEnqueueGateway,
+    EnqueueWeatherUpdateJobsResult, SchedulerWeatherFarmListGateway, WeatherUpdateJobsEnqueueGateway,
 };
-pub use interactors::SchedulerWeatherUpdateJobsTriggerInteractor;
-pub use ports::SchedulerWeatherUpdateTriggerOutputPort;
+pub use interactors::{
+    SchedulerWeatherBatchEnqueueInteractor, SchedulerWeatherUpdateJobsTriggerInteractor,
+};
+pub use ports::{SchedulerWeatherFetchSchedulePort, SchedulerWeatherUpdateTriggerOutputPort};

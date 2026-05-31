@@ -46,7 +46,7 @@ critical_path:
     notes: "Mutations + reads on Rust; FieldCultivationSync after adjust (sqlite gateways)"
   - id: internal_jobs
     phase: done
-    notes: "trigger_weather_update in-process chain on Rust"
+    notes: "trigger_weather_update via SchedulerWeatherBatchEnqueueInteractor + FetchWeatherDataPerformInteractor (farm_weather_fetch)"
 
 waves:
   wave-2-remaining:
@@ -65,5 +65,5 @@ waves:
     - { context: pest, phase: done }
   wave-4:
     - { context: field_cultivation, phase: done, notes: "show/PATCH/climate GET; patch contract" }
-    - { context: weather_data, phase: done, notes: "scheduler via internal_jobs in-process chain; GCS adapter for reads" }
+    - { context: weather_data, phase: done, notes: "scheduler via internal_jobs + PerformInteractor persist; GCS adapter for reads" }
     - { context: crop, phase: done }

@@ -10,7 +10,6 @@ use crate::optimization_chain_run::{
     run_weather_prediction_step,
 };
 use crate::state::AppState;
-use agrr_adapters_agrr::WeatherDaemonGateway;
 use agrr_adapters_sqlite::CultivationPlanSqliteGateway;
 use agrr_domain::cultivation_plan::dtos::{
     AdvanceCultivationPlanPhaseInput, CultivationPlanPhaseName,
@@ -18,7 +17,6 @@ use agrr_domain::cultivation_plan::dtos::{
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
 use agrr_domain::cultivation_plan::interactors::AdvanceCultivationPlanPhaseInteractor;
 use agrr_domain::shared::ports::CultivationPlanPhaseBroadcastPort;
-use agrr_domain::weather_data::gateways::AgrrWeatherGateway;
 use agrr_domain::weather_data::OptimizationJobChainWeatherComputation;
 use rusqlite::params;
 use serde_json::{json, Value};
@@ -321,82 +319,3 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     dispatcher.enqueue_chain(steps);
 }
 
-/// Scheduler: reference farms then user farms (in-process).
-pub fn enqueue_scheduler_weather_update_chain(state: &AppState) {
-    let pool = state.sqlite.clone();
-    let dispatcher = state.job_dispatcher.clone();
-    let clock = SystemClock;
-    let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock);
-
-    dispatcher.enqueue_chain(vec![
-        JobStep {
-            name: "update_reference_weather_data",
-            run: Arc::new({
-                let pool = pool.clone();
-                let start = window.start_date;
-                let end = window.end_date;
-                move || {
-                    let pool = pool.clone();
-                    Box::pin(async move {
-                        let farms: Vec<(i64, f64, f64)> = pool
-                            .with_read(|conn| {
-                                let mut stmt = conn.prepare(
-                                    "SELECT id, latitude, longitude FROM farms WHERE is_reference = 1",
-                                )?;
-                                let rows = stmt.query_map([], |row| {
-                                    Ok((row.get(0)?, row.get(1)?, row.get(2)?))
-                                })?;
-                                let mut out = Vec::new();
-                                for row in rows {
-                                    out.push(row?);
-                                }
-                                Ok::<_, rusqlite::Error>(out)
-                            })
-                            .unwrap_or_default();
-                        let agrr = WeatherDaemonGateway::from_env();
-                        for (farm_id, lat, lon) in farms {
-                            info!(farm_id, "scheduler: reference farm weather");
-                            let _ = agrr.fetch_by_date_range(lat, lon, start, end, "jma");
-                        }
-                        true
-                    })
-                }
-            }),
-        },
-        JobStep {
-            name: "update_user_farms_weather_data",
-            run: Arc::new({
-                let pool = pool.clone();
-                let start = window.start_date;
-                let end = window.end_date;
-                move || {
-                    let pool = pool.clone();
-                    Box::pin(async move {
-                        let farms: Vec<(i64, f64, f64)> = pool
-                            .with_read(|conn| {
-                                let mut stmt = conn.prepare(
-                                    "SELECT id, latitude, longitude FROM farms \
-                                     WHERE is_reference = 0 AND user_id IS NOT NULL",
-                                )?;
-                                let rows = stmt.query_map([], |row| {
-                                    Ok((row.get(0)?, row.get(1)?, row.get(2)?))
-                                })?;
-                                let mut out = Vec::new();
-                                for row in rows {
-                                    out.push(row?);
-                                }
-                                Ok::<_, rusqlite::Error>(out)
-                            })
-                            .unwrap_or_default();
-                        let agrr = WeatherDaemonGateway::from_env();
-                        for (farm_id, lat, lon) in farms {
-                            info!(farm_id, "scheduler: user farm weather");
-                            let _ = agrr.fetch_by_date_range(lat, lon, start, end, "jma");
-                        }
-                        true
-                    })
-                }
-            }),
-        },
-    ]);
-}

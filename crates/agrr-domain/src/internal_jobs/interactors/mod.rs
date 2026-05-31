@@ -1,3 +1,5 @@
+pub(crate) mod scheduler_weather_batch_enqueue_interactor;
 pub(crate) mod scheduler_weather_update_jobs_trigger_interactor;
 
+pub use scheduler_weather_batch_enqueue_interactor::SchedulerWeatherBatchEnqueueInteractor;
 pub use scheduler_weather_update_jobs_trigger_interactor::SchedulerWeatherUpdateJobsTriggerInteractor;

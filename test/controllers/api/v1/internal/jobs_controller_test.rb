@@ -7,7 +7,6 @@ module Api
     module Internal
       class JobsControllerTest < ActionDispatch::IntegrationTest
         setup do
-          # Set a test token for all tests
           @token = "test_scheduler_token_12345"
           ENV["SCHEDULER_AUTH_TOKEN"] = @token
         end
@@ -34,12 +33,8 @@ module Api
         end
 
         test "should accept valid token in X-Scheduler-Token header" do
-          assert_enqueued_with(job: UpdateReferenceWeatherDataJob) do
-            assert_enqueued_with(job: UpdateUserFarmsWeatherDataJob) do
-              post "/api/v1/internal/jobs/trigger_weather_update",
-                   headers: { "X-Scheduler-Token" => @token }
-            end
-          end
+          post "/api/v1/internal/jobs/trigger_weather_update",
+               headers: { "X-Scheduler-Token" => @token }
 
           assert_response :success
           json = JSON.parse(response.body)
@@ -49,23 +44,15 @@ module Api
         end
 
         test "should accept valid token in Authorization header" do
-          assert_enqueued_with(job: UpdateReferenceWeatherDataJob) do
-            assert_enqueued_with(job: UpdateUserFarmsWeatherDataJob) do
-              post "/api/v1/internal/jobs/trigger_weather_update",
-                   headers: { "Authorization" => "Bearer #{@token}" }
-            end
-          end
+          post "/api/v1/internal/jobs/trigger_weather_update",
+               headers: { "Authorization" => "Bearer #{@token}" }
 
           assert_response :success
         end
 
         test "should accept valid token in params" do
-          assert_enqueued_with(job: UpdateReferenceWeatherDataJob) do
-            assert_enqueued_with(job: UpdateUserFarmsWeatherDataJob) do
-              post "/api/v1/internal/jobs/trigger_weather_update",
-                   params: { token: @token }
-            end
-          end
+          post "/api/v1/internal/jobs/trigger_weather_update",
+               params: { token: @token }
 
           assert_response :success
         end
@@ -82,30 +69,30 @@ module Api
         end
 
         test "should handle errors gracefully" do
-          # ジョブのエンキュー時にエラーが発生した場合をシミュレート
-          UpdateReferenceWeatherDataJob.stub(:perform_later, -> { raise ActiveJob::EnqueueError, "Job error" }) do
-            post "/api/v1/internal/jobs/trigger_weather_update",
-                 headers: { "X-Scheduler-Token" => @token }
+          job_proxy = mock("fetch_weather_job_proxy")
+          job_proxy.expects(:perform_later).raises(ActiveJob::EnqueueError, "Job error")
+          FetchWeatherDataJob.stubs(:set).returns(job_proxy)
 
-            assert_response :internal_server_error
-            json = JSON.parse(response.body)
-            assert_equal false, json["success"]
-            assert_equal "Job error", json["error"]
-          end
+          create(:farm, :reference, latitude: 35.68, longitude: 139.76)
+
+          post "/api/v1/internal/jobs/trigger_weather_update",
+               headers: { "X-Scheduler-Token" => @token }
+
+          assert_response :internal_server_error
+          json = JSON.parse(response.body)
+          assert_equal false, json["success"]
+          assert_equal "Job error", json["error"]
         end
 
-        test "should enqueue both jobs when authenticated" do
-          assert_enqueued_jobs(2) do
+        test "enqueues FetchWeatherDataJob per farm when authenticated" do
+          create(:farm, :reference, latitude: 35.68, longitude: 139.76)
+
+          assert_enqueued_jobs(1, only: FetchWeatherDataJob) do
             post "/api/v1/internal/jobs/trigger_weather_update",
                  headers: { "X-Scheduler-Token" => @token }
           end
 
           assert_response :success
-
-          # エンキューされたジョブの種類を確認
-          enqueued_job_classes = enqueued_jobs.map { |j| j[:job] }
-          assert_includes enqueued_job_classes, UpdateReferenceWeatherDataJob
-          assert_includes enqueued_job_classes, UpdateUserFarmsWeatherDataJob
         end
       end
     end

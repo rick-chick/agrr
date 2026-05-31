@@ -1,3 +1,5 @@
+pub(crate) mod scheduler_weather_farm_row;
 pub(crate) mod scheduler_weather_update_trigger_failure;
 
+pub use scheduler_weather_farm_row::SchedulerWeatherFarmRow;
 pub use scheduler_weather_update_trigger_failure::SchedulerWeatherUpdateTriggerFailure;
