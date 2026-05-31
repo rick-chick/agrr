@@ -2,6 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { PlanListView, PlanListViewState } from './plan-list.view';
 import { LoadPlanListUseCase } from '../../usecase/plans/load-plan-list.usecase';
 import { DeletePlanUseCase } from '../../usecase/plans/delete-plan.usecase';
@@ -16,7 +17,7 @@ const initialControl: PlanListViewState = {
 @Component({
   selector: 'app-plan-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, PlanDisplayNamePipe],
   providers: [...PLAN_LIST_PROVIDERS],
   template: `
     <main class="page-main">
@@ -35,7 +36,7 @@ const initialControl: PlanListViewState = {
               <li class="card-list__item">
                 <article class="item-card">
                   <a [routerLink]="['/plans', plan.id]" class="item-card__body">
-                    <span class="item-card__title">{{ plan.name }}</span>
+                    <span class="item-card__title">{{ plan.name | planDisplayName }}</span>
                   </a>
                   <div class="item-card__actions">
                     <button

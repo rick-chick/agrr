@@ -151,6 +151,18 @@
       }
     },
     "field_climate": {
+      "close": "Close climate chart",
+      "loading": "Loading climate data…",
+      "retry": "Retry",
+      "base_temperature": "Base temperature",
+      "optimal_range": "Optimal range",
+      "current_stage": "Current stage",
+      "daily_temperature": "Daily temperature",
+      "gdd_progress": "GDD progress",
+      "header_title_fallback": "Field climate data",
+      "header_subtitle_fallback": "Awaiting selection",
+      "period_unknown": "—",
+      "stage_gdd_value": "{{value}} GDD",
       "chart": {
         "temperature": "Temperature (°C)",
         "min_temp": "Min temp",
@@ -159,7 +171,7 @@
         "daily_gdd": "Daily GDD",
         "cumulative_gdd": "Cumulative GDD",
         "required_cumulative_gdd": "Required cumulative GDD",
-        "tooltip_format": "{{value}}"
+        "tooltip_format": "MMM d, yyyy"
       }
     },
     "pest_ai": {
@@ -1069,6 +1081,30 @@
       "optimization_started": "Optimization started.",
       "reoptimization_started": "Re-optimization started."
     },
+    "field_climate": {
+      "close": "Close climate chart",
+      "loading": "Loading climate data…",
+      "retry": "Retry",
+      "base_temperature": "Base temperature",
+      "optimal_range": "Optimal range",
+      "current_stage": "Current stage",
+      "daily_temperature": "Daily temperature",
+      "gdd_progress": "GDD progress",
+      "header_title_fallback": "Field climate data",
+      "header_subtitle_fallback": "Awaiting selection",
+      "period_unknown": "—",
+      "stage_gdd_value": "{{value}} GDD",
+      "chart": {
+        "temperature": "Temperature (°C)",
+        "min_temp": "Min temp",
+        "mean_temp": "Mean temp",
+        "max_temp": "Max temp",
+        "daily_gdd": "Daily GDD",
+        "cumulative_gdd": "Cumulative GDD",
+        "required_cumulative_gdd": "Required cumulative GDD",
+        "tooltip_format": "MMM d, yyyy"
+      }
+    },
     "title": "Cultivation Plans",
     "default_plan_name": "Main Plan",
     "steps": {
@@ -1158,7 +1194,20 @@
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",
+      "description": "Select crops to include in the plan for {{farmName}}.",
       "subtitle": "Click cards to select multiple crops",
+      "farm_info_label": "Farm information",
+      "farm_name_label": "Farm name",
+      "total_area_label": "Total area",
+      "plan_name_label": "Plan name",
+      "plan_name_placeholder": "e.g. Main Plan",
+      "select_crops_label": "Crops to grow",
+      "create_plan_button": "Create plan",
+      "errors": {
+        "farm_id_not_specified": "Farm was not specified.",
+        "no_crop_selected": "Please select at least one crop.",
+        "farm_id_unknown": "Farm could not be determined."
+      },
       "summary": {
         "year": "Year",
         "farm": "Farm",

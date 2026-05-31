@@ -32,7 +32,10 @@ describe('PlanFieldClimateComponent', () => {
 
     mockUseCase = { execute: vi.fn() } as unknown as LoadFieldClimateUseCase;
     mockCdr = { markForCheck: vi.fn() } as unknown as ChangeDetectorRef;
-    mockTranslate = { instant: vi.fn((key: string) => key) } as unknown as TranslateService;
+    mockTranslate = {
+      instant: vi.fn((key: string) => key),
+      onLangChange: { subscribe: vi.fn() }
+    } as unknown as TranslateService;
 
     component = new PlanFieldClimateComponent(
       mockPresenter as PlanFieldClimatePresenter,

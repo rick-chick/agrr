@@ -2,6 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
@@ -18,7 +19,14 @@ const initialControl: PlanDetailViewState = {
 @Component({
   selector: 'app-plan-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, GanttChartComponent, PlanFieldClimateComponent, TranslateModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    GanttChartComponent,
+    PlanFieldClimateComponent,
+    TranslateModule,
+    PlanDisplayNamePipe
+  ],
   providers: [...PLAN_DETAIL_PROVIDERS],
   template: `
     <section class="page">
@@ -30,7 +38,7 @@ const initialControl: PlanDetailViewState = {
           <p>{{ control.error | translate }}</p>
         </div>
       } @else if (control.plan) {
-        <h2>{{ control.plan.name }}</h2>
+        <h2>{{ control.plan.name | planDisplayName }}</h2>
         @if (control.planData) {
           <div class="plan-detail__layout">
             <div class="plan-detail__pane plan-detail__gantt">

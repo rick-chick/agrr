@@ -388,8 +388,61 @@
       "optimization_started": "अनुकूलन शुरू किया गया।",
       "reoptimization_started": "पुनः अनुकूलन शुरू किया गया।"
     },
+    "field_climate": {
+      "close": "जलवायु चार्ट बंद करें",
+      "loading": "जलवायु डेटा लोड हो रहा है…",
+      "retry": "पुनः प्रयास करें",
+      "base_temperature": "आधार तापमान",
+      "optimal_range": "इष्टतम सीमा",
+      "current_stage": "वर्तमान अवस्था",
+      "daily_temperature": "दैनिक तापमान",
+      "gdd_progress": "GDD प्रगति",
+      "header_title_fallback": "खेत जलवायु डेटा",
+      "header_subtitle_fallback": "चयन की प्रतीक्षा",
+      "period_unknown": "—",
+      "stage_gdd_value": "{{value}} GDD",
+      "chart": {
+        "temperature": "तापमान (°C)",
+        "min_temp": "न्यूनतम तापमान",
+        "mean_temp": "औसत तापमान",
+        "max_temp": "अधिकतम तापमान",
+        "daily_gdd": "दैनिक GDD",
+        "cumulative_gdd": "संचयी GDD",
+        "required_cumulative_gdd": "आवश्यक संचयी GDD",
+        "tooltip_format": "dd/MM/yyyy"
+      }
+    },
     "title": "खेती योजना",
     "default_plan_name": "मुख्य योजना",
+    "display_name_from_farm": "{{farmName}} योजना",
+    "field_climate": {
+      "close": "जलवायु चार्ट बंद करें",
+      "loading": "जलवायु डेटा लोड हो रहा है…",
+      "retry": "पुनः प्रयास करें",
+      "base_temperature": "आधार तापमान",
+      "optimal_range": "इष्टतम सीमा",
+      "current_stage": "वर्तमान अवस्था",
+      "daily_temperature": "दैनिक तापमान",
+      "gdd_progress": "GDD प्रगति",
+      "header_title_fallback": "खेत जलवायु डेटा",
+      "header_subtitle_fallback": "चयन की प्रतीक्षा",
+      "period_unknown": "—",
+      "stage_gdd_value": "{{value}} GDD",
+      "chart": {
+        "temperature": "तापमान (°C)",
+        "min_temp": "न्यूनतम तापमान",
+        "mean_temp": "औसत तापमान",
+        "max_temp": "अधिकतम तापमान",
+        "daily_gdd": "दैनिक GDD",
+        "cumulative_gdd": "संचयी GDD",
+        "required_cumulative_gdd": "आवश्यक संचयी GDD",
+        "tooltip_format": "dd/MM/yyyy"
+      }
+    },
+    "task_schedule": {
+      "title": "कार्य अनुसूची: {{name}}",
+      "back_to_plan": "← योजना पर वापस"
+    },
     "steps": {
       "year": "वर्ष",
       "farm": "खेत",
@@ -476,7 +529,20 @@
     },
     "select_crop": {
       "title": "🌾 उगाने के लिए फसलें चुनें",
+      "description": "{{farmName}} की योजना में शामिल करने के लिए फसलें चुनें।",
       "subtitle": "एकाधिक फसलें चुनने के लिए कार्ड पर क्लिक करें",
+      "farm_info_label": "खेत की जानकारी",
+      "farm_name_label": "खेत का नाम",
+      "total_area_label": "कुल क्षेत्रफल",
+      "plan_name_label": "योजना नाम",
+      "plan_name_placeholder": "उदाहरण: मुख्य योजना",
+      "select_crops_label": "उगाई जाने वाली फसलें",
+      "create_plan_button": "योजना बनाएं",
+      "errors": {
+        "farm_id_not_specified": "खेत निर्दिष्ट नहीं है।",
+        "no_crop_selected": "कृपया कम से कम एक फसल चुनें।",
+        "farm_id_unknown": "खेत निर्धारित नहीं किया जा सका।"
+      },
       "summary": {
         "year": "वर्ष",
         "farm": "खेत",
@@ -729,6 +795,18 @@
       "no_risks": "कोई जोखिम नहीं ✓"
     },
     "field_climate": {
+      "close": "जलवायु चार्ट बंद करें",
+      "loading": "जलवायु डेटा लोड हो रहा है…",
+      "retry": "पुनः प्रयास करें",
+      "base_temperature": "आधार तापमान",
+      "optimal_range": "इष्टतम सीमा",
+      "current_stage": "वर्तमान अवस्था",
+      "daily_temperature": "दैनिक तापमान",
+      "gdd_progress": "GDD प्रगति",
+      "header_title_fallback": "खेत जलवायु डेटा",
+      "header_subtitle_fallback": "चयन की प्रतीक्षा",
+      "period_unknown": "—",
+      "stage_gdd_value": "{{value}} GDD",
       "chart": {
         "temperature": "तापमान (°C)",
         "min_temp": "न्यूनतम तापमान",
@@ -737,7 +815,7 @@
         "daily_gdd": "दैनिक GDD",
         "cumulative_gdd": "संचयी GDD",
         "required_cumulative_gdd": "आवश्यक संचयी GDD",
-        "tooltip_format": "{{value}}"
+        "tooltip_format": "dd/MM/yyyy"
       }
     },
     "fertilize_ai": {

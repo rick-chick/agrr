@@ -2,6 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
@@ -16,7 +17,7 @@ const initialControl: PlanTaskScheduleViewState = {
 @Component({
   selector: 'app-plan-task-schedule',
   standalone: true,
-  imports: [CommonModule, RouterLink, TaskScheduleTimelineComponent, TranslateModule],
+  imports: [CommonModule, RouterLink, TaskScheduleTimelineComponent, TranslateModule, PlanDisplayNamePipe],
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
@@ -29,7 +30,10 @@ const initialControl: PlanTaskScheduleViewState = {
             <p>{{ control.error | translate }}</p>
           </div>
         } @else if (control.schedule) {
-          <h2>{{ 'plans.task_schedule.title' | translate: { name: control.schedule.plan.name } }}</h2>
+          <h2>{{
+            'plans.task_schedule.title'
+              | translate: { name: (control.schedule.plan.name | planDisplayName) }
+          }}</h2>
           <app-task-schedule-timeline [fields]="control.schedule.fields" />
         }
       </section>

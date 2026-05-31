@@ -1995,7 +1995,24 @@
       "optimization_started": "最適化を開始しました。",
       "reoptimization_started": "再最適化を開始しました。"
     },
+    "display_name_from_farm": "{{farmName}}の計画",
+    "task_schedule": {
+      "title": "作業予定: {{name}}",
+      "back_to_plan": "← 計画に戻る"
+    },
     "field_climate": {
+      "close": "気象チャートを閉じる",
+      "loading": "気象データを読み込んでいます…",
+      "retry": "再試行",
+      "base_temperature": "基準温度",
+      "optimal_range": "適正範囲",
+      "current_stage": "現在ステージ",
+      "daily_temperature": "日別気温",
+      "gdd_progress": "GDD推移",
+      "header_title_fallback": "圃場気象データ",
+      "header_subtitle_fallback": "選択待ち",
+      "period_unknown": "—",
+      "stage_gdd_value": "{{value}} GDD",
       "chart": {
         "temperature": "気温（℃）",
         "min_temp": "最低気温",
@@ -2004,7 +2021,7 @@
         "daily_gdd": "日次GDD",
         "cumulative_gdd": "積算GDD",
         "required_cumulative_gdd": "必要積算GDD",
-        "tooltip_format": "{{value}}"
+        "tooltip_format": "yyyy/MM/dd"
       }
     },
     "title": "個人計画",
@@ -2096,7 +2113,20 @@
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
+      "description": "{{farmName}} の計画に含める作物を選択してください。",
       "subtitle": "複数選択可能です。カードをクリックして選択してください。",
+      "farm_info_label": "農場情報",
+      "farm_name_label": "農場名",
+      "total_area_label": "総面積",
+      "plan_name_label": "計画名（将来的に複数計画を管理できます）",
+      "plan_name_placeholder": "例: メイン計画",
+      "select_crops_label": "栽培する作物",
+      "create_plan_button": "計画を作成",
+      "errors": {
+        "farm_id_not_specified": "農場が指定されていません。",
+        "no_crop_selected": "作物を1つ以上選択してください。",
+        "farm_id_unknown": "農場を特定できません。"
+      },
       "summary": {
         "year": "年度",
         "farm": "農場",

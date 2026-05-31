@@ -17,7 +17,8 @@ import { CommonModule } from '@angular/common';
 import Chart from 'chart.js/auto';
 import type { ChartConfiguration, ChartDataset, Plugin } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 import {
   ClimateGddPoint,
   ClimateTemperaturePoint,
@@ -50,23 +51,36 @@ type StageTemperatureBand = {
 @Component({
   selector: 'app-plan-field-climate',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   providers: [...PLAN_FIELD_CLIMATE_PROVIDERS],
   template: `
     <section class="plan-field-climate">
       <header class="plan-field-climate__header">
         <div class="plan-field-climate__header-info">
-          <p class="plan-field-climate__title">{{ headerTitle }}</p>
-          <p class="plan-field-climate__subtitle">{{ headerSubtitle }}</p>
+          <p class="plan-field-climate__title">
+            {{
+              control.climateData?.field_cultivation.crop_name ??
+                ('plans.field_climate.header_title_fallback' | translate)
+            }}
+          </p>
+          <p class="plan-field-climate__subtitle">
+            {{
+              control.climateData?.farm.name ??
+                ('plans.field_climate.header_subtitle_fallback' | translate)
+            }}
+          </p>
           <div class="plan-field-climate__header-meta">
-            <span>{{ headerFieldName }}</span>
+            <span>{{
+              control.climateData?.field_cultivation.field_name ??
+                ('plans.field_climate.period_unknown' | translate)
+            }}</span>
             <span>{{ headerPeriod }}</span>
           </div>
         </div>
         <button
           type="button"
           class="plan-field-climate__close"
-          aria-label="Close climate chart"
+          [attr.aria-label]="'plans.field_climate.close' | translate"
           (click)="close.emit()"
         >
           ×
@@ -74,26 +88,28 @@ type StageTemperatureBand = {
       </header>
 
       <div *ngIf="control.loading" class="plan-field-climate__status">
-        <p>Loading climate data…</p>
+        <p>{{ 'plans.field_climate.loading' | translate }}</p>
       </div>
 
       <div *ngIf="control.error" class="plan-field-climate__error">
         <p>{{ control.error }}</p>
-        <button type="button" class="plan-field-climate__retry" (click)="retry()">Retry</button>
+        <button type="button" class="plan-field-climate__retry" (click)="retry()">
+          {{ 'plans.field_climate.retry' | translate }}
+        </button>
       </div>
 
       <section *ngIf="control.climateData" class="plan-field-climate__content">
         <dl class="plan-field-climate__stats">
           <div>
-            <dt>Base temperature</dt>
+            <dt>{{ 'plans.field_climate.base_temperature' | translate }}</dt>
             <dd>{{ control.climateData.crop_requirements.base_temperature }}℃</dd>
           </div>
           <div *ngIf="optimalRange">
-            <dt>Optimal range</dt>
+            <dt>{{ 'plans.field_climate.optimal_range' | translate }}</dt>
             <dd>{{ optimalRange }}</dd>
           </div>
           <div>
-            <dt>Current stage</dt>
+            <dt>{{ 'plans.field_climate.current_stage' | translate }}</dt>
             <dd>{{ currentStage }}</dd>
           </div>
         </dl>
@@ -101,14 +117,19 @@ type StageTemperatureBand = {
         <div class="plan-field-climate__stage-list">
           <article class="plan-field-climate__stage" *ngFor="let stage of stageRequirements">
             <p class="plan-field-climate__stage-name">{{ stage.name }}</p>
-            <p class="plan-field-climate__stage-value">{{ stage.cumulative_gdd_required }} GDD</p>
+            <p class="plan-field-climate__stage-value">
+              {{
+                'plans.field_climate.stage_gdd_value'
+                  | translate: { value: stage.cumulative_gdd_required }
+              }}
+            </p>
           </article>
         </div>
 
         <div class="plan-field-climate__charts">
           <article class="plan-field-climate__chart-card">
             <header>
-              <h4>Daily temperature</h4>
+              <h4>{{ 'plans.field_climate.daily_temperature' | translate }}</h4>
             </header>
             <div class="plan-field-climate__chart-wrapper">
               <canvas #temperatureCanvas></canvas>
@@ -116,7 +137,7 @@ type StageTemperatureBand = {
           </article>
           <article class="plan-field-climate__chart-card">
             <header>
-              <h4>GDD progress</h4>
+              <h4>{{ 'plans.field_climate.gdd_progress' | translate }}</h4>
             </header>
             <div class="plan-field-climate__chart-wrapper">
               <canvas #gddCanvas></canvas>
@@ -162,6 +183,7 @@ export class PlanFieldClimateComponent
     { optimal: 'rgba(14, 165, 233, 0.16)', stress: 'rgba(239, 68, 68, 0.08)' }
   ];
   private lastFieldCultivationId: number | null = null;
+  private langChangeSub?: Subscription;
 
   constructor(
     private readonly presenter: PlanFieldClimatePresenter,
@@ -172,6 +194,10 @@ export class PlanFieldClimateComponent
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.langChangeSub = this.translate.onLangChange.subscribe(() => {
+      this.applyChartI18n();
+      this.cdr.markForCheck();
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -198,6 +224,7 @@ export class PlanFieldClimateComponent
   }
 
   ngOnDestroy(): void {
+    this.langChangeSub?.unsubscribe();
     this.temperatureChart?.destroy();
     this.gddChart?.destroy();
   }
@@ -217,24 +244,11 @@ export class PlanFieldClimateComponent
     this.scheduleChartRefresh();
   }
 
-  get headerTitle(): string {
-    return (
-      this.control.climateData?.field_cultivation.crop_name ??
-      'Field climate data'
-    );
-  }
-
-  get headerSubtitle(): string {
-    return this.control.climateData?.farm.name ?? 'Awaiting selection';
-  }
-
-  get headerFieldName(): string {
-    return this.control.climateData?.field_cultivation.field_name ?? '—';
-  }
-
   get headerPeriod(): string {
     const field = this.control.climateData?.field_cultivation;
-    if (!field?.start_date || !field?.completion_date) return '—';
+    if (!field?.start_date || !field?.completion_date) {
+      return this.translate.instant('plans.field_climate.period_unknown');
+    }
     return `${field.start_date} – ${field.completion_date}`;
   }
 
@@ -245,7 +259,10 @@ export class PlanFieldClimateComponent
   get currentStage(): string {
     const gddPoints = this.control.climateData?.gdd_data;
     const lastPoint = gddPoints?.[gddPoints.length - 1];
-    return lastPoint?.current_stage ?? '—';
+    return (
+      lastPoint?.current_stage ??
+      this.translate.instant('plans.field_climate.period_unknown')
+    );
   }
 
   get optimalRange(): string | null {
@@ -258,6 +275,15 @@ export class PlanFieldClimateComponent
     if (!this.currentRequest) return;
     this.control = { loading: true, error: null, climateData: null };
     this.useCase.execute(this.currentRequest);
+  }
+
+  private applyChartI18n(): void {
+    if (!this.temperatureChart && !this.gddChart) return;
+    this.refreshCharts();
+  }
+
+  private chartLabel(key: string): string {
+    return this.translate.instant(`plans.field_climate.chart.${key}`);
   }
 
   private loadClimateIfNeeded(): void {
@@ -295,7 +321,7 @@ export class PlanFieldClimateComponent
       this.temperatureChart = new Chart(this.temperatureCanvas.nativeElement, {
         type: 'line',
         data: { labels: [], datasets: [] },
-        options: this.buildChartOptions(this.translate.instant('plans.field_climate.chart.temperature')),
+        options: this.buildChartOptions(this.chartLabel('temperature')),
         plugins: [this.getStageBandPlugin()]
       });
     }
@@ -304,7 +330,7 @@ export class PlanFieldClimateComponent
       this.gddChart = new Chart(this.gddCanvas.nativeElement, {
         type: 'line',
         data: { labels: [], datasets: [] },
-        options: this.buildGddChartOptions(this.translate.instant('plans.field_climate.chart.cumulative_gdd'))
+        options: this.buildGddChartOptions(this.chartLabel('cumulative_gdd'))
       });
     }
   }
@@ -339,9 +365,9 @@ export class PlanFieldClimateComponent
 
     const labels = weather.map(entry => entry.date);
     const datasets: ChartDataset<'line'>[] = [
-      this.buildTemperatureDataset(this.translate.instant('plans.field_climate.chart.min_temp'), weather, 'temperature_min', '#0ea5e9'),
-      this.buildTemperatureDataset(this.translate.instant('plans.field_climate.chart.mean_temp'), weather, 'temperature_mean', '#2563eb'),
-      this.buildTemperatureDataset(this.translate.instant('plans.field_climate.chart.max_temp'), weather, 'temperature_max', '#16a34a')
+      this.buildTemperatureDataset(this.chartLabel('min_temp'), weather, 'temperature_min', '#0ea5e9'),
+      this.buildTemperatureDataset(this.chartLabel('mean_temp'), weather, 'temperature_mean', '#2563eb'),
+      this.buildTemperatureDataset(this.chartLabel('max_temp'), weather, 'temperature_max', '#16a34a')
     ];
 
     this.temperatureChart.data.labels = labels;
@@ -367,14 +393,14 @@ export class PlanFieldClimateComponent
 
     const datasets: ChartDataset<'line'>[] = [
       this.buildGddDataset(
-        this.translate.instant('plans.field_climate.chart.daily_gdd'),
+        this.chartLabel('daily_gdd'),
         gddData,
         entry => entry.gdd,
         '#f97316',
         'y2'
       ),
       this.buildGddDataset(
-        this.translate.instant('plans.field_climate.chart.cumulative_gdd'),
+        this.chartLabel('cumulative_gdd'),
         gddData,
         entry => entry.cumulative_gdd,
         '#10b981',
@@ -483,9 +509,9 @@ export class PlanFieldClimateComponent
           type: 'time',
           time: {
             unit: 'day',
-            tooltipFormat: this.translate.instant('plans.field_climate.chart.tooltip_format'),
+            tooltipFormat: this.chartLabel('tooltip_format'),
             displayFormats: {
-              day: 'MM/dd'
+              day: this.chartDateTickFormat()
             }
           },
           grid: {
@@ -533,9 +559,9 @@ export class PlanFieldClimateComponent
           type: 'time',
           time: {
             unit: 'day',
-            tooltipFormat: this.translate.instant('plans.field_climate.chart.tooltip_format'),
+            tooltipFormat: this.chartLabel('tooltip_format'),
             displayFormats: {
-              day: 'MM/dd'
+              day: this.chartDateTickFormat()
             }
           },
           grid: {
@@ -572,7 +598,7 @@ export class PlanFieldClimateComponent
           min: 0,
           title: {
             display: true,
-            text: this.translate.instant('plans.field_climate.chart.daily_gdd'),
+            text: this.chartLabel('daily_gdd'),
             color: '#f97316'
           },
           ticks: {
@@ -584,6 +610,17 @@ export class PlanFieldClimateComponent
         }
       }
     };
+  }
+
+  private chartDateTickFormat(): string {
+    switch (this.translate.currentLang) {
+      case 'in':
+        return 'dd/MM';
+      case 'ja':
+        return 'MM/dd';
+      default:
+        return 'MM/dd';
+    }
   }
 
   private buildStageBands(): StageTemperatureBand[] {
@@ -759,7 +796,7 @@ export class PlanFieldClimateComponent
     });
 
     return {
-      label: this.translate.instant('plans.field_climate.chart.required_cumulative_gdd'),
+      label: this.chartLabel('required_cumulative_gdd'),
       data,
       stepped: 'before',
       borderColor: '#ef4444',
