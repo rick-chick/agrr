@@ -11,8 +11,8 @@
 |------|------|
 | 本番 API トラフィック | **Rust（`agrr-server`）** — LB 上の backend 名は `agrr-rails-backend` のままだが、NEG は `agrr-production`（Rust イメージ） |
 | P6 レベル 4（本番ストラングラー・トラフィック） | **実質達成**（指紋・501 フォールバック・契約テスト GREEN） |
-| P7 コード削除 Phase 1 | **実施済み**（2026-05-31）— `app/controllers/api`・jobs・channels・API adapters 削除。Rails 残: SPA shell・auth_test・`lib/domain` |
-| P7 コード削除 Phase 2（`lib/domain`） | **手動スモーク後**（OAuth / 計画 WS / マスタ） |
+| P7 コード削除 Phase 1 | **実施済み**（2026-05-31）— `app/controllers/api`・jobs・channels・API adapters 削除 |
+| P7 コード削除 Phase 2（`lib/domain`） | **実施済み**（2026-05-31）— `lib/domain/`・`test/domain/` 削除。Rails 残: SPA shell・auth_test・薄い adapters |
 | 本番 DB データ | **in repair 適用済み**（レプリカ確認）。**us 参照作物 7 件**は stages 欠損のまま |
 
 ## 残作業
@@ -22,7 +22,7 @@
 | 1 | URL map の **命名整理**（任意・P7） | パスは `agrr-rails-backend` → 実体は Rust。`rust-backend` へのリネームまたは ADR どおりの整理のみ残る |
 | 2 | 本番 **手動スモーク** | OAuth ログイン、`auth/me`、計画作成→最適化 WS、マスタ CRUD、`save_plan`、`POST /undo_deletion` |
 | 3 | 本番 **us 参照データ**（必要時） | 7 件の `crop_stages` 欠損。`in` repair では直らない。運用合意のうえ `agrr-migrate data apply` |
-| 4 | **P7** Rails 資産削除 | [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) — `lib/domain` は Phase 2 |
+| 4 | **P7** Rails 資産削除（残） | [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) — URL map 命名・Rails 本番イメージ廃止など |
 
 **ローカルゲート**（削除 PR 前に再実行）: `cargo build -p agrr-server` + `COVERAGE=false ./scripts/run-rust-contract-tests.sh` + [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh)（2026-05-31: contract **112 runs, 0 failures**、p7 gate **OK**）。
 

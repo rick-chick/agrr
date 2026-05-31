@@ -53,7 +53,7 @@ class Crop < ApplicationRecord
   validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
   validates :source_crop_id, uniqueness: { scope: :user_id }, allow_nil: true
 
-  # ユーザー作物の件数制限は Domain::Crop::Policies::CropCreateLimitPolicy（Interactor）で実施
+  # ユーザー作物の件数制限は agrr-server（CropCreateLimitPolicy）で実施
   validates :user, presence: true, unless: :is_reference?
   validate :user_must_be_nil_for_reference, if: :is_reference?
 

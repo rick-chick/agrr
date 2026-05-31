@@ -4,8 +4,6 @@ module Adapters
   module Auth
     module Presenters
       class AuthTestMockLoginHtmlPresenter
-        include Domain::Auth::Ports::AuthTestMockLoginOutputPort
-
         def initialize(view:)
           @view = view
         end

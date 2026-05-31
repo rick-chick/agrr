@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class SpaController < ApplicationController
-  skip_before_action :authenticate_user!
-
   def index
     index_path = Rails.root.join("public", "index.html")
     unless File.exist?(index_path)

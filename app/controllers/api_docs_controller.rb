@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 class ApiDocsController < ApplicationController
-  # APIリファレンスは認証不要で公開
-  skip_before_action :authenticate_user!
-
   # GET /api/docs
   def index
     # OpenAPI仕様ファイルを読み込んでJSONに変換

@@ -23,5 +23,10 @@ AGRR_SERVER_CONTRACT_REBUILD=1 COVERAGE=false ./scripts/run-rust-contract-tests.
 echo "==> agrr-migrate (schema smoke)"
 cargo test -p agrr-migrate --quiet
 
-echo "==> Reminder: do not delete lib/domain until production runs Rust-only (see .cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh)"
-echo "OK: P7 code removal preconditions for local/CI."
+echo "==> Checking Ruby lib/domain is removed"
+if [ -d lib/domain ]; then
+  echo "FAIL: lib/domain/ must be deleted (P7 Phase 2)"
+  exit 1
+fi
+
+echo "OK: P7 code removal gate passed."

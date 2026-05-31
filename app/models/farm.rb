@@ -41,7 +41,7 @@ class Farm < ApplicationRecord
   validates :region, inclusion: { in: %w[jp us in] }, allow_nil: true
   validates :source_farm_id, uniqueness: { scope: :user_id }, allow_nil: true
 
-  # ユーザー農場の件数制限は Domain::Farm::Policies::FarmCreateLimitPolicy（Interactor）で実施
+  # ユーザー農場の件数制限は agrr-server（FarmCreateLimitPolicy）で実施
   validates :user, presence: true
 
   # 参照農場はアノニマスユーザーにのみ設定可能（複数の参照農場を許可）
@@ -65,12 +65,12 @@ class Farm < ApplicationRecord
     is_reference
   end
 
-  # 天気データ取得の進捗率（0-100）— 表示用。永続化更新は domain 経由。
+  # 天気データ取得の進捗率（0-100）— 表示用。
   def weather_data_progress
-    Domain::Farm::Calculators::FarmWeatherProgressCalculator.progress_percent(
-      fetched: weather_data_fetched_years,
-      total: weather_data_total_years
-    )
+    total = weather_data_total_years.to_i
+    return 0 if total.zero?
+
+    (weather_data_fetched_years.to_f / total * 100).round
   end
 
   private

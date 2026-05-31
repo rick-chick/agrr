@@ -91,7 +91,10 @@ class CultivationPlan < ApplicationRecord
   # @deprecated 年度という概念は削除されました。このメソッドは後方互換性のため残していますが、使用しないでください。
   # 計画年度から計画期間を計算（2年間）
   def self.calculate_planning_dates(plan_year)
-    Domain::CultivationPlan::Calculators::PlanningDateCalculator.calculate_planning_dates(plan_year)
+    {
+      start_date: Date.new(plan_year, 1, 1),
+      end_date: Date.new(plan_year + 1, 12, 31)
+    }
   end
 
   # 計画期間をメソッドとして計算

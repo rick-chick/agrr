@@ -1,14 +1,9 @@
 # frozen_string_literal: true
 
 class AuthTestController < ApplicationController
-  # Skip authentication for test endpoints
-  skip_before_action :authenticate_user!, only: [ :mock_login, :mock_login_as, :mock_logout ]
-
-  # Only available in development and test
   before_action :ensure_development_or_test, only: [ :mock_login, :mock_login_as, :mock_logout ]
 
   def mock_login
-    # Default developer login
     mock_login_as_user(:google_oauth2)
   end
 
@@ -28,10 +23,12 @@ class AuthTestController < ApplicationController
 
   def mock_logout
     presenter = Adapters::Auth::Presenters::AuthTestLogoutHtmlPresenter.new(view: self)
-    Domain::Auth::Interactors::AuthUserLogoutInteractor.new(
-      output_port: presenter,
-      session_revocation_gateway: CompositionRoot.user_session_revocation_gateway
-    ).call(authenticated: logged_in?, user_id: current_user.id)
+    if logged_in?
+      CompositionRoot.user_session_revocation_gateway.delete_all_sessions_for_user!(user_id: current_user.id)
+      presenter.on_success
+    else
+      presenter.on_not_logged_in
+    end
   end
 
   public
@@ -39,9 +36,7 @@ class AuthTestController < ApplicationController
   def auth_test_clear_session_cookies!
     cookies.delete(:session_id)
     cookies.delete(:session_id, path: "/")
-    cookie_domain = if request.respond_to?(:cookie_domain, true)
-      request.cookie_domain.presence
-    end
+    cookie_domain = request.cookie_domain.presence if request.respond_to?(:cookie_domain, true)
     cookies.delete(:session_id, domain: cookie_domain, path: "/") if cookie_domain
     cookies.delete(:session_id, domain: :all, path: "/")
   end
@@ -66,6 +61,11 @@ class AuthTestController < ApplicationController
       return
     end
 
+    unless Rails.env.development? || Rails.env.test?
+      redirect_to root_path(locale: I18n.default_locale), alert: I18n.t("auth_test.env_only")
+      return
+    end
+
     return_to = params[:return_to].presence || session.delete(:return_to)
     pending_allowed = return_to.present? && Adapters::Auth::SpaAuthRedirect.allowed_return_to?(
       return_to,
@@ -73,7 +73,7 @@ class AuthTestController < ApplicationController
     )
     stashed = session[:public_plan_save_data].present?
 
-    input = Domain::Auth::Dtos::AuthTestMockLoginInput.new(
+    input = Adapters::Auth::AuthTestMockLoginInput.new(
       google_id: auth_hash["uid"],
       email: auth_hash.dig("info", "email"),
       name: auth_hash.dig("info", "name"),
@@ -84,20 +84,43 @@ class AuthTestController < ApplicationController
       pending_return_to_allowed: pending_allowed
     )
 
+    if input.google_id.blank?
+      redirect_to root_path(locale: I18n.default_locale), alert: I18n.t("auth_test.mock_data_missing")
+      return
+    end
+
+    result = CompositionRoot.auth_test_login_gateway.persist_mock_user_and_session!(input)
     presenter = Adapters::Auth::Presenters::AuthTestMockLoginHtmlPresenter.new(view: self)
-    Domain::Auth::Interactors::AuthTestMockLoginInteractor.new(
-      output_port: presenter,
-      gateway: CompositionRoot.auth_test_login_gateway,
-      oauth_url_appender: CompositionRoot.oauth_conversion_url_appender
-    ).call(
-      input_dto: input,
-      environment_allowed: Rails.env.development? || Rails.env.test?
-    )
+
+    case result.status
+    when :success
+      if input.stashed_public_plan
+        presenter.on_success_process_saved_plan(session_id: result.session_id, expires_at: result.expires_at)
+      elsif input.pending_return_to && input.pending_return_to_allowed
+        url = CompositionRoot.oauth_conversion_url_appender.append(input.pending_return_to)
+        presenter.on_success_return_to(
+          url: url,
+          session_id: result.session_id,
+          expires_at: result.expires_at,
+          user_name: result.user_name
+        )
+      else
+        presenter.on_success_root(
+          session_id: result.session_id,
+          expires_at: result.expires_at,
+          user_name: result.user_name
+        )
+      end
+    when :user_not_persisted, :record_invalid
+      presenter.on_create_failed(error_messages: Array(result.error_messages).compact)
+    else
+      presenter.on_create_failed(error_messages: [ "unknown" ])
+    end
   end
 
   def ensure_development_or_test
-    unless Rails.env.development? || Rails.env.test?
-      redirect_to root_path(locale: I18n.default_locale), alert: I18n.t("auth_test.env_only")
-    end
+    return if Rails.env.development? || Rails.env.test?
+
+    redirect_to root_path(locale: I18n.default_locale), alert: I18n.t("auth_test.env_only")
   end
 end

@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class HealthController < ApplicationController
-  # ヘルスチェックは認証不要
-  skip_before_action :authenticate_user!
   skip_before_action :verify_authenticity_token
 
   # SELECT 1 による接続・クエリで起きうる例外のみを 503 に落とす（ARCHITECTURE.md Application edge 3:
