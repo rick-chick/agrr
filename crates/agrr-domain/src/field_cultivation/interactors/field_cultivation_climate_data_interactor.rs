@@ -192,14 +192,7 @@ impl FieldCultivationClimateDataInputPort for FieldCultivationClimateDataInterac
 
         let context = to_context_snapshot(&source, &crop_entity);
 
-        let climate_data = match assemble_climate_data(
-            self,
-            &source,
-            &context,
-            &crop_entity,
-            input.display_start_date.as_deref(),
-            input.display_end_date.as_deref(),
-        ) {
+        let climate_data = match assemble_climate_data(self, &source, &context, &crop_entity) {
             Ok(Some(data)) => data,
             Ok(None) => {
                 self.logger.warn(&format!(
@@ -262,25 +255,10 @@ fn assemble_climate_data(
     source: &FieldCultivationClimateSourceSnapshot,
     context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
     crop_entity: &crate::field_cultivation::dtos::ClimateCropEntity,
-    display_start_date: Option<&str>,
-    display_end_date: Option<&str>,
 ) -> Result<Option<FieldCultivationClimateDataOutput>, Box<dyn std::error::Error + Send + Sync>> {
-    let weather_payload = fetch_primary_weather_payload(
-        interactor,
-        source,
-        context,
-        display_start_date,
-        display_end_date,
-    )?;
+    let weather_payload = fetch_primary_weather_payload(interactor, source, context)?;
     if weather_payload.is_none() {
-        return assemble_climate_data_from_fallback(
-            interactor,
-            source,
-            context,
-            crop_entity,
-            display_start_date,
-            display_end_date,
-        );
+        return assemble_climate_data_from_fallback(interactor, source, context, crop_entity);
     }
     let weather_payload = weather_payload.unwrap();
     Ok(Some(build_climate_output(
@@ -296,15 +274,8 @@ fn assemble_climate_data_from_fallback(
     source: &FieldCultivationClimateSourceSnapshot,
     context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
     crop_entity: &crate::field_cultivation::dtos::ClimateCropEntity,
-    display_start_date: Option<&str>,
-    display_end_date: Option<&str>,
 ) -> Result<Option<FieldCultivationClimateDataOutput>, Box<dyn std::error::Error + Send + Sync>> {
-    let weather_payload = fetch_fallback_weather_payload(
-        interactor,
-        source,
-        display_start_date,
-        display_end_date,
-    )?;
+    let weather_payload = fetch_fallback_weather_payload(interactor, source)?;
     let Some(weather_payload) = weather_payload else {
         return Ok(None);
     };
@@ -341,8 +312,6 @@ fn fetch_primary_weather_payload(
     interactor: &FieldCultivationClimateDataInteractor<'_>,
     source: &FieldCultivationClimateSourceSnapshot,
     context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
-    display_start_date: Option<&str>,
-    display_end_date: Option<&str>,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     let weather_payload = if context.plan_predicted_weather_present {
         merge_cached_prediction_with_observed(interactor, source, context)?
@@ -411,8 +380,6 @@ fn merge_cached_prediction_with_observed(
 fn fetch_fallback_weather_payload(
     interactor: &FieldCultivationClimateDataInteractor<'_>,
     source: &FieldCultivationClimateSourceSnapshot,
-    display_start_date: Option<&str>,
-    display_end_date: Option<&str>,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     interactor.logger.info(&format!(
         "Fallback to on-the-fly prediction for field_cultivation_id={}",
