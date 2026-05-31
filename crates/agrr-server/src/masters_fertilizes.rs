@@ -1,7 +1,7 @@
 //! Masters fertilizes API — `/api/v1/masters/fertilizes`
 
 use crate::adapters::PassthroughTranslator;
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{FertilizeSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::fertilize::dtos::{
@@ -24,7 +24,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -88,10 +87,9 @@ impl FertilizeListOutputPort for ListPort {
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = FertilizeSqliteGateway::new(pool.clone());
@@ -135,11 +133,10 @@ impl FertilizeDetailOutputPort for DetailPort {
 
 async fn show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = FertilizeSqliteGateway::new(pool.clone());
@@ -160,7 +157,12 @@ async fn show(
 }
 
 #[derive(Deserialize)]
-struct FertilizeBody {
+struct FertilizeRequest {
+    fertilize: FertilizeAttrs,
+}
+
+#[derive(Deserialize)]
+struct FertilizeAttrs {
     name: Option<String>,
     n: Option<f64>,
     p: Option<f64>,
@@ -193,11 +195,17 @@ impl FertilizeCreateOutputPort for CreatePort {
 
 async fn create(
     State(state): State<AppState>,
-    jar: CookieJar,
-    Json(body): Json<FertilizeBody>,
+    auth: MastersUserId,
+    Json(payload): Json<FertilizeRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let body = payload.fertilize;
+    if body.name.as_deref().unwrap_or("").trim().is_empty() {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": ["name is required"]})),
+        ));
+    }
+    let user_id = auth.0;
     let mut input = FertilizeCreateInput::new(body.name.clone().unwrap_or_default());
     input.n = body.n;
     input.p = body.p;
@@ -242,12 +250,12 @@ impl FertilizeUpdateOutputPort for UpdatePort {
 
 async fn update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
-    Json(body): Json<FertilizeBody>,
+    Json(payload): Json<FertilizeRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let body = payload.fertilize;
+    let user_id = auth.0;
     let input = FertilizeUpdateInput {
         fertilize_id: id,
         name: body.name.clone(),
@@ -294,11 +302,10 @@ impl FertilizeDestroyOutputPort for DestroyPort {
 
 async fn destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = FertilizeSqliteGateway::new(pool.clone());

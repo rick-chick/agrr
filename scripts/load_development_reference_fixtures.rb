@@ -2,7 +2,7 @@
 
 # Load JP/US reference masters from db/fixtures/*.json (LoadAllFixtures migration logic).
 # Safe to re-run when reference farms are missing (find_or_initialize / upsert).
-require Rails.root.join("db/migrate/20260222191715_load_all_fixtures.rb")
+require Rails.root.join("db/migrate_archive/20260222191715_load_all_fixtures.rb")
 
 m = LoadAllFixtures.new
 m.define_singleton_method(:say) { |msg, _subtask = false| puts msg }

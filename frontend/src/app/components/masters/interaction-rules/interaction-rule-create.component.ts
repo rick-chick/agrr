@@ -55,7 +55,7 @@ const initialControl: InteractionRuleCreateViewState = {
             <input id="impact_ratio" name="impact_ratio" type="number" step="0.01" [(ngModel)]="control.formData.impact_ratio" required />
           </label>
           <label class="form-card__field" for="is_directional">
-            <span class="form-card__field-label">{{ 'interaction_rules.form.is_directional_label' | translate }}</span>
+            <span class="form-card__field-label">{{ 'interaction_rules.form.direction_label' | translate }}</span>
             <input id="is_directional" name="is_directional" type="checkbox" [(ngModel)]="control.formData.is_directional" />
           </label>
           <label class="form-card__field" for="description">

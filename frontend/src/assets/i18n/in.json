@@ -1126,11 +1126,22 @@
       "title": "新しい作業を追加"
     },
     "edit": {
-      "title": "{{name}}を編集"
+      "title": "{{name}} संपादित करें",
+      "title_default": "कार्य"
+    },
+    "errors": {
+      "invalid_id": "अमान्य कार्य ID।"
     },
     "form": {
-      "submit_create": "作業を作成",
-      "submit_update": "作業を更新",
+      "name_label": "कार्य का नाम",
+      "description_label": "विवरण",
+      "time_per_sqm_label": "कार्य समय (घंटे/㎡)",
+      "weather_dependency_label": "मौसम निर्भरता",
+      "skill_level_label": "कौशल स्तर",
+      "task_type_label": "कार्य प्रकार",
+      "required_tools_label": "आवश्यक उपकरण",
+      "submit_create": "कार्य बनाएँ",
+      "submit_update": "कार्य अपडेट करें",
       "required_tools_hint": "改行で複数入力できます",
       "region_label": "地域",
       "region_jp": "日本",
@@ -1161,6 +1172,9 @@
       "skill_level_beginner": "初心者",
       "skill_level_intermediate": "中級者",
       "skill_level_advanced": "上級者",
+      "region": "क्षेत्र",
+      "task_type": "कार्य प्रकार",
+      "hours_suffix": "घंटे/㎡",
       "created_at": "作成日",
       "updated_at": "更新日",
       "associated_crops": "関連する作物",
@@ -1979,6 +1993,9 @@
     }
   },
   "pesticides": {
+    "undo": {
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+    },
     "form": {
       "crop_label": "फसल",
       "crop_help": "वह फसल चुनें जिस पर यह कीटनाशक लागू होता है (आवश्यक)",
@@ -2042,6 +2059,7 @@
     },
     "index": {
       "title": "कीटनाशक सूची",
+      "description": "फसलों और कीटों से जुड़े कीटनाशक मास्टर प्रबंधित करें।",
       "new_pesticide": "नया कीटनाशक जोड़ें",
       "reference_pesticides": "संदर्भ कीटनाशक (सामान्य डेटा)",
       "active_ingredient": "सक्रिय तत्व",
@@ -2058,11 +2076,19 @@
         "button": "कीटनाशक जोड़ें"
       }
     },
+    "errors": {
+      "invalid_id": "अमान्य कीटनाशक ID।"
+    },
+    "fallback": {
+      "crop": "फसल (ID: {{id}})",
+      "pest": "कीट (ID: {{id}})"
+    },
     "new": {
       "title": "नया कीटनाशक जोड़ें"
     },
     "edit": {
-      "title": "{{name}} संपादित करें"
+      "title": "{{name}} संपादित करें",
+      "title_default": "कीटनाशक"
     },
     "show": {
       "reference_pesticide": "संदर्भ कीटनाशक",

@@ -1,6 +1,6 @@
 // Tests for `interactors/farm_weather_data_access_interactor.rs` (Ruby parity under test/domain/weather_data/).
 
-    use crate::shared::ports::{ClockPort, LoggerPort};
+    use crate::shared::ports::ClockPort;
     use time::{Date, Month, OffsetDateTime, Time};
 
     use crate::weather_data::ports::{
@@ -199,14 +199,6 @@
         fn now(&self) -> OffsetDateTime {
             self.now
         }
-    }
-
-    struct NoopLogger;
-    impl LoggerPort for NoopLogger {
-        fn info(&self, _: &str) {}
-        fn warn(&self, _: &str) {}
-        fn error(&self, _: &str) {}
-        fn debug(&self, _: &str) {}
     }
 
     #[test]

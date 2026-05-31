@@ -259,7 +259,7 @@
         interactor.call(empty_input(1)).expect("handled");
         assert!(matches!(
             output.failure,
-            Some(UpdateFailure::Policy(PolicyPermissionDenied))
+            Some(UpdateFailure::Policy(_))
         ));
     }
 

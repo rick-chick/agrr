@@ -157,7 +157,11 @@ where
         }
         match err.downcast::<RecordInvalidError>() {
             Ok(record_invalid) => {
-                output_port.on_failure(CreateFailure::Error(Error::new(record_invalid.to_string())));
+                let message = record_invalid
+                    .detail_message()
+                    .map(|m| m.to_string())
+                    .unwrap_or_else(|| record_invalid.to_string());
+                output_port.on_failure(CreateFailure::Error(Error::new(message)));
                 Ok(())
             }
             Err(err) => Err(err),

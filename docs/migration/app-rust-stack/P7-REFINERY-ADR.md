@@ -1,6 +1,6 @@
 # ADR: P7 schema ownership — refinery + Rails sunset
 
-> **ステータス**: 方針確定（詳細手順は P7 着手時に追記）  
+> **ステータス**: 実施中 — 手順は [P7-MIGRATION-RUNBOOK.md](./P7-MIGRATION-RUNBOOK.md)、実装は `crates/agrr-migrate`  
 > **前提**: P6 全 BC ルート切替完了、`rails-backend` を URL map から除去済み
 
 ## コンテキスト
@@ -13,7 +13,9 @@
 | 項目 | 内容 |
 |------|------|
 | P7 マイグレーション | **[refinery](https://github.com/refinery/refinery)** で Rust 側に移管 |
-| ダウンタイム | 着手時に測定・ADR 追記（単一ライター維持のままメンテナンスウィンドウを想定） |
+| ダウンタイム | 単一ライター維持。既存 DB は `schema stamp` + 差分 `schema run` のみ（baseline 再適用禁止） |
+| データ | `agrr-migrate data apply`（**起動時は実行しない**）。履歴は primary の `data_migration_history` |
+| 地域 | `jp` / `in` / `us` |
 | `cable` SQLite | WS プロセス内化に伴い **廃止** |
 | 削除 undo | **Angular のみ**（Rust server template は採用しない） |
 

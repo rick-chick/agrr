@@ -1,7 +1,7 @@
 // Tests for `interactors/task_schedule_generate_interactor.rs` (Ruby parity under test/domain/agricultural_task/).
 
-    use crate::cultivation_plan::interactors::entry_schedule::crop_stage_snapshot::CropStageSnapshot;
-    use crate::shared::ports::{ClockPort, LoggerPort};
+    
+    use crate::shared::ports::ClockPort;
     use time::{Date, OffsetDateTime};
 
     use crate::agricultural_task::gateways::TaskSchedulePlanContext;
@@ -173,18 +173,18 @@
 
     #[derive(Debug, Clone)]
     struct ReplaceCall {
-        cultivation_plan_id: i64,
-        field_cultivation_id: i64,
-        category: String,
-        generated_at: OffsetDateTime,
+        _cultivation_plan_id: i64,
+        _field_cultivation_id: i64,
+        _category: String,
+        _generated_at: OffsetDateTime,
         items: Vec<TaskScheduleReplaceItem>,
     }
 
     #[derive(Debug, Clone)]
     struct ClearCall {
-        cultivation_plan_id: i64,
-        field_cultivation_id: i64,
-        category: String,
+        _cultivation_plan_id: i64,
+        _field_cultivation_id: i64,
+        _category: String,
     }
 
     impl CapturingTaskScheduleGateway {
@@ -204,9 +204,9 @@
             category: &str,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             self.cleared.lock().unwrap().push(ClearCall {
-                cultivation_plan_id,
-                field_cultivation_id,
-                category: category.to_string(),
+                _cultivation_plan_id: cultivation_plan_id,
+                _field_cultivation_id: field_cultivation_id,
+                _category: category.to_string(),
             });
             Ok(())
         }
@@ -220,10 +220,10 @@
             items: Vec<TaskScheduleReplaceItem>,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             self.replaced.lock().unwrap().push(ReplaceCall {
-                cultivation_plan_id,
-                field_cultivation_id,
-                category: category.to_string(),
-                generated_at,
+                _cultivation_plan_id: cultivation_plan_id,
+                _field_cultivation_id: field_cultivation_id,
+                _category: category.to_string(),
+                _generated_at: generated_at,
                 items,
             });
             Ok(())
@@ -237,8 +237,8 @@
 
     #[derive(Debug, Clone)]
     struct ProgressPayload {
-        crop_id: i64,
-        start_date: Option<Date>,
+        _crop_id: i64,
+        _start_date: Option<Date>,
         weather_data: serde_json::Value,
     }
 
@@ -250,8 +250,8 @@
             weather_data: &serde_json::Value,
         ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
             self.received.lock().unwrap().push(ProgressPayload {
-                crop_id: crop.id,
-                start_date,
+                _crop_id: crop.id,
+                _start_date: start_date,
                 weather_data: weather_data.clone(),
             });
             Ok(self.response.clone())
@@ -409,8 +409,8 @@
 
         let replaced = task_schedule_gateway.replaced.lock().unwrap();
         assert_eq!(replaced.len(), 2);
-        let general = replaced.iter().find(|r| r.category == "general").unwrap();
-        let fertilizer = replaced.iter().find(|r| r.category == "fertilizer").unwrap();
+        let general = replaced.iter().find(|r| r._category == "general").unwrap();
+        let fertilizer = replaced.iter().find(|r| r._category == "fertilizer").unwrap();
         assert_eq!(general.items.len(), 1);
         assert_eq!(general.items[0].task_type, FIELD_WORK);
         assert_eq!(general.items[0].agricultural_task_id, Some(11));

@@ -1,7 +1,7 @@
 // Tests for `interactors/plan_allocation_adjust_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
 
     use crate::cultivation_plan::dtos::{
-        CultivationPlanRestAuth, PlanAllocationAdjustPlanCropSnapshot,
+        CultivationPlanRestAuth,
         PlanAllocationAdjustReadSnapshot,
     };
     use crate::cultivation_plan::entities::CultivationPlanEntity;
@@ -13,7 +13,7 @@
     use crate::field_cultivation::ports::FieldCultivationSyncInputPort;
     use crate::weather_data::dtos::{CultivationPlanWeather, FarmWeatherPrediction, WeatherLocation};
     use crate::shared::ports::translator_port::TranslateOptions;
-    use serde_json::json;
+    
     use std::sync::{Arc, Mutex};
     use time::macros::datetime;
 

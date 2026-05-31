@@ -1,5 +1,6 @@
 //! Nested crop pests — `/api/v1/masters/crops/{crop_id}/pests`.
 
+use crate::masters_auth::MastersUserId;
 use crate::masters_crop_context::{auth_user, internal_error, load_user_non_reference_crop};
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
@@ -21,7 +22,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -67,10 +67,10 @@ fn take_response(
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(crop_id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar).await?;
+    let user_id = auth_user(auth);
     load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
@@ -104,11 +104,11 @@ struct CreateBody {
 
 async fn create(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(crop_id): Path<i64>,
     Json(body): Json<CreateBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar).await?;
+    let user_id = auth_user(auth);
     load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
@@ -170,10 +170,10 @@ async fn create(
 
 async fn destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, pest_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar).await?;
+    let user_id = auth_user(auth);
     load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let pest_gateway = PestSqliteGateway::new(pool.clone());

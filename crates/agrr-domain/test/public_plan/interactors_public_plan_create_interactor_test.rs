@@ -2,7 +2,7 @@
 
     use crate::shared::exceptions::RecordInvalidError;
     use crate::shared::ports::{ClockPort, LoggerPort};
-    use time::{Date, Month, OffsetDateTime, Time};
+    use time::{Date, Month};
 
     use crate::public_plan::dtos::{PublicPlanCrop, PublicPlanFarm};
     use crate::public_plan::ports::PlanInitializerResult;

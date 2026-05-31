@@ -9,6 +9,7 @@ use agrr_domain::interaction_rule::gateways::{
     InteractionRuleGateway, SoftDeleteWithUndoOutcome, SoftDeleteWithUndoSuccess,
 };
 use agrr_domain::shared::attr::AttrMap;
+use agrr_domain::shared::exceptions::RecordInvalidError;
 use agrr_domain::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use agrr_domain::shared::user::User;
 use agrr_domain::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter;
@@ -16,6 +17,20 @@ use rusqlite::{params, types::Value};
 
 pub struct InteractionRuleSqliteGateway {
     pool: SqlitePool,
+}
+
+const VALID_REGIONS: [&str; 3] = ["jp", "us", "in"];
+
+fn validate_region_attr(attrs: &AttrMap) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    if let Some(region) = attr_str(attrs, "region") {
+        if !VALID_REGIONS.contains(&region.as_str()) {
+            return Err(Box::new(RecordInvalidError::new(
+                Some("region must be one of jp, us, in".into()),
+                None,
+            )));
+        }
+    }
+    Ok(())
 }
 
 impl InteractionRuleSqliteGateway {
@@ -95,6 +110,7 @@ impl InteractionRuleGateway for InteractionRuleSqliteGateway {
         let impact_ratio = attr_f64(&attrs, "impact_ratio").unwrap_or(1.0);
         let is_reference = attr_bool(&attrs, "is_reference").unwrap_or(false);
         let is_directional = attr_bool(&attrs, "is_directional").unwrap_or(true);
+        validate_region_attr(&attrs)?;
         let user_id = if is_reference { None } else { Some(user.id) };
         self.pool.with_write_box(|conn| {
             conn.execute(
@@ -157,6 +173,7 @@ impl InteractionRuleGateway for InteractionRuleSqliteGateway {
         if sets.is_empty() {
             return self.find_by_id(id);
         }
+        validate_region_attr(&attrs)?;
         sets.push("updated_at = datetime('now')".into());
         let sql = format!("UPDATE interaction_rules SET {} WHERE id = ?", sets.join(", "));
         values.push(Value::Integer(id));

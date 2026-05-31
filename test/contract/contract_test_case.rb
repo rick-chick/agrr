@@ -65,11 +65,12 @@ class ContractTestCase < ActionDispatch::IntegrationTest
     Net::HTTP.start(uri.host, uri.port) { |http| http.request(req) }
   end
 
-  def rust_delete(path, session_id: nil, accept: "application/json")
+  def rust_delete(path, session_id: nil, headers: {}, accept: "application/json")
     uri = URI("#{contract_host}#{path}")
     req = Net::HTTP::Delete.new(uri)
     req["Accept"] = accept
     req["Cookie"] = "session_id=#{session_id}" if session_id
+    headers.each { |key, value| req[key] = value }
     Net::HTTP.start(uri.host, uri.port) { |http| http.request(req) }
   end
 end

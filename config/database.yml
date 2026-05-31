@@ -15,11 +15,11 @@ development:
   cache:
     <<: *default
     database: storage/development_cache.sqlite3
-    migrations_paths: db/cache_migrate
+    migrations_paths: db/cache_migrate_archive
   cable:
     <<: *default
     database: storage/development_cable.sqlite3
-    migrations_paths: db/cable_migrate
+    migrations_paths: db/cable_migrate_archive
     schema_dump: cable_schema.rb
 
 # Warning: The database defined as "test" will be erased and
@@ -38,11 +38,11 @@ test:
   cache:
     <<: *default
     database: storage/test_cache.sqlite3
-    migrations_paths: db/cache_migrate
+    migrations_paths: db/cache_migrate_archive
   cable:
     <<: *default
     database: storage/test_cable.sqlite3
-    migrations_paths: db/cable_migrate
+    migrations_paths: db/cable_migrate_archive
     schema_dump: cable_schema.rb
 
 # AWS Test environment (SQLite with persistent storage)
@@ -58,11 +58,11 @@ production:
   cache:
     <<: *default
     database: /tmp/production_cache.sqlite3
-    migrations_paths: db/cache_migrate
+    migrations_paths: db/cache_migrate_archive
   cable:
     <<: *default
     database: /tmp/production_cable.sqlite3
-    migrations_paths: db/cable_migrate
+    migrations_paths: db/cable_migrate_archive
     schema_dump: cable_schema.rb
     # Use WAL for cable DB to reduce locking during concurrent access
     journal_mode: wal

@@ -59,6 +59,59 @@ module Domain
           assert_equal true, dto.debug_info[:using_agrr_progress]
         end
 
+        test "build_output truncates gdd_data at final cumulative requirement" do
+          start_date = Date.new(2026, 3, 1)
+          end_date = Date.new(2026, 3, 5)
+          context = Dtos::FieldCultivationClimateContextSnapshot.new(
+            field_cultivation_id: 1,
+            field_name: "A",
+            crop_name: "Tomato",
+            start_date: start_date,
+            completion_date: end_date,
+            farm_id: 10,
+            farm_name: "Farm",
+            farm_latitude: 35.0,
+            farm_longitude: 139.0,
+            plan_id: 5,
+            plan_type_public: false,
+            plan_predicted_weather_present: true,
+            prediction_target_end_date: nil,
+            calculated_planning_end_date: nil,
+            predicted_weather_data: {},
+            crop_id: 2,
+            base_temperature: 10.0,
+            optimal_temperature_range: { min: 15, max: 25 },
+            stages: [
+              {
+                name: "Stage1",
+                order: 1,
+                gdd_required: 100.0,
+                cumulative_gdd_required: 100.0
+              }
+            ]
+          )
+
+          progress_result = {
+            "progress_records" => [
+              { "date" => "2026-03-01", "cumulative_gdd" => 40.0, "stage_name" => "S1" },
+              { "date" => "2026-03-02", "cumulative_gdd" => 80.0, "stage_name" => "S1" },
+              { "date" => "2026-03-03", "cumulative_gdd" => 110.0, "stage_name" => "S1" },
+              { "date" => "2026-03-04", "cumulative_gdd" => 130.0, "stage_name" => "S1" },
+              { "date" => "2026-03-05", "cumulative_gdd" => 150.0, "stage_name" => "S1" }
+            ]
+          }
+
+          dto = FieldCultivationClimateDataMapper.build_output(
+            context: context,
+            weather_records: [],
+            progress_result: progress_result
+          )
+
+          assert_equal 3, dto.gdd_data.length
+          assert_equal "2026-03-03", dto.gdd_data.last[:date]
+          assert_in_delta 110.0, dto.gdd_data.last[:cumulative_gdd], 0.01
+        end
+
         test "extract_weather_records filters by cultivation period" do
           payload = {
             "data" => [

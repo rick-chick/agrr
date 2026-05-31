@@ -44,3 +44,9 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod interactors_masters_nutrient_requirement_destroy_interactor_test_inline {
+    use super::*;
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/crop/interactors_masters_nutrient_requirement_destroy_interactor_test.rs"));
+}

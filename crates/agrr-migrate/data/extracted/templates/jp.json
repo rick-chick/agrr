@@ -1,0 +1,2262 @@
+{
+  "templates": [
+    {
+      "task_name": "耕耘",
+      "crop_name": "かぼちゃ",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "キャベツ",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "キュウリ",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "ジャガイモ",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "大根",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "とうもろこし",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "トマト",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "ナス",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "ニンジン",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "白菜",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "ピーマン",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "ブロッコリー",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "ほうれん草",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "レタス",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "耕耘",
+      "crop_name": "玉ねぎ",
+      "description": "土を耕して柔らかくする作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "スコップ",
+        "クワ",
+        "鍬"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "かぼちゃ",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "キャベツ",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "キュウリ",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "ジャガイモ",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "大根",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "とうもろこし",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "トマト",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "ナス",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "ニンジン",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "白菜",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "ピーマン",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "ブロッコリー",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "ほうれん草",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "レタス",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "基肥",
+      "crop_name": "玉ねぎ",
+      "description": "植え付け前に土に混ぜ込む肥料",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "スコップ",
+        "肥料"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "播種",
+      "crop_name": "かぼちゃ",
+      "description": "種をまく作業",
+      "time_per_sqm": 0.005,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "種",
+        "まき溝切り器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "播種",
+      "crop_name": "大根",
+      "description": "種をまく作業",
+      "time_per_sqm": 0.005,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "種",
+        "まき溝切り器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "播種",
+      "crop_name": "とうもろこし",
+      "description": "種をまく作業",
+      "time_per_sqm": 0.005,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "種",
+        "まき溝切り器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "播種",
+      "crop_name": "ニンジン",
+      "description": "種をまく作業",
+      "time_per_sqm": 0.005,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "種",
+        "まき溝切り器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "播種",
+      "crop_name": "ほうれん草",
+      "description": "種をまく作業",
+      "time_per_sqm": 0.005,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "種",
+        "まき溝切り器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "かぼちゃ",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "キャベツ",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "キュウリ",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "ジャガイモ",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "トマト",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "ナス",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "白菜",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "ピーマン",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "ブロッコリー",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "レタス",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "定植",
+      "crop_name": "玉ねぎ",
+      "description": "苗を植え付ける作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "苗",
+        "移植ごて"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "かぼちゃ",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "キャベツ",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "キュウリ",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "ジャガイモ",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "大根",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "とうもろこし",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "トマト",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "ナス",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "ニンジン",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "白菜",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "ピーマン",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "ブロッコリー",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "ほうれん草",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "レタス",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "灌水",
+      "crop_name": "玉ねぎ",
+      "description": "作物に水を与える作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "ホース",
+        "散水器"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "かぼちゃ",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "キャベツ",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "キュウリ",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "ジャガイモ",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "大根",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "とうもろこし",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "トマト",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "ナス",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "ニンジン",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "白菜",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "ピーマン",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "ブロッコリー",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "ほうれん草",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "レタス",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "除草",
+      "crop_name": "玉ねぎ",
+      "description": "雑草を取り除く作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "鎌",
+        "草取りフォーク"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "かぼちゃ",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "キャベツ",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "キュウリ",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "ジャガイモ",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "大根",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "とうもろこし",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "トマト",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "ナス",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "ニンジン",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "白菜",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "ピーマン",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "ブロッコリー",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "ほうれん草",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "レタス",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "収穫",
+      "crop_name": "玉ねぎ",
+      "description": "作物を収穫する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "ハサミ",
+        "収穫かご"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "かぼちゃ",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "キャベツ",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "キュウリ",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "ジャガイモ",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "大根",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "とうもろこし",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "トマト",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "ナス",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "ニンジン",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "白菜",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "ピーマン",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "ブロッコリー",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "ほうれん草",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "レタス",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "出荷準備",
+      "crop_name": "玉ねぎ",
+      "description": "出荷前の準備作業（洗浄、選別など）",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "バケツ",
+        "選別用かご",
+        "ブラシ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "かぼちゃ",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "キュウリ",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "ジャガイモ",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "大根",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "トマト",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "ナス",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "ニンジン",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "白菜",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "ピーマン",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "マルチング",
+      "crop_name": "玉ねぎ",
+      "description": "マルチシートを敷く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "マルチシート",
+        "マルチ押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "キャベツ",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "キュウリ",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "大根",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "トマト",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "ナス",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "ニンジン",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "白菜",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "ピーマン",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "ブロッコリー",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "ほうれん草",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "レタス",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "トンネル設置",
+      "crop_name": "玉ねぎ",
+      "description": "トンネル支柱を設置する作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "トンネル支柱",
+        "ビニール"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "支柱立て",
+      "crop_name": "かぼちゃ",
+      "description": "支柱を立てて作物を支える作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "支柱",
+        "結束バンド"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "支柱立て",
+      "crop_name": "キュウリ",
+      "description": "支柱を立てて作物を支える作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "支柱",
+        "結束バンド"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "支柱立て",
+      "crop_name": "トマト",
+      "description": "支柱を立てて作物を支える作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "支柱",
+        "結束バンド"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "支柱立て",
+      "crop_name": "ナス",
+      "description": "支柱を立てて作物を支える作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "支柱",
+        "結束バンド"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "支柱立て",
+      "crop_name": "ピーマン",
+      "description": "支柱を立てて作物を支える作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "支柱",
+        "結束バンド"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "防虫ネット張り",
+      "crop_name": "かぼちゃ",
+      "description": "防虫ネットを設置する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "防虫ネット",
+        "ネット押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "防虫ネット張り",
+      "crop_name": "キャベツ",
+      "description": "防虫ネットを設置する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "防虫ネット",
+        "ネット押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "防虫ネット張り",
+      "crop_name": "キュウリ",
+      "description": "防虫ネットを設置する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "防虫ネット",
+        "ネット押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "防虫ネット張り",
+      "crop_name": "大根",
+      "description": "防虫ネットを設置する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "防虫ネット",
+        "ネット押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "防虫ネット張り",
+      "crop_name": "白菜",
+      "description": "防虫ネットを設置する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "防虫ネット",
+        "ネット押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "防虫ネット張り",
+      "crop_name": "ブロッコリー",
+      "description": "防虫ネットを設置する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "防虫ネット",
+        "ネット押さえ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "間引き",
+      "crop_name": "かぼちゃ",
+      "description": "過密な苗を間引く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "ハサミ"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "間引き",
+      "crop_name": "大根",
+      "description": "過密な苗を間引く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "ハサミ"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "間引き",
+      "crop_name": "とうもろこし",
+      "description": "過密な苗を間引く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "ハサミ"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "間引き",
+      "crop_name": "ニンジン",
+      "description": "過密な苗を間引く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "ハサミ"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "間引き",
+      "crop_name": "ほうれん草",
+      "description": "過密な苗を間引く作業",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "ハサミ"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "剪定",
+      "crop_name": "かぼちゃ",
+      "description": "不要な枝を切る作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "low",
+      "required_tools": [
+        "剪定ばさみ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "剪定",
+      "crop_name": "キュウリ",
+      "description": "不要な枝を切る作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "low",
+      "required_tools": [
+        "剪定ばさみ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "剪定",
+      "crop_name": "トマト",
+      "description": "不要な枝を切る作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "low",
+      "required_tools": [
+        "剪定ばさみ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "剪定",
+      "crop_name": "ナス",
+      "description": "不要な枝を切る作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "low",
+      "required_tools": [
+        "剪定ばさみ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "剪定",
+      "crop_name": "ピーマン",
+      "description": "不要な枝を切る作業",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "low",
+      "required_tools": [
+        "剪定ばさみ"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "誘引",
+      "crop_name": "かぼちゃ",
+      "description": "作物を支柱などに誘引する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "結束バンド",
+        "支柱"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "誘引",
+      "crop_name": "キュウリ",
+      "description": "作物を支柱などに誘引する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "結束バンド",
+        "支柱"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "誘引",
+      "crop_name": "トマト",
+      "description": "作物を支柱などに誘引する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "結束バンド",
+        "支柱"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "誘引",
+      "crop_name": "ナス",
+      "description": "作物を支柱などに誘引する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "結束バンド",
+        "支柱"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "誘引",
+      "crop_name": "ピーマン",
+      "description": "作物を支柱などに誘引する作業",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "結束バンド",
+        "支柱"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "かぼちゃ",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "キャベツ",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "キュウリ",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "ジャガイモ",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "大根",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "とうもろこし",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "トマト",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "ナス",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "ニンジン",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "白菜",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "ピーマン",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "ブロッコリー",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "ほうれん草",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "レタス",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "規格選別",
+      "crop_name": "玉ねぎ",
+      "description": "収穫物を規格ごとに選別する作業",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "選別用かご",
+        "規格表",
+        "はかり"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "かぼちゃ",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "キャベツ",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "キュウリ",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "ジャガイモ",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "大根",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "とうもろこし",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "トマト",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "ナス",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "ニンジン",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "白菜",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "ピーマン",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "ブロッコリー",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "ほうれん草",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "レタス",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "task_name": "箱詰め・袋詰め",
+      "crop_name": "玉ねぎ",
+      "description": "出荷用の箱や袋に詰める作業",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "箱",
+        "袋",
+        "ラベル"
+      ],
+      "skill_level": "beginner"
+    }
+  ]
+}

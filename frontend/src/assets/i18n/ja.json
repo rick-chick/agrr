@@ -119,11 +119,19 @@
         "button": "農薬を追加"
       }
     },
+    "errors": {
+      "invalid_id": "農薬IDが無効です。"
+    },
+    "fallback": {
+      "crop": "作物 (ID: {{id}})",
+      "pest": "害虫 (ID: {{id}})"
+    },
     "new": {
       "title": "新しい農薬を追加"
     },
     "edit": {
-      "title": "{{name}}を編集"
+      "title": "{{name}}を編集",
+      "title_default": "農薬"
     },
     "show": {
       "reference_pesticide": "参照農薬",
@@ -201,9 +209,20 @@
       "title": "新しい作業を追加"
     },
     "edit": {
-      "title": "{{name}}を編集"
+      "title": "{{name}}を編集",
+      "title_default": "作業"
+    },
+    "errors": {
+      "invalid_id": "作業IDが不正です。"
     },
     "form": {
+      "name_label": "作業名",
+      "description_label": "説明",
+      "time_per_sqm_label": "作業時間 (時間/㎡)",
+      "weather_dependency_label": "天候依存度",
+      "skill_level_label": "スキルレベル",
+      "task_type_label": "作業種別",
+      "required_tools_label": "必要な道具",
       "submit_create": "作業を作成",
       "submit_update": "作業を更新",
       "required_tools_hint": "改行で複数入力できます",
@@ -236,6 +255,9 @@
       "skill_level_beginner": "初心者",
       "skill_level_intermediate": "中級者",
       "skill_level_advanced": "上級者",
+      "region": "地域",
+      "task_type": "作業種別",
+      "hours_suffix": "時間/㎡",
       "created_at": "作成日",
       "updated_at": "更新日",
       "associated_crops": "関連する作物",

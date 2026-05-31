@@ -31,13 +31,15 @@ fi
 
 echo "Step 2: Database setup..."
 # Run migrations for all databases (primary, queue, cache)
-echo "Running migrations for all databases (primary, cache)..."
-bundle exec rails db:migrate
-if [ $? -ne 0 ]; then
-    echo "ERROR: Database migration failed"
+echo "Running schema migrations (refinery)..."
+export AGRR_APP_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export AGRR_SQLITE_PATH="/tmp/test.sqlite3"
+export AGRR_CACHE_SQLITE_PATH="/tmp/test_cache.sqlite3"
+"$(dirname "$0")/run-agrr-migrate.sh" schema run || {
+    echo "ERROR: Schema migration failed"
     exit 1
-fi
-echo "All databases migrated successfully"
+}
+echo "Schema migrated successfully"
 
 # Step 3: Start agrr daemon if enabled
 if [ "${USE_AGRR_DAEMON}" = "true" ]; then

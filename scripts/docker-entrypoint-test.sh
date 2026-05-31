@@ -33,15 +33,14 @@ APP_ROOT="/app"
 STORAGE_DIR="${APP_ROOT}/storage"
 CACHE_DIR="${APP_ROOT}/.docker/test_db_cache"
 FINGERPRINT_FILE="${CACHE_DIR}/migrations.sha256"
-DB_FILES=("test.sqlite3" "test_cache.sqlite3" "test_cable.sqlite3")
+DB_FILES=("test.sqlite3" "test_cache.sqlite3")
 
 mkdir -p "${CACHE_DIR}"
 
 calculate_fingerprint() {
-  # マイグレーションと関連スクリプトの差分を指標化
-  find "${APP_ROOT}/db/migrate" "${APP_ROOT}/db/cache_migrate" -type f -name "*.rb" -print0 2>/dev/null \
+  find "${APP_ROOT}/crates/agrr-migrate/migrations" -type f \( -name "*.sql" \) -print0 2>/dev/null \
     | LC_ALL=C sort -z \
-    | xargs -0 sha256sum \
+    | xargs -0 sha256sum 2>/dev/null \
     | sha256sum \
     | awk '{ print $1 }'
 }
@@ -122,11 +121,15 @@ if [ -f "${FINGERPRINT_FILE}" ]; then
 fi
 
 if [ "${CACHE_VALID}" != "true" ]; then
-  echo "==> Setting up test databases (primary, queue, cache)..."
-  bundle exec rails db:create
+  echo "==> Setting up test databases (primary, cache)..."
+  mkdir -p "${STORAGE_DIR}"
+  export AGRR_APP_ROOT="${APP_ROOT}"
+  export AGRR_SQLITE_PATH="${STORAGE_DIR}/test.sqlite3"
+  export AGRR_CACHE_SQLITE_PATH="${STORAGE_DIR}/test_cache.sqlite3"
+  rm -f "${AGRR_SQLITE_PATH}" "${AGRR_CACHE_SQLITE_PATH}"
 
-  echo "==> Preparing database schema via migrations..."
-  bundle exec rails db:migrate
+  echo "==> Preparing database schema via refinery..."
+  /app/scripts/run-agrr-migrate.sh schema run
 
   cache_current_databases
 fi

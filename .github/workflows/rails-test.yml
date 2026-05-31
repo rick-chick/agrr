@@ -25,7 +25,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .docker/test_db_cache
-          key: test-db-${{ hashFiles('db/migrate/**/*.rb', 'db/cache_migrate/**/*.rb') }}
+          key: test-db-${{ hashFiles('crates/agrr-migrate/migrations/**/*.sql') }}
           restore-keys: |
             test-db-
 

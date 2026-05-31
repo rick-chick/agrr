@@ -4,6 +4,8 @@ use rusqlite::{Connection, Row};
 use serde_json::{Map, Value};
 use std::collections::HashSet;
 
+use crate::shared::attr_sql::quote_sql_column;
+
 use super::schedule::master_table_name;
 
 pub fn restore_snapshot(
@@ -93,11 +95,14 @@ fn insert_attributes(
     if keys.is_empty() {
         return Ok(());
     }
-    let cols: Vec<&str> = keys.iter().map(|k| k.as_str()).collect();
-    let placeholders: Vec<String> = (1..=cols.len()).map(|i| format!("?{i}")).collect();
+    let quoted_cols: Vec<String> = keys
+        .iter()
+        .map(|k| quote_sql_column(k).into_owned())
+        .collect();
+    let placeholders: Vec<String> = (1..=quoted_cols.len()).map(|i| format!("?{i}")).collect();
     let sql = format!(
         "INSERT OR REPLACE INTO {table} ({}) VALUES ({})",
-        cols.join(", "),
+        quoted_cols.join(", "),
         placeholders.join(", ")
     );
     let params: Vec<rusqlite::types::Value> = keys

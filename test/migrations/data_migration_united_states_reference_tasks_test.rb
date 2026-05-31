@@ -1,5 +1,5 @@
 require "test_helper"
-require Rails.root.join("db/migrate/20251107193000_data_migration_united_states_reference_tasks")
+require Rails.root.join("db/migrate_archive/20251107193000_data_migration_united_states_reference_tasks")
 
 class DataMigrationUnitedStatesReferenceTasksTest < ActiveSupport::TestCase
   EXPECTED_TASKS = DataMigrationUnitedStatesReferenceTasks::TASK_DEFINITIONS.transform_values do |definition|

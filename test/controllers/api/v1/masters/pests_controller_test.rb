@@ -72,6 +72,22 @@ module Api
           assert_equal "テスト害虫", json_response["name"]
         end
 
+        test "create returns 422 when name is missing" do
+          assert_no_difference("@user.pests.where(is_reference: false).count") do
+            post api_v1_masters_pests_path,
+                 params: { pest: { name: "" } },
+                 as: :json,
+                 headers: {
+                   "Accept" => "application/json",
+                   "X-API-Key" => @api_key
+                 }
+          end
+
+          assert_response :unprocessable_entity
+          json = JSON.parse(response.body)
+          assert_includes json["errors"], "name is required"
+        end
+
         test "should create pest" do
           assert_difference("@user.pests.where(is_reference: false).count", 1) do
             post api_v1_masters_pests_path,

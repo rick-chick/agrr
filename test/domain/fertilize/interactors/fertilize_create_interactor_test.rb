@@ -131,6 +131,20 @@ module Domain
           assert gateway.received, "gateway create must be attempted"
         end
 
+        test "calls on_failure with name is required when gateway rejects blank name" do
+          user = FakeUser.new(id: 1, is_admin: false)
+          gateway = FakeGateway.new(
+            error: Domain::Shared::Exceptions::RecordInvalid.new("name is required")
+          )
+          input = Domain::Fertilize::Dtos::FertilizeCreateInput.new(name: "")
+
+          build_interactor(gateway: gateway, user_lookup: FakeUserLookup.new(user: user)).call(input)
+
+          assert_nil @output_port.success
+          assert_instance_of Domain::Shared::Dtos::Error, @output_port.failure
+          assert_equal "name is required", @output_port.failure.message
+        end
+
         test "re-raises unexpected gateway errors" do
           user = FakeUser.new(id: 1, is_admin: false)
           gateway = FakeGateway.new(error: StandardError.new("Name can't be blank"))

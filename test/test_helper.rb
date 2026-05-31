@@ -25,7 +25,7 @@ if ENV["RAILS_ENV"] && ENV["RAILS_ENV"] != "test"
        docker compose down
        docker volume rm agrr_storage_dev_data
        docker compose up -d web
-       # マイグレーションは entrypoint が db:migrate で適用（db/schema.rb はリポジトリに含めない）
+       # スキーマは test entrypoint が agrr-migrate schema run で適用（refinery）
   MSG
   exit 1
 end

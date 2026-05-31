@@ -13,12 +13,14 @@ pub fn build_output(
     progress_result: &Value,
 ) -> FieldCultivationClimateDataOutput {
     let base_temp = context.base_temperature;
+    let final_cumulative_gdd_required = final_cumulative_gdd_required_from_stages(&context.stages);
     let (daily_gdd, baseline_gdd, filtered_records, progress_records) = build_daily_gdd(
         progress_result,
         weather_records,
         context.start_date,
         context.completion_date,
         base_temp,
+        final_cumulative_gdd_required,
     );
 
     let weather_data: Vec<Value> = weather_records
@@ -103,17 +105,51 @@ pub fn extract_weather_records(
         .collect()
 }
 
+fn final_cumulative_gdd_required_from_stages(stages: &[Value]) -> Option<f64> {
+    stages
+        .iter()
+        .filter_map(|stage| {
+            stage
+                .get("cumulative_gdd_required")
+                .and_then(|v| v.as_f64())
+        })
+        .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+}
+
+fn truncate_daily_gdd_at_requirement(
+    daily_gdd: &mut Vec<Value>,
+    final_cumulative_gdd_required: Option<f64>,
+) {
+    let Some(required) = final_cumulative_gdd_required else {
+        return;
+    };
+    if required <= 0.0 || daily_gdd.is_empty() {
+        return;
+    }
+    let Some(completion_index) = daily_gdd.iter().position(|datum| {
+        datum
+            .get("cumulative_gdd")
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0)
+            >= required
+    }) else {
+        return;
+    };
+    daily_gdd.truncate(completion_index + 1);
+}
+
 fn build_daily_gdd(
     progress_result: &Value,
     weather_data_records: &[Value],
     start_date: Date,
     completion_date: Date,
     base_temp: f64,
+    final_cumulative_gdd_required: Option<f64>,
 ) -> (Vec<Value>, f64, Vec<Value>, Vec<Value>) {
     let progress_records = to_array_value(progress_result.get("progress_records"));
     let mut baseline_gdd = 0.0;
     let mut filtered_records: Vec<Value> = Vec::new();
-    let daily_gdd: Vec<Value>;
+    let mut daily_gdd: Vec<Value>;
 
     if progress_records.is_empty() {
         daily_gdd = calculate_gdd_manually(weather_data_records, base_temp);
@@ -182,6 +218,8 @@ fn build_daily_gdd(
         }
         daily_gdd = built;
     }
+
+    truncate_daily_gdd_at_requirement(&mut daily_gdd, final_cumulative_gdd_required);
 
     (
         daily_gdd,

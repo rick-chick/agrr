@@ -48,6 +48,12 @@ RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompi
 # Note: Database setup is done at runtime by start_app_test.sh
 # This ensures migrations run with the actual test database
 
+FROM rust:1-bookworm AS rust_builder
+WORKDIR /app
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+COPY crates ./crates
+RUN cargo build --release -p agrr-migrate
+
 # Production stage (test environment)
 FROM ruby:3.3.10-slim
 
@@ -89,6 +95,9 @@ WORKDIR /app
 
 # Copy the application from builder stage
 COPY --from=builder --chown=appuser:appuser /app /app
+
+COPY --from=rust_builder /app/target/release/agrr-migrate /usr/local/bin/agrr-migrate
+RUN chmod +x /usr/local/bin/agrr-migrate
 
 # Ensure entrypoint scripts have execute permissions
 # ボリュームマウントで上書きされる可能性があるが、ベースイメージとして権限を設定

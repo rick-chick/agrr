@@ -1,0 +1,193 @@
+{
+  "tasks": [
+    {
+      "name": "Plowing",
+      "description": "Tilling soil to make it soft",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "Shovel",
+        "Hoe",
+        "Tiller"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Base Fertilization",
+      "description": "Fertilizer mixed into soil before planting",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "Shovel",
+        "Fertilizer"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "name": "Seeding",
+      "description": "Sowing seeds",
+      "time_per_sqm": 0.005,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "Seeds",
+        "Seeder"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "name": "Transplanting",
+      "description": "Planting seedlings",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "Seedlings",
+        "Trowel"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "name": "Watering",
+      "description": "Watering crops",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "high",
+      "required_tools": [
+        "Hose",
+        "Sprinkler"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "name": "Weeding",
+      "description": "Removing weeds",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "Sickle",
+        "Weed Fork"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "name": "Harvesting",
+      "description": "Harvesting crops",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "Shears",
+        "Harvest Basket"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Shipping Preparation",
+      "description": "Preparation work before shipping (washing, sorting, etc.)",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "Bucket",
+        "Sorting Basket",
+        "Brush"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Mulching",
+      "description": "Laying mulch sheets",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "Mulch Sheet",
+        "Mulch Anchor"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Tunnel Setup",
+      "description": "Installing tunnel supports",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "Tunnel Supports",
+        "Plastic Sheet"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Support Structure Setup",
+      "description": "Setting up supports for crops",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "Stakes",
+        "Ties"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Net Installation",
+      "description": "Installing pest control nets",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "medium",
+      "required_tools": [
+        "Pest Net",
+        "Net Anchor"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Thinning",
+      "description": "Thinning overcrowded seedlings",
+      "time_per_sqm": 0.01,
+      "weather_dependency": "low",
+      "required_tools": [
+        "Shears"
+      ],
+      "skill_level": "beginner"
+    },
+    {
+      "name": "Pruning",
+      "description": "Cutting unnecessary branches",
+      "time_per_sqm": 0.02,
+      "weather_dependency": "low",
+      "required_tools": [
+        "Pruning Shears"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Training",
+      "description": "Training crops on supports",
+      "time_per_sqm": 0.015,
+      "weather_dependency": "low",
+      "required_tools": [
+        "Ties",
+        "Stakes"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Grading",
+      "description": "Sorting harvested produce by grade",
+      "time_per_sqm": 0.05,
+      "weather_dependency": "low",
+      "required_tools": [
+        "Sorting Basket",
+        "Grade Chart",
+        "Scale"
+      ],
+      "skill_level": "intermediate"
+    },
+    {
+      "name": "Packaging",
+      "description": "Packing into boxes or bags for shipping",
+      "time_per_sqm": 0.03,
+      "weather_dependency": "low",
+      "required_tools": [
+        "Boxes",
+        "Bags",
+        "Labels"
+      ],
+      "skill_level": "beginner"
+    }
+  ]
+}

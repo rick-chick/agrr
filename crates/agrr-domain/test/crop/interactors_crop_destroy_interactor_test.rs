@@ -329,7 +329,7 @@
             success: None,
             failure: None,
         };
-        let user_lookup_1 = StubLookup(User::new(10, false));
+        let _user_lookup_1 = StubLookup(User::new(10, false));
         let user_lookup = StubLookup(User::new(10, false));
         let mut i = CropDestroyInteractor::new(
             &mut out,
@@ -341,7 +341,7 @@
         i.call(22).unwrap();
         assert!(matches!(
             out.failure,
-            Some(DestroyFailure::Policy(PolicyPermissionDenied))
+            Some(DestroyFailure::Policy(_))
         ));
     }
 
@@ -357,7 +357,7 @@
             success: None,
             failure: None,
         };
-        let user_lookup_1 = StubLookup(User::new(10, false));
+        let _user_lookup_1 = StubLookup(User::new(10, false));
         let user_lookup = StubLookup(User::new(10, false));
         let mut i = CropDestroyInteractor::new(
             &mut out,

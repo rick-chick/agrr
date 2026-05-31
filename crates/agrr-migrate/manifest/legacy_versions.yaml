@@ -1,0 +1,767 @@
+---
+generated_at: '2026-05-30T11:15:55Z'
+primary:
+- version: '20250101000001'
+  file: db/migrate_archive/20250101000001_create_users.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_users
+- version: '20250101000002'
+  file: db/migrate_archive/20250101000002_create_sessions.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_sessions
+- version: '20250102000000'
+  file: db/migrate_archive/20250102000000_create_crop_fertilize_profiles.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_crop_fertilize_profiles
+- version: '20250102000001'
+  file: db/migrate_archive/20250102000001_create_crop_fertilize_applications.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_crop_fertilize_applications
+- version: '20251005123838'
+  file: db/migrate_archive/20251005123838_create_active_storage_tables.active_storage.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_active_storage_tables.active_storage
+- version: '20251006000000'
+  file: db/migrate_archive/20251006000000_create_farms_and_fields_and_farm_sizes.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_farms_and_fields_and_farm_sizes
+- version: '20251006032545'
+  file: db/migrate_archive/20251006032545_add_admin_to_users.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_admin_to_users
+- version: '20251006070000'
+  file: db/migrate_archive/20251006070000_create_crops_and_stages.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_crops_and_stages
+- version: '20251007114520'
+  file: db/migrate_archive/20251007114520_create_weather_locations.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_weather_locations
+- version: '20251007114528'
+  file: db/migrate_archive/20251007114528_create_weather_data.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_weather_data
+- version: '20251007121430'
+  file: db/migrate_archive/20251007121430_add_weather_data_status_to_farms.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_weather_data_status_to_farms
+- version: '20251007225738'
+  file: db/migrate_archive/20251007225738_add_last_broadcast_at_to_farms.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_last_broadcast_at_to_farms
+- version: '20251008100000'
+  file: db/migrate_archive/20251008100000_add_weather_location_to_farms.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_weather_location_to_farms
+- version: '20251008130639'
+  file: db/migrate_archive/20251008130639_fix_avatar_urls_in_users.rb
+  tag: ddl
+  region: all
+  kind:
+  name: fix_avatar_urls_in_users
+- version: '20251011000000'
+  file: db/migrate_archive/20251011000000_create_free_crop_plans.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_free_crop_plans
+- version: '20251011074223'
+  file: db/migrate_archive/20251011074223_add_is_anonymous_to_users.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_is_anonymous_to_users
+- version: '20251011080601'
+  file: db/migrate_archive/20251011080601_add_is_default_to_farms.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_is_default_to_farms
+- version: '20251011084323'
+  file: db/migrate_archive/20251011084323_remove_unique_constraint_from_farms_is_default.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_unique_constraint_from_farms_is_default
+- version: '20251011121154'
+  file: db/migrate_archive/20251011121154_add_area_and_revenue_fields_to_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_area_and_revenue_fields_to_crops
+- version: '20251011230830'
+  file: db/migrate_archive/20251011230830_add_agrr_crop_id_to_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_agrr_crop_id_to_crops
+- version: '20251012073130'
+  file: db/migrate_archive/20251012073130_rename_farm_is_default_to_is_reference.rb
+  tag: ddl
+  region: all
+  kind:
+  name: rename_farm_is_default_to_is_reference
+- version: '20251012101720'
+  file: db/migrate_archive/20251012101720_add_unique_index_to_weather_data.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_unique_index_to_weather_data
+- version: '20251012115409'
+  file: db/migrate_archive/20251012115409_create_cultivation_plan_structure.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_cultivation_plan_structure
+- version: '20251012115435'
+  file: db/migrate_archive/20251012115435_add_area_to_fields.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_area_to_fields
+- version: '20251012123000'
+  file: db/migrate_archive/20251012123000_change_user_id_to_optional_in_fields.rb
+  tag: ddl
+  region: all
+  kind:
+  name: change_user_id_to_optional_in_fields
+- version: '20251013020434'
+  file: db/migrate_archive/20251013020434_change_field_id_to_nullable_in_field_cultivations.rb
+  tag: ddl
+  region: all
+  kind:
+  name: change_field_id_to_nullable_in_field_cultivations
+- version: '20251013020435'
+  file: db/migrate_archive/20251013020435_add_cultivation_info_to_field_cultivations.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_cultivation_info_to_field_cultivations
+- version: '20251013030000'
+  file: db/migrate_archive/20251013030000_create_cultivation_plan_fields_and_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_cultivation_plan_fields_and_crops
+- version: '20251013030001'
+  file: db/migrate_archive/20251013030001_remove_field_and_crop_references_from_field_cultivations.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_field_and_crop_references_from_field_cultivations
+- version: '20251013033141'
+  file: db/migrate_archive/20251013033141_remove_location_from_fields.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_location_from_fields
+- version: '20251013072347'
+  file: db/migrate_archive/20251013072347_add_optimization_phase_to_c.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_optimization_phase_to_c
+- version: '20251014195013'
+  file: db/migrate_archive/20251014195013_add_groups_to_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_groups_to_crops
+- version: '20251014195014'
+  file: db/migrate_archive/20251014195014_add_planning_dates_to_cultivation_plans.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_planning_dates_to_cultivation_plans
+- version: '20251015071009'
+  file: db/migrate_archive/20251015071009_create_interaction_rules.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_interaction_rules
+- version: '20251015072037'
+  file: db/migrate_archive/20251015072037_add_user_id_and_is_reference_to_interaction_rules.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_user_id_and_is_reference_to_interaction_rules
+- version: '20251015072038'
+  file: db/migrate_archive/20251015072038_add_max_temperature_to_temperature_requirements.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_max_temperature_to_temperature_requirements
+- version: '20251016014211'
+  file: db/migrate_archive/20251016014211_add_optimization_results_to_cultivation_plans.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_optimization_results_to_cultivation_plans
+- version: '20251016060156'
+  file: db/migrate_archive/20251016060156_add_predicted_weather_data_to_cultivation_plans.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_predicted_weather_data_to_cultivation_plans
+- version: '20251016150000'
+  file: db/migrate_archive/20251016150000_create_solid_cache_tables.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_solid_cache_tables
+- version: '20251017000000'
+  file: db/migrate_archive/20251017000000_add_region_to_fields_crops_and_interaction_rules.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_region_to_fields_crops_and_interaction_rules
+- version: '20251017000001'
+  file: db/migrate_archive/20251017000001_add_region_to_farms.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_region_to_farms
+- version: '20251018075019'
+  file: db/migrate_archive/20251018075019_seed_japan_reference_data.rb
+  tag: data
+  region: jp
+  kind: base
+  name: seed_japan_reference_data
+- version: '20251018075149'
+  file: db/migrate_archive/20251018075149_seed_united_states_reference_data.rb
+  tag: data
+  region: us
+  kind: base
+  name: seed_united_states_reference_data
+- version: '20251018130418'
+  file: db/migrate_archive/20251018130418_seed_india_reference_data.rb
+  tag: data
+  region: in
+  kind: base
+  name: seed_india_reference_data
+- version: '20251020033343'
+  file: db/migrate_archive/20251020033343_add_private_plan_fields_to_cultivation_plans.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_private_plan_fields_to_cultivation_plans
+- version: '20251021051123'
+  file: db/migrate_archive/20251021051123_add_predicted_weather_data_to_farms.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_predicted_weather_data_to_farms
+- version: '20251024105042'
+  file: db/migrate_archive/20251024105042_add_crop_id_to_cultivation_plan_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_crop_id_to_cultivation_plan_crops
+- version: '20251024105804'
+  file: db/migrate_archive/20251024105804_remove_agrr_crop_id_from_cultivation_plan_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_agrr_crop_id_from_cultivation_plan_crops
+- version: '20251024105813'
+  file: db/migrate_archive/20251024105813_remove_agrr_crop_id_from_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_agrr_crop_id_from_crops
+- version: '20251025045442'
+  file: db/migrate_archive/20251025045442_remove_field_prefix_from_field_names.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_field_prefix_from_field_names
+- version: '20251026061849'
+  file: db/migrate_archive/20251026061849_fix_field_unique_constraints.rb
+  tag: ddl
+  region: all
+  kind:
+  name: fix_field_unique_constraints
+- version: '20251026101101'
+  file: db/migrate_archive/20251026101101_add_unique_constraint_to_cultivation_plans.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_unique_constraint_to_cultivation_plans
+- version: '20251101100944'
+  file: db/migrate_archive/20251101100944_create_fertilizes.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_fertilizes
+- version: '20251101121651'
+  file: db/migrate_archive/20251101121651_add_size_to_fertilizes.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_size_to_fertilizes
+- version: '20251101213337'
+  file: db/migrate_archive/20251101213337_rename_size_to_package_size_in_fertilizes.rb
+  tag: ddl
+  region: all
+  kind:
+  name: rename_size_to_package_size_in_fertilizes
+- version: '20251101213338'
+  file: db/migrate_archive/20251101213338_remove_usage_and_application_rate_from_fertilizes.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_usage_and_application_rate_from_fertilizes
+- version: '20251102102633'
+  file: db/migrate_archive/20251102102633_change_package_size_to_numeric_in_fertilizes.rb
+  tag: ddl
+  region: all
+  kind:
+  name: change_package_size_to_numeric_in_fertilizes
+- version: '20251102102634'
+  file: db/migrate_archive/20251102102634_remove_totals_from_crop_fertilize_profiles_and_applications.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_totals_from_crop_fertilize_profiles_and_applications
+- version: '20251102102635'
+  file: db/migrate_archive/20251102102635_add_unique_constraint_to_crop_fertilize_profiles_crop_id.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_unique_constraint_to_crop_fertilize_profiles_crop_id
+- version: '20251102151736'
+  file: db/migrate_archive/20251102151736_remove_confidence_from_crop_fertilize_profiles.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_confidence_from_crop_fertilize_profiles
+- version: '20251102151737'
+  file: db/migrate_archive/20251102151737_remove_sources_and_notes_from_crop_fertilize_profiles.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_sources_and_notes_from_crop_fertilize_profiles
+- version: '20251102151738'
+  file: db/migrate_archive/20251102151738_create_pests.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: create_pests
+- version: '20251102151739'
+  file: db/migrate_archive/20251102151739_create_pest_temperature_profiles.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: create_pest_temperature_profiles
+- version: '20251102151740'
+  file: db/migrate_archive/20251102151740_create_pest_thermal_requirements.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: create_pest_thermal_requirements
+- version: '20251102151741'
+  file: db/migrate_archive/20251102151741_create_pest_control_methods.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: create_pest_control_methods
+- version: '20251102151742'
+  file: db/migrate_archive/20251102151742_create_crop_pests.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: create_crop_pests
+- version: '20251102205723'
+  file: db/migrate_archive/20251102205723_drop_crop_fertilize_profiles_and_applications.rb
+  tag: ddl
+  region: all
+  kind:
+  name: drop_crop_fertilize_profiles_and_applications
+- version: '20251102211023'
+  file: db/migrate_archive/20251102211023_create_pesticides.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: create_pesticides
+- version: '20251102211024'
+  file: db/migrate_archive/20251102211024_create_pesticide_usage_constraints.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: create_pesticide_usage_constraints
+- version: '20251102211025'
+  file: db/migrate_archive/20251102211025_create_pesticide_application_details.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: create_pesticide_application_details
+- version: '20251102220000'
+  file: db/migrate_archive/20251102220000_add_crop_and_pest_to_pesticides.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: add_crop_and_pest_to_pesticides
+- version: '20251102220001'
+  file: db/migrate_archive/20251102220001_remove_pest_id_from_pests.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: remove_pest_id_from_pests
+- version: '20251102230328'
+  file: db/migrate_archive/20251102230328_add_user_id_to_pests.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: add_user_id_to_pests
+- version: '20251103081717'
+  file: db/migrate_archive/20251103081717_add_user_id_to_pesticides.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: add_user_id_to_pesticides
+- version: '20251103081718'
+  file: db/migrate_archive/20251103081718_remove_pesticide_id_from_pesticides.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: remove_pesticide_id_from_pesticides
+- version: '20251103090411'
+  file: db/migrate_archive/20251103090411_add_user_id_to_fertilizes.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_user_id_to_fertilizes
+- version: '20251103090412'
+  file: db/migrate_archive/20251103090412_create_agricultural_tasks.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_agricultural_tasks
+- version: '20251103112701'
+  file: db/migrate_archive/20251103112701_create_nutrient_requirements.rb
+  tag: ddl
+  region: all
+  kind: nutrients
+  name: create_nutrient_requirements
+- version: '20251103112702'
+  file: db/migrate_archive/20251103112702_add_region_to_pests_pesticides_fertilizes_agricultural_tasks.rb
+  tag: ddl
+  region: all
+  kind: pests
+  name: add_region_to_pests_pesticides_fertilizes_agricultural_tasks
+- version: '20251103225747'
+  file: db/migrate_archive/20251103225747_create_agricultural_task_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_agricultural_task_crops
+- version: '20251105140722'
+  file: db/migrate_archive/20251105140722_add_region_and_seed_japan_nutrient_requirements.rb
+  tag: mixed
+  region: jp
+  kind: nutrients
+  name: add_region_and_seed_japan_nutrient_requirements
+- version: '20251105184957'
+  file: db/migrate_archive/20251105184957_seed_united_states_nutrient_requirements.rb
+  tag: data
+  region: us
+  kind: nutrients
+  name: seed_united_states_nutrient_requirements
+- version: '20251105185020'
+  file: db/migrate_archive/20251105185020_seed_india_nutrient_requirements.rb
+  tag: data
+  region: in
+  kind: nutrients
+  name: seed_india_nutrient_requirements
+- version: '20251107124000'
+  file: db/migrate_archive/20251107124000_add_source_farm_id_to_farms.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_source_farm_id_to_farms
+- version: '20251107182456'
+  file: db/migrate_archive/20251107182456_add_source_crop_id_to_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_source_crop_id_to_crops
+- version: '20251107183959'
+  file: db/migrate_archive/20251107183959_add_source_interaction_rule_id_to_interaction_rules.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_source_interaction_rule_id_to_interaction_rules
+- version: '20251107190000'
+  file: db/migrate_archive/20251107190000_add_source_ids_to_additional_masters.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_source_ids_to_additional_masters
+- version: '20251107193000'
+  file: db/migrate_archive/20251107193000_data_migration_united_states_reference_tasks.rb
+  tag: data
+  region: us
+  kind: tasks
+  name: data_migration_united_states_reference_tasks
+- version: '20251107194000'
+  file: db/migrate_archive/20251107194000_add_task_type_to_agricultural_tasks.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_task_type_to_agricultural_tasks
+- version: '20251107194500'
+  file: db/migrate_archive/20251107194500_data_migration_india_reference_tasks.rb
+  tag: data
+  region: in
+  kind: tasks
+  name: data_migration_india_reference_tasks
+- version: '20251108112037'
+  file: db/migrate_archive/20251108112037_data_migration_united_states_reference_pests.rb
+  tag: data
+  region: us
+  kind: pests
+  name: data_migration_united_states_reference_pests
+- version: '20251108112943'
+  file: db/migrate_archive/20251108112943_data_migration_india_reference_pests.rb
+  tag: data
+  region: in
+  kind: pests
+  name: data_migration_india_reference_pests
+- version: '20251108113000'
+  file: db/migrate_archive/20251108113000_add_agricultural_task_refs_to_task_schedule_items.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_agricultural_task_refs_to_task_schedule_items
+- version: '20251108134917'
+  file: db/migrate_archive/20251108134917_data_migration_japan_reference_pests.rb
+  tag: data
+  region: jp
+  kind: pests
+  name: data_migration_japan_reference_pests
+- version: '20251108145000'
+  file: db/migrate_archive/20251108145000_create_task_schedules.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_task_schedules
+- version: '20251109123000'
+  file: db/migrate_archive/20251109123000_add_predicted_weather_data_to_weather_locations.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_predicted_weather_data_to_weather_locations
+- version: '20251109123001'
+  file: db/migrate_archive/20251109123001_add_status_and_actuals_to_task_schedule_items.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_status_and_actuals_to_task_schedule_items
+- version: '20251109160000'
+  file: db/migrate_archive/20251109160000_create_deletion_undo_events.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_deletion_undo_events
+- version: '20251110191500'
+  file: db/migrate_archive/20251110191500_data_migration_japan_reference_tasks.rb
+  tag: data
+  region: jp
+  kind: tasks
+  name: data_migration_japan_reference_tasks
+- version: '20251111090000'
+  file: db/migrate_archive/20251111090000_create_crop_task_schedule_blueprints.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_crop_task_schedule_blueprints
+- version: '20251111090100'
+  file: db/migrate_archive/20251111090100_create_crop_task_templates.rb
+  tag: ddl
+  region: all
+  kind: templates
+  name: create_crop_task_templates
+- version: '20251111091500'
+  file: db/migrate_archive/20251111091500_add_agricultural_task_to_crop_task_templates.rb
+  tag: ddl
+  region: all
+  kind: templates
+  name: add_agricultural_task_to_crop_task_templates
+- version: '20251111120000'
+  file: db/migrate_archive/20251111120000_drop_agricultural_task_crops.rb
+  tag: ddl
+  region: all
+  kind:
+  name: drop_agricultural_task_crops
+- version: '20251113211624'
+  file: db/migrate_archive/20251113211624_data_migration_japan_reference_crop_task_templates.rb
+  tag: data
+  region: jp
+  kind: templates
+  name: data_migration_japan_reference_crop_task_templates
+- version: '20251116054000'
+  file: db/migrate_archive/20251116054000_add_source_task_to_crop_task_schedule_blueprints.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_source_task_to_crop_task_schedule_blueprints
+- version: '20251125052813'
+  file: db/migrate_archive/20251125052813_add_api_key_to_users.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_api_key_to_users
+- version: '20251129180621'
+  file: db/migrate_archive/20251129180621_change_private_plans_to_annual_planning.rb
+  tag: ddl
+  region: all
+  kind:
+  name: change_private_plans_to_annual_planning
+- version: '20251205195707'
+  file: db/migrate_archive/20251205195707_add_name_to_crop_task_schedule_blueprints.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_name_to_crop_task_schedule_blueprints
+- version: '20251206061856'
+  file: db/migrate_archive/20251206061856_remove_unique_index_from_solid_cable_messages_channel_hash.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_unique_index_from_solid_cable_messages_channel_hash
+- version: '20260130000002'
+  file: db/migrate_archive/20260130000002_drop_balloons.rb
+  tag: ddl
+  region: all
+  kind:
+  name: drop_balloons
+- version: '20260130000003'
+  file: db/migrate_archive/20260130000003_create_balloons.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_balloons
+- version: '20260130000004'
+  file: db/migrate_archive/20260130000004_remove_balloons_table.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_balloons_table
+- version: '20260210000000'
+  file: db/migrate_archive/20260210000000_create_contact_messages.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_contact_messages
+- version: '20260222100029'
+  file: db/migrate_archive/20260222100029_add_is_predicted_to_weather_data.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_is_predicted_to_weather_data
+- version: '20260222100919'
+  file: db/migrate_archive/20260222100919_data_migration_japan_reference_tasks_fix.rb
+  tag: data
+  region: jp
+  kind: tasks
+  name: data_migration_japan_reference_tasks_fix
+- version: '20260222191715'
+  file: db/migrate_archive/20260222191715_load_all_fixtures.rb
+  tag: data
+  region: all
+  kind: dev_fixtures
+  name: load_all_fixtures
+- version: '20260222191716'
+  file: db/migrate_archive/20260222191716_set_default_timezone_for_weather_locations.rb
+  tag: ddl
+  region: all
+  kind:
+  name: set_default_timezone_for_weather_locations
+- version: '20260309093047'
+  file: db/migrate_archive/20260309093047_truncate_weather_data_for_gcs_migration.rb
+  tag: ddl
+  region: all
+  kind:
+  name: truncate_weather_data_for_gcs_migration
+- version: '20260310053009'
+  file: db/migrate_archive/20260310053009_vacuum_after_weather_data_truncate.rb
+  tag: ddl
+  region: all
+  kind:
+  name: vacuum_after_weather_data_truncate
+- version: '20260529120000'
+  file: db/migrate_archive/20260529120000_drop_active_storage_tables.rb
+  tag: ddl
+  region: all
+  kind:
+  name: drop_active_storage_tables
+cache:
+- version: '20250101000001'
+  file: db/cache_migrate_archive/20250101000001_create_solid_cache_tables.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_solid_cache_tables
+  database: cache
+cable:
+- version: '20250101000001'
+  file: db/cable_migrate_archive/20250101000001_create_solid_cable_messages.rb
+  tag: ddl
+  region: all
+  kind:
+  name: create_solid_cable_messages
+  database: cable
+- version: '20251204000001'
+  file: db/cable_migrate_archive/20251204000001_add_unique_index_on_solid_cable_channel_hash.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_unique_index_on_solid_cable_channel_hash
+  database: cable
+- version: '20251205000001'
+  file: db/cable_migrate_archive/20251205000001_add_unique_index_on_solid_cable_messages_id.rb
+  tag: ddl
+  region: all
+  kind:
+  name: add_unique_index_on_solid_cable_messages_id
+  database: cable
+- version: '20251206014713'
+  file: db/cable_migrate_archive/20251206014713_remove_primary_database_tables_from_cable.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_primary_database_tables_from_cable
+  database: cable
+- version: '20251206061856'
+  file: db/cable_migrate_archive/20251206061856_remove_unique_index_from_solid_cable_messages_channel_hash.rb
+  tag: ddl
+  region: all
+  kind:
+  name: remove_unique_index_from_solid_cable_messages_channel_hash
+  database: cable

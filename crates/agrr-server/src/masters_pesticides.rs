@@ -1,7 +1,7 @@
 //! Masters pesticides API — `/api/v1/masters/pesticides`
 
 use crate::adapters::PassthroughTranslator;
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{PesticideSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::pesticide::dtos::{
@@ -24,7 +24,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -87,10 +86,9 @@ impl PesticideListOutputPort for ListPort {
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = PesticideSqliteGateway::new(pool.clone());
@@ -106,33 +104,10 @@ async fn index(
 struct DetailPort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
 impl PesticideDetailOutputPort for DetailPort {
     fn on_success(&mut self, dto: PesticideDetailOutput) {
-        let usage = dto.usage_constraint_snapshot.as_ref().map(|u| {
-            json!({
-                "min_temperature": u.min_temperature,
-                "max_temperature": u.max_temperature,
-                "max_wind_speed_m_s": u.max_wind_speed_m_s,
-                "max_application_count": u.max_application_count,
-                "harvest_interval_days": u.harvest_interval_days,
-                "other_constraints": u.other_constraints,
-            })
-        });
-        let application = dto.application_detail_snapshot.as_ref().map(|a| {
-            json!({
-                "dilution_ratio": a.dilution_ratio,
-                "amount_per_m2": a.amount_per_m2,
-                "amount_unit": a.amount_unit,
-                "application_method": a.application_method,
-            })
-        });
+        // Rails `PesticideDetailApiPresenter` returns flat pesticide entity JSON.
         *self.0.lock().unwrap() = Some(Ok((
             StatusCode::OK,
-            Json(json!({
-                "pesticide": pesticide_json(&dto.pesticide),
-                "crop_name": dto.crop_name,
-                "pest_name": dto.pest_name,
-                "usage_constraint": usage,
-                "application_detail": application,
-            })),
+            Json(pesticide_json(&dto.pesticide)),
         )));
     }
     fn on_failure(&mut self, failure: DetailFailure) {
@@ -146,11 +121,10 @@ impl PesticideDetailOutputPort for DetailPort {
 
 async fn show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = PesticideSqliteGateway::new(pool.clone());
@@ -165,14 +139,49 @@ async fn show(
 }
 
 #[derive(Deserialize)]
-struct PesticideBody {
+struct PesticideRequest {
+    pesticide: PesticideAttrs,
+}
+
+#[derive(Deserialize)]
+struct PesticideAttrs {
     name: Option<String>,
     active_ingredient: Option<String>,
     description: Option<String>,
-    crop_id: Option<i64>,
-    pest_id: Option<i64>,
+    /// Angular `<select [value]>` may send JSON strings; parse in `parse_optional_id`.
+    crop_id: Option<serde_json::Value>,
+    pest_id: Option<serde_json::Value>,
     region: Option<String>,
     is_reference: Option<bool>,
+}
+
+const PESTICIDE_REQUIRED_FIELDS_MSG: &str = "name, crop_id, pest_id are required";
+
+fn parse_optional_id(value: &Option<serde_json::Value>) -> Option<i64> {
+    match value {
+        None | Some(serde_json::Value::Null) => None,
+        Some(serde_json::Value::Number(n)) => n.as_i64(),
+        Some(serde_json::Value::String(s)) => {
+            let s = s.trim();
+            if s.is_empty() {
+                None
+            } else {
+                s.parse().ok()
+            }
+        }
+        _ => None,
+    }
+}
+
+fn valid_pesticide_create_attrs(attrs: &PesticideAttrs) -> bool {
+    let name_ok = attrs
+        .name
+        .as_deref()
+        .map(|s| !s.trim().is_empty())
+        .unwrap_or(false);
+    let crop_ok = parse_optional_id(&attrs.crop_id).is_some_and(|id| id > 0);
+    let pest_ok = parse_optional_id(&attrs.pest_id).is_some_and(|id| id > 0);
+    name_ok && crop_ok && pest_ok
 }
 
 struct CreatePort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
@@ -197,16 +206,22 @@ impl PesticideCreateOutputPort for CreatePort {
 
 async fn create(
     State(state): State<AppState>,
-    jar: CookieJar,
-    Json(body): Json<PesticideBody>,
+    auth: MastersUserId,
+    Json(payload): Json<PesticideRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let body = payload.pesticide;
+    if !valid_pesticide_create_attrs(&body) {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": [PESTICIDE_REQUIRED_FIELDS_MSG]})),
+        ));
+    }
+    let user_id = auth.0;
     let mut input = PesticideCreateInput::new(body.name.clone().unwrap_or_default());
     input.active_ingredient = body.active_ingredient.clone();
     input.description = body.description.clone();
-    input.crop_id = body.crop_id;
-    input.pest_id = body.pest_id;
+    input.crop_id = parse_optional_id(&body.crop_id);
+    input.pest_id = parse_optional_id(&body.pest_id);
     input.region = body.region.clone();
     input.is_reference = body.is_reference;
     let out = Arc::new(Mutex::new(None));
@@ -249,19 +264,19 @@ impl PesticideUpdateOutputPort for UpdatePort {
 
 async fn update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
-    Json(body): Json<PesticideBody>,
+    Json(payload): Json<PesticideRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let body = payload.pesticide;
+    let user_id = auth.0;
     let input = PesticideUpdateInput {
         pesticide_id: id,
         name: body.name.clone(),
         active_ingredient: body.active_ingredient.clone(),
         description: body.description.clone(),
-        crop_id: body.crop_id,
-        pest_id: body.pest_id,
+        crop_id: parse_optional_id(&body.crop_id),
+        pest_id: parse_optional_id(&body.pest_id),
         region: body.region.clone(),
         is_reference: body.is_reference,
     };
@@ -300,11 +315,10 @@ impl PesticideDestroyOutputPort for DestroyPort {
 
 async fn destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = PesticideSqliteGateway::new(pool.clone());

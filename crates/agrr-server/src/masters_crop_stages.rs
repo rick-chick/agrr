@@ -1,7 +1,7 @@
 //! Nested crop stages under `/api/v1/masters/crops/:crop_id/crop_stages`.
 
 use crate::masters_json::crop_stage_to_json;
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{CropSqliteGateway, CropStageSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::crop::dtos::{
@@ -28,7 +28,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -71,11 +70,10 @@ pub(crate) async fn ensure_crop_visible(
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(crop_id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
@@ -104,11 +102,10 @@ async fn index(
 
 async fn show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, id)): Path<(i64, i64)>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let stage_gw = CropStageSqliteGateway::new(pool);
@@ -203,12 +200,11 @@ fn stage_update_payload_from_attrs(attrs: &StageAttrs) -> Result<Value, (StatusC
 
 async fn create(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(crop_id): Path<i64>,
     Json(body): Json<StageRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let payload = stage_payload_from_attrs(&body.crop_stage)?;
     let pool = state.sqlite.clone();
@@ -243,12 +239,11 @@ async fn create(
 
 async fn update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, id)): Path<(i64, i64)>,
     Json(body): Json<StageRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let payload = stage_update_payload_from_attrs(&body.crop_stage)?;
     let pool = state.sqlite.clone();
@@ -281,11 +276,10 @@ async fn update(
 
 async fn destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);

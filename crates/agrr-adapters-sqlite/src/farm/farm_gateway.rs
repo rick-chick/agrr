@@ -221,7 +221,7 @@ impl FarmGateway for FarmSqliteGateway {
         attrs: AttrMap,
     ) -> Result<FarmEntity, Box<dyn std::error::Error + Send + Sync>> {
         let name = required_str(&attrs, "name")?;
-        let region = required_str(&attrs, "region")?;
+        let region = attrs.get("region").and_then(attr_as_str);
         let latitude = required_f64(&attrs, "latitude")?;
         let longitude = required_f64(&attrs, "longitude")?;
         let is_reference = attrs

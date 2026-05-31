@@ -1,7 +1,7 @@
 //! Masters agricultural tasks API.
 
 use crate::adapters::PassthroughTranslator;
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     AgTaskCropSqliteGateway, AgriculturalTaskSqliteGateway, CropTaskTemplateSqliteGateway,
@@ -30,7 +30,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -104,11 +103,10 @@ impl AgriculturalTaskListOutputPort for ListPort {
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Query(q): Query<ListQuery>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let pool = state.sqlite.clone();
     let user_lookup = UserLookupSqliteGateway::new(pool.clone());
     let user = user_lookup.find(user_id);
@@ -127,15 +125,10 @@ async fn index(
 struct DetailPort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
 impl AgriculturalTaskDetailOutputPort for DetailPort {
     fn on_success(&mut self, dto: AgriculturalTaskDetailOutput) {
+        // Rails `AgriculturalTaskDetailApiPresenter` returns flat task entity JSON.
         *self.0.lock().unwrap() = Some(Ok((
             StatusCode::OK,
-            Json(json!({
-                "agricultural_task": task_json(&dto.task),
-                "associated_crops": dto.associated_crops.iter().map(|c| json!({
-                    "id": c.id,
-                    "name": c.name,
-                })).collect::<Vec<_>>(),
-            })),
+            Json(task_json(&dto.task)),
         )));
     }
     fn on_failure(&mut self, failure: DetailFailure) {
@@ -149,11 +142,10 @@ impl AgriculturalTaskDetailOutputPort for DetailPort {
 
 async fn show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
@@ -168,7 +160,12 @@ async fn show(
 }
 
 #[derive(Deserialize)]
-struct TaskBody {
+struct TaskRequest {
+    agricultural_task: TaskAttrs,
+}
+
+#[derive(Deserialize)]
+struct TaskAttrs {
     name: Option<String>,
     description: Option<String>,
     time_per_sqm: Option<f64>,
@@ -194,11 +191,11 @@ impl AgriculturalTaskCreateOutputPort for CreatePort {
 
 async fn create(
     State(state): State<AppState>,
-    jar: CookieJar,
-    Json(body): Json<TaskBody>,
+    auth: MastersUserId,
+    Json(payload): Json<TaskRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let body = payload.agricultural_task;
+    let user_id = auth.0;
     let mut input = AgriculturalTaskCreateInput::new(body.name.clone().unwrap_or_default());
     input.description = body.description.clone();
     input.time_per_sqm = body.time_per_sqm;
@@ -246,12 +243,12 @@ impl AgriculturalTaskUpdateOutputPort for UpdatePort {
 
 async fn update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
-    Json(body): Json<TaskBody>,
+    Json(payload): Json<TaskRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let body = payload.agricultural_task;
+    let user_id = auth.0;
     let input = AgriculturalTaskUpdateInput {
         id,
         name: body.name.clone(),
@@ -304,11 +301,10 @@ impl AgriculturalTaskDestroyOutputPort for DestroyPort {
 
 async fn destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = AgriculturalTaskSqliteGateway::new(pool.clone());

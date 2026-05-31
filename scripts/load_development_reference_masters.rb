@@ -17,7 +17,7 @@ end
 jp_pests = Pest.where(is_reference: true, region: "jp").count
 if jp_pests.zero?
   puts "Loading Japan reference pests..."
-  run_migration_up("db/migrate/20251108134917_data_migration_japan_reference_pests.rb")
+  run_migration_up("db/migrate_archive/20251108134917_data_migration_japan_reference_pests.rb")
 else
   puts "Japan reference pests already present (#{jp_pests})"
 end
@@ -25,32 +25,33 @@ end
 us_pests = Pest.where(is_reference: true, region: "us").count
 if us_pests.zero?
   puts "Loading US reference pests..."
-  run_migration_up("db/migrate/20251108112037_data_migration_united_states_reference_pests.rb")
+  run_migration_up("db/migrate_archive/20251108112037_data_migration_united_states_reference_pests.rb")
 else
   puts "US reference pests already present (#{us_pests})"
 end
 
-jp_tasks = AgriculturalTask.where(is_reference: true, region: "jp").count
-if jp_tasks.zero?
-  if ActiveRecord::Base.connection.table_exists?(:agricultural_task_crops)
-    puts "Loading Japan reference agricultural tasks..."
-    run_migration_up("db/migrate/20251110191500_data_migration_japan_reference_tasks.rb")
-  else
-    puts "Skipping Japan reference agricultural tasks (agricultural_task_crops table removed; US tasks still load)"
-  end
+in_pests = Pest.where(is_reference: true, region: "in").count
+if in_pests.zero?
+  puts "Loading India reference pests..."
+  run_migration_up("db/migrate_archive/20251108112943_data_migration_india_reference_pests.rb")
 else
-  puts "Japan reference tasks already present (#{jp_tasks})"
+  puts "India reference pests already present (#{in_pests})"
 end
 
+# Task migrations reference dropped agricultural_task_crops; use same JSON as agrr-migrate.
+jp_tasks = AgriculturalTask.where(is_reference: true, region: "jp").count
 us_tasks = AgriculturalTask.where(is_reference: true, region: "us").count
-if us_tasks.zero?
-  puts "Loading US reference agricultural tasks..."
-  run_migration_up("db/migrate/20251107193000_data_migration_united_states_reference_tasks.rb")
+in_tasks = AgriculturalTask.where(is_reference: true, region: "in").count
+if jp_tasks.zero? || us_tasks.zero? || in_tasks.zero?
+  puts "Loading reference agricultural tasks from extracted JSON (jp/in/us)..."
+  load Rails.root.join("scripts/apply_extracted_reference_tasks.rb")
 else
-  puts "US reference tasks already present (#{us_tasks})"
+  puts "Reference tasks already present (jp=#{jp_tasks} us=#{us_tasks} in=#{in_tasks})"
 end
 
 puts "Done: jp_pests=#{Pest.where(is_reference: true, region: 'jp').count} " \
      "us_pests=#{Pest.where(is_reference: true, region: 'us').count} " \
+     "in_pests=#{Pest.where(is_reference: true, region: 'in').count} " \
      "jp_tasks=#{AgriculturalTask.where(is_reference: true, region: 'jp').count} " \
-     "us_tasks=#{AgriculturalTask.where(is_reference: true, region: 'us').count}"
+     "us_tasks=#{AgriculturalTask.where(is_reference: true, region: 'us').count} " \
+     "in_tasks=#{AgriculturalTask.where(is_reference: true, region: 'in').count}"

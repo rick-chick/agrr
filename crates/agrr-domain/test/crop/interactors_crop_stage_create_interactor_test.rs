@@ -1,6 +1,6 @@
 // Tests for `interactors/crop_stage_create_interactor.rs` (Ruby parity under test/domain/crop/).
 
-    use crate::crop::entities::{CropEntity, CropStageEntity};
+    use crate::crop::entities::CropStageEntity;
     use serde_json::json;
 
     struct SpyOutput {

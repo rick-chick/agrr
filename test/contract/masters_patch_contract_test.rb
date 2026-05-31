@@ -19,7 +19,7 @@ class MastersPatchContractTest < ContractTestCase
     response = rust_patch(
       "/api/v1/masters/pests/#{@pest.id}",
       session_id: @session_id,
-      body: { name: "Updated Pest Name" }
+      body: { pest: { name: "Updated Pest Name" } }
     )
     refute_equal 501, response.code.to_i, response.body
     assert_equal 200, response.code.to_i, response.body
@@ -33,7 +33,7 @@ class MastersPatchContractTest < ContractTestCase
     response = rust_patch(
       "/api/v1/masters/crops/#{@crop.id}/crop_stages/#{@crop_stage.id}",
       session_id: @session_id,
-      body: { name: "Updated Stage", order: @crop_stage.order }
+      body: { crop_stage: { name: "Updated Stage", order: @crop_stage.order } }
     )
     refute_equal 501, response.code.to_i, response.body
     assert_equal 200, response.code.to_i, response.body

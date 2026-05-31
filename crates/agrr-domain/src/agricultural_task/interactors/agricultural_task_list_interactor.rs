@@ -79,3 +79,11 @@ fn list_tasks_for_input<G: AgriculturalTaskGateway>(
         _ => gateway.list_user_and_reference_tasks(user_id, query),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/agricultural_task/interactors_agricultural_task_list_interactor_test.rs"
+    ));
+}

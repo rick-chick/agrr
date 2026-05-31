@@ -1,6 +1,6 @@
 // Tests for `interactors/pest_ai_create_interactor.rs` (Ruby parity under test/domain/pest/).
 
-    use crate::pest::entities::PestEntity;
+    
     use crate::pest::ports::{PestAiCreateInteractorPort, PestAiCreateResult, PestAiUpdateInteractorPort, PestAiUpdateResult};
     use crate::shared::attr::AttrMap;
     use crate::shared::user::User;

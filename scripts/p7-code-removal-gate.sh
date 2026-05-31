@@ -20,5 +20,8 @@ fi
 echo "==> Rust contract suite"
 AGRR_SERVER_CONTRACT_REBUILD=1 COVERAGE=false ./scripts/run-rust-contract-tests.sh
 
+echo "==> agrr-migrate (schema smoke)"
+cargo test -p agrr-migrate --quiet
+
 echo "==> Reminder: do not delete lib/domain until production runs Rust-only (see scripts/prod-rust-cutover-checklist.sh)"
 echo "OK: P7 code removal preconditions for local/CI."

@@ -39,6 +39,10 @@
 1. 複数の細かいタスクをグループ分けしてグループごとにに作業を行う
 2. タスク分解を行わずに、作業を開始する
 
+## 改修は TDD（スキル必須）
+- ソース・テストの変更は **RED → GREEN → REFACTOR**。手順: `.cursor/skills/tdd-on-edit/SKILL.md`、ルール: `.cursor/rules/tdd-on-edit.mdc`
+- テスト実行は **test-common** のみ。バグは `error-investigation` → `error-fix-red-green`
+
 ## 改修したらテストとレビューをすること
 - OK
 1. 複数のタスクがある中で一つのタスクを終えたので関連するテストだけ行う

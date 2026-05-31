@@ -87,7 +87,7 @@ describe('InteractionRuleEditComponent', () => {
       'interaction_rules.form.source_group_label': 'Source Group',
       'interaction_rules.form.target_group_label': 'Target Group',
       'interaction_rules.form.impact_ratio_label': 'Impact Ratio',
-      'interaction_rules.form.is_directional_label': 'Is Directional',
+      'interaction_rules.form.direction_label': 'Direction',
       'interaction_rules.form.description_label': 'Description',
       'interaction_rules.form.submit_update': 'Update',
       'common.back': 'Back',

@@ -56,6 +56,12 @@ RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompi
 # Note: Database setup is done at runtime by start_app.sh
 # This ensures migrations run with the actual production database
 
+FROM rust:1-bookworm AS rust_builder
+WORKDIR /app
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+COPY crates ./crates
+RUN cargo build --release -p agrr-migrate
+
 # Production stage
 FROM ruby:3.3.10-slim
 
@@ -84,6 +90,9 @@ WORKDIR /app
 
 # Copy the application from builder stage
 COPY --from=builder --chown=appuser:appuser /app /app
+
+COPY --from=rust_builder /app/target/release/agrr-migrate /usr/local/bin/agrr-migrate
+RUN chmod +x /usr/local/bin/agrr-migrate
 
 # Copy Litestream configuration
 COPY config/litestream.yml /etc/litestream.yml

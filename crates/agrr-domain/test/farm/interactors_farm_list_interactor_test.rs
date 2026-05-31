@@ -3,8 +3,8 @@
     use crate::farm::entities::FarmEntity;
     use crate::farm::gateways::FarmGateway;
     use crate::farm::ports::FarmListOutputPort;
-    use crate::shared::gateways::UserLookupGateway;
-    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+    
+    
 
     use crate::shared::attr::AttrMap;
     use crate::shared::user::User;

@@ -1,5 +1,5 @@
 require "test_helper"
-require Rails.root.join("db/migrate/20251113211624_data_migration_japan_reference_crop_task_templates")
+require Rails.root.join("db/migrate_archive/20251113211624_data_migration_japan_reference_crop_task_templates")
 
 class DataMigrationJapanReferenceCropTaskTemplatesTest < ActiveSupport::TestCase
   EXPECTED_TASKS = DataMigrationJapanReferenceCropTaskTemplates::TASK_DEFINITIONS.transform_values do |definition|

@@ -424,6 +424,7 @@ impl CropGateway for CropSqliteGateway {
         crop_stage_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         match self.pool.with_write_box(|conn| {
+            delete_crop_stage_requirements(conn, crop_stage_id)?;
             conn.execute("DELETE FROM crop_stages WHERE id = ?1", params![crop_stage_id])
         }) {
             Ok(0) => Err(Box::new(RecordNotFoundError) as Box<dyn std::error::Error + Send + Sync>),
@@ -767,13 +768,41 @@ impl PrivatePlanCropListGateway for CropSqliteGateway {
             let mut stmt = conn.prepare(&sql)?;
             let params: Vec<i64> = crop_ids.to_vec();
             let rows = stmt.query_map(rusqlite::params_from_iter(params.iter()), map_crop_row)?;
-            let mut out = Vec::new();
+            let mut by_id = std::collections::HashMap::new();
             for row in rows {
-                out.push(row?);
+                let entity = row?;
+                by_id.insert(entity.id, entity);
             }
-            Ok(out)
+            Ok(crop_ids
+                .iter()
+                .filter_map(|id| by_id.get(id).cloned())
+                .collect())
         })
     }
+}
+
+/// Rails `CropStage` `dependent: :destroy` on requirement associations.
+fn delete_crop_stage_requirements(
+    conn: &rusqlite::Connection,
+    crop_stage_id: i64,
+) -> rusqlite::Result<()> {
+    conn.execute(
+        "DELETE FROM temperature_requirements WHERE crop_stage_id = ?1",
+        params![crop_stage_id],
+    )?;
+    conn.execute(
+        "DELETE FROM thermal_requirements WHERE crop_stage_id = ?1",
+        params![crop_stage_id],
+    )?;
+    conn.execute(
+        "DELETE FROM sunshine_requirements WHERE crop_stage_id = ?1",
+        params![crop_stage_id],
+    )?;
+    conn.execute(
+        "DELETE FROM nutrient_requirements WHERE crop_stage_id = ?1",
+        params![crop_stage_id],
+    )?;
+    Ok(())
 }
 
 fn load_crop_stage_by_id(

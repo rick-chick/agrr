@@ -69,7 +69,8 @@ pub use public_plan::{
     CropRowsAvailablePublicSqliteGateway, PublicPlanCropSqliteGateway, PublicPlanSqliteGateway,
 };
 pub use shared::{
-    find_farm as internal_api_find_farm, InternalApiFarmLookupResult, InternalApiFarmRow,
+    find_farm as internal_api_find_farm, ApiKeyPrincipalSqliteGateway,
+    InternalApiFarmLookupResult, InternalApiFarmRow, SessionCookiePrincipalSqliteGateway,
     SessionUserReadSqliteGateway, SessionUserRow, UserLookupSqliteGateway,
 };
 pub use field_cultivation::{

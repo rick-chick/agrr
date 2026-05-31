@@ -412,7 +412,7 @@
         assert!(!interactor.call(input).expect("ok"));
         assert!(matches!(
             output.failure,
-            Some(UpdateFailure::Policy(PolicyPermissionDenied))
+            Some(UpdateFailure::Policy(_))
         ));
     }
 

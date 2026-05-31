@@ -52,3 +52,9 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod interactors_masters_sunshine_requirement_create_interactor_test_inline {
+    use super::*;
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/crop/interactors_masters_sunshine_requirement_create_interactor_test.rs"));
+}

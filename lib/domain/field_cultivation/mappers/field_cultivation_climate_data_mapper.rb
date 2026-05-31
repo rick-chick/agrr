@@ -13,12 +13,15 @@ module Domain
         def build_output(context:, weather_records:, progress_result:)
           weather_records = Array(weather_records)
           base_temp = context.base_temperature
+          final_cumulative_gdd_required = final_cumulative_gdd_required_from_stages(context.stages)
+
           daily_gdd, baseline_gdd, filtered_records, progress_records = build_daily_gdd(
             progress_result,
             weather_records,
             context.start_date,
             context.completion_date,
-            base_temp
+            base_temp,
+            final_cumulative_gdd_required: final_cumulative_gdd_required
           )
 
           Dtos::FieldCultivationClimateDataOutput.new(
@@ -88,7 +91,23 @@ module Domain
           end
         end
 
-        def build_daily_gdd(progress_result, weather_data_records, start_date, completion_date, base_temp)
+        def final_cumulative_gdd_required_from_stages(stages)
+          stages = Array(stages)
+          return nil if stages.empty?
+
+          stages.filter_map do |stage|
+            stage[:cumulative_gdd_required] || stage["cumulative_gdd_required"]
+          end.max
+        end
+
+        def build_daily_gdd(
+          progress_result,
+          weather_data_records,
+          start_date,
+          completion_date,
+          base_temp,
+          final_cumulative_gdd_required: nil
+        )
           weather_data_records = Array(weather_data_records)
           progress_records = progress_result["progress_records"] || []
           baseline_gdd = 0.0
@@ -128,7 +147,25 @@ module Domain
             end
           end
 
+          truncate_daily_gdd_at_requirement!(
+            daily_gdd,
+            final_cumulative_gdd_required: final_cumulative_gdd_required
+          )
+
           [ daily_gdd, baseline_gdd, filtered_records, progress_records ]
+        end
+
+        def truncate_daily_gdd_at_requirement!(daily_gdd, final_cumulative_gdd_required:)
+          return daily_gdd unless final_cumulative_gdd_required&.positive?
+          return daily_gdd if daily_gdd.empty?
+
+          completion_index = daily_gdd.find_index do |datum|
+            datum[:cumulative_gdd].to_f >= final_cumulative_gdd_required
+          end
+          return daily_gdd unless completion_index
+
+          daily_gdd.replace(daily_gdd[0..completion_index])
+          daily_gdd
         end
 
         def calculate_gdd_manually(weather_data_records, base_temp)

@@ -153,6 +153,6 @@ where
 
 #[cfg(test)]
 mod calculators_farm_weather_progress_calculator_test_inline {
-    use super::*;
+    
     include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/farm/calculators_farm_weather_progress_calculator_test.rs"));
 }

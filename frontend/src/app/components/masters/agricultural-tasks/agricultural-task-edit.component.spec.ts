@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AgriculturalTaskEditComponent } from './agricultural-task-edit.component';
@@ -63,6 +63,17 @@ describe('AgriculturalTaskEditComponent', () => {
 
   it('should have agriculturalTaskId set correctly', () => {
     expect(component['agriculturalTaskId']).toBe(1);
+  });
+
+  it('sets error when agricultural task id is missing', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      'agricultural_tasks.errors.invalid_id': 'Invalid task ID.'
+    });
+    translate.use('en');
+    mockActivatedRoute.snapshot.paramMap.get = () => null;
+    component.ngOnInit();
+    expect(component.control.error).toBe(translate.instant('agricultural_tasks.errors.invalid_id'));
   });
 
   it('should call updateUseCase when updateAgriculturalTask is called', () => {

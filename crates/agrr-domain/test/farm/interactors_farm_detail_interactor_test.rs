@@ -5,7 +5,7 @@
     use crate::farm::gateways::FarmGateway;
     use crate::farm::ports::{DetailFailure, FarmDetailOutputPort};
     use crate::shared::gateways::UserLookupGateway;
-    use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
+    
 
     use crate::farm::entities::FieldEntity;
     use crate::shared::attr::AttrMap;

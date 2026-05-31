@@ -30,6 +30,6 @@ impl StageRoleResolver {
 
 #[cfg(test)]
 mod interactors_entry_schedule_stage_role_resolver_test_inline {
-    use super::*;
+    
     include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/cultivation_plan/interactors_entry_schedule_stage_role_resolver_test.rs"));
 }

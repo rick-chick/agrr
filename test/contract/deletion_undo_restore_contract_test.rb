@@ -21,6 +21,8 @@ class DeletionUndoRestoreContractTest < ContractTestCase
       undo_body = JSON.parse(delete_resp.body)
       undo_token = undo_body["undo_token"] || undo_body.dig("undo", "undo_token")
       assert undo_token.present?
+      assert undo_body["undo_path"].present?, undo_body.inspect
+      assert_equal "/undo_deletion?undo_token=#{undo_token}", undo_body["undo_path"]
       assert_not InteractionRule.exists?(@rule.id)
 
       restore_resp = rust_post(

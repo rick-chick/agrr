@@ -73,7 +73,7 @@
         ) -> Result<FarmEntity, Box<dyn std::error::Error + Send + Sync>> {
             match &self.farm {
                 Ok(f) => Ok(f.clone()),
-                Err(e) => Err(Box::new(RecordNotFoundError) as _),
+                Err(_e) => Err(Box::new(RecordNotFoundError) as _),
             }
         }
     }

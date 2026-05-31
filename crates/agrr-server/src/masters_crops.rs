@@ -2,7 +2,7 @@
 
 use crate::adapters::PassthroughTranslator;
 use crate::masters_json::{crop_destroy_undo_json, crop_to_json};
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{CropSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::crop::dtos::{CropCreateInput, CropDetailOutput, CropUpdateInput};
@@ -25,7 +25,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -59,9 +58,9 @@ struct CropAttrs {
 
 async fn list_crops(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar)?;
+    let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
@@ -81,10 +80,10 @@ async fn list_crops(
 
 async fn show_crop(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar)?;
+    let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
@@ -104,7 +103,7 @@ async fn show_crop(
 
 async fn create_crop(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Json(payload): Json<CropBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     if payload.crop.name.as_deref().unwrap_or("").is_empty() {
@@ -113,7 +112,7 @@ async fn create_crop(
             Json(json!({"errors": ["name is required"]})),
         ));
     }
-    let user_id = auth_user(&state, &jar)?;
+    let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
@@ -144,11 +143,11 @@ async fn create_crop(
 
 async fn update_crop(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
     Json(payload): Json<CropBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar)?;
+    let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
@@ -180,10 +179,10 @@ async fn update_crop(
 
 async fn destroy_crop(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar)?;
+    let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
     let crop_name = gateway
@@ -337,10 +336,8 @@ fn destroy_failure(error: DestroyFailure) -> (StatusCode, Value) {
     }
 }
 
-fn auth_user(state: &AppState, jar: &CookieJar) -> Result<i64, (StatusCode, Json<Value>)> {
-    user_id_from_session(state, jar).map_err(|status| {
-        (status, Json(json!({"error": "unauthorized"})))
-    })
+fn auth_user(auth: MastersUserId) -> i64 {
+    auth.0
 }
 
 fn internal(_: Box<dyn std::error::Error + Send + Sync>) -> (StatusCode, Json<Value>) {

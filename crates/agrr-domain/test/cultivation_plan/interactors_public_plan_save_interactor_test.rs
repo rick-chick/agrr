@@ -1,7 +1,7 @@
 // Tests for `interactors/public_plan_save_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
 
     use crate::cultivation_plan::dtos::{
-        PublicPlanSaveFieldDatum, PublicPlanSaveHeaderSnapshot, PublicPlanSaveSessionData,
+        PublicPlanSaveFieldDatum, PublicPlanSaveHeaderSnapshot,
         PublicPlanSaveSuccess,
     };
     use crate::farm::entities::FarmEntity;

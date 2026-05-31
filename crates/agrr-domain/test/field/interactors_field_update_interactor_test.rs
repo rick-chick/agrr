@@ -15,6 +15,7 @@
         WithFarm(FieldWithFarm),
         WithFarmOtherOwner,
         NotFound,
+        #[allow(dead_code)]
         UpdateReturns(FieldEntity),
     }
 

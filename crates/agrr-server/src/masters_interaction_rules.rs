@@ -1,7 +1,7 @@
 //! Masters interaction rules API.
 
 use crate::adapters::PassthroughTranslator;
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{InteractionRuleSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::interaction_rule::dtos::{
@@ -25,7 +25,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -89,10 +88,9 @@ impl InteractionRuleListOutputPort for ListPort {
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = InteractionRuleSqliteGateway::new(pool.clone());
@@ -122,11 +120,10 @@ impl InteractionRuleDetailOutputPort for DetailPort {
 
 async fn show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = InteractionRuleSqliteGateway::new(pool.clone());
@@ -145,7 +142,12 @@ async fn show(
 }
 
 #[derive(Deserialize)]
-struct RuleBody {
+struct RuleRequest {
+    interaction_rule: RuleAttrs,
+}
+
+#[derive(Deserialize)]
+struct RuleAttrs {
     rule_type: Option<String>,
     source_group: Option<String>,
     target_group: Option<String>,
@@ -171,11 +173,11 @@ impl InteractionRuleCreateOutputPort for CreatePort {
 
 async fn create(
     State(state): State<AppState>,
-    jar: CookieJar,
-    Json(body): Json<RuleBody>,
+    auth: MastersUserId,
+    Json(payload): Json<RuleRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let body = payload.interaction_rule;
+    let user_id = auth.0;
     let input = InteractionRuleCreateInput::new(
         body.rule_type.clone().unwrap_or_default(),
         body.source_group.clone().unwrap_or_default(),
@@ -225,12 +227,12 @@ impl InteractionRuleUpdateOutputPort for UpdatePort {
 
 async fn update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
-    Json(body): Json<RuleBody>,
+    Json(payload): Json<RuleRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let body = payload.interaction_rule;
+    let user_id = auth.0;
     let input = InteractionRuleUpdateInput {
         id,
         rule_type: body.rule_type.clone(),
@@ -277,11 +279,10 @@ impl InteractionRuleDestroyOutputPort for DestroyPort {
 
 async fn destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = InteractionRuleSqliteGateway::new(pool.clone());

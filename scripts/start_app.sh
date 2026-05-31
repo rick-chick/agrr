@@ -73,15 +73,20 @@ restore_db() {
 
 # Run migrations for all databases in a single Rails process (1x boot instead of 4x)
 migrate_all() {
-  echo "  Running migrations for all databases (primary, cache, cable)..."
+  echo "  Running schema migrations (refinery: primary + cache)..."
   local migrate_start=$(date +%s)
-  if bundle exec rails db:migrate; then
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  export AGRR_APP_ROOT="${script_dir}/.."
+  export AGRR_SQLITE_PATH="/tmp/production.sqlite3"
+  export AGRR_CACHE_SQLITE_PATH="/tmp/production_cache.sqlite3"
+  if "${script_dir}/run-agrr-migrate.sh" schema run; then
     local migrate_end=$(date +%s)
     local migrate_duration=$((migrate_end - migrate_start))
-    echo "  ✓ All databases migrated successfully (took ${migrate_duration}s)"
+    echo "  ✓ Schema migrated successfully (took ${migrate_duration}s)"
     return 0
   else
-    echo "  ERROR: Database migration failed"
+    echo "  ERROR: Schema migration failed"
     return 1
   fi
 }
@@ -96,30 +101,18 @@ schema_up_to_date() {
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   local app_root="${script_dir}/.."
 
-  get_expected_version() {
-    local migrate_dir=$1
-    ls "$app_root/$migrate_dir"/[0-9]*_*.rb 2>/dev/null | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort -rn | head -1
-  }
-
-  check_db_version() {
+  check_refinery_at_least() {
     local db_file=$1
-    local expected=$2
-    [ -z "$expected" ] && return 1
+    local min_version=$2
     [ ! -f "$db_file" ] && return 1
     local actual
-    actual=$(sqlite3 "$db_file" "SELECT MAX(version) FROM schema_migrations" 2>/dev/null)
+    actual=$(sqlite3 "$db_file" "SELECT COALESCE(MAX(version), 0) FROM refinery_schema_history" 2>/dev/null) || return 1
     [ -z "$actual" ] && return 1
-    [ "$actual" = "$expected" ] || return 1
+    [ "$actual" -ge "$min_version" ] || return 1
   }
 
-  local primary_expected cache_expected cable_expected
-  primary_expected=$(get_expected_version "db/migrate")
-  cache_expected=$(get_expected_version "db/cache_migrate")
-  cable_expected=$(get_expected_version "db/cable_migrate")
-
-  check_db_version "/tmp/production.sqlite3" "$primary_expected" || return 1
-  check_db_version "/tmp/production_cache.sqlite3" "$cache_expected" || return 1
-  check_db_version "/tmp/production_cable.sqlite3" "$cable_expected" || return 1
+  check_refinery_at_least "/tmp/production.sqlite3" 2 || return 1
+  check_refinery_at_least "/tmp/production_cache.sqlite3" 1 || return 1
 
   return 0
 }

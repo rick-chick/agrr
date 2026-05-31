@@ -64,3 +64,9 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod interactors_agricultural_task_detail_interactor_test_inline {
+    use super::*;
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/agricultural_task/interactors_agricultural_task_detail_interactor_test.rs"));
+}

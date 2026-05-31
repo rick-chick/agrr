@@ -1,11 +1,10 @@
 // Tests for `interactors/fetch_weather_data_perform_interactor.rs` (Ruby parity under test/domain/weather_data/).
 
-    use crate::shared::ports::{ClockPort, LoggerPort};
     use time::{Date, Month, OffsetDateTime, Time};
 
 use serde_json::json;
 
-    use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
+    use crate::shared::exceptions::RecordNotFoundError;
     use crate::weather_data::gateways::{FetchWeatherFarmEntity, WeatherLocationRecord};
     use std::sync::{Arc, Mutex};
 
@@ -19,14 +18,6 @@ use serde_json::json;
         fn error(&self, message: &str) {
             self.errors.lock().expect("lock").push(message.to_string());
         }
-        fn debug(&self, _: &str) {}
-    }
-
-    struct NoopLogger;
-    impl LoggerPort for NoopLogger {
-        fn info(&self, _: &str) {}
-        fn warn(&self, _: &str) {}
-        fn error(&self, _: &str) {}
         fn debug(&self, _: &str) {}
     }
 

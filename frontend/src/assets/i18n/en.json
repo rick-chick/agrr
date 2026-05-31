@@ -1393,11 +1393,19 @@
         "button": "Add Pesticide"
       }
     },
+    "errors": {
+      "invalid_id": "Invalid pesticide id."
+    },
+    "fallback": {
+      "crop": "Crop (ID: {{id}})",
+      "pest": "Pest (ID: {{id}})"
+    },
     "new": {
       "title": "Add New Pesticide"
     },
     "edit": {
-      "title": "Edit {{name}}"
+      "title": "Edit {{name}}",
+      "title_default": "Pesticide"
     },
     "show": {
       "reference_pesticide": "Reference Pesticide",
@@ -1475,9 +1483,20 @@
       "title": "Add Task"
     },
     "edit": {
-      "title": "Edit {{name}}"
+      "title": "Edit {{name}}",
+      "title_default": "Task"
+    },
+    "errors": {
+      "invalid_id": "Invalid task ID."
     },
     "form": {
+      "name_label": "Task Name",
+      "description_label": "Description",
+      "time_per_sqm_label": "Time per ㎡ (hours/㎡)",
+      "weather_dependency_label": "Weather Dependency",
+      "skill_level_label": "Skill Level",
+      "task_type_label": "Task Type",
+      "required_tools_label": "Required Tools",
       "submit_create": "Create Task",
       "submit_update": "Update Task",
       "required_tools_hint": "Use new lines for multiple items",
@@ -1510,6 +1529,9 @@
       "skill_level_beginner": "Beginner",
       "skill_level_intermediate": "Intermediate",
       "skill_level_advanced": "Advanced",
+      "region": "Region",
+      "task_type": "Task Type",
+      "hours_suffix": "hours/㎡",
       "created_at": "Created At",
       "updated_at": "Updated At",
       "associated_crops": "Associated Crops",
@@ -2475,7 +2497,6 @@
       "errors": {
         "title": "{{count}} errors occurred:"
       },
-      "is_directional_label": "Is Directional",
       "region_label": "Region"
     },
     "show": {

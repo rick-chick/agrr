@@ -11,6 +11,6 @@ impl FarmCreateLimitPolicy {
 
 #[cfg(test)]
 mod policies_farm_create_limit_test_inline {
-    use super::*;
+    
     include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/farm/policies_farm_create_limit_test.rs"));
 }

@@ -309,6 +309,6 @@
         interactor.call(5).unwrap();
         assert!(matches!(
             output.failure,
-            Some(DetailFailure::Policy(PolicyPermissionDenied))
+            Some(DetailFailure::Policy(_))
         ));
     }

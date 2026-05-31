@@ -1,6 +1,6 @@
 // Tests for `interactors/pesticide_list_interactor.rs` (Ruby parity under test/domain/pesticide/).
 
-    use crate::pesticide::entities::{PesticideEntity, PesticideEntityAttrs};
+    use crate::pesticide::entities::PesticideEntity;
     use crate::shared::user::User;
 
     struct StubLookup(User);

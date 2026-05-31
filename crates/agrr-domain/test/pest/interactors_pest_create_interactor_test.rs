@@ -50,7 +50,7 @@
         fn create_for_user(
             &self,
             _: &User,
-            attrs: AttrMap,
+            _attrs: AttrMap,
         ) -> Result<PestEntity, Box<dyn std::error::Error + Send + Sync>> {
             Ok(self.entity.clone())
         }
@@ -87,6 +87,81 @@
             unimplemented!()
         }
 
+        fn soft_delete_with_undo(
+            &self,
+            _: &User,
+            _: i64,
+            _: i64,
+            _: &dyn TranslatorPort,
+        ) -> Result<
+            crate::pest::gateways::SoftDeleteWithUndoOutcome,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            unimplemented!()
+        }
+        fn find_by_name(
+            &self,
+            _: i64,
+            _: &str,
+        ) -> Result<Option<PestEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+    }
+
+    struct NameRequiredGateway;
+    impl PestGateway for NameRequiredGateway {
+        fn list_pests_for_crop_filtered(
+            &self,
+            _: i64,
+            _: &[i64],
+            _: crate::pest::gateways::CropPestListOrder,
+        ) -> Result<Vec<PestEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn find_by_id(
+            &self,
+            _: i64,
+        ) -> Result<PestEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn create_for_user(
+            &self,
+            _: &User,
+            _: AttrMap,
+        ) -> Result<PestEntity, Box<dyn std::error::Error + Send + Sync>> {
+            Err(Box::new(RecordInvalidError::new(
+                Some("name is required".into()),
+                None,
+            )))
+        }
+        fn update_for_user(
+            &self,
+            _: &User,
+            _: i64,
+            _: AttrMap,
+        ) -> Result<PestEntity, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn list_index_for_filter(
+            &self,
+            _: &crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter,
+        ) -> Result<Vec<PestEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            unimplemented!()
+        }
+        fn find_pest_show_detail(
+            &self,
+            _: i64,
+        ) -> Result<crate::pest::dtos::PestShowDetail, Box<dyn std::error::Error + Send + Sync>>
+        {
+            unimplemented!()
+        }
+        fn find_delete_usage(
+            &self,
+            _: i64,
+        ) -> Result<crate::pest::dtos::PestDeleteUsage, Box<dyn std::error::Error + Send + Sync>>
+        {
+            unimplemented!()
+        }
         fn soft_delete_with_undo(
             &self,
             _: &User,
@@ -311,6 +386,34 @@
         input.is_reference = Some(true);
         interactor.call(input).expect("handled");
         assert_eq!(output.success, Some(entity));
+    }
+
+    // Gateway: create_for_user without name → RecordInvalid "name is required"
+    #[test]
+    fn returns_error_when_create_without_name() {
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let lookup = StubLookup(User::new(7, false));
+        let mut interactor = PestCreateInteractor::new(
+            &mut output,
+            7,
+            &NameRequiredGateway,
+            &NoopCropGateway,
+            &NoopCropPestGateway,
+            &StubTranslator,
+            &lookup,
+        );
+        interactor
+            .call(PestCreateInput::new(""))
+            .expect("handled");
+        match output.failure {
+            Some(CreateFailure::Error(err)) => {
+                assert!(err.message.contains("name is required"))
+            }
+            other => panic!("expected failure, got {other:?}"),
+        }
     }
 
     // Ruby: test "create の RecordInvalid 時は Error を返す"

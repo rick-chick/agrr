@@ -46,8 +46,11 @@ jobs:
             target
           key: cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: cargo test
+      - name: cargo test agrr-domain
         run: cargo test -p agrr-domain
+
+      - name: cargo test agrr-adapters-sqlite gateway parity
+        run: cargo test -p agrr-adapters-sqlite -- '_gateway_test'
 
       - name: llvm-cov report (informational, no gate)
         continue-on-error: true

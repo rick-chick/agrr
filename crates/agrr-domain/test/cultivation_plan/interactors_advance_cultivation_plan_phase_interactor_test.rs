@@ -1,7 +1,7 @@
 // Tests for `interactors/advance_cultivation_plan_phase_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
 
     use crate::cultivation_plan::dtos::{CultivationPlanCreateAttrs, CultivationPlanPhaseName};
-    use crate::shared::ports::logger_port::LoggerPort;
+    
     use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 
     use crate::cultivation_plan::entities::FieldCultivationEntity;

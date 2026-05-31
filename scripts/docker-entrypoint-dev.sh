@@ -57,9 +57,19 @@ fi
 
 # すべてのDBをマイグレーション実行（primary, queue, cache, cable）
 echo "========================================="
-echo "Running migrations for all databases (primary, cache, cable)..."
+echo "Running schema migrations (refinery)..."
 echo "========================================="
-bundle exec rails db:migrate
+export AGRR_APP_ROOT=/app
+export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-/app/storage/development.sqlite3}"
+export AGRR_CACHE_SQLITE_PATH="${AGRR_CACHE_SQLITE_PATH:-/app/storage/development_cache.sqlite3}"
+if [ -f "${AGRR_SQLITE_PATH}" ] && ! sqlite3 "${AGRR_SQLITE_PATH}" "SELECT 1 FROM refinery_schema_history LIMIT 1" 2>/dev/null | grep -q 1; then
+  if sqlite3 "${AGRR_SQLITE_PATH}" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users'" 2>/dev/null | grep -qE '^[1-9]'; then
+    echo "Stamping legacy schema on restored development DB..."
+    /app/scripts/run-agrr-migrate.sh schema stamp || true
+    /app/scripts/run-agrr-migrate.sh data stamp || true
+  fi
+fi
+/app/scripts/run-agrr-migrate.sh schema run
 
 # app/assets/buildsディレクトリを確実に作成（コンテナ内のみ、ボリュームから除外）
 mkdir -p /app/app/assets/builds

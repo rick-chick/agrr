@@ -61,15 +61,15 @@ const initialControl: PesticideEditViewState = {
             <label for="crop_id" class="form-card__field">
               <span class="form-card__field-label">{{ 'pesticides.form.crop_label' | translate }}</span>
               <select id="crop_id" name="crop_id" [(ngModel)]="control.formData.crop_id" required>
-                <option [value]="0">{{ 'pesticides.form.select_crop' | translate }}</option>
-                <option *ngFor="let crop of crops" [value]="crop.id">{{ crop.name }}</option>
+                <option [ngValue]="0">{{ 'pesticides.form.select_crop' | translate }}</option>
+                <option *ngFor="let crop of crops" [ngValue]="crop.id">{{ crop.name }}</option>
               </select>
             </label>
             <label for="pest_id" class="form-card__field">
               <span class="form-card__field-label">{{ 'pesticides.form.pest_label' | translate }}</span>
               <select id="pest_id" name="pest_id" [(ngModel)]="control.formData.pest_id" required>
-                <option [value]="0">{{ 'pesticides.form.select_pest' | translate }}</option>
-                <option *ngFor="let pest of pests" [value]="pest.id">{{ pest.name }}</option>
+                <option [ngValue]="0">{{ 'pesticides.form.select_pest' | translate }}</option>
+                <option *ngFor="let pest of pests" [ngValue]="pest.id">{{ pest.name }}</option>
               </select>
             </label>
             @if (auth.user()?.admin) {

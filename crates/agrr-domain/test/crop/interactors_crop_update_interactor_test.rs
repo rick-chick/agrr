@@ -93,7 +93,7 @@
         let user_lookup = StubLookup(User::new(10, false));
         let mut i = CropUpdateInteractor::new(&mut out, 10, &gw, &StubTranslator, &user_lookup);
         i.call(CropUpdateInput::new(5)).unwrap();
-        assert!(matches!(out.failure, Some(UpdateFailure::Policy(PolicyPermissionDenied))));
+        assert!(matches!(out.failure, Some(UpdateFailure::Policy(_))));
     }
 
     // Ruby: test "calls on_failure with error dto when non-admin toggles is_reference"

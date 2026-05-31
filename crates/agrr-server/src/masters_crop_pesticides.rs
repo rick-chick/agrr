@@ -1,5 +1,6 @@
 //! Nested crop pesticides index — `/api/v1/masters/crops/{crop_id}/pesticides`.
 
+use crate::masters_auth::MastersUserId;
 use crate::masters_crop_context::{auth_user, internal_error, load_user_non_reference_crop};
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
@@ -14,7 +15,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde_json::{json, Value};
 
 pub fn routes() -> Router<AppState> {
@@ -42,10 +42,10 @@ fn pesticide_json(e: &PesticideEntity) -> Value {
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(crop_id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar).await?;
+    let user_id = auth_user(auth);
     load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let pesticide_gateway = PesticideSqliteGateway::new(pool.clone());

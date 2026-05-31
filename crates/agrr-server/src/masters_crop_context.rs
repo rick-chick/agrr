@@ -1,6 +1,6 @@
 //! Shared crop context load for masters nested routes.
 
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{CropSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::crop::entities::CropEntity;
@@ -9,15 +9,10 @@ use agrr_domain::crop::interactors::crop_load_user_non_reference_for_masters_int
 };
 use axum::http::StatusCode;
 use axum::Json;
-use axum_extra::extract::cookie::CookieJar;
 use serde_json::{json, Value};
 
-pub(crate) async fn auth_user(
-    state: &AppState,
-    jar: &CookieJar,
-) -> Result<i64, (StatusCode, Json<Value>)> {
-    user_id_from_session(state, jar)
-        .map_err(|status| (status, Json(json!({"error": "unauthorized"}))))
+pub(crate) fn auth_user(auth: MastersUserId) -> i64 {
+    auth.0
 }
 
 /// Loads a user-owned non-reference crop for masters nested APIs (404 when missing or not allowed).

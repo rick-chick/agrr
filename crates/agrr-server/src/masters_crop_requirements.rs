@@ -1,7 +1,7 @@
 //! Nested crop stage requirements under masters crops.
 
 use crate::masters_crop_stages::ensure_crop_visible;
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     CropSqliteGateway, NutrientRequirementSqliteGateway, SunshineRequirementSqliteGateway,
@@ -41,7 +41,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde_json::{json, Value};
 
 pub fn routes() -> Router<AppState> {
@@ -129,11 +128,10 @@ fn nutrient_json(e: &NutrientRequirementEntity) -> Value {
 
 async fn temperature_show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let req_gw = TemperatureRequirementSqliteGateway::new(pool);
@@ -185,32 +183,31 @@ async fn temperature_show(
 
 async fn temperature_create(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    temperature_write(state, jar, crop_id, stage_id, body, true).await
+    temperature_write(state, auth, crop_id, stage_id, body, true).await
 }
 
 async fn temperature_update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    temperature_write(state, jar, crop_id, stage_id, body, false).await
+    temperature_write(state, auth, crop_id, stage_id, body, false).await
 }
 
 async fn temperature_write(
     state: AppState,
-    jar: CookieJar,
+    auth: MastersUserId,
     crop_id: i64,
     stage_id: i64,
     body: Value,
     create: bool,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let req_gw = TemperatureRequirementSqliteGateway::new(pool.clone());
@@ -266,11 +263,10 @@ async fn temperature_write(
 
 async fn temperature_destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let crop_gw = CropSqliteGateway::new(pool);
@@ -304,11 +300,10 @@ async fn temperature_destroy(
 
 async fn thermal_show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let req_gw = ThermalRequirementSqliteGateway::new(pool);
@@ -360,32 +355,31 @@ async fn thermal_show(
 
 async fn thermal_create(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    thermal_write(state, jar, crop_id, stage_id, body, true).await
+    thermal_write(state, auth, crop_id, stage_id, body, true).await
 }
 
 async fn thermal_update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    thermal_write(state, jar, crop_id, stage_id, body, false).await
+    thermal_write(state, auth, crop_id, stage_id, body, false).await
 }
 
 async fn thermal_write(
     state: AppState,
-    jar: CookieJar,
+    auth: MastersUserId,
     crop_id: i64,
     stage_id: i64,
     body: Value,
     create: bool,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let req_gw = ThermalRequirementSqliteGateway::new(pool.clone());
@@ -441,11 +435,10 @@ async fn thermal_write(
 
 async fn thermal_destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let crop_gw = CropSqliteGateway::new(pool);
@@ -479,11 +472,10 @@ async fn thermal_destroy(
 
 async fn sunshine_show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let req_gw = SunshineRequirementSqliteGateway::new(pool);
@@ -535,32 +527,31 @@ async fn sunshine_show(
 
 async fn sunshine_create(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    sunshine_write(state, jar, crop_id, stage_id, body, true).await
+    sunshine_write(state, auth, crop_id, stage_id, body, true).await
 }
 
 async fn sunshine_update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    sunshine_write(state, jar, crop_id, stage_id, body, false).await
+    sunshine_write(state, auth, crop_id, stage_id, body, false).await
 }
 
 async fn sunshine_write(
     state: AppState,
-    jar: CookieJar,
+    auth: MastersUserId,
     crop_id: i64,
     stage_id: i64,
     body: Value,
     create: bool,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let req_gw = SunshineRequirementSqliteGateway::new(pool.clone());
@@ -616,11 +607,10 @@ async fn sunshine_write(
 
 async fn sunshine_destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let crop_gw = CropSqliteGateway::new(pool);
@@ -654,11 +644,10 @@ async fn sunshine_destroy(
 
 async fn nutrient_show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let req_gw = NutrientRequirementSqliteGateway::new(pool);
@@ -710,32 +699,31 @@ async fn nutrient_show(
 
 async fn nutrient_create(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    nutrient_write(state, jar, crop_id, stage_id, body, true).await
+    nutrient_write(state, auth, crop_id, stage_id, body, true).await
 }
 
 async fn nutrient_update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
     Json(body): Json<Value>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    nutrient_write(state, jar, crop_id, stage_id, body, false).await
+    nutrient_write(state, auth, crop_id, stage_id, body, false).await
 }
 
 async fn nutrient_write(
     state: AppState,
-    jar: CookieJar,
+    auth: MastersUserId,
     crop_id: i64,
     stage_id: i64,
     body: Value,
     create: bool,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let req_gw = NutrientRequirementSqliteGateway::new(pool.clone());
@@ -791,11 +779,10 @@ async fn nutrient_write(
 
 async fn nutrient_destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar)
-        .map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     ensure_crop_visible(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let crop_gw = CropSqliteGateway::new(pool);

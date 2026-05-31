@@ -26,6 +26,7 @@ pub mod farm_weather_fetch;
 pub mod field_cultivations;
 pub mod internal_farms;
 pub mod jobs;
+pub mod masters_auth;
 pub mod masters_agricultural_tasks;
 pub mod masters_crop_requirements;
 pub mod masters_crop_agricultural_tasks;

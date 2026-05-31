@@ -1,5 +1,6 @@
 //! Nested crop agricultural task templates — `/api/v1/masters/crops/{crop_id}/agricultural_tasks`.
 
+use crate::masters_auth::MastersUserId;
 use crate::masters_crop_context::{auth_user, internal_error, load_user_non_reference_crop};
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
@@ -27,7 +28,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -75,10 +75,10 @@ fn decimal_to_json_f64(d: Option<Decimal>) -> Option<f64> {
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(crop_id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar).await?;
+    let user_id = auth_user(auth);
     load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());
@@ -123,11 +123,11 @@ struct TemplateBody {
 
 async fn create(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(crop_id): Path<i64>,
     Json(body): Json<TemplateBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar).await?;
+    let user_id = auth_user(auth);
     load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let mut input = MastersCropTaskTemplateCreateInput::new(user_id, crop_id, body.agricultural_task_id);
     input.name = body.name;
@@ -166,11 +166,11 @@ async fn create(
 
 async fn update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, id)): Path<(i64, i64)>,
     Json(body): Json<TemplateBody>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar).await?;
+    let user_id = auth_user(auth);
     load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let attributes = json!({
         "name": body.name,
@@ -214,10 +214,10 @@ async fn update(
 
 async fn destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path((crop_id, id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
-    let user_id = auth_user(&state, &jar).await?;
+    let user_id = auth_user(auth);
     load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool.clone());

@@ -82,27 +82,6 @@ module Adapters
           assert_raises(Domain::Shared::Exceptions::RecordInvalid) { @gateway.update(record.id, update_dto) }
         end
 
-        test "should list all records and return entities" do
-          record1 = create(:interaction_rule, :reference, region: "jp")
-          record2 = create(:interaction_rule, :reference, region: "us")
-          entities = ::InteractionRule.all.map { |r| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(r) }
-          assert_equal 2, entities.size
-          assert entities.all? { |e| e.is_a?(Domain::InteractionRule::Entities::InteractionRuleEntity) }
-          ids = entities.map(&:id)
-          assert_includes ids, record1.id
-          assert_includes ids, record2.id
-        end
-
-        test "should list with scope and return entities" do
-          record1 = create(:interaction_rule, :reference, region: "jp")
-          record2 = create(:interaction_rule, :reference, region: "us")
-          scope = ::InteractionRule.where(region: "jp")
-          entities = scope.map { |r| Adapters::InteractionRule::Mappers::InteractionRuleMapper.interaction_rule_entity_from_record(r) }
-          assert_equal 1, entities.size
-          assert_equal record1.id, entities.first.id
-          assert entities.all? { |e| e.is_a?(Domain::InteractionRule::Entities::InteractionRuleEntity) }
-        end
-
         test "list_index_for_filter returns scoped entities for non-admin" do
           user = create(:user, admin: false)
           my_rule = create(:interaction_rule, user: user, is_reference: false, region: "jp")

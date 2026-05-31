@@ -213,11 +213,11 @@ fn map_field_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<FieldEntity> {
         name: row.get(1)?,
         area: row.get(2)?,
         daily_fixed_cost: row.get(3)?,
-        description: row.get(4).ok(),
-        region: row.get(5)?,
-        farm_id: row.get(6)?,
-        user_id: row.get(7)?,
-        created_at: row.get(8)?,
-        updated_at: row.get(9)?,
+        description: None,
+        region: row.get(4)?,
+        farm_id: row.get(5)?,
+        user_id: row.get(6)?,
+        created_at: row.get(7)?,
+        updated_at: row.get(8)?,
     })
 }

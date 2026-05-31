@@ -39,7 +39,7 @@ const initialControl: PesticideCreateViewState = {
   template: `
     <main class="page-main">
       <section class="form-card" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="form-card__title">{{ 'pesticides.create.title' | translate }}</h2>
+        <h2 id="form-heading" class="form-card__title">{{ 'pesticides.new.title' | translate }}</h2>
         <form (ngSubmit)="createPesticide()" #pesticideForm="ngForm" class="form-card__form">
           <label for="name" class="form-card__field">
             <span class="form-card__field-label">{{ 'pesticides.form.name_label' | translate }}</span>
@@ -56,15 +56,15 @@ const initialControl: PesticideCreateViewState = {
           <label for="crop_id" class="form-card__field">
             {{ 'pesticides.form.crop_label' | translate }}
             <select id="crop_id" name="crop_id" [(ngModel)]="control.formData.crop_id" required>
-              <option [value]="0">{{ 'pesticides.form.select_crop' | translate }}</option>
-              <option *ngFor="let crop of crops" [value]="crop.id">{{ crop.name }}</option>
+              <option [ngValue]="0">{{ 'pesticides.form.select_crop' | translate }}</option>
+              <option *ngFor="let crop of crops" [ngValue]="crop.id">{{ crop.name }}</option>
             </select>
           </label>
           <label for="pest_id" class="form-card__field">
             <span class="form-card__field-label">{{ 'pesticides.form.pest_label' | translate }}</span>
             <select id="pest_id" name="pest_id" [(ngModel)]="control.formData.pest_id" required>
-              <option [value]="0">{{ 'pesticides.form.select_pest' | translate }}</option>
-              <option *ngFor="let pest of pests" [value]="pest.id">{{ pest.name }}</option>
+              <option [ngValue]="0">{{ 'pesticides.form.select_pest' | translate }}</option>
+              <option *ngFor="let pest of pests" [ngValue]="pest.id">{{ pest.name }}</option>
             </select>
           </label>
           @if (auth.user()?.admin) {

@@ -5,6 +5,9 @@ mod crop_masters_task_template_gateway;
 mod crop_stage_gateway;
 mod requirement_gateways;
 
+#[cfg(test)]
+mod crop_gateway_test;
+
 pub use crop_ai_upsert_sqlite_persistence::CropAiUpsertSqlitePersistence;
 pub use crop_gateway::CropSqliteGateway;
 pub use crop_masters_task_template_gateway::CropMastersTaskTemplateSqliteGateway;

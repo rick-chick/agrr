@@ -3,7 +3,7 @@
     use crate::cultivation_plan::dtos::CultivationPlanCreateAttrs;
     use crate::cultivation_plan::entities::{CultivationPlanEntity, FieldCultivationEntity};
     use crate::deletion_undo::exceptions::DeletionUndoError;
-    use crate::shared::exceptions::{AssociationInUseError, RecordInvalidError};
+    use crate::shared::exceptions::AssociationInUseError;
     use crate::shared::user::User;
     use serde_json::json;
     use std::sync::{Arc, Mutex};

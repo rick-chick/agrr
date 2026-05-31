@@ -19,7 +19,7 @@
         ) -> Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>> {
             match &self.plan {
                 Ok(p) => Ok(p.clone()),
-                Err(e) => Err(Box::new(RecordNotFoundError)),
+                Err(_e) => Err(Box::new(RecordNotFoundError)),
             }
         }
 

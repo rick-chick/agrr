@@ -43,6 +43,22 @@ module Api
           assert_equal "テスト肥料", json_response["name"]
         end
 
+        test "create returns 422 when name is missing" do
+          assert_no_difference("@user.fertilizes.where(is_reference: false).count") do
+            post api_v1_masters_fertilizes_path,
+                 params: { fertilize: { name: "" } },
+                 as: :json,
+                 headers: {
+                   "Accept" => "application/json",
+                   "X-API-Key" => @api_key
+                 }
+          end
+
+          assert_response :unprocessable_entity
+          json = JSON.parse(response.body)
+          assert_includes json["errors"], "name is required"
+        end
+
         test "should create fertilize" do
           assert_difference("@user.fertilizes.where(is_reference: false).count", 1) do
             post api_v1_masters_fertilizes_path,

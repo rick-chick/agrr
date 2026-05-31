@@ -1,6 +1,6 @@
 // Tests for `interactors/fertilize_ai_create_interactor.rs` (Ruby parity under test/domain/fertilize/).
 
-    use crate::fertilize::entities::{FertilizeEntity, FertilizeEntityAttrs};
+    use crate::fertilize::entities::FertilizeEntity;
     use crate::fertilize::ports::{AiCreateResult, AiUpdateResult};
     use crate::shared::user::User;
 

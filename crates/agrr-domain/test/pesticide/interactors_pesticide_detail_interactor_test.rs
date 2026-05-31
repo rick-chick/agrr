@@ -170,7 +170,7 @@
         interactor.call(3).expect("handled");
         assert!(matches!(
             output.failure,
-            Some(DetailFailure::Policy(PolicyPermissionDenied))
+            Some(DetailFailure::Policy(_))
         ));
     }
 
@@ -189,6 +189,6 @@
         interactor.call(3).expect("handled");
         assert!(matches!(
             output.failure,
-            Some(DetailFailure::Policy(PolicyPermissionDenied))
+            Some(DetailFailure::Policy(_))
         ));
     }

@@ -1,7 +1,7 @@
 //! Masters pests API (`/api/v1/masters/pests`).
 
 use crate::adapters::{NoopLogger, PassthroughTranslator};
-use crate::session_auth::user_id_from_session;
+use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{PestSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::pest::dtos::{PestCreateInput, PestDestroyOutput, PestUpdateInput};
@@ -21,7 +21,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -84,11 +83,9 @@ impl PestListOutputPort for ListPort {
 
 async fn index(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar).map_err(|s| {
-        (s, Json(json!({"error": "unauthorized"})))
-    })?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = PestSqliteGateway::new(pool.clone());
@@ -105,15 +102,10 @@ async fn index(
 struct DetailPort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
 impl PestDetailOutputPort for DetailPort {
     fn on_success(&mut self, output: agrr_domain::pest::dtos::PestDetailOutput) {
+        // Rails `PestDetailApiPresenter` returns a flat pest entity (Angular `PestApiGateway.show`).
         *self.0.lock().unwrap() = Some(Ok((
             StatusCode::OK,
-            Json(json!({
-                "pest": pest_entity_json(&output.pest),
-                "temperature_profile": output.temperature_profile,
-                "thermal_requirement": output.thermal_requirement,
-                "control_methods": output.control_methods,
-                "associated_crops": output.associated_crops,
-            })),
+            Json(pest_entity_json(&output.pest)),
         )));
     }
     fn on_failure(&mut self, failure: DetailFailure) {
@@ -127,10 +119,10 @@ impl PestDetailOutputPort for DetailPort {
 
 async fn show(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar).map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = PestSqliteGateway::new(pool.clone());
@@ -152,6 +144,11 @@ async fn show(
 
 #[derive(Deserialize)]
 struct PestBody {
+    pest: PestAttrs,
+}
+
+#[derive(Deserialize)]
+struct PestAttrs {
     name: Option<String>,
     name_scientific: Option<String>,
     family: Option<String>,
@@ -183,18 +180,24 @@ impl PestCreateOutputPort for CreatePort {
 
 async fn create(
     State(state): State<AppState>,
-    jar: CookieJar,
-    Json(body): Json<PestBody>,
+    auth: MastersUserId,
+    Json(payload): Json<PestBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar).map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
-    let mut input = PestCreateInput::new(body.name.clone().unwrap_or_default());
-    input.name_scientific = body.name_scientific.clone();
-    input.family = body.family.clone();
-    input.order = body.order.clone();
-    input.description = body.description.clone();
-    input.occurrence_season = body.occurrence_season.clone();
-    input.region = body.region.clone();
-    input.is_reference = body.is_reference;
+    if payload.pest.name.as_deref().unwrap_or("").trim().is_empty() {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": ["name is required"]})),
+        ));
+    }
+    let user_id = auth.0;
+    let mut input = PestCreateInput::new(payload.pest.name.clone().unwrap());
+    input.name_scientific = payload.pest.name_scientific.clone();
+    input.family = payload.pest.family.clone();
+    input.order = payload.pest.order.clone();
+    input.description = payload.pest.description.clone();
+    input.occurrence_season = payload.pest.occurrence_season.clone();
+    input.region = payload.pest.region.clone();
+    input.is_reference = payload.pest.is_reference;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = PestSqliteGateway::new(pool.clone());
@@ -239,21 +242,21 @@ impl PestUpdateOutputPort for UpdatePort {
 
 async fn update(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
-    Json(body): Json<PestBody>,
+    Json(payload): Json<PestBody>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar).map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let input = PestUpdateInput {
         pest_id: id,
-        name: body.name.clone(),
-        name_scientific: body.name_scientific.clone(),
-        family: body.family.clone(),
-        order: body.order.clone(),
-        description: body.description.clone(),
-        occurrence_season: body.occurrence_season.clone(),
-        region: body.region.clone(),
-        is_reference: body.is_reference,
+        name: payload.pest.name.clone(),
+        name_scientific: payload.pest.name_scientific.clone(),
+        family: payload.pest.family.clone(),
+        order: payload.pest.order.clone(),
+        description: payload.pest.description.clone(),
+        occurrence_season: payload.pest.occurrence_season.clone(),
+        region: payload.pest.region.clone(),
+        is_reference: payload.pest.is_reference,
         pest_temperature_profile_attributes: None,
         pest_thermal_requirement_attributes: None,
         pest_control_methods_attributes: None,
@@ -300,10 +303,10 @@ impl PestDestroyOutputPort for DestroyPort {
 
 async fn destroy(
     State(state): State<AppState>,
-    jar: CookieJar,
+    auth: MastersUserId,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
-    let user_id = user_id_from_session(&state, &jar).map_err(|s| (s, Json(json!({"error": "unauthorized"}))))?;
+    let user_id = auth.0;
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = PestSqliteGateway::new(pool.clone());
@@ -321,4 +324,30 @@ async fn destroy(
         .call(id)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
     take_response(&out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::pest::entities::{PestEntity, PestEntityAttrs};
+
+    #[test]
+    fn pest_entity_json_exposes_name_at_top_level() {
+        let entity = PestEntity::new(PestEntityAttrs {
+            id: Some(1),
+            user_id: Some(7),
+            name: "テスト害虫".into(),
+            name_scientific: Some("Testus pestus".into()),
+            family: Some("テスト科".into()),
+            is_reference: false,
+            ..Default::default()
+        })
+        .expect("valid");
+        let json = pest_entity_json(&entity);
+        assert_eq!(json["id"], 1);
+        assert_eq!(json["name"], "テスト害虫");
+        assert_eq!(json["name_scientific"], "Testus pestus");
+        assert_eq!(json["family"], "テスト科");
+        assert!(!json.as_object().unwrap().contains_key("pest"));
+    }
 }
