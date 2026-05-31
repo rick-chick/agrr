@@ -1232,11 +1232,11 @@
       "status_badge": "अनुकूलन जारी",
       "year_label": "वर्ष %{year}",
       "year_label_annual": "वर्ष भर",
-      "crops_count": "%{count} फसलें",
+      "crops_count": "{{ count }} फसलें",
       "error_message": "अनुकूलन स्थिति प्राप्त करने में विफल।\n\nकृपया निम्न में से एक प्रयास करें:\n• पेज को पुनः लोड करें (F5 कुंजी)\n• अपने ब्राउज़र कैश को साफ करें\n• कुछ समय प्रतीक्षा करें और फिर प्रयास करें\n\nयदि समस्या बनी रहती है, तो कृपया एक नई योजना बनाएं।",
       "progress": {
-        "elapsed_time": "⏳ %{time}सेकंड",
-        "elapsed_time_minute": "%{minutes}मिनट %{seconds}सेकंड",
+        "elapsed_time": "⏳ {{ time }} सेकंड",
+        "elapsed_time_minute": "{{ minutes }}मिनट {{ seconds }}सेकंड",
         "duration_hint": "इसमें लगभग 1 मिनट लगेगा",
         "default_message": "अनुकूलन तैयार किया जा रहा है..."
       },
