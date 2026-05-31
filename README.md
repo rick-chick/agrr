@@ -58,7 +58,7 @@ cd frontend && ng serve --host 127.0.0.1
 
 - API / `/cable`: http://127.0.0.1:3000（ng serve :4200 から自動で向く）
 - 停止: `./scripts/dev-rust-stack.sh stop`
-- 詳細: [`docs/migration/app-rust-stack/RUST-OPTIMIZATION-CHAIN-VERIFY.md`](docs/migration/app-rust-stack/RUST-OPTIMIZATION-CHAIN-VERIFY.md)
+- 詳細: [`docs/migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md`](docs/migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)
 
 #### 新規計画作成で AGRR を使う場合
 

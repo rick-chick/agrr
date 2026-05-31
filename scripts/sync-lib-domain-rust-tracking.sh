@@ -70,7 +70,7 @@ in_progress_count=0
   echo ""
   grep -E '^  - id:' "$TRACKING_YAML" | sed 's/  - id: /- /'
   echo ""
-  echo "詳細定義: [TRACKING.yaml](./TRACKING.yaml)、手順: [PROGRAM.md](./PROGRAM.md)"
+  echo "詳細定義: [TRACKING.yaml](./TRACKING.yaml)、索引: [README.md](./README.md)"
 } > "$OUT_MD"
 
 echo "Wrote $OUT_MD"

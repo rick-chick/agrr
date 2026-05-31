@@ -1,5 +1,5 @@
 # P6 BC 切替進捗 — 終着: Rails 廃止・API フォールバックなし
-# 正: P6-COMPLETION-CRITERIA.md, BLOCKERS-RESPONSE.md
+# 正: P6-COMPLETION-CRITERIA.md, PRODUCTION-CUTOVER-STATUS.md
 
 program: app-rust-stack-p6
 updated: 2026-05-30

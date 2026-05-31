@@ -3,10 +3,9 @@
 - **アーキテクチャ（規約本体）**: リポジトリ直下 [`ARCHITECTURE.md`](../ARCHITECTURE.md)
 - **設計メモ**: [`design/`](design/)
 - **マイグレーション・データ移行**: [`migration/`](migration/)
-- **lib/domain → Rust 移行プログラム**: [`migration/lib-domain-rust/`](migration/lib-domain-rust/)（進捗: [TRACKING.md](migration/lib-domain-rust/TRACKING.md)）
-- **アプリ RUST 化 — 終着スタック（Axum / ストラングラー）**: [`migration/app-rust-stack/`](migration/app-rust-stack/)（[PROVISIONAL-STACK.md](migration/app-rust-stack/PROVISIONAL-STACK.md)）
+- **lib/domain → Rust（完了）**: [`migration/lib-domain-rust/`](migration/lib-domain-rust/)（[`TRACKING.yaml`](migration/lib-domain-rust/TRACKING.yaml)）
+- **アプリ RUST 化（P6–P7）**: [`migration/app-rust-stack/`](migration/app-rust-stack/)（本番: [`PRODUCTION-CUTOVER-STATUS.md`](migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)）
 - **テスト運用**: [`testing/`](testing/)
 - **アセットパイプライン（Rails HTML 側）**: [`asset-pipeline.md`](asset-pipeline.md)
-- **Gateway 移行（命名・adapter 残存ドメインロジック）**: [`gateway-domain-logic-migration.md`](gateway-domain-logic-migration.md)（正: [`gateway-naming-violations.md`](gateway-naming-violations.md) は命名中心）
 
-API・ドメインの振る舞いの正は **`ARCHITECTURE.md`** と **`lib/domain` のポート/DTO**、および **該当テスト** とする（旧 `docs/contracts/`・`docs/adr/` は廃止）。
+API・ドメインの振る舞いの正は **`ARCHITECTURE.md`**、**`crates/agrr-domain`**、**該当テスト**（R4: `test/contract/` + `run-rust-contract-tests.sh`）。

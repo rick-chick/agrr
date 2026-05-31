@@ -1,29 +1,23 @@
 # アプリ RUST 化 — スタック選定
 
-**終着ランタイム**（Axum + `agrr-domain` + Rust adapter）の仮決定と、[`lib-domain-rust`](../lib-domain-rust/) プログラム（P0–P5）および本書（P6–P7）との関係をまとめる。
-
-Rails を移行期の前提として**維持しない**。未移行ルートのみ一時的に Rails が応答し、ストラングラー完了後に廃止する。
+**終着ランタイム**（Axum + `agrr-domain` + Rust adapter）と P6–P7（本番切替・Rails 廃止）の索引。
 
 | 文書 | 内容 |
 |------|------|
-| [PROVISIONAL-STACK.md](./PROVISIONAL-STACK.md) | **スタック仮決定**（終着像、本番運用の正、確定事項・OAuth callback 案 A、R4 複製元） |
-| [ADR-strangler-lb-url-map.md](./ADR-strangler-lb-url-map.md) | **ストラングラー配線 ADR**（二 Cloud Run + URL map、`/api/*`・`/cable`・`/auth/*`） |
-| [BLOCKERS-RESPONSE.md](./BLOCKERS-RESPONSE.md) | スタック調査アーカイブ（解消済み §1–4） |
-| [TRACKING-P6.yaml](./TRACKING-P6.yaml) | **P6 BC 切替進捗** |
-| [P7-REFINERY-ADR.md](./P7-REFINERY-ADR.md) | **P7 スキーマ移管・Rails 廃止 ADR** |
-| [P6-BC-CUTOVER-TEMPLATE.md](./P6-BC-CUTOVER-TEMPLATE.md) | BC 切替 PR チェックリスト |
-| [P6-COMPLETION-CRITERIA.md](./P6-COMPLETION-CRITERIA.md) | **完了条件**（Rust 起動 ≠ 移行完了、レベル 1〜5） |
-| [P7-EXIT-CHECKLIST.md](./P7-EXIT-CHECKLIST.md) | P7 出口（`lib/domain` 削除は全 BC 後） |
-| [P7-MIGRATION-RUNBOOK.md](./P7-MIGRATION-RUNBOOK.md) | **schema / data CLI**（本番移行要約・repair は手動 — 冒頭「Rust 本番移行時に必要なこと」） |
-| [RUST-OPTIMIZATION-CHAIN-VERIFY.md](./RUST-OPTIMIZATION-CHAIN-VERIFY.md) | **最適化ジョブチェーン**のローカル確認（spike / chain-run） |
-| [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | **本番カットオーバー残作業・観測記録**（GCP / DB レプリカ / R4） |
+| [PROVISIONAL-STACK.md](./PROVISIONAL-STACK.md) | **スタック仮決定**（終着像、本番運用、OAuth、R4） |
+| [ADR-strangler-lb-url-map.md](./ADR-strangler-lb-url-map.md) | ストラングラー配線 ADR |
+| [TRACKING-P6.yaml](./TRACKING-P6.yaml) | P6 BC 切替進捗（全 `done`） |
+| [P6-COMPLETION-CRITERIA.md](./P6-COMPLETION-CRITERIA.md) | **完了条件**（レベル 1〜5） |
+| [P7-EXIT-CHECKLIST.md](./P7-EXIT-CHECKLIST.md) | P7 出口（`lib/domain` 削除など） |
+| [P7-REFINERY-ADR.md](./P7-REFINERY-ADR.md) | refinery スキーマ移管 |
+| [P7-MIGRATION-RUNBOOK.md](./P7-MIGRATION-RUNBOOK.md) | `agrr-migrate` schema / data CLI |
+| [WEATHER-DATA-GCS-SMOKE.md](./WEATHER-DATA-GCS-SMOKE.md) | 天気 GCS スモーク |
+| [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | **本番観測・残作業の正** |
 
-**「完了」の定義**は [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md) が正。BC 切替 PR の手順は [`P6-BC-CUTOVER-TEMPLATE.md`](./P6-BC-CUTOVER-TEMPLATE.md)。R4 契約テストの実行・CI は [`test/contract/README.md`](../../../test/contract/README.md)。
+**完了の定義**: [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md)。R4 契約: [`test/contract/README.md`](../../../test/contract/README.md)、`./scripts/run-rust-contract-tests.sh`。
 
-ドメイン BC の実装順・進捗は [`lib-domain-rust/`](../lib-domain-rust/) を参照。
+**lib/domain プログラム**: 完了（[`TRACKING.yaml`](../lib-domain-rust/TRACKING.yaml) 19/19 `done`）。
 
-**着手前提（lib/domain プログラム）**: **満たす**（2026-05-29）— [`TRACKING.yaml`](../lib-domain-rust/TRACKING.yaml) 全 19 BC `phase: done`、[`PROGRAM.md`](../lib-domain-rust/PROGRAM.md) 出口。
+**P6 コード**: 完了（[`TRACKING-P6.yaml`](./TRACKING-P6.yaml) 全 BC `done`）。
 
-**P6 実装（コード）**: [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) 全 BC `phase: done`（2026-05-30）。`agrr-server` + R4 契約 + [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server) 起動 bootstrap あり。
-
-**本番トラフィック**: **未切替** — 残作業・観測は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。手順: [`.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh`](../../../.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh)。
+**本番 API**: Rust（`agrr-server` on `agrr-production`）。詳細・手動スモーク・P7 削除順は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。チェック: [`.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh`](../../../.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh)。

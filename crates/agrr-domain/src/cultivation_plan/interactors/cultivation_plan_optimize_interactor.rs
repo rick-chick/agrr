@@ -2,7 +2,7 @@
 //!
 //! **天気**: allocate 中は新規 `predict` しない。`get_existing_prediction` で DB キャッシュのみ読む
 //! （Rails 同様）。新規予測はチェーンの `WeatherPredictionJob` / `run_weather_prediction_step` 側。
-//! 詳細: `docs/migration/app-rust-stack/RUST-OPTIMIZATION-CHAIN-VERIFY.md` §天気予測と optimize allocate。
+//! 天気予測の日数は `OptimizationJobChainWeatherComputation`（Rails `WeatherPredictionJob` 相当）。
 
 use std::fmt;
 

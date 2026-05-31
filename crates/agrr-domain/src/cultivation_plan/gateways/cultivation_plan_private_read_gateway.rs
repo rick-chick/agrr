@@ -1,7 +1,7 @@
 //! Ruby: `Domain::CultivationPlan::Gateways::CultivationPlanPrivateReadGateway`
 //!
 //! Index / count only. Plan / timeline / optimization snapshots use dedicated read gateways
-//! + domain `load_snapshot` in Ruby (see `gateway-domain-logic-migration.md` §P4).
+//! + domain mapper assembles read snapshots (Gateway boundary).
 
 use crate::cultivation_plan::dtos::{
     OptimizationPlanSnapshot, PrivatePlanIndexPlanRow, PrivatePlanReadSnapshot,

@@ -218,8 +218,6 @@ Gateways **must not** depend on HTTP or incidental UI conventions: shapes named 
 
 **Decision boundary:** Gateway methods are narrow persistence / HTTP / process I/O. Cross-context orchestration, multi-step business flow, authorization and validation decisions follow [R0](#r0-authorization-and-validation). Examples on the wrong side of the boundary include authorization encoded as a scope chooser (`scope_for_admin_or_user`, `is_admin ? A.where(...) : B.where(...)`), role-aware visibility filters, conditional dispatch across multiple I/O calls, uniqueness checks, resource limit checks, and methods that bundle several persistence operations into a single use-case-encoding entry point. A gateway that returns different domain shapes depending on caller identity has crossed the boundary.
 
-**Migration backlog (non-normative):** Known adapter-side domain logic and naming debt are tracked in [`docs/gateway-domain-logic-migration.md`](docs/gateway-domain-logic-migration.md) and [`docs/gateway-naming-violations.md`](docs/gateway-naming-violations.md). Those documents do not amend this section.
-
 #### Read snapshot assembly: domain composes, adapter does narrow I/O
 
 When moving **thick adapter assembly** (parent + child loaded and merged in one gateway) into the domain, the target shape is **not** “one gateway returns the screen blob.” It is:

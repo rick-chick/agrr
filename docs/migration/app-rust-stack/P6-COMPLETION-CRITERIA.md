@@ -1,6 +1,6 @@
 # P6 完了条件（何が「移行完了」か）
 
-> **正**: 本書は「完了」の定義の単一ソース。進捗の列挙は [`TRACKING-P6.yaml`](./TRACKING-P6.yaml)、BC 切替 PR の手順は [`P6-BC-CUTOVER-TEMPLATE.md`](./P6-BC-CUTOVER-TEMPLATE.md)、Rails 廃止は [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md)。
+> **正**: 本書は「完了」の定義の単一ソース。進捗の列挙は [`TRACKING-P6.yaml`](./TRACKING-P6.yaml)、本番観測は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)、Rails 廃止は [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md)。
 
 ---
 
@@ -34,11 +34,11 @@
 
 ## レベル 1 — 1 BC（境界づけられたコンテキスト）の切替完了
 
-[`P6-BC-CUTOVER-TEMPLATE.md`](./P6-BC-CUTOVER-TEMPLATE.md) の 1〜7 を **すべて**満たすこと。1 つでも欠ければその BC は **未完了**。
+次の 1〜7 を **すべて**満たすこと（2026-05-30: [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) 全 BC `done`）。
 
 | # | 完了条件 | 観測方法 |
 |---|----------|----------|
-| 1 | Ruby adapter §P4（該当 read gateway）が domain 方針どおり | [`gateway-domain-logic-migration.md`](../../gateway-domain-logic-migration.md) + レビュー |
+| 1 | read gateway が domain 方針どおり（adapter は狭い I/O） | [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) Gateway boundary + レビュー |
 | 2 | `agrr-adapters-sqlite` / `gcs` / `agrr` に必要な trait 実装 | `cargo test -p agrr-adapters-*` GREEN |
 | 3 | `agrr-server` にルート + edge Presenter + **domain Interactor 委譲**（handler 直 Gateway 禁止） | コードレビュー + `ARCHITECTURE.md` ゲート |
 | 4 | **R4 契約** — Rails ランタイム **と** `CONTRACT_RUNTIME=rust` の両方 GREEN | `run-test-rails.sh test/contract/...` + [`scripts/run-rust-contract-tests.sh`](../../../scripts/run-rust-contract-tests.sh)（該当ファイルをスクリプトに含める） |
@@ -166,7 +166,7 @@ flowchart TD
 |------|------|
 | [README.md](./README.md) | 索引 |
 | [TRACKING-P6.yaml](./TRACKING-P6.yaml) | BC ごとの `phase` |
-| [P6-BC-CUTOVER-TEMPLATE.md](./P6-BC-CUTOVER-TEMPLATE.md) | 1 BC PR チェックリスト |
+| [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | 本番観測・P7 削除順 |
 | [ADR-strangler-lb-url-map.md](./ADR-strangler-lb-url-map.md) | 本番振分 |
 | [P7-EXIT-CHECKLIST.md](./P7-EXIT-CHECKLIST.md) | Rails 廃止 |
 | [test/contract/README.md](../../../test/contract/README.md) | R4 実行手順 |

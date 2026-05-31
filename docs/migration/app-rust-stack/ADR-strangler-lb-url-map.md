@@ -2,7 +2,7 @@
 
 > **ステータス**: 確定（2026-05-29）  
 > **決定者**: プロダクト / 移行プログラム（スタック調査ブロッカー解消）  
-> **関連**: [PROVISIONAL-STACK.md](./PROVISIONAL-STACK.md)、[BLOCKERS-RESPONSE.md](./BLOCKERS-RESPONSE.md)、[load-balancer-update スキル](../../../.cursor/skills/load-balancer-update/SKILL.md)
+> **関連**: [PROVISIONAL-STACK.md](./PROVISIONAL-STACK.md)、[PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md)、[load-balancer-update スキル](../../../.cursor/skills/load-balancer-update/SKILL.md)
 
 ## コンテキスト
 

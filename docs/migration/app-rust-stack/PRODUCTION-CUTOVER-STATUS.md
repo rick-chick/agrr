@@ -1,56 +1,83 @@
 # 本番 Rust カットオーバー — 残作業と観測記録
 
-> **最終観測**: 2026-05-31（gcloud / curl / Litestream レプリカ / `run-rust-contract-tests.sh`）  
+> **最終観測**: 2026-05-31（gcloud / curl / 本番レプリカ / `run-rust-contract-tests.sh` / `p7-code-removal-gate.sh`）  
 > **完了条件**: [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md) レベル 4・5  
 > **デプロイ**: [`.cursor/skills/deploy-server/scripts/gcp-deploy-rust.sh`](../../../.cursor/skills/deploy-server/scripts/gcp-deploy-rust.sh)（test: [`deploy-rust-backend.sh test`](../../../.cursor/skills/gcp-test-local/scripts/deploy-rust-backend.sh)）  
-**手順**: [`.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh`](../../../.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh)
+> **手順**: [`.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh`](../../../.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh)
+
+## サマリー（2026-05-31）
+
+| 観点 | 状態 |
+|------|------|
+| 本番 API トラフィック | **Rust（`agrr-server`）** — LB 上の backend 名は `agrr-rails-backend` のままだが、NEG は `agrr-production`（Rust イメージ） |
+| P6 レベル 4（本番ストラングラー・トラフィック） | **実質達成**（指紋・501 フォールバック・契約テスト GREEN） |
+| P7 コード削除 Phase 1 | **着手可**（ゲート済み Rails API 層） |
+| P7 コード削除 Phase 2（`lib/domain`） | **手動スモーク後**（OAuth / 計画 WS / マスタ） |
+| 本番 DB データ | **in repair 適用済み**（レプリカ確認）。**us 参照作物 7 件**は stages 欠損のまま |
 
 ## 残作業
 
 | # | 項目 | 備考 |
 |---|------|------|
-| 1 | 本番 `rust-backend` + URL map 切替 | `/api/*` `/cable` `/auth/*` `/up` → 現状すべて `agrr-rails-backend` |
-| 2 | 本番 `agrr-production` を `Dockerfile.agrr-server` に | 現行 `agrr:20260420-091559`（Rails） |
-| 3 | 本番初回 refinery / schema | レプリカで `schema verify`・手順合意（本番は `schema_migrations` のみ） |
-| 4 | 本番 `data apply`（必要分） | us 参照作物 **7件** stages 欠損（下記）。India repair では直らない |
-| 5 | 本番スモーク | OAuth・計画→WS・マスタ CRUD — **map 切替後** |
-| 6 | P7 | Rails サービス廃止・[`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) |
+| 1 | URL map の **命名整理**（任意・P7） | パスは `agrr-rails-backend` → 実体は Rust。`rust-backend` へのリネームまたは ADR どおりの整理のみ残る |
+| 2 | 本番 **手動スモーク** | OAuth ログイン、`auth/me`、計画作成→最適化 WS、マスタ CRUD、`save_plan`、`POST /undo_deletion` |
+| 3 | 本番 **us 参照データ**（必要時） | 7 件の `crop_stages` 欠損。`in` repair では直らない。運用合意のうえ `agrr-migrate data apply` |
+| 4 | **P7** Rails 資産削除 | [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) — `lib/domain` は Phase 2 |
 
-**ローカルゲート**（切替前に再実行）: `cargo build -p agrr-server` + `COVERAGE=false ./scripts/run-rust-contract-tests.sh`（2026-05-31: 112 runs, 0 failures）。
+**ローカルゲート**（削除 PR 前に再実行）: `cargo build -p agrr-server` + `COVERAGE=false ./scripts/run-rust-contract-tests.sh` + [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh)（2026-05-31: contract **112 runs, 0 failures**、p7 gate **OK**）。
 
-**GCP test**: `agrr-test:latest`（Rust）、直 URL `/up` → `ok`。`agrr.net` 経由では未使用。
+**完了済み（旧「残作業」から外す）**:
+
+- 本番 `agrr-production` を `Dockerfile.agrr-server` でデプロイ — `agrr-server:20260531-222952`
+- 本番 refinery — レプリカで `schema verify OK`（`refinery_schema_history` + `data_migration_history` あり）
+- 本番 in repair — `20260531120000` / `20260531130100` 適用済み（レプリカ）
 
 ---
 
 ## 観測記録（2026-05-31）
 
+### Cloud Run
+
+| 項目 | 値 |
+|------|-----|
+| サービス | `agrr-production` |
+| イメージ | `asia-northeast1-docker.pkg.dev/agrr-475323/agrr/agrr-server:20260531-222952` |
+| Run 直 URL | 未認証 curl は 404（想定内）。**LB 経由で検証** |
+
 ### GCP URL map（`agrr-frontend-url-map-simple`）
 
-| パス | backend service |
-|------|-----------------|
-| `/api/*` | `agrr-rails-backend` |
-| `/cable`, `/cable/*` | `agrr-rails-backend` |
-| `/auth`, `/auth/*` | `agrr-rails-backend` |
-| `/up` | `agrr-rails-backend` |
+| パス | backend service（LB 上の名前） | 実体 |
+|------|-------------------------------|------|
+| `/api/*` | `agrr-rails-backend` | `agrr-rails-neg` → **`agrr-production`（Rust）** |
+| `/cable`, `/cable/*` | `agrr-rails-backend` | 同上 |
+| `/auth`, `/auth/*` | `agrr-rails-backend` | 同上 |
+| `/up` | `agrr-rails-backend` | 同上 |
 
-`rust-backend` 用 backend service **なし**。`agrr-rails-neg` → `agrr-production`。
+専用 `rust-backend` backend service は **未作成**（1 NEG / 1 Cloud Run に集約）。
 
-### エンドポイント指紋（curl）
+### エンドポイント指紋（curl `agrr.net`）
 
-| | `agrr-test`（Run 直 URL） | `agrr.net`（LB） |
-|--|---------------------------|------------------|
-| `/up` | `200` `ok` | `200` Rails JSON |
-| `/health` | `200` `ok` | `404` Angular |
-| 未知 API | `501` `api_not_migrated` | `404` Rails |
+| パス | HTTP | 本文・備考 |
+|------|------|------------|
+| `/up` | 200 | `ok`（**Rust**） |
+| `/api/v1/health` | 200 | Rust JSON（`database`, `timestamp` 等） |
+| `/api/v1/plans` | 401 | `{"error":"unauthorized"}` |
+| `/api/v1/…`（未実装） | 501 | `api_not_migrated` |
+| `/auth/login` | 307 | `Location: /login`（SPA） |
+| `/cable` | 400 | `upgrade` ヘッダなし（WS 前提） |
+| `/health` | 404 | Angular（CDN。Rust `/health` とは別経路） |
 
-### Litestream レプリカ
+### Litestream レプリカ（`tmp/production-primary-replica/primary.sqlite3`）
 
 照会: [production-primary-sqlite-query](../../../.cursor/skills/production-primary-sqlite-query/SKILL.md)（遅延あり得る）。
 
-| 環境 | バケット | マイグレーション表 | India repair | in 参照・stages なし | us 参照・stages なし |
-|------|----------|-------------------|--------------|----------------------|----------------------|
-| GCP test | `agrr-test-db` | refinery + `data_migration_history` | 適用済み | 0 | — |
-| 本番 | `agrr-production-db` | `schema_migrations` のみ | 履歴表なし | 0 | **7** |
+| 項目 | 結果 |
+|------|------|
+| `agrr-migrate schema verify` | **OK**（refinery version 2） |
+| 履歴表 | `schema_migrations`, `refinery_schema_history`, `data_migration_history` |
+| `in` repair | **適用済み** |
+| `in` 参照・stages なし | **0** |
+| `us` 参照・stages なし | **7**（下表） |
 
 本番 us 参照作物（stages なし）:
 
@@ -82,14 +109,16 @@ agrr-migrate schema verify
 agrr-migrate data list
 ```
 
-## 推奨実施順
+## 推奨実施順（更新）
 
-1. レプリカで schema / us 7件の修復方針（運用合意）— 上記コピーで実施
-2. 本番 `agrr-server` + `rust-backend` + URL map
-3. 必要なら手動 `data apply`、切替後スモーク
-4. P7
+1. 手動スモーク（上記 #2）
+2. us 7 件の修復方針（運用合意・必要なら `data apply`）
+3. P7 Phase 1 — ゲート済み Rails API / jobs / channels 削除 PR
+4. P7 Phase 2 — `lib/domain` 削除（`p7-code-removal-gate.sh` 再実行後）
+5. URL map 命名整理・Rails Cloud Run 廃止（P7 完了）
 
 ## 関連
 
+- [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) — Rails 廃止チェックリスト
 - [`P7-MIGRATION-RUNBOOK.md`](./P7-MIGRATION-RUNBOOK.md) — schema / data CLI
 - [`README.md`](./README.md) — 索引

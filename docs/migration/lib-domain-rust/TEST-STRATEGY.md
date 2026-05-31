@@ -12,7 +12,7 @@
 ### R0 の必須ルール（2026-05 方針）
 
 1. `lib/domain` に **専用の domain-lib テストが無い** Interactor / Policy / Calculator / Mapper は、Rust 移植 **前に** `test/domain/<context>/` を追加する。
-2. `crates/agrr-domain` の `mod.rs` に **Deferred（no test/domain …）** と書いて Rust だけ先に進めることは **禁止**（バックログは [`BACKLOG-test-first.yaml`](./BACKLOG-test-first.yaml)）。
+2. `crates/agrr-domain` の `mod.rs` に **Deferred（no test/domain …）** と書いて Rust だけ先に進めることは **禁止**（未テスト表面は R0 を先に GREEN）。
 3. R0 で追加したテスト名は、R1 パリティの `#[test]` コメントに **Ruby テスト名を引用**する（既存パリティ手順と同じ）。
 
 **ルール**: Rust 化したモジュールは **R0 → R1 + R2** を必ず GREEN にしてから `TRACKING.yaml` の `phase: done`。R3 は本番経路の回帰として PR / リリース前に GREEN を維持する。

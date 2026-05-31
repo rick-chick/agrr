@@ -31,4 +31,4 @@ Manual proof that **Application Default Credentials (ADC)** can read weather bul
 ## Related
 
 - Contract (local_root): `scripts/run-rust-contract-tests.sh`, `test/contract/internal_farm_weather_contract_test.rb`, `test/contract/plan_cultivation_mutations_contract_test.rb`
-- [`BLOCKERS-RESPONSE.md`](./BLOCKERS-RESPONSE.md) — Rails 天気読み残差（本番 Rust 切替後は未使用）
+- [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md) — 本番観測の正
