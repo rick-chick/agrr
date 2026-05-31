@@ -26,7 +26,7 @@ rm -f /app/tmp/pids/server.pid
 # db:migrateがschema.rbを見つけると、それを使ってDBを作成してしまい
 # schema_migrationsに全マイグレーション実行済みと記録されるため
 echo "Removing schema files for clean migration run..."
-rm -f /app/db/schema.rb /app/db/cache_schema.rb /app/db/cable_schema.rb
+rm -f /app/db/schema.rb /app/db/cache_schema.rb
 
 # Litestream復元（開発環境でも本番同様にlitestreamを使用）
 LITESTREAM_CONFIG="/app/config/litestream.development.yml"
@@ -49,12 +49,6 @@ if [ -f "$LITESTREAM_CONFIG" ] && [ -n "${GCS_BUCKET_DEV:-}" ]; then
         echo "⚠ No cache database replica found, will be created"
     fi
     
-    # ケーブルデータベースの復元
-    if litestream restore -if-replica-exists -config "$LITESTREAM_CONFIG" storage/development_cable.sqlite3; then
-        echo "✓ Cable database restored from GCS"
-    else
-        echo "⚠ No cable database replica found, will be created"
-    fi
 else
     if [ ! -f "$LITESTREAM_CONFIG" ]; then
         echo "⚠ Litestream config not found: $LITESTREAM_CONFIG"
@@ -64,7 +58,7 @@ else
     fi
 fi
 
-# すべてのDBをマイグレーション実行（primary, queue, cache, cable）
+# primary + cache schema (refinery)
 echo "========================================="
 echo "Running schema migrations (refinery)..."
 echo "========================================="

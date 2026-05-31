@@ -80,14 +80,8 @@ Rails.application.configure do
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true
 
-  # ActionCable configuration for WebSocket
-  config.action_cable.url = "ws://localhost:3000/cable"
-  config.action_cable.mount_path = "/cable"
-  config.action_cable.allowed_request_origins = [
-    /http:\/\/localhost:\d+/,
-    /http:\/\/127\.0\.0\.1:\d+/
-  ]
-  config.action_cable.disable_request_forgery_protection = false
+  # WebSocket (/cable) is on agrr-server; Rails does not mount Action Cable.
+  config.action_cable.mount_path = nil
 
   # Raise error when a before_action's only/except options reference missing actions (Rails 6.1 doesn't have this)
   # config.action_controller.raise_on_missing_callback_actions = true

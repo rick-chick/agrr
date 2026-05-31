@@ -1,5 +1,5 @@
 # Litestream configuration for Cloud Storage replication
-# Replicates primary, cache, cable. Queue excluded to avoid database is locked.
+# Replicates primary and cache. Queue/cable excluded (Rust WS; queue ephemeral).
 # All paths are prefixed with 'production/' to ensure complete separation from development
 dbs:
   # Main application database
@@ -23,13 +23,3 @@ dbs:
         path: production/cache.sqlite3
         retention: 24h
         sync-interval: 300s
-  
-  # Solid Cable database (Action Cable messages)
-  - path: /tmp/production_cable.sqlite3
-    replicas:
-      - type: gcs
-        bucket: ${GCS_BUCKET}
-        path: production/cable.sqlite3
-        retention: 24h
-        sync-interval: 60s
-

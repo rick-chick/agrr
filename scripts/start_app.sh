@@ -21,7 +21,7 @@ export AGRR_SCRIPTS_DIR="$SCRIPT_DIR"
 # shellcheck source=db_bootstrap_common.sh
 source "${SCRIPT_DIR}/db_bootstrap_common.sh"
 
-unset SKIP_CABLE_DB
+export SKIP_CABLE_DB=true
 
 cleanup() {
   local exit_code=${1:-$?}

@@ -29,4 +29,14 @@ if [ -d lib/domain ]; then
   exit 1
 fi
 
+echo "==> Checking Rails database.yml has no Solid Cable DB"
+if rg -q '^\s+cable:' config/database.yml; then
+  echo "FAIL: config/database.yml must not define a cable SQLite database (WS on agrr-server)"
+  exit 1
+fi
+if rg -q 'solid_cable' config/cable.yml; then
+  echo "FAIL: config/cable.yml must not use solid_cable adapter"
+  exit 1
+fi
+
 echo "OK: P7 code removal gate passed."
