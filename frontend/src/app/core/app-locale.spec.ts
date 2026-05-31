@@ -24,11 +24,9 @@ describe('app-locale', () => {
     expect(calls).toEqual(['in']);
     expect(translate.currentLang).toBe('in');
   });
-});
 
-describe('resolveInitialAppLang', () => {
-  it('prefers stored language when valid', () => {
-    const storage = new Map<string, string>([['agrr.app.lang', 'in']]);
+  it('applyAppLang with persist false does not overwrite stored language', () => {
+    const storage = new Map<string, string>([['agrr.app.lang', 'ja']]);
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => {
@@ -36,9 +34,70 @@ describe('resolveInitialAppLang', () => {
       }
     });
 
+    const translate = {
+      currentLang: 'ja',
+      use: (lang: string) => {
+        (translate as { currentLang: string }).currentLang = lang;
+      }
+    };
+
     try {
-      expect(resolveInitialAppLang()).toBe('in');
+      applyAppLang(translate as never, 'in', { persist: false });
+      expect(translate.currentLang).toBe('in');
+      expect(storage.get('agrr.app.lang')).toBe('ja');
     } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+describe('resolveInitialAppLang', () => {
+  it('ignores stale stored in when browser region is Japan', () => {
+    const storage = new Map<string, string>([['agrr.app.lang', 'in']]);
+    const originalNavigator = globalThis.navigator;
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      }
+    });
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { languages: ['ja-JP', 'ja'], language: 'ja-JP' }
+    });
+
+    try {
+      expect(resolveInitialAppLang()).toBe('ja');
+    } finally {
+      Object.defineProperty(globalThis, 'navigator', {
+        configurable: true,
+        value: originalNavigator
+      });
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('prefers stored language when valid', () => {
+    const storage = new Map<string, string>([['agrr.app.lang', 'en']]);
+    const originalNavigator = globalThis.navigator;
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      }
+    });
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { languages: ['ja-JP'], language: 'ja-JP' }
+    });
+
+    try {
+      expect(resolveInitialAppLang()).toBe('en');
+    } finally {
+      Object.defineProperty(globalThis, 'navigator', {
+        configurable: true,
+        value: originalNavigator
+      });
       vi.unstubAllGlobals();
     }
   });

@@ -131,7 +131,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   selectFarm(farm: Farm): void {
     const lang = mapFarmRegionToAppLang(farm.region);
     if (lang) {
-      applyAppLang(this.translate, lang);
+      applyAppLang(this.translate, lang, { persist: false });
     }
     this.selectedFarmId = farm.id;
     this.selectedFarm = farm;

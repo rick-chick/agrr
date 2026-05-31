@@ -2,12 +2,17 @@ export type BrowserRegion = 'jp' | 'us' | 'in';
 export type AppLang = 'ja' | 'en' | 'in';
 
 const DEFAULT_BROWSER_REGION: BrowserRegion = 'jp';
-const LOCALE_TO_REGION: Record<string, BrowserRegion> = {
+/** BCP 47 language subtags → reference-farm region (checked left-to-right). */
+const LANGUAGE_TO_REGION: Record<string, BrowserRegion> = {
   ja: 'jp',
-  jp: 'jp',
   en: 'us',
+  hi: 'in'
+};
+
+/** Region subtags when no language subtag matched (checked right-to-left). */
+const REGION_SUBTAG_TO_REGION: Record<string, BrowserRegion> = {
+  jp: 'jp',
   us: 'us',
-  hi: 'in',
   in: 'in'
 };
 
@@ -39,9 +44,16 @@ export const mapLocaleToBrowserRegion = (locale?: string | null): BrowserRegion 
   }
 
   const localeParts = splitLocaleParts(locale);
+
+  for (const part of localeParts) {
+    const region = LANGUAGE_TO_REGION[part];
+    if (region) {
+      return region;
+    }
+  }
+
   for (let index = localeParts.length - 1; index >= 0; index -= 1) {
-    const part = localeParts[index];
-    const region = LOCALE_TO_REGION[part];
+    const region = REGION_SUBTAG_TO_REGION[localeParts[index]];
     if (region) {
       return region;
     }

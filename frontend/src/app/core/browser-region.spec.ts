@@ -6,6 +6,12 @@ import {
 } from './browser-region';
 
 describe('mapLocaleToBrowserRegion', () => {
+  it('maps Japanese browser locales to Japan (language before region subtag)', () => {
+    expect(mapLocaleToBrowserRegion('ja')).toBe('jp');
+    expect(mapLocaleToBrowserRegion('ja-JP')).toBe('jp');
+    expect(mapLocaleToBrowserRegion('ja-IN')).toBe('jp');
+  });
+
   it('maps Hindi locale to India', () => {
     expect(mapLocaleToBrowserRegion('hi')).toBe('in');
     expect(mapLocaleToBrowserRegion('hi-IN')).toBe('in');

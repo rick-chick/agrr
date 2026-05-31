@@ -132,7 +132,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     this.presenter.setView(this);
     const lang = mapFarmRegionToAppLang(this.publicPlanStore.state.farm?.region);
     if (lang) {
-      applyAppLang(this.translate, lang);
+      applyAppLang(this.translate, lang, { persist: false });
     }
     const planId = this.resolvePlanId();
     if (!planId) {
