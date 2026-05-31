@@ -42,7 +42,15 @@ module Domain
           end
           Domain::Shared::Policies::CropNestedPestsAccess.assert_allowed!(user, crop)
 
-          unless Domain::Shared::PestCropAssociationAccess.crop_accessible_for_pest?(crop, pest_entity, user: user)
+          unless Domain::Shared::Policies::CropPolicy.crop_associable_with_pest?(
+            user: user,
+            crop_is_reference: crop.reference?,
+            crop_user_id: crop.user_id,
+            crop_region: crop.region,
+            pest_is_reference: pest_entity.reference?,
+            pest_user_id: pest_entity.user_id,
+            pest_region: pest_entity.region
+          )
             return @output_port.on_forbidden
           end
 

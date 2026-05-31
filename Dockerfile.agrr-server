@@ -6,11 +6,14 @@ COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY crates ./crates
 RUN cargo build --release -p agrr-server -p agrr-migrate
 
-FROM debian:bookworm-slim
+# Match Dockerfile.production final stage (ruby:3.3.10-slim → glibc 2.41).
+# debian:bookworm-slim (glibc 2.36) cannot run lib/core/agrr (PyInstaller needs >= 2.38).
+FROM ruby:3.3.10-slim
 
 RUN apt-get update -qq && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    libsqlite3-0 \
     sqlite3 \
     wget \
     && wget -q https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb \
@@ -26,6 +29,11 @@ COPY --from=builder /app/target/release/agrr-migrate /usr/local/bin/agrr-migrate
 COPY config/litestream.yml /etc/litestream.yml
 COPY scripts/db_bootstrap_common.sh scripts/start_agrr_server.sh scripts/run-agrr-migrate.sh /app/scripts/
 RUN chmod +x /app/scripts/db_bootstrap_common.sh /app/scripts/start_agrr_server.sh /app/scripts/run-agrr-migrate.sh
+
+# agrr-migrate data apply / repair (manifest, extracted JSON, reference fixtures)
+COPY crates/agrr-migrate/manifest /app/crates/agrr-migrate/manifest
+COPY crates/agrr-migrate/data/extracted /app/crates/agrr-migrate/data/extracted
+COPY db/fixtures /app/db/fixtures
 
 # Optional agrr Python binary (optimization / weather daemon)
 COPY lib/core/ /tmp/agrr_temp/

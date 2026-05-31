@@ -4,6 +4,7 @@ mod context;
 mod dev_fixtures;
 mod nutrients;
 mod pests;
+mod repairs;
 mod tasks;
 mod templates;
 pub mod weather_stream;

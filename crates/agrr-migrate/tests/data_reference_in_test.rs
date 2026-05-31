@@ -34,7 +34,6 @@ fn data_apply_reference_data_in_region() {
     assert_eq!(28, pests, "in extracted pests JSON has 28 entries");
     assert_eq!(17, tasks, "in extracted tasks JSON has 17 entries");
 
-    // Rails create_basic_crops_without_ai_data has no crop_stages → nutrients migration seeds 0.
     let nutrients = count_query(
         &conn,
         "SELECT COUNT(*) FROM nutrient_requirements nr
@@ -42,7 +41,10 @@ fn data_apply_reference_data_in_region() {
          INNER JOIN crops c ON c.id = cs.crop_id
          WHERE nr.is_reference = 1 AND c.is_reference = 1 AND c.region = 'in'",
     );
-    assert_eq!(0, nutrients, "in inline crops have no stages; no nutrient rows");
+    assert!(
+        nutrients > 0,
+        "in reference crops from india_reference_crops.json should have nutrient rows"
+    );
 
     let crop_pests = count_query(
         &conn,
@@ -50,5 +52,8 @@ fn data_apply_reference_data_in_region() {
          INNER JOIN crops c ON c.id = cp.crop_id
          WHERE c.region = 'in'",
     );
-    assert_eq!(3, crop_pests, "in archive pest crop links (name / name+variety resolve)");
+    assert_eq!(
+        69, crop_pests,
+        "in archive pest crop links resolve against india_reference_crops.json names"
+    );
 }

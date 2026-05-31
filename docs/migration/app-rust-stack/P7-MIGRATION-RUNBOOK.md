@@ -2,6 +2,49 @@
 
 Operational guide for [`agrr-migrate`](../../../crates/agrr-migrate). Schema migrations run on app startup; reference data is **manual only**.
 
+## Rust 本番移行時に必要なこと（要約）
+
+**デプロイ（Cloud Run 起動）だけでは参照データは直らない。** 起動時は [`db_bootstrap_common.sh`](../../../scripts/db_bootstrap_common.sh) 経由の **`agrr-migrate schema run` のみ**（[`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh)）。`kind=repair` を含む **すべての `data apply` は手動**。
+
+| 区分 | 例 | デプロイ時に自動？ | 適用方法 |
+|------|-----|-------------------|----------|
+| **Schema**（DDL / refinery） | `data_migration_history` テーブル追加など | **はい** | 起動時 `schema run` |
+| **Data** `base` / `nutrients` / `pests` / `tasks` / … | `20251018130418` in base など | **いいえ** | `agrr-migrate data apply --region … --kind …` |
+| **Data** `repair` | `20260531120000` repair_india_reference_farms、`20260531130100` repair_india_reference_crops | **いいえ** | `data apply --region in --kind repair` |
+
+`20260531120000` / `20260531130100` はマニフェスト上 `region=in`, `kind=repair`（[`legacy_versions.yaml`](../../../crates/agrr-migrate/manifest/legacy_versions.yaml)）。**イメージに manifest・fixture が入っていても、デプロイだけでは `data_migration_history` にも DB データにも反映されない。**
+
+### チェックリスト（本番・staging・GCP test 共通）
+
+1. **イメージ** — [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server) に `agrr-migrate` バイナリ、`crates/agrr-migrate/manifest`、`data/extracted`、`db/fixtures`（特に `india_reference_weather.json` / `india_reference_crops.json`）が含まれること。
+2. **Litestream 復元済み DB** — 空 DB に baseline しない。手順は下記 [Litestream-restored production / staging DB](#litestream-restored-production--staging-db)。
+3. **Schema** — デプロイ後 `schema verify`。**Rails 由来の履歴のみ**の DB は `schema stamp` → `data stamp`（dry-run 後）を検証用コピーで実施。
+4. **Data（手動・環境ごとに合意）** — 症状に応じて [Data recovery matrix](#data-recovery-matrix) の `data apply` を実行。未適用分だけ走る（`data_migration_history` で skip）。
+5. **India repair（region 不具合）** — test で in 参照作物に `crop_stages` が無い／公開プラン最適化が `crop has no growth stages` のとき:
+   ```bash
+   export AGRR_APP_ROOT=/app   # コンテナ内、またはホストでレプリカを指す
+   export AGRR_SQLITE_PATH=/path/to/primary.sqlite3
+   agrr-migrate data apply --region in --kind repair
+   ```
+   farms（`20260531120000`）→ crops（`20260531130100`）の順。fixture 欠落時は **エラーで止まり履歴は付かない**。
+6. **検証** — `agrr-migrate data list`；参照作物の stages（例: in で `without_stages=0`）；公開プラン最適化のスモーク。
+7. **本番 DB** — **運用合意なしに `data apply` を本番 primary に対して実行しない**（レプリカコピーで dry-run / 検証してから）。
+
+### test と本番の違い（誤解しやすい点）
+
+- **同じマニフェスト・同じ repair コマンド**でも、**既に壊れている region／行だけ**が対象（例: test の in はインライン作物、本番の in は stages あり得る／本番 us は stages 無し参照作物があり得る）。
+- **GCP test にデプロイ済み ≠ repair 適用済み**。デプロイはコードと fixture の配備；**DB 修復は別途 `data apply`**。
+- **本番も region 別の参照データ不整合がありうる**。「in の crop_stages だけ見て本番 migrate 不要」とは断定しない。不足 kind／region は matrix と DB 照会で決める。
+
+### 関連コマンド
+
+```bash
+agrr-migrate schema verify
+agrr-migrate schema status
+agrr-migrate data list
+agrr-migrate data apply --region in --kind repair   # 20260531120000, 20260531130100（未適用時のみ）
+```
+
 ## Tools and env
 
 | Variable | Default | Purpose |
@@ -65,6 +108,8 @@ Writes `crates/agrr-migrate/data/extracted/{tasks,pests,templates}/`. Pests expo
 |---------|---------|
 | Missing JP/US reference farms/crops/weather | `data apply --region jp` or `us` `--kind base` |
 | Missing India reference base | `data apply --region in --kind base` |
+| India public plan shows only Punjab (stub farm) | `data apply --region in --kind repair` (requires `db/fixtures/india_reference_weather.json` in image) |
+| India optimization fails (`crop has no growth stages`) | `data apply --region in --kind repair` (applies `repair_india_reference_crops`; requires `db/fixtures/india_reference_crops.json` in image). Then `data apply --region in --kind nutrients` if nutrients are missing. |
 | Missing pests | `data apply --region <jp\|in\|us> --kind pests` |
 | Missing agricultural tasks | `data apply --region <jp\|in\|us> --kind tasks` |
 | Missing nutrients | `data apply --region <jp\|in\|us> --kind nutrients` |

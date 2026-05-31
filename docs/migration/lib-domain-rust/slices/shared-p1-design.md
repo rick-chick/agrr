@@ -27,7 +27,7 @@
 | exceptions | **done** |
 | value_objects | **done**（`ReferenceIndexListFilter`） |
 | `crop_nested_pests_access` | **not_started** |
-| `pest_crop_association_access` | Ruby @deprecated — Rust は `crop_policy` に統合済み |
+| `pest_crop_association_access` | 削除済み（Ruby / Rust とも `CropPolicy.crop_associable_with_pest?`） |
 
 ## p1b 残
 

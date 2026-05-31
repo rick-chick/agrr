@@ -60,6 +60,7 @@ pub const DATA_KINDS: &[&str] = &[
     "tasks",
     "templates",
     "dev_fixtures",
+    "repair",
 ];
 
 pub fn parse_regions(raw: &str) -> Vec<String> {

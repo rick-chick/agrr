@@ -61,47 +61,6 @@ pub fn apply(conn: &mut Connection, app_root: &Path, region: &str) -> anyhow::Re
     Ok(())
 }
 
-struct IndiaInlineCrop {
-    name: &'static str,
-    variety: &'static str,
-    groups: &'static [&'static str],
-    area_per_unit: f64,
-    revenue_per_area: f64,
-}
-
-const INDIA_INLINE_CROPS: &[IndiaInlineCrop] = &[
-    IndiaInlineCrop { name: "चावल", variety: "बासमती", groups: &["Poaceae"], area_per_unit: 0.25, revenue_per_area: 8000.0 },
-    IndiaInlineCrop { name: "चावल", variety: "IR64", groups: &["Poaceae"], area_per_unit: 0.25, revenue_per_area: 7000.0 },
-    IndiaInlineCrop { name: "गेहूं", variety: "HD2967", groups: &["Poaceae"], area_per_unit: 0.25, revenue_per_area: 6000.0 },
-    IndiaInlineCrop { name: "कपास", variety: "बीटी कपास", groups: &["Malvaceae"], area_per_unit: 0.25, revenue_per_area: 12000.0 },
-    IndiaInlineCrop { name: "गन्ना", variety: "CoC671", groups: &["Poaceae"], area_per_unit: 0.25, revenue_per_area: 15000.0 },
-    IndiaInlineCrop { name: "सोयाबीन", variety: "JS335", groups: &["Fabaceae"], area_per_unit: 0.25, revenue_per_area: 7000.0 },
-    IndiaInlineCrop { name: "मूंगफली", variety: "TMV2", groups: &["Fabaceae"], area_per_unit: 0.25, revenue_per_area: 8000.0 },
-    IndiaInlineCrop { name: "चना", variety: "देसी", groups: &["Fabaceae"], area_per_unit: 0.25, revenue_per_area: 9000.0 },
-    IndiaInlineCrop { name: "मसूर", variety: "मसूर दाल", groups: &["Fabaceae"], area_per_unit: 0.25, revenue_per_area: 8500.0 },
-    IndiaInlineCrop { name: "अरहर", variety: "तूर दाल", groups: &["Fabaceae"], area_per_unit: 0.25, revenue_per_area: 8000.0 },
-    IndiaInlineCrop { name: "मक्का", variety: "संकर", groups: &["Poaceae"], area_per_unit: 0.25, revenue_per_area: 7000.0 },
-    IndiaInlineCrop { name: "बाजरा", variety: "मोती बाजरा", groups: &["Poaceae"], area_per_unit: 0.25, revenue_per_area: 5000.0 },
-    IndiaInlineCrop { name: "ज्वार", variety: "ज्वार अनाज", groups: &["Poaceae"], area_per_unit: 0.25, revenue_per_area: 5000.0 },
-    IndiaInlineCrop { name: "सरसों", variety: "पूसा बोल्ड", groups: &["Brassicaceae"], area_per_unit: 0.25, revenue_per_area: 7000.0 },
-    IndiaInlineCrop { name: "सूरजमुखी", variety: "KBSH44", groups: &["Asteraceae"], area_per_unit: 0.25, revenue_per_area: 8000.0 },
-    IndiaInlineCrop { name: "जूट", variety: "JRO524", groups: &["Malvaceae"], area_per_unit: 0.25, revenue_per_area: 6000.0 },
-    IndiaInlineCrop { name: "मिर्च", variety: "गुंटूर", groups: &["Solanaceae"], area_per_unit: 0.25, revenue_per_area: 15000.0 },
-    IndiaInlineCrop { name: "टमाटर", variety: "पूसा रूबी", groups: &["Solanaceae"], area_per_unit: 0.25, revenue_per_area: 12000.0 },
-    IndiaInlineCrop { name: "आलू", variety: "कुफरी", groups: &["Solanaceae"], area_per_unit: 0.25, revenue_per_area: 10000.0 },
-    IndiaInlineCrop { name: "प्याज", variety: "नासिक लाल", groups: &["Amaryllidaceae"], area_per_unit: 0.25, revenue_per_area: 9000.0 },
-    IndiaInlineCrop { name: "बैंगन", variety: "बैंगन", groups: &["Solanaceae"], area_per_unit: 0.25, revenue_per_area: 8000.0 },
-    IndiaInlineCrop { name: "पत्ता गोभी", variety: "गोल्डन एकर", groups: &["Brassicaceae"], area_per_unit: 0.25, revenue_per_area: 7000.0 },
-    IndiaInlineCrop { name: "फूल गोभी", variety: "स्नोबॉल", groups: &["Brassicaceae"], area_per_unit: 0.25, revenue_per_area: 8000.0 },
-    IndiaInlineCrop { name: "चाय", variety: "असम", groups: &["Theaceae"], area_per_unit: 0.25, revenue_per_area: 20000.0 },
-    IndiaInlineCrop { name: "कॉफी", variety: "अरेबिका", groups: &["Rubiaceae"], area_per_unit: 0.25, revenue_per_area: 25000.0 },
-    IndiaInlineCrop { name: "हल्दी", variety: "अल्लेप्पी", groups: &["Zingiberaceae"], area_per_unit: 0.25, revenue_per_area: 18000.0 },
-    IndiaInlineCrop { name: "अदरक", variety: "रियो", groups: &["Zingiberaceae"], area_per_unit: 0.25, revenue_per_area: 16000.0 },
-    IndiaInlineCrop { name: "इलायची", variety: "मालाबार", groups: &["Zingiberaceae"], area_per_unit: 0.25, revenue_per_area: 30000.0 },
-    IndiaInlineCrop { name: "नारियल", variety: "लंबा", groups: &["Arecaceae"], area_per_unit: 0.25, revenue_per_area: 12000.0 },
-    IndiaInlineCrop { name: "आम", variety: "अल्फांसो", groups: &["Anacardiaceae"], area_per_unit: 0.25, revenue_per_area: 20000.0 },
-];
-
 #[derive(Debug, Deserialize)]
 struct FarmWeatherFixture {
     latitude: serde_json::Value,
@@ -201,6 +160,60 @@ fn seed_farms_and_weather(
 
     println!("  base/{region}: {farm_count} reference farms with weather");
     Ok(())
+}
+
+/// Restores all India reference farms from `db/fixtures/india_reference_weather.json`.
+/// Removes the legacy `Punjab` stub row produced by `seed_basic_farms` when the weather fixture was absent.
+/// Ignores `AGRR_MIGRATE_SKIP_WEATHER` so production repair always loads weather.
+pub fn repair_india_reference_farms(conn: &mut Connection, app_root: &Path) -> anyhow::Result<()> {
+    let weather_path = fixtures_dir(app_root).join("india_reference_weather.json");
+    if !weather_path.is_file() {
+        anyhow::bail!(
+            "repair/in: missing fixture {} (required for India reference farms)",
+            weather_path.display()
+        );
+    }
+
+    let removed = remove_india_legacy_stub_farm(conn)?;
+    if removed > 0 {
+        println!("  repair/in: removed {removed} legacy stub farm(s) named Punjab");
+    }
+
+    let anonymous_id = ensure_anonymous_user(conn)?;
+    seed_farms_and_weather(conn, "in", anonymous_id, &weather_path)?;
+    println!("  repair/in: India reference farms repair completed");
+    Ok(())
+}
+
+/// Restores India reference crops (with growth stages) from `db/fixtures/india_reference_crops.json`.
+/// Removes legacy inline crops (name/variety only, no `crop_stages`) before upserting fixture rows.
+pub fn repair_india_reference_crops(conn: &mut Connection, app_root: &Path) -> anyhow::Result<()> {
+    let crops_path = fixtures_dir(app_root).join("india_reference_crops.json");
+    if !crops_path.is_file() {
+        anyhow::bail!(
+            "repair/in: missing fixture {} (required for India reference crops)",
+            crops_path.display()
+        );
+    }
+
+    let removed = remove_india_reference_crops_without_stages(conn)?;
+    if removed > 0 {
+        println!("  repair/in: removed {removed} legacy reference crop(s) without growth stages");
+    }
+
+    seed_crops(conn, app_root, "in", "india_reference_crops.json")?;
+    println!("  repair/in: India reference crops repair completed");
+    Ok(())
+}
+
+fn remove_india_legacy_stub_farm(conn: &mut Connection) -> anyhow::Result<usize> {
+    let n = conn.execute(
+        "DELETE FROM farms
+         WHERE is_reference = 1 AND region = 'in' AND name = 'Punjab'
+           AND ABS(latitude - 30.9010) < 0.0001 AND ABS(longitude - 75.8573) < 0.0001",
+        [],
+    )?;
+    Ok(n)
 }
 
 fn json_f64(v: &serde_json::Value) -> anyhow::Result<f64> {
@@ -370,9 +383,11 @@ struct ThermalFixture {
 
 fn seed_crops(conn: &mut Connection, app_root: &Path, region: &str, crops_file: &str) -> anyhow::Result<()> {
     let path = fixtures_dir(app_root).join(crops_file);
-    if region == "in" && !path.is_file() {
-        println!("  ⚠ crops fixture missing: {}; using inline India crops", path.display());
-        return seed_india_inline_crops(conn);
+    if !path.is_file() {
+        anyhow::bail!(
+            "base/{region}: missing crops fixture {} (required for reference crops)",
+            path.display()
+        );
     }
     let text = std::fs::read_to_string(&path)
         .with_context(|| format!("read crops fixture {}", path.display()))?;
@@ -767,32 +782,45 @@ fn seed_japan_sample_fields(conn: &mut Connection) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn seed_india_inline_crops(conn: &mut Connection) -> anyhow::Result<()> {
-    // Matches Rails `create_basic_crops_without_ai_data`: crops only, no crop_stages.
-    let now = context::now_rfc3339();
+fn remove_india_reference_crops_without_stages(conn: &mut Connection) -> anyhow::Result<usize> {
+    let mut stmt = conn.prepare(
+        "SELECT id FROM crops
+         WHERE region = 'in' AND is_reference = 1
+           AND NOT EXISTS (SELECT 1 FROM crop_stages cs WHERE cs.crop_id = crops.id)",
+    )?;
+    let ids: Vec<i64> = stmt
+        .query_map([], |r| r.get(0))?
+        .collect::<Result<Vec<_>, _>>()?;
+    drop(stmt);
+    if ids.is_empty() {
+        return Ok(0);
+    }
 
     with_transaction(conn, |tx| {
-        for crop in INDIA_INLINE_CROPS {
-            let groups_json = serde_json::to_string(&crop.groups)?;
-            upsert_crop(
-                tx,
-                crop.name,
-                crop.variety,
-                "in",
-                crop.area_per_unit,
-                crop.revenue_per_area,
-                &groups_json,
-                &now,
+        for crop_id in &ids {
+            tx.execute("DELETE FROM crop_pests WHERE crop_id = ?1", params![crop_id])?;
+            tx.execute(
+                "DELETE FROM crop_task_schedule_blueprints WHERE crop_id = ?1",
+                params![crop_id],
             )?;
+            tx.execute(
+                "DELETE FROM crop_task_templates WHERE crop_id = ?1",
+                params![crop_id],
+            )?;
+            tx.execute("DELETE FROM pesticides WHERE crop_id = ?1", params![crop_id])?;
+            tx.execute("DELETE FROM free_crop_plans WHERE crop_id = ?1", params![crop_id])?;
+            tx.execute(
+                "UPDATE cultivation_plan_crops SET crop_id = NULL WHERE crop_id = ?1",
+                params![crop_id],
+            )?;
+        }
+        for crop_id in &ids {
+            tx.execute("DELETE FROM crops WHERE id = ?1", params![crop_id])?;
         }
         Ok(())
     })?;
 
-    println!(
-        "  base/in: {} inline reference crops (no india_reference_crops.json; no stages)",
-        INDIA_INLINE_CROPS.len()
-    );
-    Ok(())
+    Ok(ids.len())
 }
 
 fn interaction_impacts(region: &str) -> HashMap<&'static str, (f64, &'static str)> {

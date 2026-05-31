@@ -3,7 +3,7 @@ use crate::manifest::LegacyManifest;
 use rusqlite::Connection;
 
 use super::context;
-use super::{base, dev_fixtures, nutrients, pests, tasks, templates};
+use super::{base, dev_fixtures, nutrients, pests, repairs, tasks, templates};
 
 pub fn apply_kind(
     paths: &DbPaths,
@@ -66,7 +66,7 @@ fn apply_kind_regions(
                 continue;
             }
             println!("apply {} (region={region} kind={kind}) ...", entry.name);
-            apply_kind_region(paths, conn, region, kind)?;
+            apply_kind_region(paths, conn, region, kind, &entry.name)?;
             record_applied(conn, &entry.version, region, kind)?;
         }
     }
@@ -78,6 +78,7 @@ fn apply_kind_region(
     conn: &mut Connection,
     region: &str,
     kind: &str,
+    migration_name: &str,
 ) -> anyhow::Result<()> {
     let app_root = &paths.app_root;
     match kind {
@@ -87,6 +88,7 @@ fn apply_kind_region(
         "tasks" => tasks::apply(conn, app_root, region),
         "templates" => templates::apply(conn, app_root, region),
         "dev_fixtures" => dev_fixtures::apply(conn, app_root, region),
+        "repair" => repairs::apply(conn, app_root, region, migration_name),
         other => anyhow::bail!("unknown data kind: {other}"),
     }
 }

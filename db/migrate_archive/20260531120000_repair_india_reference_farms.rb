@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+# Historical marker for agrr-migrate data kind=repair (region=in).
+# Implementation: crates/agrr-migrate/src/data/repairs.rs + base::repair_india_reference_farms
+#
+#   agrr-migrate data apply --region in --kind repair
+class RepairIndiaReferenceFarms < ActiveRecord::Migration[8.0]
+  def up
+    say "Apply via agrr-migrate: data apply --region in --kind repair", true
+  end
+
+  def down
+    raise ActiveRecord::IrreversibleMigration
+  end
+end

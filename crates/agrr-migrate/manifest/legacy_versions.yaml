@@ -721,6 +721,18 @@ primary:
   region: all
   kind:
   name: drop_active_storage_tables
+- version: '20260531120000'
+  file: db/migrate_archive/20260531120000_repair_india_reference_farms.rb
+  tag: data
+  region: in
+  kind: repair
+  name: repair_india_reference_farms
+- version: '20260531130100'
+  file: db/migrate_archive/20260531130100_repair_india_reference_crops.rb
+  tag: data
+  region: in
+  kind: repair
+  name: repair_india_reference_crops
 cache:
 - version: '20250101000001'
   file: db/cache_migrate_archive/20250101000001_create_solid_cache_tables.rb
