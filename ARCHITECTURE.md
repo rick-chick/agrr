@@ -834,7 +834,7 @@ test/
 - Use the runner scripts, not raw `rails test` (protects the development database). Orchestration: `[.cursor/rules/rails-testing-workflow.mdc](.cursor/rules/rails-testing-workflow.mdc)`, `[.cursor/skills/test-common/SKILL.md](.cursor/skills/test-common/SKILL.md)`.
 - Processes with non-obvious termination (`agrr` daemon, long-running jobs, etc.) must be executed through the `process-monitor` skill, and success/failure determined only after obtaining the exit code (do not declare "complete" during execution).
 - Do not create a new Ruby test directory that belongs to neither Ruby runner. `test/javascript/` is an exception: it is an existing directory for JS unit tests of `app/javascript/` (Stimulus). It is not executed by Ruby runners (`run-test-rails.sh` / `run-test-domain-lib.sh`), but by JS tooling. Angular SPA tests live under `frontend/` (separate from this `test/javascript/`).
-- Frontend: `cd frontend && npm test`, `npm run build`, i18n check scripts (`frontend/package.json`).
+- Frontend: `cd frontend && npm test`, `npm run build` (i18n catalog: `frontend/src/assets/i18n/*.json`, hand-edited).
 
 ## Additional Resources
 

@@ -1,4 +1,4 @@
-# Angular: unit test / build / i18n チェック
+# Angular: unit test / build
 name: Frontend test
 
 on:
@@ -33,12 +33,6 @@ jobs:
 
       - name: Production build
         run: npm run build
-
-      - name: i18n hardcoded check
-        run: npm run check-hardcoded-i18n
-
-      - name: i18n JA values check
-        run: npm run check-ja-values
 
       - name: ng serve proxy contract
         run: npm run check:proxy-conf

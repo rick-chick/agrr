@@ -58,12 +58,6 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 
-## i18n detection helpers
+## i18n
 
-The frontend includes helpers under `frontend/scripts` that detect untranslated text before it ships:
-
-- `npm run extract-i18n` extracts every literal UI string to `frontend/i18n-extraction/keys.json`.
-- `npm run check-hardcoded-i18n` looks for Japanese text that still lingers in templates/TypeScript **and** flags elements with button-like classes (e.g., `btn-primary`, `mat-raised-button`) that render text without a `translate` attribute or pipe.
-- `npm run check-ja-values` reports `ja.json` entries whose existing translations contain no Japanese characters, helping you spot English placeholders that slipped into the Japanese file. The output lands in `frontend/i18n-extraction/ja-value-report.json`.
-
-Run these scripts as part of the repository's i18n completion workflow so the reports stay green before merging.
+Runtime catalog: `src/assets/i18n/{ja,en,in}.json` (`@ngx-translate`). Edit keys only there; do not bulk-sync or prune from auxiliary reports. See `.cursor/rules/i18n-completion-orchestrator.mdc`.

@@ -23,7 +23,7 @@ npm run e2e:capture-for-agent
 
 **スキル**: **`frontend-agent-visual-review`**（必須出力: `e2e/agent-review/visual-review-results.md` … サマリ表で pattern ごとに ja/en/in の 3 枚を見てレイアウトと **i18n** を指摘）
 
-**i18n**: 各 pattern で `.en.png` は英語、`.in.png` はヒンディー（インド向け）であること。未翻訳キー・日本語残り・`%{...}` 残りは **`frontend-agent-visual-review`** の「言語・i18n」節に従い指摘する。機械検出は `npm run check-hardcoded-i18n`。
+**i18n**: 各 pattern で `.en.png` は英語、`.in.png` はヒンディー（インド向け）であること。未翻訳キー・日本語残り・`%{...}` 残りは **`frontend-agent-visual-review`** の「言語・i18n」節に従い指摘する。
 
 1. **`@frontend/e2e/agent-review/out`** でフォルダごと参照する（**気になる枚だけ拾うのは補助**。フルレビューはフォルダ＋下記バッチ）。
 2. 同時に **`@frontend/e2e/agent-review/route-to-png.md`** と **`@frontend/e2e/route-manifest.json`** を添える。
