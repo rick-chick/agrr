@@ -1,0 +1,2828 @@
+{
+  "अदरक (रियो)": {
+    "name": "अदरक (रियो)",
+    "variety": "रियो",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 16000.0,
+    "groups": [
+      "Zingiberaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "अरहर (तूर दाल)": {
+    "name": "अरहर (तूर दाल)",
+    "variety": "तूर दाल",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 8000.0,
+    "groups": [
+      "Fabaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 34.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "आम (अल्फांसो)": {
+    "name": "आम (अल्फांसो)",
+    "variety": "अल्फांसो",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 20000.0,
+    "groups": [
+      "Anacardiaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "अंकुरण अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 34.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "फूल आने की अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 34.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 34.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "आलू (कुफरी)": {
+    "name": "आलू (कुफरी)",
+    "variety": "कुफरी",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 10000.0,
+    "groups": [
+      "Solanaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 500.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 150.0
+        }
+      }
+    ]
+  },
+  "इलायची (मालाबार)": {
+    "name": "इलायची (मालाबार)",
+    "variety": "मालाबार",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 30000.0,
+    "groups": [
+      "Zingiberaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "रोपाई अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "कपास (बीटी कपास)": {
+    "name": "कपास (बीटी कपास)",
+    "variety": "बीटी कपास",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 12000.0,
+    "groups": [
+      "Malvaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 8.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      },
+      {
+        "name": "वृद्धि से फूल आना",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "फूल आने से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "कॉफी (अरेबिका)": {
+    "name": "कॉफी (अरेबिका)",
+    "variety": "अरेबिका",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 25000.0,
+    "groups": [
+      "Rubiaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "अंकुरण अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 6.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 13.0,
+          "optimal_min": 18.0,
+          "optimal_max": 24.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 28.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 6.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "फूल आने की अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 18.0,
+          "optimal_max": 24.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 28.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 13.0,
+          "optimal_min": 18.0,
+          "optimal_max": 24.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 28.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 6.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "गन्ना (CoC671)": {
+    "name": "गन्ना (CoC671)",
+    "variety": "CoC671",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 15000.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "अंकुरण अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1500.0
+        }
+      },
+      {
+        "name": "परिपक्वता अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "गेहूं (HD2967)": {
+    "name": "गेहूं (HD2967)",
+    "variety": "HD2967",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 6000.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से उद्भव",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 100.0
+        }
+      },
+      {
+        "name": "उद्भव से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "चना (देसी)": {
+    "name": "चना (देसी)",
+    "variety": "देसी",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 9000.0,
+    "groups": [
+      "Fabaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "अंकुरण से फूल आना",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 250.0
+        }
+      },
+      {
+        "name": "फूल आने से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 400.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 150.0
+        }
+      }
+    ]
+  },
+  "चाय (असम)": {
+    "name": "चाय (असम)",
+    "variety": "असम",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 20000.0,
+    "groups": [
+      "Theaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "अंकुरण अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 8.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "चावल (बासमती)": {
+    "name": "चावल (बासमती)",
+    "variety": "बासमती",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 8000.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "रोपाई अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 25.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "चावल (IR64)": {
+    "name": "चावल (IR64)",
+    "variety": "IR64",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 7000.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "रोपाई अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 25.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "जूट (JRO524)": {
+    "name": "जूट (JRO524)",
+    "variety": "JRO524",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 6000.0,
+    "groups": [
+      "Malvaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 20.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 40.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "ज्वार (ज्वार अनाज)": {
+    "name": "ज्वार (ज्वार अनाज)",
+    "variety": "ज्वार अनाज",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 5000.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 8.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 100.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 34.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 34.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "टमाटर (पूसा रूबी)": {
+    "name": "टमाटर (पूसा रूबी)",
+    "variety": "पूसा रूबी",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 12000.0,
+    "groups": [
+      "Solanaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "रोपाई अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "नारियल (लंबा)": {
+    "name": "नारियल (लंबा)",
+    "variety": "लंबा",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 12000.0,
+    "groups": [
+      "Arecaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "अंकुरण अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 25.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 33.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "परिपक्वता अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 25.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 18.0,
+          "optimal_min": 24.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "पत्ता गोभी (गोल्डन एकर)": {
+    "name": "पत्ता गोभी (गोल्डन एकर)",
+    "variety": "गोल्डन एकर",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 7000.0,
+    "groups": [
+      "Brassicaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 150.0
+        }
+      },
+      {
+        "name": "रोपाई अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 3.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "प्याज (नासिक लाल)": {
+    "name": "प्याज (नासिक लाल)",
+    "variety": "नासिक लाल",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 9000.0,
+    "groups": [
+      "Amaryllidaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 100.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "फूल गोभी (स्नोबॉल)": {
+    "name": "फूल गोभी (स्नोबॉल)",
+    "variety": "स्नोबॉल",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 8000.0,
+    "groups": [
+      "Brassicaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 4.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "रोपाई अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 28.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      }
+    ]
+  },
+  "बाजरा (मोती बाजरा)": {
+    "name": "बाजरा (मोती बाजरा)",
+    "variety": "मोती बाजरा",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 5000.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 38.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 150.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 38.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 25.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 40.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 38.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "बैंगन (बैंगन)": {
+    "name": "बैंगन (बैंगन)",
+    "variety": "बैंगन",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 8000.0,
+    "groups": [
+      "Solanaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "रोपाई अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "मक्का (संकर)": {
+    "name": "मक्का (संकर)",
+    "variety": "संकर",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 7000.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 750.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 250.0
+        }
+      }
+    ]
+  },
+  "मसूर (मसूर दाल)": {
+    "name": "मसूर (मसूर दाल)",
+    "variety": "मसूर दाल",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 8500.0,
+    "groups": [
+      "Fabaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 100.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "मिर्च (गुंटूर)": {
+    "name": "मिर्च (गुंटूर)",
+    "variety": "गुंटूर",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 15000.0,
+    "groups": [
+      "Solanaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "रोपाई अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 38.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "मूंगफली (TMV2)": {
+    "name": "मूंगफली (TMV2)",
+    "variety": "TMV2",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 8000.0,
+    "groups": [
+      "Fabaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 8.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 150.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "सरसों (पूसा बोल्ड)": {
+    "name": "सरसों (पूसा बोल्ड)",
+    "variety": "पूसा बोल्ड",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 7000.0,
+    "groups": [
+      "Brassicaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "अंकुरण से वृद्धि",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 20.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 500.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 700.0
+        }
+      }
+    ]
+  },
+  "सूरजमुखी (KBSH44)": {
+    "name": "सूरजमुखी (KBSH44)",
+    "variety": "KBSH44",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 8000.0,
+    "groups": [
+      "Asteraceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "अंकुरण से फूल आना",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      },
+      {
+        "name": "फूल आने से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      }
+    ]
+  },
+  "सोयाबीन (JS335)": {
+    "name": "सोयाबीन (JS335)",
+    "variety": "JS335",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 7000.0,
+    "groups": [
+      "Fabaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "बुवाई से अंकुरण",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "अंकुरण से फूल आना",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "फूल आने से परिपक्वता",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      },
+      {
+        "name": "परिपक्वता से कटाई",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 900.0
+        }
+      }
+    ]
+  },
+  "हल्दी (अल्लेप्पी)": {
+    "name": "हल्दी (अल्लेप्पी)",
+    "variety": "अल्लेप्पी",
+    "is_reference": true,
+    "region": "in",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 18000.0,
+    "groups": [
+      "Zingiberaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "पौध अवस्था",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "वृद्धि अवस्था",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 20.0,
+          "optimal_min": 25.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 18.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "कटाई अवस्था",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  }
+}
