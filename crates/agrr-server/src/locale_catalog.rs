@@ -3,6 +3,8 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use saphyr::{LoadableYamlNode, ScalarOwned, YamlOwned};
+
 #[derive(Clone)]
 pub struct LocaleCatalog {
     /// `ja` | `en` | `in` → `pests.undo.toast` → message template
@@ -78,37 +80,57 @@ fn merge_yaml_file(
     out: &mut HashMap<String, HashMap<String, String>>,
 ) -> Result<(), String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
-    let root: serde_yaml::Value =
-        serde_yaml::from_str(&text).map_err(|e| format!("yaml {}: {e}", path.display()))?;
-    let Some(mapping) = root.as_mapping() else {
+    // Rails locale files may repeat keys in one file; Psych last-wins. serde_yaml rejects them.
+    let docs = YamlOwned::load_from_str(&text).map_err(|e| format!("yaml {}: {e}", path.display()))?;
+    let Some(root) = docs.into_iter().next() else {
+        return Ok(());
+    };
+    let YamlOwned::Mapping(mapping) = root else {
         return Ok(());
     };
     for (locale_key, content) in mapping {
-        let Some(locale_str) = locale_key.as_str() else {
+        let Some(locale_str) = yaml_mapping_key(&locale_key) else {
             continue;
         };
-        let catalog_locale = normalize_locale(locale_str).to_string();
+        let catalog_locale = normalize_locale(&locale_str).to_string();
         let bucket = out.entry(catalog_locale).or_default();
-        flatten_value("", content, bucket);
+        flatten_yaml_owned("", &content, bucket);
     }
     Ok(())
 }
 
-fn flatten_value(prefix: &str, value: &serde_yaml::Value, out: &mut HashMap<String, String>) {
+fn yaml_mapping_key(key: &YamlOwned) -> Option<String> {
+    match key {
+        YamlOwned::Value(ScalarOwned::String(s)) => Some(s.clone()),
+        YamlOwned::Representation(rep, _, _) => Some(rep.clone()),
+        _ => None,
+    }
+}
+
+fn flatten_yaml_owned(prefix: &str, value: &YamlOwned, out: &mut HashMap<String, String>) {
     match value {
-        serde_yaml::Value::Mapping(map) => {
+        YamlOwned::Mapping(map) => {
             for (k, v) in map {
-                let Some(part) = k.as_str() else { continue };
+                let Some(part) = yaml_mapping_key(&k) else {
+                    continue;
+                };
                 let key = if prefix.is_empty() {
-                    part.to_string()
+                    part
                 } else {
                     format!("{prefix}.{part}")
                 };
-                flatten_value(&key, v, out);
+                flatten_yaml_owned(&key, v, out);
             }
         }
-        serde_yaml::Value::String(s) => {
-            out.insert(prefix.to_string(), s.clone());
+        YamlOwned::Value(ScalarOwned::String(s)) => {
+            if !prefix.is_empty() {
+                out.insert(prefix.to_string(), s.clone());
+            }
+        }
+        YamlOwned::Representation(rep, _, _) => {
+            if !prefix.is_empty() {
+                out.insert(prefix.to_string(), rep.clone());
+            }
         }
         _ => {}
     }
@@ -141,6 +163,37 @@ mod tests {
             catalog.translate("in", "pests.undo.toast").as_deref(),
             Some("JA %{name}")
         );
+    }
+
+    #[test]
+    fn loads_all_repo_locale_files() {
+        let dir = locales_dir_from_env();
+        if !dir.is_dir() {
+            return;
+        }
+        LocaleCatalog::load_from_dir(&dir).expect("load all locale yaml files");
+    }
+
+    #[test]
+    fn translates_api_errors_no_cultivation_period_from_repo_locales() {
+        let dir = locales_dir_from_env();
+        if !dir.is_dir() {
+            return;
+        }
+        let catalog = LocaleCatalog::load_from_dir(&dir).expect("load locales");
+        let expected = [
+            ("ja", "栽培期間が設定されていません"),
+            ("en", "Cultivation period is not set"),
+        ];
+        for (locale, want) in expected {
+            let msg = catalog
+                .translate(locale, "api.errors.no_cultivation_period")
+                .unwrap_or_default();
+            assert_eq!(
+                msg, want,
+                "locale={locale} api.errors.no_cultivation_period"
+            );
+        }
     }
 
     #[test]

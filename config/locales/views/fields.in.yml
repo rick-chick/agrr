@@ -88,45 +88,4 @@ in:
       edit: "संपादित करें"
       delete: "हटाएं"
       confirm_delete: "क्या आप इस खेत क्षेत्र को हटाना चाहते हैं?"
-      breadcrumb:
-        farms: "खेत सूची"
-        current: "नया खेत क्षेत्र"
-      form:
-        name_label: "खेत क्षेत्र नाम"
-        name_placeholder: "उदाहरण: खेत #1"
-        name_help: "अपने खेत क्षेत्र का नाम दर्ज करें"
-        area_label: "क्षेत्रफल (वर्ग मीटर)"
-        area_placeholder: "उदाहरण: 1000"
-        area_help: "अपने खेत क्षेत्र का क्षेत्रफल वर्ग मीटर में दर्ज करें"
-        location_label: "📍 स्थान"
-        map_loading: "🗺️ नक्शा लोड हो रहा है..."
-        latitude_label: "अक्षांश"
-        latitude_placeholder: "28.6139"
-        longitude_label: "देशांतर"
-        longitude_placeholder: "77.2090"
-        submit: "खेत क्षेत्र बनाएं"
-        cancel: "रद्द करें"
-      errors:
-        title: "%{count} त्रुटियां हुईं:"
-    
-    edit:
-      title: "खेत क्षेत्र संपादित करें"
-      breadcrumb:
-        farms: "खेत सूची"
-        current: "खेत क्षेत्र संपादित करें"
-      form:
-        submit: "खेत क्षेत्र अपडेट करें"
-        cancel: "रद्द करें"
-      errors:
-        title: "%{count} त्रुटियां हुईं:"
-    
-    show:
-      breadcrumb:
-        farms: "खेत सूची"
-        fields: "खेत क्षेत्र सूची"
-      info: "खेत क्षेत्र जानकारी"
-      edit: "संपादित करें"
-      delete: "हटाएं"
-      delete_confirm: "क्या आप वाकई हटाना चाहते हैं?"
-      back: "वापस"
 

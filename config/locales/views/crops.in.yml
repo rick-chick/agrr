@@ -1,3 +1,5 @@
+in:
+  crops:
     agricultural_tasks:
       flash:
         template_created: "चयनित कार्य से टेम्पलेट बनाया गया।"
@@ -46,8 +48,6 @@
           required_tools_hint: "प्रत्येक पंक्ति में एक उपकरण दर्ज करें"
           submit_update: "टेम्पलेट अपडेट करें"
 
-in:
-  crops:
     form:
       name_label: "नाम"
       variety_label: "किस्म"
@@ -177,8 +177,6 @@ in:
       groups: "समूह"
       created_at: "निर्माण तिथि"
       updated_at: "अद्यतन तिथि"
-      edit: "Edit"
-      delete: "Hapus"
       pests_title: "कीट"
       no_pests_description: "अभी तक कोई कीट पंजीकृत नहीं।"
       manage_pests: "कीट प्रबंधन"
@@ -265,12 +263,4 @@ in:
         cancel: "रद्द करें"
         errors:
           title: "%{count} त्रुटियां हुईं:"
-    
-    edit:
-      title: "%{name} संपादित करें"
-      form:
-        submit: "फसल अपडेट करें"
-        cancel: "रद्द करें"
-      errors:
-        title: "%{count} त्रुटियां हुईं:"
 

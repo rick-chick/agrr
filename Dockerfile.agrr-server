@@ -25,6 +25,7 @@ COPY --from=builder /app/target/release/agrr-server /usr/local/bin/agrr-server
 COPY --from=builder /app/target/release/agrr-migrate /usr/local/bin/agrr-migrate
 
 COPY config/litestream.yml /etc/litestream.yml
+COPY config/locales /app/config/locales
 COPY scripts/db_bootstrap_common.sh scripts/start_agrr_server.sh scripts/run-agrr-migrate.sh \
   scripts/production-data-migrate-inner.sh /app/scripts/
 RUN chmod +x /app/scripts/db_bootstrap_common.sh /app/scripts/start_agrr_server.sh \

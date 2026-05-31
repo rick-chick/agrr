@@ -12,16 +12,6 @@ us:
       regenerate:
         success: "API key regenerated successfully."
         failure: "Failed to regenerate API key."
-  # Date/Time formats
-  time:
-    formats:
-      long: "%B %d, %Y %H:%M"
-      short: "%m/%d %H:%M"
-  date:
-    formats:
-      long: "%B %d, %Y"
-      short: "%m/%d"
-  
   # Common
   common:
     save: "Save"
@@ -53,7 +43,6 @@ us:
   # API error messages
   api:
     errors:
-      no_cultivation_period: "Cultivation period is not set"
       backdoor:
         not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
         missing_token: "Missing authentication token"
@@ -114,64 +103,6 @@ us:
     not_logged_in: "Not logged in."
     create_user_failed: "Failed to create user: %{errors}"
     mock_login_success: "Mock login successful as %{name}!"
-  
-  # JavaScript messages
-  js:
-    crop_ai:
-      enter_name: "Please enter a crop name"
-      fetching: "Fetching crop information with AI..."
-      button_fetching: "🤖 Fetching with AI..."
-      created_success: "✓ Retrieved and saved crop '%{name}'!"
-      fetch_failed: "Failed to retrieve crop information"
-      network_error: "A network error occurred"
-    crop_palette:
-      plan_id_missing: "Error: Could not retrieve plan ID"
-      crop_types_limit: "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}"
-      crop_add_failed: "Failed to add crop: %{message}"
-      communication_error: "Communication error occurred. Please try again."
-    
-    gantt:
-      optimization_failed: "Optimization failed"
-      update_failed: "Failed to update data. Please reload the page manually."
-      fetch_error: "Error occurred while fetching data. Please reload the page manually."
-      field_info_error: "Error: Could not retrieve destination field information.\nPlease check the console log."
-      communication_error: "Communication error occurred.\nPlease try again."
-      add_field_button: "Add Field"
-      adding_field_loading: "Adding field..."
-      confirm_delete_field: "Delete %{field_name}?\n(This field has no crops, so it can be deleted)"
-      confirm_delete_crop: "Delete %{crop_name}?"
-      invalid_area: "Please enter a valid area"
-      field_add_failed: "Failed to add field"
-      field_delete_failed: "Failed to delete field"
-
-    plans:
-      gantt_not_loaded: "Gantt feature was not loaded (script might have failed to load)"
-      data_missing: "Required data is missing for loading"
-      load_failed: "Failed to load data"
-      load_error: "Failed to load data"
-      errors:
-        field_not_found: "Field not found"
-        cannot_remove_field_with_cultivations: "This field has cultivation schedules. Remove crops first."
-        cannot_remove_last_field: "The last field cannot be removed"
-      messages:
-        field_removed: "Field removed."
-    
-    fertilize_ai:
-      enter_name: "Enter fertilizer name"
-      fetching: "Fetching fertilizer information with AI..."
-      button_fetching: "🤖 Fetching information with AI..."
-      created_success: "✓ Fetched and saved fertilizer information for \"%{name}\"!"
-      updated_success: "✓ Fetched and updated fertilizer information for \"%{name}\"!"
-      fetch_failed: "Failed to fetch fertilizer information"
-      network_error: "Network error occurred"
-    pest_ai:
-      enter_name: "Please enter a pest name"
-      fetching: "Fetching pest information with AI..."
-      button_fetching: "🤖 Fetching with AI..."
-      created_success: "✓ Retrieved and saved pest '%{name}'!"
-      updated_success: "✓ Retrieved and updated pest information for '%{name}'!"
-      fetch_failed: "Failed to retrieve pest information"
-      network_error: "A network error occurred"
 
   # Navigation
   nav:
@@ -363,7 +294,6 @@ us:
       adding_field_loading: "Adding field..."
       confirm_delete_field: "Delete %{field_name}?\n(This field has no crops, so it can be deleted)"
       confirm_delete_crop: "Delete %{crop_name}?"
-      adding_field_loading: "Adding..."
     timeline:
       update_failed: "Failed to update"
       date_required: "Date is required"

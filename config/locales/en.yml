@@ -213,7 +213,22 @@ en:
         restrict_dependent_destroy:
           has_one: "Cannot delete record because a dependent %{record} exists"
           has_many: "Cannot delete record because dependent %{record} exist"
-  
+      models:
+        task_schedule_item:
+          attributes:
+            gdd_trigger:
+              agrr_required: "GDD trigger is required for AGRR-sourced tasks"
+        farm:
+          attributes:
+            is_reference:
+              reference_only_anonymous: "Reference farms can only belong to the anonymous user"
+            user:
+              farm_limit_exceeded: "You can create up to 4 Farms"
+        crop:
+          attributes:
+            user:
+              crop_limit_exceeded: "You can create up to 20 Crops"
+
   # Error messages (common for ActiveRecord and other validations)
   # API translations
   api:
@@ -257,6 +272,7 @@ en:
         weather_location_required: "This farm has no weather location linked."
         prediction_failed: "Failed to fetch weather prediction."
     errors:
+      no_cultivation_period: "Cultivation period is not set"
       backdoor:
         not_enabled: "Backdoor is not enabled. Set AGRR_BACKDOOR_TOKEN environment variable."
         missing_token: "Missing authentication token"
@@ -309,24 +325,6 @@ en:
       fertilizes:
         updated_with_latest: "Updated fertilizer '%{name}' with latest info"
         created_by_ai: "Created fertilizer '%{name}' with AI-fetched info"
-
-  activerecord:
-    errors:
-      models:
-        task_schedule_item:
-          attributes:
-            gdd_trigger:
-              agrr_required: "GDD trigger is required for AGRR-sourced tasks"
-        farm:
-          attributes:
-            is_reference:
-              reference_only_anonymous: "Reference farms can only belong to the anonymous user"
-            user:
-              farm_limit_exceeded: "You can create up to 4 Farms"
-        crop:
-          attributes:
-            user:
-              crop_limit_exceeded: "You can create up to 20 Crops"
 
   auth_test:
     mock_data_missing: "Mock authentication data is not configured"

@@ -13,16 +13,6 @@ in:
       regenerate:
         success: "API कुंजी सफलतापूर्वक पुनः बनाई गई।"
         failure: "API कुंजी पुनः बनाने में विफल।"
-  # तारीख और समय प्रारूप (Date/Time formats)
-  time:
-    formats:
-      long: "%d %B %Y %H:%M"
-      short: "%d/%m %H:%M"
-  date:
-    formats:
-      long: "%d %B %Y"
-      short: "%d/%m"
-  
   # सामान्य (Common)
   common:
     save: "सहेजें"

@@ -166,8 +166,6 @@ ja:
       groups: "グループ"
       created_at: "作成日"
       updated_at: "更新日"
-      edit: "編集"
-      delete: "削除"
       pests_title: "害虫"
       no_pests_description: "まだ害虫が登録されていません。"
       manage_pests: "害虫を管理"
@@ -258,14 +256,6 @@ ja:
         cancel: "キャンセル"
         errors:
           title: "%{count}件のエラーがあります："
-    
-    edit:
-      title: "%{name}を編集"
-      form:
-        submit: "作物を更新"
-        cancel: "キャンセル"
-      errors:
-        title: "%{count}件のエラーがあります："
     
     pests:
       flash:

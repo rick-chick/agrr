@@ -1,14 +1,4 @@
 ja:
-  # 日付・時刻フォーマット
-  time:
-    formats:
-      long: "%Y年%m月%d日 %H:%M"
-      short: "%m/%d %H:%M"
-  date:
-    formats:
-      long: "%Y年%m月%d日"
-      short: "%m/%d"
-  
   # 共通
   common:
     save: "保存"
@@ -55,8 +45,6 @@ ja:
 
   # API用エラーメッセージ
   api:
-    errors:
-      no_cultivation_period: "栽培期間が設定されていません"
     entry_schedule:
       label:
         sowing: "種をまく目安"
@@ -97,6 +85,7 @@ ja:
         weather_location_required: "この農場に気象地点が紐づいていません。"
         prediction_failed: "気象予測の取得に失敗しました。"
     errors:
+      no_cultivation_period: "栽培期間が設定されていません"
       backdoor:
         not_enabled: "Backdoor 機能が有効化されていません。設定を確認してください。"
         missing_token: "認証トークンが指定されていません"
@@ -156,8 +145,6 @@ ja:
         updated_with_latest: "肥料「%{name}」を最新情報で更新しました"
         created_by_ai: "AIで肥料「%{name}」の情報を取得して作成しました"
         updated_by_ai: "肥料「%{name}」を更新しました"
-      crop_not_found: "作物情報が見つかりません"
-      no_cultivation_period: "栽培期間が設定されていません"
       weather_forecast_failed: "天気予報データの取得に失敗しました"
       data_fetch_failed: "データの取得に失敗しました"
       agrr_daemon_not_running: "AGRRサービスが起動していません"
