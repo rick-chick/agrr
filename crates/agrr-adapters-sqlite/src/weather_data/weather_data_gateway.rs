@@ -19,8 +19,13 @@ impl WeatherDataSqliteGateway {
     }
 }
 
+/// Accepts `YYYY-MM-DD` and `YYYY-MM-DDTHH:MM:SS` (India reference fixtures store the latter).
 fn parse_date(s: &str) -> Option<Date> {
-    Date::parse(s.trim(), &time::format_description::parse("[year]-[month]-[day]").ok()?).ok()
+    let s = s.trim();
+    if s.len() < 10 {
+        return None;
+    }
+    Date::parse(&s[..10], &time::format_description::parse("[year]-[month]-[day]").ok()?).ok()
 }
 
 fn date_str(d: Date) -> String {

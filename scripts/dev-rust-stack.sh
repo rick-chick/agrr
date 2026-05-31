@@ -5,7 +5,7 @@
 #   ./scripts/dev-rust-stack.sh        # 起動
 #   ./scripts/dev-rust-stack.sh stop   # 停止
 #
-# 環境変数: AGRR_SQLITE_PATH, AGRR_SOCKET_PATH, AGRR_BIN, AGRR_USE_MOCK, AGRR_SKIP_CARGO_BUILD
+# 環境変数: AGRR_SQLITE_PATH, AGRR_SOCKET_PATH, AGRR_BIN, AGRR_USE_MOCK, AGRR_SKIP_CARGO_BUILD, WEATHER_DATA_SOURCE
 set -euo pipefail
 
 export AGRR_RUST_API=1
@@ -112,6 +112,8 @@ if [[ ! -f "$AGRR_SQLITE_PATH" ]]; then
 fi
 
 export AGRR_SOCKET_PATH="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
+# docker-compose / env.example と同じ。India 等は noaa より nasa-power（determine_data_source の noaa を上書き）
+export WEATHER_DATA_SOURCE="${WEATHER_DATA_SOURCE:-nasa-power}"
 AGRR_BIN="${AGRR_BIN:-$ROOT/lib/core/agrr}"
 
 ensure_agrr_daemon() {
@@ -155,12 +157,13 @@ fi
 
 require_port_free 8080 "agrr-server" || exit 1
 
-echo "==> agrr-server on 127.0.0.1:8080 (AGRR_USE_MOCK=${AGRR_USE_MOCK:-false}, socket=$AGRR_SOCKET_PATH)"
+echo "==> agrr-server on 127.0.0.1:8080 (AGRR_USE_MOCK=${AGRR_USE_MOCK:-false}, WEATHER_DATA_SOURCE=$WEATHER_DATA_SOURCE, socket=$AGRR_SOCKET_PATH)"
 AGRR_ENV="${AGRR_ENV:-development}" \
   FRONTEND_URL="$FRONTEND_URL" \
   AGRR_SQLITE_PATH="$AGRR_SQLITE_PATH" \
   AGRR_SOCKET_PATH="$AGRR_SOCKET_PATH" \
   AGRR_USE_MOCK="${AGRR_USE_MOCK:-false}" \
+  WEATHER_DATA_SOURCE="$WEATHER_DATA_SOURCE" \
   "$ROOT/target/release/agrr-server" >"$PID_DIR/rust.log" 2>&1 &
 echo $! >"$PID_DIR/rust.pid"
 
