@@ -5,19 +5,7 @@ module Adapters
     module Gateways
       class PredictionDaemonGateway < BaseGatewayV2
         def predict(historical_data:, days:, model: "lightgbm")
-          # 環境変数でモデル選択を制御
-          # 優先順位:
-          # 1) ENV['AGRR_PREDICT_MODEL'] があればそれを最優先（例: 'mock', 'lightgbm'）
-          # 2) 開発環境では、ENV['AGRR_USE_MOCK'] が 'false' でなければ 'mock' を既定にする（後方互換）
-          # 3) それ以外は引数の model を使用
-          env_model = ENV["AGRR_PREDICT_MODEL"]&.strip&.downcase
-          effective_model = if env_model.present?
-            env_model
-          elsif Rails.env.development?
-            (ENV["AGRR_USE_MOCK"] == "false") ? model : "mock"
-          else
-            model
-          end
+          effective_model = resolve_effective_model(model)
 
           if effective_model == "mock"
             Rails.logger.info "🔮 [AGRR] Using MOCK model (effective_model=mock)"
@@ -141,6 +129,18 @@ module Adapters
         end
 
         private
+
+        # 優先順位: AGRR_PREDICT_MODEL > (development かつ AGRR_USE_MOCK=true なら mock) > 引数 model
+        def resolve_effective_model(model)
+          env_model = ENV["AGRR_PREDICT_MODEL"]&.strip&.downcase
+          return env_model if env_model.present?
+
+          if Rails.env.development? && ENV["AGRR_USE_MOCK"] == "true"
+            "mock"
+          else
+            model
+          end
+        end
 
         def generate_mock_predictions(historical_data, days)
           Rails.logger.info "🎭 [AGRR] Generating mock predictions for #{days} days"

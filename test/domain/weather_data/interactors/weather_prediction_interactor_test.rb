@@ -60,6 +60,36 @@ module Domain
           end
         end
 
+        class CountingPredictionGateway
+          attr_reader :calls
+
+          def initialize
+            @calls = 0
+          end
+
+          def predict(historical_data:, days:, model: "lightgbm")
+            @calls += 1
+            start = Date.new(2026, 5, 14)
+            rows = (0...[days, 1].max).map do |i|
+              d = start + i
+              {
+                "time" => d.to_s,
+                "temperature_2m_max" => 20.0,
+                "temperature_2m_min" => 10.0,
+                "temperature_2m_mean" => 15.0,
+                "precipitation_sum" => 0.0
+              }
+            end
+            {
+              "latitude" => historical_data["latitude"],
+              "longitude" => historical_data["longitude"],
+              "elevation" => historical_data["elevation"],
+              "timezone" => historical_data["timezone"],
+              "data" => rows
+            }
+          end
+        end
+
         setup do
           @clock = FakeClock.new(Date.new(2026, 5, 15), Time.utc(2026, 5, 15, 8, 0, 0))
           @anchors_resolver = FakeAnchorsResolver.new
@@ -107,6 +137,36 @@ module Domain
           assert_not_nil result
           assert_equal payload, result[:data]
           assert_equal "2025-01-01", result[:prediction_start_date]
+        end
+
+        test "predict_for_cultivation_plan reuses weather location cache without calling prediction gateway" do
+          cached = {
+            "data" => [
+              { "time" => "2025-12-31", "temperature_2m_max" => 99.0, "temperature_2m_min" => 1.0,
+                "temperature_2m_mean" => 50.0, "precipitation_sum" => 0.0 }
+            ],
+            "prediction_start_date" => "2025-01-01",
+            "prediction_end_date" => "2025-12-31"
+          }
+          gateway = CountingPredictionGateway.new
+          interactor = build_interactor(
+            weather_location: weather_location_dto(predicted_weather_data: cached),
+            prediction_gateway: gateway
+          )
+          training_result = {
+            data: [ FakeDatum.new(date: Date.new(2026, 5, 13), temperature_max: 20.0, temperature_min: 10.0,
+                                  temperature_mean: 15.0, precipitation: 0.0, sunshine_hours: 5.0,
+                                  wind_speed: 2.0, weather_code: 0) ],
+            end_date: Date.new(2026, 5, 13)
+          }
+
+          interactor.stub(:get_training_data, training_result) do
+            interactor.stub(:get_current_year_data, []) do
+              interactor.predict_for_cultivation_plan(plan_weather: plan_weather_dto)
+            end
+          end
+
+          assert_equal 0, gateway.calls
         end
 
         test "predict_for_cultivation_plan persists the built payload via both gateways" do
@@ -166,13 +226,18 @@ module Domain
 
         private
 
-        def build_interactor(weather_location: :__default, clock: :__default, anchors_resolver: :__default)
+        def build_interactor(
+          weather_location: :__default,
+          clock: :__default,
+          anchors_resolver: :__default,
+          prediction_gateway: :__default
+        )
           Domain::WeatherData::Interactors::WeatherPredictionInteractor.new(
             weather_location: weather_location == :__default ? weather_location_dto : weather_location,
             cultivation_plan_gateway: @cultivation_plan_gateway,
             farm_gateway: Object.new,
             weather_data_gateway: @weather_data_gateway,
-            prediction_gateway: Object.new,
+            prediction_gateway: prediction_gateway == :__default ? Object.new : prediction_gateway,
             logger: @logger,
             clock: clock == :__default ? @clock : clock,
             anchors_resolver: anchors_resolver == :__default ? @anchors_resolver : anchors_resolver

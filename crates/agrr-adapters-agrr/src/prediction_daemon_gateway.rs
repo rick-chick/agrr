@@ -5,7 +5,7 @@ use rand::Rng;
 use serde_json::{json, Value};
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
 use crate::daemon_response::parse_daemon_json_payload;
-use crate::daemon_temp_file::{path_string, read_json_file, write_temp_json};
+use crate::daemon_temp_file::{path_string, write_temp_json};
 
 pub struct PredictionDaemonGateway {
     client: AgrrDaemonClient,
@@ -25,10 +25,64 @@ impl PredictionDaemonGateway {
                 return m;
             }
         }
-        if std::env::var("AGRR_USE_MOCK").as_deref() != Ok("false") {
+        if std::env::var("AGRR_USE_MOCK").as_deref() == Ok("true") {
             return "mock".into();
         }
         requested.to_string()
+    }
+}
+
+#[cfg(test)]
+mod effective_model_tests {
+    use super::PredictionDaemonGateway;
+
+    fn restore_env(key: &str, prev: Option<String>) {
+        match prev {
+            Some(v) => std::env::set_var(key, v),
+            None => std::env::remove_var(key),
+        }
+    }
+
+    fn with_env_vars<F>(vars: &[(&str, Option<&str>)], f: F)
+    where
+        F: FnOnce(),
+    {
+        let prev: Vec<_> = vars
+            .iter()
+            .map(|(k, _)| (*k, std::env::var(k).ok()))
+            .collect();
+        for (key, value) in vars {
+            match value {
+                Some(v) => std::env::set_var(key, v),
+                None => std::env::remove_var(key),
+            }
+        }
+        f();
+        for (key, old) in prev {
+            restore_env(key, old);
+        }
+    }
+
+    #[test]
+    fn effective_model_respects_agrr_use_mock_opt_in() {
+        with_env_vars(
+            &[("AGRR_USE_MOCK", None), ("AGRR_PREDICT_MODEL", None)],
+            || {
+                assert_eq!(
+                    PredictionDaemonGateway::effective_model("lightgbm"),
+                    "lightgbm"
+                );
+            },
+        );
+        with_env_vars(
+            &[("AGRR_USE_MOCK", Some("true")), ("AGRR_PREDICT_MODEL", None)],
+            || {
+                assert_eq!(
+                    PredictionDaemonGateway::effective_model("lightgbm"),
+                    "mock"
+                );
+            },
+        );
     }
 }
 
@@ -85,22 +139,12 @@ impl PredictionGateway for PredictionDaemonGateway {
             .execute_daemon_args(&args)
             .map_err(|e: AgrrDaemonError| e.to_string())?;
 
-        if let Ok(payload) = parse_daemon_json_payload(&wrapper) {
-            if payload.get("data").is_some() {
-                return Ok(payload);
-            }
-            if payload.get("predictions").is_some() {
-                return Ok(transform_predictions_to_weather_data(&payload, historical_data));
-            }
+        let payload = parse_daemon_json_payload(&wrapper).map_err(|e: AgrrDaemonError| e.to_string())?;
+        if payload.get("data").is_some() {
+            return Ok(payload);
         }
-
-        let raw = read_json_file(&out_path)?;
-        let _ = std::fs::remove_file(&out_path);
-        if raw.get("data").is_some() {
-            return Ok(raw);
-        }
-        if raw.get("predictions").is_some() {
-            return Ok(transform_predictions_to_weather_data(&raw, historical_data));
+        if payload.get("predictions").is_some() {
+            return Ok(transform_predictions_to_weather_data(&payload, historical_data));
         }
         Err("prediction output missing data and predictions".into())
     }

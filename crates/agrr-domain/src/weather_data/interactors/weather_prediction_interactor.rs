@@ -74,6 +74,8 @@ pub struct WeatherPredictionTestOverrides {
 /// Ruby: `Domain::WeatherData::Interactors::WeatherPredictionInteractor`
 pub struct WeatherPredictionInteractor<'a> {
     weather_location: WeatherLocation,
+    /// Rails `@farm&.predicted_weather_data` — optional cache for `get_prediction_data`.
+    farm_predicted_weather: Option<Value>,
     cultivation_plan_gateway: &'a dyn CultivationPlanPredictedWeatherGateway,
     weather_data_gateway: &'a dyn WeatherDataGateway,
     prediction_gateway: &'a dyn PredictionGateway,
@@ -86,6 +88,7 @@ pub struct WeatherPredictionInteractor<'a> {
 impl<'a> WeatherPredictionInteractor<'a> {
     pub fn new(
         weather_location: WeatherLocation,
+        farm_predicted_weather: Option<Value>,
         cultivation_plan_gateway: &'a dyn CultivationPlanPredictedWeatherGateway,
         weather_data_gateway: &'a dyn WeatherDataGateway,
         prediction_gateway: &'a dyn PredictionGateway,
@@ -98,6 +101,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
         let _ = anchors_resolver.anchors_for(clock.today());
         Ok(Self {
             weather_location,
+            farm_predicted_weather,
             cultivation_plan_gateway,
             weather_data_gateway,
             prediction_gateway,
@@ -111,6 +115,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
     #[cfg(test)]
     pub fn with_test_overrides(
         weather_location: WeatherLocation,
+        farm_predicted_weather: Option<Value>,
         cultivation_plan_gateway: &'a dyn CultivationPlanPredictedWeatherGateway,
         weather_data_gateway: &'a dyn WeatherDataGateway,
         prediction_gateway: &'a dyn PredictionGateway,
@@ -121,6 +126,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
     ) -> Self {
         Self {
             weather_location,
+            farm_predicted_weather,
             cultivation_plan_gateway,
             weather_data_gateway,
             prediction_gateway,
@@ -307,6 +313,12 @@ impl<'a> WeatherPredictionInteractor<'a> {
 
         if let Some(cached) =
             cached_future_data(self.weather_location.predicted_weather_data(), target_end_date)
+        {
+            return Ok(cached);
+        }
+
+        if let Some(cached) =
+            cached_future_data(self.farm_predicted_weather.as_ref(), target_end_date)
         {
             return Ok(cached);
         }

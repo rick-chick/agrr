@@ -69,7 +69,10 @@ ensure_agrr_daemon() {
     exit 1
   fi
   echo "==> Starting agrr daemon ($AGRR_BIN)"
-  "$AGRR_BIN" daemon start >/dev/null 2>&1 || true
+  if ! "$AGRR_BIN" daemon start >/dev/null 2>&1; then
+    echo "agrr daemon start failed (check $AGRR_BIN daemon status)"
+    exit 1
+  fi
   for _ in $(seq 1 45); do
     [[ -S "$AGRR_SOCKET_PATH" ]] && return 0
     sleep 1

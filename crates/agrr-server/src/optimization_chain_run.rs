@@ -214,6 +214,10 @@ pub fn run_weather_prediction_step(
 
     let pool = state.sqlite.clone();
     let wl = crate::cultivation_plan_weather_load::load_weather_location(&pool, plan_id)?;
+    let farm_predicted = crate::cultivation_plan_weather_load::load_farm_weather_prediction(&pool, plan_id)
+        .ok()
+        .flatten()
+        .and_then(|f| f.predicted_weather_data().cloned());
     let weather_data = WeatherDataGatewayBundle::resolve(pool.clone())
         .map_err(|e| format!("weather data gateway: {e}"))?;
     let plan_predicted = FieldCultivationPlanPredictedWeatherSqliteGateway::new(pool.clone());
@@ -224,6 +228,7 @@ pub fn run_weather_prediction_step(
 
     let interactor = WeatherPredictionInteractor::new(
         wl,
+        farm_predicted,
         &plan_predicted,
         &weather_data,
         &prediction,

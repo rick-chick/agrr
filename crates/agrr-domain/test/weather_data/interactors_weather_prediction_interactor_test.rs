@@ -153,6 +153,42 @@
         }
     }
 
+    struct SpyPredictionGateway {
+        calls: Arc<Mutex<u32>>,
+    }
+
+    impl SpyPredictionGateway {
+        fn new() -> Self {
+            Self {
+                calls: Arc::new(Mutex::new(0)),
+            }
+        }
+    }
+
+    impl PredictionGateway for SpyPredictionGateway {
+        fn predict(
+            &self,
+            _: &Value,
+            days: i64,
+            _: &str,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            *self.calls.lock().expect("lock") += 1;
+            let mut rows = Vec::new();
+            let start = Date::from_calendar_date(2026, Month::May, 14).expect("valid");
+            for i in 0..days.max(1) {
+                let d = start + time::Duration::days(i);
+                rows.push(json!({
+                    "time": d.to_string(),
+                    "temperature_2m_max": 20.0,
+                    "temperature_2m_min": 10.0,
+                    "temperature_2m_mean": 15.0,
+                    "precipitation_sum": 0.0
+                }));
+            }
+            Ok(json!({ "data": rows }))
+        }
+    }
+
     fn fixed_clock() -> FixedClock {
         FixedClock {
             today: Date::from_calendar_date(2026, Month::May, 15).expect("valid"),
@@ -197,6 +233,7 @@
         let bad_clock = BadClock;
         let err = WeatherPredictionInteractor::new(
             weather_location_dto(None),
+            None,
             &plan_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
@@ -241,6 +278,7 @@
         let clock = fixed_clock();
         let interactor = WeatherPredictionInteractor::new(
             weather_location_dto(Some(payload.clone())),
+            None,
             &plan_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
@@ -287,6 +325,7 @@
         let clock = fixed_clock();
         let interactor = WeatherPredictionInteractor::new(
             weather_location_dto(None),
+            None,
             &plan_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
@@ -303,6 +342,68 @@
         );
         assert!(result.is_some());
         assert_eq!(result.expect("result").data, plan_payload);
+    }
+
+    #[test]
+    fn predict_for_cultivation_plan_reuses_location_cache_without_calling_gateway() {
+        let cached = json!({
+            "data": [{
+                "time": "2025-12-31",
+                "temperature_2m_max": 99.0,
+                "temperature_2m_min": 1.0,
+                "temperature_2m_mean": 50.0,
+                "precipitation_sum": 0.0
+            }],
+            "prediction_start_date": "2025-01-01",
+            "prediction_end_date": "2025-12-31"
+        });
+        let spy = SpyPredictionGateway::new();
+        let calls = spy.calls.clone();
+        let training_result = TrainingDataResult {
+            data: vec![WeatherData::new(
+                Date::from_calendar_date(2026, Month::May, 13).expect("valid"),
+                Some(20.0),
+                Some(10.0),
+                Some(15.0),
+                Some(0.0),
+                Some(5.0),
+                Some(2.0),
+                Some(0),
+            )],
+            end_date: Date::from_calendar_date(2026, Month::May, 13).expect("valid"),
+        };
+        let plan_gateway = FakePlanGateway {
+            updated: Arc::new(Mutex::new(None)),
+        };
+        let weather_gateway = FakeWeatherDataGateway {
+            period_data: vec![],
+            persisted: Arc::new(Mutex::new(None)),
+        };
+        let clock = fixed_clock();
+        let interactor = WeatherPredictionInteractor::with_test_overrides(
+            weather_location_dto(Some(cached)),
+            None,
+            &plan_gateway,
+            &weather_gateway,
+            &spy,
+            &NoopLogger,
+            &clock,
+            &FakeAnchors,
+            WeatherPredictionTestOverrides {
+                training_result: Some(training_result),
+                ..Default::default()
+            },
+        );
+
+        interactor
+            .predict_for_cultivation_plan(&plan_weather_dto(), None)
+            .expect("ok");
+
+        assert_eq!(
+            *calls.lock().expect("lock"),
+            0,
+            "Rails parity: reuse weather_location cache when it covers target_end_date"
+        );
     }
 
     #[test]
@@ -341,6 +442,7 @@
 
         let interactor = WeatherPredictionInteractor::with_test_overrides(
             weather_location_dto(None),
+            None,
             &plan_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
@@ -409,6 +511,7 @@
 
         let interactor = WeatherPredictionInteractor::with_test_overrides(
             weather_location_dto(None),
+            None,
             &plan_gateway,
             &weather_gateway,
             &NoopPredictionGateway,

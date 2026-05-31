@@ -68,6 +68,7 @@ impl OwnedWeatherPredictionService {
     ) -> Result<R, WeatherPredictionError> {
         let interactor = WeatherPredictionInteractor::new(
             self.weather_location.clone(),
+            self.farm_predicted.clone(),
             &self.plan_gateway,
             &self.weather_gateway,
             &self.prediction_gateway,
