@@ -29,14 +29,14 @@ apply_pragmas "$AGRR_CACHE_SQLITE_PATH" "cache"
 litestream replicate -config /etc/litestream.yml &
 echo "==> Litestream replicate started"
 
-echo "==> un-stamp repair + us base for body apply"
+echo "==> un-stamp repair migrations for re-apply"
 sqlite3 "$AGRR_SQLITE_PATH" \
-  "DELETE FROM data_migration_history WHERE version IN ('20260531120000','20260531130100','20251018075149');"
+  "DELETE FROM data_migration_history WHERE version IN ('20260531120000','20260531130100','20260531130200');"
 
 echo "==> data apply in repair"
 "$M" data apply --region in --kind repair
-echo "==> data apply us base (skip weather)"
-AGRR_MIGRATE_SKIP_WEATHER=1 "$M" data apply --region us --kind base
+echo "==> data apply us repair (crop_stages from us_reference_crops.json)"
+"$M" data apply --region us --kind repair
 
 echo "==> post-check"
 sqlite3 "$AGRR_SQLITE_PATH" \

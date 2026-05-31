@@ -1,4 +1,4 @@
-# 本番 Rust カットオーバー — 残作業と観測記録
+# 本番 Rust カットオーバー — 完了状態と観測記録
 
 > **最終観測**: 2026-06-01（本番手動スモーク完了申告 + `p7-code-removal-gate.sh`）。本番指紋・レプリカは 2026-05-31（gcloud / curl）  
 > **完了条件**: [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md) レベル 4・5  
@@ -17,16 +17,23 @@
 | P7 コード削除 Phase 2（`lib/domain`） | **実施済み**（2026-05-31）— `lib/domain/`・`test/domain/` 削除 |
 | P7 Phase 3（Solid Cable DB） | **実施済み**（2026-05-31）— `database.yml` の cable DB・Litestream cable レプリカ削除。Rails は `/cable` 非マウント |
 | P7 refinery / 本番イメージ | **実施済み**（2026-05-31）— `Dockerfile.production` 削除、デプロイは `agrr-server` + `agrr-migrate` のみ |
-| 本番 DB データ | **in repair 適用済み**（レプリカ確認）。**us 参照作物 7 件**は stages 欠損のまま |
+| 本番 DB データ | **in / us repair 適用済み**（運用申告 2026-06-01。`20260531130200` 含む） |
 
-## 残作業
+## 移行プログラムの残作業
 
-| # | 項目 | 備考 |
-|---|------|------|
-| ~~1~~ | ~~URL map 命名整理~~ | **実施済み**（2026-05-31）— `agrr-rails-backend` → **`rust-backend`**、旧 backend 削除。[`scripts/agrr-frontend-url-map-simple.yaml`](../../../scripts/agrr-frontend-url-map-simple.yaml) |
-| ~~2~~ | ~~本番 **手動スモーク**~~ | **実施済み**（2026-06-01）— OAuth、`auth/me`、計画→最適化 WS、マスタ CRUD、`save_plan`、`POST /undo_deletion` |
-| 3 | 本番 **us 参照データ** | `20260531130200` `repair_us_reference_crops` — コード済み。本番 primary へは運用合意後 `agrr-migrate data apply --region us --kind repair` |
-| 4 | **P7 出口** #7（必要時） | 参照データの手動 `data apply` — [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md)・[`P7-MIGRATION-RUNBOOK.md`](./P7-MIGRATION-RUNBOOK.md) |
+**なし**（2026-06-01 — 本番 `agrr.net` で手動スモーク・in/us repair まで運用確認済み）。通常の機能デプロイ・PR マージは**本移行の残タスクではない**。
+
+## P7「削除」— 済んでいることと残っていること
+
+本番 API/WS から Rails を外す **P7 の削除は 2026-05-31 に完了**している。進んでいないように見えるのは、**リポジトリから Rails 全体を消したわけではない**ため。
+
+| 区分 | 状態 | 例 |
+|------|------|-----|
+| **削除済み（本番経路）** | 完了 | `app/controllers/api/`、`lib/domain/`、`test/domain/`、API jobs/channels、API 用 adapters、`Dockerfile.production`、Solid Cable DB |
+| **本番は Rust のみ** | 完了 | LB → `agrr-server`（`/api/*` `/cable` `/auth/*`） |
+| **意図的に残存（開発・テスト用 Rails シェル）** | 別スコープ | `spa#index`、静的ページ、`auth_test`、[`config/routes.rb`](../../../config/routes.rb) の dev ルート、Rails テスト基盤（`docker compose` / `run-test-rails.sh`）、一部 `app/adapters`（auth_test 等） |
+
+**レベル 5（P7）の定義**は [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md) — 「本番で Rails API に依存しない」であり、「`Gemfile` や Rails プロジェクトの全消し」ではない。
 
 **ローカルゲート**: [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh) 1 本で足りる（内部で build + R4 契約 + `agrr-migrate`）。**2026-06-01: OK**（109 runs, 0 failures）。Rust / 起動スクリプトを変えたマージ前のみ再実行。
 
@@ -36,7 +43,8 @@
 - **`Dockerfile.production` 廃止**（2026-05-31）— 本番デプロイは `Dockerfile.agrr-server` のみ（`gcp-deploy.sh` → refinery / Litestream）
 - 本番 `agrr-production` を `Dockerfile.agrr-server` でデプロイ — `agrr-server:20260531-222952`
 - 本番 refinery — レプリカで `schema verify OK`（`refinery_schema_history` + `data_migration_history` あり）
-- 本番 in repair — `20260531120000` / `20260531130100` 適用済み（レプリカ）
+- 本番 in repair — `20260531120000` / `20260531130100` 適用済み
+- 本番 us repair — `20260531130200` 適用済み（2026-06-01）
 - **本番手動スモーク** — 2026-06-01（`agrr.net`、レベル 4 条件 3）
 
 ---
@@ -85,19 +93,9 @@ NEG 名 `agrr-rails-neg` は歴史的名称のまま（Cloud Run `agrr-productio
 | 履歴表 | `schema_migrations`, `refinery_schema_history`, `data_migration_history` |
 | `in` repair | **適用済み** |
 | `in` 参照・stages なし | **0** |
-| `us` 参照・stages なし | **7**（下表） |
+| `us` 参照・stages なし | **7**（**2026-05-31 レプリカ時点**。us repair 適用後は本番確認済み — 下記 2026-06-01） |
 
-本番 us 参照作物（stages なし）:
-
-| id | name |
-|----|------|
-| 76 | Almonds (Nonpareil) |
-| 77 | Apples (Red Delicious) |
-| 78 | Carrots (Standard) |
-| 79 | Cotton (Upland Cotton) |
-| 80 | Rice (Long Grain) |
-| 81 | Soybeans (Standard) |
-| 82 | Wheat (Winter Wheat) |
+> **注意**: この節はカットオーバー直後のレプリカ観測の**履歴**。2026-06-01 時点の本番確認で us repair・手動スモークは OK のため、現状の「残課題」ではない。
 
 ---
 
@@ -125,7 +123,8 @@ NEG 名 `agrr-rails-neg` は歴史的名称のまま（Cloud Run `agrr-productio
 | マスタ CRUD（`/api/v1/masters/*`） | OK |
 | `POST /api/v1/public_plans/save_plan` | OK |
 | `POST /undo_deletion` | OK |
-| 記録 | 運用確認済み（利用者申告） |
+| us 参照データ repair（`20260531130200`） | OK（本番確認済み） |
+| 記録 | 運用確認済み |
 
 ---
 
@@ -145,17 +144,11 @@ agrr-migrate schema verify
 agrr-migrate data list
 ```
 
-## 推奨実施順（2026-06-01 時点）
+## クローズ（2026-06-01）
 
-**次にやること**
+**Rust 本番移行（P6 レベル 4・P7）はクローズ。** 本番確認（スモーク・in/us repair）まで含めて完了。
 
-1. **us 参照データ repair 適用**（残作業 #3）— レプリカで dry-run 後、合意のうえ本番: `agrr-migrate data apply --region us --kind repair`（`20260531130200`、fixture: `db/fixtures/us_reference_crops.json`）。手順: [`P7-MIGRATION-RUNBOOK.md`](./P7-MIGRATION-RUNBOOK.md)
-
-**完了済み**
-
-- **本番手動スモーク** **2026-06-01**（レベル 4 条件 3 — 上記観測記録）
-- ローカルゲート **2026-06-01**（`p7-code-removal-gate.sh`）
-- P7 Phase 1–3、URL map **`rust-backend`**、`Dockerfile.production` 廃止、本番 **`agrr-server` 単体**（2026-05-31）
+以降の「Rails 関連」は **別プログラム**（例: 開発用 Rails シェル縮小、`ARCHITECTURE.md` の記述を Rust 正に合わせる）であり、本ドキュメントの残作業ではない。
 
 ## 関連
 
