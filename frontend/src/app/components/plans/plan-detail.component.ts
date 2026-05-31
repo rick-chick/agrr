@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
-import { GanttChartComponent } from './gantt-chart.component';
-import { PlanFieldClimateComponent } from './plan-field-climate.component';
+import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
 import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/plan-detail.providers';
@@ -22,57 +21,31 @@ const initialControl: PlanDetailViewState = {
   imports: [
     CommonModule,
     RouterLink,
-    GanttChartComponent,
-    PlanFieldClimateComponent,
+    PlanGanttClimateShellComponent,
     TranslateModule,
     PlanDisplayNamePipe
   ],
   providers: [...PLAN_DETAIL_PROVIDERS],
   template: `
-    <section class="page">
-      <a [routerLink]="['/plans']">{{ 'plans.show.back_to_list' | translate }}</a>
+    <main class="page-main">
+      <a class="plan-detail__back" [routerLink]="['/plans']">{{
+        'plans.show.back_to_list' | translate
+      }}</a>
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <div class="page-alert-error" role="alert">
+        <div class="plan-detail__alert" role="alert">
           <p>{{ control.error | translate }}</p>
         </div>
       } @else if (control.plan) {
-        <h2>{{ control.plan.name | planDisplayName }}</h2>
+        <h2 class="plan-detail__title">{{ control.plan.name | planDisplayName }}</h2>
         @if (control.planData) {
-          <div class="plan-detail__layout">
-            <div class="plan-detail__pane plan-detail__gantt">
-              <app-gantt-chart
-                [data]="control.planData"
-                [planType]="planType"
-                (cultivationSelected)="handleCultivationSelection($event)"
-                (visibleRangeChange)="handleVisibleRangeUpdate($event)"
-              />
-            </div>
-
-            <div
-              class="plan-detail__pane plan-detail__climate-panel"
-              [class.plan-detail__climate-panel--open]="selectedCultivationId !== null"
-            >
-              @if (selectedCultivationId) {
-                <app-plan-field-climate
-                  [fieldCultivationId]="selectedCultivationId"
-                  [planType]="selectedPlanType"
-                  [displayStartDate]="visibleRangeStartDate"
-                  [displayEndDate]="visibleRangeEndDate"
-                  (close)="closeClimatePanel()"
-                />
-              } @else {
-                <p class="plan-detail__climate-placeholder">
-                  {{ 'plans.detail.select_cultivation_hint' | translate }}
-                </p>
-              }
-            </div>
+          <div class="plan-detail__body plan-detail-surface">
+            <app-plan-gantt-climate-shell [data]="control.planData" [planType]="planType" />
           </div>
-
         }
       }
-    </section>
+    </main>
   `,
   styleUrls: ['./plan-detail.component.css']
 })
@@ -92,10 +65,6 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   }
 
   readonly planType: 'private' | 'public' = 'private';
-  selectedCultivationId: number | null = null;
-  selectedPlanType: 'private' | 'public' = this.planType;
-  visibleRangeStartDate: string | null = null;
-  visibleRangeEndDate: string | null = null;
 
   ngOnInit(): void {
     this.presenter.setView(this);
@@ -114,36 +83,5 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   load(planId: number): void {
     this.control = { ...this.control, loading: true };
     this.useCase.execute({ planId });
-  }
-
-  handleCultivationSelection(event: { cultivationId: number; planType: 'private' | 'public' }): void {
-    const alreadySelected =
-      this.selectedCultivationId === event.cultivationId &&
-      this.selectedPlanType === event.planType;
-
-    if (alreadySelected) {
-      this.closeClimatePanel();
-      return;
-    }
-
-    this.selectedCultivationId = event.cultivationId;
-    this.selectedPlanType = event.planType;
-  }
-
-  closeClimatePanel(): void {
-    this.selectedCultivationId = null;
-    this.selectedPlanType = this.planType;
-  }
-
-  handleVisibleRangeUpdate(range: { startDate: Date; endDate: Date; label: string }): void {
-    this.visibleRangeStartDate = this.toIsoDate(range.startDate);
-    this.visibleRangeEndDate = this.toIsoDate(range.endDate);
-  }
-
-  private toIsoDate(value: Date): string {
-    const year = value.getFullYear();
-    const month = (value.getMonth() + 1).toString().padStart(2, '0');
-    const day = value.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 }

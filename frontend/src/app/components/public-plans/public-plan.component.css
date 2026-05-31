@@ -11,7 +11,7 @@
 }
 
 /* 結果画面: 子を横いっぱいに（align-items: center による幅つぶれ防止） */
-.public-plans-wrapper.page-main:has(.public-plan-results__body) {
+.public-plans-wrapper.page-main:has(.plan-detail-surface) {
   align-items: stretch;
 }
 

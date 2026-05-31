@@ -10,8 +10,7 @@ import {
   PublicPlanResultsPresenter,
   PUBLIC_PLAN_RESULTS_PROVIDERS
 } from '../../usecase/public-plans/public-plan-results.providers';
-import { GanttChartComponent } from '../plans/gantt-chart.component';
-import { PlanFieldClimateComponent } from '../plans/plan-field-climate.component';
+import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { FlashMessageService } from '../../services/flash-message.service';
@@ -35,7 +34,7 @@ const initialControl: PublicPlanResultsViewState = {
 @Component({
   selector: 'app-public-plan-results',
   standalone: true,
-  imports: [CommonModule, GanttChartComponent, PlanFieldClimateComponent, TranslateModule, RouterLink],
+  imports: [CommonModule, PlanGanttClimateShellComponent, TranslateModule, RouterLink],
   providers: [...PUBLIC_PLAN_RESULTS_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper">
@@ -66,33 +65,8 @@ const initialControl: PublicPlanResultsViewState = {
             </a>
           </div>
 
-          <div class="public-plan-results__body">
-            <div class="plan-detail__layout">
-              <div class="plan-detail__pane plan-detail__gantt">
-                <app-gantt-chart
-                  [data]="control.data"
-                  [planType]="planType"
-                  (cultivationSelected)="handleCultivationSelection($event)"
-                />
-              </div>
-
-              <div
-                class="plan-detail__pane plan-detail__climate-panel"
-                [class.plan-detail__climate-panel--open]="selectedCultivationId !== null"
-              >
-                @if (selectedCultivationId) {
-                  <app-plan-field-climate
-                    [fieldCultivationId]="selectedCultivationId"
-                    [planType]="selectedPlanType"
-                    (close)="closeClimatePanel()"
-                  />
-                } @else {
-                  <p class="plan-detail__climate-placeholder">
-                    {{ 'plans.detail.select_cultivation_hint' | translate }}
-                  </p>
-                }
-              </div>
-            </div>
+          <div class="public-plan-results__body plan-detail-surface">
+            <app-plan-gantt-climate-shell [data]="control.data" [planType]="planType" />
           </div>
         }
       </div>
@@ -114,8 +88,6 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   protected readonly auth = inject(AuthService);
 
   readonly planType: 'private' | 'public' = 'public';
-  selectedCultivationId: number | null = null;
-  selectedPlanType: 'private' | 'public' = this.planType;
 
   private pendingSaveTriggered = false;
 
@@ -193,24 +165,5 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     }
     const fromStore = this.publicPlanStore.state.planId;
     return fromStore && fromStore > 0 ? fromStore : 0;
-  }
-
-  handleCultivationSelection(event: { cultivationId: number; planType: 'private' | 'public' }): void {
-    const alreadySelected =
-      this.selectedCultivationId === event.cultivationId &&
-      this.selectedPlanType === event.planType;
-
-    if (alreadySelected) {
-      this.closeClimatePanel();
-      return;
-    }
-
-    this.selectedCultivationId = event.cultivationId;
-    this.selectedPlanType = event.planType;
-  }
-
-  closeClimatePanel(): void {
-    this.selectedCultivationId = null;
-    this.selectedPlanType = this.planType;
   }
 }

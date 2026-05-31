@@ -1,4 +1,5 @@
-/* 結果画面: 外枠カードなし（ガント・気候パネルは子コンポーネント側の枠のみ） */
+@import '../plans/plan-detail-surface.css';
+
 :host {
   display: block;
   width: 100%;
@@ -10,91 +11,4 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-}
-
-.public-plan-results__body {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding-bottom: var(--bottom-spacer-height);
-}
-
-.public-plan-results__body .plan-detail__layout {
-  display: grid;
-  gap: var(--space-4);
-  margin-top: 0;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.public-plan-results__body .plan-detail__pane {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.public-plan-results__body .plan-detail__climate-panel--open {
-  border: none;
-  box-shadow: none;
-}
-
-/* ガント・気候のカード枠はコンテンツ幅いっぱい（スマホで細くならない） */
-.public-plan-results__body :is(
-  .gantt-page,
-  .gantt-container,
-  .gantt-scroll-area,
-  .crop-palette,
-  .field-form,
-  .no-data-message,
-  .plan-field-climate,
-  .plan-field-climate__status,
-  .plan-field-climate__error,
-  .plan-field-climate__chart-card
-) {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.plan-detail__gantt {
-  min-height: 420px;
-}
-
-.plan-detail__climate-panel {
-  min-height: 300px;
-}
-
-.plan-detail__climate-placeholder {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
-  line-height: 1.5;
-  margin: 0;
-  padding: var(--space-4);
-  text-align: center;
-}
-
-@media (max-width: 768px) {
-  .public-plan-results__body :is(
-    .plan-field-climate__charts,
-    .plan-field-climate__stats,
-    .plan-field-climate__stage-list
-  ) {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: calc(2 * var(--card-fill-min-mobile) + var(--space-2))) and (max-width: 768px) {
-  .public-plan-results__body :is(
-    .plan-field-climate__charts,
-    .plan-field-climate__stats,
-    .plan-field-climate__stage-list
-  ) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }

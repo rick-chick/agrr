@@ -1,0 +1,71 @@
+/*
+ * 計画詳細・public 結果の共通レイアウト（plans/:id と public-plan-results）。
+ * 外枠 pane カードなし。子の幅・グリッド補正は各子コンポーネント CSS も参照。
+ */
+.plan-detail-surface {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-bottom: var(--bottom-spacer-height);
+}
+
+.plan-detail-surface .plan-detail__layout {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.plan-detail-surface .plan-detail__pane {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.plan-detail-surface .plan-detail__climate-panel--open {
+  border: none;
+  box-shadow: none;
+}
+
+.plan-detail-surface > app-plan-gantt-climate-shell {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.plan-detail-surface .plan-detail__pane > app-gantt-chart,
+.plan-detail-surface .plan-detail__pane > app-plan-field-climate {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.plan-detail__gantt {
+  min-height: 420px;
+}
+
+.plan-detail__climate-panel {
+  min-height: 300px;
+}
+
+.plan-detail__climate-placeholder {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  margin: 0;
+  padding: var(--space-4);
+  text-align: center;
+}

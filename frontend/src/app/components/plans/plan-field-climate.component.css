@@ -176,3 +176,31 @@
   width: 100% !important;
   height: 100% !important;
 }
+
+.plan-field-climate__status,
+.plan-field-climate__error,
+.plan-field-climate__chart-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/*
+ * モバイル: 2列にすると1枚が --card-fill-min-mobile 未満になる幅では1列。
+ * 2枚分+gap が確保できる幅だけ最大2列（public-plan-results と同型）。
+ */
+@media (max-width: 768px) {
+  .plan-field-climate__charts,
+  .plan-field-climate__stats,
+  .plan-field-climate__stage-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: calc(2 * var(--card-fill-min-mobile) + var(--space-2))) and (max-width: 768px) {
+  .plan-field-climate__charts,
+  .plan-field-climate__stats,
+  .plan-field-climate__stage-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

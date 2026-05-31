@@ -173,33 +173,4 @@ describe('PublicPlanResultsComponent', () => {
       expect(saveUseCase.execute).toHaveBeenCalledTimes(1);
     });
   });
-
-  describe('climate panel interactions', () => {
-    it('opens the climate panel for a new cultivation selection', () => {
-      component.handleCultivationSelection({ cultivationId: 5, planType: 'public' });
-
-      expect(component.selectedCultivationId).toBe(5);
-      expect(component.selectedPlanType).toBe('public');
-    });
-
-    it('closes the climate panel when the same cultivation is selected again', () => {
-      component.selectedCultivationId = 5;
-      component.selectedPlanType = 'public';
-
-      component.handleCultivationSelection({ cultivationId: 5, planType: 'public' });
-
-      expect(component.selectedCultivationId).toBeNull();
-      expect(component.selectedPlanType).toBe('public');
-    });
-
-    it('resets selection via closeClimatePanel', () => {
-      component.selectedCultivationId = 8;
-      component.selectedPlanType = 'private';
-
-      component.closeClimatePanel();
-
-      expect(component.selectedCultivationId).toBeNull();
-      expect(component.selectedPlanType).toBe('public');
-    });
-  });
 });
