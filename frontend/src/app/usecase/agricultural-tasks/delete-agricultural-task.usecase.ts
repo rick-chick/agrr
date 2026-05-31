@@ -19,7 +19,7 @@ export class DeleteAgriculturalTaskUseCase implements DeleteAgriculturalTaskInpu
       next: (response) => {
         this.outputPort.onSuccess({
           deletedAgriculturalTaskId: dto.agriculturalTaskId,
-          undo: response.undo,
+          undo: response,
           refresh: dto.onAfterUndo
         });
         dto.onSuccess?.();

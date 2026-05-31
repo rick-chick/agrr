@@ -16,10 +16,10 @@ export class DeleteFertilizeUseCase implements DeleteFertilizeInputPort {
 
   execute(dto: DeleteFertilizeInputDto): void {
     this.fertilizeGateway.destroy(dto.fertilizeId).subscribe({
-      next: (response) =>
+      next: (undo) =>
         this.outputPort.onSuccess({
           deletedFertilizeId: dto.fertilizeId,
-          undo: response.undo,
+          undo,
           refresh: dto.onAfterUndo
         }),
       error: (err: Error) =>

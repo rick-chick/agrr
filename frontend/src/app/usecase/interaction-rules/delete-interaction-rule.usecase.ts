@@ -13,10 +13,10 @@ export class DeleteInteractionRuleUseCase implements DeleteInteractionRuleInputP
 
   execute(dto: DeleteInteractionRuleInputDto): void {
     this.interactionRuleGateway.destroy(dto.interactionRuleId).subscribe({
-      next: (response) => {
+      next: (undo) => {
         this.outputPort.onSuccess({
           deletedInteractionRuleId: dto.interactionRuleId,
-          undo: response.undo,
+          undo,
           refresh: dto.onAfterUndo
         });
         dto.onSuccess?.();

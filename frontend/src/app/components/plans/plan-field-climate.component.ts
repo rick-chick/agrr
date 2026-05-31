@@ -59,19 +59,19 @@ type StageTemperatureBand = {
         <div class="plan-field-climate__header-info">
           <p class="plan-field-climate__title">
             {{
-              control.climateData?.field_cultivation.crop_name ??
+              control.climateData?.field_cultivation?.crop_name ??
                 ('plans.field_climate.header_title_fallback' | translate)
             }}
           </p>
           <p class="plan-field-climate__subtitle">
             {{
-              control.climateData?.farm.name ??
+              control.climateData?.farm?.name ??
                 ('plans.field_climate.header_subtitle_fallback' | translate)
             }}
           </p>
           <div class="plan-field-climate__header-meta">
             <span>{{
-              control.climateData?.field_cultivation.field_name ??
+              control.climateData?.field_cultivation?.field_name ??
                 ('plans.field_climate.period_unknown' | translate)
             }}</span>
             <span>{{ headerPeriod }}</span>

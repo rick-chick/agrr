@@ -1,4 +1,15 @@
 {
+  "deletion_undo": {
+    "schedule_forbidden": "आपको यह क्रिया करने की अनुमति नहीं है।",
+    "toast_message": "{{resource}} हटा दिया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।",
+    "redirect_notice": "{{resource}} हटा दिया गया।",
+    "restored": "हटाना पूर्ववत कर दिया गया।",
+    "undo_button": "पूर्ववत करें",
+    "close_button": "बंद करें",
+    "expired": "पूर्ववत करने का समय समाप्त हो गया।",
+    "restore_failed": "हटाना पूर्ववत नहीं किया जा सका।",
+    "not_found": "पूर्ववत क्रिया नहीं मिली।"
+  },
   "controllers": {
     "plans": {
       "task_schedule_items": {

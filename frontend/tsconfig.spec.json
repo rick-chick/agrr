@@ -11,9 +11,7 @@
   },
   "include": [
     "src/**/*.d.ts",
-    "src/**/*.spec.ts"
-  ],
-  "exclude": [
-    "src/proxy-routes.spec.ts"
+    "src/**/*.spec.ts",
+    "proxy-routes.spec.ts"
   ]
 }

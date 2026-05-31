@@ -1,17 +1,18 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { UndoToastService } from '../../../services/undo-toast.service';
 
 @Component({
   selector: 'app-undo-toast',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   template: `
     <div class="undo-toast" *ngIf="toastService.state().visible">
       <span>{{ toastService.state().message }}</span>
       <div class="actions">
-        <button type="button" (click)="undo.emit()">Undo</button>
-        <button type="button" (click)="toastService.hide()">Close</button>
+        <button type="button" (click)="undo.emit()">{{ 'deletion_undo.undo_button' | translate }}</button>
+        <button type="button" (click)="toastService.hide()">{{ 'deletion_undo.close_button' | translate }}</button>
       </div>
     </div>
   `,

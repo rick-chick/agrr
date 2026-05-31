@@ -16,10 +16,10 @@ export class DeletePestUseCase implements DeletePestInputPort {
 
   execute(dto: DeletePestInputDto): void {
     this.pestGateway.destroy(dto.pestId).subscribe({
-      next: (response) => {
+      next: (undo) => {
         this.outputPort.onSuccess({
           deletedPestId: dto.pestId,
-          undo: response.undo,
+          undo,
           refresh: dto.onAfterUndo
         });
         dto.onSuccess?.();

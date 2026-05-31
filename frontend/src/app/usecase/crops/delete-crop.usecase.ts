@@ -16,10 +16,10 @@ export class DeleteCropUseCase implements DeleteCropInputPort {
 
   execute(dto: DeleteCropInputDto): void {
     this.cropGateway.destroy(dto.cropId).subscribe({
-      next: (response) => {
+      next: (undo) => {
         this.outputPort.onSuccess({
           deletedCropId: dto.cropId,
-          undo: response.undo,
+          undo,
           refresh: dto.onAfterUndo
         });
         dto.onSuccess?.();

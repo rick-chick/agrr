@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpHeaders } from '@angular/common/http';
 import { Observable, defer } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { extractDeletionUndoResponse } from '../../domain/shared/extract-deletion-undo-response';
+import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import { ApiService } from '../api.service';
 import { ApiKeyService } from '../api-key.service';
 
@@ -53,5 +56,10 @@ export class MastersClientService {
       const options = headers.keys().length > 0 ? { headers } : {};
       return this.apiClient.delete<T>(`/api/v1/masters${path}`, options);
     });
+  }
+
+  /** Masters DELETE with undo (flat or `{ undo: … }` JSON). */
+  deleteWithUndo(path: string): Observable<DeletionUndoResponse | undefined> {
+    return this.delete<unknown>(path).pipe(map((body) => extractDeletionUndoResponse(body)));
   }
 }

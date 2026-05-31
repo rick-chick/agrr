@@ -19,7 +19,7 @@ export class DeletePesticideUseCase implements DeletePesticideInputPort {
       next: (response) => {
         this.outputPort.onSuccess({
           deletedPesticideId: dto.pesticideId,
-          undo: response.undo,
+          undo: response,
           refresh: dto.onAfterUndo
         });
         dto.onSuccess?.();

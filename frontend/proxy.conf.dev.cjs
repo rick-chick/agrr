@@ -8,5 +8,7 @@ module.exports = {
   '/api/**': api,
   '/auth/**': api,
   '/cable': { ...api, ws: true },
-  '/up': api
+  '/up': api,
+  // UndoToastService posts here after masters DELETE (not under /api).
+  '/undo_deletion': api
 };

@@ -13,16 +13,12 @@ export interface CropCreatePayload {
   is_reference?: boolean;
 }
 
-export interface CropDeleteResponse {
-  undo: DeletionUndoResponse;
-}
-
 export interface CropGateway {
   list(): Observable<Crop[]>;
   show(cropId: number): Observable<Crop>;
   create(payload: CropCreatePayload): Observable<Crop>;
   update(cropId: number, payload: CropCreatePayload): Observable<Crop>;
-  destroy(cropId: number): Observable<CropDeleteResponse>;
+  destroy(cropId: number): Observable<DeletionUndoResponse | undefined>;
 }
 
 export const CROP_GATEWAY = new InjectionToken<CropGateway>('CROP_GATEWAY');

@@ -10,5 +10,6 @@ module.exports = {
   '/api/**': api,
   '/auth/**': api,
   '/cable': { ...api, ws: true },
-  '/up': api
+  '/up': api,
+  '/undo_deletion': api
 };
