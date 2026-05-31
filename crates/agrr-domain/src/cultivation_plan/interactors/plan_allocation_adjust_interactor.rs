@@ -486,17 +486,17 @@ where
                 })?
         };
 
-        let historical_end = self
-            .clock
-            .today()
-            .checked_sub(time::Duration::days(1))
-            .unwrap_or_else(|| self.clock.today());
+        let (historical_start, historical_end) =
+            crate::weather_data::mappers::adjust_historical_fetch_window(
+                effective_planning_start,
+                self.clock.today(),
+            );
 
         let historical_rows = self
             .read_gateway
             .list_historical_weather_rows(
                 Some(weather_location.id),
-                effective_planning_start,
+                historical_start,
                 historical_end,
             )
             .map_err(|e| PlanAllocationAdjustFailure {
@@ -518,7 +518,7 @@ where
             prediction_data
         } else {
             self.logger.info(&format!(
-                "✅ [Adjust] Historical weather data loaded: {} records ({effective_planning_start} to {historical_end})",
+                "✅ [Adjust] Historical weather data loaded: {} records ({historical_start} to {historical_end})",
                 historical_rows.len()
             ));
             let facts = &snapshot.weather_location_facts;

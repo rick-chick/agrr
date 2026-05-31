@@ -16,16 +16,8 @@ module Domain
           today:
         )
           mapper = Domain::FieldCultivation::Mappers::FieldCultivationClimateWeatherPayloadMapper
-          display_start = mapper.coerce_optional_date(display_start_date)
-          display_end = mapper.coerce_optional_date(display_end_date)
-
-          if display_start && display_end
-            observed_start = display_start
-            observed_end = display_end
-          else
-            observed_start = mapper.coerce_optional_date(cultivation_start_date)
-            observed_end = mapper.coerce_optional_date(cultivation_end_date)
-          end
+          observed_start = mapper.coerce_optional_date(cultivation_start_date)
+          observed_end = mapper.coerce_optional_date(cultivation_end_date)
 
           return Dtos::FieldCultivationClimateObservedMergeRangeDecision.skip if observed_start.nil? || observed_end.nil?
 

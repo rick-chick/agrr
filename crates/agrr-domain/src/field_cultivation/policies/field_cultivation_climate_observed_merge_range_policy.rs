@@ -10,14 +10,9 @@ pub fn resolve_observed_merge_range(
     cultivation_end_date: Option<Date>,
     today: Date,
 ) -> FieldCultivationClimateObservedMergeRangeDecision {
-    let display_start = display_start_date.and_then(coerce_optional_date);
-    let display_end = display_end_date.and_then(coerce_optional_date);
-
-    let (observed_start, observed_end) = if let (Some(s), Some(e)) = (display_start, display_end) {
-        (Some(s), Some(e))
-    } else {
-        (cultivation_start_date, cultivation_end_date)
-    };
+    let _ = (display_start_date, display_end_date);
+    let observed_start = cultivation_start_date;
+    let observed_end = cultivation_end_date;
 
     let (Some(observed_start), Some(observed_end)) = (observed_start, observed_end) else {
         return FieldCultivationClimateObservedMergeRangeDecision::skip();

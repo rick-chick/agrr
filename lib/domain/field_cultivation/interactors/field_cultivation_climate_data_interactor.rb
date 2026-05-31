@@ -242,16 +242,16 @@ module Domain
             start_date: decision.start_date,
             end_date: decision.end_date
           )
-          return cached if observed_dtos.empty?
 
-          observed_formatted = Mappers::FieldCultivationClimateWeatherPayloadMapper.build_observed_agrr_payload(
-            weather_location_meta: Mappers::FieldCultivationClimateWeatherPayloadMapper.weather_location_meta_from_source(source: source),
-            observed_weather_dtos: observed_dtos
-          )
-
-          Mappers::FieldCultivationClimateWeatherPayloadMapper.merge_cached_with_observed(
+          Mappers::FieldCultivationClimateAgrrWeatherAssembler.assemble_plan_weather_with_observed(
             cached_weather_payload: cached,
-            observed_formatted: observed_formatted
+            observed_weather_dtos: observed_dtos,
+            weather_location_meta: Mappers::FieldCultivationClimateWeatherPayloadMapper.weather_location_meta_from_source(source: source),
+            cultivation_start_date: context.start_date,
+            cultivation_end_date: context.completion_date,
+            today: @clock.today,
+            display_start_date: display_start_date,
+            display_end_date: display_end_date
           )
         end
 

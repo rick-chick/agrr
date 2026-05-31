@@ -353,8 +353,12 @@ module Domain
             prediction_data = weather_info[:data]
           end
 
-          historical_data_start = effective_planning_start
-          historical_data_end = @clock.today - 1
+          historical_window = Domain::WeatherData::Mappers::AdjustObservedWeatherWindowMapper.historical_fetch_window(
+            effective_planning_start: effective_planning_start,
+            today: @clock.today
+          )
+          historical_data_start = historical_window[:start_date]
+          historical_data_end = historical_window[:end_date]
           historical_rows = @plan_allocation_adjust_read_gateway.list_historical_weather_rows(
             weather_location_id: weather_location.id,
             historical_start: historical_data_start,

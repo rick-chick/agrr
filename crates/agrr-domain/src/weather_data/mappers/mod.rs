@@ -1,5 +1,7 @@
 pub(crate) mod adjust_historical_prediction_mapper;
+pub(crate) mod adjust_observed_weather_window_mapper;
 pub(crate) mod open_meteo_weather_mapper;
 
 pub use adjust_historical_prediction_mapper::AdjustHistoricalPredictionMapper;
+pub use adjust_observed_weather_window_mapper::historical_fetch_window as adjust_historical_fetch_window;
 pub use open_meteo_weather_mapper::OpenMeteoWeatherMapper;
