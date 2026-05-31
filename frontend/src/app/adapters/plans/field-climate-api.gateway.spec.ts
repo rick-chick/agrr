@@ -30,9 +30,7 @@ describe('FieldClimateApiGateway', () => {
     },
     weather_data: [],
     gdd_data: [],
-    stages: [],
-    progress_result: {},
-    debug_info: {}
+    stages: []
   };
 
   beforeEach(() => {

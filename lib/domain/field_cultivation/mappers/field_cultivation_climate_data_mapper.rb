@@ -24,6 +24,8 @@ module Domain
             final_cumulative_gdd_required: final_cumulative_gdd_required
           )
 
+          chart_weather_records = align_weather_records_to_gdd_span(weather_records, daily_gdd)
+
           Dtos::FieldCultivationClimateDataOutput.new(
             field_cultivation: {
               id: context.field_cultivation_id,
@@ -42,7 +44,7 @@ module Domain
               base_temperature: base_temp,
               optimal_temperature_range: context.optimal_temperature_range
             },
-            weather_data: weather_records.map do |datum|
+            weather_data: chart_weather_records.map do |datum|
               {
                 "date" => datum["date"],
                 "temperature_max" => datum["temperature_max"],
@@ -153,6 +155,31 @@ module Domain
           )
 
           [ daily_gdd, baseline_gdd, filtered_records, progress_records ]
+        end
+
+        def align_weather_records_to_gdd_span(weather_records, daily_gdd)
+          weather_records = Array(weather_records)
+          return weather_records if daily_gdd.empty?
+
+          first_date = parse_gdd_datum_date(daily_gdd.first)
+          last_date = parse_gdd_datum_date(daily_gdd.last)
+          return weather_records unless first_date && last_date
+
+          weather_records.select do |datum|
+            datum_date = parse_gdd_datum_date(datum)
+            next false unless datum_date
+
+            datum_date >= first_date && datum_date <= last_date
+          end
+        end
+
+        def parse_gdd_datum_date(datum)
+          date_value = datum[:date] || datum["date"]
+          return nil unless date_value
+
+          Date.parse(date_value.to_s)
+        rescue ArgumentError, TypeError
+          nil
         end
 
         def truncate_daily_gdd_at_requirement!(daily_gdd, final_cumulative_gdd_required:)

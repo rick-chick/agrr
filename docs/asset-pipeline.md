@@ -24,4 +24,4 @@
 1. npm ライブラリを使う、または他 JS とバンドルが必要 → `app/javascript/`（`application.js` で import）
 2. それ以外 → `app/assets/javascripts/`（Propshaft で配信）
 
-例：`custom_gantt_chart.js`、`climate_chart.js` のようなプロジェクト固有スクリプトは Propshaft 側。
+例：プロジェクト固有の Propshaft 配下スクリプト（ガント等のレガシー資産があった場合）。

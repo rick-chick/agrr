@@ -26,10 +26,8 @@ import {
 import { PlanFieldClimateView, PlanFieldClimateViewState } from './plan-field-climate.view';
 import { LoadFieldClimateUseCase } from '../../usecase/plans/field-climate/load-field-climate.usecase';
 import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
-import {
-  PlanFieldClimatePresenter,
-  PLAN_FIELD_CLIMATE_PROVIDERS
-} from '../../usecase/plans/plan-field-climate.providers';
+import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
+import { PLAN_FIELD_CLIMATE_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 
 const INITIAL_STATE: PlanFieldClimateViewState = {
   loading: false,

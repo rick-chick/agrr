@@ -89,6 +89,62 @@
     }
 
     #[test]
+    fn build_output_aligns_weather_data_span_with_truncated_gdd_data() {
+        let context = FieldCultivationClimateContextSnapshot {
+            field_cultivation_id: 1,
+            field_name: "A".into(),
+            crop_name: "Tomato".into(),
+            start_date: date!(2026 - 03 - 01),
+            completion_date: date!(2026 - 03 - 05),
+            farm_id: 10,
+            farm_name: "Farm".into(),
+            farm_latitude: 35.0,
+            farm_longitude: 139.0,
+            plan_id: 5,
+            plan_type_public: false,
+            plan_predicted_weather_present: true,
+            prediction_target_end_date: None,
+            calculated_planning_end_date: None,
+            predicted_weather_data: Some(json!({})),
+            crop_id: 2,
+            base_temperature: 10.0,
+            optimal_temperature_range: Some(json!({ "min": 15, "max": 25 })),
+            stages: vec![json!({
+                "name": "Stage1",
+                "order": 1,
+                "gdd_required": 100.0,
+                "cumulative_gdd_required": 100.0
+            })],
+        };
+        let weather_records: Vec<Value> = (1..=5)
+            .map(|day| {
+                json!({
+                    "date": format!("2026-03-{day:02}"),
+                    "temperature_max": 30.0,
+                    "temperature_min": 20.0,
+                    "temperature_mean": 25.0
+                })
+            })
+            .collect();
+        let progress_result = json!({
+            "progress_records": [
+                { "date": "2026-03-01", "cumulative_gdd": 40.0, "stage_name": "S1" },
+                { "date": "2026-03-02", "cumulative_gdd": 80.0, "stage_name": "S1" },
+                { "date": "2026-03-03", "cumulative_gdd": 110.0, "stage_name": "S1" },
+                { "date": "2026-03-04", "cumulative_gdd": 130.0, "stage_name": "S1" },
+                { "date": "2026-03-05", "cumulative_gdd": 150.0, "stage_name": "S1" }
+            ]
+        });
+        let dto = build_output(&context, &weather_records, &progress_result);
+        assert_eq!(dto.gdd_data.len(), dto.weather_data.len());
+        assert_eq!(dto.gdd_data[0]["date"], dto.weather_data[0]["date"]);
+        assert_eq!(
+            dto.gdd_data.last().unwrap()["date"],
+            dto.weather_data.last().unwrap()["date"]
+        );
+    }
+
+    #[test]
     fn extract_weather_records_filters_by_period() {
         let payload = json!({
             "data": [

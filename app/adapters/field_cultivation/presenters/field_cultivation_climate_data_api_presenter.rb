@@ -60,9 +60,7 @@ module Adapters
             crop_requirements: dto.crop_requirements,
             weather_data: dto.weather_data,
             gdd_data: dto.gdd_data,
-            stages: dto.stages,
-            progress_result: dto.progress_result,
-            debug_info: dto.debug_info
+            stages: dto.stages
           }
         end
 

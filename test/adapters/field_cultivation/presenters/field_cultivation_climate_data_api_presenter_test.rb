@@ -79,9 +79,7 @@ class FieldCultivationClimateDataApiPresenterTest < ActiveSupport::TestCase
       crop_requirements: crop_requirements,
       weather_data: weather_data,
       gdd_data: gdd_data,
-      stages: stages,
-      progress_result: progress_result,
-      debug_info: debug_info
+      stages: stages
     }
 
     view_mock.expects(:render_response).with(

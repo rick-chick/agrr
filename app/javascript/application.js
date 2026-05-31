@@ -3,5 +3,3 @@ import "@hotwired/turbo-rails"
 
 import "./controllers"
 import "./cable_subscription"
-
-import "./integrations/analytics_integration"

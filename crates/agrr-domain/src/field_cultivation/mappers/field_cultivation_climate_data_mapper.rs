@@ -23,7 +23,9 @@ pub fn build_output(
         final_cumulative_gdd_required,
     );
 
-    let weather_data: Vec<Value> = weather_records
+    let chart_weather_records = align_weather_records_to_gdd_span(weather_records, &daily_gdd);
+
+    let weather_data: Vec<Value> = chart_weather_records
         .iter()
         .map(|datum| {
             json!({
@@ -114,6 +116,37 @@ fn final_cumulative_gdd_required_from_stages(stages: &[Value]) -> Option<f64> {
                 .and_then(|v| v.as_f64())
         })
         .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+}
+
+fn align_weather_records_to_gdd_span(
+    weather_records: &[Value],
+    daily_gdd: &[Value],
+) -> Vec<Value> {
+    if daily_gdd.is_empty() {
+        return weather_records.to_vec();
+    }
+    let Some(first_date) = gdd_datum_date(daily_gdd.first()) else {
+        return weather_records.to_vec();
+    };
+    let Some(last_date) = gdd_datum_date(daily_gdd.last()) else {
+        return weather_records.to_vec();
+    };
+
+    weather_records
+        .iter()
+        .filter(|datum| {
+            gdd_datum_date(Some(datum))
+                .is_some_and(|datum_date| datum_date >= first_date && datum_date <= last_date)
+        })
+        .cloned()
+        .collect()
+}
+
+fn gdd_datum_date(datum: Option<&Value>) -> Option<Date> {
+    let datum = datum?;
+    let date_value = datum.get("date")?;
+    let date_str = date_value.as_str()?;
+    parse_iso_date(date_str)
 }
 
 fn truncate_daily_gdd_at_requirement(

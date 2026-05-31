@@ -728,19 +728,6 @@
       "gdd_target_label": "लक्ष्य: {{target}}°C·दिन",
       "no_risks": "कोई जोखिम नहीं ✓"
     },
-    "temperature_chart": {
-      "no_data": "चयनित अवधि के लिए कोई डेटा उपलब्ध नहीं है।",
-      "load_failed": "डेटा लोड करने में विफल।",
-      "no_prediction_data": "कोई पूर्वानुमान डेटा उपलब्ध नहीं है।",
-      "prediction_load_failed": "पूर्वानुमान डेटा लोड करने में विफल।",
-      "predicted_value": "(पूर्वानुमानित)"
-    },
-    "climate_chart": {
-      "fetch_failed": "डेटा प्राप्त करने में विफल रहा।",
-      "load_failed": "डेटा लोड करने में विफल रहा।",
-      "chart_create_failed": "चार्ट बनाने में विफल रहा।",
-      "gdd_chart_create_failed": "GDD चार्ट बनाने में विफल रहा।"
-    },
     "field_climate": {
       "chart": {
         "temperature": "तापमान (°C)",

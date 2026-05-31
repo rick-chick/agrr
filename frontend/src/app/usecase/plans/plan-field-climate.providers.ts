@@ -12,6 +12,3 @@ export const PLAN_FIELD_CLIMATE_PROVIDERS: readonly Provider[] = [
   { provide: LOAD_FIELD_CLIMATE_OUTPUT_PORT, useExisting: PlanFieldClimatePresenter },
   { provide: FIELD_CLIMATE_GATEWAY, useExisting: FieldClimateApiGateway }
 ];
-
-export { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
-export { FieldClimateApiGateway } from '../../adapters/plans/field-climate-api.gateway';

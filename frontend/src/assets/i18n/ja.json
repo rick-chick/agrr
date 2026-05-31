@@ -1701,12 +1701,6 @@
       "jsPlansLoadErrorWithMessage": "データの読み込みに失敗しました: {{message}}",
       "jsGanttNotLoaded": "ガントチャート機能が読み込まれていません"
     },
-    "climate_chart": {
-      "fetch_failed": "データの取得に失敗しました。",
-      "load_failed": "データの読み込みに失敗しました。",
-      "chart_create_failed": "チャートの生成に失敗しました。",
-      "gdd_chart_create_failed": "GDDチャートの生成に失敗しました。"
-    },
     "crop_form": {
       "stage_name_placeholder": "例：発芽期、栄養成長期",
       "order_placeholder": "0",
@@ -2000,19 +1994,6 @@
       "field_added": "圃場を追加しました。",
       "optimization_started": "最適化を開始しました。",
       "reoptimization_started": "再最適化を開始しました。"
-    },
-    "temperature_chart": {
-      "no_data": "選択した期間のデータがありません。",
-      "load_failed": "データの読み込みに失敗しました。",
-      "no_prediction_data": "予測データがありません。",
-      "prediction_load_failed": "予測データの読み込みに失敗しました。",
-      "predicted_value": "（予測値）"
-    },
-    "climate_chart": {
-      "fetch_failed": "データの取得に失敗しました",
-      "load_failed": "データの読み込みに失敗しました",
-      "chart_create_failed": "チャートの作成に失敗しました",
-      "gdd_chart_create_failed": "GDDチャートの作成に失敗しました"
     },
     "field_climate": {
       "chart": {

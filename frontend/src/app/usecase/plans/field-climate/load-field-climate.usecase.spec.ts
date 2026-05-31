@@ -53,9 +53,7 @@ describe('LoadFieldClimateUseCase', () => {
         low_stress_threshold: 15,
         high_stress_threshold: 33
       }
-    ],
-    progress_result: {},
-    debug_info: {}
+    ]
   };
 
   it('passes gateway result to outputPort.present', () => {

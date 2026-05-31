@@ -59,6 +59,4 @@ export interface FieldCultivationClimateData {
   weather_data: ClimateTemperaturePoint[];
   gdd_data: ClimateGddPoint[];
   stages: StageRequirement[];
-  progress_result: Record<string, unknown>;
-  debug_info: Record<string, unknown>;
 }

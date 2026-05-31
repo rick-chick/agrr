@@ -5,8 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import type { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
 import { LoadFieldClimateUseCase } from '../../usecase/plans/field-climate/load-field-climate.usecase';
-import { PlanFieldClimatePresenter } from '../../usecase/plans/plan-field-climate.providers';
-import { PlanFieldClimateView } from './plan-field-climate.view';
+import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
 
 vi.mock('chart.js/auto', () => ({
@@ -18,41 +17,38 @@ vi.mock('chart.js/auto', () => ({
 }));
 
 describe('PlanFieldClimateComponent', () => {
-  let component: PlanFieldClimateComponent;
-  let mockPresenter: PlanFieldClimatePresenter;
+  let mockPresenter: Pick<PlanFieldClimatePresenter, 'setView' | 'present' | 'onError'>;
   let mockUseCase: LoadFieldClimateUseCase;
   let mockCdr: ChangeDetectorRef;
   let mockTranslate: TranslateService;
-  let capturedView: PlanFieldClimateView | null;
+  let component: PlanFieldClimateComponent;
 
   beforeEach(() => {
-    capturedView = null;
-
     mockPresenter = {
-      setView: vi.fn((view: PlanFieldClimateView) => {
-        capturedView = view;
-      }),
-      present: vi.fn((data: FieldCultivationClimateData) => {
-        if (!capturedView) return;
-        capturedView.control = {
-          loading: false,
-          error: null,
-          climateData: data
-        };
-      }),
+      setView: vi.fn(),
+      present: vi.fn(),
       onError: vi.fn()
-    } as unknown as PlanFieldClimatePresenter;
+    };
 
     mockUseCase = { execute: vi.fn() } as unknown as LoadFieldClimateUseCase;
     mockCdr = { markForCheck: vi.fn() } as unknown as ChangeDetectorRef;
     mockTranslate = { instant: vi.fn((key: string) => key) } as unknown as TranslateService;
 
-    component = new PlanFieldClimateComponent(mockPresenter, mockUseCase, mockCdr, mockTranslate);
+    component = new PlanFieldClimateComponent(
+      mockPresenter as PlanFieldClimatePresenter,
+      mockUseCase,
+      mockCdr,
+      mockTranslate
+    );
     component.ngOnInit();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('registers itself as the presenter view on init', () => {
+    expect(mockPresenter.setView).toHaveBeenCalledWith(component);
   });
 
   it('calls useCase.execute when a cultivation selection changes', () => {
@@ -76,7 +72,7 @@ describe('PlanFieldClimateComponent', () => {
     expect(mockUseCase.execute).toHaveBeenCalledWith(expectedPayload);
   });
 
-  it('updates control when presenter emits climate data', () => {
+  it('marks for check when control is updated via the view contract', () => {
     const sampleData: FieldCultivationClimateData = {
       success: true,
       field_cultivation: {
@@ -97,12 +93,14 @@ describe('PlanFieldClimateComponent', () => {
       },
       weather_data: [],
       gdd_data: [],
-      stages: [],
-      progress_result: {},
-      debug_info: {}
+      stages: []
     };
 
-    mockPresenter.present(sampleData);
+    component.control = {
+      loading: false,
+      error: null,
+      climateData: sampleData
+    };
 
     expect(component.control.climateData).toBe(sampleData);
     expect(mockCdr.markForCheck).toHaveBeenCalled();

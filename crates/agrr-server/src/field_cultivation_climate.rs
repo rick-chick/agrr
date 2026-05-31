@@ -114,8 +114,6 @@ fn success_json(dto: FieldCultivationClimateDataOutput) -> Value {
         "weather_data": dto.weather_data,
         "gdd_data": dto.gdd_data,
         "stages": dto.stages,
-        "progress_result": dto.progress_result,
-        "debug_info": dto.debug_info,
     })
 }
 
