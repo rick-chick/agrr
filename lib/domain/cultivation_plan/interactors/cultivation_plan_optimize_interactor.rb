@@ -36,7 +36,6 @@ module Domain
 
         def call
           load_snapshot!
-          advance_phase(:start_optimizing)
           advance_phase(:phase_optimizing)
           @current_phase = nil
 

@@ -171,11 +171,28 @@ run_db_bootstrap() {
   echo "  ✓ Litestream started (PID: ${LITESTREAM_PID})"
 
   if [ "${USE_AGRR_DAEMON}" = "true" ]; then
-    echo "Step 3.2: Starting agrr daemon (async)..."
+    echo "Step 3.2: Starting agrr daemon..."
     local agrr_bin="${AGRR_BIN_PATH:-/usr/local/bin/agrr}"
+    local agrr_socket="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
+    local agrr_ready_seconds="${AGRR_DAEMON_READY_SECONDS:-45}"
     if [ -x "$agrr_bin" ]; then
       "$agrr_bin" daemon start &
-      echo "  ✓ agrr daemon start initiated (fire-and-forget)"
+      echo "  ✓ agrr daemon start initiated"
+      local waited=0
+      while [ "$waited" -lt "$agrr_ready_seconds" ]; do
+        if [ -S "$agrr_socket" ]; then
+          echo "  ✓ agrr daemon socket ready: $agrr_socket (after ${waited}s)"
+          break
+        fi
+        sleep 1
+        waited=$((waited + 1))
+      done
+      if [ ! -S "$agrr_socket" ]; then
+        echo "  ⚠ agrr daemon socket not ready after ${agrr_ready_seconds}s: $agrr_socket"
+        if [ -x "$agrr_bin" ]; then
+          "$agrr_bin" daemon status 2>&1 | sed 's/^/    /' || true
+        fi
+      fi
     else
       echo "  ⚠ agrr binary not found at $agrr_bin, skipping daemon"
     fi

@@ -2,7 +2,7 @@
 
 `ARCHITECTURE.md` の方針（domain は純粋で太く、adapter は薄く、Rust へ移行可能）に沿い、**`lib/domain` 全 bounded context の振る舞い**を `crates/agrr-domain` へ段階移植するための単一プログラムです。
 
-**ステータス（2026-05-29）**: 全コンテキスト `phase: done`（[`TRACKING.md`](./TRACKING.md)）。**[`app-rust-stack`](../app-rust-stack/) P6 着手の domain ブロッカーは解消**。adapter の §P4 残留は gateway 移行ドキュメントで app 移植時に継続。
+**ステータス（2026-05-29）**: 全コンテキスト `phase: done`（[`TRACKING.md`](./TRACKING.md)）。本番切替の残作業は [`app-rust-stack/PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)。
 
 本番 HTTP・adapter・Rails 廃止の終着スタックは [`app-rust-stack`](../app-rust-stack/) を参照。
 

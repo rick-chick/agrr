@@ -214,6 +214,9 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
             if farm.region.as_deref() == Some("jp") {
                 return "jma".to_string();
             }
+            if farm.region.as_deref() == Some("in") {
+                return "nasa-power".to_string();
+            }
             if japan_location(latitude, longitude) {
                 return "jma".to_string();
             }

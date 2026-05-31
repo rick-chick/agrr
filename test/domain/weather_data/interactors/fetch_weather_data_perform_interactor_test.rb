@@ -112,6 +112,13 @@ module Domain
           assert_equal "noaa", @interactor.send(:determine_data_source, 1, latitude: 40.0, longitude: -74.0)
         end
 
+        test "determine_data_source returns nasa-power for in region farm" do
+          farm = mock("farm")
+          farm.stubs(:region).returns("in")
+          @farm_gateway.stubs(:find_by_id).with(1).returns(farm)
+          assert_equal "nasa-power", @interactor.send(:determine_data_source, 1, latitude: 28.6, longitude: 77.2)
+        end
+
         test "determine_data_source returns jma for japan coordinates no farm" do
           @farm_gateway.stubs(:find_by_id).returns(nil)
           assert_equal "jma", @interactor.send(:determine_data_source, nil, latitude: 35.0, longitude: 139.0)

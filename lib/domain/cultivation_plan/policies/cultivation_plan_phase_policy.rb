@@ -15,11 +15,10 @@ module Domain
             {
               attrs: {
                 status: "optimizing",
-                optimization_phase: "optimizing",
-                optimization_phase_message: ""
+                optimization_phase: "initializing"
               },
-              message_key: nil,
-              broadcast: false
+              message_key: "models.cultivation_plan.phases.initializing",
+              broadcast: true
             }
           when :phase_fetching_weather
             phase_attrs("fetching_weather", "models.cultivation_plan.phases.fetching_weather")

@@ -134,29 +134,15 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
         &clock,
     );
 
-    let mut steps: Vec<JobStep> = vec![];
+    advance_phase(
+        &state_clone,
+        plan_id,
+        &channel,
+        CultivationPlanPhaseName::StartOptimizing,
+        None,
+    );
 
-    {
-        let state = state_clone.clone();
-        let channel = channel.clone();
-        steps.push(JobStep {
-            name: "start_optimizing",
-            run: Arc::new(move || {
-                let state = state.clone();
-                let channel = channel.clone();
-                Box::pin(async move {
-                    advance_phase(
-                        &state,
-                        plan_id,
-                        &channel,
-                        CultivationPlanPhaseName::StartOptimizing,
-                        None,
-                    );
-                    true
-                })
-            }),
-        });
-    }
+    let mut steps: Vec<JobStep> = vec![];
 
     {
         let state = state_clone.clone();

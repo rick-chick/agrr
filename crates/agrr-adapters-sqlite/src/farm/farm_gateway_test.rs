@@ -255,21 +255,19 @@ fn farm_weather_data_access_context_for_admin_lookup_returns_any_farm_by_id() {
     assert_eq!(ctx.farm_id, farm_id);
 }
 
-// Rust fetch block: MarkFarmWeatherDataFailedInteractor persists last_error (domain + sqlite adapter).
+// Adapter: update_weather_progress maps failed attrs to SQLite columns (domain interactor covered in agrr-domain).
 #[test]
 fn update_weather_progress_persists_weather_data_last_error() {
-    use agrr_domain::farm::dtos::MarkFarmWeatherDataFailedInput;
-    use agrr_domain::farm::interactors::MarkFarmWeatherDataFailedInteractor;
+    use agrr_domain::farm::calculators::FarmWeatherProgressCalculator;
 
     let pool = farm_test_pool();
     let farm_id = insert_farm(&pool, 1, "Test", false, 35.0, 139.0, "jp");
     let gw = FarmSqliteGateway::new(pool.clone());
-    MarkFarmWeatherDataFailedInteractor::new(&gw)
-        .call(MarkFarmWeatherDataFailedInput {
-            farm_id,
-            error_message: "fetch weather data failed: WeatherDataStorageFailed".into(),
-        })
-        .expect("mark failed");
+    let attrs = FarmWeatherProgressCalculator::failed_attrs(
+        "fetch weather data failed: WeatherDataStorageFailed",
+    );
+    gw.update_weather_progress(farm_id, attrs)
+        .expect("update weather progress");
 
     let last_error: Option<String> = pool
         .with_read(|conn| {
@@ -295,4 +293,32 @@ fn update_weather_progress_persists_weather_data_last_error() {
         })
         .expect("status");
     assert_eq!(status, "failed");
+}
+
+// Production SQLite stores Rails `datetime(6)` as TEXT; reading as f64 must not fail the whole list.
+#[test]
+fn list_reference_farms_for_region_reads_rails_datetime_last_broadcast_at() {
+    let pool = farm_test_pool();
+    let gw = FarmSqliteGateway::new(pool.clone());
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO farms (user_id, name, latitude, longitude, region, is_reference,
+              created_at, updated_at, weather_data_status, weather_data_fetched_years,
+              weather_data_total_years, last_broadcast_at)
+             VALUES (0, 'Hokkaido', 43.0642, 141.3469, 'jp', 1,
+              '2026-01-01 00:00:00', '2026-01-01 00:00:00', 'pending', 0, 0,
+              '2026-02-03 07:23:33.539317')",
+            [],
+        )
+    })
+    .unwrap();
+
+    let farms = gw
+        .list_reference_farms_for_region("jp")
+        .expect("list reference farms");
+    assert_eq!(farms.len(), 1);
+    let ts = farms[0]
+        .last_broadcast_at
+        .expect("last_broadcast_at parsed from TEXT");
+    assert!(ts > 1_700_000_000.0);
 }

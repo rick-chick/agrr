@@ -3,8 +3,7 @@
 ## プログラム状態（2026-05-29）
 
 **出口基準を満たし完了**（正: [`TRACKING.yaml`](./TRACKING.yaml) — 全 19 bounded context `phase: done`、サマリー [`TRACKING.md`](./TRACKING.md)）。  
-以降の作業は [`app-rust-stack`](../app-rust-stack/) の P6（`agrr-server`・adapter・ルート切替）および adapter §P4 バックログ（[`gateway-domain-logic-migration.md`](../../gateway-domain-logic-migration.md)）。  
-スタック調査上の整理: [`app-rust-stack/BLOCKERS-RESPONSE.md`](../app-rust-stack/BLOCKERS-RESPONSE.md) §4。
+以降の作業は [`app-rust-stack`](../app-rust-stack/)（P6 コード完了・本番切替は [`PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)）。
 
 ## ゴール
 
@@ -41,7 +40,7 @@
 
 次をすべて満たした時点で、**本プログラムは完了**とし、[`app-rust-stack`](../app-rust-stack/) の P6（`agrr-server`・adapter 移植）を **ブロッカーなしで着手**できる。
 
-> **2026-05-29**: 上記 3 条件を満たす（`TRACKING.yaml` 全 BC `phase: done`）。P6 残ブロッカーは adapter §P4・`agrr-server` 未作成・R4（[`BLOCKERS-RESPONSE.md`](../app-rust-stack/BLOCKERS-RESPONSE.md)）。
+> **2026-05-29**: 上記 3 条件を満たす（`TRACKING.yaml` 全 BC `phase: done`）。P6 実装は完了（[`TRACKING-P6.yaml`](../app-rust-stack/TRACKING-P6.yaml)）。
 
 1. `TRACKING.yaml` の全 bounded context が `phase: done`
 2. リポジトリ全体で **R0・R1・R2** GREEN（`run-test-domain-lib.sh`・`run-test-rust-domain.sh`）

@@ -16,11 +16,10 @@ pub fn build(phase_name: CultivationPlanPhaseName, failure_subphase: Option<&str
         CultivationPlanPhaseName::StartOptimizing => CultivationPlanPhaseBuild {
             attrs: HashMap::from([
                 ("status".into(), "optimizing".into()),
-                ("optimization_phase".into(), "optimizing".into()),
-                ("optimization_phase_message".into(), String::new()),
+                ("optimization_phase".into(), "initializing".into()),
             ]),
-            message_key: None,
-            broadcast: false,
+            message_key: Some("models.cultivation_plan.phases.initializing".into()),
+            broadcast: true,
         },
         CultivationPlanPhaseName::PhaseFetchingWeather => {
             phase_attrs("fetching_weather", "models.cultivation_plan.phases.fetching_weather")
@@ -77,4 +76,12 @@ fn failure_message_key(failure_subphase: Option<&str>) -> &'static str {
         "task_schedule_generation" => "models.cultivation_plan.phase_failed.task_schedule_generation",
         _ => "models.cultivation_plan.phase_failed.default",
     }
+}
+
+#[cfg(test)]
+mod policies_cultivation_plan_phase_policy_test_inline {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/policies_cultivation_plan_phase_policy_test.rs"
+    ));
 }

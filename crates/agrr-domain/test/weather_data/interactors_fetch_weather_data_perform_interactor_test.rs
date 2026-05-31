@@ -388,6 +388,24 @@ use serde_json::json;
     }
 
     #[test]
+    fn determine_data_source_returns_nasa_power_for_in_region_farm() {
+        let harness = PerformHarness::new(
+            None,
+            0,
+            Arc::new(Mutex::new(false)),
+            Some("in".into()),
+            false,
+            None,
+        );
+        assert_eq!(
+            harness
+                .interactor_no_sleep_skip()
+                .determine_data_source(Some(1), 28.6, 77.2),
+            "nasa-power"
+        );
+    }
+
+    #[test]
     fn determine_data_source_returns_jma_for_japan_coordinates_no_farm() {
         let harness = PerformHarness::new(
             None,

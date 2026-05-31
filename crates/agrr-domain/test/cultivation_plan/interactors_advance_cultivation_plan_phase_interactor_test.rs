@@ -163,9 +163,9 @@
         assert!(recorded.iter().any(|a| a.get("status") == Some(&"completed".to_string())));
     }
 
-    // Ruby: test "call skips broadcast when start_optimizing"
+    // Ruby: test "call updates plan and broadcasts when start_optimizing"
     #[test]
-    fn call_skips_broadcast_when_start_optimizing() {
+    fn call_broadcasts_when_start_optimizing() {
         let updates = Arc::new(Mutex::new(Vec::new()));
         let gateway = StubGateway {
             plan: plan_entity(),
@@ -186,10 +186,10 @@
             .call(AdvanceCultivationPlanPhaseInput {
                 plan_id: 1,
                 phase_name: CultivationPlanPhaseName::StartOptimizing,
-                channel_class: None,
+                channel_class: Some("TestChannel".into()),
                 failure_subphase: None,
             })
             .unwrap();
 
-        assert!(!*called.lock().unwrap());
+        assert!(*called.lock().unwrap());
     }

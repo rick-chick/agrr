@@ -92,21 +92,7 @@ P6 TRACKING 完了より **厳しい**条件。ローカルで次をすべて満
 | E | WebSocket 最適化が Rust `/cable` で本番同等 |
 | F | `COVERAGE=false ./scripts/run-rust-contract-tests.sh` が **全** contract を含み GREEN |
 
-**現状（2026-05-29）— dev nginx [`nginx-strangler-host.conf`](../../../docker/nginx-strangler-host.conf) 経由:**
-
-| Angular / API | 行き先（strangler :3000） |
-|---------------|---------------------------|
-| `GET /api/v1/plans`, `GET /api/v1/plans/:id`, `DELETE /api/v1/plans/:id` | Rust ✅ |
-| `GET .../cultivation_plans/:id/data`, `GET .../task_schedule` | Rust ✅ |
-| `GET /api/v1/auth/me`, `DELETE /api/v1/auth/logout` | Rust ✅ |
-| `POST /undo_deletion` | Rust ✅ |
-| `GET/POST` マスタ `/api/v1/masters/*`（farms, crops, pests…） | Rust ✅ |
-| `POST /api/v1/public_plans/save_plan` | Rust ✅（wizard 一部 read も Rust） |
-| `PATCH .../field_cultivations/:id`、`/cable`、最適化ジョブチェーン | Rust ✅（in-process チェーン + CableHub） |
-| `POST` AI（`crops|fertilizes|pests/ai_*`）、`internal/farms/*/weather_*` | Rust ✅ |
-| `weather_data`（スケジューラ）、`backdoor`（7 routes） | Rust ✅（internal_jobs チェーン / backdoor は Angular 未使用） |
-
-→ **dev strangler / rust-only で SPA 主要導線は Rust**。レベル 3 は **R4 全 GREEN（`run-rust-contract-tests.sh`）+ Rails 未起動 E2E** で判定。
+**現状（P6 TRACKING 完了）**: [`./scripts/dev-rust-stack.sh`](../../../scripts/dev-rust-stack.sh) + [`docker/nginx-strangler-host.conf`](../../../docker/nginx-strangler-host.conf) で `/api/` は Rust のみ（未実装は 501）。レベル 3 は **`run-rust-contract-tests.sh` 全 GREEN + Rails 未起動 E2E**。本番は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
 
 ---
 

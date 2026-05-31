@@ -102,11 +102,11 @@ defaultService: rails-backend
 
 ## 影響
 
-- P6 着手の **スタック ADR ブロッカーは解消**（実装: `agrr-server` Cloud Run 作成 + map ルール追加は P6 タスク）。
+- 本番 URL map 切替の残作業: [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
 - インフラ変更は **ルート切替 PR と同じリリース**で validate → import（ロールバックは map を戻す）。
 - 監視: `/up` の参照先を切替ごとに確認。
 
 ## 参照
 
-- クリティカルパス順: [BLOCKERS-RESPONSE.md — クリティカルパス](./BLOCKERS-RESPONSE.md#クリティカルパス実装順変更なし)
+- クリティカルパス順: [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) `critical_path`
 - OAuth 案 A: [PROVISIONAL-STACK.md — OAuth](./PROVISIONAL-STACK.md#oauth-コールバック-url確定--2026-05-29案-a)

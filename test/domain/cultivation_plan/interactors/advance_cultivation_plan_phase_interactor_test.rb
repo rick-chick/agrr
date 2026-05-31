@@ -56,16 +56,29 @@ module Domain
           )
         end
 
-        test "call skips broadcast when start_optimizing" do
-          @gateway.expects(:update).with(1, { status: "optimizing" }).returns(@plan_entity)
-          @broadcast_port.expects(:broadcast_phase_update).never
+        test "call updates plan and broadcasts when start_optimizing" do
+          @translator.expects(:t).with("models.cultivation_plan.phases.initializing").returns("最適化を準備しています")
+          @gateway.expects(:update).with(
+            1,
+            has_entries(
+              status: "optimizing",
+              optimization_phase: "initializing",
+              optimization_phase_message: "最適化を準備しています"
+            )
+          ).returns(@plan_entity)
+          @gateway.stubs(:list_by_plan_id).with(1).returns([])
+          @broadcast_port.expects(:broadcast_phase_update).with(
+            plan_id: 1,
+            channel_class: "TestChannel",
+            payload: has_entries(status: "optimizing", progress: 0)
+          )
           @gateway.expects(:find_by_id).with(1).returns(@plan_entity)
-          @gateway.expects(:list_by_plan_id).with(1).returns([])
 
           @interactor.call(
             Dtos::AdvanceCultivationPlanPhaseInput.new(
               plan_id: 1,
-              phase_name: :start_optimizing
+              phase_name: :start_optimizing,
+              channel_class: "TestChannel"
             )
           )
         end

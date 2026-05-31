@@ -229,6 +229,7 @@ module Domain
 
           if farm_entity
             return "jma" if farm_entity.region == "jp"
+            return "nasa-power" if farm_entity.region == "in"
             lat = latitude
             lon = longitude
             return "jma" if japan_location?(lat, lon)

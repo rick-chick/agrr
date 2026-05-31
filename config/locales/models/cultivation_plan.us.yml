@@ -2,6 +2,7 @@ us:
   models:
     cultivation_plan:
       phases:
+        initializing: "Preparing optimization..."
         fetching_weather: "Fetching weather data..."
         predicting_weather: "Predicting weather data..."
         weather_prediction_completed: "Weather prediction completed"

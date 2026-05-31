@@ -30,7 +30,7 @@ wave_e:
     - internal_farm_weather_contract_test.rb
     - ai_api_contract_test.rb
     - api_v1_health_contract_test.rb
-  nginx_checklist: NGINX-STRANGLER-HOST-CHECKLIST.md
+  nginx_checklist: docker/nginx-strangler-host.conf
   rust_contract_runner: scripts/run-rust-contract-tests.sh
   angular_routing_audit: scripts/run-rust-contract-tests.sh
 

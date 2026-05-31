@@ -1405,6 +1405,7 @@
     },
     "cultivation_plan": {
       "phases": {
+        "initializing": "最適化を準備しています...",
         "fetching_weather": "気象データを取得しています...",
         "weather_data_fetched": "気象データの取得が完了しました",
         "predicting_weather": "気象データを予測しています...",

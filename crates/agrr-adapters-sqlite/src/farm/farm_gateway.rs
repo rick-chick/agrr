@@ -11,7 +11,9 @@ use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::RecordInvalidError;
 use agrr_domain::shared::user::User;
 use rusqlite::params;
+use rusqlite::types::ValueRef;
 use serde_json::json;
+use time::{format_description::well_known::Rfc3339, format_description::FormatItem, PrimitiveDateTime, UtcOffset};
 
 pub struct FarmSqliteGateway {
     pool: SqlitePool,
@@ -21,6 +23,69 @@ impl FarmSqliteGateway {
     pub fn new(pool: SqlitePool) -> Self {
         Self { pool }
     }
+}
+
+fn optional_unix_timestamp_from_row(
+    row: &rusqlite::Row<'_>,
+    idx: usize,
+) -> rusqlite::Result<Option<f64>> {
+    match row.get_ref(idx)? {
+        ValueRef::Null => Ok(None),
+        ValueRef::Real(v) => Ok(Some(v)),
+        ValueRef::Integer(v) => Ok(Some(v as f64)),
+        ValueRef::Text(bytes) => {
+            let text = std::str::from_utf8(bytes).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    idx,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
+            parse_unix_timestamp_from_text(text).map(Some).ok_or_else(|| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    idx,
+                    rusqlite::types::Type::Text,
+                    Box::new(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        format!("unparseable timestamp: {text}"),
+                    )),
+                )
+            })
+        }
+        other => Err(rusqlite::Error::FromSqlConversionFailure(
+            idx,
+            other.data_type(),
+            Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "unsupported sqlite type for unix timestamp",
+            )),
+        )),
+    }
+}
+
+fn parse_unix_timestamp_from_text(text: &str) -> Option<f64> {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    if let Ok(v) = trimmed.parse::<f64>() {
+        return Some(v);
+    }
+    if let Ok(od) = time::OffsetDateTime::parse(trimmed, &Rfc3339) {
+        return Some(od.unix_timestamp() as f64 + f64::from(od.nanosecond()) / 1_000_000_000.0);
+    }
+    const RAILS_DATETIME: &[FormatItem<'_>] = time::macros::format_description!(
+        "[year]-[month]-[day] [hour]:[minute]:[second].[subsecond]"
+    );
+    const RAILS_DATETIME_NO_FRAC: &[FormatItem<'_>] =
+        time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second]");
+    for format in [RAILS_DATETIME, RAILS_DATETIME_NO_FRAC] {
+        if let Ok(dt) = PrimitiveDateTime::parse(trimmed, format) {
+            let od = dt.assume_offset(UtcOffset::UTC);
+            return Some(od.unix_timestamp() as f64 + f64::from(od.nanosecond()) / 1_000_000_000.0);
+        }
+    }
+    None
 }
 
 fn map_farm_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<FarmEntity> {
@@ -40,7 +105,7 @@ fn map_farm_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<FarmEntity> {
         weather_data_total_years: row.get(11)?,
         weather_data_last_error: row.get(12)?,
         weather_location_id: row.get(13)?,
-        last_broadcast_at: row.get(14)?,
+        last_broadcast_at: optional_unix_timestamp_from_row(row, 14)?,
     })
 }
 

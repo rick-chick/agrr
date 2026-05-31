@@ -10,6 +10,7 @@ module Adapters
           dispatcher = mock("dispatcher")
           logger = mock("logger")
           logger.expects(:info).at_least_once
+          advance_phase = mock("advance_phase_interactor")
           channel = OptimizationChannel
 
           weather_location = Struct.new(:latest_weather_date).new(Date.new(2025, 6, 1))
@@ -17,6 +18,11 @@ module Adapters
           plan = Struct.new(:farm).new(farm)
 
           ::CultivationPlan.stub(:find, proc { |_id| plan }) do
+            advance_phase.expects(:call).with do |input|
+              input.plan_id == 99 &&
+                input.phase_name == :start_optimizing &&
+                input.channel_class == channel
+            end
             dispatcher.expects(:enqueue).with do |jobs, **kwargs|
               kwargs[:redirect_path].nil? &&
                 kwargs[:caller_label] == "TestCaller" &&
@@ -39,7 +45,8 @@ module Adapters
             gateway = PublicPlanOptimizationJobChainActiveRecordGateway.new(
               dispatcher: dispatcher,
               logger: logger,
-              channel_class: channel
+              channel_class: channel,
+              advance_phase_interactor: advance_phase
             )
             gateway.enqueue_after_create!(cultivation_plan_id: 99, caller_label: "TestCaller")
           end
@@ -49,6 +56,7 @@ module Adapters
           dispatcher = mock("dispatcher")
           logger = mock("logger")
           logger.expects(:info).at_least_once
+          advance_phase = mock("advance_phase_interactor")
           channel = OptimizationChannel
 
           weather_location = Struct.new(:latest_weather_date).new(Date.new(2025, 6, 1))
@@ -56,6 +64,11 @@ module Adapters
           plan = Struct.new(:farm).new(farm)
 
           ::CultivationPlan.stub(:find, proc { |_id| plan }) do
+            advance_phase.expects(:call).with do |input|
+              input.plan_id == 99 &&
+                input.phase_name == :start_optimizing &&
+                input.channel_class == channel
+            end
             dispatcher.expects(:enqueue).with do |jobs, **kwargs|
               kwargs[:redirect_path] == "/results" &&
                 kwargs[:caller_label] == "TestCaller" &&
@@ -65,7 +78,8 @@ module Adapters
             gateway = PublicPlanOptimizationJobChainActiveRecordGateway.new(
               dispatcher: dispatcher,
               logger: logger,
-              channel_class: channel
+              channel_class: channel,
+              advance_phase_interactor: advance_phase
             )
             gateway.enqueue_after_create!(
               cultivation_plan_id: 99,

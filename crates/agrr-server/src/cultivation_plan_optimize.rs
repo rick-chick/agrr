@@ -1,7 +1,7 @@
 //! Rails `OptimizationJob` wiring for `CultivationPlanOptimizeInteractor`.
 //!
 //! Phase split:
-//! - Interactor: `StartOptimizing`, `PhaseOptimizing` (via `CultivationPlanOptimizeAdvancePhasePort`)
+//! - Interactor: `PhaseOptimizing` (`StartOptimizing` is broadcast synchronously when the job chain is enqueued)
 //! - `run_optimization_step`: no `PhaseOptimizationCompleted` (Rails-only; no task schedule job in Rust chain)
 //! - Chain on failure: `PhaseFailed` + `optimizing`; success continues to `plan_finalize` → `PhaseCompleted`
 //!

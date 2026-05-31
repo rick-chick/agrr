@@ -5,10 +5,11 @@ module Adapters
     module Gateways
       # 公開プラン作成後の気象取得→予測→最適化→タスク生成ジョブチェーンを組み立ててエンキューする（AR / ActiveJob は本アダプタに閉じる）。
       class PublicPlanOptimizationJobChainActiveRecordGateway < Domain::PublicPlan::Gateways::PublicPlanOptimizationJobChainGateway
-        def initialize(dispatcher:, logger:, channel_class:)
+        def initialize(dispatcher:, logger:, channel_class:, advance_phase_interactor:)
           @dispatcher = dispatcher
           @logger = logger
           @channel_class = channel_class
+          @advance_phase_interactor = advance_phase_interactor
         end
 
         def enqueue_after_create!(cultivation_plan_id:, caller_label:, redirect_path: nil)
@@ -34,6 +35,14 @@ module Adapters
           today = Time.zone.today
           next_year_end = Date.new(today.year + 1, 12, 31)
           @logger.info "📅 [#{caller_label}] Predict days: #{predict_days} (from #{end_date} to #{next_year_end})"
+
+          @advance_phase_interactor.call(
+            Domain::CultivationPlan::Dtos::AdvanceCultivationPlanPhaseInput.new(
+              plan_id: cultivation_plan_id,
+              phase_name: :start_optimizing,
+              channel_class: @channel_class
+            )
+          )
 
           job_instances = build_job_instances(
             cultivation_plan_id: cultivation_plan_id,

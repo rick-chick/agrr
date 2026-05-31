@@ -2,6 +2,7 @@ in:
   models:
     cultivation_plan:
       phases:
+        initializing: "अनुकूलन की तैयारी कर रहे हैं..."
         fetching_weather: "मौसम डेटा प्राप्त कर रहे हैं..."
         predicting_weather: "मौसम डेटा की भविष्यवाणी कर रहे हैं..."
         weather_prediction_completed: "मौसम पूर्वानुमान पूरा हो गया"

@@ -27,8 +27,10 @@ COPY --from=builder /app/target/release/agrr-server /usr/local/bin/agrr-server
 COPY --from=builder /app/target/release/agrr-migrate /usr/local/bin/agrr-migrate
 
 COPY config/litestream.yml /etc/litestream.yml
-COPY scripts/db_bootstrap_common.sh scripts/start_agrr_server.sh scripts/run-agrr-migrate.sh /app/scripts/
-RUN chmod +x /app/scripts/db_bootstrap_common.sh /app/scripts/start_agrr_server.sh /app/scripts/run-agrr-migrate.sh
+COPY scripts/db_bootstrap_common.sh scripts/start_agrr_server.sh scripts/run-agrr-migrate.sh \
+  scripts/production-data-migrate-inner.sh /app/scripts/
+RUN chmod +x /app/scripts/db_bootstrap_common.sh /app/scripts/start_agrr_server.sh \
+  /app/scripts/run-agrr-migrate.sh /app/scripts/production-data-migrate-inner.sh
 
 # agrr-migrate data apply / repair (manifest, extracted JSON, reference fixtures)
 COPY crates/agrr-migrate/manifest /app/crates/agrr-migrate/manifest

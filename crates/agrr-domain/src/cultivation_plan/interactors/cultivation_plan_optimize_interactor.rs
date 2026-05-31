@@ -92,7 +92,6 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
             self.plan_id,
         )?;
 
-        self.advance_phase(CultivationPlanPhaseName::StartOptimizing, None);
         self.advance_phase(CultivationPlanPhaseName::PhaseOptimizing, None);
 
         if !snapshot.weather_location_present {
