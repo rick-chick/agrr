@@ -9,7 +9,7 @@ import { vi } from 'vitest';
 const translationMap = new Map<string, string>([
   ['contact_form.validation.message_required', 'メッセージは必須です。'],
   ['contact_form.validation.email_required', 'メールアドレスは必須です。'],
-  ['contact_form.success.message', 'メッセージを送信しました。'],
+  ['contact_form.success.message', 'お問い合わせを受け付けました。'],
   ['contact_form.success.toast', 'お問い合わせありがとうございます。'],
   ['contact_form.errors.send_failed', '送信に失敗しました。']
 ]);
