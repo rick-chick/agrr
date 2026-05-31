@@ -71,7 +71,6 @@ function applyEnCropsFromJa(en, ja) {
     'show.edit': 'Edit',
     'show.delete': 'Delete',
     'show.confirm_delete': 'Delete this crop?',
-    'undo.toast': '{{name}} was deleted. You can undo this action.',
     'form.submit_create': 'Create Crop',
     'form.submit_update': 'Update Crop',
     'form.cancel': 'Cancel',
@@ -105,8 +104,7 @@ function applyInCropsFromJa(inLoc, ja) {
     'index.empty.button': 'फसल जोड़ें',
     'new.title': 'नई फसल जोड़ें',
     'edit.title': '{{name}} संपादित करें',
-    'show.back_to_list': 'फसल सूची पर वापस',
-    'undo.toast': '{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।'
+    'show.back_to_list': 'फसल सूची पर वापस'
   };
   for (const [p, v] of Object.entries(overrides)) {
     setPath(inLoc.crops, p, v);

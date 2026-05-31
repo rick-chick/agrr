@@ -1,4 +1,6 @@
 import { Injectable, inject, signal, NgZone } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { translateServerToastMessage } from '../core/i18n/translate-server-toast-message';
 import { ApiService } from './api.service';
 
 export type UndoToastState = {
@@ -16,6 +18,7 @@ type PendingUndo = {
 export class UndoToastService {
   private readonly apiClient = inject(ApiService);
   private readonly ngZone = inject(NgZone);
+  private readonly translate = inject(TranslateService);
 
   private readonly stateSignal = signal<UndoToastState>({
     visible: false,
@@ -29,7 +32,10 @@ export class UndoToastService {
   }
 
   show(message: string) {
-    this.stateSignal.set({ visible: true, message });
+    this.stateSignal.set({
+      visible: true,
+      message: this.localizeToastMessage(message)
+    });
   }
 
   /**
@@ -46,7 +52,16 @@ export class UndoToastService {
     onRestored?: () => void
   ): void {
     this.pendingUndo = { undoPath, undoToken, onRestored };
-    this.stateSignal.set({ visible: true, message });
+    this.stateSignal.set({
+      visible: true,
+      message: this.localizeToastMessage(message)
+    });
+  }
+
+  private localizeToastMessage(message: string): string {
+    return translateServerToastMessage(message, (key, params) =>
+      this.translate.instant(key, params)
+    );
   }
 
   hide() {

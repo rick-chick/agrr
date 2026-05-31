@@ -1,6 +1,9 @@
 //! P6 `agrr-server` — strangler edge (Axum).
 
 pub mod adapters;
+pub mod locale_catalog;
+pub mod locale_translator;
+pub mod request_locale;
 pub mod add_crop_support;
 pub mod adjust_weather_prediction;
 pub mod cultivation_plan_optimize;

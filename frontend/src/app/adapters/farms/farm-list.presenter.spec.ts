@@ -127,7 +127,7 @@ describe('FarmListPresenter', () => {
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',
         toast_message: 'Farm deleted',
-        undo_path: '/api/v1/masters/farms/1/undo'
+        undo_path: '/undo_deletion?undo_token=token123'
       };
 
       const dto: DeleteFarmSuccessDto = {

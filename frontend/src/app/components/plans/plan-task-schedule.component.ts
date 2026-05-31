@@ -22,7 +22,7 @@ const initialControl: PlanTaskScheduleViewState = {
   template: `
     <main class="page-main page-main--fit">
       <section class="page">
-        <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedule.back_to_plan' | translate }}</a>
+        <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedules.back_to_plan' | translate }}</a>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
@@ -31,7 +31,7 @@ const initialControl: PlanTaskScheduleViewState = {
           </div>
         } @else if (control.schedule) {
           <h2>{{
-            'plans.task_schedule.title'
+            'plans.task_schedules.title'
               | translate: { name: (control.schedule.plan.name | planDisplayName) }
           }}</h2>
           <app-task-schedule-timeline [fields]="control.schedule.fields" />

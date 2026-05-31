@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { Component, inject } from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-privacy',
@@ -49,7 +49,10 @@ import { TranslateModule } from '@ngx-translate/core';
         <p class="page-section-content">{{ 'pages.privacy.section7.content' | translate }}</p>
 
         <h2 class="page-section-title">{{ 'pages.privacy.section8.title' | translate }}</h2>
-        <p class="page-section-content" [innerHTML]="'pages.privacy.section8.content_html' | translate"></p>
+        <p
+          class="page-section-content"
+          [innerHTML]="'pages.privacy.section8.content_html' | translate: section8ContactParams"
+        ></p>
 
         <p class="page-footer-text-right">{{ 'pages.privacy.last_updated' | translate }}</p>
       </div>
@@ -57,4 +60,11 @@ import { TranslateModule } from '@ngx-translate/core';
   `,
   styleUrls: ['./privacy.component.css']
 })
-export class PrivacyComponent {}
+export class PrivacyComponent {
+  private readonly translate = inject(TranslateService);
+
+  get section8ContactParams(): Record<string, string> {
+    const text = this.translate.instant('pages.privacy.section8.contact_link_text');
+    return { contact_link: `<a href="/contact">${text}</a>` };
+  }
+}

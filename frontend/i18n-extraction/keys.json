@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-30T06:03:33.421Z",
+  "generatedAt": "2026-05-31T14:33:17.782Z",
   "entries": [
     {
       "key": "auto.app.components.home.home.component.ts_prop_titlekey_homeindexfeaturesgrowth_predic",
@@ -31,7 +31,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 98,
       "text": "nav.about",
-      "snippet": "\n  readonly moreItems: { link: string; labelKey: string }[] = [\n    { link: '/about', labelKey: 'nav.about' },\n    { link: '/contact', labelKey: 'nav.contact' },\n    { link: '/privacy', labelKey: 'nav.privacy' },"
+      "snippet": "\r\n  readonly moreItems: { link: string; labelKey: string }[] = [\r\n    { link: '/about', labelKey: 'nav.about' },\r\n    { link: '/contact', labelKey: 'nav.contact' },\r\n    { link: '/privacy', labelKey: 'nav.privacy' },\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navagricultural_tasks",
@@ -39,7 +39,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 93,
       "text": "nav.agricultural_tasks",
-      "snippet": "    { link: '/pests', labelKey: 'nav.pests' },\n    { link: '/pesticides', labelKey: 'nav.pesticides' },\n    { link: '/agricultural_tasks', labelKey: 'nav.agricultural_tasks' },\n    { link: '/interaction_rules', labelKey: 'nav.interaction_rules' },\n  ];"
+      "snippet": "    { link: '/pests', labelKey: 'nav.pests' },\r\n    { link: '/pesticides', labelKey: 'nav.pesticides' },\r\n    { link: '/agricultural_tasks', labelKey: 'nav.agricultural_tasks' },\r\n    { link: '/interaction_rules', labelKey: 'nav.interaction_rules' },\r\n  ];\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navcontact",
@@ -47,7 +47,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 99,
       "text": "nav.contact",
-      "snippet": "  readonly moreItems: { link: string; labelKey: string }[] = [\n    { link: '/about', labelKey: 'nav.about' },\n    { link: '/contact', labelKey: 'nav.contact' },\n    { link: '/privacy', labelKey: 'nav.privacy' },\n    { link: '/terms', labelKey: 'nav.terms' },"
+      "snippet": "  readonly moreItems: { link: string; labelKey: string }[] = [\r\n    { link: '/about', labelKey: 'nav.about' },\r\n    { link: '/contact', labelKey: 'nav.contact' },\r\n    { link: '/privacy', labelKey: 'nav.privacy' },\r\n    { link: '/terms', labelKey: 'nav.terms' },\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navcrops",
@@ -55,7 +55,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 89,
       "text": "nav.crops",
-      "snippet": "  readonly mastersItems: { link: string; labelKey: string }[] = [\n    { link: '/farms', labelKey: 'nav.farms' },\n    { link: '/crops', labelKey: 'nav.crops' },\n    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\n    { link: '/pests', labelKey: 'nav.pests' },"
+      "snippet": "  readonly mastersItems: { link: string; labelKey: string }[] = [\r\n    { link: '/farms', labelKey: 'nav.farms' },\r\n    { link: '/crops', labelKey: 'nav.crops' },\r\n    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\r\n    { link: '/pests', labelKey: 'nav.pests' },\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navfarms",
@@ -63,7 +63,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 88,
       "text": "nav.farms",
-      "snippet": "\n  readonly mastersItems: { link: string; labelKey: string }[] = [\n    { link: '/farms', labelKey: 'nav.farms' },\n    { link: '/crops', labelKey: 'nav.crops' },\n    { link: '/fertilizes', labelKey: 'nav.fertilizes' },"
+      "snippet": "\r\n  readonly mastersItems: { link: string; labelKey: string }[] = [\r\n    { link: '/farms', labelKey: 'nav.farms' },\r\n    { link: '/crops', labelKey: 'nav.crops' },\r\n    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navfertilizes",
@@ -71,7 +71,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 90,
       "text": "nav.fertilizes",
-      "snippet": "    { link: '/farms', labelKey: 'nav.farms' },\n    { link: '/crops', labelKey: 'nav.crops' },\n    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\n    { link: '/pests', labelKey: 'nav.pests' },\n    { link: '/pesticides', labelKey: 'nav.pesticides' },"
+      "snippet": "    { link: '/farms', labelKey: 'nav.farms' },\r\n    { link: '/crops', labelKey: 'nav.crops' },\r\n    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\r\n    { link: '/pests', labelKey: 'nav.pests' },\r\n    { link: '/pesticides', labelKey: 'nav.pesticides' },\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navinteraction_rules",
@@ -79,7 +79,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 94,
       "text": "nav.interaction_rules",
-      "snippet": "    { link: '/pesticides', labelKey: 'nav.pesticides' },\n    { link: '/agricultural_tasks', labelKey: 'nav.agricultural_tasks' },\n    { link: '/interaction_rules', labelKey: 'nav.interaction_rules' },\n  ];\n"
+      "snippet": "    { link: '/pesticides', labelKey: 'nav.pesticides' },\r\n    { link: '/agricultural_tasks', labelKey: 'nav.agricultural_tasks' },\r\n    { link: '/interaction_rules', labelKey: 'nav.interaction_rules' },\r\n  ];\r\n\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navpesticides",
@@ -87,7 +87,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 92,
       "text": "nav.pesticides",
-      "snippet": "    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\n    { link: '/pests', labelKey: 'nav.pests' },\n    { link: '/pesticides', labelKey: 'nav.pesticides' },\n    { link: '/agricultural_tasks', labelKey: 'nav.agricultural_tasks' },\n    { link: '/interaction_rules', labelKey: 'nav.interaction_rules' },"
+      "snippet": "    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\r\n    { link: '/pests', labelKey: 'nav.pests' },\r\n    { link: '/pesticides', labelKey: 'nav.pesticides' },\r\n    { link: '/agricultural_tasks', labelKey: 'nav.agricultural_tasks' },\r\n    { link: '/interaction_rules', labelKey: 'nav.interaction_rules' },\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navpests",
@@ -95,7 +95,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 91,
       "text": "nav.pests",
-      "snippet": "    { link: '/crops', labelKey: 'nav.crops' },\n    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\n    { link: '/pests', labelKey: 'nav.pests' },\n    { link: '/pesticides', labelKey: 'nav.pesticides' },\n    { link: '/agricultural_tasks', labelKey: 'nav.agricultural_tasks' },"
+      "snippet": "    { link: '/crops', labelKey: 'nav.crops' },\r\n    { link: '/fertilizes', labelKey: 'nav.fertilizes' },\r\n    { link: '/pests', labelKey: 'nav.pests' },\r\n    { link: '/pesticides', labelKey: 'nav.pesticides' },\r\n    { link: '/agricultural_tasks', labelKey: 'nav.agricultural_tasks' },\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navprivacy",
@@ -103,7 +103,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 100,
       "text": "nav.privacy",
-      "snippet": "    { link: '/about', labelKey: 'nav.about' },\n    { link: '/contact', labelKey: 'nav.contact' },\n    { link: '/privacy', labelKey: 'nav.privacy' },\n    { link: '/terms', labelKey: 'nav.terms' },\n  ];"
+      "snippet": "    { link: '/about', labelKey: 'nav.about' },\r\n    { link: '/contact', labelKey: 'nav.contact' },\r\n    { link: '/privacy', labelKey: 'nav.privacy' },\r\n    { link: '/terms', labelKey: 'nav.terms' },\r\n  ];\r"
     },
     {
       "key": "auto.app.components.shared.navbar.navbar.component.ts_prop_labelkey_navterms",
@@ -111,7 +111,7 @@
       "file": "src/app/components/shared/navbar/navbar.component.ts",
       "line": 101,
       "text": "nav.terms",
-      "snippet": "    { link: '/contact', labelKey: 'nav.contact' },\n    { link: '/privacy', labelKey: 'nav.privacy' },\n    { link: '/terms', labelKey: 'nav.terms' },\n  ];\n"
+      "snippet": "    { link: '/contact', labelKey: 'nav.contact' },\r\n    { link: '/privacy', labelKey: 'nav.privacy' },\r\n    { link: '/terms', labelKey: 'nav.terms' },\r\n  ];\r\n\r"
     },
     {
       "key": "auto.app.domain.contact.contact-message.model.ts_prop_message_contact_formvalidationemail_in",
@@ -162,12 +162,12 @@
       "snippet": "  }\n  if (payload.subject && payload.subject.length > 255) {\n    return { valid: false, message: 'contact_form.validation.subject_too_long' };\n  }\n  const email = payload.email?.trim();"
     },
     {
-      "key": "auto.index.template_text_agrragriculture_resource_and_r",
+      "key": "auto.index.template_text_agrr_agriculture_resource_and_",
       "type": "template-text",
       "file": "src/index.html",
       "line": 7,
-      "text": "AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム",
-      "snippet": "  <!-- TranslateService updates title, meta, and html lang at runtime -->\n  <!-- Static fallbacks for crawlers: Japanese default matches app defaultLang -->\n  <title>AGRR（Agriculture Resource and Rotation planner）- 農業計画支援システム</title>\n  <meta name=\"description\" content=\"AGRRは気象データとAIを活用した農業作付け・輪作計画支援システムです。公式 agrr.net。圃場管理、作物情報管理、栽培計画の最適化で、持続可能な農業を実現します。\">\n  <base href=\"/\">"
+      "text": "AGRR (Agriculture Resource and Rotation planner)",
+      "snippet": "  <!-- TranslateService updates title, meta, and html lang at runtime -->\n  <!-- Static fallbacks for crawlers: Japanese default matches app defaultLang -->\n  <title>AGRR (Agriculture Resource and Rotation planner)</title>\n  <meta name=\"description\" content=\"AGRR supports crop planning and rotation with weather data and AI. https://agrr.net\">\n  <base href=\"/\">"
     }
   ]
 }

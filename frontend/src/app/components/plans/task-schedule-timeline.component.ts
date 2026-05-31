@@ -16,7 +16,7 @@ import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedul
 
           <div class="schedule-columns">
             <div class="column">
-              <h4>{{ 'plans.task_schedule.timeline_column_general' | translate }}</h4>
+              <h4>{{ 'plans.task_schedules.general_label' | translate }}</h4>
               <div
                 cdkDropList
                 [cdkDropListData]="field.schedules.general"
@@ -31,7 +31,7 @@ import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedul
             </div>
 
             <div class="column">
-              <h4>{{ 'plans.task_schedule.timeline_column_fertilizer' | translate }}</h4>
+              <h4>{{ 'plans.task_schedules.fertilizer_label' | translate }}</h4>
               <div
                 cdkDropList
                 [cdkDropListData]="field.schedules.fertilizer"
@@ -46,7 +46,7 @@ import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedul
           </div>
         </div>
       } @else {
-        <p>{{ 'plans.task_schedule.timeline_empty' | translate }}</p>
+        <p>{{ 'plans.task_schedules.no_schedules' | translate }}</p>
       }
     </div>
   `,

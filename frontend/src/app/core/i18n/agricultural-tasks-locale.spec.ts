@@ -7,7 +7,6 @@ import ja from '../../../assets/i18n/ja.json';
 const JAPANESE_UI = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/;
 
 type AgriculturalTasksBundle = {
-  undo?: { toast?: string };
   index?: {
     title?: string;
     description?: string;

@@ -107,7 +107,7 @@ export class CropEditPresenter implements
 
   onSuccess(_dto: UpdateCropSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'success', text: 'Crop updated successfully' });
+    this.flashMessage.show({ type: 'success', text: 'crops.flash.updated' });
     this.view.control = {
       ...this.view.control,
       saving: false
@@ -124,7 +124,7 @@ export class CropEditPresenter implements
         crop_stages: [...currentStages, dto.stage]
       }
     };
-    this.flashMessage.show({ type: 'success', text: 'Crop stage created successfully' });
+    this.flashMessage.show({ type: 'success', text: 'crops.flash.stage_created' });
   }
 
   presentUpdateCropStage(dto: UpdateCropStageOutputDto): void {
@@ -140,7 +140,7 @@ export class CropEditPresenter implements
         crop_stages: updatedStages
       }
     };
-    this.flashMessage.show({ type: 'success', text: 'Crop stage updated successfully' });
+    this.flashMessage.show({ type: 'success', text: 'crops.flash.stage_updated' });
   }
 
   presentDeleteCropStage(dto: DeleteCropStageOutputDto): void {
@@ -154,7 +154,7 @@ export class CropEditPresenter implements
         crop_stages: filteredStages
       }
     };
-    this.flashMessage.show({ type: 'success', text: 'Crop stage deleted successfully' });
+    this.flashMessage.show({ type: 'success', text: 'crops.flash.stage_deleted' });
   }
 
   presentUpdateTemperatureRequirement(dto: UpdateTemperatureRequirementOutputDto): void {
@@ -176,7 +176,7 @@ export class CropEditPresenter implements
         crop_stages: updatedStages
       }
     };
-    this.flashMessage.show({ type: 'success', text: 'Temperature requirement updated successfully' });
+    this.flashMessage.show({ type: 'success', text: 'crops.flash.temperature_requirement_updated' });
   }
 
   presentUpdateThermalRequirement(dto: UpdateThermalRequirementOutputDto): void {
@@ -198,7 +198,7 @@ export class CropEditPresenter implements
         crop_stages: updatedStages
       }
     };
-    this.flashMessage.show({ type: 'success', text: 'Thermal requirement updated successfully' });
+    this.flashMessage.show({ type: 'success', text: 'crops.flash.thermal_requirement_updated' });
   }
 
   presentUpdateSunshineRequirement(dto: UpdateSunshineRequirementOutputDto): void {
@@ -220,7 +220,7 @@ export class CropEditPresenter implements
         crop_stages: updatedStages
       }
     };
-    this.flashMessage.show({ type: 'success', text: 'Sunshine requirement updated successfully' });
+    this.flashMessage.show({ type: 'success', text: 'crops.flash.sunshine_requirement_updated' });
   }
 
   presentUpdateNutrientRequirement(dto: UpdateNutrientRequirementOutputDto): void {
@@ -242,6 +242,6 @@ export class CropEditPresenter implements
         crop_stages: updatedStages
       }
     };
-    this.flashMessage.show({ type: 'success', text: 'Nutrient requirement updated successfully' });
+    this.flashMessage.show({ type: 'success', text: 'crops.flash.nutrient_requirement_updated' });
   }
 }

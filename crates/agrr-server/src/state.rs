@@ -1,9 +1,13 @@
 use crate::cable::CableHub;
 use crate::jobs::JobChainDispatcher;
+use crate::locale_catalog::{locales_dir_from_env, LocaleCatalog};
+use crate::locale_translator::LocaleTranslator;
+use crate::request_locale::locale_from_headers;
 use crate::runtime_env;
 use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_adapters_sqlite::SqlitePool;
 use agrr_domain::weather_data::gateways::WeatherDataGateway;
+use axum::http::HeaderMap;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -19,6 +23,7 @@ pub struct AppState {
     pub secure_cookies: bool,
     pub job_dispatcher: Arc<JobChainDispatcher>,
     pub cable_hub: Arc<CableHub>,
+    pub locale_catalog: Arc<LocaleCatalog>,
 }
 
 impl AppState {
@@ -28,9 +33,19 @@ impl AppState {
             WeatherDataGatewayBundle::resolve(sqlite.clone())
                 .unwrap_or_else(|e| panic!("weather data gateway bundle: {e}")),
         );
+        let locales_dir = locales_dir_from_env();
+        let locale_catalog = Arc::new(
+            LocaleCatalog::load_from_dir(&locales_dir).unwrap_or_else(|e| {
+                panic!(
+                    "locale catalog from {}: {e}",
+                    locales_dir.display()
+                );
+            }),
+        );
         Self {
             sqlite,
             weather_data,
+            locale_catalog,
             google_client_id: Arc::new(std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default()),
             google_client_secret: Arc::new(
                 std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default(),
@@ -60,5 +75,10 @@ impl AppState {
 
     pub fn backdoor_token_matches(&self, provided: &str) -> bool {
         !self.backdoor_token.is_empty() && provided == self.backdoor_token.as_str()
+    }
+
+    pub fn locale_translator<'a>(&'a self, headers: &HeaderMap) -> LocaleTranslator<'a> {
+        let locale = locale_from_headers(headers);
+        LocaleTranslator::new(&self.locale_catalog, locale)
     }
 }

@@ -120,11 +120,8 @@ pub fn crop_stage_to_json(stage: &CropStageEntity) -> Value {
     obj
 }
 
-pub fn farm_destroy_undo_json(
-    undo: &Value,
-    farm_name: &str,
-    toast_key: &str,
-) -> Value {
+/// Nested undo payload for Angular masters delete (farm/crop share the same shape).
+pub fn masters_destroy_undo_json(undo: &Value, toast_message: &str) -> Value {
     let undo_token = undo.get("undo_token").and_then(|v| v.as_str()).unwrap_or("");
     let undo_deadline = undo
         .get("expires_at")
@@ -134,26 +131,10 @@ pub fn farm_destroy_undo_json(
         "undo": {
             "undo_token": undo_token,
             "undo_path": format!("/undo_deletion?undo_token={undo_token}"),
-            "toast_message": format!("{toast_key}:{farm_name}"),
+            "toast_message": toast_message,
             "undo_deadline": undo_deadline,
             "auto_hide_after": 5000
         }
     })
 }
 
-pub fn crop_destroy_undo_json(undo: &Value, crop_name: &str) -> Value {
-    let undo_token = undo.get("undo_token").and_then(|v| v.as_str()).unwrap_or("");
-    let undo_deadline = undo
-        .get("expires_at")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
-    json!({
-        "undo": {
-            "undo_token": undo_token,
-            "undo_path": format!("/undo_deletion?undo_token={undo_token}"),
-            "toast_message": format!("flash.crops.deleted:{crop_name}"),
-            "undo_deadline": undo_deadline,
-            "auto_hide_after": 5000
-        }
-    })
-}

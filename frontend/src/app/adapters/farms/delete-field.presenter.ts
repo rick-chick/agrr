@@ -21,7 +21,7 @@ export class DeleteFieldPresenter implements DeleteFieldOutputPort {
 
     if (dto.undo) {
       this.undoToastService.showWithUndo(
-        'Field deleted.',
+        dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
         () => {

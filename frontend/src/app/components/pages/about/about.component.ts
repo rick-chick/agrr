@@ -55,13 +55,13 @@ import { Subscription } from 'rxjs';
             <li>{{ 'pages.about.operator.location' | translate }}</li>
             <li>{{ 'pages.about.operator.initiative' | translate }}</li>
             <li>
-              {{ 'pages.about.operator.contact' | translate: { 
+              {{ 'pages.about.operator.contact_html' | translate: { 
                   email_link: 'support@agrr.net', 
                   contact_link: ('pages.about.operator.contact_form' | translate) 
                 } }}
             </li>
             <li>
-              {{ 'pages.about.operator.ads_notice' | translate: { 
+              {{ 'pages.about.operator.ads_notice_html' | translate: { 
                   privacy_link: ('pages.about.operator.privacy_link_text' | translate) 
                 } }}
             </li>

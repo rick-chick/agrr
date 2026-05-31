@@ -17,7 +17,7 @@ describe('DeleteCropUseCase', () => {
       show: () => of({} as never),
       create: () => of({} as never),
       update: () => of({} as never),
-      destroy: vi.fn(() => of({ undo: undoResponse }))
+      destroy: vi.fn(() => of(undoResponse))
     };
 
     let receivedDto: { deletedCropId: number; undo?: DeletionUndoResponse } | null = null;

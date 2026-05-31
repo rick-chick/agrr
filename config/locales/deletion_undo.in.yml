@@ -1,0 +1,35 @@
+in:
+  deletion_undo:
+    toast_message: "%{resource} हटा दिया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+    schedule_forbidden: "आपको यह क्रिया करने की अनुमति नहीं है।"
+    redirect_notice: "%{resource} हटा दिया गया।"
+    restored: "हटाना पूर्ववत कर दिया गया।"
+    undo_button: "पूर्ववत करें"
+    close_button: "बंद करें"
+    expired: "पूर्ववत करने का समय समाप्त हो गया।"
+    restore_failed: "हटाना पूर्ववत नहीं किया जा सका।"
+    not_found: "पूर्ववत क्रिया नहीं मिली।"
+  pesticides:
+    undo:
+      toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+  agricultural_tasks:
+    undo:
+      toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+  crops:
+    undo:
+      toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+  pests:
+    undo:
+      toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+  fertilizes:
+    undo:
+      toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+  farms:
+    undo:
+      toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+  fields:
+    undo:
+      toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+  interaction_rules:
+    undo:
+      toast: "%{source} → %{target} नियम हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"

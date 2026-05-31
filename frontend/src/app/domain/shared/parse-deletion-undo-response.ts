@@ -6,11 +6,8 @@ function isDeletionUndoResponse(value: unknown): value is DeletionUndoResponse {
   return typeof token === 'string' && token.length > 0;
 }
 
-/**
- * Masters DELETE の JSON から Undo 情報を取り出す。
- * Rust API は flat（undo_token がトップレベル）または nested（undo キー）の両方があり得る。
- */
-export function extractDeletionUndoResponse(body: unknown): DeletionUndoResponse | undefined {
+/** DELETE レスポンス（flat または `{ undo: … }`）から Undo 情報を取り出す。 */
+export function parseDeletionUndoResponse(body: unknown): DeletionUndoResponse | undefined {
   if (!body || typeof body !== 'object') return undefined;
   if (isDeletionUndoResponse(body)) return body;
   const nested = (body as { undo?: unknown }).undo;

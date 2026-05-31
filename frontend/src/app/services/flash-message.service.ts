@@ -1,4 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { translateServerToastMessage } from '../core/i18n/translate-server-toast-message';
 
 export type FlashMessage = {
   id: string;
@@ -8,6 +10,7 @@ export type FlashMessage = {
 
 @Injectable({ providedIn: 'root' })
 export class FlashMessageService {
+  private readonly translate = inject(TranslateService);
   private readonly messagesSignal = signal<FlashMessage[]>([]);
 
   messages() {
@@ -16,7 +19,10 @@ export class FlashMessageService {
 
   show(message: Omit<FlashMessage, 'id'>) {
     const id = crypto.randomUUID();
-    this.messagesSignal.update((messages) => [...messages, { id, ...message }]);
+    const text = translateServerToastMessage(message.text, (key, params) =>
+      this.translate.instant(key, params)
+    );
+    this.messagesSignal.update((messages) => [...messages, { id, ...message, text }]);
   }
 
   remove(id: string) {

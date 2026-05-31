@@ -26,7 +26,7 @@ use agrr_domain::agricultural_task::ports::{
 use agrr_domain::shared::dtos::ReferencableListRow;
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
@@ -302,6 +302,7 @@ impl AgriculturalTaskDestroyOutputPort for DestroyPort {
 async fn destroy(
     State(state): State<AppState>,
     auth: MastersUserId,
+    headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
@@ -309,7 +310,7 @@ async fn destroy(
     let pool = state.sqlite.clone();
     let gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
-    let translator = PassthroughTranslator;
+    let translator = state.locale_translator(&headers);
     let mut port = DestroyPort(out.clone());
     let mut interactor = AgriculturalTaskDestroyInteractor::new(
         &mut port,

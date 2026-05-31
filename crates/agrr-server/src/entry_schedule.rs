@@ -1,7 +1,8 @@
 //! Public entry schedule (`/api/v1/public_plans/entry_schedule/crops*`).
 
-use crate::adapters::{NoopLogger, PassthroughTranslator, SystemClock};
+use crate::adapters::{NoopLogger, SystemClock};
 use crate::state::AppState;
+use axum::http::HeaderMap;
 use agrr_adapters_agrr::{AgrrDaemonClient, EntryScheduleOptimizationAgrrDaemonGateway};
 use agrr_adapters_sqlite::{CropSqliteGateway, FarmSqliteGateway};
 use agrr_domain::crop::dtos::CropFindReferenceForEntryScheduleInput;
@@ -341,9 +342,11 @@ fn stage_rows(crop_gateway: &CropSqliteGateway, crop_id: i64) -> Vec<CropStageRo
 
 async fn entry_schedule_crop_show(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(crop_id): Path<i64>,
     Query(query): Query<EntryScheduleShowQuery>,
 ) -> impl IntoResponse {
+    let translator = state.locale_translator(&headers);
     let farm = match load_farm(&state, query.farm_id).await {
         Ok(f) => f,
         Err(e) => return e.into_response(),
@@ -383,7 +386,7 @@ async fn entry_schedule_crop_show(
         &crop_gw,
         &StubWeatherLoader,
         &runner,
-        &PassthroughTranslator,
+        &translator,
         &SystemClock,
     );
     interactor.call(
@@ -404,6 +407,7 @@ async fn entry_schedule_crop_show(
 
 async fn entry_schedule_crops(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Query(query): Query<EntryScheduleCropsQuery>,
 ) -> impl IntoResponse {
     let farm = match load_farm(&state, query.farm_id).await {
@@ -425,7 +429,7 @@ async fn entry_schedule_crops(
     let weather = StubWeatherLoader
         .load_prediction_payload(&FarmWrap(farm.clone()), query.prediction_end_date.as_deref(), SystemClock.today())
         .unwrap_or_default();
-    let translator = PassthroughTranslator;
+    let translator = state.locale_translator(&headers);
     let mut items = Vec::new();
     for crop in reference_crops {
         if !crop_reference_record_policy::visible_for_entry_schedule(

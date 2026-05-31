@@ -1,7 +1,7 @@
 //! Masters farms API — `/api/v1/masters/farms`
 
 use crate::adapters::PassthroughTranslator;
-use crate::masters_json::{farm_destroy_undo_json, farm_field_to_json, farm_to_json};
+use crate::masters_json::{farm_field_to_json, farm_to_json, masters_destroy_undo_json};
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{FarmSqliteGateway, UserLookupSqliteGateway};
@@ -20,7 +20,7 @@ use agrr_domain::farm::ports::{
 use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
@@ -187,13 +187,14 @@ async fn update_farm(
 async fn destroy_farm(
     State(state): State<AppState>,
     auth: MastersUserId,
+    headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = FarmSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
-    let translator = PassthroughTranslator;
+    let translator = state.locale_translator(&headers);
     let mut presenter = DestroyPresenter { body: None };
     let mut interactor = FarmDestroyInteractor::new(
         &mut presenter,
@@ -205,10 +206,9 @@ async fn destroy_farm(
     interactor.call(id).map_err(internal)?;
 
     match presenter.body {
-        Some(Ok(output)) => Ok(Json(farm_destroy_undo_json(
+        Some(Ok(output)) => Ok(Json(masters_destroy_undo_json(
             &output.undo,
-            &output.farm_name,
-            "flash.farms.deleted",
+            &format!("flash.farms.deleted:{}", output.farm_name),
         ))),
         Some(Err((status, body))) => Err((status, Json(body))),
         None => Err(internal_error()),

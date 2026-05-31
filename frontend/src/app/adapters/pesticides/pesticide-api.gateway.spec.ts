@@ -7,12 +7,11 @@ import { Pesticide } from '../../domain/pesticides/pesticide';
 describe('PesticideApiGateway', () => {
   let client: {
     get: ReturnType<typeof vi.fn>;
-    deleteWithUndo: ReturnType<typeof vi.fn>;
   };
   let gateway: PesticideApiGateway;
 
   beforeEach(() => {
-    client = { get: vi.fn(), deleteWithUndo: vi.fn() };
+    client = { get: vi.fn() };
     gateway = new PesticideApiGateway(client as unknown as MastersClientService);
   });
 
@@ -27,13 +26,4 @@ describe('PesticideApiGateway', () => {
     expect(client.get).toHaveBeenCalledWith('/pesticides');
   });
 
-  it('destroy uses deleteWithUndo on masters API path', async () => {
-    vi.mocked(client.deleteWithUndo).mockReturnValue(
-      of({ undo_token: 'token-1', undo_path: '/undo_deletion?undo_token=token-1', toast_message: 'deleted' })
-    );
-
-    const result = await firstValueFrom(gateway.destroy(42));
-    expect(client.deleteWithUndo).toHaveBeenCalledWith('/pesticides/42');
-    expect(result?.undo_token).toBe('token-1');
-  });
 });

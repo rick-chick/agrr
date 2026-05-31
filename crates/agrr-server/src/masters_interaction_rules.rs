@@ -21,7 +21,7 @@ use agrr_domain::interaction_rule::ports::{
 use agrr_domain::shared::dtos::Error;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
@@ -280,6 +280,7 @@ impl InteractionRuleDestroyOutputPort for DestroyPort {
 async fn destroy(
     State(state): State<AppState>,
     auth: MastersUserId,
+    headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
@@ -287,7 +288,7 @@ async fn destroy(
     let pool = state.sqlite.clone();
     let gateway = InteractionRuleSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
-    let translator = PassthroughTranslator;
+    let translator = state.locale_translator(&headers);
     let mut port = DestroyPort(out.clone());
     let mut interactor = InteractionRuleDestroyInteractor::new(
         &mut port,

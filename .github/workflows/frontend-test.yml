@@ -39,3 +39,6 @@ jobs:
 
       - name: i18n JA values check
         run: npm run check-ja-values
+
+      - name: ng serve proxy contract
+        run: npm run check:proxy-conf

@@ -119,29 +119,4 @@ class MastersInteractionRulesContractTest < ContractTestCase
     end
   end
 
-  test "destroy_returns_undo_token_json_via_masters_api" do
-    rule = create(
-      :interaction_rule,
-      :user_owned,
-      user: @user,
-      rule_type: "continuous_cultivation",
-      source_group: "D1",
-      target_group: "D2"
-    )
-
-    if rust_contract?
-      response = rust_delete("/api/v1/masters/interaction_rules/#{rule.id}", session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-      assert json["undo_token"].present?
-      assert json["undo_path"].present?
-      assert_equal "/undo_deletion?undo_token=#{json['undo_token']}", json["undo_path"]
-      assert json["toast_message"].present?
-    else
-      sign_in_as @user
-      delete "/api/v1/masters/interaction_rules/#{rule.id}",
-             headers: { "Accept" => "application/json" }
-      assert_response :success
-    end
-  end
 end

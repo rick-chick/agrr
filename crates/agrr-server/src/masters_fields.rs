@@ -18,7 +18,7 @@ use agrr_domain::field::ports::{
 use agrr_domain::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
@@ -162,13 +162,14 @@ async fn update_field(
 async fn destroy_field(
     State(state): State<AppState>,
     auth: MastersUserId,
+    headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let gateway = FieldSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
-    let translator = PassthroughTranslator;
+    let translator = state.locale_translator(&headers);
     let mut presenter = DestroyPresenter { body: None };
     let mut interactor = FieldDestroyInteractor::new(
         &mut presenter,

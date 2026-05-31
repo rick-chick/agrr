@@ -1,25 +1,30 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpHeaders } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
 import { Observable, defer } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { extractDeletionUndoResponse } from '../../domain/shared/extract-deletion-undo-response';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
+import { parseDeletionUndoResponse } from '../../domain/shared/parse-deletion-undo-response';
 import { ApiService } from '../api.service';
 import { ApiKeyService } from '../api-key.service';
 
 @Injectable({ providedIn: 'root' })
 export class MastersClientService {
+  private readonly translate = inject(TranslateService);
+
   constructor(
     private readonly apiClient: ApiService,
     private readonly apiKeyService: ApiKeyService
   ) {}
 
   private getHeaders(): HttpHeaders {
+    const lang = this.translate.currentLang || this.translate.defaultLang || 'ja';
+    let headers = new HttpHeaders({ 'Accept-Language': lang });
     const apiKey = this.apiKeyService.getApiKey();
     if (apiKey) {
-      return new HttpHeaders({ 'X-API-Key': apiKey });
+      headers = headers.set('X-API-Key', apiKey);
     }
-    return new HttpHeaders();
+    return headers;
   }
 
   /**
@@ -60,6 +65,6 @@ export class MastersClientService {
 
   /** Masters DELETE with undo (flat or `{ undo: … }` JSON). */
   deleteWithUndo(path: string): Observable<DeletionUndoResponse | undefined> {
-    return this.delete<unknown>(path).pipe(map((body) => extractDeletionUndoResponse(body)));
+    return this.delete<unknown>(path).pipe(map((body) => parseDeletionUndoResponse(body)));
   }
 }

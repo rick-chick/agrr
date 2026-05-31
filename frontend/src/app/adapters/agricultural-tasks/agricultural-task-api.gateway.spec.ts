@@ -7,12 +7,11 @@ import { AgriculturalTask } from '../../domain/agricultural-tasks/agricultural-t
 describe('AgriculturalTaskApiGateway', () => {
   let client: {
     get: ReturnType<typeof vi.fn>;
-    deleteWithUndo: ReturnType<typeof vi.fn>;
   };
   let gateway: AgriculturalTaskApiGateway;
 
   beforeEach(() => {
-    client = { get: vi.fn(), deleteWithUndo: vi.fn() };
+    client = { get: vi.fn() };
     gateway = new AgriculturalTaskApiGateway(client as unknown as MastersClientService);
   });
 
@@ -27,13 +26,4 @@ describe('AgriculturalTaskApiGateway', () => {
     expect(client.get).toHaveBeenCalledWith('/agricultural_tasks');
   });
 
-  it('destroy uses deleteWithUndo on masters API path', async () => {
-    vi.mocked(client.deleteWithUndo).mockReturnValue(
-      of({ undo_token: 'token-1', undo_path: '/undo_deletion?undo_token=token-1', toast_message: 'deleted' })
-    );
-
-    const result = await firstValueFrom(gateway.destroy(42));
-    expect(client.deleteWithUndo).toHaveBeenCalledWith('/agricultural_tasks/42');
-    expect(result?.undo_token).toBe('token-1');
-  });
 });

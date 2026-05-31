@@ -30,7 +30,7 @@ use agrr_domain::cultivation_plan::ports::{
 use agrr_domain::shared::dtos::Error;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
@@ -444,6 +444,7 @@ impl CultivationPlanDestroyOutputPort for DestroyPresenter {
 async fn destroy_plan(
     State(state): State<AppState>,
     jar: CookieJar,
+    headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar)
@@ -451,7 +452,7 @@ async fn destroy_plan(
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
-    let translator = PassthroughTranslator;
+    let translator = state.locale_translator(&headers);
     let mut presenter = DestroyPresenter { body: None };
     let mut interactor = CultivationPlanDestroyInteractor::new(
         &mut presenter,

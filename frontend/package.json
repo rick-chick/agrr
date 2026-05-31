@@ -11,6 +11,7 @@
     "extract-i18n": "node scripts/extract-i18n.js",
     "check-hardcoded-i18n": "node scripts/check-hardcoded-i18n.js",
     "check-ja-values": "node scripts/check-ja-values.js",
+    "check:proxy-conf": "node scripts/proxy-conf-contract.mjs",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/",
     "test:e2e:ui": "playwright test --ui",

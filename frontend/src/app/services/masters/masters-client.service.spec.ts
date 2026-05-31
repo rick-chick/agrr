@@ -1,73 +1,59 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { of, firstValueFrom } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MastersClientService } from './masters-client.service';
+import { ApiService } from '../api.service';
+import { ApiKeyService } from '../api-key.service';
 
-// Mock HttpHeaders
-class MockHttpHeaders {
-  private headers = new Map<string, string>();
-  constructor(init?: any) {
-    if (init) {
-      Object.keys(init).forEach(key => this.headers.set(key, init[key]));
-    }
-  }
-  get(name: string) { return this.headers.get(name); }
-  set(name: string, value: string) {
-    const newHeaders = new MockHttpHeaders();
-    this.headers.forEach((v, k) => newHeaders.headers.set(k, v));
-    newHeaders.headers.set(name, value);
-    return newHeaders;
-  }
-}
-
-// Logic from masters-client.service.ts (session auth fallback 対応後)
-class MastersClientServiceLogic {
-  constructor(private apiClient: any, private apiKeyService: any) {}
-
-  private getHeaders(): any {
-    const apiKey = this.apiKeyService.getApiKey();
-    if (apiKey) return new MockHttpHeaders({ 'X-API-Key': apiKey });
-    return new MockHttpHeaders();
-  }
-
-  get(path: string): any {
-    const headers = this.getHeaders();
-    const options = this.apiKeyService.getApiKey() ? { headers } : {};
-    return this.apiClient.get(`/api/v1/masters${path}`, options);
-  }
-}
-
-describe('MastersClientService Logic Verification', () => {
-  let service: MastersClientServiceLogic;
-  let apiClient: any;
-  let apiKeyService: any;
+describe('MastersClientService', () => {
+  let service: MastersClientService;
+  let apiClient: { get: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
+  let apiKeyService: { getApiKey: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    apiClient = { get: vi.fn().mockReturnValue(of({})) };
-    apiKeyService = { getApiKey: vi.fn() };
-    service = new MastersClientServiceLogic(apiClient, apiKeyService);
+    apiClient = { get: vi.fn().mockReturnValue(of({})), delete: vi.fn() };
+    apiKeyService = { getApiKey: vi.fn().mockReturnValue(null) };
+    service = new MastersClientService(
+      apiClient as unknown as ApiService,
+      apiKeyService as unknown as ApiKeyService
+    );
+    (service as unknown as { translate: TranslateService }).translate = {
+      currentLang: 'in',
+      defaultLang: 'ja'
+    } as TranslateService;
   });
 
-  it('should make request without X-API-Key when API key is missing (session auth fallback)', async () => {
-    apiKeyService.getApiKey.mockReturnValue(null);
-    await firstValueFrom(service.get('/test'));
-    expect(apiClient.get).toHaveBeenCalledWith('/api/v1/masters/test', {});
+  it('get uses /api/v1/masters prefix without X-API-Key when session auth only', async () => {
+    await firstValueFrom(service.get('/crops'));
+    expect(apiClient.get).toHaveBeenCalledWith('/api/v1/masters/crops', {});
   });
 
-  it('should include X-API-Key header when API key is present', async () => {
-    const mockKey = 'test-api-key';
-    apiKeyService.getApiKey.mockReturnValue(mockKey);
-    apiClient.get.mockReturnValue(of({}));
-
-    await firstValueFrom(service.get('/test'));
-
+  it('get includes X-API-Key when API key is present', async () => {
+    apiKeyService.getApiKey.mockReturnValue('test-api-key');
+    await firstValueFrom(service.get('/crops'));
     expect(apiClient.get).toHaveBeenCalledWith(
-      '/api/v1/masters/test',
+      '/api/v1/masters/crops',
       expect.objectContaining({
-        headers: expect.any(Object)
+        headers: expect.objectContaining({})
       })
     );
-    
-    const callArgs = apiClient.get.mock.calls[0];
-    const headers = callArgs[1].headers;
-    expect(headers.get('X-API-Key')).toBe(mockKey);
+  });
+
+  describe('deleteWithUndo', () => {
+    it('calls masters DELETE and returns parsed undo payload', async () => {
+      apiClient.delete.mockReturnValue(
+        of({
+          undo_token: 'flat-token',
+          undo_path: '/undo_deletion?undo_token=flat-token',
+          toast_message: 'deleted'
+        })
+      );
+
+      const result = await firstValueFrom(service.deleteWithUndo('/farms/42'));
+      expect(apiClient.delete).toHaveBeenCalledWith('/api/v1/masters/farms/42', {
+        headers: expect.objectContaining({})
+      });
+      expect(result?.undo_token).toBe('flat-token');
+    });
   });
 });
