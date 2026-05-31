@@ -10,21 +10,56 @@
   align-items: center;
 }
 
+/* 結果画面: 子を横いっぱいに（align-items: center による幅つぶれ防止） */
+.public-plans-wrapper.page-main:has(.public-plan-results__body) {
+  align-items: stretch;
+}
+
 @media (max-width: 768px) {
   .public-plans-wrapper.page-main {
-    padding: var(--space-4);
+    padding: var(--space-2);
+  }
+
+  .free-plans-container {
+    padding-bottom: var(--space-4);
   }
 
   .gantt-results-header {
-    padding: var(--space-5);
+    margin-bottom: var(--space-4);
   }
 
   .gantt-results-header-title {
     font-size: var(--font-size-2xl);
   }
 
-  .gantt-results-header-summary {
-    grid-template-columns: repeat(2, 1fr);
+  .enhanced-summary-items {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-plans-wrapper.page-main {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .free-plans-container {
+    padding-bottom: var(--space-3);
+  }
+
+  .gantt-results-header {
+    margin-bottom: var(--space-3);
+  }
+
+  .enhanced-grid {
+    gap: var(--space-2);
+  }
+
+  .selection-section h3 {
+    margin-bottom: var(--space-2);
+  }
+
+  .compact-header-card {
+    margin-bottom: var(--space-2);
   }
 }
 
@@ -462,7 +497,7 @@
 
 @media (max-width: 768px) {
   .fixed-bottom-bar-container {
-    padding: 0.75rem 1rem;
+    padding: var(--space-2) var(--space-3);
   }
 
   .fixed-bottom-bar-content {
@@ -522,7 +557,7 @@
 
 @media (max-width: 480px) {
   .fixed-bottom-bar-container {
-    padding: 0.625rem 0.75rem;
+    padding: var(--space-1) var(--space-2);
   }
 
   .fixed-bottom-bar-content {
@@ -739,7 +774,7 @@
   .compact-header-card {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--space-3);
+    gap: var(--space-1);
   }
 
   .compact-header-card:has(.compact-progress),
@@ -996,7 +1031,7 @@
 
 @media (max-width: 768px) {
   .fixed-progress-container {
-    padding: var(--space-4);
+    padding: var(--space-2) var(--space-3);
   }
 
   .fixed-progress-bar .progress-header {
@@ -1012,7 +1047,7 @@
 
 @media (max-width: 480px) {
   .fixed-progress-container {
-    padding: var(--space-3);
+    padding: var(--space-1) var(--space-2);
   }
 
   .fixed-progress-bar .progress-info {

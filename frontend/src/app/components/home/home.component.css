@@ -139,6 +139,19 @@
 }
 
 @media (max-width: 768px) {
+  .hero-section {
+    padding: var(--space-4) var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  .features-section {
+    padding: var(--space-4) var(--space-2);
+  }
+
+  .cta-section {
+    padding: var(--space-4) var(--space-2);
+  }
+
   .features-grid {
     grid-template-columns: 1fr;
     gap: var(--space-6);
@@ -146,5 +159,17 @@
 
   .hero-section h1 {
     font-size: var(--font-size-3xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: var(--space-3) var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .features-section,
+  .cta-section {
+    padding: var(--space-3) var(--space-2);
   }
 }

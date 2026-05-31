@@ -178,6 +178,9 @@
   /* 余白（追加・4px ベース） */
   --space-10: 40px;
 
+  /* カード1枚あたりの最小幅（320px 級のスマホ想定） */
+  --card-fill-min-mobile: 20rem; /* 320px */
+
   /* タイポグラフィ（追加） */
   --font-size-2xl: 24px;
   --font-size-3xl: 30px;
@@ -259,4 +262,49 @@
   color: var(--color-text-secondary);
   line-height: var(--line-height-normal);
   margin: 0;
+}
+
+/* モバイル: カード内余白を 4px（--space-1）に統一 */
+@media (max-width: 768px) {
+  :is(
+    .section-card,
+    .detail-card,
+    .form-card,
+    .content-card,
+    .feature-card,
+    .enhanced-selection-card,
+    .enhanced-summary-card,
+    .compact-header-card,
+    .optimizing-card,
+    .crop-card,
+    a.item-card,
+    article.item-card,
+    .info-box,
+    .info-box-note,
+    .warning-box,
+    .highlight-box,
+    .gantt-results-header,
+    .confirm-dialog
+  ) {
+    padding: var(--space-1);
+  }
+
+  .section-card,
+  article.item-card {
+    gap: var(--space-1);
+  }
+
+  /*
+   * 折返し: 2列並べても1枚が --card-fill-min-mobile 未満になる幅では1列（縦に複数行）。
+   * 2枚分+gap が確保できる幅だけ最大2列（2行目以降へ折返し）。
+   */
+  :is(.enhanced-grid, .gantt-results-header-summary, .crop-checkboxes) {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: calc(2 * var(--card-fill-min-mobile) + var(--space-2))) and (max-width: 768px) {
+  :is(.enhanced-grid, .gantt-results-header-summary, .crop-checkboxes) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

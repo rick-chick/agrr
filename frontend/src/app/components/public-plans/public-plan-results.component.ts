@@ -66,7 +66,7 @@ const initialControl: PublicPlanResultsViewState = {
             </a>
           </div>
 
-          <section class="page">
+          <div class="public-plan-results__body">
             <div class="plan-detail__layout">
               <div class="plan-detail__pane plan-detail__gantt">
                 <app-gantt-chart
@@ -93,7 +93,7 @@ const initialControl: PublicPlanResultsViewState = {
                 }
               </div>
             </div>
-          </section>
+          </div>
         }
       </div>
     </main>

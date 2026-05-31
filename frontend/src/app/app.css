@@ -45,6 +45,25 @@
   padding: var(--space-6) var(--space-5);
   max-width: 1200px;
   margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* page-main / 静的ページは自前の余白を持つため、モバイルでは二重 padding を避ける */
+@media (max-width: 768px) {
+  .app-main {
+    padding: var(--space-2);
+  }
+
+  .app-main:has(.page-main),
+  .app-main:has(.page-content-container) {
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-main:not(:has(.page-main)):not(:has(.page-content-container)) {
+    padding: var(--space-1) var(--space-2);
+  }
 }
 
 /* ============================================
@@ -114,6 +133,20 @@ a.btn:focus-visible {
   box-shadow: var(--shadow-card);
 }
 
+@media (max-width: 768px) {
+  .content-card,
+  .enhanced-summary-card {
+    margin-bottom: var(--space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .content-card,
+  .enhanced-summary-card {
+    margin-bottom: var(--space-2);
+  }
+}
+
 .content-card__title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
@@ -161,6 +194,20 @@ a.btn:focus-visible {
   padding: var(--space-4) var(--space-6);
   width: 100%;
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .fixed-bottom-bar-container,
+  .fixed-bottom-bar > .fixed-bottom-bar-content {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .fixed-bottom-bar-container,
+  .fixed-bottom-bar > .fixed-bottom-bar-content {
+    padding: var(--space-1) var(--space-2);
+  }
 }
 
 /* create 画面: bar > content のときは content に max-width と padding */

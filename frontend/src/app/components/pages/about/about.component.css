@@ -148,8 +148,8 @@
 
 @media (max-width: 768px) {
   .page-content-container {
-    margin: var(--space-6) auto;
-    padding: var(--space-4);
+    margin: var(--space-2) auto;
+    padding: var(--space-2);
   }
 
   .page-header {
@@ -166,16 +166,12 @@
     margin-top: var(--space-8);
   }
 
-  .info-box,
-  .warning-box,
-  .highlight-box {
-    padding: var(--space-4);
-  }
 }
 
 @media (max-width: 480px) {
   .page-content-container {
-    padding: var(--space-3);
+    margin: var(--space-1) auto;
+    padding: var(--space-1) var(--space-2);
   }
 
   .page-header {
