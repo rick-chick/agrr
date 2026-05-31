@@ -49,7 +49,8 @@ export class CropListPresenter implements LoadCropListOutputPort, DeleteCropOutp
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        dto.refresh
+        dto.refresh,
+        dto.undo.resource
       );
     }
   }

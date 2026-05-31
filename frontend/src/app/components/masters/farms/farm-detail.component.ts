@@ -69,7 +69,7 @@ const initialControl: FarmDetailViewState = {
         }
 
         <section class="section-card" aria-labelledby="map-heading">
-          <h2 id="map-heading" class="section-title">{{ 'farms.show.map' | translate }}</h2>
+          <h2 id="map-heading" class="section-title">{{ 'farms.show.map.title' | translate }}</h2>
           <app-farm-map
             [latitude]="control.farm.latitude"
             [longitude]="control.farm.longitude"

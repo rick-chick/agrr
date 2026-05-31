@@ -49,7 +49,8 @@ export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutp
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        dto.refresh
+        dto.refresh,
+        dto.undo.resource
       );
     }
   }

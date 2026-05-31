@@ -263,7 +263,7 @@ describe('CropEditPresenter', () => {
       presenter.present(dto);
 
       expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'success', text: 'Crop stage deleted successfully' });
+      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'success', text: 'crops.flash.stage_deleted' });
     });
   });
 

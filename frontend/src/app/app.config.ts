@@ -1,7 +1,12 @@
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import {
+  TranslateLoader,
+  TranslateModule,
+  provideTranslateParser
+} from '@ngx-translate/core';
+import { AgrrTranslateParser } from './core/i18n/agrr-translate.parser';
 import 'chartjs-adapter-date-fns';
 
 import { routes } from './app.routes';
@@ -20,7 +25,8 @@ export const appConfig: ApplicationConfig = {
           provide: TranslateLoader,
           useFactory: createTranslateLoader,
           deps: [HttpClient]
-        }
+        },
+        parser: provideTranslateParser(AgrrTranslateParser)
       })
     )
   ]

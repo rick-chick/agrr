@@ -1,8 +1,8 @@
 {
   "deletion_undo": {
-    "toast_message": "%{resource} हटा दिया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।",
+    "toast_message": "{{resource}} हटा दिया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।",
     "schedule_forbidden": "आपको यह क्रिया करने की अनुमति नहीं है।",
-    "redirect_notice": "%{resource} हटा दिया गया।",
+    "redirect_notice": "{{resource}} हटा दिया गया।",
     "restored": "हटाना पूर्ववत कर दिया गया।",
     "undo_button": "पूर्ववत करें",
     "close_button": "बंद करें",
@@ -12,7 +12,7 @@
   },
   "pesticides": {
     "undo": {
-      "toast": "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
     "form": {
       "crop_label": "फसल",
@@ -61,7 +61,7 @@
       "submit_update": "कीटनाशक अपडेट करें",
       "cancel": "रद्द करें",
       "errors": {
-        "title": "%{count} त्रुटियां हुईं:"
+        "title": "{{count}} त्रुटियां हुईं:"
       }
     },
     "flash": {
@@ -69,7 +69,7 @@
       "updated": "कीटनाशक सफलतापूर्वक अपडेट किया गया।",
       "destroyed": "कीटनाशक हटाया गया।",
       "cannot_delete_in_use": "इस कीटनाशक को हटाया नहीं जा सकता क्योंकि यह अन्य डेटा में उपयोग हो रहा है।",
-      "delete_error": "हटाते समय त्रुटि हुई: %{message}",
+      "delete_error": "हटाते समय त्रुटि हुई: {{message}}",
       "reference_only_admin": "केवल व्यवस्थापक संदर्भ कीटनाशक बना सकते हैं।",
       "reference_flag_admin_only": "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।",
       "no_permission": "अनुमति अस्वीकृत।",
@@ -77,6 +77,7 @@
     },
     "index": {
       "title": "कीटनाशक सूची",
+      "description": "अपनी खेती योजनाओं के लिए कीटनाशक मास्टर डेटा पंजीकृत और प्रबंधित करें।",
       "new_pesticide": "नया कीटनाशक जोड़ें",
       "reference_pesticides": "संदर्भ कीटनाशक (सामान्य डेटा)",
       "active_ingredient": "सक्रिय तत्व",
@@ -97,7 +98,7 @@
       "title": "नया कीटनाशक जोड़ें"
     },
     "edit": {
-      "title": "%{name} संपादित करें"
+      "title": "{{name}} संपादित करें"
     },
     "show": {
       "reference_pesticide": "संदर्भ कीटनाशक",
@@ -129,114 +130,202 @@
   },
   "agricultural_tasks": {
     "undo": {
-      "toast": "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
     "flash": {
       "created": "作業が作成されました。",
       "updated": "作業が更新されました。",
       "destroyed": "作業が削除されました。",
       "cannot_delete_in_use": "この作業は他のデータで使用されているため削除できません。",
-      "delete_error": "削除中にエラーが発生しました: %{message}",
+      "delete_error": "削除中にエラーが発生しました: {{message}}",
       "reference_only_admin": "参照作業は管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
       "not_found": "指定された作業が見つかりません。"
     },
     "index": {
-      "title": "作業一覧",
-      "new_agricultural_task": "新しい作業を追加",
-      "time_per_sqm": "作業時間",
-      "reference_task": "参照作業",
-      "user_task_tag": "自分の作業",
+      "title": "कार्य सूची",
+      "new_agricultural_task": "नया कार्य जोड़ें",
+      "time_per_sqm": "प्रति वर्ग मीटर समय",
+      "reference_task": "संदर्भ कार्य",
+      "user_task_tag": "मेरा कार्य",
       "actions": {
-        "search": "検索",
-        "show": "詳細",
-        "edit": "編集",
-        "delete": "削除",
-        "delete_confirm": "本当にこの作業を削除しますか？"
+        "search": "खोजें",
+        "show": "विवरण",
+        "edit": "संपादित करें",
+        "delete": "हटाएं",
+        "delete_confirm": "क्या आप वाकई इस कार्य को हटाना चाहते हैं?"
       },
       "filters": {
-        "user_tasks": "自分の作業",
-        "reference_tasks": "参照作業",
-        "all_tasks": "すべて表示"
+        "user_tasks": "मेरे कार्य",
+        "reference_tasks": "संदर्भ कार्य",
+        "all_tasks": "सभी दिखाएं"
       },
-      "search_label": "作業を検索",
-      "search_placeholder": "作業名で検索",
+      "search_label": "कार्य खोजें",
+      "search_placeholder": "कार्य नाम से खोजें",
       "empty": {
         "icon": "🔧",
-        "title": "まだ作業が登録されていません",
-        "description": "最初の作業を追加して始めましょう。",
-        "button": "作業を追加"
-      }
+        "title": "अभी तक कोई कार्य पंजीकृत नहीं",
+        "description": "शुरू करने के लिए अपना पहला कार्य जोड़ें।",
+        "button": "कार्य जोड़ें"
+      },
+      "description": "अपनी खेती योजनाओं के लिए खेत कार्य और प्रबंधन कार्य पंजीकृत और प्रबंधित करें।",
+      "skill_label": "कौशल स्तर"
     },
     "new": {
-      "title": "新しい作業を追加"
+      "title": "नया कार्य जोड़ें"
     },
     "edit": {
-      "title": "%{name}を編集"
+      "title": "{{name}} संपादित करें"
     },
     "form": {
-      "submit_create": "作業を作成",
-      "submit_update": "作業を更新",
-      "required_tools_hint": "改行で複数入力できます",
-      "region_label": "地域",
-      "region_jp": "日本",
-      "region_us": "米国",
-      "region_in": "インド",
-      "region_blank": "選択してください",
-      "region_help": "この作業が適用される地域を選択してください（任意）",
+      "name_label": "कार्य का नाम",
+      "description_label": "विवरण",
+      "time_per_sqm_label": "समय (घंटे/㎡)",
+      "weather_dependency_label": "मौसम निर्भरता",
+      "skill_level_label": "कौशल स्तर",
+      "task_type_label": "कार्य प्रकार",
+      "submit_create": "कार्य बनाएं",
+      "submit_update": "कार्य अपडेट करें",
+      "required_tools_hint": "कई आइटम के लिए नई पंक्तियों का उपयोग करें",
+      "region_label": "क्षेत्र",
+      "region_jp": "जापान",
+      "region_us": "संयुक्त राज्य",
+      "region_in": "भारत",
+      "region_blank": "कृपया चुनें",
+      "region_help": "वह क्षेत्र चुनें जहाँ यह कार्य लागू होता है (वैकल्पिक)",
       "crop_selection": {
-        "title": "紐づける作物を選択",
-        "description": "この作業を適用したい作物カードを選択してください。クリックで選択／解除が切り替わります。",
-        "reference_badge": "参照作物",
-        "user_badge": "自分の作物",
-        "selected_state": "選択中",
-        "empty": "選択可能な作物がありません。先に作物を登録してください。"
+        "title": "लिंक करने के लिए फसलें चुनें",
+        "description": "इस कार्य को लागू करने के लिए फसल कार्ड चुनें। चयन टॉगल करने के लिए क्लिक करें।",
+        "reference_badge": "संदर्भ फसल",
+        "user_badge": "मेरी फसल",
+        "selected_state": "चयनित",
+        "empty": "कोई चयन योग्य फसल नहीं। पहले फसलें बनाएँ।"
       }
     },
     "show": {
-      "reference_task": "参照作業",
-      "name": "作業名",
-      "description": "説明",
-      "time_per_sqm": "作業時間",
-      "weather_dependency": "天候依存度",
-      "weather_dependency_low": "低",
-      "weather_dependency_medium": "中",
-      "weather_dependency_high": "高",
-      "required_tools": "必要な道具",
-      "skill_level": "スキルレベル",
-      "skill_level_beginner": "初心者",
-      "skill_level_intermediate": "中級者",
-      "skill_level_advanced": "上級者",
-      "created_at": "作成日",
-      "updated_at": "更新日",
-      "associated_crops": "関連する作物",
-      "reference_crop": "参照作物",
-      "no_crops_associated": "この作業に紐づく作物はありません。",
-      "back_to_list": "作業一覧に戻る",
-      "edit": "編集",
-      "delete": "削除",
-      "confirm_delete": "この作業を削除しますか？"
+      "reference_task": "संदर्भ कार्य",
+      "name": "कार्य का नाम",
+      "description": "विवरण",
+      "time_per_sqm": "प्रति वर्ग मीटर समय",
+      "weather_dependency": "मौसम निर्भरता",
+      "weather_dependency_low": "कम",
+      "weather_dependency_medium": "मध्यम",
+      "weather_dependency_high": "उच्च",
+      "required_tools": "आवश्यक उपकरण",
+      "skill_level": "कौशल स्तर",
+      "skill_level_beginner": "शुरुआती",
+      "skill_level_intermediate": "मध्यम",
+      "skill_level_advanced": "उन्नत",
+      "created_at": "निर्माण तिथि",
+      "updated_at": "अद्यतन तिथि",
+      "associated_crops": "संबद्ध फसलें",
+      "reference_crop": "संदर्भ फसल",
+      "no_crops_associated": "कोई फसल संबद्ध नहीं।",
+      "back_to_list": "सूची पर वापस",
+      "edit": "संपादित करें",
+      "delete": "हटाएं",
+      "confirm_delete": "क्या आप इस कार्य को हटाना चाहते हैं?"
     }
   },
   "crops": {
     "undo": {
-      "toast": "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
-    "flash": {
-      "updated": "फसल सफलतापूर्वक अपडेट की गई।",
-      "stage_created": "फसल चरण सफलतापूर्वक बनाया गया।",
-      "stage_updated": "फसल चरण सफलतापूर्वक अपडेट किया गया।",
-      "stage_deleted": "फसल चरण सफलतापूर्वक हटाया गया।",
-      "temperature_requirement_updated": "तापमान आवश्यकता सफलतापूर्वक अपडेट की गई।",
-      "thermal_requirement_updated": "थर्मल आवश्यकता सफलतापूर्वक अपडेट की गई।",
-      "sunshine_requirement_updated": "सूर्यप्रकाश आवश्यकता सफलतापूर्वक अपडेट की गई।",
-      "nutrient_requirement_updated": "पोषक तत्व आवश्यकता सफलतापूर्वक अपडेट की गई।"
+    "form": {
+      "name_label": "नाम",
+      "variety_label": "किस्म",
+      "variety_help": "किस्म का नाम दर्ज करें (वैकल्पिक)",
+      "area_per_unit_label": "प्रति इकाई क्षेत्र (m²)",
+      "area_per_unit_help": "प्रति इकाई खेती क्षेत्र दर्ज करें (वैकल्पिक)",
+      "revenue_per_area_label": "प्रति क्षेत्र राजस्व (प्रति m²)",
+      "revenue_per_area_help": "प्रति m² राजस्व दर्ज करें (वैकल्पिक)",
+      "groups_label": "समूह",
+      "groups_placeholder": "उदा. अनाज, धान, मुख्य फसल",
+      "groups_help": "फसल समूह अल्पविराम से अलग करके दर्ज करें (वैकल्पिक)",
+      "region_label": "क्षेत्र",
+      "region_jp": "जापान",
+      "region_us": "संयुक्त राज्य",
+      "region_in": "भारत",
+      "region_blank": "कृपया चुनें",
+      "region_help": "जहाँ यह फसल उगाई जाती है वह क्षेत्र चुनें (वैकल्पिक)",
+      "is_reference_label": "संदर्भ फसल (केवल व्यवस्थापक)",
+      "submit_create": "फसल बनाएं",
+      "submit_update": "फसल अपडेट करें",
+      "cancel": "रद्द करें",
+      "errors": {
+        "title": "{{count}} त्रुटि(याँ) मिलीं:"
+      }
+    },
+    "stage": {
+      "default_name": "चरण {{order}}",
+      "confirm_delete": "क्या आप इस वृद्धि चरण को हटाना चाहते हैं?"
+    },
+    "errors": {
+      "invalid_id": "अमान्य फसल ID।"
+    },
+    "index": {
+      "title": "फसल सूची",
+      "description": "अपनी खेती योजनाओं के लिए फसल मास्टर डेटा प्रबंधित करें।",
+      "new_crop": "नई फसल जोड़ें",
+      "reference_crops": "संदर्भ फसल (साझा डेटा)",
+      "my_crops": "मेरी फसलें",
+      "count": "{{count}} आइटम",
+      "actions": {
+        "show": "विवरण",
+        "edit": "संपादित करें",
+        "delete": "हटाएं",
+        "delete_confirm": "क्या आप इस फसल को हटाना चाहते हैं?"
+      },
+      "empty": {
+        "icon": "🌱",
+        "title": "अभी तक कोई फसल पंजीकृत नहीं",
+        "description": "शुरू करने के लिए अपनी पहली फसल जोड़ें।",
+        "button": "फसल जोड़ें"
+      }
+    },
+    "new": {
+      "title": "नई फसल जोड़ें"
+    },
+    "edit": {
+      "title": "{{name}} संपादित करें",
+      "stages_title": "वृद्धि चरण",
+      "add_stage": "चरण जोड़ें",
+      "stage_title": "चरण {{order}}",
+      "stage_name": "चरण का नाम",
+      "stage_order": "क्रम",
+      "requirements_title": "आवश्यकताएँ",
+      "temperature_requirement": "तापमान आवश्यकताएँ",
+      "thermal_requirement": "थर्मल आवश्यकताएँ",
+      "sunshine_requirement": "सूरज की रोशनी आवश्यकताएँ",
+      "nutrient_requirement": "पोषक तत्व आवश्यकताएँ",
+      "base_temperature": "आधार तापमान (°C)",
+      "optimal_min": "इष्टतम न्यूनतम तापमान (°C)",
+      "optimal_max": "इष्टतम अधिकतम तापमान (°C)",
+      "low_stress_threshold": "कम तनाव सीमा (°C)",
+      "high_stress_threshold": "उच्च तनाव सीमा (°C)",
+      "frost_threshold": "हिम सीमा (°C)",
+      "sterility_risk_threshold": "बाँझपन जोखिम सीमा (°C)",
+      "max_temperature": "अधिकतम तापमान (°C)",
+      "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
+      "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
+      "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
+      "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",
+      "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (kg/ha/day)",
+      "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (kg/ha/day)",
+      "region": "क्षेत्र",
+      "form": {
+        "submit": "फसल अपडेट करें",
+        "cancel": "रद्द करें"
+      },
+      "errors": {
+        "title": "{{count}} त्रुटियाँ:"
+      }
     }
   },
   "pests": {
     "undo": {
-      "toast": "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
     "form": {
       "pest_id_label": "कीट ID",
@@ -285,7 +374,7 @@
       "submit_update": "कीट अपडेट करें",
       "cancel": "रद्द करें",
       "errors": {
-        "title": "%{count} त्रुटियां हुईं:"
+        "title": "{{count}} त्रुटियां हुईं:"
       }
     },
     "flash": {
@@ -293,7 +382,7 @@
       "updated": "कीट सफलतापूर्वक अपडेट किया गया।",
       "destroyed": "कीट हटाया गया।",
       "cannot_delete_in_use": "इस कीट को हटाया नहीं जा सकता क्योंकि यह अन्य डेटा में उपयोग हो रहा है।",
-      "delete_error": "हटाते समय त्रुटि हुई: %{message}",
+      "delete_error": "हटाते समय त्रुटि हुई: {{message}}",
       "reference_only_admin": "केवल व्यवस्थापक संदर्भ कीट बना सकते हैं।",
       "reference_flag_admin_only": "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।",
       "no_permission": "अनुमति अस्वीकृत।",
@@ -301,6 +390,7 @@
     },
     "index": {
       "title": "कीट सूची",
+      "description": "अपनी खेती योजनाओं के लिए कीट मास्टर डेटा पंजीकृत और प्रबंधित करें।",
       "new_pest": "नया कीट जोड़ें",
       "reference_pests": "संदर्भ कीट (सामान्य डेटा)",
       "scientific_name": "वैज्ञानिक नाम",
@@ -322,7 +412,7 @@
       "title": "नया कीट जोड़ें"
     },
     "edit": {
-      "title": "%{name} संपादित करें"
+      "title": "{{name}} संपादित करें"
     },
     "show": {
       "reference_pest": "संदर्भ कीट",
@@ -333,6 +423,7 @@
       "order": "गण",
       "description": "विवरण",
       "occurrence_season": "घटना का मौसम",
+      "region": "क्षेत्र",
       "temperature_profile": "तापमान प्रोफ़ाइल",
       "base_temperature": "आधार तापमान",
       "max_temperature": "अधिकतम तापमान",
@@ -354,11 +445,14 @@
       "edit": "संपादित करें",
       "delete": "हटाएं",
       "confirm_delete": "क्या आप वाकई इस कीट को हटाना चाहते हैं?"
+    },
+    "errors": {
+      "invalid_id": "अमान्य कीट ID।"
     }
   },
   "fertilizes": {
     "undo": {
-      "toast": "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
     "form": {
       "name_label": "नाम",
@@ -388,7 +482,7 @@
       "submit_update": "उर्वरक अपडेट करें",
       "cancel": "रद्द करें",
       "errors": {
-        "title": "%{count} त्रुटियां हुईं:"
+        "title": "{{count}} त्रुटियां हुईं:"
       }
     },
     "flash": {
@@ -396,7 +490,7 @@
       "updated": "उर्वरक सफलतापूर्वक अपडेट किया गया।",
       "destroyed": "उर्वरक हटाया गया।",
       "cannot_delete_in_use": "इस उर्वरक को हटाया नहीं जा सकता क्योंकि यह अन्य डेटा में उपयोग हो रहा है।",
-      "delete_error": "हटाते समय त्रुटि हुई: %{message}",
+      "delete_error": "हटाते समय त्रुटि हुई: {{message}}",
       "reference_only_admin": "केवल व्यवस्थापक संदर्भ उर्वरक बना सकते हैं।",
       "reference_flag_admin_only": "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।",
       "no_permission": "अनुमति अस्वीकृत।",
@@ -404,6 +498,7 @@
     },
     "index": {
       "title": "उर्वरक सूची",
+      "description": "अपनी खेती योजनाओं के लिए उर्वरक मास्टर डेटा पंजीकृत और प्रबंधित करें।",
       "new_fertilize": "नया उर्वरक जोड़ें",
       "reference_fertilizes": "संदर्भ उर्वरक (सामान्य डेटा)",
       "actions": {
@@ -423,7 +518,7 @@
       "title": "नया उर्वरक जोड़ें"
     },
     "edit": {
-      "title": "%{name} संपादित करें"
+      "title": "{{name}} संपादित करें"
     },
     "show": {
       "reference_fertilize": "संदर्भ उर्वरक",
@@ -444,22 +539,27 @@
   },
   "farms": {
     "undo": {
-      "toast": "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+    },
+    "validation": {
+      "required_fields": "खेत का नाम, क्षेत्र, अक्षांश और देशांतर आवश्यक हैं।"
     },
     "flash": {
       "created": "खेत सफलतापूर्वक बनाया गया।",
       "updated": "खेत सफलतापूर्वक अपडेट किया गया।",
       "destroyed": "खेत हटाया गया।",
-      "cannot_delete": "यह खेत %{count} फसल योजनाओं में उपयोग किया जा रहा है इसलिए हटाया नहीं जा सकता।",
+      "cannot_delete": "यह खेत {{count}} फसल योजनाओं में उपयोग किया जा रहा है इसलिए हटाया नहीं जा सकता।",
       "not_found": "खेत नहीं मिला।",
       "no_permission": "आपके पास इस खेत तक पहुँच की अनुमति नहीं है।"
     },
     "index": {
       "title": "खेत सूची",
+      "description": "अपनी खेती योजनाओं के लिए खेत मास्टर डेटा पंजीकृत और प्रबंधित करें।",
       "new_farm": "नया खेत जोड़ें",
+      "reference_badge": "संदर्भ खेत",
       "reference_farms": "संदर्भ खेत (खेती क्षेत्र)",
       "my_farms": "मेरे खेत",
-      "count": "%{count} आइटम",
+      "count": "{{count}} आइटम",
       "empty": {
         "icon": "🚜",
         "title": "अभी तक कोई खेत पंजीकृत नहीं",
@@ -496,7 +596,7 @@
         "cancel": "रद्द करें"
       },
       "errors": {
-        "title": "%{count} त्रुटियां हुईं:"
+        "title": "{{count}} त्रुटियां हुईं:"
       }
     },
     "edit": {
@@ -506,7 +606,7 @@
         "cancel": "रद्द करें"
       },
       "errors": {
-        "title": "%{count} त्रुटियां हुईं:"
+        "title": "{{count}} त्रुटियां हुईं:"
       }
     },
     "show": {
@@ -514,21 +614,41 @@
       "delete": "हटाएं",
       "delete_confirm": "क्या आप वाकई इस खेत को हटाना चाहते हैं?",
       "back": "वापस",
+      "location": "क्षेत्र",
       "fields": "खेत क्षेत्र",
       "add_field": "खेत क्षेत्र जोड़ें",
       "weather": "मौसम जानकारी",
+      "weather_status": "मौसम डेटा स्थिति",
+      "weather_progress": "प्रगति",
       "fields_list": "खेत क्षेत्र",
       "fields_list_title": "खेत क्षेत्र सूची",
       "no_fields": "अभी तक कोई खेत क्षेत्र पंजीकृत नहीं।",
       "add_first_field": "पहला खेत क्षेत्र जोड़ें",
       "back_to_list": "खेत सूची पर वापस जाएं",
-      "detail": "विवरण"
+      "detail": "विवरण",
+      "map": {
+        "title": "नक्शा"
+      },
+      "field_form": {
+        "edit_title": "खेत क्षेत्र संपादित करें",
+        "add_title": "खेत क्षेत्र जोड़ें",
+        "name_label": "खेत क्षेत्र का नाम",
+        "name_placeholder": "उदाहरण: उत्तरी धान का खेत",
+        "area_label": "क्षेत्र (㎡)",
+        "area_placeholder": "उदाहरण: 1000",
+        "daily_fixed_cost_label": "दैनिक निश्चित लागत (₹)",
+        "daily_fixed_cost_placeholder": "उदाहरण: 5000",
+        "region_label": "क्षेत्र",
+        "region_placeholder": "उदाहरण: भारत",
+        "submit_update": "अपडेट करें",
+        "submit_create": "खेत क्षेत्र बनाएं"
+      }
     },
     "card": {
       "latitude": "अक्षांश",
       "longitude": "देशांतर",
       "location_not_set": "स्थान सेट नहीं है",
-      "fields_count": "खेत क्षेत्र: %{count}",
+      "fields_count": "खेत क्षेत्र: {{count}}",
       "weather_data": "मौसम डेटा:",
       "processing_complete": "डेटा प्रोसेसिंग लगभग पूर्ण...",
       "detail": "विवरण",
@@ -544,7 +664,7 @@
       "location": "स्थान",
       "location_not_set": "स्थान सेट नहीं है",
       "fields_count": "खेत क्षेत्र",
-      "fields_count_value": "%{count}",
+      "fields_count_value": "{{count}}",
       "created_at": "निर्माण तिथि",
       "updated_at": "अद्यतन तिथि",
       "temperature_data": "तापमान डेटा",
@@ -555,7 +675,7 @@
       "period_365": "पिछला 1 वर्ष",
       "period_next_365": "अगले साल के अंत तक (पूर्वानुमान)",
       "processing_complete": "डेटा प्रोसेसिंग लगभग पूर्ण...",
-      "fetching_progress": "मौसम डेटा प्राप्त कर रहे हैं... (%{progress}%)",
+      "fetching_progress": "मौसम डेटा प्राप्त कर रहे हैं... ({{progress}}%)",
       "fetch_failed": "मौसम डेटा प्राप्त करने में विफल।",
       "preparing": "मौसम डेटा तैयार कर रहे हैं...",
       "temperature_chart_title": "तापमान रुझान",
@@ -570,13 +690,13 @@
     "weather_data": {
       "no_weather_data": "इस खेत के लिए मौसम डेटा अभी तक प्राप्त नहीं किया गया है।",
       "insufficient_historical_data": "पूर्वानुमान के लिए अपर्याप्त ऐतिहासिक डेटा।",
-      "job_queue_failed": "पूर्वानुमान जॉब कतारबद्ध करने में विफल: %{error}",
+      "job_queue_failed": "पूर्वानुमान जॉब कतारबद्ध करने में विफल: {{error}}",
       "farm_not_found": "खेत नहीं मिला।"
     }
   },
   "fields": {
     "undo": {
-      "toast": "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
     "js": {
       "validation": {
@@ -590,7 +710,7 @@
       "updated": "खेत क्षेत्र सफलतापूर्वक अपडेट किया गया।",
       "destroyed": "खेत क्षेत्र हटाया गया।",
       "cannot_delete_in_use": "यह खेत क्षेत्र अन्य डेटा में उपयोग हो रहा है, इसलिए इसे हटाया नहीं जा सकता।",
-      "delete_error": "हटाने के दौरान त्रुटि हुई: %{message}",
+      "delete_error": "हटाने के दौरान त्रुटि हुई: {{message}}",
       "farm_not_found": "खेत नहीं मिला।",
       "not_found": "खेत क्षेत्र नहीं मिला।",
       "no_permission": "अनुमति अस्वीकृत।"
@@ -636,7 +756,7 @@
         "cancel": "रद्द करें"
       },
       "errors": {
-        "title": "%{count} त्रुटियां हुईं:"
+        "title": "{{count}} त्रुटियां हुईं:"
       }
     },
     "edit": {
@@ -650,7 +770,7 @@
         "cancel": "रद्द करें"
       },
       "errors": {
-        "title": "%{count} त्रुटियां हुईं:"
+        "title": "{{count}} त्रुटियां हुईं:"
       }
     },
     "show": {
@@ -667,14 +787,14 @@
   },
   "interaction_rules": {
     "undo": {
-      "toast": "%{source} → %{target} नियम हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{source}} → {{target}} नियम हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
     "flash": {
       "created": "नियम सफलतापूर्वक बनाया गया।",
       "updated": "नियम सफलतापूर्वक अपडेट किया गया।",
       "destroyed": "नियम हटाया गया।",
       "cannot_delete_in_use": "यह नियम अन्य डेटा में उपयोग हो रहा है, इसलिए इसे हटाया नहीं जा सकता।",
-      "delete_error": "हटाते समय त्रुटि हुई: %{message}",
+      "delete_error": "हटाते समय त्रुटि हुई: {{message}}",
       "reference_only_admin": "केवल व्यवस्थापक संदर्भ नियम बना सकते हैं।",
       "reference_flag_admin_only": "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।",
       "no_permission": "अनुमति अस्वीकृत।",
@@ -682,6 +802,7 @@
     },
     "index": {
       "title": "निरंतर खेती नियम सूची",
+      "description": "अपनी खेती योजनाओं के लिए फसल चक्र नियम पंजीकृत और प्रबंधित करें।",
       "new_rule": "नया नियम जोड़ें",
       "system_rules": "सिस्टम मानक नियम",
       "my_rules": "मेरे नियम",
@@ -740,7 +861,7 @@
       "submit_update": "नियम अपडेट करें",
       "cancel": "रद्द करें",
       "errors": {
-        "title": "%{count} त्रुटियां हुईं:"
+        "title": "{{count}} त्रुटियां हुईं:"
       }
     },
     "show": {
@@ -756,8 +877,8 @@
       "description": "विवरण",
       "created_at": "निर्माण तिथि",
       "updated_at": "अद्यतन तिथि",
-      "decrease": "%{percent}% कमी",
-      "increase": "+%{percent}% वृद्धि",
+      "decrease": "{{percent}}% कमी",
+      "increase": "+{{percent}}% वृद्धि",
       "no_impact": "कोई प्रभाव नहीं",
       "edit": "संपादित करें",
       "delete": "हटाएं",
@@ -770,7 +891,7 @@
       "task_schedule_items": {
         "errors": {
           "cancel_failed": "हम इस निर्धारित कार्य को रद्द नहीं कर सके। कृपया पुनः प्रयास करें।",
-          "undo_failed": "हम पूर्ववत कार्रवाई तैयार नहीं कर सके: %{message}",
+          "undo_failed": "हम पूर्ववत कार्रवाई तैयार नहीं कर सके: {{message}}",
           "invalid_template": "चयनित कार्य टेम्पलेट इस खेत में उपयोग नहीं किया जा सकता।"
         }
       }
@@ -870,6 +991,29 @@
     "true": "हां",
     "false": "नहीं"
   },
+  "contact_form": {
+    "name": "नाम",
+    "email": "ईमेल",
+    "subject": "विषय",
+    "message": "संदेश",
+    "submit": "भेजें",
+    "success": {
+      "message": "आपकी पूछताछ प्राप्त हो गई है।",
+      "toast": "संपर्क करने के लिए धन्यवाद।"
+    },
+    "errors": {
+      "send_failed": "संदेश भेजने में विफल।",
+      "validation_failed": "कृपया अपना इनपुट जांचें।"
+    },
+    "validation": {
+      "message_required": "संदेश आवश्यक है।",
+      "message_too_long": "संदेश 5000 अक्षरों या उससे कम होना चाहिए।",
+      "name_too_long": "नाम 255 अक्षरों या उससे कम होना चाहिए।",
+      "subject_too_long": "विषय 255 अक्षरों या उससे कम होना चाहिए।",
+      "email_required": "ईमेल आवश्यक है।",
+      "email_invalid": "ईमेल प्रारूप अमान्य है।"
+    }
+  },
   "optimization": {
     "messages": {
       "completed": "अनुकूलन पूर्ण हुआ",
@@ -886,15 +1030,15 @@
       "data_fetch_failed": "डेटा प्राप्त करने में विफल",
       "weather_data_invalid_format": "मौसम डेटा का प्रारूप अमान्य है। कृपया अनुकूलन दोबारा चलाएं।",
       "common": {
-        "invalid_date_format": "तिथि प्रारूप अमान्य है: %{message}"
+        "invalid_date_format": "तिथि प्रारूप अमान्य है: {{message}}"
       },
       "optimization": {
-        "calculate_period_failed": "योजना अवधि की गणना विफल: %{message}",
+        "calculate_period_failed": "योजना अवधि की गणना विफल: {{message}}",
         "result_empty": "समायोजन परिणाम खाली है",
-        "adjust_failed": "समायोजन विफल: %{message}"
+        "adjust_failed": "समायोजन विफल: {{message}}"
       },
       "cultivation_plan": {
-        "crop_missing_growth_stages": "फसल '%{crop_name}' में कोई विकास चरण कॉन्फ़िगर नहीं हैं। कृपया समायोजन करने से पहले विकास चरण कॉन्फ़िगर करें।"
+        "crop_missing_growth_stages": "फसल '{{crop_name}}' में कोई विकास चरण कॉन्फ़िगर नहीं हैं। कृपया समायोजन करने से पहले विकास चरण कॉन्फ़िगर करें।"
       },
       "pests": {
         "pest_id_required": "pest_id आवश्यक है",
@@ -916,12 +1060,12 @@
       "cannot_remove_field_with_cultivations": "इस फ़ील्ड में खेती अनुसूची है। कृपया पहले फसलें हटाएं।",
       "cannot_remove_last_field": "अंतिम फ़ील्ड को हटाया नहीं जा सकता",
       "max_fields_limit": "आप अधिकतम 5 फ़ील्ड ही जोड़ सकते हैं",
-      "field_add_failed": "फ़ील्ड जोड़ने में विफल: %{message}",
+      "field_add_failed": "फ़ील्ड जोड़ने में विफल: {{message}}",
       "select_region": "कृपया खेती क्षेत्र चुनें।",
       "select_farm_size": "कृपया खेत का आकार चुनें।",
       "select_crop": "कृपया एक या अधिक फसलें चुनें।",
       "restart": "कृपया शुरू से फिर से शुरू करें।",
-      "create_failed": "योजना बनाने में विफल: %{errors}",
+      "create_failed": "योजना बनाने में विफल: {{errors}}",
       "not_found": "खेती योजना नहीं मिली।",
       "schedule_generation_failed": "कार्य अनुसूची पंजीकरण विफल",
       "crop_not_found": "फसल नहीं मिली।",
@@ -969,6 +1113,9 @@
       "subtitle": "अपने खेत का क्षेत्र चुनें",
       "empty_message": "वर्तमान में, कोई चयन योग्य खेती क्षेत्र नहीं हैं।"
     },
+    "select_farm": {
+      "available_farms": "उपलब्ध खेत"
+    },
     "select_farm_size": {
       "title": "📏 खेत का आकार चुनें",
       "subtitle": "अपने खेत के आकार के सबसे करीब का चयन करें",
@@ -995,12 +1142,12 @@
     "optimizing": {
       "title": "खेती योजना",
       "status_badge": "अनुकूलन में",
-      "crops_count": "{{ count }} प्रकार की फसलें",
+      "crops_count": "{{count}} प्रकार की फसलें",
       "hint": "💡 अनुकूलन पूरा होने पर स्वचालित रूप से परिणाम स्क्रीन पर जाएगा",
       "error_message": "अनुकूलन स्थिति प्राप्त करने में विफल।\n\nनिम्नलिखित में से किसी एक को आज़माएं:\n• पृष्ठ रीलोड करें (F5 कुंजी)\n• ब्राउज़र कैश साफ़ करें\n• थोड़ी देर बाद फिर से एक्सेस करें\n\nयदि समस्या हल नहीं होती है, तो एक नई योजना बनाएं।",
       "progress": {
-        "elapsed_time": "⏳ {{ time }} सेकंड",
-        "elapsed_time_minute": "{{ minutes }}मिनट {{ seconds }}सेकंड",
+        "elapsed_time": "⏳ {{time}} सेकंड",
+        "elapsed_time_minute": "{{minutes}}मिनट {{seconds}}सेकंड",
         "duration_hint": "लगभग 1 मिनट लगता है",
         "default_message": "अनुकूलन तैयार हो रहा है..."
       },
@@ -1045,16 +1192,16 @@
         "region": "क्षेत्र",
         "total_area": "कुल क्षेत्रफल",
         "field_count": "खेत संख्या",
-        "field_count_value": "%{count} खेत",
+        "field_count_value": "{{count}} खेत",
         "total_cost": "कुल लागत",
         "total_revenue": "कुल राजस्व",
         "total_profit": "कुल लाभ",
-        "subtitle": "%{count} खेतों के लिए इष्टतम खेती अवधि निर्धारित की गई"
+        "subtitle": "{{count}} खेतों के लिए इष्टतम खेती अवधि निर्धारित की गई"
       },
       "gantt": {
         "title": "खेती अनुसूची",
         "hint": "विवरण प्रदर्शित करने के लिए खेती पर क्लिक करें",
-        "month_format": "%{month}月"
+        "month_format": "{{month}}月"
       },
       "crop_palette": {
         "title": "फसलें जोड़ें",
@@ -1108,22 +1255,22 @@
       "cannot_remove_field_with_cultivations": "इस खेत में खेती का कार्यक्रम है। कृपया पहले फसलें हटाएं।",
       "cannot_remove_last_field": "अंतिम खेत नहीं हटाया जा सकता।",
       "max_fields_limit": "आप अधिकतम 5 फ़ील्ड ही जोड़ सकते हैं",
-      "field_add_failed": "फ़ील्ड जोड़ने में विफल: %{message}",
+      "field_add_failed": "फ़ील्ड जोड़ने में विफल: {{message}}",
       "select_farm": "कृपया एक खेत चुनें।",
       "select_crop": "कृपया कम से कम एक फसल चुनें।",
       "restart": "कृपया फिर से शुरू करें।",
       "session_invalid": "आपका सत्र अमान्य है। कृपया फिर से साइन इन करें।",
-      "create_failed": "योजना बनाने में विफल: %{errors}",
+      "create_failed": "योजना बनाने में विफल: {{errors}}",
       "not_found": "खेती योजना नहीं मिली।",
       "farm_not_found": "खेत नहीं मिला।",
       "crop_not_found": "फसल नहीं मिली।",
       "unauthorized": "इस योजना तक पहुँचने की अनुमति नहीं है।",
-      "plan_already_exists": "%{year} के लिए योजना पहले से मौजूद है।",
+      "plan_already_exists": "{{year}} के लिए योजना पहले से मौजूद है।",
       "plan_already_exists_annual": "इस खेत के लिए योजना पहले से मौजूद है।",
-      "copy_failed": "योजना कॉपी करने में विफल: %{errors}",
+      "copy_failed": "योजना कॉपी करने में विफल: {{errors}}",
       "copy_not_available_for_annual_planning": "वार्षिक योजना के लिए कॉपी फ़ंक्शन उपलब्ध नहीं है।",
       "delete_failed": "योजना हटाने में विफल।",
-      "delete_error": "हटाते समय त्रुटि हुई: %{message}",
+      "delete_error": "हटाते समय त्रुटि हुई: {{message}}",
       "already_optimized": "यह योजना पहले से अनुकूलित है।",
       "invalid_field_params": "खेत की जानकारी अमान्य है।",
       "no_candidates_found": "इस फसल के लिए कोई इष्टतम रोपण कार्यक्रम नहीं मिला। मौसम डेटा सीमा बढ़ाई गई लेकिन कोई उम्मीदवार नहीं मिले।",
@@ -1132,7 +1279,7 @@
     "messages": {
       "field_removed": "खेत हटाया गया।",
       "plan_created": "योजना सफलतापूर्वक बनाई गई।",
-      "plan_copied": "%{year} की योजना कॉपी की गई।",
+      "plan_copied": "{{year}} की योजना कॉपी की गई।",
       "plan_deleted": "योजना सफलतापूर्वक हटाई गई।",
       "crop_added": "फसल जोड़ी गई।",
       "field_added": "खेत जोड़ा गया।",
@@ -1141,6 +1288,7 @@
     },
     "title": "खेती योजना",
     "default_plan_name": "मुख्य योजना",
+    "display_name_from_farm": "{{farmName}} की योजना",
     "steps": {
       "year": "वर्ष",
       "farm": "खेत",
@@ -1158,14 +1306,57 @@
       },
       "fallback": {
         "message": "स्क्रीन बहुत संकरी है। विस्तृत चार्ट देखने के लिए डिवाइस को घुमाएँ या ज़ूम आउट करें।"
+      },
+      "optimizing": "अनुकूलन जारी...",
+      "no_plan_data": "कोई योजना डेटा नहीं।",
+      "no_field_data": "कोई खेत क्षेत्र डेटा नहीं।",
+      "no_data": "प्रदर्शित करने के लिए कोई डेटा नहीं।",
+      "adjust_failed": "समायोजन विफल।",
+      "range": {
+        "prev_month": "पिछला महीना",
+        "next_month": "अगला महीना"
+      },
+      "labels": {
+        "year": "वर्ष",
+        "month": "माह",
+        "day": "दि",
+        "week": "सप्त",
+        "quarter": "तिमाही"
       }
     },
+    "field_climate": {
+      "header_title_fallback": "फसल का नाम उपलब्ध नहीं",
+      "header_subtitle_fallback": "खेत का नाम उपलब्ध नहीं",
+      "period_unknown": "अवधि अज्ञात",
+      "close": "बंद करें",
+      "loading": "जलवायु डेटा लोड हो रहा है...",
+      "retry": "पुनः प्रयास करें",
+      "base_temperature": "आधार तापमान",
+      "optimal_range": "इष्टतम तापमान सीमा",
+      "current_stage": "वर्तमान चरण",
+      "stage_gdd_value": "आवश्यक संचयी तापमान: {{value}}℃日",
+      "daily_temperature": "दैनिक तापमान",
+      "gdd_progress": "संचयी तापमान प्रगति",
+      "chart": {
+        "temperature": "तापमान (℃)",
+        "cumulative_gdd": "संचयी तापमान (℃日)",
+        "min_temp": "न्यूनतम तापमान",
+        "mean_temp": "औसत तापमान",
+        "max_temp": "उच्चतम तापमान",
+        "daily_gdd": "दैनिक संचयी तापमान",
+        "tooltip_format": "dd/MM/yyyy",
+        "required_cumulative_gdd": "आवश्यक संचयी तापमान"
+      }
+    },
+    "detail": {
+      "select_cultivation_hint": "जलवायु डेटा देखने के लिए चार्ट पर खेती बार चुनें।"
+    },
     "undo": {
-      "toast": "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
     "task_schedule_items": {
       "undo": {
-        "toast": "%{name} का शेड्यूल हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+        "toast": "{{name}} का शेड्यूल हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
       }
     },
     "index": {
@@ -1175,7 +1366,7 @@
       "try_public_plans": "मुफ्त योजनाओं से शुरू करें",
       "no_plans": "अभी तक कोई योजना नहीं",
       "no_plans_hint": "खेती अनुसूची को अनुकूलित करने के लिए एक नई योजना बनाएं।",
-      "year_label": "वर्ष %{year}",
+      "year_label": "वर्ष {{year}}",
       "status": {
         "pending": "लंबित",
         "optimizing": "अनुकूलन जारी",
@@ -1185,8 +1376,8 @@
       "plan_card": {
         "farm": "खेत",
         "total_area": "कुल क्षेत्रफल",
-        "crops_count": "%{count} फसलें",
-        "fields_count": "%{count} खेत",
+        "crops_count": "{{count}} फसलें",
+        "fields_count": "{{count}} खेत",
         "view": "विवरण देखें",
         "copy": "अगले वर्ष में कॉपी करें",
         "delete": "हटाएं",
@@ -1201,7 +1392,7 @@
       "plan_name_placeholder": "उदाहरण: मुख्य योजना",
       "farm_label": "खेत",
       "farm_hint": "कृपया एक खेत चुनें",
-      "suggested_plan_name_hint": "डिफ़ॉल्ट योजना नाम \"%{name}\" है (अगला चरण खेत के नाम को योजना नाम के रूप में उपयोग करता है)।",
+      "suggested_plan_name_hint": "डिफ़ॉल्ट योजना नाम \"{{name}}\" है (अगला चरण खेत के नाम को योजना नाम के रूप में उपयोग करता है)।",
       "no_farms": "कोई खेत उपलब्ध नहीं",
       "no_farms_hint": "कृपया पहले एक खेत बनाएं",
       "create_farm_link": "खेत बनाएं",
@@ -1230,13 +1421,13 @@
     "optimizing": {
       "title": "खेती योजना",
       "status_badge": "अनुकूलन जारी",
-      "year_label": "वर्ष %{year}",
+      "year_label": "वर्ष {{year}}",
       "year_label_annual": "वर्ष भर",
-      "crops_count": "{{ count }} फसलें",
+      "crops_count": "{{count}} फसलें",
       "error_message": "अनुकूलन स्थिति प्राप्त करने में विफल।\n\nकृपया निम्न में से एक प्रयास करें:\n• पेज को पुनः लोड करें (F5 कुंजी)\n• अपने ब्राउज़र कैश को साफ करें\n• कुछ समय प्रतीक्षा करें और फिर प्रयास करें\n\nयदि समस्या बनी रहती है, तो कृपया एक नई योजना बनाएं।",
       "progress": {
-        "elapsed_time": "⏳ {{ time }} सेकंड",
-        "elapsed_time_minute": "{{ minutes }}मिनट {{ seconds }}सेकंड",
+        "elapsed_time": "⏳ {{time}}सेकंड",
+        "elapsed_time_minute": "{{minutes}}मिनट {{seconds}}सेकंड",
         "duration_hint": "इसमें लगभग 1 मिनट लगेगा",
         "default_message": "अनुकूलन तैयार किया जा रहा है..."
       },
@@ -1262,22 +1453,22 @@
         "loading_data": "डेटा लोड किया जा रहा है..."
       },
       "header": {
-        "title": "वर्ष %{year} खेती योजना",
+        "title": "वर्ष {{year}} खेती योजना",
         "badge": "पूर्ण",
         "farm": "खेत",
         "total_area": "कुल क्षेत्रफल",
         "field_count": "खेत",
-        "field_count_value": "%{count} खेत",
+        "field_count_value": "{{count}} खेत",
         "total_cost": "कुल लागत",
         "total_revenue": "कुल आय",
         "total_profit": "कुल लाभ",
-        "subtitle": "%{count} खेतों के लिए इष्टतम खेती अवधि निर्धारित की गई",
+        "subtitle": "{{count}} खेतों के लिए इष्टतम खेती अवधि निर्धारित की गई",
         "planning_period": "योजना अवधि",
-        "planning_period_value": "%{start} - %{end}"
+        "planning_period_value": "{{start}} - {{end}}"
       },
       "gantt": {
         "title": "खेती अनुसूची",
-        "month_format": "%{month}"
+        "month_format": "{{month}}"
       },
       "crop_palette": {
         "title": "फसल जोड़ें",
@@ -1313,15 +1504,15 @@
       "copy_plan": "अगले वर्ष में कॉपी करें",
       "delete": "हटाएं",
       "header": {
-        "title": "वर्ष %{year} खेती योजना",
+        "title": "वर्ष {{year}} खेती योजना",
         "badge": "पूर्ण",
         "farm": "खेत",
         "total_area": "कुल क्षेत्रफल",
         "field_count": "खेत",
-        "field_count_value": "%{count} खेत",
+        "field_count_value": "{{count}} खेत",
         "planning_period": "योजना अवधि",
-        "planning_period_value": "%{start} - %{end}",
-        "subtitle": "%{count} खेतों के लिए इष्टतम खेती अवधि निर्धारित की गई"
+        "planning_period_value": "{{start}} - {{end}}",
+        "subtitle": "{{count}} खेतों के लिए इष्टतम खेती अवधि निर्धारित की गई"
       },
       "gantt": {
         "title": "खेती अनुसूची"
@@ -1337,7 +1528,7 @@
       },
       "confirms": {
         "optimize": "क्या आप इस योजना को अनुकूलित करना चाहते हैं?",
-        "copy_next_year": "क्या आप इस योजना को अगले वर्ष (%{year}) में कॉपी करना चाहते हैं?"
+        "copy_next_year": "क्या आप इस योजना को अगले वर्ष ({{year}}) में कॉपी करना चाहते हैं?"
       }
     }
   },
@@ -1347,7 +1538,7 @@
       "fetching": "AI के साथ फसल जानकारी प्राप्त की जा रही है...",
       "button_fetching": "🤖 AI के साथ जानकारी प्राप्त की जा रही है...",
       "button_idle": "🤖 AIで作物情報を取得・保存",
-      "created_success": "✓ फसल '%{name}' की जानकारी प्राप्त कर सहेजी गई!",
+      "created_success": "✓ फसल '{{name}}' की जानकारी प्राप्त कर सहेजी गई!",
       "fetch_failed": "फसल जानकारी प्राप्त करने में विफल",
       "network_error": "एक नेटवर्क त्रुटि हुई"
     },
@@ -1386,8 +1577,8 @@
     },
     "crop_palette": {
       "plan_id_missing": "त्रुटि: योजना ID प्राप्त नहीं की जा सकी",
-      "crop_types_limit": "अधिकतम %{max_types} फसल प्रकारों की अनुमति है।\nवर्तमान: %{current_types}",
-      "crop_add_failed": "फसल जोड़ने में विफल: %{message}",
+      "crop_types_limit": "अधिकतम {{max_types}} फसल प्रकारों की अनुमति है।\nवर्तमान: {{current_types}}",
+      "crop_add_failed": "फसल जोड़ने में विफल: {{message}}",
       "communication_error": "संचार त्रुटि हुई। कृपया पुनः प्रयास करें।"
     },
     "gantt": {
@@ -1398,8 +1589,8 @@
       "communication_error": "संचार त्रुटि हुई।\nकृपया पुनः प्रयास करें।",
       "add_field_button": "फ़ील्ड जोड़ें",
       "adding_field_loading": "फ़ील्ड जोड़ा जा रहा है...",
-      "confirm_delete_field": "%{field_name} को हटाएं?\n(इस फ़ील्ड में कोई फसल नहीं है)",
-      "confirm_delete_crop": "%{crop_name} को हटाएं?",
+      "confirm_delete_field": "{{field_name}} को हटाएं?\n(इस फ़ील्ड में कोई फसल नहीं है)",
+      "confirm_delete_crop": "{{crop_name}} को हटाएं?",
       "invalid_area": "कृपया एक मान्य क्षेत्र दर्ज करें",
       "field_add_failed": "फ़ील्ड जोड़ने में विफल",
       "field_delete_failed": "फ़ील्ड हटाने में विफल",
@@ -1410,7 +1601,16 @@
       "prompt_field_area": "Enter the field area (㎡).",
       "adding_field": "Adding field...",
       "deleting_field": "Deleting field...",
-      "error_occurred": "An error occurred. Please try again later."
+      "error_occurred": "An error occurred. Please try again later.",
+      "add_crop_button": "फसल जोड़ें",
+      "crop_palette_cancel": "रद्द करें",
+      "crop_palette_title": "फसल जोड़ें",
+      "crop_palette_no_crops": "जोड़ने के लिए कोई फसल नहीं",
+      "field_form_name_label": "खेत क्षेत्र का नाम",
+      "field_form_name_placeholder": "उदा. क्षेत्र A",
+      "field_form_area_label": "क्षेत्र (㎡)",
+      "field_form_area_placeholder": "उदा. 100",
+      "field_form_submit": "क्षेत्र जोड़ें"
     },
     "crops": {
       "edit": {
@@ -1446,20 +1646,38 @@
       "enter_name": "उर्वरक नाम दर्ज करें",
       "fetching": "AI के साथ उर्वरक जानकारी प्राप्त हो रही है...",
       "button_fetching": "🤖 AI के साथ जानकारी प्राप्त की जा रही है...",
-      "created_success": "✓ उर्वरक \"%{name}\" की जानकारी प्राप्त कर सहेजी गई!",
-      "updated_success": "✓ उर्वरक \"%{name}\" की जानकारी प्राप्त कर अपडेट की गई!",
+      "created_success": "✓ उर्वरक \"{{name}}\" की जानकारी प्राप्त कर सहेजी गई!",
+      "updated_success": "✓ उर्वरक \"{{name}}\" की जानकारी प्राप्त कर अपडेट की गई!",
       "fetch_failed": "उर्वरक जानकारी प्राप्त करने में विफल",
       "network_error": "नेटवर्क त्रुटि हुई"
     }
   },
+  "status": {
+    "checking": "जाँच हो रही है..."
+  },
   "nav": {
+    "main": "मुख्य नेविगेशन",
+    "open_menu": "मेनू खोलें",
+    "close_menu": "मेनू बंद करें",
+    "plan": "योजनाएं",
+    "menu_masters": "मास्टर डेटा",
+    "new_plan": "फसल योजना बनाएं",
+    "reports": "रिपोर्ट",
+    "menu_more": "अधिक",
     "home": "मुखपृष्ठ",
     "farms": "खेत प्रबंधन",
     "crops": "फसल प्रबंधन",
+    "fertilizes": "उर्वरक",
+    "pests": "कीट",
+    "pesticides": "कीटनाशक",
+    "agricultural_tasks": "कार्य",
+    "interaction_rules": "परिक्रमण",
     "plans": "खेती योजना",
     "public_plans": "मुफ्त खेती योजना",
     "about": "AGRR के बारे में",
     "contact": "संपर्क करें",
+    "privacy": "गोपनीयता नीति",
+    "terms": "उपयोग की शर्तें",
     "login": "लॉगिन",
     "logout": "लॉगआउट",
     "admin": "व्यवस्थापक",
@@ -1475,13 +1693,13 @@
   "flash": {
     "actions": {
       "create": {
-        "notice": "%{resource_name} बनाया गया"
+        "notice": "{{resource_name}} बनाया गया"
       },
       "update": {
-        "notice": "%{resource_name} अपडेट किया गया"
+        "notice": "{{resource_name}} अपडेट किया गया"
       },
       "destroy": {
-        "notice": "%{resource_name} हटाया गया"
+        "notice": "{{resource_name}} हटाया गया"
       }
     },
     "template_created": "चयनित कार्य से टेम्पलेट बनाया गया।",
@@ -1491,19 +1709,19 @@
     "template_updated": "टेम्पलेट अपडेट किया गया।",
     "template_deleted": "टेम्पलेट हटाया गया।",
     "farms": {
-      "deleted": "%{name} हटाया गया।"
+      "deleted": "{{name}} हटाया गया।"
     },
     "crops": {
-      "deleted": "%{name} हटाया गया।"
+      "deleted": "{{name}} हटाया गया।"
     }
   },
   "activerecord": {
     "errors": {
       "messages": {
-        "record_invalid": "सत्यापन विफल: %{errors}",
+        "record_invalid": "सत्यापन विफल: {{errors}}",
         "restrict_dependent_destroy": {
-          "has_one": "%{record} मौजूद है इसलिए हटाया नहीं जा सकता",
-          "has_many": "%{record} मौजूद है इसलिए हटाया नहीं जा सकता"
+          "has_one": "{{record}} मौजूद है इसलिए हटाया नहीं जा सकता",
+          "has_many": "{{record}} मौजूद है इसलिए हटाया नहीं जा सकता"
         }
       },
       "models": {
@@ -1516,6 +1734,12 @@
         },
         "farm": {
           "attributes": {
+            "is_reference": {
+              "reference_only_anonymous": "संदर्भ खेत केवल अज्ञात उपयोगकर्ता के लिए सेट किए जा सकते हैं"
+            },
+            "user": {
+              "farm_limit_exceeded": "आप अधिकतम 4 Farm बना सकते हैं"
+            },
             "name": {
               "blank": "दर्ज करें"
             },
@@ -1537,7 +1761,7 @@
             "area_sqm": {
               "blank": "दर्ज करें",
               "not_a_number": "संख्या में दर्ज करें",
-              "greater_than": "%{count} से अधिक मान दर्ज करें"
+              "greater_than": "{{count}} से अधिक मान दर्ज करें"
             }
           }
         },
@@ -1648,13 +1872,13 @@
     "invalid_user_type": "不正なユーザー種別です",
     "mock_logout_success": "モックログアウトに成功しました",
     "not_logged_in": "ログインしていません",
-    "create_user_failed": "ユーザー作成に失敗しました: %{errors}",
-    "mock_login_success": "モックログインに成功しました（%{name}）!"
+    "create_user_failed": "ユーザー作成に失敗しました: {{errors}}",
+    "mock_login_success": "モックログインに成功しました（{{name}}）!"
   },
   "jobs": {
     "fetch_weather_data": {
-      "retry_limit_exceeded": "पुनः प्रयास सीमा पार हो गई: %{error}",
-      "validation_error": "डेटा सत्यापन त्रुटि: %{error}"
+      "retry_limit_exceeded": "पुनः प्रयास सीमा पार हो गई: {{error}}",
+      "validation_error": "डेटा सत्यापन त्रुटि: {{error}}"
     },
     "weather_prediction": {
       "completed": "मौसम भविष्यवाणी पूर्ण हुई"
@@ -1662,13 +1886,13 @@
     "optimize_cultivation_plan": {
       "completed": "अनुकूलन पूरा हुआ",
       "failed": "अनुकूलन विफल रहा",
-      "unexpected_error": "एक अप्रत्याशित त्रुटि हुई: %{message}",
+      "unexpected_error": "एक अप्रत्याशित त्रुटि हुई: {{message}}",
       "errors": {
         "growth_incomplete": "चयनित फसलें निर्दिष्ट अवधि में वृद्धि पूरी नहीं कर सकतीं। कृपया लंबी मूल्यांकन अवधि निर्धारित करें या विभिन्न फसलें चुनें।",
         "missing_field": "इनपुट डेटा में आवश्यक फ़ील्ड गायब हैं। कृपया सिस्टम प्रशासक से संपर्क करें।",
         "file_error": "फ़ाइल पढ़ने में विफल। कृपया सिस्टम प्रशासक से संपर्क करें।",
         "invalid_format": "अमान्य इनपुट डेटा प्रारूप। कृपया सिस्टम प्रशासक से संपर्क करें।",
-        "optimization_failed": "अनुकूलन प्रक्रिया विफल रही: %{message}"
+        "optimization_failed": "अनुकूलन प्रक्रिया विफल रही: {{message}}"
       }
     }
   },
@@ -1676,7 +1900,7 @@
     "farm": {
       "weather_status": {
         "pending": "प्रतीक्षा में",
-        "fetching": "प्राप्त कर रहे हैं (%{progress}%)",
+        "fetching": "प्राप्त कर रहे हैं ({{progress}}%)",
         "completed": "पूर्ण",
         "failed": "विफल",
         "unknown": "अज्ञात"
@@ -1705,57 +1929,57 @@
   "services": {
     "plan_save_service": {
       "messages": {
-        "farm_created": "खेत बनाया गया: %{farm_name}",
-        "crop_created": "फसल बनाई गई: %{crop_name}",
-        "fertilize_created": "उर्वरक बनाया गया: %{fertilize_name}",
-        "pest_created": "कीट बनाया गया: %{pest_name}",
-        "agricultural_task_created": "कृषि कार्य बनाया गया: %{task_name}",
-        "pesticide_created": "कीटनाशक बनाया गया: %{pesticide_name}",
-        "field_created": "खेत का क्षेत्र बनाया गया: %{field_name}",
-        "plan_created": "योजना बनाई गई: %{plan_id}",
-        "interaction_rule_created": "अंतर्क्रिया नियम बनाया गया: %{source_group} → %{target_group}",
-        "crop_stage_copied": "फसल चरण कॉपी किया गया: %{stage_name}",
-        "temperature_requirement_copied": "तापमान आवश्यकता कॉपी की गई: %{stage_name}",
-        "sunshine_requirement_copied": "धूप आवश्यकता कॉपी की गई: %{stage_name}",
-        "thermal_requirement_copied": "तापीय आवश्यकता कॉपी की गई: %{stage_name}",
-        "nutrient_requirement_copied": "पोषक तत्व आवश्यकता कॉपी की गई: %{stage_name}",
-        "cultivation_plan_field_copied": "योजना क्षेत्र कॉपी किया गया: %{field_name}",
-        "cultivation_plan_crop_copied": "योजना फसल कॉपी की गई: %{crop_name}",
-        "field_cultivation_copied": "क्षेत्र खेती कॉपी की गई: %{field_name} × %{crop_name}",
+        "farm_created": "खेत बनाया गया: {{farm_name}}",
+        "crop_created": "फसल बनाई गई: {{crop_name}}",
+        "fertilize_created": "उर्वरक बनाया गया: {{fertilize_name}}",
+        "pest_created": "कीट बनाया गया: {{pest_name}}",
+        "agricultural_task_created": "कृषि कार्य बनाया गया: {{task_name}}",
+        "pesticide_created": "कीटनाशक बनाया गया: {{pesticide_name}}",
+        "field_created": "खेत का क्षेत्र बनाया गया: {{field_name}}",
+        "plan_created": "योजना बनाई गई: {{plan_id}}",
+        "interaction_rule_created": "अंतर्क्रिया नियम बनाया गया: {{source_group}} → {{target_group}}",
+        "crop_stage_copied": "फसल चरण कॉपी किया गया: {{stage_name}}",
+        "temperature_requirement_copied": "तापमान आवश्यकता कॉपी की गई: {{stage_name}}",
+        "sunshine_requirement_copied": "धूप आवश्यकता कॉपी की गई: {{stage_name}}",
+        "thermal_requirement_copied": "तापीय आवश्यकता कॉपी की गई: {{stage_name}}",
+        "nutrient_requirement_copied": "पोषक तत्व आवश्यकता कॉपी की गई: {{stage_name}}",
+        "cultivation_plan_field_copied": "योजना क्षेत्र कॉपी किया गया: {{field_name}}",
+        "cultivation_plan_crop_copied": "योजना फसल कॉपी की गई: {{crop_name}}",
+        "field_cultivation_copied": "क्षेत्र खेती कॉपी की गई: {{field_name}} × {{crop_name}}",
         "service_completed": "PlanSaveService सफलतापूर्वक पूर्ण हुआ"
       },
       "errors": {
-        "farm_not_found": "संदर्भ खेत नहीं मिला (ID: %{farm_id})",
-        "farm_creation_failed": "खेत बनाने में विफल: %{errors}",
-        "crop_not_found": "संदर्भ फसल नहीं मिली (ID: %{crop_id})",
-        "crop_creation_failed": "फसल बनाने में विफल: %{errors}",
-        "crop_stage_copy_failed": "फसल चरण कॉपी करने में विफल: %{errors}",
-        "temperature_requirement_copy_failed": "तापमान आवश्यकता कॉपी करने में विफल: %{errors}",
-        "sunshine_requirement_copy_failed": "धूप आवश्यकता कॉपी करने में विफल: %{errors}",
-        "thermal_requirement_copy_failed": "तापीय आवश्यकता कॉपी करने में विफल: %{errors}",
-        "field_creation_failed": "क्षेत्र बनाने में विफल: %{errors}",
-        "interaction_rule_creation_failed": "अंतर्क्रिया नियम बनाने में विफल: %{errors}",
-        "plan_not_found": "संदर्भ योजना नहीं मिली (ID: %{plan_id})",
-        "plan_creation_failed": "योजना बनाने में विफल: %{errors}",
-        "plan_relations_copy_failed": "योजना संबंध कॉपी करने में विफल: %{errors}",
-        "session_data_invalid": "अमान्य सत्र डेटा: %{data}",
+        "farm_not_found": "संदर्भ खेत नहीं मिला (ID: {{farm_id}})",
+        "farm_creation_failed": "खेत बनाने में विफल: {{errors}}",
+        "crop_not_found": "संदर्भ फसल नहीं मिली (ID: {{crop_id}})",
+        "crop_creation_failed": "फसल बनाने में विफल: {{errors}}",
+        "crop_stage_copy_failed": "फसल चरण कॉपी करने में विफल: {{errors}}",
+        "temperature_requirement_copy_failed": "तापमान आवश्यकता कॉपी करने में विफल: {{errors}}",
+        "sunshine_requirement_copy_failed": "धूप आवश्यकता कॉपी करने में विफल: {{errors}}",
+        "thermal_requirement_copy_failed": "तापीय आवश्यकता कॉपी करने में विफल: {{errors}}",
+        "field_creation_failed": "क्षेत्र बनाने में विफल: {{errors}}",
+        "interaction_rule_creation_failed": "अंतर्क्रिया नियम बनाने में विफल: {{errors}}",
+        "plan_not_found": "संदर्भ योजना नहीं मिली (ID: {{plan_id}})",
+        "plan_creation_failed": "योजना बनाने में विफल: {{errors}}",
+        "plan_relations_copy_failed": "योजना संबंध कॉपी करने में विफल: {{errors}}",
+        "session_data_invalid": "अमान्य सत्र डेटा: {{data}}",
         "user_not_found": "उपयोगकर्ता नहीं मिला",
-        "transaction_failed": "डेटाबेस लेनदेन विफल: %{error}",
-        "unknown_error": "अप्रत्याशित त्रुटि हुई: %{error}"
+        "transaction_failed": "डेटाबेस लेनदेन विफल: {{error}}",
+        "unknown_error": "अप्रत्याशित त्रुटि हुई: {{error}}"
       },
       "debug": {
-        "session_data_received": "सत्र डेटा प्राप्त हुआ: %{data}",
-        "farm_id_extracted": "खेत ID निकाला गया: %{farm_id}",
-        "crop_ids_extracted": "फसल ID निकाले गए: %{crop_ids}",
-        "field_data_extracted": "क्षेत्र डेटा निकाला गया: %{field_data}",
-        "plan_id_extracted": "योजना ID निकाला गया: %{plan_id}",
-        "reference_farm_found": "संदर्भ खेत मिला: %{farm_name}",
-        "reference_crops_found": "संदर्भ फसलें मिलीं: %{count} फसलें",
-        "reference_plan_found": "संदर्भ योजना मिली: %{plan_name}",
-        "user_crops_created": "उपयोगकर्ता फसलें बनाई गईं: %{count} फसलें",
-        "user_fields_created": "उपयोगकर्ता क्षेत्र बनाए गए: %{count} क्षेत्र",
-        "new_plan_created": "नई योजना बनाई गई: %{plan_id}",
-        "plan_relations_copied": "योजना संबंध कॉपी किए गए: %{fields} क्षेत्र, %{crops} फसलें, %{cultivations} खेती"
+        "session_data_received": "सत्र डेटा प्राप्त हुआ: {{data}}",
+        "farm_id_extracted": "खेत ID निकाला गया: {{farm_id}}",
+        "crop_ids_extracted": "फसल ID निकाले गए: {{crop_ids}}",
+        "field_data_extracted": "क्षेत्र डेटा निकाला गया: {{field_data}}",
+        "plan_id_extracted": "योजना ID निकाला गया: {{plan_id}}",
+        "reference_farm_found": "संदर्भ खेत मिला: {{farm_name}}",
+        "reference_crops_found": "संदर्भ फसलें मिलीं: {{count}} फसलें",
+        "reference_plan_found": "संदर्भ योजना मिली: {{plan_name}}",
+        "user_crops_created": "उपयोगकर्ता फसलें बनाई गईं: {{count}} फसलें",
+        "user_fields_created": "उपयोगकर्ता क्षेत्र बनाए गए: {{count}} क्षेत्र",
+        "new_plan_created": "नई योजना बनाई गई: {{plan_id}}",
+        "plan_relations_copied": "योजना संबंध कॉपी किए गए: {{fields}} क्षेत्र, {{crops}} फसलें, {{cultivations}} खेती"
       }
     }
   },
@@ -1948,8 +2172,8 @@
         "location": "स्थान: जापान",
         "initiative": "सामुदायिक खेत में खेती का अनुभव है। साथ ही, सार्वजनिक रूप से उपलब्ध कृषि तकनीकी सामग्री और शोध पत्रों का संदर्भ लेकर, प्रत्येक फसल की खेती आवश्यकताओं और योजना से जुड़ी जानकारी को संकलित कर साझा करते हैं।",
         "contact_form": "संपर्क फ़ॉर्म",
-        "contact_html": "संपर्क: %{email_link}（%{contact_link} भी उपयोग करें）",
-        "ads_notice_html": "विज्ञापन: इस साइट पर Google AdSense के माध्यम से विज्ञापन दिखाए जाते हैं। विज्ञापन दिखाने के लिए कुकीज़ का उपयोग हो सकता है। विवरण के लिए %{privacy_link} देखें।",
+        "contact_html": "संपर्क: {{email_link}}（{{contact_link}} भी उपयोग करें）",
+        "ads_notice_html": "विज्ञापन: इस साइट पर Google AdSense के माध्यम से विज्ञापन दिखाए जाते हैं। विज्ञापन दिखाने के लिए कुकीज़ का उपयोग हो सकता है। विवरण के लिए {{privacy_link}} देखें।",
         "privacy_link_text": "गोपनीयता नीति",
         "sources_and_updates": "हम प्रत्येक लेख के अंत में मुख्य संदर्भ और सार्वजनिक सामग्री के लिंक देते हैं, और सामग्री को नवीनतम शोध और मैदानी डेटा के आधार पर समय-समय पर अपडेट करते हैं।"
       },
@@ -1983,6 +2207,11 @@
         "मौसम डेटा प्रदर्शित नहीं हो रहा → कृपया जांचें कि खेत स्थान सूचना सही ढंग से सेट है"
       ],
       "footer_message": "हम सेवा सुधार के लिए आपकी प्रतिक्रिया और अनुरोधों की प्रतीक्षा कर रहे हैं।"
+    },
+    "notFound": {
+      "title": "पृष्ठ नहीं मिला",
+      "message": "आप जिस पृष्ठ की तलाश कर रहे हैं वह मौजूद नहीं है या स्थानांतरित हो गया हो सकता है।",
+      "backHome": "होम पर वापस जाएँ"
     },
     "privacy": {
       "title": "गोपनीयता नीति",
@@ -2037,7 +2266,7 @@
       },
       "section8": {
         "title": "8. संपर्क",
-        "content_html": "गोपनीयता नीति के संबंध में पूछताछ के लिए, कृपया %{contact_link} के माध्यम से हमसे संपर्क करें।",
+        "content_html": "गोपनीयता नीति के संबंध में पूछताछ के लिए, कृपया {{contact_link}} के माध्यम से हमसे संपर्क करें।",
         "contact_link_text": "संपर्क पृष्ठ"
       },
       "last_updated": "अंतिम अद्यतन: 17 अक्टूबर 2025"
@@ -2107,7 +2336,7 @@
       },
       "article10": {
         "title": "अनुच्छेद 10 (संपर्क)",
-        "content_html": "इन शर्तों के संबंध में पूछताछ के लिए, कृपया %{contact_link} के माध्यम से हमसे संपर्क करें।",
+        "content_html": "इन शर्तों के संबंध में पूछताछ के लिए, कृपया {{contact_link}} के माध्यम से हमसे संपर्क करें।",
         "contact_link_text": "संपर्क पृष्ठ"
       },
       "effective_date": "प्रभावी तिथि: 17 अक्टूबर 2025"
@@ -2145,14 +2374,21 @@
       "terms": "सेवा की शर्तें",
       "contact_title": "संपर्क",
       "contact_form": "संपर्क फॉर्म",
-      "copyright": "© %{year} AGRR. सर्वाधिकार सुरक्षित।"
+      "copyright": "© {{year}} AGRR. सर्वाधिकार सुरक्षित।"
     },
     "cookie_consent": {
       "title": "Cookie usage",
-      "description_html": "We use cookies for ads delivery and analytics. You can change your choice at any time. See %{privacy_link} for details.",
+      "description_html": "We use cookies for ads delivery and analytics. You can change your choice at any time. See {{privacy_link}} for details.",
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "region_select": {
+      "label": "क्षेत्र",
+      "blank": "कृपया चुनें",
+      "jp": "जापान",
+      "us": "संयुक्त राज्य",
+      "in": "भारत"
     }
   }
 }

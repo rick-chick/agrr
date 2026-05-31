@@ -1,8 +1,8 @@
 {
   "deletion_undo": {
     "schedule_forbidden": "You are not allowed to perform this action.",
-    "toast_message": "%{resource} was deleted. You can undo this action.",
-    "redirect_notice": "%{resource} was deleted.",
+    "toast_message": "{{resource}} was deleted. You can undo this action.",
+    "redirect_notice": "{{resource}} was deleted.",
     "restored": "Deletion was undone.",
     "undo_button": "Undo",
     "close_button": "Close",
@@ -15,7 +15,7 @@
       "task_schedule_items": {
         "errors": {
           "cancel_failed": "We couldn't cancel the scheduled task. Please try again.",
-          "undo_failed": "We couldn't prepare the undo action: %{message}",
+          "undo_failed": "We couldn't prepare the undo action: {{message}}",
           "invalid_template": "The selected task template cannot be used for this field."
         }
       }
@@ -48,18 +48,27 @@
       "communication_error": "Communication error occurred",
       "add_field_button": "Add Field",
       "adding_field_loading": "Adding...",
-      "confirm_delete_field": "Delete %{field_name}?\n(This field has no crops, so it can be deleted)",
-      "confirm_delete_crop": "Delete %{crop_name}?",
+      "confirm_delete_field": "Delete {{field_name}}?\n(This field has no crops, so it can be deleted)",
+      "confirm_delete_crop": "Delete {{crop_name}}?",
       "invalid_area": "Invalid area value",
       "field_add_failed": "Failed to add field",
-      "field_delete_failed": "Failed to delete field"
+      "field_delete_failed": "Failed to delete field",
+      "add_crop_button": "Add crop",
+      "crop_palette_cancel": "Cancel",
+      "crop_palette_title": "Add crop",
+      "crop_palette_no_crops": "No crops available to add",
+      "field_form_name_label": "Field name",
+      "field_form_name_placeholder": "e.g. Field A",
+      "field_form_area_label": "Area (㎡)",
+      "field_form_area_placeholder": "e.g. 100",
+      "field_form_submit": "Add field"
     },
     "crop_ai": {
       "enter_name": "Enter crop name",
       "fetching": "Fetching crop information with AI...",
       "button_fetching": "🤖 Fetching information with AI...",
       "button_idle": "🤖 Fetch and save with AI",
-      "created_success": "✓ Fetched and saved crop information for \"%{name}\"!",
+      "created_success": "✓ Fetched and saved crop information for \"{{name}}\"!",
       "fetch_failed": "Failed to fetch crop information",
       "network_error": "Network error occurred"
     },
@@ -67,15 +76,15 @@
       "enter_name": "Enter fertilizer name",
       "fetching": "Fetching fertilizer information with AI...",
       "button_fetching": "🤖 Fetching information with AI...",
-      "created_success": "✓ Fetched and saved fertilizer information for \"%{name}\"!",
+      "created_success": "✓ Fetched and saved fertilizer information for \"{{name}}\"!",
       "fetch_failed": "Failed to fetch fertilizer information",
       "network_error": "Network error occurred",
-      "updated_success": "✓ Fetched and updated fertilizer information for \"%{name}\"!"
+      "updated_success": "✓ Fetched and updated fertilizer information for \"{{name}}\"!"
     },
     "crop_palette": {
       "plan_id_missing": "Plan ID is missing",
-      "crop_types_limit": "Maximum %{max_types} crop types allowed.\nCurrent: %{current_types}",
-      "crop_add_failed": "Failed to add crop: %{message}",
+      "crop_types_limit": "Maximum {{max_types}} crop types allowed.\nCurrent: {{current_types}}",
+      "crop_add_failed": "Failed to add crop: {{message}}",
       "communication_error": "Communication error occurred"
     },
     "copy_to_clipboard": {
@@ -145,8 +154,8 @@
       "enter_name": "Please enter a pest name",
       "fetching": "Fetching pest information with AI...",
       "button_fetching": "🤖 Fetching with AI...",
-      "created_success": "✓ Retrieved and saved pest '%{name}'!",
-      "updated_success": "✓ Retrieved and updated pest information for '%{name}'!",
+      "created_success": "✓ Retrieved and saved pest '{{name}}'!",
+      "updated_success": "✓ Retrieved and updated pest information for '{{name}}'!",
       "fetch_failed": "Failed to retrieve pest information",
       "network_error": "A network error occurred"
     }
@@ -171,14 +180,55 @@
     "true": "Yes",
     "false": "No"
   },
+  "contact_form": {
+    "name": "Name",
+    "email": "Email",
+    "subject": "Subject",
+    "message": "Message",
+    "submit": "Send",
+    "success": {
+      "message": "Your inquiry has been received.",
+      "toast": "Thank you for contacting us."
+    },
+    "errors": {
+      "send_failed": "Failed to send your message.",
+      "validation_failed": "Please check your input."
+    },
+    "validation": {
+      "message_required": "Message is required.",
+      "message_too_long": "Message must be 5000 characters or fewer.",
+      "name_too_long": "Name must be 255 characters or fewer.",
+      "subject_too_long": "Subject must be 255 characters or fewer.",
+      "email_required": "Email is required.",
+      "email_invalid": "Email format is invalid."
+    }
+  },
+  "status": {
+    "checking": "Checking..."
+  },
   "nav": {
+    "main": "Main navigation",
+    "open_menu": "Open menu",
+    "close_menu": "Close menu",
+    "plan": "Plans",
+    "menu_masters": "Master Data",
+    "new_plan": "Create Crop Plan",
+    "reports": "Reports",
+    "menu_more": "More",
     "home": "Home",
     "farms": "Farm Management",
     "crops": "Crop Management",
+    "fertilizes": "Fertilizers",
+    "pests": "Pests",
+    "pesticides": "Pesticides",
+    "agricultural_tasks": "Tasks",
+    "interaction_rules": "Rotations",
     "plans": "Crop Plans",
     "public_plans": "Free Crop Plans",
     "about": "About AGRR",
     "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
     "login": "Login",
     "logout": "Logout",
     "admin": "Admin",
@@ -194,20 +244,20 @@
   "flash": {
     "actions": {
       "create": {
-        "notice": "%{resource_name} was successfully created"
+        "notice": "{{resource_name}} was successfully created"
       },
       "update": {
-        "notice": "%{resource_name} was successfully updated"
+        "notice": "{{resource_name}} was successfully updated"
       },
       "destroy": {
-        "notice": "%{resource_name} was successfully deleted"
+        "notice": "{{resource_name}} was successfully deleted"
       }
     },
     "farms": {
-      "deleted": "%{name} was deleted."
+      "deleted": "{{name}} was deleted."
     },
     "crops": {
-      "deleted": "%{name} was deleted."
+      "deleted": "{{name}} was deleted."
     }
   },
   "date": {
@@ -326,7 +376,7 @@
             "area_sqm": {
               "blank": "can't be blank",
               "not_a_number": "must be a number",
-              "greater_than": "must be greater than %{count}"
+              "greater_than": "must be greater than {{count}}"
             }
           }
         },
@@ -339,10 +389,10 @@
         }
       },
       "messages": {
-        "record_invalid": "Validation failed: %{errors}",
+        "record_invalid": "Validation failed: {{errors}}",
         "restrict_dependent_destroy": {
-          "has_one": "Cannot delete record because a dependent %{record} exists",
-          "has_many": "Cannot delete record because dependent %{record} exist"
+          "has_one": "Cannot delete record because a dependent {{record}} exists",
+          "has_many": "Cannot delete record because dependent {{record}} exist"
         }
       }
     },
@@ -451,20 +501,20 @@
         }
       },
       "flow": {
-        "summary": "Typical flow: %{phases} (guide from forecast)",
+        "summary": "Typical flow: {{phases}} (guide from forecast)",
         "summary_fallback": "Could not summarize the growth flow.",
-        "detail_chunk": "%{label} %{range}",
-        "month_range": "%{start}–%{end}"
+        "detail_chunk": "{{label}} {{range}}",
+        "month_range": "{{start}}–{{end}}"
       },
       "timeline": {
-        "month_summary": "%{labels} (guide)"
+        "month_summary": "{{labels}} (guide)"
       },
       "disclaimer": {
         "short": "This is a guide only—not a guarantee of outcomes. May include generic estimates where data is missing."
       },
       "reason": {
-        "list": "Based on temperature bands for stages \"%{sowing}\" and \"%{transplant}\", scanned %{days} days of forecast weather.",
-        "agrr": "Optimized cultivation period: %{start}–%{completion} (~%{days} days, GDD %{gdd}). The four phase bands split that period into quarters (approximate).",
+        "list": "Based on temperature bands for stages \"{{sowing}}\" and \"{{transplant}}\", scanned {{days}} days of forecast weather.",
+        "agrr": "Optimized cultivation period: {{start}}–{{completion}} (~{{days}} days, GDD {{gdd}}). The four phase bands split that period into quarters (approximate).",
         "agrr_failed": {
           "generic": "Could not compute a cultivation period.",
           "daemon_unavailable": "The optimization service is unavailable (it may not be running). Please try again later.",
@@ -490,7 +540,7 @@
         "name_required": "Please enter a pest name",
         "invalid_payload": "Invalid pest payload format",
         "fetch_failed": "Failed to retrieve pest information",
-        "fetch_failed_with_reason": "Failed to retrieve pest information: %{message}",
+        "fetch_failed_with_reason": "Failed to retrieve pest information: {{message}}",
         "not_found": "Pest not found",
         "invalid_affected_crops": "AGRR response contains invalid affected_crops",
         "daemon_not_running": "AGRR service is not running",
@@ -503,8 +553,8 @@
       "common": {
         "location_required": "Location is required",
         "weather_service_unavailable": "Weather service is temporarily unavailable",
-        "weather_fetch_failed": "Weather data fetch failed: %{message}",
-        "forecast_fetch_failed": "Forecast fetch failed: %{message}",
+        "weather_fetch_failed": "Weather data fetch failed: {{message}}",
+        "forecast_fetch_failed": "Forecast fetch failed: {{message}}",
         "weather_invalid_response": "Invalid response from weather service",
         "not_found": "Resource not found",
         "farm_not_found": "Farm not found",
@@ -514,13 +564,13 @@
           "no_file": "No file provided",
           "not_found": "File not found"
         },
-        "invalid_date_format": "Invalid date format: %{message}"
+        "invalid_date_format": "Invalid date format: {{message}}"
       },
       "crops": {
         "name_required": "Please enter a crop name",
         "invalid_payload": "Invalid crop payload format",
         "fetch_failed": "Failed to retrieve crop information",
-        "fetch_failed_with_reason": "Failed to retrieve crop information: %{message}",
+        "fetch_failed_with_reason": "Failed to retrieve crop information: {{message}}",
         "reference_only_admin": "Only admin can create reference crops",
         "reference_flag_admin_only": "Only admin can change reference flag"
       },
@@ -528,10 +578,10 @@
         "name_required": "Please enter a fertilizer name",
         "invalid_payload": "Invalid fertilizer payload format",
         "fetch_failed": "Failed to retrieve fertilizer information",
-        "fetch_failed_with_reason": "Failed to retrieve fertilizer information: %{message}"
+        "fetch_failed_with_reason": "Failed to retrieve fertilizer information: {{message}}"
       },
       "cultivation_plan": {
-        "crop_missing_growth_stages": "Crop '%{crop_name}' has no growth stages configured. Please configure growth stages before adjusting."
+        "crop_missing_growth_stages": "Crop '{{crop_name}}' has no growth stages configured. Please configure growth stages before adjusting."
       },
       "no_cultivation_period": "Cultivation period not set",
       "crop_not_found": "Crop information not found",
@@ -540,9 +590,9 @@
       "data_fetch_failed": "Failed to fetch data",
       "weather_data_invalid_format": "Weather data format is invalid. Please rerun optimization.",
       "optimization": {
-        "calculate_period_failed": "Failed to calculate planning period: %{message}",
+        "calculate_period_failed": "Failed to calculate planning period: {{message}}",
         "result_empty": "Adjustment result is empty",
-        "adjust_failed": "Failed to adjust: %{message}"
+        "adjust_failed": "Failed to adjust: {{message}}"
       }
     },
     "messages": {
@@ -553,11 +603,11 @@
         "weather_data_fetch_started": "Weather data fetch started"
       },
       "crops": {
-        "updated_with_latest": "Updated crop '%{name}' with latest info",
-        "created_by_ai": "Created crop '%{name}' with AI-fetched info"
+        "updated_with_latest": "Updated crop '{{name}}' with latest info",
+        "created_by_ai": "Created crop '{{name}}' with AI-fetched info"
       },
       "fertilizes": {
-        "updated_with_latest": "Updated fertilizer '%{name}' with latest info",
+        "updated_with_latest": "Updated fertilizer '{{name}}' with latest info",
         "created_by_ai": "Fertilizer information fetched and saved with AI!",
         "invalid_payload": "Invalid fertilizer data received from AI"
       },
@@ -571,104 +621,104 @@
     "invalid_user_type": "Invalid user type.",
     "mock_logout_success": "Mock logout successful!",
     "not_logged_in": "Not logged in.",
-    "create_user_failed": "Failed to create user: %{errors}",
-    "mock_login_success": "Mock login successful as %{name}!"
+    "create_user_failed": "Failed to create user: {{errors}}",
+    "mock_login_success": "Mock login successful as {{name}}!"
   },
   "services": {
     "plan_save_service": {
       "messages": {
-        "coordinates": "Coordinates: %{lat}, %{lng}",
-        "farm_created": "Farm created: %{farm_name}",
-        "crop_created": "Crop created: %{crop_name}",
-        "fertilize_created": "Fertilize created: %{fertilize_name}",
-        "pest_created": "Pest created: %{pest_name}",
-        "agricultural_task_created": "Agricultural task created: %{task_name}",
-        "pesticide_created": "Pesticide created: %{pesticide_name}",
-        "field_created": "Field created: %{field_name}",
-        "plan_created": "Plan created: %{plan_id}",
-        "interaction_rule_created": "Interaction rule created: %{source_group} → %{target_group}",
-        "crop_stage_copied": "Crop stage copied: %{stage_name}",
-        "temperature_requirement_copied": "Temperature requirement copied: %{stage_name}",
-        "sunshine_requirement_copied": "Sunshine requirement copied: %{stage_name}",
-        "thermal_requirement_copied": "Thermal requirement copied: %{stage_name}",
-        "nutrient_requirement_copied": "Nutrient requirement copied: %{stage_name}",
-        "cultivation_plan_field_copied": "Plan field copied: %{field_name}",
-        "cultivation_plan_crop_copied": "Plan crop copied: %{crop_name}",
-        "field_cultivation_copied": "Field cultivation copied: %{field_name} × %{crop_name}",
+        "coordinates": "Coordinates: {{lat}}, {{lng}}",
+        "farm_created": "Farm created: {{farm_name}}",
+        "crop_created": "Crop created: {{crop_name}}",
+        "fertilize_created": "Fertilize created: {{fertilize_name}}",
+        "pest_created": "Pest created: {{pest_name}}",
+        "agricultural_task_created": "Agricultural task created: {{task_name}}",
+        "pesticide_created": "Pesticide created: {{pesticide_name}}",
+        "field_created": "Field created: {{field_name}}",
+        "plan_created": "Plan created: {{plan_id}}",
+        "interaction_rule_created": "Interaction rule created: {{source_group}} → {{target_group}}",
+        "crop_stage_copied": "Crop stage copied: {{stage_name}}",
+        "temperature_requirement_copied": "Temperature requirement copied: {{stage_name}}",
+        "sunshine_requirement_copied": "Sunshine requirement copied: {{stage_name}}",
+        "thermal_requirement_copied": "Thermal requirement copied: {{stage_name}}",
+        "nutrient_requirement_copied": "Nutrient requirement copied: {{stage_name}}",
+        "cultivation_plan_field_copied": "Plan field copied: {{field_name}}",
+        "cultivation_plan_crop_copied": "Plan crop copied: {{crop_name}}",
+        "field_cultivation_copied": "Field cultivation copied: {{field_name}} × {{crop_name}}",
         "service_completed": "PlanSaveService completed successfully"
       },
       "errors": {
-        "farm_not_found": "Reference farm not found (ID: %{farm_id})",
-        "farm_creation_failed": "Failed to create farm: %{errors}",
-        "crop_not_found": "Reference crop not found (ID: %{crop_id})",
-        "crop_creation_failed": "Failed to create crop: %{errors}",
-        "crop_stage_copy_failed": "Failed to copy crop stage: %{errors}",
-        "temperature_requirement_copy_failed": "Failed to copy temperature requirement: %{errors}",
-        "sunshine_requirement_copy_failed": "Failed to copy sunshine requirement: %{errors}",
-        "thermal_requirement_copy_failed": "Failed to copy thermal requirement: %{errors}",
-        "field_creation_failed": "Failed to create field: %{errors}",
-        "interaction_rule_creation_failed": "Failed to create interaction rule: %{errors}",
-        "plan_not_found": "Reference plan not found (ID: %{plan_id})",
-        "plan_creation_failed": "Failed to create plan: %{errors}",
-        "plan_relations_copy_failed": "Failed to copy plan relations: %{errors}",
-        "session_data_invalid": "Invalid session data: %{data}",
+        "farm_not_found": "Reference farm not found (ID: {{farm_id}})",
+        "farm_creation_failed": "Failed to create farm: {{errors}}",
+        "crop_not_found": "Reference crop not found (ID: {{crop_id}})",
+        "crop_creation_failed": "Failed to create crop: {{errors}}",
+        "crop_stage_copy_failed": "Failed to copy crop stage: {{errors}}",
+        "temperature_requirement_copy_failed": "Failed to copy temperature requirement: {{errors}}",
+        "sunshine_requirement_copy_failed": "Failed to copy sunshine requirement: {{errors}}",
+        "thermal_requirement_copy_failed": "Failed to copy thermal requirement: {{errors}}",
+        "field_creation_failed": "Failed to create field: {{errors}}",
+        "interaction_rule_creation_failed": "Failed to create interaction rule: {{errors}}",
+        "plan_not_found": "Reference plan not found (ID: {{plan_id}})",
+        "plan_creation_failed": "Failed to create plan: {{errors}}",
+        "plan_relations_copy_failed": "Failed to copy plan relations: {{errors}}",
+        "session_data_invalid": "Invalid session data: {{data}}",
         "user_not_found": "User not found",
-        "transaction_failed": "Database transaction failed: %{error}",
-        "unknown_error": "Unexpected error occurred: %{error}"
+        "transaction_failed": "Database transaction failed: {{error}}",
+        "unknown_error": "Unexpected error occurred: {{error}}"
       },
       "debug": {
-        "session_data_received": "Session data received: %{data}",
-        "farm_id_extracted": "Farm ID extracted: %{farm_id}",
-        "crop_ids_extracted": "Crop IDs extracted: %{crop_ids}",
-        "field_data_extracted": "Field data extracted: %{field_data}",
-        "plan_id_extracted": "Plan ID extracted: %{plan_id}",
-        "reference_farm_found": "Reference farm found: %{farm_name}",
-        "reference_crops_found": "Reference crops found: %{count} crops",
-        "reference_plan_found": "Reference plan found: %{plan_name}",
-        "user_crops_created": "User crops created: %{count} crops",
-        "user_fields_created": "User fields created: %{count} fields",
-        "new_plan_created": "New plan created: %{plan_id}",
-        "plan_relations_copied": "Plan relations copied: %{fields} fields, %{crops} crops, %{cultivations} cultivations"
+        "session_data_received": "Session data received: {{data}}",
+        "farm_id_extracted": "Farm ID extracted: {{farm_id}}",
+        "crop_ids_extracted": "Crop IDs extracted: {{crop_ids}}",
+        "field_data_extracted": "Field data extracted: {{field_data}}",
+        "plan_id_extracted": "Plan ID extracted: {{plan_id}}",
+        "reference_farm_found": "Reference farm found: {{farm_name}}",
+        "reference_crops_found": "Reference crops found: {{count}} crops",
+        "reference_plan_found": "Reference plan found: {{plan_name}}",
+        "user_crops_created": "User crops created: {{count}} crops",
+        "user_fields_created": "User fields created: {{count}} fields",
+        "new_plan_created": "New plan created: {{plan_id}}",
+        "plan_relations_copied": "Plan relations copied: {{fields}} fields, {{crops}} crops, {{cultivations}} cultivations"
       }
     }
   },
   "errors": {
-    "format": "%{attribute} %{message}",
+    "format": "{{attribute}} {{message}}",
     "messages": {
       "required": "must exist",
       "blank": "can't be blank",
       "empty": "can't be empty",
       "invalid": "is invalid",
-      "confirmation": "doesn't match %{attribute}",
+      "confirmation": "doesn't match {{attribute}}",
       "accepted": "must be accepted",
-      "too_long": "is too long (maximum is %{count} characters)",
-      "too_short": "is too short (minimum is %{count} characters)",
-      "wrong_length": "is the wrong length (should be %{count} characters)",
+      "too_long": "is too long (maximum is {{count}} characters)",
+      "too_short": "is too short (minimum is {{count}} characters)",
+      "wrong_length": "is the wrong length (should be {{count}} characters)",
       "not_a_number": "is not a number",
       "not_an_integer": "must be an integer",
-      "greater_than": "must be greater than %{count}",
-      "greater_than_or_equal_to": "must be greater than or equal to %{count}",
-      "equal_to": "must be equal to %{count}",
-      "less_than": "must be less than %{count}",
-      "less_than_or_equal_to": "must be less than or equal to %{count}",
-      "other_than": "must be other than %{count}",
+      "greater_than": "must be greater than {{count}}",
+      "greater_than_or_equal_to": "must be greater than or equal to {{count}}",
+      "equal_to": "must be equal to {{count}}",
+      "less_than": "must be less than {{count}}",
+      "less_than_or_equal_to": "must be less than or equal to {{count}}",
+      "other_than": "must be other than {{count}}",
       "odd": "must be odd",
       "even": "must be even",
       "taken": "has already been taken",
       "inclusion": "is not included in the list",
       "exclusion": "is reserved",
       "present": "must be blank",
-      "model_invalid": "Validation failed: %{errors}",
-      "required_dependency": "is missing the required %{dependency}"
+      "model_invalid": "Validation failed: {{errors}}",
+      "required_dependency": "is missing the required {{dependency}}"
     },
     "template": {
-      "header": "%{count} error(s) prohibited this %{model} from being saved"
+      "header": "{{count}} error(s) prohibited this {{model}} from being saved"
     }
   },
   "jobs": {
     "fetch_weather_data": {
-      "retry_limit_exceeded": "Retry limit exceeded: %{error}",
-      "validation_error": "Data validation error: %{error}"
+      "retry_limit_exceeded": "Retry limit exceeded: {{error}}",
+      "validation_error": "Data validation error: {{error}}"
     },
     "weather_prediction": {
       "completed": "Weather prediction completed"
@@ -676,14 +726,14 @@
     "optimize_cultivation_plan": {
       "completed": "Optimization completed",
       "failed": "Optimization failed",
-      "unexpected_error": "An unexpected error occurred: %{message}",
+      "unexpected_error": "An unexpected error occurred: {{message}}",
       "errors": {
         "growth_incomplete": "Selected crops cannot complete growth within the specified period. Please set a longer evaluation period or choose different crops.",
         "no_valid_candidates": "No crops could be planted. This may occur when:\n• Selected crops cannot mature within the planning period\n• Field capacity is insufficient\n• Weather conditions are unfavorable\n\nPlease set a longer cultivation period or choose different crops.",
         "missing_field": "Required fields are missing in input data. Please contact the system administrator.",
         "file_error": "Failed to read file. Please contact the system administrator.",
         "invalid_format": "Invalid input data format. Please contact the system administrator.",
-        "optimization_failed": "Optimization process failed: %{message}"
+        "optimization_failed": "Optimization process failed: {{message}}"
       }
     }
   },
@@ -691,7 +741,7 @@
     "farm": {
       "weather_status": {
         "pending": "Pending",
-        "fetching": "Fetching (%{progress}%)",
+        "fetching": "Fetching ({{progress}}%)",
         "completed": "Completed",
         "failed": "Failed",
         "unknown": "Unknown"
@@ -738,12 +788,12 @@
       "cannot_remove_field_with_cultivations": "This field has cultivation schedules. Remove crops first.",
       "cannot_remove_last_field": "The last field cannot be removed",
       "max_fields_limit": "You can add up to 5 fields only",
-      "field_add_failed": "Failed to add field: %{message}",
+      "field_add_failed": "Failed to add field: {{message}}",
       "select_region": "Please select a region.",
       "select_farm_size": "Please select a farm size.",
       "select_crop": "Please select at least one crop.",
       "restart": "Please start over.",
-      "create_failed": "Failed to create plan: %{errors}",
+      "create_failed": "Failed to create plan: {{errors}}",
       "not_found": "Crop plan not found.",
       "schedule_generation_failed": "Failed to register work schedule",
       "crop_not_found": "Crop not found.",
@@ -791,6 +841,9 @@
       "subtitle": "Choose the region where your farm is located",
       "empty_message": "No regions available for selection at this time."
     },
+    "select_farm": {
+      "available_farms": "Available Farms"
+    },
     "select_farm_size": {
       "title": "📏 Select Your Farm Size",
       "subtitle": "Choose the size closest to your farm area",
@@ -817,12 +870,12 @@
     "optimizing": {
       "title": "Crop Planning",
       "status_badge": "Optimizing",
-      "crops_count": "{{ count }} crop types",
+      "crops_count": "{{count}} crop types",
       "hint": "",
       "error_message": "Failed to fetch optimization status.\n\nPlease try:\n• Reload page (F5)\n• Clear browser cache\n• Wait a moment and try again\n\nIf the problem persists, please create a new plan.",
       "progress": {
-        "elapsed_time": "⏳ {{ time }} sec",
-        "elapsed_time_minute": "{{ minutes }}:{{ seconds }}",
+        "elapsed_time": "⏳ {{time}} sec",
+        "elapsed_time_minute": "{{minutes}}:{{seconds}}",
         "duration_hint": "Takes approximately 1 minute",
         "default_message": "Preparing optimization..."
       },
@@ -867,15 +920,15 @@
         "region": "Region",
         "total_area": "Total Area",
         "field_count": "Fields",
-        "field_count_value": "%{count} fields",
+        "field_count_value": "{{count}} fields",
         "total_cost": "Total Cost",
         "total_revenue": "Total Revenue",
         "total_profit": "Total Profit",
-        "subtitle": "Optimal cultivation periods for %{count} fields have been determined"
+        "subtitle": "Optimal cultivation periods for {{count}} fields have been determined"
       },
       "gantt": {
         "title": "Cultivation Schedule",
-        "month_format": "Month %{month}"
+        "month_format": "Month {{month}}"
       },
       "crop_palette": {
         "title": "Add Crops",
@@ -929,22 +982,22 @@
       "cannot_remove_field_with_cultivations": "This field contains cultivation schedules. Please delete the crops first.",
       "cannot_remove_last_field": "Cannot remove the last field.",
       "max_fields_limit": "You can add up to 5 fields only",
-      "field_add_failed": "Failed to add field: %{message}",
+      "field_add_failed": "Failed to add field: {{message}}",
       "select_farm": "Please select a farm.",
       "select_crop": "Please select at least one crop.",
       "restart": "Please start over.",
       "session_invalid": "Your session is invalid. Please sign in again.",
-      "create_failed": "Failed to create plan: %{errors}",
+      "create_failed": "Failed to create plan: {{errors}}",
       "not_found": "Cultivation plan not found.",
       "farm_not_found": "Farm not found.",
       "crop_not_found": "Crop not found.",
       "unauthorized": "You don't have permission to access this plan.",
-      "plan_already_exists": "A plan for %{year} already exists.",
+      "plan_already_exists": "A plan for {{year}} already exists.",
       "plan_already_exists_annual": "A plan for this farm already exists.",
-      "copy_failed": "Failed to copy plan: %{errors}",
+      "copy_failed": "Failed to copy plan: {{errors}}",
       "copy_not_available_for_annual_planning": "Copy function is not available for annual planning.",
       "delete_failed": "Failed to delete plan.",
-      "delete_error": "An error occurred while deleting: %{message}",
+      "delete_error": "An error occurred while deleting: {{message}}",
       "already_optimized": "This plan is already optimized.",
       "invalid_field_params": "Invalid field information.",
       "no_candidates_found": "No optimal planting schedule found for this crop. Weather data range was extended but no candidates were found.",
@@ -953,7 +1006,7 @@
     "messages": {
       "field_removed": "Field removed.",
       "plan_created": "Plan created successfully.",
-      "plan_copied": "Plan copied to %{year}.",
+      "plan_copied": "Plan copied to {{year}}.",
       "plan_deleted": "Plan deleted successfully.",
       "crop_added": "Crop added.",
       "field_added": "Field added.",
@@ -962,6 +1015,7 @@
     },
     "title": "Cultivation Plans",
     "default_plan_name": "Main Plan",
+    "display_name_from_farm": "{{farmName}} Plan",
     "steps": {
       "year": "Year",
       "farm": "Farm",
@@ -979,14 +1033,57 @@
       },
       "fallback": {
         "message": "The screen is too narrow for the full chart. Rotate or enlarge your device to view more details."
+      },
+      "optimizing": "Optimizing...",
+      "no_plan_data": "No plan data available.",
+      "no_field_data": "No field data available.",
+      "no_data": "No data to display.",
+      "adjust_failed": "Adjustment failed.",
+      "range": {
+        "prev_month": "Previous month",
+        "next_month": "Next month"
+      },
+      "labels": {
+        "year": "",
+        "month": "",
+        "day": "d",
+        "week": "w",
+        "quarter": "Q"
       }
     },
+    "field_climate": {
+      "header_title_fallback": "Crop name unavailable",
+      "header_subtitle_fallback": "Farm name unavailable",
+      "period_unknown": "Period unknown",
+      "close": "Close",
+      "loading": "Loading climate data...",
+      "retry": "Retry",
+      "base_temperature": "Base temperature",
+      "optimal_range": "Optimal temperature range",
+      "current_stage": "Current stage",
+      "stage_gdd_value": "Required GDD: {{value}} ℃·day",
+      "daily_temperature": "Daily temperature",
+      "gdd_progress": "GDD progress",
+      "chart": {
+        "temperature": "Temperature (℃)",
+        "cumulative_gdd": "Accumulated GDD (℃·day)",
+        "min_temp": "Min temperature",
+        "mean_temp": "Mean temperature",
+        "max_temp": "Max temperature",
+        "daily_gdd": "Daily GDD",
+        "tooltip_format": "yyyy-MM-dd",
+        "required_cumulative_gdd": "Required cumulative GDD"
+      }
+    },
+    "detail": {
+      "select_cultivation_hint": "Select a cultivation bar on the chart to view climate data."
+    },
     "undo": {
-      "toast": "%{name} was deleted. You can undo this action."
+      "toast": "{{name}} was deleted. You can undo this action."
     },
     "task_schedule_items": {
       "undo": {
-        "toast": "%{name}'s schedule was deleted. You can undo this action."
+        "toast": "{{name}}'s schedule was deleted. You can undo this action."
       }
     },
     "index": {
@@ -996,7 +1093,7 @@
       "try_public_plans": "Try Free Plans",
       "no_plans": "No plans yet",
       "no_plans_hint": "Create a new plan to optimize your cultivation schedule.",
-      "year_label": "Year %{year}",
+      "year_label": "Year {{year}}",
       "status": {
         "pending": "Pending",
         "optimizing": "Optimizing",
@@ -1006,8 +1103,8 @@
       "plan_card": {
         "farm": "Farm",
         "total_area": "Total Area",
-        "crops_count": "%{count} crops",
-        "fields_count": "%{count} fields",
+        "crops_count": "{{count}} crops",
+        "fields_count": "{{count}} fields",
         "view": "View Details",
         "copy": "Copy to Next Year",
         "delete": "Delete",
@@ -1022,7 +1119,7 @@
       "plan_name_placeholder": "e.g. Main Plan",
       "farm_label": "Farm",
       "farm_hint": "Please select a farm",
-      "suggested_plan_name_hint": "Default plan name is \"%{name}\" (the next step uses your farm name as the plan name).",
+      "suggested_plan_name_hint": "Default plan name is \"{{name}}\" (the next step uses your farm name as the plan name).",
       "no_farms": "No farms available",
       "no_farms_hint": "Please create a farm first",
       "create_farm_link": "Create Farm",
@@ -1051,13 +1148,13 @@
     "optimizing": {
       "title": "Cultivation Plan",
       "status_badge": "Optimizing",
-      "year_label": "Year %{year}",
+      "year_label": "Year {{year}}",
       "year_label_annual": "Year-round",
-      "crops_count": "{{ count }} crops",
+      "crops_count": "{{count}} crops",
       "error_message": "Failed to retrieve optimization status.\n\nPlease try one of the following:\n• Reload the page (F5 key)\n• Clear your browser cache\n• Wait a moment and try again\n\nIf the issue persists, please create a new plan.",
       "progress": {
-        "elapsed_time": "⏳ {{ time }}s",
-        "elapsed_time_minute": "{{ minutes }}m {{ seconds }}s",
+        "elapsed_time": "⏳ {{time}}s",
+        "elapsed_time_minute": "{{minutes}}m {{seconds}}s",
         "duration_hint": "This will take approximately 1 minute",
         "default_message": "Preparing optimization..."
       },
@@ -1083,22 +1180,22 @@
         "loading_data": "Loading data..."
       },
       "header": {
-        "title": "Year %{year} Cultivation Plan",
+        "title": "Year {{year}} Cultivation Plan",
         "badge": "Completed",
         "farm": "Farm",
         "total_area": "Total Area",
         "field_count": "Fields",
-        "field_count_value": "%{count} fields",
+        "field_count_value": "{{count}} fields",
         "total_cost": "Total Cost",
         "total_revenue": "Total Revenue",
         "total_profit": "Total Profit",
-        "subtitle": "Optimal cultivation periods determined for %{count} fields",
+        "subtitle": "Optimal cultivation periods determined for {{count}} fields",
         "planning_period": "Planning Period",
-        "planning_period_value": "%{start} - %{end}"
+        "planning_period_value": "{{start}} - {{end}}"
       },
       "gantt": {
         "title": "Cultivation Schedule",
-        "month_format": "%{month}"
+        "month_format": "{{month}}"
       },
       "crop_palette": {
         "title": "Add Crops",
@@ -1134,15 +1231,15 @@
       "copy_plan": "Copy to Next Year",
       "delete": "Delete",
       "header": {
-        "title": "Year %{year} Cultivation Plan",
+        "title": "Year {{year}} Cultivation Plan",
         "badge": "Completed",
         "farm": "Farm",
         "total_area": "Total Area",
         "field_count": "Fields",
-        "field_count_value": "%{count} fields",
+        "field_count_value": "{{count}} fields",
         "planning_period": "Planning Period",
-        "planning_period_value": "%{start} - %{end}",
-        "subtitle": "Optimal cultivation periods determined for %{count} fields"
+        "planning_period_value": "{{start}} - {{end}}",
+        "subtitle": "Optimal cultivation periods determined for {{count}} fields"
       },
       "gantt": {
         "title": "Cultivation Schedule"
@@ -1158,13 +1255,13 @@
       },
       "confirms": {
         "optimize": "Do you want to optimize this plan?",
-        "copy_next_year": "Copy this plan to next year (%{year})?"
+        "copy_next_year": "Copy this plan to next year ({{year}})?"
       }
     }
   },
   "pesticides": {
     "undo": {
-      "toast": "%{name} was deleted. You can undo this action."
+      "toast": "{{name}} was deleted. You can undo this action."
     },
     "form": {
       "crop_label": "Crop",
@@ -1213,7 +1310,7 @@
       "submit_update": "Update Pesticide",
       "cancel": "Cancel",
       "errors": {
-        "title": "%{count} error(s) found:"
+        "title": "{{count}} error(s) found:"
       }
     },
     "flash": {
@@ -1221,7 +1318,7 @@
       "updated": "Pesticide updated successfully.",
       "destroyed": "Pesticide deleted successfully.",
       "cannot_delete_in_use": "This pesticide cannot be deleted because it is being used in other data.",
-      "delete_error": "An error occurred while deleting: %{message}",
+      "delete_error": "An error occurred while deleting: {{message}}",
       "reference_only_admin": "Only administrators can create reference pesticides.",
       "reference_flag_admin_only": "Only administrators can change the reference flag.",
       "no_permission": "Permission denied.",
@@ -1229,6 +1326,7 @@
     },
     "index": {
       "title": "Pesticides",
+      "description": "Register and manage pesticide master data for your cultivation plans.",
       "new_pesticide": "Add New Pesticide",
       "reference_pesticides": "Reference Pesticides (Common Data)",
       "active_ingredient": "Active Ingredient",
@@ -1249,7 +1347,7 @@
       "title": "Add New Pesticide"
     },
     "edit": {
-      "title": "Edit %{name}"
+      "title": "Edit {{name}}"
     },
     "show": {
       "reference_pesticide": "Reference Pesticide",
@@ -1281,14 +1379,14 @@
   },
   "agricultural_tasks": {
     "undo": {
-      "toast": "%{name} was deleted. You can undo this action."
+      "toast": "{{name}} was deleted. You can undo this action."
     },
     "flash": {
       "created": "Task was created.",
       "updated": "Task was updated.",
       "destroyed": "Task was deleted.",
       "cannot_delete_in_use": "This task is used elsewhere and cannot be deleted.",
-      "delete_error": "An error occurred while deleting: %{message}",
+      "delete_error": "An error occurred while deleting: {{message}}",
       "reference_only_admin": "Only admins can create reference tasks.",
       "reference_flag_admin_only": "Only admins can change the reference flag.",
       "no_permission": "You do not have permission.",
@@ -1296,6 +1394,8 @@
     },
     "index": {
       "title": "Tasks",
+      "description": "Register and manage field work and maintenance tasks for your cultivation plans.",
+      "skill_label": "Skill level",
       "new_agricultural_task": "Add Task",
       "time_per_sqm": "Time per ㎡",
       "reference_task": "Reference Task",
@@ -1325,9 +1425,15 @@
       "title": "Add Task"
     },
     "edit": {
-      "title": "Edit %{name}"
+      "title": "Edit {{name}}"
     },
     "form": {
+      "name_label": "Task Name",
+      "description_label": "Description",
+      "time_per_sqm_label": "Time (hours/㎡)",
+      "weather_dependency_label": "Weather Dependency",
+      "skill_level_label": "Skill Level",
+      "task_type_label": "Task Type",
       "submit_create": "Create Task",
       "submit_update": "Update Task",
       "required_tools_hint": "Use new lines for multiple items",
@@ -1373,7 +1479,7 @@
   },
   "crops": {
     "undo": {
-      "toast": "%{name} was deleted. You can undo this action."
+      "toast": "{{name}} was deleted. You can undo this action."
     },
     "agricultural_tasks": {
       "flash": {
@@ -1458,7 +1564,7 @@
       "submit_update": "Update Crop",
       "cancel": "Cancel",
       "errors": {
-        "title": "%{count} errors occurred:"
+        "title": "{{count}} errors occurred:"
       }
     },
     "stage": {
@@ -1512,18 +1618,13 @@
         "daily_uptake_k_label": "Potassium (K) Uptake (g/m²/day)",
         "daily_uptake_k_placeholder": "e.g., 0.8",
         "daily_uptake_k_help": "Enter daily potassium (element) uptake for this stage."
-      }
+      },
+      "default_name": "Stage {{order}}",
+      "confirm_delete": "Delete this growth stage?"
     },
     "flash": {
       "created": "Crop was successfully created.",
       "updated": "Crop was successfully updated.",
-      "stage_created": "Crop stage created successfully.",
-      "stage_updated": "Crop stage updated successfully.",
-      "stage_deleted": "Crop stage deleted successfully.",
-      "temperature_requirement_updated": "Temperature requirement updated successfully.",
-      "thermal_requirement_updated": "Thermal requirement updated successfully.",
-      "sunshine_requirement_updated": "Sunshine requirement updated successfully.",
-      "nutrient_requirement_updated": "Nutrient requirement updated successfully.",
       "destroyed": "Crop was successfully deleted.",
       "task_schedule_blueprints_generated": "Task templates were regenerated.",
       "task_schedule_blueprints_failed": "Failed to regenerate task templates. Please check the logs.",
@@ -1537,7 +1638,7 @@
       "new_crop": "Add New Crop",
       "reference_crops": "Reference Crops (Common Data)",
       "my_crops": "My Crops",
-      "count": "%{count} items",
+      "count": "{{count}} items",
       "actions": {
         "show": "Details",
         "edit": "Edit",
@@ -1552,20 +1653,46 @@
       },
       "debug": {
         "label": "Debug:"
-      }
+      },
+      "description": "Manage crop master data for your cultivation plans."
     },
     "new": {
       "title": "Add New Crop"
     },
     "edit": {
-      "title": "Edit %{name}",
+      "title": "Edit {{name}}",
       "form": {
         "submit": "Update Crop",
         "cancel": "Cancel"
       },
       "errors": {
-        "title": "%{count} errors occurred:"
-      }
+        "title": "{{count}} error(s):"
+      },
+      "stages_title": "Growth Stages",
+      "add_stage": "Add Stage",
+      "stage_title": "Stage {{order}}",
+      "stage_name": "Stage Name",
+      "stage_order": "Order",
+      "requirements_title": "Requirements",
+      "temperature_requirement": "Temperature Requirements",
+      "thermal_requirement": "Thermal Requirements",
+      "sunshine_requirement": "Sunshine Requirements",
+      "nutrient_requirement": "Nutrient Requirements",
+      "base_temperature": "Base Temperature (°C)",
+      "optimal_min": "Optimal Min Temperature (°C)",
+      "optimal_max": "Optimal Max Temperature (°C)",
+      "low_stress_threshold": "Low Stress Threshold (°C)",
+      "high_stress_threshold": "High Stress Threshold (°C)",
+      "frost_threshold": "Frost Threshold (°C)",
+      "sterility_risk_threshold": "Sterility Risk Threshold (°C)",
+      "max_temperature": "Max Temperature (°C)",
+      "required_gdd": "Required Growing Degree Days (°C·day)",
+      "minimum_sunshine_hours": "Minimum Sunshine Hours (hours/day)",
+      "target_sunshine_hours": "Target Sunshine Hours (hours/day)",
+      "daily_uptake_n": "Daily Nitrogen Uptake (kg/ha/day)",
+      "daily_uptake_p": "Daily Phosphorus Uptake (kg/ha/day)",
+      "daily_uptake_k": "Daily Potassium Uptake (kg/ha/day)",
+      "region": "Region"
     },
     "show": {
       "reference_crop": "Reference Crop",
@@ -1612,8 +1739,8 @@
       "daily_uptake_k": "Potassium (K) Uptake",
       "task_schedule_blueprints_title": "Task Plan",
       "task_schedule_blueprints_description_html": "These tasks were suggested by the AI. Review them here and adjust individual tasks from their detail screens when needed.",
-      "task_schedule_blueprints_axis_gdd_total": "Cumulative GDD (Total %{total})",
-      "task_schedule_blueprints_order_tooltip": "Order %{order}",
+      "task_schedule_blueprints_axis_gdd_total": "Cumulative GDD (Total {{total}})",
+      "task_schedule_blueprints_order_tooltip": "Order {{order}}",
       "task_schedule_blueprints_missing_task": "Unlinked task",
       "no_task_schedule_blueprints": "No task plans have been defined yet.",
       "task_type_label": "Task Type",
@@ -1626,7 +1753,7 @@
       "origin_ai_label": "AI",
       "origin_manual_label": "Manual",
       "manual_task_type_label": "Available Templates",
-      "manual_task_count": "%{count} items",
+      "manual_task_count": "{{count}} items",
       "source_reference_label": "Reference Data",
       "source_user_label": "User Created",
       "manual_task_hint": "Link this task with the AI plan to include it in schedule optimization.",
@@ -1662,7 +1789,7 @@
         "submit_update": "Update Crop",
         "cancel": "Cancel",
         "errors": {
-          "title": "%{count} errors occurred:"
+          "title": "{{count}} errors occurred:"
         }
       }
     },
@@ -1706,7 +1833,7 @@
         "back_to_list": "Back to List"
       },
       "edit": {
-        "title": "Edit %{pest_name}",
+        "title": "Edit {{pest_name}}",
         "back_to_list": "Back to List"
       },
       "show": {
@@ -1738,6 +1865,9 @@
         "back_to_crop": "Back to Crop",
         "edit": "Edit"
       }
+    },
+    "errors": {
+      "invalid_id": "Invalid crop ID."
     }
   },
   "pests": {
@@ -1797,18 +1927,18 @@
       "submit_update": "Update Pest",
       "cancel": "Cancel",
       "errors": {
-        "title": "%{count} error(s) found:"
+        "title": "{{count}} error(s) found:"
       }
     },
     "undo": {
-      "toast": "%{name} was deleted. You can undo this action."
+      "toast": "{{name}} was deleted. You can undo this action."
     },
     "flash": {
       "created": "Pest created successfully.",
       "updated": "Pest updated successfully.",
       "destroyed": "Pest deleted successfully.",
       "cannot_delete_in_use": "This pest cannot be deleted because it is being used in other data.",
-      "delete_error": "An error occurred while deleting: %{message}",
+      "delete_error": "An error occurred while deleting: {{message}}",
       "reference_only_admin": "Only administrators can create reference pests.",
       "reference_flag_admin_only": "Only administrators can change the reference flag.",
       "no_permission": "Permission denied.",
@@ -1816,6 +1946,7 @@
     },
     "index": {
       "title": "Pests",
+      "description": "Register and manage pest master data for your cultivation plans.",
       "new_pest": "Add New Pest",
       "reference_pests": "Reference Pests (Common Data)",
       "scientific_name": "Scientific Name",
@@ -1837,7 +1968,7 @@
       "title": "Add New Pest"
     },
     "edit": {
-      "title": "Edit %{name}"
+      "title": "Edit {{name}}"
     },
     "show": {
       "reference_pest": "Reference Pest",
@@ -1848,6 +1979,7 @@
       "order": "Order",
       "description": "Description",
       "occurrence_season": "Occurrence Season",
+      "region": "Region",
       "temperature_profile": "Temperature Profile",
       "base_temperature": "Base Temperature",
       "max_temperature": "Maximum Temperature",
@@ -1872,11 +2004,14 @@
       "crops_title": "Associated Crops",
       "reference_crop": "Reference Crop",
       "no_crops_description": "No crops are associated with this pest yet."
+    },
+    "errors": {
+      "invalid_id": "Invalid pest ID."
     }
   },
   "fertilizes": {
     "undo": {
-      "toast": "%{name} was deleted. You can undo this action."
+      "toast": "{{name}} was deleted. You can undo this action."
     },
     "form": {
       "name_label": "Name",
@@ -1906,7 +2041,7 @@
       "submit_update": "Update Fertilizer",
       "cancel": "Cancel",
       "errors": {
-        "title": "%{count} error(s) found:"
+        "title": "{{count}} error(s) found:"
       }
     },
     "flash": {
@@ -1914,7 +2049,7 @@
       "updated": "Fertilizer updated successfully.",
       "destroyed": "Fertilizer deleted successfully.",
       "cannot_delete_in_use": "This fertilizer cannot be deleted because it is being used in other data.",
-      "delete_error": "An error occurred while deleting: %{message}",
+      "delete_error": "An error occurred while deleting: {{message}}",
       "reference_only_admin": "Only administrators can create reference fertilizers.",
       "reference_flag_admin_only": "Only administrators can change the reference flag.",
       "no_permission": "Permission denied.",
@@ -1922,6 +2057,7 @@
     },
     "index": {
       "title": "Fertilizers",
+      "description": "Register and manage fertilizer master data for your cultivation plans.",
       "new_fertilize": "Add New Fertilizer",
       "reference_fertilizes": "Reference Fertilizers (Common Data)",
       "actions": {
@@ -1941,7 +2077,7 @@
       "title": "Add New Fertilizer"
     },
     "edit": {
-      "title": "Edit %{name}"
+      "title": "Edit {{name}}"
     },
     "show": {
       "reference_fertilize": "Reference Fertilizer",
@@ -1962,22 +2098,27 @@
   },
   "farms": {
     "undo": {
-      "toast": "%{name} was deleted. You can undo this action."
+      "toast": "{{name}} was deleted. You can undo this action."
+    },
+    "validation": {
+      "required_fields": "Farm name, region, latitude, and longitude are required."
     },
     "flash": {
       "created": "Farm was successfully created.",
       "updated": "Farm was successfully updated.",
       "destroyed": "Farm was successfully deleted.",
-      "cannot_delete": "This farm cannot be deleted because it is used by %{count} crop plans.",
+      "cannot_delete": "This farm cannot be deleted because it is used by {{count}} crop plans.",
       "not_found": "Farm not found.",
       "no_permission": "You do not have permission to access this farm."
     },
     "index": {
       "title": "Farms",
+      "description": "Register and manage farm master data for your cultivation plans.",
       "new_farm": "Add New Farm",
+      "reference_badge": "Reference",
       "reference_farms": "Reference Farms (Growing Regions)",
       "my_farms": "My Farms",
-      "count": "%{count} items",
+      "count": "{{count}} items",
       "empty": {
         "icon": "🚜",
         "title": "No farms registered yet",
@@ -2014,7 +2155,7 @@
         "cancel": "Cancel"
       },
       "errors": {
-        "title": "%{count} errors occurred:"
+        "title": "{{count}} errors occurred:"
       }
     },
     "edit": {
@@ -2024,7 +2165,7 @@
         "cancel": "Cancel"
       },
       "errors": {
-        "title": "%{count} errors occurred:"
+        "title": "{{count}} errors occurred:"
       }
     },
     "show": {
@@ -2032,21 +2173,41 @@
       "delete": "Delete",
       "delete_confirm": "Are you sure you want to delete this farm?",
       "back": "Back",
+      "location": "Region",
       "fields": "Fields",
       "add_field": "Add Field",
       "weather": "Weather Information",
+      "weather_status": "Weather Data Status",
+      "weather_progress": "Progress",
       "fields_list": "Fields",
       "fields_list_title": "Fields List",
       "no_fields": "No fields registered yet.",
       "add_first_field": "Add First Field",
       "back_to_list": "Back to Farm List",
-      "detail": "Details"
+      "detail": "Details",
+      "map": {
+        "title": "Map"
+      },
+      "field_form": {
+        "edit_title": "Edit Field",
+        "add_title": "Add Field",
+        "name_label": "Field Name",
+        "name_placeholder": "e.g., North Rice Field",
+        "area_label": "Area (㎡)",
+        "area_placeholder": "e.g., 1000",
+        "daily_fixed_cost_label": "Daily Fixed Cost (¥)",
+        "daily_fixed_cost_placeholder": "e.g., 5000",
+        "region_label": "Region",
+        "region_placeholder": "e.g., Japan",
+        "submit_update": "Update",
+        "submit_create": "Create Field"
+      }
     },
     "card": {
       "latitude": "Latitude",
       "longitude": "Longitude",
       "location_not_set": "Location not set",
-      "fields_count": "Fields: %{count}",
+      "fields_count": "Fields: {{count}}",
       "weather_data": "Weather Data:",
       "processing_complete": "Data processing almost complete...",
       "detail": "Details",
@@ -2062,7 +2223,7 @@
       "location": "Location",
       "location_not_set": "Location not set",
       "fields_count": "Fields",
-      "fields_count_value": "%{count}",
+      "fields_count_value": "{{count}}",
       "created_at": "Created",
       "updated_at": "Updated",
       "temperature_data": "Temperature Data",
@@ -2073,7 +2234,7 @@
       "period_365": "Past 1 Year",
       "period_next_365": "Until End of Next Year (Forecast)",
       "processing_complete": "Data processing almost complete...",
-      "fetching_progress": "Fetching weather data... (%{progress}%)",
+      "fetching_progress": "Fetching weather data... ({{progress}}%)",
       "fetch_failed": "Failed to fetch weather data.",
       "preparing": "Preparing weather data...",
       "temperature_chart_title": "Temperature Trends",
@@ -2088,13 +2249,13 @@
     "weather_data": {
       "no_weather_data": "Weather data for this farm has not been retrieved yet.",
       "insufficient_historical_data": "Insufficient historical data for prediction.",
-      "job_queue_failed": "Failed to queue prediction job: %{error}",
+      "job_queue_failed": "Failed to queue prediction job: {{error}}",
       "farm_not_found": "Farm not found."
     }
   },
   "fields": {
     "undo": {
-      "toast": "%{name} was deleted. You can undo this action."
+      "toast": "{{name}} was deleted. You can undo this action."
     },
     "js": {
       "validation": {
@@ -2108,7 +2269,7 @@
       "updated": "Field was successfully updated.",
       "destroyed": "Field was successfully deleted.",
       "cannot_delete_in_use": "This field cannot be deleted because it is being used in other data.",
-      "delete_error": "An error occurred while deleting: %{message}",
+      "delete_error": "An error occurred while deleting: {{message}}",
       "farm_not_found": "Farm not found.",
       "not_found": "Field not found.",
       "no_permission": "Permission denied."
@@ -2154,7 +2315,7 @@
         "cancel": "Cancel"
       },
       "errors": {
-        "title": "%{count} errors occurred:"
+        "title": "{{count}} errors occurred:"
       }
     },
     "edit": {
@@ -2168,7 +2329,7 @@
         "cancel": "Cancel"
       },
       "errors": {
-        "title": "%{count} errors occurred:"
+        "title": "{{count}} errors occurred:"
       }
     },
     "show": {
@@ -2185,14 +2346,14 @@
   },
   "interaction_rules": {
     "undo": {
-      "toast": "%{source} → %{target} rule was deleted. You can undo this action."
+      "toast": "{{source}} → {{target}} rule was deleted. You can undo this action."
     },
     "flash": {
       "created": "Rule was successfully created.",
       "updated": "Rule was successfully updated.",
       "destroyed": "Rule was successfully deleted.",
       "cannot_delete_in_use": "This rule cannot be deleted because it is in use.",
-      "delete_error": "An error occurred while deleting: %{message}",
+      "delete_error": "An error occurred while deleting: {{message}}",
       "reference_only_admin": "Only administrators can create reference rules.",
       "reference_flag_admin_only": "Only administrators can change the reference flag.",
       "no_permission": "Permission denied.",
@@ -2200,6 +2361,7 @@
     },
     "index": {
       "title": "Crop Rotation Rules",
+      "description": "Register and manage crop rotation rules for your cultivation plans.",
       "new_rule": "Add New Rule",
       "system_rules": "System Standard Rules",
       "my_rules": "My Rules",
@@ -2258,7 +2420,7 @@
       "submit_update": "Update Rule",
       "cancel": "Cancel",
       "errors": {
-        "title": "%{count} errors occurred:"
+        "title": "{{count}} errors occurred:"
       }
     },
     "show": {
@@ -2274,8 +2436,8 @@
       "description": "Description",
       "created_at": "Created",
       "updated_at": "Updated",
-      "decrease": "%{percent}% decrease",
-      "increase": "+%{percent}% increase",
+      "decrease": "{{percent}}% decrease",
+      "increase": "+{{percent}}% increase",
       "no_impact": "No impact",
       "edit": "Edit",
       "delete": "Delete",
@@ -2429,8 +2591,8 @@
         "location": "Location: Japan",
         "initiative": "Initiative: In addition to hands-on experience at a community garden, we reference publicly available agricultural technical materials and papers to organize crop-specific requirements and planning insights.",
         "contact_form": "Contact Form",
-        "contact_html": "Contact: %{email_link} (you can also use the %{contact_link})",
-        "ads_notice_html": "Ads: This site uses Google AdSense and may use cookies for ad delivery. Please see the %{privacy_link} for details.",
+        "contact_html": "Contact: {{email_link}} (you can also use the {{contact_link}})",
+        "ads_notice_html": "Ads: This site uses Google AdSense and may use cookies for ad delivery. Please see the {{privacy_link}} for details.",
         "privacy_link_text": "Privacy Policy",
         "sources_and_updates": "We list key references and public materials at the end of each article and continually update content based on the latest research and field data."
       },
@@ -2464,6 +2626,11 @@
         "Weather data not displaying → Please check if field location information is set correctly"
       ],
       "footer_message": "We look forward to your feedback and requests for service improvement."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "message": "The page you are looking for does not exist or may have been moved.",
+      "backHome": "Back to Home"
     },
     "privacy": {
       "title": "Privacy Policy",
@@ -2518,7 +2685,7 @@
       },
       "section8": {
         "title": "8. Contact",
-        "content_html": "For inquiries regarding the Privacy Policy, please contact us via %{contact_link}.",
+        "content_html": "For inquiries regarding the Privacy Policy, please contact us via {{contact_link}}.",
         "contact_link_text": "Contact Page"
       },
       "last_updated": "Last updated: October 17, 2025"
@@ -2588,7 +2755,7 @@
       },
       "article10": {
         "title": "Article 10 (Contact)",
-        "content_html": "For inquiries regarding these Terms, please contact us via %{contact_link}.",
+        "content_html": "For inquiries regarding these Terms, please contact us via {{contact_link}}.",
         "contact_link_text": "Contact Page"
       },
       "effective_date": "Effective date: October 17, 2025"
@@ -2626,14 +2793,21 @@
       "terms": "Terms of Service",
       "contact_title": "Contact",
       "contact_form": "Contact Form",
-      "copyright": "© %{year} AGRR. All rights reserved."
+      "copyright": "© {{year}} AGRR. All rights reserved."
     },
     "cookie_consent": {
       "title": "Cookie usage",
-      "description_html": "We use cookies for ads delivery and analytics. You can change your choice anytime. See %{privacy_link} for details.",
+      "description_html": "We use cookies for ads delivery and analytics. You can change your choice anytime. See {{privacy_link}} for details.",
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "region_select": {
+      "label": "Region",
+      "blank": "Please select",
+      "jp": "Japan",
+      "us": "United States",
+      "in": "India"
     }
   }
 }

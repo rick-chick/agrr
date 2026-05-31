@@ -27,6 +27,8 @@ use axum::{
 use serde::Deserialize;
 use serde_json::{json, Value};
 
+const FARM_REQUIRED_FIELDS_MSG: &str = "farms.validation.required_fields";
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/v1/masters/farms", get(list_farms).post(create_farm))
@@ -118,7 +120,7 @@ async fn create_farm(
     {
         return Err((
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({"errors": ["name, region, latitude, longitude are required"]})),
+            Json(json!({"errors": [FARM_REQUIRED_FIELDS_MSG]})),
         ));
     }
     let user_id = auth_user(auth);

@@ -27,7 +27,8 @@ export class DeleteFieldPresenter implements DeleteFieldOutputPort {
         () => {
           // 復元成功時は一覧を再取得
           this.view?.load?.(dto.farmId);
-        }
+        },
+        dto.undo.resource
       );
     } else {
       // undo がなくても削除成功時は一覧を再取得

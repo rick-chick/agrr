@@ -49,18 +49,23 @@ export class UndoToastService {
     message: string,
     undoPath: string,
     undoToken: string,
-    onRestored?: () => void
+    onRestored?: () => void,
+    resourceLabel?: string
   ): void {
     this.pendingUndo = { undoPath, undoToken, onRestored };
     this.stateSignal.set({
       visible: true,
-      message: this.localizeToastMessage(message)
+      message: this.localizeToastMessage(message, resourceLabel)
     });
   }
 
-  private localizeToastMessage(message: string): string {
-    return translateServerToastMessage(message, (key, params) =>
-      this.translate.instant(key, params)
+  private localizeToastMessage(message: string, resourceLabel?: string): string {
+    const fallback =
+      resourceLabel && resourceLabel.length > 0 ? { name: resourceLabel } : undefined;
+    return translateServerToastMessage(
+      message,
+      (key, params) => this.translate.instant(key, params),
+      fallback
     );
   }
 

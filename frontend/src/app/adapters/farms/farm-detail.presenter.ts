@@ -75,7 +75,8 @@ export class FarmDetailPresenter
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.farms)
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.farms),
+        dto.undo.resource
       );
     }
   }

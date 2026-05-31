@@ -47,7 +47,8 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.agriculturalTasks)
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.agriculturalTasks),
+        dto.undo.resource
       );
     }
   }

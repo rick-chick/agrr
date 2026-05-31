@@ -47,7 +47,8 @@ export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePest
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.pests)
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.pests),
+        dto.undo.resource
       );
     }
   }

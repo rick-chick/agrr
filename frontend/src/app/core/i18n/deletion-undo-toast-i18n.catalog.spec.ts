@@ -47,6 +47,21 @@ describe('deletion undo toast i18n catalog', () => {
           expect(typeof value).toBe('string');
           expect((value as string).length).toBeGreaterThan(0);
         });
+
+        it(`${key} uses {{name}} for ngx interpolation when applicable`, () => {
+          if (key === 'interaction_rules.undo.toast') return;
+          if (key === 'deletion_undo.toast_message') {
+            const value = getNested(catalog, key) as string;
+            expect(value).toContain('{{resource}}');
+            return;
+          }
+          const value = getNested(catalog, key) as string;
+          expect(value).toContain('{{name}}');
+          expect(value).not.toMatch(/%\{name\}/);
+          if (name === 'in') {
+            expect(value).toContain('पूर्ववत कर सकते हैं');
+          }
+        });
       }
     });
   }

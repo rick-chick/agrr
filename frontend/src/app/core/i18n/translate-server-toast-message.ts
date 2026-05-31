@@ -25,6 +25,8 @@ export function parseServerToastMessage(message: string): ServerToastMessagePart
   return { key, params: { name: trimmed.slice(colonIdx + 1) } };
 }
 
+export type ServerToastFallbackParams = Record<string, string>;
+
 function applyInterpolation(template: string, params: Record<string, string>): string {
   return Object.entries(params).reduce(
     (text, [paramKey, value]) =>
@@ -33,26 +35,48 @@ function applyInterpolation(template: string, params: Record<string, string>): s
   );
 }
 
+function mergeInterpolationParams(
+  parsed: ServerToastMessageParts,
+  fallbackParams?: ServerToastFallbackParams
+): Record<string, string> | undefined {
+  const merged = { ...fallbackParams, ...parsed.params };
+  return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
+function hasNamePlaceholder(text: string): boolean {
+  return text.includes('{{name}}') || text.includes('%{name}');
+}
+
 /**
  * Resolves server toast / flash strings: i18n keys (optional `key:param` for %{name}),
  * or returns the original text when it is already human-readable.
  */
 export function translateServerToastMessage(
   message: string,
-  instant: (key: string, interpolateParams?: Record<string, string>) => string
+  instant: (key: string, interpolateParams?: Record<string, string>) => string,
+  fallbackParams?: ServerToastFallbackParams
 ): string {
   if (!message) return message;
 
   const parsed = parseServerToastMessage(message);
   if (!parsed) {
     const direct = instant(message);
-    return direct !== message ? direct : message;
+    if (direct !== message) {
+      return fallbackParams ? applyInterpolation(direct, fallbackParams) : direct;
+    }
+    if (fallbackParams && hasNamePlaceholder(message)) {
+      return applyInterpolation(message, fallbackParams);
+    }
+    return message;
   }
 
-  const params = Object.keys(parsed.params).length > 0 ? parsed.params : undefined;
+  const params = mergeInterpolationParams(parsed, fallbackParams);
   const translated = instant(parsed.key, params);
   if (translated === parsed.key) {
     return message;
   }
-  return applyInterpolation(translated, parsed.params);
+  if (!params) {
+    return translated;
+  }
+  return hasNamePlaceholder(translated) ? applyInterpolation(translated, params) : translated;
 }

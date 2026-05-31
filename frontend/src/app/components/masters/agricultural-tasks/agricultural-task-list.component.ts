@@ -49,7 +49,8 @@ const initialControl: AgriculturalTaskListViewState = {
                     <span class="item-card__title">{{ task.name }}</span>
                     @if (task.skill_level) {
                       <span class="item-card__meta">
-                        {{ 'agricultural_tasks.index.skill_label' | translate }}: {{ task.skill_level }}
+                        {{ 'agricultural_tasks.index.skill_label' | translate }}:
+                        {{ ('agricultural_tasks.show.skill_level_' + task.skill_level) | translate }}
                       </span>
                     }
                   </a>

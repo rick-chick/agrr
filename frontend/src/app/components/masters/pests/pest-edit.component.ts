@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PestEditView, PestEditViewState, PestEditFormData } from './pest-edit.view';
 import { LoadPestForEditUseCase } from '../../../usecase/pests/load-pest-for-edit.usecase';
@@ -87,6 +87,7 @@ const initialControl: PestEditViewState = {
 })
 export class PestEditComponent implements PestEditView, OnInit {
   readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadPestForEditUseCase);
@@ -108,7 +109,11 @@ export class PestEditComponent implements PestEditView, OnInit {
     this.applyUserRegionToForm();
     const pestId = Number(this.route.snapshot.paramMap.get('id'));
     if (!pestId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid pest id.' };
+      this.control = {
+        ...initialControl,
+        loading: false,
+        error: this.translate.instant('pests.errors.invalid_id')
+      };
       return;
     }
     this.load(pestId);

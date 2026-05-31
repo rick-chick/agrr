@@ -47,7 +47,8 @@ export class InteractionRuleDetailPresenter implements LoadInteractionRuleDetail
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.interactionRules)
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.interactionRules),
+        dto.undo.resource
       );
     }
   }

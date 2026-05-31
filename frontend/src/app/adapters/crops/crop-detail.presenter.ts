@@ -47,7 +47,8 @@ export class CropDetailPresenter implements LoadCropDetailOutputPort, DeleteCrop
         dto.undo.toast_message,
         dto.undo.undo_path,
         dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.crops)
+        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.crops),
+        dto.undo.resource
       );
     }
   }
