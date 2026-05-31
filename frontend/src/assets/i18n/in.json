@@ -415,30 +415,6 @@
     "title": "खेती योजना",
     "default_plan_name": "मुख्य योजना",
     "display_name_from_farm": "{{farmName}} योजना",
-    "field_climate": {
-      "close": "जलवायु चार्ट बंद करें",
-      "loading": "जलवायु डेटा लोड हो रहा है…",
-      "retry": "पुनः प्रयास करें",
-      "base_temperature": "आधार तापमान",
-      "optimal_range": "इष्टतम सीमा",
-      "current_stage": "वर्तमान अवस्था",
-      "daily_temperature": "दैनिक तापमान",
-      "gdd_progress": "GDD प्रगति",
-      "header_title_fallback": "खेत जलवायु डेटा",
-      "header_subtitle_fallback": "चयन की प्रतीक्षा",
-      "period_unknown": "—",
-      "stage_gdd_value": "{{value}} GDD",
-      "chart": {
-        "temperature": "तापमान (°C)",
-        "min_temp": "न्यूनतम तापमान",
-        "mean_temp": "औसत तापमान",
-        "max_temp": "अधिकतम तापमान",
-        "daily_gdd": "दैनिक GDD",
-        "cumulative_gdd": "संचयी GDD",
-        "required_cumulative_gdd": "आवश्यक संचयी GDD",
-        "tooltip_format": "dd/MM/yyyy"
-      }
-    },
     "task_schedule": {
       "title": "कार्य अनुसूची: {{name}}",
       "back_to_plan": "← योजना पर वापस"
@@ -794,30 +770,6 @@
       "gdd_target_label": "लक्ष्य: {{target}}°C·दिन",
       "no_risks": "कोई जोखिम नहीं ✓"
     },
-    "field_climate": {
-      "close": "जलवायु चार्ट बंद करें",
-      "loading": "जलवायु डेटा लोड हो रहा है…",
-      "retry": "पुनः प्रयास करें",
-      "base_temperature": "आधार तापमान",
-      "optimal_range": "इष्टतम सीमा",
-      "current_stage": "वर्तमान अवस्था",
-      "daily_temperature": "दैनिक तापमान",
-      "gdd_progress": "GDD प्रगति",
-      "header_title_fallback": "खेत जलवायु डेटा",
-      "header_subtitle_fallback": "चयन की प्रतीक्षा",
-      "period_unknown": "—",
-      "stage_gdd_value": "{{value}} GDD",
-      "chart": {
-        "temperature": "तापमान (°C)",
-        "min_temp": "न्यूनतम तापमान",
-        "mean_temp": "औसत तापमान",
-        "max_temp": "अधिकतम तापमान",
-        "daily_gdd": "दैनिक GDD",
-        "cumulative_gdd": "संचयी GDD",
-        "required_cumulative_gdd": "आवश्यक संचयी GDD",
-        "tooltip_format": "dd/MM/yyyy"
-      }
-    },
     "fertilize_ai": {
       "enter_name": "उर्वरक नाम दर्ज करें",
       "fetching": "AI के साथ उर्वरक जानकारी प्राप्त हो रही है...",
@@ -1163,6 +1115,7 @@
     },
     "index": {
       "title": "作業一覧",
+      "description": "खेती कार्य टेम्पलेट का प्रबंधन करें।",
       "new_agricultural_task": "新しい作業を追加",
       "time_per_sqm": "作業時間",
       "reference_task": "参照作業",
@@ -1386,6 +1339,7 @@
     },
     "index": {
       "title": "खेत सूची",
+      "description": "फसल योजनाओं की इकाई के रूप में खेतों का प्रबंधन करें।",
       "new_farm": "नया खेत जोड़ें",
       "reference_farms": "संदर्भ खेत (खेती क्षेत्र)",
       "my_farms": "मेरे खेत",
@@ -1549,6 +1503,7 @@
     },
     "index": {
       "title": "उर्वरक सूची",
+      "description": "उर्वरक मास्टर डेटा का प्रबंधन करें।",
       "new_fertilize": "नया उर्वरक जोड़ें",
       "reference_fertilizes": "संदर्भ उर्वरक (सामान्य डेटा)",
       "actions": {
@@ -1739,6 +1694,7 @@
     },
     "index": {
       "title": "निरंतर खेती नियम सूची",
+      "description": "फसल समूहों के बीच परिक्रमण और उत्तराधिकार प्रभाव नियमों का प्रबंधन करें।",
       "new_rule": "नया नियम जोड़ें",
       "system_rules": "सिस्टम मानक नियम",
       "my_rules": "मेरे नियम",
@@ -2248,6 +2204,7 @@
     },
     "index": {
       "title": "कीट सूची",
+      "description": "फसलों से जुड़े कीटों का प्रबंधन करें।",
       "new_pest": "नया कीट जोड़ें",
       "reference_pests": "संदर्भ कीट (सामान्य डेटा)",
       "scientific_name": "वैज्ञानिक नाम",

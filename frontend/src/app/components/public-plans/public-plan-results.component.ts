@@ -19,6 +19,7 @@ import {
   consumePendingPublicPlanSave,
   setPendingPublicPlanSave
 } from '../../services/public-plans/pending-public-plan-save';
+import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 
 /**
  * 無料計画の結果（/public-plans/results）。
@@ -87,7 +88,7 @@ const initialControl: PublicPlanResultsViewState = {
                   />
                 } @else {
                   <p class="plan-detail__climate-placeholder">
-                    Select a cultivation bar to show climate insights.
+                    {{ 'plans.detail.select_cultivation_hint' | translate }}
                   </p>
                 }
               </div>
@@ -129,6 +130,10 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    const lang = mapFarmRegionToAppLang(this.publicPlanStore.state.farm?.region);
+    if (lang) {
+      applyAppLang(this.translate, lang);
+    }
     const planId = this.resolvePlanId();
     if (!planId) {
       this.control = {

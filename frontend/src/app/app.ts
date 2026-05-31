@@ -12,27 +12,7 @@ import { CookieConsentBannerComponent } from './components/shared/cookie-consent
 import { GoogleAnalyticsService } from './services/google-analytics.service';
 import { AuthService } from './services/auth.service';
 import { UndoToastService } from './services/undo-toast.service';
-/** Maps browser language codes to supported Angular i18n keys. en→en, hi→in, others→ja */
-function detectBrowserLang(): 'ja' | 'en' | 'in' {
-  const langs: readonly string[] =
-    typeof navigator !== 'undefined' && navigator.languages?.length
-      ? [...navigator.languages]
-      : typeof navigator !== 'undefined' && navigator.language
-        ? [navigator.language]
-        : [];
-  for (const raw of langs) {
-    const code = raw.split('-')[0].toLowerCase();
-    if (code === 'en') return 'en';
-    if (code === 'hi') return 'in';
-    if (code === 'ja') return 'ja';
-  }
-  return 'ja';
-}
-
-/** Rails uses 'us' for English; ja/in stay as-is */
-function toRailsLocale(angularLang: 'ja' | 'en' | 'in'): string {
-  return angularLang === 'en' ? 'us' : angularLang;
-}
+import { applyAppLang, resolveInitialAppLang } from './core/app-locale';
 
 /** BCP 47 language for <html lang> */
 function documentHtmlLang(angularLang: 'ja' | 'en' | 'in'): string {
@@ -90,11 +70,7 @@ export class App implements OnInit, OnDestroy {
     this.translate.addLangs(['ja', 'en', 'in']);
     this.translate.setDefaultLang('ja');
 
-    const initialLang = detectBrowserLang();
-    this.translate.use(initialLang);
-    if (typeof document !== 'undefined') {
-      document.cookie = `locale=${toRailsLocale(initialLang)}; path=/; max-age=31536000`;
-    }
+    applyAppLang(this.translate, resolveInitialAppLang());
 
     this.translate
       .get([

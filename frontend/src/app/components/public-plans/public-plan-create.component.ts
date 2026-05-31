@@ -13,6 +13,7 @@ import {
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { Farm } from '../../domain/farms/farm';
 import { resolveReferenceFarmRegion } from '../../core/browser-region';
+import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
 
 const initialControl: PublicPlanCreateViewState = {
@@ -128,6 +129,10 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   }
 
   selectFarm(farm: Farm): void {
+    const lang = mapFarmRegionToAppLang(farm.region);
+    if (lang) {
+      applyAppLang(this.translate, lang);
+    }
     this.selectedFarmId = farm.id;
     this.selectedFarm = farm;
     this.publicPlanStore.setFarm(farm);
