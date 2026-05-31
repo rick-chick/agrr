@@ -2947,6 +2947,13 @@
     },
     "policy": {
       "no_permission": "You do not have permission to access this resource."
+    },
+    "region_select": {
+      "label": "Region",
+      "blank": "Please select",
+      "jp": "Japan",
+      "us": "US",
+      "in": "India"
     }
   },
   "home": {

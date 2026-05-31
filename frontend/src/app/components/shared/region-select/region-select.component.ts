@@ -10,7 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
   template: `
     <div class="form-card__field">
       <label class="form-card__field-label" [for]="id">
-        {{ 'crops.form.region_label' | translate }}
+        {{ 'shared.region_select.label' | translate }}
       </label>
       <select
         class="form-card__select"
@@ -21,10 +21,10 @@ import { TranslateModule } from '@ngx-translate/core';
         [(ngModel)]="regionValue"
         (ngModelChange)="onRegionChange($event)"
       >
-        <option value="">{{ 'crops.form.region_blank' | translate }}</option>
-        <option value="jp">{{ 'crops.form.region_jp' | translate }}</option>
-        <option value="us">{{ 'crops.form.region_us' | translate }}</option>
-        <option value="in">{{ 'crops.form.region_in' | translate }}</option>
+        <option value="">{{ 'shared.region_select.blank' | translate }}</option>
+        <option value="jp">{{ 'shared.region_select.jp' | translate }}</option>
+        <option value="us">{{ 'shared.region_select.us' | translate }}</option>
+        <option value="in">{{ 'shared.region_select.in' | translate }}</option>
       </select>
     </div>
   `,

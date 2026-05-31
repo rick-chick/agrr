@@ -1102,47 +1102,51 @@
     }
   },
   "agricultural_tasks": {
+    "undo": {
+      "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+    },
     "flash": {
-      "created": "作業が作成されました。",
-      "updated": "作業が更新されました。",
-      "destroyed": "作業が削除されました。",
-      "cannot_delete_in_use": "この作業は他のデータで使用されているため削除できません。",
-      "delete_error": "削除中にエラーが発生しました: {{message}}",
-      "reference_only_admin": "参照作業は管理者のみ作成できます。",
-      "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
-      "no_permission": "権限がありません。",
-      "not_found": "指定された作業が見つかりません。"
+      "created": "कार्य बनाया गया।",
+      "updated": "कार्य अपडेट किया गया।",
+      "destroyed": "कार्य हटाया गया।",
+      "cannot_delete_in_use": "यह कार्य अन्य डेटा में उपयोग हो रहा है, इसलिए हटाया नहीं जा सकता।",
+      "delete_error": "हटाते समय त्रुटि हुई: {{message}}",
+      "reference_only_admin": "केवल व्यवस्थापक संदर्भ कार्य बना सकते हैं।",
+      "reference_flag_admin_only": "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।",
+      "no_permission": "अनुमति नहीं है।",
+      "not_found": "निर्दिष्ट कार्य नहीं मिला।"
     },
     "index": {
-      "title": "作業一覧",
+      "title": "कार्य सूची",
       "description": "खेती कार्य टेम्पलेट का प्रबंधन करें।",
-      "new_agricultural_task": "新しい作業を追加",
-      "time_per_sqm": "作業時間",
-      "reference_task": "参照作業",
-      "user_task_tag": "自分の作業",
+      "skill_label": "कौशल स्तर",
+      "new_agricultural_task": "नया कार्य जोड़ें",
+      "time_per_sqm": "कार्य समय",
+      "reference_task": "संदर्भ कार्य",
+      "user_task_tag": "मेरा कार्य",
       "actions": {
-        "search": "検索",
-        "show": "詳細",
-        "edit": "編集",
-        "delete": "削除",
-        "delete_confirm": "本当にこの作業を削除しますか？"
+        "search": "खोजें",
+        "show": "विवरण",
+        "edit": "संपादित करें",
+        "delete": "हटाएं",
+        "delete_confirm": "क्या आप वाकई इस कार्य को हटाना चाहते हैं?"
       },
       "filters": {
-        "user_tasks": "自分の作業",
-        "reference_tasks": "参照作業",
-        "all_tasks": "すべて表示"
+        "user_tasks": "मेरे कार्य",
+        "reference_tasks": "संदर्भ कार्य",
+        "all_tasks": "सभी दिखाएं"
       },
-      "search_label": "作業を検索",
-      "search_placeholder": "作業名で検索",
+      "search_label": "कार्य खोजें",
+      "search_placeholder": "कार्य नाम से खोजें",
       "empty": {
         "icon": "🔧",
-        "title": "まだ作業が登録されていません",
-        "description": "最初の作業を追加して始めましょう。",
-        "button": "作業を追加"
+        "title": "अभी तक कोई कार्य पंजीकृत नहीं",
+        "description": "शुरू करने के लिए अपना पहला कार्य जोड़ें।",
+        "button": "कार्य जोड़ें"
       }
     },
     "new": {
-      "title": "新しい作業を追加"
+      "title": "नया कार्य जोड़ें"
     },
     "edit": {
       "title": "{{name}} संपादित करें",
@@ -1161,48 +1165,48 @@
       "required_tools_label": "आवश्यक उपकरण",
       "submit_create": "कार्य बनाएँ",
       "submit_update": "कार्य अपडेट करें",
-      "required_tools_hint": "改行で複数入力できます",
-      "region_label": "地域",
-      "region_jp": "日本",
-      "region_us": "米国",
-      "region_in": "インド",
-      "region_blank": "選択してください",
-      "region_help": "この作業が適用される地域を選択してください（任意）",
+      "required_tools_hint": "कई आइटम के लिए नई पंक्ति का उपयोग करें",
+      "region_label": "क्षेत्र",
+      "region_jp": "जापान",
+      "region_us": "अमेरिका",
+      "region_in": "भारत",
+      "region_blank": "कृपया चुनें",
+      "region_help": "वह क्षेत्र चुनें जहाँ यह कार्य लागू होता है (वैकल्पिक)",
       "crop_selection": {
-        "title": "紐づける作物を選択",
-        "description": "この作業を適用したい作物カードを選択してください。クリックで選択／解除が切り替わります。",
-        "reference_badge": "参照作物",
-        "user_badge": "自分の作物",
-        "selected_state": "選択中",
-        "empty": "選択可能な作物がありません。先に作物を登録してください。"
+        "title": "लिंक करने के लिए फसलें चुनें",
+        "description": "इस कार्य को लागू करने के लिए फसल कार्ड चुनें। चयन टॉगल करने के लिए क्लिक करें।",
+        "reference_badge": "संदर्भ फसल",
+        "user_badge": "मेरी फसल",
+        "selected_state": "चयनित",
+        "empty": "कोई चयन योग्य फसल नहीं। पहले फसलें पंजीकृत करें।"
       }
     },
     "show": {
-      "reference_task": "参照作業",
-      "name": "作業名",
-      "description": "説明",
-      "time_per_sqm": "作業時間",
-      "weather_dependency": "天候依存度",
-      "weather_dependency_low": "低",
-      "weather_dependency_medium": "中",
-      "weather_dependency_high": "高",
-      "required_tools": "必要な道具",
-      "skill_level": "スキルレベル",
-      "skill_level_beginner": "初心者",
-      "skill_level_intermediate": "中級者",
-      "skill_level_advanced": "上級者",
+      "reference_task": "संदर्भ कार्य",
+      "name": "कार्य का नाम",
+      "description": "विवरण",
+      "time_per_sqm": "कार्य समय",
+      "weather_dependency": "मौसम निर्भरता",
+      "weather_dependency_low": "कम",
+      "weather_dependency_medium": "मध्यम",
+      "weather_dependency_high": "उच्च",
+      "required_tools": "आवश्यक उपकरण",
+      "skill_level": "कौशल स्तर",
+      "skill_level_beginner": "शुरुआती",
+      "skill_level_intermediate": "मध्यम",
+      "skill_level_advanced": "उन्नत",
       "region": "क्षेत्र",
       "task_type": "कार्य प्रकार",
       "hours_suffix": "घंटे/㎡",
-      "created_at": "作成日",
-      "updated_at": "更新日",
-      "associated_crops": "関連する作物",
-      "reference_crop": "参照作物",
-      "no_crops_associated": "この作業に紐づく作物はありません。",
-      "back_to_list": "作業一覧に戻る",
-      "edit": "編集",
-      "delete": "削除",
-      "confirm_delete": "この作業を削除しますか？"
+      "created_at": "निर्माण तिथि",
+      "updated_at": "अद्यतन तिथि",
+      "associated_crops": "संबद्ध फसलें",
+      "reference_crop": "संदर्भ फसल",
+      "no_crops_associated": "इस कार्य से कोई फसल जुड़ी नहीं है।",
+      "back_to_list": "कार्य सूची पर वापस",
+      "edit": "संपादित करें",
+      "delete": "हटाएं",
+      "confirm_delete": "क्या आप इस कार्य को हटाना चाहते हैं?"
     }
   },
   "api_keys": {
@@ -2349,6 +2353,13 @@
       "privacy_link_text": "Privacy Policy",
       "accept": "Accept",
       "reject": "Reject"
+    },
+    "region_select": {
+      "label": "क्षेत्र",
+      "blank": "कृपया चुनें",
+      "jp": "जापान",
+      "us": "अमेरिका",
+      "in": "भारत"
     }
   },
   "contact_form": {
