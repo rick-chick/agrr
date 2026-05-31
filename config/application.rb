@@ -8,9 +8,7 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-# Adapters 名前空間（gateway 実装・presenter）は app/adapters/ に置く。
-# app/* は本来 namespace 無し root になるため、namespace を明示する push_dir
-# （下記）に渡せるよう、ここで先行定義しておく。
+# Dev/test auth adapters only (API on agrr-server).
 module Adapters; end
 
 module Agrr
@@ -33,10 +31,6 @@ module Agrr
     config.autoload_paths += %W[#{config.root}/lib]
     config.eager_load_paths += %W[#{config.root}/lib]
 
-    # Gateway 実装・presenter は app/adapters/<context>/ 配下に置き、namespace は
-    # Adapters:: を維持する。app/* ディレクトリは通常 namespace 無しの autoload root に
-    # なるため、Adapters namespace を明示して push_dir する（Rails の set_autoload_paths /
-    # setup_once_autoloader は既に push 済みの dir を再登録しないため衝突しない）。
     Rails.autoloaders.main.push_dir("#{config.root}/app/adapters", namespace: Adapters)
 
     # Use SQLite for caching

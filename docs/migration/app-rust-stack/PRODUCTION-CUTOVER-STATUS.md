@@ -11,7 +11,7 @@
 |------|------|
 | 本番 API トラフィック | **Rust（`agrr-server`）** — LB 上の backend 名は `agrr-rails-backend` のままだが、NEG は `agrr-production`（Rust イメージ） |
 | P6 レベル 4（本番ストラングラー・トラフィック） | **実質達成**（指紋・501 フォールバック・契約テスト GREEN） |
-| P7 コード削除 Phase 1 | **着手可**（ゲート済み Rails API 層） |
+| P7 コード削除 Phase 1 | **実施済み**（2026-05-31）— `app/controllers/api`・jobs・channels・API adapters 削除。Rails 残: SPA shell・auth_test・`lib/domain` |
 | P7 コード削除 Phase 2（`lib/domain`） | **手動スモーク後**（OAuth / 計画 WS / マスタ） |
 | 本番 DB データ | **in repair 適用済み**（レプリカ確認）。**us 参照作物 7 件**は stages 欠損のまま |
 

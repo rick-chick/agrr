@@ -11,9 +11,9 @@ if ! rg -q 'AGRR_RUST_API=1' scripts/dev-rust-stack.sh; then
   exit 1
 fi
 
-echo "==> Checking Rails API routes gated"
-if ! rg -q 'AgrrRustApi.enabled\?' config/routes.rb; then
-  echo "FAIL: config/routes.rb must gate API when AGRR_RUST_API=1"
+echo "==> Checking Rails routes have no API surface"
+if rg -q 'namespace :api|mount ActionCable|undo_deletion|auth#google_oauth2' config/routes.rb; then
+  echo "FAIL: config/routes.rb must not register API/auth/cable/undo (use agrr-server)"
   exit 1
 fi
 

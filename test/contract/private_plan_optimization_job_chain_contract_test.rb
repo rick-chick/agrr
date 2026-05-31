@@ -3,7 +3,7 @@
 require "test_helper"
 require_relative "contract_test_case"
 
-# R4: optimization job chain is enqueued after plan create (Rails jobs or rust in-process).
+# R4: plan read after create (optimization chain runs in-process on agrr-server).
 class PrivatePlanOptimizationJobChainContractTest < ContractTestCase
   setup do
     @user = create(:user)
@@ -19,21 +19,12 @@ class PrivatePlanOptimizationJobChainContractTest < ContractTestCase
     @session_id = contract_session_id_for(@user)
   end
 
-  test "job chain starts with fetch weather and includes optimization" do
-    if rust_contract?
-      # Rust: in-process chain runs asynchronously; plan create triggers enqueue via POST /api/v1/plans smoke.
-      response = rust_get("/api/v1/plans/#{@plan.id}", session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-      assert json["id"].present?
-    else
-      builder = Adapters::CultivationPlan::PrivatePlanOptimizationJobChainBuilder.new(
-        logger: Rails.logger,
-        clock: Time.zone
-      )
-      jobs = builder.build(cultivation_plan_id: @plan.id, channel_class: PlansOptimizationChannel)
-      assert_instance_of FetchWeatherDataJob, jobs[0]
-      assert jobs.any? { |j| j.is_a?(OptimizationJob) }
-    end
+  test "plan show is available for optimization chain context" do
+    skip "requires CONTRACT_RUNTIME=rust" unless rust_contract?
+
+    response = rust_get("/api/v1/plans/#{@plan.id}", session_id: @session_id)
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
+    assert json["id"].present?
   end
 end

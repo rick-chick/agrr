@@ -16,12 +16,6 @@ class WeatherLocation < ApplicationRecord
 
   # 最新の天気データの日付を取得
   def latest_weather_date
-    weather_data_storage_gateway.latest_date(weather_location_id: id)
-  end
-
-  private
-
-  def weather_data_storage_gateway
-    Adapters::WeatherData::WeatherDataGatewayFactory.resolve(clock: CompositionRoot.clock)
+    weather_data.maximum(:date)
   end
 end
