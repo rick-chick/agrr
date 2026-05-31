@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-class InteractionRuleListApiPresenterTest < ActiveSupport::TestCase
-  test "on_failure renders forbidden for policy" do
+class InteractionRuleApiPresentersPolicyTest < ActiveSupport::TestCase
+  test "list presenter on_failure renders forbidden for policy" do
     view = Minitest::Mock.new
     presenter = Adapters::InteractionRule::Presenters::InteractionRuleListApiPresenter.new(view: view)
     error_dto = Domain::Shared::Policies::PolicyPermissionDenied.new

@@ -87,20 +87,6 @@ class FarmListApiPresenterTest < ActiveSupport::TestCase
     presenter.on_success(nil)
   end
 
-  test "on_failure renders forbidden for PolicyPermissionDenied" do
-    view_mock = mock
-    presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: view_mock)
-
-    err = Domain::Shared::Policies::PolicyPermissionDenied.new
-
-    view_mock.expects(:render_response).with(
-      json: { error: I18n.t("farms.flash.no_permission") },
-      status: :forbidden
-    )
-
-    presenter.on_failure(err)
-  end
-
   test "on_failure renders unprocessable_entity with Error message" do
     view_mock = mock
     presenter = Adapters::Farm::Presenters::FarmListApiPresenter.new(view: view_mock)

@@ -327,30 +327,9 @@ module CompositionRoot
         Adapters::CultivationPlan::Gateways::CultivationPlanPlanCropActiveRecordGateway.new
     end
 
-    def weather_prediction_interactor_factory
-      @weather_prediction_interactor_factory ||= Adapters::WeatherData::WeatherPredictionInteractorFactory.new(
-        cultivation_plan_gateway: cultivation_plan_gateway,
-        farm_gateway: farm_gateway,
-        weather_data_gateway: weather_data_gateway,
-        prediction_gateway: prediction_gateway,
-        logger: logger,
-        clock: Time.zone,
-        weather_location_dto_from_active_record: method(:weather_location_dto_from_active_record),
-        farm_weather_prediction_dto_from_active_record: method(:farm_weather_prediction_dto_from_active_record),
-        anchors_resolver_factory: lambda { |clock|
-          if clock.is_a?(ActiveSupport::TimeZone)
-            Adapters::WeatherData::Ports::RailsWeatherPredictionAnchorsAdapter.new(zone: clock)
-          else
-            raise ArgumentError,
-                  "weather_prediction_interactor_factory requires ActiveSupport::TimeZone clock (#{clock.class})"
-          end
-        }
-      )
-    end
-
     def adjust_weather_prediction_gateway
       @adjust_weather_prediction_gateway ||= Adapters::CultivationPlan::Gateways::AdjustWeatherPredictionActiveRecordGateway.new(
-        weather_prediction_interactor_factory: weather_prediction_interactor_factory
+        prediction_service_factory: method(:weather_prediction_interactor)
       )
     end
 
@@ -417,7 +396,8 @@ module CompositionRoot
 
     def api_private_plan_job_chain_enqueuer
       @api_private_plan_job_chain_enqueuer ||= Adapters::CultivationPlan::ApiPrivatePlanJobChainEnqueuer.new(
-        job_chain_builder: private_plan_optimization_job_chain_builder
+        job_chain_builder: private_plan_optimization_job_chain_builder,
+        advance_phase_interactor: advance_cultivation_plan_phase_interactor
       )
     end
 
@@ -733,7 +713,8 @@ module CompositionRoot
       @public_plan_optimization_job_chain_gateway ||= Adapters::PublicPlan::Gateways::PublicPlanOptimizationJobChainActiveRecordGateway.new(
         dispatcher: job_chain_async_dispatcher,
         logger: logger,
-        channel_class: ::OptimizationChannel
+        channel_class: ::OptimizationChannel,
+        advance_phase_interactor: advance_cultivation_plan_phase_interactor
       )
     end
 
@@ -984,6 +965,17 @@ module CompositionRoot
       )
     end
 
+    def entry_schedule_optimization_runner
+      @entry_schedule_optimization_runner ||= lambda do |crop:, weather_payload:, farm:, crop_gateway:|
+        entry_schedule_optimize_interactor(
+          crop: crop,
+          weather_payload: weather_payload,
+          farm: farm,
+          crop_gateway: crop_gateway
+        ).call
+      end
+    end
+
     def entry_schedule_weather_loader_adapter
       @entry_schedule_weather_loader_adapter ||= Adapters::PublicPlan::EntryScheduleWeatherLoaderAdapter.new(
         prediction_service_factory: lambda { |farm|
@@ -1021,7 +1013,7 @@ module CompositionRoot
         output_port: output_port,
         weather_loader: entry_schedule_weather_loader_adapter,
         crop_gateway: crop_gateway,
-        optimization_runner: Adapters::PublicPlan::EntryScheduleOptimizationRunnerAdapter,
+        optimization_runner: entry_schedule_optimization_runner,
         translator: translator,
         clock: Time.zone,
         logger: logger
@@ -1033,7 +1025,7 @@ module CompositionRoot
         output_port: output_port,
         crop_gateway: crop_gateway,
         weather_loader: entry_schedule_weather_loader_adapter,
-        optimization_runner: Adapters::PublicPlan::EntryScheduleOptimizationRunnerAdapter,
+        optimization_runner: entry_schedule_optimization_runner,
         translator: translator,
         clock: clock
       )

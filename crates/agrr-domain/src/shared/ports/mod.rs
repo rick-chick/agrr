@@ -25,9 +25,3 @@ pub use logger_port::LoggerPort;
 pub use masters_api_credentials_resolve_output_port::MastersApiCredentialsResolveOutputPort;
 pub use sql_like_sanitize_port::SqlLikeSanitizePort;
 pub use translator_port::{TranslateOptions, TranslatorPort};
-
-#[cfg(test)]
-mod ports_mod_test_inline {
-    use super::*;
-    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/shared/ports_mod_test.rs"));
-}

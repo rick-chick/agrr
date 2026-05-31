@@ -56,18 +56,6 @@ class AgrrDaemonClientTest < ActiveSupport::TestCase
     end
   end
 
-  test "should build weather command args correctly" do
-    # This test would need to mock the system call
-    # For now, just test that the method exists and accepts parameters
-    assert_respond_to @service, :weather
-    assert_respond_to @service, :forecast
-    assert_respond_to @service, :crop
-  end
-
-  test "should respond to schedule method" do
-    assert_respond_to @service, :schedule
-  end
-
   test "weather uses noaa data source by default and reads json from output file" do
     captured_args = nil
     output_path = nil
@@ -130,8 +118,6 @@ class AgrrDaemonClientTest < ActiveSupport::TestCase
     refute File.exist?(wrote_path), "output file should be removed after reading"
     status.verify
   end
-
-  # NOTE: Removed test 'should raise error when schedule called without daemon' per request.
 
   test "schedule executes agrr client with json option and returns raw response" do
     captured_args = nil

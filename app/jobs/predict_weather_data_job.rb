@@ -8,8 +8,8 @@ class PredictWeatherDataJob < ApplicationJob
   queue_as :default
 
   # リトライ設定（agrr実行エラー時のみ）
-  retry_on Adapters::Agrr::Gateways::BaseGateway::ExecutionError, wait: 5.minutes, attempts: 3
-  retry_on Adapters::Agrr::Gateways::BaseGateway::ParseError, wait: 5.minutes, attempts: 3
+  retry_on Adapters::Agrr::Gateways::BaseGatewayV2::ExecutionError, wait: 5.minutes, attempts: 3
+  retry_on Adapters::Agrr::Gateways::BaseGatewayV2::ParseError, wait: 5.minutes, attempts: 3
 
   # データ不足エラーはリトライしない
   discard_on ArgumentError
@@ -230,8 +230,8 @@ class PredictWeatherDataJob < ApplicationJob
         cultivation_plan_id &&
         channel_class &&
         !exception.is_a?(ActiveRecord::RecordNotFound) &&
-        !exception.is_a?(Adapters::Agrr::Gateways::BaseGateway::ExecutionError) &&
-        !exception.is_a?(Adapters::Agrr::Gateways::BaseGateway::ParseError)
+        !exception.is_a?(Adapters::Agrr::Gateways::BaseGatewayV2::ExecutionError) &&
+        !exception.is_a?(Adapters::Agrr::Gateways::BaseGatewayV2::ParseError)
       phase_failed_notified = false
       suppress(StandardError) do
         CompositionRoot.advance_cultivation_plan_phase(

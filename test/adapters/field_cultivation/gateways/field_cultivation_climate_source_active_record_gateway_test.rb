@@ -46,7 +46,7 @@ module Adapters
           wire = climate_source_gateway.find_api_summary_by_field_cultivation_id(@field_cultivation.id)
 
           assert_equal @field_cultivation.id, wire.id
-          assert_respond_to wire, :field_name
+          assert_equal @plan_field.name, wire.field_name
         end
 
         test "find_weather_prediction_targets_by_plan_id returns domain DTOs" do
