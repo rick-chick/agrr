@@ -2272,6 +2272,31 @@
     "contact": "お問い合わせ",
     "copyright": "© 2025 AGRR. All rights reserved."
   },
+  "home": {
+    "index": {
+      "hero": {
+        "title": "🌱 農業をもっとスマートに",
+        "subtitle_html": "気象データとAIを活用した最適な作付け計画で、<br>あなたの農業を次のレベルへ",
+        "cta_button": "新規作付"
+      },
+      "features": {
+        "title": "AGRRの特徴",
+        "subtitle": "データドリブンで農業計画をサポート",
+        "weather": {
+          "title": "気象データ分析",
+          "description": "過去20年以上の気象データを分析し、最適な作付け時期を提案します。"
+        },
+        "optimization": {
+          "title": "作付け計画最適化",
+          "description": "農場サイズと作物の組み合わせを最適化し、効率的な計画を立案します。"
+        },
+        "growth_prediction": {
+          "title": "成長予測",
+          "description": "積算温度（GDD）を活用し、作物の成長段階を予測します。"
+        }
+      }
+    }
+  },
   "flash": {
     "actions": {
       "create": {

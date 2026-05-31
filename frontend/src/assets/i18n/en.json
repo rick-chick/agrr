@@ -241,6 +241,31 @@
     "contact": "Contact",
     "copyright": "© 2025 AGRR. All rights reserved."
   },
+  "home": {
+    "index": {
+      "hero": {
+        "title": "🌱 Make Agriculture Smarter",
+        "subtitle_html": "Take your farming to the next level with<br>optimal crop planning using weather data and AI",
+        "cta_button": "New Crop Plan"
+      },
+      "features": {
+        "title": "AGRR Features",
+        "subtitle": "Data-Driven Agricultural Planning Support",
+        "weather": {
+          "title": "Weather Data Analysis",
+          "description": "Analyze over 20 years of historical weather data to suggest optimal planting times."
+        },
+        "optimization": {
+          "title": "Crop Plan Optimization",
+          "description": "Optimize farm size and crop combinations for efficient planning."
+        },
+        "growth_prediction": {
+          "title": "Growth Prediction",
+          "description": "Predict crop growth stages using Growing Degree Days (GDD)."
+        }
+      }
+    }
+  },
   "flash": {
     "actions": {
       "create": {
