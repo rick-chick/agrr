@@ -105,7 +105,10 @@ pub(crate) fn broadcast_completed(
     );
 }
 
-/// Enqueue weather → prediction → optimization → [task_schedule] → finalize.
+/// Enqueue weather → prediction → optimization → finalize.
+///
+/// No `TaskScheduleGenerationJob` and no `phase_optimization_completed` / `task_schedule_generating`
+/// broadcasts (Rails-only intermediates before `completed`).
 pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, state: &AppState) {
     let channel = channel.to_string();
     let hub = state.cable_hub.clone();
@@ -257,34 +260,6 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                             false
                         }
                     }
-                })
-            }),
-        });
-    }
-
-    if ctx.all_crops_have_blueprints {
-        let state = state_clone.clone();
-        let channel = channel.clone();
-        let pool = pool.clone();
-        steps.push(JobStep {
-            name: "task_schedule_generation",
-            run: Arc::new(move || {
-                let state = state.clone();
-                let channel = channel.clone();
-                let pool = pool.clone();
-                Box::pin(async move {
-                    if !plan_still_optimizing(&pool, plan_id) {
-                        return false;
-                    }
-                    advance_phase(
-                        &state,
-                        plan_id,
-                        &channel,
-                        CultivationPlanPhaseName::PhaseTaskScheduleGenerating,
-                        None,
-                    );
-                    info!(plan_id, "task_schedule_generation: pending TaskSchedule gateways on rust");
-                    true
                 })
             }),
         });

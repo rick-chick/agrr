@@ -35,7 +35,6 @@ pub struct ChainContext {
     pub latitude: f64,
     pub longitude: f64,
     pub latest_weather_date: Option<Date>,
-    pub all_crops_have_blueprints: bool,
 }
 
 pub fn load_chain_context(
@@ -55,24 +54,7 @@ pub fn load_chain_context(
             return Ok(None);
         };
 
-        let (crop_count, blueprint_count): (i64, i64) = conn.query_row(
-            "SELECT COUNT(DISTINCT cpc.crop_id), \
-             COUNT(DISTINCT CASE WHEN ctb.id IS NOT NULL THEN cpc.crop_id END) \
-             FROM cultivation_plan_crops cpc \
-             LEFT JOIN crop_task_schedule_blueprints ctb ON ctb.crop_id = cpc.crop_id \
-             WHERE cpc.cultivation_plan_id = ?1",
-            rusqlite::params![plan_id],
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )?;
-        let all_crops_have_blueprints = crop_count > 0 && crop_count == blueprint_count;
-
-        Ok(Some((
-            farm_id,
-            latitude,
-            longitude,
-            weather_location_id,
-            all_crops_have_blueprints,
-        )))
+        Ok(Some((farm_id, latitude, longitude, weather_location_id)))
     })
     .map_err(|e| e.to_string())?;
 
@@ -96,7 +78,6 @@ pub fn load_chain_context(
         latitude: base.1,
         longitude: base.2,
         latest_weather_date,
-        all_crops_have_blueprints: base.4,
     }))
 }
 
@@ -255,7 +236,10 @@ pub fn run_weather_prediction_step(
     Ok(())
 }
 
-/// Rails `OptimizationJob#perform` optimize body + job-level `phase_optimization_completed`.
+/// Rails `OptimizationJob#perform` optimize body only.
+///
+/// Does **not** advance `phase_optimization_completed` (Rails bridge before
+/// `TaskScheduleGenerationJob`). Rust chain goes optimize → `plan_finalize` → `completed`.
 pub fn run_optimization_step(state: &AppState, plan_id: i64, channel: &str) -> Result<(), String> {
     crate::cultivation_plan_optimize::run_cultivation_plan_optimize_interactor(
         state, plan_id, channel,
@@ -273,13 +257,6 @@ pub fn run_optimization_step(state: &AppState, plan_id: i64, channel: &str) -> R
         );
     }
 
-    advance_phase(
-        state,
-        plan_id,
-        channel,
-        CultivationPlanPhaseName::PhaseOptimizationCompleted,
-        None,
-    );
     Ok(())
 }
 

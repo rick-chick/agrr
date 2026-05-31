@@ -1,8 +1,12 @@
 //! Rails `OptimizationJob` wiring for `CultivationPlanOptimizeInteractor`.
 //!
-//! Phase split (Rails parity):
+//! Phase split:
 //! - Interactor: `StartOptimizing`, `PhaseOptimizing` (via `CultivationPlanOptimizeAdvancePhasePort`)
-//! - `run_optimization_step` (job): `PhaseOptimizationCompleted` on success; chain on failure: `PhaseFailed` + `optimizing`
+//! - `run_optimization_step`: no `PhaseOptimizationCompleted` (Rails-only; no task schedule job in Rust chain)
+//! - Chain on failure: `PhaseFailed` + `optimizing`; success continues to `plan_finalize` → `PhaseCompleted`
+//!
+//! Weather (Rails `CultivationPlanOptimizeInteractor#call` 同様): `get_existing_prediction` のみ。
+//! `predict_for_cultivation_plan` は `run_weather_prediction_step`（Rails `WeatherPredictionJob`）で先行実行。
 
 use crate::adapters::{NoopLogger, SystemClock};
 use crate::optimization_job_chain::advance_phase;
@@ -39,7 +43,7 @@ impl CultivationPlanOptimizeAdvancePhasePort for ChainOptimizeAdvance<'_> {
     }
 }
 
-/// Runs optimize interactor; `PhaseOptimizationCompleted` is advanced by the caller (job parity).
+/// Runs optimize interactor; phase completion is handled by `run_plan_finalize_step`.
 pub fn run_cultivation_plan_optimize_interactor(
     state: &AppState,
     plan_id: i64,
