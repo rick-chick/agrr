@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef, ChangeDetectionStrategy }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PublicPlanCreateView, PublicPlanCreateViewState } from './public-plan-create.view';
 import { LoadPublicPlanFarmsUseCase } from '../../usecase/public-plans/load-public-plan-farms.usecase';
 import { ResetPublicPlanCreationStateUseCase } from '../../usecase/public-plans/reset-public-plan-creation-state.usecase';
@@ -12,7 +12,7 @@ import {
 } from '../../usecase/public-plans/public-plan-create.providers';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { Farm } from '../../domain/farms/farm';
-import { detectBrowserRegion } from '../../core/browser-region';
+import { resolveReferenceFarmRegion } from '../../core/browser-region';
 
 const initialControl: PublicPlanCreateViewState = {
   loading: true,
@@ -92,6 +92,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly resetStateUseCase = inject(ResetPublicPlanCreationStateUseCase);
   private readonly presenter = inject(PublicPlanCreatePresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
+  private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   selectedFarmId: number | null = null;
@@ -118,8 +119,10 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
       // Load farms to allow re-selection and avoid stuck loading
       this.loadFarms(state.farm.region);
     } else {
-      const browserRegion = detectBrowserRegion();
-      this.loadFarms(browserRegion);
+      const region = resolveReferenceFarmRegion(
+        this.translate.currentLang || this.translate.defaultLang
+      );
+      this.loadFarms(region);
     }
   }
 

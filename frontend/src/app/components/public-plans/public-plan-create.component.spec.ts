@@ -9,6 +9,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
   let presenter: { setView: ReturnType<typeof vi.fn> };
   let publicPlanStore: { state: { farm?: { id: number; region: string } }; setFarm: ReturnType<typeof vi.fn> };
   let cdr: { detectChanges: ReturnType<typeof vi.fn> };
+  let translate: { currentLang: string; defaultLang: string };
 
   beforeEach(() => {
     useCase = { execute: vi.fn() };
@@ -16,6 +17,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     presenter = { setView: vi.fn() };
     publicPlanStore = { state: {}, setFarm: vi.fn() };
     cdr = { detectChanges: vi.fn() };
+    translate = { currentLang: 'ja', defaultLang: 'ja' };
 
     // Create a plain instance and inject dependencies manually to avoid Angular TestBed complexities.
     component = Object.create(PublicPlanCreateComponent.prototype);
@@ -24,6 +26,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     component.resetStateUseCase = resetStateUseCase;
     component.presenter = presenter;
     component.publicPlanStore = publicPlanStore;
+    component.translate = translate;
     component.cdr = cdr;
     component._control = {
       loading: true,
@@ -68,15 +71,32 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     expect(useCase.execute).toHaveBeenCalledWith({ region: 'jp' });
   });
 
-  it('detects browser region when no farm stored', () => {
+  it('prefers app language over browser when resolving reference farm region', () => {
     const originalNavigator = (globalThis as any).navigator;
+    translate.currentLang = 'ja';
+    translate.defaultLang = 'ja';
     (globalThis as any).navigator = { languages: ['en-US'], language: 'en-US' };
 
     try {
       publicPlanStore.state = {};
       PublicPlanCreateComponent.prototype.ngOnInit.call(component);
       expect(resetStateUseCase.execute).toHaveBeenCalledWith({});
-      expect(useCase.execute).toHaveBeenCalledWith({ region: 'us' });
+      expect(useCase.execute).toHaveBeenCalledWith({ region: 'jp' });
+    } finally {
+      (globalThis as any).navigator = originalNavigator;
+    }
+  });
+
+  it('uses India region when app language is in even if browser is en-US', () => {
+    const originalNavigator = (globalThis as any).navigator;
+    translate.currentLang = 'in';
+    translate.defaultLang = 'ja';
+    (globalThis as any).navigator = { languages: ['en-US'], language: 'en-US' };
+
+    try {
+      publicPlanStore.state = {};
+      PublicPlanCreateComponent.prototype.ngOnInit.call(component);
+      expect(useCase.execute).toHaveBeenCalledWith({ region: 'in' });
     } finally {
       (globalThis as any).navigator = originalNavigator;
     }

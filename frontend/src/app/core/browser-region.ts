@@ -1,4 +1,5 @@
 export type BrowserRegion = 'jp' | 'us' | 'in';
+export type AppLang = 'ja' | 'en' | 'in';
 
 const DEFAULT_BROWSER_REGION: BrowserRegion = 'jp';
 const LOCALE_TO_REGION: Record<string, BrowserRegion> = {
@@ -6,7 +7,22 @@ const LOCALE_TO_REGION: Record<string, BrowserRegion> = {
   jp: 'jp',
   en: 'us',
   us: 'us',
+  hi: 'in',
   in: 'in'
+};
+
+/** Maps Angular app language (navbar / ngx-translate) to reference-farm region. */
+export const mapAppLangToBrowserRegion = (lang?: string | null): BrowserRegion | undefined => {
+  switch (lang) {
+    case 'ja':
+      return 'jp';
+    case 'en':
+      return 'us';
+    case 'in':
+      return 'in';
+    default:
+      return undefined;
+  }
 };
 
 const splitLocaleParts = (locale: string): string[] => {
@@ -32,6 +48,15 @@ export const mapLocaleToBrowserRegion = (locale?: string | null): BrowserRegion 
   }
 
   return undefined;
+};
+
+/** Prefer app language, then browser locales (aligned with app.ts detectBrowserLang). */
+export const resolveReferenceFarmRegion = (appLang?: string | null): BrowserRegion => {
+  const fromApp = mapAppLangToBrowserRegion(appLang);
+  if (fromApp) {
+    return fromApp;
+  }
+  return detectBrowserRegion();
 };
 
 export const detectBrowserRegion = (): BrowserRegion => {
