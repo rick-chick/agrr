@@ -1,8 +1,10 @@
 # AGRR Architecture Documentation
 
 ## System Overview
-Rails is deprecated in this project. Adapter should be thin, domain should be pure and fat, so that this  project can move to Rust. 
-AGRR is an agricultural planning and optimization system with a decoupled Angular SPA and a Ruby on Rails 8 JSON API.
+
+AGRR is an agricultural planning and optimization system: an **Angular 21 SPA** uses **agrr-server** (Rust / Axum on Cloud Run) for JSON API, WebSocket (`/cable`), and OAuth (`/auth/*`). Adapters stay thin; domain logic is pure and lives in **`agrr-domain`**.
+
+A **Rails shell** remains for local SPA fallback, static pages, and dev/test helpers only—not production business API. Migration status: [`docs/migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md`](docs/migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md).
 
 **Technology stack**
 
@@ -12,13 +14,13 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 | Frontend            | Angular 21 SPA (Clean Architecture-oriented layers under `frontend/src/app/`)                  |
 | Frontend hosting    | Google Cloud Storage + Cloud CDN (see `.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh`) |
 | Backend (API/WS)    | **agrr-server** (Rust) on **Google Cloud Run** — `.cursor/skills/deploy-server/scripts/gcp-deploy.sh` |
-| Rails shell (dev)   | SPA fallback・auth_test のみ（本番 API は Rust）                                                       |
-| Database            | SQLite3 (**primary** / **cache** DBs; Solid Cache; Solid Cable DB during Rails WS migration), **Litestream** replica to GCS. Background jobs: Active Job **`:async`** in-process (**Solid Queue not used**). Operational source of truth: [`docs/migration/app-rust-stack/PROVISIONAL-STACK.md`](docs/migration/app-rust-stack/PROVISIONAL-STACK.md) |
+| Rails shell (dev)   | SPA fallback・`auth_test`・静的ページのみ（本番 API/WS/auth は Rust）                                 |
+| Database            | SQLite3 (**primary** / **cache**); **Litestream** replica to GCS. Schema: **refinery** via `agrr-migrate` on deploy. Jobs: Rust Tokio chains + internal HTTP ([`PROVISIONAL-STACK.md`](docs/migration/app-rust-stack/PROVISIONAL-STACK.md)). Solid Queue not used. |
 | Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads                 |
-| Contract-first API  | `lib/domain` ports/DTOs plus integration and domain tests encoding observable API behavior   |
+| Contract-first API  | `test/contract/**` + [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh); domain in `crates/agrr-domain` |
 
 
-**Architecture (primary):** Decoupled **Angular SPA + Rails JSON API** for business features. Remaining server-rendered HTML is limited to **OAuth login**, **health**, **deletion undo** (migrate to Angular before P7; see app-rust-stack), **ActionCable**, **API docs**, and **dev/test** helpers—not master CRUD or planning UI. Domain logic lives in `lib/domain`; HTTP adapters use API presenters (`*_api_presenter.rb`). Legacy `*_html_presenter.rb` files may remain only where they still serve JSON-shaped responses (e.g. task schedule timeline) or auth/undo edges until renamed.
+**Architecture (production):** Decoupled **Angular SPA + agrr-server**. Deletion undo is **Angular-only** (no Rust server templates). **Rails shell** serves HTML fallback routes, legal pages, API docs, and dev/test mocks when run locally—not master CRUD, planning API, OAuth, or ActionCable in production.
 
 
 
@@ -29,7 +31,8 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 flowchart TD
   User[User] --> CDN[CloudCDN]
   CDN --> GCS[GCS_static_SPA]
-  User --> CloudRun[Rails_CloudRun]
+  User --> LB[LoadBalancer_agrr.net]
+  LB --> CloudRun[agrr-server_CloudRun]
   CloudRun --> SQLite[(SQLite_primary)]
   CloudRun --> Litestream[Litestream_GCS]
   CloudRun --> AgrrDaemon[Agrr_daemon_binary]
@@ -39,7 +42,9 @@ flowchart TD
 
 ## Backend
 
-Business logic lives under `lib/domain/`. `lib/core/` holds external binaries and native code.
+> **Runtime (P7):** Production HTTP/WS/auth run in `crates/agrr-server` with `agrr-domain` and `agrr-adapters-*`. Ruby `lib/domain` and `app/controllers/api` are removed. Diagrams and paths below state **layer rules** the Rust stack follows; map `lib/domain` → `crates/agrr-domain`, `app/adapters` → `crates/agrr-adapters-*`, Rails controller edge → Axum handlers and `crates/agrr-server/src/composition.rs`.
+
+Business logic lives in **`crates/agrr-domain/`** (formerly `lib/domain/`). `lib/core/` holds external binaries and native code.
 
 ### API Layer
 

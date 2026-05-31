@@ -17,6 +17,7 @@ pub fn apply(
         ("in", "repair_india_reference_crops") => {
             base::repair_india_reference_crops(conn, app_root)
         }
+        ("us", "repair_us_reference_crops") => base::repair_us_reference_crops(conn, app_root),
         (other_region, name) => {
             anyhow::bail!("repair kind has no implementation for region={other_region} name={name}")
         }

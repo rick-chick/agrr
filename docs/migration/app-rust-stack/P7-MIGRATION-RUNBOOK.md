@@ -10,7 +10,7 @@ Operational guide for [`agrr-migrate`](../../../crates/agrr-migrate). Schema mig
 |------|-----|-------------------|----------|
 | **Schema**（DDL / refinery） | `data_migration_history` テーブル追加など | **はい** | 起動時 `schema run` |
 | **Data** `base` / `nutrients` / `pests` / `tasks` / … | `20251018130418` in base など | **いいえ** | `agrr-migrate data apply --region … --kind …` |
-| **Data** `repair` | `20260531120000` repair_india_reference_farms、`20260531130100` repair_india_reference_crops | **いいえ** | `data apply --region in --kind repair` |
+| **Data** `repair` | `in`: `20260531120000` farms、`20260531130100` crops — `us`: `20260531130200` crops | **いいえ** | `data apply --region in --kind repair` / `--region us --kind repair` |
 
 `20260531120000` / `20260531130100` はマニフェスト上 `region=in`, `kind=repair`（[`legacy_versions.yaml`](../../../crates/agrr-migrate/manifest/legacy_versions.yaml)）。**イメージに manifest・fixture が入っていても、デプロイだけでは `data_migration_history` にも DB データにも反映されない。**
 
@@ -105,6 +105,71 @@ Writes `crates/agrr-migrate/data/extracted/{tasks,pests,templates}/`. Pests expo
    `agrr-migrate data stamp --dry-run` then `agrr-migrate data stamp`
 4. Deploy version with `agrr-migrate schema run` in entrypoint — applies only **pending** refinery versions (e.g. V2 `data_migration_history`).
 
+## US `crop_stages` repair — 本番適用の整理
+
+### 種類の区別（混同しない）
+
+| 種類 | 例 | Cloud Run 起動時（`start_agrr_server.sh`） | 手動 |
+|------|-----|-------------------------------------------|------|
+| **Schema**（DDL） | `refinery_schema_history`、テーブル追加 | **自動** — `agrr-migrate schema run` | 通常不要 |
+| **Data**（参照データ） | `base` / `nutrients` / … | **走らない** | `agrr-migrate data apply` |
+| **Data repair**（修復） | US: `20260531130200` `repair_us_reference_crops` | **走らない** | `data apply --region us --kind repair` |
+
+**通常の本番デプロイ（`gcp-deploy.sh` → `start_agrr_server.sh`）だけでは、US repair は DB に一切触れない。** イメージに `us_reference_crops.json` が入っていても、中身は「実行可能な道具」が載っただけ。
+
+### US repair が DB でやること（1 回だけ）
+
+1. `data_migration_history` に `20260531130200` が **無ければ** 実行（あれば **skip**）。
+2. `region=us` かつ `crop_stages` が無い参照作物を削除。
+3. `db/fixtures/us_reference_crops.json` から参照作物＋`crop_stages` を upsert。
+4. 成功時に `data_migration_history` へ `20260531130200` を記録。
+
+India の `data apply --region in --kind repair` とは別コマンド。US は **作物のみ**（`20260531130200` 1 本）。India は farms + crops の 2 本が同じ `--region in --kind repair` で順に走る。
+
+### 前提（順序）
+
+1. **コードが入ったイメージをデプロイ済み** — マニフェストに `20260531130200`、Rust に `repair_us_reference_crops`、`/app/db/fixtures/us_reference_crops.json`（[`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server) の `COPY db/fixtures`）。
+2. **書き込み先は本番 primary** — Litestream が複製する `/tmp/production.sqlite3`（環境変数 `AGRR_SQLITE_PATH`）。レプリカコピーへの `data apply` は**本番を変えない**。
+
+未デプロイの古いイメージで `data apply --region us --kind repair` しても、マニフェストに `20260531130200` が無ければ **何も起きない**（pending エントリなし）。
+
+### 環境変数の意味
+
+| 変数 | 本番 Cloud Run | レプリカ検証（ホスト） |
+|------|----------------|------------------------|
+| `AGRR_APP_ROOT` | `/app`（fixture・manifest のルート） | リポジトリルート `$PWD` |
+| `AGRR_SQLITE_PATH` | `/tmp/production.sqlite3`（Litestream primary） | `tmp/production-primary-replica/primary.sqlite3` 等 |
+
+```bash
+# 本番コンテナ内（primary に書く）のイメージ
+export AGRR_APP_ROOT=/app
+export AGRR_SQLITE_PATH=/tmp/production.sqlite3
+agrr-migrate data list    # pending に 20260531130200 repair_us_reference_crops があるか
+agrr-migrate data apply --region us --kind repair
+```
+
+### 本番への書き込み経路（3 段階）
+
+| 段階 | 目的 | 手順 |
+|------|------|------|
+| **A. 検証のみ** | 本番を変えず効果確認 | [`scripts/refresh-production-primary-replica.sh`](../../../scripts/refresh-production-primary-replica.sh) → ホストで `AGRR_APP_ROOT=$PWD` `AGRR_SQLITE_PATH=.../primary.sqlite3` → `data apply --region us --kind repair` → `without_stages` が 0 か確認 |
+| **B. 本番 primary へ適用** | 実データ修復 | Litestream 付きで primary を開き、上記 `data apply` を **1 回**実行 → Litestream が GCS へ複製（数分待つ） |
+| **C. 事後確認** | 適用済み・欠損解消 | レプリカで `SELECT version FROM data_migration_history WHERE version='20260531130200';` と `us` の `without_stages=0` |
+
+**B の具体例（運用スクリプト）**: [`.cursor/skills/deploy-server/scripts/run-production-data-migrate.sh`](../../../.cursor/skills/deploy-server/scripts/run-production-data-migrate.sh) は、一時 revision で `production-data-migrate-inner.sh` を走らせ、Litestream restore → migrate → replicate する。**現状の inner は in repair + us `base` のみ**（US repair は含まない）。US repair だけ載せるなら inner を差し替えるか、同等の one-shot で `data apply --region us --kind repair` のみ実行する。
+
+**手動で Cloud Run に SSH する想定はない。** 書き込むなら「migrate 用 entrypoint の revision を 1 台立てて primary + Litestream 経由で GCS に反映」が安全。
+
+### よくある誤解
+
+| 誤解 | 事実 |
+|------|------|
+| デプロイしたら repair 済み | **誤り**。デプロイはバイナリ・fixture の配備のみ。 |
+| `schema run` が data もやる | **誤り**。起動時は schema のみ。 |
+| `data apply --region us --kind base` で stages が直る | **不十分**。stub 作物が残る場合は **`kind=repair`**（`repair_us_reference_crops`）が必要。 |
+| 何度も repair すると重複 | **誤り**。`data_migration_history` で 2 回目は skip。fixture upsert は冪等。 |
+| レプリカで apply = 本番修復済み | **誤り**。レプリカは読み取り用コピー。本番は B 経路が必要。 |
+
 ## Data recovery matrix
 
 | Symptom | Command |
@@ -113,6 +178,7 @@ Writes `crates/agrr-migrate/data/extracted/{tasks,pests,templates}/`. Pests expo
 | Missing India reference base | `data apply --region in --kind base` |
 | India public plan shows only Punjab (stub farm) | `data apply --region in --kind repair` (requires `db/fixtures/india_reference_weather.json` in image) |
 | India optimization fails (`crop has no growth stages`) | `data apply --region in --kind repair` (applies `repair_india_reference_crops`; requires `db/fixtures/india_reference_crops.json` in image). Then `data apply --region in --kind nutrients` if nutrients are missing. |
+| US reference crops without `crop_stages` (e.g. 7 stub rows) | `data apply --region us --kind repair` (applies `repair_us_reference_crops`; requires `db/fixtures/us_reference_crops.json` in image). |
 | Missing pests | `data apply --region <jp\|in\|us> --kind pests` |
 | Missing agricultural tasks | `data apply --region <jp\|in\|us> --kind tasks` |
 | Missing nutrients | `data apply --region <jp\|in\|us> --kind nutrients` |

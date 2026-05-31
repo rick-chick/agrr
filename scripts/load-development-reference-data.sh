@@ -19,6 +19,10 @@ echo "==> India reference repair (farms + crops with growth stages from fixtures
 echo "    Same fix as GCP test: agrr-migrate data apply --region in --kind repair"
 cargo run -p agrr-migrate -- data apply --region in --kind repair || true
 
+echo "==> US reference crops repair (growth stages from us_reference_crops.json)"
+echo "    Production: agrr-migrate data apply --region us --kind repair"
+cargo run -p agrr-migrate -- data apply --region us --kind repair || true
+
 echo "==> JP crop task templates"
 cargo run -p agrr-migrate -- data apply --region jp --kind templates || true
 

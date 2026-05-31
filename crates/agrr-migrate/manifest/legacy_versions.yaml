@@ -733,6 +733,12 @@ primary:
   region: in
   kind: repair
   name: repair_india_reference_crops
+- version: '20260531130200'
+  file: db/migrate_archive/20260531130200_repair_us_reference_crops.rb
+  tag: data
+  region: us
+  kind: repair
+  name: repair_us_reference_crops
 cache:
 - version: '20250101000001'
   file: db/cache_migrate_archive/20250101000001_create_solid_cache_tables.rb

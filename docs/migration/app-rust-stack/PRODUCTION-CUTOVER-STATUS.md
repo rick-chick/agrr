@@ -1,16 +1,18 @@
 # 本番 Rust カットオーバー — 残作業と観測記録
 
-> **最終観測**: 2026-05-31（gcloud / curl / 本番レプリカ / `run-rust-contract-tests.sh` / `p7-code-removal-gate.sh`）  
+> **最終観測**: 2026-06-01（本番手動スモーク完了申告 + `p7-code-removal-gate.sh`）。本番指紋・レプリカは 2026-05-31（gcloud / curl）  
 > **完了条件**: [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md) レベル 4・5  
 > **デプロイ**: [`.cursor/skills/deploy-server/scripts/gcp-deploy-rust.sh`](../../../.cursor/skills/deploy-server/scripts/gcp-deploy-rust.sh)（test: [`deploy-rust-backend.sh test`](../../../.cursor/skills/gcp-test-local/scripts/deploy-rust-backend.sh)）  
 > **手順**: [`.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh`](../../../.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh)
 
-## サマリー（2026-05-31）
+## サマリー（2026-06-01）
 
 | 観点 | 状態 |
 |------|------|
 | 本番 API トラフィック | **Rust（`agrr-server`）** — LB backend 名 **`rust-backend`**（NEG `agrr-rails-neg` → `agrr-production`） |
-| P6 レベル 4（本番ストラングラー・トラフィック） | **実質達成**（指紋・501 フォールバック・契約テスト GREEN） |
+| **ローカルゲート** | **2026-06-01 OK** — [`p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh)（R4 **109 runs, 0 failures**、`agrr-migrate` GREEN） |
+| P6 レベル 4（本番ストラングラー完了） | **達成**（2026-06-01 — 条件 1–3。手動スモークは運用確認済み） |
+| P6 レベル 4 #3（手動スモーク） | **完了**（2026-06-01 — `agrr.net` ブラウザ、下表 6 項目） |
 | P7 コード削除 Phase 1 | **実施済み**（2026-05-31）— `app/controllers/api`・jobs・channels・API adapters 削除 |
 | P7 コード削除 Phase 2（`lib/domain`） | **実施済み**（2026-05-31）— `lib/domain/`・`test/domain/` 削除 |
 | P7 Phase 3（Solid Cable DB） | **実施済み**（2026-05-31）— `database.yml` の cable DB・Litestream cable レプリカ削除。Rails は `/cable` 非マウント |
@@ -22,11 +24,11 @@
 | # | 項目 | 備考 |
 |---|------|------|
 | ~~1~~ | ~~URL map 命名整理~~ | **実施済み**（2026-05-31）— `agrr-rails-backend` → **`rust-backend`**、旧 backend 削除。[`scripts/agrr-frontend-url-map-simple.yaml`](../../../scripts/agrr-frontend-url-map-simple.yaml) |
-| 2 | 本番 **手動スモーク** | OAuth ログイン、`auth/me`、計画作成→最適化 WS、マスタ CRUD、`save_plan`、`POST /undo_deletion` |
-| 3 | 本番 **us 参照データ**（必要時） | 7 件の `crop_stages` 欠損。`in` repair では直らない。運用合意のうえ `agrr-migrate data apply` |
-| 4 | **P7** Rails 資産削除（残） | 手動スモーク・us `data apply` など — [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) |
+| ~~2~~ | ~~本番 **手動スモーク**~~ | **実施済み**（2026-06-01）— OAuth、`auth/me`、計画→最適化 WS、マスタ CRUD、`save_plan`、`POST /undo_deletion` |
+| 3 | 本番 **us 参照データ** | `20260531130200` `repair_us_reference_crops` — コード済み。本番 primary へは運用合意後 `agrr-migrate data apply --region us --kind repair` |
+| 4 | **P7 出口** #7（必要時） | 参照データの手動 `data apply` — [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md)・[`P7-MIGRATION-RUNBOOK.md`](./P7-MIGRATION-RUNBOOK.md) |
 
-**ローカルゲート**（削除 PR 前に再実行）: `cargo build -p agrr-server` + `COVERAGE=false ./scripts/run-rust-contract-tests.sh` + [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh)（2026-05-31: contract **112 runs, 0 failures**、p7 gate **OK**）。
+**ローカルゲート**: [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh) 1 本で足りる（内部で build + R4 契約 + `agrr-migrate`）。**2026-06-01: OK**（109 runs, 0 failures）。Rust / 起動スクリプトを変えたマージ前のみ再実行。
 
 **完了済み（旧「残作業」から外す）**:
 
@@ -35,6 +37,7 @@
 - 本番 `agrr-production` を `Dockerfile.agrr-server` でデプロイ — `agrr-server:20260531-222952`
 - 本番 refinery — レプリカで `schema verify OK`（`refinery_schema_history` + `data_migration_history` あり）
 - 本番 in repair — `20260531120000` / `20260531130100` 適用済み（レプリカ）
+- **本番手動スモーク** — 2026-06-01（`agrr.net`、レベル 4 条件 3）
 
 ---
 
@@ -98,6 +101,34 @@ NEG 名 `agrr-rails-neg` は歴史的名称のまま（Cloud Run `agrr-productio
 
 ---
 
+## 観測記録（2026-06-01）
+
+### ローカルゲート
+
+| 項目 | 結果 |
+|------|------|
+| コマンド | `./scripts/p7-code-removal-gate.sh` |
+| `cargo build -p agrr-server` | OK |
+| R4 契約 | **109 runs, 0 failures**（7.7s） |
+| `cargo test -p agrr-migrate` | OK |
+| 静的チェック（routes / `lib/domain` / Cable） | OK |
+
+### 本番手動スモーク（レベル 4 条件 3）
+
+| 項目 | 結果 |
+|------|------|
+| 実施日 | 2026-06-01 |
+| 環境 | `https://agrr.net`（ブラウザ） |
+| Google OAuth ログイン | OK |
+| `GET /api/v1/auth/me` → 200 | OK |
+| 私有計画作成 → 最適化 WS 完走 | OK |
+| マスタ CRUD（`/api/v1/masters/*`） | OK |
+| `POST /api/v1/public_plans/save_plan` | OK |
+| `POST /undo_deletion` | OK |
+| 記録 | 運用確認済み（利用者申告） |
+
+---
+
 ## ローカルレプリカコピー（本番ライブ非接触）
 
 ```bash
@@ -114,13 +145,17 @@ agrr-migrate schema verify
 agrr-migrate data list
 ```
 
-## 推奨実施順（更新）
+## 推奨実施順（2026-06-01 時点）
 
-1. 手動スモーク（上記 #2）
-2. us 7 件の修復方針（運用合意・必要なら `data apply`）
-3. P7 Phase 1 — ゲート済み Rails API / jobs / channels 削除 PR
-4. P7 Phase 2 — `lib/domain` 削除（`p7-code-removal-gate.sh` 再実行後）
-5. URL map 命名整理・Rails Cloud Run 廃止（P7 完了）
+**次にやること**
+
+1. **us 参照データ repair 適用**（残作業 #3）— レプリカで dry-run 後、合意のうえ本番: `agrr-migrate data apply --region us --kind repair`（`20260531130200`、fixture: `db/fixtures/us_reference_crops.json`）。手順: [`P7-MIGRATION-RUNBOOK.md`](./P7-MIGRATION-RUNBOOK.md)
+
+**完了済み**
+
+- **本番手動スモーク** **2026-06-01**（レベル 4 条件 3 — 上記観測記録）
+- ローカルゲート **2026-06-01**（`p7-code-removal-gate.sh`）
+- P7 Phase 1–3、URL map **`rust-backend`**、`Dockerfile.production` 廃止、本番 **`agrr-server` 単体**（2026-05-31）
 
 ## 関連
 

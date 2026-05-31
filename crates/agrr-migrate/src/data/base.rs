@@ -196,13 +196,34 @@ pub fn repair_india_reference_crops(conn: &mut Connection, app_root: &Path) -> a
         );
     }
 
-    let removed = remove_india_reference_crops_without_stages(conn)?;
+    let removed = remove_reference_crops_without_stages(conn, "in")?;
     if removed > 0 {
         println!("  repair/in: removed {removed} legacy reference crop(s) without growth stages");
     }
 
     seed_crops(conn, app_root, "in", "india_reference_crops.json")?;
     println!("  repair/in: India reference crops repair completed");
+    Ok(())
+}
+
+/// Restores US reference crops (with growth stages) from `db/fixtures/us_reference_crops.json`.
+/// Removes legacy inline crops (name/variety only, no `crop_stages`) before upserting fixture rows.
+pub fn repair_us_reference_crops(conn: &mut Connection, app_root: &Path) -> anyhow::Result<()> {
+    let crops_path = fixtures_dir(app_root).join("us_reference_crops.json");
+    if !crops_path.is_file() {
+        anyhow::bail!(
+            "repair/us: missing fixture {} (required for US reference crops)",
+            crops_path.display()
+        );
+    }
+
+    let removed = remove_reference_crops_without_stages(conn, "us")?;
+    if removed > 0 {
+        println!("  repair/us: removed {removed} legacy reference crop(s) without growth stages");
+    }
+
+    seed_crops(conn, app_root, "us", "us_reference_crops.json")?;
+    println!("  repair/us: US reference crops repair completed");
     Ok(())
 }
 
@@ -782,14 +803,17 @@ fn seed_japan_sample_fields(conn: &mut Connection) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn remove_india_reference_crops_without_stages(conn: &mut Connection) -> anyhow::Result<usize> {
+fn remove_reference_crops_without_stages(
+    conn: &mut Connection,
+    region: &str,
+) -> anyhow::Result<usize> {
     let mut stmt = conn.prepare(
         "SELECT id FROM crops
-         WHERE region = 'in' AND is_reference = 1
+         WHERE region = ?1 AND is_reference = 1
            AND NOT EXISTS (SELECT 1 FROM crop_stages cs WHERE cs.crop_id = crops.id)",
     )?;
     let ids: Vec<i64> = stmt
-        .query_map([], |r| r.get(0))?
+        .query_map([region], |r| r.get(0))?
         .collect::<Result<Vec<_>, _>>()?;
     drop(stmt);
     if ids.is_empty() {
