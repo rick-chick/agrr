@@ -68,11 +68,14 @@ cargo run -p agrr-migrate -- schema run
 cargo run -p agrr-migrate -- data apply \
   --region jp,in,us \
   --kind base,nutrients,pests,tasks
+cargo run -p agrr-migrate -- data apply --region in --kind repair
 cargo run -p agrr-migrate -- data apply --region jp --kind templates
 cargo run -p agrr-migrate -- data apply --region jp,us --kind dev_fixtures
 ```
 
-Or use [`scripts/load-development-reference-data.sh`](../../../scripts/load-development-reference-data.sh) (wraps `agrr-migrate`).
+Or use [`scripts/load-development-reference-data.sh`](../../../scripts/load-development-reference-data.sh) (wraps `agrr-migrate`, including `in` repair).
+
+**GCP test** (Litestream-restored DB with broken inline India crops): [`.cursor/skills/gcp-test-local/scripts/run-gcp-test-data-migrate.sh`](../../../.cursor/skills/gcp-test-local/scripts/run-gcp-test-data-migrate.sh) — bootstrap + `data apply --region in --kind repair` + replicate, then restore normal `start_agrr_server.sh` deploy.
 
 ### Weather fixtures (`base` kind)
 

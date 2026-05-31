@@ -34,7 +34,7 @@ PID_DIR="${TMPDIR:-/tmp}/agrr-dev-rust-pids"
 mkdir -p "$PID_DIR"
 NGINX_CONF="$ROOT/docker/nginx-strangler-host.conf"
 NGINX_PID="/tmp/agrr-dev-rust-nginx.pid"
-# 旧 e2e-strangler-stack.sh が残した master
+# 旧 alias スクリプト削除済み — 本スクリプトを直接使う
 LEGACY_NGINX_PID="/tmp/agrr-strangler-nginx.pid"
 LEGACY_PID_DIR="${TMPDIR:-/tmp}/agrr-strangler-pids"
 

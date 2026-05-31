@@ -27,7 +27,6 @@
 | exceptions | **done** |
 | value_objects | **done**（`ReferenceIndexListFilter`） |
 | `crop_nested_pests_access` | **not_started** |
-| `pest_crop_association_access` | 削除済み（Ruby / Rust とも `CropPolicy.crop_associable_with_pest?`） |
 
 ## p1b 残
 
@@ -43,19 +42,6 @@
 - `interactors/masters_api_credentials_resolve_interactor.rb`
 - `HttpJsonEnvelope`, `TurboStreamSubscription` — **R3**: Presenter 移管 ADR 推奨
 
-## ARCHITECTURE ブロッカー
+## 状態
 
-| 条項 | 内容 |
-|------|------|
-| R1 | duck-typed `record` → Rust は `RecordRef` trait 等が必要 |
-| R3 | HTTP/Turbo DTO がドメインに残存 |
-| — | `list_allowed_sql_params` — Ruby 内参照なし、削除 or enum 化を判断 |
-
-## 実装順（次エージェント）
-
-1. p1c: port/gateway traits
-2. p1b: `reference_record_authorization` + mapper
-3. G3 再確認: `run-test-rust-domain.sh` + `run-test-domain-lib.sh test/domain/shared/`
-4. `shared` → `phase: done` 後、wave-2-small へ
-
-詳細 52 行インベントリは git 履歴または設計セッション fecb2ff5 のエージェント出力を参照。
+`shared` は [`TRACKING.yaml`](../TRACKING.yaml) で `phase: done`（2026-05-29）。本スライスの P1 ブロッカー（R1/R3）は実装済み。

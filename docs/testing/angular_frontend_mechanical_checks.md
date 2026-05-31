@@ -35,21 +35,15 @@ npm install
 npm run start
 ```
 
-## 2. CORS/認証APIの機械的チェック
+## 2. API ルート整合（Rust スタック）
 
-ログイン後に `session_id` Cookie を取得し、以下のスクリプトで確認します。
+フロントの `/api/v1` パスが `agrr-server` に登録されているかを機械確認します。
 
 ```bash
-SESSION_ID=your_session_id \
-  BASE_URL=http://localhost:3000 \
-  FRONTEND_ORIGIN=http://localhost:4200 \
-  scripts/verify_angular_integration.sh
+scripts/verify-angular-api-rust-routing.sh
 ```
 
-### SESSION_ID の取得方法
-1. ブラウザで `http://localhost:4200` にアクセス
-2. 「ログイン」からOAuthでログイン
-3. 開発者ツールの Application/Storage で `session_id` を確認
+CORS・Cookie 認証は **§4 の手動スモーク**（ブラウザ）で確認します。
 
 ## 3. Angularビルド/起動確認
 
