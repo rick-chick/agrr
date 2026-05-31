@@ -410,11 +410,9 @@ fn merge_cached_prediction_with_observed(
     let start = decision.start_date.unwrap();
     let end = decision.end_date.unwrap();
     let weather_location_id = source.weather_location_id.unwrap();
-    let observed_dtos = interactor.weather_data_gateway.weather_data_for_period(
-        weather_location_id,
-        start,
-        end,
-    );
+    let observed_dtos = interactor
+        .weather_data_gateway
+        .weather_data_for_period(weather_location_id, start, end)?;
     if observed_dtos.is_empty() {
         return Ok(Some(cached));
     }
@@ -447,7 +445,7 @@ fn fetch_fallback_weather_payload(
         weather_location_id,
         training_start_date,
         training_end_date,
-    );
+    )?;
     let training_formatted =
         build_observed_agrr_payload_simple(&meta, &training_data);
 
@@ -494,7 +492,7 @@ fn fetch_fallback_weather_payload(
             weather_location_id,
             observed_start,
             observed_end,
-        );
+        )?;
         let current_year_formatted =
             build_observed_agrr_payload_simple(&meta, &current_year_data);
         Ok(Some(merge_training_and_future(
@@ -506,7 +504,7 @@ fn fetch_fallback_weather_payload(
             weather_location_id,
             start_date,
             completion_date,
-        );
+        )?;
         Ok(Some(interactor.weather_data_gateway.format_for_agrr(
             &period_data,
             &weather_location,

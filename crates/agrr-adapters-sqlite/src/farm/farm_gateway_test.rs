@@ -254,3 +254,45 @@ fn farm_weather_data_access_context_for_admin_lookup_returns_any_farm_by_id() {
         .expect("context");
     assert_eq!(ctx.farm_id, farm_id);
 }
+
+// Rust fetch block: MarkFarmWeatherDataFailedInteractor persists last_error (domain + sqlite adapter).
+#[test]
+fn update_weather_progress_persists_weather_data_last_error() {
+    use agrr_domain::farm::dtos::MarkFarmWeatherDataFailedInput;
+    use agrr_domain::farm::interactors::MarkFarmWeatherDataFailedInteractor;
+
+    let pool = farm_test_pool();
+    let farm_id = insert_farm(&pool, 1, "Test", false, 35.0, 139.0, "jp");
+    let gw = FarmSqliteGateway::new(pool.clone());
+    MarkFarmWeatherDataFailedInteractor::new(&gw)
+        .call(MarkFarmWeatherDataFailedInput {
+            farm_id,
+            error_message: "fetch weather data failed: WeatherDataStorageFailed".into(),
+        })
+        .expect("mark failed");
+
+    let last_error: Option<String> = pool
+        .with_read(|conn| {
+            conn.query_row(
+                "SELECT weather_data_last_error FROM farms WHERE id = ?1",
+                params![farm_id],
+                |row| row.get(0),
+            )
+        })
+        .expect("read");
+    assert!(
+        last_error
+            .as_deref()
+            .is_some_and(|msg| msg.contains("WeatherDataStorageFailed"))
+    );
+    let status: String = pool
+        .with_read(|conn| {
+            conn.query_row(
+                "SELECT weather_data_status FROM farms WHERE id = ?1",
+                params![farm_id],
+                |row| row.get(0),
+            )
+        })
+        .expect("status");
+    assert_eq!(status, "failed");
+}

@@ -66,6 +66,10 @@ docker compose --profile test run --rm \
     export PORT=8080
     export SCHEDULER_AUTH_TOKEN="${SCHEDULER_AUTH_TOKEN:-test_scheduler_token_contract}"
     export AGRR_BACKDOOR_TOKEN="${AGRR_BACKDOOR_TOKEN:-contract-token}"
+    export WEATHER_DATA_STORAGE=gcs
+    export GCS_BUCKET="${GCS_BUCKET:-test-bucket-contract}"
+    export WEATHER_DATA_LOCAL_ROOT="${WEATHER_DATA_LOCAL_ROOT:-/tmp/agrr-weather-contract}"
+    mkdir -p "$WEATHER_DATA_LOCAL_ROOT"
     agrr-server >/tmp/agrr-server-contract.log 2>&1 &
     SERVER_PID=$!
     cleanup() { kill "$SERVER_PID" 2>/dev/null || true; }

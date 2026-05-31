@@ -7,6 +7,7 @@ use crate::farm_weather_fetch::run_farm_weather_fetch_block;
 use crate::jobs::JobStep;
 use crate::state::AppState;
 use agrr_adapters_sqlite::SchedulerWeatherFarmListSqliteGateway;
+use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::internal_jobs::gateways::{
     EnqueueWeatherUpdateJobsResult, WeatherUpdateJobsEnqueueGateway,
 };
@@ -119,8 +120,15 @@ impl WeatherUpdateJobsEnqueueInProcessGateway {
 
 impl WeatherUpdateJobsEnqueueGateway for WeatherUpdateJobsEnqueueInProcessGateway {
     fn enqueue_weather_update_jobs(&self) -> EnqueueWeatherUpdateJobsResult {
+        let pool = self.state.sqlite.clone();
+        let weather_bundle = match WeatherDataGatewayBundle::resolve(pool.clone()) {
+            Ok(bundle) => bundle,
+            Err(message) => {
+                return EnqueueWeatherUpdateJobsResult::failure(message.to_string());
+            }
+        };
         let list_gateway =
-            SchedulerWeatherFarmListSqliteGateway::new(self.state.sqlite.clone());
+            SchedulerWeatherFarmListSqliteGateway::new(pool, &weather_bundle);
         let schedule = SchedulerWeatherFetchScheduleAdapter::new(self.state.clone());
         let clock = SystemClock;
         let interactor =

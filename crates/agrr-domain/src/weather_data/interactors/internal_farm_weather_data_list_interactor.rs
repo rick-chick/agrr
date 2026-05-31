@@ -51,6 +51,16 @@ where
                     http_status: InternalFarmWeatherHttpStatus::NotFound,
                 });
             }
+            InternalFarmWeatherDataListResult::StorageError => {
+                let opts = TranslateOptions::default();
+                let message = self
+                    .translator
+                    .t("api.errors.common.internal_server_error", &opts);
+                self.output_port.on_failure(InternalFarmWeatherFetchFailure {
+                    message,
+                    http_status: InternalFarmWeatherHttpStatus::InternalServerError,
+                });
+            }
             InternalFarmWeatherDataListResult::Ok(success) => {
                 self.output_port.on_success(success);
             }

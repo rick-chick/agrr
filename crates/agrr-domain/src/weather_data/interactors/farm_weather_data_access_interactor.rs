@@ -78,11 +78,17 @@ where
         }
 
         let wl_id = ctx.weather_location_id.expect("checked");
-        let weather_data_dtos = self.weather_data_gateway.weather_data_for_period(
+        let weather_data_dtos = match self.weather_data_gateway.weather_data_for_period(
             wl_id,
             start_date,
             end_date,
-        );
+        ) {
+            Ok(d) => d,
+            Err(_) => {
+                self.output_port.on_weather_data_storage_unavailable();
+                return;
+            }
+        };
 
         let filtered: Vec<FarmWeatherIndexRow> = weather_data_dtos
             .into_iter()
@@ -188,11 +194,17 @@ where
         let end_date = self.clock.today();
         let start_date = subtract_months(end_date, 24);
         let required_days = (end_date - start_date).whole_days() + 1;
-        let historical_data_count = self.weather_data_gateway.historical_data_count(
+        let historical_data_count = match self.weather_data_gateway.historical_data_count(
             wl_id,
             start_date,
             end_date,
-        );
+        ) {
+            Ok(c) => c,
+            Err(_) => {
+                self.output_port.on_weather_data_storage_unavailable();
+                return;
+            }
+        };
 
         if historical_data_count < required_days {
             self.output_port.on_insufficient_historical_data();

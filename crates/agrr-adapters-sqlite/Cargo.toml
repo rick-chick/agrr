@@ -16,4 +16,6 @@ time = { workspace = true, features = ["parsing", "formatting"] }
 getrandom = "0.2"
 
 [dev-dependencies]
+agrr-adapters-gcs = { path = "../agrr-adapters-gcs" }
+tempfile = "3"
 time = { workspace = true }

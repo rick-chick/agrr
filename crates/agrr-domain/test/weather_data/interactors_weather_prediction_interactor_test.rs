@@ -57,24 +57,40 @@
             _: i64,
             _: Date,
             _: Date,
-        ) -> Vec<WeatherData> {
-            self.period_data.clone()
+        ) -> Result<Vec<WeatherData>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(self.period_data.clone())
         }
 
-        fn weather_data_count(&self, _: i64, _: Option<Date>, _: Option<Date>) -> i64 {
-            0
+        fn weather_data_count(
+            &self,
+            _: i64,
+            _: Option<Date>,
+            _: Option<Date>,
+        ) -> Result<i64, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(0)
         }
 
-        fn historical_data_count(&self, _: i64, _: Date, _: Date) -> i64 {
-            0
+        fn historical_data_count(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<i64, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(0)
         }
 
-        fn earliest_date(&self, _: i64) -> Option<Date> {
-            None
+        fn earliest_date(
+            &self,
+            _: i64,
+        ) -> Result<Option<Date>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(None)
         }
 
-        fn latest_date(&self, _: i64) -> Option<Date> {
-            None
+        fn latest_date(
+            &self,
+            _: i64,
+        ) -> Result<Option<Date>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(None)
         }
 
         fn upsert_weather_data(

@@ -65,5 +65,5 @@ waves:
     - { context: pest, phase: done }
   wave-4:
     - { context: field_cultivation, phase: done, notes: "show/PATCH/climate GET; patch contract" }
-    - { context: weather_data, phase: done, notes: "scheduler via internal_jobs + PerformInteractor persist; GCS adapter for reads" }
+    - { context: weather_data, phase: done, notes: "ADC read/list + Result propagation; fetch/scheduler/internal farm read/field climate via WeatherDataGatewayBundle; startup validate_weather_storage_config; review gaps (a)(b)(c); plan_allocation_adjust_read_gateway SQLite weather_data = separate task; see WEATHER-DATA-GCS-SMOKE.md" }
     - { context: crop, phase: done }

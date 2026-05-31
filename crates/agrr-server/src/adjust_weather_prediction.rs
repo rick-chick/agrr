@@ -1,9 +1,8 @@
 //! Ruby: `AdjustWeatherPredictionActiveRecordGateway` — WeatherPredictionInteractor wiring for adjust/add_crop.
 
 use agrr_adapters_agrr::PredictionDaemonGateway;
-use agrr_adapters_sqlite::{
-    FieldCultivationPlanPredictedWeatherSqliteGateway, SqlitePool, WeatherDataSqliteGateway,
-};
+use agrr_adapters_sqlite::{FieldCultivationPlanPredictedWeatherSqliteGateway, SqlitePool};
+use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::cultivation_plan::gateways::{
     AdjustWeatherPredictionGateway, WeatherPredictionService,
 };
@@ -42,7 +41,8 @@ impl AdjustWeatherPredictionGateway for SqliteAdjustWeatherPredictionGateway {
             logger: StderrLogger,
             farm_predicted: farm.and_then(|f| f.predicted_weather_data().cloned()),
             plan_gateway: FieldCultivationPlanPredictedWeatherSqliteGateway::new(self.pool.clone()),
-            weather_gateway: WeatherDataSqliteGateway::new(self.pool.clone()),
+            weather_gateway: WeatherDataGatewayBundle::resolve(self.pool.clone())
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             prediction_gateway: PredictionDaemonGateway::from_env(),
             clock: SystemClock,
             anchors: SystemWeatherPredictionAnchors,
@@ -55,7 +55,7 @@ struct OwnedWeatherPredictionService {
     logger: StderrLogger,
     farm_predicted: Option<Value>,
     plan_gateway: FieldCultivationPlanPredictedWeatherSqliteGateway,
-    weather_gateway: WeatherDataSqliteGateway,
+    weather_gateway: WeatherDataGatewayBundle,
     prediction_gateway: PredictionDaemonGateway,
     clock: SystemClock,
     anchors: SystemWeatherPredictionAnchors,

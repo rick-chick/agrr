@@ -16,6 +16,7 @@ pub struct InternalFarmWeatherFetchFailure {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InternalFarmWeatherHttpStatus {
     NotFound,
+    InternalServerError,
 }
 
 /// Ruby: `Domain::WeatherData::Dtos::InternalFarmWeatherDataListOutput`
@@ -31,6 +32,7 @@ pub struct InternalFarmWeatherDataListOutput {
 pub enum InternalFarmWeatherDataListResult {
     FarmNotFound,
     WeatherLocationNotFound,
+    StorageError,
     Ok(InternalFarmWeatherDataListOutput),
 }
 
@@ -41,6 +43,10 @@ impl InternalFarmWeatherDataListResult {
 
     pub fn weather_location_not_found() -> Self {
         Self::WeatherLocationNotFound
+    }
+
+    pub fn storage_error() -> Self {
+        Self::StorageError
     }
 
     pub fn ok(success: InternalFarmWeatherDataListOutput) -> Self {
@@ -63,12 +69,17 @@ pub struct InternalFarmWeatherStatusOutput {
 #[derive(Debug, Clone, PartialEq)]
 pub enum InternalFarmWeatherStatusResult {
     FarmNotFound,
+    StorageError,
     Ok(InternalFarmWeatherStatusOutput),
 }
 
 impl InternalFarmWeatherStatusResult {
     pub fn farm_not_found() -> Self {
         Self::FarmNotFound
+    }
+
+    pub fn storage_error() -> Self {
+        Self::StorageError
     }
 
     pub fn ok(success: InternalFarmWeatherStatusOutput) -> Self {

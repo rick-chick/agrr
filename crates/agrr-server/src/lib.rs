@@ -55,6 +55,7 @@ pub mod session_auth;
 pub mod state;
 pub mod task_schedule_timeline_json;
 pub mod task_schedules;
+pub mod weather_data_gateway_factory;
 pub mod weather_prediction_anchors;
 pub mod workbench_payload;
 
@@ -71,6 +72,10 @@ pub async fn run_http_server() {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .init();
+
+    if let Err(message) = weather_data_gateway_factory::validate_weather_storage_config() {
+        panic!("weather storage configuration invalid: {message}");
+    }
 
     let state = AppState::from_env();
 

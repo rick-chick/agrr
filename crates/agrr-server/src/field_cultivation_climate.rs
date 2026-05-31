@@ -6,9 +6,10 @@ use crate::state::AppState;
 use agrr_adapters_agrr::FieldCultivationClimateAgrrGateway;
 use agrr_adapters_sqlite::{
     FieldCultivationClimateSourceSqliteGateway, FieldCultivationCropSqliteGateway,
-    FieldCultivationPlanPredictedWeatherSqliteGateway, FieldCultivationWeatherDataSqliteGateway,
-    UserLookupSqliteGateway,
+    FieldCultivationPlanPredictedWeatherSqliteGateway,
+    FieldCultivationWeatherDataFromStorageGateway, UserLookupSqliteGateway,
 };
+use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::field_cultivation::dtos::{
     FieldCultivationClimateDataInput, FieldCultivationClimateDataOutput,
 };
@@ -163,9 +164,16 @@ async fn run_climate_data(
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let pool = state.sqlite.clone();
     let db_path = pool.database_path();
+    let weather_bundle = WeatherDataGatewayBundle::resolve(pool.clone()).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"success": false, "message": e.to_string()})),
+        )
+    })?;
+    let weather_data =
+        FieldCultivationWeatherDataFromStorageGateway::new(&weather_bundle);
     let climate_source = FieldCultivationClimateSourceSqliteGateway::new(db_path);
     let crop_gateway = FieldCultivationCropSqliteGateway::new(pool.clone());
-    let weather_data = FieldCultivationWeatherDataSqliteGateway::new(db_path);
     let plan_weather = FieldCultivationPlanPredictedWeatherSqliteGateway::new(pool.clone());
     let agrr = FieldCultivationClimateAgrrGateway::from_env();
     let user_lookup = UserLookupSqliteGateway::new(pool);

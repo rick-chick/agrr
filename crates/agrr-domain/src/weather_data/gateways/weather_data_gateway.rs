@@ -4,6 +4,7 @@ use serde_json::Value;
 use time::Date;
 
 use crate::weather_data::dtos::WeatherData;
+use crate::weather_data::gateways::WeatherDataStorageError;
 
 /// Minimal weather location record returned by gateway lookups.
 #[derive(Debug, Clone)]
@@ -18,25 +19,31 @@ pub trait WeatherDataGateway: Send + Sync {
         weather_location_id: i64,
         start_date: Date,
         end_date: Date,
-    ) -> Vec<WeatherData>;
+    ) -> Result<Vec<WeatherData>, WeatherDataStorageError>;
 
     fn weather_data_count(
         &self,
         weather_location_id: i64,
         start_date: Option<Date>,
         end_date: Option<Date>,
-    ) -> i64;
+    ) -> Result<i64, WeatherDataStorageError>;
 
     fn historical_data_count(
         &self,
         weather_location_id: i64,
         start_date: Date,
         end_date: Date,
-    ) -> i64;
+    ) -> Result<i64, WeatherDataStorageError>;
 
-    fn earliest_date(&self, weather_location_id: i64) -> Option<Date>;
+    fn earliest_date(
+        &self,
+        weather_location_id: i64,
+    ) -> Result<Option<Date>, WeatherDataStorageError>;
 
-    fn latest_date(&self, weather_location_id: i64) -> Option<Date>;
+    fn latest_date(
+        &self,
+        weather_location_id: i64,
+    ) -> Result<Option<Date>, WeatherDataStorageError>;
 
     fn upsert_weather_data(
         &self,

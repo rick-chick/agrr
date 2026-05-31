@@ -2,9 +2,12 @@
 
 require "test_helper"
 require_relative "contract_test_case"
+require_relative "support/gcs_weather_fixture"
 
 # R4: private plan cultivation REST mutations (Wave B) — rust edge when CONTRACT_RUNTIME=rust.
 class PlanCultivationMutationsContractTest < ContractTestCase
+  include GcsWeatherFixture
+
   setup do
     @user = create(:user)
     @farm = create(:farm, user: @user)
@@ -35,6 +38,10 @@ class PlanCultivationMutationsContractTest < ContractTestCase
       area: 10.0,
       status: "completed")
     @session_id = contract_session_id_for(@user)
+    seed_rust_gcs_weather_fixture!(
+      weather_location_id: @weather_location.id,
+      dates: (Date.new(2026, 4, 1)..Date.new(2026, 4, 14)).to_a
+    )
   end
 
   test "add_field returns success json shape" do
@@ -129,5 +136,18 @@ class PlanCultivationMutationsContractTest < ContractTestCase
     )
     refute_equal 501, response.code.to_i
     assert_includes [200, 404, 422, 503], response.code.to_i
+
+    return unless response.code.to_i == 200
+    return unless ENV["WEATHER_DATA_STORAGE"] == "gcs"
+
+    json = JSON.parse(response.body)
+    assert_equal true, json["success"]
+    weather_payload = json["weather_data"]
+    assert weather_payload.is_a?(Hash), "expected weather_data object"
+    data = weather_payload["data"]
+    assert data.is_a?(Array) && data.any?,
+           "expected non-empty observed weather from GCS bulk (fixture under #{gcs_fixture_path(@weather_location.id, 2026)})"
+    assert_empty WeatherData.where(weather_location_id: @weather_location.id),
+                 "climate bulk path must not rely on SQLite weather_data rows"
   end
 end

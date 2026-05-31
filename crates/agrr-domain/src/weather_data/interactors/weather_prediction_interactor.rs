@@ -42,6 +42,7 @@ pub enum WeatherPredictionError {
     WeatherLocationRequired,
     WeatherDataNotFound(String),
     InsufficientPredictionData(String),
+    WeatherDataStorageFailed,
 }
 
 impl std::fmt::Display for WeatherPredictionError {
@@ -55,6 +56,7 @@ impl std::fmt::Display for WeatherPredictionError {
             Self::WeatherDataNotFound(msg) | Self::InsufficientPredictionData(msg) => {
                 write!(f, "{msg}")
             }
+            Self::WeatherDataStorageFailed => write!(f, "weather data storage failed"),
         }
     }
 }
@@ -201,7 +203,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
         let training_result = self.get_training_data()?;
         let training_data = training_result.data;
         let training_end_date = training_result.end_date;
-        let current_year_data = self.get_current_year_data();
+        let current_year_data = self.get_current_year_data()?;
 
         let training_formatted = self.format_weather_data_for_agrr(&training_data);
         let future = self.get_prediction_data(&training_formatted, target_end_date, training_end_date)?;
@@ -251,11 +253,14 @@ impl<'a> WeatherPredictionInteractor<'a> {
         }
 
         let anchors = self.anchors_resolver.anchors_for(self.clock.today());
-        let training_data = self.weather_data_gateway.weather_data_for_period(
-            self.weather_location.id,
-            anchors.training_start_date,
-            anchors.training_end_date,
-        );
+        let training_data = self
+            .weather_data_gateway
+            .weather_data_for_period(
+                self.weather_location.id,
+                anchors.training_start_date,
+                anchors.training_end_date,
+            )
+            .map_err(|_| WeatherPredictionError::WeatherDataStorageFailed)?;
 
         if training_data.is_empty() {
             return Err(WeatherPredictionError::WeatherDataNotFound(format!(
@@ -279,13 +284,15 @@ impl<'a> WeatherPredictionInteractor<'a> {
         })
     }
 
-    fn get_current_year_data(&self) -> Vec<WeatherData> {
+    fn get_current_year_data(&self) -> Result<Vec<WeatherData>, WeatherPredictionError> {
         let anchors = self.anchors_resolver.anchors_for(self.clock.today());
-        self.weather_data_gateway.weather_data_for_period(
-            self.weather_location.id,
-            anchors.current_year_history_start_date,
-            anchors.current_year_history_end_date,
-        )
+        self.weather_data_gateway
+            .weather_data_for_period(
+                self.weather_location.id,
+                anchors.current_year_history_start_date,
+                anchors.current_year_history_end_date,
+            )
+            .map_err(|_| WeatherPredictionError::WeatherDataStorageFailed)
     }
 
     fn get_prediction_data(

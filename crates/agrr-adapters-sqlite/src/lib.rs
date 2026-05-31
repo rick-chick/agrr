@@ -78,7 +78,7 @@ pub use shared::{
 pub use field_cultivation::{
     FieldCultivationClimateSourceSqliteGateway, FieldCultivationCropSqliteGateway,
     FieldCultivationPlanPredictedWeatherSqliteGateway, FieldCultivationSyncPlanReadSqliteGateway,
-    FieldCultivationSyncSqliteGateway, FieldCultivationWeatherDataSqliteGateway,
+    FieldCultivationSyncSqliteGateway, FieldCultivationWeatherDataFromStorageGateway,
 };
 pub use pool::SqlitePool;
 pub use weather_data::{

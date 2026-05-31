@@ -3,21 +3,22 @@
 use crate::pool::SqlitePool;
 use crate::shared::internal_api_farm_lookup::{find_farm, InternalApiFarmLookupResult};
 use agrr_domain::weather_data::gateways::{
-    InternalWeatherFetchStartGateway, StartInternalWeatherFetchResult, WeatherFetchFarmSnapshot,
+    InternalWeatherFetchStartGateway, StartInternalWeatherFetchResult, WeatherDataGateway,
+    WeatherFetchFarmSnapshot,
 };
-use rusqlite::params;
 
-pub struct InternalWeatherFetchStartSqliteGateway {
+pub struct InternalWeatherFetchStartSqliteGateway<'a> {
     pool: SqlitePool,
+    weather_data: &'a dyn WeatherDataGateway,
 }
 
-impl InternalWeatherFetchStartSqliteGateway {
-    pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+impl<'a> InternalWeatherFetchStartSqliteGateway<'a> {
+    pub fn new(pool: SqlitePool, weather_data: &'a dyn WeatherDataGateway) -> Self {
+        Self { pool, weather_data }
     }
 }
 
-impl InternalWeatherFetchStartGateway for InternalWeatherFetchStartSqliteGateway {
+impl InternalWeatherFetchStartGateway for InternalWeatherFetchStartSqliteGateway<'_> {
     fn start_internal_weather_data_fetch(
         &self,
         farm_id: &str,
@@ -41,7 +42,10 @@ impl InternalWeatherFetchStartGateway for InternalWeatherFetchStartSqliteGateway
         if farm.weather_location_id.is_some()
             && farm.weather_data_status.as_deref() == Some("completed")
         {
-            let count = weather_data_count(&self.pool, farm.weather_location_id);
+            let count = match weather_data_count(self.weather_data, farm.weather_location_id) {
+                Ok(c) => c,
+                Err(message) => return StartInternalWeatherFetchResult::Failed(message),
+            };
             return StartInternalWeatherFetchResult::Completed(WeatherFetchFarmSnapshot {
                 weather_data_count: Some(count),
                 weather_data_status: farm
@@ -56,27 +60,29 @@ impl InternalWeatherFetchStartGateway for InternalWeatherFetchStartSqliteGateway
     }
 }
 
-fn weather_data_count(pool: &SqlitePool, weather_location_id: Option<i64>) -> i32 {
+fn weather_data_count(
+    weather_data: &dyn WeatherDataGateway,
+    weather_location_id: Option<i64>,
+) -> Result<i32, String> {
     let Some(id) = weather_location_id else {
-        return 0;
+        return Ok(0);
     };
-    pool.with_read(|conn| {
-        conn.query_row(
-            "SELECT COUNT(*) FROM weather_data WHERE weather_location_id = ?1",
-            params![id],
-            |row| row.get::<_, i64>(0),
-        )
-    })
-    .ok()
-    .map(|c| c as i32)
-    .unwrap_or(0)
+    weather_data
+        .weather_data_count(id, None, None)
+        .map(|c| c as i32)
+        .map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::weather_data::WeatherDataSqliteGateway;
+    use agrr_domain::weather_data::dtos::WeatherData;
+    use agrr_domain::weather_data::gateways::{WeatherDataStorageError, WeatherLocationRecord};
+    use serde_json::Value;
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU64, Ordering};
+    use time::Date;
 
     fn temp_pool() -> (SqlitePool, PathBuf) {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -113,16 +119,126 @@ mod tests {
         (pool, path)
     }
 
+    struct FailingCountGateway;
+
+    impl WeatherDataGateway for FailingCountGateway {
+        fn weather_data_for_period(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<Vec<WeatherData>, WeatherDataStorageError> {
+            Ok(vec![])
+        }
+
+        fn weather_data_count(
+            &self,
+            _: i64,
+            _: Option<Date>,
+            _: Option<Date>,
+        ) -> Result<i64, WeatherDataStorageError> {
+            Err(WeatherDataStorageError::new("storage down"))
+        }
+
+        fn historical_data_count(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<i64, WeatherDataStorageError> {
+            Ok(0)
+        }
+
+        fn earliest_date(&self, _: i64) -> Result<Option<Date>, WeatherDataStorageError> {
+            Ok(None)
+        }
+
+        fn latest_date(&self, _: i64) -> Result<Option<Date>, WeatherDataStorageError> {
+            Ok(None)
+        }
+
+        fn upsert_weather_data(
+            &self,
+            _: &[WeatherData],
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+
+        fn find_by_coordinates(&self, _: f64, _: f64) -> Option<WeatherLocationRecord> {
+            None
+        }
+
+        fn find_or_create_weather_location(
+            &self,
+            _: f64,
+            _: f64,
+            _: Option<f64>,
+            _: Option<&str>,
+        ) -> Result<WeatherLocationRecord, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(WeatherLocationRecord { id: 1 })
+        }
+
+        fn update_predicted_weather_data(
+            &self,
+            _: i64,
+            _: &Value,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
+
     #[test]
-    fn completed_when_location_and_status_completed() {
+    fn completed_count_uses_injected_sqlite_gateway() {
         let (pool, _path) = temp_pool();
-        let gw = InternalWeatherFetchStartSqliteGateway::new(pool);
+        let weather = WeatherDataSqliteGateway::new(pool.clone());
+        let gw = InternalWeatherFetchStartSqliteGateway::new(pool, &weather);
         let result = gw.start_internal_weather_data_fetch("5");
         let StartInternalWeatherFetchResult::Completed(snap) = result else {
             panic!("expected completed");
         };
         assert_eq!(snap.farm_id, 5);
         assert_eq!(snap.weather_data_count, Some(1));
+    }
+
+    #[test]
+    fn completed_count_reads_gcs_bulk_without_sqlite_weather_rows() {
+        use super::super::gcs_weather_test_support::{
+            write_year_fixture, with_local_gcs_root, GcsBulkWeatherGateway,
+        };
+
+        with_local_gcs_root(|root| {
+            write_year_fixture(
+                root,
+                99,
+                2020,
+                r#"{"2020-01-01": {"temperature_max": 1.0, "temperature_min": 0.0}}"#,
+            );
+            let (pool, _path) = temp_pool();
+            pool.with_write(|conn| {
+                conn.execute("DELETE FROM weather_data", [])
+            })
+            .expect("clear sqlite bulk rows");
+            let weather = GcsBulkWeatherGateway::from_local_env().expect("gcs");
+            let gw = InternalWeatherFetchStartSqliteGateway::new(pool, &weather);
+            let result = gw.start_internal_weather_data_fetch("5");
+            let StartInternalWeatherFetchResult::Completed(snap) = result else {
+                panic!("expected completed, got {result:?}");
+            };
+            assert_eq!(snap.weather_data_count, Some(1));
+        });
+    }
+
+    #[test]
+    fn completed_returns_failed_on_storage_count_error() {
+        let (pool, _path) = temp_pool();
+        let failing = FailingCountGateway;
+        let gw = InternalWeatherFetchStartSqliteGateway::new(pool, &failing);
+        let result = gw.start_internal_weather_data_fetch("5");
+        let StartInternalWeatherFetchResult::Failed(msg) = result else {
+            panic!("expected failed");
+        };
+        assert!(msg.contains("storage down"));
     }
 
     #[test]
@@ -146,7 +262,8 @@ mod tests {
             )
         })
         .expect("schema");
-        let gw = InternalWeatherFetchStartSqliteGateway::new(pool);
+        let weather = WeatherDataSqliteGateway::new(pool.clone());
+        let gw = InternalWeatherFetchStartSqliteGateway::new(pool, &weather);
         let result = gw.start_internal_weather_data_fetch("6");
         assert!(matches!(result, StartInternalWeatherFetchResult::NeedsFetch(_)));
     }

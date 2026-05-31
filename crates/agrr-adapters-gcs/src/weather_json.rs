@@ -34,6 +34,10 @@ impl WeatherDataGcsConfig {
 pub enum WeatherDataGcsError {
     #[error("GCS_WEATHER_DATA_BUCKET or GCS_BUCKET must be set")]
     MissingBucket,
+    #[error("GCS authentication failed")]
+    AuthFailed,
+    #[error("GCS HTTP {status}: {message}")]
+    HttpStatus { status: u16, message: String },
     #[error("HTTP error: {0}")]
     Http(#[from] reqwest::Error),
     #[error("IO error: {0}")]

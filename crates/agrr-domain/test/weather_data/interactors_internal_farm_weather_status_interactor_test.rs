@@ -5,10 +5,10 @@
     struct StubTranslator;
     impl TranslatorPort for StubTranslator {
         fn translate(&self, key: &str, _: &TranslateOptions) -> String {
-            if key == "api.errors.common.farm_not_found" {
-                "農場がありません".into()
-            } else {
-                key.into()
+            match key {
+                "api.errors.common.farm_not_found" => "農場がありません".into(),
+                "api.errors.common.internal_server_error" => "サーバーエラー".into(),
+                _ => key.into(),
             }
         }
         fn localize(&self, _: time::Date, _: Option<&str>, _: &TranslateOptions) -> String {
@@ -101,4 +101,29 @@
         });
 
         assert_eq!(output.success.as_ref(), Some(&success));
+    }
+
+    #[test]
+    fn storage_error_delegates_internal_server_error_status() {
+        let gateway = StubGateway {
+            result: InternalFarmWeatherStatusResult::storage_error(),
+        };
+        let mut output = SpyOutput {
+            success: None,
+            failure: None,
+        };
+        let translator = StubTranslator;
+        let mut interactor =
+            InternalFarmWeatherStatusInteractor::new(&mut output, &gateway, &translator);
+
+        interactor.call(InternalFarmWeatherReadInput {
+            farm_id: "99".into(),
+        });
+
+        let failure = output.failure.expect("failure");
+        assert_eq!(failure.message, "サーバーエラー");
+        assert_eq!(
+            failure.http_status,
+            InternalFarmWeatherHttpStatus::InternalServerError
+        );
     }

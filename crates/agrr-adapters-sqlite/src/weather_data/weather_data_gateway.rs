@@ -2,7 +2,9 @@
 
 use crate::pool::SqlitePool;
 use agrr_domain::weather_data::dtos::WeatherData;
-use agrr_domain::weather_data::gateways::{WeatherDataGateway, WeatherLocationRecord};
+use agrr_domain::weather_data::gateways::{
+    WeatherDataGateway, WeatherDataStorageError, WeatherLocationRecord,
+};
 use rusqlite::{params, OptionalExtension};
 use serde_json::Value;
 use time::Date;
@@ -25,13 +27,17 @@ fn date_str(d: Date) -> String {
     d.to_string()
 }
 
+fn storage_err(e: rusqlite::Error) -> WeatherDataStorageError {
+    WeatherDataStorageError::new(e.to_string())
+}
+
 impl WeatherDataGateway for WeatherDataSqliteGateway {
     fn weather_data_for_period(
         &self,
         weather_location_id: i64,
         start_date: Date,
         end_date: Date,
-    ) -> Vec<WeatherData> {
+    ) -> Result<Vec<WeatherData>, WeatherDataStorageError> {
         self.pool
             .with_read(|conn| {
                 let mut stmt = conn.prepare(
@@ -66,7 +72,7 @@ impl WeatherDataGateway for WeatherDataSqliteGateway {
                 }
                 Ok(out)
             })
-            .unwrap_or_default()
+            .map_err(storage_err)
     }
 
     fn weather_data_count(
@@ -74,7 +80,7 @@ impl WeatherDataGateway for WeatherDataSqliteGateway {
         weather_location_id: i64,
         start_date: Option<Date>,
         end_date: Option<Date>,
-    ) -> i64 {
+    ) -> Result<i64, WeatherDataStorageError> {
         self.pool
             .with_read(|conn| {
                 let (sql, start, end) = match (start_date, end_date) {
@@ -106,7 +112,7 @@ impl WeatherDataGateway for WeatherDataSqliteGateway {
                     (None, None) => conn.query_row(sql, params![weather_location_id], |r| r.get(0)),
                 }
             })
-            .unwrap_or(0)
+            .map_err(storage_err)
     }
 
     fn historical_data_count(
@@ -114,7 +120,7 @@ impl WeatherDataGateway for WeatherDataSqliteGateway {
         weather_location_id: i64,
         start_date: Date,
         end_date: Date,
-    ) -> i64 {
+    ) -> Result<i64, WeatherDataStorageError> {
         self.pool
             .with_read(|conn| {
                 conn.query_row(
@@ -129,10 +135,13 @@ impl WeatherDataGateway for WeatherDataSqliteGateway {
                     |row| row.get(0),
                 )
             })
-            .unwrap_or(0)
+            .map_err(storage_err)
     }
 
-    fn earliest_date(&self, weather_location_id: i64) -> Option<Date> {
+    fn earliest_date(
+        &self,
+        weather_location_id: i64,
+    ) -> Result<Option<Date>, WeatherDataStorageError> {
         self.pool
             .with_read(|conn| {
                 let s: Option<String> = conn.query_row(
@@ -142,11 +151,13 @@ impl WeatherDataGateway for WeatherDataSqliteGateway {
                 )?;
                 Ok(s.and_then(|d| parse_date(&d)))
             })
-            .ok()
-            .flatten()
+            .map_err(storage_err)
     }
 
-    fn latest_date(&self, weather_location_id: i64) -> Option<Date> {
+    fn latest_date(
+        &self,
+        weather_location_id: i64,
+    ) -> Result<Option<Date>, WeatherDataStorageError> {
         self.pool
             .with_read(|conn| {
                 let s: Option<String> = conn.query_row(
@@ -156,8 +167,7 @@ impl WeatherDataGateway for WeatherDataSqliteGateway {
                 )?;
                 Ok(s.and_then(|d| parse_date(&d)))
             })
-            .ok()
-            .flatten()
+            .map_err(storage_err)
     }
 
     fn upsert_weather_data(

@@ -5,6 +5,7 @@ pub(crate) mod internal_weather_fetch_start_gateway;
 pub(crate) mod prediction_gateway;
 pub(crate) mod weather_data_farm_gateway;
 pub(crate) mod weather_data_gateway;
+pub(crate) mod weather_data_storage_error;
 
 pub use agrr_weather_gateway::AgrrWeatherGateway;
 pub use cultivation_plan_predicted_weather_gateway::CultivationPlanPredictedWeatherGateway;
@@ -16,3 +17,4 @@ pub use internal_weather_fetch_start_gateway::{
 pub use prediction_gateway::PredictionGateway;
 pub use weather_data_farm_gateway::{FetchWeatherFarmEntity, WeatherDataFarmGateway};
 pub use weather_data_gateway::{WeatherDataGateway, WeatherLocationRecord};
+pub use weather_data_storage_error::WeatherDataStorageError;

@@ -43,7 +43,18 @@
             self.calls.lock().expect("lock").push("farm_not_found".into());
         }
         fn on_no_weather_location(&mut self) {}
-        fn on_insufficient_historical_data(&mut self) {}
+        fn on_insufficient_historical_data(&mut self) {
+            self.calls
+                .lock()
+                .expect("lock")
+                .push("insufficient_historical_data".into());
+        }
+        fn on_weather_data_storage_unavailable(&mut self) {
+            self.calls
+                .lock()
+                .expect("lock")
+                .push("weather_data_storage_unavailable".into());
+        }
         fn on_enqueue_failed(&mut self, _: String) {}
     }
 
@@ -97,28 +108,49 @@
     }
 
     impl WeatherDataGateway for FakeWeatherGateway {
-        fn weather_data_for_period(&self, _: i64, _: Date, _: Date) -> Vec<WeatherData> {
-            self.rows.clone()
+        fn weather_data_for_period(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<Vec<WeatherData>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(self.rows.clone())
         }
 
-        fn weather_data_count(&self, _: i64, start: Option<Date>, end: Option<Date>) -> i64 {
+        fn weather_data_count(
+            &self,
+            _: i64,
+            start: Option<Date>,
+            end: Option<Date>,
+        ) -> Result<i64, crate::weather_data::gateways::WeatherDataStorageError> {
             if start.is_some() && end.is_some() {
-                1
+                Ok(1)
             } else {
-                0
+                Ok(0)
             }
         }
 
-        fn historical_data_count(&self, _: i64, _: Date, _: Date) -> i64 {
-            10_000
+        fn historical_data_count(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<i64, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(10_000)
         }
 
-        fn earliest_date(&self, _: i64) -> Option<Date> {
-            Some(Date::from_calendar_date(2020, Month::January, 1).expect("valid"))
+        fn earliest_date(
+            &self,
+            _: i64,
+        ) -> Result<Option<Date>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(Some(Date::from_calendar_date(2020, Month::January, 1).expect("valid")))
         }
 
-        fn latest_date(&self, _: i64) -> Option<Date> {
-            Some(Date::from_calendar_date(2024, Month::January, 1).expect("valid"))
+        fn latest_date(
+            &self,
+            _: i64,
+        ) -> Result<Option<Date>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(Some(Date::from_calendar_date(2024, Month::January, 1).expect("valid")))
         }
 
         fn upsert_weather_data(
@@ -296,4 +328,129 @@
         });
 
         assert_eq!(calls.lock().expect("lock")[0], "farm_not_found");
+    }
+
+    struct FailingStorageWeatherGateway;
+
+    impl WeatherDataGateway for FailingStorageWeatherGateway {
+        fn weather_data_for_period(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<Vec<WeatherData>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Err(crate::weather_data::gateways::WeatherDataStorageError::new("down"))
+        }
+
+        fn weather_data_count(
+            &self,
+            _: i64,
+            _: Option<Date>,
+            _: Option<Date>,
+        ) -> Result<i64, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(0)
+        }
+
+        fn historical_data_count(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<i64, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(0)
+        }
+
+        fn earliest_date(
+            &self,
+            _: i64,
+        ) -> Result<Option<Date>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(None)
+        }
+
+        fn latest_date(
+            &self,
+            _: i64,
+        ) -> Result<Option<Date>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(None)
+        }
+
+        fn upsert_weather_data(
+            &self,
+            _: &[WeatherData],
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+
+        fn find_by_coordinates(&self, _: f64, _: f64) -> Option<crate::weather_data::gateways::WeatherLocationRecord> {
+            None
+        }
+
+        fn find_or_create_weather_location(
+            &self,
+            _: f64,
+            _: f64,
+            _: Option<f64>,
+            _: Option<&str>,
+        ) -> Result<crate::weather_data::gateways::WeatherLocationRecord, Box<dyn std::error::Error + Send + Sync>>
+        {
+            Ok(crate::weather_data::gateways::WeatherLocationRecord { id: 1 })
+        }
+
+        fn update_predicted_weather_data(
+            &self,
+            _: i64,
+            _: &serde_json::Value,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn index_flow_reports_storage_unavailable_on_read_error() {
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let mut output = RecordingOutputPort {
+            calls: calls.clone(),
+            last_index: Arc::new(Mutex::new(None)),
+        };
+        let farm_gateway = FakeFarmGateway {
+            ctx: Some(FarmWeatherDataAccessContext {
+                farm_id: 1,
+                display_name: "テスト".into(),
+                latitude: 35.0,
+                longitude: 139.0,
+                weather_location_id: Some(9),
+                predicted_weather_data: None,
+            }),
+        };
+        let weather_gateway = FailingStorageWeatherGateway;
+        let clock = FixedClock {
+            now: OffsetDateTime::new_utc(
+                Date::from_calendar_date(2026, Month::January, 1).expect("valid"),
+                Time::MIDNIGHT,
+            ),
+            today: Date::from_calendar_date(2026, Month::January, 1).expect("valid"),
+        };
+        let mut interactor = FarmWeatherDataAccessInteractor::new(
+            &mut output,
+            &farm_gateway,
+            &weather_gateway,
+            &FakeEnqueue,
+            &FakeParse,
+            &clock,
+        );
+
+        interactor.call(FarmWeatherDataAccessInput {
+            farm_id: 1,
+            user_id: 1,
+            is_admin: false,
+            predict: false,
+            start_date: None,
+            end_date: None,
+        });
+
+        assert_eq!(
+            calls.lock().expect("lock")[0],
+            "weather_data_storage_unavailable"
+        );
     }

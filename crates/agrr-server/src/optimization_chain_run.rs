@@ -6,13 +6,15 @@ use crate::weather_prediction_anchors::SystemWeatherPredictionAnchors;
 use agrr_adapters_agrr::WeatherDaemonGateway;
 use agrr_adapters_sqlite::{
     CultivationPlanSqliteGateway, FieldCultivationPlanPredictedWeatherSqliteGateway,
-    WeatherDataFarmSqliteGateway, WeatherDataSqliteGateway,
+    WeatherDataFarmSqliteGateway,
 };
+use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
 use agrr_domain::cultivation_plan::optimization_completion;
 use agrr_domain::cultivation_plan::policies::cultivation_plan_optimization_complete_policy;
 use agrr_domain::cultivation_plan::dtos::CultivationPlanPhaseName;
 use agrr_domain::shared::ports::ClockPort;
+use agrr_domain::weather_data::gateways::WeatherDataGateway;
 use agrr_domain::weather_data::dtos::FetchWeatherDataPerformInput;
 use agrr_domain::weather_data::interactors::FetchWeatherDataPerformInteractor;
 use agrr_domain::weather_data::interactors::WeatherPredictionInteractor;
@@ -36,24 +38,22 @@ pub struct ChainContext {
     pub all_crops_have_blueprints: bool,
 }
 
-pub fn load_chain_context(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> Option<ChainContext> {
-    pool.with_read(|conn| {
-        let row: Result<(i64, f64, f64, Option<String>), _> = conn.query_row(
-            "SELECT cp.farm_id, f.latitude, f.longitude, \
-             (SELECT MAX(wd.date) FROM weather_data wd \
-              WHERE wd.weather_location_id = f.weather_location_id) \
+pub fn load_chain_context(
+    pool: &agrr_adapters_sqlite::SqlitePool,
+    plan_id: i64,
+) -> Result<Option<ChainContext>, String> {
+    let base = pool.with_read(|conn| {
+        let row: Result<(i64, f64, f64, Option<i64>), _> = conn.query_row(
+            "SELECT cp.farm_id, f.latitude, f.longitude, f.weather_location_id \
              FROM cultivation_plans cp \
              INNER JOIN farms f ON f.id = cp.farm_id \
              WHERE cp.id = ?1",
             rusqlite::params![plan_id],
             |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
         );
-        let Ok((farm_id, latitude, longitude, latest_str)) = row else {
+        let Ok((farm_id, latitude, longitude, weather_location_id)) = row else {
             return Ok(None);
         };
-        let latest_weather_date = latest_str
-            .as_deref()
-            .and_then(|s| Date::parse(s, &time::format_description::well_known::Iso8601::DATE).ok());
 
         let (crop_count, blueprint_count): (i64, i64) = conn.query_row(
             "SELECT COUNT(DISTINCT cpc.crop_id), \
@@ -66,16 +66,38 @@ pub fn load_chain_context(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64)
         )?;
         let all_crops_have_blueprints = crop_count > 0 && crop_count == blueprint_count;
 
-        Ok(Some(ChainContext {
+        Ok(Some((
             farm_id,
             latitude,
             longitude,
-            latest_weather_date,
+            weather_location_id,
             all_crops_have_blueprints,
-        }))
+        )))
     })
-    .ok()
-    .flatten()
+    .map_err(|e| e.to_string())?;
+
+    let Some(base) = base else {
+        return Ok(None);
+    };
+
+    let latest_weather_date = match base.3 {
+        Some(wl_id) => {
+            let bundle =
+                WeatherDataGatewayBundle::resolve(pool.clone()).map_err(|e| e.to_string())?;
+            bundle
+                .latest_date(wl_id)
+                .map_err(|e| e.to_string())?
+        }
+        None => None,
+    };
+
+    Ok(Some(ChainContext {
+        farm_id: base.0,
+        latitude: base.1,
+        longitude: base.2,
+        latest_weather_date,
+        all_crops_have_blueprints: base.4,
+    }))
 }
 
 struct ChainFetchPresenter;
@@ -132,7 +154,8 @@ pub fn run_fetch_weather_step(
     end_date: Date,
 ) -> Result<(), String> {
     let pool = state.sqlite.clone();
-    let weather_data = WeatherDataSqliteGateway::new(pool.clone());
+    let weather_data = WeatherDataGatewayBundle::resolve(pool.clone())
+        .map_err(|e| format!("weather data gateway: {e}"))?;
     let farm_gateway = WeatherDataFarmSqliteGateway::new(pool);
     let agrr = WeatherDaemonGateway::from_env();
     let presenter = ChainFetchPresenter;
@@ -191,7 +214,8 @@ pub fn run_weather_prediction_step(
 
     let pool = state.sqlite.clone();
     let wl = crate::cultivation_plan_weather_load::load_weather_location(&pool, plan_id)?;
-    let weather_data = WeatherDataSqliteGateway::new(pool.clone());
+    let weather_data = WeatherDataGatewayBundle::resolve(pool.clone())
+        .map_err(|e| format!("weather data gateway: {e}"))?;
     let plan_predicted = FieldCultivationPlanPredictedWeatherSqliteGateway::new(pool.clone());
     let prediction = agrr_adapters_agrr::PredictionDaemonGateway::from_env();
     let logger = NoopLogger;

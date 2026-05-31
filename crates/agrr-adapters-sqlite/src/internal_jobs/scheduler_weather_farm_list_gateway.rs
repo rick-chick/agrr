@@ -2,25 +2,22 @@
 
 use agrr_domain::internal_jobs::dtos::SchedulerWeatherFarmRow;
 use agrr_domain::internal_jobs::gateways::SchedulerWeatherFarmListGateway;
-use time::Date;
+use agrr_domain::weather_data::gateways::WeatherDataGateway;
 
 use crate::pool::SqlitePool;
 
-pub struct SchedulerWeatherFarmListSqliteGateway {
+pub struct SchedulerWeatherFarmListSqliteGateway<'a> {
     pool: SqlitePool,
+    weather_data: &'a dyn WeatherDataGateway,
 }
 
-impl SchedulerWeatherFarmListSqliteGateway {
-    pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+impl<'a> SchedulerWeatherFarmListSqliteGateway<'a> {
+    pub fn new(pool: SqlitePool, weather_data: &'a dyn WeatherDataGateway) -> Self {
+        Self { pool, weather_data }
     }
 }
 
-fn parse_date(s: &str) -> Option<Date> {
-    Date::parse(s.trim(), &time::format_description::parse("[year]-[month]-[day]").ok()?).ok()
-}
-
-impl SchedulerWeatherFarmListGateway for SchedulerWeatherFarmListSqliteGateway {
+impl SchedulerWeatherFarmListGateway for SchedulerWeatherFarmListSqliteGateway<'_> {
     fn list_reference_farms_for_weather_update(
         &self,
     ) -> Result<Vec<SchedulerWeatherFarmRow>, String> {
@@ -51,24 +48,22 @@ impl SchedulerWeatherFarmListGateway for SchedulerWeatherFarmListSqliteGateway {
     }
 
     fn list_user_farms_for_weather_update(&self) -> Result<Vec<SchedulerWeatherFarmRow>, String> {
-        self.pool
+        let rows_data: Vec<(i64, f64, f64, i64)> = self
+            .pool
             .with_read(|conn| {
                 let mut stmt = conn.prepare(
-                    "SELECT f.id, f.latitude, f.longitude, \
-                            (SELECT MAX(wd.date) FROM weather_data wd \
-                             WHERE wd.weather_location_id = f.weather_location_id) AS latest_date \
+                    "SELECT f.id, f.latitude, f.longitude, f.weather_location_id \
                      FROM farms f \
                      WHERE f.is_reference = 0 \
                        AND f.weather_location_id IS NOT NULL",
                 )?;
                 let rows = stmt.query_map([], |row| {
-                    let latest_str: Option<String> = row.get(3)?;
-                    Ok(SchedulerWeatherFarmRow {
-                        farm_id: row.get(0)?,
-                        latitude: row.get(1)?,
-                        longitude: row.get(2)?,
-                        latest_weather_date: latest_str.and_then(|s| parse_date(&s)),
-                    })
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, f64>(1)?,
+                        row.get::<_, f64>(2)?,
+                        row.get::<_, i64>(3)?,
+                    ))
                 })?;
                 let mut out = Vec::new();
                 for row in rows {
@@ -76,13 +71,30 @@ impl SchedulerWeatherFarmListGateway for SchedulerWeatherFarmListSqliteGateway {
                 }
                 Ok(out)
             })
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+
+        let mut out = Vec::with_capacity(rows_data.len());
+        for (farm_id, latitude, longitude, weather_location_id) in rows_data {
+            let latest_weather_date = self
+                .weather_data
+                .latest_date(weather_location_id)
+                .map_err(|e| e.to_string())?;
+            out.push(SchedulerWeatherFarmRow {
+                farm_id,
+                latitude,
+                longitude,
+                latest_weather_date,
+            });
+        }
+        Ok(out)
     }
 }
 
 #[cfg(test)]
 mod scheduler_weather_farm_list_gateway_test {
     use super::*;
+    use crate::weather_data::WeatherDataSqliteGateway;
+    use time::Date;
 
     fn test_pool() -> SqlitePool {
         let dir = std::env::temp_dir().join(format!(
@@ -142,14 +154,15 @@ mod scheduler_weather_farm_list_gateway_test {
         })
         .unwrap();
 
-        let gw = SchedulerWeatherFarmListSqliteGateway::new(pool);
+        let weather = WeatherDataSqliteGateway::new(pool.clone());
+        let gw = SchedulerWeatherFarmListSqliteGateway::new(pool, &weather);
         let farms = gw.list_reference_farms_for_weather_update().unwrap();
         assert_eq!(farms.len(), 1);
         assert_eq!(farms[0].farm_id, 1);
     }
 
     #[test]
-    fn lists_user_farms_with_weather_location_and_latest_date() {
+    fn user_farm_latest_date_reads_sqlite_weather_data_when_sqlite_gateway() {
         let pool = test_pool();
         pool.with_write(|conn| {
             conn.execute(
@@ -171,7 +184,8 @@ mod scheduler_weather_farm_list_gateway_test {
         })
         .unwrap();
 
-        let gw = SchedulerWeatherFarmListSqliteGateway::new(pool);
+        let weather = WeatherDataSqliteGateway::new(pool.clone());
+        let gw = SchedulerWeatherFarmListSqliteGateway::new(pool, &weather);
         let farms = gw.list_user_farms_for_weather_update().unwrap();
         assert_eq!(farms.len(), 1);
         assert_eq!(farms[0].farm_id, 10);
@@ -179,5 +193,39 @@ mod scheduler_weather_farm_list_gateway_test {
             farms[0].latest_weather_date,
             Some(Date::from_calendar_date(2026, time::Month::April, 28).unwrap())
         );
+    }
+
+    #[test]
+    fn user_farm_latest_date_reads_gcs_bulk_without_sqlite_weather_rows() {
+        use crate::weather_data::gcs_weather_test_support::{
+            write_year_fixture, with_local_gcs_root, GcsBulkWeatherGateway,
+        };
+
+        with_local_gcs_root(|root| {
+            write_year_fixture(
+                root,
+                5,
+                2026,
+                r#"{"2026-04-28": {"temperature_max": 20.0, "temperature_min": 10.0}}"#,
+            );
+            let pool = test_pool();
+            pool.with_write(|conn| {
+                conn.execute(
+                    "INSERT INTO farms (id, name, latitude, longitude, is_reference, weather_location_id, user_id)
+                     VALUES (10, 'user', 36.0, 140.0, 0, 5, 1)",
+                    [],
+                )
+            })
+            .unwrap();
+
+            let weather = GcsBulkWeatherGateway::from_local_env().expect("gcs gateway");
+            let gw = SchedulerWeatherFarmListSqliteGateway::new(pool, &weather);
+            let farms = gw.list_user_farms_for_weather_update().unwrap();
+            assert_eq!(farms.len(), 1);
+            assert_eq!(
+                farms[0].latest_weather_date,
+                Some(Date::from_calendar_date(2026, time::Month::April, 28).unwrap())
+            );
+        });
     }
 }

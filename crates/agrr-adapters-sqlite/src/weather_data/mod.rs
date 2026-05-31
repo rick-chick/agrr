@@ -3,6 +3,9 @@ mod internal_weather_fetch_start_gateway;
 mod weather_data_farm_gateway;
 mod weather_data_gateway;
 
+#[cfg(test)]
+pub(crate) mod gcs_weather_test_support;
+
 pub use internal_farm_weather_read_gateway::InternalFarmWeatherReadSqliteGateway;
 pub use internal_weather_fetch_start_gateway::InternalWeatherFetchStartSqliteGateway;
 pub use weather_data_farm_gateway::WeatherDataFarmSqliteGateway;

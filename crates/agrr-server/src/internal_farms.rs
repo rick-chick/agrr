@@ -16,6 +16,7 @@ use crate::state::AppState;
 use agrr_adapters_sqlite::{
     InternalFarmWeatherReadSqliteGateway, InternalWeatherFetchStartSqliteGateway,
 };
+use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::shared::ports::{ClockPort, TranslatorPort};
 use agrr_domain::weather_data::dtos::{
     InternalFarmWeatherDataListOutput, InternalFarmWeatherFetchFailure,
@@ -69,7 +70,18 @@ async fn fetch_weather_data(
         return resp.into_response();
     }
 
-    let gateway = InternalWeatherFetchStartSqliteGateway::new(state.sqlite.clone());
+    let pool = state.sqlite.clone();
+    let weather_bundle = match WeatherDataGatewayBundle::resolve(pool.clone()) {
+        Ok(bundle) => bundle,
+        Err(e) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": e.to_string() })),
+            )
+                .into_response();
+        }
+    };
+    let gateway = InternalWeatherFetchStartSqliteGateway::new(pool, &weather_bundle);
     let start_fetch = StartFarmWeatherFetchAdapter::new(state.clone());
     let translator = PassthroughTranslator;
     let clock = SystemClock;
@@ -94,7 +106,18 @@ async fn weather_status(
         return resp.into_response();
     }
 
-    let gateway = InternalFarmWeatherReadSqliteGateway::new(state.sqlite.clone());
+    let pool = state.sqlite.clone();
+    let weather_bundle = match WeatherDataGatewayBundle::resolve(pool.clone()) {
+        Ok(bundle) => bundle,
+        Err(e) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": e.to_string() })),
+            )
+                .into_response();
+        }
+    };
+    let gateway = InternalFarmWeatherReadSqliteGateway::new(pool, &weather_bundle);
     let translator = PassthroughTranslator;
     let mut presenter = WeatherStatusPresenter::default();
     let mut interactor =
@@ -111,7 +134,18 @@ async fn get_weather_data(
         return resp.into_response();
     }
 
-    let gateway = InternalFarmWeatherReadSqliteGateway::new(state.sqlite.clone());
+    let pool = state.sqlite.clone();
+    let weather_bundle = match WeatherDataGatewayBundle::resolve(pool.clone()) {
+        Ok(bundle) => bundle,
+        Err(e) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": e.to_string() })),
+            )
+                .into_response();
+        }
+    };
+    let gateway = InternalFarmWeatherReadSqliteGateway::new(pool, &weather_bundle);
     let translator = PassthroughTranslator;
     let mut presenter = WeatherDataListPresenter::default();
     let mut interactor =
@@ -196,6 +230,9 @@ impl InternalFarmWeatherStatusOutputPort for WeatherStatusPresenter {
     fn on_failure(&mut self, dto: InternalFarmWeatherFetchFailure) {
         let status = match dto.http_status {
             InternalFarmWeatherHttpStatus::NotFound => StatusCode::NOT_FOUND,
+            InternalFarmWeatherHttpStatus::InternalServerError => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         };
         self.body = Some((status, json!({ "error": dto.message })));
     }
@@ -236,6 +273,9 @@ impl InternalFarmWeatherDataListOutputPort for WeatherDataListPresenter {
     fn on_failure(&mut self, dto: InternalFarmWeatherFetchFailure) {
         let status = match dto.http_status {
             InternalFarmWeatherHttpStatus::NotFound => StatusCode::NOT_FOUND,
+            InternalFarmWeatherHttpStatus::InternalServerError => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         };
         self.body = Some((status, json!({ "error": dto.message })));
     }

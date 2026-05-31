@@ -25,6 +25,7 @@ pub enum FetchWeatherDataPerformError {
     ExcessiveMissingWeatherDays,
     MissingOrInvalidWeatherLocation,
     InvalidDateParameters,
+    WeatherDataStorageFailed,
 }
 
 impl std::fmt::Display for FetchWeatherDataPerformError {
@@ -90,11 +91,14 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
             .find_by_coordinates(input.latitude, input.longitude)
         {
             let expected_days = (input.end_date - input.start_date).whole_days() + 1;
-            let existing_count = self.weather_data_gateway.weather_data_count(
-                location.id,
-                Some(input.start_date),
-                Some(input.end_date),
-            );
+            let existing_count = self
+                .weather_data_gateway
+                .weather_data_count(
+                    location.id,
+                    Some(input.start_date),
+                    Some(input.end_date),
+                )
+                .map_err(|_| FetchWeatherDataPerformError::WeatherDataStorageFailed)?;
             let threshold_days = (expected_days as f64 * SUFFICIENT_DATA_RATIO).ceil() as i64;
 
             if existing_count >= threshold_days {
@@ -175,9 +179,9 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
             .collect();
 
         if !dtos.is_empty() {
-            let _ = self
-                .weather_data_gateway
-                .upsert_weather_data(&dtos, weather_location.id);
+            self.weather_data_gateway
+                .upsert_weather_data(&dtos, weather_location.id)
+                .map_err(|_| FetchWeatherDataPerformError::WeatherDataStorageFailed)?;
         }
 
         if let Some(farm_id) = input.farm_id {

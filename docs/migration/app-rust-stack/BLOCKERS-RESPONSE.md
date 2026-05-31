@@ -138,6 +138,17 @@ flowchart TD
 
 ---
 
+## Rails 正との残差（P6 Rust スコープ外・文書化のみ）
+
+| 経路 | 状態 | 備考 |
+|------|------|------|
+| **agrr-server** internal farm weather / field climate / scheduler / fetch | `WeatherDataGatewayBundle`（`WEATHER_DATA_STORAGE=gcs` 時は ADC read + GCS bulk） | R4: `internal_farm_weather_contract_test.rb`（GCS fixture で `count > 0`） |
+| **Rails** `Api::V1::InternalController` | `farm.weather_location.weather_data`（AR 直読み） | GCS 本番で Rails 経路を使う場合は別 PR。Rust cutover では nginx が internal を Rust に向ける前提 |
+| **Rails** `InternalWeatherFetchStartActiveRecordGateway` | `weather_data` AR count for `completed` | Rust は `WeatherDataGatewayBundle` 先行。Rails 追従は別 PR |
+| **Rust** `plan_allocation_adjust_read_gateway` | `FROM weather_data` SQLite | 天気平面外。adjust 読み取りの bundle 化は別タスク |
+
+---
+
 ## 参照
 
 - [`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md) — ストラングラー配線（確定）  

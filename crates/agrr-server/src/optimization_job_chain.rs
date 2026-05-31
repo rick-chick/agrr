@@ -113,9 +113,16 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     let dispatcher = state.job_dispatcher.clone();
     let state_clone = state.clone();
 
-    let Some(ctx) = load_chain_context(&pool, plan_id) else {
-        error!(plan_id, "optimization chain: plan context not found");
-        return;
+    let ctx = match load_chain_context(&pool, plan_id) {
+        Ok(Some(ctx)) => ctx,
+        Ok(None) => {
+            error!(plan_id, "optimization chain: plan context not found");
+            return;
+        }
+        Err(e) => {
+            error!(plan_id, error = %e, "optimization chain: weather storage unavailable");
+            return;
+        }
     };
 
     let clock = SystemClock;

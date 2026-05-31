@@ -7,12 +7,18 @@ use crate::adapters::SystemClock;
 use crate::jobs::JobStep;
 use crate::state::AppState;
 use agrr_adapters_agrr::WeatherDaemonGateway;
-use agrr_adapters_sqlite::{FarmSqliteGateway, WeatherDataFarmSqliteGateway, WeatherDataSqliteGateway};
+use agrr_adapters_sqlite::{FarmSqliteGateway, WeatherDataFarmSqliteGateway};
+use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::farm::calculators::FarmWeatherProgressCalculator;
-use agrr_domain::farm::dtos::{RecordFarmWeatherBlockCompletedInput, StartFarmWeatherDataFetchInput};
-use agrr_domain::farm::interactors::{
-    RecordFarmWeatherBlockCompletedInteractor, StartFarmWeatherDataFetchInteractor,
+use agrr_domain::farm::dtos::{
+    MarkFarmWeatherDataFailedInput, RecordFarmWeatherBlockCompletedInput,
+    StartFarmWeatherDataFetchInput,
 };
+use agrr_domain::farm::interactors::{
+    MarkFarmWeatherDataFailedInteractor, RecordFarmWeatherBlockCompletedInteractor,
+    StartFarmWeatherDataFetchInteractor,
+};
+use agrr_domain::weather_data::interactors::FetchWeatherDataPerformError;
 use agrr_domain::shared::dtos::WeatherFetchDateBlock;
 use agrr_domain::shared::ports::FetchWeatherDataEnqueuePort;
 use agrr_domain::weather_data::dtos::FetchWeatherDataPerformInput;
@@ -144,7 +150,13 @@ pub async fn run_farm_weather_fetch_block(
     end_date: Date,
 ) {
     let pool = state.sqlite.clone();
-    let weather_data = WeatherDataSqliteGateway::new(pool.clone());
+    let weather_data = match WeatherDataGatewayBundle::resolve(pool.clone()) {
+        Ok(bundle) => bundle,
+        Err(e) => {
+            tracing::warn!(?e, "weather data gateway resolve failed");
+            return;
+        }
+    };
     let farm_weather = WeatherDataFarmSqliteGateway::new(pool.clone());
     let farm_gateway = FarmSqliteGateway::new(pool);
     let agrr = WeatherDaemonGateway::from_env();
@@ -176,6 +188,23 @@ pub async fn run_farm_weather_fetch_block(
     };
     if let Err(e) = interactor.call(input) {
         tracing::warn!(farm_id, ?e, "farm weather fetch block failed");
+        mark_farm_weather_fetch_failed(&farm_gateway, farm_id, &e);
+    }
+}
+
+fn mark_farm_weather_fetch_failed(
+    farm_gateway: &FarmSqliteGateway,
+    farm_id: i64,
+    err: &FetchWeatherDataPerformError,
+) {
+    let error_message = format!("fetch weather data failed: {err}");
+    if let Err(mark_err) = MarkFarmWeatherDataFailedInteractor::new(farm_gateway).call(
+        MarkFarmWeatherDataFailedInput {
+            farm_id,
+            error_message,
+        },
+    ) {
+        tracing::warn!(farm_id, ?mark_err, "failed to mark farm weather data failed");
     }
 }
 

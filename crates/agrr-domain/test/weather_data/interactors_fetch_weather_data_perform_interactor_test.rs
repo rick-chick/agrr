@@ -5,7 +5,9 @@
 use serde_json::json;
 
     use crate::shared::exceptions::RecordNotFoundError;
-    use crate::weather_data::gateways::{FetchWeatherFarmEntity, WeatherLocationRecord};
+    use crate::weather_data::gateways::{
+        FetchWeatherFarmEntity, WeatherDataStorageError, WeatherLocationRecord,
+    };
     use std::sync::{Arc, Mutex};
 
     struct MockPresenter {
@@ -46,31 +48,51 @@ use serde_json::json;
         find_coords: Option<WeatherLocationRecord>,
         weather_count: i64,
         upsert_called: Arc<Mutex<bool>>,
+        count_fails: bool,
+        upsert_fails: bool,
     }
 
     impl WeatherDataGateway for MockWeatherGateway {
-        fn weather_data_for_period(&self, _: i64, _: Date, _: Date) -> Vec<WeatherData> {
-            vec![]
+        fn weather_data_for_period(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<Vec<WeatherData>, WeatherDataStorageError> {
+            Ok(vec![])
         }
 
-        fn weather_data_count(&self, _: i64, start: Option<Date>, end: Option<Date>) -> i64 {
+        fn weather_data_count(
+            &self,
+            _: i64,
+            start: Option<Date>,
+            end: Option<Date>,
+        ) -> Result<i64, WeatherDataStorageError> {
+            if self.count_fails {
+                return Err(WeatherDataStorageError::new("count failed"));
+            }
             if start.is_some() && end.is_some() {
-                self.weather_count
+                Ok(self.weather_count)
             } else {
-                0
+                Ok(0)
             }
         }
 
-        fn historical_data_count(&self, _: i64, _: Date, _: Date) -> i64 {
-            0
+        fn historical_data_count(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<i64, WeatherDataStorageError> {
+            Ok(0)
         }
 
-        fn earliest_date(&self, _: i64) -> Option<Date> {
-            None
+        fn earliest_date(&self, _: i64) -> Result<Option<Date>, WeatherDataStorageError> {
+            Ok(None)
         }
 
-        fn latest_date(&self, _: i64) -> Option<Date> {
-            None
+        fn latest_date(&self, _: i64) -> Result<Option<Date>, WeatherDataStorageError> {
+            Ok(None)
         }
 
         fn upsert_weather_data(
@@ -78,6 +100,9 @@ use serde_json::json;
             _: &[WeatherData],
             _: i64,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            if self.upsert_fails {
+                return Err("upsert failed".into());
+            }
             *self.upsert_called.lock().expect("lock") = true;
             Ok(())
         }
@@ -218,11 +243,35 @@ use serde_json::json;
             find_raises: bool,
             agrr_response: Option<Value>,
         ) -> Self {
+            Self::with_flags(
+                find_coords,
+                weather_count,
+                upsert_called,
+                region,
+                find_raises,
+                agrr_response,
+                false,
+                false,
+            )
+        }
+
+        fn with_flags(
+            find_coords: Option<WeatherLocationRecord>,
+            weather_count: i64,
+            upsert_called: Arc<Mutex<bool>>,
+            region: Option<String>,
+            find_raises: bool,
+            agrr_response: Option<Value>,
+            count_fails: bool,
+            upsert_fails: bool,
+        ) -> Self {
             Self {
                 weather: MockWeatherGateway {
                     find_coords,
                     weather_count,
                     upsert_called,
+                    count_fails,
+                    upsert_fails,
                 },
                 farm: MockFarmGateway {
                     region,
@@ -512,4 +561,47 @@ use serde_json::json;
 
         harness.interactor().call(sample_input()).expect("ok");
         assert!(*upsert_called.lock().expect("lock"));
+    }
+
+    #[test]
+    fn fails_when_weather_data_count_errors() {
+        let harness = PerformHarness::with_flags(
+            Some(WeatherLocationRecord { id: 1 }),
+            0,
+            Arc::new(Mutex::new(false)),
+            Some("jp".into()),
+            false,
+            None,
+            true,
+            false,
+        );
+
+        let err = harness.interactor().call(sample_input()).expect_err("error");
+        assert_eq!(err, FetchWeatherDataPerformError::WeatherDataStorageFailed);
+    }
+
+    #[test]
+    fn fails_when_upsert_errors() {
+        let acceptable = json!({
+            "location": {
+                "latitude": 35.6762,
+                "longitude": 139.6503,
+                "elevation": 50.0,
+                "timezone": "Asia/Tokyo"
+            },
+            "data": (1..=7).map(weather_point).collect::<Vec<_>>()
+        });
+        let harness = PerformHarness::with_flags(
+            None,
+            0,
+            Arc::new(Mutex::new(false)),
+            Some("jp".into()),
+            false,
+            Some(acceptable),
+            false,
+            true,
+        );
+
+        let err = harness.interactor().call(sample_input()).expect_err("error");
+        assert_eq!(err, FetchWeatherDataPerformError::WeatherDataStorageFailed);
     }

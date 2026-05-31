@@ -5,23 +5,23 @@ use crate::shared::internal_api_farm_lookup::{find_farm, InternalApiFarmLookupRe
 use agrr_domain::farm::entities::FarmEntity;
 use agrr_domain::weather_data::dtos::{
     InternalFarmWeatherDataListOutput, InternalFarmWeatherDataListResult,
-    InternalFarmWeatherStatusOutput, InternalFarmWeatherStatusResult,
+    InternalFarmWeatherStatusOutput, InternalFarmWeatherStatusResult, WeatherData,
 };
-use agrr_domain::weather_data::gateways::InternalFarmWeatherReadGateway;
+use agrr_domain::weather_data::gateways::{InternalFarmWeatherReadGateway, WeatherDataGateway};
 use rusqlite::params;
 use serde_json::{json, Value};
-
-pub struct InternalFarmWeatherReadSqliteGateway {
+pub struct InternalFarmWeatherReadSqliteGateway<'a> {
     pool: SqlitePool,
+    weather_data: &'a dyn WeatherDataGateway,
 }
 
-impl InternalFarmWeatherReadSqliteGateway {
-    pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+impl<'a> InternalFarmWeatherReadSqliteGateway<'a> {
+    pub fn new(pool: SqlitePool, weather_data: &'a dyn WeatherDataGateway) -> Self {
+        Self { pool, weather_data }
     }
 }
 
-impl InternalFarmWeatherReadGateway for InternalFarmWeatherReadSqliteGateway {
+impl InternalFarmWeatherReadGateway for InternalFarmWeatherReadSqliteGateway<'_> {
     fn weather_status_snapshot(
         &self,
         farm_id: &str,
@@ -32,7 +32,13 @@ impl InternalFarmWeatherReadGateway for InternalFarmWeatherReadSqliteGateway {
         }
         let farm = farm.expect("found");
 
-        let weather_data_count = weather_data_count_for_farm(&self.pool, farm.weather_location_id);
+        let weather_data_count = match weather_data_count_for_farm(
+            self.weather_data,
+            farm.weather_location_id,
+        ) {
+            Ok(count) => count,
+            Err(()) => return InternalFarmWeatherStatusResult::storage_error(),
+        };
         let progress = farm_entity_progress(&farm);
 
         InternalFarmWeatherStatusResult::ok(InternalFarmWeatherStatusOutput {
@@ -67,7 +73,10 @@ impl InternalFarmWeatherReadGateway for InternalFarmWeatherReadSqliteGateway {
             None => return InternalFarmWeatherDataListResult::weather_location_not_found(),
         };
 
-        let weather_data_rows = load_weather_data_rows(&self.pool, location_id);
+        let weather_data_rows = match load_weather_data_rows(self.weather_data, location_id) {
+            Ok(rows) => rows,
+            Err(_) => return InternalFarmWeatherDataListResult::storage_error(),
+        };
         let count = weather_data_rows.len() as i64;
 
         let farm_summary = json!({
@@ -108,20 +117,17 @@ fn farm_entity_progress(farm: &crate::shared::internal_api_farm_lookup::Internal
     entity.weather_data_progress()
 }
 
-fn weather_data_count_for_farm(pool: &SqlitePool, weather_location_id: Option<i64>) -> i32 {
+fn weather_data_count_for_farm(
+    weather_data: &dyn WeatherDataGateway,
+    weather_location_id: Option<i64>,
+) -> Result<i32, ()> {
     let Some(id) = weather_location_id else {
-        return 0;
+        return Ok(0);
     };
-    pool.with_read(|conn| {
-        conn.query_row(
-            "SELECT COUNT(*) FROM weather_data WHERE weather_location_id = ?1",
-            params![id],
-            |row| row.get::<_, i64>(0),
-        )
-    })
-    .ok()
-    .map(|c| c as i32)
-    .unwrap_or(0)
+    weather_data
+        .weather_data_count(id, None, None)
+        .map(|c| c as i32)
+        .map_err(|_| ())
 }
 
 fn load_weather_location(pool: &SqlitePool, location_id: i64) -> Option<Value> {
@@ -142,37 +148,38 @@ fn load_weather_location(pool: &SqlitePool, location_id: i64) -> Option<Value> {
     .ok()
 }
 
-fn load_weather_data_rows(pool: &SqlitePool, location_id: i64) -> Vec<Value> {
-    pool.with_read(|conn| {
-        let mut stmt = conn.prepare(
-            "SELECT date, temperature_max, temperature_min, temperature_mean, precipitation, \
-             sunshine_hours, wind_speed, weather_code \
-             FROM weather_data WHERE weather_location_id = ?1 ORDER BY date",
-        )?;
-        let rows = stmt.query_map(params![location_id], |row| {
-            Ok(json!({
-                "date": row.get::<_, String>(0)?,
-                "temperature_max": row.get::<_, Option<f64>>(1)?,
-                "temperature_min": row.get::<_, Option<f64>>(2)?,
-                "temperature_mean": row.get::<_, Option<f64>>(3)?,
-                "precipitation": row.get::<_, Option<f64>>(4)?,
-                "sunshine_hours": row.get::<_, Option<f64>>(5)?,
-                "wind_speed": row.get::<_, Option<f64>>(6)?,
-                "weather_code": row.get::<_, Option<i64>>(7)?,
-            }))
-        })?;
-        let mut out = Vec::new();
-        for row in rows {
-            out.push(row?);
-        }
-        Ok(out)
+fn load_weather_data_rows(
+    weather_data: &dyn WeatherDataGateway,
+    location_id: i64,
+) -> Result<Vec<Value>, ()> {
+    let earliest = weather_data.earliest_date(location_id).map_err(|_| ())?;
+    let latest = weather_data.latest_date(location_id).map_err(|_| ())?;
+    let (Some(start), Some(end)) = (earliest, latest) else {
+        return Ok(vec![]);
+    };
+    let rows = weather_data
+        .weather_data_for_period(location_id, start, end)
+        .map_err(|_| ())?;
+    Ok(rows.into_iter().map(weather_data_row_json).collect())
+}
+
+fn weather_data_row_json(dto: WeatherData) -> Value {
+    json!({
+        "date": dto.date.to_string(),
+        "temperature_max": dto.temperature_max,
+        "temperature_min": dto.temperature_min,
+        "temperature_mean": dto.temperature_mean,
+        "precipitation": dto.precipitation,
+        "sunshine_hours": dto.sunshine_hours,
+        "wind_speed": dto.wind_speed,
+        "weather_code": dto.weather_code,
     })
-    .unwrap_or_default()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::weather_data::WeatherDataSqliteGateway;
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -230,9 +237,10 @@ mod tests {
     }
 
     #[test]
-    fn weather_status_snapshot_returns_progress_and_count() {
+    fn weather_status_count_uses_injected_sqlite_gateway() {
         let (pool, _path) = temp_pool_with_weather();
-        let gw = InternalFarmWeatherReadSqliteGateway::new(pool);
+        let weather = WeatherDataSqliteGateway::new(pool.clone());
+        let gw = InternalFarmWeatherReadSqliteGateway::new(pool, &weather);
         let result = gw.weather_status_snapshot("1");
         let InternalFarmWeatherStatusResult::Ok(dto) = result else {
             panic!("expected ok");
@@ -263,11 +271,46 @@ mod tests {
             )
         })
         .expect("schema");
-        let gw = InternalFarmWeatherReadSqliteGateway::new(pool);
+        let weather = WeatherDataSqliteGateway::new(pool.clone());
+        let gw = InternalFarmWeatherReadSqliteGateway::new(pool, &weather);
         let result = gw.weather_data_list_snapshot("2");
         assert!(matches!(
             result,
             InternalFarmWeatherDataListResult::WeatherLocationNotFound
         ));
+    }
+
+    #[test]
+    fn weather_status_count_reads_gcs_bulk_without_sqlite_weather_rows() {
+        use super::super::gcs_weather_test_support::{
+            temp_pool_farms_only, write_year_fixture, with_local_gcs_root, GcsBulkWeatherGateway,
+        };
+
+        with_local_gcs_root(|root| {
+            write_year_fixture(
+                root,
+                10,
+                2024,
+                r#"{"2024-01-01": {"temperature_max": 10.5}}"#,
+            );
+            let (pool, _path) = temp_pool_farms_only();
+            pool.with_write(|conn| {
+                conn.execute(
+                    "INSERT INTO farms (id, name, latitude, longitude, is_reference,
+                        weather_data_status, weather_data_fetched_years, weather_data_total_years,
+                        weather_location_id)
+                     VALUES (1, 'Farm A', 35.0, 139.0, 0, 'completed', 1, 1, 10)",
+                    [],
+                )
+            })
+            .expect("farm");
+            let weather = GcsBulkWeatherGateway::from_local_env().expect("gcs");
+            let gw = InternalFarmWeatherReadSqliteGateway::new(pool, &weather);
+            let result = gw.weather_status_snapshot("1");
+            let InternalFarmWeatherStatusResult::Ok(dto) = result else {
+                panic!("expected ok, got {result:?}");
+            };
+            assert_eq!(dto.weather_data_count, 1);
+        });
     }
 }

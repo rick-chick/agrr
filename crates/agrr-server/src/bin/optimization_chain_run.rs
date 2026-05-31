@@ -85,9 +85,16 @@ fn main() -> ExitCode {
     }
 
     if let Some(step) = step_from_args() {
-        let Some(ctx) = load_chain_context(&pool, plan_id) else {
-            eprintln!("chain context not found for plan {plan_id}");
-            return ExitCode::from(2);
+        let ctx = match load_chain_context(&pool, plan_id) {
+            Ok(Some(ctx)) => ctx,
+            Ok(None) => {
+                eprintln!("chain context not found for plan {plan_id}");
+                return ExitCode::from(2);
+            }
+            Err(e) => {
+                eprintln!("chain context failed for plan {plan_id}: {e}");
+                return ExitCode::from(1);
+            }
         };
         let clock = SystemClock;
         let window =
