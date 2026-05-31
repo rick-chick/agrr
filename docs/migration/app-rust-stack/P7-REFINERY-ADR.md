@@ -1,7 +1,7 @@
 # ADR: P7 schema ownership — refinery + Rails sunset
 
-> **ステータス**: 実施中 — 手順は [P7-MIGRATION-RUNBOOK.md](./P7-MIGRATION-RUNBOOK.md)、実装は `crates/agrr-migrate`  
-> **前提**: P6 全 BC ルート切替完了、`rails-backend` を URL map から除去済み
+> **ステータス**: **確定**（2026-05-31）— 手順は [P7-MIGRATION-RUNBOOK.md](./P7-MIGRATION-RUNBOOK.md)、実装は `crates/agrr-migrate`  
+> **前提**: P6 全 BC ルート切替完了、本番 LB は `rust-backend`（`agrr-server`）、`Dockerfile.production` 廃止
 
 ## コンテキスト
 

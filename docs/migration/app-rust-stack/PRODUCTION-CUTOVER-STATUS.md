@@ -14,6 +14,7 @@
 | P7 コード削除 Phase 1 | **実施済み**（2026-05-31）— `app/controllers/api`・jobs・channels・API adapters 削除 |
 | P7 コード削除 Phase 2（`lib/domain`） | **実施済み**（2026-05-31）— `lib/domain/`・`test/domain/` 削除 |
 | P7 Phase 3（Solid Cable DB） | **実施済み**（2026-05-31）— `database.yml` の cable DB・Litestream cable レプリカ削除。Rails は `/cable` 非マウント |
+| P7 refinery / 本番イメージ | **実施済み**（2026-05-31）— `Dockerfile.production` 削除、デプロイは `agrr-server` + `agrr-migrate` のみ |
 | 本番 DB データ | **in repair 適用済み**（レプリカ確認）。**us 参照作物 7 件**は stages 欠損のまま |
 
 ## 残作業
@@ -23,13 +24,14 @@
 | ~~1~~ | ~~URL map 命名整理~~ | **実施済み**（2026-05-31）— `agrr-rails-backend` → **`rust-backend`**、旧 backend 削除。[`scripts/agrr-frontend-url-map-simple.yaml`](../../../scripts/agrr-frontend-url-map-simple.yaml) |
 | 2 | 本番 **手動スモーク** | OAuth ログイン、`auth/me`、計画作成→最適化 WS、マスタ CRUD、`save_plan`、`POST /undo_deletion` |
 | 3 | 本番 **us 参照データ**（必要時） | 7 件の `crop_stages` 欠損。`in` repair では直らない。運用合意のうえ `agrr-migrate data apply` |
-| 4 | **P7** Rails 資産削除（残） | [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) — URL map 命名・Rails 本番イメージ廃止など |
+| 4 | **P7** Rails 資産削除（残） | 手動スモーク・us `data apply` など — [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) |
 
 **ローカルゲート**（削除 PR 前に再実行）: `cargo build -p agrr-server` + `COVERAGE=false ./scripts/run-rust-contract-tests.sh` + [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh)（2026-05-31: contract **112 runs, 0 failures**、p7 gate **OK**）。
 
 **完了済み（旧「残作業」から外す）**:
 
 - URL map backend 名 **`rust-backend`** へ整理（2026-05-31）— `agrr-rails-backend` 削除、`agrr.net` `/up`・`/api/v1/health` スモーク OK
+- **`Dockerfile.production` 廃止**（2026-05-31）— 本番デプロイは `Dockerfile.agrr-server` のみ（`gcp-deploy.sh` → refinery / Litestream）
 - 本番 `agrr-production` を `Dockerfile.agrr-server` でデプロイ — `agrr-server:20260531-222952`
 - 本番 refinery — レプリカで `schema verify OK`（`refinery_schema_history` + `data_migration_history` あり）
 - 本番 in repair — `20260531120000` / `20260531130100` 適用済み（レプリカ）

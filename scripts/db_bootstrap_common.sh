@@ -1,12 +1,12 @@
 # Shared Litestream restore, refinery schema migrate, PRAGMA, replicate (+ optional agrr daemon).
-# Sourced by scripts/start_app.sh (Rails) and scripts/start_agrr_server.sh (agrr-server).
+# Sourced by scripts/start_agrr_server.sh (agrr-server Cloud Run entrypoint).
 #
 # Environment:
 #   SKIP_CABLE_DB=true  — skip cable SQLite (Rust: in-process WebSocket, no Solid Cable)
 #   USE_AGRR_DAEMON     — start agrr binary daemon when true
 #   AGRR_BIN_PATH       — default /usr/local/bin/agrr
 
-# Set by start_app.sh / start_agrr_server.sh before sourcing this file.
+# Set by start_agrr_server.sh before sourcing this file.
 db_bootstrap_scripts_dir() {
   if [ -n "${AGRR_SCRIPTS_DIR:-}" ]; then
     echo "$AGRR_SCRIPTS_DIR"

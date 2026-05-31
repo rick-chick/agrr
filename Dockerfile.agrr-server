@@ -1,13 +1,11 @@
-# agrr-server on Cloud Run — same runtime bootstrap as Dockerfile.production (Litestream + agrr-migrate).
-# Entrypoint: scripts/start_agrr_server.sh
+# agrr-server on Cloud Run — Litestream + agrr-migrate (refinery). Entrypoint: scripts/start_agrr_server.sh
 FROM rust:1-bookworm AS builder
 WORKDIR /app
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY crates ./crates
 RUN cargo build --release -p agrr-server -p agrr-migrate
 
-# Match Dockerfile.production final stage (ruby:3.3.10-slim → glibc 2.41).
-# debian:bookworm-slim (glibc 2.36) cannot run lib/core/agrr (PyInstaller needs >= 2.38).
+# ruby:3.3.10-slim (glibc 2.41) — debian:bookworm-slim cannot run lib/core/agrr (PyInstaller needs >= 2.38).
 FROM ruby:3.3.10-slim
 
 RUN apt-get update -qq && apt-get install -y --no-install-recommends \

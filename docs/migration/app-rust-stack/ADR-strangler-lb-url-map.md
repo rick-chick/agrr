@@ -28,10 +28,10 @@
 | バックエンド（論理名） | 実体 | 役割 |
 |------------------------|------|------|
 | `frontend-backend` | GCS バケット（CDN） | `*.js` / `*.css` / SPA fallback |
-| `rails-backend` | 現行 Cloud Run（Rails） | **廃止予定** — 本番カットオーバー後はトラフィック 0。開発も `AGRR_RUST_API=1` で API は Rust のみ |
-| `rust-backend` | Cloud Run（`agrr-server`、[`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server)） | **全 API** `/api/*`・`/cable`・`/auth/*`・`/up`（起動: [`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh)） |
+| ~~`rails-backend`~~ | — | **廃止**（2026-05-31）— `Dockerfile.production` 削除 |
+| `rust-backend` | Cloud Run（`agrr-server`、[`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server)） | **全 API** `/api/*`・`/cable`・`/auth/*`・`/up`・`/assets`（起動: [`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh)） |
 
-P7 完了後は `rails-backend` サービス削除、Rust 単体 + 静的のみ。
+本番は Rust 単体 + GCS 静的（SPA）。
 
 ### パス振分（正）
 

@@ -11,7 +11,8 @@ AGRR is an agricultural planning and optimization system with a decoupled Angula
 | ------------------- | ---------------------------------------------------------------------------------------------- |
 | Frontend            | Angular 21 SPA (Clean Architecture-oriented layers under `frontend/src/app/`)                  |
 | Frontend hosting    | Google Cloud Storage + Cloud CDN (see `.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh`) |
-| Backend             | Ruby on Rails 8 on **Google Cloud Run** (see `.cursor/skills/deploy-server/scripts/gcp-deploy.sh`)     |
+| Backend (API/WS)    | **agrr-server** (Rust) on **Google Cloud Run** — `.cursor/skills/deploy-server/scripts/gcp-deploy.sh` |
+| Rails shell (dev)   | SPA fallback・auth_test のみ（本番 API は Rust）                                                       |
 | Database            | SQLite3 (**primary** / **cache** DBs; Solid Cache; Solid Cable DB during Rails WS migration), **Litestream** replica to GCS. Background jobs: Active Job **`:async`** in-process (**Solid Queue not used**). Operational source of truth: [`docs/migration/app-rust-stack/PROVISIONAL-STACK.md`](docs/migration/app-rust-stack/PROVISIONAL-STACK.md) |
 | Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads                 |
 | Contract-first API  | `lib/domain` ports/DTOs plus integration and domain tests encoding observable API behavior   |

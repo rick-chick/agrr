@@ -1,6 +1,6 @@
 #!/bin/bash
 # Cloud Run entrypoint for agrr-server (Dockerfile.agrr-server).
-# Same DB bootstrap as scripts/start_app.sh (Litestream + agrr-migrate + PRAGMA), without Solid Cable DB.
+# Litestream restore + agrr-migrate schema run + PRAGMA (no Solid Cable DB).
 
 set -euo pipefail
 

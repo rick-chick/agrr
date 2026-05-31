@@ -1,6 +1,6 @@
 # AGRR - 農業計画支援システム
 
-Rails 8 + SQLite + Google Cloud Run で動く農業計画支援システム
+Angular SPA + **agrr-server**（Rust API/WebSocket）+ SQLite（Litestream）— 本番は Google Cloud Run。開発用に Rails シェルあり。
 
 ## 🚀 クイックスタート
 
@@ -73,7 +73,7 @@ cd frontend && ng serve --host 127.0.0.1
 ### デプロイ
 
 ```bash
-# Production環境
+# Production（agrr-server / Dockerfile.agrr-server）
 .cursor/skills/deploy-server/scripts/gcp-deploy.sh
 
 # Frontend
