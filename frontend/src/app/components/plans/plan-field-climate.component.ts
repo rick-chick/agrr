@@ -195,7 +195,9 @@ export class PlanFieldClimateComponent
   ngOnInit(): void {
     this.presenter.setView(this);
     this.langChangeSub = this.translate.onLangChange.subscribe(() => {
-      this.applyChartI18n();
+      if (this.temperatureChart || this.gddChart) {
+        this.refreshCharts();
+      }
       this.cdr.markForCheck();
     });
   }
@@ -275,11 +277,6 @@ export class PlanFieldClimateComponent
     if (!this.currentRequest) return;
     this.control = { loading: true, error: null, climateData: null };
     this.useCase.execute(this.currentRequest);
-  }
-
-  private applyChartI18n(): void {
-    if (!this.temperatureChart && !this.gddChart) return;
-    this.refreshCharts();
   }
 
   private chartLabel(key: string): string {
@@ -456,28 +453,6 @@ export class PlanFieldClimateComponent
       spanGaps: true,
       fill: false,
       yAxisID: axisId
-    };
-  }
-
-  private buildConstantDataset(
-    label: string,
-    labels: string[],
-    value: number,
-    color: string
-  ): ChartDataset<'line'> {
-    return {
-      label,
-      data: labels.map(() => value),
-      borderColor: color,
-      backgroundColor: 'transparent',
-      borderWidth: 1,
-      borderDash: [6, 4],
-      tension: 0.1,
-      pointRadius: 0,
-      pointHoverRadius: 0,
-      spanGaps: true,
-      fill: false,
-      yAxisID: 'y1'
     };
   }
 
@@ -766,19 +741,6 @@ export class PlanFieldClimateComponent
     if (!value) return null;
     const parsed = Date.parse(value);
     return Number.isNaN(parsed) ? null : parsed;
-  }
-
-  private inferStageNameFromCumulative(
-    cumulative: number,
-    orderedStages: StageRequirement[]
-  ): string | null {
-    for (const stage of orderedStages) {
-      if (cumulative <= stage.cumulative_gdd_required) {
-        return stage.name;
-      }
-    }
-
-    return orderedStages.at(-1)?.name ?? null;
   }
 
   private buildStageRequirementDataset(
