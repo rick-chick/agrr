@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { MastersClientService } from '../../services/masters/masters-client.service';
-import { Fertilize } from '../../domain/fertilizes/fertilize';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
+import { Fertilize } from '../../domain/fertilizes/fertilize';
 import { FertilizeGateway, FertilizeCreatePayload } from '../../usecase/fertilizes/fertilize-gateway';
 
 @Injectable()
@@ -26,9 +25,7 @@ export class FertilizeApiGateway implements FertilizeGateway {
     return this.client.patch<Fertilize>(`/fertilizes/${fertilizeId}`, { fertilize: payload });
   }
 
-  destroy(fertilizeId: number) {
-    return this.client
-      .delete<DeletionUndoResponse>(`/fertilizes/${fertilizeId}`)
-      .pipe(map((r) => ({ undo: r })));
+  destroy(fertilizeId: number): Observable<DeletionUndoResponse | undefined> {
+    return this.client.deleteWithUndo(`/fertilizes/${fertilizeId}`);
   }
 }

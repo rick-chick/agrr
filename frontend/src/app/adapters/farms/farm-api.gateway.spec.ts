@@ -11,7 +11,7 @@ describe('FarmApiGateway', () => {
     get: ReturnType<typeof vi.fn>;
     post: ReturnType<typeof vi.fn>;
     patch: ReturnType<typeof vi.fn>;
-    delete: ReturnType<typeof vi.fn>;
+    deleteWithUndo: ReturnType<typeof vi.fn>;
   };
   let gateway: FarmApiGateway;
 
@@ -20,7 +20,7 @@ describe('FarmApiGateway', () => {
       get: vi.fn(),
       post: vi.fn(),
       patch: vi.fn(),
-      delete: vi.fn()
+      deleteWithUndo: vi.fn()
     };
     gateway = new FarmApiGateway(client as unknown as MastersClientService);
   });
@@ -178,21 +178,21 @@ describe('FarmApiGateway', () => {
   });
 
   describe('destroy', () => {
-    it('returns Observable<DeletionUndoResponse>', async () => {
+    it('returns DeletionUndoResponse via deleteWithUndo', async () => {
       const response: DeletionUndoResponse = {
         undo_token: 'token123',
         toast_message: 'Farm deleted',
-        undo_path: '/api/v1/farms/undo'
+        undo_path: '/undo_deletion?undo_token=token123'
       };
-      vi.mocked(client.delete).mockReturnValue(of(response));
+      vi.mocked(client.deleteWithUndo).mockReturnValue(of(response));
 
       const result = await firstValueFrom(gateway.destroy(1));
       expect(result).toEqual(response);
-      expect(client.delete).toHaveBeenCalledWith('/farms/1');
+      expect(client.deleteWithUndo).toHaveBeenCalledWith('/farms/1');
     });
 
     it('forwards error when api fails', async () => {
-      vi.mocked(client.delete).mockReturnValue(throwError(() => new Error('network error')));
+      vi.mocked(client.deleteWithUndo).mockReturnValue(throwError(() => new Error('network error')));
 
       await expect(firstValueFrom(gateway.destroy(1))).rejects.toThrow('network error');
     });
@@ -253,21 +253,21 @@ describe('FarmApiGateway', () => {
   });
 
   describe('destroyField', () => {
-    it('returns Observable<DeletionUndoResponse>', async () => {
+    it('returns DeletionUndoResponse via deleteWithUndo', async () => {
       const response: DeletionUndoResponse = {
         undo_token: 'token456',
         toast_message: 'Field deleted',
-        undo_path: '/api/v1/fields/undo'
+        undo_path: '/undo_deletion?undo_token=token456'
       };
-      vi.mocked(client.delete).mockReturnValue(of(response));
+      vi.mocked(client.deleteWithUndo).mockReturnValue(of(response));
 
       const result = await firstValueFrom(gateway.destroyField(1));
       expect(result).toEqual(response);
-      expect(client.delete).toHaveBeenCalledWith('/fields/1');
+      expect(client.deleteWithUndo).toHaveBeenCalledWith('/fields/1');
     });
 
     it('forwards error when api fails', async () => {
-      vi.mocked(client.delete).mockReturnValue(throwError(() => new Error('network error')));
+      vi.mocked(client.deleteWithUndo).mockReturnValue(throwError(() => new Error('network error')));
 
       await expect(firstValueFrom(gateway.destroyField(1))).rejects.toThrow('network error');
     });

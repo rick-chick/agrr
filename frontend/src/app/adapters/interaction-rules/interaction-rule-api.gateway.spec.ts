@@ -9,7 +9,7 @@ describe('InteractionRuleApiGateway', () => {
     get: ReturnType<typeof vi.fn>;
     post: ReturnType<typeof vi.fn>;
     patch: ReturnType<typeof vi.fn>;
-    delete: ReturnType<typeof vi.fn>;
+    deleteWithUndo: ReturnType<typeof vi.fn>;
   };
   let gateway: InteractionRuleApiGateway;
 
@@ -18,7 +18,7 @@ describe('InteractionRuleApiGateway', () => {
       get: vi.fn(),
       post: vi.fn(),
       patch: vi.fn(),
-      delete: vi.fn()
+      deleteWithUndo: vi.fn()
     };
     gateway = new InteractionRuleApiGateway(client as unknown as MastersClientService);
   });
@@ -43,8 +43,8 @@ describe('InteractionRuleApiGateway', () => {
     expect(client.get).toHaveBeenCalledWith('/interaction_rules');
   });
 
-  it('destroy uses masters API relative path and maps undo response', async () => {
-    vi.mocked(client.delete).mockReturnValue(
+  it('destroy uses deleteWithUndo on masters API path', async () => {
+    vi.mocked(client.deleteWithUndo).mockReturnValue(
       of({
         undo_token: 'token-1',
         undo_path: '/undo_deletion?undo_token=token-1',
@@ -53,7 +53,7 @@ describe('InteractionRuleApiGateway', () => {
     );
 
     const result = await firstValueFrom(gateway.destroy(42));
-    expect(client.delete).toHaveBeenCalledWith('/interaction_rules/42');
-    expect(result.undo?.undo_token).toBe('token-1');
+    expect(client.deleteWithUndo).toHaveBeenCalledWith('/interaction_rules/42');
+    expect(result?.undo_token).toBe('token-1');
   });
 });

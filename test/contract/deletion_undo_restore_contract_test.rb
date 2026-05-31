@@ -3,7 +3,7 @@
 require "test_helper"
 require_relative "contract_test_case"
 
-# R4: POST /undo_deletion after masters API destroy (mirrors DeletionUndosControllerTest)
+# R4: POST /undo_deletion after masters API destroy (agrr-server)
 class DeletionUndoRestoreContractTest < ContractTestCase
   setup do
     @user = create(:user)

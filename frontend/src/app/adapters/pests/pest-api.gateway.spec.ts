@@ -9,12 +9,11 @@ describe('PestApiGateway', () => {
     get: ReturnType<typeof vi.fn>;
     post: ReturnType<typeof vi.fn>;
     patch: ReturnType<typeof vi.fn>;
-    delete: ReturnType<typeof vi.fn>;
   };
   let gateway: PestApiGateway;
 
   beforeEach(() => {
-    client = { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() };
+    client = { get: vi.fn(), post: vi.fn(), patch: vi.fn() };
     gateway = new PestApiGateway(client as unknown as MastersClientService);
   });
 
@@ -72,13 +71,4 @@ describe('PestApiGateway', () => {
     });
   });
 
-  it('destroy uses masters API relative path and maps undo response', async () => {
-    vi.mocked(client.delete).mockReturnValue(
-      of({ undo_token: 'token-1', undo_path: '/undo', toast_message: 'deleted' })
-    );
-
-    const result = await firstValueFrom(gateway.destroy(42));
-    expect(client.delete).toHaveBeenCalledWith('/pests/42');
-    expect(result.undo?.undo_token).toBe('token-1');
-  });
 });

@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { MastersClientService } from '../../services/masters/masters-client.service';
 import { Pest } from '../../domain/pests/pest';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
@@ -26,9 +25,7 @@ export class PestApiGateway implements PestGateway {
     return this.client.patch<Pest>(`/pests/${pestId}`, { pest: payload });
   }
 
-  destroy(pestId: number) {
-    return this.client
-      .delete<DeletionUndoResponse>(`/pests/${pestId}`)
-      .pipe(map((r) => ({ undo: r })));
+  destroy(pestId: number): Observable<DeletionUndoResponse | undefined> {
+    return this.client.deleteWithUndo(`/pests/${pestId}`);
   }
 }

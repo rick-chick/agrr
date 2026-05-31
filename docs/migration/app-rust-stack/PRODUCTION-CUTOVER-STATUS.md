@@ -20,7 +20,7 @@
 
 | # | 項目 | 備考 |
 |---|------|------|
-| 1 | URL map の **命名整理**（任意・P7） | パスは `agrr-rails-backend` → 実体は Rust。`rust-backend` へのリネームまたは ADR どおりの整理のみ残る |
+| 1 | URL map の **命名整理**（任意・**スキップ可**） | GCP 上の backend **リソース名**（`agrr-rails-backend`）のみ。`agrr.net` のパス・NEG 先（`agrr-production`）は既に Rust。**リネームしなくても本番挙動は変わらない**（[`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md) の `rust-backend` は論理名）。実施する場合のみ `url-maps validate` → `import` で手順ミスに注意 |
 | 2 | 本番 **手動スモーク** | OAuth ログイン、`auth/me`、計画作成→最適化 WS、マスタ CRUD、`save_plan`、`POST /undo_deletion` |
 | 3 | 本番 **us 参照データ**（必要時） | 7 件の `crop_stages` 欠損。`in` repair では直らない。運用合意のうえ `agrr-migrate data apply` |
 | 4 | **P7** Rails 資産削除（残） | [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) — URL map 命名・Rails 本番イメージ廃止など |

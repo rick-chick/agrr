@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { MastersClientService } from '../../services/masters/masters-client.service';
 import { InteractionRule } from '../../domain/interaction-rules/interaction-rule';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
@@ -26,9 +25,7 @@ export class InteractionRuleApiGateway implements InteractionRuleGateway {
     return this.client.patch<InteractionRule>(`/interaction_rules/${interactionRuleId}`, { interaction_rule: payload });
   }
 
-  destroy(interactionRuleId: number) {
-    return this.client
-      .delete<DeletionUndoResponse>(`/interaction_rules/${interactionRuleId}`)
-      .pipe(map((r) => ({ undo: r })));
+  destroy(interactionRuleId: number): Observable<DeletionUndoResponse | undefined> {
+    return this.client.deleteWithUndo(`/interaction_rules/${interactionRuleId}`);
   }
 }

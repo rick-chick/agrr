@@ -1,13 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { MastersClientService } from '../../services/masters/masters-client.service';
 import { AgriculturalTask } from '../../domain/agricultural-tasks/agricultural-task';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import {
   AgriculturalTaskGateway,
-  AgriculturalTaskCreatePayload,
-  AgriculturalTaskDeleteResponse
+  AgriculturalTaskCreatePayload
 } from '../../usecase/agricultural-tasks/agricultural-task-gateway';
 
 @Injectable()
@@ -30,9 +28,7 @@ export class AgriculturalTaskApiGateway implements AgriculturalTaskGateway {
     return this.client.patch<AgriculturalTask>(`/agricultural_tasks/${agriculturalTaskId}`, { agricultural_task: payload });
   }
 
-  destroy(agriculturalTaskId: number): Observable<AgriculturalTaskDeleteResponse> {
-    return this.client
-      .delete<DeletionUndoResponse>(`/agricultural_tasks/${agriculturalTaskId}`)
-      .pipe(map((r) => ({ undo: r })));
+  destroy(agriculturalTaskId: number): Observable<DeletionUndoResponse | undefined> {
+    return this.client.deleteWithUndo(`/agricultural_tasks/${agriculturalTaskId}`);
   }
 }
