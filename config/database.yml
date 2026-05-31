@@ -11,7 +11,8 @@ default: &default
 development:
   primary:
     <<: *default
-    database: storage/development.sqlite3
+    # Optional: isolated play DB (scripts/verify-weather-sqlite-local.sh). Rust: AGRR_SQLITE_PATH.
+    database: <%= ENV.fetch("AGRR_PRIMARY_SQLITE_PATH", "storage/development.sqlite3") %>
   cache:
     <<: *default
     database: storage/development_cache.sqlite3

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 const repoRoot = join(process.cwd(), '..');
 const useDevSession = !!process.env.E2E_CAPTURE_DEV_SESSION;
-/** 事前に scripts/e2e-strangler-stack.sh で :3000 を起動済みのとき Playwright は Rails を立てない */
+/** 事前に scripts/dev-rust-stack.sh で :3000 を起動済みのとき Playwright は Rails を立てない */
 const useStrangler = !!process.env.E2E_STRANGLER;
 
 const ngServe = {
@@ -16,7 +16,7 @@ const ngServe = {
 };
 
 /**
- * Legacy: Rails on :3000 for mock login. Prefer `E2E_STRANGLER=1` + `./scripts/e2e-strangler-stack.sh`
+ * Legacy: Rails on :3000 for mock login. Prefer `E2E_STRANGLER=1` + `./scripts/dev-rust-stack.sh`
  * (agrr-server mock login via nginx :3000 → :8080). Only used when E2E_CAPTURE_DEV_SESSION without E2E_STRANGLER.
  */
 const railsDev = {
@@ -35,7 +35,7 @@ const railsDev = {
  *
  * - `route-manifest-visual.spec.ts` は **`npm run e2e:capture-for-agent`** が付与する `E2E_CAPTURE_DEV_SESSION=1` のときのみ実行（それ以外は skip）。
  * - Mock login: **agrr-server** `GET /auth/test/mock_login_as/{user}`（`E2E_API_ORIGIN` 既定 127.0.0.1:3000 = nginx strangler）。
- * - `E2E_STRANGLER=1`: Rails webServer を起動しない。事前に `scripts/e2e-strangler-stack.sh`（推奨 `AGRR_RUST_API=1`）。
+ * - `E2E_STRANGLER=1`: Rails webServer を起動しない。事前に `./scripts/dev-rust-stack.sh`。
  * - `getApiBaseUrl()` が 127.0.0.1:4200 → 127.0.0.1:3000 を向ける前提。
  */
 export default defineConfig({

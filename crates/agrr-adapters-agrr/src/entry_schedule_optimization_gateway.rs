@@ -6,6 +6,7 @@ use serde_json::Value;
 use tempfile::NamedTempFile;
 use time::Date;
 
+use crate::agrr_daemon_debug_dump::copy_temp_file_to_debug;
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
 
 pub struct EntryScheduleOptimizationAgrrDaemonGateway {
@@ -63,6 +64,9 @@ impl EntryScheduleOptimizationGateway for EntryScheduleOptimizationAgrrDaemonGat
             "daily_fixed_cost": 0.01
         });
         let field_file = Self::write_temp_json(&field, "entry_field")?;
+        copy_temp_file_to_debug(weather_file.path(), "optimization_weather");
+        copy_temp_file_to_debug(field_file.path(), "optimization_field");
+        copy_temp_file_to_debug(crop_file.path(), "optimization_crop");
         let mut args = vec![
             "optimize".into(),
             "period".into(),

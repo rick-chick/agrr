@@ -23,7 +23,7 @@ use agrr_domain::cultivation_plan::dtos::{
     AddCropAdjustResult, CultivationPlanRestAuth, PlanAllocationAdjustFailure,
     PlanAllocationAdjustInput, PlanAllocationAdjustOutput,
 };
-use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustDebugDumpNullGateway;
+use crate::plan_allocation_adjust_debug_dump::plan_allocation_adjust_debug_dump;
 use agrr_domain::cultivation_plan::interactors::{
     AddCropInteractor, AddFieldInteractor, PlanAllocationAdjustInteractor, RemoveFieldInteractor,
 };
@@ -198,7 +198,8 @@ where
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let plan_crop_gateway = CultivationPlanPlanCropSqliteGateway::new(pool.clone());
-    let read_gateway = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
+    let read_gateway =
+        PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), state.weather_data.clone());
     let candidates_agrr = PlanAllocationCandidatesAgrrDaemonGateway::from_env();
     let candidates_service = PlanAllocationCandidatesService::new(
         pool.clone(),
@@ -210,10 +211,10 @@ where
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
     let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
     let events = NoopOptimizationEventsGateway;
-    let debug_dump = PlanAllocationAdjustDebugDumpNullGateway;
     let logger = StderrLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
+    let debug_dump = plan_allocation_adjust_debug_dump(&clock, &logger);
     let rule_seed = format!(
         "{:08x}",
         std::time::SystemTime::now()
@@ -626,14 +627,15 @@ pub(crate) async fn run_adjust_plan(
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
-    let read_gateway = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
+    let read_gateway =
+        PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), state.weather_data.clone());
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
     let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
     let events = NoopOptimizationEventsGateway;
-    let debug_dump = PlanAllocationAdjustDebugDumpNullGateway;
     let logger = StderrLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
+    let debug_dump = plan_allocation_adjust_debug_dump(&clock, &logger);
     let rule_seed = format!(
         "{:08x}",
         std::time::SystemTime::now()

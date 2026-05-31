@@ -5,7 +5,7 @@
 ## 前提
 
 1. `bundle exec rails db:prepare`（`storage/development.sqlite3` — 参照農場・作業目安用 fixture を含む）
-2. 別ターミナル: リポジトリ root で `AGRR_RUST_API=1 ./scripts/e2e-strangler-stack.sh`
+2. 別ターミナル: リポジトリ root で `./scripts/dev-rust-stack.sh`
 3. frontend で:
 
 ```bash

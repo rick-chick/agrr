@@ -8,7 +8,13 @@ use serde_json::Value;
 use tempfile::NamedTempFile;
 use time::Date;
 
+use crate::agrr_daemon_debug_dump::{copy_temp_file_to_debug, write_json_value_to_debug};
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
+use crate::daemon_response::{
+    ensure_daemon_command_success, parse_daemon_json_payload, read_daemon_output_json_file,
+};
+use crate::daemon_temp_file::write_temp_json_path;
+use crate::progress_daemon_normalize::{empty_progress_result, normalize_progress_result};
 
 pub struct FieldCultivationClimateAgrrGateway {
     client: AgrrDaemonClient,
@@ -31,10 +37,6 @@ impl FieldCultivationClimateAgrrGateway {
         file.as_file().sync_all().ok()?;
         Some(file)
     }
-
-    fn empty_progress() -> Value {
-        serde_json::json!({ "daily_progress": [] })
-    }
 }
 
 impl FieldCultivationClimateProgressGateway for FieldCultivationClimateAgrrGateway {
@@ -45,16 +47,18 @@ impl FieldCultivationClimateProgressGateway for FieldCultivationClimateAgrrGatew
         weather_payload: &Value,
     ) -> Value {
         if !self.client.daemon_running() {
-            return Self::empty_progress();
+            return empty_progress_result();
         }
         let Some(crop_file) = Self::write_temp_json(crop_requirement, "progress_crop") else {
-            return Self::empty_progress();
+            return empty_progress_result();
         };
         let Some(weather_file) = Self::write_temp_json(weather_payload, "progress_weather") else {
-            return Self::empty_progress();
+            return empty_progress_result();
         };
+        copy_temp_file_to_debug(crop_file.path(), "progress_crop");
+        copy_temp_file_to_debug(weather_file.path(), "progress_weather");
+        // Rails `DaemonClient#progress`: no leading dummy_path (BaseGatewayV2 strips it).
         let args = vec![
-            "dummy_path".into(),
             "progress".into(),
             "--crop-file".into(),
             crop_file.path().to_string_lossy().into_owned(),
@@ -66,9 +70,12 @@ impl FieldCultivationClimateProgressGateway for FieldCultivationClimateAgrrGatew
             "json".into(),
         ];
         match self.client.execute_daemon_args(&args) {
-            Ok(v) => v,
-            Err(AgrrDaemonError::NotRunning(_)) => Self::empty_progress(),
-            Err(_) => Self::empty_progress(),
+            Ok(wrapper) => match parse_daemon_json_payload(&wrapper) {
+                Ok(payload) => normalize_progress_result(&payload),
+                Err(_) => empty_progress_result(),
+            },
+            Err(AgrrDaemonError::NotRunning(_)) => empty_progress_result(),
+            Err(_) => empty_progress_result(),
         }
     }
 }
@@ -78,7 +85,8 @@ impl FieldCultivationPredictionGateway for FieldCultivationClimateAgrrGateway {
         if !self.client.daemon_running() {
             return None;
         }
-        let hist_file = Self::write_temp_json(historical_data, "predict_hist")?;
+        let hist_file = write_temp_json_path(historical_data, "predict_hist").ok()?;
+        copy_temp_file_to_debug(&hist_file, "prediction_input");
         let out_path = std::env::temp_dir().join(format!(
             "agrr_predict_{}",
             std::time::SystemTime::now()
@@ -89,7 +97,7 @@ impl FieldCultivationPredictionGateway for FieldCultivationClimateAgrrGateway {
         let args = vec![
             "predict".into(),
             "--input".into(),
-            hist_file.path().to_string_lossy().into_owned(),
+            hist_file.to_string_lossy().into_owned(),
             "--output".into(),
             out_path.to_string_lossy().into_owned(),
             "--days".into(),
@@ -100,11 +108,16 @@ impl FieldCultivationPredictionGateway for FieldCultivationClimateAgrrGateway {
             "json".into(),
         ];
         let response = self.client.execute_daemon_args(&args).ok()?;
-        if response.get("data").is_some() {
-            return Some(response);
+        ensure_daemon_command_success(&response).ok()?;
+        let payload = read_daemon_output_json_file(&out_path).ok()?;
+        write_json_value_to_debug("prediction_output", &payload);
+        if payload.get("data").is_some() {
+            write_json_value_to_debug("prediction_transformed", &payload);
+            return Some(payload);
         }
-        std::fs::read_to_string(&out_path)
-            .ok()
-            .and_then(|s| serde_json::from_str(&s).ok())
+        if payload.get("predictions").is_some() {
+            return Some(payload);
+        }
+        None
     }
 }

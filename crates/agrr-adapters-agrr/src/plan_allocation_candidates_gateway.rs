@@ -7,6 +7,7 @@ use agrr_domain::cultivation_plan::gateways::PlanAllocationCandidatesGateway;
 use serde_json::Value;
 use time::Date;
 
+use crate::agrr_daemon_debug_dump::copy_temp_file_to_debug;
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
 use crate::daemon_temp_file::write_temp_json_path;
 
@@ -66,6 +67,11 @@ impl PlanAllocationCandidatesGateway for PlanAllocationCandidatesAgrrDaemonGatew
         let weather_path = Self::write_temp_json(weather_data, "candidates_weather")?;
         let output_path = Self::write_temp_json(&Value::Object(serde_json::Map::new()), "candidates_output")?;
 
+        copy_temp_file_to_debug(&allocation_path, "candidates_allocation");
+        copy_temp_file_to_debug(&fields_path, "candidates_fields");
+        copy_temp_file_to_debug(&crops_path, "candidates_crops");
+        copy_temp_file_to_debug(&weather_path, "candidates_weather");
+
         let mut args = vec![
             "optimize".into(),
             "candidates".into(),
@@ -91,6 +97,7 @@ impl PlanAllocationCandidatesGateway for PlanAllocationCandidatesAgrrDaemonGatew
 
         let rules_path = if let Some(rules) = interaction_rules {
             let rules_path = Self::write_temp_json(rules, "candidates_rules")?;
+            copy_temp_file_to_debug(&rules_path, "candidates_rules");
             args.push("--interaction-rules-file".into());
             args.push(rules_path.to_string_lossy().into_owned());
             Some(rules_path)
@@ -103,6 +110,7 @@ impl PlanAllocationCandidatesGateway for PlanAllocationCandidatesAgrrDaemonGatew
             .execute_daemon_args(&args)
             .map_err(map_daemon_error)?;
 
+        copy_temp_file_to_debug(&output_path, "candidates_output");
         let result = parse_candidates_output(&output_path);
         Self::remove_temp_path(&allocation_path);
         Self::remove_temp_path(&fields_path);

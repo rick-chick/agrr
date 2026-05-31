@@ -43,7 +43,7 @@ class InternalFarmWeatherContractTest < ContractTestCase
     if ENV["WEATHER_DATA_STORAGE"] == "gcs"
       assert_operator json.fetch("count", 0), :>, 0,
                       "expected GCS period read count > 0"
-      assert_empty WeatherData.where(weather_location_id: @weather_location.id),
+      assert_empty ::WeatherDatum.where(weather_location_id: @weather_location.id),
                    "bulk path must not rely on SQLite weather_data rows"
     end
   end

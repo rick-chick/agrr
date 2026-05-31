@@ -61,7 +61,7 @@ pub use cultivation_plan::{
     CropRowsAvailablePrivateSqliteGateway, CultivationPlanRestPlanReadDomainSqliteGateway,
     CultivationPlanOptimizationSqliteGateway, CultivationPlanRestPlanReadSqliteGateway,
     CultivationPlanSqliteGateway, OptimizationPlanReadSqliteGateway,
-    PlanAllocationAdjustReadSqliteGateway,
+    PlanAllocationAdjustDebugDumpFileGateway, PlanAllocationAdjustReadSqliteGateway,
     PublicPlanSavePersistenceSqliteAdapter, PublicPlanSaveReadSqliteGateway,
 };
 pub use farm::FarmSqliteGateway;

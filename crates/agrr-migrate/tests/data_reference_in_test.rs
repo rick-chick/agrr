@@ -26,7 +26,10 @@ fn data_apply_reference_data_in_region() {
         "SELECT COUNT(*) FROM agricultural_tasks WHERE region = 'in' AND is_reference = 1",
     );
 
-    assert!(farms >= 1, "in reference farms: {farms}");
+    assert!(
+        farms >= 50,
+        "in reference farms: {farms} (expected all farms from india_reference_weather.json keys when fixture is present, even with AGRR_MIGRATE_SKIP_WEATHER)"
+    );
     assert!(crops >= 10, "in reference crops: {crops}");
     assert_eq!(28, pests, "in extracted pests JSON has 28 entries");
     assert_eq!(17, tasks, "in extracted tasks JSON has 17 entries");

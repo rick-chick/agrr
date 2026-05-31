@@ -7,6 +7,7 @@ use serde_json::Value;
 use std::path::PathBuf;
 use time::Date;
 
+use crate::agrr_daemon_debug_dump::copy_temp_file_to_debug;
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
 use crate::daemon_response::parse_daemon_json_payload;
 use crate::daemon_temp_file::write_temp_json_path;
@@ -77,6 +78,12 @@ impl PlanAllocationAdjustGateway for PlanAllocationAdjustAgrrDaemonGateway {
         )?;
         let weather_path = Self::write_temp_json(weather_data, "weather")?;
 
+        copy_temp_file_to_debug(&allocation_path, "adjust_allocation");
+        copy_temp_file_to_debug(&moves_path, "adjust_moves");
+        copy_temp_file_to_debug(&fields_path, "adjust_fields");
+        copy_temp_file_to_debug(&crops_path, "adjust_crops");
+        copy_temp_file_to_debug(&weather_path, "adjust_weather");
+
         let mut args: Vec<String> = vec![
             "optimize".into(),
             "adjust".into(),
@@ -100,6 +107,7 @@ impl PlanAllocationAdjustGateway for PlanAllocationAdjustAgrrDaemonGateway {
 
         let rules_path = if let Some(rules) = interaction_rules {
             let rules_path = Self::write_temp_json(rules, "interaction_rules")?;
+            copy_temp_file_to_debug(&rules_path, "adjust_rules");
             args.push("--interaction-rules-file".into());
             args.push(rules_path.to_string_lossy().into_owned());
             Some(rules_path)

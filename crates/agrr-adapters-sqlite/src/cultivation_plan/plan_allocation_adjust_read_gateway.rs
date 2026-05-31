@@ -11,18 +11,22 @@ use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustReadGateway;
 use agrr_domain::cultivation_plan::mappers::PlanAllocationAdjustReadSnapshotParts;
 use agrr_domain::field_cultivation::dtos::WeatherPredictionTargets;
 use agrr_domain::weather_data::dtos::{CultivationPlanWeather, WeatherLocation};
+use agrr_domain::weather_data::gateways::WeatherDataGateway;
 use rusqlite::{params, OptionalExtension};
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::sync::Arc;
 use time::Date;
 
 pub struct PlanAllocationAdjustReadSqliteGateway {
     pool: SqlitePool,
+    weather_data: Arc<dyn WeatherDataGateway>,
 }
 
 impl PlanAllocationAdjustReadSqliteGateway {
-    pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+    /// Ruby: `PlanAllocationAdjustReadActiveRecordGateway.new(weather_data_gateway: ...)`
+    pub fn new(pool: SqlitePool, weather_data: Arc<dyn WeatherDataGateway>) -> Self {
+        Self { pool, weather_data }
     }
 }
 
@@ -217,38 +221,27 @@ impl PlanAllocationAdjustReadGateway for PlanAllocationAdjustReadSqliteGateway {
         let Some(weather_location_id) = weather_location_id else {
             return Ok(vec![]);
         };
-        let start = historical_start.to_string();
-        let end = historical_end.to_string();
-        self.pool.with_read_box(|conn| {
-            let mut stmt = conn.prepare(
-                "SELECT date, temperature_max, temperature_min, temperature_mean, \
-                 precipitation, sunshine_hours, wind_speed, weather_code \
-                 FROM weather_data \
-                 WHERE weather_location_id = ?1 AND date >= ?2 AND date <= ?3 \
-                 AND temperature_max IS NOT NULL AND temperature_min IS NOT NULL \
-                 ORDER BY date",
-            )?;
-            let rows = stmt.query_map(
-                params![weather_location_id, start, end],
-                |row| {
-                    Ok(json!({
-                        "date": row.get::<_, String>(0)?,
-                        "temperature_max": row.get::<_, f64>(1)?,
-                        "temperature_min": row.get::<_, f64>(2)?,
-                        "temperature_mean": row.get::<_, Option<f64>>(3)?,
-                        "precipitation": row.get::<_, Option<f64>>(4)?,
-                        "sunshine_hours": row.get::<_, Option<f64>>(5)?,
-                        "wind_speed": row.get::<_, Option<f64>>(6)?,
-                        "weather_code": row.get::<_, Option<i64>>(7)?,
-                    }))
-                },
-            )?;
-            let mut out = Vec::new();
-            for row in rows {
-                out.push(row?);
+        let dtos = self
+            .weather_data
+            .weather_data_for_period(weather_location_id, historical_start, historical_end)
+            .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.to_string().into() })?;
+        let mut out = Vec::new();
+        for dto in dtos {
+            if dto.temperature_max.is_none() || dto.temperature_min.is_none() {
+                continue;
             }
-            Ok(out)
-        })
+            out.push(json!({
+                "date": dto.date.to_string(),
+                "temperature_max": dto.temperature_max,
+                "temperature_min": dto.temperature_min,
+                "temperature_mean": dto.temperature_mean,
+                "precipitation": dto.precipitation,
+                "sunshine_hours": dto.sunshine_hours,
+                "wind_speed": dto.wind_speed,
+                "weather_code": dto.weather_code,
+            }));
+        }
+        Ok(out)
     }
 
     fn plan_summary_for_adjust_response(
@@ -419,4 +412,95 @@ fn build_plan_crop_snapshots(
         out.push(entry);
     }
     Ok(out)
+}
+
+#[cfg(test)]
+mod list_historical_weather_rows_tests {
+    use super::*;
+    use crate::weather_data::gcs_weather_test_support::{
+        with_local_gcs_root, write_year_fixture, GcsBulkWeatherGateway,
+    };
+    use crate::weather_data::WeatherDataSqliteGateway;
+    use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustReadGateway;
+    use time::Month;
+
+    fn temp_pool_with_weather_row() -> (SqlitePool, i64) {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!("agrr_adjust_read_weather_{n}.sqlite3"));
+        let _ = std::fs::remove_file(&path);
+        let pool = SqlitePool::new(path.to_string_lossy());
+        let location_id: i64 = pool
+            .with_write(|conn| {
+                conn.execute_batch(
+                    "CREATE TABLE weather_locations (
+                        id INTEGER PRIMARY KEY,
+                        latitude REAL NOT NULL,
+                        longitude REAL NOT NULL,
+                        elevation REAL,
+                        timezone TEXT
+                    );
+                    CREATE TABLE weather_data (
+                        id INTEGER PRIMARY KEY,
+                        weather_location_id INTEGER NOT NULL,
+                        date TEXT NOT NULL,
+                        temperature_max REAL,
+                        temperature_min REAL,
+                        temperature_mean REAL,
+                        precipitation REAL,
+                        sunshine_hours REAL,
+                        wind_speed REAL,
+                        weather_code INTEGER
+                    );
+                    INSERT INTO weather_locations (id, latitude, longitude, elevation, timezone)
+                    VALUES (10, 35.0, 135.0, NULL, 'Asia/Tokyo');
+                    INSERT INTO weather_data (weather_location_id, date, temperature_max, temperature_min, temperature_mean)
+                    VALUES (10, '2024-06-01', 25.0, 15.0, 20.0);",
+                )?;
+                Ok(10_i64)
+            })
+            .expect("schema");
+        (pool, location_id)
+    }
+
+    #[test]
+    fn list_historical_weather_rows_reads_sqlite_when_active_record_gateway() {
+        let (pool, location_id) = temp_pool_with_weather_row();
+        let weather = Arc::new(WeatherDataSqliteGateway::new(pool.clone()));
+        let gw = PlanAllocationAdjustReadSqliteGateway::new(pool, weather);
+        let start = Date::from_calendar_date(2024, Month::June, 1).unwrap();
+        let end = Date::from_calendar_date(2024, Month::June, 30).unwrap();
+        let rows = gw
+            .list_historical_weather_rows(Some(location_id), start, end)
+            .expect("rows");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["date"], "2024-06-01");
+    }
+
+    #[test]
+    fn list_historical_weather_rows_reads_gcs_bulk_without_sqlite_rows() {
+        let (pool, location_id) = temp_pool_with_weather_row();
+        with_local_gcs_root(|root| {
+            std::env::set_var("WEATHER_DATA_STORAGE", "gcs");
+            write_year_fixture(
+                root,
+                location_id,
+                2024,
+                r#"{"2024-06-01":{"temperature_max":22.0,"temperature_min":12.0}}"#,
+            );
+            let weather: Arc<dyn WeatherDataGateway> = Arc::new(
+                GcsBulkWeatherGateway::from_local_env().expect("gcs gateway"),
+            );
+            let gw = PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather);
+            let start = Date::from_calendar_date(2024, Month::June, 1).unwrap();
+            let end = Date::from_calendar_date(2024, Month::June, 30).unwrap();
+            let rows = gw
+                .list_historical_weather_rows(Some(location_id), start, end)
+                .expect("rows");
+            assert_eq!(rows.len(), 1);
+            assert_eq!(rows[0]["temperature_max"], 22.0);
+            std::env::remove_var("WEATHER_DATA_STORAGE");
+        });
+    }
 }

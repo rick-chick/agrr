@@ -1,4 +1,5 @@
-# P6 rust-backend Cloud Run image (stub / strangler edge)
+# agrr-server on Cloud Run — same runtime bootstrap as Dockerfile.production (Litestream + agrr-migrate).
+# Entrypoint: scripts/start_agrr_server.sh
 FROM rust:1-bookworm AS builder
 WORKDIR /app
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
@@ -6,10 +7,46 @@ COPY crates ./crates
 RUN cargo build --release -p agrr-server -p agrr-migrate
 
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates sqlite3 && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    sqlite3 \
+    wget \
+    && wget -q https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb \
+    && dpkg -i litestream-v0.3.13-linux-amd64.deb \
+    && rm litestream-v0.3.13-linux-amd64.deb \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+
 COPY --from=builder /app/target/release/agrr-server /usr/local/bin/agrr-server
 COPY --from=builder /app/target/release/agrr-migrate /usr/local/bin/agrr-migrate
-ENV PORT=8080
+
+COPY config/litestream.yml /etc/litestream.yml
+COPY scripts/db_bootstrap_common.sh scripts/start_agrr_server.sh scripts/run-agrr-migrate.sh /app/scripts/
+RUN chmod +x /app/scripts/db_bootstrap_common.sh /app/scripts/start_agrr_server.sh /app/scripts/run-agrr-migrate.sh
+
+# Optional agrr Python binary (optimization / weather daemon)
+COPY lib/core/ /tmp/agrr_temp/
+RUN if [ -f /tmp/agrr_temp/agrr ]; then \
+      mv /tmp/agrr_temp/agrr /usr/local/bin/agrr && chmod +x /usr/local/bin/agrr && \
+      if [ -d /tmp/agrr_temp/_internal ]; then \
+        mv /tmp/agrr_temp/_internal /usr/local/bin/_internal; \
+      fi && \
+      echo "✓ agrr binary included (USE_AGRR_DAEMON=true to start)"; \
+    else \
+      echo "⚠ agrr binary not found (USE_AGRR_DAEMON ignored)"; \
+    fi && rm -rf /tmp/agrr_temp
+
+ENV AGRR_APP_ROOT=/app \
+    AGRR_SQLITE_PATH=/tmp/production.sqlite3 \
+    AGRR_CACHE_SQLITE_PATH=/tmp/production_cache.sqlite3 \
+    PORT=8080
+
 EXPOSE 8080
-CMD ["agrr-server"]
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD curl -f http://127.0.0.1:8080/up || exit 1
+
+CMD ["/app/scripts/start_agrr_server.sh"]

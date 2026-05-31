@@ -14,7 +14,11 @@ pub struct CultivationPlanPhaseBuild {
 pub fn build(phase_name: CultivationPlanPhaseName, failure_subphase: Option<&str>) -> CultivationPlanPhaseBuild {
     match phase_name {
         CultivationPlanPhaseName::StartOptimizing => CultivationPlanPhaseBuild {
-            attrs: HashMap::from([("status".into(), "optimizing".into())]),
+            attrs: HashMap::from([
+                ("status".into(), "optimizing".into()),
+                ("optimization_phase".into(), "optimizing".into()),
+                ("optimization_phase_message".into(), String::new()),
+            ]),
             message_key: None,
             broadcast: false,
         },

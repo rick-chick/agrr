@@ -82,18 +82,24 @@ fn optimization_snapshot_payload(
         }
         return Some(json!({
             "status": "completed",
-            "progress": 100
+            "progress": 100,
+            "phase": "completed",
+            "message_key": "models.cultivation_plan.phases.completed"
         }));
     }
 
     if status == "failed" {
         let message = plan.optimization_phase_message.as_deref();
+        let message_key = message
+            .filter(|m| m.starts_with("models.cultivation_plan.phase_failed."))
+            .or(Some("models.cultivation_plan.phase_failed.default"));
         return Some(json!({
             "status": "failed",
             "progress": 0,
-            "phase": plan.optimization_phase,
+            "phase": "failed",
             "phase_message": message,
-            "message": message
+            "message": message,
+            "message_key": message_key
         }));
     }
 

@@ -40,13 +40,8 @@ const initialControl: PublicPlanSelectCropViewState = {
               <a routerLink="/public-plans/new" class="step-label step-label-link">{{ 'public_plans.steps.region' | translate }}</a>
             </div>
             <div class="compact-step-divider completed"></div>
-            <div class="compact-step completed">
-              <div class="step-number">2</div>
-              <a routerLink="/public-plans/select-farm-size" class="step-label step-label-link">{{ 'public_plans.steps.size' | translate }}</a>
-            </div>
-            <div class="compact-step-divider completed"></div>
             <div class="compact-step active">
-              <div class="step-number">3</div>
+              <div class="step-number">2</div>
               <span class="step-label">{{ 'public_plans.steps.crop' | translate }}</span>
             </div>
           </div>
@@ -113,7 +108,7 @@ const initialControl: PublicPlanSelectCropViewState = {
           <div class="fixed-bottom-bar-container">
             <div class="fixed-bottom-bar-content">
               <div class="fixed-bottom-bar-left">
-                <a routerLink="/public-plans/select-farm-size" class="btn btn-white back-button">
+                <a routerLink="/public-plans/new" class="btn btn-white back-button">
                   {{ 'public_plans.select_crop.bottom_bar.back_button' | translate }}
                 </a>
                 <div class="selection-counter-group">

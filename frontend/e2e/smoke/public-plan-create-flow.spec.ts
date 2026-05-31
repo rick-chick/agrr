@@ -62,7 +62,7 @@ async function assertPublicPlanBusinessComplete(planId: string): Promise<void> {
 
 /**
  * 無料作付け計画: ウィザード → 最適化（Rust Cable）→ 結果。
- * 前提: `AGRR_RUST_API=1 ./scripts/e2e-strangler-stack.sh` + agrr デーモン。
+ * 前提: `./scripts/dev-rust-stack.sh`（agrr デーモン込みで起動）。
  */
 smokeDescribe('public plan create flow (free plan)', () => {
   test.beforeEach(async ({ page }) => {
@@ -92,10 +92,6 @@ smokeDescribe('public plan create flow (free plan)', () => {
       test.skip(true, 'no public farms in dev DB');
     }
     await farmCard.click();
-    await expect(page).toHaveURL(/\/public-plans\/select-farm-size/);
-
-    const sizeCard = page.locator('app-public-plan-select-farm-size .enhanced-selection-card').first();
-    await sizeCard.click();
     await expect(page).toHaveURL(/\/public-plans\/select-crop/);
 
     const cropWithStages = page.locator('app-public-plan-select-crop .enhanced-grid .crop-item', {

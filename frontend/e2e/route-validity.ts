@@ -14,7 +14,7 @@ export const HOST_SELECTOR_BY_PATTERN: Record<string, string> = {
   privacy: 'app-privacy',
   terms: 'app-terms',
   'public-plans/new': 'app-public-plan-create',
-  'public-plans/select-farm-size': 'app-public-plan-select-farm-size',
+  'public-plans/select-farm-size': 'app-public-plan-create',
   'public-plans/select-crop': 'app-public-plan-select-crop',
   'public-plans/optimizing': 'app-public-plan-optimizing',
   'public-plans/results': 'app-public-plan-results',
@@ -93,7 +93,7 @@ export function expectedPathnameFromResolvedGoto(href: string): string {
  * ストア未初期化のクールスタートでは /public-plans/new に寄せる実装（意図したガード）。
  * スナップショットは「そのフローの安定終着」を表す。
  */
-export const PUBLIC_PLAN_REDIRECT_TO_NEW = new Set(['public-plans/select-crop', 'public-plans/select-farm-size']);
+export const PUBLIC_PLAN_REDIRECT_TO_NEW = new Set(['public-plans/select-crop']);
 
 /** スナップショット前に「意図した URL とホストコンポーネントに到達している」ことを保証する */
 export async function assertPageValidity(

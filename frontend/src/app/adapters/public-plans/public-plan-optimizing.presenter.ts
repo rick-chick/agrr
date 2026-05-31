@@ -16,6 +16,27 @@ export class PublicPlanOptimizingPresenter
     this.view = view;
   }
 
+  /** Rust PassthroughTranslator may put i18n keys in phase_message; always resolve for display. */
+  private resolvePhaseMessage(
+    dto: PublicPlanOptimizationMessageDto,
+    prevMessage: string,
+    status: string
+  ): string {
+    const key =
+      dto.message_key ??
+      (dto.phase_message?.startsWith('models.') ? dto.phase_message : undefined);
+    if (key) {
+      const translated = this.translate.instant(key);
+      if (translated !== key) {
+        return translated;
+      }
+    }
+    if (status === 'completed') {
+      return this.translate.instant('models.cultivation_plan.phases.completed');
+    }
+    return dto.phase_message ?? prevMessage;
+  }
+
   present(dto: PublicPlanOptimizationMessageDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
@@ -24,10 +45,7 @@ export class PublicPlanOptimizingPresenter
       prevViewState: prev
     });
     const nextStatus = dto.status ?? prev.status;
-    const nextPhaseMessage =
-      dto.message_key
-        ? this.translate.instant(dto.message_key)
-        : dto.phase_message ?? prev.phaseMessage;
+    const nextPhaseMessage = this.resolvePhaseMessage(dto, prev.phaseMessage, nextStatus);
     this.view.control = {
       status: nextStatus,
       progress: typeof dto.progress === 'number' ? dto.progress : prev.progress,

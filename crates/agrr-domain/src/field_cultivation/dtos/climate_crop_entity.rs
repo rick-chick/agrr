@@ -7,6 +7,8 @@ pub struct ClimateTemperatureRequirement {
     pub optimal_max: Option<f64>,
     pub low_stress_threshold: Option<f64>,
     pub high_stress_threshold: Option<f64>,
+    pub frost_threshold: Option<f64>,
+    pub max_temperature: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -22,32 +24,16 @@ pub struct ClimateCropStage {
     pub thermal_requirement: Option<ClimateThermalRequirement>,
 }
 
-/// Minimal crop view for climate UC (avoids `crop` module dependency).
+/// Crop view for climate UC (agrr `progress` crop-file shape matches `CropAgrrRequirementMapper`).
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClimateCropEntity {
     pub id: i64,
+    pub name: String,
+    pub variety: Option<String>,
+    pub area_per_unit: Option<f64>,
+    pub revenue_per_area: Option<f64>,
+    pub groups: Value,
     pub is_reference: bool,
     pub user_id: Option<i64>,
     pub crop_stages: Vec<ClimateCropStage>,
-}
-
-impl ClimateCropEntity {
-    pub fn stages_for_mapper(&self) -> Vec<Value> {
-        self.crop_stages
-            .iter()
-            .filter_map(|st| {
-                let temp = st.temperature_requirement.as_ref()?;
-                let thermal = st.thermal_requirement.as_ref()?;
-                Some(serde_json::json!({
-                    "name": st.name,
-                    "order": st.order,
-                    "gdd_required": thermal.required_gdd,
-                    "optimal_temperature_min": temp.optimal_min,
-                    "optimal_temperature_max": temp.optimal_max,
-                    "low_stress_threshold": temp.low_stress_threshold,
-                    "high_stress_threshold": temp.high_stress_threshold,
-                }))
-            })
-            .collect()
-    }
 }

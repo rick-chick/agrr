@@ -215,6 +215,11 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
                         Ok(()) => true,
                         Err(e) => {
                             eprintln!("weather_prediction failed plan_id={plan_id}: {e}");
+                            eprintln!(
+                                "  hint: ensure agrr daemon ({}) or set AGRR_USE_MOCK=true for local dev",
+                                std::env::var("AGRR_SOCKET_PATH")
+                                    .unwrap_or_else(|_| "/tmp/agrr.sock".into())
+                            );
                             warn!(plan_id, error = %e, "weather_prediction failed");
                             advance_phase(
                                 &state,

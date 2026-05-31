@@ -25,6 +25,11 @@
         };
         let crop = ClimateCropEntity {
             id: 2,
+            name: "Tomato".into(),
+            variety: None,
+            area_per_unit: None,
+            revenue_per_area: None,
+            groups: serde_json::json!([]),
             is_reference: false,
             user_id: Some(1),
             crop_stages: vec![ClimateCropStage {
@@ -36,6 +41,8 @@
                     optimal_max: Some(25.0),
                     low_stress_threshold: None,
                     high_stress_threshold: None,
+                    frost_threshold: None,
+                    max_temperature: None,
                 }),
                 thermal_requirement: Some(
                     crate::field_cultivation::dtos::ClimateThermalRequirement {

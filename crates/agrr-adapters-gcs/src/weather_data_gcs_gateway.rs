@@ -247,19 +247,33 @@ fn parse_json_map(raw: &str) -> Result<BTreeMap<String, Value>, WeatherDataGcsEr
     }
 }
 
+/// GCS year files store numerics as JSON numbers or strings (Rails `.to_json` parity).
+fn json_value_as_f64(value: &Value) -> Option<f64> {
+    match value {
+        Value::Number(n) => n.as_f64(),
+        Value::String(s) => s.parse().ok(),
+        _ => None,
+    }
+}
+
+fn json_value_as_i32(value: &Value) -> Option<i32> {
+    match value {
+        Value::Number(n) => n.as_i64().and_then(|i| i32::try_from(i).ok()),
+        Value::String(s) => s.parse().ok(),
+        _ => None,
+    }
+}
+
 fn hash_to_dto(date: Date, attrs: &Value) -> WeatherData {
     WeatherData::new(
         date,
-        attrs.get("temperature_max").and_then(|v| v.as_f64()),
-        attrs.get("temperature_min").and_then(|v| v.as_f64()),
-        attrs.get("temperature_mean").and_then(|v| v.as_f64()),
-        attrs.get("precipitation").and_then(|v| v.as_f64()),
-        attrs.get("sunshine_hours").and_then(|v| v.as_f64()),
-        attrs.get("wind_speed").and_then(|v| v.as_f64()),
-        attrs
-            .get("weather_code")
-            .and_then(|v| v.as_i64())
-            .map(|n| n as i32),
+        attrs.get("temperature_max").and_then(json_value_as_f64),
+        attrs.get("temperature_min").and_then(json_value_as_f64),
+        attrs.get("temperature_mean").and_then(json_value_as_f64),
+        attrs.get("precipitation").and_then(json_value_as_f64),
+        attrs.get("sunshine_hours").and_then(json_value_as_f64),
+        attrs.get("wind_speed").and_then(json_value_as_f64),
+        attrs.get("weather_code").and_then(json_value_as_i32),
     )
 }
 
@@ -319,6 +333,27 @@ mod tests {
         let dtos = gw.weather_data_for_period(1, start, end).unwrap();
         assert_eq!(dtos.len(), 2);
         assert_eq!(dtos[0].temperature_max, Some(10.0));
+    }
+
+    #[test]
+    fn weather_data_for_period_parses_string_numeric_fields_from_gcs() {
+        let dir = tempdir().unwrap();
+        let key = WeatherDataGcsBulkGateway::object_key(6, 2024);
+        let path = dir.path().join(&key);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(
+            path,
+            r#"{"2024-01-01":{"temperature_max":"13.9","temperature_min":"4.3","temperature_mean":"8.5","precipitation":"0.0","sunshine_hours":"8.8","wind_speed":"6.6","weather_code":0}}"#,
+        )
+        .unwrap();
+        let gw = local_gateway(dir.path());
+        let start = Date::from_calendar_date(2024, Month::January, 1).unwrap();
+        let end = start;
+        let dtos = gw.weather_data_for_period(6, start, end).unwrap();
+        assert_eq!(dtos.len(), 1);
+        assert_eq!(dtos[0].temperature_max, Some(13.9));
+        assert_eq!(dtos[0].temperature_min, Some(4.3));
+        assert_eq!(gw.historical_data_count(6, start, end).unwrap(), 1);
     }
 
     #[test]

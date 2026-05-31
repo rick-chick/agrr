@@ -11,7 +11,7 @@
 | **終着** | `agrr-server` + SQLite/Litestream + GCS + Angular CDN。**Rails Cloud Run は廃止** |
 | **フォールバック禁止** | 未移行 API を nginx / URL map で Rails に落とさない |
 | **未実装** | Rust で実装するか、`501` + `api_not_migrated`（[`fallback.rs`](../../../crates/agrr-server/src/fallback.rs)） |
-| **開発** | [`scripts/rust-only-dev-stack.sh`](../../../scripts/rust-only-dev-stack.sh)（`AGRR_RUST_API=1`）が標準 |
+| **開発** | [`scripts/dev-rust-stack.sh`](../../../scripts/dev-rust-stack.sh) が標準（ローカル Rust の唯一の起動入口） |
 | **契約 CI 正** | [`scripts/run-rust-contract-tests.sh`](../../../scripts/run-rust-contract-tests.sh) |
 
 [`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md) の「未移行は Rails 既定」は**移行期の暫定**のみ。終着像は本節と P7 と一致させる。
@@ -25,7 +25,7 @@
 | **Rust を起動した** | `agrr-server` が :8080 で応答する | **単体では SPA 不可** |
 | **BC 1 件の切替完了** | その BC のルートが Rust + R4 rust GREEN + 単一ライター | 他 BC は **Rails 必須** |
 | **P6 プログラム完了** | [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) のクリティカルパス + wave がすべて `phase: done` | **API は Rust のみ**（`AGRR_RUST_API=1` / strangler nginx） |
-| **ストラングラー完了（P7 入口）** | 本番 URL map に **Rails 向け API ルールが残っていない** | 開発も **Rust 単体**（[`rust-only-dev-stack.sh`](../../../scripts/rust-only-dev-stack.sh)）で SPA |
+| **ストラングラー完了（P7 入口）** | 本番 URL map に **Rails 向け API ルールが残っていない** | 開発も **Rust 単体**（[`dev-rust-stack.sh`](../../../scripts/dev-rust-stack.sh)）で SPA |
 | **Rails 廃止（P7 完了）** | [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) 全項目 | **Rails 不要** |
 
 **「Rust を起動お願い」≠「Rails 移行が終わった」**。移行期の開発は意図的に **Rails + Rust + 振分（nginx / URL map）** である。
@@ -73,9 +73,9 @@
 
 ### P6 完了時点でもまだ残るもの
 
-- 本番 **Rails Cloud Run** は P7 カットオーバーまで残る場合がある（**API トラフィックは Rust のみ**が完了条件）。
+- 本番 **Rails Cloud Run** は P7 カットオーバーまで残る場合がある（**API トラフィックは Rust のみ**が完了条件）。Rust 起動 bootstrap は [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server) + [`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh)。
 - **`lib/domain`（Ruby）は削除しない**（P7 — [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh)）。
-- 開発の **Rails 起動は不要**（`AGRR_RUST_API=1` + `rust-only-dev-stack.sh`）。
+- 開発の **Rails 起動は不要**（`./scripts/dev-rust-stack.sh` のみ）。
 
 ---
 
@@ -135,15 +135,11 @@ P6 TRACKING 完了より **厳しい**条件。ローカルで次をすべて満
 
 | 起動方法 | 用途 | 完了レベルとの関係 |
 |----------|------|-------------------|
-| `agrr-server` のみ（:8080） | 移行済み API の curl / Rust 契約 | レベル 1 の一部検証のみ |
-| `./scripts/e2e-strangler-stack.sh` | Angular + **本番同型振分**（:3000） | レベル 2〜3 の開発標準。**Rails 起動は仕様** |
-| `ng serve` + API :3000 | 上記 + フロント | SPA 全体確認（Rails 未完了 BC あり） |
-| `./bin/test` | CI 同等（Rails 全件 + rust contract） | レベル 1 の R4（P6 3 ファイルは rust 済） |
+| **`./scripts/dev-rust-stack.sh`** | agrr デーモン + agrr-server + nginx (:3000)。**ローカル Rust 開発の唯一の入口** | レベル 2〜3（SPA + 最適化チェーン） |
+| `ng serve --host 127.0.0.1` | 上記のあと別ターミナル（:4200 → API :3000） | SPA 全体確認 |
+| `./bin/test` / `run-rust-contract-tests.sh` | CI 同等 | レベル 1 の R4 |
 
-### ローカル nginx の注意
-
-- Rails は **:3001**、表 API は **:3000**（strangler）。
-- `/up` を :3000 で見ると Host 設定不足で 403 になることがある（Rails 停止ではない）。死活は **`http://127.0.0.1:3001/up`**。
+`cargo run` 単体・`docker compose --profile rust`・`verify-weather-sqlite-local.sh server` は **UI 開発用の起動手順としては使わない**（検証・CI 向け）。
 
 ---
 

@@ -10,10 +10,8 @@ export const publicPlansRoutes: Routes = [
   },
   {
     path: 'public-plans/select-farm-size',
-    loadComponent: () =>
-      import('../components/public-plans/public-plan-select-farm-size.component').then(
-        (m) => m.PublicPlanSelectFarmSizeComponent
-      )
+    redirectTo: '/public-plans/new',
+    pathMatch: 'full'
   },
   {
     path: 'public-plans/select-crop',

@@ -44,6 +44,7 @@ pub mod masters_pests;
 pub mod masters_pesticides;
 pub mod optimization_chain_run;
 pub mod optimization_job_chain;
+pub mod plan_allocation_adjust_debug_dump;
 pub mod plan_allocation_candidates;
 pub mod plans;
 pub mod public_plan_save;

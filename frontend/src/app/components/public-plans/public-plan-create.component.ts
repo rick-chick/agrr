@@ -13,6 +13,7 @@ import {
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { Farm } from '../../domain/farms/farm';
 import { resolveReferenceFarmRegion } from '../../core/browser-region';
+import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
 
 const initialControl: PublicPlanCreateViewState = {
   loading: true,
@@ -39,7 +40,7 @@ const initialControl: PublicPlanCreateViewState = {
           <div class="compact-progress">
             <div class="compact-step active">
               <div class="step-number">1</div>
-              <span class="step-label">{{ 'public_plans.steps.size' | translate }}</span>
+              <span class="step-label">{{ 'public_plans.steps.region' | translate }}</span>
             </div>
             <div class="compact-step-divider"></div>
             <div class="compact-step">
@@ -130,7 +131,8 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     this.selectedFarmId = farm.id;
     this.selectedFarm = farm;
     this.publicPlanStore.setFarm(farm);
-    this.router.navigate(['/public-plans/select-farm-size']);
+    this.publicPlanStore.setFarmSize(DEFAULT_PUBLIC_PLAN_FARM_SIZE);
+    this.router.navigate(['/public-plans/select-crop']);
   }
 
   private loadFarms(region: string): void {

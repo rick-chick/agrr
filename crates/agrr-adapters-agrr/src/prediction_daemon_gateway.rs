@@ -3,8 +3,10 @@
 use agrr_domain::weather_data::gateways::PredictionGateway;
 use rand::Rng;
 use serde_json::{json, Value};
+use crate::agrr_daemon_debug_dump::{copy_temp_file_to_debug, write_json_value_to_debug};
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
-use crate::daemon_response::parse_daemon_json_payload;
+use crate::daemon_response::{ensure_daemon_command_success, read_daemon_output_json_file};
+use std::path::Path;
 use crate::daemon_temp_file::{path_string, write_temp_json};
 
 pub struct PredictionDaemonGateway {
@@ -108,6 +110,7 @@ impl PredictionGateway for PredictionDaemonGateway {
         }
 
         let hist_file = write_temp_json(historical_data, "predict_hist")?;
+        copy_temp_file_to_debug(hist_file.path(), "prediction_input");
         let out_file = tempfile::Builder::new()
             .prefix("predict_out_")
             .suffix(".json")
@@ -139,12 +142,18 @@ impl PredictionGateway for PredictionDaemonGateway {
             .execute_daemon_args(&args)
             .map_err(|e: AgrrDaemonError| e.to_string())?;
 
-        let payload = parse_daemon_json_payload(&wrapper).map_err(|e: AgrrDaemonError| e.to_string())?;
+        ensure_daemon_command_success(&wrapper).map_err(|e: AgrrDaemonError| e.to_string())?;
+        let payload = read_daemon_output_json_file(Path::new(&out_path))
+            .map_err(|e: AgrrDaemonError| e.to_string())?;
+        write_json_value_to_debug("prediction_output", &payload);
         if payload.get("data").is_some() {
+            write_json_value_to_debug("prediction_transformed", &payload);
             return Ok(payload);
         }
         if payload.get("predictions").is_some() {
-            return Ok(transform_predictions_to_weather_data(&payload, historical_data));
+            let transformed = transform_predictions_to_weather_data(&payload, historical_data);
+            write_json_value_to_debug("prediction_transformed", &transformed);
+            return Ok(transformed);
         }
         Err("prediction output missing data and predictions".into())
     }

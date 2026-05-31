@@ -41,7 +41,12 @@ pub fn apply(conn: &mut Connection, app_root: &Path, region: &str) -> anyhow::Re
     let skip_weather = std::env::var("AGRR_MIGRATE_SKIP_WEATHER").is_ok();
     let weather_path = fixtures_dir(app_root).join(paths.weather);
     if skip_weather {
-        seed_basic_farms(conn, region, anonymous_id)?;
+        if weather_path.is_file() {
+            seed_farms_without_weather_data(conn, region, anonymous_id, &weather_path)?;
+        } else {
+            println!("  ⚠ weather fixture missing: {}", weather_path.display());
+            seed_basic_farms(conn, region, anonymous_id)?;
+        }
     } else if weather_path.is_file() {
         seed_farms_and_weather(conn, region, anonymous_id, &weather_path)?;
     } else {
@@ -123,6 +128,35 @@ struct WeatherDatumFixture {
     sunshine_hours: Option<f64>,
     wind_speed: Option<f64>,
     weather_code: Option<i64>,
+}
+
+/// Loads every farm from the weather fixture (names + coordinates) without weather rows.
+fn seed_farms_without_weather_data(
+    conn: &mut Connection,
+    region: &str,
+    user_id: i64,
+    weather_path: &Path,
+) -> anyhow::Result<()> {
+    let now = context::now_rfc3339();
+    let mut farm_count = 0usize;
+
+    weather_stream::for_each_top_level_object_entry(weather_path, |farm_name, value_json| {
+        let farm_data: FarmWeatherFixture =
+            serde_json::from_str(value_json).with_context(|| format!("parse farm {farm_name}"))?;
+        let lat = json_f64(&farm_data.latitude)?;
+        let lon = json_f64(&farm_data.longitude)?;
+
+        with_transaction(conn, |tx| {
+            upsert_farm(tx, farm_name, region, user_id, lat, lon, &now)?;
+            Ok(())
+        })?;
+
+        farm_count += 1;
+        Ok(())
+    })?;
+
+    println!("  base/{region}: {farm_count} reference farms (weather skipped)");
+    Ok(())
 }
 
 fn seed_farms_and_weather(

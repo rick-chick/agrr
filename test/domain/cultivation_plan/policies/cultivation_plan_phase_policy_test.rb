@@ -6,10 +6,17 @@ module Domain
   module CultivationPlan
     module Policies
       class CultivationPlanPhasePolicyTest < DomainLibTestCase
-        test "build start_optimizing sets status without broadcast" do
+        test "build start_optimizing resets phase attrs without broadcast" do
           built = CultivationPlanPhasePolicy.build(phase_name: :start_optimizing)
 
-          assert_equal({ status: "optimizing" }, built[:attrs])
+          assert_equal(
+            {
+              status: "optimizing",
+              optimization_phase: "optimizing",
+              optimization_phase_message: ""
+            },
+            built[:attrs]
+          )
           assert_nil built[:message_key]
           refute built[:broadcast]
         end

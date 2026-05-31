@@ -8,7 +8,7 @@ import { request, type FullConfig } from '@playwright/test';
  * 全テストで共有する storage state を書き出す（`E2E_API_ORIGIN` → nginx :3000 → :8080）。
  *
  * ブラウザでフロントへリダイレクト完了まで待たない（Angular 未起動でも Cookie は同一レスポンスで付く）。
- * 事前起動: `AGRR_RUST_API=1 ./scripts/e2e-strangler-stack.sh` + Playwright `E2E_STRANGLER=1`。
+ * 事前起動: `./scripts/dev-rust-stack.sh` + Playwright `E2E_STRANGLER=1`。
  */
 export default async function globalSetup(config: FullConfig): Promise<void> {
   if (!process.env.E2E_CAPTURE_DEV_SESSION) {

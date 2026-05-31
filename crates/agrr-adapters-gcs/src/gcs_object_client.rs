@@ -3,6 +3,7 @@
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+use std::sync::OnceLock;
 
 use reqwest::blocking::Client;
 use reqwest::StatusCode;
@@ -15,11 +16,29 @@ pub struct GcsObjectClient {
     http: Client,
 }
 
+/// One process-wide blocking client. Per-request `Client::new()` + drop inside Tokio workers panics.
+fn shared_blocking_http_client() -> &'static Client {
+    static CLIENT: OnceLock<Client> = OnceLock::new();
+    CLIENT.get_or_init(Client::new)
+}
+
+/// Initialize the process-wide blocking client off the Tokio runtime (safe from `#[tokio::main]`).
+pub fn preload_blocking_http_client() {
+    std::thread::Builder::new()
+        .name("gcs-blocking-http-init".into())
+        .spawn(|| {
+            let _ = shared_blocking_http_client();
+        })
+        .expect("spawn gcs blocking http init thread")
+        .join()
+        .expect("join gcs blocking http init thread");
+}
+
 impl GcsObjectClient {
     pub fn new(config: WeatherDataGcsConfig) -> Self {
         Self {
             config,
-            http: Client::new(),
+            http: shared_blocking_http_client().clone(),
         }
     }
 

@@ -5,6 +5,11 @@
     fn crop(is_reference: bool, user_id: Option<i64>) -> ClimateCropEntity {
         ClimateCropEntity {
             id: 1,
+            name: "crop".into(),
+            variety: None,
+            area_per_unit: None,
+            revenue_per_area: None,
+            groups: serde_json::json!([]),
             is_reference,
             user_id,
             crop_stages: vec![],

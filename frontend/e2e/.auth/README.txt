@@ -9,10 +9,10 @@ nginx strangler（127.0.0.1:3000）→ agrr-server（127.0.0.1:8080）の `/auth
 
 ```bash
 # リポジトリ root
-AGRR_RUST_API=1 ./scripts/e2e-strangler-stack.sh
+./scripts/dev-rust-stack.sh
 ```
 
-失敗したとき: `cargo build -p agrr-server --release` のあと `./scripts/e2e-strangler-stack.sh stop` → 再起動。
+失敗したとき: `cargo build -p agrr-server --release` のあと `./scripts/dev-rust-stack.sh stop` → 再起動。
 nginx 設定を変えたら `nginx -s reload -c docker/nginx-strangler-host.conf`（または stack スクリプトで stop/start）。
 
 ### キャプチャ
@@ -41,7 +41,7 @@ curl -sI "http://127.0.0.1:3000/auth/test/mock_login_as/developer?return_to=http
 
 Rails の `auth/login` と同様、**開発ビルド**（`ng serve`）の `/login` にモックログイン欄が出る（本番ビルドでは非表示）。
 
-1. strangler を起動: リポジトリ root で `AGRR_RUST_API=1 ./scripts/e2e-strangler-stack.sh`（:3000 → agrr-server :8080、`RAILS_ENV=development`）
+1. リポジトリ root で `./scripts/dev-rust-stack.sh`（:3000 → agrr-server :8080）
 2. Angular: `cd frontend && npm start`（既定 http://127.0.0.1:4200）
 3. http://127.0.0.1:4200/login を開き、「開発者 / 農家 / 研究員」いずれかをクリック
 4. API ベースは `getApiBaseUrl()`（4200 では http://127.0.0.1:3000）。リダイレクト後 `GET /api/v1/auth/me` でユーザーが返ること

@@ -12,7 +12,15 @@ module Domain
           name = phase_name.to_sym
           case name
           when :start_optimizing
-            { attrs: { status: "optimizing" }, message_key: nil, broadcast: false }
+            {
+              attrs: {
+                status: "optimizing",
+                optimization_phase: "optimizing",
+                optimization_phase_message: ""
+              },
+              message_key: nil,
+              broadcast: false
+            }
           when :phase_fetching_weather
             phase_attrs("fetching_weather", "models.cultivation_plan.phases.fetching_weather")
           when :phase_weather_data_fetched

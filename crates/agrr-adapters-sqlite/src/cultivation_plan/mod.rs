@@ -6,6 +6,7 @@ mod cultivation_plan_gateway;
 mod cultivation_plan_optimization_sqlite_gateway;
 pub mod planning_horizon;
 mod optimization_plan_read_gateway;
+mod plan_allocation_adjust_debug_dump_file_gateway;
 mod plan_allocation_adjust_read_gateway;
 mod field_mutation_gateway;
 mod plan_crop_gateway;
@@ -38,6 +39,7 @@ pub use cultivation_plan_optimization_sqlite_gateway::CultivationPlanOptimizatio
 pub use optimization_plan_read_gateway::OptimizationPlanReadSqliteGateway;
 pub use plan_save_persistence::PublicPlanSavePersistenceSqliteAdapter;
 pub use public_plan_save_read_gateway::PublicPlanSaveReadSqliteGateway;
+pub use plan_allocation_adjust_debug_dump_file_gateway::PlanAllocationAdjustDebugDumpFileGateway;
 pub use plan_allocation_adjust_read_gateway::PlanAllocationAdjustReadSqliteGateway;
 pub use field_mutation_gateway::CultivationPlanFieldMutationSqliteGateway;
 pub use plan_crop_gateway::CultivationPlanPlanCropSqliteGateway;

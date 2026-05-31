@@ -41,6 +41,25 @@ docker compose up
 
 > 💡 **メモリ監視はデフォルトで無効**(起動時間短縮のため)。必要時は `ENABLE_MEMORY_MONITOR=true docker compose up` で有効化。
 
+#### ローカル Rust API（P6 移行済み UI）
+
+Rails ではなく **agrr-server** で API / WebSocket を試すときは、起動は次の **1 本だけ**。
+
+```bash
+# 初回のみ: DB
+RAILS_ENV=development bundle exec rails db:prepare
+
+# ターミナル 1: agrr デーモン + agrr-server + nginx (:3000)
+./scripts/dev-rust-stack.sh
+
+# ターミナル 2: Angular
+cd frontend && ng serve --host 127.0.0.1
+```
+
+- API / `/cable`: http://127.0.0.1:3000（ng serve :4200 から自動で向く）
+- 停止: `./scripts/dev-rust-stack.sh stop`
+- 詳細: [`docs/migration/app-rust-stack/RUST-OPTIMIZATION-CHAIN-VERIFY.md`](docs/migration/app-rust-stack/RUST-OPTIMIZATION-CHAIN-VERIFY.md)
+
 #### 新規計画作成で AGRR を使う場合
 
 新規計画作成(栽培計画の最適化)には AGRR デーモンが必要です。

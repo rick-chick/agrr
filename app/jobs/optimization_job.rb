@@ -45,11 +45,8 @@ class OptimizationJob < ApplicationJob
     )
     optimizer.call
 
-    CompositionRoot.advance_cultivation_plan_phase(
-      plan_id: cultivation_plan_id,
-      phase_name: :phase_optimization_completed,
-      channel_class: channel_class
-    )
+    # Next chain step is TaskScheduleGenerationJob (task_schedule_generating) or PlanFinalizeJob
+    # (completed). Do not broadcast optimization_completed ("generating task schedules…").
 
     Rails.logger.info "✅ [OptimizationJob] Optimization completed for plan ##{cultivation_plan_id}"
   rescue *(CultivationPlanJobExceptions::OPTIMIZATION_FAILURES) => e

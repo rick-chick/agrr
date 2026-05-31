@@ -2,7 +2,7 @@
 
 > **方針（2026-05-29）**: **Rails フォールバックなし**。`location /api/` → Rust。未登録パスは agrr-server **501** `api_not_migrated`。`location /` は **404**（API を Rails に送らない）。
 >
-> 開発: `./scripts/rust-only-dev-stack.sh`（`AGRR_RUST_API=1`）または `./scripts/e2e-strangler-stack.sh`。
+> 開発: **`./scripts/dev-rust-stack.sh`** のみ。
 
 ## Rust upstream（`127.0.0.1:8080`）
 

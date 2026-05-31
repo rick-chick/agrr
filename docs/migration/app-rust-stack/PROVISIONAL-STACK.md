@@ -196,8 +196,8 @@ Ruby の [`lib/composition_root.rb`](../../../lib/composition_root.rb) と同型
 |------|------|
 | ドメイン | `run-test-rust-domain.sh` / `rust-domain-test.yml` |
 | 契約・統合 | **R4**（下記）+ 移行期 `run-test-rails.sh`（Rails 残存 BC の回帰） |
-| 本番（移行完了後） | Cloud Run + **Rust 単体** `Dockerfile`（Rails イメージ廃止） |
-| 移行期 | **二 Cloud Run**（`agrr-server` / Rails）+ **グローバル URL map** パス振分（[ADR](./ADR-strangler-lb-url-map.md)） |
+| 本番（移行完了後） | Cloud Run + **Rust 単体** [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server)（[`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh) — Litestream + `agrr-migrate`、Rails イメージ廃止） |
+| 移行期 | **二 Cloud Run**（`agrr-server` / Rails）+ **グローバル URL map** パス振分（[ADR](./ADR-strangler-lb-url-map.md)）。Rust 起動: [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server) + [`scripts/start_agrr_server.sh`](../../../scripts/start_agrr_server.sh) |
 
 ### R4 契約テスト（確定 — 複製元は既存テスト）
 

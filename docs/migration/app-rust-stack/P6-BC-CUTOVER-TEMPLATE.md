@@ -11,5 +11,5 @@
 3. `agrr-server` `build_*` + presenter + ルート
 4. [`test/contract/**`](../../../test/contract/) R4 GREEN（[`test/contract/README.md`](../../../test/contract/README.md) — Rails 全件 + [`scripts/run-rust-contract-tests.sh`](../../../scripts/run-rust-contract-tests.sh) で `CONTRACT_RUNTIME=rust`）
 5. 単一ライター（当該テーブル write は Rust のみ）
-6. URL map pathRule + `scripts/deploy-rust-backend-stub.sh` デプロイ
+6. URL map pathRule + `.cursor/skills/gcp-test-local/scripts/deploy-rust-backend.sh` デプロイ
 7. [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) 更新

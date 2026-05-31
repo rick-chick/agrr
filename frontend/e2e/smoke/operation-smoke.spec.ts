@@ -69,7 +69,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(page.locator('app-farm-list')).toBeVisible();
   });
 
-  test('public plan wizard: farm size then crop selection', async ({ page }) => {
+  test('public plan wizard: farm then crop selection', async ({ page }) => {
     const r = findRoute('public-plans/new');
     await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
     await waitForPageStable(page, r);
@@ -80,11 +80,6 @@ smokeDescribe('operation smoke (key user flows)', () => {
       test.skip(true, 'no public farms in dev DB');
     }
     await farmCard.click();
-    await expect(page).toHaveURL(/\/public-plans\/select-farm-size/);
-    await expect(page.locator('app-public-plan-select-farm-size')).toBeVisible();
-
-    const sizeCard = page.locator('app-public-plan-select-farm-size .enhanced-selection-card').first();
-    await sizeCard.click();
     await expect(page).toHaveURL(/\/public-plans\/select-crop/);
     await expect(page.locator('app-public-plan-select-crop')).toBeVisible();
 
