@@ -9,7 +9,7 @@
 
 | 観点 | 状態 |
 |------|------|
-| 本番 API トラフィック | **Rust（`agrr-server`）** — LB 上の backend 名は `agrr-rails-backend` のままだが、NEG は `agrr-production`（Rust イメージ） |
+| 本番 API トラフィック | **Rust（`agrr-server`）** — LB backend 名 **`rust-backend`**（NEG `agrr-rails-neg` → `agrr-production`） |
 | P6 レベル 4（本番ストラングラー・トラフィック） | **実質達成**（指紋・501 フォールバック・契約テスト GREEN） |
 | P7 コード削除 Phase 1 | **実施済み**（2026-05-31）— `app/controllers/api`・jobs・channels・API adapters 削除 |
 | P7 コード削除 Phase 2（`lib/domain`） | **実施済み**（2026-05-31）— `lib/domain/`・`test/domain/` 削除 |
@@ -20,7 +20,7 @@
 
 | # | 項目 | 備考 |
 |---|------|------|
-| 1 | URL map の **命名整理**（任意・**スキップ可**） | GCP 上の backend **リソース名**（`agrr-rails-backend`）のみ。`agrr.net` のパス・NEG 先（`agrr-production`）は既に Rust。**リネームしなくても本番挙動は変わらない**（[`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md) の `rust-backend` は論理名）。実施する場合のみ `url-maps validate` → `import` で手順ミスに注意 |
+| ~~1~~ | ~~URL map 命名整理~~ | **実施済み**（2026-05-31）— `agrr-rails-backend` → **`rust-backend`**、旧 backend 削除。[`scripts/agrr-frontend-url-map-simple.yaml`](../../../scripts/agrr-frontend-url-map-simple.yaml) |
 | 2 | 本番 **手動スモーク** | OAuth ログイン、`auth/me`、計画作成→最適化 WS、マスタ CRUD、`save_plan`、`POST /undo_deletion` |
 | 3 | 本番 **us 参照データ**（必要時） | 7 件の `crop_stages` 欠損。`in` repair では直らない。運用合意のうえ `agrr-migrate data apply` |
 | 4 | **P7** Rails 資産削除（残） | [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) — URL map 命名・Rails 本番イメージ廃止など |
@@ -29,6 +29,7 @@
 
 **完了済み（旧「残作業」から外す）**:
 
+- URL map backend 名 **`rust-backend`** へ整理（2026-05-31）— `agrr-rails-backend` 削除、`agrr.net` `/up`・`/api/v1/health` スモーク OK
 - 本番 `agrr-production` を `Dockerfile.agrr-server` でデプロイ — `agrr-server:20260531-222952`
 - 本番 refinery — レプリカで `schema verify OK`（`refinery_schema_history` + `data_migration_history` あり）
 - 本番 in repair — `20260531120000` / `20260531130100` 適用済み（レプリカ）
@@ -49,12 +50,13 @@
 
 | パス | backend service（LB 上の名前） | 実体 |
 |------|-------------------------------|------|
-| `/api/*` | `agrr-rails-backend` | `agrr-rails-neg` → **`agrr-production`（Rust）** |
-| `/cable`, `/cable/*` | `agrr-rails-backend` | 同上 |
-| `/auth`, `/auth/*` | `agrr-rails-backend` | 同上 |
-| `/up` | `agrr-rails-backend` | 同上 |
+| `/api/*` | **`rust-backend`** | `agrr-rails-neg` → **`agrr-production`（Rust）** |
+| `/cable`, `/cable/*` | **`rust-backend`** | 同上 |
+| `/auth`, `/auth/*` | **`rust-backend`** | 同上 |
+| `/up` | **`rust-backend`** | 同上 |
+| `/assets`, `/assets/*` | **`rust-backend`** | 同上 |
 
-専用 `rust-backend` backend service は **未作成**（1 NEG / 1 Cloud Run に集約）。
+NEG 名 `agrr-rails-neg` は歴史的名称のまま（Cloud Run `agrr-production` を指す）。
 
 ### エンドポイント指紋（curl `agrr.net`）
 

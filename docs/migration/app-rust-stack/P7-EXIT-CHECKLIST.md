@@ -6,7 +6,7 @@
 
 | # | 項目 | 確認 |
 |---|------|------|
-| 1 | URL map **命名整理**（任意・スキップ可）— backend サービス名を `rust-backend` 等に揃える。**パス・OAuth URL・クライアントは不変**。現状 `agrr-rails-backend` → NEG `agrr-production`（Rust）で機能的には終着済み。リネームは運用ラベルのみ（[checklist](../../../.cursor/skills/gcp-test-local/scripts/prod-rust-cutover-checklist.sh)） | スキップ可 |
+| 1 | URL map **命名整理** — `rust-backend`（[`scripts/agrr-frontend-url-map-simple.yaml`](../../../scripts/agrr-frontend-url-map-simple.yaml)） | 2026-05-31 |
 | 2 | `lib/domain/` 削除 | |
 | 3 | Rails adapter / 未使用 Solid Cable DB 削除 | |
 | 4 | refinery ADR 実施（[`P7-REFINERY-ADR.md`](./P7-REFINERY-ADR.md)） | |
