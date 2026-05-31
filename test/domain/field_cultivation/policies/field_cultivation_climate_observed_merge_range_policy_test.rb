@@ -8,8 +8,6 @@ module Domain
       class FieldCultivationClimateObservedMergeRangePolicyTest < DomainLibTestCase
         test "caps observed end at today minus one" do
           decision = FieldCultivationClimateObservedMergeRangePolicy.resolve(
-            display_start_date: nil,
-            display_end_date: nil,
             cultivation_start_date: Date.new(2026, 1, 1),
             cultivation_end_date: Date.new(2026, 12, 31),
             today: Date.new(2026, 3, 10)
@@ -22,8 +20,6 @@ module Domain
 
         test "skips when cultivation start is after actual end" do
           decision = FieldCultivationClimateObservedMergeRangePolicy.resolve(
-            display_start_date: Date.new(2026, 5, 1),
-            display_end_date: Date.new(2026, 6, 1),
             cultivation_start_date: Date.new(2026, 5, 1),
             cultivation_end_date: Date.new(2026, 12, 31),
             today: Date.new(2026, 3, 1)
@@ -32,10 +28,8 @@ module Domain
           assert decision.skip?
         end
 
-        test "observed merge uses cultivation period when display range is a narrower subset" do
+        test "observed merge range follows cultivation period" do
           decision = FieldCultivationClimateObservedMergeRangePolicy.resolve(
-            display_start_date: Date.new(2026, 7, 1),
-            display_end_date: Date.new(2026, 7, 31),
             cultivation_start_date: Date.new(2026, 2, 17),
             cultivation_end_date: Date.new(2026, 7, 13),
             today: Date.new(2026, 5, 31)

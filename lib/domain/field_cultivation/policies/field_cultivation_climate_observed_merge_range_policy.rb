@@ -8,13 +8,7 @@ module Domain
 
         # @param today [Date]
         # @return [Domain::FieldCultivation::Dtos::FieldCultivationClimateObservedMergeRangeDecision]
-        def resolve(
-          display_start_date:,
-          display_end_date:,
-          cultivation_start_date:,
-          cultivation_end_date:,
-          today:
-        )
+        def resolve(cultivation_start_date:, cultivation_end_date:, today:)
           mapper = Domain::FieldCultivation::Mappers::FieldCultivationClimateWeatherPayloadMapper
           observed_start = mapper.coerce_optional_date(cultivation_start_date)
           observed_end = mapper.coerce_optional_date(cultivation_end_date)

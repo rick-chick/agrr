@@ -345,13 +345,7 @@ fn fetch_primary_weather_payload(
     display_end_date: Option<&str>,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     let weather_payload = if context.plan_predicted_weather_present {
-        merge_cached_prediction_with_observed(
-            interactor,
-            source,
-            context,
-            display_start_date,
-            display_end_date,
-        )?
+        merge_cached_prediction_with_observed(interactor, source, context)?
     } else {
         interactor.logger.warn(&format!(
             "⚠️ [FieldCultivationClimateDataInteractor] No cached prediction for CultivationPlan#{}, generating",
@@ -386,8 +380,6 @@ fn merge_cached_prediction_with_observed(
     interactor: &FieldCultivationClimateDataInteractor<'_>,
     source: &FieldCultivationClimateSourceSnapshot,
     context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
-    display_start_date: Option<&str>,
-    display_end_date: Option<&str>,
 ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
     interactor.logger.info(&format!(
         "✅ [FieldCultivationClimateDataInteractor] Using saved prediction for CultivationPlan#{}, merging with observed data",
@@ -398,8 +390,6 @@ fn merge_cached_prediction_with_observed(
         .clone()
         .unwrap_or(json!({}));
     let decision = resolve_observed_merge_range(
-        display_start_date,
-        display_end_date,
         Some(context.start_date),
         Some(context.completion_date),
         interactor.clock.today(),
@@ -413,9 +403,6 @@ fn merge_cached_prediction_with_observed(
     let observed_dtos = interactor
         .weather_data_gateway
         .weather_data_for_period(weather_location_id, start, end)?;
-    if observed_dtos.is_empty() {
-        return Ok(Some(cached));
-    }
     let meta = weather_location_meta_from_source(source);
     let observed_formatted = build_observed_agrr_payload(&meta, &observed_dtos);
     Ok(Some(merge_cached_with_observed(&cached, &observed_formatted)))
@@ -464,8 +451,6 @@ fn fetch_fallback_weather_payload(
         };
 
         let decision = resolve_observed_merge_range(
-            display_start_date,
-            display_end_date,
             Some(start_date),
             Some(completion_date),
             interactor.clock.today(),

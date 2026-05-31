@@ -1,20 +1,14 @@
 use time::Date;
 
 use crate::field_cultivation::dtos::FieldCultivationClimateObservedMergeRangeDecision;
-use crate::field_cultivation::mappers::field_cultivation_climate_weather_payload_mapper::coerce_optional_date;
 
 pub fn resolve_observed_merge_range(
-    display_start_date: Option<&str>,
-    display_end_date: Option<&str>,
     cultivation_start_date: Option<Date>,
     cultivation_end_date: Option<Date>,
     today: Date,
 ) -> FieldCultivationClimateObservedMergeRangeDecision {
-    let _ = (display_start_date, display_end_date);
-    let observed_start = cultivation_start_date;
-    let observed_end = cultivation_end_date;
-
-    let (Some(observed_start), Some(observed_end)) = (observed_start, observed_end) else {
+    let (Some(observed_start), Some(observed_end)) = (cultivation_start_date, cultivation_end_date)
+    else {
         return FieldCultivationClimateObservedMergeRangeDecision::skip();
     };
 

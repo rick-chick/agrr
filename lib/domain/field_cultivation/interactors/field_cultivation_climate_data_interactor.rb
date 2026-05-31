@@ -194,12 +194,7 @@ module Domain
 
         def fetch_primary_weather_payload(source:, context:, display_start_date:, display_end_date:)
           weather_payload = if context.plan_predicted_weather_present
-            merge_cached_prediction_with_observed(
-              source: source,
-              context: context,
-              display_start_date: display_start_date,
-              display_end_date: display_end_date
-            )
+            merge_cached_prediction_with_observed(source: source, context: context)
           else
             @logger.warn "⚠️ [FieldCultivationClimateDataInteractor] No cached prediction for CultivationPlan##{context.plan_id}, generating"
             invoke_plan_prediction(source: source)
@@ -224,13 +219,11 @@ module Domain
           prediction_info[:data]
         end
 
-        def merge_cached_prediction_with_observed(source:, context:, display_start_date:, display_end_date:)
+        def merge_cached_prediction_with_observed(source:, context:)
           @logger.info "✅ [FieldCultivationClimateDataInteractor] Using saved prediction for CultivationPlan##{context.plan_id}, merging with observed data"
           cached = context.predicted_weather_data
 
           decision = Policies::FieldCultivationClimateObservedMergeRangePolicy.resolve(
-            display_start_date: display_start_date,
-            display_end_date: display_end_date,
             cultivation_start_date: context.start_date,
             cultivation_end_date: context.completion_date,
             today: @clock.today
@@ -243,15 +236,14 @@ module Domain
             end_date: decision.end_date
           )
 
-          Mappers::FieldCultivationClimateAgrrWeatherAssembler.assemble_plan_weather_with_observed(
+          weather_location_meta = Mappers::FieldCultivationClimateWeatherPayloadMapper.weather_location_meta_from_source(source: source)
+          observed_formatted = Mappers::FieldCultivationClimateWeatherPayloadMapper.build_observed_agrr_payload(
+            weather_location_meta: weather_location_meta,
+            observed_weather_dtos: observed_dtos
+          )
+          Mappers::FieldCultivationClimateWeatherPayloadMapper.merge_cached_with_observed(
             cached_weather_payload: cached,
-            observed_weather_dtos: observed_dtos,
-            weather_location_meta: Mappers::FieldCultivationClimateWeatherPayloadMapper.weather_location_meta_from_source(source: source),
-            cultivation_start_date: context.start_date,
-            cultivation_end_date: context.completion_date,
-            today: @clock.today,
-            display_start_date: display_start_date,
-            display_end_date: display_end_date
+            observed_formatted: observed_formatted
           )
         end
 
@@ -289,8 +281,6 @@ module Domain
             return nil unless future.is_a?(Hash)
 
             decision = Policies::FieldCultivationClimateObservedMergeRangePolicy.resolve(
-              display_start_date: display_start_date,
-              display_end_date: display_end_date,
               cultivation_start_date: source.start_date,
               cultivation_end_date: source.completion_date,
               today: @clock.today
