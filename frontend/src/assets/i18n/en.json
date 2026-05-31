@@ -905,8 +905,7 @@
       "title": "🌾 Select Crops to Grow",
       "subtitle": "Multiple selection available. Click cards to select.",
       "summary": {
-        "region": "Region",
-        "farm_size": "Farm Size"
+        "region": "Region"
       },
       "bottom_bar": {
         "back_button": "← Back",

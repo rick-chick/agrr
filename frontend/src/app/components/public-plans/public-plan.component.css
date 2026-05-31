@@ -734,6 +734,45 @@
   border-left: var(--border-width-4) solid var(--color-success);
 }
 
+/* モバイル: 固定高さ + overflow:hidden で進捗（地域・作物等）が見切れないよう縦積み・折り返し */
+@media (max-width: 768px) {
+  .compact-header-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .compact-header-card:has(.compact-progress),
+  .compact-header-card:has(.compact-subtitle) {
+    height: auto;
+    overflow: visible;
+  }
+
+  .compact-header-title {
+    min-width: 0;
+    width: 100%;
+    flex: none;
+  }
+
+  .compact-progress {
+    width: 100%;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 44px;
+    justify-content: flex-start;
+  }
+
+  .compact-step {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .compact-step .step-label,
+  .compact-step.completed .step-label-link {
+    white-space: normal;
+  }
+}
+
 .public-plan-results__header-actions {
   display: flex;
   flex-wrap: wrap;

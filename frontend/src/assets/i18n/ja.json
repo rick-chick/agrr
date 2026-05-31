@@ -1811,8 +1811,7 @@
       "title": "🌾 栽培したい作物を選択してください",
       "subtitle": "複数選択可能です。カードをクリックして選択してください。",
       "summary": {
-        "region": "地域",
-        "farm_size": "農場サイズ"
+        "region": "地域"
       },
       "bottom_bar": {
         "back_button": "← 戻る",

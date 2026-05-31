@@ -47,21 +47,14 @@ const initialControl: PublicPlanSelectCropViewState = {
           </div>
         </div>
 
-        @if (farm && farmSize) {
-        <div class="enhanced-summary-card">
+        @if (farm) {
+        <div class="enhanced-summary-card enhanced-summary-card--single-row">
           <div class="enhanced-summary-items">
             <div class="enhanced-summary-row">
               <div class="enhanced-summary-icon">🌍</div>
               <div class="enhanced-summary-content">
                 <div class="enhanced-summary-label">{{ 'public_plans.select_crop.summary.region' | translate }}</div>
                 <div class="enhanced-summary-value">{{ farm.name }}</div>
-              </div>
-            </div>
-            <div class="enhanced-summary-row">
-              <div class="enhanced-summary-icon">🏡</div>
-              <div class="enhanced-summary-content">
-                <div class="enhanced-summary-label">{{ 'public_plans.select_crop.summary.farm_size' | translate }}</div>
-                <div class="enhanced-summary-value">{{ farmSize.name }} ({{ farmSize.area_sqm }}㎡)</div>
               </div>
             </div>
           </div>
