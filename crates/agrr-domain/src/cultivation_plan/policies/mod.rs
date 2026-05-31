@@ -1,3 +1,4 @@
+pub mod cultivation_plan_allocate_allocation_policy;
 pub mod cultivation_plan_field_policy;
 pub mod cultivation_plan_optimization_complete_policy;
 pub mod cultivation_plan_phase_policy;

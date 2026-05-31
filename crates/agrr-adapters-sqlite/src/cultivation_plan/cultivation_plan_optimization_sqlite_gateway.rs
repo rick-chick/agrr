@@ -35,6 +35,23 @@ impl CultivationPlanOptimizationGateway for CultivationPlanOptimizationSqliteGat
         })
     }
 
+    fn field_cultivations_with_allocate_results_present(
+        &self,
+        plan_id: i64,
+    ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_read_box(|conn| {
+            let count: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM field_cultivations \
+                 WHERE cultivation_plan_id = ?1 \
+                   AND cultivation_days > 1 \
+                   AND json_extract(optimization_result, '$.raw.growth_days') IS NOT NULL",
+                params![plan_id],
+                |row| row.get(0),
+            )?;
+            Ok(count > 0)
+        })
+    }
+
     fn cultivation_plan_crops_with_crop(
         &self,
         plan_id: i64,

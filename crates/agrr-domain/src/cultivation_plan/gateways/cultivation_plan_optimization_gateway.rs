@@ -11,6 +11,13 @@ pub trait CultivationPlanOptimizationGateway: Send + Sync {
         plan_id: i64,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>>;
 
+    /// True when the plan has at least one FieldCultivation produced by a prior successful allocate
+    /// (excludes planning-period placeholders with `cultivation_days` 1 and no agrr `growth_days`).
+    fn field_cultivations_with_allocate_results_present(
+        &self,
+        plan_id: i64,
+    ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>>;
+
     fn cultivation_plan_crops_with_crop(
         &self,
         plan_id: i64,

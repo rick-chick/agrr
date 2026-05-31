@@ -47,13 +47,13 @@ cargo run -p agrr-server --bin optimization-chain-run -- --plan-id 14 --step pre
 cargo run -p agrr-server --bin optimization-chain-run -- --plan-id 14 --step optimize
 ```
 
-## UI / API 経由（strangler）
+## UI / API 経由（ローカル Rust）
 
 ```bash
-bash scripts/e2e-strangler-stack.sh
-# Angular: http://localhost:4200
-# API 経 nginx: http://localhost:3000 → agrr-server :8080
-# WebSocket: /cable（進捗は OptimizationChannel / PlansOptimizationChannel）
+./scripts/dev-rust-stack.sh
+# 別ターミナル: cd frontend && ng serve --host 127.0.0.1
+# API/WebSocket: http://127.0.0.1:3000 → agrr-server :8080
+# 停止: ./scripts/dev-rust-stack.sh stop
 ```
 
 公開プラン作成 API が Rust に向いている環境では、作成直後に `enqueue_private_plan_optimization_chain` が走る。

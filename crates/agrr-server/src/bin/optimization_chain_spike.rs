@@ -8,10 +8,12 @@
 
 use std::env;
 use std::process::ExitCode;
+use std::sync::Arc;
 
 use agrr_adapters_agrr::{AgrrDaemonClient, PlanAllocationAllocateAgrrDaemonGateway, WeatherDaemonGateway};
 use agrr_domain::cultivation_plan::gateways::PlanAllocationAllocateGateway;
-use agrr_domain::weather_data::gateways::AgrrWeatherGateway;
+use agrr_domain::weather_data::gateways::{AgrrWeatherGateway, WeatherDataGateway};
+use agrr_server::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_adapters_sqlite::{
     CultivationPlanOptimizationSqliteGateway, OptimizationPlanReadSqliteGateway,
     PlanAllocationAdjustReadSqliteGateway, SqlitePool,
@@ -108,7 +110,20 @@ fn check_daemon() -> Check {
     }
 }
 
-fn check_weather_api(lat: f64, lon: f64, pool: &SqlitePool, wl_id: Option<i64>) -> Check {
+fn shared_weather_gateway(pool: &SqlitePool) -> Arc<dyn WeatherDataGateway> {
+    Arc::new(
+        WeatherDataGatewayBundle::resolve(pool.clone())
+            .expect("weather data gateway bundle"),
+    )
+}
+
+fn check_weather_api(
+    lat: f64,
+    lon: f64,
+    pool: &SqlitePool,
+    weather: Arc<dyn WeatherDataGateway>,
+    wl_id: Option<i64>,
+) -> Check {
     let clock = SystemClock;
     let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock);
     // Full history window often yields warnings-only stderr with empty stdout; probe recent days.
@@ -130,7 +145,8 @@ fn check_weather_api(lat: f64, lon: f64, pool: &SqlitePool, wl_id: Option<i64>) 
         }
         Ok(None) => Check::fail("weather_daemon_gateway", "empty payload"),
         Err(e) => {
-            let read = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
+            let read =
+                PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather.clone());
             if let Ok(rows) =
                 read.list_historical_weather_rows(wl_id, window.start_date, window.end_date)
             {
@@ -167,8 +183,12 @@ fn coords_from_snapshot(snapshot: &agrr_domain::cultivation_plan::dtos::PlanAllo
     lat.zip(lon).map(|(a, b)| (a, b, wl_id))
 }
 
-fn check_sqlite_plan_read(pool: &SqlitePool, plan_id: i64) -> (Check, Option<(f64, f64, Option<i64>)>) {
-    let gw = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
+fn check_sqlite_plan_read(
+    pool: &SqlitePool,
+    weather: Arc<dyn WeatherDataGateway>,
+    plan_id: i64,
+) -> (Check, Option<(f64, f64, Option<i64>)>) {
+    let gw = PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather);
     match gw.find_adjust_read_snapshot_by_plan_id(plan_id) {
         Ok(snapshot) => {
             let fields = snapshot.plan_field_snapshots.len();
@@ -519,15 +539,16 @@ fn main() -> ExitCode {
     println!("  plan_id={plan_id}");
 
     let pool = SqlitePool::new(&sqlite_path);
+    let weather = shared_weather_gateway(&pool);
 
     let mut checks = vec![check_daemon()];
 
-    let (plan_check, coords) = check_sqlite_plan_read(&pool, plan_id);
+    let (plan_check, coords) = check_sqlite_plan_read(&pool, weather.clone(), plan_id);
     checks.push(plan_check);
 
     if let Some((lat, lon, wl_id)) = coords {
-        checks.push(check_weather_api(lat, lon, &pool, wl_id));
-        let read = PlanAllocationAdjustReadSqliteGateway::new(pool.clone());
+        checks.push(check_weather_api(lat, lon, &pool, weather.clone(), wl_id));
+        let read = PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather);
         checks.push(check_sqlite_historical_weather(&read, wl_id));
     } else {
         checks.push(Check::fail(

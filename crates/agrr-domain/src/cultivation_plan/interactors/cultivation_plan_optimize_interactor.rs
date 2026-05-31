@@ -1,4 +1,8 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::CultivationPlanOptimizeInteractor`
+//!
+//! **天気**: allocate 中は新規 `predict` しない。`get_existing_prediction` で DB キャッシュのみ読む
+//! （Rails 同様）。新規予測はチェーンの `WeatherPredictionJob` / `run_weather_prediction_step` 側。
+//! 詳細: `docs/migration/app-rust-stack/RUST-OPTIMIZATION-CHAIN-VERIFY.md` §天気予測と optimize allocate。
 
 use std::fmt;
 
@@ -21,7 +25,7 @@ use crate::cultivation_plan::gateways::{
 use crate::cultivation_plan::mappers::{
     interaction_rule_agrr_mapper, optimization_plan_read_snapshot_mapper,
 };
-use crate::cultivation_plan::policies::cultivation_plan_optimization_complete_policy;
+use crate::cultivation_plan::policies::cultivation_plan_allocate_allocation_policy;
 use crate::cultivation_plan::ports::CultivationPlanOptimizeAdvancePhasePort;
 use crate::shared::exceptions::RecordInvalidError;
 use crate::shared::ports::ClockPort;
@@ -192,11 +196,11 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
             )
             .map_err(|e| Self::map_allocate_error(e))?;
 
-        if !cultivation_plan_optimization_complete_policy::allocation_has_field_schedules(
+        if !cultivation_plan_allocate_allocation_policy::allocation_result_persistable(
             &allocation_result,
         ) {
             return Err(Box::new(AllocationNoCandidatesError::new(
-                "no field schedules in allocation result",
+                "allocation result has no persistable field_schedules (agrr allocate rows must include growth_days, crop_name, and cultivation dates)",
             )));
         }
 
@@ -216,7 +220,7 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
 
         if self
             .optimization_gateway
-            .field_cultivations_present(self.plan_id)?
+            .field_cultivations_with_allocate_results_present(self.plan_id)?
         {
             let start = snapshot
                 .calculated_planning_start_date
@@ -293,13 +297,28 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
                 continue;
             }
 
+            let mut persisted = 0usize;
             for allocation in &allocations {
+                if !cultivation_plan_allocate_allocation_policy::allocation_row_persistable(
+                    allocation,
+                ) {
+                    self.logger.warn(&format!(
+                        "⚠️  [AGRR] Skipping non-persistable allocation for field {field_id}"
+                    ));
+                    continue;
+                }
                 self.create_field_cultivation_from_allocation(allocation, &field_id)?;
+                persisted += 1;
+            }
+
+            if persisted == 0 {
+                return Err(Box::new(AllocationNoCandidatesError::new(
+                    "no persistable allocations in field schedule",
+                )));
             }
 
             self.logger.info(&format!(
-                "✅ [AGRR] Created {} FieldCultivations for field {field_id}",
-                allocations.len()
+                "✅ [AGRR] Created {persisted} FieldCultivations for field {field_id}"
             ));
         }
         Ok(())
@@ -359,7 +378,7 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
             .get("growth_days")
             .and_then(|v| v.as_i64())
             .map(|d| d as i32)
-            .unwrap_or(1);
+            .unwrap_or_else(|| (completion_date - start_date).whole_days() as i32 + 1);
 
         let estimated_cost = allocation
             .get("total_cost")

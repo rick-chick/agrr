@@ -76,4 +76,4 @@ echo
 echo "OK: Rust optimization chain is verifiable locally."
 echo "  Spike only:  bash scripts/verify-rust-optimization-chain.sh"
 echo "  Full chain:  RUN_CHAIN=1 bash scripts/verify-rust-optimization-chain.sh"
-echo "  UI + API:    bash scripts/e2e-strangler-stack.sh  (agrr-server :8080, nginx :3000)"
+echo "  UI + API:    ./scripts/dev-rust-stack.sh  (agrr-server :8080, nginx :3000)"

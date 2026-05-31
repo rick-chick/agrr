@@ -1,14 +1,20 @@
 //! Ruby: `PlanAllocationAllocateAgrrDaemonGateway` / `AllocationDaemonGateway`
+//!
+//! Always calls the agrr daemon (Rails parity — no mock allocation path).
+
+use std::path::PathBuf;
 
 use agrr_domain::cultivation_plan::errors::{AllocationExecutionError, AllocationNoCandidatesError};
 use agrr_domain::cultivation_plan::gateways::PlanAllocationAllocateGateway;
+use agrr_domain::cultivation_plan::policies::cultivation_plan_allocate_allocation_policy;
 use agrr_domain::cultivation_plan::policies::cultivation_plan_optimization_complete_policy;
 use serde_json::{json, Value};
 use time::Date;
 
+use crate::agrr_daemon_debug_dump::copy_temp_file_to_debug;
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
 use crate::daemon_response::parse_daemon_json_payload;
-use crate::daemon_temp_file::{path_string, write_temp_json};
+use crate::daemon_temp_file::write_temp_json_path;
 
 pub struct PlanAllocationAllocateAgrrDaemonGateway {
     client: AgrrDaemonClient,
@@ -19,6 +25,19 @@ impl PlanAllocationAllocateAgrrDaemonGateway {
         Self {
             client: AgrrDaemonClient::from_env(),
         }
+    }
+
+    pub fn new(client: AgrrDaemonClient) -> Self {
+        Self { client }
+    }
+
+    fn write_temp_json(data: &Value, prefix: &str) -> Result<PathBuf, AllocationExecutionError> {
+        write_temp_json_path(data, prefix)
+            .map_err(|e| AllocationExecutionError::new(e.to_string()))
+    }
+
+    fn remove_temp_path(path: &PathBuf) {
+        let _ = std::fs::remove_file(path);
     }
 }
 
@@ -35,52 +54,46 @@ impl PlanAllocationAllocateGateway for PlanAllocationAllocateAgrrDaemonGateway {
         max_time: Option<i64>,
         enable_parallel: bool,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-        if std::env::var("AGRR_USE_MOCK").as_deref() != Ok("false") {
-            let mock = mock_allocate_result(fields, crops, planning_start, planning_end);
-            if !cultivation_plan_optimization_complete_policy::allocation_has_field_schedules(&mock)
-            {
-                return Err(Box::new(AllocationNoCandidatesError::new(
-                    "mock allocation produced no field schedules",
-                )));
-            }
-            return Ok(mock);
-        }
-
-        let fields_file = write_temp_json(
+        let fields_path = Self::write_temp_json(
             &json!({ "fields": fields }),
             "allocate_fields",
-        )
-        .map_err(|e| AllocationExecutionError::new(e.to_string()))?;
-        let crops_file = write_temp_json(&json!({ "crops": crops }), "allocate_crops")
-            .map_err(|e| AllocationExecutionError::new(e.to_string()))?;
-        let weather_file = write_temp_json(weather_data, "allocate_weather")
-            .map_err(|e| AllocationExecutionError::new(e.to_string()))?;
+        )?;
+        let crops_path = Self::write_temp_json(&json!({ "crops": crops }), "allocate_crops")?;
+        let weather_path = Self::write_temp_json(weather_data, "allocate_weather")?;
+
+        copy_temp_file_to_debug(&fields_path, "allocation_fields");
+        copy_temp_file_to_debug(&crops_path, "allocation_crops");
+        copy_temp_file_to_debug(&weather_path, "allocation_weather");
 
         let mut args = vec![
             "optimize".into(),
             "allocate".into(),
             "--fields-file".into(),
-            path_string(&fields_file),
+            fields_path.to_string_lossy().into_owned(),
             "--crops-file".into(),
-            path_string(&crops_file),
+            crops_path.to_string_lossy().into_owned(),
             "--planning-start".into(),
             planning_start.to_string(),
             "--planning-end".into(),
             planning_end.to_string(),
             "--weather-file".into(),
-            path_string(&weather_file),
+            weather_path.to_string_lossy().into_owned(),
             "--objective".into(),
             objective.into(),
             "--format".into(),
             "json".into(),
         ];
 
-        if let Some(rules) = interaction_rules {
-            let rules_file = write_temp_json(rules, "allocate_rules")
-                .map_err(|e| AllocationExecutionError::new(e.to_string()))?;
+        let rules_path = if let Some(rules) = interaction_rules {
+            let rules_path = Self::write_temp_json(rules, "allocate_rules")?;
+            copy_temp_file_to_debug(&rules_path, "allocation_rules");
             args.push("--interaction-rules-file".into());
-            args.push(path_string(&rules_file));
-        }
+            args.push(rules_path.to_string_lossy().into_owned());
+            Some(rules_path)
+        } else {
+            None
+        };
+
         if let Some(max_time) = max_time {
             args.push("--max-time".into());
             args.push(max_time.to_string());
@@ -94,62 +107,29 @@ impl PlanAllocationAllocateGateway for PlanAllocationAllocateAgrrDaemonGateway {
             .execute_daemon_args(&args)
             .map_err(map_daemon_error)?;
         let value = parse_daemon_json_payload(&wrapper).map_err(map_daemon_error)?;
-        parse_allocate_result(&value).map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+        let result =
+            parse_allocate_result(&value).map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>);
+
+        Self::remove_temp_path(&fields_path);
+        Self::remove_temp_path(&crops_path);
+        Self::remove_temp_path(&weather_path);
+        if let Some(path) = rules_path {
+            Self::remove_temp_path(&path);
+        }
+
+        result
     }
 }
 
-fn mock_id_string(value: &Value) -> Option<String> {
-    value
-        .as_str()
-        .map(str::to_string)
-        .or_else(|| value.as_i64().map(|id| id.to_string()))
-}
-
-fn mock_allocate_result(
-    fields: &[Value],
-    crops: &[Value],
-    planning_start: Date,
-    planning_end: Date,
-) -> Value {
-    let field_id = fields
-        .first()
-        .and_then(|f| f.get("field_id").or_else(|| f.get("id")))
-        .and_then(mock_id_string)
-        .unwrap_or_else(|| "1".into());
-    let crop_id = crops
-        .first()
-        .and_then(|c| {
-            c.pointer("/crop/crop_id")
-                .or_else(|| c.get("crop_id"))
-                .or_else(|| c.get("id"))
-        })
-        .and_then(mock_id_string)
-        .unwrap_or_else(|| "1".into());
-    let field_id_i64 = field_id.parse().unwrap_or(1);
-    json!({
-        "field_schedules": [{
-            "field_id": field_id_i64,
-            "allocations": [{
-                "crop_id": crop_id,
-                "start_date": planning_start.to_string(),
-                "completion_date": planning_end.to_string(),
-                "area_used": 1.0
-            }]
-        }],
-        "summary": "mock-allocation"
-    })
-}
-
 fn parse_allocate_result(raw: &Value) -> Result<Value, AllocationNoCandidatesError> {
-    if let Some(schedules) = raw.get("field_schedules").and_then(|v| v.as_array()) {
+    let normalized = if let Some(schedules) = raw.get("field_schedules").and_then(|v| v.as_array()) {
         if schedules.is_empty() {
             return Err(AllocationNoCandidatesError::new(
                 "allocation returned empty field_schedules",
             ));
         }
-        return Ok(raw.clone());
-    }
-    if let Some(optimization) = raw.get("optimization_result") {
+        raw.clone()
+    } else if let Some(optimization) = raw.get("optimization_result") {
         let field_schedules = optimization
             .get("field_schedules")
             .cloned()
@@ -161,20 +141,28 @@ fn parse_allocate_result(raw: &Value) -> Result<Value, AllocationNoCandidatesErr
                 "allocation optimization_result has empty field_schedules",
             ));
         }
-        return Ok(serde_json::json!({
+        serde_json::json!({
             "field_schedules": field_schedules,
             "optimization_result": optimization,
             "summary": raw.get("summary"),
-        }));
-    }
-    if raw.is_object() {
+        })
+    } else if raw.is_object() {
         return Err(AllocationNoCandidatesError::new(
             "allocation result has no field_schedules",
         ));
+    } else {
+        return Err(AllocationNoCandidatesError::new(
+            "allocation result empty",
+        ));
+    };
+
+    if !cultivation_plan_allocate_allocation_policy::allocation_result_persistable(&normalized) {
+        return Err(AllocationNoCandidatesError::new(
+            "allocation result has no persistable allocations",
+        ));
     }
-    Err(AllocationNoCandidatesError::new(
-        "allocation result empty",
-    ))
+
+    Ok(normalized)
 }
 
 fn map_daemon_error(err: AgrrDaemonError) -> AllocationExecutionError {

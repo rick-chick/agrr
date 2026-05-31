@@ -27,7 +27,7 @@ impl ClockPort for FixedClock {
 }
 
 struct StubOptimizationGateway {
-    field_cultivations_present: bool,
+    field_cultivations_with_allocate_results_present: bool,
 }
 
 impl CultivationPlanOptimizationGateway for StubOptimizationGateway {
@@ -35,7 +35,14 @@ impl CultivationPlanOptimizationGateway for StubOptimizationGateway {
         &self,
         _plan_id: i64,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(self.field_cultivations_present)
+        Ok(self.field_cultivations_with_allocate_results_present)
+    }
+
+    fn field_cultivations_with_allocate_results_present(
+        &self,
+        _plan_id: i64,
+    ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(self.field_cultivations_with_allocate_results_present)
     }
 
     fn cultivation_plan_crops_with_crop(
@@ -209,7 +216,7 @@ fn calculate_planning_period_uses_prediction_target_end_for_public_plan_without_
         farm_weather_input: None,
     };
     let gateway = StubOptimizationGateway {
-        field_cultivations_present: false,
+        field_cultivations_with_allocate_results_present: false,
     };
     let clock = FixedClock(fixed_today);
     let interactor = CultivationPlanOptimizeInteractor::new(
