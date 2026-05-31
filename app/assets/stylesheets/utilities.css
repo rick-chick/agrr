@@ -6,7 +6,7 @@
    読み込み順序：
    1. Design Tokens (variables.css)
    2. Reset & Base (reset.css)
-   3. Feature-specific CSS (auth.css, fields.css, etc.)
+   3. Feature-specific CSS (fields.css, etc.)
    ============================================ */
 
 /* ============================================

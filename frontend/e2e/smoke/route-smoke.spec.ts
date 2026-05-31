@@ -42,10 +42,9 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
       const url = resolveGotoUrl(r, resolvedCaptureIds);
       await page.goto(url);
 
-      const pathnameExpect =
-        PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern) || r.pattern === 'auth/login'
-          ? undefined
-          : expectedPathnameFromResolvedGoto(url);
+      const pathnameExpect = PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern)
+        ? undefined
+        : expectedPathnameFromResolvedGoto(url);
 
       await assertPageValidity(page, r, pathnameExpect);
       await waitForPageStable(page, r);

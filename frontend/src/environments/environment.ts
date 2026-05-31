@@ -1,5 +1,7 @@
 export const environment = {
   production: false,
+  /** ng serve proxy が /api・/auth を :3000 へ転送（本番・gcp-test と同型の同一オリジン） */
+  proxySameOriginApi: true as const,
   /** Rails `AuthTestController` 相当の `/auth/test/mock_login_as/*`（ng serve 開発ビルドのみ） */
   enableDevMockLogin: true,
   enableGoogleAnalytics: false,

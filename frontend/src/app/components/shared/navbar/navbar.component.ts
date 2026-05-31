@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { type CurrentUser } from '../../../services/api.service';
-import { getApiBaseUrl } from '../../../core/api-base-url';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
 
 /** 画面完結のドロップダウンは app-nav-dropdown に委譲。ここは認証・リンク構成だけ。 */
@@ -59,7 +58,9 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
             {{ 'nav.logout' | translate }}
           </button>
         } @else {
-          <a class="login-link" [href]="loginUrl">{{ 'nav.login' | translate }}</a>
+          <a class="login-link" routerLink="/login" [queryParams]="loginReturnQuery">
+            {{ 'nav.login' | translate }}
+          </a>
         }
       </div>
     </nav>
@@ -71,7 +72,6 @@ export class NavbarComponent {
 
   @Input() user: CurrentUser | null = null;
   @Input() loading = false;
-  @Input() apiBaseUrl = '';
   @Output() logout = new EventEmitter<void>();
 
   /** 画面完結: どれか一つだけ開く（interactor 不要） */
@@ -101,10 +101,17 @@ export class NavbarComponent {
     { link: '/terms', labelKey: 'nav.terms' },
   ];
 
-  get loginUrl(): string {
-    const base = this.apiBaseUrl || getApiBaseUrl() || window.location.origin;
-    const returnTo = encodeURIComponent(window.location.href || window.location.origin + '/');
-    return `${base}/auth/login?return_to=${returnTo}`;
+  /** ログイン後に戻る URL（ログインページ自身では付けない）。 */
+  get loginReturnQuery(): { return_to?: string } {
+    if (typeof window === 'undefined') {
+      return {};
+    }
+    const path = window.location.pathname;
+    const onLogin = path === '/login' || path.endsWith('/login');
+    if (onLogin) {
+      return {};
+    }
+    return { return_to: window.location.href || `${window.location.origin}/` };
   }
 
   get reportUrl(): string {

@@ -18,7 +18,7 @@ class ApplicationControllerLocaleTest < ActionController::TestCase
   end
 
   test "path locale takes precedence over cookie and header" do
-    @request.path = "/us/auth/login"
+    @request.path = "/us/contact"
     @request.cookies["locale"] = "in"
     @request.env["HTTP_ACCEPT_LANGUAGE"] = "ja-JP,ja;q=0.9"
 
@@ -26,7 +26,7 @@ class ApplicationControllerLocaleTest < ActionController::TestCase
   end
 
   test "cookie locale is used when path locale is absent" do
-    @request.path = "/auth/login"
+    @request.path = "/contact"
     @request.cookies["locale"] = "in"
     # header not set to test cookie precedence over default
 
@@ -34,14 +34,14 @@ class ApplicationControllerLocaleTest < ActionController::TestCase
   end
 
   test "Accept-Language header is used when path and cookie are absent" do
-    @request.path = "/auth/login"
+    @request.path = "/contact"
     @request.env["HTTP_ACCEPT_LANGUAGE"] = "en-US,en;q=0.9"
 
     assert_equal "us", captured_locale_from_switch
   end
 
   test "default locale is used when no hints exist" do
-    @request.path = "/auth/login"
+    @request.path = "/contact"
 
     assert_equal I18n.default_locale.to_s, captured_locale_from_switch
   end

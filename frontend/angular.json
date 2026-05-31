@@ -88,11 +88,13 @@
               "buildTarget": "frontend:build:production"
             },
             "development": {
-              "buildTarget": "frontend:build:development"
+              "buildTarget": "frontend:build:development",
+              "proxyConfig": "proxy.conf.dev.cjs"
             },
             "gcp-test": {
               "buildTarget": "frontend:build:gcp-test",
-              "proxyConfig": "proxy.conf.gcp-test.cjs"
+              "proxyConfig": "proxy.conf.gcp-test.cjs",
+              "port": 4201
             }
           },
           "defaultConfiguration": "development"

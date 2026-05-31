@@ -12,7 +12,7 @@
 - **移行**: Rails を「維持しながら Rust 化する」前提は置かない。**ストラングラー**（ルート単位で Rust へ切替、Rails は残ルートがゼロになった時点で廃止）。
 - **保全の正**: ユーザー可視の振る舞いは **API / WebSocket 契約テスト** と **`agrr-domain` パリティ**（[`TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md)）。
 
-WebSocket ワイヤ・ジョブチェーン・P6 マイグレーション所有・R4 複製元・削除 undo（Angular 化）・P7 **refinery**・ジョブ耐障害（`:async` 受容）・**OAuth コールバック URL**（現行パス維持）・**ストラングラー配線**（二 Cloud Run + URL map で `/api/*`・`/cable`・`/auth/*` を BC 単位で Rust へ）は **本書に確定**。**ユーザー添付は未使用のため P6 対象外**（2026-05-29 削除）。配線 ADR: [`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md)。ブロッカー整理は [`BLOCKERS-RESPONSE.md`](./BLOCKERS-RESPONSE.md)。
+WebSocket ワイヤ・ジョブチェーン・P6 マイグレーション所有・R4 複製元・削除 undo（Angular 化）・P7 **refinery**・ジョブ耐障害（`:async` 受容）・**OAuth コールバック URL**（現行パス維持）・**ストラングラー配線**（二 Cloud Run + URL map で `/api/*`・`/cable`・`/auth/*` を BC 単位で Rust へ）は **本書に確定**。**ユーザー添付は未使用のため P6 対象外**（2026-05-29 削除）。配線 ADR: [`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md)。本番残作業は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
 
 > **PROGRAM との関係**: ドメイン移行の手順・フェーズ（P0–P5、R0–R3）は [`PROGRAM.md`](../lib-domain-rust/PROGRAM.md) と [`TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md) が正。本書の P6 エッジ配線 / P7 Rails 廃止 / R4 契約は終着スタックの目標。
 
@@ -96,8 +96,8 @@ Ruby の [`lib/composition_root.rb`](../../../lib/composition_root.rb) と同型
 | 項目 | 選定 |
 |------|------|
 | 方針名 | **案 A — パス・ホスト維持** |
-| Google 開始 | `POST /auth/google_oauth2`（**locale なし**。現行 [`login.html.erb`](../../../app/views/auth/login.html.erb) と同型） |
-| ログイン入口 | `GET /{locale}/auth/login?return_to=...`（Angular → API。現行維持） |
+| Google 開始 | `POST /auth/google_oauth2`（**locale なし**。Angular [`/login`](../../../frontend/src/app/components/auth/login/login.component.ts) のフォーム POST と同型） |
+| ログイン入口 | SPA `GET /login?return_to=...`（レガシー `GET /auth/login` は API が SPA へ 302） |
 | **本番 redirect URI** | `https://agrr.net/auth/google_oauth2/callback` |
 | 本番（補助） | `www.agrr.net` を実際に経由する場合のみ `https://www.agrr.net/auth/google_oauth2/callback` を **追加登録** |
 | **開発 redirect URI** | `http://localhost:3000/auth/google_oauth2/callback` |

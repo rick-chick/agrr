@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
+  buildGoogleOAuthStartUrl,
   buildMockLoginUrl,
-  buildOAuthLoginUrl,
+  oauthLocationForLogin,
   oauthReturnToUrl
 } from './login-auth-urls';
 
@@ -39,21 +40,33 @@ describe('login-auth-urls', () => {
     ).toBe(href);
   });
 
-  it('builds OAuth login URL with encoded return_to', () => {
+  it('uses return_to query for OAuth when provided', () => {
     const loc = { href: `${origin}/login`, pathname: '/login', origin };
-    const url = buildOAuthLoginUrl('http://localhost:3000', 'ja', loc);
-    expect(url).toContain(`return_to=${encodeURIComponent(`${origin}/`)}`);
-    expect(url).toBe('http://localhost:3000/ja/auth/login?return_to=http%3A%2F%2Flocalhost%3A4200%2F');
+    const plans = `${origin}/plans?x=1`;
+    const effective = oauthLocationForLogin(loc, plans);
+    const url = buildGoogleOAuthStartUrl('', effective);
+    expect(url).toContain(`return_to=${encodeURIComponent(plans)}`);
   });
 
-  it('builds dev mock login URLs on strangler :3000', () => {
+  it('builds same-origin Google OAuth start URL when apiBase is empty', () => {
     const loc = { href: `${origin}/login`, pathname: '/login', origin };
-    const apiBase = 'http://localhost:3000';
-    expect(buildMockLoginUrl(apiBase, 'developer', loc)).toBe(
-      `${apiBase}/auth/test/mock_login_as/developer?return_to=${encodeURIComponent(`${origin}/`)}`
+    const url = buildGoogleOAuthStartUrl('', loc);
+    expect(url).toBe(
+      `/auth/google_oauth2?return_to=${encodeURIComponent(`${origin}/`)}`
     );
-    expect(buildMockLoginUrl(apiBase, 'farmer', loc)).toContain('/auth/test/mock_login_as/farmer?return_to=');
-    expect(buildMockLoginUrl(apiBase, 'researcher', loc)).toContain(
+  });
+
+  it('oauthReturnToUrl tolerates missing location', () => {
+    expect(oauthReturnToUrl(undefined)).toBe(`${window.location.origin}/`);
+  });
+
+  it('builds same-origin mock login URLs when apiBase is empty', () => {
+    const loc = { href: `${origin}/login`, pathname: '/login', origin };
+    expect(buildMockLoginUrl('', 'developer', loc)).toBe(
+      `/auth/test/mock_login_as/developer?return_to=${encodeURIComponent(`${origin}/`)}`
+    );
+    expect(buildMockLoginUrl('', 'farmer', loc)).toContain('/auth/test/mock_login_as/farmer?return_to=');
+    expect(buildMockLoginUrl('', 'researcher', loc)).toContain(
       '/auth/test/mock_login_as/researcher?return_to='
     );
   });

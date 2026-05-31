@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
@@ -21,6 +21,7 @@ describe('PublicPlanResultsComponent', () => {
   let authService: { user: ReturnType<typeof vi.fn>; loadCurrentUser: ReturnType<typeof vi.fn> };
   let publicPlanStore: { state: { planId: number | null; farm: { name: string } } };
   let activatedRoute: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
+  let router: { navigate: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
   let flashMessage: { show: ReturnType<typeof vi.fn> };
   let mockTranslate: { instant: ReturnType<typeof vi.fn> };
@@ -36,6 +37,7 @@ describe('PublicPlanResultsComponent', () => {
         queryParamMap: { get: vi.fn() }
       }
     };
+    router = { navigate: vi.fn(() => Promise.resolve(true)) };
     cdr = { markForCheck: vi.fn() };
     flashMessage = { show: vi.fn() };
     mockTranslate = {
@@ -52,6 +54,7 @@ describe('PublicPlanResultsComponent', () => {
       providers: [
         PublicPlanResultsComponent,
         { provide: ActivatedRoute, useValue: activatedRoute },
+        { provide: Router, useValue: router },
         { provide: AuthService, useValue: authService },
         { provide: PublicPlanStore, useValue: publicPlanStore },
         { provide: FlashMessageService, useValue: flashMessage },
@@ -91,12 +94,14 @@ describe('PublicPlanResultsComponent', () => {
       });
     });
 
-    it('redirects to login when user is not authenticated', () => {
+    it('navigates to /login when user is not authenticated', () => {
       authService.user.mockReturnValue(null);
       activatedRoute.snapshot.queryParamMap.get.mockReturnValue('123');
       component.savePlan();
 
-      expect(window.location.href).toContain('/auth/login?return_to=');
+      expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+        queryParams: { return_to: 'http://localhost:4200/public-plans/results?planId=123' }
+      });
       expect(sessionStorage.getItem('agrr_pending_public_plan_save')).toContain('"planId":123');
       expect(saveUseCase.execute).not.toHaveBeenCalled();
     });

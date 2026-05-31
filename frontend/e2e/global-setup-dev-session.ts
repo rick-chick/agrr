@@ -5,7 +5,7 @@ import { request, type FullConfig } from '@playwright/test';
 /**
  * E2E_CAPTURE_DEV_SESSION=1 のときのみ実行。
  * agrr-server（Rust）の `/auth/test/mock_login_as/{user}` で session cookie を付与し、
- * 全テストで共有する storage state を書き出す（`E2E_API_ORIGIN` → nginx :3000 → :8080）。
+ * 全テストで共有する storage state を書き出す（既定: ng serve :4200 proxy → :3000 → :8080）。
  *
  * ブラウザでフロントへリダイレクト完了まで待たない（Angular 未起動でも Cookie は同一レスポンスで付く）。
  * 事前起動: `./scripts/dev-rust-stack.sh` + Playwright `E2E_STRANGLER=1`。
@@ -20,7 +20,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   mkdirSync(authDir, { recursive: true });
 
   const baseURL = (config.projects[0]?.use?.baseURL as string | undefined)?.replace(/\/$/, '') ?? 'http://127.0.0.1:4200';
-  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+  const apiOrigin = (process.env.E2E_API_ORIGIN ?? baseURL).replace(/\/$/, '');
   const returnTo = `${baseURL}/`;
 
   const apiRequest = await request.newContext({ baseURL: apiOrigin });

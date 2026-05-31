@@ -65,7 +65,7 @@
     <% else %>
       <%= link_to t('shared.navbar.create_plan'), spa_public_plans_new_path, class: nav_link_class(spa_public_plans_new_path) %>
       <%= link_to t('shared.navbar.reports'), research_path_for(I18n.locale), class: nav_link_class("/research") %>
-      <%= link_to auth_login_path, class: "btn-icon", title: t('shared.navbar.login') do %>
+      <%= link_to spa_login_url(return_to: request.original_url), class: "btn-icon", title: t('shared.navbar.login') do %>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
           <polyline points="10 17 15 12 10 7"></polyline>

@@ -123,6 +123,14 @@ class ApplicationController < ActionController::Base
     @current_user = CompositionRoot.session_cookie_user_gateway.user_for_session_cookie(cookies[:session_id])
   end
 
+  def spa_login_url(return_to: nil)
+    Adapters::Auth::SpaAuthRedirect.login_url(
+      return_to: return_to,
+      request_base_url: request.base_url
+    )
+  end
+  helper_method :spa_login_url
+
   def authenticate_user!
     # アノニマスユーザーの場合は認証が必要
     return if current_user && !current_user.anonymous?
@@ -130,7 +138,9 @@ class ApplicationController < ActionController::Base
     if request.format.json?
       render json: { error: I18n.t("auth.messages.login_required") }, status: :unauthorized
     else
-      redirect_to auth_login_path, alert: I18n.t("auth.messages.login_required_page")
+      redirect_to spa_login_url(return_to: request.original_url),
+                  allow_other_host: true,
+                  alert: I18n.t("auth.messages.login_required_page")
     end
   end
 

@@ -12,9 +12,9 @@
     "check-hardcoded-i18n": "node scripts/check-hardcoded-i18n.js",
     "check-ja-values": "node scripts/check-ja-values.js",
     "test:e2e": "playwright test",
-    "test:e2e:smoke": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 E2E_API_ORIGIN=http://127.0.0.1:3000 playwright test e2e/smoke/",
+    "test:e2e:smoke": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/",
     "test:e2e:ui": "playwright test --ui",
-    "e2e:capture-for-agent": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 E2E_API_ORIGIN=http://127.0.0.1:3000 playwright test e2e/visual/route-manifest-visual.spec.ts e2e/visual/login-capture-for-agent.spec.ts && node e2e/agent-review/verify-capture-complete.mjs",
+    "e2e:capture-for-agent": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/visual/route-manifest-visual.spec.ts e2e/visual/login-capture-for-agent.spec.ts && node e2e/agent-review/verify-capture-complete.mjs",
     "audit:css-tokens": "node scripts/audit-component-css-tokens.mjs",
     "audit:css-tokens:enforce": "node scripts/audit-component-css-tokens.mjs --enforce",
     "e2e:manifest": "node scripts/generate-e2e-route-manifest.mjs"

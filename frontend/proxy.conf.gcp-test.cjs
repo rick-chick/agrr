@@ -6,4 +6,9 @@ const target = (
 // Strip upstream cookie Domain so session binds to the dev-server host (127.0.0.1:4201).
 const api = { target, secure: true, changeOrigin: true, cookieDomainRewrite: '' };
 
-module.exports = { '/api': api, '/auth': api, '/cable': { ...api, ws: true }, '/up': api };
+module.exports = {
+  '/api/**': api,
+  '/auth/**': api,
+  '/cable': { ...api, ws: true },
+  '/up': api
+};

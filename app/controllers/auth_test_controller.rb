@@ -67,7 +67,10 @@ class AuthTestController < ApplicationController
     end
 
     return_to = params[:return_to].presence || session.delete(:return_to)
-    pending_allowed = return_to.present? && allowed_return_to?(return_to)
+    pending_allowed = return_to.present? && Adapters::Auth::SpaAuthRedirect.allowed_return_to?(
+      return_to,
+      request_base_url: request.base_url
+    )
     stashed = session[:public_plan_save_data].present?
 
     input = Domain::Auth::Dtos::AuthTestMockLoginInput.new(
@@ -90,22 +93,6 @@ class AuthTestController < ApplicationController
       input_dto: input,
       environment_allowed: Rails.env.development? || Rails.env.test?
     )
-  end
-
-  def allowed_return_to?(url)
-    return false if url.blank?
-    uri = URI.parse(url)
-    return false unless %w[http https].include?(uri.scheme)
-    origin = build_origin(uri)
-    allowed = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?)
-    allowed_origins = allowed.filter_map { |base| build_origin(URI.parse(base)) rescue nil }
-    allowed_origins.include?(origin)
-  rescue URI::InvalidURIError
-    false
-  end
-
-  def build_origin(uri)
-    "#{uri.scheme}://#{uri.host}#{":#{uri.port}" if uri.port && uri.port != uri.default_port}"
   end
 
   def ensure_development_or_test

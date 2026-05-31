@@ -6,7 +6,6 @@ export const HOST_SELECTOR_BY_PATTERN: Record<string, string> = {
   '': 'app-home',
   '**': 'app-not-found',
   about: 'app-about',
-  'auth/login': 'app-login',
   contact: 'app-contact',
   'entry-schedule': 'app-entry-schedule-list',
   'entry-schedule/crop/:cropId': 'app-entry-schedule-detail',
@@ -70,7 +69,6 @@ export type RouteRow = { pattern: string; url: string; requiresAuth: boolean; so
 
 /** リダイレクト後に期待する pathname（末尾スラッシュは正規化で吸収。クエリは除去） */
 export function expectedPathname(r: RouteRow): string {
-  if (r.pattern === 'auth/login') return '/login';
   const raw = r.url.startsWith('/') ? r.url : `/${r.url}`;
   const pathOnly = raw.split('?')[0] ?? raw;
   return pathOnly.replace(/\/$/, '') || '/';

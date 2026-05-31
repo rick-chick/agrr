@@ -22,7 +22,7 @@ export const smokeManifest: Manifest = JSON.parse(
  */
 export const smokeDescribe = process.env.E2E_CAPTURE_DEV_SESSION ? test.describe : test.describe.skip;
 
-export const SKIP_ROUTES_WITH_DEV_SESSION = new Set(['auth/login', 'login']);
+export const SKIP_ROUTES_WITH_DEV_SESSION = new Set(['login']);
 
 export async function disableCookieBanner(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -51,7 +51,7 @@ export async function loadResolvedCaptureIds(): Promise<ResolvedCaptureIds | nul
   if (!existsSync(storagePath)) {
     return null;
   }
-  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
   const api = await request.newContext({ storageState: storagePath });
   try {
     return await buildResolvedCaptureIds(api, apiOrigin);
@@ -78,7 +78,7 @@ export async function getUserOwnedFarmCount(): Promise<number | null> {
   if (!existsSync(storagePath)) {
     return null;
   }
-  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
   const api = await request.newContext({ storageState: storagePath });
   try {
     const res = await api.get(`${apiOrigin}/api/v1/masters/farms`);

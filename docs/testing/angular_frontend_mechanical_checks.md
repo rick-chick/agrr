@@ -17,7 +17,7 @@ bin/rails test test/controllers/auth_test_controller_test.rb
 
 ### 手動確認
 1. `http://localhost:4200` にアクセス
-2. 「ログイン」リンクをクリック → `http://localhost:3000/auth/login?return_to=...` へ遷移
+2. 「ログイン」リンクをクリック → `http://localhost:4200/login?return_to=...` へ遷移（SPA 内）
 3. モックログイン（developer/farmer/researcher）をクリック
 4. **期待**: `http://localhost:4200/` にリダイレクトされ、「ようこそ、...」が表示される
 
@@ -56,6 +56,6 @@ npm run build
 
 1. `http://localhost:4200` にアクセス
 2. 未ログイン時に「ログインが必要です」が表示される
-3. ログイン導線（`/auth/login`）が開く
+3. ログイン画面（`/login`）が開く
 4. ログイン後に「ようこそ、...」表示へ切り替わる
 5. 「ログアウト」で未ログイン状態に戻る

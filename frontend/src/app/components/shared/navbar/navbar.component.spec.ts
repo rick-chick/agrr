@@ -18,7 +18,6 @@ describe('NavbarComponent', () => {
     fixture = TestBed.createComponent(NavbarComponent);
     component = fixture.componentInstance;
     translate = TestBed.inject(TranslateService);
-    component.apiBaseUrl = 'https://api.example.com';
   });
 
   it('uses /research/ for ja locale', () => {

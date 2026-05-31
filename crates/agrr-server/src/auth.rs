@@ -4,7 +4,8 @@
 
 use crate::auth_return_to::{
     allowed_return_to, append_oauth_conversion_query, default_frontend_home,
-    dev_environment_allowed, google_oauth_configured, OAUTH_RETURN_TO_COOKIE,
+    google_oauth_configured, oauth_csrf_state_matches, spa_login_redirect_url,
+    OAUTH_CSRF_STATE_COOKIE, OAUTH_RETURN_TO_COOKIE,
 };
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
@@ -13,7 +14,7 @@ use agrr_adapters_sqlite::{
 };
 use axum::{
     extract::{Query, State},
-    http::{header, StatusCode},
+    http::StatusCode,
     response::{IntoResponse, Redirect, Response},
     routing::{get, post},
     Router,
@@ -30,10 +31,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/auth/login", get(login_page))
         .route("/{locale}/auth/login", get(login_page))
-        .route(
-            "/auth/google_oauth2",
-            get(start_google_oauth).post(start_google_oauth),
-        )
+        .route("/auth/google_oauth2", post(start_google_oauth))
         .route("/auth/google_oauth2/callback", get(google_callback))
         .route("/auth/failure", get(auth_failure))
         .route("/auth/logout", post(logout))
@@ -44,25 +42,8 @@ struct LoginQuery {
     return_to: Option<String>,
 }
 
-async fn login_page(
-    State(state): State<AppState>,
-    Query(query): Query<LoginQuery>,
-    jar: CookieJar,
-) -> impl IntoResponse {
-    let oauth_ready = google_oauth_configured(&state.google_client_id, &state.google_client_secret);
-    let return_to = query.return_to.filter(|u| allowed_return_to(u));
-    let jar = if let Some(ref url) = return_to {
-        let mut cookie = Cookie::new(OAUTH_RETURN_TO_COOKIE, url.clone());
-        cookie.set_http_only(true);
-        cookie.set_same_site(SameSite::Lax);
-        cookie.set_path("/");
-        jar.add(cookie)
-    } else {
-        jar
-    };
-
-    let body = render_login_html(oauth_ready, return_to.as_deref());
-    (jar, [(header::CONTENT_TYPE, "text/html; charset=utf-8")], body)
+async fn login_page(Query(query): Query<LoginQuery>) -> Redirect {
+    Redirect::temporary(&spa_login_redirect_url(query.return_to.as_deref()))
 }
 
 async fn start_google_oauth(
@@ -71,15 +52,8 @@ async fn start_google_oauth(
     jar: CookieJar,
 ) -> Result<Response, StatusCode> {
     if !google_oauth_configured(&state.google_client_id, &state.google_client_secret) {
-        tracing::warn!("Google OAuth not configured — redirecting to login page");
-        let mut url = "/auth/login".to_string();
-        if let Some(ref return_to) = query.return_to.filter(|u| allowed_return_to(u)) {
-            url = format!(
-                "/auth/login?return_to={}",
-                url::form_urlencoded::byte_serialize(return_to.as_bytes()).collect::<String>()
-            );
-        }
-        return Ok(Redirect::temporary(&url).into_response());
+        tracing::warn!("Google OAuth not configured — redirecting to SPA login");
+        return Ok(Redirect::temporary(&spa_login_redirect_url(query.return_to.as_deref())).into_response());
     }
 
     let jar = if let Some(ref url) = query.return_to.filter(|u| allowed_return_to(u)) {
@@ -93,12 +67,13 @@ async fn start_google_oauth(
     };
 
     let client = google_oauth_client(&state)?;
-    let (auth_url, _csrf) = client
+    let (auth_url, csrf) = client
         .authorize_url(CsrfToken::new_random)
         .add_scope(Scope::new("openid".into()))
         .add_scope(Scope::new("email".into()))
         .add_scope(Scope::new("profile".into()))
         .url();
+    let jar = jar_with_oauth_csrf(jar, csrf.secret());
     Ok((jar, Redirect::temporary(auth_url.as_str())).into_response())
 }
 
@@ -106,6 +81,7 @@ async fn start_google_oauth(
 struct OAuthCallbackQuery {
     code: Option<String>,
     error: Option<String>,
+    state: Option<String>,
 }
 
 async fn google_callback(
@@ -114,8 +90,16 @@ async fn google_callback(
     jar: CookieJar,
 ) -> Result<Response, StatusCode> {
     if query.error.is_some() || query.code.is_none() {
-        return Ok(Redirect::to("/auth/failure").into_response());
+        return Ok(Redirect::temporary(&spa_login_redirect_url(None)).into_response());
     }
+    let stored_csrf = jar
+        .get(OAUTH_CSRF_STATE_COOKIE)
+        .map(|c| c.value().to_string());
+    if !oauth_csrf_state_matches(stored_csrf.as_deref(), query.state.as_deref()) {
+        tracing::warn!("OAuth callback rejected: CSRF state mismatch");
+        return Ok(Redirect::temporary(&spa_login_redirect_url(None)).into_response());
+    }
+    let jar = jar.remove(Cookie::from(OAUTH_CSRF_STATE_COOKIE));
     let client = google_oauth_client(&state)?;
     let token = client
         .exchange_code(AuthorizationCode::new(query.code.unwrap()))
@@ -143,7 +127,7 @@ async fn google_callback(
     let gateway = AuthOmniauthSessionSqliteGateway::new(state.sqlite.clone());
     let result = gateway.process_google_callback(&info);
     if result.status != OmniauthCallbackStatus::Success {
-        return Ok(Redirect::to("/auth/failure").into_response());
+        return Ok(Redirect::temporary(&spa_login_redirect_url(None)).into_response());
     }
 
     let mut cookie = Cookie::new("session_id", result.session_id.unwrap_or_default());
@@ -176,7 +160,7 @@ async fn google_callback(
 }
 
 async fn auth_failure() -> Redirect {
-    Redirect::to("/auth/login")
+    Redirect::temporary(&spa_login_redirect_url(None))
 }
 
 async fn logout(State(state): State<AppState>, jar: CookieJar) -> impl IntoResponse {
@@ -189,59 +173,19 @@ async fn logout(State(state): State<AppState>, jar: CookieJar) -> impl IntoRespo
         }
     }
     let jar = jar.remove(Cookie::from("session_id"));
-    (jar, Redirect::to("/auth/login"))
+    (jar, Redirect::temporary(&spa_login_redirect_url(None)))
 }
 
-fn render_login_html(oauth_ready: bool, return_to: Option<&str>) -> String {
-    let google_section = if oauth_ready {
-        r#"<form method="get" action="/auth/google_oauth2">
-            <button type="submit">Googleでサインイン</button>
-           </form>"#
-            .to_string()
-    } else {
-        r#"<div class="oauth-error">
-            <p><strong>Google OAuth認証が設定されていません</strong></p>
-            <p>ローカル開発では Angular ログイン画面の「開発用ログイン」を使うか、
-               <code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code> を設定してください。</p>
-           </div>"#
-            .to_string()
-    };
-
-    let dev_section = if dev_environment_allowed() {
-        let return_q = return_to
-            .map(|u| format!(
-                "?return_to={}",
-                url::form_urlencoded::byte_serialize(u.as_bytes()).collect::<String>()
-            ))
-            .unwrap_or_default();
-        format!(
-            r#"<div class="dev-login">
-              <h2>開発用ログイン</h2>
-              <p><a href="/auth/test/mock_login_as/developer{return_q}">開発者としてログイン</a></p>
-              <p><a href="/auth/test/mock_login_as/farmer{return_q}">農家としてログイン</a></p>
-              <p><a href="/auth/test/mock_login_as/researcher{return_q}">研究者としてログイン</a></p>
-              <p><a href="{frontend}">Angular ログイン画面に戻る</a></p>
-            </div>"#,
-            frontend = default_frontend_home().trim_end_matches('/'),
-        )
-    } else {
-        String::new()
-    };
-
-    format!(
-        r#"<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>AGRR Login</title></head>
-        <body>
-        <h1>AGRR Login</h1>
-        {google_section}
-        {dev_section}
-        </body></html>"#
-    )
+fn jar_with_oauth_csrf(jar: CookieJar, csrf_secret: &str) -> CookieJar {
+    let mut cookie = Cookie::new(OAUTH_CSRF_STATE_COOKIE, csrf_secret.to_string());
+    cookie.set_http_only(true);
+    cookie.set_same_site(SameSite::Lax);
+    cookie.set_path("/");
+    jar.add(cookie)
 }
 
 fn google_oauth_client(state: &AppState) -> Result<BasicClient, StatusCode> {
-    let redirect = std::env::var("GOOGLE_OAUTH_REDIRECT_URI").unwrap_or_else(|_| {
-        "http://localhost:3000/auth/google_oauth2/callback".to_string()
-    });
+    let redirect = crate::auth_return_to::google_oauth_redirect_uri();
     Ok(BasicClient::new(
         ClientId::new(state.google_client_id.to_string()),
         Some(ClientSecret::new(state.google_client_secret.to_string())),

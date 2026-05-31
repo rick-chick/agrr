@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-30T03:34:08.064Z",
+  "generatedAt": "2026-05-31T11:40:50.895Z",
   "note": "path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は `npm run e2e:capture-for-agent`（Rails development + AuthTest モックログインで付与したセッション、`e2e/.auth/dev-session.json`）で全ルートを ja/en/in の3言語キャプチャする。requiresAuth はルート定義上のフラグ。",
   "routes": [
     {
@@ -19,12 +19,6 @@
       "url": "/about",
       "requiresAuth": false,
       "source": "pages.routes.ts"
-    },
-    {
-      "pattern": "auth/login",
-      "url": "/auth/login",
-      "requiresAuth": false,
-      "source": "core.routes.ts"
     },
     {
       "pattern": "contact",

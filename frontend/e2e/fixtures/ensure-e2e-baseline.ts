@@ -11,7 +11,7 @@ import {
 } from '../shared/baseline-ids';
 
 function apiOrigin(): string {
-  return (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+  return (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
 }
 
 function sessionStoragePath(): string {

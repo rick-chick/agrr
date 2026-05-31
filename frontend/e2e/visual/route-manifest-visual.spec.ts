@@ -37,7 +37,7 @@ const captureDescribe = process.env.E2E_CAPTURE_DEV_SESSION ? test.describe : te
  * モックログイン済みセッションでは authGuard が `/login` へ寄せず `app-login` が出ない。
  * 既存 PNG（未ログイン時キャプチャ）を verify が参照するため、再撮影は skip する。
  */
-const SKIP_CAPTURE_WITH_DEV_SESSION = new Set(['auth/login', 'login']);
+const SKIP_CAPTURE_WITH_DEV_SESSION = new Set(['login']);
 
 function routeLabel(r: RouteRow): string {
   return r.pattern === '' ? '(home)' : r.pattern;
@@ -77,10 +77,9 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
       }
       const url =
         resolvedCaptureIds != null ? applyResolvedUrl(r.pattern, r.url, resolvedCaptureIds) : r.url;
-      const pathnameExpect =
-        PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern) || r.pattern === 'auth/login'
-          ? undefined
-          : expectedPathnameFromResolvedGoto(url);
+      const pathnameExpect = PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern)
+        ? undefined
+        : expectedPathnameFromResolvedGoto(url);
 
       for (const locale of CAPTURE_LOCALES) {
         await installCaptureLocale(page, locale);

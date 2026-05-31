@@ -122,8 +122,7 @@ module ApplicationHelper
   end
 
   def spa_private_plan_url(plan_id)
-    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
-    "#{origin}/plans/#{plan_id}"
+    "#{spa_frontend_origin}/plans/#{plan_id}"
   end
 
   def spa_private_plan_optimizing_url(plan_id)
@@ -131,13 +130,11 @@ module ApplicationHelper
   end
 
   def spa_private_plan_select_crop_path
-    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
-    "#{origin}/plans/select-crop"
+    "#{spa_frontend_origin}/plans/select-crop"
   end
 
   def spa_private_plan_new_path
-    origin = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
-    "#{origin}/plans/new"
+    "#{spa_frontend_origin}/plans/new"
   end
 
   def spa_private_plans_path
@@ -149,7 +146,7 @@ module ApplicationHelper
   end
 
   def spa_frontend_origin
-    ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?).first
+    Adapters::Auth::SpaAuthRedirect.default_origin
   end
 
   def spa_masters_farms_path

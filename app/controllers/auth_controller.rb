@@ -1,41 +1,15 @@
 # frozen_string_literal: true
 
 class AuthController < ApplicationController
-  layout "auth", only: [ :login ]
-
   # Skip CSRF protection for OAuth endpoints
   skip_before_action :verify_authenticity_token, only: [ :google_oauth2_callback, :failure ]
 
   # Public endpoints
   skip_before_action :authenticate_user!, only: [ :login, :google_oauth2_callback, :failure ]
 
-  # Production環境での認証機能制限を解除
-  # before_action :check_production_environment
-
   def login
-    # Store return_to for redirect after OAuth (e.g. Angular dev server at 4200)
-    if params[:return_to].present?
-      return_to = params[:return_to].strip
-      session[:return_to] = return_to if allowed_return_to?(return_to)
-    end
-
-    # Check if Google OAuth is properly configured
-    unless ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present?
-      Rails.logger.error "🚨 Google OAuth not configured for login attempt"
-      Rails.logger.error "   GOOGLE_CLIENT_ID: #{ENV['GOOGLE_CLIENT_ID'].present? ? 'SET (value exists)' : 'NOT SET or EMPTY'}"
-      Rails.logger.error "   GOOGLE_CLIENT_SECRET: #{ENV['GOOGLE_CLIENT_SECRET'].present? ? 'SET (value exists)' : 'NOT SET or EMPTY'}"
-      Rails.logger.error "   Environment: #{Rails.env}"
-      flash[:alert] = I18n.t("auth.flash.oauth_not_configured")
-    end
-    # Display login page with Google OAuth button
-  end
-
-  # Google OAuth2 initiation - handled by OmniAuth middleware
-  def google_oauth2
-    # This should not be reached as OmniAuth middleware handles /auth/google_oauth2
-    # If reached, there's a configuration issue
-    Rails.logger.error "🚨 OAuth: google_oauth2 action reached - OmniAuth middleware not working"
-    redirect_to auth_login_path, alert: I18n.t("auth.flash.oauth_config_error")
+    return_to = params[:return_to]&.strip
+    redirect_to spa_login_url(return_to: return_to), allow_other_host: true
   end
 
   def google_oauth2_callback
@@ -83,7 +57,7 @@ class AuthController < ApplicationController
 
   def failure
     error_message = params[:message] || I18n.t("auth.flash.authentication_failed")
-    redirect_to auth_login_path, alert: error_message
+    redirect_to spa_login_url, allow_other_host: true, alert: error_message
   end
 
   def logout
@@ -98,93 +72,20 @@ class AuthController < ApplicationController
 
   # Delete session cookie robustly across environments and domains
   def clear_session_cookie
-    # Default deletion (matches cookies set without domain/path)
     cookies.delete(:session_id)
-
-    # Ensure deletion when a domain/path is involved (some proxies/CDNs alter host)
-    cookie_domain = if request.respond_to?(:cookie_domain, true)
-      request.cookie_domain.presence
-    end
-
-    # Try explicit path root
     cookies.delete(:session_id, path: "/")
-
-    # Try with current host domain if available
-    if cookie_domain
-      cookies.delete(:session_id, domain: cookie_domain, path: "/")
-    end
-
-    # Also try wildcard domain deletion for subdomain cookies
+    cookie_domain = request.cookie_domain.presence if request.respond_to?(:cookie_domain, true)
+    cookies.delete(:session_id, domain: cookie_domain, path: "/") if cookie_domain
     cookies.delete(:session_id, domain: :all, path: "/")
-  end
-
-  def check_production_environment
-    if Rails.env.production?
-      if request.format.json?
-        render json: { error: I18n.t("auth.flash.disabled_in_production_json") }, status: :forbidden
-      else
-        redirect_to root_path, alert: I18n.t("auth.flash.disabled_in_production")
-      end
-    end
   end
 
   def auth_failure_path
     "/auth/failure"
   end
 
-  def allowed_return_to?(url)
-    return false if url.blank?
-    uri = URI.parse(url)
-    return false unless %w[http https].include?(uri.scheme)
-    origin = build_origin(uri)
-
-    allowed_origins = frontend_allowed_origins
-    return true if allowed_origins.include?(origin)
-    return true if matches_request_origin?(origin)
-    return true if matches_allowed_host?(uri.host)
-
-    false
-  rescue URI::InvalidURIError
-    false
-  end
-
-  def frontend_allowed_origins
-    allowed = ENV.fetch("FRONTEND_URL", "http://localhost:4200").split(",").map(&:strip).reject(&:empty?)
-    allowed.filter_map { |base| build_origin(URI.parse(base)) rescue nil }
-  end
-
-  def matches_request_origin?(origin)
-    request_base = URI.parse(request.base_url)
-    build_origin(request_base) == origin
-  rescue URI::InvalidURIError
-    false
-  end
-
-  def matches_allowed_host?(host)
-    return false unless host.present?
-    allowed = ENV.fetch("ALLOWED_HOSTS", "").split(",").map(&:strip).reject(&:empty?)
-    allowed.any? { |allowed_host| host_match?(host, allowed_host) }
-  end
-
-  def host_match?(host, allowed_host)
-    return false unless host.present? && allowed_host.present?
-
-    normalized = allowed_host.strip
-    if normalized.start_with?(".")
-      host.end_with?(normalized.delete_prefix("."))
-    else
-      host.casecmp?(normalized)
-    end
-  end
-
-  def build_origin(uri)
-    "#{uri.scheme}://#{uri.host}#{":#{uri.port}" if uri.port && uri.port != uri.default_port}"
-  end
-
   def redirect_to_spa_public_plan_results_after_save!(save_data)
     plan_id = save_data[:plan_id] || save_data["plan_id"]
-    origin = frontend_allowed_origins.first || "http://localhost:4200"
-    redirect_to "#{origin}/public-plans/results?planId=#{plan_id}",
+    redirect_to "#{Adapters::Auth::SpaAuthRedirect.default_origin}/public-plans/results?planId=#{plan_id}",
                 allow_other_host: true,
                 notice: I18n.t("auth.flash.login_success")
   end

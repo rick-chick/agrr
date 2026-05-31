@@ -12,8 +12,6 @@ import { CookieConsentBannerComponent } from './components/shared/cookie-consent
 import { GoogleAnalyticsService } from './services/google-analytics.service';
 import { AuthService } from './services/auth.service';
 import { UndoToastService } from './services/undo-toast.service';
-import { getApiBaseUrl } from './core/api-base-url';
-
 /** Maps browser language codes to supported Angular i18n keys. en→en, hi→in, others→ja */
 function detectBrowserLang(): 'ja' | 'en' | 'in' {
   const langs: readonly string[] =
@@ -72,7 +70,6 @@ export class App implements OnInit, OnDestroy {
   private readonly googleAnalytics = inject(GoogleAnalyticsService);
   private routerSubscription?: Subscription;
   private langChangeSubscription?: Subscription;
-  protected readonly apiBaseUrl = getApiBaseUrl();
 
   performUndo(): void {
     this.undoToastService.performUndo();

@@ -25,7 +25,7 @@ type PublicPlanDataBody = {
 };
 
 async function fetchPublicPlanStatus(planId: string): Promise<string> {
-  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
   const storagePath = join(process.cwd(), 'e2e', '.auth', 'dev-session.json');
   const api = await request.newContext(
     existsSync(storagePath) ? { storageState: storagePath } : {}
@@ -41,7 +41,7 @@ async function fetchPublicPlanStatus(planId: string): Promise<string> {
 
 /** Rust API: 計画がビジネス上「完成」していること（status + 作付け 1 件以上）。 */
 async function assertPublicPlanBusinessComplete(planId: string): Promise<void> {
-  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:3000').replace(/\/$/, '');
+  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
   const storagePath = join(process.cwd(), 'e2e', '.auth', 'dev-session.json');
   const api = await request.newContext(
     existsSync(storagePath) ? { storageState: storagePath } : {}

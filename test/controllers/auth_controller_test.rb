@@ -54,13 +54,4 @@ class AuthControllerTest < ActionController::TestCase
     assert_nil session[:return_to]
   end
 
-  def test_login_stores_allowed_return_to
-    get :login, params: { return_to: "http://localhost:4200/dashboard" }
-    assert_equal "http://localhost:4200/dashboard", session[:return_to]
-  end
-
-  def test_login_ignores_disallowed_return_to
-    get :login, params: { return_to: "https://evil.example.com/" }
-    assert_nil session[:return_to]
-  end
 end

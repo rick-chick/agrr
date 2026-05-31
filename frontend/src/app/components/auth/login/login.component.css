@@ -18,6 +18,10 @@
   color: var(--color-text-secondary);
 }
 
+.google-oauth-form {
+  margin: 0;
+}
+
 .login-button {
   display: inline-block;
   background: var(--color-primary);
@@ -25,6 +29,9 @@
   padding: 10px var(--space-4);
   border-radius: var(--radius-lg);
   text-decoration: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
 }
 
 .dev-login-section {

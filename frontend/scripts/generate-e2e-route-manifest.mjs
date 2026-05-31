@@ -14,6 +14,9 @@ const ROUTES_DIR = join(FRONTEND, 'src/app/routes');
 const OUT = join(FRONTEND, 'e2e', 'route-manifest.json');
 const ROUTE_TO_PNG = join(FRONTEND, 'e2e', 'agent-review', 'route-to-png.md');
 
+/** SPA 内リダイレクトのみ。ログイン UI は `/login` で E2E する */
+const E2E_EXCLUDE_MANIFEST_PATTERNS = new Set(['auth/login']);
+
 function patternToUrl(pattern) {
   if (pattern === '') return '/';
   if (pattern === '**') return '/__e2e-route-manifest-not-found__';
@@ -63,6 +66,7 @@ async function main() {
   const seen = new Set();
   const deduped = [];
   for (const r of all) {
+    if (E2E_EXCLUDE_MANIFEST_PATTERNS.has(r.pattern)) continue;
     const k = `${r.pattern}\0${r.requiresAuth}`;
     if (seen.has(k)) continue;
     seen.add(k);

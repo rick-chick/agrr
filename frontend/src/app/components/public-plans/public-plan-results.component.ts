@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs';
 import { PublicPlanResultsView, PublicPlanResultsViewState } from './public-plan-results.view';
@@ -19,7 +19,6 @@ import {
   consumePendingPublicPlanSave,
   setPendingPublicPlanSave
 } from '../../services/public-plans/pending-public-plan-save';
-import { getApiBaseUrl } from '../../core/api-base-url';
 
 /**
  * 無料計画の結果（/public-plans/results）。
@@ -102,6 +101,7 @@ const initialControl: PublicPlanResultsViewState = {
 })
 export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly useCase = inject(LoadPublicPlanResultsUseCase);
   private readonly saveUseCase = inject(SavePublicPlanUseCase);
   private readonly presenter = inject(PublicPlanResultsPresenter);
@@ -158,9 +158,9 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
 
     if (!this.auth.user()) {
       setPendingPublicPlanSave(planId);
-      const apiBase = getApiBaseUrl() || window.location.origin;
-      const returnTo = encodeURIComponent(window.location.href);
-      window.location.href = `${apiBase}/auth/login?return_to=${returnTo}`;
+      void this.router.navigate(['/login'], {
+        queryParams: { return_to: window.location.href }
+      });
       return;
     }
 

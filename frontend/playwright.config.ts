@@ -34,9 +34,9 @@ const railsDev = {
  * E2E: ルート妥当性検証 + Agent レビュー用 PNG（ピクセル回帰はしない）。
  *
  * - `route-manifest-visual.spec.ts` は **`npm run e2e:capture-for-agent`** が付与する `E2E_CAPTURE_DEV_SESSION=1` のときのみ実行（それ以外は skip）。
- * - Mock login: **agrr-server** `GET /auth/test/mock_login_as/{user}`（`E2E_API_ORIGIN` 既定 127.0.0.1:3000 = nginx strangler）。
+ * - Mock login: **agrr-server** `GET /auth/test/mock_login_as/{user}`（既定: ng serve :4200 proxy → :3000）。
  * - `E2E_STRANGLER=1`: Rails webServer を起動しない。事前に `./scripts/dev-rust-stack.sh`。
- * - `getApiBaseUrl()` が 127.0.0.1:4200 → 127.0.0.1:3000 を向ける前提。
+ * - `getApiBaseUrl()` は同一オリジン（`proxySameOriginApi`）で ''。
  */
 export default defineConfig({
   testDir: './e2e',

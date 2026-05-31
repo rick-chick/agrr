@@ -17,7 +17,7 @@ const manifest: Manifest = JSON.parse(
   readFileSync(join(process.cwd(), 'e2e/route-manifest.json'), 'utf8'),
 );
 
-const LOGIN_PATTERNS = new Set(['auth/login', 'login']);
+const LOGIN_PATTERNS = new Set(['login']);
 
 const loginRoutes = manifest.routes.filter((r) => LOGIN_PATTERNS.has(r.pattern));
 

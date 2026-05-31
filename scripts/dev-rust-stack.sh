@@ -103,6 +103,53 @@ fi
 
 stop_all
 
+# .env は bash source 非互換の行があるため、必要なキーのみ安全に読む（OAuth は .env.gcp を優先）
+agrr_read_dotenv_var() {
+  local file="$1" key="$2"
+  [[ -f "$file" ]] || return 1
+  local line val
+  line="$(grep -E "^[[:space:]]*${key}=" "$file" 2>/dev/null | tail -1)" || return 1
+  val="${line#*=}"
+  val="${val%%#*}"
+  val="${val%"${val##*[![:space:]]}"}"
+  val="${val#"${val%%[![:space:]]*}"}"
+  val="${val#\"}"
+  val="${val%\"}"
+  val="${val#\'}"
+  val="${val%\'}"
+  [[ -n "$val" ]] || return 1
+  printf '%s' "$val"
+}
+
+agrr_dotenv_value_usable() {
+  local v="$1"
+  [[ -n "$v" ]] || return 1
+  [[ "$v" == "your_google_client_id_here" || "$v" == "your_google_client_secret_here" ]] && return 1
+  [[ "$v" == *'${'* ]] && return 1
+  return 0
+}
+
+agrr_load_google_oauth_env() {
+  local f id secret
+  for f in "$ROOT/.env.gcp" "$ROOT/.env"; do
+    [[ -f "$f" ]] || continue
+    if [[ -z "${GOOGLE_CLIENT_ID:-}" ]]; then
+      id="$(agrr_read_dotenv_var "$f" GOOGLE_CLIENT_ID || true)"
+      if agrr_dotenv_value_usable "$id"; then
+        export GOOGLE_CLIENT_ID="$id"
+      fi
+    fi
+    if [[ -z "${GOOGLE_CLIENT_SECRET:-}" ]]; then
+      secret="$(agrr_read_dotenv_var "$f" GOOGLE_CLIENT_SECRET || true)"
+      if agrr_dotenv_value_usable "$secret"; then
+        export GOOGLE_CLIENT_SECRET="$secret"
+      fi
+    fi
+  done
+}
+
+agrr_load_google_oauth_env
+
 export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-$ROOT/storage/development.sqlite3}"
 export FRONTEND_URL="${FRONTEND_URL:-http://127.0.0.1:4200,http://localhost:4200}"
 
@@ -157,9 +204,23 @@ fi
 
 require_port_free 8080 "agrr-server" || exit 1
 
+if [[ -z "${GOOGLE_CLIENT_ID:-}" || -z "${GOOGLE_CLIENT_SECRET:-}" ]]; then
+  echo "WARN: GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET が未設定です（$ROOT/.env.gcp を確認）。Google ログインは使えません。"
+elif [[ "$GOOGLE_CLIENT_ID" == "your_google_client_id_here" ]]; then
+  echo "WARN: GOOGLE_CLIENT_ID がプレースホルダのままです。$ROOT/.env.gcp を更新してください。"
+fi
+
+if [[ "${AGRR_ENV:-development}" == "production" && "${ENABLE_MOCK_AUTH:-}" == "1" ]]; then
+  echo "ERROR: ENABLE_MOCK_AUTH=1 は本番（AGRR_ENV=production）では禁止です。"
+  exit 1
+fi
+
 echo "==> agrr-server on 127.0.0.1:8080 (AGRR_USE_MOCK=${AGRR_USE_MOCK:-false}, WEATHER_DATA_SOURCE=$WEATHER_DATA_SOURCE, socket=$AGRR_SOCKET_PATH)"
 AGRR_ENV="${AGRR_ENV:-development}" \
   FRONTEND_URL="$FRONTEND_URL" \
+  GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}" \
+  GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}" \
+  GOOGLE_OAUTH_REDIRECT_URI="${GOOGLE_OAUTH_REDIRECT_URI:-}" \
   AGRR_SQLITE_PATH="$AGRR_SQLITE_PATH" \
   AGRR_SOCKET_PATH="$AGRR_SOCKET_PATH" \
   AGRR_USE_MOCK="${AGRR_USE_MOCK:-false}" \
@@ -197,6 +258,7 @@ echo ""
 echo "Dev Rust stack ready."
 echo "  API + WebSocket: http://127.0.0.1:3000"
 echo "  agrr-server:     http://127.0.0.1:8080/health"
-echo "  Angular:         cd frontend && ng serve --host 127.0.0.1   # → :4200, API は :3000"
+echo "  Angular:         cd frontend && ng serve --host 127.0.0.1   # → :4200, /api・/auth は proxy → :3000"
+echo "  Google OAuth:    redirect URI = FRONTEND_URL 先頭 + /auth/google_oauth2/callback（例 :4200）"
 echo "  Stop:            ./scripts/dev-rust-stack.sh stop"
 echo "  Logs:            $PID_DIR/rust.log"
