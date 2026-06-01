@@ -38,7 +38,15 @@ const GANTT_KEYS = [
   'js.gantt.field_form_area_label',
   'js.gantt.field_form_area_placeholder',
   'js.gantt.field_form_submit',
-  'js.gantt.adding_field_loading'
+  'js.gantt.adding_field_loading',
+  'plans.gantt.mobile.field_column_short',
+  'plans.gantt.mobile.field_legend_button',
+  'plans.gantt.mobile.field_legend_title',
+  'plans.gantt.mobile.field_legend_item',
+  'plans.gantt.mobile.field_legend_delete',
+  'plans.gantt.mobile.drag_target_field',
+  'js.gantt.logs.data_refetch_failed',
+  'js.gantt.logs.data_refetch_api_error'
 ] as const;
 
 /** English uses empty axis suffixes for year/month (e.g. "2026", "5"). */

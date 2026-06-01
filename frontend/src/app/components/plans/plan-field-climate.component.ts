@@ -92,7 +92,7 @@ type StageTemperatureBand = {
       </div>
 
       <div *ngIf="control.error" class="plan-field-climate__error">
-        <p>{{ control.error }}</p>
+        <p>{{ control.error | translate }}</p>
         <button type="button" class="plan-field-climate__retry" (click)="retry()">
           {{ 'plans.field_climate.retry' | translate }}
         </button>

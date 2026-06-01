@@ -61,7 +61,11 @@
       "field_form_name_placeholder": "e.g. Field A",
       "field_form_area_label": "Area (㎡)",
       "field_form_area_placeholder": "e.g. 100",
-      "field_form_submit": "Add field"
+      "field_form_submit": "Add field",
+      "logs": {
+        "data_refetch_failed": "Failed to reload plan data.",
+        "data_refetch_api_error": "An error occurred while reloading plan data."
+      }
     },
     "crop_ai": {
       "enter_name": "Enter crop name",
@@ -1091,6 +1095,8 @@
       "period_unknown": "Period unknown",
       "close": "Close",
       "loading": "Loading climate data...",
+      "load_failed": "Failed to load climate data.",
+      "load_unknown": "An unknown error occurred.",
       "retry": "Retry",
       "base_temperature": "Base temperature",
       "optimal_range": "Optimal temperature range",

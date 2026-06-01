@@ -1669,7 +1669,11 @@
       "field_form_name_placeholder": "例: A圃場",
       "field_form_area_label": "面積 (㎡)",
       "field_form_area_placeholder": "例: 100",
-      "field_form_submit": "圃場を追加"
+      "field_form_submit": "圃場を追加",
+      "logs": {
+        "data_refetch_failed": "計画データの再取得に失敗しました。",
+        "data_refetch_api_error": "計画データの再取得中にエラーが発生しました。"
+      }
     },
     "crops": {
       "edit": {
@@ -2003,6 +2007,8 @@
       "period_unknown": "期間不明",
       "close": "閉じる",
       "loading": "気候データを読み込んでいます...",
+      "load_failed": "気候データの取得に失敗しました。",
+      "load_unknown": "不明なエラーが発生しました。",
       "retry": "再試行",
       "base_temperature": "基準温度",
       "optimal_range": "最適温度範囲",

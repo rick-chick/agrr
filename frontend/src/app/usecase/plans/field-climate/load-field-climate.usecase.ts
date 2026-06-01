@@ -39,7 +39,7 @@ export class LoadFieldClimateUseCase implements LoadFieldClimateInputPort {
             err?.error?.error ??
             err?.error?.errors?.join(', ') ??
             err?.message ??
-            'Unknown error'
+            'plans.field_climate.load_unknown'
         };
 
         this.outputPort.onError(errorDto);

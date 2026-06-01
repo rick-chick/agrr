@@ -1323,6 +1323,14 @@
         "day": "दि",
         "week": "सप्त",
         "quarter": "तिमाही"
+      },
+      "mobile": {
+        "field_column_short": "#",
+        "field_legend_button": "खेत सूची",
+        "field_legend_title": "खेत सूची",
+        "field_legend_item": "{{index}}. {{fieldName}}",
+        "field_legend_delete": "हटाएं",
+        "drag_target_field": "स्थानांतरित करें: {{index}} — {{fieldName}}"
       }
     },
     "field_climate": {
@@ -1331,6 +1339,8 @@
       "period_unknown": "अवधि अज्ञात",
       "close": "बंद करें",
       "loading": "जलवायु डेटा लोड हो रहा है...",
+      "load_failed": "जलवायु डेटा लोड करने में विफल।",
+      "load_unknown": "अज्ञात त्रुटि हुई।",
       "retry": "पुनः प्रयास करें",
       "base_temperature": "आधार तापमान",
       "optimal_range": "इष्टतम तापमान सीमा",
@@ -1611,7 +1621,11 @@
       "field_form_name_placeholder": "उदा. क्षेत्र A",
       "field_form_area_label": "क्षेत्र (㎡)",
       "field_form_area_placeholder": "उदा. 100",
-      "field_form_submit": "क्षेत्र जोड़ें"
+      "field_form_submit": "क्षेत्र जोड़ें",
+      "logs": {
+        "data_refetch_failed": "योजना डेटा पुनः लोड करने में विफल।",
+        "data_refetch_api_error": "योजना डेटा पुनः लोड करते समय त्रुटि हुई।"
+      }
     },
     "crops": {
       "edit": {
