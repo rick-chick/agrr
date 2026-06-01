@@ -1,9 +1,26 @@
 import { TranslateService } from '@ngx-translate/core';
 import {
+  HOME_DEMO_SECTION_I18N_KEYS,
   LANDING_DEMO_I18N_KEYS,
   LANDING_DEMO_LABELS_FIXTURE,
   LandingDemoLabels
 } from './landing-demo-i18n.keys';
+
+export type HomeDemoTitleParams = {
+  schedule: string;
+  preview: string;
+  separator: string;
+};
+
+export function buildHomeDemoTitleParams(
+  translate: Pick<TranslateService, 'instant'>
+): HomeDemoTitleParams {
+  return {
+    schedule: translate.instant(HOME_DEMO_SECTION_I18N_KEYS.schedule),
+    preview: translate.instant(HOME_DEMO_SECTION_I18N_KEYS.preview),
+    separator: translate.instant(HOME_DEMO_SECTION_I18N_KEYS.separator)
+  };
+}
 
 export function buildLandingDemoLabels(
   translate: Pick<TranslateService, 'instant'>
