@@ -8,7 +8,7 @@
 #   bin/fetch_reference_weather_data --farm-name "北海道"       # 特定の農場のみ
 #
 # 前提条件:
-#   - rails db:seed が実行済み（参照農場がDBに存在する）
+#   - agrr-migrate data apply 済み（参照農場がDBに存在する）
 #   - agrrバイナリが lib/core/agrr に存在する
 #
 # 処理内容:
@@ -116,7 +116,7 @@ farms = Farm.where(is_reference: true)
 farms = farms.where(name: farm_name_filter) if farm_name_filter
 
 if farms.empty?
-  ColorLogger.error("参照農場が見つかりません。先に 'rails db:seed' を実行してください。")
+  ColorLogger.error("参照農場が見つかりません。先に load-reference-data-host.sh または agrr-migrate data apply を実行してください。")
   exit 1
 end
 
@@ -200,5 +200,5 @@ puts ""
 ColorLogger.info("次のステップ:")
 puts "  1. ファイルを確認: cat #{fixture_path} | head -n 50"
 puts "  2. Gitにコミット: git add #{fixture_path}"
-puts "  3. 以後は 'rails db:seed' で高速にデータ投入が可能になります"
+puts "  3. 以後は agrr-migrate data apply で参照データを再投入できます"
 puts ""

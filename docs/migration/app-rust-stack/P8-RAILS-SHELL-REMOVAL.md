@@ -37,8 +37,8 @@ Rails シェル: `dev-docker/scripts/rails-up.sh`。
 
 | Phase | 内容 | ゲート |
 |-------|------|--------|
-| **P8.0** | ドキュメント・スクリプト文言（`rails db:prepare` → `agrr-migrate`） | レビュー |
-| **P8.1** | テストランナー整理（空ディレクトリ、`bin/domain-lib-test` 廃止、`bin/test` は Rust 契約を正と明記） | `./bin/test` / CI |
+| **P8.0** | ドキュメント・スクリプト文言（`rails db:prepare` → `agrr-migrate`） | **完了**（`bin/setup`, `test/README.md`, dev-docker スキル既存） |
+| **P8.1** | テストランナー整理（空ディレクトリ、`bin/domain-lib-test` 廃止、`bin/test` は Rust 契約を正と明記） | **完了**（`bin/test`, test-common SKILL, 空 `test/channels` 等削除） |
 | **P8.2** | DB ブートストラップの Rails 依存除去 | **完了**（`load-reference-data.sh` / `load-reference-data-host.sh`） |
 | **P8.3** | Compose / README の既定起動を Rust に | **完了**（[dev-docker](../../../.cursor/skills/dev-docker/SKILL.md)） |
 | **P8.4** | テスト縮小（AR モデルテスト・Rails 専用 integration の移管 or 削除） | R4 GREEN |

@@ -8,7 +8,7 @@
 #   bin/fetch_us_reference_weather_data --farm-name "Kern County, CA"  # Fetch for specific farm only
 #
 # Prerequisites:
-#   - rails db:seed executed (US reference farms exist in DB)
+#   - agrr-migrate data apply executed (US reference farms exist in DB)
 #   - agrr binary exists at lib/core/agrr
 #
 # Process:
@@ -116,7 +116,7 @@ farms = Farm.where(is_reference: true, region: 'us')
 farms = farms.where(name: farm_name_filter) if farm_name_filter
 
 if farms.empty?
-  ColorLogger.error("No US reference farms found. Please run 'rails db:seed' first.")
+  ColorLogger.error("No US reference farms found. Run load-reference-data-host.sh or agrr-migrate data apply first.")
   exit 1
 end
 
@@ -204,6 +204,6 @@ puts ""
 ColorLogger.info("Next steps:")
 puts "  1. Check the file: cat #{fixture_path} | head -n 50"
 puts "  2. Commit to Git: git add #{fixture_path}"
-puts "  3. After this, 'rails db:seed' can quickly load the data"
+puts "  3. After this, agrr-migrate data apply can reload reference data"
 puts ""
 
