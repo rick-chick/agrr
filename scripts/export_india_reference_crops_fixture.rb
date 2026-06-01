@@ -5,9 +5,9 @@
 # Source of truth: production reference crops (region=in, is_reference=1) with crop_stages.
 #
 # Usage:
-#   bundle exec ruby scripts/export_india_reference_crops_fixture.rb [path/to/primary.sqlite3]
+#   ruby scripts/export_india_reference_crops_fixture.rb [path/to/primary.sqlite3]
 #   DBPATH=$(KEEP_DB=1 .../query_production_primary_sqlite.sh 2>&1 | tail -1) && \
-#     bundle exec ruby scripts/export_india_reference_crops_fixture.rb "$DBPATH"
+#     ruby scripts/export_india_reference_crops_fixture.rb "$DBPATH"
 
 require "json"
 require "sqlite3"

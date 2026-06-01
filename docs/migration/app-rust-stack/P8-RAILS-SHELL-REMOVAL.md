@@ -32,6 +32,8 @@
 
 **削除済み（P8.7）**: `config/application.rb`・`routes.rb`・`environments/`・`initializers/`・`database.yml` 等、`config.ru`、`Rakefile`・`lib/tasks/**`・`bin/rails`・`bin/rake`、`.rubocop.yml`、`scripts/compare_rails_rust_migration_parity.rb`、`scripts/extract_reference_data_json.rb`、Playwright の Rails `webServer`。
 
+**削除済み（P8.7 追補）**: `bin/` の Rails 依存ワンオフ（`generate_pest_data_migration.rb`、`fetch_*_reference_weather_data`、`convert_india_to_hindi`、`translate_*_crop_stages`、`update_india_farms_to_hindi`）。参照データの天気 fixture は `agrr-migrate data apply` + [`run-production-agrr-cli.sh`](../../../.cursor/skills/production-admin/scripts/run-production-agrr-cli.sh) 等で再取得。`scripts/verify-weather-sqlite-local.sh` の scheduler 窓は Python（`SchedulerUserFarmFetchWindowPolicy` 相当）に置換。
+
 **削除済み（P8.5 以前）**: HTTP シェル、Hotwire、`lib/domain/`、API adapters、本番 Rails イメージ。
 
 ## 開発の正

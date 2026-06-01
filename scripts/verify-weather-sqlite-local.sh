@@ -203,29 +203,28 @@ cmd_stop() {
   fi
 }
 
+# Rust: SchedulerUserFarmFetchWindowPolicy (agrr-domain)
 expected_scheduler_range() {
-  local max_date="$1"
-  local latest_ruby="nil"
-  if [[ -n "$max_date" ]]; then
-    latest_ruby="Date.parse('$max_date')"
-  fi
-  (
-    cd "$ROOT"
-    export AGRR_PRIMARY_SQLITE_PATH="$PLAY_DB"
-    bundle exec ruby -e "
-require_relative 'config/environment'
-latest = $latest_ruby
-r = Domain::WeatherData::Policies::SchedulerUserFarmFetchWindowPolicy.fetch_range(
-  latest_weather_date: latest,
-  clock: Time.zone
-)
-if r
-  puts \"start=#{r[:start_date]} end=#{r[:end_date]}\"
-else
-  puts 'skip'
-end
-"
-  )
+  local max_date="${1:-}"
+  python3 - "$max_date" <<'PY'
+import sys
+from datetime import date, timedelta
+
+raw = sys.argv[1] if len(sys.argv) > 1 else ""
+today = date.today()
+lookback = 7
+
+if raw:
+    latest = date.fromisoformat(raw[:10])
+    start = latest + timedelta(days=1)
+else:
+    start = today - timedelta(days=lookback)
+
+if start > today:
+    print("skip")
+else:
+    print(f"start={start.isoformat()} end={today.isoformat()}")
+PY
 }
 
 cmd_verify() {
