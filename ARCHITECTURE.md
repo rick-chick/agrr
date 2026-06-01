@@ -800,11 +800,11 @@ Enforced in **domain Policies**. ActiveRecord validations and DB constraints are
 
 ## Testing
 
-**Production path (R4)**: `test/contract/**` with `CONTRACT_RUNTIME=rust` and co-located `agrr-server` — [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh). This is the API/WS behavioral gate after P7.
+**Production path (R4)**: co-located **`agrr-server`** + [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh) (`CONTRACT_RUNTIME=rust`). Ruby `test/contract/**` hits `RUST_CONTRACT_BASE_URL` only (not Rails API). Shrinking harness: [`docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md).
 
 **Domain logic**: `cargo test` in `crates/agrr-domain` — [`.cursor/skills/test-common/scripts/run-test-rust-domain.sh`](.cursor/skills/test-common/scripts/run-test-rust-domain.sh).
 
-**Rails shell (shrinking, P8)**: `run-test-rails.sh` runs remaining Ruby tests (models, migrations, dev controllers). R4 contract harness (`test/contract/**`) runs only via `scripts/run-rust-contract-tests.sh` (`CONTRACT_RUNTIME=rust`). Removed with P7: `lib/domain/`, `test/domain/`, `test/adapters/`, `test/channels/`, `test/jobs/`, API adapters.
+**Rails shell (shrinking, P8)**: `run-test-rails.sh` with no args is a no-op; with paths it delegates to `run-rust-contract-tests.sh`. Remaining Rails is contract **fixture** (`app/models`, FactoryBot) until `Gemfile` removal. Removed with P7: `lib/domain/`, `test/domain/`, `test/adapters/`, `test/channels/`, `test/jobs/`, API adapters.
 
 **Rules**
 

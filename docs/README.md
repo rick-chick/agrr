@@ -8,4 +8,4 @@
 - **ローカル Compose 開発**: [`.cursor/skills/dev-docker/SKILL.md`](../.cursor/skills/dev-docker/SKILL.md)
 - **テスト運用**: [`testing/`](testing/)
 
-API・ドメインの振る舞いの正は **`ARCHITECTURE.md`**、**`crates/agrr-domain`**、**該当テスト**（R4: `test/contract/` + `run-rust-contract-tests.sh`）。
+API・ドメインの振る舞いの正は **`ARCHITECTURE.md`**、**`crates/agrr-server`**、**`crates/agrr-domain`**、**R4**（`run-rust-contract-tests.sh` — co-located `agrr-server`）。Ruby `test/contract/` は P8 で縮小中（[`P8-RAILS-SHELL-REMOVAL.md`](migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）。

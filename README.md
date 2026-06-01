@@ -48,7 +48,7 @@ cd frontend && ng serve --host 127.0.0.1
 **必ず test-common / 専用スクリプト経由**。生 `rails test` は開発 DB 破壊防止のため `test/test_helper.rb` で拒否される。
 
 ```bash
-./bin/test                                                    # 全体（Rails シェル回帰 + cargo + R4・本番経路の正）
+./bin/test                                                    # 全体（cargo + R4・本番経路の正）
 .cursor/skills/test-common/scripts/run-test-rails.sh          # R4 契約（ファイル指定時）
 .cursor/skills/test-common/scripts/run-test-rust-domain.sh    # agrr-domain
 scripts/run-rust-contract-tests.sh                            # R4 契約（本番経路の正）

@@ -35,7 +35,7 @@
 |------|------|
 | **削除済み** | `app/controllers/api/`、`lib/domain/`、`test/domain/`、API jobs/channels、大半の API adapters、`Dockerfile.production`、Solid Cable DB |
 | **本番** | `/api/*` `/cable` `/auth/*` → `agrr-server` のみ |
-| **意図的に残存（P8 で削除予定）** | SPA フォールバック、`auth_test`、Rails テスト基盤（`docker compose` / `run-test-rails.sh`）、一部 dev adapters |
+| **意図的に残存（P8 で削除予定）** | 契約用 Mini Rails（`Gemfile` + `test/contract` + AR fixture）。`auth_test` は agrr-server の dev ルート（本番 API とは別） |
 
 レベル 5 は「本番で Rails API 不要」であり、Rails プロジェクトの全削除ではない（[`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md)）。全削除は [`P8-RAILS-SHELL-REMOVAL.md`](./P8-RAILS-SHELL-REMOVAL.md)。
 

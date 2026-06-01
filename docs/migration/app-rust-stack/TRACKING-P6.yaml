@@ -1,5 +1,8 @@
 # P6 BC 切替進捗 — 終着: Rails 廃止・API フォールバックなし
 # 正: P6-COMPLETION-CRITERIA.md, PRODUCTION-CUTOVER-STATUS.md
+#
+# P8 (2026-06-02): wave_e の Ruby 契約は P6 時点の R4 ゲート。API は agrr-server 実装済み。
+# auth_me / auth_logout は agrr-r4-contract への移植対象外 — P8-RAILS-SHELL-REMOVAL.md「Ruby 契約の P8.6 扱い」
 
 program: app-rust-stack-p6
 updated: 2026-05-30
@@ -10,8 +13,8 @@ policy:
 
 wave_e:
   contract_tests:
-    - auth_me_contract_test.rb
-    - auth_logout_contract_test.rb
+    - auth_me_contract_test.rb       # P8.6: drop without Rust port (auth_api.rs + E2E)
+    - auth_logout_contract_test.rb   # P8.6: drop without Rust port
     - internal_jobs_contract_test.rb
     - private_plan_optimization_job_chain_contract_test.rb
     - field_cultivation_patch_contract_test.rb

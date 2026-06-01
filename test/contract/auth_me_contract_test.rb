@@ -3,7 +3,8 @@
 require "test_helper"
 require_relative "contract_test_case"
 
-# R4: mirrors Api::V1::AuthController#me JSON shape
+# P8.6: remove without agrr-r4-contract port (auth_api.rs + E2E). See P8-RAILS-SHELL-REMOVAL.md
+# R4: HTTP against agrr-server only (legacy comment: ex-Rails controller shape)
 class AuthMeContractTest < ContractTestCase
   setup do
     @user = create(:user, name: "Contract User", email: "contract@example.com")

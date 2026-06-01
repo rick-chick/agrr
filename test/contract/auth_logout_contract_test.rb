@@ -3,7 +3,8 @@
 require "test_helper"
 require_relative "contract_test_case"
 
-# R4: DELETE /api/v1/auth/logout
+# P8.6: remove without agrr-r4-contract port (auth_api.rs + E2E). See P8-RAILS-SHELL-REMOVAL.md
+# R4: DELETE /api/v1/auth/logout on agrr-server
 class AuthLogoutContractTest < ContractTestCase
   setup do
     @user = create(:user)

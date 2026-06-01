@@ -8,12 +8,17 @@
 ## 認証フロー確認（モックログイン）
 
 ### テストで確認
+
 ```bash
-scripts/run-rust-contract-tests.sh test/contract/auth_me_contract_test.rb
+# 推奨: E2E（/api/v1/auth/me はモックしない）
+cd frontend && npm run e2e:capture-for-agent   # 要 dev-docker + ng serve（スキル参照）
+
+# または R4 一式
+scripts/run-rust-contract-tests.sh
 ```
 
-- 本番経路のセッション API は R4 契約（`auth_me` 等）と E2E（Playwright モックログイン）で確認する
-- 開発用 `GET /auth/test/*` は agrr-server 実装（`crates/agrr-server/src/auth_test.rs`）
+- **`GET /api/v1/auth/me`**: `crates/agrr-server/src/auth_api.rs` に実装済み。専用 Ruby 契約（`auth_me_contract_test.rb`）は P8.6 で **Rust 移植せず削除予定**（E2E で回帰）
+- 開発用 `GET /auth/test/*`: `crates/agrr-server/src/auth_test.rs`
 
 ### 手動確認
 1. `http://localhost:4200` にアクセス
