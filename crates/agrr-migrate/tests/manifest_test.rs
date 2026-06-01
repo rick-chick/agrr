@@ -8,7 +8,7 @@ fn legacy_manifest_loads_primary_entries() {
         .parent()
         .unwrap();
     let m = LegacyManifest::load(root).expect("load manifest");
-    assert_eq!(m.primary.len(), 122);
+    assert_eq!(m.primary.len(), 123);
     assert!(
         m.primary.iter().any(|e| e.kind.as_deref() == Some("pests") && e.region == "jp"),
         "expected jp pests entry"

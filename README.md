@@ -37,7 +37,6 @@ cd frontend && ng serve --host 127.0.0.1
 ### レガシー: Rails シェル（Compose profile）
 
 ```bash
-.cursor/skills/dev-docker/scripts/rails-up.sh
 ```
 
 通常の API 開発は **dev-docker**（[`SKILL.md`](.cursor/skills/dev-docker/SKILL.md)）を使う。
@@ -50,7 +49,7 @@ cd frontend && ng serve --host 127.0.0.1
 
 ```bash
 ./bin/test                                                    # 全体（Rails シェル回帰 + cargo + R4・本番経路の正）
-.cursor/skills/test-common/scripts/run-test-rails.sh          # Rails シェル回帰のみ
+.cursor/skills/test-common/scripts/run-test-rails.sh          # R4 契約（ファイル指定時）
 .cursor/skills/test-common/scripts/run-test-rust-domain.sh    # agrr-domain
 scripts/run-rust-contract-tests.sh                            # R4 契約（本番経路の正）
 .cursor/skills/test-common/scripts/run-test-frontend.sh       # Angular

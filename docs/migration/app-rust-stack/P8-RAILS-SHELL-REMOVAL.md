@@ -4,15 +4,15 @@
 
 **本番の正**: [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)（移行プログラム残作業なし）。
 
-## いま残っている Rails（2026-06-01）
+## いま残っている Rails（P8.5 後）
 
 | 領域 | 例 | 役割 |
 |------|-----|------|
-| HTTP シェル | `spa#index`, `pages#*`, `auth_test`, `/up` | ローカル HTML フォールバック・dev モック |
-| ActiveRecord | `app/models/**` | 契約テストの fixture / Session、モデル単体テスト |
-| テスト基盤 | `run-test-rails.sh`, `Dockerfile.test`, `test/contract/**`（Minitest + `CONTRACT_RUNTIME=rust`） | R4 は **Rust 向け**だがハーネスはまだ Ruby |
-| Compose | `docker compose --profile rails up web` | SPA フォールバック（API は既定 Rust） |
-| スキーマ | `db/migrate`（履歴） | 新規は **refinery**（`crates/agrr-migrate`）のみ発行 |
+| 契約ハーネス | `app/models/**`, `test/contract/**`, `test/factories/**`, 縮小 `Gemfile` | R4: Minitest + ActiveRecord fixture → **agrr-server** |
+| テスト実行 | `scripts/run-rust-contract-tests.sh`, `Dockerfile.test` | co-located `agrr-server` + refinery DB |
+| スキーマ履歴 | `db/migrate_archive/` | 参照のみ。新規は **refinery**（`crates/agrr-migrate`） |
+
+**削除済み（P8.5）**: HTTP シェル（controllers/views/adapters）、`Dockerfile`（dev Rails）、Compose `web` / `rails-up.sh`、モデル単体テスト、OmniAuth/CORS/Propshaft 依存。
 
 **削除済み（再削除しない）**: `lib/domain/`, `app/controllers/api/`, API adapters/jobs/channels, `Dockerfile.production`, Solid Cable DB。
 
@@ -31,8 +31,6 @@
 cd frontend && ng serve --host 127.0.0.1
 ```
 
-Rails シェル: `dev-docker/scripts/rails-up.sh`。
-
 ## フェーズ（推奨順）
 
 | Phase | 内容 | ゲート |
@@ -41,8 +39,9 @@ Rails シェル: `dev-docker/scripts/rails-up.sh`。
 | **P8.1** | テストランナー整理（空ディレクトリ、`bin/domain-lib-test` 廃止、`bin/test` は Rust 契約を正と明記） | **完了**（`bin/test`, test-common SKILL, 空 `test/channels` 等削除） |
 | **P8.2** | DB ブートストラップの Rails 依存除去 | **完了**（`load-reference-data.sh` / `load-reference-data-host.sh`） |
 | **P8.3** | Compose / README の既定起動を Rust に | **完了**（[dev-docker](../../../.cursor/skills/dev-docker/SKILL.md)） |
-| **P8.4** | テスト縮小（AR モデルテスト・Rails 専用 integration の移管 or 削除） | R4 GREEN |
-| **P8.5** | Gemfile・Rails アプリツリー削除 | `p7-code-removal-gate.sh` + フロント E2E |
+| **P8.4** | テスト縮小（廃止 API 統合テスト削除、`run-test-rails.sh` から `test/contract` 除外） | **完了**（2026-06-01）— R4: `run-rust-contract-tests.sh` GREEN、Rails シェル 212 件 GREEN |
+| **P8.5** | HTTP シェル・モデルテスト・dev Rails 削除。Gemfile は契約ハーネス用に縮小 | **完了**（2026-06-01）— R4 109 GREEN、`p7-code-removal-gate.sh` |
+| **P8.6** | 契約ハーネスの Rust 化（Gemfile 完全削除） | TBD |
 
 ## ゲート
 

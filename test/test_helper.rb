@@ -50,7 +50,6 @@ end
 
 require_relative "../config/environment"
 require "rails/test_help"
-require "minitest/mock"
 require "mocha/minitest"
 
 # Load test support files
@@ -58,9 +57,6 @@ Dir[Rails.root.join("test", "support", "**", "*.rb")].each { |f| require f }
 
 module ActiveSupport
   class TestCase
-    # Include AGRR mock helper
-    include AgrrMockHelper
-
     # Include FactoryBot syntax methods
     include FactoryBot::Syntax::Methods
 
@@ -72,36 +68,11 @@ module ActiveSupport
 
     # テストデータは FactoryBot 等で都度作成（Minitest fixtures は未使用）
 
-    # テスト開始前にアノニマスユーザーを作成
     setup do
-      # application.jsがビルドされているか確認し、なければダミーファイルを作成
-      ensure_application_js_built
-
       User.instance_variable_set(:@anonymous_user, nil)
       User.anonymous_user
-      # Set default locale for URL helpers
       I18n.locale = :ja
-      # Set default URL options for route helpers
       Rails.application.routes.default_url_options[:locale] = :ja
-    end
-
-    teardown do
-      CompositionRoot.reset!
-    end
-
-    # application.jsがビルドされているか確認し、なければダミーファイルを作成
-    def ensure_application_js_built
-      app_js_path = Rails.root.join("app", "assets", "builds", "application.js")
-      unless File.exist?(app_js_path)
-        Rails.logger.warn "[Test] ⚠️ application.js not found at #{app_js_path}"
-        Rails.logger.warn "[Test] Creating dummy application.js for test environment (Propshaft requires this)"
-
-        # Propshaftが存在しないアセットに対してエラーを発生させるため、ダミーファイルを作成
-        FileUtils.mkdir_p(app_js_path.dirname)
-        File.write(app_js_path, "// Dummy application.js for test environment\n// This file is auto-generated when application.js is not built\n")
-
-        Rails.logger.info "[Test] ✓ Created dummy application.js"
-      end
     end
 
     # URLヘルパーのデフォルトオプションを設定
@@ -110,17 +81,6 @@ module ActiveSupport
     end
 
     # Add more helper methods to be used by all tests here...
-
-    # OAuth test helpers
-    def setup_omniauth_mock(provider, auth_hash)
-      OmniAuth.config.test_mode = true
-      OmniAuth.config.mock_auth[provider.to_sym] = auth_hash
-    end
-
-    def clear_omniauth_mock
-      OmniAuth.config.test_mode = false
-      OmniAuth.config.mock_auth.clear
-    end
 
     def create_authenticated_user
       user = create(:user)

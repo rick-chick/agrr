@@ -53,13 +53,16 @@ ensure_agrr_server_binary() {
 
 ensure_agrr_server_binary
 
-echo "==> R4 contract (CONTRACT_RUNTIME=rust, shared test.sqlite3)"
+CONTRACT_TEST_ARGS="${*:-test/contract/}"
+
+echo "==> R4 contract (CONTRACT_RUNTIME=rust, shared test.sqlite3) args: ${CONTRACT_TEST_ARGS}"
 docker compose --profile test run --rm \
   -e AGRR_TEST_SCRIPT=1 \
   -e "COVERAGE=${COVERAGE:-false}" \
   -e CONTRACT_RUNTIME=rust \
   -e RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 \
   -v "${BINARY}:/usr/local/bin/agrr-server:ro" \
+  -e "CONTRACT_TEST_ARGS=${CONTRACT_TEST_ARGS}" \
   test bash -c '
     set -euo pipefail
     export AGRR_SQLITE_PATH=/app/storage/test.sqlite3
@@ -85,5 +88,6 @@ docker compose --profile test run --rm \
       cat /tmp/agrr-server-contract.log
       exit 1
     fi
-    bundle exec rails test test/contract/
+    # shellcheck disable=SC2086
+    bundle exec rails test ${CONTRACT_TEST_ARGS}
   '

@@ -107,7 +107,7 @@ SQLite / ActiveRecord / HTTP
 cd frontend && ng serve --host 127.0.0.1
 ```
 
-ホスト cargo: `dev-docker/scripts/load-reference-data-host.sh` + `host-rust-stack.sh`。Rails シェル: `rails-up.sh`。
+ホスト cargo: `dev-docker/scripts/load-reference-data-host.sh` + `host-rust-stack.sh`。
 
 ### テスト（**必ず test-common 経由**）
 

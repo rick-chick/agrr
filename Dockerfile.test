@@ -1,7 +1,6 @@
-# Multi-stage build for production (test environment)
+# Test image: R4 contract harness (Minitest + ActiveRecord) + agrr-migrate
 FROM ruby:3.3.10-slim AS builder
 
-# Install system dependencies (including SQLite and Node.js)
 RUN apt-get update -qq && apt-get install -y \
     build-essential \
     libsqlite3-dev \
@@ -9,44 +8,18 @@ RUN apt-get update -qq && apt-get install -y \
     curl \
     ca-certificates \
     dos2unix \
-    gnupg \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
 WORKDIR /app
 
-# Copy Gemfile and Gemfile.lock
 COPY Gemfile Gemfile.lock ./
-
-# Install gems
 RUN bundle config set --local deployment 'true' && \
-    bundle config set --local without 'development test' && \
+    bundle config set --local without 'development' && \
     bundle install
 
-# Copy package.json and install Node.js dependencies
-COPY package.json ./
-RUN npm install
-
-# Copy the rest of the application
 COPY . .
-
-# Fix line endings to prevent shebang warnings
 RUN find /app -name "*.rb" -type f -exec dos2unix {} \; 2>/dev/null || true
-
-# Build JavaScript assets
-RUN npm run build
-
-# Create storage directory for SQLite databases
 RUN mkdir -p storage
-
-# Precompile assets (with dummy master key if needed)
-# Note: javascript:build will run again, but it uses node_modules/.bin/esbuild (no network needed)
-RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
-
-# Note: Database setup is done at runtime by start_app_test.sh
-# This ensures migrations run with the actual test database
 
 FROM rust:1-bookworm AS rust_builder
 WORKDIR /app
@@ -54,99 +27,28 @@ COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY crates ./crates
 RUN cargo build --release -p agrr-migrate
 
-# Production stage (test environment)
 FROM ruby:3.3.10-slim
 
-# Install runtime dependencies (including SQLite, Node.js, Litestream, and build tools for test gems)
 RUN apt-get update -qq && apt-get install -y \
     libsqlite3-0 \
     libyaml-0-2 \
     curl \
     ca-certificates \
-    gnupg \
-    wget \
     build-essential \
     libsqlite3-dev \
-    chromium \
-    chromium-driver \
-    fonts-liberation \
-    libatk-bridge2.0-0 \
-    libasound2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnss3 \
-    libxss1 \
-    libxi6 \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && wget https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.deb \
-    && dpkg -i litestream-v0.3.13-linux-amd64.deb \
-    && rm litestream-v0.3.13-linux-amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
-ENV CHROME_BIN=/usr/bin/chromium \
-    CHROMEDRIVER_PATH=/usr/bin/chromedriver
-
-# Create a non-root user
-RUN useradd -m -u 1000 appuser
-
-# Set the working directory
 WORKDIR /app
 
-# Copy the application from builder stage
-COPY --from=builder --chown=appuser:appuser /app /app
-
+COPY --from=builder /app /app
 COPY --from=rust_builder /app/target/release/agrr-migrate /usr/local/bin/agrr-migrate
-RUN chmod +x /usr/local/bin/agrr-migrate
+RUN chmod +x /usr/local/bin/agrr-migrate /app/scripts/*.sh 2>/dev/null || true
 
-# Ensure entrypoint scripts have execute permissions
-# ボリュームマウントで上書きされる可能性があるが、ベースイメージとして権限を設定
-RUN chmod +x /app/scripts/*.sh 2>/dev/null || true
-
-# Copy Litestream configuration for test
-COPY config/litestream.test.yml /etc/litestream.test.yml
-
-# Copy agrr binary and dependencies if they exist (for daemon mode)
-# lib/core/.dockerkeep ensures the directory exists even without agrr binary
-COPY --chown=appuser:appuser lib/core/ /tmp/agrr_temp/
-RUN if [ -f /tmp/agrr_temp/agrr ]; then \
-        mv /tmp/agrr_temp/agrr /usr/local/bin/agrr && \
-        chmod +x /usr/local/bin/agrr && \
-        chown appuser:appuser /usr/local/bin/agrr && \
-        if [ -d /tmp/agrr_temp/_internal ]; then \
-            mv /tmp/agrr_temp/_internal /usr/local/bin/_internal && \
-            chown -R appuser:appuser /usr/local/bin/_internal && \
-            echo "✓ agrr binary and dependencies included (daemon mode available with USE_AGRR_DAEMON=true)"; \
-        else \
-            echo "✓ agrr binary included (daemon mode available with USE_AGRR_DAEMON=true)"; \
-        fi; \
-    else \
-        echo "⚠ agrr binary not found (daemon mode disabled - USE_AGRR_DAEMON will be ignored)"; \
-    fi && \
-    rm -rf /tmp/agrr_temp
-
-# Ensure gems are available in the final stage (keep test group)
 RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development' && \
     bundle install
 
-# Install Node.js dependencies for runtime (if needed)
-COPY package.json ./
-RUN npm install --production
+RUN mkdir -p /app/storage
 
-# Create storage directory with proper permissions
-RUN mkdir -p /app/storage && chown -R appuser:appuser /app/storage
-
-# Run as root for gcsfuse (FUSE requires root or privileged mode)
-# USER appuser
-
-# Expose port (Cloud Run uses dynamic PORT)
-EXPOSE 3000
-ENV PORT=3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:3000/up || exit 1
-
-# Start the Rails server with test configuration
-CMD ["/app/scripts/start_app_test.sh"]
+ENV RAILS_ENV=test
+CMD ["bash", "/app/scripts/docker-entrypoint-test.sh"]

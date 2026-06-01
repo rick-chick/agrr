@@ -2,7 +2,7 @@
 
 # AGRR: テスト実行（開発 DB 保護のため専用コンテナ / スクリプト経由のみ）
 # 本番 API 振る舞いの正: scripts/run-rust-contract-tests.sh（R4, CONTRACT_RUNTIME=rust）
-# Rails シェル回帰: run-test-rails.sh（models / contract harness / dev controllers）
+# R4 contract harness: run-rust-contract-tests.sh（P8.5 — Rails shell 回帰なし）
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -11,18 +11,15 @@ if [ $# -eq 0 ]; then
     echo "🧪 AGRR テスト実行スクリプト"
     echo ""
     echo "使用方法:"
-    echo "  ./bin/test                              # 全体（Rails 残存 + cargo + R4）"
-    echo "  ./bin/test test/models/user_test.rb     # Rails シェル（特定ファイル）"
-    echo "  ./bin/test test/contract                # Rails 契約ハーネスのみ"
+    echo "  ./bin/test                              # 全体（cargo + R4）"
+    echo "  ./bin/test test/contract/foo_test.rb    # R4 契約（特定ファイル、agrr-server 同梱）"
     echo ""
     echo "💡 直接 'rails test' は開発 DB 破壊防止のため拒否されます"
     echo "💡 API/WS の正は R4: scripts/run-rust-contract-tests.sh"
     echo ""
 fi
 
-echo "🚀 Rails シェル回帰を実行します..."
 if [ $# -eq 0 ]; then
-  AGRR_TEST_SCRIPT=1 "$PROJECT_ROOT/.cursor/skills/test-common/scripts/run-test-rails.sh"
   if command -v cargo >/dev/null 2>&1 || [ -f "${HOME}/.cargo/env" ]; then
     echo ""
     echo "🚀 agrr-domain（cargo test）を実行します..."

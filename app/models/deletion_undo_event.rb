@@ -2,6 +2,8 @@
 
 class DeletionUndoEvent < ApplicationRecord
   DEFAULT_AUTO_HIDE_SECONDS = 5
+  # Parity with agrr-server DELETION_UNDO_TTL_SECONDS default (24h).
+  DEFAULT_TTL = 24.hours
 
   belongs_to :deleted_by, class_name: "User", optional: true
 
@@ -69,7 +71,7 @@ class DeletionUndoEvent < ApplicationRecord
   end
 
   def ensure_expires_at
-    self.expires_at ||= Time.current + Adapters::DeletionUndo::Manager.default_ttl
+    self.expires_at ||= Time.current + DEFAULT_TTL
   end
 
   def ensure_auto_hide_metadata

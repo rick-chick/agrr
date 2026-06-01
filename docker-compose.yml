@@ -2,8 +2,7 @@
 # 操作は .cursor/skills/dev-docker/SKILL.md（scripts/up.sh 等）を正とする。
 #
 # Default: agrr-server + strangler-proxy (:3000 → Rust API/WS/auth)
-# Rails shell: dev-docker/scripts/rails-up.sh
-# Tests: test-common（profile test）
+# Tests: test-common（profile test）— R4 contract harness only (P8.5)
 
 services:
   # Rust API / WebSocket / OAuth (default dev stack)
@@ -48,94 +47,7 @@ services:
       agrr-server:
         condition: service_healthy
 
-  # Rails shell (legacy SPA fallback, asset pipeline) — profile: rails
-  web:
-    profiles:
-      - rails
-    build:
-      context: .
-      dockerfile: Dockerfile
-      network: host
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
-    entrypoint: ["bash", "/app/.cursor/skills/dev-docker/entrypoints/docker-entrypoint-dev-daemon.sh"]
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
-      - storage_dev_data:/app/storage  # 開発用永続ストレージ
-      - bundle_data:/usr/local/bundle
-      - bundle_cache:/usr/local/bundle/cache
-      - ./tmp/debug:/app/tmp/debug  # デバッグファイルのみホストと共有
-      - ./tmp/memory_monitoring:/app/tmp/memory_monitoring  # メモリ監視ログをホストと共有
-      - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
-      - /app/log
-      - /app/node_modules
-      - /app/app/assets/builds  # esbuildの出力はコンテナ内のみ（権限問題を回避）
-      - ./public/assets:/app/public/assets
-    environment:
-      - RAILS_ENV=development
-      - DATABASE_URL=sqlite3:storage/development.sqlite3
-      - USE_AGRR_DAEMON=true  # Daemon mode enabled by default
-      - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
-      - ASYNC_DAEMON_START=true  # 完全非同期daemon起動（Railsサーバーを即座に起動）
-      - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
-      - ENABLE_MEMORY_MONITOR=false  # Disable memory monitoring by default for faster startup
-      # 予測モックは AGRR_USE_MOCK=true のときのみ（開発の既定は実 agrr デーモン）
-      - MEMORY_MONITOR_INTERVAL=10  # Check memory every 10 seconds (when enabled)
-      - MEMORY_MONITOR_DURATION=0  # 0 = monitor indefinitely (when enabled)
-      - AGRR_BACKDOOR_TOKEN=4d2522cd0f306acaca381256ea73cdb2288d12759a318b8b8988975b78ba2a32  # Backdoor API token
-      - GCS_BUCKET_DEV=${GCS_BUCKET_DEV:-agrr-development-db}  # Litestream用GCSバケット（開発環境専用、本番とは別バケット）
-      # Google OAuth設定（開発環境用）
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-    command: bundle exec rails server -b 0.0.0.0
-    stdin_open: true
-    tty: true
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-
-  # Web without daemon (CLI mode, optional)
-  web-cli:
-    profiles:
-      - rails
-      - cli
-    build:
-      context: .
-      dockerfile: Dockerfile
-      network: host
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
-    entrypoint: ["bash", "/app/.cursor/skills/dev-docker/entrypoints/docker-entrypoint-dev.sh"]
-    ports:
-      - "3001:3000"
-    volumes:
-      - .:/app
-      - storage_dev_data:/app/storage
-      - bundle_data:/usr/local/bundle
-      - bundle_cache:/usr/local/bundle/cache
-      - ./tmp/debug:/app/tmp/debug  # デバッグファイルのみホストと共有
-      - /app/tmp/cache  # キャッシュはコンテナ内に隔離（再起動時にクリア）
-      - /app/log
-      - /app/node_modules
-      - /app/app/assets/builds  # esbuildの出力はコンテナ内のみ（権限問題を回避）
-      - ./public/assets:/app/public/assets
-    environment:
-      - RAILS_ENV=development
-      - DATABASE_URL=sqlite3:storage/development.sqlite3
-      - USE_AGRR_DAEMON=true
-      - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
-      - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present), ideal for India
-      - GCS_BUCKET_DEV=${GCS_BUCKET_DEV:-agrr-development-db}  # Litestream用GCSバケット（開発環境専用、本番とは別バケット）
-    command: bundle exec rails server -b 0.0.0.0
-    stdin_open: true
-    tty: true
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-
-  # Test environment
+  # Test environment (R4 contract harness + agrr-migrate)
   # テスト実行方法:
   #   - 全テスト: docker compose run --rm test bundle exec rails test
   #   - システムテスト: docker compose run --rm test bundle exec rails test:system
@@ -169,6 +81,7 @@ services:
       - AGRR_BIN_PATH=/app/lib/core/agrr  # 明示的にvolume-mountedバイナリを指定
       - WEATHER_DATA_SOURCE=nasa-power  # NASA POWER: Global coverage (1984-present)
       - USE_AGRR_DAEMON=false  # 通常のテストではdaemonを使用しない
+      - SKIP_ASSET_BUILD=1  # P8.5: contract harness only
     command: bash -c "tail -f /dev/null"
     dns:
       - 8.8.8.8

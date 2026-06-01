@@ -804,7 +804,7 @@ Enforced in **domain Policies**. ActiveRecord validations and DB constraints are
 
 **Domain logic**: `cargo test` in `crates/agrr-domain` — [`.cursor/skills/test-common/scripts/run-test-rust-domain.sh`](.cursor/skills/test-common/scripts/run-test-rust-domain.sh).
 
-**Rails shell (shrinking, P8)**: `run-test-rails.sh` runs remaining Ruby tests (models, migrations, dev controllers, contract harness setup via ActiveRecord). Removed with P7: `lib/domain/`, `test/domain/`, `test/adapters/`, `test/channels/`, `test/jobs/`, API adapters.
+**Rails shell (shrinking, P8)**: `run-test-rails.sh` runs remaining Ruby tests (models, migrations, dev controllers). R4 contract harness (`test/contract/**`) runs only via `scripts/run-rust-contract-tests.sh` (`CONTRACT_RUNTIME=rust`). Removed with P7: `lib/domain/`, `test/domain/`, `test/adapters/`, `test/channels/`, `test/jobs/`, API adapters.
 
 **Rules**
 

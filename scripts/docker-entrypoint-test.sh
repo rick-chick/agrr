@@ -82,29 +82,21 @@ cache_current_databases() {
   echo "✓ Cache updated"
 }
 
-# app/assets/buildsディレクトリを確実に作成（コンテナ内のみ、ボリュームから除外）
-mkdir -p "${APP_ROOT}/app/assets/builds"
-
-# アセットファイルをクリーンアップ（古いビルドファイルを削除）
-echo "==> Cleaning up old asset files..."
-rm -rf "${APP_ROOT}/app/assets/builds/"*
-rm -rf "${APP_ROOT}/tmp/cache/assets/"*
-## Propshaft public assets should not persist between runs in Docker
-rm -rf "${APP_ROOT}/public/assets/"*
-echo "✓ Asset files cleaned"
-
-# .npmrcを無効化（ホスト環境用の設定がコンテナ内でエラーを引き起こすため）
-if [ -f "${APP_ROOT}/.npmrc" ]; then
-    echo "==> Temporarily disabling .npmrc for container environment..."
+# P8.5: contract harness only — no npm/asset pipeline (Angular is separate).
+if [ "${SKIP_ASSET_BUILD:-1}" != "1" ]; then
+  mkdir -p "${APP_ROOT}/app/assets/builds"
+  echo "==> Cleaning up old asset files..."
+  rm -rf "${APP_ROOT}/app/assets/builds/"* "${APP_ROOT}/tmp/cache/assets/"* "${APP_ROOT}/public/assets/"*
+  if [ -f "${APP_ROOT}/.npmrc" ]; then
     mv "${APP_ROOT}/.npmrc" "${APP_ROOT}/.npmrc.bak" 2>/dev/null || true
+  fi
+  echo "==> Installing npm dependencies..."
+  npm ci
+  echo "==> Building assets..."
+  npm run build
+else
+  echo "==> Skipping npm/asset build (SKIP_ASSET_BUILD=${SKIP_ASSET_BUILD:-1})"
 fi
-
-# アセットビルド実行（システムテスト用）
-# devDependencies（esbuild 等）込み。npm install は lock を更新し得るため ci を使う（ホスト .:/app マウント）。
-echo "==> Installing npm dependencies (including devDependencies)..."
-npm ci
-echo "==> Building assets for system tests..."
-npm run build
 
 CURRENT_FINGERPRINT="$(calculate_fingerprint)"
 CACHE_VALID="false"
