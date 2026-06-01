@@ -11,9 +11,15 @@ if ! rg -q 'AGRR_RUST_API=1' .cursor/skills/dev-docker/scripts/host-rust-stack.s
   exit 1
 fi
 
-echo "==> Checking Rails routes have no API surface"
-if rg -q 'namespace :api|mount ActionCable|undo_deletion|auth#google_oauth2' config/routes.rb; then
-  echo "FAIL: config/routes.rb must not register API/auth/cable/undo (use agrr-server)"
+echo "==> Checking Rails HTTP shell is gone"
+if [ -f config/routes.rb ]; then
+  if rg -q 'namespace :api|mount ActionCable|undo_deletion|auth#google_oauth2' config/routes.rb 2>/dev/null; then
+    echo "FAIL: config/routes.rb must not register API/auth/cable/undo (use agrr-server)"
+    exit 1
+  fi
+fi
+if [ -f Gemfile ]; then
+  echo "FAIL: Gemfile must be removed (P8.6)"
   exit 1
 fi
 
@@ -26,16 +32,6 @@ cargo test -p agrr-migrate --quiet
 echo "==> Checking Ruby lib/domain is removed"
 if [ -d lib/domain ]; then
   echo "FAIL: lib/domain/ must be deleted (P7 Phase 2)"
-  exit 1
-fi
-
-echo "==> Checking Rails database.yml has no Solid Cable DB"
-if rg -q '^\s+cable:' config/database.yml; then
-  echo "FAIL: config/database.yml must not define a cable SQLite database (WS on agrr-server)"
-  exit 1
-fi
-if rg -q 'solid_cable' config/cable.yml; then
-  echo "FAIL: config/cable.yml must not use solid_cable adapter"
   exit 1
 fi
 

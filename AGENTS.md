@@ -1,11 +1,11 @@
 # Project rules
 ## 変更がないのにテストを２度走らせない
 - OK
-1. cd /home/akishige/projects/agrr && .cursor/skills/test-common/scripts/run-test-rails.sh [file|..] > ./tmp/{UUID}.log
+1. cd /home/akishige/projects/agrr && scripts/run-rust-contract-tests.sh > ./tmp/{UUID}.log
 2. grep|tail|head|... ./tmp/{UUID}.log
 - NG
-1. cd /home/akishige/projects/agrr && .cursor/skills/test-common/scripts/run-test-rails.sh [file|..] > 2>&1 | tails -20
-2. cd /home/akishige/projects/agrr && .cursor/skills/test-common/scripts/run-test-rails.sh [file|..] > 2>&1 | grep hoge
+1. cd /home/akishige/projects/agrr && scripts/run-rust-contract-tests.sh > 2>&1 | tails -20
+2. cd /home/akishige/projects/agrr && scripts/run-rust-contract-tests.sh > 2>&1 | grep hoge
 
 ## Readツールの使用はレンジを絞ること
 - OK

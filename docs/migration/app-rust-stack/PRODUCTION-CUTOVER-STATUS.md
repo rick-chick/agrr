@@ -1,7 +1,7 @@
 # 本番 Rust カットオーバー — 完了（2026-06-01）
 
 > **状態**: P6 レベル 4・P7 **クローズ**（本番 `agrr.net` 確認済み）  
-> **完了条件の定義**: [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md)  
+> **完了条件の定義（履歴）**: [`../archive/P6-COMPLETION-CRITERIA.md`](../archive/P6-COMPLETION-CRITERIA.md)  
 > **data repair 手順**: [`P7-MIGRATION-RUNBOOK.md`](./P7-MIGRATION-RUNBOOK.md)  
 > **ローカルゲート**: [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh)
 
@@ -35,9 +35,9 @@
 |------|------|
 | **削除済み** | `app/controllers/api/`、`lib/domain/`、`test/domain/`、API jobs/channels、大半の API adapters、`Dockerfile.production`、Solid Cable DB |
 | **本番** | `/api/*` `/cable` `/auth/*` → `agrr-server` のみ |
-| **意図的に残存（P8 で削除予定）** | 契約用 Mini Rails（`Gemfile` + `test/contract` + AR fixture）。`auth_test` は agrr-server の dev ルート（本番 API とは別） |
+| **P8.6 後の残存** | `config/**` 等の遺産ファイルのみ（[`P8-RAILS-SHELL-REMOVAL.md`](./P8-RAILS-SHELL-REMOVAL.md)）。`auth_test` は agrr-server の dev ルート |
 
-レベル 5 は「本番で Rails API 不要」であり、Rails プロジェクトの全削除ではない（[`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md)）。全削除は [`P8-RAILS-SHELL-REMOVAL.md`](./P8-RAILS-SHELL-REMOVAL.md)。
+レベル 5 は「本番で Rails API 不要」（P6）。リポジトリからの Rails 除去は P8 完了（[`P8-RAILS-SHELL-REMOVAL.md`](./P8-RAILS-SHELL-REMOVAL.md)）。
 
 ## 本番確認記録（2026-06-01）
 
@@ -53,4 +53,4 @@
 
 - [`README.md`](./README.md) — 索引
 - [`P8-RAILS-SHELL-REMOVAL.md`](./P8-RAILS-SHELL-REMOVAL.md) — リポジトリから Rails を外す（P7 後）
-- [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) — BC 切替（全 `done`）
+- [`../archive/TRACKING-P6.yaml`](../archive/TRACKING-P6.yaml) — BC 切替（全 `done`、履歴）

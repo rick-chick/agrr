@@ -1,4 +1,5 @@
 # P6 BC 切替進捗 — 終着: Rails 廃止・API フォールバックなし
+# 履歴（P6 完了済み）。正: ../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md, ../lib-domain-rust/TEST-STRATEGY.md
 # 正: P6-COMPLETION-CRITERIA.md, PRODUCTION-CUTOVER-STATUS.md
 #
 # P8 (2026-06-02): wave_e の Ruby 契約は P6 時点の R4 ゲート。API は agrr-server 実装済み。
@@ -29,7 +30,7 @@ wave_e:
     - public_plans_api_contract_test.rb
     - public_plan_cultivation_mutations_contract_test.rb
     - internal_farm_weather_contract_test.rb
-    - crates/agrr-r4-contract/tests/contracts.rs  # health, /cable, AI routes (ex Ruby smokes)
+    - crates/agrr-r4-contract/tests/contracts.rs  # health, /cable (P8: AI smokes removed — domain)
   nginx_checklist: docker/nginx-strangler-host.conf
   rust_contract_runner: scripts/run-rust-contract-tests.sh
   angular_routing_audit: scripts/run-rust-contract-tests.sh

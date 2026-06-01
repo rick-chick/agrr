@@ -9,7 +9,7 @@
 | 文書 | 内容 |
 |------|------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | `agrr-domain` クレート構成・型の約束 |
-| [TEST-STRATEGY.md](./TEST-STRATEGY.md) | R0〜R4 テスト層・パリティ |
+| [TEST-STRATEGY.md](./TEST-STRATEGY.md) | 現行テスト層（domain / adapter / R4 / E2E） |
 | [TRACKING.yaml](./TRACKING.yaml) | 進捗（機械可読） |
 | [TRACKING.md](./TRACKING.md) | 進捗サマリー（`sync-lib-domain-rust-tracking.sh` で生成） |
 | [app-rust-stack/](../app-rust-stack/) | P6–P7（Axum・本番切替・Rails 削除） |
@@ -19,7 +19,7 @@
 ```bash
 ./scripts/sync-lib-domain-rust-tracking.sh
 .cursor/skills/test-common/scripts/run-test-rust-domain.sh
-.cursor/skills/test-common/scripts/run-test-domain-lib.sh   # Ruby lib/domain 削除まで併走
+scripts/run-rust-contract-tests.sh
 ```
 
 ## 関連

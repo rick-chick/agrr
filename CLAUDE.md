@@ -111,11 +111,11 @@ cd frontend && ng serve --host 127.0.0.1
 
 ### テスト（**必ず test-common 経由**）
 
-⚠️ **直接 `rails test` / `bundle exec rails test` / `npm test` を実行しない。開発 DB が壊れる。** `test/test_helper.rb` には RAILS_ENV≠test 時の即時終了ガードがある。
+⚠️ **直接 `npm test` を実行しない。** API テストは `scripts/run-rust-contract-tests.sh`（Ruby `rails test` は P8.6 で廃止）。
 
 ```bash
 # Rails テスト（DB / SimpleCov / フルスタック込み・テスト専用 tmpfs）
-.cursor/skills/test-common/scripts/run-test-rails.sh [ARGS]
+scripts/run-rust-contract-tests.sh
 
 # agrr-domain（cargo）
 .cursor/skills/test-common/scripts/run-test-rust-domain.sh [ARGS]

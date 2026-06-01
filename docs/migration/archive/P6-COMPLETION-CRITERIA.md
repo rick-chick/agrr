@@ -1,6 +1,8 @@
+> **履歴（P6 完了済み）** — 現行テストの正は [`../lib-domain-rust/TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md)、[`../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)。
+
 # P6 完了条件（何が「移行完了」か）
 
-> **正**: 本書は「完了」の**定義**の単一ソース。進捗の列挙は [`TRACKING-P6.yaml`](./TRACKING-P6.yaml)。**本番クローズ記録**は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
+> **履歴**: P6 完了時点の定義。現行は [`../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](../app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)。進捗スナップショットは [`TRACKING-P6.yaml`](./TRACKING-P6.yaml)。本番記録は [`../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)。
 
 ---
 
@@ -169,4 +171,4 @@ flowchart TD
 | [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | 本番観測・P7 削除順 |
 | [ADR-strangler-lb-url-map.md](./ADR-strangler-lb-url-map.md) | 本番振分 |
 | [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | 本番クローズ・P7 出口 |
-| [test/contract/README.md](../../../test/contract/README.md) | R4 実行手順 |
+| [test/README.md](../../../test/README.md) | 現行テスト（Ruby `test/contract` は P8.6 で削除） |

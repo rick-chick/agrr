@@ -1,5 +1,5 @@
-# Rails 全テスト（Docker Compose 専用 test プロファイル）
-name: Rails test
+# Backend tests: agrr-domain (cargo) + R4 contract (agrr-r4-contract + agrr-server)
+name: Backend test
 
 on:
   pull_request:

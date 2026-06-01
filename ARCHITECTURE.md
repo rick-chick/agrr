@@ -17,7 +17,7 @@ A **Rails shell** remains for local SPA fallback, static pages, and dev/test hel
 | Rails shell (dev)   | SPA fallback・`auth_test`・静的ページのみ（本番 API/WS/auth は Rust）                                 |
 | Database            | SQLite3 (**primary** / **cache**); **Litestream** replica to GCS. Schema: **refinery** via `agrr-migrate` on deploy. Jobs: Rust Tokio chains + internal HTTP ([`PROVISIONAL-STACK.md`](docs/migration/app-rust-stack/PROVISIONAL-STACK.md)). Solid Queue not used. |
 | Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads                 |
-| Contract-first API  | `test/contract/**` + [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh); domain in `crates/agrr-domain` |
+| Contract-first API  | [`crates/agrr-r4-contract`](crates/agrr-r4-contract) + [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh); domain in `crates/agrr-domain` |
 
 
 **Architecture (production):** Decoupled **Angular SPA + agrr-server**. Deletion undo is **Angular-only** (no Rust server templates). **Rails shell** serves HTML fallback routes, legal pages, API docs, and dev/test mocks when run locally—not master CRUD, planning API, OAuth, or ActionCable in production.
@@ -800,11 +800,11 @@ Enforced in **domain Policies**. ActiveRecord validations and DB constraints are
 
 ## Testing
 
-**Production path (R4)**: co-located **`agrr-server`** + [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh) (`CONTRACT_RUNTIME=rust`). Ruby `test/contract/**` hits `RUST_CONTRACT_BASE_URL` only (not Rails API). Shrinking harness: [`docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md).
+**Production path (R4)**: co-located **`agrr-server`** + [`crates/agrr-r4-contract`](crates/agrr-r4-contract) via [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh). Broader API regression: E2E + `agrr-domain` tests. See [`docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md).
 
 **Domain logic**: `cargo test` in `crates/agrr-domain` — [`.cursor/skills/test-common/scripts/run-test-rust-domain.sh`](.cursor/skills/test-common/scripts/run-test-rust-domain.sh).
 
-**Rails shell (shrinking, P8)**: `run-test-rails.sh` with no args is a no-op; with paths it delegates to `run-rust-contract-tests.sh`. Remaining Rails is contract **fixture** (`app/models`, FactoryBot) until `Gemfile` removal. Removed with P7: `lib/domain/`, `test/domain/`, `test/adapters/`, `test/channels/`, `test/jobs/`, API adapters.
+**Rails removed (P8.6–P8.7)**: No `Gemfile`, `app/`, or Ruby tests. Retained: `config/locales/**` (agrr-server i18n), `config/litestream*.yml`, `db/migrate_archive/` (legacy manifest refs). Removed with P7: `lib/domain/`, API adapters.
 
 **Rules**
 

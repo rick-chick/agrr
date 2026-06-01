@@ -1,4 +1,4 @@
-//! R4 HTTP contracts (P8.6 — migrate from `test/contract/*_contract_test.rb`).
+//! R4 HTTP smoke: co-located agrr-server stack + routing (not domain rules — see agrr-domain / E2E).
 
 use agrr_r4_contract::http::ContractClient;
 use std::collections::HashMap;
@@ -13,7 +13,6 @@ fn status_and_body(response: reqwest::blocking::Response) -> (u16, String) {
     (status, body)
 }
 
-// Parity: test/contract/api_v1_health_contract_test.rb
 #[test]
 fn get_api_v1_health_returns_ok_payload() {
     let client = ContractClient::from_env();
@@ -26,7 +25,6 @@ fn get_api_v1_health_returns_ok_payload() {
     assert!(json["version"].as_str().is_some());
 }
 
-// Parity: test/contract/optimization_channel_rust_contract_test.rb
 #[test]
 fn cable_route_is_not_global_api_not_migrated_501() {
     let client = ContractClient::from_env();
@@ -34,78 +32,5 @@ fn cable_route_is_not_global_api_not_migrated_501() {
     assert_ne!(
         501, status,
         "cable must be handled by agrr-server, not global 501 fallback: {body}"
-    );
-}
-
-// Parity: test/contract/ai_api_contract_test.rb — route wired on agrr-server (not 501)
-#[test]
-fn crops_ai_create_is_not_501() {
-    let client = ContractClient::from_env();
-    let (status, body) = status_and_body(
-        client.post(
-            "/api/v1/crops/ai_create",
-            None,
-            &empty_headers(),
-            Some(serde_json::json!({})),
-        ),
-    );
-    assert_ne!(501, status, "{body}");
-    assert!(
-        [400, 401, 422, 503].contains(&status),
-        "unexpected status {status}: {body}"
-    );
-}
-
-#[test]
-fn fertilizes_ai_create_is_not_501() {
-    let client = ContractClient::from_env();
-    let (status, body) = status_and_body(
-        client.post(
-            "/api/v1/fertilizes/ai_create",
-            None,
-            &empty_headers(),
-            Some(serde_json::json!({})),
-        ),
-    );
-    assert_ne!(501, status, "{body}");
-    assert!(
-        [400, 401, 422, 503].contains(&status),
-        "unexpected status {status}: {body}"
-    );
-}
-
-#[test]
-fn pests_ai_create_is_not_501() {
-    let client = ContractClient::from_env();
-    let (status, body) = status_and_body(
-        client.post(
-            "/api/v1/pests/ai_create",
-            None,
-            &empty_headers(),
-            Some(serde_json::json!({})),
-        ),
-    );
-    assert_ne!(501, status, "{body}");
-    assert!(
-        [400, 401, 422, 503].contains(&status),
-        "unexpected status {status}: {body}"
-    );
-}
-
-#[test]
-fn pests_ai_update_is_not_501() {
-    let client = ContractClient::from_env();
-    let (status, body) = status_and_body(
-        client.post(
-            "/api/v1/pests/1/ai_update",
-            None,
-            &empty_headers(),
-            Some(serde_json::json!({})),
-        ),
-    );
-    assert_ne!(501, status, "{body}");
-    assert!(
-        [400, 401, 404, 422, 503].contains(&status),
-        "unexpected status {status}: {body}"
     );
 }

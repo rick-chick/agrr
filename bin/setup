@@ -8,13 +8,6 @@ cd "$ROOT"
 export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-$ROOT/storage/development.sqlite3}"
 export AGRR_CACHE_SQLITE_PATH="${AGRR_CACHE_SQLITE_PATH:-$ROOT/storage/development_cache.sqlite3}"
 
-echo "== Installing Ruby dependencies (Rails shell / contract harness) =="
-if [ -f Gemfile ]; then
-  gem install bundler --conservative
-  bundle check || bundle install
-fi
-
-echo ""
 echo "== Preparing database (agrr-migrate schema) =="
 "${ROOT}/scripts/run-agrr-migrate.sh" schema run
 

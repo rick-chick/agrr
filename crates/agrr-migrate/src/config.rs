@@ -28,9 +28,6 @@ impl DbPaths {
         })
     }
 
-    pub fn gemfile_exists(&self) -> bool {
-        self.app_root.join("Gemfile").is_file()
-    }
 }
 
 pub fn repo_relative(app_root: &Path, rel: &str) -> PathBuf {

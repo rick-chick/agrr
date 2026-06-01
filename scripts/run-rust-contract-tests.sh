@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# R4 contract tests against co-located agrr-server (same SQLite as Rails test DB).
+# R4 contract tests: co-located agrr-server + agrr-r4-contract (Rust only; P8.6).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -92,9 +92,7 @@ ensure_agrr_r4_contract_tests_binary() {
 
 ensure_agrr_r4_contract_tests_binary
 
-CONTRACT_TEST_ARGS="${*:-test/contract/}"
-
-echo "==> R4 contract (CONTRACT_RUNTIME=rust, shared test.sqlite3) args: ${CONTRACT_TEST_ARGS}"
+echo "==> R4 contract (CONTRACT_RUNTIME=rust, shared test.sqlite3)"
 docker compose --profile test run --rm \
   -e AGRR_TEST_SCRIPT=1 \
   -e "COVERAGE=${COVERAGE:-false}" \
@@ -102,7 +100,6 @@ docker compose --profile test run --rm \
   -e RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 \
   -v "${BINARY}:/usr/local/bin/agrr-server:ro" \
   -v "${R4_CONTRACT_TESTS_BIN}:/usr/local/bin/agrr-r4-contract-tests:ro" \
-  -e "CONTRACT_TEST_ARGS=${CONTRACT_TEST_ARGS}" \
   test bash -c '
     set -euo pipefail
     export AGRR_SQLITE_PATH=/app/storage/test.sqlite3
@@ -128,8 +125,6 @@ docker compose --profile test run --rm \
       cat /tmp/agrr-server-contract.log
       exit 1
     fi
-    echo "==> R4 contract (Rust harness, agrr-r4-contract)"
+    echo "==> R4 contract (agrr-r4-contract)"
     RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests
-    # shellcheck disable=SC2086
-    bundle exec rails test ${CONTRACT_TEST_ARGS}
   '

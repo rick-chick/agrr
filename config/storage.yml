@@ -1,4 +1,0 @@
-# Active Storage is unused (tables dropped). Test env keeps Disk service for Rails defaults.
-test:
-  service: Disk
-  root: <%= Rails.root.join("tmp/storage") %>

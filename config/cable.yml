@@ -1,9 +1,0 @@
-# WebSocket (/cable) is served by agrr-server. Rails does not mount Action Cable.
-development:
-  adapter: async
-
-test:
-  adapter: test
-
-production:
-  adapter: async

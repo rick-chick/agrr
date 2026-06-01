@@ -2,7 +2,7 @@
 
 Angular SPA + **agrr-server**（Rust API / WebSocket / OAuth）+ SQLite（Litestream）— 本番は Google Cloud Run。
 
-本番 API は **Rust のみ**（P7 完了）。リポジトリには開発・テスト用の **Rails シェル**が残っている（削除計画: [`docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）。
+本番 API は **Rust のみ**（P7 完了）。Ruby 契約ハーネスは P8.6 で削除済み（[`P8-RAILS-SHELL-REMOVAL.md`](docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）。
 
 ## 🚀 クイックスタート（推奨: Rust 開発スタック）
 
@@ -34,24 +34,16 @@ cd frontend && ng serve --host 127.0.0.1
 - `host-rust-stack.sh` 起動時にソケットが無ければデーモンを自動起動する
 - バイナリ未ビルド時: `cd lib/core/agrr_core && ./build_standalone.sh --onefile && cp dist/agrr ../agrr`
 
-### レガシー: Rails シェル（Compose profile）
-
-```bash
-```
-
-通常の API 開発は **dev-docker**（[`SKILL.md`](.cursor/skills/dev-docker/SKILL.md)）を使う。
-
 ---
 
 ## 🧪 テスト
 
-**必ず test-common / 専用スクリプト経由**。生 `rails test` は開発 DB 破壊防止のため `test/test_helper.rb` で拒否される。
+**必ず test-common / 専用スクリプト経由**（`rails test` は廃止）。
 
 ```bash
-./bin/test                                                    # 全体（cargo + R4・本番経路の正）
-.cursor/skills/test-common/scripts/run-test-rails.sh          # R4 契約（ファイル指定時）
+./bin/test                                                    # 全体（cargo + R4）
 .cursor/skills/test-common/scripts/run-test-rust-domain.sh    # agrr-domain
-scripts/run-rust-contract-tests.sh                            # R4 契約（本番経路の正）
+scripts/run-rust-contract-tests.sh                            # R4（agrr-r4-contract）
 .cursor/skills/test-common/scripts/run-test-frontend.sh       # Angular
 ```
 

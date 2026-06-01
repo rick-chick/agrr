@@ -2,7 +2,7 @@
 # Testコンテナ用のentrypoint
 # テストDB準備を自動化
 #
-# R4 contract harness: scripts/run-rust-contract-tests.sh
+# R4 contract (Rust): scripts/run-rust-contract-tests.sh
 #
 
 set -euo pipefail

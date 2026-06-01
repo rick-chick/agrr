@@ -2,7 +2,7 @@
 
 # AGRR: テスト実行（開発 DB 保護のため専用コンテナ / スクリプト経由のみ）
 # 本番 API 振る舞いの正: scripts/run-rust-contract-tests.sh（R4, CONTRACT_RUNTIME=rust）
-# R4 contract harness: run-rust-contract-tests.sh（P8.5 — Rails shell 回帰なし）
+# R4 contract: run-rust-contract-tests.sh（P8.6 — Ruby 契約なし）
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -12,7 +12,7 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "使用方法:"
     echo "  ./bin/test                              # 全体（cargo + R4）"
-    echo "  ./bin/test test/contract/foo_test.rb    # R4 契約（特定ファイル、agrr-server 同梱）"
+    echo "  ./bin/test                              # 引数付きも R4 一式（Ruby 契約廃止）"
     echo ""
     echo "💡 直接 'rails test' は開発 DB 破壊防止のため拒否されます"
     echo "💡 API/WS の正は R4: scripts/run-rust-contract-tests.sh"

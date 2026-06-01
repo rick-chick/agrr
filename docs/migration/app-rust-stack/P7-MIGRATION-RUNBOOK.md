@@ -86,13 +86,7 @@ Or use [dev-docker `load-reference-data-host.sh`](../../../.cursor/skills/dev-do
 
 ## Regenerating extracted JSON (maintainers)
 
-When `db/migrate_archive` task/pest definitions change:
-
-```bash
-bundle exec ruby scripts/extract_reference_data_json.rb
-```
-
-Writes `crates/agrr-migrate/data/extracted/{tasks,pests,templates}/`. Pests export needs reference pests in the dev DB (run archive pest migrations first if `in` is empty).
+When `db/migrate_archive` task/pest definitions change, update `crates/agrr-migrate/data/extracted/{tasks,pests,templates}/` directly or restore the removed `scripts/extract_reference_data_json.rb` from git history (P8.7: no `Gemfile` in repo).
 
 ## Litestream-restored production / staging DB
 
@@ -188,24 +182,9 @@ agrr-migrate data apply --region us --kind repair
 
 Check status: `agrr-migrate data list`
 
-## Parity verification (Rails archive vs agrr-migrate)
+## Parity verification (historical)
 
-| | Rails 側 | Rust 側 |
-|---|----------|---------|
-| Schema | `agrr-migrate schema run` | 同左 |
-| Data | `db/migrate_archive` の data 系 + `scripts/apply_extracted_reference_tasks.rb`（tasks は JSON） | `agrr-migrate data apply`（全 kind） |
-
-`scripts/compare_rails_rust_migration_parity.rb` は両方の DB を作り、`sqlite3 .schema` と `.dump` の INSERT 行を diff する（差分は `tmp/migration_parity/rails.*.txt` と `rust.*.txt`）。
-
-```bash
-# スキーマのみ（CI 向け・数秒）
-bundle exec ruby scripts/compare_rails_rust_migration_parity.rb --schema-only
-
-# 参照データまで（天気 JSON 込み・数十分）
-bundle exec ruby scripts/compare_rails_rust_migration_parity.rb
-```
-
-CI: `cargo test -p agrr-migrate --test migration_parity_test`（スキーマのみ。データ全体は `#[ignore]`）
+P8.7 で Rails パリティ用 Ruby スクリプト（`compare_rails_rust_migration_parity.rb` 等）を削除。**正**は `agrr-migrate schema verify` と `agrr-migrate data apply` の結果。アーカイブ手順は git 履歴を参照。
 
 `AGRR_MIGRATE_SKIP_WEATHER` は **agrr-migrate の `base` 実装用**（開発・単体テスト）であり、パリティ用ではない。
 

@@ -17,7 +17,7 @@ cd frontend && npm run e2e:capture-for-agent   # 要 dev-docker + ng serve（ス
 scripts/run-rust-contract-tests.sh
 ```
 
-- **`GET /api/v1/auth/me`**: `crates/agrr-server/src/auth_api.rs` に実装済み。専用 Ruby 契約（`auth_me_contract_test.rb`）は P8.6 で **Rust 移植せず削除予定**（E2E で回帰）
+- **`GET /api/v1/auth/me`**: `crates/agrr-server/src/auth_api.rs`。Ruby 契約は P8.6 で削除済み（E2E で回帰）
 - 開発用 `GET /auth/test/*`: `crates/agrr-server/src/auth_test.rs`
 
 ### 手動確認

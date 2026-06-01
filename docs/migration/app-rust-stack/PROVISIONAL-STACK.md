@@ -117,7 +117,7 @@ Ruby の [`lib/composition_root.rb`](../../../lib/composition_root.rb) と同型
 | API サブドメイン（`api.agrr.net`） | 本番は SPA と API が同一オリジン（`getApiBaseUrl()` 空）。Cookie / CORS / WS の再設計が必要 |
 | 新パス（例 `/oauth/google/callback`） | 移行期の API・ログイン契約変更。本プログラムの原則と矛盾 |
 
-**実装参照（現行）**: [`config/initializers/omniauth.rb`](../../../config/initializers/omniauth.rb)、[`config/routes.rb`](../../../config/routes.rb)（`auth#google_oauth2_callback`）、[`app/controllers/auth_controller.rb`](../../../app/controllers/auth_controller.rb)。
+**実装参照（現行）**: `crates/agrr-server`（OAuth / `auth_api` / `auth_test` mock login）。Rails `config/routes`・controllers は P8.7 で削除済み。
 
 ### WebSocket（確定 — 現行 Ruby / Angular 写経）
 
@@ -195,33 +195,19 @@ Ruby の [`lib/composition_root.rb`](../../../lib/composition_root.rb) と同型
 | 項目 | 選定 |
 |------|------|
 | ドメイン | `run-test-rust-domain.sh` / `rust-domain-test.yml` |
-| 契約・統合 | **R4**（下記）+ 移行期 `run-test-rails.sh`（Rails 残存 BC の回帰） |
-| 本番（移行完了後） | Cloud Run + **Rust 単体** [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server)（[`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh) — Litestream + `agrr-migrate`、Rails イメージ廃止） |
-| 移行期 | **二 Cloud Run**（`agrr-server` / Rails）+ **グローバル URL map** パス振分（[ADR](./ADR-strangler-lb-url-map.md)）。Rust 起動: [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server) + [`scripts/start_agrr_server.sh`](../../../scripts/start_agrr_server.sh) |
+| 契約・統合 | **R4** — `scripts/run-rust-contract-tests.sh`（`agrr-r4-contract` スモーク） |
+| 本番 | Cloud Run + **Rust 単体** [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server)（[`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh)） |
 
-### R4 契約テスト（確定 — 複製元は既存テスト）
+### R4 契約テスト（現行 — P8 以降）
 
-P6 ルート切替のゲート。**新規シナリオを invent しない**。現行の観測可能振る舞いを写す。
+**正**: [`P8-RAILS-SHELL-REMOVAL.md`](./P8-RAILS-SHELL-REMOVAL.md)、[`../lib-domain-rust/TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md)。
 
-| 段階 | 置き場所 | 実行 |
-|------|----------|------|
-| 移行期 | `test/contract/**`（新設） | `run-test-rails.sh test/contract` |
-| Rust 切替後 | `crates/agrr-server/tests/contract/**` | `run-test-rust-domain.sh` 拡張または専用 script（P6 で追加） |
-| CI | 既存 `.github/workflows/rails-test.yml` に contract パスを追加（Rust 側は `rust-domain-test.yml` と分離維持） |
+| 実行 | 内容 |
+|------|------|
+| `scripts/run-rust-contract-tests.sh` | co-located `agrr-server` + `crates/agrr-r4-contract`（health・`/cable`） |
+| `./bin/test` | `agrr-domain` + R4 |
 
-**最低限の複製元**（WS + 最適化クリティカルパス）:
-
-| 種別 | ファイル |
-|------|----------|
-| WS 購読・認可 | `test/channels/optimization_channel_test.rb` |
-| public 計画 + session | `test/controllers/api/v1/public_plans/wizard_controller_test.rb` |
-| internal Scheduler | `test/controllers/api/v1/internal/jobs_controller_test.rb` |
-| ジョブチェーン形状 | `test/adapters/cultivation_plan/private_plan_optimization_job_chain_builder_test.rb` |
-| phase broadcast payload | `test/domain/cultivation_plan/interactors/advance_cultivation_plan_phase_interactor_test.rb` |
-
-BC 切替ごとに、対応する `test/controllers/api/v1/**` を R4 スコープへ追加する。
-
-**R4 GREEN** = 切替対象ルートについて、上記相当のアサーションが移行先ランタイムでも通ること。
+P6 時代の Ruby `test/contract/**` と複製元一覧は [`../archive/P6-COMPLETION-CRITERIA.md`](../archive/P6-COMPLETION-CRITERIA.md) を参照（履歴）。
 
 ---
 

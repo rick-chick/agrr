@@ -30,5 +30,5 @@ Manual proof that **Application Default Credentials (ADC)** can read weather bul
 
 ## Related
 
-- Contract (local_root): `scripts/run-rust-contract-tests.sh`, `test/contract/internal_farm_weather_contract_test.rb`, `test/contract/plan_cultivation_mutations_contract_test.rb`
+- Contract (local_root): `scripts/run-rust-contract-tests.sh`（R4 スモーク）。天気・計画の振る舞いは `agrr-domain` / adapter 単体・E2E
 - [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md) — 本番観測の正

@@ -47,7 +47,7 @@ services:
       agrr-server:
         condition: service_healthy
 
-  # Test environment (R4 contract harness + agrr-migrate)
+  # Test environment (agrr-migrate DB cache + R4 contract runner)
   # テスト実行: scripts/run-rust-contract-tests.sh または ./bin/test
   test:
     image: agrr-test:latest
@@ -60,17 +60,10 @@ services:
     entrypoint: ["bash", "/app/scripts/docker-entrypoint-test.sh"]
     volumes:
       - .:/app
-      # vendor/bundleはコンテナ内のものを使用（Dockerfile.testでインストール済み）
-      - /app/vendor/bundle
-      # bundle_dataはマウントしない（Dockerfile.testでインストールされたgemを使用）
-      # - bundle_data:/usr/local/bundle
-      - bundle_cache:/usr/local/bundle/cache
     tmpfs:
       - /app/storage:mode=777  # テスト専用の一時ストレージ（開発環境と完全分離）
       - /app/tmp:mode=777
     environment:
-      - RAILS_ENV=test
-      - DATABASE_URL=sqlite3:storage/test.sqlite3
       - FRONTEND_URL=http://localhost:4200
       - AGRR_BIN_PATH=/app/lib/core/agrr
       - WEATHER_DATA_SOURCE=nasa-power
@@ -83,5 +76,4 @@ services:
       - test
 
 volumes:
-  bundle_cache:
   storage_dev_data:   # 開発環境用永続ストレージ

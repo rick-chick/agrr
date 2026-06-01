@@ -108,5 +108,5 @@ defaultService: rails-backend
 
 ## 参照
 
-- クリティカルパス順: [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) `critical_path`
+- クリティカルパス順: [`../archive/TRACKING-P6.yaml`](../archive/TRACKING-P6.yaml) `critical_path`（履歴）
 - OAuth 案 A: [PROVISIONAL-STACK.md — OAuth](./PROVISIONAL-STACK.md#oauth-コールバック-url確定--2026-05-29案-a)
