@@ -552,15 +552,15 @@ export function computeGanttPointerDragDistancePx(
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-export function shouldShowGanttMobileTrashDropzone(input: {
+export function shouldShowGanttTrashDropzone(input: {
   isMobileLayout: boolean;
   isDragging: boolean;
   pointerDragDistance: number;
 }): boolean {
-  if (!input.isMobileLayout) return false;
   return (
     input.isDragging ||
-    input.pointerDragDistance > getGanttDragActivationThresholdPx(true)
+    input.pointerDragDistance >
+      getGanttDragActivationThresholdPx(input.isMobileLayout)
   );
 }
 

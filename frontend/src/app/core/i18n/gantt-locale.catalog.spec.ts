@@ -46,7 +46,10 @@ const GANTT_KEYS = [
   'plans.gantt.mobile.field_legend_delete',
   'plans.gantt.mobile.drag_target_field',
   'js.gantt.logs.data_refetch_failed',
-  'js.gantt.logs.data_refetch_api_error'
+  'js.gantt.logs.data_refetch_api_error',
+  'js.gantt.confirm_delete_crop',
+  'js.gantt.confirm_delete_field',
+  'shared.navbar.farms'
 ] as const;
 
 /** English uses empty axis suffixes for year/month (e.g. "2026", "5"). */

@@ -29,7 +29,8 @@ import {
   pickGanttActiveTouchIndex,
   collectTouchIdentifiers,
   computeGanttPointerDragDistancePx,
-  shouldShowGanttMobileTrashDropzone,
+  computeGanttChartHeight,
+  shouldShowGanttTrashDropzone,
   resolveGanttMobileDragFieldContext,
   computeGanttDragPointerSvgOffset,
   computeGanttDragBarSvgPosition,
@@ -160,6 +161,35 @@ describe('gantt-chart-layout', () => {
         visibleEnd: new Date('2026-08-01')
       })
     ).toBe(false);
+    expect(
+      shouldReinitializeGanttVisibleRange({
+        planStartTime: planStart,
+        planEndTime: new Date('2027-12-31').getTime(),
+        lastPlanStartTime: planStart,
+        lastPlanEndTime: planEnd,
+        visibleStart: new Date('2026-02-01'),
+        visibleEnd: new Date('2026-08-01')
+      })
+    ).toBe(false);
+  });
+
+  it('computes chart height from row count and margins', () => {
+    expect(
+      computeGanttChartHeight({
+        marginTop: 60,
+        rowCount: 0,
+        rowHeight: 68,
+        marginBottom: 12
+      })
+    ).toBe(72);
+    expect(
+      computeGanttChartHeight({
+        marginTop: 60,
+        rowCount: 1,
+        rowHeight: 68,
+        marginBottom: 12
+      })
+    ).toBe(140);
   });
 
   it('maps bar x to drag start date', () => {
@@ -236,30 +266,44 @@ describe('gantt-chart-layout', () => {
     expect(computeGanttPointerDragDistancePx(103, 104, 100, 100)).toBe(5);
   });
 
-  it('shouldShowGanttMobileTrashDropzone follows mobile drag rules', () => {
+  it('shouldShowGanttTrashDropzone follows drag rules on mobile and desktop', () => {
     expect(
-      shouldShowGanttMobileTrashDropzone({
+      shouldShowGanttTrashDropzone({
         isMobileLayout: false,
         isDragging: true,
         pointerDragDistance: 100
       })
+    ).toBe(true);
+    expect(
+      shouldShowGanttTrashDropzone({
+        isMobileLayout: false,
+        isDragging: false,
+        pointerDragDistance: 2
+      })
     ).toBe(false);
     expect(
-      shouldShowGanttMobileTrashDropzone({
+      shouldShowGanttTrashDropzone({
+        isMobileLayout: false,
+        isDragging: false,
+        pointerDragDistance: 4
+      })
+    ).toBe(true);
+    expect(
+      shouldShowGanttTrashDropzone({
         isMobileLayout: true,
         isDragging: false,
         pointerDragDistance: 8
       })
     ).toBe(false);
     expect(
-      shouldShowGanttMobileTrashDropzone({
+      shouldShowGanttTrashDropzone({
         isMobileLayout: true,
         isDragging: false,
         pointerDragDistance: 13
       })
     ).toBe(true);
     expect(
-      shouldShowGanttMobileTrashDropzone({
+      shouldShowGanttTrashDropzone({
         isMobileLayout: true,
         isDragging: true,
         pointerDragDistance: 0

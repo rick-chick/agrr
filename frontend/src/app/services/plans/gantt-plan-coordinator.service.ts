@@ -195,6 +195,23 @@ export class GanttPlanCoordinatorService {
   }
 }
 
+export type GanttPlanMutationFailureKind =
+  | 'refetch_failed'
+  | 'refetch_error'
+  | 'message';
+
+export function classifyGanttPlanMutationFailure(
+  failure: GanttPlanMutationFailure
+): { kind: GanttPlanMutationFailureKind; message?: string } {
+  if (failure.refetchFailed) {
+    return { kind: 'refetch_failed' };
+  }
+  if (failure.refetchError) {
+    return { kind: 'refetch_error' };
+  }
+  return { kind: 'message', message: failure.message };
+}
+
 export function extractHttpErrorMessage(error: HttpErrorResponse): string | undefined {
   if (error?.error?.message) {
     return String(error.error.message);
