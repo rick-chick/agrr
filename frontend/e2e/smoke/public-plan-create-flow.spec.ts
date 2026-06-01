@@ -62,7 +62,7 @@ async function assertPublicPlanBusinessComplete(planId: string): Promise<void> {
 
 /**
  * 無料作付け計画: ウィザード → 最適化（Rust Cable）→ 結果。
- * 前提: `./scripts/dev-rust-stack.sh`（agrr デーモン込みで起動）。
+ * 前提: dev-docker `host-rust-stack.sh` または `up.sh`（agrr デーモン込み）。
  */
 smokeDescribe('public plan create flow (free plan)', () => {
   test.beforeEach(async ({ page }) => {

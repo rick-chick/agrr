@@ -11,7 +11,7 @@
 | **終着** | `agrr-server` + SQLite/Litestream + GCS + Angular CDN。**Rails Cloud Run は廃止** |
 | **フォールバック禁止** | 未移行 API を nginx / URL map で Rails に落とさない |
 | **未実装** | Rust で実装するか、`501` + `api_not_migrated`（[`fallback.rs`](../../../crates/agrr-server/src/fallback.rs)） |
-| **開発** | [`scripts/dev-rust-stack.sh`](../../../scripts/dev-rust-stack.sh) が標準（ローカル Rust の唯一の起動入口） |
+| **開発** | [dev-docker](../../../.cursor/skills/dev-docker/SKILL.md)（`up.sh` / `host-rust-stack.sh`）が標準 |
 | **契約 CI 正** | [`scripts/run-rust-contract-tests.sh`](../../../scripts/run-rust-contract-tests.sh) |
 
 [`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md) の「未移行は Rails 既定」は**移行期の暫定**のみ。終着像は本節と P7 と一致させる。
@@ -25,7 +25,7 @@
 | **Rust を起動した** | `agrr-server` が :8080 で応答する | **単体では SPA 不可** |
 | **BC 1 件の切替完了** | その BC のルートが Rust + R4 rust GREEN + 単一ライター | 他 BC は **Rails 必須** |
 | **P6 プログラム完了** | [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) のクリティカルパス + wave がすべて `phase: done` | **API は Rust のみ**（`AGRR_RUST_API=1` / strangler nginx） |
-| **ストラングラー完了（P7 入口）** | 本番 URL map に **Rails 向け API ルールが残っていない** | 開発も **Rust 単体**（[`dev-rust-stack.sh`](../../../scripts/dev-rust-stack.sh)）で SPA |
+| **ストラングラー完了（P7 入口）** | 本番 URL map に **Rails 向け API ルールが残っていない** | 開発も **Rust 単体**（dev-docker）で SPA |
 | **Rails 廃止（P7 完了）** | [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md) P7 出口チェックリスト | **本番で Rails API 不要** |
 
 **「Rust を起動お願い」≠「Rails 移行が終わった」**。移行期の開発は意図的に **Rails + Rust + 振分（nginx / URL map）** である。
@@ -75,7 +75,7 @@
 
 - 本番 **Rails Cloud Run** は P7 カットオーバーまで残る場合がある（**API トラフィックは Rust のみ**が完了条件）。Rust 起動 bootstrap は [`Dockerfile.agrr-server`](../../../Dockerfile.agrr-server) + [`start_agrr_server.sh`](../../../scripts/start_agrr_server.sh)。
 - **`lib/domain`（Ruby）は削除しない**（P7 — [`scripts/p7-code-removal-gate.sh`](../../../scripts/p7-code-removal-gate.sh)）。
-- 開発の **Rails 起動は不要**（`./scripts/dev-rust-stack.sh` のみ）。
+- 開発の **Rails 起動は不要**（dev-docker のみ）。
 
 ---
 
@@ -92,7 +92,7 @@ P6 TRACKING 完了より **厳しい**条件。ローカルで次をすべて満
 | E | WebSocket 最適化が Rust `/cable` で本番同等 |
 | F | `COVERAGE=false ./scripts/run-rust-contract-tests.sh` が **全** contract を含み GREEN |
 
-**現状（P6 TRACKING 完了）**: [`./scripts/dev-rust-stack.sh`](../../../scripts/dev-rust-stack.sh) + [`docker/nginx-strangler-host.conf`](../../../docker/nginx-strangler-host.conf) で `/api/` は Rust のみ（未実装は 501）。レベル 3 は **`run-rust-contract-tests.sh` 全 GREEN + Rails 未起動 E2E**。本番は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
+**現状（P6 TRACKING 完了）**: dev-docker + [`docker/nginx-strangler-host.conf`](../../../docker/nginx-strangler-host.conf) で `/api/` は Rust のみ（未実装は 501）。レベル 3 は **`run-rust-contract-tests.sh` 全 GREEN + Rails 未起動 E2E**。本番は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
 
 ---
 
@@ -121,11 +121,11 @@ P6 TRACKING 完了より **厳しい**条件。ローカルで次をすべて満
 
 | 起動方法 | 用途 | 完了レベルとの関係 |
 |----------|------|-------------------|
-| **`./scripts/dev-rust-stack.sh`** | agrr デーモン + agrr-server + nginx (:3000)。**ローカル Rust 開発の唯一の入口** | レベル 2〜3（SPA + 最適化チェーン） |
+| **dev-docker `up.sh` / `host-rust-stack.sh`** | agrr デーモン + agrr-server + nginx (:3000) | レベル 2〜3（SPA + 最適化チェーン） |
 | `ng serve --host 127.0.0.1` | 上記のあと別ターミナル（:4200 → API :3000） | SPA 全体確認 |
 | `./bin/test` / `run-rust-contract-tests.sh` | CI 同等 | レベル 1 の R4 |
 
-`cargo run` 単体・`docker compose --profile rust`・`verify-weather-sqlite-local.sh server` は **UI 開発用の起動手順としては使わない**（検証・CI 向け）。
+`cargo run` 単体・`verify-weather-sqlite-local.sh server` は **UI 開発用の起動手順としては使わない**（検証・CI 向け）。開発の既定は [dev-docker](../../../.cursor/skills/dev-docker/SKILL.md)（`up.sh` または `host-rust-stack.sh`）。
 
 ---
 

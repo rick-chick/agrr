@@ -97,18 +97,17 @@ SQLite / ActiveRecord / HTTP
 
 ## 必須コマンド
 
-### 開発環境（推奨: Rust スタック）
+### 開発環境（Rust スタック）
+
+**Docker（正）**: [`.cursor/skills/dev-docker/SKILL.md`](.cursor/skills/dev-docker/SKILL.md)
 
 ```bash
-chmod +x scripts/*.sh
-./scripts/load-development-reference-data.sh   # 初回 DB
-./scripts/dev-rust-stack.sh                    # agrr-server + nginx :3000
+.cursor/skills/dev-docker/scripts/load-reference-data.sh   # 初回 DB
+.cursor/skills/dev-docker/scripts/up.sh                   # :3000
 cd frontend && ng serve --host 127.0.0.1
 ```
 
-本番 API/WS は Rust のみ（P7 完了）。リポジトリの Rails 削除は P8（[`docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）。
-
-**レガシー**: `docker compose up`（Rails シェル、SPA フォールバック用）。
+ホスト cargo: `dev-docker/scripts/load-reference-data-host.sh` + `host-rust-stack.sh`。Rails シェル: `rails-up.sh`。
 
 ### テスト（**必ず test-common 経由**）
 
@@ -139,6 +138,7 @@ scripts/run-rust-contract-tests.sh
 ```bash
 .cursor/skills/deploy-server/scripts/gcp-deploy.sh    # Production agrr-server（agrr.net API/WS）
 .cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh  # Frontend → GCS + Cloud CDN
+.cursor/skills/dev-docker/SKILL.md                  # ローカル Compose 開発（agrr-server :3000）
 .cursor/skills/gcp-test-local/SKILL.md              # GCP test（agrr-test）+ ローカル ng serve proxy
 ```
 

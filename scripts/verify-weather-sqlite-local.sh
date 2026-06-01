@@ -6,8 +6,8 @@
 #   ./scripts/verify-weather-sqlite-local.sh prepare
 #   ./scripts/verify-weather-sqlite-local.sh env        # print exports
 #   ./scripts/verify-weather-sqlite-local.sh status
-#   USE_AGRR_DAEMON=true docker compose up   # or ensure AGRR_SOCKET_PATH exists
-#   ./scripts/verify-weather-sqlite-local.sh server     # headless only (UI 開発は dev-rust-stack.sh)
+#   .cursor/skills/dev-docker/scripts/up.sh   # or host-rust-stack.sh
+#   ./scripts/verify-weather-sqlite-local.sh server     # headless only (UI は dev-docker)
 #   ./scripts/verify-weather-sqlite-local.sh trigger
 #   ./scripts/verify-weather-sqlite-local.sh verify     # prepare + 2x trigger + checks
 #   ./scripts/verify-weather-sqlite-local.sh stop       # stop background server from `server`
@@ -57,7 +57,7 @@ ensure_agrr_daemon() {
   if [[ -S "$AGRR_SOCKET_PATH" ]]; then
     return 0
   fi
-  [[ -x "$AGRR_BIN" ]] || fail "agrr daemon not running and $AGRR_BIN missing. Try: USE_AGRR_DAEMON=true docker compose up"
+  [[ -x "$AGRR_BIN" ]] || fail "agrr daemon not running and $AGRR_BIN missing. Try: dev-docker/scripts/up.sh"
   info "starting agrr daemon ($AGRR_BIN)"
   "$AGRR_BIN" daemon start >/dev/null 2>&1 || true
   for _ in $(seq 1 45); do
@@ -73,7 +73,7 @@ cmd_prepare() {
     info "play DB already exists: $PLAY_DB"
     return 0
   fi
-  [[ -f "$ROOT/storage/development.sqlite3" ]] || fail "missing storage/development.sqlite3 — run: ./scripts/load-development-reference-data.sh"
+  [[ -f "$ROOT/storage/development.sqlite3" ]] || fail "missing storage/development.sqlite3 — run: dev-docker/scripts/load-reference-data-host.sh"
   cp "$ROOT/storage/development.sqlite3" "$PLAY_DB"
   info "copied development.sqlite3 -> $PLAY_DB (development DB untouched)"
 }

@@ -1,15 +1,64 @@
-# Docker Compose file for development
+# Docker Compose — development
+# 操作は .cursor/skills/dev-docker/SKILL.md（scripts/up.sh 等）を正とする。
+#
+# Default: agrr-server + strangler-proxy (:3000 → Rust API/WS/auth)
+# Rails shell: dev-docker/scripts/rails-up.sh
+# Tests: test-common（profile test）
 
 services:
-  # Web with daemon support (development with daemon) - DEFAULT
+  # Rust API / WebSocket / OAuth (default dev stack)
+  agrr-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.agrr-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - storage_dev_data:/app/storage
+      - ./lib/core:/app/lib/core:ro
+    environment:
+      - AGRR_SQLITE_PATH=/app/storage/development.sqlite3
+      - AGRR_CACHE_SQLITE_PATH=/app/storage/development_cache.sqlite3
+      - AGRR_ENV=development
+      - SKIP_CABLE_DB=true
+      - USE_AGRR_DAEMON=true
+      - AGRR_BIN_PATH=/usr/local/bin/agrr
+      - WEATHER_DATA_SOURCE=nasa-power
+      - FRONTEND_URL=http://localhost:4200,http://127.0.0.1:4200
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - SCHEDULER_AUTH_TOKEN=${SCHEDULER_AUTH_TOKEN:-}
+      - AGRR_BACKDOOR_TOKEN=${AGRR_BACKDOOR_TOKEN:-4d2522cd0f306acaca381256ea73cdb2288d12759a318b8b8988975b78ba2a32}
+      - GCS_BUCKET_DEV=${GCS_BUCKET_DEV:-}
+    entrypoint: ["bash", "/app/dev-docker-entrypoints/docker-entrypoint-dev-rust-stack.sh"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/up"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  strangler-proxy:
+    image: nginx:1.27-alpine
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./docker/nginx-strangler.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      agrr-server:
+        condition: service_healthy
+
+  # Rails shell (legacy SPA fallback, asset pipeline) — profile: rails
   web:
+    profiles:
+      - rails
     build:
       context: .
       dockerfile: Dockerfile
       network: host
       extra_hosts:
         - "host.docker.internal:host-gateway"
-    entrypoint: ["bash", "/app/scripts/docker-entrypoint-dev-daemon.sh"]
+    entrypoint: ["bash", "/app/.cursor/skills/dev-docker/entrypoints/docker-entrypoint-dev-daemon.sh"]
     ports:
       - "3000:3000"
     volumes:
@@ -23,7 +72,7 @@ services:
       - /app/log
       - /app/node_modules
       - /app/app/assets/builds  # esbuildの出力はコンテナ内のみ（権限問題を回避）
-      - /home/akishige/projects/agrr/public/assets:/app/public/assets  # Propshaftアセットをホストと共有（開発環境での動的配信のため）
+      - ./public/assets:/app/public/assets
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
@@ -49,13 +98,16 @@ services:
 
   # Web without daemon (CLI mode, optional)
   web-cli:
+    profiles:
+      - rails
+      - cli
     build:
       context: .
       dockerfile: Dockerfile
       network: host
       extra_hosts:
         - "host.docker.internal:host-gateway"
-    entrypoint: ["bash", "/app/scripts/docker-entrypoint-dev.sh"]
+    entrypoint: ["bash", "/app/.cursor/skills/dev-docker/entrypoints/docker-entrypoint-dev.sh"]
     ports:
       - "3001:3000"
     volumes:
@@ -68,7 +120,7 @@ services:
       - /app/log
       - /app/node_modules
       - /app/app/assets/builds  # esbuildの出力はコンテナ内のみ（権限問題を回避）
-      - /home/akishige/projects/agrr/public/assets:/app/public/assets  # Propshaftアセットをホストと共有（開発環境での動的配信のため）
+      - ./public/assets:/app/public/assets
     environment:
       - RAILS_ENV=development
       - DATABASE_URL=sqlite3:storage/development.sqlite3
@@ -79,8 +131,6 @@ services:
     command: bundle exec rails server -b 0.0.0.0
     stdin_open: true
     tty: true
-    profiles:
-      - cli
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -179,37 +229,6 @@ services:
       - SE_NODE_SESSION_TIMEOUT=300
     profiles:
       - test
-
-  # P6 Rust edge (strangler); proxy via strangler-proxy profile
-  agrr-server:
-    build:
-      context: .
-      dockerfile: Dockerfile.agrr-server
-    ports:
-      - "8080:8080"
-    volumes:
-      - storage_dev_data:/app/storage
-    environment:
-      - AGRR_SQLITE_PATH=/app/storage/development.sqlite3
-      - AGRR_ENV=development
-      - FRONTEND_URL=http://localhost:4200,http://127.0.0.1:4200
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - SCHEDULER_AUTH_TOKEN=${SCHEDULER_AUTH_TOKEN:-}
-    profiles:
-      - rust
-
-  strangler-proxy:
-    image: nginx:1.27-alpine
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./docker/nginx-strangler.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - web
-      - agrr-server
-    profiles:
-      - rust
 
 volumes:
   bundle_data:

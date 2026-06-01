@@ -30,10 +30,10 @@ echo "  PLAN_ID=$PLAN_ID"
 echo "  RUN_CHAIN=$RUN_CHAIN"
 echo
 
-[[ -f "$AGRR_SQLITE_PATH" ]] || fail "DB missing. Run: ./scripts/load-development-reference-data.sh (or copy development.sqlite3)"
+[[ -f "$AGRR_SQLITE_PATH" ]] || fail "DB missing. Run: dev-docker/scripts/load-reference-data-host.sh (or copy development.sqlite3)"
 
 if [[ ! -S "$AGRR_SOCKET_PATH" ]]; then
-  fail "agrr daemon not running at $AGRR_SOCKET_PATH. Example: USE_AGRR_DAEMON=true docker compose up"
+  fail "agrr daemon not running at $AGRR_SOCKET_PATH. Example: dev-docker/scripts/up.sh"
 fi
 
 command -v cargo >/dev/null 2>&1 || fail "cargo not found (install rustup / source ~/.cargo/env)"
@@ -76,4 +76,4 @@ echo
 echo "OK: Rust optimization chain is verifiable locally."
 echo "  Spike only:  bash scripts/verify-rust-optimization-chain.sh"
 echo "  Full chain:  RUN_CHAIN=1 bash scripts/verify-rust-optimization-chain.sh"
-echo "  UI + API:    ./scripts/dev-rust-stack.sh  (agrr-server :8080, nginx :3000)"
+echo "  UI + API:    dev-docker/scripts/host-rust-stack.sh  (agrr-server :8080, nginx :3000)"

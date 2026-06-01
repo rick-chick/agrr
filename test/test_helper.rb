@@ -24,7 +24,7 @@ if ENV["RAILS_ENV"] && ENV["RAILS_ENV"] != "test"
     🔄 前回DBが壊れた場合の復旧方法:
        docker compose down
        docker volume rm agrr_storage_dev_data
-       docker compose up -d web
+       .cursor/skills/dev-docker/scripts/up.sh
        # スキーマは test entrypoint が agrr-migrate schema run で適用（refinery）
   MSG
   exit 1

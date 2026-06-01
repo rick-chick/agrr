@@ -6,7 +6,7 @@ updated: 2026-05-30
 policy:
   rails_api_fallback: forbidden
   unimplemented_api: rust_501_api_not_migrated
-  dev_stack: scripts/dev-rust-stack.sh
+  dev_stack: .cursor/skills/dev-docker/scripts/host-rust-stack.sh
 
 wave_e:
   contract_tests:

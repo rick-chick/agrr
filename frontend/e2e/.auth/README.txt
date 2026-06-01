@@ -9,10 +9,10 @@ ng serve（127.0.0.1:4200）proxy → nginx strangler（127.0.0.1:3000）→ agr
 
 ```bash
 # リポジトリ root
-./scripts/dev-rust-stack.sh
+.cursor/skills/dev-docker/scripts/host-rust-stack.sh
 ```
 
-失敗したとき: `cargo build -p agrr-server --release` のあと `./scripts/dev-rust-stack.sh stop` → 再起動。
+失敗したとき: `cargo build -p agrr-server --release` のあと `.cursor/skills/dev-docker/scripts/host-rust-stack.sh stop` → 再起動。
 nginx 設定を変えたら `nginx -s reload -c docker/nginx-strangler-host.conf`（または stack スクリプトで stop/start）。
 
 ### キャプチャ
@@ -41,7 +41,7 @@ curl -sI "http://127.0.0.1:4200/auth/test/mock_login_as/developer?return_to=http
 
 **開発ビルド**（`ng serve`）の `/login` にモックログイン欄が出る（本番ビルドでは非表示）。
 
-1. リポジトリ root で `./scripts/dev-rust-stack.sh`（:3000 → agrr-server :8080）
+1. リポジトリ root で `.cursor/skills/dev-docker/scripts/host-rust-stack.sh`（:3000 → agrr-server :8080）
 2. Angular: `cd frontend && npm start`（既定 http://127.0.0.1:4200）
 3. http://127.0.0.1:4200/login を開き、「開発者 / 農家 / 研究員」いずれかをクリック
 4. API・認証は同一オリジン（proxy）。リダイレクト後 `GET /api/v1/auth/me` でユーザーが返ること

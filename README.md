@@ -12,33 +12,35 @@ Angular SPA + **agrr-server**（Rust API / WebSocket / OAuth）+ SQLite（Litest
 chmod +x scripts/*.sh
 
 # DB（refinery + 参照マスタ）
-./scripts/load-development-reference-data.sh
+.cursor/skills/dev-docker/scripts/load-reference-data.sh
+# ホスト cargo: .cursor/skills/dev-docker/scripts/load-reference-data-host.sh
 
-# ターミナル 1: agrr デーモン + agrr-server + nginx (:3000)
-./scripts/dev-rust-stack.sh
+# ターミナル 1 — いずれか
+.cursor/skills/dev-docker/scripts/up.sh              # Docker（推奨）
+# .cursor/skills/dev-docker/scripts/host-rust-stack.sh  # ホスト cargo
 
 # ターミナル 2: Angular
 cd frontend && ng serve --host 127.0.0.1
 ```
 
 - API / `/cable` / `/auth`: http://127.0.0.1:3000（ng serve :4200 から向く）
-- 停止: `./scripts/dev-rust-stack.sh stop`
+- 停止: `down.sh` または `host-rust-stack.sh stop`（いずれも dev-docker スキル内）
 - 本番切替・P7 状態: [`docs/migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md`](docs/migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)
 
 ### 新規計画作成（AGRR デーモン）
 
 最適化には `lib/core/agrr` デーモンが必要。
 
-- `dev-rust-stack.sh` 起動時にソケットが無ければデーモンを自動起動する
+- `host-rust-stack.sh` 起動時にソケットが無ければデーモンを自動起動する
 - バイナリ未ビルド時: `cd lib/core/agrr_core && ./build_standalone.sh --onefile && cp dist/agrr ../agrr`
 
-### レガシー: Docker Compose（Rails シェル）
+### レガシー: Rails シェル（Compose profile）
 
 ```bash
-docker compose up   # :3000 で rails server（SPA フォールバック・auth_test 等）
+.cursor/skills/dev-docker/scripts/rails-up.sh
 ```
 
-P8 で既定を Rust に寄せる予定。新規開発は上記 **dev-rust-stack** を使う。
+通常の API 開発は **dev-docker**（[`SKILL.md`](.cursor/skills/dev-docker/SKILL.md)）を使う。
 
 ---
 

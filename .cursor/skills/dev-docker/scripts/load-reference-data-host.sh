@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Load JP/IN/US reference masters into storage/development.sqlite3 (fixtures + data migrations).
+# Docker dev stack: .cursor/skills/dev-docker/scripts/load-reference-data.sh
 # Includes India kind=repair after base (growth stages from db/fixtures/india_reference_crops.json).
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 cd "$ROOT"
-export RAILS_ENV=development
 export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-$ROOT/storage/development.sqlite3}"
 
 echo "==> Schema (refinery)"

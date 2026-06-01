@@ -4,8 +4,8 @@
 
 ## 前提
 
-1. `./scripts/load-development-reference-data.sh`（`storage/development.sqlite3` — 参照農場・作業目安用 fixture を含む）
-2. 別ターミナル: リポジトリ root で `./scripts/dev-rust-stack.sh`
+1. `.cursor/skills/dev-docker/scripts/load-reference-data-host.sh`（または `load-reference-data.sh`）
+2. 別ターミナル: `.cursor/skills/dev-docker/scripts/up.sh` または `host-rust-stack.sh`
 3. frontend で:
 
 ```bash

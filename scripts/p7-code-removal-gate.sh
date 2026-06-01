@@ -6,8 +6,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 echo "==> Checking AGRR_RUST_API adoption"
-if ! rg -q 'AGRR_RUST_API=1' scripts/dev-rust-stack.sh; then
-  echo "FAIL: dev-rust-stack.sh must set AGRR_RUST_API=1"
+if ! rg -q 'AGRR_RUST_API=1' .cursor/skills/dev-docker/scripts/host-rust-stack.sh; then
+  echo "FAIL: dev-docker/scripts/host-rust-stack.sh must set AGRR_RUST_API=1"
   exit 1
 fi
 

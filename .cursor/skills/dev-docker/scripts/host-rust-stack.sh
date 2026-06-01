@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# ローカル Rust 開発の唯一の起動入口: agrr デーモン + agrr-server (:8080) + nginx (:3000 → Rust).
+# ホスト上の Rust 開発起動: agrr デーモン + agrr-server (:8080) + nginx (:3000 → Rust).
+# Docker 利用時は .cursor/skills/dev-docker/scripts/up.sh（SKILL.md 参照）。
 # Angular (ng serve :4200) は API/WebSocket を http://127.0.0.1:3000 に向ける。
 #
-#   ./scripts/dev-rust-stack.sh        # 起動
-#   ./scripts/dev-rust-stack.sh stop   # 停止
+#   host-rust-stack.sh        # 起動（本スキル scripts/）
+#   host-rust-stack.sh stop
 #
 # 環境変数: AGRR_SQLITE_PATH, AGRR_SOCKET_PATH, AGRR_BIN, AGRR_USE_MOCK, AGRR_SKIP_CARGO_BUILD, WEATHER_DATA_SOURCE
 set -euo pipefail
 
 export AGRR_RUST_API=1
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 cd "$ROOT"
 
 if [[ -f "${HOME}/.cargo/env" ]]; then
@@ -90,7 +91,7 @@ require_port_free() {
   if port_listening "$port"; then
     echo "ERROR: port ${port} still in use. Another process (e.g. docker compose web on :3000) may be bound."
     ss -tlnp 2>/dev/null | grep ":${port} " || true
-    echo "Free the port, then re-run: ./scripts/dev-rust-stack.sh"
+    echo "Free the port, then re-run: dev-docker/scripts/host-rust-stack.sh"
     return 1
   fi
 }
@@ -154,7 +155,7 @@ export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-$ROOT/storage/development.sqlite3}"
 export FRONTEND_URL="${FRONTEND_URL:-http://127.0.0.1:4200,http://localhost:4200}"
 
 if [[ ! -f "$AGRR_SQLITE_PATH" ]]; then
-  echo "Missing $AGRR_SQLITE_PATH — run once: ./scripts/load-development-reference-data.sh"
+  echo "Missing $AGRR_SQLITE_PATH — run once: dev-docker/scripts/load-reference-data-host.sh"
   exit 1
 fi
 
@@ -195,7 +196,7 @@ else
     echo "  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
     echo "  source \"\$HOME/.cargo/env\""
     echo "Or skip rebuild if binary exists:"
-    echo "  AGRR_SKIP_CARGO_BUILD=1 ./scripts/dev-rust-stack.sh"
+    echo "  AGRR_SKIP_CARGO_BUILD=1 dev-docker/scripts/host-rust-stack.sh"
     exit 1
   }
   echo "==> cargo build -p agrr-server (release) ($CARGO)"
@@ -260,5 +261,5 @@ echo "  API + WebSocket: http://127.0.0.1:3000"
 echo "  agrr-server:     http://127.0.0.1:8080/health"
 echo "  Angular:         cd frontend && ng serve --host 127.0.0.1   # → :4200, /api・/auth は proxy → :3000"
 echo "  Google OAuth:    redirect URI = FRONTEND_URL 先頭 + /auth/google_oauth2/callback（例 :4200）"
-echo "  Stop:            ./scripts/dev-rust-stack.sh stop"
+echo "  Stop:            dev-docker/scripts/host-rust-stack.sh stop"
 echo "  Logs:            $PID_DIR/rust.log"
