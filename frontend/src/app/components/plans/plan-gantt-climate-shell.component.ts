@@ -2,18 +2,13 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
+import { GanttVisibleRange } from '../../domain/plans/gantt-chart-layout';
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
 
 export type CultivationSelectionEvent = {
   cultivationId: number;
   planType: 'private' | 'public';
-};
-
-export type GanttVisibleRange = {
-  startDate: Date;
-  endDate: Date;
-  label: string;
 };
 
 /**

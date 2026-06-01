@@ -37,7 +37,10 @@ import {
   buildGanttDragDropLayout,
   shouldIgnoreGanttPointerCancel,
   shouldActivateGanttDrag,
-  shouldReinitializeGanttVisibleRange
+  shouldReinitializeGanttVisibleRange,
+  parseGanttPlanBounds,
+  buildGanttAddCropDisplayRange,
+  isPointInsideClientRect
 } from './gantt-chart-layout';
 
 describe('gantt-chart-layout', () => {
@@ -471,5 +474,32 @@ describe('gantt-chart-layout', () => {
   it('adds months to a date', () => {
     const result = addMonths(new Date('2026-01-15'), 2);
     expect(result.getMonth()).toBe(2);
+  });
+
+  it('parseGanttPlanBounds returns null for invalid dates', () => {
+    expect(parseGanttPlanBounds(undefined, '2026-12-31')).toEqual({ start: null, end: null });
+    expect(parseGanttPlanBounds('invalid', '2026-12-31')).toEqual({ start: null, end: null });
+  });
+
+  it('parseGanttPlanBounds normalizes valid plan dates', () => {
+    const bounds = parseGanttPlanBounds('2026-01-01', '2026-06-30');
+    expect(bounds.start?.toISOString().slice(0, 10)).toBe('2026-01-01');
+    expect(bounds.end?.toISOString().slice(0, 10)).toBe('2026-06-30');
+  });
+
+  it('buildGanttAddCropDisplayRange prefers visible range over plan bounds', () => {
+    const range = buildGanttAddCropDisplayRange({
+      visibleStart: new Date('2026-02-01'),
+      visibleEnd: new Date('2026-05-01'),
+      planStart: new Date('2026-01-01'),
+      planEnd: new Date('2026-12-31')
+    });
+    expect(range).toEqual({ start: '2026-02-01', end: '2026-05-01' });
+  });
+
+  it('isPointInsideClientRect detects pointer within rect', () => {
+    const rect = { left: 10, right: 20, top: 30, bottom: 40 };
+    expect(isPointInsideClientRect(15, 35, rect)).toBe(true);
+    expect(isPointInsideClientRect(5, 35, rect)).toBe(false);
   });
 });

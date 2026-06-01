@@ -6,25 +6,23 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { of, throwError } from 'rxjs';
 
 import { GanttChartComponent } from './gantt-chart.component';
-import { PlanService, buildCultivationPlanEndpoint } from '../../services/plans/plan.service';
+import { GanttPlanCoordinatorService } from '../../services/plans/gantt-plan-coordinator.service';
 import { AvailableCropData, CultivationData } from '../../domain/plans/cultivation-plan-data';
 import { GANTT_MARGIN_LEFT_MOBILE } from '../../domain/plans/gantt-chart-layout';
 describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
   let fixture: ComponentFixture<GanttChartComponent>;
-  let planService: PlanService;
+  let ganttPlanCoordinator: GanttPlanCoordinatorService;
   let mobileLayoutMatches = false;
 
   beforeEach(async () => {
-    const planServiceMock = {
-      adjustPlan: vi.fn(),
-      getPlanData: vi.fn(),
-      getPublicPlanData: vi.fn(),
+    const coordinatorMock = {
+      adjustCultivationMove: vi.fn(),
+      loadPlanData: vi.fn().mockReturnValue(of(null)),
       addCrop: vi.fn(),
       removeCultivation: vi.fn(),
       addField: vi.fn(),
-      removeField: vi.fn(),
-      buildCultivationPlanEndpoint
+      removeField: vi.fn()
     };
 
     await TestBed.configureTestingModule({
@@ -34,14 +32,14 @@ describe('GanttChartComponent', () => {
         TranslateModule.forRoot()
       ],
       providers: [
-        { provide: PlanService, useValue: planServiceMock }
+        { provide: GanttPlanCoordinatorService, useValue: coordinatorMock }
       ]
     })
     .compileComponents();
 
     fixture = TestBed.createComponent(GanttChartComponent);
     component = fixture.componentInstance;
-    planService = TestBed.inject(PlanService);
+    ganttPlanCoordinator = TestBed.inject(GanttPlanCoordinatorService);
 
     // Configure simple translations required by these tests
     const translate = TestBed.inject(TranslateService);
@@ -102,40 +100,43 @@ describe('GanttChartComponent', () => {
       }];
     });
 
-    it('should call private plan adjust endpoint when planType is private', () => {
+    it('should call adjust coordinator for private plans', () => {
       component.planType = 'private';
-
-      planService.adjustPlan = vi.fn().mockReturnValue({
-        subscribe: vi.fn()
-      });
+      ganttPlanCoordinator.adjustCultivationMove = vi.fn().mockReturnValue(
+        of({ status: 'failure', failure: {} })
+      );
 
       component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-09-15'));
 
-      expect(planService.adjustPlan).toHaveBeenCalledWith(
-        '/api/v1/plans/cultivation_plans/7/adjust',
-        expect.any(Object)
-      );
+      expect(ganttPlanCoordinator.adjustCultivationMove).toHaveBeenCalledWith({
+        planType: 'private',
+        planId: 7,
+        cultivationId: 14,
+        toFieldId: 1,
+        newStartDate: expect.any(Date)
+      });
     });
 
-    it('should call public plan adjust endpoint when planType is public', () => {
+    it('should call adjust coordinator for public plans', () => {
       component.planType = 'public';
-
-      planService.adjustPlan = vi.fn().mockReturnValue({
-        subscribe: vi.fn()
-      });
+      ganttPlanCoordinator.adjustCultivationMove = vi.fn().mockReturnValue(
+        of({ status: 'failure', failure: {} })
+      );
 
       component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-09-15'));
 
-      expect(planService.adjustPlan).toHaveBeenCalledWith(
-        '/api/v1/public_plans/cultivation_plans/7/adjust',
-        expect.any(Object)
-      );
+      expect(ganttPlanCoordinator.adjustCultivationMove).toHaveBeenCalledWith({
+        planType: 'public',
+        planId: 7,
+        cultivationId: 14,
+        toFieldId: 1,
+        newStartDate: expect.any(Date)
+      });
     });
 
     it('should update fieldGroups after adjustCultivation succeeds', () => {
       component.planType = 'private';
 
-      // getPlanDataが新しいデータを返すようにモック（start_dateが変更されたデータ）
       const updatedData = {
         data: {
           id: 7,
@@ -147,19 +148,15 @@ describe('GanttChartComponent', () => {
             field_id: 1,
             field_name: 'Field 1',
             crop_name: 'Rice',
-            start_date: '2026-09-15', // 変更された日付
-            completion_date: '2026-10-15' // 変更された日付
+            start_date: '2026-09-15',
+            completion_date: '2026-10-15'
           }]
         }
       };
 
-      // adjustPlanが成功レスポンスを返すようにモック
-      planService.adjustPlan = vi.fn().mockReturnValue(
-        of({ success: true, message: '調整が完了しました' })
+      ganttPlanCoordinator.adjustCultivationMove = vi.fn().mockReturnValue(
+        of({ status: 'success', data: updatedData })
       );
-
-      // getPlanDataが新しいデータを返すようにモック
-      planService.getPlanData = vi.fn().mockReturnValue(of(updatedData));
 
       component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-09-15'));
 
@@ -291,7 +288,7 @@ describe('GanttChartComponent', () => {
       } as any;
     });
 
-    it('should add a crop via planService and refresh data', () => {
+    it('should add a crop via coordinator and apply refreshed data', () => {
       component.visibleStartDate = new Date('2026-02-01');
       component.visibleEndDate = new Date('2026-08-31');
       const crop: AvailableCropData = {
@@ -302,24 +299,23 @@ describe('GanttChartComponent', () => {
       };
       component.selectedCrop = crop;
 
-      planService.addCrop = vi.fn().mockReturnValue(of({ success: true }));
-      const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
+      ganttPlanCoordinator.addCrop = vi.fn().mockReturnValue(
+        of({ status: 'success', data: component.data! })
+      );
+      const applySpy = vi.spyOn(component as any, 'applyRefreshedPlanData').mockImplementation(() => {});
 
       component.confirmAddCrop();
 
-      expect(planService.addCrop).toHaveBeenCalledWith(
-        '/api/v1/plans/cultivation_plans/7/add_crop',
-        {
-          crop_id: 99,
-          display_start_date: '2026-02-01',
-          display_end_date: '2026-08-31'
-        }
-      );
-      expect(refreshSpy).toHaveBeenCalledWith(7);
-      refreshSpy.mockRestore();
+      expect(ganttPlanCoordinator.addCrop).toHaveBeenCalledWith('private', 7, {
+        crop_id: 99,
+        display_start_date: '2026-02-01',
+        display_end_date: '2026-08-31'
+      });
+      expect(applySpy).toHaveBeenCalled();
+      applySpy.mockRestore();
     });
 
-    it('should remove a cultivation using removeCultivation', () => {
+    it('should remove a cultivation via coordinator', () => {
       const cultivation = {
         id: 33,
         field_id: 1,
@@ -329,47 +325,48 @@ describe('GanttChartComponent', () => {
         completion_date: '2026-01-10'
       } as CultivationData;
 
-      planService.removeCultivation = vi.fn().mockReturnValue(of({ success: true }));
-      const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
+      ganttPlanCoordinator.removeCultivation = vi.fn().mockReturnValue(
+        of({ status: 'success', data: component.data! })
+      );
+      const applySpy = vi.spyOn(component as any, 'applyRefreshedPlanData').mockImplementation(() => {});
 
       component.confirmRemoveCultivation(cultivation);
 
-      expect(planService.removeCultivation).toHaveBeenCalledWith(
-        '/api/v1/plans/cultivation_plans/7/adjust',
-        { moves: [{ allocation_id: 33, action: 'remove' }] }
-      );
-      expect(refreshSpy).toHaveBeenCalledWith(7);
-      refreshSpy.mockRestore();
+      expect(ganttPlanCoordinator.removeCultivation).toHaveBeenCalledWith('private', 7, 33);
+      expect(applySpy).toHaveBeenCalled();
+      applySpy.mockRestore();
     });
 
-    it('should add a new field via planService', () => {
+    it('should add a new field via coordinator', () => {
       component.newFieldName = 'New Patch';
       component.newFieldArea = 1.2;
-      planService.addField = vi.fn().mockReturnValue(of({ success: true }));
-      const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
+      ganttPlanCoordinator.addField = vi.fn().mockReturnValue(
+        of({ status: 'success', data: component.data! })
+      );
+      const applySpy = vi.spyOn(component as any, 'applyRefreshedPlanData').mockImplementation(() => {});
 
       component.confirmAddField();
 
-      expect(planService.addField).toHaveBeenCalledWith(
-        '/api/v1/plans/cultivation_plans/7/add_field',
-        { field_name: 'New Patch', field_area: 1.2 }
-      );
-      expect(refreshSpy).toHaveBeenCalledWith(7);
-      refreshSpy.mockRestore();
+      expect(ganttPlanCoordinator.addField).toHaveBeenCalledWith('private', 7, {
+        field_name: 'New Patch',
+        field_area: 1.2
+      });
+      expect(applySpy).toHaveBeenCalled();
+      applySpy.mockRestore();
     });
 
-    it('should remove an empty field', () => {
+    it('should remove an empty field via coordinator', () => {
       const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
-      planService.removeField = vi.fn().mockReturnValue(of({ success: true }));
-      const refreshSpy = vi.spyOn(component as any, 'refreshPlanData').mockImplementation(() => {});
+      ganttPlanCoordinator.removeField = vi.fn().mockReturnValue(
+        of({ status: 'success', data: component.data! })
+      );
+      const applySpy = vi.spyOn(component as any, 'applyRefreshedPlanData').mockImplementation(() => {});
 
       component.confirmRemoveField(group);
 
-      expect(planService.removeField).toHaveBeenCalledWith(
-        '/api/v1/plans/cultivation_plans/7/remove_field/88'
-      );
-      expect(refreshSpy).toHaveBeenCalledWith(7);
-      refreshSpy.mockRestore();
+      expect(ganttPlanCoordinator.removeField).toHaveBeenCalledWith('private', 7, 88);
+      expect(applySpy).toHaveBeenCalled();
+      applySpy.mockRestore();
     });
   });
 
@@ -527,20 +524,15 @@ describe('GanttChartComponent', () => {
       component['initializeVisibleRange'](planStart, planEnd);
 
       expect(component.visibleStartDate?.getTime()).toBe(planStart.getTime());
-      expect(component.canShiftRangeBackward).toBe(true);
-      expect(component.canShiftRangeForward).toBe(true);
 
       component.shiftVisibleRange(-1);
       const shiftedBack = component.visibleStartDate!;
       expect(shiftedBack.getFullYear()).toBe(2025);
       expect(shiftedBack.getMonth()).toBe(11);
-      expect(component.canShiftRangeBackward).toBe(true);
-      expect(component.canShiftRangeForward).toBe(true);
 
       component.shiftVisibleRange(36);
       const shiftedForward = component.visibleStartDate!;
       expect(shiftedForward.getTime()).toBeGreaterThan(planEnd.getTime());
-      expect(component.canShiftRangeForward).toBe(true);
     });
   });
 
@@ -620,8 +612,9 @@ describe('GanttChartComponent', () => {
     });
 
     it('retains the visible range when adjust extends the plan boundary', () => {
-      planService.adjustPlan = vi.fn().mockReturnValue(of({ success: true }));
-      planService.getPlanData = vi.fn().mockReturnValue(of(buildPlanData('2026-01-01', '2027-12-31')));
+      ganttPlanCoordinator.adjustCultivationMove = vi.fn().mockReturnValue(
+        of({ status: 'success', data: buildPlanData('2026-01-01', '2027-12-31') })
+      );
       const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
 
       component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-02-01'));
@@ -634,8 +627,9 @@ describe('GanttChartComponent', () => {
     });
 
     it('resets the visible range when adjust moves plan outside the current window', () => {
-      planService.adjustPlan = vi.fn().mockReturnValue(of({ success: true }));
-      planService.getPlanData = vi.fn().mockReturnValue(of(buildPlanData('2028-01-01', '2028-12-31')));
+      ganttPlanCoordinator.adjustCultivationMove = vi.fn().mockReturnValue(
+        of({ status: 'success', data: buildPlanData('2028-01-01', '2028-12-31') })
+      );
       const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
 
       component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-02-01'));
@@ -646,19 +640,20 @@ describe('GanttChartComponent', () => {
       initializeSpy.mockRestore();
     });
 
-    it('keeps the visible range when adjust fails and plan data refresh errors out', () => {
-      planService.adjustPlan = vi.fn().mockReturnValue(
-        throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' }))
+    it('keeps the visible range when adjust fails with a message', () => {
+      ganttPlanCoordinator.adjustCultivationMove = vi.fn().mockReturnValue(
+        of({ status: 'failure', failure: { message: 'bad request' } })
       );
-      planService.getPlanData = vi.fn().mockReturnValue(of(buildPlanData('2026-01-01', '2026-12-31')));
       const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
+      const failureSpy = vi.spyOn(component as any, 'handleAdjustmentFailure').mockImplementation(() => {});
 
       component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-02-01'));
 
       expect(initializeSpy).not.toHaveBeenCalled();
       expect(component.visibleStartDate?.getTime()).toBe(new Date('2026-02-01').getTime());
-      expect(planService.getPlanData).toHaveBeenCalled();
+      expect(failureSpy).toHaveBeenCalledWith('bad request');
       initializeSpy.mockRestore();
+      failureSpy.mockRestore();
     });
   });
 });

@@ -14,7 +14,6 @@ import {
   computeGanttVisibleRangeEnd,
   determineGanttTimeScale,
   formatGanttVisibleRangeLabel,
-  formatIsoDateOnly,
   GanttFieldGroup,
   GanttTimeAxisSegment,
   GanttTimeScale,
@@ -23,7 +22,6 @@ import {
   ganttCropStrokeColor,
   normalizePlanBounds,
   applyGanttCultivationMove,
-  buildGanttAdjustMove,
   formatGanttFieldRowIndexLabel,
   getGanttFieldLabelCenterX,
   getGanttMarginLeft,
@@ -39,26 +37,22 @@ import {
   buildGanttDragDropLayout,
   shouldActivateGanttDrag,
   shouldIgnoreGanttPointerCancel,
-  shouldReinitializeGanttVisibleRange
+  shouldReinitializeGanttVisibleRange,
+  DEFAULT_GANTT_CHART_DIMENSIONS,
+  GanttChartDimensions,
+  GanttVisibleRange,
+  parseGanttPlanBounds,
+  buildGanttAddCropDisplayRange,
+  isPointInsideClientRect
 } from '../../domain/plans/gantt-chart-layout';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { PlanService, AddCropRequest } from '../../services/plans/plan.service';
+import { AddCropRequest } from '../../services/plans/plan.service';
+import {
+  extractHttpErrorMessage,
+  GanttPlanCoordinatorService,
+  GanttPlanMutationOutcome
+} from '../../services/plans/gantt-plan-coordinator.service';
 import { FlashMessageService } from '../../services/flash-message.service';
-
-interface GanttConfig {
-  margin: { top: number; right: number; bottom: number; left: number };
-  rowHeight: number;
-  barHeight: number;
-  barPadding: number;
-  width: number;
-  height: number;
-}
-
-interface VisibleRange {
-  startDate: Date;
-  endDate: Date;
-  label: string;
-}
 
 @Component({
   selector: 'app-gantt-chart',
@@ -323,8 +317,8 @@ interface VisibleRange {
                             [attr.width]="params.width" 
                             [attr.height]="config.barHeight" 
                             rx="6" ry="6"
-                            [attr.fill]="getCropColor(cultivation.crop_name)"
-                            [attr.stroke]="getCropStrokeColor(cultivation.crop_name)"
+                            [attr.fill]="ganttCropFillColor(cultivation.crop_name)"
+                            [attr.stroke]="ganttCropStrokeColor(cultivation.crop_name)"
                             stroke-width="2.5"
                             class="bar-bg"
                             style="cursor: grab;" />
@@ -392,13 +386,15 @@ interface VisibleRange {
 export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   readonly formatGanttFieldRowIndexLabel = formatGanttFieldRowIndexLabel;
   readonly getGanttFieldLabelCenterX = getGanttFieldLabelCenterX;
+  readonly ganttCropFillColor = ganttCropFillColor;
+  readonly ganttCropStrokeColor = ganttCropStrokeColor;
   @Input() data: CultivationPlanData | null = null;
   @Input() planType: 'public' | 'private' = 'private';
   @Output() cultivationSelected = new EventEmitter<{
     cultivationId: number;
     planType: 'public' | 'private';
   }>();
-  @Output() visibleRangeChange = new EventEmitter<VisibleRange>();
+  @Output() visibleRangeChange = new EventEmitter<GanttVisibleRange>();
 
   @ViewChild('container') container!: ElementRef<HTMLDivElement>;
   @ViewChild('svg') svgElement!: ElementRef<SVGSVGElement>;
@@ -412,14 +408,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   showTrashDropzone = false;
   trashDropzoneActive = false;
 
-  config: GanttConfig = {
-    margin: { top: 60, right: 20, bottom: 12, left: 80 },
-    rowHeight: 68,
-    barHeight: 48,
-    barPadding: 8,
-    width: 1200,
-    height: 500
-  };
+  config: GanttChartDimensions = { ...DEFAULT_GANTT_CHART_DIMENSIONS };
 
   fieldGroups: GanttFieldGroup[] = [];
   months: GanttTimeAxisSegment[] = [];
@@ -437,8 +426,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   visibleStartDate: Date | null = null;
   visibleEndDate: Date | null = null;
   visibleRangeLabel = '';
-  canShiftRangeBackward = false;
-  canShiftRangeForward = false;
 
   private lastPlanStartTime = 0;
   private lastPlanEndTime = 0;
@@ -488,7 +475,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private pendingDetectChanges = false;
   /** ドロップ後の最適化API完了までオーバーレイを表示する */
   showOptimizationLock = false;
-  private planService = inject(PlanService);
+  private ganttPlanCoordinator = inject(GanttPlanCoordinatorService);
   private cdr = inject(ChangeDetectorRef);
   private flashMessageService = inject(FlashMessageService);
 
@@ -750,7 +737,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.visibleStartDate = start;
     this.visibleEndDate = computeGanttVisibleRangeEnd(start);
     this.updateRangeLabel();
-    this.updateNavigationStates();
     this.emitVisibleRange();
   }
 
@@ -774,12 +760,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     });
   }
 
-  private updateNavigationStates() {
-    const hasRange = !!this.visibleStartDate && !!this.visibleEndDate;
-    this.canShiftRangeBackward = hasRange;
-    this.canShiftRangeForward = hasRange;
-  }
-
   getBarParams(cultivation: CultivationData) {
     if (!this.data) return null;
     const planStartRaw = new Date(this.data.data.planning_start_date);
@@ -797,14 +777,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       marginLeft: this.config.margin.left,
       chartWidth
     });
-  }
-
-  getCropColor(name: string): string {
-    return ganttCropFillColor(name ?? '');
-  }
-
-  getCropStrokeColor(name: string): string {
-    return ganttCropStrokeColor(name ?? '');
   }
 
   onPointerDown(event: PointerEvent, cultivation: CultivationData) {
@@ -1320,13 +1292,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private isPointerOverTrash(clientX: number, clientY: number): boolean {
     const el = this.trashDropzone?.nativeElement;
     if (!el) return false;
-    const rect = el.getBoundingClientRect();
-    return (
-      clientX >= rect.left &&
-      clientX <= rect.right &&
-      clientY >= rect.top &&
-      clientY <= rect.bottom
-    );
+    return isPointInsideClientRect(clientX, clientY, el.getBoundingClientRect());
   }
 
   private screenToSVGCoords(screenX: number, screenY: number): { x: number; y: number } {
@@ -1354,26 +1320,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   private resetBarPosition() {
     if (!this.data) return;
-
-    // エラー時はサーバーから最新データを再取得してロールバック
-    const planId = this.data.data.id;
-    const isPublicPlan = this.planType === 'public';
-
-    if (isPublicPlan) {
-      this.planService.getPublicPlanData(planId).subscribe(data => {
-        if (data) {
-          this.data = data;
-          this.updateChart();
-        }
-      });
-    } else {
-      this.planService.getPlanData(planId).subscribe(data => {
-        if (data) {
-          this.data = data;
-          this.updateChart();
-        }
-      });
-    }
+    this.ganttPlanCoordinator.loadPlanData(this.planType, this.data.data.id).subscribe((data) => {
+      if (data) {
+        this.data = data;
+        this.updateChart();
+      }
+    });
   }
 
   private handleAdjustmentFailure(message?: string) {
@@ -1384,13 +1336,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.showOptimizationLock = false;
     this.scheduleDetectChanges();
     this.resetBarPosition();
-  }
-
-  private extractHttpErrorMessage(error: HttpErrorResponse): string | undefined {
-    if (error?.error?.message) {
-      return String(error.error.message);
-    }
-    return error.message;
   }
 
   private resetVisualState() {
@@ -1417,7 +1362,10 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   private getEffectiveDisplayRange(): { start: Date; end: Date } {
-    const { start: planStart, end: planEnd } = this.getPlanBoundsFromData();
+    const { start: planStart, end: planEnd } = parseGanttPlanBounds(
+      this.data?.data?.planning_start_date,
+      this.data?.data?.planning_end_date
+    );
     return resolveGanttEffectiveDisplayRange({
       dragStartDisplayStart: this.dragStartDisplayStartDate,
       dragStartDisplayEnd: this.dragStartDisplayEndDate,
@@ -1444,71 +1392,51 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.updateChart();
   }
 
-  private adjustCultivation(cultivationId: number, newFieldName: string, newFieldIndex: number, newStartDate: Date) {
+  private adjustCultivation(
+    cultivationId: number,
+    _newFieldName: string,
+    newFieldIndex: number,
+    newStartDate: Date
+  ) {
     if (!this.data) return;
 
     const planId = this.data.data.id;
     const targetField = this.fieldGroups[newFieldIndex];
     if (!targetField) return;
 
-    const isPublicPlan = this.planType === 'public';
-    const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'adjust');
-    if (!endpoint) return;
-
-    const moves = [buildGanttAdjustMove(cultivationId, targetField.fieldId, newStartDate)];
-
-    this.planService.adjustPlan(endpoint, { moves }).subscribe({
-      next: (response) => {
-        if (response.success) {
-          const clearLockAndUpdate = () => {
+    this.ganttPlanCoordinator
+      .adjustCultivationMove({
+        planType: this.planType,
+        planId,
+        cultivationId,
+        toFieldId: targetField.fieldId,
+        newStartDate
+      })
+      .subscribe((outcome) => {
+        if (outcome.status === 'failure') {
+          const { failure } = outcome;
+          if (failure.refetchFailed) {
+            this.handleOperationError('js.gantt.logs.data_refetch_failed');
+            this.updateChart();
             this.showOptimizationLock = false;
             this.scheduleDetectChanges();
-          };
-          if (isPublicPlan) {
-            this.planService.getPublicPlanData(planId).subscribe({
-              next: (data) => {
-                if (data && data.data && data.data.fields) {
-                  this.data = data;
-                  this.updateChart();
-                } else {
-                  this.handleOperationError('js.gantt.logs.data_refetch_failed');
-                  this.updateChart();
-                }
-                clearLockAndUpdate();
-              },
-              error: () => {
-                this.handleOperationError('js.gantt.logs.data_refetch_api_error');
-                this.updateChart();
-                clearLockAndUpdate();
-              }
-            });
-          } else {
-            this.planService.getPlanData(planId).subscribe({
-              next: (data) => {
-                if (data && data.data && data.data.fields) {
-                  this.data = data;
-                  this.updateChart();
-                } else {
-                  this.handleOperationError('js.gantt.logs.data_refetch_failed');
-                  this.updateChart();
-                }
-                clearLockAndUpdate();
-              },
-              error: () => {
-                this.handleOperationError('js.gantt.logs.data_refetch_api_error');
-                this.updateChart();
-                clearLockAndUpdate();
-              }
-            });
+            return;
           }
-        } else {
-          this.handleAdjustmentFailure(response.message);
+          if (failure.refetchError) {
+            this.handleOperationError('js.gantt.logs.data_refetch_api_error');
+            this.updateChart();
+            this.showOptimizationLock = false;
+            this.scheduleDetectChanges();
+            return;
+          }
+          this.handleAdjustmentFailure(failure.message);
+          return;
         }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.handleAdjustmentFailure(this.extractHttpErrorMessage(error));
-      }
-    });
+        this.data = outcome.data;
+        this.updateChart();
+        this.showOptimizationLock = false;
+        this.scheduleDetectChanges();
+      });
   }
 
   toggleCropPalette() {
@@ -1530,85 +1458,45 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   confirmAddCrop() {
     if (!this.data || !this.selectedCrop) return;
     const planId = this.data.data.id;
-    const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'add_crop');
-    if (!endpoint) return;
     this.isAddCropLoading = true;
     this.showOptimizationLock = true;
-    const displayRange = this.buildAddCropDisplayRange();
+    const { start: planStart, end: planEnd } = parseGanttPlanBounds(
+      this.data.data.planning_start_date,
+      this.data.data.planning_end_date
+    );
+    const displayRange = buildGanttAddCropDisplayRange({
+      visibleStart: this.visibleStartDate,
+      visibleEnd: this.visibleEndDate,
+      planStart,
+      planEnd
+    });
     const payload: AddCropRequest = {
       crop_id: this.selectedCrop.id,
       ...(displayRange.start && { display_start_date: displayRange.start }),
       ...(displayRange.end && { display_end_date: displayRange.end })
     };
 
-    this.planService.addCrop(endpoint, payload).subscribe({
-      next: (response) => {
-        this.isAddCropLoading = false;
-        if (response.success) {
-          this.isCropPaletteOpen = false;
-          this.selectedCrop = null;
-          this.cropStartDate = null;
-          this.refreshPlanData(planId);
-        } else {
-          this.handleOperationError(response.message, response.technical_details);
-        }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isAddCropLoading = false;
-        this.handleOperationError(this.extractHttpErrorMessage(error));
+    this.ganttPlanCoordinator.addCrop(this.planType, planId, payload).subscribe((outcome) => {
+      this.isAddCropLoading = false;
+      if (outcome.status === 'failure') {
+        this.handleOperationError(outcome.failure.message);
+        return;
       }
+      this.isCropPaletteOpen = false;
+      this.selectedCrop = null;
+      this.cropStartDate = null;
+      this.applyRefreshedPlanData(outcome.data);
     });
-  }
-
-  private buildAddCropDisplayRange(): { start?: string; end?: string } {
-    const { start: planStart, end: planEnd } = this.getPlanBoundsFromData();
-    const effectiveStart = this.visibleStartDate ?? planStart;
-    const effectiveEnd = this.visibleEndDate ?? planEnd;
-    return {
-      start: this.formatDisplayRangeDate(effectiveStart),
-      end: this.formatDisplayRangeDate(effectiveEnd)
-    };
-  }
-
-  private getPlanBoundsFromData(): { start: Date | null; end: Date | null } {
-    if (!this.data) return { start: null, end: null };
-    const planStartRaw = new Date(this.data.data.planning_start_date);
-    const planEndRaw = new Date(this.data.data.planning_end_date);
-
-    if (isNaN(planStartRaw.getTime()) || isNaN(planEndRaw.getTime())) {
-      return { start: null, end: null };
-    }
-
-    const { start, end } = normalizePlanBounds(planStartRaw, planEndRaw);
-    return { start, end };
-  }
-
-  private formatDisplayRangeDate(date?: Date | null): string | undefined {
-    if (!date) return undefined;
-    return formatIsoDateOnly(date);
   }
 
   confirmRemoveCultivation(cultivation: CultivationData) {
     if (!this.data) return;
     const planId = this.data.data.id;
-    const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'adjust');
-    if (!endpoint) return;
     this.showOptimizationLock = true;
 
-    this.planService.removeCultivation(endpoint, {
-      moves: [{ allocation_id: cultivation.id, action: 'remove' }]
-    }).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.refreshPlanData(planId);
-        } else {
-          this.handleOperationError(response.message);
-        }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.handleOperationError(this.extractHttpErrorMessage(error));
-      }
-    });
+    this.ganttPlanCoordinator
+      .removeCultivation(this.planType, planId, cultivation.id)
+      .subscribe((outcome) => this.handleMutationOutcome(outcome, planId));
   }
 
   toggleFieldForm() {
@@ -1622,58 +1510,61 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   confirmAddField() {
     if (!this.data || !this.newFieldName || !this.newFieldArea) return;
     const planId = this.data.data.id;
-    const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'add_field');
-    if (!endpoint) return;
     this.isFieldFormLoading = true;
     this.showOptimizationLock = true;
-    const payload = {
-      field_name: this.newFieldName,
-      field_area: Number(this.newFieldArea)
-    };
 
-    this.planService.addField(endpoint, payload).subscribe({
-      next: (response) => {
+    this.ganttPlanCoordinator
+      .addField(this.planType, planId, {
+        field_name: this.newFieldName,
+        field_area: Number(this.newFieldArea)
+      })
+      .subscribe((outcome) => {
         this.isFieldFormLoading = false;
-        if (response.success) {
-          this.fieldFormVisible = false;
-          this.newFieldName = '';
-          this.newFieldArea = null;
-          this.refreshPlanData(planId);
-        } else {
-          this.handleOperationError(response.message);
+        if (outcome.status === 'failure') {
+          this.handleOperationError(outcome.failure.message);
+          return;
         }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isFieldFormLoading = false;
-        this.handleOperationError(this.extractHttpErrorMessage(error));
-      }
-    });
+        this.fieldFormVisible = false;
+        this.newFieldName = '';
+        this.newFieldArea = null;
+        this.applyRefreshedPlanData(outcome.data);
+      });
   }
 
   confirmRemoveField(group: GanttFieldGroup) {
     if (!this.data || group.cultivations.length > 0) return;
     const planId = this.data.data.id;
-    const endpoint = this.planService.buildCultivationPlanEndpoint(
-      this.planType,
-      planId,
-      'remove_field',
-      group.fieldId
-    );
-    if (!endpoint) return;
     this.showOptimizationLock = true;
 
-    this.planService.removeField(endpoint).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.refreshPlanData(planId);
-        } else {
-          this.handleOperationError(response.message);
-        }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.handleOperationError(this.extractHttpErrorMessage(error));
+    this.ganttPlanCoordinator
+      .removeField(this.planType, planId, group.fieldId)
+      .subscribe((outcome) => this.handleMutationOutcome(outcome, planId));
+  }
+
+  private handleMutationOutcome(outcome: GanttPlanMutationOutcome, planId: number) {
+    if (outcome.status === 'failure') {
+      const { failure } = outcome;
+      if (failure.refetchFailed) {
+        this.handleOperationError('js.gantt.logs.data_refetch_failed');
+        this.refreshPlanData(planId);
+        return;
       }
-    });
+      if (failure.refetchError) {
+        this.handleOperationError('js.gantt.logs.data_refetch_api_error');
+        this.refreshPlanData(planId);
+        return;
+      }
+      this.handleOperationError(failure.message);
+      return;
+    }
+    this.applyRefreshedPlanData(outcome.data);
+  }
+
+  private applyRefreshedPlanData(planData: CultivationPlanData) {
+    this.data = planData;
+    this.updateChart();
+    this.showOptimizationLock = false;
+    this.scheduleDetectChanges();
   }
 
   private refreshPlanData(planId?: number) {
@@ -1683,21 +1574,17 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       return;
     }
 
-    const request$ = this.planType === 'public'
-      ? this.planService.getPublicPlanData(targetPlanId)
-      : this.planService.getPlanData(targetPlanId);
-
-    request$.subscribe({
+    this.ganttPlanCoordinator.loadPlanData(this.planType, targetPlanId).subscribe({
       next: (planData) => {
         if (planData) {
-          this.data = planData;
-          this.updateChart();
+          this.applyRefreshedPlanData(planData);
+        } else {
+          this.showOptimizationLock = false;
+          this.scheduleDetectChanges();
         }
-        this.showOptimizationLock = false;
-        this.scheduleDetectChanges();
       },
       error: (error: HttpErrorResponse) => {
-        this.handleOperationError(this.extractHttpErrorMessage(error));
+        this.handleOperationError(extractHttpErrorMessage(error));
       }
     });
   }

@@ -769,3 +769,71 @@ export function computeGanttBarLabelPosition(input: {
   const y = input.barY + input.barHeight / 2 + 5;
   return { x: labelCenterX, y };
 }
+
+export type GanttVisibleRange = {
+  startDate: Date;
+  endDate: Date;
+  label: string;
+};
+
+export type GanttChartDimensions = {
+  margin: { top: number; right: number; bottom: number; left: number };
+  rowHeight: number;
+  barHeight: number;
+  barPadding: number;
+  width: number;
+  height: number;
+};
+
+export const DEFAULT_GANTT_CHART_DIMENSIONS: GanttChartDimensions = {
+  margin: { top: 60, right: 20, bottom: 12, left: GANTT_MARGIN_LEFT_DESKTOP },
+  rowHeight: 68,
+  barHeight: 48,
+  barPadding: 8,
+  width: 1200,
+  height: 500
+};
+
+export type GanttPlanDateBounds = { start: Date | null; end: Date | null };
+
+export function parseGanttPlanBounds(
+  planningStartDate: string | undefined,
+  planningEndDate: string | undefined
+): GanttPlanDateBounds {
+  if (!planningStartDate || !planningEndDate) {
+    return { start: null, end: null };
+  }
+  const planStartRaw = new Date(planningStartDate);
+  const planEndRaw = new Date(planningEndDate);
+  if (isNaN(planStartRaw.getTime()) || isNaN(planEndRaw.getTime())) {
+    return { start: null, end: null };
+  }
+  return normalizePlanBounds(planStartRaw, planEndRaw);
+}
+
+export function buildGanttAddCropDisplayRange(input: {
+  visibleStart: Date | null;
+  visibleEnd: Date | null;
+  planStart: Date | null;
+  planEnd: Date | null;
+}): { start?: string; end?: string } {
+  const effectiveStart = input.visibleStart ?? input.planStart;
+  const effectiveEnd = input.visibleEnd ?? input.planEnd;
+  return {
+    start: effectiveStart ? formatIsoDateOnly(effectiveStart) : undefined,
+    end: effectiveEnd ? formatIsoDateOnly(effectiveEnd) : undefined
+  };
+}
+
+export function isPointInsideClientRect(
+  clientX: number,
+  clientY: number,
+  rect: { left: number; right: number; top: number; bottom: number }
+): boolean {
+  return (
+    clientX >= rect.left &&
+    clientX <= rect.right &&
+    clientY >= rect.top &&
+    clientY <= rect.bottom
+  );
+}

@@ -99,25 +99,25 @@ export type AddCropResponse = {
   };
 };
 
-type RemoveCultivationRequest = {
+export type RemoveCultivationRequest = {
   moves: Array<{
     allocation_id: number;
     action: string;
   }>;
 };
 
-type RemoveCultivationResponse = {
+export type RemoveCultivationResponse = {
   success: boolean;
   message?: string;
 };
 
-type AddFieldRequest = {
+export type AddFieldRequest = {
   field_name: string;
   field_area: number;
   daily_fixed_cost?: number;
 };
 
-type AddFieldResponse = {
+export type AddFieldResponse = {
   success: boolean;
   message?: string;
   field: {
@@ -129,7 +129,7 @@ type AddFieldResponse = {
   total_area: number;
 };
 
-type RemoveFieldResponse = {
+export type RemoveFieldResponse = {
   success: boolean;
   message?: string;
   field_id: number;
