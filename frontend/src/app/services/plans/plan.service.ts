@@ -48,6 +48,38 @@ export class PlanService {
   adjustPlan(endpoint: string, body: { moves: Array<{ allocation_id: number; action: string; to_field_id?: number; to_start_date?: string }> }): Observable<{ success: boolean; message?: string; cultivation_plan?: any }> {
     return this.apiClient.post<{ success: boolean; message?: string; cultivation_plan?: any }>(endpoint, body);
   }
+
+  buildCultivationPlanEndpoint(
+    planType: 'private' | 'public',
+    planId: number,
+    action: CultivationPlanAction,
+    fieldId?: number
+  ): string | null {
+    return buildCultivationPlanEndpoint(planType, planId, action, fieldId);
+  }
+}
+
+export type CultivationPlanAction = 'adjust' | 'add_crop' | 'add_field' | 'remove_field';
+
+export function buildCultivationPlanEndpoint(
+  planType: 'private' | 'public',
+  planId: number,
+  action: CultivationPlanAction,
+  fieldId?: number
+): string | null {
+  const prefix =
+    planType === 'public'
+      ? '/api/v1/public_plans/cultivation_plans'
+      : '/api/v1/plans/cultivation_plans';
+
+  if (action === 'remove_field') {
+    if (!fieldId) {
+      return null;
+    }
+    return `${prefix}/${planId}/remove_field/${fieldId}`;
+  }
+
+  return `${prefix}/${planId}/${action}`;
 }
 
 export type AddCropRequest = {

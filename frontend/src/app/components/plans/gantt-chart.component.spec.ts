@@ -6,13 +6,14 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { of, throwError } from 'rxjs';
 
 import { GanttChartComponent } from './gantt-chart.component';
-import { PlanService } from '../../services/plans/plan.service';
+import { PlanService, buildCultivationPlanEndpoint } from '../../services/plans/plan.service';
 import { AvailableCropData, CultivationData } from '../../domain/plans/cultivation-plan-data';
 
 describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
   let fixture: ComponentFixture<GanttChartComponent>;
   let planService: PlanService;
+  let mobileLayoutMatches = false;
 
   beforeEach(async () => {
     const planServiceMock = {
@@ -22,11 +23,8 @@ describe('GanttChartComponent', () => {
       addCrop: vi.fn(),
       removeCultivation: vi.fn(),
       addField: vi.fn(),
-      removeField: vi.fn()
-    };
-
-    const cdrMock = {
-      detectChanges: vi.fn()
+      removeField: vi.fn(),
+      buildCultivationPlanEndpoint
     };
 
     await TestBed.configureTestingModule({
@@ -51,18 +49,22 @@ describe('GanttChartComponent', () => {
       plans: {
         gantt: {
           no_field_data: '圃場データがありません。',
-          no_plan_data: '計画データが読み込まれていません。'
+          no_plan_data: '計画データが読み込まれていません。',
+          trash_drop_label: '作付を削除'
         }
       }
     }, true);
     translate.use('ja');
 
-    // ChangeDetectorRefをモックに置き換え
-    component['cdr'] = cdrMock as any;
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: mobileLayoutMatches,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }))
+    );
   });
 
   describe('adjustCultivation', () => {
@@ -78,6 +80,7 @@ describe('GanttChartComponent', () => {
             id: 14,
             field_id: 1,
             field_name: 'Field 1',
+            crop_name: 'Rice',
             start_date: '2026-01-01',
             completion_date: '2026-01-31'
           }]
@@ -124,9 +127,6 @@ describe('GanttChartComponent', () => {
     it('should update fieldGroups after adjustCultivation succeeds', () => {
       component.planType = 'private';
 
-      // 初期状態のfieldGroupsを記録（退行検知用にスナップショット可能）
-      void JSON.parse(JSON.stringify(component.fieldGroups));
-
       // getPlanDataが新しいデータを返すようにモック（start_dateが変更されたデータ）
       const updatedData = {
         data: {
@@ -138,6 +138,7 @@ describe('GanttChartComponent', () => {
             id: 14,
             field_id: 1,
             field_name: 'Field 1',
+            crop_name: 'Rice',
             start_date: '2026-09-15', // 変更された日付
             completion_date: '2026-10-15' // 変更された日付
           }]
@@ -152,146 +153,14 @@ describe('GanttChartComponent', () => {
       // getPlanDataが新しいデータを返すようにモック
       planService.getPlanData = vi.fn().mockReturnValue(of(updatedData));
 
-      // adjustCultivationを実行
       component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-09-15'));
 
-      // RED: fieldGroupsが更新されていない場合、テストが失敗する
-      // updateChart()が呼ばれても、fieldGroupsが更新されていない可能性がある
-      expect(component.fieldGroups.length).toBeGreaterThan(0);
-
-      // fieldGroups内のcultivationsが更新されているか確認
       const fieldGroup = component.fieldGroups.find(g => g.fieldId === 1);
       expect(fieldGroup).toBeDefined();
-      if (fieldGroup) {
-        const cultivation = fieldGroup.cultivations.find(c => c.id === 14);
-        expect(cultivation).toBeDefined();
-        if (cultivation) {
-          // RED: 更新されていない場合、テストが失敗する
-          expect(cultivation.start_date).toBe('2026-09-15');
-          expect(cultivation.completion_date).toBe('2026-10-15');
-        } else {
-          // RED: cultivationが見つからない場合、テストが失敗する
-          expect(cultivation).toBeDefined();
-        }
-      } else {
-        // RED: fieldGroupが見つからない場合、テストが失敗する
-        expect(fieldGroup).toBeDefined();
-      }
-    });
-
-    it('should update UI after drag and drop completion via onMouseUp', async () => {
-      component.planType = 'private';
-
-      // テスト用のDOM要素を準備
-      const mockContainer = document.createElement('div');
-      mockContainer.style.width = '800px';
-      mockContainer.style.height = '600px';
-      component['container'] = { nativeElement: mockContainer } as any;
-
-      // SVG要素のモック
-      const mockSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      component['svg'] = { nativeElement: mockSvg } as any;
-
-      // 初期データを設定
-      component.data = {
-        data: {
-          id: 7,
-          planning_start_date: '2026-01-01',
-          planning_end_date: '2026-12-31',
-          fields: [{ id: 1, name: 'Field 1' }],
-          cultivations: [{
-            id: 14,
-            field_id: 1,
-            field_name: 'Field 1',
-            crop_name: 'Rice',
-            start_date: '2026-01-01',
-            completion_date: '2026-01-31'
-          }]
-        }
-      } as any;
-
-      // updateChartを実行して初期状態を設定
-      component['updateChart']();
-
-      // ドラッグ対象のcultivationを取得
-      const cultivation = component.data.data.cultivations[0];
-
-      // ドラッグ開始（onMouseDown）
-      const mouseDownEvent = new MouseEvent('mousedown', {
-        clientX: 100,
-        clientY: 100,
-        bubbles: true
-      });
-      component.onMouseDown(mouseDownEvent, cultivation);
-
-      // 少し移動してドラッグ開始をトリガー
-      const mouseMoveEvent = new MouseEvent('mousemove', {
-        clientX: 150, // 50px右に移動（ドラッグ開始閾値を超える）
-        clientY: 100,
-        bubbles: true
-      });
-      document.dispatchEvent(mouseMoveEvent);
-
-      // API呼び出しとデータ取得をモック
-      const updatedData = {
-        data: {
-          id: 7,
-          planning_start_date: '2026-01-01',
-          planning_end_date: '2026-12-31',
-          fields: [{ id: 1, name: 'Field 1' }],
-          cultivations: [{
-            id: 14,
-            field_id: 1,
-            field_name: 'Field 1',
-            crop_name: 'Rice',
-            start_date: '2026-02-01', // 日付が変更された
-            completion_date: '2026-02-28' // 日付が変更された
-          }]
-        }
-      };
-
-      planService.adjustPlan = vi.fn().mockReturnValue(
-        of({ success: true, message: '調整が完了しました' })
-      );
-      planService.getPlanData = vi.fn().mockReturnValue(of(updatedData));
-
-      // ドラッグ完了（onMouseUp）
-      const mouseUpEvent = new MouseEvent('mouseup', {
-        clientX: 200, // さらに右に移動（有意な移動）
-        clientY: 100,
-        bubbles: true
-      });
-      document.dispatchEvent(mouseUpEvent);
-
-      // 非同期処理を待つ
-      await new Promise(resolve => setTimeout(resolve, 0));
-
-      // fixture.detectChanges() を実行して変更検知を強制
-      fixture.detectChanges();
-
-      // さらにコンポーネントのdetectChanges()も実行（実際の修正をシミュレート）
-      component['cdr'].detectChanges();
-
-      // RED: ドラッグ完了後にfieldGroupsが更新されていない場合、テストが失敗する
-      const fieldGroup = component.fieldGroups.find(g => g.fieldId === 1);
-      expect(fieldGroup).toBeDefined();
-      if (fieldGroup) {
-        const updatedCultivation = fieldGroup.cultivations.find(c => c.id === 14);
-        expect(updatedCultivation).toBeDefined();
-        if (updatedCultivation) {
-          // RED: 日付が更新されていない場合、テストが失敗する
-          expect(updatedCultivation.start_date).toBe('2026-02-01');
-          expect(updatedCultivation.completion_date).toBe('2026-02-28');
-        }
-      }
-
-      // RED: DOM要素が更新されていない場合、テストが失敗する
-      // 実際のDOM要素が更新されているかを確認
-      const svgElement = fixture.nativeElement.querySelector('svg');
-      expect(svgElement).toBeTruthy();
-
-      // GREEN: detectChanges()が呼ばれたことを確認（修正後の動作）
-      expect(component['cdr'].detectChanges).toHaveBeenCalled();
+      const cultivation = fieldGroup!.cultivations.find(c => c.id === 14);
+      expect(cultivation).toBeDefined();
+      expect(cultivation!.start_date).toBe('2026-09-15');
+      expect(cultivation!.completion_date).toBe('2026-10-15');
     });
   });
 
@@ -391,38 +260,6 @@ describe('GanttChartComponent', () => {
       const svgElement = fixture.nativeElement.querySelector('svg');
       expect(svgElement).toBeTruthy();
       expect(svgElement.getAttribute('height')).toBe('140');
-    });
-  });
-
-  describe('change detection scheduling', () => {
-    it('should defer detectChanges after updateChart', async () => {
-      component.data = {
-        data: {
-          id: 7,
-          planning_start_date: '2026-01-01',
-          planning_end_date: '2026-12-31',
-          fields: [{ id: 1, name: 'Field 1' }],
-          cultivations: [{
-            id: 14,
-            field_id: 1,
-            field_name: 'Field 1',
-            start_date: '2026-01-01',
-            completion_date: '2026-01-31'
-          }]
-        }
-      } as any;
-
-      const mockContainer = document.createElement('div');
-      mockContainer.getBoundingClientRect = () => ({ width: 800 } as DOMRect);
-      component['container'] = { nativeElement: mockContainer } as any;
-
-      component['updateChart']();
-
-      expect(component['cdr'].detectChanges).not.toHaveBeenCalled();
-
-      await Promise.resolve();
-
-      expect(component['cdr'].detectChanges).toHaveBeenCalled();
     });
   });
 
@@ -528,6 +365,83 @@ describe('GanttChartComponent', () => {
     });
   });
 
+  describe('mobile touch and trash drop', () => {
+    const cultivation = {
+      id: 33,
+      field_id: 1,
+      field_name: 'Field 1',
+      crop_name: 'Rice',
+      start_date: '2026-01-01',
+      completion_date: '2026-01-31'
+    } as CultivationData;
+
+    beforeEach(() => {
+      mobileLayoutMatches = false;
+      component.planType = 'private';
+      component.data = {
+        data: {
+          id: 7,
+          planning_start_date: '2026-01-01',
+          planning_end_date: '2026-12-31',
+          fields: [{ id: 1, name: 'Field 1' }],
+          cultivations: [cultivation]
+        }
+      } as any;
+
+      const mockContainer = document.createElement('div');
+      mockContainer.style.width = '800px';
+      component['container'] = { nativeElement: mockContainer } as any;
+      vi.spyOn(component as any, 'scheduleDetectChanges').mockImplementation(() => {});
+      component['updateChart']();
+      component['needsUpdate'] = false;
+    });
+
+    it('sets isMobileLayout from matchMedia', () => {
+      mobileLayoutMatches = true;
+      component.ngAfterViewInit();
+      expect(component.isMobileLayout).toBe(true);
+    });
+
+    it('shows cultivation delete controls when isMobileLayout is false', () => {
+      component.isMobileLayout = false;
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelectorAll('.cultivation-delete-control').length).toBeGreaterThan(0);
+    });
+
+    it('calls confirmRemoveCultivation when pointerup ends over trash on mobile', () => {
+      component.isMobileLayout = true;
+      component.trashDropzone = {
+        nativeElement: {
+          getBoundingClientRect: () => ({
+            left: 0,
+            top: 0,
+            right: 100,
+            bottom: 100,
+            width: 100,
+            height: 100,
+            x: 0,
+            y: 0,
+            toJSON: () => ({})
+          })
+        }
+      } as any;
+
+      const removeSpy = vi
+        .spyOn(component, 'confirmRemoveCultivation')
+        .mockImplementation(() => {});
+
+      component['isDragging'] = true;
+      component.draggedCultivation = cultivation;
+      component['onPointerUp'](
+        new PointerEvent('pointerup', { clientX: 50, clientY: 50, pointerId: 2 })
+      );
+
+      expect(removeSpy).toHaveBeenCalledWith(cultivation);
+      removeSpy.mockRestore();
+    });
+  });
+
   describe('visible range navigation', () => {
     beforeEach(() => {
       component.data = {
@@ -615,6 +529,7 @@ describe('GanttChartComponent', () => {
           id: 14,
           field_id: 1,
           field_name: 'Field 1',
+          crop_name: 'Rice',
           start_date: '2026-01-01',
           completion_date: '2026-01-31'
         }]

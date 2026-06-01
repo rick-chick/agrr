@@ -22,6 +22,7 @@ const GANTT_KEYS = [
   'plans.gantt.no_field_data',
   'plans.gantt.no_data',
   'plans.gantt.adjust_failed',
+  'plans.gantt.trash_drop_label',
   'plans.gantt.labels.year',
   'plans.gantt.labels.month',
   'plans.gantt.labels.day',

@@ -332,3 +332,47 @@
 .bar-label {
   pointer-events: none;
 }
+
+.gantt-page {
+  position: relative;
+}
+
+.cultivation-bar.dragging {
+  touch-action: none;
+}
+
+.gantt-trash-dropzone {
+  position: fixed;
+  left: 50%;
+  bottom: max(var(--space-4), env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 56px;
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-gray-300);
+  background: var(--color-surface);
+  color: var(--color-gray-500);
+  box-shadow: var(--shadow-lg);
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.gantt-trash-dropzone--active {
+  border-color: var(--color-danger, #ef4444);
+  background: #fef2f2;
+  color: #ef4444;
+  transform: translateX(-50%) scale(1.08);
+}
+
+.gantt-trash-dropzone__icon {
+  width: 28px;
+  height: 28px;
+}

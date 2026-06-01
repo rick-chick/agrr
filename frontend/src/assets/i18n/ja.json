@@ -1976,6 +1976,7 @@
       "no_field_data": "圃場データがありません。",
       "no_data": "表示するデータがありません。",
       "adjust_failed": "調整に失敗しました。",
+      "trash_drop_label": "作付を削除",
       "range": {
         "prev_month": "前月",
         "next_month": "次月"

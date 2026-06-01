@@ -3,6 +3,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
+import {
+  computeGanttBarParams,
+  daysBetween,
+  ganttCropFillColor,
+  ganttCropStrokeColor,
+  normalizePlanBounds
+} from '../../domain/plans/gantt-chart-layout';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PlanService, AddCropRequest } from '../../services/plans/plan.service';
 import { FlashMessageService } from '../../services/flash-message.service';
@@ -164,7 +171,6 @@ interface VisibleRange {
               <p>{{ 'plans.gantt.no_field_data' | translate }}</p>
             } @else {
               <p>{{ 'plans.gantt.no_data' | translate }}</p>
-              <p>APIレスポンス: {{ debugData() }}</p>
             }
           </div>
         } @else {
@@ -230,7 +236,7 @@ interface VisibleRange {
                 @for (cultivation of group.cultivations; track cultivation.id) {
                   @if (getBarParams(cultivation); as params) {
                     <g class="cultivation-bar" 
-                       (mousedown)="onMouseDown($event, cultivation)"
+                       (pointerdown)="onPointerDown($event, cultivation)"
                        [class.dragging]="draggedCultivation?.id === cultivation.id"
                        [attr.data-id]="cultivation.id"
                        [attr.data-field]="cultivation.field_name">
@@ -255,25 +261,27 @@ interface VisibleRange {
                             style="pointer-events: none;">
                         {{ cultivation.crop_name }}
                       </text>
-                      <g
-                        class="cultivation-delete-control"
-                        (click)="confirmRemoveCultivation(cultivation); $event.stopPropagation()">
-                        <circle
-                          [attr.cx]="params.x + params.width - 14"
-                          [attr.cy]="config.barPadding + config.barHeight / 2"
-                          r="9"
-                          fill="white"
-                          stroke="#ef4444"
-                          stroke-width="2" />
-                        <text
-                          [attr.x]="params.x + params.width - 14"
-                          [attr.y]="config.barPadding + config.barHeight / 2 + 4"
-                          font-size="12"
-                          text-anchor="middle"
-                          fill="#ef4444">
-                          ×
-                        </text>
-                      </g>
+                      @if (!isMobileLayout) {
+                        <g
+                          class="cultivation-delete-control"
+                          (click)="confirmRemoveCultivation(cultivation); $event.stopPropagation()">
+                          <circle
+                            [attr.cx]="params.x + params.width - 14"
+                            [attr.cy]="config.barPadding + config.barHeight / 2"
+                            r="9"
+                            fill="white"
+                            stroke="#ef4444"
+                            stroke-width="2" />
+                          <text
+                            [attr.x]="params.x + params.width - 14"
+                            [attr.y]="config.barPadding + config.barHeight / 2 + 4"
+                            font-size="12"
+                            text-anchor="middle"
+                            fill="#ef4444">
+                            ×
+                          </text>
+                        </g>
+                      }
                     </g>
                   }
                 }
@@ -283,6 +291,22 @@ interface VisibleRange {
           </div>
         }
       </div>
+
+      @if (showTrashDropzone) {
+        <div
+          #trashDropzone
+          class="gantt-trash-dropzone"
+          [class.gantt-trash-dropzone--active]="trashDropzoneActive"
+          [attr.aria-label]="'plans.gantt.trash_drop_label' | translate"
+          role="button"
+        >
+          <svg class="gantt-trash-dropzone__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9zm-1 11h12a2 2 0 0 0 2-2V9H6v9a2 2 0 0 0 2 2z" />
+          </svg>
+        </div>
+      }
     </div>
   `,
   styleUrls: ['./gantt-chart.component.css']
@@ -299,6 +323,12 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   @ViewChild('container') container!: ElementRef<HTMLDivElement>;
   @ViewChild('svg') svgElement!: ElementRef<SVGSVGElement>;
   @ViewChild('highlightRect') highlightRect!: ElementRef<SVGRectElement>;
+  @ViewChild('trashDropzone') trashDropzone?: ElementRef<HTMLElement>;
+
+  /** max-width: 768px — matches project mobile breakpoints */
+  isMobileLayout = false;
+  showTrashDropzone = false;
+  trashDropzoneActive = false;
 
   config: GanttConfig = {
     margin: { top: 60, right: 20, bottom: 12, left: 80 },
@@ -336,7 +366,17 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   draggedCultivation: CultivationData | null = null;
   private dragStartX = 0;
   private dragStartY = 0;
-  private dragThreshold = 5; // 5px以上移動したらドラッグとみなす
+  private dragThreshold = 3; // 3px以上移動したらドラッグとみなす
+  private pointerDragDistance = 0;
+  private activePointerId: number | null = null;
+  private mobileMediaQuery: MediaQueryList | null = null;
+  private readonly onMobileLayoutChange = () => {
+    this.isMobileLayout = this.mobileMediaQuery?.matches ?? false;
+    if (!this.isMobileLayout) {
+      this.clearTrashDropzoneUi();
+    }
+    this.scheduleDetectChanges();
+  };
   private originalBarX = 0;
   private originalBarY = 0;
   private dragStartDisplayStartDate: Date | null = null;
@@ -348,8 +388,8 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private barHeight = 0;
   private initialMouseSvgOffset = { x: 0, y: 0 };
   private lastTargetFieldIndex = -1;
-  private globalMouseMoveHandler: any;
-  private globalMouseUpHandler: any;
+  private globalPointerMoveHandler: ((event: PointerEvent) => void) | null = null;
+  private globalPointerUpHandler: ((event: PointerEvent) => void) | null = null;
   private needsUpdate = false; // データ変更とコンテナ準備のタイミングを分離するためのフラグ
   private isDestroyed = false;
   private pendingDetectChanges = false;
@@ -369,12 +409,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   ngOnInit(): void {
-    console.log('🚀 GanttChartComponent: ngOnInit called', {
-      hasData: !!this.data,
-      dataStructure: this.data ? Object.keys(this.data) : null,
-      fieldsCount: this.data?.data?.fields?.length,
-      cultivationsCount: this.data?.data?.cultivations?.length
-    });
     // コンテナ要素がまだ利用できないため、updateChart()は呼ばずにフラグを設定
     if (this.data) {
       this.needsUpdate = true;
@@ -382,13 +416,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('🔄 GanttChartComponent: ngOnChanges called', {
-      hasData: !!this.data,
-      dataStructure: this.data ? Object.keys(this.data) : null,
-      fieldsCount: this.data?.data?.fields?.length,
-      cultivationsCount: this.data?.data?.cultivations?.length,
-      containerReady: !!this.container?.nativeElement
-    });
     if (changes['data'] && this.data) {
       // コンテナ要素が利用可能な場合のみupdateChart()を実行、そうでない場合はフラグを設定
       if (this.container?.nativeElement) {
@@ -403,21 +430,25 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   ngAfterViewInit(): void {
-    // コンテナ要素が確実にレンダリングされた後に幅を取得し、必要に応じてupdateChart()を実行
     setTimeout(() => {
       this.updateDimensions();
       if (this.needsUpdate) {
         this.updateChart();
         this.needsUpdate = false;
       }
-      // 初期描画後にChangeDetectionを実行して画面を更新
       this.scheduleDetectChanges();
     }, 0);
     window.addEventListener('resize', this.onResize);
+    if (typeof window.matchMedia === 'function') {
+      this.mobileMediaQuery = window.matchMedia('(max-width: 768px)');
+      this.isMobileLayout = this.mobileMediaQuery.matches;
+      this.mobileMediaQuery.addEventListener('change', this.onMobileLayoutChange);
+    }
   }
 
   ngOnDestroy(): void {
     window.removeEventListener('resize', this.onResize);
+    this.mobileMediaQuery?.removeEventListener('change', this.onMobileLayoutChange);
     this.removeGlobalListeners();
     this.isDestroyed = true;
   }
@@ -450,15 +481,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   private updateChart() {
-    console.log('📊 GanttChartComponent: updateChart called', {
-      hasData: !!this.data,
-      fieldsCount: this.data?.data?.fields?.length,
-      cultivationsCount: this.data?.data?.cultivations?.length,
-      containerWidth: this.container?.nativeElement?.getBoundingClientRect().width
-    });
-
     if (!this.data) {
-      console.warn('❌ GanttChartComponent: No data available');
       return;
     }
 
@@ -472,11 +495,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     const fields = this.data.data.fields;
     const cultivations = this.data.data.cultivations;
-
-    console.log('📋 GanttChartComponent: Processing data', {
-      fields: fields?.length || 0,
-      cultivations: cultivations?.length || 0
-    });
 
     // フィールドをID順でソートして、常に同じ順序で描画されるようにする
     // これにより、最適化後のフィールド順序変更によるy方向位置ズレを防ぐ
@@ -492,7 +510,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     const planStartRaw = new Date(this.data.data.planning_start_date);
     const planEndRaw = new Date(this.data.data.planning_end_date);
-    const { start: planStart, end: planEnd } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+    const { start: planStart, end: planEnd } = normalizePlanBounds(planStartRaw, planEndRaw);
 
     // chartWidthを計算してからdetermineTimeScaleに渡す
     const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
@@ -553,10 +571,10 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     if (!this.data) return;
     const planStartRaw = new Date(this.data.data.planning_start_date);
     const planEndRaw = new Date(this.data.data.planning_end_date);
-    const { start: planStart, end: planEnd } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+    const { start: planStart, end: planEnd } = normalizePlanBounds(planStartRaw, planEndRaw);
     const start = this.visibleStartDate ?? planStart;
     const end = this.visibleEndDate ?? planEnd;
-    const totalDays = Math.max(this.daysBetween(start, end), 1);
+    const totalDays = Math.max(daysBetween(start, end), 1);
     const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
 
     this.months = [];
@@ -572,7 +590,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       const segment = this.getNextTimeSegment(current, this.timeScale.unit);
       if (!segment) break;
 
-      const daysInSegment = this.daysBetween(current, segment.end);
+      const daysInSegment = daysBetween(current, segment.end);
       const width = (daysInSegment / totalDays) * chartWidth;
 
       // ラベルを表示するかどうかを決定
@@ -649,7 +667,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private setVisibleRangeFromStart(candidateStart: Date) {
     const start = new Date(candidateStart);
     if (isNaN(start.getTime())) {
-      console.warn('🚧 Invalid visible range start', candidateStart);
       return;
     }
     let end = this.addMonths(start, this.MAX_VISIBLE_RANGE_MONTHS);
@@ -705,13 +722,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const result = new Date(date.getTime());
     result.setMonth(result.getMonth() + months);
     return result;
-  }
-
-  private normalizePlanBounds(planStart: Date, planEnd: Date): { start: Date; end: Date } {
-    if (planStart.getTime() <= planEnd.getTime()) {
-      return { start: new Date(planStart), end: new Date(planEnd) };
-    }
-    return { start: new Date(planEnd), end: new Date(planStart) };
   }
 
   private formatYearMonth(date: Date): string {
@@ -816,36 +826,19 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     if (!this.data) return null;
     const planStartRaw = new Date(this.data.data.planning_start_date);
     const planEndRaw = new Date(this.data.data.planning_end_date);
-    const { start: planStart, end: planEnd } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+    const { start: planStart, end: planEnd } = normalizePlanBounds(planStartRaw, planEndRaw);
     const visibleStart = this.visibleStartDate ?? planStart;
     const visibleEnd = this.visibleEndDate ?? planEnd;
-    const start = new Date(cultivation.start_date);
-    const end = new Date(cultivation.completion_date);
-
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
-
-    if (end < visibleStart || start > visibleEnd) return null;
-
-    const totalDays = Math.max(this.daysBetween(visibleStart, visibleEnd), 1);
     const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
 
-    const clampedStartDate = start < visibleStart ? visibleStart : start;
-    const clampedEndDate = end > visibleEnd ? visibleEnd : end;
-    if (clampedEndDate < clampedStartDate) return null;
-
-    const startOffsetDays = Math.max(this.daysBetween(visibleStart, clampedStartDate), 0);
-    const visibleDays = Math.max(this.daysBetween(clampedStartDate, clampedEndDate) + 1, 1);
-
-    if (visibleDays <= 0) return null;
-
-    const x = this.config.margin.left + (startOffsetDays / totalDays) * chartWidth;
-    const width = (visibleDays / totalDays) * chartWidth;
-
-    return { x, width };
-  }
-
-  private daysBetween(d1: Date, d2: Date): number {
-    return Math.floor((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+    return computeGanttBarParams({
+      cultivationStart: new Date(cultivation.start_date),
+      cultivationEnd: new Date(cultivation.completion_date),
+      visibleStart,
+      visibleEnd,
+      marginLeft: this.config.margin.left,
+      chartWidth
+    });
   }
 
   private getTotalMonths(start: Date, end: Date): number {
@@ -893,23 +886,31 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   getCropColor(name: string): string {
-    const colors = ['#9ae6b4', '#fbd38d', '#90cdf4', '#c6f6d5', '#feebc8', '#feb2b2'];
-    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return colors[hash % colors.length];
+    return ganttCropFillColor(name ?? '');
   }
 
   getCropStrokeColor(name: string): string {
-    const colors = ['#48bb78', '#f6ad55', '#4299e1', '#2f855a', '#dd6b20', '#fc8181'];
-    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return colors[hash % colors.length];
+    return ganttCropStrokeColor(name ?? '');
   }
 
-  onMouseDown(event: MouseEvent, cultivation: CultivationData) {
+  onPointerDown(event: PointerEvent, cultivation: CultivationData) {
     if (event.button !== 0) return;
     event.preventDefault();
 
+    const target = event.currentTarget as Element | null;
+    if (target?.setPointerCapture) {
+      try {
+        target.setPointerCapture(event.pointerId);
+      } catch {
+        // ignore capture failures on unsupported targets
+      }
+    }
+    this.activePointerId = event.pointerId;
+
     // ドラッグの準備（まだドラッグは開始していない）
     this.isDragging = false;
+    this.pointerDragDistance = 0;
+    this.resetTrashDropzoneState();
     this.draggedCultivation = cultivation;
     this.dragStartX = event.clientX;
     this.dragStartY = event.clientY;
@@ -929,7 +930,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     // ドラッグ開始時の表示範囲を保存（ドラッグ中の再描画対策）
     if (this.data) {
-      const { start: planStart, end: planEnd } = this.normalizePlanBounds(
+      const { start: planStart, end: planEnd } = normalizePlanBounds(
         new Date(this.data.data.planning_start_date),
         new Date(this.data.data.planning_end_date)
       );
@@ -941,22 +942,27 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.originalFieldIndex = this.fieldGroups.findIndex(g => g.fieldName === cultivation.field_name);
     this.lastTargetFieldIndex = -1;
 
-    this.globalMouseMoveHandler = (e: MouseEvent) => this.onMouseMove(e);
-    this.globalMouseUpHandler = (e: MouseEvent) => this.onMouseUp(e);
+    this.globalPointerMoveHandler = (e: PointerEvent) => this.onPointerMove(e);
+    this.globalPointerUpHandler = (e: PointerEvent) => this.onPointerUp(e);
 
-    document.addEventListener('mousemove', this.globalMouseMoveHandler);
-    document.addEventListener('mouseup', this.globalMouseUpHandler);
+    document.addEventListener('pointermove', this.globalPointerMoveHandler);
+    document.addEventListener('pointerup', this.globalPointerUpHandler);
+    document.addEventListener('pointercancel', this.globalPointerUpHandler);
   }
 
-  private onMouseMove(event: MouseEvent) {
+  private onPointerMove(event: PointerEvent) {
     if (!this.draggedCultivation) return;
+    if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
 
     const mouseDeltaX = event.clientX - this.dragStartX;
     const mouseDeltaY = event.clientY - this.dragStartY;
 
+    const distance = Math.sqrt(mouseDeltaX * mouseDeltaX + mouseDeltaY * mouseDeltaY);
+    this.pointerDragDistance = distance;
+    this.updateTrashDropzoneUi(event.clientX, event.clientY);
+
     // ドラッグ開始判定（まだ開始していない場合）
     if (!this.isDragging) {
-      const distance = Math.sqrt(mouseDeltaX * mouseDeltaX + mouseDeltaY * mouseDeltaY);
       if (distance > this.dragThreshold) {
         // ドラッグ開始
         this.isDragging = true;
@@ -1044,12 +1050,42 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     }
   }
 
-  private onMouseUp(_event: MouseEvent) {
+  private onPointerUp(event: PointerEvent) {
     if (!this.draggedCultivation) return;
+    if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
+
+    const target = event.target as Element | null;
+    if (target?.releasePointerCapture) {
+      try {
+        if (target.hasPointerCapture?.(event.pointerId)) {
+          target.releasePointerCapture(event.pointerId);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    this.activePointerId = null;
 
     // ハイライトを非表示
     if (this.highlightRect) {
       this.highlightRect.nativeElement.setAttribute('opacity', '0');
+    }
+
+    if (
+      this.isMobileLayout &&
+      this.isDragging &&
+      this.isPointerOverTrash(event.clientX, event.clientY)
+    ) {
+      const cultivationToRemove = this.draggedCultivation;
+      this.resetVisualState();
+      this.isDragging = false;
+      this.draggedCultivation = null;
+      this.dragStartDisplayStartDate = null;
+      this.dragStartDisplayEndDate = null;
+      this.clearTrashDropzoneUi();
+      this.removeGlobalListeners();
+      this.confirmRemoveCultivation(cultivationToRemove);
+      return;
     }
 
     const cultivationId = this.draggedCultivation.id;
@@ -1079,7 +1115,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         this.dragStartDisplayEndDate ??
         this.visibleEndDate ??
         (this.data ? new Date(this.data.data.planning_end_date) : new Date());
-      const totalDays = this.daysBetween(effectiveDisplayStartDate, effectiveDisplayEndDate);
+      const totalDays = daysBetween(effectiveDisplayStartDate, effectiveDisplayEndDate);
       const chartWidth = this.config.width - MARGIN_LEFT - this.config.margin.right;
       daysFromStart = Math.round((newX - MARGIN_LEFT) / chartWidth * totalDays);
       newStartDate = new Date(effectiveDisplayStartDate);
@@ -1114,7 +1150,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         this.dragStartDisplayEndDate ??
         this.visibleEndDate ??
         (this.data ? new Date(this.data.data.planning_end_date) : new Date());
-      const totalDays = this.daysBetween(effectiveDisplayStartDate, effectiveDisplayEndDate);
+      const totalDays = daysBetween(effectiveDisplayStartDate, effectiveDisplayEndDate);
       const chartWidth = this.config.width - MARGIN_LEFT - this.config.margin.right;
       daysFromStart = Math.round((newX - MARGIN_LEFT) / chartWidth * totalDays);
       newStartDate = new Date(effectiveDisplayStartDate);
@@ -1127,14 +1163,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       // - 圃場が変わった、または
       // - 2日以上の日付移動があった
       if (originalFieldName !== newFieldName || Math.abs(daysFromStart) > 2) {
-        this.logWithKey('js.gantt.logs.drag_complete', {
-          cultivation_id: cultivationId,
-          from_field: originalFieldName,
-          to_field: newFieldName,
-          new_start_date: newStartDate?.toISOString().split('T')[0],
-          daysFromStart: daysFromStart
-        });
-
         if (newStartDate && this.data) {
           // 楽観的更新を先に実行
           this.applyMovesLocally(cultivationId, newFieldName, newFieldIndex, newStartDate);
@@ -1146,13 +1174,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
           this.adjustCultivation(cultivationId, newFieldName, newFieldIndex, newStartDate);
         }
       } else {
-        this.logWithKey('js.gantt.logs.drag_small_skip');
-        // 位置をリセット
         this.resetBarPosition();
       }
     } else {
-      this.logWithKey('js.gantt.logs.click_skip');
-      // 位置をリセット
       this.resetBarPosition();
     }
 
@@ -1171,18 +1195,61 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.draggedCultivation = null;
     this.dragStartDisplayStartDate = null;
     this.dragStartDisplayEndDate = null;
+    this.clearTrashDropzoneUi();
     this.removeGlobalListeners();
   }
 
   private removeGlobalListeners() {
-    if (this.globalMouseMoveHandler) {
-      document.removeEventListener('mousemove', this.globalMouseMoveHandler);
-      this.globalMouseMoveHandler = null;
+    if (this.globalPointerMoveHandler) {
+      document.removeEventListener('pointermove', this.globalPointerMoveHandler);
+      this.globalPointerMoveHandler = null;
     }
-    if (this.globalMouseUpHandler) {
-      document.removeEventListener('mouseup', this.globalMouseUpHandler);
-      this.globalMouseUpHandler = null;
+    if (this.globalPointerUpHandler) {
+      document.removeEventListener('pointerup', this.globalPointerUpHandler);
+      document.removeEventListener('pointercancel', this.globalPointerUpHandler);
+      this.globalPointerUpHandler = null;
     }
+  }
+
+  private updateTrashDropzoneUi(clientX: number, clientY: number) {
+    if (!this.isMobileLayout || !this.draggedCultivation) {
+      this.clearTrashDropzoneUi();
+      return;
+    }
+    const shouldShow =
+      this.pointerDragDistance > this.dragThreshold || this.isDragging;
+    if (this.showTrashDropzone !== shouldShow) {
+      this.showTrashDropzone = shouldShow;
+      this.scheduleDetectChanges();
+    }
+    const overTrash = shouldShow && this.isPointerOverTrash(clientX, clientY);
+    if (this.trashDropzoneActive !== overTrash) {
+      this.trashDropzoneActive = overTrash;
+      this.scheduleDetectChanges();
+    }
+  }
+
+  private resetTrashDropzoneState(): void {
+    this.showTrashDropzone = false;
+    this.trashDropzoneActive = false;
+  }
+
+  private clearTrashDropzoneUi() {
+    if (!this.showTrashDropzone && !this.trashDropzoneActive) return;
+    this.resetTrashDropzoneState();
+    this.scheduleDetectChanges();
+  }
+
+  private isPointerOverTrash(clientX: number, clientY: number): boolean {
+    const el = this.trashDropzone?.nativeElement;
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    return (
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    );
   }
 
   private screenToSVGCoords(screenX: number, screenY: number): { x: number; y: number } {
@@ -1280,7 +1347,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     // 期間を維持して終了日を計算
     const oldStartDate = new Date(cultivation.start_date);
     const oldEndDate = new Date(cultivation.completion_date);
-    const duration = this.daysBetween(oldStartDate, oldEndDate);
+    const duration = daysBetween(oldStartDate, oldEndDate);
 
     const newEndDate = new Date(newStartDate);
     newEndDate.setDate(newEndDate.getDate() + duration);
@@ -1295,30 +1362,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.updateChart();
   }
 
-  debugData(): string {
-    if (!this.data) return 'data: null';
-    if (!this.data.data) return 'data.data: null';
-    return `fields: ${this.data.data.fields?.length || 0}, cultivations: ${this.data.data.cultivations?.length || 0}`;
-  }
-
-  private logWithKey(key: string, payload?: unknown) {
-    const message = this.translate.instant(key);
-    if (payload !== undefined) {
-      console.log(message, payload);
-    } else {
-      console.log(message);
-    }
-  }
-
-  private errorWithKey(key: string, payload?: unknown) {
-    const message = this.translate.instant(key);
-    if (payload !== undefined) {
-      console.error(message, payload);
-    } else {
-      console.error(message);
-    }
-  }
-
   private adjustCultivation(cultivationId: number, newFieldName: string, newFieldIndex: number, newStartDate: Date) {
     if (!this.data) return;
 
@@ -1326,11 +1369,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const targetField = this.fieldGroups[newFieldIndex];
     if (!targetField) return;
 
-    // planTypeに応じて適切なエンドポイントを選択
     const isPublicPlan = this.planType === 'public';
-    const endpoint = isPublicPlan
-      ? `/api/v1/public_plans/cultivation_plans/${planId}/adjust`
-      : `/api/v1/plans/cultivation_plans/${planId}/adjust`;
+    const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'adjust');
+    if (!endpoint) return;
 
     const moves = [{
       allocation_id: cultivationId,
@@ -1342,8 +1383,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     this.planService.adjustPlan(endpoint, { moves }).subscribe({
       next: (response) => {
         if (response.success) {
-          this.logWithKey('js.gantt.logs.adjustment_success', response);
-          // サーバーからの最新データで更新
           const clearLockAndUpdate = () => {
             this.showOptimizationLock = false;
             this.scheduleDetectChanges();
@@ -1355,13 +1394,13 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
                   this.data = data;
                   this.updateChart();
                 } else {
-                  this.errorWithKey('js.gantt.logs.data_refetch_failed', data);
+                  this.handleOperationError('js.gantt.logs.data_refetch_failed');
                   this.updateChart();
                 }
                 clearLockAndUpdate();
               },
-              error: (error) => {
-                this.errorWithKey('js.gantt.logs.data_refetch_api_error', error);
+              error: () => {
+                this.handleOperationError('js.gantt.logs.data_refetch_api_error');
                 this.updateChart();
                 clearLockAndUpdate();
               }
@@ -1373,25 +1412,23 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
                   this.data = data;
                   this.updateChart();
                 } else {
-                  this.errorWithKey('js.gantt.logs.data_refetch_failed', data);
+                  this.handleOperationError('js.gantt.logs.data_refetch_failed');
                   this.updateChart();
                 }
                 clearLockAndUpdate();
               },
-              error: (error) => {
-                this.errorWithKey('js.gantt.logs.data_refetch_api_error', error);
+              error: () => {
+                this.handleOperationError('js.gantt.logs.data_refetch_api_error');
                 this.updateChart();
                 clearLockAndUpdate();
               }
             });
           }
         } else {
-          this.errorWithKey('js.gantt.logs.adjustment_failed', response.message);
           this.handleAdjustmentFailure(response.message);
         }
       },
       error: (error: HttpErrorResponse) => {
-        this.errorWithKey('js.gantt.logs.api_call_error', error);
         this.handleAdjustmentFailure(this.extractHttpErrorMessage(error));
       }
     });
@@ -1415,9 +1452,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   confirmAddCrop() {
     if (!this.data || !this.selectedCrop) return;
-    const endpoint = this.buildEndpoint('add_crop');
-    if (!endpoint) return;
     const planId = this.data.data.id;
+    const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'add_crop');
+    if (!endpoint) return;
     this.isAddCropLoading = true;
     this.showOptimizationLock = true;
     const displayRange = this.buildAddCropDisplayRange();
@@ -1465,7 +1502,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       return { start: null, end: null };
     }
 
-    const { start, end } = this.normalizePlanBounds(planStartRaw, planEndRaw);
+    const { start, end } = normalizePlanBounds(planStartRaw, planEndRaw);
     return { start, end };
   }
 
@@ -1477,9 +1514,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   confirmRemoveCultivation(cultivation: CultivationData) {
     if (!this.data) return;
-    const endpoint = this.buildEndpoint('adjust');
-    if (!endpoint) return;
     const planId = this.data.data.id;
+    const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'adjust');
+    if (!endpoint) return;
     this.showOptimizationLock = true;
 
     this.planService.removeCultivation(endpoint, {
@@ -1508,9 +1545,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   confirmAddField() {
     if (!this.data || !this.newFieldName || !this.newFieldArea) return;
-    const endpoint = this.buildEndpoint('add_field');
-    if (!endpoint) return;
     const planId = this.data.data.id;
+    const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'add_field');
+    if (!endpoint) return;
     this.isFieldFormLoading = true;
     this.showOptimizationLock = true;
     const payload = {
@@ -1539,9 +1576,14 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   confirmRemoveField(group: FieldGroup) {
     if (!this.data || group.cultivations.length > 0) return;
-    const endpoint = this.buildEndpoint('remove_field', group.fieldId);
-    if (!endpoint) return;
     const planId = this.data.data.id;
+    const endpoint = this.planService.buildCultivationPlanEndpoint(
+      this.planType,
+      planId,
+      'remove_field',
+      group.fieldId
+    );
+    if (!endpoint) return;
     this.showOptimizationLock = true;
 
     this.planService.removeField(endpoint).subscribe({
@@ -1582,21 +1624,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         this.handleOperationError(this.extractHttpErrorMessage(error));
       }
     });
-  }
-
-  private buildEndpoint(action: 'adjust' | 'add_crop' | 'add_field' | 'remove_field', fieldId?: number): string | null {
-    const planId = this.data?.data?.id;
-    if (!planId) return null;
-    const prefix = this.planType === 'public'
-      ? '/api/v1/public_plans/cultivation_plans'
-      : '/api/v1/plans/cultivation_plans';
-
-    if (action === 'remove_field') {
-      if (!fieldId) return null;
-      return `${prefix}/${planId}/remove_field/${fieldId}`;
-    }
-
-    return `${prefix}/${planId}/${action}`;
   }
 
   private handleOperationError(message?: string, technicalDetails?: string) {

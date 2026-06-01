@@ -1064,6 +1064,7 @@
       "no_field_data": "No field data available.",
       "no_data": "No data to display.",
       "adjust_failed": "Adjustment failed.",
+      "trash_drop_label": "Remove cultivation",
       "range": {
         "prev_month": "Previous month",
         "next_month": "Next month"
