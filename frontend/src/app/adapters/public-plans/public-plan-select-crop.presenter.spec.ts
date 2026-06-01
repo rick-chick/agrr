@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { PublicPlanSelectCropPresenter } from './public-plan-select-crop.presenter';
 import { PublicPlanSelectCropView, PublicPlanSelectCropViewState } from '../../components/public-plans/public-plan-select-crop.view';
 import { Crop } from '../../domain/crops/crop';
@@ -10,13 +10,8 @@ describe('PublicPlanSelectCropPresenter', () => {
   let presenter: PublicPlanSelectCropPresenter;
   let view: PublicPlanSelectCropView;
   let lastControl: PublicPlanSelectCropViewState | null;
-  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
     TestBed.configureTestingModule({
       providers: [PublicPlanSelectCropPresenter]
     });
@@ -32,10 +27,6 @@ describe('PublicPlanSelectCropPresenter', () => {
       }
     };
     presenter.setView(view);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   describe('LoadPublicPlanCropsOutputPort', () => {
@@ -65,7 +56,7 @@ describe('PublicPlanSelectCropPresenter', () => {
 
   describe('CreatePublicPlanOutputPort', () => {
     describe('onSuccess', () => {
-      it('should log plan_id and update view state', () => {
+      it('should update view state on success', () => {
         const initialControl: PublicPlanSelectCropViewState = {
           loading: false,
           error: null,
@@ -77,10 +68,6 @@ describe('PublicPlanSelectCropPresenter', () => {
 
         presenter.onSuccess(dto);
 
-        expect(consoleLogSpy).toHaveBeenCalledWith(
-          '✅ [PublicPlanSelectCropPresenter] Plan created successfully. plan_id:',
-          123
-        );
         expect(lastControl).not.toBeNull();
         expect(lastControl!.saving).toBe(false);
         expect(lastControl!.error).toBeNull();
@@ -112,7 +99,7 @@ describe('PublicPlanSelectCropPresenter', () => {
     });
 
     describe('onError', () => {
-      it('should log error and update view state with error message', () => {
+      it('should update view state with error message', () => {
         const initialControl: PublicPlanSelectCropViewState = {
           loading: false,
           error: null,
@@ -124,10 +111,6 @@ describe('PublicPlanSelectCropPresenter', () => {
 
         presenter.onError(dto);
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          '❌ [PublicPlanSelectCropPresenter] Plan creation failed:',
-          'Failed to create plan'
-        );
         expect(lastControl).not.toBeNull();
         expect(lastControl!.loading).toBe(false);
         expect(lastControl!.saving).toBe(false);

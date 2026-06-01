@@ -12,6 +12,7 @@ import {
 } from '../../usecase/public-plans/public-plan-select-crop.providers';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { Crop } from '../../domain/crops/crop';
+import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
 
 const initialControl: PublicPlanSelectCropViewState = {
   loading: true,
@@ -150,10 +151,6 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
     }
     return null;
   }
-  get farmSize() {
-    return this.publicPlanStore.state.farmSize;
-  }
-
   private _control: PublicPlanSelectCropViewState = initialControl;
   get control(): PublicPlanSelectCropViewState {
     return this._control;
@@ -164,23 +161,16 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   }
 
   ngOnInit(): void {
-    console.log('🌱 [PublicPlanSelectCrop] ngOnInit called');
     const farm = this.farm;
-    const farmSize = this.farmSize;
-    console.log('🌱 [PublicPlanSelectCrop] farm:', farm);
-    console.log('🌱 [PublicPlanSelectCrop] farmSize:', farmSize);
-    if (!farm || !farmSize) {
+    if (!farm) {
       this.router.navigate(['/public-plans/new']);
       return;
     }
-    // Reset state to ensure clean state before creating plan
     this.resetStateUseCase.execute({});
     this.publicPlanStore.setFarm(farm);
-    this.publicPlanStore.setFarmSize(farmSize);
     this.presenter.setView(this);
     this.selectedCrops = [...this.publicPlanStore.state.selectedCrops];
     this.selectedCropIds = new Set(this.selectedCrops.map((c) => c.id));
-    console.log('🌱 [PublicPlanSelectCrop] executing loadCropsUseCase with farmId:', farm.id);
     this.loadCropsUseCase.execute({ farmId: farm.id });
   }
 
@@ -196,18 +186,15 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   }
 
   createPlan(): void {
-    if (
-      this.control.saving ||
-      this.selectedCropIds.size === 0 ||
-      !this.farm ||
-      !this.farmSize
-    ) {
+    if (this.control.saving || this.selectedCropIds.size === 0 || !this.farm) {
       return;
     }
+    const farmSizeId =
+      this.publicPlanStore.state.farmSize?.id ?? DEFAULT_PUBLIC_PLAN_FARM_SIZE.id;
     this.control = { ...this.control, saving: true, error: null };
     this.createPlanUseCase.execute({
       farmId: this.farm.id,
-      farmSizeId: this.farmSize.id,
+      farmSizeId,
       cropIds: Array.from(this.selectedCropIds),
       onSuccess: (response) => {
         this.publicPlanStore.setPlanId(response.plan_id);

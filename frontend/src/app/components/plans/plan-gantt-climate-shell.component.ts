@@ -2,13 +2,14 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
+import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { GanttVisibleRange } from '../../domain/plans/gantt-chart-layout';
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
 
 export type CultivationSelectionEvent = {
   cultivationId: number;
-  planType: 'private' | 'public';
+  planType: CultivationPlanContextType;
 };
 
 /**
@@ -53,10 +54,10 @@ export type CultivationSelectionEvent = {
 })
 export class PlanGanttClimateShellComponent {
   @Input({ required: true }) data!: CultivationPlanData;
-  @Input() planType: 'private' | 'public' = 'private';
+  @Input() planType: CultivationPlanContextType = 'private';
 
   selectedCultivationId: number | null = null;
-  selectedPlanType: 'private' | 'public' = this.planType;
+  selectedPlanType: CultivationPlanContextType = this.planType;
   visibleRangeStartDate: string | null = null;
   visibleRangeEndDate: string | null = null;
 

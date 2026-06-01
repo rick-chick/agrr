@@ -16,6 +16,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
+import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import {
   addMonths,
   buildGanttFieldGroups,
@@ -420,10 +421,10 @@ export class GanttChartComponent
   readonly ganttCropFillColor = ganttCropFillColor;
   readonly ganttCropStrokeColor = ganttCropStrokeColor;
   @Input() data: CultivationPlanData | null = null;
-  @Input() planType: 'public' | 'private' = 'private';
+  @Input() planType: CultivationPlanContextType = 'private';
   @Output() cultivationSelected = new EventEmitter<{
     cultivationId: number;
-    planType: 'public' | 'private';
+    planType: CultivationPlanContextType;
   }>();
   @Output() visibleRangeChange = new EventEmitter<GanttVisibleRange>();
 

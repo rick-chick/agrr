@@ -30,7 +30,6 @@ describe('SavePublicPlanUseCase', () => {
 
     const gateway: PublicPlanGateway = {
       getFarms: vi.fn(() => of([])),
-      getFarmSizes: vi.fn(() => of([])),
       getCrops: vi.fn(() => of([])),
       createPlan: vi.fn(() => of({ plan_id: 0 })),
       savePlan: vi.fn(() => of(response))
@@ -62,7 +61,6 @@ describe('SavePublicPlanUseCase', () => {
 
     const gateway: PublicPlanGateway = {
       getFarms: vi.fn(() => of([])),
-      getFarmSizes: vi.fn(() => of([])),
       getCrops: vi.fn(() => of([])),
       createPlan: vi.fn(() => of({ plan_id: 0 })),
       savePlan: vi.fn(() => of(response))
@@ -94,7 +92,6 @@ describe('SavePublicPlanUseCase', () => {
 
     const gateway: PublicPlanGateway = {
       getFarms: vi.fn(() => of([])),
-      getFarmSizes: vi.fn(() => of([])),
       getCrops: vi.fn(() => of([])),
       createPlan: vi.fn(() => of({ plan_id: 0 })),
       savePlan: vi.fn(() => of(response))
@@ -118,7 +115,6 @@ describe('SavePublicPlanUseCase', () => {
   it('calls outputPort.onError with server error from 422 HttpErrorResponse', () => {
     const gateway: PublicPlanGateway = {
       getFarms: vi.fn(() => of([])),
-      getFarmSizes: vi.fn(() => of([])),
       getCrops: vi.fn(() => of([])),
       createPlan: vi.fn(() => of({ plan_id: 0 })),
       savePlan: vi.fn(() =>
@@ -149,7 +145,6 @@ describe('SavePublicPlanUseCase', () => {
   it('calls outputPort.onError with i18n key for 401 HttpErrorResponse without body error', () => {
     const gateway: PublicPlanGateway = {
       getFarms: vi.fn(() => of([])),
-      getFarmSizes: vi.fn(() => of([])),
       getCrops: vi.fn(() => of([])),
       createPlan: vi.fn(() => of({ plan_id: 0 })),
       savePlan: vi.fn(() =>
@@ -180,7 +175,6 @@ describe('SavePublicPlanUseCase', () => {
   it('calls outputPort.onError when gateway throws error', () => {
     const gateway: PublicPlanGateway = {
       getFarms: vi.fn(() => of([])),
-      getFarmSizes: vi.fn(() => of([])),
       getCrops: vi.fn(() => of([])),
       createPlan: vi.fn(() => of({ plan_id: 0 })),
       savePlan: vi.fn(() => throwError(() => new Error('Network error')))

@@ -27,6 +27,7 @@ import {
 import { PlanFieldClimateView, PlanFieldClimateViewState } from './plan-field-climate.view';
 import { LoadFieldClimateUseCase } from '../../usecase/plans/field-climate/load-field-climate.usecase';
 import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
+import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
 import { PLAN_FIELD_CLIMATE_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 
@@ -195,7 +196,7 @@ export class PlanFieldClimateComponent
     OnDestroy
 {
   @Input() fieldCultivationId: number | null = null;
-  @Input() planType: 'private' | 'public' = 'private';
+  @Input() planType: CultivationPlanContextType = 'private';
   @Input() displayStartDate: string | null = null;
   @Input() displayEndDate: string | null = null;
   @Output() close = new EventEmitter<void>();

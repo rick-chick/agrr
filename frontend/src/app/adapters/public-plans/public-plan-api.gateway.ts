@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
-import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
 import {
   PublicPlanGateway,
   CreatePublicPlanResponse,
@@ -17,12 +16,6 @@ export class PublicPlanApiGateway implements PublicPlanGateway {
   getFarms(region?: string): Observable<Farm[]> {
     const params = region ? { region } : undefined;
     return this.apiClient.get<Farm[]>('/api/v1/public_plans/farms', { params });
-  }
-
-  getFarmSizes(): Observable<FarmSizeOption[]> {
-    return this.apiClient.get<FarmSizeOption[]>(
-      '/api/v1/public_plans/farm_sizes'
-    );
   }
 
   getCrops(farmId: number): Observable<Crop[]> {

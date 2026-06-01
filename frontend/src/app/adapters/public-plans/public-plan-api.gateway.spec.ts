@@ -110,15 +110,4 @@ describe('PublicPlanApiGateway', () => {
       expect(apiClient.get).toHaveBeenCalledWith('/api/v1/public_plans/farms', { params: undefined });
     });
   });
-
-  describe('getFarmSizes', () => {
-    it('calls API and returns farm sizes', async () => {
-      const farmSizes = [{ id: 'home_garden', name: 'Home Garden', area_sqm: 30 }];
-      vi.mocked(apiClient.get).mockReturnValue(of(farmSizes));
-
-      const result = await firstValueFrom(gateway.getFarmSizes());
-      expect(result).toEqual(farmSizes);
-      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/public_plans/farm_sizes');
-    });
-  });
 });

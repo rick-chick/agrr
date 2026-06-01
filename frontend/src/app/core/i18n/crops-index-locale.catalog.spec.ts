@@ -13,7 +13,6 @@ type CropsIndexBundle = {
   title?: string;
   description?: string;
   new_crop?: string;
-  reference_badge?: string;
 };
 
 function cropsIndex(bundle: JsonRecord): CropsIndexBundle {
@@ -32,8 +31,7 @@ function getNested(obj: JsonRecord, path: string): unknown {
 const CATALOG_KEYS = [
   'crops.index.title',
   'crops.index.description',
-  'crops.index.new_crop',
-  'crops.index.reference_badge'
+  'crops.index.new_crop'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
@@ -55,21 +53,9 @@ describe('crops index i18n catalog (crop-list)', () => {
     });
   }
 
-  it('ja reference_badge matches reference crop wording', () => {
-    expect(cropsIndex(ja as JsonRecord).reference_badge).toBe('参照作物');
-  });
-
-  it('en reference_badge is short label for inline badge', () => {
-    expect(cropsIndex(en as JsonRecord).reference_badge).toBe('Reference');
-  });
-
-  it('in reference_badge uses Hindi reference crop label', () => {
-    expect(cropsIndex(inLocale as JsonRecord).reference_badge).toBe('संदर्भ फसल');
-  });
-
   it('uses English (not Japanese) for en locale index strings', () => {
     const index = cropsIndex(en as JsonRecord);
-    const enStrings = [index.title, index.description, index.new_crop, index.reference_badge];
+    const enStrings = [index.title, index.description, index.new_crop];
     for (const value of enStrings) {
       expect(value, `unexpected Japanese in en.json: ${value}`).not.toMatch(JAPANESE_UI);
     }
@@ -77,7 +63,7 @@ describe('crops index i18n catalog (crop-list)', () => {
 
   it('uses Hindi (not Japanese) for in locale index strings', () => {
     const index = cropsIndex(inLocale as JsonRecord);
-    const inStrings = [index.title, index.description, index.new_crop, index.reference_badge];
+    const inStrings = [index.title, index.description, index.new_crop];
     for (const value of inStrings) {
       expect(value, `unexpected Japanese in in.json: ${value}`).not.toMatch(JAPANESE_UI);
     }

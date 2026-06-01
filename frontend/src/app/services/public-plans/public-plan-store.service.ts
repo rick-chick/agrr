@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Farm } from '../../domain/farms/farm';
 import { Crop } from '../../domain/crops/crop';
 import { FarmSizeOption } from '../../domain/public-plans/farm-size-option';
+import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
 import { PublicPlanSessionPort } from '../../usecase/public-plans/public-plan-session.port';
 
 export interface PublicPlanState {
@@ -31,11 +32,12 @@ export class PublicPlanStore implements PublicPlanSessionPort {
   }
 
   setFarm(farm: Farm): void {
-    this.updateState({ farm, farmSize: null, selectedCrops: [], planId: null });
-  }
-
-  setFarmSize(farmSize: FarmSizeOption): void {
-    this.updateState({ farmSize });
+    this.updateState({
+      farm,
+      farmSize: DEFAULT_PUBLIC_PLAN_FARM_SIZE,
+      selectedCrops: [],
+      planId: null
+    });
   }
 
   setSelectedCrops(crops: Crop[]): void {

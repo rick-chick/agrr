@@ -4,7 +4,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { GanttPlanCoordinatorService } from './gantt-plan-coordinator.service';
 import { PlanService } from './plan.service';
+import { DemoGanttPlanStore } from './demo-gantt-plan-store.service';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
+import { LANDING_DEMO_PLAN_ID } from '../../domain/plans/cultivation-plan-context-type';
+import { LANDING_DEMO_LABELS_FIXTURE } from '../../domain/plans/landing-demo-i18n.keys';
 
 describe('GanttPlanCoordinatorService', () => {
   let planService: {
@@ -41,7 +44,21 @@ describe('GanttPlanCoordinatorService', () => {
       addField: vi.fn(),
       removeField: vi.fn()
     };
-    coordinator = new GanttPlanCoordinatorService(planService as unknown as PlanService);
+    const demoStore = new DemoGanttPlanStore();
+    demoStore.initialize(LANDING_DEMO_LABELS_FIXTURE);
+    coordinator = new GanttPlanCoordinatorService(
+      planService as unknown as PlanService,
+      demoStore
+    );
+  });
+
+  describe('demo planType', () => {
+    it('loadPlanData does not call PlanService HTTP', async () => {
+      const data = await firstValueFrom(coordinator.loadPlanData('demo', LANDING_DEMO_PLAN_ID));
+      expect(data?.data.cultivations.length).toBeGreaterThan(0);
+      expect(planService.getPlanData).not.toHaveBeenCalled();
+      expect(planService.getPublicPlanData).not.toHaveBeenCalled();
+    });
   });
 
   describe('adjustCultivationMove', () => {

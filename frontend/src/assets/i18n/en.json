@@ -249,8 +249,39 @@
     "index": {
       "hero": {
         "title": "🌱 Make Agriculture Smarter",
-        "subtitle_html": "Take your farming to the next level with<br>optimal crop planning using weather data and AI",
-        "cta_button": "New Crop Plan"
+        "subtitle_html": "Take your farming to the next level with crop planning powered by weather data and AI.<br>Try the sample calendar below first.",
+        "cta_scroll_demo": "Try the sample calendar",
+        "cta_footer_link": "Start a free crop plan now"
+      },
+      "demo": {
+        "title": "Sample planting calendar (try it)",
+        "lead": "Drag bars, add crops, and open climate charts. Weather and GDD use sample data.",
+        "disclaimer": "Actions on this screen stay on your device only. Full optimization (~1 minute) runs separately when you create your own plan.",
+        "badge": "Demo",
+        "hints": {
+          "drag": "Drag a bar to shift dates",
+          "tap": "Tap a bar for weather and GDD",
+          "add": "Use + to add a crop"
+        },
+        "cta_create": "Create a plan for my region and crops",
+        "fixture": {
+          "plan_name": "Sample crop plan (demo)",
+          "farm_name": "Sample community garden (demo)",
+          "field_a": "Plot A",
+          "field_b": "Plot B",
+          "field_c": "Plot C",
+          "crop_tomato": "Tomato",
+          "crop_cucumber": "Cucumber",
+          "crop_eggplant": "Eggplant",
+          "crop_pepper": "Bell pepper",
+          "variety_pepper": "Sweet long",
+          "variety_eggplant": "Senryo No.2",
+          "stage_germination": "Germination",
+          "stage_growth": "Growth",
+          "stage_harvest": "Harvest",
+          "gdd_stage_growing": "Vegetative",
+          "gdd_stage_pre_harvest": "Pre-harvest"
+        }
       },
       "features": {
         "title": "AGRR Features",
@@ -261,7 +292,7 @@
         },
         "optimization": {
           "title": "Crop Plan Optimization",
-          "description": "Optimize farm size and crop combinations for efficient planning."
+          "description": "Build crop plans from your region, fields, and crops using weather and GDD."
         },
         "growth_prediction": {
           "title": "Growth Prediction",
@@ -837,13 +868,8 @@
     "title": "Crop Planning",
     "steps": {
       "region": "Region",
-      "size": "Size",
       "crop": "Crop",
       "completed": "✓"
-    },
-    "region_selection": {
-      "title": "🌍 Select Your Region",
-      "subtitle": "Choose the region for agricultural data"
     },
     "farm_sizes": {
       "home_garden": {
@@ -865,28 +891,14 @@
       "success": "Plan saved to My Plans.",
       "error": "Failed to save plan."
     },
-    "new": {
-      "title": "🌍 Select Your Growing Region",
-      "subtitle": "Choose the region where your farm is located",
-      "empty_message": "No regions available for selection at this time."
-    },
     "select_farm": {
       "available_farms": "Available Farms"
-    },
-    "select_farm_size": {
-      "title": "📏 Select Your Farm Size",
-      "subtitle": "Choose the size closest to your farm area",
-      "back_button": "← Back to Region Selection",
-      "summary": {
-        "region": "Region"
-      }
     },
     "select_crop": {
       "title": "🌾 Select Crops to Grow",
       "subtitle": "Multiple selection available. Click cards to select.",
       "summary": {
-        "region": "Region",
-        "farm_size": "Farm Size"
+        "region": "Region"
       },
       "bottom_bar": {
         "back_button": "← Back",

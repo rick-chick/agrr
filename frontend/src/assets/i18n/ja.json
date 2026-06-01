@@ -1736,13 +1736,8 @@
     "title": "計画",
     "steps": {
       "region": "地域",
-      "size": "サイズ",
       "crop": "作物",
       "completed": "✓"
-    },
-    "region_selection": {
-      "title": "🌍 地域を選択してください",
-      "subtitle": "農業データを利用する地域を選択してください"
     },
     "farm_sizes": {
       "home_garden": {
@@ -1764,28 +1759,14 @@
       "success": "計画をマイプランに保存しました。",
       "error": "計画の保存に失敗しました。"
     },
-    "new": {
-      "title": "🌍 栽培地域を選択してください",
-      "subtitle": "あなたの農場がある地域を選択してください",
-      "empty_message": "現在、選択可能な栽培地域がありません。"
-    },
     "select_farm": {
       "available_farms": "利用可能な農場"
-    },
-    "select_farm_size": {
-      "title": "📏 農場のサイズを選択してください",
-      "subtitle": "あなたの農場の広さに最も近いものを選択してください",
-      "back_button": "← 地域選択に戻る",
-      "summary": {
-        "region": "地域"
-      }
     },
     "select_crop": {
       "title": "🌾 栽培したい作物を選択してください",
       "subtitle": "複数選択可能です。カードをクリックして選択してください。",
       "summary": {
-        "region": "地域",
-        "farm_size": "農場サイズ"
+        "region": "地域"
       },
       "bottom_bar": {
         "back_button": "← 戻る",
@@ -2292,8 +2273,39 @@
     "index": {
       "hero": {
         "title": "🌱 農業をもっとスマートに",
-        "subtitle_html": "気象データとAIを活用した最適な作付け計画で、<br>あなたの農業を次のレベルへ",
-        "cta_button": "新規作付"
+        "subtitle_html": "気象データとAIを活用した作付け計画で、あなたの農業を次のレベルへ。<br>まずは下のサンプルカレンダーを触ってみてください。",
+        "cta_scroll_demo": "サンプルカレンダーを触る",
+        "cta_footer_link": "いますぐ無料で作付け計画を始める"
+      },
+      "demo": {
+        "title": "サンプル作付けカレンダー（触ってみる）",
+        "lead": "バーを動かしたり作物を足したりできます。気象・GDDはサンプルデータです。",
+        "disclaimer": "この画面の操作はお使いの端末内だけで完結します。本番の最適化（約1分）とは別の簡易デモです。",
+        "badge": "デモ",
+        "hints": {
+          "drag": "バーをドラッグして日程を変更",
+          "tap": "バーをタップして気象・GDDを表示",
+          "add": "＋から作物を追加"
+        },
+        "cta_create": "自分の地域・作物で計画を作る",
+        "fixture": {
+          "plan_name": "サンプル作付け計画（デモ）",
+          "farm_name": "サンプル市民農園（デモ）",
+          "field_a": "A区画",
+          "field_b": "B区画",
+          "field_c": "C区画",
+          "crop_tomato": "トマト",
+          "crop_cucumber": "キュウリ",
+          "crop_eggplant": "ナス",
+          "crop_pepper": "ピーマン",
+          "variety_pepper": "甘長",
+          "variety_eggplant": "千両二号",
+          "stage_germination": "発芽",
+          "stage_growth": "生育",
+          "stage_harvest": "収穫",
+          "gdd_stage_growing": "生育期",
+          "gdd_stage_pre_harvest": "収穫前"
+        }
       },
       "features": {
         "title": "AGRRの特徴",
@@ -2304,7 +2316,7 @@
         },
         "optimization": {
           "title": "作付け計画最適化",
-          "description": "農場サイズと作物の組み合わせを最適化し、効率的な計画を立案します。"
+          "description": "地域・圃場・作物から、気象とGDDを踏まえた作付け計画を立案します。"
         },
         "growth_prediction": {
           "title": "成長予測",

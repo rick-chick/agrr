@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
+import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { buildGanttAdjustMove } from '../../domain/plans/gantt-chart-layout';
 import { GanttPlanMutationFailure } from '../../domain/plans/gantt-plan-mutation';
 import {
@@ -14,6 +15,7 @@ import {
   RemoveCultivationResponse,
   RemoveFieldResponse
 } from './plan.service';
+import { DemoGanttPlanStore } from './demo-gantt-plan-store.service';
 
 export type { GanttPlanMutationFailure };
 
@@ -21,19 +23,28 @@ export type GanttPlanMutationOutcome =
   | { status: 'success'; data: CultivationPlanData }
   | { status: 'failure'; failure: GanttPlanMutationFailure };
 
-function ganttMutationSuccess(data: CultivationPlanData): GanttPlanMutationOutcome {
+export function ganttMutationSuccess(data: CultivationPlanData): GanttPlanMutationOutcome {
   return { status: 'success', data };
 }
 
-function ganttMutationFailure(failure: GanttPlanMutationFailure): GanttPlanMutationOutcome {
+export function ganttMutationFailure(failure: GanttPlanMutationFailure): GanttPlanMutationOutcome {
   return { status: 'failure', failure };
 }
 
 @Injectable({ providedIn: 'root' })
 export class GanttPlanCoordinatorService {
-  constructor(private readonly planService: PlanService) {}
+  constructor(
+    private readonly planService: PlanService,
+    private readonly demoStore: DemoGanttPlanStore
+  ) {}
 
-  loadPlanData(planType: 'public' | 'private', planId: number): Observable<CultivationPlanData | null> {
+  loadPlanData(
+    planType: CultivationPlanContextType,
+    planId: number
+  ): Observable<CultivationPlanData | null> {
+    if (planType === 'demo') {
+      return this.demoStore.loadPlan(planId).pipe(map((data) => (data?.data?.fields ? data : null)));
+    }
     const request$ =
       planType === 'public'
         ? this.planService.getPublicPlanData(planId)
@@ -46,12 +57,15 @@ export class GanttPlanCoordinatorService {
   }
 
   adjustCultivationMove(input: {
-    planType: 'public' | 'private';
+    planType: CultivationPlanContextType;
     planId: number;
     cultivationId: number;
     toFieldId: number;
     newStartDate: Date;
   }): Observable<GanttPlanMutationOutcome> {
+    if (input.planType === 'demo') {
+      return this.demoStore.adjustCultivationMove(input);
+    }
     const endpoint = this.planService.buildCultivationPlanEndpoint(
       input.planType,
       input.planId,
@@ -84,10 +98,13 @@ export class GanttPlanCoordinatorService {
   }
 
   addCrop(
-    planType: 'public' | 'private',
+    planType: CultivationPlanContextType,
     planId: number,
     payload: AddCropRequest
   ): Observable<GanttPlanMutationOutcome> {
+    if (planType === 'demo') {
+      return this.demoStore.addCrop(planId, payload);
+    }
     const endpoint = this.planService.buildCultivationPlanEndpoint(planType, planId, 'add_crop');
     if (!endpoint) {
       return of(ganttMutationFailure({}));
@@ -107,10 +124,13 @@ export class GanttPlanCoordinatorService {
   }
 
   removeCultivation(
-    planType: 'public' | 'private',
+    planType: CultivationPlanContextType,
     planId: number,
     cultivationId: number
   ): Observable<GanttPlanMutationOutcome> {
+    if (planType === 'demo') {
+      return this.demoStore.removeCultivation(planId, cultivationId);
+    }
     const endpoint = this.planService.buildCultivationPlanEndpoint(planType, planId, 'adjust');
     if (!endpoint) {
       return of(ganttMutationFailure({}));
@@ -131,10 +151,13 @@ export class GanttPlanCoordinatorService {
   }
 
   addField(
-    planType: 'public' | 'private',
+    planType: CultivationPlanContextType,
     planId: number,
     payload: AddFieldRequest
   ): Observable<GanttPlanMutationOutcome> {
+    if (planType === 'demo') {
+      return this.demoStore.addField(planId, payload);
+    }
     const endpoint = this.planService.buildCultivationPlanEndpoint(planType, planId, 'add_field');
     if (!endpoint) {
       return of(ganttMutationFailure({}));
@@ -153,10 +176,13 @@ export class GanttPlanCoordinatorService {
   }
 
   removeField(
-    planType: 'public' | 'private',
+    planType: CultivationPlanContextType,
     planId: number,
     fieldId: number
   ): Observable<GanttPlanMutationOutcome> {
+    if (planType === 'demo') {
+      return this.demoStore.removeField(planId, fieldId);
+    }
     const endpoint = this.planService.buildCultivationPlanEndpoint(
       planType,
       planId,
@@ -180,7 +206,7 @@ export class GanttPlanCoordinatorService {
   }
 
   private afterMutationRefresh(
-    planType: 'public' | 'private',
+    planType: CultivationPlanContextType,
     planId: number
   ): Observable<GanttPlanMutationOutcome> {
     return this.loadPlanData(planType, planId).pipe(

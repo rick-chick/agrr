@@ -28,7 +28,6 @@ export class CreatePublicPlanUseCase implements CreatePublicPlanInputPort {
           // Update store with the new planId before calling onSuccess
           // This ensures the store is updated before navigation
           this.publicPlanSession.setPlanId(response.plan_id);
-          console.log('💾 [CreatePublicPlanUseCase] Updated session planId:', response.plan_id);
           this.outputPort.onSuccess(response);
           dto.onSuccess?.(response);
         },

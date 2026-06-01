@@ -13,11 +13,9 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Keys returned in API `toast_message` or shown on the undo toast UI. */
-const DELETION_UNDO_TOAST_CATALOG_KEYS = [
+/** Toast copy that includes a name placeholder (ngx `{{name}}`). */
+const TOAST_KEYS_WITH_NAME = [
   'deletion_undo.toast_message',
-  'deletion_undo.undo_button',
-  'deletion_undo.close_button',
   'flash.farms.deleted',
   'flash.crops.deleted',
   'pesticides.undo.toast',
@@ -32,6 +30,9 @@ const DELETION_UNDO_TOAST_CATALOG_KEYS = [
   'plans.task_schedule_items.undo.toast'
 ] as const;
 
+/** Static undo UI labels (no name interpolation). */
+const STATIC_TOAST_KEYS = ['deletion_undo.undo_button', 'deletion_undo.close_button'] as const;
+
 const locales: { name: string; catalog: JsonRecord }[] = [
   { name: 'ja', catalog: ja as JsonRecord },
   { name: 'en', catalog: en as JsonRecord },
@@ -41,26 +42,37 @@ const locales: { name: string; catalog: JsonRecord }[] = [
 describe('deletion undo toast i18n catalog', () => {
   for (const { name, catalog } of locales) {
     describe(name, () => {
-      for (const key of DELETION_UNDO_TOAST_CATALOG_KEYS) {
+      for (const key of [...TOAST_KEYS_WITH_NAME, ...STATIC_TOAST_KEYS]) {
         it(`defines ${key}`, () => {
           const value = getNested(catalog, key);
           expect(typeof value).toBe('string');
           expect((value as string).length).toBeGreaterThan(0);
         });
+      }
 
-        it(`${key} uses {{name}} for ngx interpolation when applicable`, () => {
-          if (key === 'interaction_rules.undo.toast') return;
+      for (const key of TOAST_KEYS_WITH_NAME) {
+        it(`${key} uses ngx placeholders not Rails %{name}`, () => {
+          const value = getNested(catalog, key) as string;
           if (key === 'deletion_undo.toast_message') {
-            const value = getNested(catalog, key) as string;
             expect(value).toContain('{{resource}}');
+            expect(value).not.toMatch(/%\{resource\}/);
             return;
           }
-          const value = getNested(catalog, key) as string;
+          if (key === 'interaction_rules.undo.toast') {
+            expect(value).toContain('{{source}}');
+            expect(value).toContain('{{target}}');
+            expect(value).not.toMatch(/%\{/);
+            return;
+          }
           expect(value).toContain('{{name}}');
           expect(value).not.toMatch(/%\{name\}/);
-          if (name === 'in') {
-            expect(value).toContain('पूर्ववत कर सकते हैं');
-          }
+        });
+      }
+
+      for (const key of STATIC_TOAST_KEYS) {
+        it(`${key} has no Rails-style placeholders`, () => {
+          const value = getNested(catalog, key) as string;
+          expect(value).not.toMatch(/%\{/);
         });
       }
     });

@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { forkJoin } from 'rxjs';
 import { LoadPublicPlanFarmsInputDto } from './load-public-plan-farms.dtos';
 import { LoadPublicPlanFarmsInputPort } from './load-public-plan-farms.input-port';
 import {
@@ -17,20 +16,11 @@ export class LoadPublicPlanFarmsUseCase implements LoadPublicPlanFarmsInputPort 
   ) {}
 
   execute(dto: LoadPublicPlanFarmsInputDto): void {
-    console.log('🌱 [LoadPublicPlanFarmsUseCase] execute called with:', dto);
-    forkJoin([
-      this.publicPlanGateway.getFarms(dto.region),
-      this.publicPlanGateway.getFarmSizes()
-    ]).subscribe({
-      next: ([farms, farmSizes]) => {
-        console.log('🌱 [LoadPublicPlanFarmsUseCase] forkJoin next - farms:', farms?.length, 'farmSizes:', farmSizes?.length);
-        this.outputPort.present({
-          farms,
-          farmSizes
-        });
+    this.publicPlanGateway.getFarms(dto.region).subscribe({
+      next: (farms) => {
+        this.outputPort.present({ farms });
       },
       error: (err: Error) => {
-        console.log('🌱 [LoadPublicPlanFarmsUseCase] forkJoin error:', err);
         this.outputPort.onError({ message: err?.message ?? 'Unknown error' });
       }
     });

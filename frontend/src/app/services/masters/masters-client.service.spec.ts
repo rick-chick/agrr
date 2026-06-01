@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { of, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,26 +11,29 @@ describe('MastersClientService', () => {
   let apiClient: { get: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
   let apiKeyService: { getApiKey: ReturnType<typeof vi.fn> };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     apiClient = { get: vi.fn().mockReturnValue(of({})), delete: vi.fn() };
     apiKeyService = { getApiKey: vi.fn().mockReturnValue(null) };
-    service = new MastersClientService(
-      apiClient as unknown as ApiService,
-      apiKeyService as unknown as ApiKeyService
-    );
-    (service as unknown as { translate: TranslateService }).translate = {
-      currentLang: 'in',
-      defaultLang: 'ja'
-    } as TranslateService;
+
+    await TestBed.configureTestingModule({
+      providers: [
+        MastersClientService,
+        { provide: ApiService, useValue: apiClient },
+        { provide: ApiKeyService, useValue: apiKeyService },
+        {
+          provide: TranslateService,
+          useValue: { currentLang: 'in', defaultLang: 'ja' } satisfies Pick<
+            TranslateService,
+            'currentLang' | 'defaultLang'
+          >
+        }
+      ]
+    }).compileComponents();
+
+    service = TestBed.inject(MastersClientService);
   });
 
   it('get uses /api/v1/masters prefix without X-API-Key when session auth only', async () => {
-    await firstValueFrom(service.get('/crops'));
-    expect(apiClient.get).toHaveBeenCalledWith('/api/v1/masters/crops', {});
-  });
-
-  it('get includes X-API-Key when API key is present', async () => {
-    apiKeyService.getApiKey.mockReturnValue('test-api-key');
     await firstValueFrom(service.get('/crops'));
     expect(apiClient.get).toHaveBeenCalledWith(
       '/api/v1/masters/crops',
@@ -37,6 +41,16 @@ describe('MastersClientService', () => {
         headers: expect.objectContaining({})
       })
     );
+    const options = apiClient.get.mock.calls[0][1] as { headers: { get: (n: string) => string | null } };
+    expect(options.headers.get('Accept-Language')).toBe('in');
+    expect(options.headers.get('X-API-Key')).toBeNull();
+  });
+
+  it('get includes X-API-Key when API key is present', async () => {
+    apiKeyService.getApiKey.mockReturnValue('test-api-key');
+    await firstValueFrom(service.get('/crops'));
+    const options = apiClient.get.mock.calls[0][1] as { headers: { get: (n: string) => string | null } };
+    expect(options.headers.get('X-API-Key')).toBe('test-api-key');
   });
 
   describe('deleteWithUndo', () => {

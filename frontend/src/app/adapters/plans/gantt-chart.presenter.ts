@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { GanttChartView } from '../../components/plans/gantt-chart.view';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
+import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { resolveGanttPlanMutationFailureAction } from '../../domain/plans/gantt-plan-mutation';
 import {
   extractHttpErrorMessage,
@@ -16,7 +17,7 @@ import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
 @Injectable()
 export class GanttChartPresenter {
   private view: GanttChartView | null = null;
-  private planType: 'private' | 'public' = 'private';
+  private planType: CultivationPlanContextType = 'private';
 
   constructor(
     private readonly translate: TranslateService,
@@ -28,7 +29,7 @@ export class GanttChartPresenter {
     this.view = view;
   }
 
-  bindPlanContext(planType: 'private' | 'public'): void {
+  bindPlanContext(planType: CultivationPlanContextType): void {
     this.planType = planType;
   }
 

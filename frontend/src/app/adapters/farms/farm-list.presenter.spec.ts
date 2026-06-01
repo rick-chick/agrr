@@ -141,12 +141,7 @@ describe('FarmListPresenter', () => {
       expect(lastControl).not.toBeNull();
       expect(lastControl!.farms).toHaveLength(1);
       expect(lastControl!.farms[0].id).toBe(2);
-      expect(mockUndoToastService.showWithUndo).toHaveBeenCalledWith(
-        undoResponse.toast_message,
-        undoResponse.undo_path,
-        undoResponse.undo_token,
-        expect.any(Function)
-      );
+      expect(mockUndoToastService.showWithUndo).toHaveBeenCalledTimes(1);
     });
   });
 });

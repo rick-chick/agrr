@@ -2,6 +2,8 @@ import { of, firstValueFrom } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FieldClimateApiGateway } from './field-climate-api.gateway';
 import { ApiService } from '../../services/api.service';
+import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.service';
+import { LANDING_DEMO_LABELS_FIXTURE } from '../../domain/plans/landing-demo-i18n.keys';
 import { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 
 describe('FieldClimateApiGateway', () => {
@@ -37,9 +39,23 @@ describe('FieldClimateApiGateway', () => {
     apiClient = {
       get: vi.fn()
     };
+    const demoStore = new DemoGanttPlanStore();
+    demoStore.initialize(LANDING_DEMO_LABELS_FIXTURE);
     gateway = new FieldClimateApiGateway(
-      apiClient as unknown as ApiService
+      apiClient as unknown as ApiService,
+      demoStore
     );
+  });
+
+  it('returns bundled demo climate without HTTP when planType is demo', async () => {
+    const result = await firstValueFrom(
+      gateway.fetchFieldClimateData({
+        fieldCultivationId: 501,
+        planType: 'demo'
+      })
+    );
+    expect(result.field_cultivation.crop_name).toBe('Tomato');
+    expect(apiClient.get).not.toHaveBeenCalled();
   });
 
   it('fetches private climate data with the plans path', async () => {

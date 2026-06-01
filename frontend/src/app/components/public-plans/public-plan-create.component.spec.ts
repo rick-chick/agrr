@@ -10,7 +10,6 @@ describe('PublicPlanCreateComponent (class-level)', () => {
   let publicPlanStore: {
     state: { farm?: { id: number; region: string } };
     setFarm: ReturnType<typeof vi.fn>;
-    setFarmSize: ReturnType<typeof vi.fn>;
   };
   let cdr: { detectChanges: ReturnType<typeof vi.fn> };
   let translate: { currentLang: string; defaultLang: string };
@@ -19,7 +18,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     useCase = { execute: vi.fn() };
     resetStateUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
-    publicPlanStore = { state: {}, setFarm: vi.fn(), setFarmSize: vi.fn() };
+    publicPlanStore = { state: {}, setFarm: vi.fn() };
     cdr = { detectChanges: vi.fn() };
     translate = { currentLang: 'ja', defaultLang: 'ja' };
 
@@ -35,8 +34,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     component._control = {
       loading: true,
       error: null,
-      farms: [],
-      farmSizes: []
+      farms: []
     };
   });
 
@@ -44,8 +42,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     const state: PublicPlanCreateViewState = {
       loading: false,
       error: null,
-      farms: [],
-      farmSizes: []
+      farms: []
     };
 
     const detectSpy = vi.spyOn(component.cdr, 'detectChanges');
@@ -75,15 +72,12 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     expect(useCase.execute).toHaveBeenCalledWith({ region: 'jp' });
   });
 
-  it('selectFarm sets default farm size 300 and navigates to select-crop', () => {
+  it('selectFarm persists farm and navigates to select-crop', () => {
     const farm = { id: 5, name: 'Tokyo', region: 'jp' } as const;
 
     PublicPlanCreateComponent.prototype.selectFarm.call(component, farm);
 
     expect(publicPlanStore.setFarm).toHaveBeenCalledWith(farm);
-    expect(publicPlanStore.setFarmSize).toHaveBeenCalledWith(
-      expect.objectContaining({ id: '300', area_sqm: 300 })
-    );
     expect(component.router.navigate).toHaveBeenCalledWith(['/public-plans/select-crop']);
   });
 

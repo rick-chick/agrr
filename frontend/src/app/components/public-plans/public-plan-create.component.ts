@@ -14,13 +14,10 @@ import { PublicPlanStore } from '../../services/public-plans/public-plan-store.s
 import { Farm } from '../../domain/farms/farm';
 import { resolveReferenceFarmRegion } from '../../core/browser-region';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
-import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
-
 const initialControl: PublicPlanCreateViewState = {
   loading: true,
   error: null,
-  farms: [],
-  farmSizes: []
+  farms: []
 };
 
 @Component({
@@ -136,7 +133,6 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     this.selectedFarmId = farm.id;
     this.selectedFarm = farm;
     this.publicPlanStore.setFarm(farm);
-    this.publicPlanStore.setFarmSize(DEFAULT_PUBLIC_PLAN_FARM_SIZE);
     this.router.navigate(['/public-plans/select-crop']);
   }
 
@@ -145,8 +141,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
       ...this.control,
       loading: true,
       error: null,
-      farms: [],
-      farmSizes: []
+      farms: []
     };
     this.useCase.execute({ region });
   }

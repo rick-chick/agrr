@@ -23,7 +23,6 @@ describe('CreatePublicPlanUseCase', () => {
     };
     const gateway: PublicPlanGateway = {
       getFarms: () => of([]),
-      getFarmSizes: () => of([]),
       getCrops: () => of([]),
       createPlan: () => of({ plan_id: 99 }),
       savePlan: () => of({} as any)
@@ -52,7 +51,6 @@ describe('CreatePublicPlanUseCase', () => {
     const railsErrorBody = { error: '作物を1つ以上選択してください。' };
     const gateway: PublicPlanGateway = {
       getFarms: () => of([]),
-      getFarmSizes: () => of([]),
       getCrops: () => of([]),
       createPlan: () =>
         throwError(() => ({ status: 422, error: railsErrorBody })),

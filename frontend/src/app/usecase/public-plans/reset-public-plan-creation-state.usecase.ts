@@ -20,6 +20,5 @@ export class ResetPublicPlanCreationStateUseCase implements ResetPublicPlanCreat
 
   execute(_dto: ResetPublicPlanCreationStateInputDto): void {
     this.publicPlanSession.reset();
-    console.log('🔄 [ResetPublicPlanCreationStateUseCase] Public plan session reset');
   }
 }

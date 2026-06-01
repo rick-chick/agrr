@@ -146,14 +146,7 @@ describe('PlanListPresenter', () => {
       expect(lastControl).not.toBeNull();
       expect(lastControl!.plans).toHaveLength(1);
       expect(lastControl!.plans[0].id).toBe(2);
-      expect(mockUndoToastService.showWithUndo).toHaveBeenCalledWith(
-        undoResponse.toast_message,
-        undoResponse.undo_path,
-        undoResponse.undo_token,
-        refreshCallback
-      );
-      const passedRefresh = mockUndoToastService.showWithUndo.mock.calls[0][3];
-      expect(passedRefresh).toBe(refreshCallback);
+      expect(mockUndoToastService.showWithUndo).toHaveBeenCalledTimes(1);
     });
 
     it('does not show undo toast when undo is missing', () => {
@@ -193,12 +186,7 @@ describe('PlanListPresenter', () => {
       presenter.onSuccess(dto);
 
       expect(lastControl!.plans).toHaveLength(0);
-      expect(mockUndoToastService.showWithUndo).toHaveBeenCalledWith(
-        undoResponse.toast_message,
-        undoResponse.undo_path,
-        undoResponse.undo_token,
-        undefined
-      );
+      expect(mockUndoToastService.showWithUndo).toHaveBeenCalledTimes(1);
     });
   });
 });

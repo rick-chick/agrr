@@ -18,7 +18,6 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     setSelectedCrops: ReturnType<typeof vi.fn>;
     setPlanId: ReturnType<typeof vi.fn>;
     setFarm: ReturnType<typeof vi.fn>;
-    setFarmSize: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -37,8 +36,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
       },
       setSelectedCrops: vi.fn(),
       setPlanId: vi.fn(),
-      setFarm: vi.fn(),
-      setFarmSize: vi.fn()
+      setFarm: vi.fn()
     };
     router = { navigate: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -86,12 +84,11 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     expect(markForCheckSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('ngOnInit resets state, sets view on presenter and loads crops when farm and farmSize are available', () => {
+  it('ngOnInit resets state, sets view on presenter and loads crops when farm is available', () => {
     PublicPlanSelectCropComponent.prototype.ngOnInit.call(component);
 
     expect(resetStateUseCase.execute).toHaveBeenCalledWith({});
     expect(publicPlanStore.setFarm).toHaveBeenCalledWith(publicPlanStore.state.farm);
-    expect(publicPlanStore.setFarmSize).toHaveBeenCalledWith(publicPlanStore.state.farmSize);
     expect(presenter.setView).toHaveBeenCalledWith(component);
     expect(loadCropsUseCase.execute).toHaveBeenCalledWith({ farmId: 1 });
     expect(router.navigate).not.toHaveBeenCalled();
@@ -101,22 +98,6 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     publicPlanStore.state = {
       farm: undefined,
       farmSize: { id: 'home_garden', name: 'Home Garden', area_sqm: 30 },
-      selectedCrops: [],
-      planId: null
-    };
-
-    PublicPlanSelectCropComponent.prototype.ngOnInit.call(component);
-
-    expect(router.navigate).toHaveBeenCalledWith(['/public-plans/new']);
-    expect(resetStateUseCase.execute).not.toHaveBeenCalled();
-    expect(presenter.setView).not.toHaveBeenCalled();
-    expect(loadCropsUseCase.execute).not.toHaveBeenCalled();
-  });
-
-  it('ngOnInit navigates to /public-plans/new when farmSize is missing', () => {
-    publicPlanStore.state = {
-      farm: { id: 1, name: 'Test Farm', region: 'jp' },
-      farmSize: undefined,
       selectedCrops: [],
       planId: null
     };
