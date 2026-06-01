@@ -158,6 +158,46 @@ export function formatGanttVisibleRangeLabel(start: Date, end: Date): string {
   return `${formatGanttYearMonth(start)}～${formatGanttYearMonth(end)}`;
 }
 
+export function buildGanttVisibleRangeFromStart(candidateStart: Date): GanttVisibleRange | null {
+  const startDate = new Date(candidateStart);
+  if (isNaN(startDate.getTime())) {
+    return null;
+  }
+  const endDate = computeGanttVisibleRangeEnd(startDate);
+  return {
+    startDate,
+    endDate,
+    label: formatGanttVisibleRangeLabel(startDate, endDate)
+  };
+}
+
+export function computeGanttBarParamsForPlanView(input: {
+  cultivationStart: string;
+  cultivationEnd: string;
+  planningStartDate: string;
+  planningEndDate: string;
+  visibleStart: Date | null;
+  visibleEnd: Date | null;
+  marginLeft: number;
+  chartWidth: number;
+}): GanttBarParams | null {
+  const { start: planStart, end: planEnd } = normalizePlanBounds(
+    new Date(input.planningStartDate),
+    new Date(input.planningEndDate)
+  );
+  const visibleStart = input.visibleStart ?? planStart;
+  const visibleEnd = input.visibleEnd ?? planEnd;
+
+  return computeGanttBarParams({
+    cultivationStart: new Date(input.cultivationStart),
+    cultivationEnd: new Date(input.cultivationEnd),
+    visibleStart,
+    visibleEnd,
+    marginLeft: input.marginLeft,
+    chartWidth: input.chartWidth
+  });
+}
+
 export function formatIsoDateOnly(date: Date): string | undefined {
   if (isNaN(date.getTime())) {
     return undefined;

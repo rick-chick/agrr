@@ -56,23 +56,8 @@ Rails.application.configure do
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true
 
-  # Suppress logger output for asset requests.
-  config.assets.quiet = true
-
-  # Propshaft configuration for development
-  # Propshaft handles assets automatically in development, no compilation needed
-  # config.assets.prefix = '/assets'
-  # config.assets.compile = true  # Not needed for Propshaft
-  # config.assets.digest = false  # Propshaft handles this automatically
-  # config.assets.debug = true
-
   # Enable static file serving in development
   config.public_file_server.enabled = true
-
-  # Propshaft specific configuration
-  config.assets.configure do |env|
-    env.logger = Rails.logger
-  end
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
@@ -89,28 +74,7 @@ Rails.application.configure do
   # Use local file storage for development
   # config.active_storage.service = :local
 
-  # Use async adapter for background jobs in development (simpler than Solid Queue)
-  # APの軽量化優先：最小限のスレッド数でAPへの影響を最小化
-  config.active_job.queue_adapter = :async
-  config.active_job.async_queue_size = 1
-
-  # 特定のキューに対してスレッド数を制限
-  config.after_initialize do
-    if Rails.env.development?
-      # 天気データ取得ジョブを順次実行
-      Rails.application.config.active_job.queue_adapter = ActiveJob::QueueAdapters::AsyncAdapter.new(
-        min_threads: 1,
-        max_threads: 1,
-        queues: {
-          "weather_data_sequential" => 1,
-          "default" => 1
-        }
-      )
-    end
-  end
-
-  # Set log level to info to see background job logs
-  config.log_level = :debug # デバッグログを有効化（問題の切り分け用）
+  config.log_level = :debug
 
   # Allow local hosts during development
   config.hosts << "localhost"
@@ -130,10 +94,4 @@ Rails.application.configure do
     policy.connect_src :self, "http://localhost:3000", "http://localhost:4200", "http://127.0.0.1:3000", "http://127.0.0.1:4200", "ws:", "wss:", "https://accounts.google.com", "https://tile.openstreetmap.org", "https://www.google-analytics.com", "https://analytics.google.com"
   end
 
-  # Google OAuth development configuration
-  config.after_initialize do
-    # Set development OAuth credentials (replace with your actual credentials)
-    ENV["GOOGLE_CLIENT_ID"] ||= "your_google_client_id_here"
-    ENV["GOOGLE_CLIENT_SECRET"] ||= "your_google_client_secret_here"
-  end
 end

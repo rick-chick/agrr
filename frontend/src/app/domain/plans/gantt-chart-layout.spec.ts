@@ -11,6 +11,8 @@ import {
   computeGanttVisibleRangeEnd,
   daysBetween,
   determineGanttTimeScale,
+  buildGanttVisibleRangeFromStart,
+  computeGanttBarParamsForPlanView,
   formatGanttVisibleRangeLabel,
   ganttCropFillColor,
   ganttCropStrokeColor,
@@ -124,6 +126,32 @@ describe('gantt-chart-layout', () => {
     expect(segments.length).toBeGreaterThan(0);
     expect(segments[0].showYear).toBe(true);
     expect(segments[0].width).toBeGreaterThan(0);
+  });
+
+  it('buildGanttVisibleRangeFromStart returns start, end, and label', () => {
+    const range = buildGanttVisibleRangeFromStart(new Date('2026-03-01'));
+    expect(range).not.toBeNull();
+    expect(range!.startDate.toISOString().slice(0, 10)).toBe('2026-03-01');
+    expect(range!.label).toBe('2026/03～2028/03');
+  });
+
+  it('buildGanttVisibleRangeFromStart returns null for invalid dates', () => {
+    expect(buildGanttVisibleRangeFromStart(new Date('invalid'))).toBeNull();
+  });
+
+  it('computeGanttBarParamsForPlanView uses visible range when set', () => {
+    const params = computeGanttBarParamsForPlanView({
+      cultivationStart: '2026-02-01',
+      cultivationEnd: '2026-02-28',
+      planningStartDate: '2026-01-01',
+      planningEndDate: '2026-12-31',
+      visibleStart: new Date('2026-02-01'),
+      visibleEnd: new Date('2026-05-31'),
+      marginLeft: 80,
+      chartWidth: 1000
+    });
+    expect(params).toEqual({ x: 80, width: expect.any(Number) });
+    expect(params!.width).toBeGreaterThan(0);
   });
 
   it('formats visible range label', () => {
@@ -518,6 +546,16 @@ describe('gantt-chart-layout', () => {
   it('adds months to a date', () => {
     const result = addMonths(new Date('2026-01-15'), 2);
     expect(result.getMonth()).toBe(2);
+  });
+
+  it('month shifts are not clamped to planning bounds', () => {
+    const planEnd = new Date('2026-12-31');
+    const shiftedBack = addMonths(new Date('2026-01-01'), -1);
+    expect(shiftedBack.getFullYear()).toBe(2025);
+    expect(shiftedBack.getMonth()).toBe(11);
+
+    const shiftedForward = addMonths(shiftedBack, 36);
+    expect(shiftedForward.getTime()).toBeGreaterThan(planEnd.getTime());
   });
 
   it('parseGanttPlanBounds returns null for invalid dates', () => {

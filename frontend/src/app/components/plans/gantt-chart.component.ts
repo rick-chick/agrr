@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
@@ -7,21 +6,20 @@ import {
   addMonths,
   buildGanttFieldGroups,
   buildGanttTimeAxisSegments,
+  buildGanttVisibleRangeFromStart,
   clampGanttChartWidth,
   computeGanttBarLabelPosition,
-  computeGanttBarParams,
+  computeGanttBarParamsForPlanView,
   computeGanttChartHeight,
-  computeGanttVisibleRangeEnd,
   determineGanttTimeScale,
-  formatGanttVisibleRangeLabel,
   GanttFieldGroup,
   GanttTimeAxisSegment,
   GanttTimeScale,
   GanttTimeUnit,
   ganttCropFillColor,
   ganttCropStrokeColor,
-  normalizePlanBounds,
   applyGanttCultivationMove,
+  normalizePlanBounds,
   formatGanttFieldRowIndexLabel,
   getGanttFieldLabelCenterX,
   getGanttMarginLeft,
@@ -47,18 +45,15 @@ import {
 } from '../../domain/plans/gantt-chart-layout';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AddCropRequest } from '../../services/plans/plan.service';
-import {
-  classifyGanttPlanMutationFailure,
-  extractHttpErrorMessage,
-  GanttPlanCoordinatorService,
-  GanttPlanMutationOutcome
-} from '../../services/plans/gantt-plan-coordinator.service';
-import { FlashMessageService } from '../../services/flash-message.service';
+import { GanttPlanCoordinatorService } from '../../services/plans/gantt-plan-coordinator.service';
+import { GanttChartPresenter } from '../../adapters/plans/gantt-chart.presenter';
+import { GanttChartView } from './gantt-chart.view';
 
 @Component({
   selector: 'app-gantt-chart',
   standalone: true,
   imports: [CommonModule, TranslateModule, FormsModule],
+  providers: [GanttChartPresenter],
   template: `
     @if (showOptimizationLock) {
       <div class="screen-lock-overlay" aria-live="polite">
@@ -106,21 +101,41 @@ import { FlashMessageService } from '../../services/flash-message.service';
           </button>
         }
         <div class="gantt-range-controls">
-        <button
-          class="range-button"
-          type="button"
-          (click)="shiftVisibleRange(-1)">
-            {{ 'plans.gantt.range.prev_month' | translate }}
-        </button>
+          <button
+            class="range-button"
+            [class.range-button--icon]="isMobileLayout"
+            type="button"
+            (click)="shiftVisibleRange(-1)"
+            [attr.aria-label]="isMobileLayout ? ('plans.gantt.range.prev_month' | translate) : null">
+            @if (isMobileLayout) {
+              <svg class="range-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+              </svg>
+            } @else {
+              {{ 'plans.gantt.range.prev_month' | translate }}
+            }
+          </button>
           <div class="gantt-range-label">
             <strong class="gantt-range-label__value">{{ visibleRangeLabel || '—' }}</strong>
           </div>
-        <button
-          class="range-button"
-          type="button"
-          (click)="shiftVisibleRange(1)">
-            {{ 'plans.gantt.range.next_month' | translate }}
-        </button>
+          <button
+            class="range-button"
+            [class.range-button--icon]="isMobileLayout"
+            type="button"
+            (click)="shiftVisibleRange(1)"
+            [attr.aria-label]="isMobileLayout ? ('plans.gantt.range.next_month' | translate) : null">
+            @if (isMobileLayout) {
+              <svg class="range-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+              </svg>
+            } @else {
+              {{ 'plans.gantt.range.next_month' | translate }}
+            }
+          </button>
         </div>
       </div>
 
@@ -363,7 +378,9 @@ import { FlashMessageService } from '../../services/flash-message.service';
   `,
   styleUrls: ['./gantt-chart.component.css']
 })
-export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+export class GanttChartComponent
+  implements OnInit, OnChanges, AfterViewInit, OnDestroy, GanttChartView
+{
   readonly formatGanttFieldRowIndexLabel = formatGanttFieldRowIndexLabel;
   readonly getGanttFieldLabelCenterX = getGanttFieldLabelCenterX;
   readonly ganttCropFillColor = ganttCropFillColor;
@@ -453,12 +470,14 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   /** ドロップ後の最適化API完了までオーバーレイを表示する */
   showOptimizationLock = false;
   private ganttPlanCoordinator = inject(GanttPlanCoordinatorService);
+  private ganttPresenter = inject(GanttChartPresenter);
   private cdr = inject(ChangeDetectorRef);
-  private flashMessageService = inject(FlashMessageService);
 
   constructor(private translate: TranslateService) {}
 
   ngOnInit(): void {
+    this.ganttPresenter.setView(this);
+    this.ganttPresenter.bindPlanContext(this.planType);
     // コンテナ要素がまだ利用できないため、updateChart()は呼ばずにフラグを設定
     if (this.data) {
       this.needsUpdate = true;
@@ -466,6 +485,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['planType']) {
+      this.ganttPresenter.bindPlanContext(this.planType);
+    }
     if (changes['data'] && this.data) {
       // コンテナ要素が利用可能な場合のみupdateChart()を実行、そうでない場合はフラグを設定
       if (this.container?.nativeElement) {
@@ -707,25 +729,14 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   }
 
   private setVisibleRangeFromStart(candidateStart: Date) {
-    const start = new Date(candidateStart);
-    if (isNaN(start.getTime())) {
+    const range = buildGanttVisibleRangeFromStart(candidateStart);
+    if (!range) {
       return;
     }
-    this.visibleStartDate = start;
-    this.visibleEndDate = computeGanttVisibleRangeEnd(start);
-    this.updateRangeLabel();
+    this.visibleStartDate = range.startDate;
+    this.visibleEndDate = range.endDate;
+    this.visibleRangeLabel = range.label;
     this.emitVisibleRange();
-  }
-
-  private updateRangeLabel() {
-    if (!this.visibleStartDate || !this.visibleEndDate) {
-      this.visibleRangeLabel = '';
-      return;
-    }
-    this.visibleRangeLabel = formatGanttVisibleRangeLabel(
-      this.visibleStartDate,
-      this.visibleEndDate
-    );
   }
 
   private emitVisibleRange() {
@@ -739,20 +750,16 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   getBarParams(cultivation: CultivationData) {
     if (!this.data) return null;
-    const planStartRaw = new Date(this.data.data.planning_start_date);
-    const planEndRaw = new Date(this.data.data.planning_end_date);
-    const { start: planStart, end: planEnd } = normalizePlanBounds(planStartRaw, planEndRaw);
-    const visibleStart = this.visibleStartDate ?? planStart;
-    const visibleEnd = this.visibleEndDate ?? planEnd;
-    const chartWidth = this.config.width - this.config.margin.left - this.config.margin.right;
 
-    return computeGanttBarParams({
-      cultivationStart: new Date(cultivation.start_date),
-      cultivationEnd: new Date(cultivation.completion_date),
-      visibleStart,
-      visibleEnd,
+    return computeGanttBarParamsForPlanView({
+      cultivationStart: cultivation.start_date,
+      cultivationEnd: cultivation.completion_date,
+      planningStartDate: this.data.data.planning_start_date,
+      planningEndDate: this.data.data.planning_end_date,
+      visibleStart: this.visibleStartDate,
+      visibleEnd: this.visibleEndDate,
       marginLeft: this.config.margin.left,
-      chartWidth
+      chartWidth: this.config.width - this.config.margin.left - this.config.margin.right
     });
   }
 
@@ -1127,12 +1134,17 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     if (this.isDragging) {
       if (commit.shouldCommit && this.data) {
-        this.applyMovesLocally(
-          cultivationId,
-          commit.newFieldName,
-          commit.newFieldIndex,
-          commit.newStartDate
-        );
+        const cultivation = this.data.data.cultivations.find((c) => c.id === cultivationId);
+        if (cultivation) {
+          applyGanttCultivationMove({
+            cultivation,
+            fieldGroups: this.fieldGroups,
+            newFieldName: commit.newFieldName,
+            newFieldIndex: commit.newFieldIndex,
+            newStartDate: commit.newStartDate
+          });
+          this.updateChart();
+        }
 
         // ドロップ後、最適化完了までスクリーンロックを表示
         this.showOptimizationLock = true;
@@ -1291,7 +1303,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     return svg.querySelector(`g.cultivation-bar[data-id="${cultivationId}"]`) as SVGGElement;
   }
 
-  private resetBarPosition() {
+  resetBarPosition(): void {
     if (!this.data) return;
     this.ganttPlanCoordinator.loadPlanData(this.planType, this.data.data.id).subscribe((data) => {
       if (data) {
@@ -1339,22 +1351,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     });
   }
 
-  private applyMovesLocally(cultivationId: number, newFieldName: string, newFieldIndex: number, newStartDate: Date) {
-    if (!this.data) return;
-
-    const cultivation = this.data.data.cultivations.find(c => c.id === cultivationId);
-    if (!cultivation) return;
-
-    applyGanttCultivationMove({
-      cultivation,
-      fieldGroups: this.fieldGroups,
-      newFieldName,
-      newFieldIndex,
-      newStartDate
-    });
-    this.updateChart();
-  }
-
   private adjustCultivation(
     cultivationId: number,
     _newFieldName: string,
@@ -1376,7 +1372,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
         newStartDate
       })
       .subscribe((outcome) =>
-        this.applyCoordinatorOutcome(outcome, planId, {
+        this.ganttPresenter.applyMutationOutcome(outcome, planId, {
           onRefetchFailure: 'update_chart',
           revertBarOnMessageFailure: true
         })
@@ -1413,15 +1409,15 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       ...(displayRange.end && { display_end_date: displayRange.end })
     };
 
-    this.ganttPlanCoordinator.addCrop(this.planType, planId, payload).subscribe((outcome) => {
-      if (outcome.status === 'failure') {
-        this.applyCoordinatorOutcome(outcome, planId);
-        return;
-      }
-      this.isCropPaletteOpen = false;
-      this.selectedCrop = null;
-      this.applyRefreshedPlanData(outcome.data);
-    });
+    this.ganttPlanCoordinator.addCrop(this.planType, planId, payload).subscribe((outcome) =>
+      this.ganttPresenter.applyMutationOutcome(outcome, planId, {
+        onSuccess: (data) => {
+          this.isCropPaletteOpen = false;
+          this.selectedCrop = null;
+          this.applyRefreshedPlanData(data);
+        }
+      })
+    );
   }
 
   confirmRemoveCultivation(cultivation: CultivationData) {
@@ -1438,7 +1434,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     this.ganttPlanCoordinator
       .removeCultivation(this.planType, planId, cultivation.id)
-      .subscribe((outcome) => this.applyCoordinatorOutcome(outcome, planId));
+      .subscribe((outcome) => this.ganttPresenter.applyMutationOutcome(outcome, planId));
   }
 
   toggleFieldForm() {
@@ -1462,14 +1458,14 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       })
       .subscribe((outcome) => {
         this.isFieldFormLoading = false;
-        if (outcome.status === 'failure') {
-          this.applyCoordinatorOutcome(outcome, planId);
-          return;
-        }
-        this.fieldFormVisible = false;
-        this.newFieldName = '';
-        this.newFieldArea = null;
-        this.applyRefreshedPlanData(outcome.data);
+        this.ganttPresenter.applyMutationOutcome(outcome, planId, {
+          onSuccess: (data) => {
+            this.fieldFormVisible = false;
+            this.newFieldName = '';
+            this.newFieldArea = null;
+            this.applyRefreshedPlanData(data);
+          }
+        });
       });
   }
 
@@ -1487,93 +1483,28 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     this.ganttPlanCoordinator
       .removeField(this.planType, planId, group.fieldId)
-      .subscribe((outcome) => this.applyCoordinatorOutcome(outcome, planId));
+      .subscribe((outcome) => this.ganttPresenter.applyMutationOutcome(outcome, planId));
   }
 
-  private applyCoordinatorOutcome(
-    outcome: GanttPlanMutationOutcome,
-    planId: number,
-    options: {
-      onRefetchFailure?: 'refresh' | 'update_chart';
-      revertBarOnMessageFailure?: boolean;
-      onSuccess?: (data: CultivationPlanData) => void;
-    } = {}
-  ): void {
-    if (outcome.status === 'failure') {
-      const classified = classifyGanttPlanMutationFailure(outcome.failure);
-      switch (classified.kind) {
-        case 'refetch_failed':
-          this.handleOperationError('js.gantt.logs.data_refetch_failed');
-          if (options.onRefetchFailure === 'update_chart') {
-            this.updateChart();
-          } else {
-            this.refreshPlanData(planId);
-          }
-          break;
-        case 'refetch_error':
-          this.handleOperationError('js.gantt.logs.data_refetch_api_error');
-          if (options.onRefetchFailure === 'update_chart') {
-            this.updateChart();
-          } else {
-            this.refreshPlanData(planId);
-          }
-          break;
-        case 'message':
-          this.handleOperationError(classified.message);
-          if (options.revertBarOnMessageFailure) {
-            this.resetBarPosition();
-          }
-          break;
-      }
-      return;
-    }
-
-    const onSuccess = options.onSuccess ?? ((data) => this.applyRefreshedPlanData(data));
-    onSuccess(outcome.data);
-  }
-
-  private applyRefreshedPlanData(planData: CultivationPlanData) {
+  applyRefreshedPlanData(planData: CultivationPlanData): void {
     this.data = planData;
     this.updateChart();
     this.showOptimizationLock = false;
     this.scheduleDetectChanges();
   }
 
-  private refreshPlanData(planId?: number) {
-    const targetPlanId = planId ?? this.data?.data?.id;
-    if (!targetPlanId) {
-      this.showOptimizationLock = false;
-      return;
-    }
-
-    this.ganttPlanCoordinator.loadPlanData(this.planType, targetPlanId).subscribe({
-      next: (planData) => {
-        if (planData) {
-          this.applyRefreshedPlanData(planData);
-        } else {
-          this.showOptimizationLock = false;
-          this.scheduleDetectChanges();
-        }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.handleOperationError(extractHttpErrorMessage(error));
-      }
-    });
-  }
-
-  private handleOperationError(message?: string, technicalDetails?: string) {
-    let text = message
-      ? this.translate.instant(message)
-      : this.translate.instant('plans.gantt.adjust_failed');
-    if (technicalDetails) {
-      text = `${text} (${technicalDetails})`;
-    }
-    this.flashMessageService.show({
-      type: 'error',
-      text
-    });
-    this.isFieldFormLoading = false;
+  updateChartOnly(): void {
+    this.updateChart();
     this.showOptimizationLock = false;
     this.scheduleDetectChanges();
+  }
+
+  clearOptimizationLock(): void {
+    this.showOptimizationLock = false;
+    this.scheduleDetectChanges();
+  }
+
+  setFieldFormLoading(loading: boolean): void {
+    this.isFieldFormLoading = loading;
   }
 }

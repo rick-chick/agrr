@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import {
-  classifyGanttPlanMutationFailure,
-  GanttPlanCoordinatorService
-} from './gantt-plan-coordinator.service';
+import { GanttPlanCoordinatorService } from './gantt-plan-coordinator.service';
 import { PlanService } from './plan.service';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 
@@ -210,19 +207,6 @@ describe('GanttPlanCoordinatorService', () => {
       const result = await firstValueFrom(coordinator.loadPlanData('private', 7));
 
       expect(result).toBeNull();
-    });
-  });
-
-  it('classifyGanttPlanMutationFailure maps coordinator failure flags', () => {
-    expect(classifyGanttPlanMutationFailure({ refetchFailed: true })).toEqual({
-      kind: 'refetch_failed'
-    });
-    expect(classifyGanttPlanMutationFailure({ refetchError: true })).toEqual({
-      kind: 'refetch_error'
-    });
-    expect(classifyGanttPlanMutationFailure({ message: 'bad request' })).toEqual({
-      kind: 'message',
-      message: 'bad request'
     });
   });
 

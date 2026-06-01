@@ -7,7 +7,14 @@ import { of, throwError } from 'rxjs';
 
 import { GanttChartComponent } from './gantt-chart.component';
 import { GanttPlanCoordinatorService } from '../../services/plans/gantt-plan-coordinator.service';
+import { GanttChartPresenter } from '../../adapters/plans/gantt-chart.presenter';
 import { CultivationData } from '../../domain/plans/cultivation-plan-data';
+
+/**
+ * Component tests: wiring, template, desktop pointercancel, trash dropzone only.
+ * Domain layout/mutation and coordinator HTTP are covered elsewhere; mobile drag is e2e
+ * (see frontend/e2e/smoke/README.md — gantt-mobile-drag.spec.ts).
+ */
 describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
   let fixture: ComponentFixture<GanttChartComponent>;
@@ -31,13 +38,15 @@ describe('GanttChartComponent', () => {
         TranslateModule.forRoot()
       ],
       providers: [
-        { provide: GanttPlanCoordinatorService, useValue: coordinatorMock }
+        { provide: GanttPlanCoordinatorService, useValue: coordinatorMock },
+        GanttChartPresenter
       ]
     })
     .compileComponents();
 
     fixture = TestBed.createComponent(GanttChartComponent);
     component = fixture.componentInstance;
+    component.ngOnInit();
     ganttPlanCoordinator = TestBed.inject(GanttPlanCoordinatorService);
 
     // Configure simple translations required by these tests
@@ -48,6 +57,10 @@ describe('GanttChartComponent', () => {
           no_field_data: '圃場データがありません。',
           no_plan_data: '計画データが読み込まれていません。',
           trash_drop_label: '作付を削除',
+          range: {
+            prev_month: '前月',
+            next_month: '次月'
+          },
           mobile: {
             field_legend_button: '圃場一覧',
             field_legend_title: '圃場一覧',
@@ -76,84 +89,6 @@ describe('GanttChartComponent', () => {
         removeEventListener: vi.fn()
       }))
     );
-  });
-
-  describe('adjustCultivation', () => {
-    beforeEach(() => {
-      // Mock data setup
-      component.data = {
-        data: {
-          id: 7,
-          planning_start_date: '2026-01-01',
-          planning_end_date: '2026-12-31',
-          fields: [{ id: 1, name: 'Field 1' }],
-          cultivations: [{
-            id: 14,
-            field_id: 1,
-            field_name: 'Field 1',
-            crop_name: 'Rice',
-            start_date: '2026-01-01',
-            completion_date: '2026-01-31'
-          }]
-        }
-      } as any;
-
-      component.fieldGroups = [{
-        fieldName: 'Field 1',
-        fieldId: 1,
-        cultivations: []
-      }];
-    });
-
-    it('should update fieldGroups after adjustCultivation succeeds', () => {
-      component.planType = 'private';
-
-      const updatedData = {
-        data: {
-          id: 7,
-          planning_start_date: '2026-01-01',
-          planning_end_date: '2026-12-31',
-          fields: [{ id: 1, name: 'Field 1' }],
-          cultivations: [{
-            id: 14,
-            field_id: 1,
-            field_name: 'Field 1',
-            crop_name: 'Rice',
-            start_date: '2026-09-15',
-            completion_date: '2026-10-15'
-          }]
-        }
-      };
-
-      ganttPlanCoordinator.adjustCultivationMove = vi.fn().mockReturnValue(
-        of({ status: 'success', data: updatedData })
-      );
-
-      component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-09-15'));
-
-      const fieldGroup = component.fieldGroups.find(g => g.fieldId === 1);
-      expect(fieldGroup).toBeDefined();
-      const cultivation = fieldGroup!.cultivations.find(c => c.id === 14);
-      expect(cultivation).toBeDefined();
-      expect(cultivation!.start_date).toBe('2026-09-15');
-      expect(cultivation!.completion_date).toBe('2026-10-15');
-    });
-
-    it('routes adjust failure message to error UI and bar reset', () => {
-      component.planType = 'private';
-      ganttPlanCoordinator.adjustCultivationMove = vi.fn().mockReturnValue(
-        of({ status: 'failure', failure: { message: 'bad request' } })
-      );
-      const errorSpy = vi.spyOn(component as any, 'handleOperationError').mockImplementation(() => {});
-      const resetSpy = vi.spyOn(component as any, 'resetBarPosition').mockImplementation(() => undefined);
-
-      component['adjustCultivation'](14, 'Field 1', 0, new Date('2026-02-01'));
-
-      expect(errorSpy).toHaveBeenCalledWith('bad request');
-      expect(resetSpy).toHaveBeenCalled();
-      errorSpy.mockRestore();
-      resetSpy.mockRestore();
-    });
   });
 
   describe('gantt chart visibility', () => {
@@ -397,34 +332,33 @@ describe('GanttChartComponent', () => {
     });
   });
 
-  describe('visible range navigation', () => {
-    beforeEach(() => {
-      component.data = {
-        data: {
-          id: 7,
-          planning_start_date: '2026-01-01',
-          planning_end_date: '2026-12-31',
-          fields: [{ id: 1, name: 'Field 1' }],
-          cultivations: []
-        }
-      } as any;
+  describe('visible range controls', () => {
+    it('shows month labels on desktop', () => {
+      mobileLayoutMatches = false;
+      component.ngAfterViewInit();
+      fixture.detectChanges();
+
+      const buttons = fixture.nativeElement.querySelectorAll('.range-button');
+      expect(buttons.length).toBe(2);
+      expect(buttons[0].textContent?.trim()).toContain('前月');
+      expect(buttons[1].textContent?.trim()).toContain('次月');
+      expect(buttons[0].getAttribute('aria-label')).toBeNull();
+      expect(buttons[0].querySelector('.range-button__icon')).toBeNull();
     });
 
-    it('allows month shifts before and after the stored plan bounds', () => {
-      const planStart = new Date('2026-01-01');
-      const planEnd = new Date('2026-12-31');
-      component['initializeVisibleRange'](planStart, planEnd);
+    it('shows chevron icons with aria-label on mobile', () => {
+      mobileLayoutMatches = true;
+      component.ngAfterViewInit();
+      fixture.detectChanges();
 
-      expect(component.visibleStartDate?.getTime()).toBe(planStart.getTime());
-
-      component.shiftVisibleRange(-1);
-      const shiftedBack = component.visibleStartDate!;
-      expect(shiftedBack.getFullYear()).toBe(2025);
-      expect(shiftedBack.getMonth()).toBe(11);
-
-      component.shiftVisibleRange(36);
-      const shiftedForward = component.visibleStartDate!;
-      expect(shiftedForward.getTime()).toBeGreaterThan(planEnd.getTime());
+      const buttons = fixture.nativeElement.querySelectorAll('.range-button');
+      expect(buttons.length).toBe(2);
+      expect(buttons[0].getAttribute('aria-label')).toBe('前月');
+      expect(buttons[1].getAttribute('aria-label')).toBe('次月');
+      expect(buttons[0].classList.contains('range-button--icon')).toBe(true);
+      expect(buttons[0].querySelector('.range-button__icon')).toBeTruthy();
+      expect(buttons[1].querySelector('.range-button__icon')).toBeTruthy();
+      expect(buttons[0].textContent?.trim()).toBe('');
     });
   });
 

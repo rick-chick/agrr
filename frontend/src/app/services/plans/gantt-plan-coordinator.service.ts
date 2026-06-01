@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { buildGanttAdjustMove } from '../../domain/plans/gantt-chart-layout';
+import { GanttPlanMutationFailure } from '../../domain/plans/gantt-plan-mutation';
 import {
   AddCropRequest,
   AddCropResponse,
@@ -14,11 +15,7 @@ import {
   RemoveFieldResponse
 } from './plan.service';
 
-export type GanttPlanMutationFailure = {
-  message?: string;
-  refetchFailed?: boolean;
-  refetchError?: boolean;
-};
+export type { GanttPlanMutationFailure };
 
 export type GanttPlanMutationOutcome =
   | { status: 'success'; data: CultivationPlanData }
@@ -193,23 +190,6 @@ export class GanttPlanCoordinatorService {
       catchError(() => of(ganttMutationFailure({ refetchError: true })))
     );
   }
-}
-
-export type GanttPlanMutationFailureKind =
-  | 'refetch_failed'
-  | 'refetch_error'
-  | 'message';
-
-export function classifyGanttPlanMutationFailure(
-  failure: GanttPlanMutationFailure
-): { kind: GanttPlanMutationFailureKind; message?: string } {
-  if (failure.refetchFailed) {
-    return { kind: 'refetch_failed' };
-  }
-  if (failure.refetchError) {
-    return { kind: 'refetch_error' };
-  }
-  return { kind: 'message', message: failure.message };
 }
 
 export function extractHttpErrorMessage(error: HttpErrorResponse): string | undefined {

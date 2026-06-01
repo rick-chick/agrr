@@ -55,9 +55,6 @@ Rails.application.configure do
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true
 
-  # Suppress logger output for asset requests.
-  config.assets.quiet = true
-
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
 
@@ -70,10 +67,6 @@ Rails.application.configure do
   # Raise error when a before_action's only/except options reference missing actions (Rails 6.1 doesn't have this)
   # config.action_controller.raise_on_missing_callback_actions = true
 
-  # Use async adapter for background jobs in docker (Solid Queue 廃止)
-  config.active_job.queue_adapter = :async
-
-  # Set log level to info to see background job logs
   config.log_level = :info
 
   # Allow connections from any host in docker environment
