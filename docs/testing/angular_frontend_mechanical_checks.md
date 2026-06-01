@@ -9,11 +9,11 @@
 
 ### テストで確認
 ```bash
-bin/rails test test/controllers/auth_test_controller_test.rb
+scripts/run-rust-contract-tests.sh test/contract/auth_me_contract_test.rb
 ```
 
-- `test_mock_login_redirects_to_return_to_when_session_return_to_present`: モックログイン後に return_to（4200）へリダイレクトすることを検証
-- `test_mock_login_redirects_to_root_when_no_return_to`: return_to 未設定時は root へリダイレクトすることを検証
+- 本番経路のセッション API は R4 契約（`auth_me` 等）と E2E（Playwright モックログイン）で確認する
+- 開発用 `GET /auth/test/*` は agrr-server 実装（`crates/agrr-server/src/auth_test.rs`）
 
 ### 手動確認
 1. `http://localhost:4200` にアクセス
@@ -23,9 +23,10 @@ bin/rails test test/controllers/auth_test_controller_test.rb
 
 ## 1. 起動準備
 
-### Rails API
+### API（Rust）
 ```bash
-FRONTEND_URL=http://localhost:4200 bin/rails server -p 3000
+.cursor/skills/dev-docker/scripts/up.sh   # :3000 strangler → agrr-server
+cd frontend && ng serve --host 127.0.0.1
 ```
 
 ### Angular

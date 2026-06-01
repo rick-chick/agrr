@@ -14,7 +14,7 @@ pub fn apply_kind(
 ) -> anyhow::Result<()> {
     if kind == "blueprints" {
         anyhow::bail!(
-            "kind 'blueprints' is not implemented; use bin/generate_crop_task_schedule_blueprints.rb (see runbook)"
+            "kind 'blueprints' is not implemented in agrr-migrate (schedule blueprint generation is out of band; see P7-MIGRATION-RUNBOOK.md)"
         );
     }
     if kind == "templates" {

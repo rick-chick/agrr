@@ -7,6 +7,7 @@ members = [
     "crates/agrr-adapters-agrr",
     "crates/agrr-server",
     "crates/agrr-migrate",
+    "crates/agrr-r4-contract",
 ]
 
 [workspace.package]

@@ -8,8 +8,8 @@
 
 | 領域 | 例 | 役割 |
 |------|-----|------|
-| 契約ハーネス | `app/models/**`, `test/contract/**`, `test/factories/**`, 縮小 `Gemfile` | R4: Minitest + ActiveRecord fixture → **agrr-server** |
-| テスト実行 | `scripts/run-rust-contract-tests.sh`, `Dockerfile.test` | co-located `agrr-server` + refinery DB |
+| 契約ハーネス | `app/models/**`, `test/contract/**`, `test/factories/**`, 縮小 `Gemfile` | R4: Minitest + ActiveRecord fixture → **agrr-server**（移行中: `crates/agrr-r4-contract`） |
+| テスト実行 | `scripts/run-rust-contract-tests.sh`, `Dockerfile.test` | co-located `agrr-server` + refinery DB + `agrr-r4-contract-tests` |
 | スキーマ履歴 | `db/migrate_archive/` | 参照のみ。新規は **refinery**（`crates/agrr-migrate`） |
 
 **削除済み（P8.5）**: HTTP シェル（controllers/views/adapters）、`Dockerfile`（dev Rails）、Compose `web` / `rails-up.sh`、モデル単体テスト、OmniAuth/CORS/Propshaft 依存。
@@ -45,7 +45,8 @@ cd frontend && ng serve --host 127.0.0.1
 | **P8.5** | HTTP シェル・モデルテスト・dev Rails 削除。Gemfile は契約ハーネス用に縮小 | **完了**（2026-06-01）— R4 109 GREEN、`p7-code-removal-gate.sh` |
 | **P8.5.1** | Hotwire 資産・test-integration・RuboCop/Brakeman CI 削除 | **完了**（2026-06-01） |
 | **P8.6.0** | 契約テスト Rust 専用化（`rust_contract?` 分岐・未使用 support 削除） | **完了**（2026-06-01）— R4 GREEN |
-| **P8.6** | 契約ハーネスの Rust 化（Gemfile 完全削除） | TBD |
+| **P8.6.1** | `agrr-r4-contract` クレート + `run-rust-contract-tests.sh` 統合。BC ごとに `test/contract/*` を Rust へ移行 | **進行中**（2026-06-01）— health / cable / AI smoke、重複 wizard 削除 |
+| **P8.6** | 契約ハーネス全 Rust 化（`Gemfile` 完全削除） | TBD（P8.6.1 完了後） |
 
 ## ゲート
 

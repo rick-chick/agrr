@@ -38,7 +38,6 @@ end
 
 require_relative "../config/environment"
 require "rails/test_help"
-require "mocha/minitest"
 
 # Load test support files
 Dir[Rails.root.join("test", "support", "**", "*.rb")].each { |f| require f }
@@ -60,45 +59,6 @@ module ActiveSupport
       User.instance_variable_set(:@anonymous_user, nil)
       User.anonymous_user
       I18n.locale = :ja
-      Rails.application.routes.default_url_options[:locale] = :ja
-    end
-
-    # URLヘルパーのデフォルトオプションを設定
-    def default_url_options
-      { locale: I18n.locale }
-    end
-
-    # Add more helper methods to be used by all tests here...
-
-    def create_authenticated_user
-      user = create(:user)
-      session = create(:session, user: user)
-      cookies[:session_id] = session.session_id
-      user
-    end
-
-    def sign_in_as(user)
-      session = create(:session, user: user)
-      cookies[:session_id] = session.session_id
-    end
-
-    # IntegrationTest用のヘルパーメソッド
-    def create_session_for(user)
-      session = create(:session, user: user)
-      session.session_id
-    end
-
-    def session_cookie_header(session_id)
-      { "Cookie" => "session_id=#{session_id}" }
-    end
-  end
-end
-
-# Integration Test用のURL設定
-module ActionDispatch
-  class IntegrationTest
-    def default_url_options
-      { locale: I18n.locale }
     end
   end
 end

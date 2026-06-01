@@ -14,12 +14,10 @@ wave_e:
     - auth_logout_contract_test.rb
     - internal_jobs_contract_test.rb
     - private_plan_optimization_job_chain_contract_test.rb
-    - optimization_channel_rust_contract_test.rb
     - field_cultivation_patch_contract_test.rb
     - plan_adjust_db_sync_contract_test.rb
     - deletion_undo_restore_contract_test.rb
     - public_plan_save_contract_test.rb
-    - public_plans_wizard_contract_test.rb
     - backdoor_api_contract_test.rb
     - masters_farms_contract_test.rb
     - masters_crops_contract_test.rb
@@ -28,8 +26,7 @@ wave_e:
     - public_plans_api_contract_test.rb
     - public_plan_cultivation_mutations_contract_test.rb
     - internal_farm_weather_contract_test.rb
-    - ai_api_contract_test.rb
-    - api_v1_health_contract_test.rb
+    - crates/agrr-r4-contract/tests/contracts.rs  # health, /cable, AI routes (ex Ruby smokes)
   nginx_checklist: docker/nginx-strangler-host.conf
   rust_contract_runner: scripts/run-rust-contract-tests.sh
   angular_routing_audit: scripts/run-rust-contract-tests.sh

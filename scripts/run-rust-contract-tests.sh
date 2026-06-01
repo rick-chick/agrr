@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 BINARY="${ROOT}/tmp/agrr-server-contract/agrr-server"
+R4_CONTRACT_TESTS_BIN="${ROOT}/tmp/agrr-server-contract/agrr-r4-contract-tests"
 mkdir -p "$(dirname "$BINARY")"
 
 ensure_agrr_server_binary() {
@@ -53,6 +54,44 @@ ensure_agrr_server_binary() {
 
 ensure_agrr_server_binary
 
+ensure_agrr_r4_contract_tests_binary() {
+  local stamp="${ROOT}/crates/agrr-r4-contract"
+  local host_built=""
+
+  if [[ -x "$R4_CONTRACT_TESTS_BIN" ]] && [[ "${AGRR_R4_CONTRACT_REBUILD:-}" != "1" ]]; then
+    if [[ ! "$stamp" -nt "$R4_CONTRACT_TESTS_BIN" ]]; then
+      return
+    fi
+    echo "==> agrr-r4-contract sources newer than contract test binary; rebuilding"
+  fi
+
+  if command -v cargo >/dev/null 2>&1; then
+    # shellcheck source=/dev/null
+    [[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
+    echo "==> Building agrr-r4-contract tests on host (cargo build --tests -p agrr-r4-contract)"
+    if cargo build --tests -p agrr-r4-contract; then
+      host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
+      if [[ -n "$host_built" && -x "$host_built" ]]; then
+        cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
+        chmod +x "$R4_CONTRACT_TESTS_BIN"
+        return
+      fi
+    elif [[ -x "$R4_CONTRACT_TESTS_BIN" ]]; then
+      echo "==> Host cargo build failed; reusing existing agrr-r4-contract test binary"
+      return
+    fi
+    echo "==> agrr-r4-contract build failed and no cached test binary"
+    exit 1
+  fi
+
+  if [[ ! -x "$R4_CONTRACT_TESTS_BIN" ]]; then
+    echo "==> cargo not found and no agrr-r4-contract test binary at $R4_CONTRACT_TESTS_BIN"
+    exit 1
+  fi
+}
+
+ensure_agrr_r4_contract_tests_binary
+
 CONTRACT_TEST_ARGS="${*:-test/contract/}"
 
 echo "==> R4 contract (CONTRACT_RUNTIME=rust, shared test.sqlite3) args: ${CONTRACT_TEST_ARGS}"
@@ -62,6 +101,7 @@ docker compose --profile test run --rm \
   -e CONTRACT_RUNTIME=rust \
   -e RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 \
   -v "${BINARY}:/usr/local/bin/agrr-server:ro" \
+  -v "${R4_CONTRACT_TESTS_BIN}:/usr/local/bin/agrr-r4-contract-tests:ro" \
   -e "CONTRACT_TEST_ARGS=${CONTRACT_TEST_ARGS}" \
   test bash -c '
     set -euo pipefail
@@ -88,6 +128,8 @@ docker compose --profile test run --rm \
       cat /tmp/agrr-server-contract.log
       exit 1
     fi
+    echo "==> R4 contract (Rust harness, agrr-r4-contract)"
+    RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 /usr/local/bin/agrr-r4-contract-tests
     # shellcheck disable=SC2086
     bundle exec rails test ${CONTRACT_TEST_ARGS}
   '

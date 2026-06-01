@@ -1,6 +1,5 @@
 //! Masters fields API — nested under farms and `/api/v1/masters/fields/:id`
 
-use crate::adapters::PassthroughTranslator;
 use crate::masters_json::field_to_json;
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;

@@ -123,8 +123,6 @@ GEM
     minitest (6.0.6)
       drb (~> 2.0)
       prism (~> 1.5)
-    mocha (2.7.1)
-      ruby2_keywords (>= 0.0.5)
     msgpack (1.8.1)
     net-imap (0.6.4)
       date
@@ -191,7 +189,6 @@ GEM
       tsort
     reline (0.6.3)
       io-console (~> 0.5)
-    ruby2_keywords (0.0.5)
     securerandom (0.4.1)
     simplecov (0.22.0)
       docile (~> 1.1)
@@ -222,7 +219,6 @@ DEPENDENCIES
   database_cleaner-active_record (= 2.2.2)
   debug
   factory_bot_rails (= 6.5.1)
-  mocha (= 2.7.1)
   rails (~> 8.0.0)
   simplecov (= 0.22.0)
   sqlite3 (>= 2.1)

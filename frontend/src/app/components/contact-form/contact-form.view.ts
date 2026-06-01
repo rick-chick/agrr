@@ -14,6 +14,7 @@ export interface ContactFormViewState {
 }
 
 export interface ContactFormView {
-  control: ContactFormViewState;
+  get control(): ContactFormViewState;
+  set control(value: ContactFormViewState);
 }
 

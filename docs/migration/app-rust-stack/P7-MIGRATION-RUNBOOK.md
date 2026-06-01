@@ -184,7 +184,7 @@ agrr-migrate data apply --region us --kind repair
 | Missing nutrients | `data apply --region <jp\|in\|us> --kind nutrients` |
 | Missing crop task templates (JP only) | `data apply --region jp --kind templates` |
 | Missing admin + sample fixtures (dev) | `data apply --region jp,us --kind dev_fixtures` |
-| Missing schedule blueprints | **Not in CLI** — use `bin/generate_crop_task_schedule_blueprints.rb`, review, apply SQL/migration separately |
+| Missing schedule blueprints | **Not in CLI** — generate out of band (legacy Rails script removed P8); review SQL/data migration separately |
 
 Check status: `agrr-migrate data list`
 

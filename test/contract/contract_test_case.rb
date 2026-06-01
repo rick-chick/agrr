@@ -4,19 +4,13 @@ require "test_helper"
 require "net/http"
 
 # R4 contract harness (P6). Targets agrr-server only (P8.5 — Rails API removed).
-# Run via scripts/run-rust-contract-tests.sh (CONTRACT_RUNTIME=rust, shared test.sqlite3).
-class ContractTestCase < ActionDispatch::IntegrationTest
-  ENV["CONTRACT_RUNTIME"] = "rust"
+# Run via scripts/run-rust-contract-tests.sh (shared test.sqlite3).
+class ContractTestCase < ActiveSupport::TestCase
   # Separate SQLite connections (agrr-server) cannot see uncommitted AR test transactions.
   self.use_transactional_tests = false
 
   def contract_host
     ENV.fetch("RUST_CONTRACT_BASE_URL", "http://127.0.0.1:8080").chomp("/")
-  end
-
-  # Path to the DB file the running Rails test process uses (for agrr-server AGRR_SQLITE_PATH).
-  def rust_sqlite_path
-    ActiveRecord::Base.connection_db_config.database
   end
 
   # Session expiry must exceed SQLite `datetime('now')` when tests use `travel_to` in the past.

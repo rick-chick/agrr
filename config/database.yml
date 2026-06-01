@@ -36,11 +36,6 @@ test:
     database: storage/test_cache.sqlite3
     migrations_paths: db/cache_migrate_archive
 
-# AWS Test environment (SQLite with persistent storage)
-aws_test:
-  <<: *default
-  database: storage/aws_test.sqlite3
-
 # Cloud Run Production environment (SQLite with separate files for better performance)
 production:
   primary:

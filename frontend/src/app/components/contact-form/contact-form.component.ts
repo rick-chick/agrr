@@ -2,23 +2,21 @@ import {
   Component,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  inject
+  inject,
+  OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SendContactMessageUseCase } from '../../usecase/contact/send-contact-message.usecase';
-import { CONTACT_FORM_PROVIDERS } from '../../usecase/contact/contact-form.providers';
-import { SendContactMessageSuccessDto } from '../../usecase/contact/send-contact-message.dtos';
 import {
-  SendContactMessageOutputPort,
-  SEND_CONTACT_MESSAGE_OUTPUT_PORT
-} from '../../usecase/contact/send-contact-message.output-port';
+  CONTACT_FORM_PROVIDERS,
+  ContactFormPresenter
+} from '../../usecase/contact/contact-form.providers';
 import {
   ContactFormView,
   ContactFormViewState,
   ContactFormMessageVariant,
-  ContactFormMessageLiveRegion,
   ContactFormMessage
 } from './contact-form.view';
 import {
@@ -26,8 +24,6 @@ import {
   validatePayload,
   isValidationFailure
 } from '../../domain/contact/contact-message.model';
-import { UndoToastService } from '../../services/undo-toast.service';
-import { ErrorDto } from '../../domain/shared/error.dto';
 
 const initialControl: ContactFormViewState = {
   loading: false,
@@ -40,10 +36,7 @@ const initialControl: ContactFormViewState = {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
   imports: [CommonModule, FormsModule, TranslateModule],
-  providers: [
-    ...CONTACT_FORM_PROVIDERS,
-    { provide: SEND_CONTACT_MESSAGE_OUTPUT_PORT, useExisting: ContactFormComponent }
-  ],
+  providers: [...CONTACT_FORM_PROVIDERS],
   template: `
     <form class="form-card" (ngSubmit)="submit()" novalidate>
       <div class="form-card__form">
@@ -138,16 +131,11 @@ const initialControl: ContactFormViewState = {
   `,
   styleUrls: ['../masters/_master-layout.css', './contact-form.component.css']
 })
-export class ContactFormComponent implements ContactFormView, SendContactMessageOutputPort {
+export class ContactFormComponent implements ContactFormView, OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly useCase = inject(SendContactMessageUseCase);
-  private readonly toast = inject(UndoToastService);
+  private readonly presenter = inject(ContactFormPresenter);
   private readonly translate = inject(TranslateService);
-  private readonly messageLiveRegion: Record<ContactFormMessageVariant, ContactFormMessageLiveRegion> = {
-    success: 'polite',
-    error: 'assertive',
-    validation: 'assertive'
-  };
 
   name: string | null = null;
   email = '';
@@ -164,6 +152,10 @@ export class ContactFormComponent implements ContactFormView, SendContactMessage
     this.cdr.detectChanges();
   }
 
+  ngOnInit(): void {
+    this.presenter.setView(this);
+  }
+
   private createMessage(
     variant: ContactFormMessageVariant,
     translationKey: string
@@ -171,28 +163,7 @@ export class ContactFormComponent implements ContactFormView, SendContactMessage
     return {
       text: this.translate.instant(translationKey),
       variant,
-      ariaLive: this.messageLiveRegion[variant]
-    };
-  }
-
-  // UseCase output port callbacks
-  onSuccess(_dto: SendContactMessageSuccessDto): void {
-    this.control = {
-      ...this.control,
-      sending: false,
-      loading: false,
-      message: this.createMessage('success', 'contact_form.success.message')
-    };
-    this.toast.show(this.translate.instant('contact_form.success.toast'));
-  }
-
-  onError(dto: ErrorDto): void {
-    const messageKey = dto.message?.trim() ? dto.message : 'contact_form.errors.send_failed';
-    this.control = {
-      ...this.control,
-      sending: false,
-      loading: false,
-      message: this.createMessage('error', messageKey)
+      ariaLive: variant === 'success' ? 'polite' : 'assertive'
     };
   }
 
@@ -223,7 +194,7 @@ export class ContactFormComponent implements ContactFormView, SendContactMessage
       loading: true,
       message: null
     };
-    this.useCase.execute(payload, this);
+    this.useCase.execute(payload, this.presenter);
   }
 }
 
