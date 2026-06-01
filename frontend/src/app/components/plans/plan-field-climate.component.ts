@@ -98,51 +98,87 @@ type StageTemperatureBand = {
         </button>
       </div>
 
-      <section *ngIf="control.climateData" class="plan-field-climate__content">
-        <dl class="plan-field-climate__stats">
-          <div>
-            <dt>{{ 'plans.field_climate.base_temperature' | translate }}</dt>
-            <dd>{{ control.climateData.crop_requirements.base_temperature }}℃</dd>
-          </div>
-          <div *ngIf="optimalRange">
-            <dt>{{ 'plans.field_climate.optimal_range' | translate }}</dt>
-            <dd>{{ optimalRange }}</dd>
-          </div>
-          <div>
-            <dt>{{ 'plans.field_climate.current_stage' | translate }}</dt>
-            <dd>{{ currentStage }}</dd>
-          </div>
-        </dl>
+      <section
+        *ngIf="control.climateData"
+        class="plan-field-climate__content plan-field-climate__content--chart-first"
+      >
+        <div class="plan-field-climate__metadata">
+          <dl class="plan-field-climate__stats">
+            <div>
+              <dt>{{ 'plans.field_climate.base_temperature' | translate }}</dt>
+              <dd>{{ control.climateData.crop_requirements.base_temperature }}℃</dd>
+            </div>
+            <div *ngIf="optimalRange">
+              <dt>{{ 'plans.field_climate.optimal_range' | translate }}</dt>
+              <dd>{{ optimalRange }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'plans.field_climate.current_stage' | translate }}</dt>
+              <dd>{{ currentStage }}</dd>
+            </div>
+          </dl>
 
-        <div class="plan-field-climate__stage-list">
-          <article class="plan-field-climate__stage" *ngFor="let stage of stageRequirements">
-            <p class="plan-field-climate__stage-name">{{ stage.name }}</p>
-            <p class="plan-field-climate__stage-value">
-              {{
-                'plans.field_climate.stage_gdd_value'
-                  | translate: { value: stage.cumulative_gdd_required }
-              }}
-            </p>
-          </article>
+          <div class="plan-field-climate__stage-list">
+            <article class="plan-field-climate__stage" *ngFor="let stage of stageRequirements">
+              <p class="plan-field-climate__stage-name">{{ stage.name }}</p>
+              <p class="plan-field-climate__stage-value">
+                {{
+                  'plans.field_climate.stage_gdd_value'
+                    | translate: { value: stage.cumulative_gdd_required }
+                }}
+              </p>
+            </article>
+          </div>
         </div>
 
-        <div class="plan-field-climate__charts">
-          <article class="plan-field-climate__chart-card">
-            <header>
-              <h4>{{ 'plans.field_climate.daily_temperature' | translate }}</h4>
-            </header>
-            <div class="plan-field-climate__chart-wrapper">
-              <canvas #temperatureCanvas></canvas>
-            </div>
-          </article>
-          <article class="plan-field-climate__chart-card">
-            <header>
-              <h4>{{ 'plans.field_climate.gdd_progress' | translate }}</h4>
-            </header>
-            <div class="plan-field-climate__chart-wrapper">
-              <canvas #gddCanvas></canvas>
-            </div>
-          </article>
+        <div class="plan-field-climate__charts-area">
+          <div class="plan-field-climate__chart-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              class="plan-field-climate__chart-tab"
+              [class.plan-field-climate__chart-tab--active]="activeChartTab === 'temperature'"
+              [attr.aria-selected]="activeChartTab === 'temperature'"
+              (click)="selectChartTab('temperature')"
+            >
+              {{ 'plans.field_climate.daily_temperature' | translate }}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              class="plan-field-climate__chart-tab"
+              [class.plan-field-climate__chart-tab--active]="activeChartTab === 'gdd'"
+              [attr.aria-selected]="activeChartTab === 'gdd'"
+              (click)="selectChartTab('gdd')"
+            >
+              {{ 'plans.field_climate.gdd_progress' | translate }}
+            </button>
+          </div>
+
+          <div
+            class="plan-field-climate__charts"
+            [class.plan-field-climate__charts--tab-temperature]="activeChartTab === 'temperature'"
+            [class.plan-field-climate__charts--tab-gdd]="activeChartTab === 'gdd'"
+          >
+            <article
+              class="plan-field-climate__chart-card plan-field-climate__chart-card--temperature"
+            >
+              <header class="plan-field-climate__chart-card-heading">
+                <h4>{{ 'plans.field_climate.daily_temperature' | translate }}</h4>
+              </header>
+              <div class="plan-field-climate__chart-wrapper">
+                <canvas #temperatureCanvas></canvas>
+              </div>
+            </article>
+            <article class="plan-field-climate__chart-card plan-field-climate__chart-card--gdd">
+              <header class="plan-field-climate__chart-card-heading">
+                <h4>{{ 'plans.field_climate.gdd_progress' | translate }}</h4>
+              </header>
+              <div class="plan-field-climate__chart-wrapper">
+                <canvas #gddCanvas></canvas>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
     </section>
@@ -166,6 +202,8 @@ export class PlanFieldClimateComponent
 
   @ViewChild('temperatureCanvas') temperatureCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('gddCanvas') gddCanvas?: ElementRef<HTMLCanvasElement>;
+
+  activeChartTab: 'temperature' | 'gdd' = 'temperature';
 
   private _control: PlanFieldClimateViewState = { ...INITIAL_STATE };
 
@@ -277,6 +315,17 @@ export class PlanFieldClimateComponent
     if (!this.currentRequest) return;
     this.control = { loading: true, error: null, climateData: null };
     this.useCase.execute(this.currentRequest);
+  }
+
+  selectChartTab(tab: 'temperature' | 'gdd'): void {
+    if (this.activeChartTab === tab) return;
+    this.activeChartTab = tab;
+    this.cdr.markForCheck();
+    Promise.resolve().then(() => {
+      const chart = tab === 'temperature' ? this.temperatureChart : this.gddChart;
+      chart?.resize();
+      this.scheduleChartRefresh();
+    });
   }
 
   private chartLabel(key: string): string {

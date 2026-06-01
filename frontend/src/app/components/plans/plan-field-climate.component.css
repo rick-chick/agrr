@@ -88,6 +88,13 @@
   gap: var(--space-3);
 }
 
+.plan-field-climate__metadata {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
 .plan-field-climate__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -143,6 +150,38 @@
   line-height: 1.2;
 }
 
+.plan-field-climate__charts-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.plan-field-climate__chart-tabs {
+  display: none;
+  gap: var(--space-2);
+}
+
+.plan-field-climate__chart-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.2;
+  padding: 8px var(--space-2);
+  cursor: pointer;
+}
+
+.plan-field-climate__chart-tab--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-muted-bg, var(--color-background));
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
 .plan-field-climate__charts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -159,7 +198,7 @@
   gap: var(--space-2);
 }
 
-.plan-field-climate__chart-card header h4 {
+.plan-field-climate__chart-card-heading h4 {
   margin: 0;
   font-size: 0.85rem;
   color: var(--color-text);
@@ -186,21 +225,78 @@
 }
 
 /*
- * モバイル: 2列にすると1枚が --card-fill-min-mobile 未満になる幅では1列。
- * 2枚分+gap が確保できる幅だけ最大2列（public-plan-results と同型）。
+ * モバイル: チャートファースト（metadata より上）、stats/stages は横スクロール、
+ * チャートはタブ切替で 1 枚表示。
  */
 @media (max-width: 768px) {
-  .plan-field-climate__charts,
-  .plan-field-climate__stats,
-  .plan-field-climate__stage-list {
+  .plan-field-climate__content--chart-first .plan-field-climate__charts-area {
+    order: -1;
+  }
+
+  .plan-field-climate__chart-tabs {
+    display: flex;
+  }
+
+  .plan-field-climate__chart-card-heading {
+    display: none;
+  }
+
+  .plan-field-climate__charts {
     grid-template-columns: 1fr;
+  }
+
+  .plan-field-climate__charts--tab-temperature .plan-field-climate__chart-card--gdd {
+    display: none;
+  }
+
+  .plan-field-climate__charts--tab-gdd .plan-field-climate__chart-card--temperature {
+    display: none;
+  }
+
+  .plan-field-climate__stats {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: var(--space-2);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .plan-field-climate__stats div {
+    flex: 0 0 auto;
+    min-width: min(148px, 78vw);
+  }
+
+  .plan-field-climate__stage-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: var(--space-2);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .plan-field-climate__stage {
+    flex: 0 0 auto;
+    min-width: min(168px, 82vw);
+  }
+
+  .plan-field-climate__chart-wrapper {
+    min-height: min(52vw, 240px);
   }
 }
 
-@media (min-width: calc(2 * var(--card-fill-min-mobile) + var(--space-2))) and (max-width: 768px) {
-  .plan-field-climate__charts,
-  .plan-field-climate__stats,
-  .plan-field-climate__stage-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (min-width: 769px) {
+  .plan-field-climate__chart-tabs {
+    display: none;
+  }
+
+  .plan-field-climate__chart-card-heading {
+    display: block;
+  }
+
+  .plan-field-climate__charts--tab-temperature .plan-field-climate__chart-card--gdd,
+  .plan-field-climate__charts--tab-gdd .plan-field-climate__chart-card--temperature {
+    display: flex;
   }
 }
