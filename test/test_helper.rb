@@ -38,11 +38,7 @@ if ENV.fetch("COVERAGE", "true") != "false"
     add_filter "/vendor/"
     add_filter "/tmp/"
 
-    add_group "Controllers", "app/controllers"
     add_group "Models", "app/models"
-    add_group "Views", "app/views"
-    add_group "Helpers", "app/helpers"
-    add_group "Jobs", "app/jobs"
 
     minimum_coverage 10
   end

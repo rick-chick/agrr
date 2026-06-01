@@ -14,6 +14,8 @@
 
 **削除済み（P8.5）**: HTTP シェル（controllers/views/adapters）、`Dockerfile`（dev Rails）、Compose `web` / `rails-up.sh`、モデル単体テスト、OmniAuth/CORS/Propshaft 依存。
 
+**削除済み（P8.5.1）**: Hotwire 資産（`app/assets/`、`app/javascript/`、root `package.json`）、`test-integration` Compose、`Procfile.dev` / `bin/dev`、Selenium プロファイル、RuboCop/Brakeman CI（Gemfile から除去済み）。
+
 **削除済み（再削除しない）**: `lib/domain/`, `app/controllers/api/`, API adapters/jobs/channels, `Dockerfile.production`, Solid Cable DB。
 
 ## 開発の正

@@ -2,20 +2,7 @@
 # Testコンテナ用のentrypoint
 # テストDB準備を自動化
 #
-# テスト実行方法:
-#   - 全テスト: docker compose run --rm test bundle exec rails test
-#   - システムテスト: docker compose run --rm test bundle exec rails test:system
-#   - 特定テスト: docker compose run --rm test bundle exec rails test test/models/farm_test.rb
-# 詳細は README.md および docs/TESTING_GUIDELINES.md を参照
-#
-# ⚠️ IMPORTANT: Testing guidelines must be followed
-# See: docs/TESTING_GUIDELINES.md
-#
-# Key requirements:
-# - Model-level tests for all validations (REQUIRED)
-# - Integration tests for service objects (REQUIRED)
-# - Resource limit testing (MANDATORY)
-# - No patches - use dependency injection instead
+# R4 contract harness: scripts/run-rust-contract-tests.sh
 #
 
 set -euo pipefail
@@ -81,22 +68,6 @@ cache_current_databases() {
   echo "${CURRENT_FINGERPRINT}" > "${FINGERPRINT_FILE}"
   echo "✓ Cache updated"
 }
-
-# P8.5: contract harness only — no npm/asset pipeline (Angular is separate).
-if [ "${SKIP_ASSET_BUILD:-1}" != "1" ]; then
-  mkdir -p "${APP_ROOT}/app/assets/builds"
-  echo "==> Cleaning up old asset files..."
-  rm -rf "${APP_ROOT}/app/assets/builds/"* "${APP_ROOT}/tmp/cache/assets/"* "${APP_ROOT}/public/assets/"*
-  if [ -f "${APP_ROOT}/.npmrc" ]; then
-    mv "${APP_ROOT}/.npmrc" "${APP_ROOT}/.npmrc.bak" 2>/dev/null || true
-  fi
-  echo "==> Installing npm dependencies..."
-  npm ci
-  echo "==> Building assets..."
-  npm run build
-else
-  echo "==> Skipping npm/asset build (SKIP_ASSET_BUILD=${SKIP_ASSET_BUILD:-1})"
-fi
 
 CURRENT_FINGERPRINT="$(calculate_fingerprint)"
 CACHE_VALID="false"
