@@ -1,6 +1,6 @@
 # P6 完了条件（何が「移行完了」か）
 
-> **正**: 本書は「完了」の定義の単一ソース。進捗の列挙は [`TRACKING-P6.yaml`](./TRACKING-P6.yaml)、本番観測は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)、Rails 廃止は [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md)。
+> **正**: 本書は「完了」の**定義**の単一ソース。進捗の列挙は [`TRACKING-P6.yaml`](./TRACKING-P6.yaml)。**本番クローズ記録**は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
 
 ---
 
@@ -26,7 +26,7 @@
 | **BC 1 件の切替完了** | その BC のルートが Rust + R4 rust GREEN + 単一ライター | 他 BC は **Rails 必須** |
 | **P6 プログラム完了** | [`TRACKING-P6.yaml`](./TRACKING-P6.yaml) のクリティカルパス + wave がすべて `phase: done` | **API は Rust のみ**（`AGRR_RUST_API=1` / strangler nginx） |
 | **ストラングラー完了（P7 入口）** | 本番 URL map に **Rails 向け API ルールが残っていない** | 開発も **Rust 単体**（[`dev-rust-stack.sh`](../../../scripts/dev-rust-stack.sh)）で SPA |
-| **Rails 廃止（P7 完了）** | [`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) 全項目 | **Rails 不要** |
+| **Rails 廃止（P7 完了）** | [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md) P7 出口チェックリスト | **本番で Rails API 不要** |
 
 **「Rust を起動お願い」≠「Rails 移行が終わった」**。移行期の開発は意図的に **Rails + Rust + 振分（nginx / URL map）** である。
 
@@ -113,7 +113,7 @@ P6 TRACKING 完了より **厳しい**条件。ローカルで次をすべて満
 
 ## レベル 5 — Rails 廃止（P7 完了）
 
-[`P7-EXIT-CHECKLIST.md`](./P7-EXIT-CHECKLIST.md) を参照。P6 完了とは別ゲート。
+[`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md) を参照。P6 完了とは別ゲート。
 
 ---
 
@@ -168,5 +168,5 @@ flowchart TD
 | [TRACKING-P6.yaml](./TRACKING-P6.yaml) | BC ごとの `phase` |
 | [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | 本番観測・P7 削除順 |
 | [ADR-strangler-lb-url-map.md](./ADR-strangler-lb-url-map.md) | 本番振分 |
-| [P7-EXIT-CHECKLIST.md](./P7-EXIT-CHECKLIST.md) | Rails 廃止 |
+| [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | 本番クローズ・P7 出口 |
 | [test/contract/README.md](../../../test/contract/README.md) | R4 実行手順 |

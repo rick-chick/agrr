@@ -12,7 +12,7 @@
 - **移行**: Rails を「維持しながら Rust 化する」前提は置かない。**ストラングラー**（ルート単位で Rust へ切替、Rails は残ルートがゼロになった時点で廃止）。
 - **保全の正**: ユーザー可視の振る舞いは **API / WebSocket 契約テスト** と **`agrr-domain` パリティ**（[`TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md)）。
 
-WebSocket ワイヤ・ジョブチェーン・P6 マイグレーション所有・R4 複製元・削除 undo（Angular 化）・P7 **refinery**・ジョブ耐障害（`:async` 受容）・**OAuth コールバック URL**（現行パス維持）・**ストラングラー配線**（二 Cloud Run + URL map で `/api/*`・`/cable`・`/auth/*` を BC 単位で Rust へ）は **本書に確定**。**ユーザー添付は未使用のため P6 対象外**（2026-05-29 削除）。配線 ADR: [`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md)。本番残作業は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
+WebSocket ワイヤ・ジョブチェーン・P6 マイグレーション所有・R4 複製元・削除 undo（Angular 化）・P7 **refinery**・ジョブ耐障害（`:async` 受容）・**OAuth コールバック URL**（現行パス維持）・**ストラングラー配線**（二 Cloud Run + URL map で `/api/*`・`/cable`・`/auth/*` を BC 単位で Rust へ）は **本書に確定**。**ユーザー添付は未使用のため P6 対象外**（2026-05-29 削除）。配線 ADR: [`ADR-strangler-lb-url-map.md`](./ADR-strangler-lb-url-map.md)。本番切替・P7 完了記録は [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
 
 > **lib-domain-rust との関係**: P0–P5 は完了（[`TRACKING.yaml`](../lib-domain-rust/TRACKING.yaml)）。テスト層は [`TEST-STRATEGY.md`](../lib-domain-rust/TEST-STRATEGY.md)。本書の P6 エッジ配線 / P7 Rails 廃止 / R4 契約は終着スタックの目標。
 

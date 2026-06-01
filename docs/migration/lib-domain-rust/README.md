@@ -2,7 +2,7 @@
 
 **ステータス（2026-05-29）**: 全 19 bounded context `phase: done`（[`TRACKING.yaml`](./TRACKING.yaml) / [`TRACKING.md`](./TRACKING.md)）。
 
-本番 HTTP・Rails 廃止は [`app-rust-stack/`](../app-rust-stack/)（観測・残作業: [`PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)）。
+本番 HTTP・Rails 廃止は [`app-rust-stack/`](../app-rust-stack/)（完了記録: [`PRODUCTION-CUTOVER-STATUS.md`](../app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)）。
 
 ## 参照（現行）
 

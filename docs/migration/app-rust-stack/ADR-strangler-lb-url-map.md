@@ -102,7 +102,7 @@ defaultService: rails-backend
 
 ## 影響
 
-- 本番 URL map 切替の残作業: [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
+- 本番切替・P7 完了記録: [`PRODUCTION-CUTOVER-STATUS.md`](./PRODUCTION-CUTOVER-STATUS.md)。
 - インフラ変更は **ルート切替 PR と同じリリース**で validate → import（ロールバックは map を戻す）。
 - 監視: `/up` の参照先を切替ごとに確認。
 

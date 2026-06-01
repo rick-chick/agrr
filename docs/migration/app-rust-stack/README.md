@@ -8,11 +8,11 @@
 | [ADR-strangler-lb-url-map.md](./ADR-strangler-lb-url-map.md) | ストラングラー配線 ADR |
 | [TRACKING-P6.yaml](./TRACKING-P6.yaml) | P6 BC 切替進捗（全 `done`） |
 | [P6-COMPLETION-CRITERIA.md](./P6-COMPLETION-CRITERIA.md) | **完了条件**（レベル 1〜5） |
-| [P7-EXIT-CHECKLIST.md](./P7-EXIT-CHECKLIST.md) | P7 出口（`lib/domain` 削除など） |
 | [P7-REFINERY-ADR.md](./P7-REFINERY-ADR.md) | refinery スキーマ移管 |
 | [P7-MIGRATION-RUNBOOK.md](./P7-MIGRATION-RUNBOOK.md) | `agrr-migrate` schema / data CLI |
 | [WEATHER-DATA-GCS-SMOKE.md](./WEATHER-DATA-GCS-SMOKE.md) | 天気 GCS スモーク |
-| [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | **本番観測・残作業の正** |
+| [PRODUCTION-CUTOVER-STATUS.md](./PRODUCTION-CUTOVER-STATUS.md) | **本番切替・P7 完了の正** |
+| [P8-RAILS-SHELL-REMOVAL.md](./P8-RAILS-SHELL-REMOVAL.md) | **リポジトリから Rails を外す**（P7 後の残作業） |
 
 **完了の定義**: [`P6-COMPLETION-CRITERIA.md`](./P6-COMPLETION-CRITERIA.md)。R4 契約: [`test/contract/README.md`](../../../test/contract/README.md)、`./scripts/run-rust-contract-tests.sh`。
 
