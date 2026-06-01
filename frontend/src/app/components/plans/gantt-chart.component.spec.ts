@@ -8,7 +8,6 @@ import { of, throwError } from 'rxjs';
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanService, buildCultivationPlanEndpoint } from '../../services/plans/plan.service';
 import { AvailableCropData, CultivationData } from '../../domain/plans/cultivation-plan-data';
-
 describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
   let fixture: ComponentFixture<GanttChartComponent>;
@@ -365,7 +364,7 @@ describe('GanttChartComponent', () => {
     });
   });
 
-  describe('mobile touch and trash drop', () => {
+  describe('mobile layout, trash drop, and pointer drop commit', () => {
     const cultivation = {
       id: 33,
       field_id: 1,
@@ -392,6 +391,8 @@ describe('GanttChartComponent', () => {
       mockContainer.style.width = '800px';
       component['container'] = { nativeElement: mockContainer } as any;
       vi.spyOn(component as any, 'scheduleDetectChanges').mockImplementation(() => {});
+      vi.spyOn(component as any, 'resetBarPosition').mockImplementation(() => undefined);
+      vi.spyOn(component as any, 'resetVisualState').mockImplementation(() => undefined);
       component['updateChart']();
       component['needsUpdate'] = false;
     });
@@ -407,6 +408,43 @@ describe('GanttChartComponent', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelectorAll('.cultivation-delete-control').length).toBeGreaterThan(0);
+    });
+
+    it('does not commit adjust on desktop pointercancel after drag', () => {
+      component.isMobileLayout = false;
+      component['initializeVisibleRange'](new Date('2026-01-01'), new Date('2026-03-31'));
+
+      const params = component.getBarParams(cultivation);
+      expect(params).toBeTruthy();
+
+      const adjustSpy = vi
+        .spyOn(component as any, 'adjustCultivation')
+        .mockImplementation(() => undefined);
+
+      component['onPointerDown'](
+        new PointerEvent('pointerdown', { clientX: 100, clientY: 100, pointerId: 1, button: 0 }),
+        cultivation
+      );
+      component['onPointerMove'](
+        new PointerEvent('pointermove', { clientX: 120, clientY: 100, pointerId: 1 })
+      );
+      component['cachedBarBg'] = {
+        getAttribute: (attr: string) => {
+          if (attr === 'x') return String(params!.x + 20);
+          if (attr === 'y') return String(component.config.barPadding);
+          if (attr === 'data-original-y') return String(component.config.barPadding);
+          return '0';
+        },
+        setAttribute: vi.fn()
+      } as unknown as SVGRectElement;
+
+      component['onPointerCancel'](
+        new PointerEvent('pointercancel', { clientX: 120, clientY: 100, pointerId: 1 })
+      );
+
+      expect(component['isDragging']).toBe(false);
+      expect(adjustSpy).not.toHaveBeenCalled();
+      adjustSpy.mockRestore();
     });
 
     it('calls confirmRemoveCultivation when pointerup ends over trash on mobile', () => {

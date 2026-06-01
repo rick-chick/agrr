@@ -8,7 +8,6 @@ import {
   buildGanttFieldGroups,
   buildGanttTimeAxisSegments,
   clampGanttChartWidth,
-  computeCultivationDatesAfterMove,
   computeGanttBarLabelPosition,
   computeGanttTargetFieldIndex,
   computeGanttBarParams,
@@ -24,8 +23,14 @@ import {
   ganttCropFillColor,
   ganttCropStrokeColor,
   normalizePlanBounds,
-  resolveGanttDragDrop,
-  shouldCommitGanttDragMove,
+  applyGanttCultivationMove,
+  buildGanttAdjustMove,
+  computeGanttFieldRowHighlightY,
+  getGanttDragActivationThresholdPx,
+  resolveGanttDragCommit,
+  resolveGanttEndingTouchIndex,
+  shouldActivateGanttDrag,
+  shouldIgnoreGanttPointerCancel,
   shouldReinitializeGanttVisibleRange
 } from '../../domain/plans/gantt-chart-layout';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -364,7 +369,6 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   draggedCultivation: CultivationData | null = null;
   private dragStartX = 0;
   private dragStartY = 0;
-  private dragThreshold = 3; // 3px以上移動したらドラッグとみなす
   private pointerDragDistance = 0;
   private activePointerId: number | null = null;
   private mobileMediaQuery: MediaQueryList | null = null;
@@ -388,6 +392,9 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
   private lastTargetFieldIndex = -1;
   private globalPointerMoveHandler: ((event: PointerEvent) => void) | null = null;
   private globalPointerUpHandler: ((event: PointerEvent) => void) | null = null;
+  private globalPointerCancelHandler: ((event: PointerEvent) => void) | null = null;
+  private globalTouchEndHandler: ((event: TouchEvent) => void) | null = null;
+  private dragPointerEnded = false;
   private needsUpdate = false; // データ変更とコンテナ準備のタイミングを分離するためのフラグ
   private isDestroyed = false;
   private pendingDetectChanges = false;
@@ -685,6 +692,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
   onPointerDown(event: PointerEvent, cultivation: CultivationData) {
     if (event.button !== 0) return;
+    // Block browser pan/scroll on the bar so horizontal drag is not stolen (especially on mobile).
     event.preventDefault();
 
     const target = event.currentTarget as Element | null;
@@ -696,6 +704,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       }
     }
     this.activePointerId = event.pointerId;
+    this.dragPointerEnded = false;
 
     // ドラッグの準備（まだドラッグは開始していない）
     this.isDragging = false;
@@ -734,15 +743,24 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     this.globalPointerMoveHandler = (e: PointerEvent) => this.onPointerMove(e);
     this.globalPointerUpHandler = (e: PointerEvent) => this.onPointerUp(e);
+    this.globalPointerCancelHandler = (e: PointerEvent) => this.onPointerCancel(e);
 
     document.addEventListener('pointermove', this.globalPointerMoveHandler);
     document.addEventListener('pointerup', this.globalPointerUpHandler);
-    document.addEventListener('pointercancel', this.globalPointerUpHandler);
+    document.addEventListener('pointercancel', this.globalPointerCancelHandler);
+    if (this.isMobileLayout) {
+      this.globalTouchEndHandler = (e: TouchEvent) => this.onTouchEnd(e);
+      document.addEventListener('touchend', this.globalTouchEndHandler);
+    }
   }
 
   private onPointerMove(event: PointerEvent) {
     if (!this.draggedCultivation) return;
     if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
+
+    if (this.isDragging && this.isMobileLayout) {
+      event.preventDefault();
+    }
 
     const mouseDeltaX = event.clientX - this.dragStartX;
     const mouseDeltaY = event.clientY - this.dragStartY;
@@ -753,7 +771,10 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     // ドラッグ開始判定（まだ開始していない場合）
     if (!this.isDragging) {
-      if (distance > this.dragThreshold) {
+      if (shouldActivateGanttDrag(distance, this.isMobileLayout)) {
+        if (this.isMobileLayout) {
+          event.preventDefault();
+        }
         // ドラッグ開始
         this.isDragging = true;
 
@@ -812,8 +833,11 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
 
     // ハイライトの更新（圃場が変わった場合のみ）
     if (targetFieldIndex !== this.lastTargetFieldIndex && this.highlightRect) {
-      const HEADER_HEIGHT = this.config.margin.top;
-      const highlightY = HEADER_HEIGHT + (targetFieldIndex * ROW_HEIGHT);
+      const highlightY = computeGanttFieldRowHighlightY({
+        targetFieldIndex,
+        rowHeight: ROW_HEIGHT,
+        headerHeight: this.config.margin.top
+      });
 
       // 圃場が変わる場合のみハイライト表示
       if (targetFieldIndex !== this.originalFieldIndex) {
@@ -841,21 +865,71 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     }
   }
 
+  /**
+   * デスクトップではジェスチャ中断時に commit せず元へ戻す。
+   * モバイル touch では scroll 競合の偽 cancel が多く、指を離す前に走ると adjust が誤発火するため無視する
+   * （commit は pointerup / touchEnd のみ）。
+   */
+  private onPointerCancel(event: PointerEvent) {
+    if (!this.draggedCultivation) return;
+    if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
+    if (shouldIgnoreGanttPointerCancel(this.isMobileLayout)) {
+      return;
+    }
+
+    this.releaseActivePointerCapture(event);
+    this.activePointerId = null;
+
+    if (this.highlightRect) {
+      this.highlightRect.nativeElement.setAttribute('opacity', '0');
+    }
+
+    this.restoreDraggedBarSvgToOriginal();
+    this.resetVisualState();
+    this.isDragging = false;
+    this.draggedCultivation = null;
+    this.dragStartDisplayStartDate = null;
+    this.dragStartDisplayEndDate = null;
+    this.clearTrashDropzoneUi();
+    this.removeGlobalListeners();
+  }
+
+  /** touch 経路で pointercancel 後に pointerup が来ない場合の commit フォールバック */
+  private onTouchEnd(event: TouchEvent) {
+    if (!this.isMobileLayout || !this.draggedCultivation || this.dragPointerEnded) return;
+
+    const changedTouchIds: number[] = [];
+    for (let i = 0; i < event.changedTouches.length; i++) {
+      const touch = event.changedTouches.item(i);
+      if (touch) changedTouchIds.push(touch.identifier);
+    }
+    const touchIndex = resolveGanttEndingTouchIndex({
+      changedTouchIds,
+      activePointerId: this.activePointerId
+    });
+    if (touchIndex === null) return;
+
+    const touch = event.changedTouches.item(touchIndex);
+    if (!touch) return;
+
+    this.dragPointerEnded = true;
+    this.activePointerId = null;
+    this.finishPointerDrag(touch.clientX, touch.clientY);
+  }
+
   private onPointerUp(event: PointerEvent) {
     if (!this.draggedCultivation) return;
     if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
+    if (this.dragPointerEnded) return;
 
-    const target = event.target as Element | null;
-    if (target?.releasePointerCapture) {
-      try {
-        if (target.hasPointerCapture?.(event.pointerId)) {
-          target.releasePointerCapture(event.pointerId);
-        }
-      } catch {
-        // ignore
-      }
-    }
+    this.dragPointerEnded = true;
+    this.releaseActivePointerCapture(event);
     this.activePointerId = null;
+    this.finishPointerDrag(event.clientX, event.clientY);
+  }
+
+  private finishPointerDrag(clientX: number, clientY: number) {
+    if (!this.draggedCultivation) return;
 
     // ハイライトを非表示
     if (this.highlightRect) {
@@ -865,7 +939,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     if (
       this.isMobileLayout &&
       this.isDragging &&
-      this.isPointerOverTrash(event.clientX, event.clientY)
+      this.isPointerOverTrash(clientX, clientY)
     ) {
       const cultivationToRemove = this.draggedCultivation;
       this.resetVisualState();
@@ -884,71 +958,54 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const displayRange = this.getEffectiveDisplayRange();
     const chartWidth =
       this.config.width - this.config.margin.left - this.config.margin.right;
+    const layout = {
+      marginLeft: this.config.margin.left,
+      chartWidth,
+      rowHeight: this.config.rowHeight,
+      displayStart: displayRange.start,
+      displayEnd: displayRange.end
+    };
 
-    let newFieldIndex = this.originalFieldIndex;
-    let newFieldName = originalFieldName;
-    let daysFromStart = 0;
-    let newStartDate: Date | null = null;
+    const barX = this.cachedBarBg
+      ? parseFloat(this.cachedBarBg.getAttribute('x') || '0')
+      : this.originalBarX;
+    const barY = this.cachedBarBg
+      ? parseFloat(this.cachedBarBg.getAttribute('y') || '0')
+      : this.originalBarY;
+    const originalBarY = this.cachedBarBg
+      ? parseFloat(this.cachedBarBg.getAttribute('data-original-y') || '0')
+      : this.originalBarY;
 
-    if (this.cachedBarBg) {
-      const barX = parseFloat(this.cachedBarBg.getAttribute('x') || '0');
-      const barY = parseFloat(this.cachedBarBg.getAttribute('y') || '0');
-      const originalBarY = parseFloat(this.cachedBarBg.getAttribute('data-original-y') || '0');
-      const resolved = resolveGanttDragDrop({
-        barX,
-        barY,
-        originalBarY,
-        marginLeft: this.config.margin.left,
-        chartWidth,
-        rowHeight: this.config.rowHeight,
-        displayStart: displayRange.start,
-        displayEnd: displayRange.end,
-        originalFieldIndex: this.originalFieldIndex,
-        originalFieldName,
-        fieldGroups: this.fieldGroups
-      });
-      newFieldIndex = resolved.newFieldIndex;
-      newFieldName = resolved.newFieldName;
-      daysFromStart = resolved.daysFromStart;
-      newStartDate = resolved.newStartDate;
-    } else {
-      const resolved = resolveGanttDragDrop({
-        barX: this.originalBarX,
-        barY: this.originalBarY,
-        originalBarY: this.originalBarY,
-        marginLeft: this.config.margin.left,
-        chartWidth,
-        rowHeight: this.config.rowHeight,
-        displayStart: displayRange.start,
-        displayEnd: displayRange.end,
-        originalFieldIndex: this.originalFieldIndex,
-        originalFieldName,
-        fieldGroups: this.fieldGroups
-      });
-      newFieldIndex = resolved.newFieldIndex;
-      newFieldName = resolved.newFieldName;
-      daysFromStart = resolved.daysFromStart;
-      newStartDate = resolved.newStartDate;
-    }
+    const commit = resolveGanttDragCommit({
+      barX,
+      barY,
+      originalBarY,
+      originalBarX: this.originalBarX,
+      originalFieldIndex: this.originalFieldIndex,
+      originalFieldName,
+      fieldGroups: this.fieldGroups,
+      layout
+    });
 
     if (this.isDragging) {
-      if (
-        shouldCommitGanttDragMove({
-          originalFieldName,
-          newFieldName,
-          daysFromStart
-        })
-      ) {
-        if (newStartDate && this.data) {
-          // 楽観的更新を先に実行
-          this.applyMovesLocally(cultivationId, newFieldName, newFieldIndex, newStartDate);
+      if (commit.shouldCommit && this.data) {
+        this.applyMovesLocally(
+          cultivationId,
+          commit.newFieldName,
+          commit.newFieldIndex,
+          commit.newStartDate
+        );
 
-          // ドロップ後、最適化完了までスクリーンロックを表示
-          this.showOptimizationLock = true;
-          this.scheduleDetectChanges();
-          // API呼び出し
-          this.adjustCultivation(cultivationId, newFieldName, newFieldIndex, newStartDate);
-        }
+        // ドロップ後、最適化完了までスクリーンロックを表示
+        this.showOptimizationLock = true;
+        this.scheduleDetectChanges();
+        // API呼び出し
+        this.adjustCultivation(
+          cultivationId,
+          commit.newFieldName,
+          commit.newFieldIndex,
+          commit.newStartDate
+        );
       } else {
         this.resetBarPosition();
       }
@@ -982,8 +1039,41 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     }
     if (this.globalPointerUpHandler) {
       document.removeEventListener('pointerup', this.globalPointerUpHandler);
-      document.removeEventListener('pointercancel', this.globalPointerUpHandler);
       this.globalPointerUpHandler = null;
+    }
+    if (this.globalPointerCancelHandler) {
+      document.removeEventListener('pointercancel', this.globalPointerCancelHandler);
+      this.globalPointerCancelHandler = null;
+    }
+    if (this.globalTouchEndHandler) {
+      document.removeEventListener('touchend', this.globalTouchEndHandler);
+      this.globalTouchEndHandler = null;
+    }
+  }
+
+  private releaseActivePointerCapture(event: PointerEvent): void {
+    const target = event.target as Element | null;
+    if (target?.releasePointerCapture) {
+      try {
+        if (target.hasPointerCapture?.(event.pointerId)) {
+          target.releasePointerCapture(event.pointerId);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  private restoreDraggedBarSvgToOriginal(): void {
+    if (!this.cachedBarBg?.setAttribute) return;
+    const originalBarY = parseFloat(
+      this.cachedBarBg.getAttribute('data-original-y') || String(this.originalBarY),
+    );
+    this.cachedBarBg.setAttribute('x', this.originalBarX.toString());
+    this.cachedBarBg.setAttribute('y', originalBarY.toString());
+    if (this.cachedLabel?.setAttribute) {
+      this.cachedLabel.setAttribute('x', (this.originalBarX + this.barWidth / 2).toString());
+      this.cachedLabel.setAttribute('y', (originalBarY + this.barHeight / 2 + 5).toString());
     }
   }
 
@@ -993,7 +1083,8 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
       return;
     }
     const shouldShow =
-      this.pointerDragDistance > this.dragThreshold || this.isDragging;
+      this.pointerDragDistance > getGanttDragActivationThresholdPx(this.isMobileLayout) ||
+      this.isDragging;
     if (this.showTrashDropzone !== shouldShow) {
       this.showTrashDropzone = shouldShow;
       this.scheduleDetectChanges();
@@ -1136,18 +1227,13 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const cultivation = this.data.data.cultivations.find(c => c.id === cultivationId);
     if (!cultivation) return;
 
-    const { startDate, completionDate } = computeCultivationDatesAfterMove({
-      oldStartDate: new Date(cultivation.start_date),
-      oldCompletionDate: new Date(cultivation.completion_date),
+    applyGanttCultivationMove({
+      cultivation,
+      fieldGroups: this.fieldGroups,
+      newFieldName,
+      newFieldIndex,
       newStartDate
     });
-
-    cultivation.start_date = startDate;
-    cultivation.completion_date = completionDate;
-    cultivation.field_name = newFieldName;
-    cultivation.field_id = this.fieldGroups[newFieldIndex].fieldId;
-
-    // fieldGroupsを再構築（圃場が変わった場合のため）
     this.updateChart();
   }
 
@@ -1162,12 +1248,7 @@ export class GanttChartComponent implements OnInit, OnChanges, AfterViewInit, On
     const endpoint = this.planService.buildCultivationPlanEndpoint(this.planType, planId, 'adjust');
     if (!endpoint) return;
 
-    const moves = [{
-      allocation_id: cultivationId,
-      action: 'move',
-      to_field_id: targetField.fieldId,
-      to_start_date: newStartDate.toISOString().split('T')[0]
-    }];
+    const moves = [buildGanttAdjustMove(cultivationId, targetField.fieldId, newStartDate)];
 
     this.planService.adjustPlan(endpoint, { moves }).subscribe({
       next: (response) => {

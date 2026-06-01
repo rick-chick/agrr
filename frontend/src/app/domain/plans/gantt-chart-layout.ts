@@ -5,7 +5,14 @@ const CROP_STROKE_COLORS = ['#48bb78', '#f6ad55', '#4299e1', '#2f855a', '#dd6b20
 
 export const GANTT_MAX_VISIBLE_RANGE_MONTHS = 24;
 export const GANTT_MIN_CHART_WIDTH = 400;
-export const GANTT_DRAG_COMMIT_DAY_THRESHOLD = 2;
+export const GANTT_DRAG_ACTIVATION_THRESHOLD_PX = 3;
+export const GANTT_DRAG_ACTIVATION_THRESHOLD_MOBILE_PX = 12;
+
+export function getGanttDragActivationThresholdPx(isMobileLayout: boolean): number {
+  return isMobileLayout
+    ? GANTT_DRAG_ACTIVATION_THRESHOLD_MOBILE_PX
+    : GANTT_DRAG_ACTIVATION_THRESHOLD_PX;
+}
 
 export enum GanttTimeUnit {
   Day = 'day',
@@ -397,16 +404,6 @@ export function computeGanttTargetFieldIndex(input: {
   );
 }
 
-export function shouldCommitGanttDragMove(input: {
-  originalFieldName: string;
-  newFieldName: string;
-  daysFromStart: number;
-  dayThreshold?: number;
-}): boolean {
-  const threshold = input.dayThreshold ?? GANTT_DRAG_COMMIT_DAY_THRESHOLD;
-  return input.originalFieldName !== input.newFieldName || Math.abs(input.daysFromStart) > threshold;
-}
-
 export function computeCultivationDatesAfterMove(input: {
   oldStartDate: Date;
   oldCompletionDate: Date;
@@ -461,6 +458,140 @@ export function resolveGanttDragDrop(input: {
     newFieldIndex = input.originalFieldIndex;
   }
   return { newFieldIndex, newFieldName, daysFromStart, newStartDate: startDate };
+}
+
+export type GanttDragDropLayout = {
+  marginLeft: number;
+  chartWidth: number;
+  rowHeight: number;
+  displayStart: Date;
+  displayEnd: Date;
+};
+
+export type GanttAdjustMove = {
+  allocation_id: number;
+  action: 'move';
+  to_field_id: number;
+  to_start_date: string;
+};
+
+export function shouldActivateGanttDrag(distancePx: number, isMobileLayout: boolean): boolean {
+  return distancePx > getGanttDragActivationThresholdPx(isMobileLayout);
+}
+
+/** モバイル touch では scroll 競合の偽 pointercancel を無視する（commit は pointerup / touchend のみ） */
+export function shouldIgnoreGanttPointerCancel(isMobileLayout: boolean): boolean {
+  return isMobileLayout;
+}
+
+/**
+ * touchend の changedTouches から、ドラッグ中ポインタに対応する index を選ぶ。
+ * 複数指で曖昧なときは null（誤 commit 防止）。
+ */
+export function resolveGanttEndingTouchIndex(input: {
+  changedTouchIds: readonly number[];
+  activePointerId: number | null;
+}): number | null {
+  if (input.changedTouchIds.length === 0) return null;
+  if (input.activePointerId !== null) {
+    const matched = input.changedTouchIds.indexOf(input.activePointerId);
+    if (matched >= 0) return matched;
+  }
+  if (input.changedTouchIds.length === 1) return 0;
+  return null;
+}
+
+export function resolveGanttDragCommit(input: {
+  barX: number;
+  barY: number;
+  originalBarY: number;
+  originalBarX: number;
+  originalFieldIndex: number;
+  originalFieldName: string;
+  fieldGroups: ReadonlyArray<{ fieldName: string }>;
+  layout: GanttDragDropLayout;
+}): {
+  shouldCommit: boolean;
+  newFieldIndex: number;
+  newFieldName: string;
+  newStartDate: Date;
+  daysOffsetDelta: number;
+} {
+  const dragBase = {
+    marginLeft: input.layout.marginLeft,
+    chartWidth: input.layout.chartWidth,
+    rowHeight: input.layout.rowHeight,
+    displayStart: input.layout.displayStart,
+    displayEnd: input.layout.displayEnd,
+    originalFieldIndex: input.originalFieldIndex,
+    originalFieldName: input.originalFieldName,
+    fieldGroups: input.fieldGroups
+  };
+  const resolved = resolveGanttDragDrop({
+    barX: input.barX,
+    barY: input.barY,
+    originalBarY: input.originalBarY,
+    ...dragBase
+  });
+  const originalDaysOffset = computeGanttBarDragStartDate({
+    barX: input.originalBarX,
+    marginLeft: dragBase.marginLeft,
+    chartWidth: dragBase.chartWidth,
+    displayStart: dragBase.displayStart,
+    displayEnd: dragBase.displayEnd
+  }).daysFromStart;
+  const daysOffsetDelta = resolved.daysFromStart - originalDaysOffset;
+  const shouldCommit =
+    resolved.newFieldName !== input.originalFieldName || daysOffsetDelta !== 0;
+  return {
+    shouldCommit,
+    newFieldIndex: resolved.newFieldIndex,
+    newFieldName: resolved.newFieldName,
+    newStartDate: resolved.newStartDate,
+    daysOffsetDelta
+  };
+}
+
+export function applyGanttCultivationMove(input: {
+  cultivation: CultivationData;
+  fieldGroups: ReadonlyArray<GanttFieldGroup>;
+  newFieldName: string;
+  newFieldIndex: number;
+  newStartDate: Date;
+}): void {
+  const dates = computeCultivationDatesAfterMove({
+    oldStartDate: new Date(input.cultivation.start_date),
+    oldCompletionDate: new Date(input.cultivation.completion_date),
+    newStartDate: input.newStartDate
+  });
+  input.cultivation.start_date = dates.startDate;
+  input.cultivation.completion_date = dates.completionDate;
+  input.cultivation.field_name = input.newFieldName;
+  const targetField = input.fieldGroups[input.newFieldIndex];
+  if (targetField) {
+    input.cultivation.field_id = targetField.fieldId;
+  }
+}
+
+export function buildGanttAdjustMove(
+  cultivationId: number,
+  toFieldId: number,
+  newStartDate: Date
+): GanttAdjustMove {
+  return {
+    allocation_id: cultivationId,
+    action: 'move',
+    to_field_id: toFieldId,
+    to_start_date: formatIsoDateOnly(newStartDate)!
+  };
+}
+
+export function computeGanttFieldRowHighlightY(input: {
+  targetFieldIndex: number;
+  rowHeight: number;
+  headerHeight: number;
+}): number {
+  return input.headerHeight + input.targetFieldIndex * input.rowHeight;
 }
 
 export function computeGanttBarLabelPosition(input: {

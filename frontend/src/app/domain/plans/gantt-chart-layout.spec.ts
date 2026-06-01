@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { CultivationData } from './cultivation-plan-data';
 import {
   addMonths,
   buildGanttFieldGroups,
@@ -15,7 +16,13 @@ import {
   ganttCropStrokeColor,
   GanttTimeUnit,
   normalizePlanBounds,
-  shouldCommitGanttDragMove,
+  applyGanttCultivationMove,
+  buildGanttAdjustMove,
+  getGanttDragActivationThresholdPx,
+  resolveGanttDragCommit,
+  resolveGanttEndingTouchIndex,
+  shouldIgnoreGanttPointerCancel,
+  shouldActivateGanttDrag,
   shouldReinitializeGanttVisibleRange
 } from './gantt-chart-layout';
 
@@ -161,28 +168,110 @@ describe('gantt-chart-layout', () => {
     ).toBe(1);
   });
 
-  it('commits drag when field changes or day offset exceeds threshold', () => {
+  it('uses higher drag activation threshold on mobile', () => {
+    expect(getGanttDragActivationThresholdPx(false)).toBe(3);
+    expect(getGanttDragActivationThresholdPx(true)).toBe(12);
+    expect(shouldActivateGanttDrag(3, false)).toBe(false);
+    expect(shouldActivateGanttDrag(4, false)).toBe(true);
+    expect(shouldActivateGanttDrag(12, true)).toBe(false);
+    expect(shouldActivateGanttDrag(13, true)).toBe(true);
+    expect(shouldIgnoreGanttPointerCancel(true)).toBe(true);
+    expect(shouldIgnoreGanttPointerCancel(false)).toBe(false);
+  });
+
+  it('resolveGanttEndingTouchIndex matches active pointer or single touch only', () => {
     expect(
-      shouldCommitGanttDragMove({
-        originalFieldName: 'A',
-        newFieldName: 'B',
-        daysFromStart: 0
-      })
-    ).toBe(true);
+      resolveGanttEndingTouchIndex({ changedTouchIds: [2], activePointerId: 2 })
+    ).toBe(0);
     expect(
-      shouldCommitGanttDragMove({
-        originalFieldName: 'A',
-        newFieldName: 'A',
-        daysFromStart: 3
-      })
-    ).toBe(true);
+      resolveGanttEndingTouchIndex({ changedTouchIds: [1, 2], activePointerId: 2 })
+    ).toBe(1);
     expect(
-      shouldCommitGanttDragMove({
-        originalFieldName: 'A',
-        newFieldName: 'A',
-        daysFromStart: 1
-      })
-    ).toBe(false);
+      resolveGanttEndingTouchIndex({ changedTouchIds: [1, 2], activePointerId: 9 })
+    ).toBeNull();
+    expect(
+      resolveGanttEndingTouchIndex({ changedTouchIds: [4], activePointerId: null })
+    ).toBe(0);
+  });
+
+  it('resolveGanttDragCommit detects position change for commit', () => {
+    const layout = {
+      marginLeft: 80,
+      chartWidth: 720,
+      rowHeight: 68,
+      displayStart: new Date('2026-01-01'),
+      displayEnd: new Date('2026-03-31')
+    };
+    const params = computeGanttBarParams({
+      cultivationStart: new Date('2026-02-01'),
+      cultivationEnd: new Date('2026-02-10'),
+      visibleStart: layout.displayStart,
+      visibleEnd: layout.displayEnd,
+      marginLeft: layout.marginLeft,
+      chartWidth: layout.chartWidth
+    });
+    expect(params).toBeTruthy();
+
+    const unchanged = resolveGanttDragCommit({
+      barX: params!.x,
+      barY: 10,
+      originalBarY: 10,
+      originalBarX: params!.x,
+      originalFieldIndex: 0,
+      originalFieldName: 'Field A',
+      fieldGroups: [{ fieldName: 'Field A' }],
+      layout
+    });
+    expect(unchanged.shouldCommit).toBe(false);
+
+    const moved = resolveGanttDragCommit({
+      barX: params!.x + 40,
+      barY: 10,
+      originalBarY: 10,
+      originalBarX: params!.x,
+      originalFieldIndex: 0,
+      originalFieldName: 'Field A',
+      fieldGroups: [{ fieldName: 'Field A' }],
+      layout
+    });
+    expect(moved.shouldCommit).toBe(true);
+    expect(moved.daysOffsetDelta).not.toBe(0);
+  });
+
+  it('buildGanttAdjustMove formats ISO date only', () => {
+    const move = buildGanttAdjustMove(9, 2, new Date('2026-03-15T12:00:00Z'));
+    expect(move).toEqual({
+      allocation_id: 9,
+      action: 'move',
+      to_field_id: 2,
+      to_start_date: '2026-03-15'
+    });
+  });
+
+  it('applyGanttCultivationMove updates cultivation dates and field', () => {
+    const cultivation = {
+      id: 1,
+      field_id: 1,
+      field_name: 'Field A',
+      crop_name: 'Rice',
+      start_date: '2026-02-01',
+      completion_date: '2026-02-11'
+    } as CultivationData;
+    const fieldGroups = buildGanttFieldGroups(
+      [{ id: 2, name: 'Field B' }],
+      [cultivation]
+    );
+    applyGanttCultivationMove({
+      cultivation,
+      fieldGroups,
+      newFieldName: 'Field B',
+      newFieldIndex: 0,
+      newStartDate: new Date('2026-03-01')
+    });
+    expect(cultivation.start_date).toBe('2026-03-01');
+    expect(cultivation.completion_date).toBe('2026-03-11');
+    expect(cultivation.field_name).toBe('Field B');
+    expect(cultivation.field_id).toBe(2);
   });
 
   it('preserves cultivation duration after move', () => {

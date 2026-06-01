@@ -29,6 +29,7 @@
 
 .cultivation-bar {
   cursor: grab;
+  touch-action: none;
   transition: opacity var(--transition-fast);
 }
 
@@ -335,10 +336,6 @@
 
 .gantt-page {
   position: relative;
-}
-
-.cultivation-bar.dragging {
-  touch-action: none;
 }
 
 .gantt-trash-dropzone {

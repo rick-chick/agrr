@@ -33,6 +33,7 @@ npm run test:e2e:smoke
 |----------|------|
 | `route-smoke.spec.ts` | `route-manifest.json` 全ルート: 正しいホスト表示・ローディング解消・`.error-message` 非表示 |
 | `operation-smoke.spec.ts` | ホーム CTA、ナビ、公開 wizard（farm-size → select-crop）、問い合わせ、**farms UI CRUD**、マスタ list/new/detail/edit、ガント UI、作業目安一覧→詳細、API キー、天気、作業予定 D&D など |
+| `gantt-mobile-drag.spec.ts` | **モバイル viewport** + **CDP touch** でガント作付バーを水平ドラッグ: しきい値未満では `adjust` しない、指を離すまで POST しない、離したあと **4 日以上**の日付移動を commit |
 
 `E2E_CAPTURE_DEV_SESSION` 未設定時は smoke は skip（`route-manifest-coverage` 等は `npm run test:e2e` で実行可）。未ログイン向けに `login` / 404 のみ別 describe で実行。
 
