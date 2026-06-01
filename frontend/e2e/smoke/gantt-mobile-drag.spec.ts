@@ -130,6 +130,22 @@ smokeDescribe('gantt mobile touch drag (CDP touch, not mouse)', () => {
     expect(posts, 'movement below mobile activation threshold must not adjust').toHaveLength(0);
   });
 
+  test('moves cultivation bar horizontally while touch is held', async ({ page }) => {
+    const bar = await openGanttBar(page);
+    if (!bar) return;
+
+    const barBg = bar.locator('.bar-bg').first();
+    const startX = await barBg.evaluate((el) => el.getAttribute('x'));
+
+    const swipe = await touchSwipeOnLocator(page, bar, 96, { end: 'hold', steps: 14 });
+    await page.waitForTimeout(200);
+
+    const midX = await barBg.evaluate((el) => el.getAttribute('x'));
+    expect(midX, 'bar should follow finger before release').not.toBe(startX);
+
+    await touchRelease(swipe.cdp);
+  });
+
   test('does not POST adjust until touch ends after horizontal swipe', async ({ page }) => {
     const bar = await openGanttBar(page);
     if (!bar) return;

@@ -8,6 +8,7 @@ import { of, throwError } from 'rxjs';
 import { GanttChartComponent } from './gantt-chart.component';
 import { PlanService, buildCultivationPlanEndpoint } from '../../services/plans/plan.service';
 import { AvailableCropData, CultivationData } from '../../domain/plans/cultivation-plan-data';
+import { GANTT_MARGIN_LEFT_MOBILE } from '../../domain/plans/gantt-chart-layout';
 describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
   let fixture: ComponentFixture<GanttChartComponent>;
@@ -49,7 +50,15 @@ describe('GanttChartComponent', () => {
         gantt: {
           no_field_data: '圃場データがありません。',
           no_plan_data: '計画データが読み込まれていません。',
-          trash_drop_label: '作付を削除'
+          trash_drop_label: '作付を削除',
+          mobile: {
+            field_legend_button: '圃場一覧',
+            field_legend_title: '圃場一覧',
+            field_legend_item: '{{index}}. {{fieldName}}',
+            field_legend_delete: '削除',
+            drag_target_field: '移動先: {{index}} — {{fieldName}}',
+            field_column_short: '#'
+          }
         }
       }
     }, true);
@@ -364,7 +373,7 @@ describe('GanttChartComponent', () => {
     });
   });
 
-  describe('mobile layout, trash drop, and pointer drop commit', () => {
+  describe('mobile layout and pointer drop wiring', () => {
     const cultivation = {
       id: 33,
       field_id: 1,
@@ -401,6 +410,25 @@ describe('GanttChartComponent', () => {
       mobileLayoutMatches = true;
       component.ngAfterViewInit();
       expect(component.isMobileLayout).toBe(true);
+    });
+
+    it('uses narrow left margin on mobile layout', () => {
+      mobileLayoutMatches = true;
+      component.ngAfterViewInit();
+      expect(component.config.margin.left).toBe(GANTT_MARGIN_LEFT_MOBILE);
+    });
+
+    it('toggles field legend open state on mobile', () => {
+      component.isMobileLayout = true;
+      component.fieldGroups = [
+        { fieldId: 1, fieldName: 'North', cultivations: [cultivation] },
+        { fieldId: 2, fieldName: 'South', cultivations: [] }
+      ];
+
+      expect(component.fieldLegendOpen).toBe(false);
+      component.toggleFieldLegend();
+      expect(component.fieldLegendOpen).toBe(true);
+      expect(component.fieldGroups.filter((g) => g.cultivations.length === 0).length).toBe(1);
     });
 
     it('shows cultivation delete controls when isMobileLayout is false', () => {

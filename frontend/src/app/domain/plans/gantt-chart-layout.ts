@@ -7,6 +7,34 @@ export const GANTT_MAX_VISIBLE_RANGE_MONTHS = 24;
 export const GANTT_MIN_CHART_WIDTH = 400;
 export const GANTT_DRAG_ACTIVATION_THRESHOLD_PX = 3;
 export const GANTT_DRAG_ACTIVATION_THRESHOLD_MOBILE_PX = 12;
+export const GANTT_MARGIN_LEFT_DESKTOP = 80;
+export const GANTT_MARGIN_LEFT_MOBILE = 36;
+
+export function getGanttMarginLeft(isMobileLayout: boolean): number {
+  return isMobileLayout ? GANTT_MARGIN_LEFT_MOBILE : GANTT_MARGIN_LEFT_DESKTOP;
+}
+
+export function formatGanttFieldRowIndexLabel(rowIndex: number): string {
+  return String(rowIndex + 1);
+}
+
+export function getGanttFieldLabelCenterX(marginLeft: number): number {
+  return marginLeft / 2;
+}
+
+export function resolveGanttDragFieldContext(input: {
+  targetFieldIndex: number;
+  fieldGroups: ReadonlyArray<{ fieldName: string }>;
+}): { rowIndex: number; fieldName: string } | null {
+  if (input.targetFieldIndex < 0 || input.targetFieldIndex >= input.fieldGroups.length) {
+    return null;
+  }
+  const group = input.fieldGroups[input.targetFieldIndex];
+  return {
+    rowIndex: input.targetFieldIndex + 1,
+    fieldName: group.fieldName
+  };
+}
 
 export function getGanttDragActivationThresholdPx(isMobileLayout: boolean): number {
   return isMobileLayout
@@ -485,20 +513,156 @@ export function shouldIgnoreGanttPointerCancel(isMobileLayout: boolean): boolean
 }
 
 /**
- * touchend の changedTouches から、ドラッグ中ポインタに対応する index を選ぶ。
- * 複数指で曖昧なときは null（誤 commit 防止）。
+ * touch リスト（touches / changedTouches）からドラッグ中ポインタの index を選ぶ。
+ * 複数指で曖昧なときは null。
  */
-export function resolveGanttEndingTouchIndex(input: {
-  changedTouchIds: readonly number[];
-  activePointerId: number | null;
-}): number | null {
-  if (input.changedTouchIds.length === 0) return null;
-  if (input.activePointerId !== null) {
-    const matched = input.changedTouchIds.indexOf(input.activePointerId);
+export function pickGanttActiveTouchIndex(
+  touchIdentifiers: readonly number[],
+  activePointerId: number | null
+): number | null {
+  if (touchIdentifiers.length === 0) return null;
+  if (activePointerId !== null) {
+    const matched = touchIdentifiers.indexOf(activePointerId);
     if (matched >= 0) return matched;
   }
-  if (input.changedTouchIds.length === 1) return 0;
+  if (touchIdentifiers.length === 1) return 0;
   return null;
+}
+
+export function collectTouchIdentifiers(
+  touchCount: number,
+  identifierAt: (index: number) => number | undefined
+): number[] {
+  const identifiers: number[] = [];
+  for (let i = 0; i < touchCount; i++) {
+    const id = identifierAt(i);
+    if (id !== undefined) identifiers.push(id);
+  }
+  return identifiers;
+}
+
+export function computeGanttPointerDragDistancePx(
+  clientX: number,
+  clientY: number,
+  startX: number,
+  startY: number
+): number {
+  const dx = clientX - startX;
+  const dy = clientY - startY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+export function shouldShowGanttMobileTrashDropzone(input: {
+  isMobileLayout: boolean;
+  isDragging: boolean;
+  pointerDragDistance: number;
+}): boolean {
+  if (!input.isMobileLayout) return false;
+  return (
+    input.isDragging ||
+    input.pointerDragDistance > getGanttDragActivationThresholdPx(true)
+  );
+}
+
+export function resolveGanttMobileDragFieldContext(input: {
+  isMobileLayout: boolean;
+  isDragging: boolean;
+  targetFieldIndex: number;
+  originalFieldIndex: number;
+  fieldGroups: ReadonlyArray<{ fieldName: string }>;
+}): { rowIndex: number; fieldName: string } | null {
+  if (!input.isMobileLayout || !input.isDragging) return null;
+  if (input.targetFieldIndex === input.originalFieldIndex) return null;
+  return resolveGanttDragFieldContext({
+    targetFieldIndex: input.targetFieldIndex,
+    fieldGroups: input.fieldGroups
+  });
+}
+
+export function computeGanttDragPointerSvgOffset(input: {
+  pointerSvgX: number;
+  pointerSvgY: number;
+  originalBarX: number;
+  currentBarY: number;
+}): { x: number; y: number } {
+  return {
+    x: input.pointerSvgX - input.originalBarX,
+    y: input.pointerSvgY - input.currentBarY
+  };
+}
+
+export type GanttRowHighlightState =
+  | { visible: false }
+  | { visible: true; y: number; height: number; opacity: number };
+
+export function computeGanttDragBarSvgPosition(input: {
+  pointerSvgX: number;
+  pointerSvgY: number;
+  initialOffset: { x: number; y: number };
+  originalBarY: number;
+  originalFieldIndex: number;
+  rowHeight: number;
+  fieldCount: number;
+  headerHeight: number;
+}): {
+  barX: number;
+  barY: number;
+  targetFieldIndex: number;
+  rowHighlight: GanttRowHighlightState;
+} {
+  const barX = input.pointerSvgX - input.initialOffset.x;
+  const barY = input.pointerSvgY - input.initialOffset.y;
+  const deltaY = barY - input.originalBarY;
+  const targetFieldIndex = computeGanttTargetFieldIndex({
+    originalFieldIndex: input.originalFieldIndex,
+    deltaY,
+    rowHeight: input.rowHeight,
+    fieldCount: input.fieldCount
+  });
+  const rowHighlight: GanttRowHighlightState =
+    targetFieldIndex !== input.originalFieldIndex
+      ? {
+          visible: true,
+          y: computeGanttFieldRowHighlightY({
+            targetFieldIndex,
+            rowHeight: input.rowHeight,
+            headerHeight: input.headerHeight
+          }),
+          height: input.rowHeight,
+          opacity: 0.4
+        }
+      : { visible: false };
+  return { barX, barY, targetFieldIndex, rowHighlight };
+}
+
+export function resolveGanttEffectiveDisplayRange(input: {
+  dragStartDisplayStart: Date | null;
+  dragStartDisplayEnd: Date | null;
+  visibleStart: Date | null;
+  visibleEnd: Date | null;
+  planStart: Date | null;
+  planEnd: Date | null;
+}): { start: Date; end: Date } {
+  return {
+    start: input.dragStartDisplayStart ?? input.visibleStart ?? input.planStart ?? new Date(),
+    end: input.dragStartDisplayEnd ?? input.visibleEnd ?? input.planEnd ?? new Date()
+  };
+}
+
+export function buildGanttDragDropLayout(input: {
+  marginLeft: number;
+  chartWidth: number;
+  rowHeight: number;
+  displayStart: Date;
+  displayEnd: Date;
+}): GanttDragDropLayout {
+  return {
+    marginLeft: input.marginLeft,
+    chartWidth: input.chartWidth,
+    rowHeight: input.rowHeight,
+    displayStart: input.displayStart,
+    displayEnd: input.displayEnd
+  };
 }
 
 export function resolveGanttDragCommit(input: {

@@ -19,8 +19,22 @@ import {
   applyGanttCultivationMove,
   buildGanttAdjustMove,
   getGanttDragActivationThresholdPx,
+  getGanttMarginLeft,
+  formatGanttFieldRowIndexLabel,
+  getGanttFieldLabelCenterX,
+  resolveGanttDragFieldContext,
+  GANTT_MARGIN_LEFT_DESKTOP,
+  GANTT_MARGIN_LEFT_MOBILE,
   resolveGanttDragCommit,
-  resolveGanttEndingTouchIndex,
+  pickGanttActiveTouchIndex,
+  collectTouchIdentifiers,
+  computeGanttPointerDragDistancePx,
+  shouldShowGanttMobileTrashDropzone,
+  resolveGanttMobileDragFieldContext,
+  computeGanttDragPointerSvgOffset,
+  computeGanttDragBarSvgPosition,
+  resolveGanttEffectiveDisplayRange,
+  buildGanttDragDropLayout,
   shouldIgnoreGanttPointerCancel,
   shouldActivateGanttDrag,
   shouldReinitializeGanttVisibleRange
@@ -168,6 +182,30 @@ describe('gantt-chart-layout', () => {
     ).toBe(1);
   });
 
+  it('exposes desktop and mobile left margins', () => {
+    expect(GANTT_MARGIN_LEFT_DESKTOP).toBe(80);
+    expect(GANTT_MARGIN_LEFT_MOBILE).toBe(36);
+    expect(getGanttMarginLeft(false)).toBe(80);
+    expect(getGanttMarginLeft(true)).toBe(36);
+  });
+
+  it('formats field row index labels as 1-based strings', () => {
+    expect(formatGanttFieldRowIndexLabel(0)).toBe('1');
+    expect(formatGanttFieldRowIndexLabel(4)).toBe('5');
+    expect(getGanttFieldLabelCenterX(80)).toBe(40);
+    expect(getGanttFieldLabelCenterX(36)).toBe(18);
+  });
+
+  it('resolveGanttDragFieldContext returns row index and name or null', () => {
+    const groups = [{ fieldName: 'A' }, { fieldName: 'B' }];
+    expect(resolveGanttDragFieldContext({ targetFieldIndex: 1, fieldGroups: groups })).toEqual({
+      rowIndex: 2,
+      fieldName: 'B'
+    });
+    expect(resolveGanttDragFieldContext({ targetFieldIndex: -1, fieldGroups: groups })).toBeNull();
+    expect(resolveGanttDragFieldContext({ targetFieldIndex: 2, fieldGroups: groups })).toBeNull();
+  });
+
   it('uses higher drag activation threshold on mobile', () => {
     expect(getGanttDragActivationThresholdPx(false)).toBe(3);
     expect(getGanttDragActivationThresholdPx(true)).toBe(12);
@@ -179,19 +217,165 @@ describe('gantt-chart-layout', () => {
     expect(shouldIgnoreGanttPointerCancel(false)).toBe(false);
   });
 
-  it('resolveGanttEndingTouchIndex matches active pointer or single touch only', () => {
+  it('pickGanttActiveTouchIndex matches active pointer or single touch only', () => {
+    expect(pickGanttActiveTouchIndex([2], 2)).toBe(0);
+    expect(pickGanttActiveTouchIndex([1, 2], 2)).toBe(1);
+    expect(pickGanttActiveTouchIndex([1, 2], 9)).toBeNull();
+    expect(pickGanttActiveTouchIndex([4], null)).toBe(0);
+  });
+
+  it('collectTouchIdentifiers reads touch ids in order', () => {
+    expect(collectTouchIdentifiers(2, (i) => (i === 0 ? 1 : 2))).toEqual([1, 2]);
+    expect(collectTouchIdentifiers(1, () => undefined)).toEqual([]);
+  });
+
+  it('computeGanttPointerDragDistancePx uses euclidean distance', () => {
+    expect(computeGanttPointerDragDistancePx(103, 104, 100, 100)).toBe(5);
+  });
+
+  it('shouldShowGanttMobileTrashDropzone follows mobile drag rules', () => {
     expect(
-      resolveGanttEndingTouchIndex({ changedTouchIds: [2], activePointerId: 2 })
-    ).toBe(0);
+      shouldShowGanttMobileTrashDropzone({
+        isMobileLayout: false,
+        isDragging: true,
+        pointerDragDistance: 100
+      })
+    ).toBe(false);
     expect(
-      resolveGanttEndingTouchIndex({ changedTouchIds: [1, 2], activePointerId: 2 })
-    ).toBe(1);
+      shouldShowGanttMobileTrashDropzone({
+        isMobileLayout: true,
+        isDragging: false,
+        pointerDragDistance: 8
+      })
+    ).toBe(false);
     expect(
-      resolveGanttEndingTouchIndex({ changedTouchIds: [1, 2], activePointerId: 9 })
+      shouldShowGanttMobileTrashDropzone({
+        isMobileLayout: true,
+        isDragging: false,
+        pointerDragDistance: 13
+      })
+    ).toBe(true);
+    expect(
+      shouldShowGanttMobileTrashDropzone({
+        isMobileLayout: true,
+        isDragging: true,
+        pointerDragDistance: 0
+      })
+    ).toBe(true);
+  });
+
+  it('resolveGanttMobileDragFieldContext hides same row and requires mobile drag', () => {
+    const groups = [{ fieldName: 'A' }, { fieldName: 'B' }];
+    expect(
+      resolveGanttMobileDragFieldContext({
+        isMobileLayout: false,
+        isDragging: true,
+        targetFieldIndex: 1,
+        originalFieldIndex: 0,
+        fieldGroups: groups
+      })
     ).toBeNull();
     expect(
-      resolveGanttEndingTouchIndex({ changedTouchIds: [4], activePointerId: null })
-    ).toBe(0);
+      resolveGanttMobileDragFieldContext({
+        isMobileLayout: true,
+        isDragging: true,
+        targetFieldIndex: 0,
+        originalFieldIndex: 0,
+        fieldGroups: groups
+      })
+    ).toBeNull();
+    expect(
+      resolveGanttMobileDragFieldContext({
+        isMobileLayout: true,
+        isDragging: true,
+        targetFieldIndex: 1,
+        originalFieldIndex: 0,
+        fieldGroups: groups
+      })
+    ).toEqual({ rowIndex: 2, fieldName: 'B' });
+  });
+
+  it('computeGanttDragPointerSvgOffset records svg grab offset', () => {
+    expect(
+      computeGanttDragPointerSvgOffset({
+        pointerSvgX: 120,
+        pointerSvgY: 50,
+        originalBarX: 100,
+        currentBarY: 10
+      })
+    ).toEqual({ x: 20, y: 40 });
+  });
+
+  it('computeGanttDragBarSvgPosition returns bar coords and row highlight', () => {
+    const result = computeGanttDragBarSvgPosition({
+      pointerSvgX: 150,
+      pointerSvgY: 77,
+      initialOffset: { x: 20, y: 40 },
+      originalBarY: 10,
+      originalFieldIndex: 0,
+      rowHeight: 68,
+      fieldCount: 2,
+      headerHeight: 60
+    });
+    expect(result.barX).toBe(130);
+    expect(result.barY).toBe(37);
+    expect(result.targetFieldIndex).toBe(0);
+    expect(result.rowHighlight).toEqual({ visible: false });
+
+    const movedRow = computeGanttDragBarSvgPosition({
+      pointerSvgX: 150,
+      pointerSvgY: 200,
+      initialOffset: { x: 20, y: 40 },
+      originalBarY: 10,
+      originalFieldIndex: 0,
+      rowHeight: 68,
+      fieldCount: 2,
+      headerHeight: 60
+    });
+    expect(movedRow.targetFieldIndex).toBe(1);
+    expect(movedRow.rowHighlight).toEqual({
+      visible: true,
+      y: 128,
+      height: 68,
+      opacity: 0.4
+    });
+  });
+
+  it('resolveGanttEffectiveDisplayRange prefers drag snapshot then visible then plan', () => {
+    const dragStart = new Date('2026-02-01');
+    const dragEnd = new Date('2026-04-01');
+    const visibleStart = new Date('2026-01-01');
+    const planStart = new Date('2025-01-01');
+    expect(
+      resolveGanttEffectiveDisplayRange({
+        dragStartDisplayStart: dragStart,
+        dragStartDisplayEnd: dragEnd,
+        visibleStart,
+        visibleEnd: null,
+        planStart,
+        planEnd: null
+      })
+    ).toEqual({ start: dragStart, end: dragEnd });
+  });
+
+  it('buildGanttDragDropLayout copies chart layout fields', () => {
+    const start = new Date('2026-01-01');
+    const end = new Date('2026-03-31');
+    expect(
+      buildGanttDragDropLayout({
+        marginLeft: 36,
+        chartWidth: 700,
+        rowHeight: 68,
+        displayStart: start,
+        displayEnd: end
+      })
+    ).toEqual({
+      marginLeft: 36,
+      chartWidth: 700,
+      rowHeight: 68,
+      displayStart: start,
+      displayEnd: end
+    });
   });
 
   it('resolveGanttDragCommit detects position change for commit', () => {

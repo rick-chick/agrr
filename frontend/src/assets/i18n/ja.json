@@ -1987,6 +1987,14 @@
         "day": "日",
         "week": "週",
         "quarter": "四半期"
+      },
+      "mobile": {
+        "field_column_short": "#",
+        "field_legend_button": "圃場一覧",
+        "field_legend_title": "圃場一覧",
+        "field_legend_item": "{{index}}. {{fieldName}}",
+        "field_legend_delete": "削除",
+        "drag_target_field": "移動先: {{index}} — {{fieldName}}"
       }
     },
     "field_climate": {

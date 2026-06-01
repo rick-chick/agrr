@@ -13,6 +13,22 @@
   -webkit-overflow-scrolling: touch;
 }
 
+@media (max-width: 768px) {
+  .gantt-scroll-area,
+  .custom-gantt-chart {
+    touch-action: none;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .gantt-page--touch-drag {
+    touch-action: none;
+  }
+
+  .gantt-page--touch-drag .gantt-scroll-area {
+    overflow: hidden;
+  }
+}
+
 .custom-gantt-chart {
   display: block;
   user-select: none;
@@ -147,6 +163,7 @@
 .gantt-container,
 .gantt-scroll-area,
 .crop-palette,
+.gantt-field-legend,
 .field-form,
 .no-data-message {
   width: 100%;
@@ -223,6 +240,74 @@
 .action-button.active {
   background: var(--color-primary-hover);
   box-shadow: var(--shadow-focus-ring-primary);
+}
+
+.action-button--secondary {
+  background: var(--color-surface);
+  color: var(--color-gray-900);
+  border: 1px solid var(--color-gray-300);
+}
+
+.action-button--secondary.active {
+  background: var(--color-gray-100);
+  box-shadow: var(--shadow-sm);
+}
+
+.gantt-drag-context {
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-200);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.gantt-field-legend {
+  background: var(--color-surface);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-sm);
+}
+
+.gantt-field-legend__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.gantt-field-legend__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.gantt-field-legend__label {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.gantt-field-legend__delete {
+  flex-shrink: 0;
+  border: 1px solid var(--color-danger, #ef4444);
+  border-radius: var(--radius-md);
+  padding: 0.25rem 0.5rem;
+  background: var(--color-surface);
+  color: var(--color-danger, #ef4444);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .crop-palette {

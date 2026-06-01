@@ -1075,6 +1075,14 @@
         "day": "d",
         "week": "w",
         "quarter": "Q"
+      },
+      "mobile": {
+        "field_column_short": "#",
+        "field_legend_button": "Fields",
+        "field_legend_title": "Field list",
+        "field_legend_item": "{{index}}. {{fieldName}}",
+        "field_legend_delete": "Remove",
+        "drag_target_field": "Move to: {{index}} — {{fieldName}}"
       }
     },
     "field_climate": {
