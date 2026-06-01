@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.service';
+import { HOME_DEMO_SECTION_I18N_KEYS } from '../../domain/plans/landing-demo-i18n.keys';
 
 @Component({
   selector: 'app-home',
@@ -22,24 +23,25 @@ import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.s
     </section>
 
     <section id="home-demo" class="home-demo-section" aria-labelledby="home-demo-heading">
-      <h2 id="home-demo-heading">{{ 'home.index.demo.title' | translate }}</h2>
-      <p class="home-demo-section__lead">{{ 'home.index.demo.lead' | translate }}</p>
-      <ul class="home-demo-hints" [attr.aria-label]="'home.index.demo.title' | translate">
+      <h2 id="home-demo-heading">{{ demoSectionTitle }}</h2>
+      <ul class="home-demo-hints" [attr.aria-label]="'home.index.demo.hints_aria' | translate">
         @for (hintKey of demoHintKeys; track hintKey) {
           <li class="home-demo-hint">{{ hintKey | translate }}</li>
         }
       </ul>
-      <p class="home-demo-section__disclaimer">{{ 'home.index.demo.disclaimer' | translate }}</p>
       @if (demoPlanData) {
         <div class="home-demo-gantt-wrap">
           <div class="home-demo-gantt__chrome">
-            <span class="home-demo-gantt__badge">{{ 'home.index.demo.badge' | translate }}</span>
+            <span class="home-demo-gantt__badge">{{
+              HOME_DEMO_SECTION_I18N_KEYS.preview | translate
+            }}</span>
           </div>
           <div class="home-demo-gantt plan-detail-surface">
             <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
           </div>
         </div>
       }
+      <p class="home-demo-section__disclaimer">{{ 'home.index.demo.disclaimer' | translate }}</p>
       <div class="home-demo-section__actions">
         <button type="button" class="primary-button large" (click)="navigateToPlan()">
           {{ 'home.index.demo.cta_create' | translate }}
@@ -74,12 +76,19 @@ import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.s
   ]
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  readonly HOME_DEMO_SECTION_I18N_KEYS = HOME_DEMO_SECTION_I18N_KEYS;
+
   private readonly router = inject(Router);
   private readonly demoStore = inject(DemoGanttPlanStore);
   private readonly translate = inject(TranslateService);
   private langChangeSub: Subscription | null = null;
 
   demoPlanData: CultivationPlanData | null = null;
+  demoTitleParams: { schedule: string; preview: string; separator: string } = {
+    schedule: '',
+    preview: '',
+    separator: ''
+  };
 
   readonly demoHintKeys = [
     'home.index.demo.hints.drag',
@@ -125,5 +134,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private applyDemoLocale(): void {
     this.demoPlanData = this.demoStore.syncFromTranslate(this.translate);
+    this.demoTitleParams = {
+      schedule: this.translate.instant(HOME_DEMO_SECTION_I18N_KEYS.schedule),
+      preview: this.translate.instant(HOME_DEMO_SECTION_I18N_KEYS.preview),
+      separator: this.translate.instant(HOME_DEMO_SECTION_I18N_KEYS.separator)
+    };
   }
 }

@@ -1,3 +1,11 @@
+/** Landing demo section heading: `{{schedule}}{{separator}}{{preview}}`. */
+export const HOME_DEMO_SECTION_I18N_KEYS = {
+  title: 'home.index.demo.title',
+  schedule: 'home.index.demo.schedule',
+  preview: 'home.index.demo.preview',
+  separator: 'home.index.demo.separator'
+} as const;
+
 /** i18n paths for landing demo fixtures (see assets/i18n). */
 export const LANDING_DEMO_I18N_KEYS = {
   planName: 'home.index.demo.fixture.plan_name',

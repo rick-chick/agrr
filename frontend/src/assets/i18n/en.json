@@ -249,21 +249,23 @@
     "index": {
       "hero": {
         "title": "🌱 Make Agriculture Smarter",
-        "subtitle_html": "Take your farming to the next level with crop planning powered by weather data and AI.<br>Try the sample calendar below first.",
-        "cta_scroll_demo": "Try the sample calendar",
-        "cta_footer_link": "Start a free crop plan now"
+        "subtitle_html": "Visualize crop plans with weather and GDD.",
+        "cta_scroll_demo": "View preview",
+        "cta_footer_link": "Create plan"
       },
       "demo": {
-        "title": "Sample planting calendar (try it)",
-        "lead": "Drag bars, add crops, and open climate charts. Weather and GDD use sample data.",
-        "disclaimer": "Actions on this screen stay on your device only. Full optimization (~1 minute) runs separately when you create your own plan.",
-        "badge": "Demo",
+        "title": "{{schedule}}{{separator}}{{preview}}",
+        "schedule": "Schedule",
+        "preview": "Preview",
+        "separator": " · ",
+        "hints_aria": "Preview controls",
+        "disclaimer": "Sandbox · on-device only",
         "hints": {
-          "drag": "Drag a bar to shift dates",
-          "tap": "Tap a bar for weather and GDD",
-          "add": "Use + to add a crop"
+          "drag": "Drag to adjust timelines",
+          "tap": "Click for climate & GDD",
+          "add": "Add crops"
         },
-        "cta_create": "Create a plan for my region and crops",
+        "cta_create": "Create production plan",
         "fixture": {
           "plan_name": "Sample crop plan (demo)",
           "farm_name": "Sample community garden (demo)",

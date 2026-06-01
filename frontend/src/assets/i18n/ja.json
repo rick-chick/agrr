@@ -2273,21 +2273,23 @@
     "index": {
       "hero": {
         "title": "🌱 農業をもっとスマートに",
-        "subtitle_html": "気象データとAIを活用した作付け計画で、あなたの農業を次のレベルへ。<br>まずは下のサンプルカレンダーを触ってみてください。",
-        "cta_scroll_demo": "サンプルカレンダーを触る",
-        "cta_footer_link": "いますぐ無料で作付け計画を始める"
+        "subtitle_html": "気象とGDDで、作付け計画を可視化。",
+        "cta_scroll_demo": "プレビューを見る",
+        "cta_footer_link": "計画を作成"
       },
       "demo": {
-        "title": "サンプル作付けカレンダー（触ってみる）",
-        "lead": "バーを動かしたり作物を足したりできます。気象・GDDはサンプルデータです。",
-        "disclaimer": "この画面の操作はお使いの端末内だけで完結します。本番の最適化（約1分）とは別の簡易デモです。",
-        "badge": "デモ",
+        "title": "{{schedule}}{{separator}}{{preview}}",
+        "schedule": "スケジュール",
+        "preview": "プレビュー",
+        "separator": " · ",
+        "hints_aria": "プレビュー操作",
+        "disclaimer": "サンドボックス · 端末内処理",
         "hints": {
-          "drag": "バーをドラッグして日程を変更",
-          "tap": "バーをタップして気象・GDDを表示",
-          "add": "＋から作物を追加"
+          "drag": "ドラッグで期間を調整",
+          "tap": "クリックで気象・GDD",
+          "add": "作物を追加"
         },
-        "cta_create": "自分の地域・作物で計画を作る",
+        "cta_create": "本番で計画を作成",
         "fixture": {
           "plan_name": "サンプル作付け計画（デモ）",
           "farm_name": "サンプル市民農園（デモ）",

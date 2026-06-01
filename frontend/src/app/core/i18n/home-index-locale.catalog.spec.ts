@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import en from '../../../assets/i18n/en.json';
 import inLocale from '../../../assets/i18n/in.json';
 import ja from '../../../assets/i18n/ja.json';
-import { LANDING_DEMO_I18N_KEYS } from '../../domain/plans/landing-demo-i18n.keys';
+import {
+  HOME_DEMO_SECTION_I18N_KEYS,
+  LANDING_DEMO_I18N_KEYS
+} from '../../domain/plans/landing-demo-i18n.keys';
+import { buildHomeDemoTitle } from './home-demo-title';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -21,9 +25,11 @@ const HOME_INDEX_KEYS = [
   'home.index.hero.cta_scroll_demo',
   'home.index.hero.cta_footer_link',
   'home.index.demo.title',
-  'home.index.demo.lead',
+  'home.index.demo.schedule',
+  'home.index.demo.preview',
+  'home.index.demo.separator',
+  'home.index.demo.hints_aria',
   'home.index.demo.disclaimer',
-  'home.index.demo.badge',
   'home.index.demo.hints.drag',
   'home.index.demo.hints.tap',
   'home.index.demo.hints.add',
@@ -46,6 +52,19 @@ const locales: { name: string; catalog: JsonRecord }[] = [
 ];
 
 describe('home.index i18n catalog', () => {
+  it('composes Schedule · Preview title from locale parts (ja)', () => {
+    const instant = (key: string, params?: Record<string, string>) => {
+      let value = getNested(ja as JsonRecord, key) as string;
+      if (params) {
+        for (const [name, replacement] of Object.entries(params)) {
+          value = value.replaceAll(`{{${name}}}`, replacement);
+        }
+      }
+      return value;
+    };
+    expect(buildHomeDemoTitle({ instant })).toBe('スケジュール · プレビュー');
+  });
+
   for (const { name, catalog } of locales) {
     describe(name, () => {
       for (const key of HOME_INDEX_KEYS) {
