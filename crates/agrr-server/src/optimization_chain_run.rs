@@ -27,7 +27,7 @@ use time::{Date, OffsetDateTime};
 use tracing::{error, warn};
 
 use crate::cable::CableHub;
-use crate::optimization_job_chain::{advance_phase, broadcast_completed, plan_still_optimizing};
+use crate::optimization_chain_phase::{advance_phase, broadcast_completed, plan_still_optimizing};
 
 #[derive(Clone)]
 pub struct ChainContext {
@@ -122,7 +122,7 @@ impl FetchWeatherAdvancePhasePort for ChainFetchAdvance<'_> {
                 CultivationPlanPhaseName::PhaseWeatherDataFetched
             }
         };
-        advance_phase(self.state, plan_id, channel_class, phase_name, None);
+        let _ = advance_phase(self.state, plan_id, channel_class, phase_name, None);
     }
 }
 
@@ -175,7 +175,7 @@ pub fn run_fetch_weather_step(
         channel,
         CultivationPlanPhaseName::PhaseWeatherDataFetched,
         None,
-    );
+    )?;
     Ok(())
 }
 
@@ -191,7 +191,7 @@ pub fn run_weather_prediction_step(
         channel,
         CultivationPlanPhaseName::PhasePredictingWeather,
         None,
-    );
+    )?;
 
     let pool = state.sqlite.clone();
     let wl = crate::cultivation_plan_weather_load::load_weather_location(&pool, plan_id)?;
@@ -232,7 +232,7 @@ pub fn run_weather_prediction_step(
         channel,
         CultivationPlanPhaseName::PhaseWeatherPredictionCompleted,
         None,
-    );
+    )?;
     Ok(())
 }
 
@@ -291,7 +291,7 @@ pub fn run_plan_finalize_step(
             "optimization chain finalize rejected plan_id={plan_id}: field_cultivations={} statuses={statuses:?}",
             field_cultivations.len()
         );
-        advance_phase(
+        let _ = advance_phase(
             state,
             plan_id,
             channel,
@@ -308,7 +308,7 @@ pub fn run_plan_finalize_step(
         channel,
         CultivationPlanPhaseName::PhaseCompleted,
         None,
-    );
+    )?;
     broadcast_completed(hub, plan_id, &pool);
     eprintln!(
         "optimization chain finalized plan_id={plan_id} field_cultivations={}",

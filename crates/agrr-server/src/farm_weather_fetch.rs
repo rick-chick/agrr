@@ -80,7 +80,7 @@ impl FetchWeatherDataEnqueuePort for FetchWeatherDataJobEnqueue {
                 }),
             });
         }
-        self.state.job_dispatcher.enqueue_chain(steps);
+        self.state.weather_fetch_job_dispatcher.enqueue_chain(steps);
     }
 }
 

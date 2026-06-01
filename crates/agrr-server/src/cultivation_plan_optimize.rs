@@ -9,7 +9,7 @@
 //! `predict_for_cultivation_plan` は `run_weather_prediction_step`（Rails `WeatherPredictionJob`）で先行実行。
 
 use crate::adapters::{NoopLogger, SystemClock};
-use crate::optimization_job_chain::advance_phase;
+use crate::optimization_chain_phase::advance_phase;
 use crate::state::AppState;
 use agrr_adapters_agrr::PlanAllocationAllocateAgrrDaemonGateway;
 use agrr_adapters_sqlite::{
@@ -33,7 +33,7 @@ impl CultivationPlanOptimizeAdvancePhasePort for ChainOptimizeAdvance<'_> {
         phase_name: CultivationPlanPhaseName,
         failure_subphase: Option<&str>,
     ) {
-        advance_phase(
+        let _ = advance_phase(
             self.state,
             plan_id,
             channel_class,

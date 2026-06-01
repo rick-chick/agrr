@@ -21,7 +21,10 @@ pub struct AppState {
     /// Ruby: `BackdoorConfig.token` from `AGRR_BACKDOOR_TOKEN`.
     pub backdoor_token: Arc<String>,
     pub secure_cookies: bool,
-    pub job_dispatcher: Arc<JobChainDispatcher>,
+    /// Farm / scheduler `FetchWeatherDataJob` chains (may be slow; must not block optimization).
+    pub weather_fetch_job_dispatcher: Arc<JobChainDispatcher>,
+    /// Cultivation-plan optimization chains only (`fetch_weather` → predict → optimize → finalize).
+    pub optimization_chain_dispatcher: Arc<JobChainDispatcher>,
     pub cable_hub: Arc<CableHub>,
     pub locale_catalog: Arc<LocaleCatalog>,
 }
@@ -55,7 +58,8 @@ impl AppState {
             ),
             backdoor_token: Arc::new(std::env::var("AGRR_BACKDOOR_TOKEN").unwrap_or_default()),
             secure_cookies: runtime_env::is_production(),
-            job_dispatcher: Arc::new(JobChainDispatcher::new()),
+            weather_fetch_job_dispatcher: Arc::new(JobChainDispatcher::new()),
+            optimization_chain_dispatcher: Arc::new(JobChainDispatcher::new()),
             cable_hub: Arc::new(CableHub::default()),
         }
     }
@@ -80,5 +84,84 @@ impl AppState {
     pub fn locale_translator<'a>(&'a self, headers: &HeaderMap) -> LocaleTranslator<'a> {
         let locale = locale_from_headers(headers);
         LocaleTranslator::new(&self.locale_catalog, locale)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::jobs::JobStep;
+    use crate::optimization_chain_phase::advance_phase;
+    use crate::test_support::{read_optimization_phase, test_app_state, test_pool_with_plan, wait_until};
+    use agrr_domain::cultivation_plan::dtos::CultivationPlanPhaseName;
+
+    #[test]
+    fn weather_and_optimization_dispatchers_are_distinct_instances() {
+        let state = test_app_state(test_pool_with_plan(1).pool);
+        assert!(
+            !Arc::ptr_eq(
+                &state.weather_fetch_job_dispatcher,
+                &state.optimization_chain_dispatcher
+            ),
+            "AppState must wire separate dispatchers"
+        );
+    }
+
+    #[test]
+    fn slow_weather_fetch_does_not_block_optimization_dispatcher_queue() {
+        let db = test_pool_with_plan(1);
+        let pool = db.pool.clone();
+        let state = test_app_state(db.pool);
+        let channel = "PublicPlanChannel";
+
+        advance_phase(
+            &state,
+            1,
+            channel,
+            CultivationPlanPhaseName::StartOptimizing,
+            None,
+        )
+        .expect("start optimizing");
+        assert_eq!(
+            read_optimization_phase(&pool, 1).as_deref(),
+            Some("initializing")
+        );
+
+        state.weather_fetch_job_dispatcher.enqueue_chain(vec![JobStep {
+            name: "scheduler_fetch_weather_data",
+            run: Arc::new(|| {
+                Box::pin(async {
+                    tokio::time::sleep(std::time::Duration::from_millis(2_000)).await;
+                    true
+                })
+            }),
+        }]);
+
+        let state_for_fetch = state.clone();
+        state.optimization_chain_dispatcher.enqueue_chain(vec![JobStep {
+            name: "fetch_weather_data",
+            run: Arc::new(move || {
+                let state = state_for_fetch.clone();
+                Box::pin(async move {
+                    advance_phase(
+                        &state,
+                        1,
+                        channel,
+                        CultivationPlanPhaseName::PhaseFetchingWeather,
+                        None,
+                    )
+                    .expect("fetching weather phase");
+                    true
+                })
+            }),
+        }]);
+
+        assert!(
+            wait_until(std::time::Duration::from_millis(500), || {
+                read_optimization_phase(&pool, 1).as_deref() == Some("fetching_weather")
+            }),
+            "optimization queue must run while weather queue is busy; phase={:?}",
+            read_optimization_phase(&pool, 1)
+        );
     }
 }

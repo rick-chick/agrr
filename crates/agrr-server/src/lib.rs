@@ -45,8 +45,11 @@ pub mod masters_interaction_rules;
 pub mod masters_json;
 pub mod masters_pests;
 pub mod masters_pesticides;
+pub mod optimization_chain_phase;
 pub mod optimization_chain_run;
 pub mod optimization_job_chain;
+#[cfg(test)]
+mod test_support;
 pub mod plan_allocation_adjust_debug_dump;
 pub mod plan_allocation_candidates;
 pub mod plans;
