@@ -800,46 +800,18 @@ Enforced in **domain Policies**. ActiveRecord validations and DB constraints are
 
 ## Testing
 
-Placement follows two rules.
+**Production path (R4)**: `test/contract/**` with `CONTRACT_RUNTIME=rust` and co-located `agrr-server` — [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh). This is the API/WS behavioral gate after P7.
 
-1. **Runtime** - `test/domain/` is the only Rails-free suite (`run-test-domain-lib.sh`); everything else runs on the Rails stack (`run-test-rails.sh`). Two kinds of test doubles serve different purposes:
-   - **Ad-hoc mocks** (`Object.new`, `mock`, `Minitest::Mock`) — used in `test/domain/` unit tests. Lightweight, Rails-free, satisfy only the gateway interface contract for the specific scenario being tested.
-   - **Memory gateways** (`app/adapters/<context>/gateways/*_memory_gateway.rb`) — full adapter implementations that store data in memory. Rails-dependent (Zeitwerk autoloaded). Used in `test/adapters/` adapter tests, `test/integration/`, `test/system/`, and other Rails-stack tests that need a working gateway without a real database.
-   Concrete adapter implementations (ActiveRecord gateways, memory gateways, HTTP gateways, etc. under `app/adapters/`) are tested under `test/adapters/` on the Rails stack.
-2. **Layer mirror** - `test/<X>/` mirrors the target production path with the source root (`app/` / `lib/`) dropped. **Condition**: place mirror tests only when *testable logic exists*. The following do not require mirror tests — domain contexts with no interactors (interface / DTO only, e.g. `logger`), **domain policies** (tested under `test/domain/<context>/` on the Rails-free runner), static/development controllers (`pages` / `dev/*` / `sitemaps` / `spa` / `demo` / `api_docs`), and adapters composed solely of presenters that are indirectly covered by controller / edge tests.
+**Domain logic**: `cargo test` in `crates/agrr-domain` — [`.cursor/skills/test-common/scripts/run-test-rust-domain.sh`](.cursor/skills/test-common/scripts/run-test-rust-domain.sh).
 
-```
-test/
-├── domain/       # ⇔ lib/domain/  pure Interactor / entity / DTO / policy units; abstractions only
-├── adapters/     # ⇔ app/adapters/<context>/  gateway (AR, memory, HTTP, ...) / presenter / mapper implementation tests
-├── controllers/  # HTTP edge (JSON / HTML) - the only place the real graph is exercised
-├── models/       # AR validations / persistence invariants
-├── jobs/         # ⇔ app/jobs/
-├── channels/     # ⇔ app/channels/
-├── mailers/      # ⇔ app/mailers/
-├── helpers/      # ⇔ app/helpers/
-├── views/        # ⇔ app/views/  (view-level units)
-├── migrations/   # data migration tests
-├── tasks/        # ⇔ lib/tasks/  (rake task tests)
-├── integration/  # multi-request flows only (ActionDispatch::IntegrationTest)
-├── system/       # browser E2E
-├── javascript/   # JS unit tests for app/javascript/ (Stimulus). Excluded from Ruby runner; executed separately.
-└── support/ factories/ fixtures/ domain_stubs/   # shared, non-test files
-```
-
-**Granularity** - three tiers per use case:
-   1. **Unit test** (`test/domain/`) — interactor + ad-hoc mocks injected. Rails-free. Verifies interactor logic, entity/DTO invariants, and policy rules against gateway interface contracts.
-   2. **Adapter test** (`test/adapters/`) — gateway implementation (ActiveRecord, memory, HTTP, …) tested in isolation on the Rails stack.
-   3. **Edge test** (`test/controllers/`) — HTTP through the controller with real gateways. The only place the full wired graph is exercised.
-   Policy unit tests are covered by tier 1 (`test/domain/`). Do not create a separate `test/policies/` directory; place policy tests under `test/domain/<context>/`.
-   Do not instantiate an interactor directly with real gateway implementations in a test (Controller-mediated indirect instantiation in edge tests is fine). **Exclusions**: contexts without interactors (interface / DTO only, e.g. `logger`), and static/development controllers (`pages`, `dev/*`, `sitemaps`, `spa`, `demo`, `api_docs`) do not require this test pattern.
+**Rails shell (shrinking, P8)**: `run-test-rails.sh` runs remaining Ruby tests (models, migrations, dev controllers, contract harness setup via ActiveRecord). `test/domain/`, `test/adapters/`, `test/channels/`, `test/jobs/` are removed with `lib/domain` and API adapters.
 
 **Rules**
 
-- Use the runner scripts, not raw `rails test` (protects the development database). Orchestration: `[.cursor/rules/rails-testing-workflow.mdc](.cursor/rules/rails-testing-workflow.mdc)`, `[.cursor/skills/test-common/SKILL.md](.cursor/skills/test-common/SKILL.md)`.
-- Processes with non-obvious termination (`agrr` daemon, long-running jobs, etc.) must be executed through the `process-monitor` skill, and success/failure determined only after obtaining the exit code (do not declare "complete" during execution).
-- Do not create a new Ruby test directory that belongs to neither Ruby runner. `test/javascript/` is an exception: it is an existing directory for JS unit tests of `app/javascript/` (Stimulus). It is not executed by Ruby runners (`run-test-rails.sh` / `run-test-domain-lib.sh`), but by JS tooling. Angular SPA tests live under `frontend/` (separate from this `test/javascript/`).
-- Frontend: `cd frontend && npm test`, `npm run build` (i18n catalog: `frontend/src/assets/i18n/*.json`, hand-edited).
+- Use runner scripts, not raw `rails test` (protects the development database). See [`.cursor/skills/test-common/SKILL.md`](.cursor/skills/test-common/SKILL.md).
+- Rust changes: [`scripts/p7-code-removal-gate.sh`](scripts/p7-code-removal-gate.sh) before merge when touching server/migrate.
+- Angular: [`.cursor/skills/test-common/scripts/run-test-frontend.sh`](.cursor/skills/test-common/scripts/run-test-frontend.sh).
+- Rails removal phases: [`docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md).
 
 ## Additional Resources
 

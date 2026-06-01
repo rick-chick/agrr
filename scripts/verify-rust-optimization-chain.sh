@@ -30,7 +30,7 @@ echo "  PLAN_ID=$PLAN_ID"
 echo "  RUN_CHAIN=$RUN_CHAIN"
 echo
 
-[[ -f "$AGRR_SQLITE_PATH" ]] || fail "DB missing. Run: bundle exec rails db:prepare (or copy development.sqlite3)"
+[[ -f "$AGRR_SQLITE_PATH" ]] || fail "DB missing. Run: ./scripts/load-development-reference-data.sh (or copy development.sqlite3)"
 
 if [[ ! -S "$AGRR_SOCKET_PATH" ]]; then
   fail "agrr daemon not running at $AGRR_SOCKET_PATH. Example: USE_AGRR_DAEMON=true docker compose up"

@@ -97,23 +97,18 @@ SQLite / ActiveRecord / HTTP
 
 ## 必須コマンド
 
-### 開発環境（Docker Compose）
+### 開発環境（推奨: Rust スタック）
 
 ```bash
-# 初回のみスクリプトに実行権限
 chmod +x scripts/*.sh
-
-# 起動（マイグレーション・アセットビルド自動）
-docker compose up
-
-# agrr デーモンも一緒に立てる（新規計画の最適化に必要）
-USE_AGRR_DAEMON=true docker compose up
-
-# メモリ監視（必要時のみ）
-ENABLE_MEMORY_MONITOR=true docker compose up
+./scripts/load-development-reference-data.sh   # 初回 DB
+./scripts/dev-rust-stack.sh                    # agrr-server + nginx :3000
+cd frontend && ng serve --host 127.0.0.1
 ```
 
-アクセス: http://localhost:3000
+本番 API/WS は Rust のみ（P7 完了）。リポジトリの Rails 削除は P8（[`docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md`](docs/migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）。
+
+**レガシー**: `docker compose up`（Rails シェル、SPA フォールバック用）。
 
 ### テスト（**必ず test-common 経由**）
 
@@ -123,8 +118,11 @@ ENABLE_MEMORY_MONITOR=true docker compose up
 # Rails テスト（DB / SimpleCov / フルスタック込み・テスト専用 tmpfs）
 .cursor/skills/test-common/scripts/run-test-rails.sh [ARGS]
 
-# lib/domain の純粋ロジックのみ（Rails なし・高速）
-.cursor/skills/test-common/scripts/run-test-domain-lib.sh [ARGS]
+# agrr-domain（cargo）
+.cursor/skills/test-common/scripts/run-test-rust-domain.sh [ARGS]
+
+# R4 契約（Rust ランタイム・本番経路の正）
+scripts/run-rust-contract-tests.sh
 
 # Frontend（Angular）
 .cursor/skills/test-common/scripts/run-test-frontend.sh [ARGS]

@@ -73,7 +73,7 @@ cmd_prepare() {
     info "play DB already exists: $PLAY_DB"
     return 0
   fi
-  [[ -f "$ROOT/storage/development.sqlite3" ]] || fail "missing storage/development.sqlite3 — run: bundle exec rails db:prepare"
+  [[ -f "$ROOT/storage/development.sqlite3" ]] || fail "missing storage/development.sqlite3 — run: ./scripts/load-development-reference-data.sh"
   cp "$ROOT/storage/development.sqlite3" "$PLAY_DB"
   info "copied development.sqlite3 -> $PLAY_DB (development DB untouched)"
 }

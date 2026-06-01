@@ -4,7 +4,7 @@
 
 ## 前提
 
-1. `bundle exec rails db:prepare`（`storage/development.sqlite3` — 参照農場・作業目安用 fixture を含む）
+1. `./scripts/load-development-reference-data.sh`（`storage/development.sqlite3` — 参照農場・作業目安用 fixture を含む）
 2. 別ターミナル: リポジトリ root で `./scripts/dev-rust-stack.sh`
 3. frontend で:
 

@@ -154,7 +154,7 @@ export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-$ROOT/storage/development.sqlite3}"
 export FRONTEND_URL="${FRONTEND_URL:-http://127.0.0.1:4200,http://localhost:4200}"
 
 if [[ ! -f "$AGRR_SQLITE_PATH" ]]; then
-  echo "Missing $AGRR_SQLITE_PATH — run once: RAILS_ENV=development bundle exec rails db:prepare"
+  echo "Missing $AGRR_SQLITE_PATH — run once: ./scripts/load-development-reference-data.sh"
   exit 1
 fi
 
