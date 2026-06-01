@@ -38,7 +38,6 @@ class PlanAdjustDbSyncContractTest < ContractTestCase
   end
 
   test "rust adjust persists field cultivations when agrr returns schedules" do
-    skip "rails-only: requires agrr daemon for adjust allocation" unless rust_contract?
 
     before_count = FieldCultivation.where(cultivation_plan_id: @plan.id).count
     response = rust_post(
@@ -63,7 +62,6 @@ class PlanAdjustDbSyncContractTest < ContractTestCase
   end
 
   test "adjust bad_request does not change field_cultivation count on rust" do
-    skip "rust contract only" unless rust_contract?
 
     crop_no_stages = create(:crop, :user_owned, user: @user)
     plan_crop = create(:cultivation_plan_crop,

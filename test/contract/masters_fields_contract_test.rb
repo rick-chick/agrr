@@ -22,19 +22,12 @@ class MastersFieldsContractTest < ContractTestCase
     other_farm = create(:farm, :user_owned, user: @user)
     other_field = create(:field, farm: other_farm, user: @user)
 
-    if rust_contract?
-      response = rust_get(
-        "/api/v1/masters/farms/#{@farm.id}/fields",
-        headers: rust_headers
-      )
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      get api_v1_masters_farm_fields_path(@farm),
-          headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_get(
+      "/api/v1/masters/farms/#{@farm.id}/fields",
+      headers: rust_headers
+    )
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert_equal 2, json.length
     field_ids = json.map { |f| f["id"] }
@@ -47,64 +40,41 @@ class MastersFieldsContractTest < ContractTestCase
     other_user = create(:user)
     other_farm = create(:farm, :user_owned, user: other_user)
 
-    if rust_contract?
-      response = rust_get(
-        "/api/v1/masters/farms/#{other_farm.id}/fields",
-        headers: rust_headers
-      )
-      assert_equal 403, response.code.to_i, response.body
-    else
-      get api_v1_masters_farm_fields_path(other_farm),
-          headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
-      assert_response :forbidden
-    end
+    response = rust_get(
+      "/api/v1/masters/farms/#{other_farm.id}/fields",
+      headers: rust_headers
+    )
+    assert_equal 403, response.code.to_i, response.body
   end
 
   test "should show field" do
     field = create(:field, farm: @farm, user: @user, name: "テスト圃場")
 
-    if rust_contract?
-      response = rust_get(
-        "/api/v1/masters/fields/#{field.id}",
-        headers: rust_headers
-      )
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      get api_v1_masters_field_path(field),
-          headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_get(
+      "/api/v1/masters/fields/#{field.id}",
+      headers: rust_headers
+    )
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert_equal field.id, json["id"]
     assert_equal "テスト圃場", json["name"]
   end
 
   test "should create field" do
-    if rust_contract?
-      response = rust_post(
-        "/api/v1/masters/farms/#{@farm.id}/fields",
-        headers: rust_headers,
-        body: {
-          field: {
-            name: "新規圃場",
-            area: 100.0,
-            daily_fixed_cost: 500.0
-          }
+    response = rust_post(
+      "/api/v1/masters/farms/#{@farm.id}/fields",
+      headers: rust_headers,
+      body: {
+        field: {
+          name: "新規圃場",
+          area: 100.0,
+          daily_fixed_cost: 500.0
         }
-      )
-      assert_equal 201, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      post api_v1_masters_farm_fields_path(@farm),
-           params: {
-             field: { name: "新規圃場", area: 100.0, daily_fixed_cost: 500.0 }
-           },
-           headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
-      assert_response :created
-      json = JSON.parse(response.body)
-    end
+      }
+    )
+    assert_equal 201, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert_equal "新規圃場", json["name"]
     assert_equal @farm.id, json["farm_id"]
@@ -113,21 +83,13 @@ class MastersFieldsContractTest < ContractTestCase
   test "should update field" do
     field = create(:field, farm: @farm, user: @user, name: "元の名前")
 
-    if rust_contract?
-      response = rust_patch(
-        "/api/v1/masters/fields/#{field.id}",
-        headers: rust_headers,
-        body: { field: { name: "更新された名前" } }
-      )
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      patch api_v1_masters_field_path(field),
-            params: { field: { name: "更新された名前" } },
-            headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_patch(
+      "/api/v1/masters/fields/#{field.id}",
+      headers: rust_headers,
+      body: { field: { name: "更新された名前" } }
+    )
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert_equal "更新された名前", json["name"]
   end
@@ -135,18 +97,12 @@ class MastersFieldsContractTest < ContractTestCase
   test "should destroy field" do
     field = create(:field, farm: @farm, user: @user)
 
-    if rust_contract?
-      response = rust_delete(
-        "/api/v1/masters/fields/#{field.id}",
-        headers: rust_headers
-      )
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-      assert json.key?("undo_token")
-    else
-      delete api_v1_masters_field_path(field),
-             headers: { "Accept" => "application/json", "X-API-Key" => @api_key }
-      assert_response :success
-    end
+    response = rust_delete(
+      "/api/v1/masters/fields/#{field.id}",
+      headers: rust_headers
+    )
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
+    assert json.key?("undo_token")
   end
 end

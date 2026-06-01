@@ -5,7 +5,6 @@ require_relative "contract_test_case"
 
 class ApiV1HealthContractTest < ContractTestCase
   test "GET /api/v1/health returns ok payload" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get("/api/v1/health")
     assert_equal 200, response.code.to_i, response.body

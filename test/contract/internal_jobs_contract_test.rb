@@ -16,7 +16,6 @@ class InternalJobsContractTest < ContractTestCase
   end
 
   test "requires authentication token" do
-    skip "rust contract only" unless rust_contract?
 
     http_response = rust_post("/api/v1/internal/jobs/trigger_weather_update")
     assert_equal 401, http_response.code.to_i, http_response.body
@@ -25,7 +24,6 @@ class InternalJobsContractTest < ContractTestCase
   end
 
   test "accepts valid scheduler token" do
-    skip "rust contract only" unless rust_contract?
 
     create(:farm, :reference, latitude: 35.68, longitude: 139.76)
 
@@ -42,7 +40,6 @@ class InternalJobsContractTest < ContractTestCase
   end
 
   test "accepts valid scheduler token in query params" do
-    skip "rust contract only" unless rust_contract?
 
     http_response = rust_post(
       "/api/v1/internal/jobs/trigger_weather_update?token=#{@token}"

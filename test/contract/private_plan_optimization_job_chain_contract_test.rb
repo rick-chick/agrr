@@ -20,7 +20,6 @@ class PrivatePlanOptimizationJobChainContractTest < ContractTestCase
   end
 
   test "plan show is available for optimization chain context" do
-    skip "requires CONTRACT_RUNTIME=rust" unless rust_contract?
 
     response = rust_get("/api/v1/plans/#{@plan.id}", session_id: @session_id)
     assert_equal 200, response.code.to_i, response.body

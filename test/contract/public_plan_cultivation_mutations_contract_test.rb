@@ -25,7 +25,6 @@ class PublicPlanCultivationMutationsContractTest < ContractTestCase
   end
 
   test "add_field returns success json shape" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_post(
       "/api/v1/public_plans/cultivation_plans/#{@plan.id}/add_field",
@@ -39,7 +38,6 @@ class PublicPlanCultivationMutationsContractTest < ContractTestCase
   end
 
   test "add_crop unknown crop returns not_found without creating plan crop" do
-    skip "rust contract only" unless rust_contract?
 
     before = CultivationPlanCrop.where(cultivation_plan_id: @plan.id).count
     response = rust_post(
@@ -57,7 +55,6 @@ class PublicPlanCultivationMutationsContractTest < ContractTestCase
   end
 
   test "remove_field returns success" do
-    skip "rust contract only" unless rust_contract?
 
     extra_field = create(:cultivation_plan_field,
       cultivation_plan: @plan,

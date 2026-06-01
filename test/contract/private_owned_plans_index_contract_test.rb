@@ -15,16 +15,9 @@ class PrivateOwnedPlansIndexContractTest < ContractTestCase
   end
 
   test "index returns user's private plans" do
-    if rust_contract?
-      response = rust_get("/api/v1/plans", session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      get "/api/v1/plans", headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(body)
-    end
+    response = rust_get("/api/v1/plans", session_id: @session_id)
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert_equal 2, json.length
     plan_ids = json.map { |p| p["id"] }
@@ -33,12 +26,7 @@ class PrivateOwnedPlansIndexContractTest < ContractTestCase
   end
 
   test "index returns unauthorized when not authenticated" do
-    if rust_contract?
-      response = rust_get("/api/v1/plans")
-      assert_equal 401, response.code.to_i
-    else
-      get "/api/v1/plans", headers: { "Accept" => "application/json" }
-      assert_response :unauthorized
-    end
+    response = rust_get("/api/v1/plans")
+    assert_equal 401, response.code.to_i
   end
 end

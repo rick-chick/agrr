@@ -6,17 +6,9 @@ require "net/http"
 # R4 contract harness (P6). Targets agrr-server only (P8.5 — Rails API removed).
 # Run via scripts/run-rust-contract-tests.sh (CONTRACT_RUNTIME=rust, shared test.sqlite3).
 class ContractTestCase < ActionDispatch::IntegrationTest
-  ENV["CONTRACT_RUNTIME"] = "rust" unless ENV.key?("CONTRACT_RUNTIME")
+  ENV["CONTRACT_RUNTIME"] = "rust"
   # Separate SQLite connections (agrr-server) cannot see uncommitted AR test transactions.
-  self.use_transactional_tests = false if ENV.fetch("CONTRACT_RUNTIME", "rails") == "rust"
-
-  def contract_runtime
-    ENV.fetch("CONTRACT_RUNTIME", "rails")
-  end
-
-  def rust_contract?
-    contract_runtime == "rust"
-  end
+  self.use_transactional_tests = false
 
   def contract_host
     ENV.fetch("RUST_CONTRACT_BASE_URL", "http://127.0.0.1:8080").chomp("/")

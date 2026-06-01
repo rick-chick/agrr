@@ -14,16 +14,9 @@ class MastersPesticidesContractTest < ContractTestCase
   test "should get index" do
     create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "Index Pesticide")
 
-    if rust_contract?
-      response = rust_get("/api/v1/masters/pesticides", session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      get "/api/v1/masters/pesticides", headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_get("/api/v1/masters/pesticides", session_id: @session_id)
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert json.is_a?(Array)
     assert json.any? { |p| p["name"] == "Index Pesticide" }
@@ -32,44 +25,28 @@ class MastersPesticidesContractTest < ContractTestCase
   test "should show pesticide" do
     pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "Show Pesticide")
 
-    if rust_contract?
-      response = rust_get("/api/v1/masters/pesticides/#{pesticide.id}", session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      get "/api/v1/masters/pesticides/#{pesticide.id}", headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_get("/api/v1/masters/pesticides/#{pesticide.id}", session_id: @session_id)
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert_equal pesticide.id, json["id"]
     assert_equal "Show Pesticide", json["name"]
   end
 
   test "should create pesticide" do
-    if rust_contract?
-      response = rust_post(
-        "/api/v1/masters/pesticides",
-        session_id: @session_id,
-        body: {
-          pesticide: {
-            name: "Contract Pesticide",
-            crop_id: @crop.id,
-            pest_id: @pest.id
-          }
+    response = rust_post(
+      "/api/v1/masters/pesticides",
+      session_id: @session_id,
+      body: {
+        pesticide: {
+          name: "Contract Pesticide",
+          crop_id: @crop.id,
+          pest_id: @pest.id
         }
-      )
-      assert_equal 201, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      post "/api/v1/masters/pesticides",
-           params: { pesticide: { name: "Contract Pesticide", crop_id: @crop.id, pest_id: @pest.id } },
-           headers: { "Accept" => "application/json" }
-      assert_response :created
-      json = JSON.parse(response.body)
-    end
+      }
+    )
+    assert_equal 201, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert_equal "Contract Pesticide", json["name"]
     assert json["id"].present?
@@ -78,22 +55,13 @@ class MastersPesticidesContractTest < ContractTestCase
   test "should update pesticide" do
     pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "Before")
 
-    if rust_contract?
-      response = rust_patch(
-        "/api/v1/masters/pesticides/#{pesticide.id}",
-        session_id: @session_id,
-        body: { pesticide: { name: "After" } }
-      )
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      patch "/api/v1/masters/pesticides/#{pesticide.id}",
-            params: { pesticide: { name: "After" } },
-            headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_patch(
+      "/api/v1/masters/pesticides/#{pesticide.id}",
+      session_id: @session_id,
+      body: { pesticide: { name: "After" } }
+    )
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert_equal "After", json["name"]
   end
@@ -101,15 +69,8 @@ class MastersPesticidesContractTest < ContractTestCase
   test "should destroy pesticide" do
     pesticide = create(:pesticide, :user_owned, user: @user, crop: @crop, pest: @pest, name: "Delete Me")
 
-    if rust_contract?
-      response = rust_delete("/api/v1/masters/pesticides/#{pesticide.id}", session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-    else
-      sign_in_as @user
-      delete "/api/v1/masters/pesticides/#{pesticide.id}",
-             headers: { "Accept" => "application/json" }
-      assert_response :success
-    end
+    response = rust_delete("/api/v1/masters/pesticides/#{pesticide.id}", session_id: @session_id)
+    assert_equal 200, response.code.to_i, response.body
 
     assert_nil Pesticide.find_by(id: pesticide.id)
   end

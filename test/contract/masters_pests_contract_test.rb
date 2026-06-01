@@ -11,7 +11,6 @@ class MastersPestsContractTest < ContractTestCase
   end
 
   test "post create and get show return flat pest with name" do
-    skip "rust contract only" unless rust_contract?
 
     create = rust_post(
       "/api/v1/masters/pests",
@@ -44,7 +43,6 @@ class MastersPestsContractTest < ContractTestCase
   end
 
   test "index lists created pest name at top level" do
-    skip "rust contract only" unless rust_contract?
 
     pest = create(:pest, :user_owned, user: @user, name: "Contract List Pest")
 

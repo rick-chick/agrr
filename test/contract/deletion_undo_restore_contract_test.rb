@@ -12,28 +12,24 @@ class DeletionUndoRestoreContractTest < ContractTestCase
   end
 
   test "restore_after_masters_api_destroy_of_interaction_rule" do
-    if rust_contract?
-      delete_resp = rust_delete(
-        "/api/v1/masters/interaction_rules/#{@rule.id}",
-        session_id: @session_id
-      )
-      assert_equal 200, delete_resp.code.to_i, delete_resp.body
-      undo_body = JSON.parse(delete_resp.body)
-      undo_token = undo_body["undo_token"] || undo_body.dig("undo", "undo_token")
-      assert undo_token.present?
-      assert undo_body["undo_path"].present?, undo_body.inspect
-      assert_equal "/undo_deletion?undo_token=#{undo_token}", undo_body["undo_path"]
-      assert_not InteractionRule.exists?(@rule.id)
+    delete_resp = rust_delete(
+      "/api/v1/masters/interaction_rules/#{@rule.id}",
+      session_id: @session_id
+    )
+    assert_equal 200, delete_resp.code.to_i, delete_resp.body
+    undo_body = JSON.parse(delete_resp.body)
+    undo_token = undo_body["undo_token"] || undo_body.dig("undo", "undo_token")
+    assert undo_token.present?
+    assert undo_body["undo_path"].present?, undo_body.inspect
+    assert_equal "/undo_deletion?undo_token=#{undo_token}", undo_body["undo_path"]
+    assert_not InteractionRule.exists?(@rule.id)
 
-      restore_resp = rust_post(
-        "/undo_deletion",
-        body: { undo_token: undo_token }
-      )
-      assert_equal 200, restore_resp.code.to_i, restore_resp.body
-      json = JSON.parse(restore_resp.body)
-    else
-      skip "Masters DELETE and undo restore are served by agrr-server; run with CONTRACT_RUNTIME=rust"
-    end
+    restore_resp = rust_post(
+      "/undo_deletion",
+      body: { undo_token: undo_token }
+    )
+    assert_equal 200, restore_resp.code.to_i, restore_resp.body
+    json = JSON.parse(restore_resp.body)
 
     assert_equal "restored", json.fetch("status")
     assert_equal undo_token, json.fetch("undo_token")
@@ -48,28 +44,24 @@ class DeletionUndoRestoreContractTest < ContractTestCase
   test "restore_after_masters_api_destroy_of_farm" do
     farm = create(:farm, :user_owned, user: @user)
 
-    if rust_contract?
-      delete_resp = rust_delete(
-        "/api/v1/masters/farms/#{farm.id}",
-        session_id: @session_id
-      )
-      assert_equal 200, delete_resp.code.to_i, delete_resp.body
-      undo_body = JSON.parse(delete_resp.body)
-      undo_token = undo_body["undo_token"] || undo_body.dig("undo", "undo_token")
-      assert undo_token.present?, undo_body.inspect
-      undo_path = undo_body["undo_path"] || undo_body.dig("undo", "undo_path")
-      assert_equal "/undo_deletion?undo_token=#{undo_token}", undo_path
-      assert_not Farm.exists?(farm.id)
+    delete_resp = rust_delete(
+      "/api/v1/masters/farms/#{farm.id}",
+      session_id: @session_id
+    )
+    assert_equal 200, delete_resp.code.to_i, delete_resp.body
+    undo_body = JSON.parse(delete_resp.body)
+    undo_token = undo_body["undo_token"] || undo_body.dig("undo", "undo_token")
+    assert undo_token.present?, undo_body.inspect
+    undo_path = undo_body["undo_path"] || undo_body.dig("undo", "undo_path")
+    assert_equal "/undo_deletion?undo_token=#{undo_token}", undo_path
+    assert_not Farm.exists?(farm.id)
 
-      restore_resp = rust_post(
-        "/undo_deletion",
-        body: { undo_token: undo_token }
-      )
-      assert_equal 200, restore_resp.code.to_i, restore_resp.body
-      json = JSON.parse(restore_resp.body)
-    else
-      skip "Farm masters destroy is served by agrr-server; run with CONTRACT_RUNTIME=rust"
-    end
+    restore_resp = rust_post(
+      "/undo_deletion",
+      body: { undo_token: undo_token }
+    )
+    assert_equal 200, restore_resp.code.to_i, restore_resp.body
+    json = JSON.parse(restore_resp.body)
 
     assert_equal "restored", json.fetch("status")
     assert_equal undo_token, json.fetch("undo_token")

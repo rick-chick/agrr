@@ -31,33 +31,20 @@ class PublicPlansApiContractTest < ContractTestCase
   end
 
   test "wizard farms index responds" do
-    if rust_contract?
-      response = rust_get("/api/v1/public_plans/farms?region=jp")
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      get "/api/v1/public_plans/farms", params: { region: "jp" },
-          headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_get("/api/v1/public_plans/farms?region=jp")
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
-    refute_equal 501, response.code.to_i if rust_contract?
+refute_equal 501, response.code.to_i
     assert json.is_a?(Array)
   end
 
   test "wizard farm_sizes index responds with catalog entry" do
-    if rust_contract?
-      response = rust_get("/api/v1/public_plans/farm_sizes")
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      get "/api/v1/public_plans/farm_sizes", headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_get("/api/v1/public_plans/farm_sizes")
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
-    refute_equal 501, response.code.to_i if rust_contract?
+refute_equal 501, response.code.to_i
     assert json.is_a?(Array)
     home = json.find { |s| s["id"] == "home_garden" }
     assert home, "expected home_garden in farm_sizes catalog"
@@ -65,37 +52,22 @@ class PublicPlansApiContractTest < ContractTestCase
   end
 
   test "wizard crops index responds for reference farm" do
-    if rust_contract?
-      response = rust_get("/api/v1/public_plans/crops?farm_id=#{@ref_farm.id}")
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      get "/api/v1/public_plans/crops",
-          params: { farm_id: @ref_farm.id },
-          headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_get("/api/v1/public_plans/crops?farm_id=#{@ref_farm.id}")
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
-    refute_equal 501, response.code.to_i if rust_contract?
+refute_equal 501, response.code.to_i
     assert json.is_a?(Array)
   end
 
   test "public cultivation plan data route is reachable" do
-    if rust_contract?
-      response = rust_get(
-        "/api/v1/public_plans/cultivation_plans/#{@public_plan.id}/data"
-      )
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      get "/api/v1/public_plans/cultivation_plans/#{@public_plan.id}/data",
-          headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(response.body)
-    end
+    response = rust_get(
+      "/api/v1/public_plans/cultivation_plans/#{@public_plan.id}/data"
+    )
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
-    refute_equal 501, response.code.to_i if rust_contract?
+refute_equal 501, response.code.to_i
     assert json["success"]
     assert_equal @public_plan.id, json.dig("data", "id")
   end

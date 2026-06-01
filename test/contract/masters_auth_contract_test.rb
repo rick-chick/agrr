@@ -5,14 +5,12 @@ require_relative "contract_test_case"
 
 class MastersAuthContractTest < ContractTestCase
   test "rejects request without api key or session" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get("/api/v1/masters/crops", accept: "application/json")
     assert_equal 401, response.code.to_i
   end
 
   test "rejects request with invalid API key" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get(
       "/api/v1/masters/crops",
@@ -23,7 +21,6 @@ class MastersAuthContractTest < ContractTestCase
   end
 
   test "allows request with valid API key in X-API-Key header" do
-    skip "rust contract only" unless rust_contract?
 
     user = create(:user)
     user.generate_api_key!
@@ -38,7 +35,6 @@ class MastersAuthContractTest < ContractTestCase
   end
 
   test "allows request with valid session cookie" do
-    skip "rust contract only" unless rust_contract?
 
     user = create(:user)
     session_id = contract_session_id_for(user)
@@ -49,7 +45,6 @@ class MastersAuthContractTest < ContractTestCase
   end
 
   test "accepts api key from Authorization Bearer header" do
-    skip "rust contract only" unless rust_contract?
 
     user = create(:user)
     user.generate_api_key!
@@ -63,7 +58,6 @@ class MastersAuthContractTest < ContractTestCase
   end
 
   test "accepts api key from query parameter" do
-    skip "rust contract only" unless rust_contract?
 
     user = create(:user)
     user.generate_api_key!

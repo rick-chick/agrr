@@ -29,8 +29,7 @@ class FieldCultivationPatchContractTest < ContractTestCase
         completion_date: "2026-11-30"
       }
     }
-    if rust_contract?
-      response = rust_patch(
+          response = rust_patch(
         "/api/v1/plans/field_cultivations/#{@fc.id}",
         session_id: @session_id,
         body: body
@@ -39,14 +38,6 @@ class FieldCultivationPatchContractTest < ContractTestCase
       json = JSON.parse(response.body)
       assert json["success"]
       assert_equal @fc.id, json.dig("field_cultivation", "id")
-    else
-      patch "/api/v1/plans/field_cultivations/#{@fc.id}",
-            params: body,
-            headers: { "Cookie" => "session_id=#{@session_id}" },
-            as: :json
-      assert_response :success
-      json = JSON.parse(response.body)
-      assert json["success"]
-    end
+
   end
 end

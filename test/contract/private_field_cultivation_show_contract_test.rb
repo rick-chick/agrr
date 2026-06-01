@@ -20,16 +20,9 @@ class PrivateFieldCultivationShowContractTest < ContractTestCase
 
   test "show returns field cultivation summary" do
     path = "/api/v1/plans/field_cultivations/#{@field_cultivation.id}"
-    if rust_contract?
-      response = rust_get(path, session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-      data = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :success
-      data = JSON.parse(body)
-    end
+    response = rust_get(path, session_id: @session_id)
+    assert_equal 200, response.code.to_i, response.body
+    data = JSON.parse(response.body)
 
     assert_equal @field_cultivation.id, data["id"]
     assert_equal @field_cultivation.field_display_name, data["field_name"]
@@ -49,24 +42,13 @@ class PrivateFieldCultivationShowContractTest < ContractTestCase
       cultivation_plan_crop: other_crop)
 
     path = "/api/v1/plans/field_cultivations/#{other_fc.id}"
-    if rust_contract?
-      response = rust_get(path, session_id: @session_id)
-      assert_equal 404, response.code.to_i
-    else
-      sign_in_as @user
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :not_found
-    end
+    response = rust_get(path, session_id: @session_id)
+    assert_equal 404, response.code.to_i
   end
 
   test "show returns 401 when not authenticated" do
     path = "/api/v1/plans/field_cultivations/#{@field_cultivation.id}"
-    if rust_contract?
-      response = rust_get(path)
-      assert_equal 401, response.code.to_i
-    else
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :unauthorized
-    end
+    response = rust_get(path)
+    assert_equal 401, response.code.to_i
   end
 end

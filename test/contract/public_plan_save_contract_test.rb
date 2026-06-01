@@ -13,22 +13,13 @@ class PublicPlanSaveContractTest < ContractTestCase
   end
 
   test "save_plan returns success when public plan exists" do
-    if rust_contract?
-      response = rust_post(
-        "/api/v1/public_plans/save_plan",
-        session_id: @session_id,
-        body: { plan_id: @public_plan.id }
-      )
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      post "/api/v1/public_plans/save_plan",
-           params: { plan_id: @public_plan.id },
-           headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(body)
-    end
+    response = rust_post(
+      "/api/v1/public_plans/save_plan",
+      session_id: @session_id,
+      body: { plan_id: @public_plan.id }
+    )
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert json["success"], json.inspect
     assert_nil json["error"]
@@ -38,34 +29,20 @@ class PublicPlanSaveContractTest < ContractTestCase
 
   test "save_plan returns plan_reused on second save for same farm" do
     first_json = nil
-    if rust_contract?
-      first_response = rust_post(
-        "/api/v1/public_plans/save_plan",
-        session_id: @session_id,
-        body: { plan_id: @public_plan.id }
-      )
-      assert_equal 200, first_response.code.to_i, first_response.body
-      first_json = JSON.parse(first_response.body)
-      response = rust_post(
-        "/api/v1/public_plans/save_plan",
-        session_id: @session_id,
-        body: { plan_id: @public_plan.id }
-      )
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      post "/api/v1/public_plans/save_plan",
-           params: { plan_id: @public_plan.id },
-           headers: { "Accept" => "application/json" }
-      assert_response :success
-      first_json = JSON.parse(body)
-      post "/api/v1/public_plans/save_plan",
-           params: { plan_id: @public_plan.id },
-           headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(body)
-    end
+    first_response = rust_post(
+      "/api/v1/public_plans/save_plan",
+      session_id: @session_id,
+      body: { plan_id: @public_plan.id }
+    )
+    assert_equal 200, first_response.code.to_i, first_response.body
+    first_json = JSON.parse(first_response.body)
+    response = rust_post(
+      "/api/v1/public_plans/save_plan",
+      session_id: @session_id,
+      body: { plan_id: @public_plan.id }
+    )
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert first_json["success"], first_json.inspect
     assert first_json["cultivation_plan_id"].present?
@@ -81,34 +58,20 @@ class PublicPlanSaveContractTest < ContractTestCase
   test "save_plan then private plan data includes cultivations when public plan has field cultivations" do
     setup_public_plan_with_field_cultivation!
 
-    if rust_contract?
-      save_response = rust_post(
-        "/api/v1/public_plans/save_plan",
-        session_id: @session_id,
-        body: { plan_id: @public_plan.id }
-      )
-      assert_equal 200, save_response.code.to_i, save_response.body
-      save_json = JSON.parse(save_response.body)
-      private_plan_id = save_json["cultivation_plan_id"]
-      data_response = rust_get(
-        "/api/v1/plans/cultivation_plans/#{private_plan_id}/data",
-        session_id: @session_id
-      )
-      assert_equal 200, data_response.code.to_i, data_response.body
-      data_json = JSON.parse(data_response.body)
-    else
-      sign_in_as @user
-      post "/api/v1/public_plans/save_plan",
-           params: { plan_id: @public_plan.id },
-           headers: { "Accept" => "application/json" }
-      assert_response :success
-      save_json = JSON.parse(body)
-      private_plan_id = save_json["cultivation_plan_id"]
-      get "/api/v1/plans/cultivation_plans/#{private_plan_id}/data",
-          headers: { "Accept" => "application/json" }
-      assert_response :success
-      data_json = JSON.parse(body)
-    end
+    save_response = rust_post(
+      "/api/v1/public_plans/save_plan",
+      session_id: @session_id,
+      body: { plan_id: @public_plan.id }
+    )
+    assert_equal 200, save_response.code.to_i, save_response.body
+    save_json = JSON.parse(save_response.body)
+    private_plan_id = save_json["cultivation_plan_id"]
+    data_response = rust_get(
+      "/api/v1/plans/cultivation_plans/#{private_plan_id}/data",
+      session_id: @session_id
+    )
+    assert_equal 200, data_response.code.to_i, data_response.body
+    data_json = JSON.parse(data_response.body)
 
     assert save_json["success"], save_json.inspect
     assert private_plan_id.present?

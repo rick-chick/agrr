@@ -45,7 +45,6 @@ class PlanCultivationMutationsContractTest < ContractTestCase
   end
 
   test "add_field returns success json shape" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_post(
       "/api/v1/plans/cultivation_plans/#{@plan.id}/add_field",
@@ -73,44 +72,26 @@ class PlanCultivationMutationsContractTest < ContractTestCase
       area: 5.0,
       status: "completed")
 
-    if rust_contract?
-      response = rust_post(
-        "/api/v1/plans/cultivation_plans/#{@plan.id}/adjust",
-        session_id: @session_id,
-        body: {
-          moves: [
-            {
-              allocation_id: @field_cultivation.id,
-              action: "move",
-              to_field_id: @field.id.to_s,
-              to_start_date: "2026-05-01"
-            }
-          ]
-        }
-      )
-      assert_equal 400, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-      assert_equal false, json["success"]
-    else
-      sign_in_as @user
-      post "/api/v1/plans/cultivation_plans/#{@plan.id}/adjust",
-        params: {
-          moves: [
-            {
-              allocation_id: @field_cultivation.id,
-              action: "move",
-              to_field_id: @field.id,
-              to_start_date: "2026-05-01"
-            }
-          ]
-        },
-        as: :json
-      assert_response :bad_request
-    end
+    response = rust_post(
+      "/api/v1/plans/cultivation_plans/#{@plan.id}/adjust",
+      session_id: @session_id,
+      body: {
+        moves: [
+          {
+            allocation_id: @field_cultivation.id,
+            action: "move",
+            to_field_id: @field.id.to_s,
+            to_start_date: "2026-05-01"
+          }
+        ]
+      }
+    )
+    assert_equal 400, response.code.to_i, response.body
+    json = JSON.parse(response.body)
+    assert_equal false, json["success"]
   end
 
   test "add_crop unknown crop returns not_found without creating plan crop" do
-    skip "rust contract only" unless rust_contract?
 
     before = CultivationPlanCrop.where(cultivation_plan_id: @plan.id).count
     response = rust_post(
@@ -128,7 +109,6 @@ class PlanCultivationMutationsContractTest < ContractTestCase
   end
 
   test "climate_data route is not 501 on rust" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get(
       "/api/v1/plans/field_cultivations/#{@field_cultivation.id}/climate_data",

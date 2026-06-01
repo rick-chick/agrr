@@ -13,7 +13,6 @@ class MastersCropNestedContractTest < ContractTestCase
   end
 
   test "get crop pests index includes associated pest" do
-    skip "rust contract only" unless rust_contract?
 
     @crop.pests << @pest
 
@@ -29,7 +28,6 @@ class MastersCropNestedContractTest < ContractTestCase
   end
 
   test "post crop pest association returns created shape" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_post(
       "/api/v1/masters/crops/#{@crop.id}/pests",
@@ -44,7 +42,6 @@ class MastersCropNestedContractTest < ContractTestCase
   end
 
   test "get crop agricultural_tasks index returns array" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get(
       "/api/v1/masters/crops/#{@crop.id}/agricultural_tasks",
@@ -57,7 +54,6 @@ class MastersCropNestedContractTest < ContractTestCase
   end
 
   test "get crop pesticides index returns array" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get(
       "/api/v1/masters/crops/#{@crop.id}/pesticides",
@@ -70,7 +66,6 @@ class MastersCropNestedContractTest < ContractTestCase
   end
 
   test "delete crop pest association returns no content" do
-    skip "rust contract only" unless rust_contract?
 
     @crop.pests << @pest
 

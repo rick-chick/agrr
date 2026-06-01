@@ -34,16 +34,9 @@ class PrivatePlanTaskScheduleContractTest < ContractTestCase
 
   test "returns task schedule json for the authenticated owner's plan" do
     path = "/api/v1/plans/#{@plan.id}/task_schedule"
-    if rust_contract?
-      response = rust_get(path, session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-      data = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :success
-      data = JSON.parse(body)
-    end
+    response = rust_get(path, session_id: @session_id)
+    assert_equal 200, response.code.to_i, response.body
+    data = JSON.parse(response.body)
 
     assert_equal @plan.id, data["plan"]["id"]
     assert_equal "2025-03-10", data["week"]["start_date"]
@@ -57,24 +50,13 @@ class PrivatePlanTaskScheduleContractTest < ContractTestCase
     other_plan = create(:cultivation_plan, :completed, user: other, farm: create(:farm, user: other))
 
     path = "/api/v1/plans/#{other_plan.id}/task_schedule"
-    if rust_contract?
-      response = rust_get(path, session_id: @session_id)
-      assert_equal 404, response.code.to_i
-    else
-      sign_in_as @user
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :not_found
-    end
+    response = rust_get(path, session_id: @session_id)
+    assert_equal 404, response.code.to_i
   end
 
   test "returns 401 when not authenticated" do
     path = "/api/v1/plans/#{@plan.id}/task_schedule"
-    if rust_contract?
-      response = rust_get(path)
-      assert_equal 401, response.code.to_i
-    else
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :unauthorized
-    end
+    response = rust_get(path)
+    assert_equal 401, response.code.to_i
   end
 end

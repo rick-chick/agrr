@@ -25,16 +25,9 @@ class PrivateCultivationPlanDataContractTest < ContractTestCase
 
   test "data returns workbench payload for owner" do
     path = "/api/v1/plans/cultivation_plans/#{@plan.id}/data"
-    if rust_contract?
-      response = rust_get(path, session_id: @session_id)
-      assert_equal 200, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-    else
-      sign_in_as @user
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :success
-      json = JSON.parse(body)
-    end
+    response = rust_get(path, session_id: @session_id)
+    assert_equal 200, response.code.to_i, response.body
+    json = JSON.parse(response.body)
 
     assert json["success"]
     assert_equal @plan.id, json["data"]["id"]
@@ -47,26 +40,15 @@ class PrivateCultivationPlanDataContractTest < ContractTestCase
     other_plan = create(:cultivation_plan, :annual_planning, farm: other_farm, user: other, plan_type: :private)
 
     path = "/api/v1/plans/cultivation_plans/#{other_plan.id}/data"
-    if rust_contract?
-      response = rust_get(path, session_id: @session_id)
-      assert_equal 404, response.code.to_i, response.body
-      json = JSON.parse(response.body)
-      refute json["success"]
-    else
-      sign_in_as @user
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :not_found
-    end
+    response = rust_get(path, session_id: @session_id)
+    assert_equal 404, response.code.to_i, response.body
+    json = JSON.parse(response.body)
+    refute json["success"]
   end
 
   test "data returns unauthorized when not authenticated" do
     path = "/api/v1/plans/cultivation_plans/#{@plan.id}/data"
-    if rust_contract?
-      response = rust_get(path)
-      assert_equal 401, response.code.to_i
-    else
-      get path, headers: { "Accept" => "application/json" }
-      assert_response :unauthorized
-    end
+    response = rust_get(path)
+    assert_equal 401, response.code.to_i
   end
 end

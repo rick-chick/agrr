@@ -16,7 +16,6 @@ class InternalFarmWeatherContractTest < ContractTestCase
   end
 
   test "weather_status returns json for existing farm" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get("/api/v1/internal/farms/#{@farm.id}/weather_status")
     refute_equal 501, response.code.to_i, response.body
@@ -32,7 +31,6 @@ class InternalFarmWeatherContractTest < ContractTestCase
   end
 
   test "weather_data list returns json for existing farm" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get("/api/v1/internal/farms/#{@farm.id}/weather_data")
     refute_equal 501, response.code.to_i, response.body
@@ -49,7 +47,6 @@ class InternalFarmWeatherContractTest < ContractTestCase
   end
 
   test "fetch_weather_data accepts existing farm" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_post("/api/v1/internal/farms/#{@farm.id}/fetch_weather_data")
     refute_equal 501, response.code.to_i, response.body
@@ -62,7 +59,6 @@ class InternalFarmWeatherContractTest < ContractTestCase
   end
 
   test "weather_status returns not found for missing farm" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get("/api/v1/internal/farms/999999999/weather_status")
     refute_equal 501, response.code.to_i, response.body

@@ -8,7 +8,6 @@ module GcsWeatherFixture
   end
 
   def seed_rust_gcs_weather_fixture!(weather_location_id:, dates: nil)
-    return unless defined?(rust_contract?) && rust_contract?
     return unless ENV["WEATHER_DATA_STORAGE"] == "gcs"
 
     dates ||= [Date.current]

@@ -43,6 +43,8 @@ cd frontend && ng serve --host 127.0.0.1
 | **P8.3** | Compose / README の既定起動を Rust に | **完了**（[dev-docker](../../../.cursor/skills/dev-docker/SKILL.md)） |
 | **P8.4** | テスト縮小（廃止 API 統合テスト削除、`run-test-rails.sh` から `test/contract` 除外） | **完了**（2026-06-01）— R4: `run-rust-contract-tests.sh` GREEN、Rails シェル 212 件 GREEN |
 | **P8.5** | HTTP シェル・モデルテスト・dev Rails 削除。Gemfile は契約ハーネス用に縮小 | **完了**（2026-06-01）— R4 109 GREEN、`p7-code-removal-gate.sh` |
+| **P8.5.1** | Hotwire 資産・test-integration・RuboCop/Brakeman CI 削除 | **完了**（2026-06-01） |
+| **P8.6.0** | 契約テスト Rust 専用化（`rust_contract?` 分岐・未使用 support 削除） | **完了**（2026-06-01）— R4 GREEN |
 | **P8.6** | 契約ハーネスの Rust 化（Gemfile 完全削除） | TBD |
 
 ## ゲート

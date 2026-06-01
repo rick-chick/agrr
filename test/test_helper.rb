@@ -1,13 +1,5 @@
-# Test Helper for AGRR
-#
-# ⚠️ IMPORTANT: Testing guidelines must be followed
-# See: docs/TESTING_GUIDELINES.md
-#
-# Key requirements:
-# - Model-level tests for all validations (REQUIRED)
-# - Integration tests for service objects (REQUIRED)
-# - Resource limit testing (MANDATORY)
-# - No patches - use dependency injection instead
+# Test Helper for AGRR — R4 contract harness only (P8.5).
+# API/WS の正: scripts/run-rust-contract-tests.sh
 #
 # 開発DBを壊さないため: RAILS_ENV=development 等でテスト実行された場合は即終了する
 if ENV["RAILS_ENV"] && ENV["RAILS_ENV"] != "test"
@@ -60,7 +52,7 @@ module ActiveSupport
     # 並列テストはPARALLEL_TESTS環境変数で制御
     # デフォルトでは無効（SimpleCovのため）
     # 有効化: PARALLEL_TESTS=1 rails test
-    # parallelize(workers: :number_of_processors) # parallel_test_config.rbで管理
+    # parallelize(workers: :number_of_processors) — PARALLEL_TESTS=1 で有効
 
     # テストデータは FactoryBot 等で都度作成（Minitest fixtures は未使用）
 

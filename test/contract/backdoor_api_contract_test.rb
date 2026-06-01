@@ -9,7 +9,6 @@ class BackdoorApiContractTest < ContractTestCase
   BACKDOOR_HEADERS = { "X-Backdoor-Token" => "contract-token" }.freeze
 
   test "backdoor status returns daemon json when token configured" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get(
       "/api/v1/backdoor/status",
@@ -22,7 +21,6 @@ class BackdoorApiContractTest < ContractTestCase
   end
 
   test "backdoor status requires token" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get("/api/v1/backdoor/status")
     assert_equal 401, response.code.to_i, response.body
@@ -31,7 +29,6 @@ class BackdoorApiContractTest < ContractTestCase
   end
 
   test "backdoor status rejects invalid token" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get(
       "/api/v1/backdoor/status",
@@ -43,7 +40,6 @@ class BackdoorApiContractTest < ContractTestCase
   end
 
   test "backdoor health returns ok when token configured" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get(
       "/api/v1/backdoor/health",
@@ -55,7 +51,6 @@ class BackdoorApiContractTest < ContractTestCase
   end
 
   test "backdoor users list returns payload when token configured" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_get(
       "/api/v1/backdoor/users",
@@ -68,7 +63,6 @@ class BackdoorApiContractTest < ContractTestCase
   end
 
   test "backdoor clear_db rejects missing token" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_post("/api/v1/backdoor/db/clear", body: {})
     assert_includes [401, 403], response.code.to_i, response.body

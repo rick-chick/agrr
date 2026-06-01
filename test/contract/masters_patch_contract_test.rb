@@ -14,7 +14,6 @@ class MastersPatchContractTest < ContractTestCase
   end
 
   test "patch masters pest updates name" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_patch(
       "/api/v1/masters/pests/#{@pest.id}",
@@ -28,7 +27,6 @@ class MastersPatchContractTest < ContractTestCase
   end
 
   test "patch masters crop stage updates name" do
-    skip "rust contract only" unless rust_contract?
 
     response = rust_patch(
       "/api/v1/masters/crops/#{@crop.id}/crop_stages/#{@crop_stage.id}",
