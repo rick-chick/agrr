@@ -488,7 +488,7 @@ describe('GanttChartComponent', () => {
       component['lastPlanEndTime'] = new Date('2026-12-31').getTime();
 
       const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
-      component['ensureVisibleRange'](new Date('2026-01-01'), new Date('2027-12-31'));
+      component['syncVisibleRange'](new Date('2026-01-01'), new Date('2027-12-31'));
 
       expect(initializeSpy).not.toHaveBeenCalled();
       expect(component.visibleStartDate?.getTime()).toBe(previousStart.getTime());
@@ -509,7 +509,7 @@ describe('GanttChartComponent', () => {
       const newPlanEnd = new Date('2027-12-31');
       const initializeSpy = vi.spyOn(component as any, 'initializeVisibleRange');
 
-      component['ensureVisibleRange'](newPlanStart, newPlanEnd);
+      component['syncVisibleRange'](newPlanStart, newPlanEnd);
 
       expect(initializeSpy).toHaveBeenCalledTimes(1);
       expect(component.visibleStartDate?.getTime()).toBe(newPlanStart.getTime());
