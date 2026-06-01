@@ -1697,8 +1697,8 @@
       },
       "demo": {
         "title": "{{schedule}}{{separator}}{{preview}}",
-        "schedule": "Schedule",
-        "preview": "Preview",
+        "schedule": "अनुसूची",
+        "preview": "पूर्वावलोकन",
         "separator": " · ",
         "hints_aria": "पूर्वावलोकन नियंत्रण",
         "disclaimer": "Sandbox · केवल डिवाइस पर",

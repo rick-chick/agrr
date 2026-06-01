@@ -65,6 +65,20 @@ describe('home.index i18n catalog', () => {
     expect(buildHomeDemoTitle({ instant })).toBe('スケジュール · プレビュー');
   });
 
+  it('composes demo title from locale parts (in), not English schedule/preview', () => {
+    const instant = (key: string, params?: Record<string, string>) => {
+      let value = getNested(inLocale as JsonRecord, key) as string;
+      if (params) {
+        for (const [name, replacement] of Object.entries(params)) {
+          value = value.replaceAll(`{{${name}}}`, replacement);
+        }
+      }
+      return value;
+    };
+    expect(buildHomeDemoTitle({ instant })).toBe('अनुसूची · पूर्वावलोकन');
+    expect(buildHomeDemoTitle({ instant })).not.toBe('Schedule · Preview');
+  });
+
   for (const { name, catalog } of locales) {
     describe(name, () => {
       for (const key of HOME_INDEX_KEYS) {
