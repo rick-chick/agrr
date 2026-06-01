@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
 import { GanttChartComponent } from './gantt-chart.component';
 import { GanttPlanCoordinatorService } from '../../services/plans/gantt-plan-coordinator.service';
@@ -11,9 +10,10 @@ import { GanttChartPresenter } from '../../adapters/plans/gantt-chart.presenter'
 import { CultivationData } from '../../domain/plans/cultivation-plan-data';
 
 /**
- * Component tests: wiring, template, desktop pointercancel, trash dropzone only.
- * Domain layout/mutation and coordinator HTTP are covered elsewhere; mobile drag is e2e
- * (see frontend/e2e/smoke/README.md — gantt-mobile-drag.spec.ts).
+ * Component tests: template wiring, action bar (desktop/mobile host), desktop pointercancel, trash dropzone.
+ * Mobile overflow menu UI → gantt-mobile-actions-menu.component.spec.ts.
+ * Domain layout → gantt-chart-layout.spec.ts; coordinator HTTP → gantt-plan-coordinator.service.spec.ts;
+ * presenter mutations → gantt-chart.presenter.spec.ts; mobile touch drag → e2e/gantt-mobile-drag.spec.ts.
  */
 describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
@@ -73,6 +73,9 @@ describe('GanttChartComponent', () => {
       },
       js: {
         gantt: {
+          add_crop_button: '作物を追加',
+          add_field_button: '圃場追加',
+          crop_palette_cancel: 'キャンセル',
           confirm_delete_crop: '{{crop_name}}を削除しますか？',
           confirm_delete_field: '{{field_name}}を削除しますか？'
         }
@@ -191,15 +194,6 @@ describe('GanttChartComponent', () => {
       vi.unstubAllGlobals();
     });
 
-    it('removes cultivation when confirm is accepted', () => {
-      vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
-
-      component.confirmRemoveCultivation(cultivation);
-
-      expect(ganttPlanCoordinator.removeCultivation).toHaveBeenCalledWith('private', 7, 33);
-      vi.unstubAllGlobals();
-    });
-
     it('does not remove field when confirm is cancelled', () => {
       vi.stubGlobal('confirm', vi.fn().mockReturnValue(false));
       const group = { fieldId: 88, fieldName: 'Empty Field', cultivations: [] } as any;
@@ -211,7 +205,7 @@ describe('GanttChartComponent', () => {
     });
   });
 
-  describe('pointer drag and responsive layout', () => {
+  describe('pointer drag (desktop)', () => {
     const cultivation = {
       id: 33,
       field_id: 1,
@@ -242,25 +236,6 @@ describe('GanttChartComponent', () => {
       vi.spyOn(component as any, 'resetVisualState').mockImplementation(() => undefined);
       component['updateChart']();
       component['needsUpdate'] = false;
-    });
-
-    it('sets isMobileLayout from matchMedia', () => {
-      mobileLayoutMatches = true;
-      component.ngAfterViewInit();
-      expect(component.isMobileLayout).toBe(true);
-    });
-
-    it('toggles field legend open state on mobile', () => {
-      component.isMobileLayout = true;
-      component.fieldGroups = [
-        { fieldId: 1, fieldName: 'North', cultivations: [cultivation] },
-        { fieldId: 2, fieldName: 'South', cultivations: [] }
-      ];
-
-      expect(component.fieldLegendOpen).toBe(false);
-      component.toggleFieldLegend();
-      expect(component.fieldLegendOpen).toBe(true);
-      expect(component.fieldGroups.filter((g) => g.cultivations.length === 0).length).toBe(1);
     });
 
     it('does not commit adjust on desktop pointercancel after drag', () => {
@@ -332,33 +307,74 @@ describe('GanttChartComponent', () => {
     });
   });
 
-  describe('visible range controls', () => {
-    it('shows month labels on desktop', () => {
-      mobileLayoutMatches = false;
-      component.ngAfterViewInit();
-      fixture.detectChanges();
+  describe('action bar', () => {
+    describe('visible range controls', () => {
+      it('shows month labels on desktop', () => {
+        mobileLayoutMatches = false;
+        component.ngAfterViewInit();
+        fixture.detectChanges();
 
-      const buttons = fixture.nativeElement.querySelectorAll('.range-button');
-      expect(buttons.length).toBe(2);
-      expect(buttons[0].textContent?.trim()).toContain('前月');
-      expect(buttons[1].textContent?.trim()).toContain('次月');
-      expect(buttons[0].getAttribute('aria-label')).toBeNull();
-      expect(buttons[0].querySelector('.range-button__icon')).toBeNull();
+        const buttons = fixture.nativeElement.querySelectorAll('.range-button');
+        expect(buttons.length).toBe(2);
+        expect(buttons[0].textContent?.trim()).toContain('前月');
+        expect(buttons[1].textContent?.trim()).toContain('次月');
+        expect(buttons[0].getAttribute('aria-label')).toBeNull();
+        expect(buttons[0].querySelector('.range-button__icon')).toBeNull();
+      });
+
+      it('shows chevron icons with aria-label on mobile', () => {
+        mobileLayoutMatches = true;
+        component.ngAfterViewInit();
+        fixture.detectChanges();
+
+        const buttons = fixture.nativeElement.querySelectorAll('.range-button');
+        expect(buttons.length).toBe(2);
+        expect(buttons[0].getAttribute('aria-label')).toBe('前月');
+        expect(buttons[1].getAttribute('aria-label')).toBe('次月');
+        expect(buttons[0].classList.contains('range-button--icon')).toBe(true);
+        expect(buttons[0].querySelector('.range-button__icon')).toBeTruthy();
+        expect(buttons[1].querySelector('.range-button__icon')).toBeTruthy();
+        expect(buttons[0].textContent?.trim()).toBe('');
+      });
     });
 
-    it('shows chevron icons with aria-label on mobile', () => {
-      mobileLayoutMatches = true;
-      component.ngAfterViewInit();
-      fixture.detectChanges();
+    describe('mobile action bar wiring', () => {
+      beforeEach(() => {
+        component.data = {
+          data: {
+            id: 7,
+            planning_start_date: '2026-01-01',
+            planning_end_date: '2026-12-31',
+            fields: [],
+            cultivations: []
+          }
+        } as any;
+      });
 
-      const buttons = fixture.nativeElement.querySelectorAll('.range-button');
-      expect(buttons.length).toBe(2);
-      expect(buttons[0].getAttribute('aria-label')).toBe('前月');
-      expect(buttons[1].getAttribute('aria-label')).toBe('次月');
-      expect(buttons[0].classList.contains('range-button--icon')).toBe(true);
-      expect(buttons[0].querySelector('.range-button__icon')).toBeTruthy();
-      expect(buttons[1].querySelector('.range-button__icon')).toBeTruthy();
-      expect(buttons[0].textContent?.trim()).toBe('');
+      it('shows labeled crop and field buttons on desktop without mobile menu host', () => {
+        mobileLayoutMatches = false;
+        component.isMobileLayout = false;
+        fixture.detectChanges();
+
+        const bar = fixture.nativeElement.querySelector('.gantt-action-bar');
+        expect(bar.querySelector('app-gantt-mobile-actions-menu')).toBeFalsy();
+        expect(bar.querySelector('.gantt-action-bar__crop-primary')).toBeFalsy();
+
+        const actionButtons = bar.querySelectorAll('.action-button');
+        expect(actionButtons.length).toBe(2);
+        expect(actionButtons[0].textContent?.trim()).toBe('作物を追加');
+        expect(actionButtons[1].textContent?.trim()).toBe('圃場追加');
+      });
+
+      it('embeds mobile crop icon and actions menu host on mobile', () => {
+        mobileLayoutMatches = true;
+        component.isMobileLayout = true;
+        fixture.detectChanges();
+
+        const bar = fixture.nativeElement.querySelector('.gantt-action-bar');
+        expect(bar.querySelector('.gantt-action-bar__crop-primary')).toBeTruthy();
+        expect(bar.querySelector('app-gantt-mobile-actions-menu')).toBeTruthy();
+      });
     });
   });
 

@@ -1081,6 +1081,7 @@
         "quarter": "Q"
       },
       "mobile": {
+        "more_actions": "More actions",
         "field_column_short": "#",
         "field_legend_button": "Fields",
         "field_legend_title": "Field list",

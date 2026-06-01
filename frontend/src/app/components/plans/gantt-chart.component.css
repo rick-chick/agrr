@@ -186,6 +186,12 @@
   align-items: center;
 }
 
+.gantt-action-bar__primary-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .gantt-range-controls {
   display: flex;
   align-items: center;
@@ -252,20 +258,24 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.action-button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: var(--space-2);
+}
+
+.action-button__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
 .action-button.active {
   background: var(--color-primary-hover);
   box-shadow: var(--shadow-focus-ring-primary);
-}
-
-.action-button--secondary {
-  background: var(--color-surface);
-  color: var(--color-gray-900);
-  border: 1px solid var(--color-gray-300);
-}
-
-.action-button--secondary.active {
-  background: var(--color-gray-100);
-  box-shadow: var(--shadow-sm);
 }
 
 .gantt-drag-context {

@@ -1993,6 +1993,7 @@
         "quarter": "四半期"
       },
       "mobile": {
+        "more_actions": "その他の操作",
         "field_column_short": "#",
         "field_legend_button": "圃場一覧",
         "field_legend_title": "圃場一覧",

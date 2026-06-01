@@ -1,4 +1,18 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ElementRef,
+  ViewChild,
+  AfterViewInit,
+  OnDestroy,
+  inject,
+  ChangeDetectorRef
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CultivationPlanData, CultivationData, AvailableCropData } from '../../domain/plans/cultivation-plan-data';
@@ -48,11 +62,12 @@ import { AddCropRequest } from '../../services/plans/plan.service';
 import { GanttPlanCoordinatorService } from '../../services/plans/gantt-plan-coordinator.service';
 import { GanttChartPresenter } from '../../adapters/plans/gantt-chart.presenter';
 import { GanttChartView } from './gantt-chart.view';
+import { GanttMobileActionsMenuComponent } from './gantt-mobile-actions-menu.component';
 
 @Component({
   selector: 'app-gantt-chart',
   standalone: true,
-  imports: [CommonModule, TranslateModule, FormsModule],
+  imports: [CommonModule, TranslateModule, FormsModule, GanttMobileActionsMenuComponent],
   providers: [GanttChartPresenter],
   template: `
     @if (showOptimizationLock) {
@@ -65,36 +80,55 @@ import { GanttChartView } from './gantt-chart.view';
     }
     <div class="gantt-page" [class.gantt-page--touch-drag]="isMobileLayout && draggedCultivation">
       <div class="gantt-action-bar">
-        <button
-          class="action-button"
-          type="button"
-          (click)="toggleCropPalette()"
-          [class.active]="isCropPaletteOpen">
-          @if (!isCropPaletteOpen) {
-            <span>{{ 'js.gantt.add_crop_button' | translate }}</span>
-          } @else {
-            <span>{{ 'js.gantt.crop_palette_cancel' | translate }}</span>
-          }
-        </button>
-        <button
-          class="action-button"
-          type="button"
-          (click)="toggleFieldForm()"
-          [class.active]="fieldFormVisible">
-          @if (!fieldFormVisible) {
-            <span>{{ 'js.gantt.add_field_button' | translate }}</span>
-          } @else {
-            <span>{{ 'js.gantt.crop_palette_cancel' | translate }}</span>
-          }
-        </button>
         @if (isMobileLayout) {
+          <div class="gantt-action-bar__primary-actions">
+            <button
+              class="action-button action-button--icon gantt-action-bar__crop-primary"
+              type="button"
+              (click)="mobileActionsMenu.closeMenu(); toggleCropPalette()"
+              [class.active]="isCropPaletteOpen"
+              [attr.aria-label]="
+                (isCropPaletteOpen ? 'js.gantt.crop_palette_cancel' : 'js.gantt.add_crop_button') | translate
+              ">
+              @if (!isCropPaletteOpen) {
+                <svg class="action-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                </svg>
+              } @else {
+                <svg class="action-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                </svg>
+              }
+            </button>
+            <app-gantt-mobile-actions-menu
+              #mobileActionsMenu
+              [fieldFormVisible]="fieldFormVisible"
+              [fieldLegendOpen]="fieldLegendOpen"
+              (addFieldToggle)="toggleFieldForm()"
+              (fieldLegendToggle)="toggleFieldLegend()"
+            />
+          </div>
+        } @else {
           <button
-            class="action-button action-button--secondary"
+            class="action-button"
             type="button"
-            (click)="toggleFieldLegend()"
-            [class.active]="fieldLegendOpen">
-            @if (!fieldLegendOpen) {
-              <span>{{ 'plans.gantt.mobile.field_legend_button' | translate }}</span>
+            (click)="toggleCropPalette()"
+            [class.active]="isCropPaletteOpen">
+            @if (!isCropPaletteOpen) {
+              <span>{{ 'js.gantt.add_crop_button' | translate }}</span>
+            } @else {
+              <span>{{ 'js.gantt.crop_palette_cancel' | translate }}</span>
+            }
+          </button>
+          <button
+            class="action-button"
+            type="button"
+            (click)="toggleFieldForm()"
+            [class.active]="fieldFormVisible">
+            @if (!fieldFormVisible) {
+              <span>{{ 'js.gantt.add_field_button' | translate }}</span>
             } @else {
               <span>{{ 'js.gantt.crop_palette_cancel' | translate }}</span>
             }

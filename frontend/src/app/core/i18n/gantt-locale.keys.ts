@@ -18,6 +18,7 @@ export const GANTT_I18N_KEYS = {
     quarter: 'plans.gantt.labels.quarter'
   },
   mobile: {
+    moreActions: 'plans.gantt.mobile.more_actions',
     fieldColumnShort: 'plans.gantt.mobile.field_column_short',
     fieldLegendButton: 'plans.gantt.mobile.field_legend_button',
     fieldLegendTitle: 'plans.gantt.mobile.field_legend_title',
@@ -73,6 +74,7 @@ export const GANTT_I18N_KEY_PATHS: readonly string[] = [
   GANTT_I18N_KEYS.js.fieldFormAreaPlaceholder,
   GANTT_I18N_KEYS.js.fieldFormSubmit,
   GANTT_I18N_KEYS.js.addingFieldLoading,
+  GANTT_I18N_KEYS.mobile.moreActions,
   GANTT_I18N_KEYS.mobile.fieldColumnShort,
   GANTT_I18N_KEYS.mobile.fieldLegendButton,
   GANTT_I18N_KEYS.mobile.fieldLegendTitle,
