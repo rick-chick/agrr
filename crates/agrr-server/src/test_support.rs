@@ -1,7 +1,9 @@
 //! Shared test fixtures for `agrr-server` integration tests.
 
 use crate::cable::CableHub;
+use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
 use crate::jobs::JobChainDispatcher;
+use crate::state::DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS;
 use crate::locale_catalog::LocaleCatalog;
 use crate::state::AppState;
 use agrr_adapters_sqlite::SqlitePool;
@@ -20,7 +22,13 @@ pub fn test_pool_with_plan(plan_id: i64) -> TestDb {
     let pool = SqlitePool::new(path);
     pool.with_write(|conn| {
         conn.execute_batch(
-            "CREATE TABLE farms (id INTEGER PRIMARY KEY, name TEXT);
+            "CREATE TABLE farms (
+               id INTEGER PRIMARY KEY,
+               name TEXT,
+               latitude REAL NOT NULL,
+               longitude REAL NOT NULL,
+               weather_location_id INTEGER
+             );
              CREATE TABLE cultivation_plans (
                id INTEGER PRIMARY KEY,
                farm_id INTEGER,
@@ -53,7 +61,48 @@ pub fn test_pool_with_plan(plan_id: i64) -> TestDb {
                status TEXT
              );",
         )?;
-        conn.execute("INSERT INTO farms (id, name) VALUES (1, 'Test Farm')", [])?;
+        conn.execute(
+            "INSERT INTO farms (id, name, latitude, longitude) VALUES (1, 'Test Farm', 35.0, 139.0)",
+            [],
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plans (id, farm_id, user_id, plan_type, status, total_area)
+             VALUES (?1, 1, 1, 'public', 'pending', 100.0)",
+            rusqlite::params![plan_id],
+        )?;
+        Ok(())
+    })
+    .expect("seed");
+    TestDb { pool, _file: file }
+}
+
+/// Schema without `optimization_phase` columns — `StartOptimizing` cannot persist.
+pub fn test_pool_without_optimization_phase_column(plan_id: i64) -> TestDb {
+    let file = NamedTempFile::new().expect("temp db");
+    let path = file.path().to_str().expect("utf8 path");
+    let pool = SqlitePool::new(path);
+    pool.with_write(|conn| {
+        conn.execute_batch(
+            "CREATE TABLE farms (
+               id INTEGER PRIMARY KEY,
+               name TEXT,
+               latitude REAL NOT NULL,
+               longitude REAL NOT NULL,
+               weather_location_id INTEGER
+             );
+             CREATE TABLE cultivation_plans (
+               id INTEGER PRIMARY KEY,
+               farm_id INTEGER,
+               user_id INTEGER,
+               total_area REAL,
+               plan_type TEXT,
+               status TEXT
+             );",
+        )?;
+        conn.execute(
+            "INSERT INTO farms (id, name, latitude, longitude) VALUES (1, 'Test Farm', 35.0, 139.0)",
+            [],
+        )?;
         conn.execute(
             "INSERT INTO cultivation_plans (id, farm_id, user_id, plan_type, status, total_area)
              VALUES (?1, 1, 1, 'public', 'pending', 100.0)",
@@ -147,7 +196,10 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
         backdoor_token: Arc::new(String::new()),
         secure_cookies: false,
         weather_fetch_job_dispatcher: Arc::new(JobChainDispatcher::new()),
-        optimization_chain_dispatcher: Arc::new(JobChainDispatcher::new()),
+        optimization_chain_dispatcher: Arc::new(JobChainDispatcher::with_max_concurrent_chains(
+            Some(DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS),
+        )),
+        farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
         cable_hub: Arc::new(CableHub::default()),
         locale_catalog: Arc::new(LocaleCatalog::from_pairs(
             "ja",
@@ -159,24 +211,3 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
     }
 }
 
-pub fn read_optimization_phase(pool: &SqlitePool, plan_id: i64) -> Option<String> {
-    pool.with_read(|conn| {
-        conn.query_row(
-            "SELECT optimization_phase FROM cultivation_plans WHERE id = ?1",
-            rusqlite::params![plan_id],
-            |row| row.get(0),
-        )
-    })
-    .ok()
-}
-
-pub fn wait_until(timeout: std::time::Duration, mut condition: impl FnMut() -> bool) -> bool {
-    let deadline = std::time::Instant::now() + timeout;
-    while std::time::Instant::now() < deadline {
-        if condition() {
-            return true;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(10));
-    }
-    false
-}

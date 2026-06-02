@@ -134,49 +134,54 @@ pub fn run_fetch_weather_step(
     start_date: Date,
     end_date: Date,
 ) -> Result<(), String> {
-    let pool = state.sqlite.clone();
-    let weather_data = WeatherDataGatewayBundle::resolve(pool.clone())
-        .map_err(|e| format!("weather data gateway: {e}"))?;
-    let farm_gateway = WeatherDataFarmSqliteGateway::new(pool);
-    let agrr = WeatherDaemonGateway::from_env();
-    let presenter = ChainFetchPresenter;
-    let advance = ChainFetchAdvance { state };
-    let record = NoopRecordBlock;
-    let interactor = FetchWeatherDataPerformInteractor::new(
-        &weather_data,
-        &farm_gateway,
-        &advance,
-        &record,
-        &agrr,
-        &presenter,
-    );
-    let clock = SystemClock;
-    let now = clock.now();
-    let input = FetchWeatherDataPerformInput {
-        latitude: ctx.latitude,
-        longitude: ctx.longitude,
-        start_date,
-        end_date,
-        farm_id: Some(ctx.farm_id),
-        cultivation_plan_id: Some(plan_id),
-        channel_class: Some(channel.to_string()),
-        executions: 1,
-        current_time: now,
-    };
-    interactor
-        .call(input)
-        .map_err(|e| format!("fetch weather perform: {e:?}"))?;
+    state
+        .farm_weather_fetch_locks
+        .with_farm_lock(ctx.farm_id, || {
+            let pool = state.sqlite.clone();
+            let weather_data = WeatherDataGatewayBundle::resolve(pool.clone())
+                .map_err(|e| format!("weather data gateway: {e}"))?;
+            let farm_gateway = WeatherDataFarmSqliteGateway::new(pool);
+            let agrr = WeatherDaemonGateway::from_env();
+            let presenter = ChainFetchPresenter;
+            let advance = ChainFetchAdvance { state };
+            let record = NoopRecordBlock;
+            let interactor = FetchWeatherDataPerformInteractor::new(
+                &weather_data,
+                &farm_gateway,
+                &advance,
+                &record,
+                &agrr,
+                &presenter,
+            );
+            let clock = SystemClock;
+            let now = clock.now();
+            let input = FetchWeatherDataPerformInput {
+                latitude: ctx.latitude,
+                longitude: ctx.longitude,
+                start_date,
+                end_date,
+                farm_id: Some(ctx.farm_id),
+                cultivation_plan_id: Some(plan_id),
+                channel_class: Some(channel.to_string()),
+                executions: 1,
+                current_time: now,
+            };
+            interactor
+                .call(input)
+                .map_err(|e| format!("fetch weather perform: {e:?}"))?;
 
-    // Interactor skips API when DB already has enough rows but only advances `weather_data_fetched`
-    // on the fetch path (Rails parity). Chain steps must leave `fetching_weather` before predict.
-    advance_phase(
-        state,
-        plan_id,
-        channel,
-        CultivationPlanPhaseName::PhaseWeatherDataFetched,
-        None,
-    )?;
-    Ok(())
+            // Interactor skips API when DB already has enough rows but only advances `weather_data_fetched`
+            // on the fetch path (Rails parity). Chain steps must leave `fetching_weather` before predict.
+            advance_phase(
+                state,
+                plan_id,
+                channel,
+                CultivationPlanPhaseName::PhaseWeatherDataFetched,
+                None,
+            )?;
+            Ok(())
+        })
+        .map_err(|e| format!("farm weather fetch lock: {e}"))
 }
 
 pub fn run_weather_prediction_step(
@@ -224,7 +229,12 @@ pub fn run_weather_prediction_step(
         OptimizationJobChainWeatherComputation::predict_days_to_next_year_end(end_date, &clock);
     interactor
         .predict_for_cultivation_plan(&plan_weather, None)
-        .map_err(|e| format!("weather prediction: {e}"))?;
+        .map_err(|e| {
+            format!(
+                "weather prediction: {e} (hint: ensure agrr daemon at {} or AGRR_USE_MOCK=true)",
+                std::env::var("AGRR_SOCKET_PATH").unwrap_or_else(|_| "/tmp/agrr.sock".into())
+            )
+        })?;
 
     advance_phase(
         state,

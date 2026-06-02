@@ -13,6 +13,7 @@ use agrr_domain::shared::ports::CultivationPlanPhaseBroadcastPort;
 use rusqlite::params;
 use serde_json::{json, Value};
 use std::sync::Arc;
+use tracing::{error, warn};
 
 struct CablePhaseBroadcast {
     hub: Arc<CableHub>,
@@ -34,6 +35,51 @@ pub(crate) fn plan_still_optimizing(pool: &agrr_adapters_sqlite::SqlitePool, pla
         Ok(status == "optimizing")
     })
     .unwrap_or(false)
+}
+
+/// Runs `step` when the plan is still optimizing. On failure, optionally advances to `failed`.
+/// Returns `true` to continue the job chain, `false` to stop remaining steps for this plan.
+pub(crate) fn run_guarded_optimization_step(
+    state: &AppState,
+    plan_id: i64,
+    channel: &str,
+    step_name: &'static str,
+    failure_subphase: Option<&str>,
+    step: impl FnOnce() -> Result<(), String>,
+) -> bool {
+    let pool = state.sqlite.clone();
+    if !plan_still_optimizing(&pool, plan_id) {
+        return false;
+    }
+    match step() {
+        Ok(()) => true,
+        Err(e) => {
+            warn!(
+                plan_id,
+                step = step_name,
+                error = %e,
+                "optimization chain step failed"
+            );
+            if let Some(subphase) = failure_subphase {
+                if let Err(phase_err) = advance_phase(
+                    state,
+                    plan_id,
+                    channel,
+                    CultivationPlanPhaseName::PhaseFailed,
+                    Some(subphase),
+                ) {
+                    error!(
+                        plan_id,
+                        step = step_name,
+                        subphase,
+                        error = %phase_err,
+                        "optimization chain: failed to persist failed phase after step error"
+                    );
+                }
+            }
+            false
+        }
+    }
 }
 
 pub(crate) fn advance_phase(

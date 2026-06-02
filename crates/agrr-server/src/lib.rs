@@ -26,6 +26,7 @@ pub mod entry_schedule;
 pub mod fallback;
 pub mod field_cultivation_climate;
 pub mod farm_weather_fetch;
+pub mod farm_weather_fetch_locks;
 pub mod field_cultivations;
 pub mod internal_farms;
 pub mod jobs;

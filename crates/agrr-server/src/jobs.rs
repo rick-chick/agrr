@@ -1,9 +1,14 @@
 //! In-process job chain dispatcher (`ChainedJobRunnerJob` equivalent).
+//!
+//! Each [`JobChainDispatcher::enqueue_chain`] call runs its steps **sequentially** on a shared
+//! Tokio runtime. **Different chains run concurrently**, so one plan's long `fetch_weather` does
+//! not block another plan's optimization chain on the same dispatcher instance.
 
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
-use tokio::sync::mpsc;
+use tokio::runtime::{Handle, Runtime};
+use tokio::sync::Semaphore;
 use tracing::info;
 
 /// `true` = continue chain; `false` = abort remaining steps (plan failed or already terminal).
@@ -15,34 +20,60 @@ pub struct JobStep {
 }
 
 pub struct JobChainDispatcher {
-    tx: mpsc::UnboundedSender<JobStep>,
+    handle: Handle,
+    /// Keeps the runtime alive for the process lifetime.
+    _runtime: Arc<Runtime>,
+    /// When set, limits how many chains may run their steps concurrently on this dispatcher.
+    chain_semaphore: Option<Arc<Semaphore>>,
 }
 
 impl JobChainDispatcher {
     pub fn new() -> Self {
-        let (tx, mut rx) = mpsc::unbounded_channel::<JobStep>();
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Builder::new_multi_thread()
+        Self::with_max_concurrent_chains(None)
+    }
+
+    pub fn with_max_concurrent_chains(max_concurrent_chains: Option<usize>) -> Self {
+        let runtime = Arc::new(
+            tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
-                .expect("job chain runtime");
-            rt.block_on(async move {
-                while let Some(step) = rx.recv().await {
-                    info!(step = step.name, "job chain step start");
-                    let continue_chain = (step.run)().await;
-                    info!(step = step.name, continue = continue_chain, "job chain step done");
-                    // Do not break the worker loop on failure: another plan's chain may already
-                    // be queued. Remaining steps for a failed plan no-op via plan_still_optimizing.
-                }
-            });
+                .expect("job chain runtime"),
+        );
+        let handle = runtime.handle().clone();
+        let runtime_for_thread = runtime.clone();
+        std::thread::spawn(move || {
+            runtime_for_thread.block_on(std::future::pending::<()>());
         });
-        Self { tx }
+        let chain_semaphore = max_concurrent_chains.map(|n| Arc::new(Semaphore::new(n)));
+        Self {
+            handle,
+            _runtime: runtime,
+            chain_semaphore,
+        }
     }
 
     pub fn enqueue_chain(&self, steps: Vec<JobStep>) {
-        for step in steps {
-            let _ = self.tx.send(step);
-        }
+        let handle = self.handle.clone();
+        let chain_semaphore = self.chain_semaphore.clone();
+        handle.spawn(async move {
+            let _permit = match chain_semaphore {
+                Some(sem) => Some(
+                    sem.acquire_owned()
+                        .await
+                        .expect("job chain concurrency semaphore closed"),
+                ),
+                None => None,
+            };
+            for step in steps {
+                info!(step = step.name, "job chain step start");
+                let continue_chain = (step.run)().await;
+                info!(step = step.name, continue = continue_chain, "job chain step done");
+                if !continue_chain {
+                    // Remaining steps for this plan would no-op via plan_still_optimizing anyway.
+                    break;
+                }
+            }
+        });
     }
 }
 
@@ -58,7 +89,7 @@ mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
     use std::time::{Duration, Instant};
-    use std::{thread, vec};
+    use std::thread;
 
     fn sleep_step(name: &'static str, millis: u64) -> JobStep {
         JobStep {
@@ -97,34 +128,84 @@ mod tests {
         false
     }
 
-    /// Characterization: the in-process dispatcher is strictly FIFO.
+    /// Two [`JobChainDispatcher`] instances do not share a queue (farm weather vs plan optimization).
     #[test]
-    fn serial_queue_runs_steps_in_enqueue_order() {
-        let dispatcher = JobChainDispatcher::new();
-        let order = Arc::new(std::sync::Mutex::new(Vec::<&'static str>::new()));
+    fn separate_dispatcher_instances_do_not_block_each_other() {
+        let weather_dispatcher = JobChainDispatcher::new();
+        let optimization_dispatcher = JobChainDispatcher::new();
+        let optimization_ran = Arc::new(AtomicBool::new(false));
 
-        for (label, delay_ms) in [("first", 50u64), ("second", 0)] {
-            let order = order.clone();
-            dispatcher.enqueue_chain(vec![JobStep {
-                name: label,
-                run: Arc::new(move || {
-                    let order = order.clone();
+        weather_dispatcher.enqueue_chain(vec![sleep_step("scheduler_fetch_weather", 500)]);
+        optimization_dispatcher.enqueue_chain(vec![flag_step(
+            "fetch_weather_data",
+            optimization_ran.clone(),
+        )]);
+
+        assert!(
+            wait_until(Duration::from_millis(200), || {
+                optimization_ran.load(Ordering::SeqCst)
+            }),
+            "optimization dispatcher must run while weather dispatcher is busy"
+        );
+    }
+
+    /// Separate `enqueue_chain` calls on the same dispatcher run concurrently.
+    #[test]
+    fn parallel_chains_do_not_block_each_other() {
+        let dispatcher = JobChainDispatcher::new();
+        let slow_chain_done = Arc::new(AtomicBool::new(false));
+        let fast_chain_done = Arc::new(AtomicBool::new(false));
+
+        dispatcher.enqueue_chain(vec![
+            sleep_step("slow_plan_fetch", 500),
+            flag_step("slow_plan_done", slow_chain_done.clone()),
+        ]);
+        dispatcher.enqueue_chain(vec![flag_step("fast_plan_fetch", fast_chain_done.clone())]);
+
+        assert!(
+            wait_until(Duration::from_millis(200), || fast_chain_done.load(Ordering::SeqCst)),
+            "fast chain should finish while slow chain is still on its first step"
+        );
+        assert!(
+            !slow_chain_done.load(Ordering::SeqCst),
+            "slow chain must not have reached its second step yet"
+        );
+        assert!(
+            wait_until(Duration::from_secs(2), || slow_chain_done.load(Ordering::SeqCst)),
+            "slow chain should eventually complete"
+        );
+    }
+
+    /// When `max_concurrent_chains` is 1, a second chain waits for the first to finish.
+    #[test]
+    fn max_concurrent_chains_limits_parallel_execution() {
+        let dispatcher = JobChainDispatcher::with_max_concurrent_chains(Some(1));
+        let second_started = Arc::new(AtomicBool::new(false));
+
+        dispatcher.enqueue_chain(vec![sleep_step("blocking_first_chain", 300)]);
+        dispatcher.enqueue_chain(vec![JobStep {
+            name: "second_chain_start",
+            run: Arc::new({
+                let second_started = second_started.clone();
+                move || {
+                    let second_started = second_started.clone();
                     Box::pin(async move {
-                        tokio::time::sleep(Duration::from_millis(delay_ms)).await;
-                        order.lock().expect("lock").push(label);
+                        second_started.store(true, Ordering::SeqCst);
                         true
                     })
-                }),
-            }]);
-        }
+                }
+            }),
+        }]);
 
-        assert!(wait_until(Duration::from_secs(2), || {
-            order.lock().expect("lock").len() == 2
-        }));
-        assert_eq!(
-            *order.lock().expect("lock"),
-            vec!["first", "second"],
-            "expected FIFO execution"
+        assert!(
+            !wait_until(Duration::from_millis(150), || {
+                second_started.load(Ordering::SeqCst)
+            }),
+            "second chain should wait for first chain to release the semaphore"
+        );
+        assert!(
+            wait_until(Duration::from_secs(2), || second_started.load(Ordering::SeqCst)),
+            "second chain should run after first chain completes"
         );
     }
 
