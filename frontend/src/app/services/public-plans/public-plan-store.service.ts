@@ -11,13 +11,16 @@ export interface PublicPlanState {
   farmSize: FarmSizeOption | null;
   selectedCrops: Crop[];
   planId: number | null;
+  /** research GDD レポート等からの作物 slug（select-crop で一度だけ消費） */
+  pendingCropSlug: string | null;
 }
 
 const INITIAL_STATE: PublicPlanState = {
   farm: null,
   farmSize: null,
   selectedCrops: [],
-  planId: null
+  planId: null,
+  pendingCropSlug: null
 };
 
 const SESSION_STORAGE_KEY = 'agrr_public_plan_state';
@@ -48,6 +51,10 @@ export class PublicPlanStore implements PublicPlanSessionPort {
     this.updateState({ planId });
   }
 
+  setPendingCropSlug(slug: string | null): void {
+    this.updateState({ pendingCropSlug: slug });
+  }
+
   reset(): void {
     this.updateState(INITIAL_STATE);
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -76,7 +83,11 @@ export class PublicPlanStore implements PublicPlanSessionPort {
         if (parsed.farm && typeof parsed.farm.id === 'string') {
           parsed.farm.id = parseInt(parsed.farm.id, 10);
         }
-        return parsed;
+        return {
+          ...INITIAL_STATE,
+          ...parsed,
+          pendingCropSlug: parsed.pendingCropSlug ?? null
+        };
       }
     } catch (e) {
       console.warn('Failed to load public plan state from session storage', e);

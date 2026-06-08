@@ -14,10 +14,12 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
       farmSize?: { id: string; name: string; area_sqm: number };
       selectedCrops: any[];
       planId: number | null;
+      pendingCropSlug: string | null;
     };
     setSelectedCrops: ReturnType<typeof vi.fn>;
     setPlanId: ReturnType<typeof vi.fn>;
     setFarm: ReturnType<typeof vi.fn>;
+    setPendingCropSlug: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
@@ -32,11 +34,13 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
         farm: { id: 1, name: 'Test Farm', region: 'jp' },
         farmSize: { id: 'home_garden', name: 'Home Garden', area_sqm: 30 },
         selectedCrops: [],
-        planId: null
+        planId: null,
+        pendingCropSlug: null
       },
       setSelectedCrops: vi.fn(),
       setPlanId: vi.fn(),
-      setFarm: vi.fn()
+      setFarm: vi.fn(),
+      setPendingCropSlug: vi.fn()
     };
     router = { navigate: vi.fn() };
     cdr = { markForCheck: vi.fn() };
@@ -99,7 +103,8 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
       farm: undefined,
       farmSize: { id: 'home_garden', name: 'Home Garden', area_sqm: 30 },
       selectedCrops: [],
-      planId: null
+      planId: null,
+      pendingCropSlug: null
     };
 
     PublicPlanSelectCropComponent.prototype.ngOnInit.call(component);
@@ -171,6 +176,31 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     PublicPlanSelectCropComponent.prototype.createPlan.call(component);
 
     expect(createPlanUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('preselects crop when pending research slug matches loaded crops', () => {
+    publicPlanStore.state.pendingCropSlug = 'tomato';
+    component.selectedCropIds = new Set();
+    component.selectedCrops = [];
+    const crops = [
+      { id: 10, name: 'トマト' },
+      { id: 11, name: 'キュウリ' }
+    ];
+
+    const desc = Object.getOwnPropertyDescriptor(PublicPlanSelectCropComponent.prototype, 'control');
+    if (desc?.set) {
+      desc.set.call(component, {
+        loading: false,
+        error: null,
+        crops,
+        saving: false
+      });
+    }
+
+    expect(publicPlanStore.setPendingCropSlug).toHaveBeenCalledWith(null);
+    expect(component.selectedCropIds).toEqual(new Set([10]));
+    expect(component.selectedCrops).toEqual([{ id: 10, name: 'トマト' }]);
+    expect(publicPlanStore.setSelectedCrops).toHaveBeenCalledWith([{ id: 10, name: 'トマト' }]);
   });
 
   it('toggleCrop adds crop when not selected', () => {

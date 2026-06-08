@@ -13,6 +13,7 @@ import {
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { Crop } from '../../domain/crops/crop';
 import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
+import { findCropByResearchSlug } from '../../domain/public-plans/research-crop-slug';
 
 const initialControl: PublicPlanSelectCropViewState = {
   loading: true,
@@ -156,7 +157,12 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
     return this._control;
   }
   set control(value: PublicPlanSelectCropViewState) {
+    const cropsJustLoaded =
+      this._control.loading && !value.loading && value.crops.length > 0 && !value.error;
     this._control = value;
+    if (cropsJustLoaded) {
+      this.applyPendingCropPreselection(value.crops);
+    }
     this.cdr.markForCheck();
   }
 
@@ -172,6 +178,21 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
     this.selectedCrops = [...this.publicPlanStore.state.selectedCrops];
     this.selectedCropIds = new Set(this.selectedCrops.map((c) => c.id));
     this.loadCropsUseCase.execute({ farmId: farm.id });
+  }
+
+  private applyPendingCropPreselection(crops: Crop[]): void {
+    const slug = this.publicPlanStore.state.pendingCropSlug;
+    if (!slug || this.selectedCropIds.size > 0) {
+      return;
+    }
+    const crop = findCropByResearchSlug(crops, slug);
+    this.publicPlanStore.setPendingCropSlug(null);
+    if (!crop) {
+      return;
+    }
+    this.selectedCropIds = new Set([crop.id]);
+    this.selectedCrops = [crop];
+    this.publicPlanStore.setSelectedCrops(this.selectedCrops);
   }
 
   toggleCrop(crop: Crop): void {

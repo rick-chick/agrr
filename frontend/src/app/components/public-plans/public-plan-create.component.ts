@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PublicPlanCreateView, PublicPlanCreateViewState } from './public-plan-create.view';
 import { LoadPublicPlanFarmsUseCase } from '../../usecase/public-plans/load-public-plan-farms.usecase';
@@ -87,6 +87,7 @@ const initialControl: PublicPlanCreateViewState = {
 })
 export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly useCase = inject(LoadPublicPlanFarmsUseCase);
   private readonly resetStateUseCase = inject(ResetPublicPlanCreationStateUseCase);
   private readonly presenter = inject(PublicPlanCreatePresenter);
@@ -108,8 +109,12 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   }
 
   ngOnInit(): void {
+    const cropSlug = this.route.snapshot.queryParamMap.get('crop');
     // Reset state to ensure clean state for new plan creation
     this.resetStateUseCase.execute({});
+    if (cropSlug) {
+      this.publicPlanStore.setPendingCropSlug(cropSlug);
+    }
     this.presenter.setView(this);
     const state = this.publicPlanStore.state;
     if (state.farm) {

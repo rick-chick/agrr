@@ -10,7 +10,9 @@ describe('PublicPlanCreateComponent (class-level)', () => {
   let publicPlanStore: {
     state: { farm?: { id: number; region: string } };
     setFarm: ReturnType<typeof vi.fn>;
+    setPendingCropSlug: ReturnType<typeof vi.fn>;
   };
+  let route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   let cdr: { detectChanges: ReturnType<typeof vi.fn> };
   let translate: { currentLang: string; defaultLang: string };
 
@@ -18,7 +20,8 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     useCase = { execute: vi.fn() };
     resetStateUseCase = { execute: vi.fn() };
     presenter = { setView: vi.fn() };
-    publicPlanStore = { state: {}, setFarm: vi.fn() };
+    publicPlanStore = { state: {}, setFarm: vi.fn(), setPendingCropSlug: vi.fn() };
+    route = { snapshot: { queryParamMap: { get: vi.fn().mockReturnValue(null) } } };
     cdr = { detectChanges: vi.fn() };
     translate = { currentLang: 'ja', defaultLang: 'ja' };
 
@@ -29,6 +32,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     component.resetStateUseCase = resetStateUseCase;
     component.presenter = presenter;
     component.publicPlanStore = publicPlanStore;
+    component.route = route;
     component.translate = translate;
     component.cdr = cdr;
     component._control = {
@@ -59,6 +63,15 @@ describe('PublicPlanCreateComponent (class-level)', () => {
       expect(component._control).toEqual(state);
     }
     expect(detectSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('stores crop query param as pending slug after reset', () => {
+    route.snapshot.queryParamMap.get.mockReturnValue('tomato');
+
+    PublicPlanCreateComponent.prototype.ngOnInit.call(component);
+
+    expect(resetStateUseCase.execute).toHaveBeenCalled();
+    expect(publicPlanStore.setPendingCropSlug).toHaveBeenCalledWith('tomato');
   });
 
   it('ngOnInit resets state, sets view on presenter and restores selected farm', () => {
