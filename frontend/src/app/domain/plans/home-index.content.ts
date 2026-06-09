@@ -1,7 +1,4 @@
-import {
-  HOME_DEMO_SECTION_I18N_KEYS,
-  LANDING_DEMO_I18N_KEYS
-} from './landing-demo-i18n.keys';
+import { HOME_DEMO_SECTION_I18N_KEYS } from './landing-demo-i18n.keys';
 
 /** Hero block on `/` (HomeComponent). */
 export const HOME_INDEX_HERO_I18N_KEYS = {
@@ -54,7 +51,6 @@ export const HOME_INDEX_CATALOG_KEYS = [
   ...Object.values(HOME_DEMO_SECTION_I18N_KEYS),
   ...Object.values(HOME_INDEX_DEMO_UI_I18N_KEYS),
   ...HOME_DEMO_HINT_I18N_KEYS,
-  ...Object.values(LANDING_DEMO_I18N_KEYS),
   ...Object.values(HOME_INDEX_FEATURES_HEADING_I18N_KEYS),
   ...HOME_INDEX_FEATURES.flatMap((feature) => [feature.titleKey, feature.descKey])
 ] as const;

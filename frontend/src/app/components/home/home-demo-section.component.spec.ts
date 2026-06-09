@@ -22,11 +22,11 @@ class StubPlanGanttClimateShellComponent {
 describe('HomeDemoSectionComponent', () => {
   let fixture: ComponentFixture<HomeDemoSectionComponent>;
   let mockRouter: { navigate: ReturnType<typeof vi.fn> };
-  let mockDemoStore: { syncFromTranslate: ReturnType<typeof vi.fn> };
+  let mockDemoStore: { syncHomeDemoViewState: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     mockRouter = { navigate: vi.fn() };
-    mockDemoStore = { syncFromTranslate: vi.fn() };
+    mockDemoStore = { syncHomeDemoViewState: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [HomeDemoSectionComponent, TranslateModule.forRoot()],
@@ -66,33 +66,24 @@ describe('HomeDemoSectionComponent', () => {
     );
     translate.use('ja');
 
+    mockDemoStore.syncHomeDemoViewState.mockReturnValue({
+      planData: buildLandingDemoPlanFixture(LANDING_DEMO_LABELS_FIXTURE),
+      titleParams: { schedule: '作付', preview: 'プレビュー', separator: ' / ' }
+    });
     fixture = TestBed.createComponent(HomeDemoSectionComponent);
   });
 
-  it('reserves gantt layout space before demo plan data is loaded', () => {
-    const wrapBeforeInit = fixture.nativeElement.querySelector('.home-demo-gantt-wrap');
-    expect(wrapBeforeInit).not.toBeNull();
-  });
-
-  it('loads demo plan data on init via DemoGanttPlanStore', () => {
-    const plan = buildLandingDemoPlanFixture(LANDING_DEMO_LABELS_FIXTURE);
-    mockDemoStore.syncFromTranslate.mockReturnValue(plan);
-
+  it('reserves gantt layout space on first paint', () => {
     fixture.detectChanges();
-
-    expect(mockDemoStore.syncFromTranslate).toHaveBeenCalled();
-    expect(fixture.componentInstance.demoPlanData).toBe(plan);
+    expect(fixture.nativeElement.querySelector('.home-demo-gantt-wrap')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-plan-gantt-climate-shell')).not.toBeNull();
   });
 
   it('navigates to public plan creation', () => {
-    mockDemoStore.syncFromTranslate.mockReturnValue(
-      buildLandingDemoPlanFixture(LANDING_DEMO_LABELS_FIXTURE)
-    );
     fixture.detectChanges();
 
     fixture.nativeElement.querySelector('button.primary-button')?.click();
 
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/public-plans/new']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/public-plans/new'] as const);
   });
 });

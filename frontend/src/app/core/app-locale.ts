@@ -22,7 +22,7 @@ export function mapFarmRegionToAppLang(region?: string | null): AppLang | undefi
   }
 }
 
-export function mapBrowserRegionToAppLang(region: BrowserRegion): AppLang {
+function mapBrowserRegionToAppLang(region: BrowserRegion): AppLang {
   switch (region) {
     case 'jp':
       return 'ja';
@@ -49,7 +49,7 @@ export function resolveInitialAppLang(): AppLang {
   return fromBrowser;
 }
 
-export type ApplyAppLangOptions = {
+type ApplyAppLangOptions = {
   /** When false, only switches ngx-translate for this session (e.g. public-plan farm region). */
   persist?: boolean;
 };

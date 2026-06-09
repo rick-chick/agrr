@@ -13,7 +13,11 @@ import {
 } from './gantt-plan-coordinator.service';
 import { CultivationPlanData, CultivationData } from '../../domain/plans/cultivation-plan-data';
 import { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
-import { buildLandingDemoLabels } from '../../domain/plans/landing-demo-labels';
+import {
+  buildHomeDemoTitleParams,
+  buildLandingDemoLabels,
+  HomeDemoTitleParams
+} from '../../domain/plans/landing-demo-labels';
 import { buildLandingDemoPlanFixture } from '../../domain/plans/landing-demo-plan.fixture';
 import { buildLandingDemoClimateForCultivation } from '../../domain/plans/landing-demo-climate.fixture';
 import {
@@ -52,6 +56,17 @@ export class DemoGanttPlanStore {
   syncFromTranslate(translate: Pick<TranslateService, 'instant'>): CultivationPlanData {
     this.initialize(buildLandingDemoLabels(translate));
     return this.getSnapshot();
+  }
+
+  /** Landing demo section view model (plan data + translated title params). */
+  syncHomeDemoViewState(translate: Pick<TranslateService, 'instant'>): {
+    planData: CultivationPlanData;
+    titleParams: HomeDemoTitleParams;
+  } {
+    return {
+      planData: this.syncFromTranslate(translate),
+      titleParams: buildHomeDemoTitleParams(translate)
+    };
   }
 
   resetToInitial(): void {

@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+export const PUBLIC_PLAN_CREATE_ROUTE = ['/public-plans/new'] as const;
+
 export const publicPlansRoutes: Routes = [
   {
     path: 'public-plans/new',

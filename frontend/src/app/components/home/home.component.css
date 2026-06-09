@@ -4,6 +4,8 @@
   background: var(--gradient-home-hero);
   border-radius: var(--radius-xl);
   margin-bottom: var(--space-10);
+  /* Reserve space before ngx-translate paints (CLS guard; primary fix is APP_INITIALIZER). */
+  min-height: 17.5rem;
 }
 
 .hero-section h1 {
@@ -153,6 +155,10 @@
   .features-grid {
     grid-template-columns: 1fr;
     gap: var(--space-6);
+  }
+
+  .hero-section {
+    min-height: 16rem;
   }
 
   .hero-section h1 {

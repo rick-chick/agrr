@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { scrollToElementId } from '../../core/dom/scroll-to-element-id';
 import {
   HOME_INDEX_FEATURES,
   HOME_INDEX_FEATURES_HEADING_I18N_KEYS,
   HOME_INDEX_HERO_I18N_KEYS
 } from '../../domain/plans/home-index.content';
+import { PUBLIC_PLAN_CREATE_ROUTE } from '../../routes/public-plans.routes';
 import { HomeDemoSectionComponent } from './home-demo-section.component';
 
 @Component({
@@ -45,7 +47,7 @@ import { HomeDemoSectionComponent } from './home-demo-section.component';
       </button>
     </section>
   `,
-  styleUrls: ['./home.component.css', '../public-plans/public-plan.component.css']
+  styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
   readonly hero = HOME_INDEX_HERO_I18N_KEYS;
@@ -56,10 +58,10 @@ export class HomeComponent {
 
   scrollToDemo(event: Event): void {
     event.preventDefault();
-    document.getElementById('home-demo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToElementId('home-demo');
   }
 
   navigateToPlan(): void {
-    this.router.navigate(['/public-plans/new']);
+    void this.router.navigate(PUBLIC_PLAN_CREATE_ROUTE);
   }
 }

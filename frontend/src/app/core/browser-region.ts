@@ -62,7 +62,7 @@ export const mapLocaleToBrowserRegion = (locale?: string | null): BrowserRegion 
   return undefined;
 };
 
-/** Prefer app language, then browser locales (aligned with app.ts detectBrowserLang). */
+/** Prefer app language, then browser locales (aligned with resolveInitialAppLang). */
 export const resolveReferenceFarmRegion = (appLang?: string | null): BrowserRegion => {
   const fromApp = mapAppLangToBrowserRegion(appLang);
   if (fromApp) {

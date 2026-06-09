@@ -9,11 +9,9 @@ import {
   HOME_INDEX_DEMO_UI_I18N_KEYS
 } from '../../domain/plans/home-index.content';
 import { HOME_DEMO_SECTION_I18N_KEYS } from '../../domain/plans/landing-demo-i18n.keys';
-import {
-  buildHomeDemoTitleParams,
-  HomeDemoTitleParams
-} from '../../domain/plans/landing-demo-labels';
+import { HomeDemoTitleParams } from '../../domain/plans/landing-demo-labels';
 import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.service';
+import { PUBLIC_PLAN_CREATE_ROUTE } from '../../routes/public-plans.routes';
 
 @Component({
   selector: 'app-home-demo-section',
@@ -36,9 +34,7 @@ import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.s
           }}</span>
         </div>
         <div class="home-demo-gantt plan-detail-surface">
-          @if (demoPlanData) {
-            <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
-          }
+          <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
         </div>
       </div>
       <p class="home-demo-section__disclaimer">{{ demoUi.disclaimer | translate }}</p>
@@ -49,11 +45,7 @@ import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.s
       </div>
     </section>
   `,
-  styleUrls: [
-    './home-demo-section.component.css',
-    '../plans/plan-detail-surface.css',
-    '../public-plans/public-plan.component.css'
-  ]
+  styleUrls: ['./home-demo-section.component.css', '../plans/plan-detail-surface.css']
 })
 export class HomeDemoSectionComponent implements OnInit, OnDestroy {
   readonly HOME_DEMO_SECTION_I18N_KEYS = HOME_DEMO_SECTION_I18N_KEYS;
@@ -65,12 +57,15 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy {
   private readonly translate = inject(TranslateService);
   private langChangeSub: Subscription | null = null;
 
-  demoPlanData: CultivationPlanData | null = null;
-  demoTitleParams: HomeDemoTitleParams = buildHomeDemoTitleParams(this.translate);
+  demoPlanData!: CultivationPlanData;
+  demoTitleParams!: HomeDemoTitleParams;
+
+  constructor() {
+    this.refreshViewState();
+  }
 
   ngOnInit(): void {
-    this.applyDemoLocale();
-    this.langChangeSub = this.translate.onLangChange.subscribe(() => this.applyDemoLocale());
+    this.langChangeSub = this.translate.onLangChange.subscribe(() => this.refreshViewState());
   }
 
   ngOnDestroy(): void {
@@ -78,11 +73,12 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy {
   }
 
   navigateToPlan(): void {
-    this.router.navigate(['/public-plans/new']);
+    void this.router.navigate(PUBLIC_PLAN_CREATE_ROUTE);
   }
 
-  private applyDemoLocale(): void {
-    this.demoPlanData = this.demoStore.syncFromTranslate(this.translate);
-    this.demoTitleParams = buildHomeDemoTitleParams(this.translate);
+  private refreshViewState(): void {
+    const view = this.demoStore.syncHomeDemoViewState(this.translate);
+    this.demoPlanData = view.planData;
+    this.demoTitleParams = view.titleParams;
   }
 }
