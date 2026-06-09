@@ -29,18 +29,18 @@ import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.s
           <li class="home-demo-hint">{{ hintKey | translate }}</li>
         }
       </ul>
-      @if (demoPlanData) {
-        <div class="home-demo-gantt-wrap">
-          <div class="home-demo-gantt__chrome">
-            <span class="home-demo-gantt__badge">{{
-              HOME_DEMO_SECTION_I18N_KEYS.preview | translate
-            }}</span>
-          </div>
-          <div class="home-demo-gantt plan-detail-surface">
-            <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
-          </div>
+      <div class="home-demo-gantt-wrap">
+        <div class="home-demo-gantt__chrome">
+          <span class="home-demo-gantt__badge">{{
+            HOME_DEMO_SECTION_I18N_KEYS.preview | translate
+          }}</span>
         </div>
-      }
+        <div class="home-demo-gantt plan-detail-surface">
+          @if (demoPlanData) {
+            <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
+          }
+        </div>
+      </div>
       <p class="home-demo-section__disclaimer">{{ demoUi.disclaimer | translate }}</p>
       <div class="home-demo-section__actions">
         <button type="button" class="primary-button large" (click)="navigateToPlan()">
@@ -66,11 +66,7 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy {
   private langChangeSub: Subscription | null = null;
 
   demoPlanData: CultivationPlanData | null = null;
-  demoTitleParams: HomeDemoTitleParams = {
-    schedule: '',
-    preview: '',
-    separator: ''
-  };
+  demoTitleParams: HomeDemoTitleParams = buildHomeDemoTitleParams(this.translate);
 
   ngOnInit(): void {
     this.applyDemoLocale();
