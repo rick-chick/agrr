@@ -1,16 +1,6 @@
 .home-demo-section {
-  margin-bottom: var(--space-10);
-  padding: var(--space-6) var(--space-4);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-8);
   scroll-margin-top: var(--space-6);
-}
-
-.home-demo-section h2 {
-  text-align: center;
-  font-size: var(--font-size-3xl);
-  margin-bottom: var(--space-4);
 }
 
 .home-demo-hints {
@@ -18,7 +8,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-2);
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-3);
   padding: 0;
   list-style: none;
 }
@@ -33,43 +23,9 @@
   line-height: var(--line-height-tight);
 }
 
-.home-demo-section__disclaimer {
-  text-align: center;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--space-4);
-}
-
-.home-demo-gantt-wrap {
-  margin-bottom: var(--space-6);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-home-feature);
-  border: 1px solid var(--color-border);
-}
-
-.home-demo-gantt__chrome {
-  display: flex;
-  align-items: center;
-  padding: var(--space-2) var(--space-4);
-  background: var(--color-background);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.home-demo-gantt__badge {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  border-radius: var(--radius-full);
-  padding: var(--space-1) var(--space-3);
-}
-
 .home-demo-gantt {
   min-height: 420px;
-  background: var(--color-surface);
+  margin-bottom: var(--space-5);
 }
 
 .home-demo-section__actions {
@@ -103,11 +59,6 @@
 @media (max-width: 768px) {
   .home-demo-section {
     margin-bottom: var(--space-6);
-    padding: 0;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
     scroll-margin-top: var(--space-4);
   }
 
@@ -122,11 +73,5 @@
 
   .home-demo-hint {
     text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .home-demo-gantt-wrap {
-    border-radius: var(--radius-md);
   }
 }

@@ -71,12 +71,11 @@ describe('DemoGanttPlanStore', () => {
     expect(snapshot.data.cultivations).toHaveLength(3);
   });
 
-  it('syncHomeDemoViewState returns plan data and title params together', () => {
+  it('syncHomeDemoViewState returns localized plan data', () => {
     const view = store.syncHomeDemoViewState({
       instant: (key: string) => `localized:${key}`
     });
     expect(view.planData.data.cultivations).toHaveLength(3);
-    expect(view.titleParams.schedule).toBe('localized:home.index.demo.schedule');
-    expect(view.titleParams.preview).toBe('localized:home.index.demo.preview');
+    expect(view.planData.data.plan_name).toBe('localized:home.index.demo.fixture.plan_name');
   });
 });

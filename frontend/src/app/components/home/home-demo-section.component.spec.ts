@@ -47,17 +47,13 @@ describe('HomeDemoSectionComponent', () => {
         home: {
           index: {
             demo: {
-              section: {
-                title: '{{schedule}}{{separator}}{{preview}}',
-                schedule: '作付',
-                preview: 'プレビュー',
-                separator: ' / ',
-                preview_badge: 'PREVIEW'
+              hints_aria: '操作のヒント',
+              hints: {
+                drag: 'ドラッグで期間を調整',
+                tap: 'クリックで気象・GDD',
+                add: '作物を追加'
               },
-              hints_aria: 'ヒント',
-              hint_drag: 'ドラッグ',
-              disclaimer: 'デモです',
-              cta_create: '作成'
+              cta_create: '地域と作物を選んで計画を作る'
             }
           }
         }
@@ -67,16 +63,24 @@ describe('HomeDemoSectionComponent', () => {
     translate.use('ja');
 
     mockDemoStore.syncHomeDemoViewState.mockReturnValue({
-      planData: buildLandingDemoPlanFixture(LANDING_DEMO_LABELS_FIXTURE),
-      titleParams: { schedule: '作付', preview: 'プレビュー', separator: ' / ' }
+      planData: buildLandingDemoPlanFixture(LANDING_DEMO_LABELS_FIXTURE)
     });
     fixture = TestBed.createComponent(HomeDemoSectionComponent);
   });
 
-  it('reserves gantt layout space on first paint', () => {
+  it('shows hints and gantt without preview chrome', () => {
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.home-demo-gantt-wrap')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('app-plan-gantt-climate-shell')).not.toBeNull();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('h2')).toBeNull();
+    expect(root.querySelector('.home-demo-gantt__chrome')).toBeNull();
+    expect(root.querySelector('.home-demo-section__disclaimer')).toBeNull();
+    expect(root.querySelector('.home-demo-hints')).not.toBeNull();
+    expect(root.querySelector('.home-demo-gantt')).not.toBeNull();
+    expect(root.querySelector('app-plan-gantt-climate-shell')).not.toBeNull();
+    expect(root.querySelector('button.primary-button')?.textContent?.trim()).toBe(
+      '地域と作物を選んで計画を作る'
+    );
   });
 
   it('navigates to public plan creation', () => {

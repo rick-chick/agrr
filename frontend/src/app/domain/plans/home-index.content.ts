@@ -1,5 +1,3 @@
-import { HOME_DEMO_SECTION_I18N_KEYS } from './landing-demo-i18n.keys';
-
 /** Hero block on `/` (HomeComponent). */
 export const HOME_INDEX_HERO_I18N_KEYS = {
   title: 'home.index.hero.title',
@@ -17,7 +15,6 @@ export const HOME_INDEX_FEATURES_HEADING_I18N_KEYS = {
 /** Demo section chrome strings (HomeDemoSectionComponent). */
 export const HOME_INDEX_DEMO_UI_I18N_KEYS = {
   hintsAria: 'home.index.demo.hints_aria',
-  disclaimer: 'home.index.demo.disclaimer',
   ctaCreate: 'home.index.demo.cta_create'
 } as const;
 
@@ -48,7 +45,6 @@ export const HOME_INDEX_FEATURES = [
 /** All `home.index` keys referenced by home route components; used by locale catalog spec. */
 export const HOME_INDEX_CATALOG_KEYS = [
   ...Object.values(HOME_INDEX_HERO_I18N_KEYS),
-  ...Object.values(HOME_DEMO_SECTION_I18N_KEYS),
   ...Object.values(HOME_INDEX_DEMO_UI_I18N_KEYS),
   ...HOME_DEMO_HINT_I18N_KEYS,
   ...Object.values(HOME_INDEX_FEATURES_HEADING_I18N_KEYS),

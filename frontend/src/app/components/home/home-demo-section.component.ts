@@ -8,36 +8,27 @@ import {
   HOME_DEMO_HINT_I18N_KEYS,
   HOME_INDEX_DEMO_UI_I18N_KEYS
 } from '../../domain/plans/home-index.content';
-import { HOME_DEMO_SECTION_I18N_KEYS } from '../../domain/plans/landing-demo-i18n.keys';
-import { HomeDemoTitleParams } from '../../domain/plans/landing-demo-labels';
-import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.service';
 import { PUBLIC_PLAN_CREATE_ROUTE } from '../../routes/public-plans.routes';
+import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.service';
 
 @Component({
   selector: 'app-home-demo-section',
   standalone: true,
   imports: [TranslateModule, PlanGanttClimateShellComponent],
   template: `
-    <section id="home-demo" class="home-demo-section" aria-labelledby="home-demo-heading">
-      <h2 id="home-demo-heading">{{
-        HOME_DEMO_SECTION_I18N_KEYS.title | translate: demoTitleParams
-      }}</h2>
+    <section
+      id="home-demo"
+      class="home-demo-section"
+      [attr.aria-label]="demoUi.hintsAria | translate"
+    >
       <ul class="home-demo-hints" [attr.aria-label]="demoUi.hintsAria | translate">
         @for (hintKey of demoHintKeys; track hintKey) {
           <li class="home-demo-hint">{{ hintKey | translate }}</li>
         }
       </ul>
-      <div class="home-demo-gantt-wrap">
-        <div class="home-demo-gantt__chrome">
-          <span class="home-demo-gantt__badge">{{
-            HOME_DEMO_SECTION_I18N_KEYS.preview | translate
-          }}</span>
-        </div>
-        <div class="home-demo-gantt plan-detail-surface">
-          <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
-        </div>
+      <div class="home-demo-gantt plan-detail-surface">
+        <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
       </div>
-      <p class="home-demo-section__disclaimer">{{ demoUi.disclaimer | translate }}</p>
       <div class="home-demo-section__actions">
         <button type="button" class="primary-button large" (click)="navigateToPlan()">
           {{ demoUi.ctaCreate | translate }}
@@ -48,7 +39,6 @@ import { PUBLIC_PLAN_CREATE_ROUTE } from '../../routes/public-plans.routes';
   styleUrls: ['./home-demo-section.component.css', '../plans/plan-detail-surface.css']
 })
 export class HomeDemoSectionComponent implements OnInit, OnDestroy {
-  readonly HOME_DEMO_SECTION_I18N_KEYS = HOME_DEMO_SECTION_I18N_KEYS;
   readonly demoUi = HOME_INDEX_DEMO_UI_I18N_KEYS;
   readonly demoHintKeys = HOME_DEMO_HINT_I18N_KEYS;
 
@@ -58,7 +48,6 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy {
   private langChangeSub: Subscription | null = null;
 
   demoPlanData!: CultivationPlanData;
-  demoTitleParams!: HomeDemoTitleParams;
 
   constructor() {
     this.refreshViewState();
@@ -77,8 +66,6 @@ export class HomeDemoSectionComponent implements OnInit, OnDestroy {
   }
 
   private refreshViewState(): void {
-    const view = this.demoStore.syncHomeDemoViewState(this.translate);
-    this.demoPlanData = view.planData;
-    this.demoTitleParams = view.titleParams;
+    this.demoPlanData = this.demoStore.syncHomeDemoViewState(this.translate).planData;
   }
 }
