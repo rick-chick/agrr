@@ -1,0 +1,17 @@
+# Canonical robots.txt — deployed via frontend/public/ (see gcp-frontend-deploy.sh).
+# Do not edit public/robots.txt at repo root (not deployed).
+
+User-agent: *
+Allow: /
+
+Sitemap: https://agrr.net/sitemap.xml
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+
+Allow: /research
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms

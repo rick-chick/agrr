@@ -16,7 +16,7 @@
 
 | 項目 | 内容 |
 |------|------|
-| パブリックホスト | `agrr.net`（必要なら `www.agrr.net` も同一 map） |
+| パブリックホスト | `agrr.net`（canonical）。`www.agrr.net` は同一 URL map 上で **301 → agrr.net** |
 | Rust 向けプレフィックス（終着・切替対象の枠） | `/api/*`、 `/cable`、 `/auth/*` |
 | 未移行の既定 | **禁止（フォールバックなし）** — 未実装パスは `agrr-server` が **501** `api_not_migrated`。Rails `defaultService` で API を受けない |
 | 切替単位 | **BC / ルート群** — URL map に **Rust 向け**ルールを追加。移行完了後は `/api/*` `/cable` `/auth/*` をすべて `rust-backend` へ |
@@ -70,6 +70,17 @@
 | 単体 Rust のみ | `run-test-rust-domain.sh` / contract テスト — map 不要 |
 
 本番 map の正は GCP 上の `agrr-frontend-url-map-simple`（または後継名）。export / validate / import は [load-balancer-update スキル](../../../.cursor/skills/load-balancer-update/SKILL.md)。
+
+### SEO / クロール（2026-06-09 追記）
+
+| 項目 | 内容 |
+|------|------|
+| `robots.txt` / `sitemap.xml` | frontend バケット root。`/*` rewrite の**前**に pathRule（rewrite なし） |
+| SPA fallback | GCS `notFoundPage` は `404.html`。classic **EXTERNAL** scheme は `defaultCustomErrorResponsePolicy` 非対応のため、公開ルート（`about` 等）に **index.html ミラー object** を deploy（[`gcp-frontend-deploy.sh`](../../../.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh)） |
+| `www` | `www-redirect` pathMatcher で apex へ 301 |
+| 旧 URL | pathRule `urlRedirect`: `public_plans` → `public-plans/new`、主要 `/us/*` `/in/*`。`/research_reports/*` の prefix 301 は classic EXTERNAL では安定しないため **sitemap の正規 URL に依存** |
+| 検証 | [`.cursor/skills/deploy-frontend/scripts/verify-seo-routing.sh`](../../../.cursor/skills/deploy-frontend/scripts/verify-seo-routing.sh) |
+| CDN | `agrr-frontend-backend` は **negative caching 無効**（404 の CDN 固定化で SPA shell が復旧不能になるため） |
 
 ### 例: pathRules のイメージ（抜粋・優先度は実 map に合わせる）
 

@@ -1,13 +1,10 @@
 creationTimestamp: '2026-02-04T02:31:36.040-08:00'
 defaultService: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
-fingerprint: t7LIdtZ432w=
+fingerprint: sMnhrg4g19o=
 hostRules:
 - hosts:
   - agrr.net
   pathMatcher: frontend-matcher
-- hosts:
-  - www.agrr.net
-  pathMatcher: www-redirect
 id: 5841225357506551528
 kind: compute#urlMap
 name: agrr-frontend-url-map-simple
@@ -27,75 +24,6 @@ pathMatchers:
     - /auth/*
     - /auth/google_oauth2
     service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendServices/rust-backend
-  - paths:
-    - /public_plans
-    - /public_plans/*
-    urlRedirect:
-      pathRedirect: /public-plans/new
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /us
-    urlRedirect:
-      pathRedirect: /
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /us/about
-    urlRedirect:
-      pathRedirect: /about
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /us/contact
-    urlRedirect:
-      pathRedirect: /contact
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /us/privacy
-    urlRedirect:
-      pathRedirect: /privacy
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /us/terms
-    urlRedirect:
-      pathRedirect: /terms
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /us/public_plans
-    - /us/public_plans/*
-    urlRedirect:
-      pathRedirect: /public-plans/new
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /in
-    urlRedirect:
-      pathRedirect: /
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /in/about
-    urlRedirect:
-      pathRedirect: /about
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /in/contact
-    urlRedirect:
-      pathRedirect: /contact
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
-  - paths:
-    - /in/public_plans
-    - /in/public_plans/*
-    urlRedirect:
-      pathRedirect: /public-plans/new
-      redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-      stripQuery: false
   - paths:
     - /research
     routeAction:
@@ -120,17 +48,6 @@ pathMatchers:
     - /up
     service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendServices/rust-backend
   - paths:
-    - /robots.txt
-    - /sitemap.xml
-    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
-  - paths:
-    - /about
-    - /contact
-    - /privacy
-    - /terms
-    - /public-plans/new
-    service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
-  - paths:
     - /favicon.ico
     service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
   - paths:
@@ -143,9 +60,4 @@ pathMatchers:
       urlRewrite:
         pathPrefixRewrite: /index.html
     service: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/backendBuckets/agrr-frontend-backend
-- defaultUrlRedirect:
-    hostRedirect: agrr.net
-    httpsRedirect: true
-    redirectResponseCode: MOVED_PERMANENTLY_DEFAULT
-  name: www-redirect
 selfLink: https://www.googleapis.com/compute/v1/projects/agrr-475323/global/urlMaps/agrr-frontend-url-map-simple

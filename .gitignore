@@ -4,6 +4,9 @@
 # or operating system, you probably want to add a global ignore instead:
 #   git config --global core.excludesfile '~/.gitignore_global'
 
+# Generated at frontend build / deploy (see .cursor/skills/deploy-frontend/scripts/generate-sitemap.mjs).
+/frontend/public/sitemap.xml
+
 # Ignore bundler config.
 /.bundle
 
