@@ -453,42 +453,63 @@ use serde_json::json;
     }
 
     #[test]
-    fn raises_on_empty_data_response() {
-        let empty = json!({
-            "location": {
-                "latitude": 35.6762,
-                "longitude": 139.6503,
-                "elevation": 50.0,
-                "timezone": "Asia/Tokyo"
-            },
-            "data": []
-        });
+    fn skips_ingest_when_agrr_returns_no_output_with_exit_zero() {
+        let upsert_called = Arc::new(Mutex::new(false));
         let harness = PerformHarness::new(
             None,
             0,
-            Arc::new(Mutex::new(false)),
+            upsert_called.clone(),
             Some("jp".into()),
             false,
-            Some(empty),
+            None,
         );
 
-        let err = harness.interactor().call(sample_input()).expect_err("error");
-        assert_eq!(err, FetchWeatherDataPerformError::EmptyWeatherDataNotAllowed);
+        harness
+            .interactor_no_sleep_skip()
+            .call(sample_input())
+            .expect("gap-fill skip when agrr has no output file");
+
+        assert!(
+            !*upsert_called.lock().expect("lock"),
+            "must not upsert when agrr reports no new weather payload"
+        );
     }
 
     #[test]
-    fn raises_on_nil_response() {
+    fn skips_gap_fill_when_jma_has_no_published_days_in_window_yet() {
+        let upsert_called = Arc::new(Mutex::new(false));
         let harness = PerformHarness::new(
-            None,
+            Some(WeatherLocationRecord { id: 28 }),
             0,
-            Arc::new(Mutex::new(false)),
+            upsert_called.clone(),
             Some("jp".into()),
             false,
             None,
         );
+        let input = FetchWeatherDataPerformInput {
+            latitude: 34.7303,
+            longitude: 136.5086,
+            start_date: Date::from_calendar_date(2026, Month::June, 10).expect("valid"),
+            end_date: Date::from_calendar_date(2026, Month::June, 11).expect("valid"),
+            farm_id: Some(28),
+            cultivation_plan_id: Some(750),
+            channel_class: Some("test".into()),
+            executions: 1,
+            current_time: OffsetDateTime::new_utc(
+                Date::from_calendar_date(2026, Month::June, 11).expect("valid"),
+                Time::MIDNIGHT,
+            ),
+        };
 
-        let err = harness.interactor().call(sample_input()).expect_err("error");
-        assert_eq!(err, FetchWeatherDataPerformError::InvalidWeatherApiResponse);
+        harness
+            .interactor_no_sleep_skip()
+            .call(input)
+            .expect("reference farm gap-fill skip when JMA has not published requested days");
+
+        assert!(
+            !*upsert_called.lock().expect("lock"),
+            "existing store through latest date must be used without upsert"
+        );
     }
 
     #[test]

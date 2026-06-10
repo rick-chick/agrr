@@ -21,7 +21,6 @@ const ALLOWED_MISSING_RATIO: f64 = 0.05;
 pub enum FetchWeatherDataPerformError {
     InvalidWeatherApiResponse,
     InvalidWeatherDataArray,
-    EmptyWeatherDataNotAllowed,
     ExcessiveMissingWeatherDays,
     MissingOrInvalidWeatherLocation,
     InvalidDateParameters,
@@ -127,7 +126,7 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
         )?;
 
         let Some(weather_data) = weather_data else {
-            return Err(FetchWeatherDataPerformError::InvalidWeatherApiResponse);
+            return self.complete_fetch_without_new_data(&input);
         };
 
         let data_points = weather_data
@@ -140,9 +139,6 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
         let missing_days = (expected_days - actual_days).max(0);
         let allowed_missing_days = (expected_days as f64 * ALLOWED_MISSING_RATIO).ceil() as i64;
 
-        if data_points.is_empty() {
-            return Err(FetchWeatherDataPerformError::EmptyWeatherDataNotAllowed);
-        }
         if missing_days > allowed_missing_days {
             return Err(FetchWeatherDataPerformError::ExcessiveMissingWeatherDays);
         } else if missing_days > 0 {
@@ -252,6 +248,26 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
         self.agrr_weather_gateway
             .fetch_by_date_range(latitude, longitude, start_date, end_date, &data_source)
             .map_err(|_| FetchWeatherDataPerformError::InvalidWeatherApiResponse)
+    }
+
+    /// agrr normal fetch exit 0 with no output file: keep existing store and continue the chain.
+    fn complete_fetch_without_new_data(
+        &self,
+        input: &FetchWeatherDataPerformInput,
+    ) -> Result<(), FetchWeatherDataPerformError> {
+        if let Some(farm_id) = input.farm_id {
+            let _ = self.record_block_completed.call(farm_id, input.current_time);
+        }
+
+        if input.cultivation_plan_id.is_some() && input.channel_class.is_some() {
+            self.advance_phase.call(
+                input.cultivation_plan_id.expect("checked"),
+                FetchWeatherPhase::WeatherDataFetched,
+                input.channel_class.as_deref().expect("checked"),
+            );
+        }
+
+        Ok(())
     }
 }
 

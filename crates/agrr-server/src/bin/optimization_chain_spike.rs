@@ -142,7 +142,10 @@ fn check_weather_api(
                 format!("{n} days ({}..{}) via WeatherDaemonGateway", start, window.end_date),
             )
         }
-        Ok(None) => Check::fail("weather_daemon_gateway", "empty payload"),
+        Ok(None) => Check::pass(
+            "weather_daemon_gateway",
+            "no output file (exit 0); chain skips ingest and uses existing store",
+        ),
         Err(e) => {
             let read =
                 PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather.clone());

@@ -4,8 +4,10 @@ use agrr_domain::weather_data::gateways::AgrrWeatherGateway;
 use serde_json::Value;
 use time::Date;
 
+use std::path::Path;
+
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
-use crate::daemon_response::parse_daemon_json_payload;
+use crate::daemon_response::{ensure_daemon_command_success, parse_daemon_json_payload};
 use crate::daemon_temp_file::read_json_file;
 
 pub struct WeatherDaemonGateway {
@@ -60,26 +62,48 @@ impl AgrrWeatherGateway for WeatherDaemonGateway {
         ];
 
         let wrapper = self.client.execute_daemon_args(&args)?;
-        if let Ok(payload) = parse_daemon_json_payload(&wrapper) {
-            if payload.get("data").is_some() {
-                let _ = std::fs::remove_file(&out_path);
-                return Ok(Some(payload));
-            }
-        }
+        ensure_daemon_command_success(&wrapper).map_err(map_daemon_err)?;
+        resolve_weather_fetch_output(&wrapper, &out_path).map_err(map_daemon_err)
+    }
+}
 
-        let raw = read_json_file(&out_path).map_err(|e| {
+/// agrr normal fetch: exit 0 with no `--output` file means nothing new to ingest (`None` skip).
+fn resolve_weather_fetch_output(
+    wrapper: &Value,
+    out_path: &Path,
+) -> Result<Option<Value>, AgrrDaemonError> {
+    if let Ok(payload) = parse_daemon_json_payload(wrapper) {
+        if weather_payload_has_rows(&payload) {
+            let _ = std::fs::remove_file(out_path);
+            return Ok(Some(payload));
+        }
+    }
+
+    if out_path.exists() {
+        let raw = read_json_file(out_path).map_err(|e| {
             AgrrDaemonError::CommandFailed(format!(
                 "weather command did not produce JSON at {}: {e}",
                 out_path.display()
             ))
         })?;
-        let _ = std::fs::remove_file(&out_path);
-
-        if raw.get("data").is_some() {
+        let _ = std::fs::remove_file(out_path);
+        if weather_payload_has_rows(&raw) {
             return Ok(Some(raw));
         }
-        Ok(None)
     }
+
+    Ok(None)
+}
+
+fn map_daemon_err(error: AgrrDaemonError) -> Box<dyn std::error::Error + Send + Sync> {
+    Box::new(error)
+}
+
+fn weather_payload_has_rows(payload: &Value) -> bool {
+    payload
+        .get("data")
+        .and_then(|data| data.as_array())
+        .is_some_and(|rows| !rows.is_empty())
 }
 
 fn effective_data_source(latitude: f64, longitude: f64, data_source: &str) -> String {
@@ -104,6 +128,42 @@ fn location_in_japan(latitude: f64, longitude: f64) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
+    use std::io::Write;
+
+    #[test]
+    fn resolve_weather_fetch_output_returns_none_when_exit_zero_and_no_output_file() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let missing = dir.path().join("weather_output_missing.json");
+        let wrapper = json!({ "exit_code": 0, "stdout": "", "stderr": "" });
+
+        let result = resolve_weather_fetch_output(&wrapper, &missing).expect("resolve");
+
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn resolve_weather_fetch_output_returns_some_when_output_file_has_rows() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("weather_output_rows.json");
+        let payload = json!({
+            "data": [{"time": "2026-06-10T00:00:00", "temperature_2m_max": 20.0}],
+            "location": {"latitude": 34.7, "longitude": 136.5}
+        });
+        let mut file = std::fs::File::create(&path).expect("create");
+        write!(file, "{}", serde_json::to_string(&payload).expect("json")).expect("write");
+
+        let wrapper = json!({ "exit_code": 0, "stdout": "", "stderr": "" });
+        let result = resolve_weather_fetch_output(&wrapper, &path).expect("resolve");
+
+        assert!(result.is_some());
+        assert_eq!(
+            result
+                .and_then(|v| v.get("data").and_then(|d| d.as_array()).map(|a| a.len()))
+                .unwrap_or(0),
+            1
+        );
+    }
 
     #[test]
     fn japan_location_switches_noaa_to_jma() {
