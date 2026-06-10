@@ -18,9 +18,13 @@ export const smokeManifest: Manifest = JSON.parse(
 
 /**
  * Rust strangler + mock login セッション付き E2E（`npm run test:e2e:smoke` と同条件）。
+ * `E2E_PRODUCTION=1` 時は本番 CDN 向け public plan スモーク等（OAuth / mock 不要の spec）を有効化。
  * 未設定時は `ng serve` のみで回る軽量テスト（`route-manifest-coverage` 等）と分離する。
  */
-export const smokeDescribe = process.env.E2E_CAPTURE_DEV_SESSION ? test.describe : test.describe.skip;
+export const smokeDescribe =
+  process.env.E2E_CAPTURE_DEV_SESSION || process.env.E2E_PRODUCTION
+    ? test.describe
+    : test.describe.skip;
 
 export const SKIP_ROUTES_WITH_DEV_SESSION = new Set(['login']);
 

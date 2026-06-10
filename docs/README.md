@@ -2,6 +2,8 @@
 
 - **アーキテクチャ（規約本体）**: リポジトリ直下 [`ARCHITECTURE.md`](../ARCHITECTURE.md)
 - **設計メモ**: [`design/`](design/)
+- **製品成長の問題点・改善案**: [`product/PRODUCT-GROWTH-ISSUES.md`](product/PRODUCT-GROWTH-ISSUES.md)
+- **本番ベンチ・ログ調査手順**: [`product/PRODUCTION-BENCHMARK-INVESTIGATION.md`](product/PRODUCTION-BENCHMARK-INVESTIGATION.md)
 - **マイグレーション・データ移行**: [`migration/`](migration/)
 - **lib/domain → Rust（完了）**: [`migration/lib-domain-rust/`](migration/lib-domain-rust/)（[`TRACKING.yaml`](migration/lib-domain-rust/TRACKING.yaml)）
 - **アプリ RUST 化（完了）**: [`migration/app-rust-stack/`](migration/app-rust-stack/)（本番: [`PRODUCTION-CUTOVER-STATUS.md`](migration/app-rust-stack/PRODUCTION-CUTOVER-STATUS.md)、P8: [`P8-RAILS-SHELL-REMOVAL.md`](migration/app-rust-stack/P8-RAILS-SHELL-REMOVAL.md)）

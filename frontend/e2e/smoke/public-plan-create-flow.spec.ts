@@ -81,16 +81,16 @@ smokeDescribe('public plan create flow (free plan)', () => {
       });
     });
 
-    const resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
+    const resolvedCaptureIds = process.env.E2E_PRODUCTION
+      ? null
+      : await loadResolvedCaptureIdsWithBaseline();
     const newRoute = findRoute('public-plans/new');
     await page.goto(resolveGotoUrl(newRoute, resolvedCaptureIds));
     await waitForPageStable(page, newRoute);
     await assertHostHealthy(page, 'app-public-plan-create');
 
     const farmCard = page.locator('app-public-plan-create .enhanced-selection-card').first();
-    if ((await farmCard.count()) === 0) {
-      test.skip(true, 'no public farms in dev DB');
-    }
+    await expect(farmCard, 'public farms must load from API').toBeVisible({ timeout: 30_000 });
     await farmCard.click();
     await expect(page).toHaveURL(/\/public-plans\/select-crop/);
 

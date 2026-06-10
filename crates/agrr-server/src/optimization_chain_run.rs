@@ -23,8 +23,10 @@ use agrr_domain::weather_data::ports::{
     RecordFarmWeatherBlockCompletedPort,
 };
 use agrr_domain::weather_data::OptimizationJobChainWeatherComputation;
+use std::sync::{Arc, OnceLock};
+use std::time::Instant;
 use time::{Date, OffsetDateTime};
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 use crate::cable::CableHub;
 use crate::optimization_chain_phase::{advance_phase, broadcast_completed, plan_still_optimizing};
@@ -35,6 +37,103 @@ pub struct ChainContext {
     pub latitude: f64,
     pub longitude: f64,
     pub latest_weather_date: Option<Date>,
+}
+
+#[derive(Clone)]
+pub struct BootstrapData {
+    pub ctx: ChainContext,
+    pub start_date: Date,
+    pub end_date: Date,
+}
+
+pub type BootstrapSlot = Arc<OnceLock<Result<BootstrapData, String>>>;
+
+pub fn new_bootstrap_slot() -> BootstrapSlot {
+    Arc::new(OnceLock::new())
+}
+
+pub fn plan_exists_in_db(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> bool {
+    pool.with_read(|conn| {
+        let exists = conn
+            .query_row(
+                "SELECT 1 FROM cultivation_plans WHERE id = ?1",
+                rusqlite::params![plan_id],
+                |_| Ok(()),
+            )
+            .is_ok();
+        Ok(exists)
+    })
+    .unwrap_or(false)
+}
+
+pub async fn run_bootstrap_step(
+    state: &AppState,
+    plan_id: i64,
+    channel: &str,
+    slot: &BootstrapSlot,
+) -> bool {
+    let started = Instant::now();
+    let result: Result<BootstrapData, String> = (|| {
+        let pool = state.sqlite.clone();
+        let ctx = load_chain_context(&pool, plan_id)?
+            .ok_or_else(|| "plan context not found".to_string())?;
+        let clock = SystemClock;
+        let weather_window = OptimizationJobChainWeatherComputation::weather_window(
+            ctx.latest_weather_date,
+            &clock,
+        );
+        advance_phase(
+            state,
+            plan_id,
+            channel,
+            CultivationPlanPhaseName::StartOptimizing,
+            None,
+        )?;
+        Ok(BootstrapData {
+            ctx,
+            start_date: weather_window.start_date,
+            end_date: weather_window.end_date,
+        })
+    })();
+
+    let duration_ms = started.elapsed().as_millis();
+    match &result {
+        Ok(_) => {
+            info!(
+                plan_id,
+                duration_ms,
+                outcome = "ok",
+                "optimization_chain.bootstrap"
+            );
+        }
+        Err(err) => {
+            error!(
+                plan_id,
+                duration_ms,
+                outcome = "failed",
+                error = %err,
+                "optimization_chain.bootstrap"
+            );
+            if let Err(phase_err) = advance_phase(
+                state,
+                plan_id,
+                channel,
+                CultivationPlanPhaseName::PhaseFailed,
+                Some("bootstrap"),
+            ) {
+                error!(
+                    plan_id,
+                    error = %phase_err,
+                    "optimization chain: failed to persist failed phase after bootstrap error"
+                );
+            }
+        }
+    }
+
+    let _ = slot.set(result);
+    slot.get()
+        .map(|outcome| outcome.is_ok())
+        .unwrap_or(false)
 }
 
 pub fn load_chain_context(

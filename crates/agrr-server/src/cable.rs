@@ -103,6 +103,15 @@ fn optimization_snapshot_payload(
         }));
     }
 
+    if status == "pending" {
+        return Some(json!({
+            "status": "pending",
+            "progress": 0,
+            "phase": "scheduling",
+            "message_key": "models.cultivation_plan.phases.initializing"
+        }));
+    }
+
     if status != "optimizing" {
         return None;
     }
@@ -259,5 +268,25 @@ async fn handle_socket(mut socket: WebSocket, hub: Arc<CableHub>, state: AppStat
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod cable_snapshot_tests {
+    use super::*;
+    use crate::test_support::test_pool_with_plan;
+
+    #[test]
+    fn pending_plan_returns_scheduling_snapshot() {
+        let db = test_pool_with_plan(1);
+        let gateway = CultivationPlanSqliteGateway::new(db.pool);
+        let payload = optimization_snapshot_payload(&gateway, 1).expect("pending snapshot");
+        assert_eq!(payload["status"], "pending");
+        assert_eq!(payload["progress"], 0);
+        assert_eq!(payload["phase"], "scheduling");
+        assert_eq!(
+            payload["message_key"],
+            "models.cultivation_plan.phases.initializing"
+        );
     }
 }

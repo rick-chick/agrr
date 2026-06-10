@@ -10,25 +10,22 @@
 //! Step bodies and phase guards live in [`crate::optimization_chain_run`] and
 //! [`crate::optimization_chain_phase`].
 
-use crate::adapters::SystemClock;
 use crate::jobs::JobStep;
-use crate::optimization_chain_phase::{advance_phase, run_guarded_optimization_step};
+use crate::optimization_chain_phase::run_guarded_optimization_step;
 use crate::optimization_chain_run::{
-    load_chain_context, run_fetch_weather_step, run_optimization_step, run_plan_finalize_step,
-    run_weather_prediction_step,
+    new_bootstrap_slot, plan_exists_in_db, run_bootstrap_step, run_fetch_weather_step,
+    run_optimization_step, run_plan_finalize_step, run_weather_prediction_step, BootstrapData,
 };
 use crate::state::AppState;
-use agrr_domain::cultivation_plan::dtos::CultivationPlanPhaseName;
-use agrr_domain::weather_data::OptimizationJobChainWeatherComputation;
 use std::sync::Arc;
 use tracing::{error, info};
 
-/// Enqueue weather → prediction → optimization → finalize.
+/// Schedule bootstrap → weather → prediction → optimization → finalize.
 ///
-/// No `TaskScheduleGenerationJob` and no `phase_optimization_completed` / `task_schedule_generating`
-/// broadcasts (Rails-only intermediates before `completed`).
-/// Returns `true` when the chain was enqueued; `false` when context is missing or
-/// `StartOptimizing` could not be applied (no steps are scheduled).
+/// HTTP handlers return after this call; GCS `load_chain_context` and `StartOptimizing` run
+/// inside the async `bootstrap` step.
+///
+/// Returns `true` when the chain was enqueued; `false` when the plan row is missing.
 pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, state: &AppState) -> bool {
     let channel = channel.to_string();
     let hub = state.cable_hub.clone();
@@ -36,61 +33,55 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     let dispatcher = state.optimization_chain_dispatcher.clone();
     let state_clone = state.clone();
 
-    let ctx = match load_chain_context(&pool, plan_id) {
-        Ok(Some(ctx)) => ctx,
-        Ok(None) => {
-            error!(plan_id, "optimization chain: plan context not found");
-            return false;
-        }
-        Err(e) => {
-            error!(plan_id, error = %e, "optimization chain: weather storage unavailable");
-            return false;
-        }
-    };
-
-    let clock = SystemClock;
-    let weather_window = OptimizationJobChainWeatherComputation::weather_window(
-        ctx.latest_weather_date,
-        &clock,
-    );
-
-    if let Err(e) = advance_phase(
-        &state_clone,
-        plan_id,
-        &channel,
-        CultivationPlanPhaseName::StartOptimizing,
-        None,
-    ) {
-        error!(
-            plan_id,
-            error = %e,
-            "optimization chain: start_optimizing failed; chain not enqueued"
-        );
+    if !plan_exists_in_db(&pool, plan_id) {
+        error!(plan_id, "optimization chain: plan not found");
         return false;
     }
 
+    let bootstrap_slot = new_bootstrap_slot();
     let mut steps: Vec<JobStep> = vec![];
 
     {
         let state = state_clone.clone();
         let channel = channel.clone();
-        let start = weather_window.start_date;
-        let end = weather_window.end_date;
-        let ctx = ctx.clone();
+        let slot = bootstrap_slot.clone();
+        steps.push(JobStep {
+            name: "bootstrap",
+            run: Arc::new(move || {
+                let state = state.clone();
+                let channel = channel.clone();
+                let slot = slot.clone();
+                Box::pin(async move { run_bootstrap_step(&state, plan_id, &channel, &slot).await })
+            }),
+        });
+    }
+
+    {
+        let state = state_clone.clone();
+        let channel = channel.clone();
+        let slot = bootstrap_slot.clone();
         steps.push(JobStep {
             name: "fetch_weather_data",
             run: Arc::new(move || {
                 let state = state.clone();
                 let channel = channel.clone();
-                let ctx = ctx.clone();
+                let slot = slot.clone();
                 Box::pin(async move {
+                    let Some(BootstrapData {
+                        ctx,
+                        start_date,
+                        end_date,
+                    }) = bootstrap_data(&slot)
+                    else {
+                        return false;
+                    };
                     run_guarded_optimization_step(
                         &state,
                         plan_id,
                         &channel,
                         "fetch_weather_data",
                         Some("fetching_weather"),
-                        || run_fetch_weather_step(&state, plan_id, &channel, &ctx, start, end),
+                        || run_fetch_weather_step(&state, plan_id, &channel, &ctx, start_date, end_date),
                     )
                 })
             }),
@@ -100,20 +91,24 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     {
         let state = state_clone.clone();
         let channel = channel.clone();
-        let end = weather_window.end_date;
+        let slot = bootstrap_slot.clone();
         steps.push(JobStep {
             name: "weather_prediction",
             run: Arc::new(move || {
                 let state = state.clone();
                 let channel = channel.clone();
+                let slot = slot.clone();
                 Box::pin(async move {
+                    let Some(BootstrapData { end_date, .. }) = bootstrap_data(&slot) else {
+                        return false;
+                    };
                     run_guarded_optimization_step(
                         &state,
                         plan_id,
                         &channel,
                         "weather_prediction",
                         Some("predicting_weather"),
-                        || run_weather_prediction_step(&state, plan_id, &channel, end),
+                        || run_weather_prediction_step(&state, plan_id, &channel, end_date),
                     )
                 })
             }),
@@ -175,25 +170,90 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     true
 }
 
+fn bootstrap_data(slot: &crate::optimization_chain_run::BootstrapSlot) -> Option<BootstrapData> {
+    slot.get()?.as_ref().ok().cloned()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::test_support::{test_app_state, test_pool_with_plan, test_pool_without_optimization_phase_column};
+    use std::thread;
+    use std::time::{Duration, Instant};
+
+    fn wait_until(timeout: Duration, mut condition: impl FnMut() -> bool) -> bool {
+        let deadline = Instant::now() + timeout;
+        while Instant::now() < deadline {
+            if condition() {
+                return true;
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+        false
+    }
+
+    fn plan_status(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> String {
+        pool.with_read(|conn| {
+            conn.query_row(
+                "SELECT status FROM cultivation_plans WHERE id = ?1",
+                rusqlite::params![plan_id],
+                |row| row.get(0),
+            )
+        })
+        .expect("status")
+    }
 
     #[test]
-    fn returns_false_when_start_optimizing_fails() {
-        let db = test_pool_without_optimization_phase_column(1);
+    fn returns_false_when_plan_missing() {
+        let db = test_pool_with_plan(1);
         let state = test_app_state(db.pool);
 
         assert!(!enqueue_private_plan_optimization_chain(
-            1,
+            999,
             "PlansOptimizationChannel",
             &state
         ));
     }
 
     #[test]
-    fn returns_true_when_start_optimizing_succeeds() {
+    fn returns_true_and_leaves_plan_pending_before_bootstrap_runs() {
+        let db = test_pool_with_plan(1);
+        let pool = db.pool.clone();
+        let state = test_app_state(db.pool);
+
+        assert!(enqueue_private_plan_optimization_chain(
+            1,
+            "PlansOptimizationChannel",
+            &state
+        ));
+        assert_eq!(plan_status(&pool, 1), "pending");
+    }
+
+    #[test]
+    fn schedules_chain_even_when_bootstrap_will_fail() {
+        let db = test_pool_without_optimization_phase_column(1);
+        let pool = db.pool.clone();
+        let state = test_app_state(db.pool);
+
+        assert!(enqueue_private_plan_optimization_chain(
+            1,
+            "PlansOptimizationChannel",
+            &state
+        ));
+
+        assert!(
+            wait_until(Duration::from_secs(2), || plan_status(&pool, 1) != "optimizing"),
+            "bootstrap must not reach optimizing without phase columns"
+        );
+        assert_eq!(
+            plan_status(&pool, 1),
+            "pending",
+            "phase persistence is unavailable; plan stays pending after bootstrap error"
+        );
+    }
+
+    #[test]
+    fn returns_true_when_plan_exists() {
         let db = test_pool_with_plan(1);
         let state = test_app_state(db.pool);
 
