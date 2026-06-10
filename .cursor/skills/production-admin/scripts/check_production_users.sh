@@ -73,7 +73,7 @@ USERS_RESPONSE=$(curl -s -H "X-Backdoor-Token: $AGRR_BACKDOOR_TOKEN" "$SERVICE_U
 if echo "$USERS_RESPONSE" | grep -q '"users"'; then
     print_status "Users retrieved successfully!"
     echo ""
-    
+
     # Pretty print JSON
     if command -v python3 &> /dev/null; then
         echo "$USERS_RESPONSE" | python3 -m json.tool
