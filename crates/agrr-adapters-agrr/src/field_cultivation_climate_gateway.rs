@@ -46,9 +46,6 @@ impl FieldCultivationClimateProgressGateway for FieldCultivationClimateAgrrGatew
         start_date: Date,
         weather_payload: &Value,
     ) -> Value {
-        if !self.client.daemon_running() {
-            return empty_progress_result();
-        }
         let Some(crop_file) = Self::write_temp_json(crop_requirement, "progress_crop") else {
             return empty_progress_result();
         };
@@ -82,9 +79,6 @@ impl FieldCultivationClimateProgressGateway for FieldCultivationClimateAgrrGatew
 
 impl FieldCultivationPredictionGateway for FieldCultivationClimateAgrrGateway {
     fn predict(&self, historical_data: &Value, days: i64, model: &str) -> Option<Value> {
-        if !self.client.daemon_running() {
-            return None;
-        }
         let hist_file = write_temp_json_path(historical_data, "predict_hist").ok()?;
         copy_temp_file_to_debug(&hist_file, "prediction_input");
         let out_path = std::env::temp_dir().join(format!(

@@ -31,12 +31,6 @@ impl AgrrWeatherGateway for WeatherDaemonGateway {
         end_date: Date,
         data_source: &str,
     ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
-        if !self.client.daemon_running() {
-            return Err(Box::new(AgrrDaemonError::NotRunning(
-                "agrr daemon not running".into(),
-            )));
-        }
-
         let effective_source = effective_data_source(latitude, longitude, data_source);
         let out_file = tempfile::Builder::new()
             .prefix("weather_output_")

@@ -1,6 +1,10 @@
 #!/bin/bash
 # Cloud Run entrypoint for agrr-server (Dockerfile.agrr-server).
 # Litestream restore + agrr-migrate schema run + PRAGMA (no Solid Cable DB).
+#
+# USE_AGRR_DAEMON: daemon start is fire-and-forget so /up can succeed without waiting.
+# Stale socket removal and request-time connect retries are handled in db_bootstrap_common.sh
+# and AgrrDaemonClient — do not add boot-time daemon readiness waits here.
 
 set -euo pipefail
 

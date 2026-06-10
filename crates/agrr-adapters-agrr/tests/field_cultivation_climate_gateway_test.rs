@@ -17,6 +17,8 @@ fn normalize_maps_daily_progress_for_domain_mapper() {
 
 #[test]
 fn progress_daemon_args_match_rails_without_dummy_path() {
+    // Avoid request-time connect retries when no daemon is expected in this test.
+    std::env::set_var("AGRR_DAEMON_REQUEST_RETRIES", "1");
     let client = AgrrDaemonClient::new("/tmp/agrr_test_missing.sock");
     assert!(!client.daemon_running());
     let gateway = FieldCultivationClimateAgrrGateway::from_env();

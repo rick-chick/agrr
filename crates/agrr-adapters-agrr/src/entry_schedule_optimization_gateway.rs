@@ -50,12 +50,6 @@ impl EntryScheduleOptimizationGateway for EntryScheduleOptimizationAgrrDaemonGat
         crop_requirement: &Value,
         _crop: &Value,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-        if !self.client.daemon_running() {
-            return Err(Box::new(EntryScheduleOptimizationError::new(
-                "daemon_unavailable",
-                "agrr daemon not running",
-            )));
-        }
         let crop_file = Self::write_temp_json(crop_requirement, "entry_crop")?;
         let weather_file = Self::write_temp_json(weather_data, "entry_weather")?;
         let field = serde_json::json!({

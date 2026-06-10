@@ -5,6 +5,12 @@
 #   SKIP_CABLE_DB=true  — skip cable SQLite (Rust: in-process WebSocket, no Solid Cable)
 #   USE_AGRR_DAEMON     — start agrr binary daemon when true
 #   AGRR_BIN_PATH       — default /usr/local/bin/agrr
+#   AGRR_SOCKET_PATH    — default /tmp/agrr.sock
+#
+# Daemon boot policy (USE_AGRR_DAEMON=true):
+#   agrr-server binds HTTP immediately; daemon start runs in parallel without readiness wait.
+#   Stale AGRR_SOCKET_PATH is removed before start so a dead listener cannot block a new daemon.
+#   Gateway calls retry socket connects at request time (AgrrDaemonClient); boot must not block.
 
 # Set by start_agrr_server.sh before sourcing this file.
 db_bootstrap_scripts_dir() {
@@ -182,11 +188,17 @@ run_db_bootstrap() {
   echo "  ✓ Litestream started (PID: ${LITESTREAM_PID})"
 
   if [ "${USE_AGRR_DAEMON}" = "true" ]; then
-    echo "Step 3.2: Starting agrr daemon (background, no readiness wait)..."
+    echo "Step 3.2: Starting agrr daemon (background, no readiness wait — HTTP binds in parallel)..."
     local agrr_bin="${AGRR_BIN_PATH:-/usr/local/bin/agrr}"
+    local socket_path="${AGRR_SOCKET_PATH:-/tmp/agrr.sock}"
     if [ -x "$agrr_bin" ]; then
+      "$agrr_bin" daemon stop 2>/dev/null || true
+      if [ -e "$socket_path" ] || [ -L "$socket_path" ]; then
+        rm -f "$socket_path"
+        echo "  ✓ removed stale agrr socket at $socket_path (prior instance; boot does not wait for daemon)"
+      fi
       "$agrr_bin" daemon start &
-      echo "  ✓ agrr daemon start initiated (socket readiness not awaited at boot)"
+      echo "  ✓ agrr daemon start initiated (readiness deferred to request-time connect retries in agrr-server)"
     else
       echo "  ⚠ agrr binary not found at $agrr_bin, skipping daemon"
     fi
