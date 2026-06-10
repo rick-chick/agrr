@@ -595,7 +595,11 @@ use serde_json::json;
         );
 
         let err = harness.interactor().call(sample_input()).expect_err("error");
-        assert_eq!(err, FetchWeatherDataPerformError::WeatherDataStorageFailed);
+        assert_eq!(
+            err,
+            FetchWeatherDataPerformError::WeatherDataStorageFailed("count failed".into())
+        );
+        assert_eq!(err.to_string(), "count failed");
     }
 
     #[test]
@@ -621,5 +625,9 @@ use serde_json::json;
         );
 
         let err = harness.interactor().call(sample_input()).expect_err("error");
-        assert_eq!(err, FetchWeatherDataPerformError::WeatherDataStorageFailed);
+        assert_eq!(
+            err,
+            FetchWeatherDataPerformError::WeatherDataStorageFailed("upsert failed".into())
+        );
+        assert_eq!(err.to_string(), "upsert failed");
     }

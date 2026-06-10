@@ -1,7 +1,7 @@
-// Tests for `policies/scheduler_user_farm_fetch_window_policy.rs` (Ruby parity: test/domain/weather_data/policies/scheduler_user_farm_fetch_window_policy_test.rb).
+// Tests for `policies/gap_fill_weather_fetch_window_policy.rs`.
 
 use crate::shared::ports::ClockPort;
-use crate::weather_data::policies::SchedulerUserFarmFetchWindowPolicy;
+use crate::weather_data::policies::GapFillWeatherFetchWindowPolicy;
 use time::{Date, Month, OffsetDateTime, Time};
 
 struct FakeClock {
@@ -19,13 +19,12 @@ impl ClockPort for FakeClock {
 }
 
 #[test]
-fn user_fetch_range_uses_latest_plus_one_through_today() {
+fn fetch_range_uses_latest_plus_one_through_today() {
     let clock = FakeClock {
         today: Date::from_calendar_date(2026, Month::June, 15).expect("valid"),
     };
     let latest = Date::from_calendar_date(2026, Month::June, 10).expect("valid");
-    let range = SchedulerUserFarmFetchWindowPolicy::fetch_range(Some(latest), &clock)
-        .expect("range");
+    let range = GapFillWeatherFetchWindowPolicy::fetch_range(Some(latest), &clock).expect("range");
     assert_eq!(
         range.start_date,
         Date::from_calendar_date(2026, Month::June, 11).expect("valid")
@@ -34,12 +33,11 @@ fn user_fetch_range_uses_latest_plus_one_through_today() {
 }
 
 #[test]
-fn user_fetch_range_without_latest_uses_seven_day_lookback() {
+fn fetch_range_without_latest_uses_seven_day_lookback() {
     let clock = FakeClock {
         today: Date::from_calendar_date(2026, Month::June, 15).expect("valid"),
     };
-    let range =
-        SchedulerUserFarmFetchWindowPolicy::fetch_range(None, &clock).expect("range");
+    let range = GapFillWeatherFetchWindowPolicy::fetch_range(None, &clock).expect("range");
     assert_eq!(
         range.start_date,
         Date::from_calendar_date(2026, Month::June, 8).expect("valid")
@@ -48,18 +46,19 @@ fn user_fetch_range_without_latest_uses_seven_day_lookback() {
 }
 
 #[test]
-fn user_fetch_range_skips_when_already_up_to_date() {
+fn fetch_range_skips_when_already_up_to_date() {
     let clock = FakeClock {
         today: Date::from_calendar_date(2026, Month::June, 15).expect("valid"),
     };
-    assert!(SchedulerUserFarmFetchWindowPolicy::fetch_range(Some(clock.today), &clock).is_none());
+    assert!(GapFillWeatherFetchWindowPolicy::fetch_range(Some(clock.today), &clock).is_none());
 }
 
 #[test]
-fn user_fetch_range_skips_when_latest_is_today() {
+fn optimization_chain_fetch_range_uses_no_op_when_up_to_date() {
     let clock = FakeClock {
         today: Date::from_calendar_date(2026, Month::June, 15).expect("valid"),
     };
-    let latest = clock.today;
-    assert!(SchedulerUserFarmFetchWindowPolicy::fetch_range(Some(latest), &clock).is_none());
+    let range =
+        GapFillWeatherFetchWindowPolicy::optimization_chain_fetch_range(Some(clock.today), &clock);
+    assert!(range.start_date > range.end_date);
 }

@@ -6,9 +6,8 @@ use crate::weather_prediction_anchors::SystemWeatherPredictionAnchors;
 use agrr_adapters_agrr::WeatherDaemonGateway;
 use agrr_adapters_sqlite::{
     CultivationPlanSqliteGateway, FieldCultivationPlanPredictedWeatherSqliteGateway,
-    WeatherDataFarmSqliteGateway,
+    WeatherDataFarmSqliteGateway, WeatherDataGatewayBundle,
 };
-use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
 use agrr_domain::cultivation_plan::optimization_completion;
 use agrr_domain::cultivation_plan::policies::cultivation_plan_optimization_complete_policy;
@@ -23,20 +22,32 @@ use agrr_domain::weather_data::ports::{
     RecordFarmWeatherBlockCompletedPort,
 };
 use agrr_domain::weather_data::OptimizationJobChainWeatherComputation;
+use agrr_domain::weather_data::ports::WeatherPredictionAnchorsPort;
 use std::sync::{Arc, OnceLock};
-use std::time::Instant;
 use time::{Date, OffsetDateTime};
-use tracing::{error, info, warn};
+use tracing::{error, warn};
 
 use crate::cable::CableHub;
 use crate::optimization_chain_phase::{advance_phase, broadcast_completed, plan_still_optimizing};
+use crate::optimization_chain_telemetry::{StepOutcome, StepTimer};
 
 #[derive(Clone)]
 pub struct ChainContext {
     pub farm_id: i64,
     pub latitude: f64,
     pub longitude: f64,
+    pub is_reference: bool,
     pub latest_weather_date: Option<Date>,
+}
+
+#[derive(Clone)]
+struct ChainPlanSnapshot {
+    farm_id: i64,
+    latitude: f64,
+    longitude: f64,
+    is_reference: bool,
+    weather_location_id: Option<i64>,
+    latest_weather_date: Option<Date>,
 }
 
 #[derive(Clone)]
@@ -72,15 +83,39 @@ pub async fn run_bootstrap_step(
     channel: &str,
     slot: &BootstrapSlot,
 ) -> bool {
-    let started = Instant::now();
+    let timer = StepTimer::start();
     let result: Result<BootstrapData, String> = (|| {
         let pool = state.sqlite.clone();
-        let ctx = load_chain_context(&pool, plan_id)?
+        let snap = load_chain_plan_snapshot(&pool, plan_id)?
             .ok_or_else(|| "plan context not found".to_string())?;
         let clock = SystemClock;
+        if snap.is_reference {
+            let bundle =
+                WeatherDataGatewayBundle::resolve(pool.clone()).map_err(|e| e.to_string())?;
+            let anchors = SystemWeatherPredictionAnchors.anchors_for(clock.today());
+            let historical_count = snap
+                .weather_location_id
+                .map(|wl_id| {
+                    bundle.historical_data_count(
+                        wl_id,
+                        anchors.training_start_date,
+                        anchors.training_end_date,
+                    )
+                })
+                .transpose()
+                .map_err(|e| e.to_string())?
+                .unwrap_or(0);
+            OptimizationJobChainWeatherComputation::ensure_reference_farm_weather_ready(
+                snap.weather_location_id,
+                snap.latest_weather_date,
+                historical_count,
+            )?;
+        }
+        let ctx = chain_context_from_snapshot(&snap);
         let weather_window = OptimizationJobChainWeatherComputation::weather_window(
             ctx.latest_weather_date,
             &clock,
+            ctx.is_reference,
         );
         advance_phase(
             state,
@@ -96,24 +131,12 @@ pub async fn run_bootstrap_step(
         })
     })();
 
-    let duration_ms = started.elapsed().as_millis();
     match &result {
         Ok(_) => {
-            info!(
-                plan_id,
-                duration_ms,
-                outcome = "ok",
-                "optimization_chain.bootstrap"
-            );
+            timer.log("bootstrap", plan_id, StepOutcome::Ok, None);
         }
         Err(err) => {
-            error!(
-                plan_id,
-                duration_ms,
-                outcome = "failed",
-                error = %err,
-                "optimization_chain.bootstrap"
-            );
+            timer.log("bootstrap", plan_id, StepOutcome::Failed, Some(err));
             if let Err(phase_err) = advance_phase(
                 state,
                 plan_id,
@@ -121,6 +144,10 @@ pub async fn run_bootstrap_step(
                 CultivationPlanPhaseName::PhaseFailed,
                 Some("bootstrap"),
             ) {
+                eprintln!(
+                    "optimization_chain phase_persist_failed plan_id={plan_id} step=bootstrap \
+                     subphase=bootstrap error={phase_err}"
+                );
                 error!(
                     plan_id,
                     error = %phase_err,
@@ -136,24 +163,48 @@ pub async fn run_bootstrap_step(
         .unwrap_or(false)
 }
 
-pub fn load_chain_context(
+fn chain_context_from_snapshot(snap: &ChainPlanSnapshot) -> ChainContext {
+    ChainContext {
+        farm_id: snap.farm_id,
+        latitude: snap.latitude,
+        longitude: snap.longitude,
+        is_reference: snap.is_reference,
+        latest_weather_date: snap.latest_weather_date,
+    }
+}
+
+fn load_chain_plan_snapshot(
     pool: &agrr_adapters_sqlite::SqlitePool,
     plan_id: i64,
-) -> Result<Option<ChainContext>, String> {
+) -> Result<Option<ChainPlanSnapshot>, String> {
     let base = pool.with_read(|conn| {
-        let row: Result<(i64, f64, f64, Option<i64>), _> = conn.query_row(
-            "SELECT cp.farm_id, f.latitude, f.longitude, f.weather_location_id \
+        let row: Result<(i64, f64, f64, Option<i64>, i64), _> = conn.query_row(
+            "SELECT cp.farm_id, f.latitude, f.longitude, f.weather_location_id, f.is_reference \
              FROM cultivation_plans cp \
              INNER JOIN farms f ON f.id = cp.farm_id \
              WHERE cp.id = ?1",
             rusqlite::params![plan_id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+            |row| {
+                Ok((
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                ))
+            },
         );
-        let Ok((farm_id, latitude, longitude, weather_location_id)) = row else {
+        let Ok((farm_id, latitude, longitude, weather_location_id, is_reference)) = row else {
             return Ok(None);
         };
 
-        Ok(Some((farm_id, latitude, longitude, weather_location_id)))
+        Ok(Some((
+            farm_id,
+            latitude,
+            longitude,
+            weather_location_id,
+            is_reference != 0,
+        )))
     })
     .map_err(|e| e.to_string())?;
 
@@ -172,12 +223,21 @@ pub fn load_chain_context(
         None => None,
     };
 
-    Ok(Some(ChainContext {
+    Ok(Some(ChainPlanSnapshot {
         farm_id: base.0,
         latitude: base.1,
         longitude: base.2,
+        is_reference: base.4,
+        weather_location_id: base.3,
         latest_weather_date,
     }))
+}
+
+pub fn load_chain_context(
+    pool: &agrr_adapters_sqlite::SqlitePool,
+    plan_id: i64,
+) -> Result<Option<ChainContext>, String> {
+    Ok(load_chain_plan_snapshot(pool, plan_id)?.map(|snap| chain_context_from_snapshot(&snap)))
 }
 
 struct ChainFetchPresenter;
@@ -267,7 +327,7 @@ pub fn run_fetch_weather_step(
             };
             interactor
                 .call(input)
-                .map_err(|e| format!("fetch weather perform: {e:?}"))?;
+                .map_err(|e| format!("fetch weather perform: {e}"))?;
 
             // Interactor skips API when DB already has enough rows but only advances `weather_data_fetched`
             // on the fetch path (Rails parity). Chain steps must leave `fetching_weather` before predict.
@@ -328,12 +388,7 @@ pub fn run_weather_prediction_step(
         OptimizationJobChainWeatherComputation::predict_days_to_next_year_end(end_date, &clock);
     interactor
         .predict_for_cultivation_plan(&plan_weather, None)
-        .map_err(|e| {
-            format!(
-                "weather prediction: {e} (hint: ensure agrr daemon at {} or AGRR_USE_MOCK=true)",
-                std::env::var("AGRR_SOCKET_PATH").unwrap_or_else(|_| "/tmp/agrr.sock".into())
-            )
-        })?;
+        .map_err(|e| format!("weather prediction: {e}"))?;
 
     advance_phase(
         state,

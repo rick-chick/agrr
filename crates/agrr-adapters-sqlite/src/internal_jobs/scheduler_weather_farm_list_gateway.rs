@@ -5,6 +5,19 @@ use agrr_domain::internal_jobs::gateways::SchedulerWeatherFarmListGateway;
 use agrr_domain::weather_data::gateways::WeatherDataGateway;
 
 use crate::pool::SqlitePool;
+use time::Date;
+
+fn latest_weather_date_for_location(
+    weather_data: &dyn WeatherDataGateway,
+    weather_location_id: Option<i64>,
+) -> Result<Option<Date>, String> {
+    match weather_location_id {
+        None => Ok(None),
+        Some(id) => weather_data
+            .latest_date(id)
+            .map_err(|e| e.to_string()),
+    }
+}
 
 pub struct SchedulerWeatherFarmListSqliteGateway<'a> {
     pool: SqlitePool,
@@ -21,22 +34,24 @@ impl SchedulerWeatherFarmListGateway for SchedulerWeatherFarmListSqliteGateway<'
     fn list_reference_farms_for_weather_update(
         &self,
     ) -> Result<Vec<SchedulerWeatherFarmRow>, String> {
-        self.pool
+        let rows_data: Vec<(i64, f64, f64, Option<i64>)> = self
+            .pool
             .with_read(|conn| {
                 let mut stmt = conn.prepare(
-                    "SELECT id, latitude, longitude FROM farms \
-                     WHERE is_reference = 1 \
-                       AND latitude IS NOT NULL \
-                       AND longitude IS NOT NULL \
-                     ORDER BY latitude DESC",
+                    "SELECT f.id, f.latitude, f.longitude, f.weather_location_id \
+                     FROM farms f \
+                     WHERE f.is_reference = 1 \
+                       AND f.latitude IS NOT NULL \
+                       AND f.longitude IS NOT NULL \
+                     ORDER BY f.latitude DESC",
                 )?;
                 let rows = stmt.query_map([], |row| {
-                    Ok(SchedulerWeatherFarmRow {
-                        farm_id: row.get(0)?,
-                        latitude: row.get(1)?,
-                        longitude: row.get(2)?,
-                        latest_weather_date: None,
-                    })
+                    Ok((
+                        row.get::<_, i64>(0)?,
+                        row.get::<_, f64>(1)?,
+                        row.get::<_, f64>(2)?,
+                        row.get::<_, Option<i64>>(3)?,
+                    ))
                 })?;
                 let mut out = Vec::new();
                 for row in rows {
@@ -44,7 +59,20 @@ impl SchedulerWeatherFarmListGateway for SchedulerWeatherFarmListSqliteGateway<'
                 }
                 Ok(out)
             })
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+
+        let mut out = Vec::with_capacity(rows_data.len());
+        for (farm_id, latitude, longitude, weather_location_id) in rows_data {
+            let latest_weather_date =
+                latest_weather_date_for_location(self.weather_data, weather_location_id)?;
+            out.push(SchedulerWeatherFarmRow {
+                farm_id,
+                latitude,
+                longitude,
+                latest_weather_date,
+            });
+        }
+        Ok(out)
     }
 
     fn list_user_farms_for_weather_update(&self) -> Result<Vec<SchedulerWeatherFarmRow>, String> {
@@ -75,10 +103,8 @@ impl SchedulerWeatherFarmListGateway for SchedulerWeatherFarmListSqliteGateway<'
 
         let mut out = Vec::with_capacity(rows_data.len());
         for (farm_id, latitude, longitude, weather_location_id) in rows_data {
-            let latest_weather_date = self
-                .weather_data
-                .latest_date(weather_location_id)
-                .map_err(|e| e.to_string())?;
+            let latest_weather_date =
+                latest_weather_date_for_location(self.weather_data, Some(weather_location_id))?;
             out.push(SchedulerWeatherFarmRow {
                 farm_id,
                 latitude,
@@ -159,6 +185,7 @@ mod scheduler_weather_farm_list_gateway_test {
         let farms = gw.list_reference_farms_for_weather_update().unwrap();
         assert_eq!(farms.len(), 1);
         assert_eq!(farms[0].farm_id, 1);
+        assert!(farms[0].latest_weather_date.is_none());
     }
 
     #[test]

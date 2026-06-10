@@ -48,6 +48,7 @@ pub mod masters_pests;
 pub mod masters_pesticides;
 pub mod optimization_chain_phase;
 pub mod optimization_chain_run;
+mod optimization_chain_telemetry;
 pub mod optimization_job_chain;
 #[cfg(test)]
 mod test_support;
@@ -63,7 +64,6 @@ pub mod session_auth;
 pub mod state;
 pub mod task_schedule_timeline_json;
 pub mod task_schedules;
-pub mod weather_data_gateway_factory;
 pub mod weather_prediction_anchors;
 pub mod workbench_payload;
 
@@ -81,7 +81,7 @@ pub async fn run_http_server() {
         .with_env_filter(EnvFilter::from_default_env())
         .init();
 
-    if let Err(message) = weather_data_gateway_factory::validate_weather_storage_config() {
+    if let Err(message) = agrr_adapters_sqlite::validate_weather_storage_config() {
         panic!("weather storage configuration invalid: {message}");
     }
 

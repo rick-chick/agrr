@@ -1,7 +1,11 @@
 mod internal_farm_weather_read_gateway;
 mod internal_weather_fetch_start_gateway;
+mod weather_bulk_metadata;
+mod weather_bulk_metadata_gcs_sync;
+mod weather_bulk_metadata_store;
 mod weather_data_farm_gateway;
 mod weather_data_gateway;
+mod weather_data_gateway_bundle;
 
 #[cfg(test)]
 mod weather_data_gateway_test;
@@ -13,3 +17,6 @@ pub use internal_farm_weather_read_gateway::InternalFarmWeatherReadSqliteGateway
 pub use internal_weather_fetch_start_gateway::InternalWeatherFetchStartSqliteGateway;
 pub use weather_data_farm_gateway::WeatherDataFarmSqliteGateway;
 pub use weather_data_gateway::WeatherDataSqliteGateway;
+pub use weather_data_gateway_bundle::{
+    validate_weather_storage_config, WeatherDataGatewayBundle,
+};

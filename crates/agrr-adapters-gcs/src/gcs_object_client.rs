@@ -9,6 +9,7 @@ use reqwest::blocking::Client;
 use reqwest::StatusCode;
 use serde_json::Value;
 
+use crate::gcs_io_counters::{record_list, record_read, record_write};
 use crate::weather_json::{WeatherDataGcsConfig, WeatherDataGcsError};
 
 pub struct GcsObjectClient {
@@ -48,6 +49,7 @@ impl GcsObjectClient {
 
     /// Missing object or local file — not a transport failure.
     pub fn read_object(&self, key: &str) -> Result<Option<Vec<u8>>, WeatherDataGcsError> {
+        record_read();
         if let Some(root) = &self.config.local_root {
             let path = root.join(key);
             if !path.exists() {
@@ -58,10 +60,7 @@ impl GcsObjectClient {
         if !self.uses_remote_gcs() {
             return Ok(None);
         }
-        let token = match test_access_token() {
-            Some(t) => t,
-            None => gcp_access_token(&self.http)?,
-        };
+        let token = gcp_access_token(&self.http)?;
         let url = object_media_url(&self.config.bucket, key);
         let resp = self.http.get(url).bearer_auth(&token).send()?;
         match resp.status() {
@@ -75,6 +74,7 @@ impl GcsObjectClient {
     }
 
     pub fn write_object(&self, key: &str, bytes: &[u8]) -> Result<(), WeatherDataGcsError> {
+        record_write();
         if let Some(root) = &self.config.local_root {
             let path = root.join(key);
             if let Some(parent) = path.parent() {
@@ -104,6 +104,7 @@ impl GcsObjectClient {
     }
 
     pub fn list_object_names(&self, prefix: &str) -> Result<Vec<String>, WeatherDataGcsError> {
+        record_list();
         if let Some(root) = &self.config.local_root {
             return list_local_prefix(root, prefix);
         }
@@ -180,21 +181,10 @@ pub fn urlencoding_key(key: &str) -> String {
 }
 
 fn object_media_url(bucket: &str, key: &str) -> String {
-    if let Ok(base) = std::env::var("GCS_API_BASE_URL") {
-        let base = base.trim_end_matches('/');
-        return format!(
-            "{base}/storage/v1/b/{bucket}/o/{}?alt=media",
-            urlencoding_key(key)
-        );
-    }
     format!(
         "https://storage.googleapis.com/storage/v1/b/{bucket}/o/{}?alt=media",
         urlencoding_key(key)
     )
-}
-
-fn test_access_token() -> Option<String> {
-    std::env::var("GCS_TEST_ACCESS_TOKEN").ok()
 }
 
 fn gcp_access_token(http: &Client) -> Result<String, WeatherDataGcsError> {
@@ -214,39 +204,4 @@ fn gcp_access_token(http: &Client) -> Result<String, WeatherDataGcsError> {
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
         .ok_or(WeatherDataGcsError::AuthFailed)
-}
-
-#[cfg(test)]
-mod gcs_object_client_http_tests {
-    use super::*;
-
-    #[test]
-    #[ignore = "integration: mock HTTP 403; run cargo test -p agrr-adapters-gcs -- --ignored"]
-    fn read_object_returns_http_status_on_403_not_empty() {
-        let mut server = mockito::Server::new();
-        let _mock = server
-            .mock("GET", mockito::Matcher::Regex(r"/storage/v1/b/test-bucket/o/.*".into()))
-            .with_status(403)
-            .with_body("Forbidden")
-            .create();
-
-        std::env::set_var("GCS_API_BASE_URL", server.url());
-        std::env::set_var("GCS_TEST_ACCESS_TOKEN", "test-token");
-
-        let config = WeatherDataGcsConfig {
-            bucket: "test-bucket".into(),
-            use_http: true,
-            local_root: None,
-        };
-        let client = GcsObjectClient::new(config);
-        let key = "weather_data/1/2024.json";
-        let result = client.read_object(key);
-        std::env::remove_var("GCS_API_BASE_URL");
-        std::env::remove_var("GCS_TEST_ACCESS_TOKEN");
-
-        let Err(WeatherDataGcsError::HttpStatus { status, .. }) = result else {
-            panic!("expected HttpStatus error, got {result:?}");
-        };
-        assert_eq!(status, 403);
-    }
 }

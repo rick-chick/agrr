@@ -13,10 +13,9 @@ use std::sync::Arc;
 use agrr_adapters_agrr::{AgrrDaemonClient, PlanAllocationAllocateAgrrDaemonGateway, WeatherDaemonGateway};
 use agrr_domain::cultivation_plan::gateways::PlanAllocationAllocateGateway;
 use agrr_domain::weather_data::gateways::{AgrrWeatherGateway, WeatherDataGateway};
-use agrr_server::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_adapters_sqlite::{
     CultivationPlanOptimizationSqliteGateway, OptimizationPlanReadSqliteGateway,
-    PlanAllocationAdjustReadSqliteGateway, SqlitePool,
+    PlanAllocationAdjustReadSqliteGateway, SqlitePool, WeatherDataGatewayBundle,
 };
 use agrr_domain::cultivation_plan::calculators::OptimizationAllocationInputCalculator;
 use agrr_domain::cultivation_plan::dtos::OptimizationPlanSnapshot;
@@ -125,7 +124,7 @@ fn check_weather_api(
     wl_id: Option<i64>,
 ) -> Check {
     let clock = SystemClock;
-    let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock);
+    let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock, false);
     // Full history window often yields warnings-only stderr with empty stdout; probe recent days.
     let start = window
         .end_date
@@ -208,7 +207,7 @@ fn check_sqlite_historical_weather(
     wl_id: Option<i64>,
 ) -> Check {
     let clock = SystemClock;
-    let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock);
+    let window = OptimizationJobChainWeatherComputation::weather_window(None, &clock, false);
     match read.list_historical_weather_rows(wl_id, window.start_date, window.end_date) {
         Ok(rows) => Check::pass(
             "sqlite_historical_weather",

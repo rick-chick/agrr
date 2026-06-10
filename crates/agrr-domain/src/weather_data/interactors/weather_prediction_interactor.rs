@@ -9,9 +9,8 @@ use crate::weather_data::gateways::{
     CultivationPlanPredictedWeatherGateway, PredictionGateway, WeatherDataGateway,
 };
 use crate::weather_data::helpers::parse_iso_date;
+use crate::weather_data::policies::MINIMUM_TRAINING_DAYS;
 use crate::weather_data::ports::WeatherPredictionAnchorsPort;
-
-const MINIMUM_REQUIRED_DAYS: usize = 18 * 365;
 
 #[derive(Debug, Clone)]
 pub struct PreparedWeatherInfo {
@@ -42,7 +41,7 @@ pub enum WeatherPredictionError {
     WeatherLocationRequired,
     WeatherDataNotFound(String),
     InsufficientPredictionData(String),
-    WeatherDataStorageFailed,
+    WeatherDataStorageFailed(String),
 }
 
 impl std::fmt::Display for WeatherPredictionError {
@@ -53,10 +52,9 @@ impl std::fmt::Display for WeatherPredictionError {
                 write!(f, "anchors_resolver must respond to anchors_for")
             }
             Self::WeatherLocationRequired => write!(f, "weather_location is required"),
-            Self::WeatherDataNotFound(msg) | Self::InsufficientPredictionData(msg) => {
-                write!(f, "{msg}")
-            }
-            Self::WeatherDataStorageFailed => write!(f, "weather data storage failed"),
+            Self::WeatherDataNotFound(msg)
+            | Self::InsufficientPredictionData(msg)
+            | Self::WeatherDataStorageFailed(msg) => write!(f, "{msg}"),
         }
     }
 }
@@ -266,7 +264,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
                 anchors.training_start_date,
                 anchors.training_end_date,
             )
-            .map_err(|_| WeatherPredictionError::WeatherDataStorageFailed)?;
+            .map_err(|e| WeatherPredictionError::WeatherDataStorageFailed(e.to_string()))?;
 
         if training_data.is_empty() {
             return Err(WeatherPredictionError::WeatherDataNotFound(format!(
@@ -275,11 +273,12 @@ impl<'a> WeatherPredictionInteractor<'a> {
             )));
         }
 
-        if training_data.len() < MINIMUM_REQUIRED_DAYS {
+        let minimum_required_days = MINIMUM_TRAINING_DAYS as usize;
+        if training_data.len() < minimum_required_days {
             return Err(WeatherPredictionError::WeatherDataNotFound(format!(
                 "気象データが不足しています。現在 {} 件のデータがありますが、最低 {} 日分（約18年）のデータが必要です。",
                 training_data.len(),
-                MINIMUM_REQUIRED_DAYS
+                minimum_required_days
             )));
         }
 
@@ -298,7 +297,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
                 anchors.current_year_history_start_date,
                 anchors.current_year_history_end_date,
             )
-            .map_err(|_| WeatherPredictionError::WeatherDataStorageFailed)
+            .map_err(|e| WeatherPredictionError::WeatherDataStorageFailed(e.to_string()))
     }
 
     fn get_prediction_data(

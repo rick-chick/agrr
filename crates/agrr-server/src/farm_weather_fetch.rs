@@ -7,8 +7,9 @@ use crate::adapters::SystemClock;
 use crate::jobs::JobStep;
 use crate::state::AppState;
 use agrr_adapters_agrr::WeatherDaemonGateway;
-use agrr_adapters_sqlite::{FarmSqliteGateway, WeatherDataFarmSqliteGateway};
-use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
+use agrr_adapters_sqlite::{
+    FarmSqliteGateway, WeatherDataFarmSqliteGateway, WeatherDataGatewayBundle,
+};
 use agrr_domain::farm::calculators::FarmWeatherProgressCalculator;
 use agrr_domain::farm::dtos::{
     MarkFarmWeatherDataFailedInput, RecordFarmWeatherBlockCompletedInput,

@@ -6,6 +6,7 @@ license.workspace = true
 description = "SQLite gateway implementations for agrr-domain traits (P6)"
 
 [dependencies]
+agrr-adapters-gcs = { path = "../agrr-adapters-gcs" }
 agrr-domain = { path = "../agrr-domain" }
 rusqlite = { version = "0.32", features = ["bundled"] }
 thiserror.workspace = true
@@ -14,8 +15,8 @@ serde_json.workspace = true
 rust_decimal.workspace = true
 time = { workspace = true, features = ["parsing", "formatting"] }
 getrandom = "0.2"
+tracing = "0.1"
 
 [dev-dependencies]
-agrr-adapters-gcs = { path = "../agrr-adapters-gcs" }
 tempfile = "3"
 time = { workspace = true }

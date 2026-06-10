@@ -97,8 +97,11 @@ fn main() -> ExitCode {
             }
         };
         let clock = SystemClock;
-        let window =
-            OptimizationJobChainWeatherComputation::weather_window(ctx.latest_weather_date, &clock);
+        let window = OptimizationJobChainWeatherComputation::weather_window(
+            ctx.latest_weather_date,
+            &clock,
+            ctx.is_reference,
+        );
         let result = match step.as_str() {
             "fetch" => run_fetch_weather_step(
                 &state,

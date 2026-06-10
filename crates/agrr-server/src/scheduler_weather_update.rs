@@ -6,8 +6,7 @@ use crate::adapters::SystemClock;
 use crate::farm_weather_fetch::run_farm_weather_fetch_block;
 use crate::jobs::JobStep;
 use crate::state::AppState;
-use agrr_adapters_sqlite::SchedulerWeatherFarmListSqliteGateway;
-use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
+use agrr_adapters_sqlite::{SchedulerWeatherFarmListSqliteGateway, WeatherDataGatewayBundle};
 use agrr_domain::internal_jobs::gateways::{
     EnqueueWeatherUpdateJobsResult, WeatherUpdateJobsEnqueueGateway,
 };

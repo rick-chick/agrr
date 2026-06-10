@@ -184,7 +184,8 @@ impl WeatherDataGcsBulkGateway {
         Ok(result)
     }
 
-    fn read_year_file(
+    /// Reads one year file for metadata refresh / backfill (same bytes as bulk upsert path).
+    pub fn read_year_file(
         &self,
         weather_location_id: i64,
         year: i32,
@@ -207,7 +208,7 @@ impl WeatherDataGcsBulkGateway {
         self.client.write_object(&key, json_str.as_bytes())
     }
 
-    fn list_years(&self, weather_location_id: i64) -> Result<Vec<i32>, WeatherDataGcsError> {
+    pub fn list_years(&self, weather_location_id: i64) -> Result<Vec<i32>, WeatherDataGcsError> {
         let prefix = format!("{PREFIX}/{weather_location_id}/");
         let mut years = Vec::new();
         for name in self.client.list_object_names(&prefix)? {

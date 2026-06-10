@@ -8,8 +8,8 @@ use agrr_adapters_sqlite::{
     FieldCultivationClimateSourceSqliteGateway, FieldCultivationCropSqliteGateway,
     FieldCultivationPlanPredictedWeatherSqliteGateway,
     FieldCultivationWeatherDataFromStorageGateway, UserLookupSqliteGateway,
+    WeatherDataGatewayBundle,
 };
-use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::field_cultivation::dtos::{
     FieldCultivationClimateDataInput, FieldCultivationClimateDataOutput,
 };

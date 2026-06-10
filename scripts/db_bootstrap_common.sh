@@ -59,25 +59,33 @@ migrate_all() {
 }
 
 schema_up_to_date() {
-  if ! command -v sqlite3 >/dev/null 2>&1; then
-    return 1
+  local script_dir
+  script_dir="$(db_bootstrap_scripts_dir)"
+  export AGRR_APP_ROOT="${AGRR_APP_ROOT:-${script_dir}/..}"
+  export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-/tmp/production.sqlite3}"
+  export AGRR_CACHE_SQLITE_PATH="${AGRR_CACHE_SQLITE_PATH:-/tmp/production_cache.sqlite3}"
+  "${script_dir}/run-agrr-migrate.sh" schema check-up-to-date >/dev/null 2>&1
+}
+
+backfill_weather_bulk_metadata_if_needed() {
+  if [ "${WEATHER_DATA_STORAGE:-}" != "gcs" ]; then
+    return 0
   fi
-
-  check_refinery_at_least() {
-    local db_file=$1
-    local min_version=$2
-    [ ! -f "$db_file" ] && return 1
-    local actual
-    actual=$(sqlite3 "$db_file" "SELECT COALESCE(MAX(version), 0) FROM refinery_schema_history" 2>/dev/null) || return 1
-    [ -z "$actual" ] && return 1
-    [ "$actual" -ge "$min_version" ] || return 1
-  }
-
-  local primary="${AGRR_SQLITE_PATH:-/tmp/production.sqlite3}"
-  local cache="${AGRR_CACHE_SQLITE_PATH:-/tmp/production_cache.sqlite3}"
-  check_refinery_at_least "$primary" 2 || return 1
-  check_refinery_at_least "$cache" 1 || return 1
-
+  local script_dir
+  script_dir="$(db_bootstrap_scripts_dir)"
+  export AGRR_APP_ROOT="${AGRR_APP_ROOT:-${script_dir}/..}"
+  export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-/tmp/production.sqlite3}"
+  export AGRR_CACHE_SQLITE_PATH="${AGRR_CACHE_SQLITE_PATH:-/tmp/production_cache.sqlite3}"
+  echo "  Backfilling weather bulk metadata (missing only)..."
+  local backfill_start
+  backfill_start=$(date +%s)
+  if "${script_dir}/run-agrr-migrate.sh" weather rebuild-bulk-metadata --missing-only; then
+    local backfill_end
+    backfill_end=$(date +%s)
+    echo "  ✓ Weather bulk metadata backfill complete (took $((backfill_end - backfill_start))s)"
+    return 0
+  fi
+  echo "  WARNING: Weather bulk metadata backfill failed (optimization may rebuild on demand)"
   return 0
 }
 
@@ -146,6 +154,9 @@ run_db_bootstrap() {
   else
     migrate_all || return 1
   fi
+
+  echo "Step 1.6: Weather bulk metadata backfill (GCS mode)"
+  backfill_weather_bulk_metadata_if_needed
 
   phase1_end=$(date +%s)
   echo "Phase 1 completed in $((phase1_end - phase1_start)) seconds"

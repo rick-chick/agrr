@@ -1,9 +1,8 @@
+use crate::internal_jobs::dtos::SchedulerWeatherFarmRow;
 use crate::internal_jobs::gateways::SchedulerWeatherFarmListGateway;
 use crate::internal_jobs::ports::SchedulerWeatherFetchSchedulePort;
 use crate::shared::ports::ClockPort;
-use crate::weather_data::policies::{
-    SchedulerReferenceFarmFetchWindowPolicy, SchedulerUserFarmFetchWindowPolicy,
-};
+use crate::weather_data::policies::GapFillWeatherFetchWindowPolicy;
 
 /// Ruby: `UpdateReferenceWeatherDataJob` + `UpdateUserFarmsWeatherDataJob` enqueue logic.
 pub struct SchedulerWeatherBatchEnqueueInteractor<'a> {
@@ -26,24 +25,20 @@ impl<'a> SchedulerWeatherBatchEnqueueInteractor<'a> {
     }
 
     pub fn call(&self) -> Result<(), String> {
-        if let Some(range) = SchedulerReferenceFarmFetchWindowPolicy::fetch_range(self.clock) {
-            let farms = self.list_gateway.list_reference_farms_for_weather_update()?;
-            for (index, farm) in farms.iter().enumerate() {
-                self.schedule_port.schedule_fetch(
-                    farm.farm_id,
-                    farm.latitude,
-                    farm.longitude,
-                    range.start_date,
-                    range.end_date,
-                    index as u64,
-                );
-            }
-        }
+        let reference_farms = self.list_gateway.list_reference_farms_for_weather_update()?;
+        self.schedule_gap_fill_farms(&reference_farms, 0);
 
         let user_farms = self.list_gateway.list_user_farms_for_weather_update()?;
-        for (index, farm) in user_farms.iter().enumerate() {
+        self.schedule_gap_fill_farms(&user_farms, 0);
+
+        self.schedule_port.flush();
+        Ok(())
+    }
+
+    fn schedule_gap_fill_farms(&self, farms: &[SchedulerWeatherFarmRow], delay_offset: u64) {
+        for (index, farm) in farms.iter().enumerate() {
             let Some(range) =
-                SchedulerUserFarmFetchWindowPolicy::fetch_range(farm.latest_weather_date, self.clock)
+                GapFillWeatherFetchWindowPolicy::fetch_range(farm.latest_weather_date, self.clock)
             else {
                 continue;
             };
@@ -53,12 +48,9 @@ impl<'a> SchedulerWeatherBatchEnqueueInteractor<'a> {
                 farm.longitude,
                 range.start_date,
                 range.end_date,
-                index as u64,
+                delay_offset + index as u64,
             );
         }
-
-        self.schedule_port.flush();
-        Ok(())
     }
 }
 

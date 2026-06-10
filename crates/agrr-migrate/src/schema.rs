@@ -138,23 +138,62 @@ fn guard_existing_db_without_refinery(conn: &Connection) -> anyhow::Result<()> {
     Ok(())
 }
 
+pub fn embedded_primary_latest_version() -> i64 {
+    primary_embedded::migrations::runner()
+        .get_migrations()
+        .iter()
+        .map(|m| i64::from(m.version()))
+        .max()
+        .unwrap_or(0)
+}
+
+pub fn embedded_cache_latest_version() -> i64 {
+    cache_embedded::migrations::runner()
+        .get_migrations()
+        .iter()
+        .map(|m| i64::from(m.version()))
+        .max()
+        .unwrap_or(0)
+}
+
+fn refinery_max_version(conn: &Connection, table: &str) -> anyhow::Result<Option<i64>> {
+    let exists: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?1",
+        [table],
+        |r| r.get(0),
+    )?;
+    if exists == 0 {
+        return Ok(None);
+    }
+    let current: i64 = conn.query_row(
+        &format!("SELECT COALESCE(MAX(version), 0) FROM {table}"),
+        [],
+        |r| r.get(0),
+    )?;
+    Ok(Some(current))
+}
+
 pub fn schema_up_to_date(paths: &DbPaths) -> anyhow::Result<bool> {
     if !paths.primary.exists() {
         return Ok(false);
     }
     let conn = Connection::open(&paths.primary)?;
-    let exists: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='refinery_schema_history'",
-        [],
-        |r| r.get(0),
-    )?;
-    if exists == 0 {
+    let Some(current_primary) = refinery_max_version(&conn, "refinery_schema_history")? else {
+        return Ok(false);
+    };
+    if current_primary < embedded_primary_latest_version() {
         return Ok(false);
     }
-    let current: i64 = conn.query_row(
-        "SELECT COALESCE(MAX(version), 0) FROM refinery_schema_history",
-        [],
-        |r| r.get(0),
-    )?;
-    Ok(current >= 2)
+
+    if paths.cache.exists() {
+        let cache_conn = Connection::open(&paths.cache)?;
+        let Some(current_cache) = refinery_max_version(&cache_conn, "refinery_schema_history")? else {
+            return Ok(false);
+        };
+        if current_cache < embedded_cache_latest_version() {
+            return Ok(false);
+        }
+    }
+
+    Ok(true)
 }

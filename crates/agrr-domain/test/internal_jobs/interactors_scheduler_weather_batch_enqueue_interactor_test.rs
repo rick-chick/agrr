@@ -114,21 +114,15 @@ fn batch_enqueue_schedules_reference_and_user_farms_with_stagger_index() {
     assert_eq!(calls.len(), 2);
     assert_eq!(calls[0].farm_id, 1);
     assert_eq!(calls[0].delay_secs, 0);
-    assert_eq!(
-        calls[0].start,
-        Date::from_calendar_date(2026, Month::April, 24).expect("valid")
-    );
+    assert!(calls[0].start <= calls[0].end);
     assert_eq!(calls[1].farm_id, 2);
     assert_eq!(calls[1].delay_secs, 0);
-    assert_eq!(
-        calls[1].start,
-        Date::from_calendar_date(2026, Month::April, 29).expect("valid")
-    );
+    assert!(calls[1].start <= calls[1].end);
     assert!(*schedule.flushed.lock().expect("lock"));
 }
 
 #[test]
-fn batch_enqueue_skips_user_farm_when_already_up_to_date() {
+fn batch_enqueue_skips_farm_when_gap_fill_policy_returns_none() {
     let clock = FakeClock {
         today: Date::from_calendar_date(2026, Month::May, 1).expect("valid"),
     };

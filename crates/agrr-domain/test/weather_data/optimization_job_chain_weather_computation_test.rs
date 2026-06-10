@@ -16,9 +16,8 @@
         }
     }
 
-    // Ruby: test "weather_window delegates to WeatherDataFetchWindowPolicy"
     #[test]
-    fn weather_window_delegates_to_weather_data_fetch_window_policy() {
+    fn weather_window_delegates_to_weather_data_fetch_window_policy_for_user_farms() {
         let clock = FakeClock {
             today: Date::from_calendar_date(2026, Month::June, 15).unwrap(),
         };
@@ -27,12 +26,37 @@
             WeatherDataFetchWindowPolicy::fetch_range(Some(latest), &clock);
 
         assert_eq!(
-            OptimizationJobChainWeatherComputation::weather_window(Some(latest), &clock),
+            OptimizationJobChainWeatherComputation::weather_window(Some(latest), &clock, false),
             expected
         );
     }
 
-    // Ruby: test "predict_days_to_next_year_end delegates to WeatherPredictionHorizonPolicy"
+    #[test]
+    fn weather_window_delegates_to_gap_fill_policy_for_reference_farms() {
+        let clock = FakeClock {
+            today: Date::from_calendar_date(2026, Month::June, 15).unwrap(),
+        };
+        let latest = Date::from_calendar_date(2026, Month::June, 10).unwrap();
+        let expected =
+            GapFillWeatherFetchWindowPolicy::optimization_chain_fetch_range(Some(latest), &clock);
+
+        assert_eq!(
+            OptimizationJobChainWeatherComputation::weather_window(Some(latest), &clock, true),
+            expected
+        );
+    }
+
+    #[test]
+    fn ensure_reference_farm_weather_ready_delegates_to_readiness_policy() {
+        let err = OptimizationJobChainWeatherComputation::ensure_reference_farm_weather_ready(
+            Some(1),
+            None,
+            10_000,
+        )
+        .expect_err("missing latest");
+        assert!(err.contains("not backfilled"));
+    }
+
     #[test]
     fn predict_days_to_next_year_end_delegates_to_weather_prediction_horizon_policy() {
         let clock = FakeClock {

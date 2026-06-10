@@ -2,6 +2,7 @@
 
 use crate::adapters::PassthroughTranslator;
 use crate::cable::CableHub;
+use crate::optimization_chain_telemetry::{StepOutcome, StepTimer};
 use crate::state::AppState;
 use agrr_adapters_sqlite::CultivationPlanSqliteGateway;
 use agrr_domain::cultivation_plan::dtos::{
@@ -13,7 +14,7 @@ use agrr_domain::shared::ports::CultivationPlanPhaseBroadcastPort;
 use rusqlite::params;
 use serde_json::{json, Value};
 use std::sync::Arc;
-use tracing::{error, warn};
+use tracing::error;
 
 struct CablePhaseBroadcast {
     hub: Arc<CableHub>,
@@ -51,15 +52,14 @@ pub(crate) fn run_guarded_optimization_step(
     if !plan_still_optimizing(&pool, plan_id) {
         return false;
     }
+    let timer = StepTimer::start();
     match step() {
-        Ok(()) => true,
+        Ok(()) => {
+            timer.log(step_name, plan_id, StepOutcome::Ok, None);
+            true
+        }
         Err(e) => {
-            warn!(
-                plan_id,
-                step = step_name,
-                error = %e,
-                "optimization chain step failed"
-            );
+            timer.log(step_name, plan_id, StepOutcome::Failed, Some(&e));
             if let Some(subphase) = failure_subphase {
                 if let Err(phase_err) = advance_phase(
                     state,
@@ -68,6 +68,10 @@ pub(crate) fn run_guarded_optimization_step(
                     CultivationPlanPhaseName::PhaseFailed,
                     Some(subphase),
                 ) {
+                    eprintln!(
+                        "optimization_chain phase_persist_failed plan_id={plan_id} step={step_name} \
+                         subphase={subphase} error={phase_err}"
+                    );
                     error!(
                         plan_id,
                         step = step_name,
@@ -81,6 +85,7 @@ pub(crate) fn run_guarded_optimization_step(
         }
     }
 }
+
 
 pub(crate) fn advance_phase(
     state: &AppState,

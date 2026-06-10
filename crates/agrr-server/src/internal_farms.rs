@@ -15,8 +15,8 @@ use crate::runtime_env;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     InternalFarmWeatherReadSqliteGateway, InternalWeatherFetchStartSqliteGateway,
+    WeatherDataGatewayBundle,
 };
-use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
 use agrr_domain::shared::ports::{ClockPort, TranslatorPort};
 use agrr_domain::weather_data::dtos::{
     InternalFarmWeatherDataListOutput, InternalFarmWeatherFetchFailure,

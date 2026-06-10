@@ -530,3 +530,117 @@
             .expect("ok");
         assert!(result.data.get("data").and_then(|v| v.as_array()).is_some_and(|a| !a.is_empty()));
     }
+
+    struct FailingWeatherDataGateway {
+        message: String,
+    }
+
+    impl WeatherDataGateway for FailingWeatherDataGateway {
+        fn weather_data_for_period(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<Vec<WeatherData>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Err(crate::weather_data::gateways::WeatherDataStorageError::new(
+                self.message.clone(),
+            ))
+        }
+
+        fn weather_data_count(
+            &self,
+            _: i64,
+            _: Option<Date>,
+            _: Option<Date>,
+        ) -> Result<i64, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(0)
+        }
+
+        fn historical_data_count(
+            &self,
+            _: i64,
+            _: Date,
+            _: Date,
+        ) -> Result<i64, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(0)
+        }
+
+        fn earliest_date(
+            &self,
+            _: i64,
+        ) -> Result<Option<Date>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(None)
+        }
+
+        fn latest_date(
+            &self,
+            _: i64,
+        ) -> Result<Option<Date>, crate::weather_data::gateways::WeatherDataStorageError> {
+            Ok(None)
+        }
+
+        fn upsert_weather_data(
+            &self,
+            _: &[WeatherData],
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+
+        fn find_by_coordinates(&self, _: f64, _: f64) -> Option<crate::weather_data::gateways::WeatherLocationRecord> {
+            None
+        }
+
+        fn find_or_create_weather_location(
+            &self,
+            _: f64,
+            _: f64,
+            _: Option<f64>,
+            _: Option<&str>,
+        ) -> Result<crate::weather_data::gateways::WeatherLocationRecord, Box<dyn std::error::Error + Send + Sync>>
+        {
+            Ok(crate::weather_data::gateways::WeatherLocationRecord { id: 1 })
+        }
+
+        fn update_predicted_weather_data(
+            &self,
+            _: i64,
+            _: &serde_json::Value,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn predict_surfaces_gateway_storage_error_detail() {
+        let plan_gateway = FakePlanGateway {
+            updated: Arc::new(Mutex::new(None)),
+        };
+        let weather_gateway = FailingWeatherDataGateway {
+            message: "GCS HTTP 503: backend timeout".into(),
+        };
+        let clock = fixed_clock();
+        let interactor = WeatherPredictionInteractor::new(
+            weather_location_dto(None),
+            None,
+            &plan_gateway,
+            &weather_gateway,
+            &NoopPredictionGateway,
+            &NoopLogger,
+            &clock,
+            &FakeAnchors,
+        )
+        .expect("valid");
+
+        let err = interactor
+            .predict_for_cultivation_plan(&plan_weather_dto(), None)
+            .expect_err("storage failure");
+
+        assert_eq!(
+            err,
+            WeatherPredictionError::WeatherDataStorageFailed(
+                "GCS HTTP 503: backend timeout".into()
+            )
+        );
+        assert_eq!(err.to_string(), "GCS HTTP 503: backend timeout");
+    }

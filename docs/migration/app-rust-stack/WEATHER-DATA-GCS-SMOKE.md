@@ -26,7 +26,7 @@ Manual proof that **Application Default Credentials (ADC)** can read weather bul
 
 4. **403 / permission failure must not look like “no data”**
    - Wrong SA or bucket IAM → API returns **5xx** or explicit storage error, **not** `count: 0` with 200.
-   - Local automated proof: `cargo test -p agrr-adapters-gcs read_object_returns_http_status_on_403 -- --ignored` (mock HTTP 403 → `WeatherDataGcsError::HttpStatus`).
+   - Proof: misconfigure IAM on a staging bucket and confirm `weather_status` / logs surface storage failure (not silent empty).
 
 ## Related
 

@@ -1,8 +1,9 @@
 //! Ruby: `AdjustWeatherPredictionActiveRecordGateway` — WeatherPredictionInteractor wiring for adjust/add_crop.
 
 use agrr_adapters_agrr::PredictionDaemonGateway;
-use agrr_adapters_sqlite::{FieldCultivationPlanPredictedWeatherSqliteGateway, SqlitePool};
-use crate::weather_data_gateway_factory::WeatherDataGatewayBundle;
+use agrr_adapters_sqlite::{
+    FieldCultivationPlanPredictedWeatherSqliteGateway, SqlitePool, WeatherDataGatewayBundle,
+};
 use agrr_domain::cultivation_plan::gateways::{
     AdjustWeatherPredictionGateway, WeatherPredictionService,
 };
