@@ -10,6 +10,7 @@ use reqwest::StatusCode;
 use serde_json::Value;
 
 use crate::gcs_io_counters::{record_list, record_read, record_write};
+use crate::gcs_read_log::log_read;
 use crate::weather_json::{WeatherDataGcsConfig, WeatherDataGcsError};
 
 pub struct GcsObjectClient {
@@ -50,6 +51,7 @@ impl GcsObjectClient {
     /// Missing object or local file — not a transport failure.
     pub fn read_object(&self, key: &str) -> Result<Option<Vec<u8>>, WeatherDataGcsError> {
         record_read();
+        log_read(&self.config.bucket, key);
         if let Some(root) = &self.config.local_root {
             let path = root.join(key);
             if !path.exists() {

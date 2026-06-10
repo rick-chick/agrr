@@ -2,7 +2,7 @@
 
 use std::time::Instant;
 
-use agrr_adapters_gcs::GcsIoSnapshot;
+use agrr_adapters_gcs::{set_gcs_read_log_suffix, GcsIoSnapshot};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StepOutcome {
@@ -40,22 +40,35 @@ fn format_step_log(
 pub struct StepTimer {
     started: Instant,
     gcs_before: GcsIoSnapshot,
+    step: &'static str,
+    plan_id: i64,
+}
+
+fn begin_step_scope(plan_id: i64, step: &'static str) {
+    set_gcs_read_log_suffix(Some(format!(" plan_id={plan_id} step={step}")));
+}
+
+fn end_step_scope() {
+    set_gcs_read_log_suffix(None);
 }
 
 impl StepTimer {
-    pub fn start() -> Self {
+    pub fn start(plan_id: i64, step: &'static str) -> Self {
+        begin_step_scope(plan_id, step);
         Self {
             started: Instant::now(),
             gcs_before: GcsIoSnapshot::capture(),
+            step,
+            plan_id,
         }
     }
 
-    pub fn log(self, step: &'static str, plan_id: i64, outcome: StepOutcome, error: Option<&str>) {
+    pub fn log(self, outcome: StepOutcome, error: Option<&str>) {
         let duration_ms = self.started.elapsed().as_millis();
         let (gcs_reads, gcs_lists, gcs_writes) = self.gcs_before.delta_since();
         let message = format_step_log(
-            step,
-            plan_id,
+            self.step,
+            self.plan_id,
             duration_ms,
             gcs_reads,
             gcs_lists,
@@ -68,9 +81,16 @@ impl StepTimer {
     }
 }
 
+impl Drop for StepTimer {
+    fn drop(&mut self) {
+        end_step_scope();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use agrr_adapters_gcs::{gcs_read_log_suffix_snapshot, set_gcs_read_log_suffix};
 
     #[test]
     fn format_step_log_includes_grep_friendly_prefix_and_fields() {
@@ -112,4 +132,23 @@ mod tests {
         assert!(line.contains("error=Expected 206 days"));
     }
 
+    #[test]
+    fn step_timer_clears_gcs_read_log_suffix_on_drop_without_log() {
+        set_gcs_read_log_suffix(None);
+        {
+            let _timer = StepTimer::start(99, "fetch_weather_data");
+            assert_eq!(
+                gcs_read_log_suffix_snapshot(),
+                Some(" plan_id=99 step=fetch_weather_data".to_string())
+            );
+        }
+        assert_eq!(gcs_read_log_suffix_snapshot(), None);
+    }
+
+    #[test]
+    fn step_timer_clears_gcs_read_log_suffix_after_log() {
+        set_gcs_read_log_suffix(None);
+        StepTimer::start(100, "bootstrap").log(StepOutcome::Ok, None);
+        assert_eq!(gcs_read_log_suffix_snapshot(), None);
+    }
 }

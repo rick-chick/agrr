@@ -52,14 +52,14 @@ pub(crate) fn run_guarded_optimization_step(
     if !plan_still_optimizing(&pool, plan_id) {
         return false;
     }
-    let timer = StepTimer::start();
+    let timer = StepTimer::start(plan_id, step_name);
     match step() {
         Ok(()) => {
-            timer.log(step_name, plan_id, StepOutcome::Ok, None);
+            timer.log(StepOutcome::Ok, None);
             true
         }
         Err(e) => {
-            timer.log(step_name, plan_id, StepOutcome::Failed, Some(&e));
+            timer.log(StepOutcome::Failed, Some(&e));
             if let Some(subphase) = failure_subphase {
                 if let Err(phase_err) = advance_phase(
                     state,

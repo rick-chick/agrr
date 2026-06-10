@@ -59,9 +59,24 @@ pub fn reset_for_test() {
 mod tests {
     use super::*;
 
+    struct CounterTestGuard;
+
+    impl CounterTestGuard {
+        fn new() -> Self {
+            reset_for_test();
+            Self
+        }
+    }
+
+    impl Drop for CounterTestGuard {
+        fn drop(&mut self) {
+            reset_for_test();
+        }
+    }
+
     #[test]
     fn snapshot_delta_counts_operations_since_capture() {
-        reset_for_test();
+        let _guard = CounterTestGuard::new();
         let before = GcsIoSnapshot::capture();
         record_read();
         record_read();

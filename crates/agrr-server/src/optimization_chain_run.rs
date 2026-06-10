@@ -83,7 +83,7 @@ pub async fn run_bootstrap_step(
     channel: &str,
     slot: &BootstrapSlot,
 ) -> bool {
-    let timer = StepTimer::start();
+    let timer = StepTimer::start(plan_id, "bootstrap");
     let result: Result<BootstrapData, String> = (|| {
         let pool = state.sqlite.clone();
         let snap = load_chain_plan_snapshot(&pool, plan_id)?
@@ -133,10 +133,10 @@ pub async fn run_bootstrap_step(
 
     match &result {
         Ok(_) => {
-            timer.log("bootstrap", plan_id, StepOutcome::Ok, None);
+            timer.log(StepOutcome::Ok, None);
         }
         Err(err) => {
-            timer.log("bootstrap", plan_id, StepOutcome::Failed, Some(err));
+            timer.log(StepOutcome::Failed, Some(err));
             if let Err(phase_err) = advance_phase(
                 state,
                 plan_id,
