@@ -1,6 +1,6 @@
 mod support;
 
-use support::{apply_data, count_query, TestDb};
+use support::{apply_repair, count_query, use_india_coords_weather_fixture, TestDb};
 
 fn seed_india_punjab_stub(conn: &rusqlite::Connection) {
     conn.execute_batch(
@@ -17,6 +17,7 @@ fn seed_india_punjab_stub(conn: &rusqlite::Connection) {
 
 #[test]
 fn data_repair_india_reference_farms_restores_fixture_farms() {
+    use_india_coords_weather_fixture();
     let db = TestDb::new();
     let conn = db.conn();
     seed_india_punjab_stub(&conn);
@@ -34,7 +35,7 @@ fn data_repair_india_reference_farms_restores_fixture_farms() {
         )
     );
 
-    apply_data(&db.paths, "in", "repair");
+    apply_repair(&db.paths, "in", "repair_india_reference_farms");
 
     let farms = count_query(
         &conn,
@@ -56,11 +57,12 @@ fn data_repair_india_reference_farms_restores_fixture_farms() {
 
 #[test]
 fn data_repair_india_reference_farms_is_idempotent() {
+    use_india_coords_weather_fixture();
     let db = TestDb::new();
     seed_india_punjab_stub(&db.conn());
 
-    apply_data(&db.paths, "in", "repair");
-    apply_data(&db.paths, "in", "repair");
+    apply_repair(&db.paths, "in", "repair_india_reference_farms");
+    apply_repair(&db.paths, "in", "repair_india_reference_farms");
 
     let conn = db.conn();
     let farms = count_query(

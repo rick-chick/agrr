@@ -1,5 +1,6 @@
 use crate::config::DbPaths;
 use crate::manifest::LegacyManifest;
+use anyhow::Context;
 use rusqlite::Connection;
 
 use super::context;
@@ -91,6 +92,17 @@ fn apply_kind_region(
         "repair" => repairs::apply(conn, app_root, region, migration_name),
         other => anyhow::bail!("unknown data kind: {other}"),
     }
+}
+
+/// Runs a single repair migration without manifest/history (for focused integration tests).
+pub fn apply_repair_migration(
+    paths: &DbPaths,
+    region: &str,
+    migration_name: &str,
+) -> anyhow::Result<()> {
+    let mut conn = Connection::open(&paths.primary)
+        .with_context(|| format!("open {}", paths.primary.display()))?;
+    repairs::apply(&mut conn, &paths.app_root, region, migration_name)
 }
 
 pub fn is_applied(conn: &Connection, version: &str) -> anyhow::Result<bool> {

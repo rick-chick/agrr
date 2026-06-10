@@ -14,7 +14,7 @@ use crate::manifest::{self, LegacyManifest, DATA_KINDS};
 use anyhow::Context;
 use rusqlite::Connection;
 
-pub use apply::{ensure_history_table, is_applied};
+pub use apply::{apply_repair_migration, ensure_history_table, is_applied};
 
 pub fn list(paths: &DbPaths) -> anyhow::Result<()> {
     let manifest = LegacyManifest::load(&paths.app_root)?;

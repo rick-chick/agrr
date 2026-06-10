@@ -1,10 +1,10 @@
 mod support;
 
-use support::{apply_data, count_query, TestDb};
+use support::{apply_data, count_query, use_jp_coords_weather_fixture, TestDb};
 
 #[test]
 fn data_apply_jp_base_includes_admin_and_sample_fields() {
-    std::env::set_var("AGRR_MIGRATE_SKIP_WEATHER", "1");
+    use_jp_coords_weather_fixture();
     let db = TestDb::new();
     apply_data(&db.paths, "jp", "base");
 

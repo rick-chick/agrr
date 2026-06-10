@@ -4,13 +4,21 @@ use anyhow::Context;
 use rusqlite::{params, Connection, Transaction};
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const WEATHER_BATCH: usize = 5000;
 
 struct RegionFixtures<'a> {
     weather: &'a str,
     crops: &'a str,
+}
+
+fn weather_fixture_path(app_root: &Path, region: &str) -> anyhow::Result<PathBuf> {
+    if let Ok(override_path) = std::env::var("AGRR_MIGRATE_WEATHER_FIXTURE") {
+        return Ok(PathBuf::from(override_path));
+    }
+    let paths = region_fixtures(region)?;
+    Ok(fixtures_dir(app_root).join(paths.weather))
 }
 
 fn region_fixtures(region: &str) -> anyhow::Result<RegionFixtures<'static>> {
@@ -39,7 +47,7 @@ pub fn apply(conn: &mut Connection, app_root: &Path, region: &str) -> anyhow::Re
         ensure_anonymous_user(conn)?
     };
     let skip_weather = std::env::var("AGRR_MIGRATE_SKIP_WEATHER").is_ok();
-    let weather_path = fixtures_dir(app_root).join(paths.weather);
+    let weather_path = weather_fixture_path(app_root, region)?;
     if skip_weather {
         if weather_path.is_file() {
             seed_farms_without_weather_data(conn, region, anonymous_id, &weather_path)?;
@@ -164,9 +172,9 @@ fn seed_farms_and_weather(
 
 /// Restores all India reference farms from `db/fixtures/india_reference_weather.json`.
 /// Removes the legacy `Punjab` stub row produced by `seed_basic_farms` when the weather fixture was absent.
-/// Ignores `AGRR_MIGRATE_SKIP_WEATHER` so production repair always loads weather.
+/// Honors `AGRR_MIGRATE_SKIP_WEATHER` (tests/dev); production repair leaves it unset and loads weather rows.
 pub fn repair_india_reference_farms(conn: &mut Connection, app_root: &Path) -> anyhow::Result<()> {
-    let weather_path = fixtures_dir(app_root).join("india_reference_weather.json");
+    let weather_path = weather_fixture_path(app_root, "in")?;
     if !weather_path.is_file() {
         anyhow::bail!(
             "repair/in: missing fixture {} (required for India reference farms)",
@@ -180,7 +188,11 @@ pub fn repair_india_reference_farms(conn: &mut Connection, app_root: &Path) -> a
     }
 
     let anonymous_id = ensure_anonymous_user(conn)?;
-    seed_farms_and_weather(conn, "in", anonymous_id, &weather_path)?;
+    if std::env::var("AGRR_MIGRATE_SKIP_WEATHER").is_ok() {
+        seed_farms_without_weather_data(conn, "in", anonymous_id, &weather_path)?;
+    } else {
+        seed_farms_and_weather(conn, "in", anonymous_id, &weather_path)?;
+    }
     println!("  repair/in: India reference farms repair completed");
     Ok(())
 }

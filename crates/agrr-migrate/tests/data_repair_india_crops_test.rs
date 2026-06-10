@@ -1,6 +1,6 @@
 mod support;
 
-use support::{apply_data, count_query, TestDb};
+use support::{apply_repair, count_query, TestDb};
 
 fn seed_india_inline_crops_without_stages(conn: &rusqlite::Connection) {
     conn.execute_batch(
@@ -24,7 +24,7 @@ fn data_repair_india_reference_crops_restores_stages_from_fixture() {
     );
     assert_eq!(0, stages_before);
 
-    apply_data(&db.paths, "in", "repair");
+    apply_repair(&db.paths, "in", "repair_india_reference_crops");
 
     let crops = count_query(
         &conn,
@@ -63,8 +63,8 @@ fn data_repair_india_reference_crops_is_idempotent() {
     let db = TestDb::new();
     seed_india_inline_crops_without_stages(&db.conn());
 
-    apply_data(&db.paths, "in", "repair");
-    apply_data(&db.paths, "in", "repair");
+    apply_repair(&db.paths, "in", "repair_india_reference_crops");
+    apply_repair(&db.paths, "in", "repair_india_reference_crops");
 
     let conn = db.conn();
     let crops = count_query(
