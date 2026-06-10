@@ -19,7 +19,7 @@ impl ClockPort for FakeClock {
 }
 
 #[test]
-fn fetch_range_uses_latest_plus_one_through_today() {
+fn fetch_range_uses_latest_plus_one_through_day_before_yesterday() {
     let clock = FakeClock {
         today: Date::from_calendar_date(2026, Month::June, 15).expect("valid"),
     };
@@ -29,7 +29,10 @@ fn fetch_range_uses_latest_plus_one_through_today() {
         range.start_date,
         Date::from_calendar_date(2026, Month::June, 11).expect("valid")
     );
-    assert_eq!(range.end_date, clock.today);
+    assert_eq!(
+        range.end_date,
+        Date::from_calendar_date(2026, Month::June, 13).expect("valid")
+    );
 }
 
 #[test]
@@ -42,7 +45,10 @@ fn fetch_range_without_latest_uses_seven_day_lookback() {
         range.start_date,
         Date::from_calendar_date(2026, Month::June, 8).expect("valid")
     );
-    assert_eq!(range.end_date, clock.today);
+    assert_eq!(
+        range.end_date,
+        Date::from_calendar_date(2026, Month::June, 13).expect("valid")
+    );
 }
 
 #[test]
@@ -50,7 +56,13 @@ fn fetch_range_skips_when_already_up_to_date() {
     let clock = FakeClock {
         today: Date::from_calendar_date(2026, Month::June, 15).expect("valid"),
     };
-    assert!(GapFillWeatherFetchWindowPolicy::fetch_range(Some(clock.today), &clock).is_none());
+    let day_before_yesterday =
+        Date::from_calendar_date(2026, Month::June, 13).expect("valid");
+    assert!(GapFillWeatherFetchWindowPolicy::fetch_range(
+        Some(day_before_yesterday),
+        &clock
+    )
+    .is_none());
 }
 
 #[test]
@@ -58,7 +70,11 @@ fn optimization_chain_fetch_range_uses_no_op_when_up_to_date() {
     let clock = FakeClock {
         today: Date::from_calendar_date(2026, Month::June, 15).expect("valid"),
     };
-    let range =
-        GapFillWeatherFetchWindowPolicy::optimization_chain_fetch_range(Some(clock.today), &clock);
+    let day_before_yesterday =
+        Date::from_calendar_date(2026, Month::June, 13).expect("valid");
+    let range = GapFillWeatherFetchWindowPolicy::optimization_chain_fetch_range(
+        Some(day_before_yesterday),
+        &clock,
+    );
     assert!(range.start_date > range.end_date);
 }

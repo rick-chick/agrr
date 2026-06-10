@@ -1,4 +1,4 @@
-//! Incremental weather fetch: `latest + 1` through today (scheduler + reference optimization chain).
+//! Incremental weather fetch: `latest + 1` through day-before-yesterday (scheduler + reference optimization chain).
 
 use time::Date;
 
@@ -25,23 +25,19 @@ impl GapFillWeatherFetchWindowPolicy {
         clock: &dyn ClockPort,
     ) -> Option<GapFillFetchRange> {
         let today = clock.today();
+        let fetch_end = subtract_days(today, 2);
         let start_date = match latest_weather_date {
             Some(latest) => latest + time::Duration::days(1),
             None => subtract_days(today, DEFAULT_LOOKBACK_DAYS),
         };
 
-        if start_date > today {
-            return None;
-        }
-
-        let end_date = today;
-        if start_date > end_date {
+        if start_date > fetch_end {
             return None;
         }
 
         Some(GapFillFetchRange {
             start_date,
-            end_date,
+            end_date: fetch_end,
         })
     }
 
@@ -57,10 +53,10 @@ impl GapFillWeatherFetchWindowPolicy {
                 range_adjusted: false,
             },
             None => {
-                let today = clock.today();
+                let fetch_end = subtract_days(clock.today(), 2);
                 WeatherFetchRange {
-                    start_date: today + time::Duration::days(1),
-                    end_date: today,
+                    start_date: fetch_end + time::Duration::days(1),
+                    end_date: fetch_end,
                     range_adjusted: false,
                 }
             }
