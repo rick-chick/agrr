@@ -1,3 +1,6 @@
+# Linux 専用: テキストは LF を正とする（CRLF 混在・autocrlf 弊害を防ぐ）
+* text=auto eol=lf
+
 # Ruby は LF を正とする（CRLF 警告・混在を防ぐ）
 *.rb text eol=lf
 
@@ -5,10 +8,8 @@
 config/locales/views/farms.*.yml merge=ours
 # その他のロケールファイルも保護
 config/locales/*.yml merge=ours
-# スクリプトファイルの実行権限を保持
-scripts/*.sh text eol=lf
-.cursor/skills/dev-docker/**/*.sh text eol=lf
-.cursor/skills/production-admin/**/*.sh text eol=lf
+# シェルスクリプト
+*.sh text eol=lf
 *.zip filter=lfs diff=lfs merge=lfs -text
 *.json filter=lfs diff=lfs merge=lfs -text
 lib/core filter=lfs diff=lfs merge=lfs -text
