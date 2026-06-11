@@ -26,6 +26,11 @@ describe('findCropByResearchSlug', () => {
     expect(findCropByResearchSlug(crops, 'bell_pepper')?.name).toBe('ピーマン');
   });
 
+  it('matches English Tomato alias from research slug', () => {
+    const crops = [crop(1, 'Tomato'), crop(2, 'Cucumber')];
+    expect(findCropByResearchSlug(crops, 'tomato')?.id).toBe(1);
+  });
+
   it('returns undefined for unknown slug', () => {
     expect(findCropByResearchSlug([crop(1, 'トマト')], 'unknown')).toBeUndefined();
   });
