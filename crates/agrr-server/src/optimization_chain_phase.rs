@@ -148,7 +148,10 @@ pub(crate) fn broadcast_completed(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::{test_app_state, test_pool_with_plan};
+    use crate::test_support::{
+        plan_status, seed_field_cultivation, set_plan_status, test_app_state, test_pool_with_plan,
+    };
+    use std::sync::atomic::{AtomicBool, Ordering};
 
     #[test]
     fn advance_phase_returns_err_when_plan_missing() {
@@ -165,5 +168,119 @@ mod tests {
             !err.is_empty(),
             "error message should describe failure: {err}"
         );
+    }
+
+    #[test]
+    fn plan_still_optimizing_reflects_db_status() {
+        let db = test_pool_with_plan(1);
+        set_plan_status(&db.pool, 1, "optimizing");
+        assert!(plan_still_optimizing(&db.pool, 1));
+
+        set_plan_status(&db.pool, 1, "failed");
+        assert!(!plan_still_optimizing(&db.pool, 1));
+    }
+
+    #[test]
+    fn guarded_step_skips_when_plan_not_optimizing() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool.clone());
+        set_plan_status(&db.pool, 1, "failed");
+        let step_ran = AtomicBool::new(false);
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "fetch_weather_data",
+            Some("fetching_weather"),
+            || {
+                step_ran.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(!continue_chain);
+        assert!(!step_ran.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn guarded_step_returns_true_on_success() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool.clone());
+        set_plan_status(&db.pool, 1, "optimizing");
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "fetch_weather_data",
+            Some("fetching_weather"),
+            || Ok(()),
+        );
+
+        assert!(continue_chain);
+        assert_eq!(plan_status(&db.pool, 1), "optimizing");
+    }
+
+    #[test]
+    fn guarded_step_marks_plan_failed_when_step_errors() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool.clone());
+        set_plan_status(&db.pool, 1, "optimizing");
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "fetch_weather_data",
+            Some("fetching_weather"),
+            || Err("daemon unavailable".into()),
+        );
+
+        assert!(!continue_chain);
+        assert_eq!(plan_status(&db.pool, 1), "failed");
+    }
+
+    #[test]
+    fn broadcast_completed_skips_when_field_cultivations_incomplete() {
+        let db = test_pool_with_plan(1);
+        let hub = CableHub::default();
+        set_plan_status(&db.pool, 1, "completed");
+        seed_field_cultivation(&db.pool, 1, 1, "optimizing");
+
+        let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+        let mut rx = rt.block_on(hub.subscribe_plan(1));
+        broadcast_completed(&hub, 1, &db.pool);
+
+        let received = rt.block_on(async {
+            tokio::time::timeout(std::time::Duration::from_millis(100), rx.recv()).await
+        });
+        assert!(
+            received.is_err(),
+            "incomplete field cultivations must not trigger completed broadcast"
+        );
+    }
+
+    #[test]
+    fn broadcast_completed_emits_when_plan_and_fields_are_completed() {
+        let db = test_pool_with_plan(1);
+        let hub = CableHub::default();
+        set_plan_status(&db.pool, 1, "completed");
+        seed_field_cultivation(&db.pool, 1, 1, "completed");
+
+        let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+        let mut rx = rt.block_on(hub.subscribe_plan(1));
+        broadcast_completed(&hub, 1, &db.pool);
+
+        let payload = rt
+            .block_on(async {
+                tokio::time::timeout(std::time::Duration::from_secs(1), rx.recv())
+                    .await
+                    .expect("timeout waiting for broadcast")
+                    .expect("broadcast channel closed")
+            });
+        let value: Value = serde_json::from_str(&payload).expect("json payload");
+        assert_eq!(value.get("status").and_then(|v| v.as_str()), Some("completed"));
+        assert_eq!(value.get("phase").and_then(|v| v.as_str()), Some("completed"));
     }
 }

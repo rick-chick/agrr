@@ -114,6 +114,46 @@ pub fn test_pool_without_optimization_phase_column(plan_id: i64) -> TestDb {
     TestDb { pool, _file: file }
 }
 
+pub fn set_plan_status(pool: &SqlitePool, plan_id: i64, status: &str) {
+    pool.with_write(|conn| {
+        conn.execute(
+            "UPDATE cultivation_plans SET status = ?1 WHERE id = ?2",
+            rusqlite::params![status, plan_id],
+        )?;
+        Ok(())
+    })
+    .expect("set plan status");
+}
+
+pub fn seed_field_cultivation(
+    pool: &SqlitePool,
+    fc_id: i64,
+    plan_id: i64,
+    status: &str,
+) {
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO field_cultivations \
+             (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, status) \
+             VALUES (?1, ?2, 1, 1, 10.0, ?3)",
+            rusqlite::params![fc_id, plan_id, status],
+        )?;
+        Ok(())
+    })
+    .expect("seed field cultivation");
+}
+
+pub fn plan_status(pool: &SqlitePool, plan_id: i64) -> String {
+    pool.with_read(|conn| {
+        conn.query_row(
+            "SELECT status FROM cultivation_plans WHERE id = ?1",
+            rusqlite::params![plan_id],
+            |row| row.get(0),
+        )
+    })
+    .expect("read plan status")
+}
+
 pub fn test_app_state(pool: SqlitePool) -> AppState {
     struct NoopWeather;
     impl WeatherDataGateway for NoopWeather {
