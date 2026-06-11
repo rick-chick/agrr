@@ -143,8 +143,7 @@ describe('PrivatePlanCreateApiGateway', () => {
     it('returns Observable<CreatePrivatePlanResponseDto>', async () => {
       const input: CreatePrivatePlanInputDto = {
         farmId: 1,
-        planName: 'Test Plan',
-        cropIds: [1, 2, 3]
+        planName: 'Test Plan'
       };
       const response: CreatePrivatePlanResponseDto = { id: 123 };
       vi.mocked(apiClient.post).mockReturnValue(of(response));
@@ -154,16 +153,14 @@ describe('PrivatePlanCreateApiGateway', () => {
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans', {
         plan: {
           farm_id: 1,
-          plan_name: 'Test Plan',
-          crop_ids: [1, 2, 3]
+          plan_name: 'Test Plan'
         }
       });
     });
 
     it('handles optional planName', async () => {
       const input: CreatePrivatePlanInputDto = {
-        farmId: 1,
-        cropIds: [1, 2]
+        farmId: 1
       };
       const response: CreatePrivatePlanResponseDto = { id: 456 };
       vi.mocked(apiClient.post).mockReturnValue(of(response));
@@ -173,16 +170,14 @@ describe('PrivatePlanCreateApiGateway', () => {
       expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans', {
         plan: {
           farm_id: 1,
-          plan_name: undefined,
-          crop_ids: [1, 2]
+          plan_name: undefined
         }
       });
     });
 
     it('forwards error when api fails', async () => {
       const input: CreatePrivatePlanInputDto = {
-        farmId: 1,
-        cropIds: [1, 2]
+        farmId: 1
       };
       vi.mocked(apiClient.post).mockReturnValue(throwError(() => new Error('network error')));
 

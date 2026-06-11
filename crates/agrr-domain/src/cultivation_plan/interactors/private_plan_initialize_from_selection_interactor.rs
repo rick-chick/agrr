@@ -1,29 +1,30 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::PrivatePlanInitializeFromSelectionInteractor`
+//!
+//! Private plan creation from farm selection only (empty plan + master field copy).
 
 use time::{Date, Month};
 
-use crate::crop::entities::CropEntity;
 use crate::cultivation_plan::dtos::{
-    CultivationPlanInitCrop, CultivationPlanInitFarm, PrivatePlanInitializeFromSelectionFailure,
+    CultivationPlanInitFarm, PrivatePlanInitializeFromSelectionFailure,
     PrivatePlanInitializeFromSelectionInput, PrivatePlanInitializeFromSelectionOutput,
+    PrivatePlanMasterFieldSeed,
 };
+use crate::cultivation_plan::policies::cultivation_plan_field_policy;
 use crate::cultivation_plan::ports::{
-    PrivatePlanCropListGateway, PrivatePlanExistingPlanGateway, PrivatePlanFarmResolveGateway,
-    PrivatePlanInitializeCallablePort, PrivatePlanInitializeFromSelectionOutputPort,
-    PrivatePlanOptimizationJobChainGateway, PrivatePlanSessionIdGeneratorPort,
+    PrivatePlanExistingPlanGateway, PrivatePlanFarmResolveGateway, PrivatePlanInitializeCallablePort,
+    PrivatePlanInitializeFromSelectionOutputPort, PrivatePlanOptimizationJobChainGateway,
+    PrivatePlanSessionIdGeneratorPort,
 };
 use crate::field::gateways::FieldGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::helpers::date_calendar::beginning_of_year;
-use crate::shared::policies::crop_policy;
 use crate::shared::policies::farm_policy;
 use crate::shared::ports::{ClockPort, LoggerPort, TranslatorPort};
 
-pub struct PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, C, FG, I, L, T, Ck, J> {
+pub struct PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, FG, I, L, T, Ck, J> {
     output_port: &'a mut O,
     cultivation_plan_gateway: &'a EP,
     farm_gateway: &'a F,
-    crop_gateway: &'a C,
     field_gateway: &'a FG,
     plan_initializer: &'a I,
     logger: &'a L,
@@ -33,13 +34,12 @@ pub struct PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, C, FG, I, 
     job_chain_enqueuer: &'a J,
 }
 
-impl<'a, O, EP, F, C, FG, I, L, T, Ck, J>
-    PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, C, FG, I, L, T, Ck, J>
+impl<'a, O, EP, F, FG, I, L, T, Ck, J>
+    PrivatePlanInitializeFromSelectionInteractor<'a, O, EP, F, FG, I, L, T, Ck, J>
 where
     O: PrivatePlanInitializeFromSelectionOutputPort,
     EP: PrivatePlanExistingPlanGateway,
     F: PrivatePlanFarmResolveGateway,
-    C: PrivatePlanCropListGateway,
     FG: FieldGateway,
     I: PrivatePlanInitializeCallablePort,
     L: LoggerPort,
@@ -52,7 +52,6 @@ where
         output_port: &'a mut O,
         cultivation_plan_gateway: &'a EP,
         farm_gateway: &'a F,
-        crop_gateway: &'a C,
         field_gateway: &'a FG,
         plan_initializer: &'a I,
         logger: &'a L,
@@ -65,7 +64,6 @@ where
             output_port,
             cultivation_plan_gateway,
             farm_gateway,
-            crop_gateway,
             field_gateway,
             plan_initializer,
             logger,
@@ -79,7 +77,7 @@ where
     pub fn call(
         &mut self,
         input: &PrivatePlanInitializeFromSelectionInput,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Err(err) = self.call_inner(input) {
             if err.downcast_ref::<RecordInvalidError>().is_some() {
                 let invalid = err.downcast_ref::<RecordInvalidError>().unwrap();
@@ -102,28 +100,8 @@ where
         &mut self,
         input: &PrivatePlanInitializeFromSelectionInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let crop_ids = input.normalized_crop_ids();
-        if crop_ids.is_empty() {
-            self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
-                PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY,
-                self.translator.t("plans.errors.select_crop", &Default::default()),
-            ));
-            return Ok(());
-        }
-
         let farm = match self.resolve_owned_farm(input)? {
             Some(farm) => farm,
-            None => {
-                self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
-                    PrivatePlanInitializeFromSelectionFailure::HTTP_NOT_FOUND,
-                    self.translator.t("plans.errors.not_found", &Default::default()),
-                ));
-                return Ok(());
-            }
-        };
-
-        let crops = match self.resolve_private_plan_crops(input, &crop_ids)? {
-            Some(crops) => crops,
             None => {
                 self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
                     PrivatePlanInitializeFromSelectionFailure::HTTP_NOT_FOUND,
@@ -145,6 +123,16 @@ where
             return Ok(());
         }
 
+        let master_fields = self.resolve_master_field_seeds(farm.id)?;
+        if master_fields.is_empty() {
+            self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
+                PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY,
+                self.translator
+                    .t("plans.errors.no_fields_in_farm", &Default::default()),
+            ));
+            return Ok(());
+        }
+
         let plan_name = input
             .plan_name
             .as_deref()
@@ -152,25 +140,14 @@ where
             .unwrap_or(&farm.name)
             .to_string();
         let session_id = self.session_id_generator.generate();
-        let total_area = self.field_gateway.get_total_area_by_farm_id(farm.id)?;
         let today = self.clock.today();
         let planning_start_date = beginning_of_year(today);
         let planning_end_date = Date::from_calendar_date(today.year() + 1, Month::December, 31)
             .expect("valid end of year");
 
-        let init_farm = CultivationPlanInitFarm {
-            id: farm.id,
-            name: farm.name.clone(),
-        };
-        let init_crops: Vec<CultivationPlanInitCrop> = crops
-            .iter()
-            .map(crop_entity_to_init_crop)
-            .collect();
-
         let result = self.plan_initializer.call(
-            &init_farm,
-            total_area,
-            &init_crops,
+            &farm,
+            &master_fields,
             input.user.id,
             &session_id,
             &plan_name,
@@ -185,8 +162,9 @@ where
             } else {
                 result.errors.join(", ")
             };
-            self.logger
-                .error(&format!("❌ [PrivatePlanInitializeFromSelectionInteractor] Initialize failed: {msg}"));
+            self.logger.error(&format!(
+                "❌ [PrivatePlanInitializeFromSelectionInteractor] Initialize failed: {msg}"
+            ));
             self.output_port.on_failure(PrivatePlanInitializeFromSelectionFailure::new(
                 PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY,
                 msg,
@@ -225,44 +203,28 @@ where
         }))
     }
 
-    fn resolve_private_plan_crops(
+    fn resolve_master_field_seeds(
         &self,
-        input: &PrivatePlanInitializeFromSelectionInput,
-        requested_ids: &[i64],
-    ) -> Result<Option<Vec<CropEntity>>, Box<dyn std::error::Error + Send + Sync>> {
-        if requested_ids.is_empty() {
-            return Ok(Some(vec![]));
-        }
-
-        let entities = self.crop_gateway.list_by_ids(requested_ids)?;
-        let accessible: Vec<CropEntity> = entities
-            .into_iter()
-            .filter(|crop| {
-                crop_policy::edit_allowed(&input.user, crop.is_reference, crop.user_id)
+        farm_id: i64,
+    ) -> Result<Vec<PrivatePlanMasterFieldSeed>, Box<dyn std::error::Error + Send + Sync>> {
+        let list = self.field_gateway.farm_fields_list(farm_id)?;
+        let mut seeds: Vec<PrivatePlanMasterFieldSeed> = list
+            .fields
+            .iter()
+            .filter_map(|field| {
+                let area = field.area?;
+                if cultivation_plan_field_policy::invalid_field_area(area) {
+                    return None;
+                }
+                Some(PrivatePlanMasterFieldSeed {
+                    name: field.display_name(),
+                    area,
+                    daily_fixed_cost: field.daily_fixed_cost,
+                })
             })
             .collect();
-
-        let mut accessible_ids: Vec<i64> = accessible.iter().map(|c| c.id).collect();
-        accessible_ids.sort_unstable();
-
-        let mut expected = requested_ids.to_vec();
-        expected.sort_unstable();
-
-        if accessible_ids != expected {
-            return Ok(None);
-        }
-
-        Ok(Some(accessible))
-    }
-}
-
-fn crop_entity_to_init_crop(crop: &CropEntity) -> CultivationPlanInitCrop {
-    CultivationPlanInitCrop {
-        id: crop.id,
-        name: crop.name.clone(),
-        variety: crop.variety.clone(),
-        area_per_unit: crop.area_per_unit.unwrap_or(0.0),
-        revenue_per_area: crop.revenue_per_area.unwrap_or(0.0),
+        seeds.sort_by(|a, b| a.name.cmp(&b.name));
+        Ok(seeds)
     }
 }
 

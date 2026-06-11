@@ -59,7 +59,6 @@ export const HOST_SELECTOR_BY_PATTERN: Record<string, string> = {
 
   plans: 'app-plan-list',
   'plans/new': 'app-plan-new',
-  'plans/select-crop': 'app-plan-select-crop',
   'plans/:id': 'app-plan-detail',
   'plans/:id/optimizing': 'app-plan-optimizing',
   'plans/:id/task_schedule': 'app-plan-task-schedule',

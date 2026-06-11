@@ -1,13 +1,16 @@
 //! add_crop edge adapters (crop resolve, adjust result collector).
 
-use agrr_adapters_sqlite::{CropSqliteGateway, UserLookupSqliteGateway};
+use agrr_adapters_sqlite::{
+    CropSourceCropLookupSqliteGateway, CropSqliteGateway, UserLookupSqliteGateway,
+};
 use agrr_domain::crop::dtos::AddCropCropSnapshot;
 use agrr_domain::crop::entities::CropEntity;
+use agrr_domain::crop::interactors::add_crop_backfill_user_crop_stages_interactor::AddCropBackfillUserCropStagesInteractor;
+use agrr_domain::crop::interactors::crop_find_private_plan_add_crop_record_interactor::{
+    CropFindPrivatePlanAddCropRecordInteractor, CropFindPrivatePlanAddCropRecordOutputPort,
+};
 use agrr_domain::crop::interactors::crop_find_public_plan_add_crop_record_interactor::{
     CropFindPublicPlanAddCropRecordInteractor, CropFindPublicPlanAddCropRecordOutputPort,
-};
-use agrr_domain::crop::interactors::crop_find_user_non_reference_record_interactor::{
-    CropFindUserNonReferenceRecordInteractor, CropFindUserNonReferenceRecordOutputPort,
 };
 use agrr_domain::cultivation_plan::dtos::{
     AddCropAdjustResult, PlanAllocationAdjustFailure, PlanAllocationAdjustOutput,
@@ -18,26 +21,29 @@ use agrr_domain::cultivation_plan::ports::{
 use agrr_domain::shared::dtos::Error;
 use std::sync::Mutex;
 
-use crate::adapters::NoopLogger;
+use crate::adapters::{NoopLogger, StderrLogger};
 
 pub struct AddCropCropResolvePrivate<'a> {
     crop_gateway: &'a CropSqliteGateway,
+    source_crop_lookup: CropSourceCropLookupSqliteGateway,
     user_id: i64,
     user_lookup: &'a UserLookupSqliteGateway,
-    logger: &'a NoopLogger,
+    logger: StderrLogger,
 }
 
 impl<'a> AddCropCropResolvePrivate<'a> {
     pub fn new(
         crop_gateway: &'a CropSqliteGateway,
+        pool: agrr_adapters_sqlite::SqlitePool,
         user_id: i64,
         user_lookup: &'a UserLookupSqliteGateway,
     ) -> Self {
         Self {
             crop_gateway,
+            source_crop_lookup: CropSourceCropLookupSqliteGateway::new(pool),
             user_id,
             user_lookup,
-            logger: &NoopLogger,
+            logger: StderrLogger,
         }
     }
 }
@@ -49,16 +55,6 @@ struct CropResolveCollector {
 impl CropFindPublicPlanAddCropRecordOutputPort for CropResolveCollector {
     fn on_success(&mut self, crop: CropEntity) {
         self.crop = Some(crop);
-    }
-
-    fn on_failure(&mut self, _error: Error) {
-        self.crop = None;
-    }
-}
-
-impl CropFindUserNonReferenceRecordOutputPort for CropResolveCollector {
-    fn on_success(&mut self, entity: CropEntity) {
-        self.crop = Some(entity);
     }
 
     fn on_failure(&mut self, _error: Error) {
@@ -104,19 +100,36 @@ impl AddCropCropResolveInputPort for AddCropCropResolvePublic<'_> {
     }
 }
 
+impl CropFindPrivatePlanAddCropRecordOutputPort for CropResolveCollector {
+    fn on_success(&mut self, crop: CropEntity) {
+        self.crop = Some(crop);
+    }
+
+    fn on_failure(&mut self, _error: Error) {
+        self.crop = None;
+    }
+}
+
 impl AddCropCropResolveInputPort for AddCropCropResolvePrivate<'_> {
     fn call(&self, crop_id: &str) -> Option<AddCropCropSnapshot> {
         let crop_id: i64 = crop_id.parse().ok()?;
         let mut collector = CropResolveCollector { crop: None };
-        let mut interactor = CropFindUserNonReferenceRecordInteractor::new(
+        let mut interactor = CropFindPrivatePlanAddCropRecordInteractor::new(
             &mut collector,
             self.user_id,
             self.crop_gateway,
-            self.logger,
             self.user_lookup,
+            &self.logger,
         );
         interactor.call(crop_id).ok()?;
-        collector.crop.as_ref().map(to_snapshot)
+        let crop = collector.crop.as_ref()?;
+        let backfill = AddCropBackfillUserCropStagesInteractor::new(
+            self.crop_gateway,
+            &self.source_crop_lookup,
+            &self.logger,
+        );
+        backfill.call(crop).ok()?;
+        Some(to_snapshot(crop))
     }
 }
 

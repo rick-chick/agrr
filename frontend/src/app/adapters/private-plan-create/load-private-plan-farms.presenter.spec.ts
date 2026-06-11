@@ -42,8 +42,8 @@ describe('LoadPrivatePlanFarmsPresenter', () => {
     it('updates view.control on present(dto)', () => {
       const dto: PrivatePlanFarmsDataDto = {
         farms: [
-          { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'pending' },
-          { id: 2, name: 'Farm B', region: 'Region B', latitude: 36.0, longitude: 136.0, weather_data_status: 'completed' }
+          { id: 1, name: 'Farm A', fieldCount: 2, totalArea: 100, hasValidFields: true },
+          { id: 2, name: 'Farm B', fieldCount: 0, totalArea: 0, hasValidFields: false }
         ]
       };
 

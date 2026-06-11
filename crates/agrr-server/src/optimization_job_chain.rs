@@ -170,6 +170,107 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     true
 }
 
+/// Schedule bootstrap → weather fetch → prediction only (no optimization / finalize).
+///
+/// Used when creating an empty private plan so add_crop can run after weather prep
+/// without failing optimization on zero field cultivations.
+pub fn enqueue_private_plan_weather_prep_chain(
+    plan_id: i64,
+    channel: &str,
+    state: &AppState,
+) -> bool {
+    let channel = channel.to_string();
+    let dispatcher = state.optimization_chain_dispatcher.clone();
+    let state_clone = state.clone();
+    let pool = state.sqlite.clone();
+
+    if !plan_exists_in_db(&pool, plan_id) {
+        error!(plan_id, "weather prep chain: plan not found");
+        return false;
+    }
+
+    let bootstrap_slot = new_bootstrap_slot();
+    let mut steps: Vec<JobStep> = vec![];
+
+    {
+        let state = state_clone.clone();
+        let channel = channel.clone();
+        let slot = bootstrap_slot.clone();
+        steps.push(JobStep {
+            name: "bootstrap",
+            run: Arc::new(move || {
+                let state = state.clone();
+                let channel = channel.clone();
+                let slot = slot.clone();
+                Box::pin(async move { run_bootstrap_step(&state, plan_id, &channel, &slot).await })
+            }),
+        });
+    }
+
+    {
+        let state = state_clone.clone();
+        let channel = channel.clone();
+        let slot = bootstrap_slot.clone();
+        steps.push(JobStep {
+            name: "fetch_weather_data",
+            run: Arc::new(move || {
+                let state = state.clone();
+                let channel = channel.clone();
+                let slot = slot.clone();
+                Box::pin(async move {
+                    let Some(BootstrapData {
+                        ctx,
+                        start_date,
+                        end_date,
+                    }) = bootstrap_data(&slot)
+                    else {
+                        return false;
+                    };
+                    run_guarded_optimization_step(
+                        &state,
+                        plan_id,
+                        &channel,
+                        "fetch_weather_data",
+                        Some("fetching_weather"),
+                        || run_fetch_weather_step(&state, plan_id, &channel, &ctx, start_date, end_date),
+                    )
+                })
+            }),
+        });
+    }
+
+    {
+        let state = state_clone.clone();
+        let channel = channel.clone();
+        let slot = bootstrap_slot.clone();
+        steps.push(JobStep {
+            name: "weather_prediction",
+            run: Arc::new(move || {
+                let state = state.clone();
+                let channel = channel.clone();
+                let slot = slot.clone();
+                Box::pin(async move {
+                    let Some(BootstrapData { end_date, .. }) = bootstrap_data(&slot) else {
+                        return false;
+                    };
+                    run_guarded_optimization_step(
+                        &state,
+                        plan_id,
+                        &channel,
+                        "weather_prediction",
+                        Some("predicting_weather"),
+                        || run_weather_prediction_step(&state, plan_id, &channel, end_date),
+                    )
+                })
+            }),
+        });
+    }
+
+    info!(plan_id, steps = steps.len(), "weather prep chain enqueued");
+    dispatcher.enqueue_chain(steps);
+    true
+}
+
 fn bootstrap_data(slot: &crate::optimization_chain_run::BootstrapSlot) -> Option<BootstrapData> {
     slot.get()?.as_ref().ok().cloned()
 }

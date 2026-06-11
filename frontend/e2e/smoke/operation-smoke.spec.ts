@@ -102,7 +102,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(page.locator('.contact-form__message--success')).toBeVisible({ timeout: 30_000 });
   });
 
-  test('private plan wizard: new form and select-crop step', async ({ page }) => {
+  test('private plan create form shows farm select and create button', async ({ page }) => {
     const newRoute = findRoute('plans/new');
     await page.goto(resolveGotoUrl(newRoute, resolvedCaptureIds));
     await waitForPageStable(page, newRoute);
@@ -110,23 +110,8 @@ smokeDescribe('operation smoke (key user flows)', () => {
 
     const farmSelect = page.locator('app-plan-new #farm-select');
     await expect(farmSelect).toBeVisible();
-    const options = farmSelect.locator('option[value]:not([value=""])');
-    if ((await options.count()) === 0) {
-      test.skip(true, 'no farms for private plan wizard');
-    }
-    const farmId = resolvedCaptureIds?.farmId ?? (await options.first().getAttribute('value'));
-    if (!farmId) {
-      test.skip(true, 'no farm id for select-crop step');
-    }
-    await farmSelect.selectOption(String(farmId));
-    await expect(farmSelect).toHaveValue(String(farmId));
-
-    const cropRoute = findRoute('plans/select-crop');
-    await page.goto(`/plans/select-crop?farmId=${farmId}`);
-    await waitForPageStable(page, cropRoute);
-    await assertHostHealthy(page, 'app-plan-select-crop');
-    await expect(page.locator('app-plan-select-crop #plan-name')).toBeVisible();
-    await expect(page.locator('app-plan-select-crop .crop-checkboxes input')).not.toHaveCount(0);
+    await expect(page.locator('app-plan-new #plan-name')).toBeVisible();
+    await expect(page.locator('app-plan-new button[type="submit"]')).toBeVisible();
   });
 
   test('plan detail gantt toolbar toggles crop palette without API mutation', async ({ page }) => {

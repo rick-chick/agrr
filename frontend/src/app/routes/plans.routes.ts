@@ -15,12 +15,6 @@ export const plansRoutes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'plans/select-crop',
-    loadComponent: () =>
-      import('../components/plans/plan-select-crop.component').then((m) => m.PlanSelectCropComponent),
-    canActivate: [authGuard]
-  },
-  {
     path: 'plans/:id',
     loadComponent: () =>
       import('../components/plans/plan-detail.component').then((m) => m.PlanDetailComponent),

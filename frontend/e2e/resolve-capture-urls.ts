@@ -120,12 +120,6 @@ export function applyResolvedUrl(pattern: string, url: string, ids: ResolvedCapt
     return url;
   }
 
-  if (pattern === 'plans/select-crop') {
-    if (ids.farmId == null) return url;
-    const pathOnly = url.split('?')[0] ?? url;
-    return `${pathOnly}?farmId=${ids.farmId}`;
-  }
-
   if (pattern.startsWith('plans/')) {
     const p = ids.privatePlanId;
     if (p == null) return url;

@@ -280,6 +280,42 @@
         }
     }
 
+    struct RecordingPredictionGateway {
+        requested_days: Arc<Mutex<Option<i64>>>,
+    }
+
+    impl RecordingPredictionGateway {
+        fn new() -> Self {
+            Self {
+                requested_days: Arc::new(Mutex::new(None)),
+            }
+        }
+    }
+
+    impl PredictionGateway for RecordingPredictionGateway {
+        fn predict(
+            &self,
+            _: &Value,
+            days: i64,
+            _: &str,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            *self.requested_days.lock().expect("lock") = Some(days);
+            let start = Date::from_calendar_date(2026, Month::June, 8).expect("valid");
+            let mut rows = Vec::new();
+            for i in 0..days {
+                let d = start + time::Duration::days(i);
+                rows.push(json!({
+                    "time": d.to_string(),
+                    "temperature_2m_max": 20.0,
+                    "temperature_2m_min": 10.0,
+                    "temperature_2m_mean": 15.0,
+                    "precipitation_sum": 0.0
+                }));
+            }
+            Ok(json!({ "data": rows }))
+        }
+    }
+
     struct SpyPredictionGateway {
         calls: Arc<Mutex<u32>>,
     }
@@ -580,6 +616,82 @@
 
         let plan_payload = predicted.plan_payload(50).expect("updated");
         assert_eq!(plan_payload, location_payload);
+    }
+
+    #[test]
+    fn get_prediction_data_uses_formatted_training_last_date_when_trailing_rows_lack_temperatures() {
+        let clock = fixed_clock();
+        let training_result = TrainingDataResult {
+            data: vec![
+                WeatherData::new(
+                    Date::from_calendar_date(2026, Month::June, 7).expect("valid"),
+                    Some(20.0),
+                    Some(10.0),
+                    Some(15.0),
+                    Some(0.0),
+                    Some(5.0),
+                    Some(2.0),
+                    Some(0),
+                ),
+                WeatherData::new(
+                    Date::from_calendar_date(2026, Month::June, 8).expect("valid"),
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+            ],
+            end_date: Date::from_calendar_date(2026, Month::June, 8).expect("valid"),
+        };
+        let current_year = vec![WeatherData::new(
+            Date::from_calendar_date(2026, Month::June, 8).expect("valid"),
+            Some(20.0),
+            Some(10.0),
+            Some(15.0),
+            Some(0.0),
+            Some(5.0),
+            Some(2.0),
+            Some(0),
+        )];
+        let recording = RecordingPredictionGateway::new();
+        let requested_days = recording.requested_days.clone();
+        let predicted = FakePredictedWeatherStore::new();
+        let weather_gateway = FakeWeatherDataGateway {
+            period_data: current_year,
+        };
+        let target = Date::from_calendar_date(2027, Month::December, 31).expect("valid");
+        let interactor = WeatherPredictionInteractor::with_test_overrides(
+            weather_location_dto(),
+            &predicted.metadata_gateway,
+            &predicted.store_gateway,
+            &weather_gateway,
+            &recording,
+            &NoopLogger,
+            &clock,
+            &FakeAnchors,
+            WeatherPredictionTestOverrides {
+                training_result: Some(training_result),
+                ..Default::default()
+            },
+        );
+
+        interactor
+            .predict_for_cultivation_plan(
+                &CultivationPlanWeather::new(50, Some(target), None, None),
+                None,
+            )
+            .expect("ok");
+
+        let formatted_last = Date::from_calendar_date(2026, Month::June, 7).expect("valid");
+        let expected_days = (target - formatted_last).whole_days();
+        assert_eq!(
+            *requested_days.lock().expect("lock"),
+            Some(expected_days),
+            "agrr --days must span from the day after the last formatted training row"
+        );
     }
 
     #[test]

@@ -354,7 +354,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
 
     fn get_prediction_data(
         &self,
-        _training_formatted: &Value,
+        training_formatted: &Value,
         target_end_date: Date,
         training_end_date: Date,
     ) -> Result<Value, WeatherPredictionError> {
@@ -366,8 +366,13 @@ impl<'a> WeatherPredictionInteractor<'a> {
             return Ok(cached);
         }
 
-        let prediction_start_date = training_end_date + time::Duration::days(1);
-        let prediction_days = (target_end_date - training_end_date).whole_days();
+        let formatted_last = latest_payload_date(
+            training_formatted.get("data").and_then(|v| v.as_array()),
+        )
+        .unwrap_or(training_end_date);
+        let prediction_start_date = formatted_last + time::Duration::days(1);
+        // agrr predicts from the day after the last formatted training row; count through target inclusive.
+        let prediction_days = (target_end_date - formatted_last).whole_days();
 
         self.logger.info(&format!(
             "🔮 [WeatherPrediction] Predicting weather from {prediction_start_date} until {target_end_date} ({prediction_days} days)"
@@ -375,7 +380,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
 
         let future = self
             .prediction_gateway
-            .predict(_training_formatted, prediction_days, "lightgbm")
+            .predict(training_formatted, prediction_days, "lightgbm")
             .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
 
         let future_data = future.get("data").and_then(|v| v.as_array()).cloned().unwrap_or_default();

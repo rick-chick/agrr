@@ -124,6 +124,26 @@ describe('PlanListComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
 
+  it('shows create plan link in header', async () => {
+    const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
+    try {
+      component.control = { loading: false, error: null, plans: [] };
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const link = fixture.nativeElement.querySelector('.page-header--with-action .btn-primary');
+      expect(link).toBeTruthy();
+      expect(link.getAttribute('href')).toContain('/plans/new');
+    } finally {
+      loadSpy.mockRestore();
+    }
+  });
+
+  it('shows empty state with create CTA when no plans', async () => {
+    const nativeElement = await renderPlans([]);
+    expect(nativeElement.querySelector('.plan-list-empty')).toBeTruthy();
+    expect(nativeElement.querySelector('.plan-list-empty .btn-primary')).toBeTruthy();
+  });
+
   it('displays plans in the list', async () => {
     const plans: PlanSummary[] = [
       { id: 1, name: 'Plan A', status: 'pending' },

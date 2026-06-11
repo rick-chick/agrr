@@ -1,25 +1,26 @@
 //! Private plans API (`/api/v1/plans`) — P6 Wave B.
 
 use crate::adapters::{NoopLogger, PassthroughTranslator, SystemClock};
-use crate::optimization_job_chain::enqueue_private_plan_optimization_chain;
+use crate::optimization_job_chain::enqueue_private_plan_weather_prep_chain;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
     CropSqliteGateway, CultivationPlanFieldMutationSqliteGateway,
-    CultivationPlanPlanCropSqliteGateway, CultivationPlanPrivateReadSqliteGateway,
-    CultivationPlanPrivateSnapshotReadSqliteGateway, CultivationPlanSqliteGateway,
-    FarmSqliteGateway, FieldSqliteGateway, UserLookupSqliteGateway,
+    CultivationPlanPrivateReadSqliteGateway, CultivationPlanPrivateSnapshotReadSqliteGateway,
+    CultivationPlanSqliteGateway, FarmSqliteGateway, FieldSqliteGateway, UserLookupSqliteGateway,
 };
 use agrr_domain::shared::gateways::UserLookupGateway;
 use agrr_domain::cultivation_plan::dtos::{
-    CultivationPlanInitCrop, CultivationPlanInitFarm, CultivationPlanInitializeResult,
+    CultivationPlanCreateAttrs, CultivationPlanInitFarm, CultivationPlanInitializeResult,
     PrivateCultivationPlanDetail, PrivatePlanIndexPlanRow, PrivatePlanInitializeFromSelectionFailure,
     PrivatePlanInitializeFromSelectionInput, PrivatePlanInitializeFromSelectionOutput,
+    PrivatePlanMasterFieldSeed,
 };
+use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
+use agrr_domain::cultivation_plan::gateways::CultivationPlanFieldMutationGateway;
 use agrr_domain::cultivation_plan::interactors::{
-    CultivationPlanDestroyInteractor, CultivationPlanInitializeInteractor,
-    PrivateOwnedPlanDetailInteractor, PrivateOwnedPlansListInteractor,
-    PrivatePlanInitializeFromSelectionInteractor,
+    CultivationPlanDestroyInteractor, PrivateOwnedPlanDetailInteractor,
+    PrivateOwnedPlansListInteractor, PrivatePlanInitializeFromSelectionInteractor,
 };
 use agrr_domain::cultivation_plan::ports::{
     CultivationPlanDestroyOutputPort, PrivateOwnedPlanDetailOutputPort,
@@ -219,8 +220,6 @@ struct CreatePlanBody {
 #[derive(Deserialize)]
 struct CreatePlanParams {
     farm_id: i64,
-    #[serde(default)]
-    crop_ids: Vec<i64>,
     plan_name: Option<String>,
 }
 
@@ -255,47 +254,49 @@ impl PrivatePlanInitializeFromSelectionOutputPort for CreatePresenter {
 
 struct PrivatePlanInitializer<'a> {
     plan_gateway: &'a CultivationPlanSqliteGateway,
-    plan_crop_gateway: &'a CultivationPlanPlanCropSqliteGateway,
     field_gateway: &'a CultivationPlanFieldMutationSqliteGateway,
-    clock: &'a SystemClock,
-    logger: &'a NoopLogger,
 }
 
 impl PrivatePlanInitializeCallablePort for PrivatePlanInitializer<'_> {
     fn call(
         &self,
         farm: &CultivationPlanInitFarm,
-        total_area: f64,
-        crops: &[CultivationPlanInitCrop],
+        master_fields: &[PrivatePlanMasterFieldSeed],
         user_id: i64,
         session_id: &str,
         plan_name: &str,
         planning_start_date: Date,
         planning_end_date: Date,
     ) -> Result<CultivationPlanInitializeResult, Box<dyn std::error::Error + Send + Sync>> {
-        let interactor = CultivationPlanInitializeInteractor::new(
-            CultivationPlanInitFarm {
-                id: farm.id,
-                name: farm.name.clone(),
-            },
+        let total_area: f64 = master_fields.iter().map(|field| field.area).sum();
+        let create_attrs = CultivationPlanCreateAttrs {
+            farm_id: farm.id,
+            user_id: Some(user_id),
             total_area,
-            crops.to_vec(),
-            self.plan_gateway,
-            self.plan_crop_gateway,
-            self.field_gateway,
-            self.clock,
-            self.logger,
-        )
-        .with_private_planning(
-            user_id,
-            Some(session_id.to_string()),
-            "private",
-            None,
-            Some(plan_name.to_string()),
-            Some(planning_start_date),
-            Some(planning_end_date),
-        );
-        interactor.call()
+            plan_type: "private".to_string(),
+            session_id: Some(session_id.to_string()),
+            plan_year: None,
+            plan_name: Some(plan_name.to_string()),
+            planning_start_date: Some(planning_start_date),
+            planning_end_date: Some(planning_end_date),
+            status: None,
+        };
+
+        let fields = master_fields.to_vec();
+        let plan = self.plan_gateway.within_transaction(|| {
+            let plan_entity = self.plan_gateway.create(&create_attrs)?;
+            for field in &fields {
+                self.field_gateway.create_field(
+                    plan_entity.id,
+                    &field.name,
+                    field.area,
+                    field.daily_fixed_cost,
+                )?;
+            }
+            self.plan_gateway.find_by_id(plan_entity.id)
+        })?;
+
+        Ok(CultivationPlanInitializeResult::success(plan))
     }
 }
 
@@ -322,7 +323,7 @@ impl PrivatePlanOptimizationJobChainGateway for JobChainAdapter<'_> {
         &self,
         cultivation_plan_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        enqueue_private_plan_optimization_chain(
+        enqueue_private_plan_weather_prep_chain(
             cultivation_plan_id,
             "PlansOptimizationChannel",
             self.state,
@@ -341,9 +342,7 @@ async fn create_plan(
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let farm_gateway = FarmSqliteGateway::new(pool.clone());
-    let crop_gateway = CropSqliteGateway::new(pool.clone());
     let field_read_gateway = FieldSqliteGateway::new(pool.clone());
-    let plan_crop_gateway = CultivationPlanPlanCropSqliteGateway::new(pool.clone());
     let field_mutation = CultivationPlanFieldMutationSqliteGateway::new(pool);
     let user_lookup = UserLookupSqliteGateway::new(state.sqlite.clone());
     let user = user_lookup.find(user_id);
@@ -353,10 +352,7 @@ async fn create_plan(
     let mut presenter = CreatePresenter { body: None };
     let initializer = PrivatePlanInitializer {
         plan_gateway: &plan_gateway,
-        plan_crop_gateway: &plan_crop_gateway,
         field_gateway: &field_mutation,
-        clock: &clock,
-        logger: &logger,
     };
     let session_gen = SessionIdGen;
     let job_chain = JobChainAdapter { state: &state };
@@ -364,7 +360,6 @@ async fn create_plan(
         &mut presenter,
         &plan_gateway,
         &farm_gateway,
-        &crop_gateway,
         &field_read_gateway,
         &initializer,
         &logger,
@@ -375,7 +370,6 @@ async fn create_plan(
     );
     let input = PrivatePlanInitializeFromSelectionInput {
         farm_id: body.plan.farm_id,
-        crop_ids: body.plan.crop_ids,
         user,
         plan_name: body.plan.plan_name,
     };

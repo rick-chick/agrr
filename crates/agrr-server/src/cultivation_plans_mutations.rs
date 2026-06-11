@@ -300,8 +300,9 @@ async fn add_crop(
         .map_err(|status| (status, Json(json!({"success": false, "message": "unauthorized"}))))?;
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
-    let user_lookup = UserLookupSqliteGateway::new(pool);
-    let crop_resolve = AddCropCropResolvePrivate::new(&crop_gateway, user_id, &user_lookup);
+    let user_lookup = UserLookupSqliteGateway::new(pool.clone());
+    let crop_resolve =
+        AddCropCropResolvePrivate::new(&crop_gateway, pool, user_id, &user_lookup);
     let auth = CultivationPlanRestAuth::private(user_id);
     run_add_crop(&state, auth, plan_id, body, crop_resolve).await
 }

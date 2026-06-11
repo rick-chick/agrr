@@ -23,6 +23,7 @@ pub(crate) mod plan_copy_field_row;
 pub(crate) mod private_plan_initialize_from_selection_failure;
 pub(crate) mod private_plan_initialize_from_selection_input;
 pub(crate) mod private_plan_initialize_from_selection_output;
+pub(crate) mod private_plan_master_field_seed;
 pub(crate) mod public_plan_save_failure;
 pub(crate) mod public_plan_save_from_session_output;
 pub(crate) mod public_plan_save_skipped_items;
@@ -154,6 +155,7 @@ pub use plan_copy_field_row::PlanCopyFieldRow;
 pub use private_plan_initialize_from_selection_failure::PrivatePlanInitializeFromSelectionFailure;
 pub use private_plan_initialize_from_selection_input::PrivatePlanInitializeFromSelectionInput;
 pub use private_plan_initialize_from_selection_output::PrivatePlanInitializeFromSelectionOutput;
+pub use private_plan_master_field_seed::PrivatePlanMasterFieldSeed;
 pub use private_plan_rows::{
     PrivateCultivationPlanDetail, PrivatePlanIndexPlanRow, PrivatePlanReadSnapshot,
     PrivatePlanShowPaletteCrop,

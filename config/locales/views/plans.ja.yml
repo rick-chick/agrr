@@ -13,6 +13,7 @@ ja:
     errors:
       select_farm: "農場を選択してください。"
       select_crop: "作物を1つ以上選択してください。"
+      no_fields_in_farm: "圃場が登録されていない農場では計画を作成できません。農場に圃場を登録してください。"
       restart: "最初からやり直してください。"
       session_invalid: "セッションが無効です。再度ログインしてください。"
       create_failed: "計画作成に失敗しました: %{errors}"

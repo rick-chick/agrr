@@ -60,8 +60,7 @@
 | 47 | `plans/:id/optimizing` | `/plans/1/optimizing` | yes | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` |
 | 48 | `plans/:id/task_schedule` | `/plans/1/task_schedule` | yes | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` |
 | 49 | `plans/new` | `/plans/new` | yes | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` |
-| 50 | `plans/select-crop` | `/plans/select-crop` | yes | `plans_select-crop.ja.png` | `plans_select-crop.en.png` | `plans_select-crop.in.png` |
-| 51 | `weather` | `/weather` | yes | `weather.ja.png` | `weather.en.png` | `weather.in.png` |
+| 50 | `weather` | `/weather` | yes | `weather.ja.png` | `weather.en.png` | `weather.in.png` |
 
 ## キャプチャ前提
 

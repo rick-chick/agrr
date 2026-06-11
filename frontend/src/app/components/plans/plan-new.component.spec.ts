@@ -4,26 +4,32 @@ import { Router } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanNewComponent } from './plan-new.component';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
+import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/create-private-plan.usecase';
 import { PlanNewPresenter } from '../../usecase/plans/plan-new.providers';
+import { CreatePrivatePlanPresenter } from '../../adapters/private-plan-create/create-private-plan.presenter';
 
 describe('PlanNewComponent', () => {
   let component: PlanNewComponent;
   let fixture: ComponentFixture<PlanNewComponent>;
-  let mockUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
-  let mockRouter: { navigate: ReturnType<typeof vi.fn> };
+  let mockLoadUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockCreateUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockFarmsPresenter: { setView: ReturnType<typeof vi.fn> };
+  let mockCreatePresenter: { setView: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    mockUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
-    mockRouter = { navigate: vi.fn() };
+    mockLoadUseCase = { execute: vi.fn() };
+    mockCreateUseCase = { execute: vi.fn() };
+    mockFarmsPresenter = { setView: vi.fn() };
+    mockCreatePresenter = { setView: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [PlanNewComponent, TranslateModule.forRoot()],
       providers: [
-        { provide: LoadPrivatePlanFarmsUseCase, useValue: mockUseCase },
-        { provide: PlanNewPresenter, useValue: mockPresenter },
-        { provide: Router, useValue: mockRouter }
+        { provide: LoadPrivatePlanFarmsUseCase, useValue: mockLoadUseCase },
+        { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
+        { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
+        { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
+        { provide: Router, useValue: { navigate: vi.fn() } }
       ]
     })
       .overrideComponent(PlanNewComponent, { set: { providers: [] } })
@@ -37,30 +43,45 @@ describe('PlanNewComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should initialize presenter and load farms on init', () => {
+  it('should initialize presenters and load farms on init', () => {
     component.ngOnInit();
 
-    expect(mockPresenter.setView).toHaveBeenCalledWith(component);
-    expect(mockUseCase.execute).toHaveBeenCalled();
+    expect(mockFarmsPresenter.setView).toHaveBeenCalledWith(component);
+    expect(mockCreatePresenter.setView).toHaveBeenCalledWith(component);
+    expect(mockLoadUseCase.execute).toHaveBeenCalled();
   });
 
-  it('should navigate to select-crop on farm selection', () => {
-    fixture.detectChanges();
-    const mockForm = document.createElement('form');
-    const mockSelect = document.createElement('select');
-    mockSelect.setAttribute('name', 'farmId');
-    const option = document.createElement('option');
-    option.value = '1';
-    option.selected = true;
-    mockSelect.appendChild(option);
-    mockForm.appendChild(mockSelect);
-    const mockEvent = {
-      preventDefault: vi.fn(),
-      target: mockForm
-    } as unknown as Event;
+  it('should call createUseCase on submit when farm has valid fields', () => {
+    component.control = {
+      loading: false,
+      submitting: false,
+      error: null,
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1,
+      noFieldsWarning: false
+    };
+    component.planName = 'My Plan';
 
-    component.onFarmSelect(mockEvent);
+    component.onSubmit(new Event('submit'));
 
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans/select-crop'], { queryParams: { farmId: '1' } });
+    expect(mockCreateUseCase.execute).toHaveBeenCalledWith({
+      farmId: 1,
+      planName: 'My Plan'
+    });
+  });
+
+  it('should not submit when selected farm has no valid fields', () => {
+    component.control = {
+      loading: false,
+      submitting: false,
+      error: null,
+      farms: [{ id: 1, name: 'Farm', fieldCount: 0, totalArea: 0, hasValidFields: false }],
+      selectedFarmId: 1,
+      noFieldsWarning: true
+    };
+
+    component.onSubmit(new Event('submit'));
+
+    expect(mockCreateUseCase.execute).not.toHaveBeenCalled();
   });
 });

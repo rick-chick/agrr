@@ -3,6 +3,8 @@
     use crate::cultivation_plan::dtos::CultivationPlanInitializeResult;
     use crate::cultivation_plan::entities::CultivationPlanEntity;
     use crate::farm::entities::FarmEntity;
+    use crate::field::entities::FieldEntity;
+    use crate::field::results::{FarmFieldsList, FarmRecord};
     use crate::shared::ports::translator_port::TranslateOptions;
     use crate::shared::user::User;
     use std::sync::{Arc, Mutex};
@@ -78,30 +80,36 @@
         }
     }
 
-    struct StubCropGateway {
-        crops: Vec<CropEntity>,
-    }
-    impl PrivatePlanCropListGateway for StubCropGateway {
-        fn list_by_ids(
-            &self,
-            _: &[i64],
-        ) -> Result<Vec<CropEntity>, Box<dyn std::error::Error + Send + Sync>> {
-            Ok(self.crops.clone())
-        }
-    }
-
     struct StubFieldGateway {
-        total_area: f64,
+        fields: Vec<FieldEntity>,
     }
     impl FieldGateway for StubFieldGateway {
         fn get_total_area_by_farm_id(&self, _: i64) -> Result<f64, Box<dyn std::error::Error + Send + Sync>> {
-            Ok(self.total_area)
+            Ok(self
+                .fields
+                .iter()
+                .filter_map(|f| f.area)
+                .filter(|a| *a > 0.0)
+                .sum())
         }
         fn farm_fields_list(
             &self,
-            _: i64,
-        ) -> Result<crate::field::results::FarmFieldsList, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
+            farm_id: i64,
+        ) -> Result<FarmFieldsList, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(FarmFieldsList::new(
+                FarmRecord {
+                    id: farm_id,
+                    name: "F".into(),
+                    user_id: Some(1),
+                    is_reference: false,
+                    latitude: Some(35.0),
+                    longitude: Some(139.0),
+                    region: Some("jp".into()),
+                    created_at: None,
+                    updated_at: None,
+                },
+                self.fields.clone(),
+            ))
         }
         fn field_with_farm(
             &self,
@@ -116,14 +124,14 @@
             _: &crate::shared::reference_record_access_filter::ReferenceRecordAccessFilter<
                 crate::shared::policies::farm_policy::FarmRecordAccessPolicy,
             >,
-        ) -> Result<crate::field::entities::FieldEntity, Box<dyn std::error::Error + Send + Sync>> {
+        ) -> Result<FieldEntity, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
         fn update(
             &self,
             _: i64,
             _: &crate::field::dtos::FieldUpdateInput,
-        ) -> Result<crate::field::entities::FieldEntity, Box<dyn std::error::Error + Send + Sync>> {
+        ) -> Result<FieldEntity, Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
         fn delete(&self, _: i64) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
@@ -131,21 +139,22 @@
         }
     }
 
-    struct StubInitializer {
+    struct SpyInitializer {
         result: CultivationPlanInitializeResult,
+        received_fields: Arc<Mutex<Vec<PrivatePlanMasterFieldSeed>>>,
     }
-    impl PrivatePlanInitializeCallablePort for StubInitializer {
+    impl PrivatePlanInitializeCallablePort for SpyInitializer {
         fn call(
             &self,
             _: &CultivationPlanInitFarm,
-            _: f64,
-            _: &[CultivationPlanInitCrop],
+            master_fields: &[PrivatePlanMasterFieldSeed],
             _: i64,
             _: &str,
             _: &str,
             _: Date,
             _: Date,
         ) -> Result<CultivationPlanInitializeResult, Box<dyn std::error::Error + Send + Sync>> {
+            *self.received_fields.lock().unwrap() = master_fields.to_vec();
             Ok(self.result.clone())
         }
     }
@@ -198,19 +207,18 @@
         }
     }
 
-    fn owned_crop(user_id: i64) -> CropEntity {
-        CropEntity {
-            id: 10,
-            user_id: Some(user_id),
-            name: "C".into(),
-            variety: Some("V".into()),
-            is_reference: false,
-            area_per_unit: Some(1.0),
-            revenue_per_area: Some(1.0),
-            region: Some("jp".into()),
-            groups: vec![],
+    fn master_field(name: &str, area: f64) -> FieldEntity {
+        FieldEntity {
+            id: 1,
+            farm_id: 1,
+            user_id: Some(1),
+            name: name.into(),
+            description: None,
             created_at: None,
             updated_at: None,
+            area: Some(area),
+            daily_fixed_cost: Some(10.0),
+            region: Some("jp".into()),
         }
     }
 
@@ -230,7 +238,7 @@
             display_name: Some("P".into()),
             optimization_phase: None,
             optimization_phase_message: None,
-            cultivation_plan_crops_count: 1,
+            cultivation_plan_crops_count: 0,
             cultivation_plan_fields_count: 1,
             created_at: None,
             updated_at: None,
@@ -238,7 +246,7 @@
     }
 
     #[test]
-    fn on_failure_unprocessable_when_crop_ids_empty() {
+    fn on_failure_unprocessable_when_farm_has_no_valid_fields() {
         let success = Arc::new(Mutex::new(Vec::new()));
         let failures = Arc::new(Mutex::new(Vec::new()));
         let mut output = SpyOutput {
@@ -254,12 +262,10 @@
         let farm_gateway = StubFarmGateway {
             farm: Ok(owned_farm(1)),
         };
-        let crop_gateway = StubCropGateway {
-            crops: vec![owned_crop(1)],
-        };
-        let field_gateway = StubFieldGateway { total_area: 10.0 };
-        let initializer = StubInitializer {
+        let field_gateway = StubFieldGateway { fields: vec![] };
+        let initializer = SpyInitializer {
             result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
+            received_fields: Arc::new(Mutex::new(Vec::new())),
         };
         let logger = FakeLogger;
         let translator = FakeTranslator;
@@ -268,7 +274,6 @@
             &mut output,
             &existing_gateway,
             &farm_gateway,
-            &crop_gateway,
             &field_gateway,
             &initializer,
             &logger,
@@ -280,7 +285,6 @@
 
         let input = PrivatePlanInitializeFromSelectionInput {
             farm_id: 1,
-            crop_ids: vec![],
             user: user(1),
             plan_name: None,
         };
@@ -292,12 +296,12 @@
             f[0].http_status,
             PrivatePlanInitializeFromSelectionFailure::HTTP_UNPROCESSABLE_ENTITY
         );
-        assert_eq!(f[0].message, "plans.errors.select_crop");
+        assert_eq!(f[0].message, "plans.errors.no_fields_in_farm");
         assert!(success.lock().unwrap().is_empty());
     }
 
     #[test]
-    fn on_success_enqueues_jobs_and_returns_id() {
+    fn on_success_copies_master_fields_and_enqueues_jobs() {
         let success = Arc::new(Mutex::new(Vec::new()));
         let failures = Arc::new(Mutex::new(Vec::new()));
         let mut output = SpyOutput {
@@ -305,30 +309,34 @@
             failures: Arc::clone(&failures),
         };
         let enqueued = Arc::new(Mutex::new(Vec::new()));
-        let session_gen = StubSessionGen;
         let job_chain = SpyJobChain {
             enqueued: Arc::clone(&enqueued),
             fail: false,
+        };
+        let field_gateway = StubFieldGateway {
+            fields: vec![
+                master_field("B", 100.0),
+                master_field("A", 50.0),
+                master_field("invalid", 0.0),
+            ],
+        };
+        let received_fields = Arc::new(Mutex::new(Vec::new()));
+        let initializer = SpyInitializer {
+            result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
+            received_fields: Arc::clone(&received_fields),
         };
         let existing_gateway = StubExistingGateway { existing: None };
         let farm_gateway = StubFarmGateway {
             farm: Ok(owned_farm(1)),
         };
-        let crop_gateway = StubCropGateway {
-            crops: vec![owned_crop(1)],
-        };
-        let field_gateway = StubFieldGateway { total_area: 100.0 };
-        let initializer = StubInitializer {
-            result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
-        };
         let logger = FakeLogger;
         let translator = FakeTranslator;
         let clock = FakeClock;
+        let session_gen = StubSessionGen;
         let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
             &mut output,
             &existing_gateway,
             &farm_gateway,
-            &crop_gateway,
             &field_gateway,
             &initializer,
             &logger,
@@ -340,7 +348,6 @@
 
         let input = PrivatePlanInitializeFromSelectionInput {
             farm_id: 1,
-            crop_ids: vec![10],
             user: user(1),
             plan_name: Some("P".into()),
         };
@@ -349,6 +356,13 @@
         assert_eq!(*success.lock().unwrap(), vec![42]);
         assert_eq!(*enqueued.lock().unwrap(), vec![42]);
         assert!(failures.lock().unwrap().is_empty());
+
+        let seeds = received_fields.lock().unwrap();
+        assert_eq!(seeds.len(), 2);
+        assert_eq!(seeds[0].name, "A");
+        assert_eq!(seeds[0].area, 50.0);
+        assert_eq!(seeds[1].name, "B");
+        assert_eq!(seeds[1].area, 100.0);
     }
 
     #[test]
@@ -359,30 +373,29 @@
             success: Arc::clone(&success),
             failures: Arc::clone(&failures),
         };
-        let session_gen = StubSessionGen;
         let job_chain = SpyJobChain {
             enqueued: Arc::new(Mutex::new(Vec::new())),
             fail: true,
+        };
+        let field_gateway = StubFieldGateway {
+            fields: vec![master_field("A", 10.0)],
+        };
+        let initializer = SpyInitializer {
+            result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
+            received_fields: Arc::new(Mutex::new(Vec::new())),
         };
         let existing_gateway = StubExistingGateway { existing: None };
         let farm_gateway = StubFarmGateway {
             farm: Ok(owned_farm(1)),
         };
-        let crop_gateway = StubCropGateway {
-            crops: vec![owned_crop(1)],
-        };
-        let field_gateway = StubFieldGateway { total_area: 10.0 };
-        let initializer = StubInitializer {
-            result: CultivationPlanInitializeResult::success(plan_entity(42, 1)),
-        };
         let logger = FakeLogger;
         let translator = FakeTranslator;
         let clock = FakeClock;
+        let session_gen = StubSessionGen;
         let mut interactor = PrivatePlanInitializeFromSelectionInteractor::new(
             &mut output,
             &existing_gateway,
             &farm_gateway,
-            &crop_gateway,
             &field_gateway,
             &initializer,
             &logger,
@@ -394,7 +407,6 @@
 
         let input = PrivatePlanInitializeFromSelectionInput {
             farm_id: 1,
-            crop_ids: vec![10],
             user: user(1),
             plan_name: None,
         };

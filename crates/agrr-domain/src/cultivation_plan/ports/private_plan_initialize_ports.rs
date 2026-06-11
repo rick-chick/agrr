@@ -2,9 +2,8 @@
 
 use time::Date;
 
-use crate::crop::entities::CropEntity;
 use crate::cultivation_plan::dtos::{
-    CultivationPlanInitCrop, CultivationPlanInitFarm, CultivationPlanInitializeResult,
+    CultivationPlanInitFarm, CultivationPlanInitializeResult, PrivatePlanMasterFieldSeed,
 };
 use crate::cultivation_plan::entities::CultivationPlanEntity;
 use crate::farm::entities::FarmEntity;
@@ -21,15 +20,14 @@ pub trait PrivatePlanCropListGateway: Send + Sync {
     fn list_by_ids(
         &self,
         crop_ids: &[i64],
-    ) -> Result<Vec<CropEntity>, Box<dyn std::error::Error + Send + Sync>>;
+    ) -> Result<Vec<crate::crop::entities::CropEntity>, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 pub trait PrivatePlanInitializeCallablePort: Send + Sync {
     fn call(
         &self,
         farm: &CultivationPlanInitFarm,
-        total_area: f64,
-        crops: &[CultivationPlanInitCrop],
+        master_fields: &[PrivatePlanMasterFieldSeed],
         user_id: i64,
         session_id: &str,
         plan_name: &str,

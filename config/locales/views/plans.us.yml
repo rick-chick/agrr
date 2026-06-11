@@ -12,6 +12,7 @@ us:
     errors:
       select_farm: "Please select a farm."
       select_crop: "Please select at least one crop."
+      no_fields_in_farm: "Cannot create a plan for a farm without registered fields. Please add fields to the farm first."
       restart: "Please start over."
       session_invalid: "Your session is invalid. Please sign in again."
       create_failed: "Failed to create plan: %{errors}"

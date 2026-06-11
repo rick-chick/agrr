@@ -15,9 +15,12 @@ export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
   present(dto: PrivatePlanFarmsDataDto): void {
     if (this.view) {
       this.view.control = {
+        ...this.view.control,
         loading: false,
         error: null,
-        farms: dto.farms
+        farms: dto.farms,
+        selectedFarmId: null,
+        noFieldsWarning: false
       };
     }
   }

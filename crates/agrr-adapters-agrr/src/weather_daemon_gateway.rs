@@ -8,7 +8,6 @@ use std::path::Path;
 
 use crate::daemon_client::{AgrrDaemonClient, AgrrDaemonError};
 use crate::daemon_response::{ensure_daemon_command_success, parse_daemon_json_payload};
-use crate::daemon_temp_file::read_json_file;
 
 pub struct WeatherDaemonGateway {
     client: AgrrDaemonClient,
@@ -74,13 +73,22 @@ fn resolve_weather_fetch_output(
     }
 
     if out_path.exists() {
-        let raw = read_json_file(out_path).map_err(|e| {
+        let content = std::fs::read_to_string(out_path).map_err(|e| {
             AgrrDaemonError::CommandFailed(format!(
                 "weather command did not produce JSON at {}: {e}",
                 out_path.display()
             ))
         })?;
         let _ = std::fs::remove_file(out_path);
+        if content.trim().is_empty() {
+            return Ok(None);
+        }
+        let raw = serde_json::from_str(&content).map_err(|e| {
+            AgrrDaemonError::CommandFailed(format!(
+                "weather command did not produce JSON at {}: {e}",
+                out_path.display()
+            ))
+        })?;
         if weather_payload_has_rows(&raw) {
             return Ok(Some(raw));
         }
@@ -134,6 +142,19 @@ mod tests {
         let result = resolve_weather_fetch_output(&wrapper, &missing).expect("resolve");
 
         assert_eq!(result, None);
+    }
+
+    #[test]
+    fn resolve_weather_fetch_output_returns_none_when_output_file_is_empty() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("weather_output_empty.json");
+        std::fs::write(&path, "").expect("write empty");
+
+        let wrapper = json!({ "exit_code": 0, "stdout": "", "stderr": "" });
+        let result = resolve_weather_fetch_output(&wrapper, &path).expect("resolve");
+
+        assert_eq!(result, None);
+        assert!(!path.exists(), "empty output file should be removed");
     }
 
     #[test]

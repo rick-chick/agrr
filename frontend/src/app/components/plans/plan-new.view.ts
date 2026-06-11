@@ -1,9 +1,12 @@
-import { Farm } from '../../domain/farms/farm';
+import { FarmPlanCreateOption } from '../../usecase/private-plan-create/private-plan-create-gateway';
 
 export interface PlanNewViewState {
   loading: boolean;
+  submitting: boolean;
   error: string | null;
-  farms: Farm[];
+  farms: FarmPlanCreateOption[];
+  selectedFarmId: number | null;
+  noFieldsWarning: boolean;
 }
 
 export interface PlanNewView {

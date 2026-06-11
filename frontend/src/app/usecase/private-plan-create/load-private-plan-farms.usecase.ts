@@ -11,7 +11,7 @@ export class LoadPrivatePlanFarmsUseCase implements LoadPrivatePlanFarmsInputPor
   ) {}
 
   execute(): void {
-    this.gateway.fetchFarms().subscribe({
+    this.gateway.fetchFarmsForPlanCreate().subscribe({
       next: (farms) => this.outputPort.present({ farms }),
       error: (err) => this.outputPort.onError({ message: err.message })
     });

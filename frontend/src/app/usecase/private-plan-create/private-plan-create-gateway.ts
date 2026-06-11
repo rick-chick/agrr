@@ -9,8 +9,17 @@ export interface FarmWithTotalAreaDto {
   totalArea: number;
 }
 
+export interface FarmPlanCreateOption {
+  id: number;
+  name: string;
+  fieldCount: number;
+  totalArea: number;
+  hasValidFields: boolean;
+}
+
 export interface PrivatePlanCreateGateway {
   fetchFarms(): Observable<Farm[]>;
+  fetchFarmsForPlanCreate(): Observable<FarmPlanCreateOption[]>;
   fetchFarm(farmId: number): Observable<FarmWithTotalAreaDto>;
   fetchCrops(): Observable<Crop[]>;
   createPlan(dto: CreatePrivatePlanInputDto): Observable<CreatePrivatePlanResponseDto>;

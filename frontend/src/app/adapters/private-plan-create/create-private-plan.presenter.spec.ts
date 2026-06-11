@@ -47,19 +47,19 @@ describe('CreatePrivatePlanPresenter', () => {
   });
 
   describe('CreatePrivatePlanOutputPort', () => {
-    it('shows success message and navigates to optimizing page on present(dto)', () => {
+    it('shows success message and navigates to workbench on present(dto)', () => {
       const dto: CreatePrivatePlanResponseDto = { id: 123 };
 
       presenter.present(dto);
 
       expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockTranslateService.instant).toHaveBeenCalledWith('adapters.privatePlanCreate.flash.success');
+      expect(mockTranslateService.instant).toHaveBeenCalledWith('plans.messages.plan_created');
       expect(mockFlashMessageService.show).toHaveBeenCalledWith({
         type: 'success',
         text: 'translated success'
       });
       expect(mockRouter.navigate).toHaveBeenCalledTimes(1);
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 123, 'optimizing']);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 123]);
       expect(lastControl).not.toBeNull();
       expect(lastControl.loading).toBe(false);
       expect(lastControl.error).toBeNull();

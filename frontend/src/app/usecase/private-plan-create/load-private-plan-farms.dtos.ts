@@ -1,5 +1,5 @@
-import { Farm } from '../../domain/farms/farm';
+import { FarmPlanCreateOption } from './private-plan-create-gateway';
 
 export interface PrivatePlanFarmsDataDto {
-  farms: Farm[];
+  farms: FarmPlanCreateOption[];
 }

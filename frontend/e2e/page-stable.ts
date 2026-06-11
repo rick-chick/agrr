@@ -17,8 +17,7 @@ function needsMasterLoadingSpinProbe(pattern: string): boolean {
     pattern === 'api-keys' ||
     pattern === 'entry-schedule' ||
     pattern === 'dashboard' ||
-    pattern === 'plans/new' ||
-    pattern === 'plans/select-crop'
+    pattern === 'plans/new'
   ) {
     return true;
   }

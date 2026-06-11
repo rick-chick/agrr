@@ -10,6 +10,8 @@ pub mod crop_find_user_non_reference_record_interactor;
 pub mod crop_load_user_non_reference_for_masters_interactor;
 pub mod crop_find_reference_for_entry_schedule_interactor;
 pub mod crop_find_public_plan_add_crop_record_interactor;
+pub mod crop_find_private_plan_add_crop_record_interactor;
+pub mod add_crop_backfill_user_crop_stages_interactor;
 pub mod crop_stage_create_interactor;
 pub mod crop_stage_update_interactor;
 pub mod crop_stage_delete_interactor;
