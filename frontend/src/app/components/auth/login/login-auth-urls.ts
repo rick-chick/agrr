@@ -7,6 +7,20 @@ export const POST_LOGIN_QUERY_PARAM = '_post_login';
 
 export type LocationLike = Pick<Location, 'href' | 'pathname' | 'origin'>;
 
+/** Angular Router の `state.url` から LocationLike を組み立てる（authGuard 等）。 */
+export function locationLikeFromRouterUrl(
+  targetUrl: string,
+  origin: string
+): LocationLike {
+  const normalized = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
+  const pathname = normalized.split('?')[0]?.split('#')[0] ?? normalized;
+  return {
+    href: `${origin}${normalized}`,
+    pathname,
+    origin
+  };
+}
+
 /** Keep in sync with `AUTH_REQUIRED_PREFIXES` in `crates/agrr-server/src/auth_return_to.rs`. */
 const AUTH_REQUIRED_PREFIXES = [
   '/plans',
@@ -99,6 +113,39 @@ export function oauthReturnToUrl(location: LocationLike | undefined): string {
     return hubWithPostLogin(location.origin, pathAndSearchFromLocation(location));
   }
   return location.href || `${location.origin}/`;
+}
+
+/** ログインリンク / authGuard リダイレクト用の `return_to` クエリ（ログインページ自身では付けない）。 */
+export function loginReturnQueryForLocation(location: LocationLike): { return_to?: string } {
+  let path = location.pathname;
+  if (path.length > 1 && path.endsWith('/')) {
+    path = path.slice(0, -1);
+  }
+  const onLogin = path === '/login' || path.endsWith('/login');
+  if (onLogin) {
+    return {};
+  }
+  return { return_to: oauthReturnToUrl(location) };
+}
+
+/** ログイン済み `/login?return_to=` 着地時のクライアント遷移先（同一オリジンのみ）。 */
+export function navigateTargetFromReturnTo(returnTo: string | null, origin: string): string | null {
+  if (!returnTo) {
+    return null;
+  }
+  try {
+    const parsed = new URL(returnTo);
+    if (parsed.origin !== origin) {
+      return null;
+    }
+    const postLogin = parsed.searchParams.get(POST_LOGIN_QUERY_PARAM);
+    if (postLogin) {
+      return postLogin.startsWith('/') ? postLogin : `/${postLogin}`;
+    }
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
 }
 
 /** `POST /auth/google_oauth2`（案 A・locale なし）。return_to はサーバー側で許可リスト検証。 */

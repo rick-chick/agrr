@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { oauthReturnToUrl } from '../../auth/login/login-auth-urls';
+import { loginReturnQueryForLocation } from '../../auth/login/login-auth-urls';
 import { type CurrentUser } from '../../../services/api.service';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
 
@@ -107,18 +107,11 @@ export class NavbarComponent {
     if (typeof window === 'undefined') {
       return {};
     }
-    const path = window.location.pathname;
-    const onLogin = path === '/login' || path.endsWith('/login');
-    if (onLogin) {
-      return {};
-    }
-    return {
-      return_to: oauthReturnToUrl({
-        href: window.location.href || `${window.location.origin}/`,
-        pathname: path,
-        origin: window.location.origin
-      })
-    };
+    return loginReturnQueryForLocation({
+      href: window.location.href || `${window.location.origin}/`,
+      pathname: window.location.pathname,
+      origin: window.location.origin
+    });
   }
 
   get reportUrl(): string {

@@ -9,6 +9,7 @@ import {
   buildGoogleOAuthStartUrl,
   buildMockLoginUrl,
   DEV_MOCK_LOGIN_USERS,
+  navigateTargetFromReturnTo,
   oauthLocationForLogin,
   type DevMockLoginUser
 } from './login-auth-urls';
@@ -73,7 +74,11 @@ export class LoginComponent implements OnInit {
       .pipe(take(1))
       .subscribe((user) => {
         if (user) {
-          void this.router.navigateByUrl('/', { replaceUrl: true });
+          const target = navigateTargetFromReturnTo(
+            this.route.snapshot.queryParamMap.get('return_to'),
+            window.location.origin
+          );
+          void this.router.navigateByUrl(target ?? '/', { replaceUrl: true });
         }
       });
   }
