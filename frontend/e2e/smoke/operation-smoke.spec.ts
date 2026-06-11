@@ -132,22 +132,6 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(gantt.locator('.crop-palette')).toBeHidden();
   });
 
-  test('api-keys page loads management actions', async ({ page }) => {
-    const r = findRoute('api-keys');
-    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
-    await waitForPageStable(page, r);
-    await assertHostHealthy(page, 'app-api-key');
-    await expect(page.locator('app-api-key .btn-primary').first()).toBeVisible();
-  });
-
-  test('weather page shows temperature chart host', async ({ page }) => {
-    const r = findRoute('weather');
-    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
-    await waitForPageStable(page, r);
-    await expect(page.locator('app-weather-page')).toBeVisible();
-    await expect(page.locator('app-temperature-chart canvas')).toBeVisible();
-  });
-
   test('entry-schedule: list opens crop detail', async ({ page }) => {
     const r = findRoute('entry-schedule');
     await page.goto(resolveGotoUrl(r, resolvedCaptureIds));

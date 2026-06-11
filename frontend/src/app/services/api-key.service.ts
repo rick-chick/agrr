@@ -1,13 +1,9 @@
-import { Injectable, inject } from '@angular/core';
-import { ApiService } from './api.service';
-import { Observable, tap } from 'rxjs';
+import { Injectable } from '@angular/core';
 
 const STORAGE_KEY = 'agrr_api_key';
 
 @Injectable({ providedIn: 'root' })
 export class ApiKeyService {
-  private apiClient = inject(ApiService);
-
   getApiKey(): string | null {
     return localStorage.getItem(STORAGE_KEY);
   }
@@ -18,21 +14,5 @@ export class ApiKeyService {
 
   clearApiKey() {
     localStorage.removeItem(STORAGE_KEY);
-  }
-
-  generateApiKey(): Observable<{ api_key: string, success: boolean }> {
-    return this.apiClient.post<{ api_key: string, success: boolean }>('/api/v1/api_keys/generate', {}).pipe(
-      tap(res => {
-        if (res.success) this.setApiKey(res.api_key);
-      })
-    );
-  }
-
-  regenerateApiKey(): Observable<{ api_key: string, success: boolean }> {
-    return this.apiClient.post<{ api_key: string, success: boolean }>('/api/v1/api_keys/regenerate', {}).pipe(
-      tap(res => {
-        if (res.success) this.setApiKey(res.api_key);
-      })
-    );
   }
 }

@@ -19,8 +19,6 @@ export const HOST_SELECTOR_BY_PATTERN: Record<string, string> = {
   'public-plans/results': 'app-public-plan-results',
 
   dashboard: 'app-home',
-  'api-keys': 'app-api-key',
-  weather: 'app-weather-page',
 
   farms: 'app-farm-list',
   'farms/new': 'app-farm-create',

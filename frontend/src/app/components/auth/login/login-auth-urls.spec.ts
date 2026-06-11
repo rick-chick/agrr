@@ -62,6 +62,11 @@ describe('login-auth-urls', () => {
     expect(requiresAuthForDirectLanding('/public-plans/results')).toBe(false);
   });
 
+  it('does not treat removed orphan routes as auth-required', () => {
+    expect(requiresAuthForDirectLanding('/weather')).toBe(false);
+    expect(requiresAuthForDirectLanding('/api-keys')).toBe(false);
+  });
+
   it('uses return_to query for OAuth when provided', () => {
     const loc = { href: `${origin}/login`, pathname: '/login', origin };
     const plans = `${origin}/plans?x=1`;

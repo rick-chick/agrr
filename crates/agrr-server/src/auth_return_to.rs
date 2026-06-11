@@ -175,8 +175,6 @@ const AUTH_REQUIRED_PREFIXES: &[&str] = &[
     "/pesticides",
     "/agricultural_tasks",
     "/interaction_rules",
-    "/api-keys",
-    "/weather",
     "/dashboard",
 ];
 
