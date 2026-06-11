@@ -120,7 +120,6 @@ mod tests {
                     timezone TEXT,
                     created_at TEXT NOT NULL DEFAULT '1970-01-01',
                     updated_at TEXT NOT NULL DEFAULT '1970-01-01',
-                    predicted_weather_data TEXT,
                     bulk_earliest_date TEXT,
                     bulk_latest_date TEXT,
                     bulk_year_stats TEXT

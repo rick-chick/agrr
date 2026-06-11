@@ -124,13 +124,6 @@ impl WeatherDataGateway for GcsBulkWeatherGateway {
         Err("GCS bulk gateway does not manage weather_locations".into())
     }
 
-    fn update_predicted_weather_data(
-        &self,
-        _: i64,
-        _: &Value,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        Err("GCS bulk gateway does not store predicted weather".into())
-    }
 }
 
 pub fn temp_pool_farms_only() -> (crate::SqlitePool, PathBuf) {

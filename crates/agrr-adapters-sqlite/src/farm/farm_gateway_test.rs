@@ -30,7 +30,7 @@ fn farm_test_pool() -> SqlitePool {
               created_at TEXT, updated_at TEXT, weather_data_status TEXT,
               weather_data_fetched_years INTEGER, weather_data_total_years INTEGER,
               weather_data_last_error TEXT, weather_location_id INTEGER,
-              last_broadcast_at REAL, predicted_weather_data TEXT
+              last_broadcast_at REAL
             );",
         )
     })

@@ -4,11 +4,18 @@ use serde_json::{json, Value};
 use time::Date;
 
 use crate::shared::ports::{ClockPort, LoggerPort};
-use crate::weather_data::dtos::{CultivationPlanWeather, WeatherData, WeatherLocation};
-use crate::weather_data::gateways::{
-    CultivationPlanPredictedWeatherGateway, PredictionGateway, WeatherDataGateway,
+use crate::weather_data::dtos::{
+    CultivationPlanWeather, PredictedWeatherMetadata, PredictedWeatherScope, WeatherData,
+    WeatherLocation,
 };
-use crate::weather_data::helpers::parse_iso_date;
+use crate::weather_data::gateways::{
+    PredictedWeatherMetadataGateway, PredictedWeatherStoreGateway, PredictionGateway,
+    WeatherDataGateway,
+};
+use crate::weather_data::helpers::{
+    build_metadata_from_payload, cached_future_data, cached_prediction_from_payload,
+    metadata_covers_target, parse_iso_date,
+};
 use crate::weather_data::policies::MINIMUM_TRAINING_DAYS;
 use crate::weather_data::ports::WeatherPredictionAnchorsPort;
 
@@ -72,9 +79,8 @@ pub struct WeatherPredictionTestOverrides {
 /// Ruby: `Domain::WeatherData::Interactors::WeatherPredictionInteractor`
 pub struct WeatherPredictionInteractor<'a> {
     weather_location: WeatherLocation,
-    /// Rails `@farm&.predicted_weather_data` — optional cache for `get_prediction_data`.
-    farm_predicted_weather: Option<Value>,
-    cultivation_plan_gateway: &'a dyn CultivationPlanPredictedWeatherGateway,
+    metadata_gateway: &'a dyn PredictedWeatherMetadataGateway,
+    store_gateway: &'a dyn PredictedWeatherStoreGateway,
     weather_data_gateway: &'a dyn WeatherDataGateway,
     prediction_gateway: &'a dyn PredictionGateway,
     logger: &'a dyn LoggerPort,
@@ -86,8 +92,8 @@ pub struct WeatherPredictionInteractor<'a> {
 impl<'a> WeatherPredictionInteractor<'a> {
     pub fn new(
         weather_location: WeatherLocation,
-        farm_predicted_weather: Option<Value>,
-        cultivation_plan_gateway: &'a dyn CultivationPlanPredictedWeatherGateway,
+        metadata_gateway: &'a dyn PredictedWeatherMetadataGateway,
+        store_gateway: &'a dyn PredictedWeatherStoreGateway,
         weather_data_gateway: &'a dyn WeatherDataGateway,
         prediction_gateway: &'a dyn PredictionGateway,
         logger: &'a dyn LoggerPort,
@@ -99,8 +105,8 @@ impl<'a> WeatherPredictionInteractor<'a> {
         let _ = anchors_resolver.anchors_for(clock.today());
         Ok(Self {
             weather_location,
-            farm_predicted_weather,
-            cultivation_plan_gateway,
+            metadata_gateway,
+            store_gateway,
             weather_data_gateway,
             prediction_gateway,
             logger,
@@ -113,8 +119,8 @@ impl<'a> WeatherPredictionInteractor<'a> {
     #[cfg(test)]
     pub fn with_test_overrides(
         weather_location: WeatherLocation,
-        farm_predicted_weather: Option<Value>,
-        cultivation_plan_gateway: &'a dyn CultivationPlanPredictedWeatherGateway,
+        metadata_gateway: &'a dyn PredictedWeatherMetadataGateway,
+        store_gateway: &'a dyn PredictedWeatherStoreGateway,
         weather_data_gateway: &'a dyn WeatherDataGateway,
         prediction_gateway: &'a dyn PredictionGateway,
         logger: &'a dyn LoggerPort,
@@ -124,8 +130,8 @@ impl<'a> WeatherPredictionInteractor<'a> {
     ) -> Self {
         Self {
             weather_location,
-            farm_predicted_weather,
-            cultivation_plan_gateway,
+            metadata_gateway,
+            store_gateway,
             weather_data_gateway,
             prediction_gateway,
             logger,
@@ -135,12 +141,11 @@ impl<'a> WeatherPredictionInteractor<'a> {
         }
     }
 
-    /// Ruby: `get_existing_prediction(target_end_date:, cultivation_plan_weather:)` (+ farm cache).
+    /// Ruby: `get_existing_prediction(target_end_date:, cultivation_plan_weather:)`
     pub fn get_existing_prediction(
         &self,
         target_end_date: Option<Date>,
         cultivation_plan_weather: Option<&CultivationPlanWeather>,
-        farm_predicted_weather: Option<&Value>,
     ) -> Option<ExistingPredictionResult> {
         let default_target = cultivation_plan_weather.and_then(|plan| {
             plan.prediction_target_end_date
@@ -148,25 +153,24 @@ impl<'a> WeatherPredictionInteractor<'a> {
         });
         let target = self.normalize_target_end_date(target_end_date.or(default_target));
 
-        if let Some(result) =
-            cached_prediction_result(self.weather_location.predicted_weather_data(), target)
+        if let Some(result) = self.lookup_cached(PredictedWeatherScope::Location, self.weather_location.id, target)
         {
             return Some(result);
         }
 
         if let Some(plan) = cultivation_plan_weather {
-            if let Some(data) = plan.predicted_weather_data() {
-                if plan_predicted_weather_has_data(data) {
-                    if let Some(result) = cached_prediction_result(Some(data), target) {
-                        return Some(result);
+            if let Some(result) = self.lookup_cached(PredictedWeatherScope::Plan, plan.id, target) {
+                return Some(result);
+            }
+            if let Some(meta) = plan.plan_metadata() {
+                if metadata_covers_target(meta, target) {
+                    if let Ok(Some(payload)) = self
+                        .store_gateway
+                        .read_payload(PredictedWeatherScope::Plan, plan.id)
+                    {
+                        return self.existing_from_payload(&payload, target);
                     }
                 }
-            }
-        }
-
-        if let Some(farm_data) = farm_predicted_weather {
-            if let Some(result) = cached_prediction_result(Some(farm_data), target) {
-                return Some(result);
             }
         }
 
@@ -186,14 +190,62 @@ impl<'a> WeatherPredictionInteractor<'a> {
         let weather_info = self.prepare_weather_data(target)?;
         let payload = self.build_prediction_payload(&weather_info, target);
 
-        self.persist_prediction_payload(&payload)?;
-        self.cultivation_plan_gateway
-            .update_predicted_weather_data(plan_weather.id, &payload)
-            .map_err(|e| {
-                WeatherPredictionError::InsufficientPredictionData(format!("persist plan: {e}"))
-            })?;
+        self.persist_scoped_prediction(
+            PredictedWeatherScope::Location,
+            self.weather_location.id,
+            &payload,
+            target,
+        )?;
+        self.persist_scoped_prediction(PredictedWeatherScope::Plan, plan_weather.id, &payload, target)?;
 
         Ok(weather_info)
+    }
+
+    fn lookup_cached(
+        &self,
+        scope: PredictedWeatherScope,
+        scope_id: i64,
+        target: Date,
+    ) -> Option<ExistingPredictionResult> {
+        let metadata = self.metadata_gateway.find(scope, scope_id).ok()??;
+        if !metadata_covers_target(&metadata, target) {
+            return None;
+        }
+        let payload = self.store_gateway.read_payload(scope, scope_id).ok()??;
+        self.existing_from_payload(&payload, target)
+    }
+
+    fn existing_from_payload(&self, payload: &Value, target: Date) -> Option<ExistingPredictionResult> {
+        let cached = cached_prediction_from_payload(payload, target)?;
+        Some(ExistingPredictionResult {
+            data: cached.data,
+            target_end_date: target,
+            prediction_start_date: cached.prediction_start_date,
+            prediction_days: cached.prediction_days,
+        })
+    }
+
+    fn persist_scoped_prediction(
+        &self,
+        scope: PredictedWeatherScope,
+        scope_id: i64,
+        payload: &Value,
+        target: Date,
+    ) -> Result<(), WeatherPredictionError> {
+        let generated_at = self.clock.now().unix_timestamp().to_string();
+        let metadata = build_metadata_from_payload(scope, scope_id, payload, target, generated_at)
+            .ok_or_else(|| {
+                WeatherPredictionError::InsufficientPredictionData(
+                    "failed to build prediction metadata".into(),
+                )
+            })?;
+        self.store_gateway
+            .write_payload(scope, scope_id, payload)
+            .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
+        self.metadata_gateway
+            .upsert(&metadata)
+            .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
+        Ok(())
     }
 
     fn prepare_weather_data(
@@ -310,15 +362,7 @@ impl<'a> WeatherPredictionInteractor<'a> {
             return Ok(data.clone());
         }
 
-        if let Some(cached) =
-            cached_future_data(self.weather_location.predicted_weather_data(), target_end_date)
-        {
-            return Ok(cached);
-        }
-
-        if let Some(cached) =
-            cached_future_data(self.farm_predicted_weather.as_ref(), target_end_date)
-        {
+        if let Some(cached) = self.lookup_cached_future(PredictedWeatherScope::Location, self.weather_location.id, target_end_date) {
             return Ok(cached);
         }
 
@@ -344,6 +388,20 @@ impl<'a> WeatherPredictionInteractor<'a> {
         }
 
         Ok(future)
+    }
+
+    fn lookup_cached_future(
+        &self,
+        scope: PredictedWeatherScope,
+        scope_id: i64,
+        target_end_date: Date,
+    ) -> Option<Value> {
+        let metadata = self.metadata_gateway.find(scope, scope_id).ok()??;
+        if !metadata_covers_target(&metadata, target_end_date) {
+            return None;
+        }
+        let payload = self.store_gateway.read_payload(scope, scope_id).ok()??;
+        cached_future_data(&payload, target_end_date)
     }
 
     fn format_weather_data_for_agrr(&self, weather_data: &[WeatherData]) -> Value {
@@ -418,12 +476,6 @@ impl<'a> WeatherPredictionInteractor<'a> {
         payload.insert("model".to_string(), Value::String("lightgbm".to_string()));
         Value::Object(payload)
     }
-
-    fn persist_prediction_payload(&self, payload: &Value) -> Result<(), WeatherPredictionError> {
-        self.weather_data_gateway
-            .update_predicted_weather_data(self.weather_location.id, payload)
-            .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))
-    }
 }
 
 fn merge_weather_data(historical: &Value, future: &Value) -> Value {
@@ -447,97 +499,6 @@ fn merge_weather_data(historical: &Value, future: &Value) -> Value {
     })
 }
 
-fn plan_predicted_weather_has_data(payload: &Value) -> bool {
-    payload
-        .get("data")
-        .and_then(|d| d.as_array())
-        .is_some_and(|arr| !arr.is_empty())
-}
-
-fn cached_prediction_result(payload: Option<&Value>, target_end_date: Date) -> Option<ExistingPredictionResult> {
-    let payload = payload?;
-    let prediction_start = parse_date(payload.get("prediction_start_date").and_then(|v| v.as_str()))?;
-    let prediction_end = parse_date(payload.get("prediction_end_date").and_then(|v| v.as_str()))?;
-    let data_array = payload.get("data")?.as_array()?;
-    if data_array.is_empty() {
-        return None;
-    }
-    let data_end = latest_payload_date(Some(data_array));
-
-    if prediction_end < target_end_date {
-        return None;
-    }
-    if data_end.is_none_or(|d| d < target_end_date) {
-        return None;
-    }
-
-    let cached_prediction_days =
-        compute_prediction_days(prediction_start, prediction_end.max(target_end_date));
-    Some(ExistingPredictionResult {
-        data: payload.clone(),
-        target_end_date,
-        prediction_start_date: payload
-            .get("prediction_start_date")
-            .and_then(|v| v.as_str())
-            .unwrap_or_default()
-            .to_string(),
-        prediction_days: cached_prediction_days,
-    })
-}
-
-fn cached_future_data(payload: Option<&Value>, target_end_date: Date) -> Option<Value> {
-    let payload = payload?;
-    let prediction_start = parse_date(payload.get("prediction_start_date").and_then(|v| v.as_str()))?;
-    let prediction_end = parse_date(payload.get("prediction_end_date").and_then(|v| v.as_str()))?;
-    if prediction_end < target_end_date {
-        return None;
-    }
-
-    let data = payload.get("data")?.as_array()?;
-    let filtered: Vec<Value> = data
-        .iter()
-        .filter_map(|datum| {
-            let datum_date = parse_date(
-                datum
-                    .get("time")
-                    .and_then(|v| v.as_str())
-                    .or_else(|| datum.get("date").and_then(|v| v.as_str())),
-            )?;
-            if datum_date < prediction_start || datum_date > target_end_date {
-                return None;
-            }
-            Some(normalize_prediction_datum(datum))
-        })
-        .collect();
-
-    if filtered.is_empty() {
-        return None;
-    }
-    let data_end = latest_payload_date(Some(&filtered));
-    if data_end.is_none_or(|d| d < target_end_date) {
-        return None;
-    }
-    Some(json!({ "data": filtered }))
-}
-
-fn normalize_prediction_datum(datum: &Value) -> Value {
-    let time = datum
-        .get("time")
-        .or_else(|| datum.get("date"))
-        .cloned()
-        .unwrap_or(Value::Null);
-    json!({
-        "time": time,
-        "temperature_2m_max": datum.get("temperature_2m_max").or_else(|| datum.get("temperature_max")).cloned().unwrap_or(Value::Null),
-        "temperature_2m_min": datum.get("temperature_2m_min").or_else(|| datum.get("temperature_min")).cloned().unwrap_or(Value::Null),
-        "temperature_2m_mean": datum.get("temperature_2m_mean").or_else(|| datum.get("temperature_mean")).cloned().unwrap_or(Value::Null),
-        "precipitation_sum": datum.get("precipitation_sum").or_else(|| datum.get("precipitation")).cloned().unwrap_or(json!(0.0)),
-        "sunshine_duration": datum.get("sunshine_duration").cloned().unwrap_or(json!(0.0)),
-        "wind_speed_10m_max": datum.get("wind_speed_10m_max").or_else(|| datum.get("wind_speed")).cloned().unwrap_or(json!(0.0)),
-        "weather_code": datum.get("weather_code").cloned().unwrap_or(json!(0)),
-    })
-}
-
 fn parse_date(value: Option<&str>) -> Option<Date> {
     value.and_then(parse_iso_date)
 }
@@ -554,10 +515,6 @@ fn latest_payload_date(data_array: Option<&Vec<Value>>) -> Option<Date> {
             )
         })
         .max()
-}
-
-fn compute_prediction_days(prediction_start: Date, prediction_end: Date) -> i64 {
-    (prediction_end - prediction_start).whole_days() + 1
 }
 
 pub fn validate_weather_prediction_dependencies(

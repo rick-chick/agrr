@@ -31,13 +31,10 @@ pub fn to_context_snapshot(
         farm_longitude: source.farm_longitude,
         plan_id: source.plan_id,
         plan_type_public: source.plan_type_public,
-        plan_predicted_weather_present: source
-            .predicted_weather_data
-            .as_ref()
-            .is_some_and(crate::shared::validation::present),
+        plan_predicted_weather_present: source.plan_metadata.is_some(),
         prediction_target_end_date: source.prediction_target_end_date,
         calculated_planning_end_date: source.calculated_planning_end_date,
-        predicted_weather_data: source.predicted_weather_data.clone(),
+        plan_metadata: source.plan_metadata.clone(),
         crop_id: crop.id,
         base_temperature,
         optimal_temperature_range: temp_req.map(build_optimal_temperature_range),

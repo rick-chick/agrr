@@ -1,9 +1,8 @@
 //! Ruby: `Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot`
 
-use serde_json::Value;
 use time::Date;
 
-use crate::weather_data::dtos::{FarmWeatherPrediction, WeatherLocation};
+use crate::weather_data::dtos::{PredictedWeatherMetadata, WeatherLocation};
 
 /// Ruby: `Domain::CultivationPlan::Dtos::OptimizationPlanSnapshot`
 #[derive(Debug, Clone)]
@@ -13,11 +12,10 @@ pub struct OptimizationPlanSnapshot {
     pub calculated_planning_start_date: Option<Date>,
     pub calculated_planning_end_date: Option<Date>,
     pub prediction_target_end_date: Option<Date>,
-    pub predicted_weather_data: Option<Value>,
+    pub plan_metadata: Option<PredictedWeatherMetadata>,
     pub total_area: Option<f64>,
     pub weather_location_present: bool,
     pub weather_location_input: Option<WeatherLocation>,
-    pub farm_weather_input: Option<FarmWeatherPrediction>,
 }
 
 impl OptimizationPlanSnapshot {
@@ -28,11 +26,10 @@ impl OptimizationPlanSnapshot {
         calculated_planning_start_date: Option<Date>,
         calculated_planning_end_date: Option<Date>,
         prediction_target_end_date: Option<Date>,
-        predicted_weather_data: Option<Value>,
+        plan_metadata: Option<PredictedWeatherMetadata>,
         total_area: Option<f64>,
         weather_location_present: bool,
         weather_location_input: Option<WeatherLocation>,
-        farm_weather_input: Option<FarmWeatherPrediction>,
     ) -> Self {
         Self {
             plan_id,
@@ -40,11 +37,10 @@ impl OptimizationPlanSnapshot {
             calculated_planning_start_date,
             calculated_planning_end_date,
             prediction_target_end_date,
-            predicted_weather_data,
+            plan_metadata,
             total_area,
             weather_location_present,
             weather_location_input,
-            farm_weather_input,
         }
     }
 }

@@ -15,12 +15,14 @@ use agrr_domain::cultivation_plan::gateways::PlanAllocationAllocateGateway;
 use agrr_domain::weather_data::gateways::{AgrrWeatherGateway, WeatherDataGateway};
 use agrr_adapters_sqlite::{
     CultivationPlanOptimizationSqliteGateway, OptimizationPlanReadSqliteGateway,
-    PlanAllocationAdjustReadSqliteGateway, SqlitePool, WeatherDataGatewayBundle,
+    PlanAllocationAdjustReadSqliteGateway, PredictedWeatherGatewayBundle, SqlitePool,
+    WeatherDataGatewayBundle,
 };
 use agrr_domain::cultivation_plan::calculators::OptimizationAllocationInputCalculator;
 use agrr_domain::cultivation_plan::dtos::OptimizationPlanSnapshot;
 use agrr_domain::weather_data::dtos::CultivationPlanWeather;
-use agrr_server::adjust_weather_prediction::existing_prediction_weather_for_allocate;
+use agrr_server::adjust_weather_prediction::SqliteAdjustWeatherPredictionGateway;
+use agrr_domain::cultivation_plan::gateways::AdjustWeatherPredictionGateway;
 use agrr_domain::cultivation_plan::gateways::{
     CultivationPlanOptimizationGateway, PlanAllocationAdjustReadGateway,
 };
@@ -116,6 +118,10 @@ fn shared_weather_gateway(pool: &SqlitePool) -> Arc<dyn WeatherDataGateway> {
     )
 }
 
+fn shared_predicted_weather_bundle(pool: &SqlitePool) -> PredictedWeatherGatewayBundle {
+    PredictedWeatherGatewayBundle::resolve(pool.clone()).expect("predicted weather gateway bundle")
+}
+
 fn check_weather_api(
     lat: f64,
     lon: f64,
@@ -147,8 +153,12 @@ fn check_weather_api(
             "no output file (exit 0); chain skips ingest and uses existing store",
         ),
         Err(e) => {
-            let read =
-                PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather.clone());
+            let predicted = shared_predicted_weather_bundle(pool);
+            let read = PlanAllocationAdjustReadSqliteGateway::new(
+                pool.clone(),
+                weather.clone(),
+                predicted.metadata.clone(),
+            );
             if let Ok(rows) =
                 read.list_historical_weather_rows(wl_id, window.start_date, window.end_date)
             {
@@ -190,7 +200,12 @@ fn check_sqlite_plan_read(
     weather: Arc<dyn WeatherDataGateway>,
     plan_id: i64,
 ) -> (Check, Option<(f64, f64, Option<i64>)>) {
-    let gw = PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather);
+    let predicted = shared_predicted_weather_bundle(pool);
+    let gw = PlanAllocationAdjustReadSqliteGateway::new(
+        pool.clone(),
+        weather,
+        predicted.metadata.clone(),
+    );
     match gw.find_adjust_read_snapshot_by_plan_id(plan_id) {
         Ok(snapshot) => {
             let fields = snapshot.plan_field_snapshots.len();
@@ -366,7 +381,8 @@ fn optimize_allocate_inputs(
     pool: &SqlitePool,
     plan_id: i64,
 ) -> Result<(Vec<Value>, Vec<Value>, Value, Date, Date), String> {
-    let read = OptimizationPlanReadSqliteGateway::new(pool.clone());
+    let predicted = shared_predicted_weather_bundle(pool);
+    let read = OptimizationPlanReadSqliteGateway::new(pool.clone(), predicted.metadata.clone());
     let optimization = CultivationPlanOptimizationSqliteGateway::new(pool.clone());
     let snapshot = load_optimization_plan_read_snapshot(&read, plan_id)
         .map_err(|e| e.to_string())?;
@@ -385,15 +401,21 @@ fn optimize_allocate_inputs(
         snapshot.plan_id,
         snapshot.prediction_target_end_date,
         snapshot.calculated_planning_end_date,
-        snapshot.predicted_weather_data.clone(),
+        snapshot.plan_metadata.clone(),
     );
-    let weather = existing_prediction_weather_for_allocate(
-        pool,
-        weather_location,
-        snapshot.farm_weather_input.as_ref(),
-        &plan_weather,
-        planning_end,
-    )?;
+    let weather_gw = SqliteAdjustWeatherPredictionGateway::new(
+        pool.clone(),
+        predicted.metadata.clone(),
+        predicted.store.clone(),
+    );
+    let service = weather_gw
+        .prediction_service(weather_location)
+        .map_err(|e| e.to_string())?;
+    let weather = service
+        .get_existing_prediction(planning_end, &plan_weather)
+        .ok_or_else(|| {
+            "天気予測データが存在しません。計画作成時に天気予測が実行されていません。".to_string()
+        })?;
     Ok((fields, crops, weather, planning_start, planning_end))
 }
 
@@ -550,7 +572,12 @@ fn main() -> ExitCode {
 
     if let Some((lat, lon, wl_id)) = coords {
         checks.push(check_weather_api(lat, lon, &pool, weather.clone(), wl_id));
-        let read = PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather);
+        let predicted = shared_predicted_weather_bundle(&pool);
+        let read = PlanAllocationAdjustReadSqliteGateway::new(
+            pool.clone(),
+            weather,
+            predicted.metadata.clone(),
+        );
         checks.push(check_sqlite_historical_weather(&read, wl_id));
     } else {
         checks.push(Check::fail(

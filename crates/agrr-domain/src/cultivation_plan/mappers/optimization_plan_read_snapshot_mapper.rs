@@ -10,7 +10,7 @@ pub fn load_snapshot(
 ) -> Result<OptimizationPlanSnapshot, Box<dyn std::error::Error + Send + Sync>> {
     let core = read_gateway.find_optimization_plan_core_snapshot_by_plan_id(plan_id)?;
     let weather_location = read_gateway.find_optimization_weather_location_by_plan_id(plan_id)?;
-    let farm_weather = read_gateway.find_optimization_farm_weather_by_plan_id(plan_id)?;
+    let plan_metadata = read_gateway.find_optimization_plan_metadata_by_plan_id(plan_id)?;
 
     Ok(to_snapshot(
         core.plan_id,
@@ -18,10 +18,9 @@ pub fn load_snapshot(
         core.calculated_planning_start_date,
         core.calculated_planning_end_date,
         core.prediction_target_end_date,
-        core.predicted_weather_data,
+        plan_metadata.or(core.plan_metadata),
         core.total_area,
         core.weather_location_present,
         weather_location,
-        farm_weather,
     ))
 }

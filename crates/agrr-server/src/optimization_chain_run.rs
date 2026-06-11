@@ -5,8 +5,7 @@ use crate::state::AppState;
 use crate::weather_prediction_anchors::SystemWeatherPredictionAnchors;
 use agrr_adapters_agrr::WeatherDaemonGateway;
 use agrr_adapters_sqlite::{
-    CultivationPlanSqliteGateway, FieldCultivationPlanPredictedWeatherSqliteGateway,
-    WeatherDataFarmSqliteGateway, WeatherDataGatewayBundle,
+    CultivationPlanSqliteGateway, WeatherDataFarmSqliteGateway, WeatherDataGatewayBundle,
 };
 use agrr_domain::cultivation_plan::gateways::CultivationPlanGateway;
 use agrr_domain::cultivation_plan::optimization_completion;
@@ -359,13 +358,8 @@ pub fn run_weather_prediction_step(
 
     let pool = state.sqlite.clone();
     let wl = crate::cultivation_plan_weather_load::load_weather_location(&pool, plan_id)?;
-    let farm_predicted = crate::cultivation_plan_weather_load::load_farm_weather_prediction(&pool, plan_id)
-        .ok()
-        .flatten()
-        .and_then(|f| f.predicted_weather_data().cloned());
     let weather_data = WeatherDataGatewayBundle::resolve(pool.clone())
         .map_err(|e| format!("weather data gateway: {e}"))?;
-    let plan_predicted = FieldCultivationPlanPredictedWeatherSqliteGateway::new(pool.clone());
     let prediction = agrr_adapters_agrr::PredictionDaemonGateway::from_env();
     let logger = NoopLogger;
     let clock = SystemClock;
@@ -373,8 +367,8 @@ pub fn run_weather_prediction_step(
 
     let interactor = WeatherPredictionInteractor::new(
         wl,
-        farm_predicted,
-        &plan_predicted,
+        state.predicted_weather.metadata.as_ref(),
+        state.predicted_weather.store.as_ref(),
         &weather_data,
         &prediction,
         &logger,
@@ -383,7 +377,11 @@ pub fn run_weather_prediction_step(
     )
     .map_err(|e| format!("weather prediction init: {e}"))?;
 
-    let plan_weather = crate::cultivation_plan_weather_load::load_plan_weather(&pool, plan_id)?;
+    let plan_weather = crate::cultivation_plan_weather_load::load_plan_weather(
+        &pool,
+        &state.predicted_weather.metadata,
+        plan_id,
+    )?;
     let _predict_days =
         OptimizationJobChainWeatherComputation::predict_days_to_next_year_end(end_date, &clock);
     interactor

@@ -5,7 +5,7 @@
 
     use crate::weather_data::ports::{
         FarmWeatherDataAccessOutputPort, FarmWeatherFarmSummary, FarmWeatherIndexRow,
-        FarmWeatherPeriod, FarmWeatherPredictionPeriod, PredictWeatherStandaloneEnqueueResult,
+        FarmWeatherPeriod, PredictWeatherStandaloneEnqueueResult,
     };
     use std::sync::{Arc, Mutex};
 
@@ -25,17 +25,6 @@
             if let Some(row) = data.into_iter().next() {
                 *self.last_index.lock().expect("lock") = Some(row);
             }
-        }
-
-        fn on_prediction_cached_success(
-            &mut self,
-            _: FarmWeatherFarmSummary,
-            _: FarmWeatherPredictionPeriod,
-            _: bool,
-            _: Option<String>,
-            _: Option<String>,
-            _: Vec<FarmWeatherIndexRow>,
-        ) {
         }
 
         fn on_prediction_queued(&mut self, _: i64, _: String) {}
@@ -76,14 +65,6 @@
             _: i64,
         ) -> Option<FarmWeatherDataAccessContext> {
             self.ctx.clone()
-        }
-
-        fn update_predicted_weather_data(
-            &self,
-            _: i64,
-            _: Option<serde_json::Value>,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
         }
 
         fn find_by_id(
@@ -180,13 +161,6 @@
             Ok(crate::weather_data::gateways::WeatherLocationRecord { id: 1 })
         }
 
-        fn update_predicted_weather_data(
-            &self,
-            _: i64,
-            _: &serde_json::Value,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
-        }
     }
 
     struct FakeEnqueue;
@@ -201,20 +175,6 @@
             _: Option<&str>,
         ) -> PredictWeatherStandaloneEnqueueResult {
             PredictWeatherStandaloneEnqueueResult::success()
-        }
-    }
-
-    struct FakeParse;
-    impl FarmWeatherPredictionPayloadParsePort for FakeParse {
-        fn predicted_at_from_payload(&self, _: Option<&str>) -> Option<OffsetDateTime> {
-            Some(OffsetDateTime::new_utc(
-                Date::from_calendar_date(2026, Month::January, 1).expect("valid"),
-                Time::MIDNIGHT,
-            ))
-        }
-
-        fn prediction_start_date_from_payload(&self, _: Option<&str>) -> Option<Date> {
-            Some(Date::from_calendar_date(2026, Month::January, 1).expect("valid"))
         }
     }
 
@@ -248,7 +208,6 @@
                 latitude: 35.0,
                 longitude: 139.0,
                 weather_location_id: Some(9),
-                predicted_weather_data: None,
             }),
         };
         let weather_gateway = FakeWeatherGateway {
@@ -275,7 +234,6 @@
             &farm_gateway,
             &weather_gateway,
             &FakeEnqueue,
-            &FakeParse,
             &clock,
         );
 
@@ -314,7 +272,6 @@
             &farm_gateway,
             &weather_gateway,
             &FakeEnqueue,
-            &FakeParse,
             &clock,
         );
 
@@ -397,13 +354,6 @@
             Ok(crate::weather_data::gateways::WeatherLocationRecord { id: 1 })
         }
 
-        fn update_predicted_weather_data(
-            &self,
-            _: i64,
-            _: &serde_json::Value,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
-        }
     }
 
     #[test]
@@ -420,7 +370,6 @@
                 latitude: 35.0,
                 longitude: 139.0,
                 weather_location_id: Some(9),
-                predicted_weather_data: None,
             }),
         };
         let weather_gateway = FailingStorageWeatherGateway;
@@ -436,7 +385,6 @@
             &farm_gateway,
             &weather_gateway,
             &FakeEnqueue,
-            &FakeParse,
             &clock,
         );
 

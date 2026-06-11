@@ -375,14 +375,6 @@ impl WeatherDataGateway for WeatherDataGatewayBundle {
             .find_or_create_weather_location(latitude, longitude, elevation, timezone)
     }
 
-    fn update_predicted_weather_data(
-        &self,
-        weather_location_id: i64,
-        payload: &Value,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.sqlite
-            .update_predicted_weather_data(weather_location_id, payload)
-    }
 }
 
 #[cfg(test)]

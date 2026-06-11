@@ -15,7 +15,7 @@ A **Rails shell** remains for local SPA fallback, static pages, and dev/test hel
 | Frontend hosting    | Google Cloud Storage + Cloud CDN (see `.cursor/skills/deploy-frontend/scripts/gcp-frontend-deploy.sh`) |
 | Backend (API/WS)    | **agrr-server** (Rust) on **Google Cloud Run** — `.cursor/skills/deploy-server/scripts/gcp-deploy.sh` |
 | Rails shell (dev)   | SPA fallback・`auth_test`・静的ページのみ（本番 API/WS/auth は Rust）                                 |
-| Database            | SQLite3 (**primary** / **cache**); **Litestream** replica to GCS. Schema: **refinery** via `agrr-migrate` on deploy. Jobs: Rust Tokio chains + internal HTTP ([`PROVISIONAL-STACK.md`](docs/migration/app-rust-stack/PROVISIONAL-STACK.md)). Solid Queue not used. |
+| Database            | SQLite3 (**primary** / **cache**); **Litestream** replica to GCS. Schema: **refinery** via `agrr-migrate` on deploy. Jobs: Rust Tokio chains + internal HTTP ([`PROVISIONAL-STACK.md`](docs/migration/app-rust-stack/PROVISIONAL-STACK.md)). Solid Queue not used. **Observed weather bulk** and **predicted weather payloads** live in GCS (`weather_data/`, `predicted_weather/`); SQLite holds metadata only for predictions ([ADR](docs/migration/app-rust-stack/ADR-predicted-weather-gcs-two-layer.md)). |
 | Primary integration | **agrr** Python binary / daemon for optimization and weather-related workloads                 |
 | Contract-first API  | [`crates/agrr-r4-contract`](crates/agrr-r4-contract) + [`scripts/run-rust-contract-tests.sh`](scripts/run-rust-contract-tests.sh); domain in `crates/agrr-domain` |
 

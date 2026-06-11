@@ -11,7 +11,7 @@
     };
     use crate::field_cultivation::dtos::FieldCultivationSyncInput;
     use crate::field_cultivation::ports::FieldCultivationSyncInputPort;
-    use crate::weather_data::dtos::{CultivationPlanWeather, FarmWeatherPrediction, WeatherLocation};
+    use crate::weather_data::dtos::{CultivationPlanWeather, WeatherLocation};
     use crate::shared::ports::translator_port::TranslateOptions;
     
     use std::sync::{Arc, Mutex};
@@ -203,7 +203,6 @@
         fn prediction_service(
             &self,
             _: &WeatherLocation,
-            _: Option<&FarmWeatherPrediction>,
         ) -> Result<Box<dyn WeatherPredictionService>, Box<dyn std::error::Error + Send + Sync>> {
             Ok(Box::new(StubWeatherService))
         }

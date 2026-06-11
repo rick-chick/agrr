@@ -1,33 +1,52 @@
 //! Ruby: `AdjustWeatherPredictionActiveRecordGateway` — WeatherPredictionInteractor wiring for adjust/add_crop.
 
 use agrr_adapters_agrr::PredictionDaemonGateway;
-use agrr_adapters_sqlite::{
-    FieldCultivationPlanPredictedWeatherSqliteGateway, SqlitePool, WeatherDataGatewayBundle,
-};
+use agrr_adapters_sqlite::{SqlitePool, WeatherDataGatewayBundle};
 use agrr_domain::cultivation_plan::gateways::{
     AdjustWeatherPredictionGateway, WeatherPredictionService,
 };
-use agrr_domain::weather_data::dtos::{
-    CultivationPlanWeather, FarmWeatherPrediction, WeatherLocation,
-};
+use agrr_domain::weather_data::dtos::{CultivationPlanWeather, WeatherLocation};
 use agrr_domain::shared::ports::LoggerPort;
+use agrr_domain::weather_data::gateways::{
+    PredictedWeatherMetadataGateway, PredictedWeatherStoreGateway,
+};
 use agrr_domain::weather_data::helpers::normalize_nested_weather_data;
 use agrr_domain::weather_data::interactors::WeatherPredictionInteractor;
 use agrr_domain::weather_data::WeatherPredictionError;
 use serde_json::Value;
+use std::sync::Arc;
 use time::Date;
 
 use crate::adapters::{StderrLogger, SystemClock};
+use crate::state::AppState;
 use crate::weather_prediction_anchors::SystemWeatherPredictionAnchors;
 
 #[derive(Clone)]
 pub struct SqliteAdjustWeatherPredictionGateway {
     pool: SqlitePool,
+    metadata: Arc<dyn PredictedWeatherMetadataGateway>,
+    store: Arc<dyn PredictedWeatherStoreGateway>,
 }
 
 impl SqliteAdjustWeatherPredictionGateway {
-    pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+    pub fn new(
+        pool: SqlitePool,
+        metadata: Arc<dyn PredictedWeatherMetadataGateway>,
+        store: Arc<dyn PredictedWeatherStoreGateway>,
+    ) -> Self {
+        Self {
+            pool,
+            metadata,
+            store,
+        }
+    }
+
+    pub fn from_state(state: &AppState) -> Self {
+        Self::new(
+            state.sqlite.clone(),
+            state.predicted_weather.metadata.clone(),
+            state.predicted_weather.store.clone(),
+        )
     }
 }
 
@@ -35,13 +54,12 @@ impl AdjustWeatherPredictionGateway for SqliteAdjustWeatherPredictionGateway {
     fn prediction_service(
         &self,
         weather_location: &WeatherLocation,
-        farm: Option<&FarmWeatherPrediction>,
     ) -> Result<Box<dyn WeatherPredictionService>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(Box::new(OwnedWeatherPredictionService {
             weather_location: weather_location.clone(),
             logger: StderrLogger,
-            farm_predicted: farm.and_then(|f| f.predicted_weather_data().cloned()),
-            plan_gateway: FieldCultivationPlanPredictedWeatherSqliteGateway::new(self.pool.clone()),
+            metadata: self.metadata.clone(),
+            store: self.store.clone(),
             weather_gateway: WeatherDataGatewayBundle::resolve(self.pool.clone())
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             prediction_gateway: PredictionDaemonGateway::from_env(),
@@ -54,8 +72,8 @@ impl AdjustWeatherPredictionGateway for SqliteAdjustWeatherPredictionGateway {
 struct OwnedWeatherPredictionService {
     weather_location: WeatherLocation,
     logger: StderrLogger,
-    farm_predicted: Option<Value>,
-    plan_gateway: FieldCultivationPlanPredictedWeatherSqliteGateway,
+    metadata: Arc<dyn PredictedWeatherMetadataGateway>,
+    store: Arc<dyn PredictedWeatherStoreGateway>,
     weather_gateway: WeatherDataGatewayBundle,
     prediction_gateway: PredictionDaemonGateway,
     clock: SystemClock,
@@ -69,8 +87,8 @@ impl OwnedWeatherPredictionService {
     ) -> Result<R, WeatherPredictionError> {
         let interactor = WeatherPredictionInteractor::new(
             self.weather_location.clone(),
-            self.farm_predicted.clone(),
-            &self.plan_gateway,
+            self.metadata.as_ref(),
+            self.store.as_ref(),
             &self.weather_gateway,
             &self.prediction_gateway,
             &self.logger,
@@ -92,7 +110,6 @@ impl WeatherPredictionService for OwnedWeatherPredictionService {
                 .get_existing_prediction(
                     Some(target_end_date),
                     Some(cultivation_plan_weather),
-                    self.farm_predicted.as_ref(),
                 )
                 .map(|r| normalize_nested_weather_data(r.data))
         })
@@ -117,15 +134,14 @@ impl WeatherPredictionService for OwnedWeatherPredictionService {
 
 /// Rails optimize: `get_existing_prediction` → `weather_info[:data]` (+ normalize).
 pub fn existing_prediction_weather_for_allocate(
-    pool: &SqlitePool,
+    state: &AppState,
     weather_location: &WeatherLocation,
-    farm: Option<&FarmWeatherPrediction>,
     plan_weather: &CultivationPlanWeather,
     planning_end_date: Date,
 ) -> Result<Value, String> {
-    let gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
+    let gateway = SqliteAdjustWeatherPredictionGateway::from_state(state);
     let service = gateway
-        .prediction_service(weather_location, farm)
+        .prediction_service(weather_location)
         .map_err(|e| e.to_string())?;
     let weather = service
         .get_existing_prediction(planning_end_date, plan_weather)
@@ -148,21 +164,21 @@ pub fn existing_prediction_weather_for_allocate(
 
 /// Ruby CompositionRoot `weather_for_candidates` lambda (add_crop candidates).
 pub(crate) fn resolve_weather_for_candidates(
-    pool: &SqlitePool,
+    state: &AppState,
     plan_id: i64,
     plan_weather: &CultivationPlanWeather,
     target_end_date: Date,
     logger: &StderrLogger,
 ) -> Result<Value, WeatherPredictionError> {
-    use crate::cultivation_plan_weather_load::{load_farm_weather_prediction, load_weather_location};
+    let weather_location = crate::cultivation_plan_weather_load::load_weather_location(
+        &state.sqlite,
+        plan_id,
+    )
+    .map_err(|_| WeatherPredictionError::WeatherLocationRequired)?;
 
-    let weather_location = load_weather_location(pool, plan_id)
-        .map_err(|_| WeatherPredictionError::WeatherLocationRequired)?;
-    let farm = load_farm_weather_prediction(pool, plan_id).ok().flatten();
-
-    let gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
+    let gateway = SqliteAdjustWeatherPredictionGateway::from_state(state);
     let service = gateway
-        .prediction_service(&weather_location, farm.as_ref())
+        .prediction_service(&weather_location)
         .map_err(|e| WeatherPredictionError::InsufficientPredictionData(e.to_string()))?;
 
     logger.info(&format!(

@@ -6,7 +6,7 @@ use crate::jobs::JobChainDispatcher;
 use crate::state::DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS;
 use crate::locale_catalog::LocaleCatalog;
 use crate::state::AppState;
-use agrr_adapters_sqlite::SqlitePool;
+use agrr_adapters_sqlite::{PredictedWeatherGatewayBundle, SqlitePool};
 use agrr_domain::weather_data::gateways::WeatherDataGateway;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
@@ -178,18 +178,15 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
             Err("not used".into())
         }
 
-        fn update_predicted_weather_data(
-            &self,
-            _: i64,
-            _: &serde_json::Value,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
-        }
     }
+
+    let predicted_weather = PredictedWeatherGatewayBundle::resolve(pool.clone())
+        .unwrap_or_else(|e| panic!("predicted weather gateway bundle: {e}"));
 
     AppState {
         sqlite: pool,
         weather_data: Arc::new(NoopWeather),
+        predicted_weather,
         google_client_id: Arc::new(String::new()),
         google_client_secret: Arc::new(String::new()),
         scheduler_auth_token: Arc::new(String::new()),

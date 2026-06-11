@@ -9,6 +9,6 @@ pub fn to_cultivation_plan_weather(
         id: source.plan_id,
         prediction_target_end_date: source.prediction_target_end_date,
         calculated_planning_end_date: source.calculated_planning_end_date,
-        predicted_weather_data: source.predicted_weather_data.clone(),
+        plan_metadata: source.plan_metadata.clone(),
     }
 }

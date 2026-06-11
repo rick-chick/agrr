@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use agrr_adapters_agrr::PlanAllocationCandidatesAgrrDaemonGateway;
-use agrr_adapters_sqlite::{PlanAllocationAdjustReadSqliteGateway, SqlitePool};
+use agrr_adapters_sqlite::PlanAllocationAdjustReadSqliteGateway;
 use agrr_domain::crop::dtos::AddCropCropSnapshot;
 use agrr_domain::cultivation_plan::dtos::CultivationPlanRestAuth;
 use agrr_domain::cultivation_plan::errors::AllocationNoCandidatesError;
@@ -20,9 +20,10 @@ use time::Date;
 
 use crate::adapters::{StderrLogger, SystemClock};
 use crate::adjust_weather_prediction::resolve_weather_for_candidates;
+use crate::state::AppState;
 
 pub struct PlanAllocationCandidatesService<'a> {
-    pool: SqlitePool,
+    state: &'a AppState,
     read_gateway: &'a PlanAllocationAdjustReadSqliteGateway,
     candidates_gateway: &'a PlanAllocationCandidatesAgrrDaemonGateway,
     clock: SystemClock,
@@ -31,12 +32,12 @@ pub struct PlanAllocationCandidatesService<'a> {
 
 impl<'a> PlanAllocationCandidatesService<'a> {
     pub fn new(
-        pool: SqlitePool,
+        state: &'a AppState,
         read_gateway: &'a PlanAllocationAdjustReadSqliteGateway,
         candidates_gateway: &'a PlanAllocationCandidatesAgrrDaemonGateway,
     ) -> Self {
         Self {
-            pool,
+            state,
             read_gateway,
             candidates_gateway,
             clock: SystemClock,
@@ -121,7 +122,7 @@ impl PlanAllocationCandidatesPort for PlanAllocationCandidatesService<'_> {
         ));
 
         let weather_value = resolve_weather_for_candidates(
-            &self.pool,
+            self.state,
             plan_id,
             &snapshot.cultivation_plan_weather_dto,
             target_end_date,

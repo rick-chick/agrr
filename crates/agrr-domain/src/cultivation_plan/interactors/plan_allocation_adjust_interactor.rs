@@ -185,7 +185,6 @@ where
             longitude,
             elevation,
             timezone,
-            None,
         ))
     }
 
@@ -441,7 +440,7 @@ where
 
         let prediction_service = self
             .weather_prediction_gateway
-            .prediction_service(&weather_location, None)
+            .prediction_service(&weather_location)
             .map_err(|e| PlanAllocationAdjustFailure {
                 kind: PlanAllocationAdjustFailure::KIND_WEATHER_FETCH_FAILED.into(),
                 message: self.translator.translate(

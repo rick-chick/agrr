@@ -21,5 +21,4 @@ pub struct FarmWeatherDataAccessContext {
     pub latitude: f64,
     pub longitude: f64,
     pub weather_location_id: Option<i64>,
-    pub predicted_weather_data: Option<serde_json::Value>,
 }

@@ -1,6 +1,6 @@
 pub(crate) mod cultivation_plan_weather;
+pub(crate) mod predicted_weather_metadata;
 pub(crate) mod farm_weather_data_access_input;
-pub(crate) mod farm_weather_prediction;
 pub(crate) mod fetch_weather_job_inputs;
 pub(crate) mod internal_farm_weather;
 pub(crate) mod internal_weather_fetch;
@@ -9,7 +9,7 @@ pub(crate) mod weather_data;
 pub(crate) mod weather_location;
 
 pub use cultivation_plan_weather::CultivationPlanWeather;
-pub use farm_weather_prediction::FarmWeatherPrediction;
+pub use predicted_weather_metadata::{PredictedWeatherMetadata, PredictedWeatherScope};
 pub use farm_weather_data_access_input::{FarmWeatherDataAccessContext, FarmWeatherDataAccessInput};
 pub use fetch_weather_job_inputs::{
     FarmWeatherProgressSnapshot, FetchWeatherDataDiscardOnInput, FetchWeatherDataPerformInput,

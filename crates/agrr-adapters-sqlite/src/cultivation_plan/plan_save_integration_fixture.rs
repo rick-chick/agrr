@@ -174,9 +174,18 @@ CREATE TABLE cultivation_plans (
   planning_start_date TEXT,
   planning_end_date TEXT,
   status TEXT,
-  predicted_weather_data TEXT,
   created_at TEXT,
   updated_at TEXT
+);
+CREATE TABLE predicted_weather_metadata (
+  scope TEXT NOT NULL,
+  scope_id INTEGER NOT NULL,
+  prediction_start_date TEXT NOT NULL,
+  prediction_end_date TEXT NOT NULL,
+  target_end_date TEXT NOT NULL,
+  data_end_date TEXT NOT NULL,
+  generated_at TEXT NOT NULL,
+  PRIMARY KEY (scope, scope_id)
 );
 CREATE TABLE cultivation_plan_fields (
   id INTEGER PRIMARY KEY,

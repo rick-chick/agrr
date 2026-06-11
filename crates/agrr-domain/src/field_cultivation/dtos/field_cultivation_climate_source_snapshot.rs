@@ -1,5 +1,6 @@
-use serde_json::Value;
 use time::Date;
+
+use crate::weather_data::dtos::PredictedWeatherMetadata;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FieldCultivationClimateSourceSnapshot {
@@ -18,6 +19,6 @@ pub struct FieldCultivationClimateSourceSnapshot {
     pub plan_type_public: bool,
     pub prediction_target_end_date: Option<Date>,
     pub calculated_planning_end_date: Option<Date>,
-    pub predicted_weather_data: Option<Value>,
+    pub plan_metadata: Option<PredictedWeatherMetadata>,
     pub plan_crop_crop_id: Option<i64>,
 }

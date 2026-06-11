@@ -1,7 +1,7 @@
 //! Ruby: `Domain::CultivationPlan::Gateways::OptimizationPlanReadGateway`
 
 use crate::cultivation_plan::dtos::OptimizationPlanReadPlanCoreSnapshot;
-use crate::weather_data::dtos::{FarmWeatherPrediction, WeatherLocation};
+use crate::weather_data::dtos::{PredictedWeatherMetadata, WeatherLocation};
 
 /// Ruby: `Domain::CultivationPlan::Gateways::OptimizationPlanReadGateway`
 pub trait OptimizationPlanReadGateway: Send + Sync {
@@ -15,8 +15,8 @@ pub trait OptimizationPlanReadGateway: Send + Sync {
         plan_id: i64,
     ) -> Result<Option<WeatherLocation>, Box<dyn std::error::Error + Send + Sync>>;
 
-    fn find_optimization_farm_weather_by_plan_id(
+    fn find_optimization_plan_metadata_by_plan_id(
         &self,
         plan_id: i64,
-    ) -> Result<Option<FarmWeatherPrediction>, Box<dyn std::error::Error + Send + Sync>>;
+    ) -> Result<Option<PredictedWeatherMetadata>, Box<dyn std::error::Error + Send + Sync>>;
 }

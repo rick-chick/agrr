@@ -10,6 +10,8 @@ use agrr_adapters_sqlite::{
     FieldCultivationWeatherDataFromStorageGateway, UserLookupSqliteGateway,
     WeatherDataGatewayBundle,
 };
+use agrr_domain::weather_data::dtos::PredictedWeatherScope;
+use agrr_domain::weather_data::gateways::PredictedWeatherStoreGateway;
 use agrr_domain::field_cultivation::dtos::{
     FieldCultivationClimateDataInput, FieldCultivationClimateDataOutput,
 };
@@ -70,16 +72,24 @@ impl WeatherPredictionAnchorsPort for FixedAnchors {
     }
 }
 
-struct NoopWeatherPredictionService;
+struct StoreBackedWeatherPredictionService<'a> {
+    store: &'a dyn PredictedWeatherStoreGateway,
+}
 
-impl FieldCultivationWeatherPredictionServiceGateway for NoopWeatherPredictionService {
+impl FieldCultivationWeatherPredictionServiceGateway for StoreBackedWeatherPredictionService<'_> {
     fn predict_for_cultivation_plan(
         &self,
         _weather_location: &Value,
         _farm: &Value,
         plan_weather: &CultivationPlanWeatherInput,
     ) -> Option<Value> {
-        plan_weather.predicted_weather_data.clone()
+        if plan_weather.plan_metadata.is_none() {
+            return None;
+        }
+        self.store
+            .read_payload(PredictedWeatherScope::Plan, plan_weather.id)
+            .ok()
+            .flatten()
     }
 }
 
@@ -172,14 +182,19 @@ async fn run_climate_data(
         FieldCultivationWeatherDataFromStorageGateway::new(&weather_bundle);
     let climate_source = FieldCultivationClimateSourceSqliteGateway::new(db_path);
     let crop_gateway = FieldCultivationCropSqliteGateway::new(pool.clone());
-    let plan_weather = FieldCultivationPlanPredictedWeatherSqliteGateway::new(pool.clone());
+    let plan_weather = FieldCultivationPlanPredictedWeatherSqliteGateway::from_bundle(
+        pool.clone(),
+        &state.predicted_weather,
+    );
     let agrr = FieldCultivationClimateAgrrGateway::from_env();
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let logger = NoopLogger;
     let translator = PassthroughTranslator;
     let clock = SystemClock;
     let anchors = FixedAnchors;
-    let prediction_service = NoopWeatherPredictionService;
+    let prediction_service = StoreBackedWeatherPredictionService {
+        store: state.predicted_weather.store.as_ref(),
+    };
 
     let mut presenter = ClimatePresenter { body: None };
     let mut interactor = FieldCultivationClimateDataInteractor::new(
@@ -197,6 +212,7 @@ async fn run_climate_data(
         &prediction_service,
         &agrr,
         &plan_weather,
+        state.predicted_weather.store.as_ref(),
         &anchors,
         &agrr,
         &clock,

@@ -28,6 +28,25 @@ impl WeatherDataGcsConfig {
             local_root,
         })
     }
+
+    /// Predicted weather payloads always use object storage (GCS or local FS mirror).
+    pub fn from_env_for_predictions() -> Result<Self, WeatherDataGcsError> {
+        let storage = std::env::var("WEATHER_DATA_STORAGE").unwrap_or_else(|_| "active_record".into());
+        if storage == "gcs" {
+            return Self::from_env();
+        }
+        let local_root = std::env::var("WEATHER_DATA_LOCAL_ROOT")
+            .ok()
+            .map(PathBuf::from)
+            .or_else(|| Some(PathBuf::from("storage/weather_gcs_mirror")));
+        Ok(Self {
+            bucket: std::env::var("GCS_WEATHER_DATA_BUCKET")
+                .or_else(|_| std::env::var("GCS_BUCKET"))
+                .unwrap_or_else(|_| "local".into()),
+            use_http: false,
+            local_root,
+        })
+    }
 }
 
 #[derive(Debug, Error)]

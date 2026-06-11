@@ -1,6 +1,5 @@
 //! Ruby: `Domain::WeatherData::Gateways::WeatherDataGateway`
 
-use serde_json::Value;
 use time::Date;
 
 use crate::weather_data::dtos::WeatherData;
@@ -64,10 +63,4 @@ pub trait WeatherDataGateway: Send + Sync {
         elevation: Option<f64>,
         timezone: Option<&str>,
     ) -> Result<WeatherLocationRecord, Box<dyn std::error::Error + Send + Sync>>;
-
-    fn update_predicted_weather_data(
-        &self,
-        weather_location_id: i64,
-        payload: &Value,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }

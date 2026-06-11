@@ -179,13 +179,6 @@ mod tests {
             Ok(WeatherLocationRecord { id: 1 })
         }
 
-        fn update_predicted_weather_data(
-            &self,
-            _: i64,
-            _: &Value,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
-        }
     }
 
     #[test]

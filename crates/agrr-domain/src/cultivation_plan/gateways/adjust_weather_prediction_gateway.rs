@@ -1,7 +1,6 @@
 //! Ruby: `Domain::CultivationPlan::Gateways::AdjustWeatherPredictionGateway`
 
-use crate::weather_data::dtos::{FarmWeatherPrediction, WeatherLocation};
-use crate::weather_data::dtos::CultivationPlanWeather;
+use crate::weather_data::dtos::{CultivationPlanWeather, WeatherLocation};
 use serde_json::Value;
 use time::Date;
 
@@ -24,6 +23,5 @@ pub trait AdjustWeatherPredictionGateway: Send + Sync {
     fn prediction_service(
         &self,
         weather_location: &WeatherLocation,
-        farm: Option<&FarmWeatherPrediction>,
     ) -> Result<Box<dyn WeatherPredictionService>, Box<dyn std::error::Error + Send + Sync>>;
 }

@@ -83,6 +83,7 @@ pub use field_cultivation::{
 pub use pool::SqlitePool;
 pub use weather_data::{
     validate_weather_storage_config, InternalFarmWeatherReadSqliteGateway,
-    InternalWeatherFetchStartSqliteGateway, WeatherDataFarmSqliteGateway,
+    InternalWeatherFetchStartSqliteGateway, PredictedWeatherGatewayBundle,
+    PredictedWeatherMetadataSqliteGateway, WeatherDataFarmSqliteGateway,
     WeatherDataGatewayBundle, WeatherDataSqliteGateway,
 };

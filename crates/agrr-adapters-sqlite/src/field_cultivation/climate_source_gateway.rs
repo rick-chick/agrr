@@ -7,10 +7,12 @@ use agrr_domain::field_cultivation::dtos::{
     FieldCultivationClimateSourceSnapshot, FieldCultivationPlanAccessSnapshot,
     WeatherPredictionTargets,
 };
+use agrr_domain::weather_data::dtos::{PredictedWeatherMetadata, PredictedWeatherScope};
+use agrr_domain::weather_data::helpers::parse_iso_date;
 use agrr_domain::field_cultivation::gateways::{
     FieldCultivationClimateSourceGateway, FieldCultivationGateway,
 };
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 
 /// SQLite-backed climate / API read gateway (narrow I/O).
 pub struct FieldCultivationClimateSourceSqliteGateway {
@@ -46,7 +48,9 @@ impl FieldCultivationClimateSourceGateway for FieldCultivationClimateSourceSqlit
     {
         let conn = self.open_connection()?;
         let row = load_field_cultivation_row(&conn, field_cultivation_id)?;
-        Ok(row.climate_source_snapshot())
+        let mut snapshot = row.climate_source_snapshot();
+        snapshot.plan_metadata = load_plan_metadata(&conn, snapshot.plan_id)?;
+        Ok(snapshot)
     }
 
     fn find_weather_prediction_targets_by_plan_id(
@@ -168,7 +172,6 @@ struct FieldCultivationClimateRow {
     plan_id: i64,
     prediction_target_end_date: Option<time::Date>,
     calculated_planning_end_date: Option<time::Date>,
-    predicted_weather_data: Option<serde_json::Value>,
     plan_crop_crop_id: Option<i64>,
     area: f64,
     cultivation_days: Option<i32>,
@@ -204,7 +207,7 @@ impl FieldCultivationClimateRow {
             plan_type_public: self.plan_type_public,
             prediction_target_end_date: self.prediction_target_end_date,
             calculated_planning_end_date: self.calculated_planning_end_date,
-            predicted_weather_data: self.predicted_weather_data.clone(),
+            plan_metadata: None,
             plan_crop_crop_id: self.plan_crop_crop_id,
         }
     }
@@ -250,7 +253,6 @@ fn load_field_cultivation_row(
           cp.id AS plan_id,
           cp.planning_end_date AS prediction_target_end_date,
           cp.planning_end_date AS calculated_planning_end_date,
-          cp.predicted_weather_data,
           cpc.crop_id AS plan_crop_crop_id,
           fc.area,
           fc.cultivation_days,
@@ -307,9 +309,6 @@ fn load_field_cultivation_row(
         calculated_planning_end_date: parse_optional_date(
             row.get::<_, Option<String>>("calculated_planning_end_date")?,
         ),
-        predicted_weather_data: row
-            .get::<_, Option<String>>("predicted_weather_data")?
-            .and_then(|s| serde_json::from_str(&s).ok()),
         plan_crop_crop_id: row.get("plan_crop_crop_id")?,
         area: row.get("area")?,
         cultivation_days: row.get("cultivation_days")?,
@@ -325,6 +324,34 @@ fn crop_display_name(name: String, variety: Option<String>) -> String {
     } else {
         name
     }
+}
+
+fn load_plan_metadata(
+    conn: &Connection,
+    plan_id: i64,
+) -> Result<Option<PredictedWeatherMetadata>, rusqlite::Error> {
+    conn.query_row(
+        "SELECT prediction_start_date, prediction_end_date, target_end_date, data_end_date, generated_at \
+         FROM predicted_weather_metadata WHERE scope = 'plan' AND scope_id = ?1",
+        [plan_id],
+        |row| {
+            let start: String = row.get(0)?;
+            let end: String = row.get(1)?;
+            let target: String = row.get(2)?;
+            let data_end: String = row.get(3)?;
+            let generated_at: String = row.get(4)?;
+            Ok(PredictedWeatherMetadata {
+                scope: PredictedWeatherScope::Plan,
+                scope_id: plan_id,
+                prediction_start_date: parse_iso_date(&start).ok_or(rusqlite::Error::InvalidQuery)?,
+                prediction_end_date: parse_iso_date(&end).ok_or(rusqlite::Error::InvalidQuery)?,
+                target_end_date: parse_iso_date(&target).ok_or(rusqlite::Error::InvalidQuery)?,
+                data_end_date: parse_iso_date(&data_end).ok_or(rusqlite::Error::InvalidQuery)?,
+                generated_at,
+            })
+        },
+    )
+    .optional()
 }
 
 fn parse_optional_date(raw: Option<String>) -> Option<time::Date> {
@@ -349,8 +376,17 @@ mod tests {
             CREATE TABLE IF NOT EXISTS weather_locations (id INTEGER PRIMARY KEY, timezone TEXT);
             CREATE TABLE IF NOT EXISTS cultivation_plans (
               id INTEGER PRIMARY KEY, plan_type TEXT, user_id INTEGER,
-              farm_id INTEGER, prediction_target_end_date TEXT,
-              calculated_planning_end_date TEXT, predicted_weather_data TEXT
+              farm_id INTEGER, planning_end_date TEXT
+            );
+            CREATE TABLE IF NOT EXISTS predicted_weather_metadata (
+              scope TEXT NOT NULL,
+              scope_id INTEGER NOT NULL,
+              prediction_start_date TEXT NOT NULL,
+              prediction_end_date TEXT NOT NULL,
+              target_end_date TEXT NOT NULL,
+              data_end_date TEXT NOT NULL,
+              generated_at TEXT NOT NULL,
+              PRIMARY KEY (scope, scope_id)
             );
             CREATE TABLE IF NOT EXISTS cultivation_plan_crops (
               id INTEGER PRIMARY KEY, crop_id INTEGER, name TEXT NOT NULL, variety TEXT
@@ -386,8 +422,8 @@ mod tests {
         )
         .unwrap();
         conn.execute(
-            "INSERT INTO cultivation_plans (id, plan_type, user_id, farm_id, prediction_target_end_date, calculated_planning_end_date, predicted_weather_data)
-             VALUES (1, 'private', 10, 1, '2026-12-31', '2026-12-31', NULL)",
+            "INSERT INTO cultivation_plans (id, plan_type, user_id, farm_id, planning_end_date)
+             VALUES (1, 'private', 10, 1, '2026-12-31')",
             [],
         )
         .unwrap();

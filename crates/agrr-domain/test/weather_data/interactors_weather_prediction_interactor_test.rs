@@ -3,9 +3,160 @@
     use crate::shared::ports::ClockPort;
     use time::{Date, Month, OffsetDateTime, Time};
 
-    use crate::weather_data::dtos::{CultivationPlanWeather, WeatherPredictionAnchors};
+    use crate::weather_data::dtos::{
+        CultivationPlanWeather, PredictedWeatherMetadata, PredictedWeatherScope, WeatherPredictionAnchors,
+    };
+    use crate::weather_data::gateways::{
+        PredictedWeatherMetadataGateway, PredictedWeatherStoreGateway,
+    };
+    use crate::weather_data::helpers::build_metadata_from_payload;
     use serde_json::json;
+    use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
+
+    type ScopeKey = (PredictedWeatherScope, i64);
+
+    struct FakePredictedWeatherStore {
+        metadata_gateway: FakeMetadataGateway,
+        store_gateway: FakeStoreGateway,
+    }
+
+    impl FakePredictedWeatherStore {
+        fn new() -> Self {
+            let metadata = Arc::new(Mutex::new(HashMap::new()));
+            let payloads = Arc::new(Mutex::new(HashMap::new()));
+            Self {
+                metadata_gateway: FakeMetadataGateway {
+                    metadata: metadata.clone(),
+                },
+                store_gateway: FakeStoreGateway { payloads },
+            }
+        }
+
+        fn seed(
+            &self,
+            scope: PredictedWeatherScope,
+            scope_id: i64,
+            payload: Value,
+            target_end_date: Date,
+        ) {
+            let generated_at = "1".to_string();
+            let meta = build_metadata_from_payload(
+                scope,
+                scope_id,
+                &payload,
+                target_end_date,
+                generated_at,
+            )
+            .expect("metadata");
+            self.metadata_gateway
+                .metadata
+                .lock()
+                .expect("lock")
+                .insert((scope, scope_id), meta);
+            self.store_gateway
+                .payloads
+                .lock()
+                .expect("lock")
+                .insert((scope, scope_id), payload);
+        }
+
+        fn location_payload(&self) -> Option<Value> {
+            self.store_gateway
+                .payloads
+                .lock()
+                .expect("lock")
+                .get(&(PredictedWeatherScope::Location, 1))
+                .cloned()
+        }
+
+        fn plan_payload(&self, plan_id: i64) -> Option<Value> {
+            self.store_gateway
+                .payloads
+                .lock()
+                .expect("lock")
+                .get(&(PredictedWeatherScope::Plan, plan_id))
+                .cloned()
+        }
+    }
+
+    struct FakeMetadataGateway {
+        metadata: Arc<Mutex<HashMap<ScopeKey, PredictedWeatherMetadata>>>,
+    }
+
+    impl PredictedWeatherMetadataGateway for FakeMetadataGateway {
+        fn find(
+            &self,
+            scope: PredictedWeatherScope,
+            scope_id: i64,
+        ) -> Result<Option<PredictedWeatherMetadata>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self
+                .metadata
+                .lock()
+                .expect("lock")
+                .get(&(scope, scope_id))
+                .cloned())
+        }
+
+        fn upsert(
+            &self,
+            metadata: &PredictedWeatherMetadata,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.metadata
+                .lock()
+                .expect("lock")
+                .insert((metadata.scope, metadata.scope_id), metadata.clone());
+            Ok(())
+        }
+
+        fn copy_plan_metadata(
+            &self,
+            _: i64,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
+
+    struct FakeStoreGateway {
+        payloads: Arc<Mutex<HashMap<ScopeKey, Value>>>,
+    }
+
+    impl PredictedWeatherStoreGateway for FakeStoreGateway {
+        fn read_payload(
+            &self,
+            scope: PredictedWeatherScope,
+            scope_id: i64,
+        ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(self
+                .payloads
+                .lock()
+                .expect("lock")
+                .get(&(scope, scope_id))
+                .cloned())
+        }
+
+        fn write_payload(
+            &self,
+            scope: PredictedWeatherScope,
+            scope_id: i64,
+            payload: &Value,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            self.payloads
+                .lock()
+                .expect("lock")
+                .insert((scope, scope_id), payload.clone());
+            Ok(())
+        }
+
+        fn copy_plan_payload(
+            &self,
+            _: i64,
+            _: i64,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            Ok(())
+        }
+    }
 
     struct FixedClock {
         today: Date,
@@ -48,7 +199,6 @@
 
     struct FakeWeatherDataGateway {
         period_data: Vec<WeatherData>,
-        persisted: Arc<Mutex<Option<(i64, Value)>>>,
     }
 
     impl WeatherDataGateway for FakeWeatherDataGateway {
@@ -116,29 +266,6 @@
             Ok(crate::weather_data::gateways::WeatherLocationRecord { id: 1 })
         }
 
-        fn update_predicted_weather_data(
-            &self,
-            weather_location_id: i64,
-            payload: &Value,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            *self.persisted.lock().expect("lock") = Some((weather_location_id, payload.clone()));
-            Ok(())
-        }
-    }
-
-    struct FakePlanGateway {
-        updated: Arc<Mutex<Option<(i64, Value)>>>,
-    }
-
-    impl CultivationPlanPredictedWeatherGateway for FakePlanGateway {
-        fn update_predicted_weather_data(
-            &self,
-            plan_id: i64,
-            payload: &Value,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            *self.updated.lock().expect("lock") = Some((plan_id, payload.clone()));
-            Ok(())
-        }
     }
 
     struct NoopPredictionGateway;
@@ -199,8 +326,8 @@
         }
     }
 
-    fn weather_location_dto(predicted: Option<Value>) -> WeatherLocation {
-        WeatherLocation::new(1, 35.0, 139.0, Some(0.0), Some("Asia/Tokyo".to_string()), predicted)
+    fn weather_location_dto() -> WeatherLocation {
+        WeatherLocation::new(1, 35.0, 139.0, Some(0.0), Some("Asia/Tokyo".to_string()))
     }
 
     fn plan_weather_dto() -> CultivationPlanWeather {
@@ -223,18 +350,15 @@
                 OffsetDateTime::new_utc(self.today(), Time::MIDNIGHT)
             }
         }
-        let plan_gateway = FakePlanGateway {
-            updated: Arc::new(Mutex::new(None)),
-        };
+        let predicted = FakePredictedWeatherStore::new();
         let weather_gateway = FakeWeatherDataGateway {
             period_data: vec![],
-            persisted: Arc::new(Mutex::new(None)),
         };
         let bad_clock = BadClock;
         let err = WeatherPredictionInteractor::new(
-            weather_location_dto(None),
-            None,
-            &plan_gateway,
+            weather_location_dto(),
+            &predicted.metadata_gateway,
+            &predicted.store_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
             &NoopLogger,
@@ -268,18 +392,17 @@
             "target_end_date": "2025-12-31",
             "model": "lightgbm"
         });
-        let plan_gateway = FakePlanGateway {
-            updated: Arc::new(Mutex::new(None)),
-        };
+        let predicted = FakePredictedWeatherStore::new();
+        let target = Date::from_calendar_date(2025, Month::December, 31).expect("valid");
+        predicted.seed(PredictedWeatherScope::Location, 1, payload.clone(), target);
         let weather_gateway = FakeWeatherDataGateway {
             period_data: vec![],
-            persisted: Arc::new(Mutex::new(None)),
         };
         let clock = fixed_clock();
         let interactor = WeatherPredictionInteractor::new(
-            weather_location_dto(Some(payload.clone())),
-            None,
-            &plan_gateway,
+            weather_location_dto(),
+            &predicted.metadata_gateway,
+            &predicted.store_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
             &NoopLogger,
@@ -290,7 +413,6 @@
 
         let result = interactor.get_existing_prediction(
             Some(Date::from_calendar_date(2025, Month::January, 1).expect("valid")),
-            None,
             None,
         );
         assert!(result.is_some());
@@ -314,19 +436,18 @@
             "prediction_start_date": "2025-01-01",
             "prediction_end_date": "2025-12-31"
         });
-        let plan_weather = CultivationPlanWeather::new(99, None, None, Some(plan_payload.clone()));
-        let plan_gateway = FakePlanGateway {
-            updated: Arc::new(Mutex::new(None)),
-        };
+        let predicted = FakePredictedWeatherStore::new();
+        let target = Date::from_calendar_date(2025, Month::December, 31).expect("valid");
+        predicted.seed(PredictedWeatherScope::Plan, 99, plan_payload.clone(), target);
+        let plan_weather = CultivationPlanWeather::new(99, None, None, None);
         let weather_gateway = FakeWeatherDataGateway {
             period_data: vec![],
-            persisted: Arc::new(Mutex::new(None)),
         };
         let clock = fixed_clock();
         let interactor = WeatherPredictionInteractor::new(
-            weather_location_dto(None),
-            None,
-            &plan_gateway,
+            weather_location_dto(),
+            &predicted.metadata_gateway,
+            &predicted.store_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
             &NoopLogger,
@@ -338,7 +459,6 @@
         let result = interactor.get_existing_prediction(
             Some(Date::from_calendar_date(2025, Month::June, 1).expect("valid")),
             Some(&plan_weather),
-            None,
         );
         assert!(result.is_some());
         assert_eq!(result.expect("result").data, plan_payload);
@@ -372,18 +492,17 @@
             )],
             end_date: Date::from_calendar_date(2026, Month::May, 13).expect("valid"),
         };
-        let plan_gateway = FakePlanGateway {
-            updated: Arc::new(Mutex::new(None)),
-        };
+        let predicted = FakePredictedWeatherStore::new();
+        let target = Date::from_calendar_date(2025, Month::December, 31).expect("valid");
+        predicted.seed(PredictedWeatherScope::Location, 1, cached, target);
         let weather_gateway = FakeWeatherDataGateway {
             period_data: vec![],
-            persisted: Arc::new(Mutex::new(None)),
         };
         let clock = fixed_clock();
         let interactor = WeatherPredictionInteractor::with_test_overrides(
-            weather_location_dto(Some(cached)),
-            None,
-            &plan_gateway,
+            weather_location_dto(),
+            &predicted.metadata_gateway,
+            &predicted.store_gateway,
             &weather_gateway,
             &spy,
             &NoopLogger,
@@ -409,14 +528,9 @@
     #[test]
     fn predict_for_cultivation_plan_persists_built_payload_via_both_gateways() {
         let clock = fixed_clock();
-        let persisted = Arc::new(Mutex::new(None));
-        let updated = Arc::new(Mutex::new(None));
+        let predicted = FakePredictedWeatherStore::new();
         let weather_gateway = FakeWeatherDataGateway {
             period_data: vec![],
-            persisted: persisted.clone(),
-        };
-        let plan_gateway = FakePlanGateway {
-            updated: updated.clone(),
         };
 
         let fake_weather_info = PreparedWeatherInfo {
@@ -441,9 +555,9 @@
         };
 
         let interactor = WeatherPredictionInteractor::with_test_overrides(
-            weather_location_dto(None),
-            None,
-            &plan_gateway,
+            weather_location_dto(),
+            &predicted.metadata_gateway,
+            &predicted.store_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
             &NoopLogger,
@@ -459,14 +573,13 @@
             .predict_for_cultivation_plan(&plan_weather_dto(), None)
             .expect("ok");
 
-        let location_payload = persisted.lock().expect("lock").clone().expect("persisted").1;
+        let location_payload = predicted.location_payload().expect("persisted");
         assert_eq!(location_payload["model"], "lightgbm");
         assert_eq!(location_payload["prediction_start_date"], "2025-01-01");
         assert_eq!(location_payload["target_end_date"], "2025-12-31");
 
-        let plan_update = updated.lock().expect("lock").clone().expect("updated");
-        assert_eq!(plan_update.0, 50);
-        assert_eq!(plan_update.1, location_payload);
+        let plan_payload = predicted.plan_payload(50).expect("updated");
+        assert_eq!(plan_payload, location_payload);
     }
 
     #[test]
@@ -501,18 +614,15 @@
             ]
         });
 
-        let plan_gateway = FakePlanGateway {
-            updated: Arc::new(Mutex::new(None)),
-        };
+        let predicted = FakePredictedWeatherStore::new();
         let weather_gateway = FakeWeatherDataGateway {
             period_data: vec![],
-            persisted: Arc::new(Mutex::new(None)),
         };
 
         let interactor = WeatherPredictionInteractor::with_test_overrides(
-            weather_location_dto(None),
-            None,
-            &plan_gateway,
+            weather_location_dto(),
+            &predicted.metadata_gateway,
+            &predicted.store_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
             &NoopLogger,
@@ -602,28 +712,19 @@
             Ok(crate::weather_data::gateways::WeatherLocationRecord { id: 1 })
         }
 
-        fn update_predicted_weather_data(
-            &self,
-            _: i64,
-            _: &serde_json::Value,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
-        }
     }
 
     #[test]
     fn predict_surfaces_gateway_storage_error_detail() {
-        let plan_gateway = FakePlanGateway {
-            updated: Arc::new(Mutex::new(None)),
-        };
+        let predicted = FakePredictedWeatherStore::new();
         let weather_gateway = FailingWeatherDataGateway {
             message: "GCS HTTP 503: backend timeout".into(),
         };
         let clock = fixed_clock();
         let interactor = WeatherPredictionInteractor::new(
-            weather_location_dto(None),
-            None,
-            &plan_gateway,
+            weather_location_dto(),
+            &predicted.metadata_gateway,
+            &predicted.store_gateway,
             &weather_gateway,
             &NoopPredictionGateway,
             &NoopLogger,

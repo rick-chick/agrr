@@ -5,7 +5,6 @@ use agrr_domain::shared::exceptions::RecordNotFoundError;
 use agrr_domain::weather_data::dtos::FarmWeatherDataAccessContext;
 use agrr_domain::weather_data::gateways::{FetchWeatherFarmEntity, WeatherDataFarmGateway};
 use rusqlite::params;
-use serde_json::Value;
 
 pub struct WeatherDataFarmSqliteGateway {
     pool: SqlitePool,
@@ -18,14 +17,12 @@ impl WeatherDataFarmSqliteGateway {
 }
 
 fn context_from_farm_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<FarmWeatherDataAccessContext> {
-    let predicted: Option<String> = row.get(5)?;
     Ok(FarmWeatherDataAccessContext {
         farm_id: row.get(0)?,
         display_name: row.get::<_, String>(1)?,
         latitude: row.get(2)?,
         longitude: row.get(3)?,
         weather_location_id: row.get(4)?,
-        predicted_weather_data: predicted.and_then(|s| serde_json::from_str(&s).ok()),
     })
 }
 
@@ -38,7 +35,7 @@ impl WeatherDataFarmGateway for WeatherDataFarmSqliteGateway {
         self.pool
             .with_read(|conn| {
                 conn.query_row(
-                    "SELECT id, name, latitude, longitude, weather_location_id, predicted_weather_data \
+                    "SELECT id, name, latitude, longitude, weather_location_id \
                      FROM farms WHERE id = ?1 AND user_id = ?2",
                     params![farm_id, user_id],
                     context_from_farm_row,
@@ -54,21 +51,13 @@ impl WeatherDataFarmGateway for WeatherDataFarmSqliteGateway {
         self.pool
             .with_read(|conn| {
                 conn.query_row(
-                    "SELECT id, name, latitude, longitude, weather_location_id, predicted_weather_data \
+                    "SELECT id, name, latitude, longitude, weather_location_id \
                      FROM farms WHERE id = ?1",
                     params![farm_id],
                     context_from_farm_row,
                 )
             })
             .ok()
-    }
-
-    fn update_predicted_weather_data(
-        &self,
-        _farm_id: i64,
-        _payload: Option<Value>,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        Ok(())
     }
 
     fn find_by_id(

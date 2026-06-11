@@ -15,6 +15,8 @@ use crate::field_cultivation::gateways::{
     FieldCultivationPredictionGateway, FieldCultivationWeatherDataGateway,
     FieldCultivationWeatherPredictionServiceGateway,
 };
+use crate::weather_data::dtos::PredictedWeatherScope;
+use crate::weather_data::gateways::PredictedWeatherStoreGateway;
 use crate::field_cultivation::interactors::plan_field_cultivation_authorization::{
     assert_field_cultivation_plan_access, assert_public_field_cultivation_plan_access,
 };
@@ -37,7 +39,7 @@ use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::user_lookup_gateway::UserLookupGateway;
 use crate::shared::policies::policy_permission_denied::PolicyPermissionDenied;
 use crate::shared::ports::{ClockPort, LoggerPort, TranslatorPort};
-use crate::shared::validation::{present, to_array_value};
+use crate::shared::validation::to_array_value;
 use std::collections::BTreeMap;
 
 pub struct FieldCultivationClimateDataInteractor<'a> {
@@ -51,6 +53,7 @@ pub struct FieldCultivationClimateDataInteractor<'a> {
     weather_prediction_gateway: &'a dyn FieldCultivationWeatherPredictionServiceGateway,
     prediction_gateway: &'a dyn FieldCultivationPredictionGateway,
     plan_predicted_weather_gateway: &'a dyn FieldCultivationPlanPredictedWeatherGateway,
+    predicted_weather_store_gateway: &'a dyn PredictedWeatherStoreGateway,
     anchors_resolver: &'a dyn WeatherPredictionAnchorsPort,
     climate_progress_gateway: &'a dyn FieldCultivationClimateProgressGateway,
     clock: &'a dyn ClockPort,
@@ -70,6 +73,7 @@ impl<'a> FieldCultivationClimateDataInteractor<'a> {
         weather_prediction_gateway: &'a dyn FieldCultivationWeatherPredictionServiceGateway,
         prediction_gateway: &'a dyn FieldCultivationPredictionGateway,
         plan_predicted_weather_gateway: &'a dyn FieldCultivationPlanPredictedWeatherGateway,
+        predicted_weather_store_gateway: &'a dyn PredictedWeatherStoreGateway,
         anchors_resolver: &'a dyn WeatherPredictionAnchorsPort,
         climate_progress_gateway: &'a dyn FieldCultivationClimateProgressGateway,
         clock: &'a dyn ClockPort,
@@ -86,6 +90,7 @@ impl<'a> FieldCultivationClimateDataInteractor<'a> {
             weather_prediction_gateway,
             prediction_gateway,
             plan_predicted_weather_gateway,
+            predicted_weather_store_gateway,
             anchors_resolver,
             climate_progress_gateway,
             clock,
@@ -354,9 +359,7 @@ fn merge_cached_prediction_with_observed(
         "✅ [FieldCultivationClimateDataInteractor] Using saved prediction for CultivationPlan#{}, merging with observed data",
         context.plan_id
     ));
-    let cached = context
-        .predicted_weather_data
-        .clone()
+    let cached = load_plan_prediction_payload(interactor, context)?
         .unwrap_or(json!({}));
     let decision = resolve_observed_merge_range(
         Some(context.start_date),
@@ -464,21 +467,33 @@ fn fetch_fallback_weather_payload(
     }
 }
 
+fn load_plan_prediction_payload(
+    interactor: &FieldCultivationClimateDataInteractor<'_>,
+    context: &crate::field_cultivation::dtos::FieldCultivationClimateContextSnapshot,
+) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+    if context.plan_metadata.is_none() {
+        return Ok(None);
+    }
+    interactor
+        .predicted_weather_store_gateway
+        .read_payload(PredictedWeatherScope::Plan, context.plan_id)
+}
+
 fn persist_predicted_weather_if_absent(
     interactor: &FieldCultivationClimateDataInteractor<'_>,
     source: &FieldCultivationClimateSourceSnapshot,
     weather_payload: &Value,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    if source
-        .predicted_weather_data
-        .as_ref()
-        .is_some_and(present)
-    {
+    if source.plan_metadata.is_some() {
         return Ok(());
     }
+    let target_end_date = source
+        .prediction_target_end_date
+        .or(source.calculated_planning_end_date)
+        .unwrap_or_else(|| interactor.clock.today());
     interactor
         .plan_predicted_weather_gateway
-        .update_predicted_weather_data(source.plan_id, weather_payload.clone())?;
+        .persist_plan_prediction(source.plan_id, weather_payload, target_end_date)?;
     interactor.logger.info(&format!(
         "💾 [FieldCultivationClimateDataInteractor] Saved prediction data to CultivationPlan#{}",
         source.plan_id

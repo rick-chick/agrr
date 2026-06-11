@@ -218,20 +218,6 @@ impl CultivationPlanOptimizationGateway for CultivationPlanOptimizationSqliteGat
         })
     }
 
-    fn update_predicted_weather_data(
-        &self,
-        cultivation_plan_id: i64,
-        payload: Value,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let json = payload.to_string();
-        self.pool.with_write_box(|conn| {
-            conn.execute(
-                "UPDATE cultivation_plans SET predicted_weather_data = ?1, updated_at = datetime('now') WHERE id = ?2",
-                params![json, cultivation_plan_id],
-            )?;
-            Ok(())
-        })
-    }
 }
 
 #[cfg(test)]

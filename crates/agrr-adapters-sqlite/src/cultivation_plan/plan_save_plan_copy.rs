@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use crate::pool::SqlitePool;
+use crate::weather_data::PredictedWeatherGatewayBundle;
 use agrr_domain::cultivation_plan::calculators::planning_date_calculator::{
     calculate_plan_year_from_cultivations, calculate_planning_dates_for_year,
     calculate_planning_dates_from_cultivations, CultivationPeriod,
@@ -44,20 +45,16 @@ impl<'a> PlanSavePlanCopy<'a> {
         farm_id: i64,
     ) -> Result<i64, Box<dyn std::error::Error + Send + Sync>> {
         let plan_id = self.ctx.session_data.plan_id;
-        self.pool.with_write_box(|conn| {
-            let (total_area, plan_year, predicted_weather, reference_farm_name): (
-                f64,
-                Option<i32>,
-                Option<String>,
-                Option<String>,
-            ) = conn.query_row(
-                "SELECT cp.total_area, cp.plan_year, cp.predicted_weather_data, f.name \
-                 FROM cultivation_plans cp \
-                 INNER JOIN farms f ON f.id = cp.farm_id \
-                 WHERE cp.id = ?1",
-                params![plan_id],
-                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
-            )?;
+        let new_plan_id = self.pool.with_write_box(|conn| {
+            let (total_area, plan_year, reference_farm_name): (f64, Option<i32>, Option<String>) =
+                conn.query_row(
+                    "SELECT cp.total_area, cp.plan_year, f.name \
+                     FROM cultivation_plans cp \
+                     INNER JOIN farms f ON f.id = cp.farm_id \
+                     WHERE cp.id = ?1",
+                    params![plan_id],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                )?;
 
             let mut periods: Vec<CultivationPeriod> = Vec::new();
             let mut stmt = conn.prepare(
@@ -106,8 +103,8 @@ impl<'a> PlanSavePlanCopy<'a> {
 
             conn.execute(
                 "INSERT INTO cultivation_plans (farm_id, user_id, total_area, plan_type, plan_year, plan_name, \
-                 planning_start_date, planning_end_date, status, predicted_weather_data, created_at, updated_at) \
-                 VALUES (?1, ?2, ?3, 'private', ?4, ?5, ?6, ?7, 'pending', ?8, datetime('now'), datetime('now'))",
+                 planning_start_date, planning_end_date, status, created_at, updated_at) \
+                 VALUES (?1, ?2, ?3, 'private', ?4, ?5, ?6, ?7, 'pending', datetime('now'), datetime('now'))",
                 params![
                     farm_id,
                     self.ctx.user_id,
@@ -116,11 +113,17 @@ impl<'a> PlanSavePlanCopy<'a> {
                     plan_name,
                     planning_start,
                     planning_end,
-                    predicted_weather,
                 ],
             )?;
             Ok(conn.last_insert_rowid())
-        })
+        })?;
+
+        let predicted = PredictedWeatherGatewayBundle::resolve(self.pool.clone())?;
+        predicted
+            .metadata
+            .copy_plan_metadata(plan_id, new_plan_id)?;
+        predicted.store.copy_plan_payload(plan_id, new_plan_id)?;
+        Ok(new_plan_id)
     }
 
     pub fn establish_master_data_relationships(&self) {}

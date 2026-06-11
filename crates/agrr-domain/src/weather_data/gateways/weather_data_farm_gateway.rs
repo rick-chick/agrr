@@ -1,7 +1,5 @@
 //! Farm gateway methods used by weather_data interactors.
 
-use serde_json::Value;
-
 use crate::shared::exceptions::RecordNotFoundError;
 use crate::weather_data::dtos::FarmWeatherDataAccessContext;
 
@@ -23,12 +21,6 @@ pub trait WeatherDataFarmGateway: Send + Sync {
         &self,
         farm_id: i64,
     ) -> Option<FarmWeatherDataAccessContext>;
-
-    fn update_predicted_weather_data(
-        &self,
-        farm_id: i64,
-        payload: Option<Value>,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     fn find_by_id(
         &self,

@@ -6,7 +6,6 @@ use agrr_domain::weather_data::gateways::{
     WeatherDataGateway, WeatherDataStorageError, WeatherLocationRecord,
 };
 use rusqlite::{params, OptionalExtension};
-use serde_json::Value;
 use time::Date;
 
 pub struct WeatherDataSqliteGateway {
@@ -256,21 +255,5 @@ impl WeatherDataGateway for WeatherDataSqliteGateway {
             let id = conn.last_insert_rowid();
             Ok(WeatherLocationRecord { id })
         })
-    }
-
-    fn update_predicted_weather_data(
-        &self,
-        weather_location_id: i64,
-        payload: &Value,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let json = serde_json::to_string(payload)?;
-        self.pool.with_write(|conn| {
-            conn.execute(
-                "UPDATE weather_locations SET predicted_weather_data = ?1, updated_at = datetime('now') WHERE id = ?2",
-                params![json, weather_location_id],
-            )?;
-            Ok(())
-        })?;
-        Ok(())
     }
 }

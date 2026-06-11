@@ -20,7 +20,7 @@
             plan_type_public: false,
             prediction_target_end_date: None,
             calculated_planning_end_date: None,
-            predicted_weather_data: None,
+            plan_metadata: None,
             plan_crop_crop_id: Some(2),
         };
         let crop = ClimateCropEntity {

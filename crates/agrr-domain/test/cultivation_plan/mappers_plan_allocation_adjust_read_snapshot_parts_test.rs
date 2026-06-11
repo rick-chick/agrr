@@ -152,7 +152,6 @@
             135.0,
             Some(10.0),
             Some("Asia/Tokyo".into()),
-            None,
         );
 
         let facts = PlanAllocationAdjustReadSnapshotParts::weather_location_facts(&wl);

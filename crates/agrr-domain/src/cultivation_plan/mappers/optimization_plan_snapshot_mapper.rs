@@ -1,10 +1,9 @@
 //! Ruby: `Domain::CultivationPlan::Mappers::OptimizationPlanSnapshotMapper`
 
-use serde_json::Value;
 use time::Date;
 
 use crate::cultivation_plan::dtos::OptimizationPlanSnapshot;
-use crate::weather_data::dtos::{FarmWeatherPrediction, WeatherLocation};
+use crate::weather_data::dtos::{PredictedWeatherMetadata, WeatherLocation};
 
 pub fn to_snapshot(
     plan_id: i64,
@@ -12,11 +11,10 @@ pub fn to_snapshot(
     calculated_planning_start_date: Option<Date>,
     calculated_planning_end_date: Option<Date>,
     prediction_target_end_date: Option<Date>,
-    predicted_weather_data: Option<Value>,
+    plan_metadata: Option<PredictedWeatherMetadata>,
     total_area: Option<f64>,
     weather_location_present: bool,
     weather_location: Option<WeatherLocation>,
-    farm_weather: Option<FarmWeatherPrediction>,
 ) -> OptimizationPlanSnapshot {
     OptimizationPlanSnapshot::new(
         plan_id,
@@ -24,11 +22,10 @@ pub fn to_snapshot(
         calculated_planning_start_date,
         calculated_planning_end_date,
         prediction_target_end_date,
-        predicted_weather_data,
+        plan_metadata,
         total_area,
         weather_location_present,
         weather_location,
-        farm_weather,
     )
 }
 

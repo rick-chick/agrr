@@ -25,28 +25,12 @@ pub struct FarmWeatherPeriod {
     pub end_date: Date,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct FarmWeatherPredictionPeriod {
-    pub start_date: String,
-    pub end_date: String,
-}
-
 /// Ruby: `Domain::WeatherData::Ports::FarmWeatherDataAccessOutputPort`
 pub trait FarmWeatherDataAccessOutputPort {
     fn on_index_success(
         &mut self,
         farm: FarmWeatherFarmSummary,
         period: FarmWeatherPeriod,
-        data: Vec<FarmWeatherIndexRow>,
-    );
-
-    fn on_prediction_cached_success(
-        &mut self,
-        farm: FarmWeatherFarmSummary,
-        period: FarmWeatherPredictionPeriod,
-        is_prediction: bool,
-        predicted_at: Option<String>,
-        model: Option<String>,
         data: Vec<FarmWeatherIndexRow>,
     );
 

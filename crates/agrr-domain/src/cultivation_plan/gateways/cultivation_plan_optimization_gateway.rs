@@ -3,7 +3,6 @@
 use crate::cultivation_plan::dtos::{
     CultivationPlanCropWithAgrr, FieldCultivationCreateAttrs, OptimizationApplyAttrs,
 };
-use serde_json::Value;
 
 pub trait CultivationPlanOptimizationGateway: Send + Sync {
     fn field_cultivations_present(
@@ -52,11 +51,5 @@ pub trait CultivationPlanOptimizationGateway: Send + Sync {
         &self,
         plan_id: i64,
         attrs: OptimizationApplyAttrs,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
-
-    fn update_predicted_weather_data(
-        &self,
-        cultivation_plan_id: i64,
-        payload: Value,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }

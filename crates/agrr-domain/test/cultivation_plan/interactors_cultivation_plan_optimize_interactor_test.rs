@@ -8,7 +8,7 @@ use crate::cultivation_plan::gateways::{
 };
 use crate::cultivation_plan::ports::CultivationPlanOptimizeAdvancePhasePort;
 use crate::shared::ports::{ClockPort, LoggerPort};
-use crate::weather_data::dtos::{FarmWeatherPrediction, WeatherLocation};
+use crate::weather_data::dtos::WeatherLocation;
 use time::{Date, Month, OffsetDateTime};
 
 struct FixedClock(Date);
@@ -94,13 +94,6 @@ impl CultivationPlanOptimizationGateway for StubOptimizationGateway {
         Ok(())
     }
 
-    fn update_predicted_weather_data(
-        &self,
-        _cultivation_plan_id: i64,
-        _payload: serde_json::Value,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        Ok(())
-    }
 }
 
 struct SilentLogger;
@@ -159,10 +152,13 @@ impl OptimizationPlanReadGateway for PanicRead {
         panic!("not used");
     }
 
-    fn find_optimization_farm_weather_by_plan_id(
+    fn find_optimization_plan_metadata_by_plan_id(
         &self,
         _: i64,
-    ) -> Result<Option<FarmWeatherPrediction>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<
+        Option<crate::weather_data::dtos::PredictedWeatherMetadata>,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
         panic!("not used");
     }
 }
@@ -184,7 +180,6 @@ impl AdjustWeatherPredictionGateway for PanicWeather {
     fn prediction_service(
         &self,
         _: &WeatherLocation,
-        _: Option<&FarmWeatherPrediction>,
     ) -> Result<Box<dyn crate::cultivation_plan::gateways::WeatherPredictionService>, Box<dyn std::error::Error + Send + Sync>>
     {
         panic!("not used");
@@ -202,7 +197,7 @@ fn calculate_planning_period_uses_prediction_target_end_for_public_plan_without_
         calculated_planning_start_date: None,
         calculated_planning_end_date: None,
         prediction_target_end_date: Some(target_end),
-        predicted_weather_data: None,
+        plan_metadata: None,
         total_area: Some(0.0),
         weather_location_present: true,
         weather_location_input: Some(WeatherLocation::new(
@@ -211,9 +206,7 @@ fn calculate_planning_period_uses_prediction_target_end_for_public_plan_without_
             0.0,
             Some(0.0),
             Some("UTC".into()),
-            None,
         )),
-        farm_weather_input: None,
     };
     let gateway = StubOptimizationGateway {
         field_cultivations_with_allocate_results_present: false,

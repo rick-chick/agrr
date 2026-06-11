@@ -10,8 +10,10 @@ use agrr_domain::cultivation_plan::dtos::{
 use agrr_domain::cultivation_plan::gateways::PlanAllocationAdjustReadGateway;
 use agrr_domain::cultivation_plan::mappers::PlanAllocationAdjustReadSnapshotParts;
 use agrr_domain::field_cultivation::dtos::WeatherPredictionTargets;
-use agrr_domain::weather_data::dtos::{CultivationPlanWeather, WeatherLocation};
-use agrr_domain::weather_data::gateways::WeatherDataGateway;
+use agrr_domain::weather_data::dtos::{
+    CultivationPlanWeather, PredictedWeatherScope, WeatherLocation,
+};
+use agrr_domain::weather_data::gateways::{PredictedWeatherMetadataGateway, WeatherDataGateway};
 use rusqlite::{params, OptionalExtension};
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -21,12 +23,21 @@ use time::Date;
 pub struct PlanAllocationAdjustReadSqliteGateway {
     pool: SqlitePool,
     weather_data: Arc<dyn WeatherDataGateway>,
+    metadata: Arc<dyn PredictedWeatherMetadataGateway>,
 }
 
 impl PlanAllocationAdjustReadSqliteGateway {
     /// Ruby: `PlanAllocationAdjustReadActiveRecordGateway.new(weather_data_gateway: ...)`
-    pub fn new(pool: SqlitePool, weather_data: Arc<dyn WeatherDataGateway>) -> Self {
-        Self { pool, weather_data }
+    pub fn new(
+        pool: SqlitePool,
+        weather_data: Arc<dyn WeatherDataGateway>,
+        metadata: Arc<dyn PredictedWeatherMetadataGateway>,
+    ) -> Self {
+        Self {
+            pool,
+            weather_data,
+            metadata,
+        }
     }
 }
 
@@ -37,10 +48,6 @@ fn parse_date(s: &str) -> Option<Date> {
     } else {
         None
     }
-}
-
-fn parse_json_opt(raw: Option<String>) -> Option<Value> {
-    raw.and_then(|s| serde_json::from_str(&s).ok())
 }
 
 impl PlanAllocationAdjustReadGateway for PlanAllocationAdjustReadSqliteGateway {
@@ -59,7 +66,6 @@ impl PlanAllocationAdjustReadGateway for PlanAllocationAdjustReadSqliteGateway {
                     "SELECT cp.id, cp.planning_start_date, cp.planning_end_date, \
                      cp.planning_end_date AS prediction_target_end_date, \
                      cp.planning_end_date AS calculated_planning_end_date, \
-                     cp.predicted_weather_data, \
                      f.id, f.name, f.latitude, f.longitude, \
                      wl.id, wl.latitude, wl.longitude, wl.elevation, wl.timezone \
                      FROM cultivation_plans cp \
@@ -74,16 +80,15 @@ impl PlanAllocationAdjustReadGateway for PlanAllocationAdjustReadSqliteGateway {
                             row.get::<_, Option<String>>(2)?,
                             row.get::<_, Option<String>>(3)?,
                             row.get::<_, Option<String>>(4)?,
-                            row.get::<_, Option<String>>(5)?,
-                            row.get::<_, Option<i64>>(6)?,
-                            row.get::<_, Option<String>>(7)?,
+                            row.get::<_, Option<i64>>(5)?,
+                            row.get::<_, Option<String>>(6)?,
+                            row.get::<_, Option<f64>>(7)?,
                             row.get::<_, Option<f64>>(8)?,
-                            row.get::<_, Option<f64>>(9)?,
-                            row.get::<_, Option<i64>>(10)?,
+                            row.get::<_, Option<i64>>(9)?,
+                            row.get::<_, Option<f64>>(10)?,
                             row.get::<_, Option<f64>>(11)?,
                             row.get::<_, Option<f64>>(12)?,
-                            row.get::<_, Option<f64>>(13)?,
-                            row.get::<_, Option<String>>(14)?,
+                            row.get::<_, Option<String>>(13)?,
                         ))
                     },
                 )
@@ -126,7 +131,6 @@ impl PlanAllocationAdjustReadGateway for PlanAllocationAdjustReadSqliteGateway {
                 planning_end_date,
                 prediction_target_end_date,
                 calculated_planning_end_date,
-                predicted_weather_data,
                 _farm_id,
                 farm_name,
                 farm_lat,
@@ -142,7 +146,7 @@ impl PlanAllocationAdjustReadGateway for PlanAllocationAdjustReadSqliteGateway {
         let planning_end = planning_end_date.as_deref().and_then(parse_date);
         let prediction_target = prediction_target_end_date.as_deref().and_then(parse_date);
         let calculated_end = calculated_planning_end_date.as_deref().and_then(parse_date);
-        let predicted_json = parse_json_opt(predicted_weather_data);
+        let plan_metadata = self.metadata.find(PredictedWeatherScope::Plan, plan_id)?;
 
         let weather_location = match (wl_id, wl_lat, wl_lon) {
                 (Some(id), Some(lat), Some(lon)) => {
@@ -152,7 +156,6 @@ impl PlanAllocationAdjustReadGateway for PlanAllocationAdjustReadSqliteGateway {
                         lon,
                         wl_elevation,
                         wl_timezone,
-                        None,
                     );
                     let facts = PlanAllocationAdjustReadSnapshotParts::weather_location_facts(&wl);
                     Some((wl, facts))
@@ -201,7 +204,7 @@ impl PlanAllocationAdjustReadGateway for PlanAllocationAdjustReadSqliteGateway {
                 plan_id,
                 prediction_target,
                 calculated_end,
-                predicted_json,
+                plan_metadata,
             ),
             weather_prediction_targets: WeatherPredictionTargets {
                 weather_location: weather_location_json.clone().unwrap_or(Value::Null),
@@ -468,7 +471,10 @@ mod list_historical_weather_rows_tests {
     fn list_historical_weather_rows_reads_sqlite_when_active_record_gateway() {
         let (pool, location_id) = temp_pool_with_weather_row();
         let weather = Arc::new(WeatherDataSqliteGateway::new(pool.clone()));
-        let gw = PlanAllocationAdjustReadSqliteGateway::new(pool, weather);
+        let metadata = Arc::new(crate::weather_data::PredictedWeatherMetadataSqliteGateway::new(
+            pool.clone(),
+        ));
+        let gw = PlanAllocationAdjustReadSqliteGateway::new(pool, weather, metadata);
         let start = Date::from_calendar_date(2024, Month::June, 1).unwrap();
         let end = Date::from_calendar_date(2024, Month::June, 30).unwrap();
         let rows = gw
@@ -492,7 +498,10 @@ mod list_historical_weather_rows_tests {
             let weather: Arc<dyn WeatherDataGateway> = Arc::new(
                 GcsBulkWeatherGateway::from_local_env().expect("gcs gateway"),
             );
-            let gw = PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather);
+            let metadata = Arc::new(crate::weather_data::PredictedWeatherMetadataSqliteGateway::new(
+                pool.clone(),
+            ));
+            let gw = PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), weather, metadata);
             let start = Date::from_calendar_date(2024, Month::June, 1).unwrap();
             let end = Date::from_calendar_date(2024, Month::June, 30).unwrap();
             let rows = gw

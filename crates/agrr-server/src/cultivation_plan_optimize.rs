@@ -50,11 +50,14 @@ pub fn run_cultivation_plan_optimize_interactor(
     channel: &str,
 ) -> Result<(), String> {
     let pool = state.sqlite.clone();
-    let read = OptimizationPlanReadSqliteGateway::new(pool.clone());
+    let read = OptimizationPlanReadSqliteGateway::new(
+        pool.clone(),
+        state.predicted_weather.metadata.clone(),
+    );
     let optimization = CultivationPlanOptimizationSqliteGateway::new(pool.clone());
     let rules = InteractionRulePlanReadSqliteGateway::new(pool.clone());
     let allocate = PlanAllocationAllocateAgrrDaemonGateway::from_env();
-    let weather = SqliteAdjustWeatherPredictionGateway::new(pool);
+    let weather = SqliteAdjustWeatherPredictionGateway::from_state(state);
     let advance = ChainOptimizeAdvance { state };
     let logger = NoopLogger;
     let clock = SystemClock;

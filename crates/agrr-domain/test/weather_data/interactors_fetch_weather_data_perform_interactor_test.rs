@@ -121,13 +121,6 @@ use serde_json::json;
             Ok(WeatherLocationRecord { id: 1 })
         }
 
-        fn update_predicted_weather_data(
-            &self,
-            _: i64,
-            _: &Value,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
-        }
     }
 
     struct MockFarmGateway {
@@ -149,14 +142,6 @@ use serde_json::json;
             _: i64,
         ) -> Option<crate::weather_data::dtos::FarmWeatherDataAccessContext> {
             None
-        }
-
-        fn update_predicted_weather_data(
-            &self,
-            _: i64,
-            _: Option<Value>,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
         }
 
         fn find_by_id(&self, _: i64) -> Result<FetchWeatherFarmEntity, RecordNotFoundError> {

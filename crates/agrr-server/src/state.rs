@@ -5,7 +5,7 @@ use crate::locale_catalog::{locales_dir_from_env, LocaleCatalog};
 use crate::locale_translator::LocaleTranslator;
 use crate::request_locale::locale_from_headers;
 use crate::runtime_env;
-use agrr_adapters_sqlite::{SqlitePool, WeatherDataGatewayBundle};
+use agrr_adapters_sqlite::{PredictedWeatherGatewayBundle, SqlitePool, WeatherDataGatewayBundle};
 use agrr_domain::weather_data::gateways::WeatherDataGateway;
 use axum::http::HeaderMap;
 use std::sync::Arc;
@@ -15,6 +15,8 @@ pub struct AppState {
     pub sqlite: SqlitePool,
     /// Ruby: `CompositionRoot#weather_data_gateway` — shared for adjust read + internal weather APIs.
     pub weather_data: Arc<dyn WeatherDataGateway>,
+    /// Predicted weather metadata (SQLite) + payload store (GCS/local FS).
+    pub predicted_weather: PredictedWeatherGatewayBundle,
     pub google_client_id: Arc<String>,
     pub google_client_secret: Arc<String>,
     pub scheduler_auth_token: Arc<String>,
@@ -49,6 +51,8 @@ impl AppState {
             WeatherDataGatewayBundle::resolve(sqlite.clone())
                 .unwrap_or_else(|e| panic!("weather data gateway bundle: {e}")),
         );
+        let predicted_weather = PredictedWeatherGatewayBundle::resolve(sqlite.clone())
+            .unwrap_or_else(|e| panic!("predicted weather gateway bundle: {e}"));
         let locales_dir = locales_dir_from_env();
         let locale_catalog = Arc::new(
             LocaleCatalog::load_from_dir(&locales_dir).unwrap_or_else(|e| {
@@ -61,6 +65,7 @@ impl AppState {
         Self {
             sqlite,
             weather_data,
+            predicted_weather,
             locale_catalog,
             google_client_id: Arc::new(std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default()),
             google_client_secret: Arc::new(

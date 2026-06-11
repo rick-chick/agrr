@@ -199,17 +199,21 @@ where
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let plan_crop_gateway = CultivationPlanPlanCropSqliteGateway::new(pool.clone());
     let read_gateway =
-        PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), state.weather_data.clone());
+        PlanAllocationAdjustReadSqliteGateway::new(
+            pool.clone(),
+            state.weather_data.clone(),
+            state.predicted_weather.metadata.clone(),
+        );
     let candidates_agrr = PlanAllocationCandidatesAgrrDaemonGateway::from_env();
     let candidates_service = PlanAllocationCandidatesService::new(
-        pool.clone(),
+        state,
         &read_gateway,
         &candidates_agrr,
     );
     let adjust_sink = AddCropAdjustResultCollector::new();
     let mut adjust_output = adjust_sink.output_adapter();
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
-    let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
+    let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::from_state(&state);
     let events = NoopOptimizationEventsGateway;
     let logger = StderrLogger;
     let translator = PassthroughTranslator;
@@ -628,9 +632,13 @@ pub(crate) async fn run_adjust_plan(
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let read_gateway =
-        PlanAllocationAdjustReadSqliteGateway::new(pool.clone(), state.weather_data.clone());
+        PlanAllocationAdjustReadSqliteGateway::new(
+            pool.clone(),
+            state.weather_data.clone(),
+            state.predicted_weather.metadata.clone(),
+        );
     let adjust_gateway = PlanAllocationAdjustAgrrDaemonGateway::from_env();
-    let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::new(pool.clone());
+    let weather_prediction_gateway = SqliteAdjustWeatherPredictionGateway::from_state(&state);
     let events = NoopOptimizationEventsGateway;
     let logger = StderrLogger;
     let translator = PassthroughTranslator;

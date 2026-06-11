@@ -113,16 +113,15 @@ impl<'a> CultivationPlanOptimizeInteractor<'a> {
                 }) as Box<dyn std::error::Error + Send + Sync>
             })?;
 
-        let prediction_service = self.weather_prediction_gateway.prediction_service(
-            weather_location,
-            snapshot.farm_weather_input.as_ref(),
-        )?;
+        let prediction_service = self
+            .weather_prediction_gateway
+            .prediction_service(weather_location)?;
 
         let plan_weather = CultivationPlanWeather::new(
             snapshot.plan_id,
             snapshot.prediction_target_end_date,
             snapshot.calculated_planning_end_date,
-            snapshot.predicted_weather_data.clone(),
+            snapshot.plan_metadata.clone(),
         );
 
         let weather_data = prediction_service
