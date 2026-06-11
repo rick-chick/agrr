@@ -98,6 +98,14 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
     expect(router.navigate).not.toHaveBeenCalled();
   });
 
+  it('ngOnInit preserves pending research crop slug across reset', () => {
+    publicPlanStore.state.pendingCropSlug = 'tomato';
+
+    PublicPlanSelectCropComponent.prototype.ngOnInit.call(component);
+
+    expect(publicPlanStore.setPendingCropSlug).toHaveBeenCalledWith('tomato');
+  });
+
   it('ngOnInit navigates to /public-plans/new when farm is missing', () => {
     publicPlanStore.state = {
       farm: undefined,
