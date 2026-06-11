@@ -10,6 +10,7 @@ import { FlashMessageComponent } from './components/shared/flash-message/flash-m
 import { UndoToastComponent } from './components/shared/undo-toast/undo-toast.component';
 import { CookieConsentBannerComponent } from './components/shared/cookie-consent-banner/cookie-consent-banner.component';
 import { GoogleAnalyticsService } from './services/google-analytics.service';
+import { POST_LOGIN_QUERY_PARAM } from './components/auth/login/login-auth-urls';
 import { AuthService } from './services/auth.service';
 import { UndoToastService } from './services/undo-toast.service';
 
@@ -65,7 +66,7 @@ export class App implements OnInit, OnDestroy {
       .loadCurrentUser()
       .pipe(take(1))
       .subscribe(() => {
-        void this.maybeTrackGoogleAdsAfterOAuthLanding();
+        void this.handleOAuthLandingSideEffects();
       });
 
     this.routerSubscription = this.router.events
@@ -79,6 +80,26 @@ export class App implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routerSubscription?.unsubscribe();
     this.langChangeSubscription?.unsubscribe();
+  }
+
+  private async handleOAuthLandingSideEffects(): Promise<void> {
+    await this.maybeTrackGoogleAdsAfterOAuthLanding();
+    await this.maybeNavigatePostLogin();
+  }
+
+  /** 認証必須パスは `/?_post_login=` 経由で着地 — セッション確認後にクライアント遷移 */
+  private async maybeNavigatePostLogin(): Promise<void> {
+    const tree = this.router.parseUrl(this.router.url);
+    const postLogin = tree.queryParams[POST_LOGIN_QUERY_PARAM];
+    if (typeof postLogin !== 'string' || !postLogin) {
+      return;
+    }
+    if (!this.authService.user()) {
+      return;
+    }
+
+    const target = this.router.parseUrl(postLogin.startsWith('/') ? postLogin : `/${postLogin}`);
+    await this.router.navigateByUrl(target, { replaceUrl: true });
   }
 
   /** OAuth（または開発用モックログイン）直後のみバックエンドが付与するクエリ `_agrr_oauth=1` を消費して Google 広告コンバージョンを送る。 */

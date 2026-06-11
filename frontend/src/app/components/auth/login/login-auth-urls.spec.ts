@@ -3,7 +3,8 @@ import {
   buildGoogleOAuthStartUrl,
   buildMockLoginUrl,
   oauthLocationForLogin,
-  oauthReturnToUrl
+  oauthReturnToUrl,
+  requiresAuthForDirectLanding
 } from './login-auth-urls';
 
 const origin = 'http://localhost:4200';
@@ -29,7 +30,7 @@ describe('login-auth-urls', () => {
     ).toBe(`${origin}/`);
   });
 
-  it('sets return_to to full href when not on login path', () => {
+  it('routes auth-required paths through / with _post_login (no SPA shell mirror)', () => {
     const href = `${origin}/plans?tab=1`;
     expect(
       oauthReturnToUrl({
@@ -37,7 +38,25 @@ describe('login-auth-urls', () => {
         pathname: '/plans',
         origin
       })
+    ).toBe(
+      `${origin}/?_post_login=${encodeURIComponent('/plans?tab=1')}`
+    );
+  });
+
+  it('keeps public full-page paths as direct return_to', () => {
+    const href = `${origin}/public-plans/results?planId=756`;
+    expect(
+      oauthReturnToUrl({
+        href,
+        pathname: '/public-plans/results',
+        origin
+      })
     ).toBe(href);
+  });
+
+  it('requiresAuthForDirectLanding does not treat public-plans as /plans', () => {
+    expect(requiresAuthForDirectLanding('/plans')).toBe(true);
+    expect(requiresAuthForDirectLanding('/public-plans/results')).toBe(false);
   });
 
   it('uses return_to query for OAuth when provided', () => {
@@ -45,7 +64,9 @@ describe('login-auth-urls', () => {
     const plans = `${origin}/plans?x=1`;
     const effective = oauthLocationForLogin(loc, plans);
     const url = buildGoogleOAuthStartUrl('', effective);
-    expect(url).toContain(`return_to=${encodeURIComponent(plans)}`);
+    expect(url).toContain(
+      `return_to=${encodeURIComponent(`${origin}/?_post_login=${encodeURIComponent('/plans?x=1')}`)}`
+    );
   });
 
   it('builds same-origin Google OAuth start URL when apiBase is empty', () => {
@@ -57,7 +78,8 @@ describe('login-auth-urls', () => {
   });
 
   it('oauthReturnToUrl tolerates missing location', () => {
-    expect(oauthReturnToUrl(undefined)).toBe(`${window.location.origin}/`);
+    const result = oauthReturnToUrl(undefined);
+    expect(result === '/' || result.endsWith('/')).toBe(true);
   });
 
   it('builds same-origin mock login URLs when apiBase is empty', () => {

@@ -161,6 +161,55 @@ fn urlencoding_encode(s: &str) -> String {
     url::form_urlencoded::byte_serialize(s.as_bytes()).collect()
 }
 
+/// Query param for client-side navigation after OAuth lands on `/` (parity: frontend `POST_LOGIN_QUERY_PARAM`).
+pub const POST_LOGIN_QUERY_PARAM: &str = "_post_login";
+
+/// Paths that require login — must not be OAuth full-page landing targets (no GCS SPA shell).
+/// Keep in sync with `AUTH_REQUIRED_PREFIXES` in `frontend/.../login-auth-urls.ts`.
+const AUTH_REQUIRED_PREFIXES: &[&str] = &[
+    "/plans",
+    "/farms",
+    "/crops",
+    "/fertilizes",
+    "/pests",
+    "/pesticides",
+    "/agricultural_tasks",
+    "/interaction_rules",
+    "/api-keys",
+    "/weather",
+    "/dashboard",
+];
+
+fn requires_auth_direct_landing(path: &str) -> bool {
+    let path = path.trim_end_matches('/');
+    if path.is_empty() || path == "/" {
+        return false;
+    }
+    AUTH_REQUIRED_PREFIXES
+        .iter()
+        .any(|prefix| path == *prefix || path.starts_with(&format!("{prefix}/")))
+}
+
+/// Auth-required `return_to` → `origin/?_post_login=<path+query>` for client-side navigation after `/` loads.
+pub fn normalize_oauth_return_to(url: &str) -> String {
+    let Ok(uri) = url::Url::parse(url) else {
+        return url.to_string();
+    };
+    if !requires_auth_direct_landing(uri.path()) {
+        return url.to_string();
+    }
+    let path = uri.path();
+    let path_and_search = match uri.query() {
+        Some(q) => format!("{path}?{q}"),
+        None => path.to_string(),
+    };
+    let origin = build_origin(&uri);
+    format!(
+        "{origin}/?{POST_LOGIN_QUERY_PARAM}={}",
+        urlencoding_encode(&path_and_search)
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -267,6 +316,21 @@ mod tests {
             "http://127.0.0.1:4200/auth/google_oauth2/callback"
         );
         std::env::remove_var("FRONTEND_URL");
+    }
+
+    #[test]
+    fn normalize_oauth_return_to_hub_for_auth_paths() {
+        let out = normalize_oauth_return_to("https://agrr.net/plans?tab=1");
+        assert_eq!(
+            out,
+            "https://agrr.net/?_post_login=%2Fplans%3Ftab%3D1"
+        );
+    }
+
+    #[test]
+    fn normalize_oauth_return_to_keeps_public_plan_results() {
+        let url = "https://agrr.net/public-plans/results?planId=756";
+        assert_eq!(normalize_oauth_return_to(url), url);
     }
 
     #[test]

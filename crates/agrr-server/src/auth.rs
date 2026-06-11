@@ -4,6 +4,7 @@
 
 use crate::auth_return_to::{
     allowed_return_to, append_oauth_conversion_query, default_frontend_home,
+    normalize_oauth_return_to,
     google_oauth_configured, oauth_csrf_state_matches, spa_login_redirect_url,
     OAUTH_CSRF_STATE_COOKIE, OAUTH_RETURN_TO_COOKIE,
 };
@@ -150,6 +151,7 @@ async fn google_callback(
         .get(OAUTH_RETURN_TO_COOKIE)
         .map(|c| c.value().to_string())
         .filter(|u| allowed_return_to(u))
+        .map(|u| normalize_oauth_return_to(&u))
         .map(|u| append_oauth_conversion_query(&u))
         .unwrap_or_else(default_frontend_home);
 

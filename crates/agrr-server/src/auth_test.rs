@@ -1,7 +1,9 @@
 //! Development/test mock login (`GET /auth/test/developer`).
 
 use crate::adapters::PassthroughTranslator;
-use crate::auth_return_to::{allowed_return_to, default_frontend_home, dev_environment_allowed};
+use crate::auth_return_to::{
+    allowed_return_to, default_frontend_home, dev_environment_allowed, normalize_oauth_return_to,
+};
 use crate::state::AppState;
 use agrr_adapters_sqlite::AuthTestLoginSqliteGateway;
 use agrr_domain::auth::dtos::AuthTestMockLoginInput;
@@ -179,6 +181,7 @@ async fn mock_login_impl(
         cookie.set_expires(expires);
         let jar = jar.add(cookie);
         if let Some(url) = presenter.redirect {
+            let url = normalize_oauth_return_to(&url);
             return Ok((jar, Redirect::temporary(&url)).into_response());
         }
         return Ok((jar, Redirect::temporary(&default_frontend_home())).into_response());
