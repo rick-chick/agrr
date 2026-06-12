@@ -327,3 +327,28 @@ pub fn run_plan_finalize_step(
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_support::test_pool_with_plan;
+
+    #[test]
+    fn load_chain_context_returns_none_when_plan_missing() {
+        let db = test_pool_with_plan(1);
+        let ctx = load_chain_context(&db.pool, 999).expect("query should succeed");
+        assert!(ctx.is_none(), "unknown plan id should not resolve context");
+    }
+
+    #[test]
+    fn load_chain_context_returns_farm_coordinates_for_existing_plan() {
+        let db = test_pool_with_plan(42);
+        let ctx = load_chain_context(&db.pool, 42)
+            .expect("query should succeed")
+            .expect("plan should resolve");
+        assert_eq!(ctx.farm_id, 1);
+        assert!((ctx.latitude - 35.0).abs() < f64::EPSILON);
+        assert!((ctx.longitude - 139.0).abs() < f64::EPSILON);
+        assert!(ctx.latest_weather_date.is_none());
+    }
+}
+

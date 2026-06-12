@@ -149,10 +149,48 @@ pub(crate) fn broadcast_completed(
 mod tests {
     use super::*;
     use crate::test_support::{test_app_state, test_pool_with_plan};
+    use agrr_adapters_sqlite::SqlitePool;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    fn set_plan_status(pool: &SqlitePool, plan_id: i64, status: &str) {
+        pool.with_write(|conn| {
+            conn.execute(
+                "UPDATE cultivation_plans SET status = ?1 WHERE id = ?2",
+                rusqlite::params![status, plan_id],
+            )?;
+            Ok(())
+        })
+        .expect("set plan status");
+    }
+
+    fn insert_field_cultivation(pool: &SqlitePool, plan_id: i64, fc_id: i64, status: &str) {
+        pool.with_write(|conn| {
+            conn.execute(
+                "INSERT INTO field_cultivations (id, cultivation_plan_id, status) VALUES (?1, ?2, ?3)",
+                rusqlite::params![fc_id, plan_id, status],
+            )?;
+            Ok(())
+        })
+        .expect("insert field cultivation");
+    }
+
+    fn plan_status(pool: &SqlitePool, plan_id: i64) -> String {
+        pool.with_read(|conn| {
+            conn.query_row(
+                "SELECT status FROM cultivation_plans WHERE id = ?1",
+                rusqlite::params![plan_id],
+                |row| row.get(0),
+            )
+        })
+        .expect("read plan status")
+    }
 
     #[test]
     fn advance_phase_returns_err_when_plan_missing() {
-        let state = test_app_state(test_pool_with_plan(1).pool);
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
         let err = advance_phase(
             &state,
             999,
@@ -165,5 +203,139 @@ mod tests {
             !err.is_empty(),
             "error message should describe failure: {err}"
         );
+    }
+
+    #[test]
+    fn plan_still_optimizing_reflects_cultivation_plan_status() {
+        let db = test_pool_with_plan(1);
+        let pool = &db.pool;
+
+        set_plan_status(pool, 1, "optimizing");
+        assert!(plan_still_optimizing(pool, 1));
+
+        set_plan_status(pool, 1, "completed");
+        assert!(!plan_still_optimizing(pool, 1));
+        assert!(!plan_still_optimizing(pool, 999));
+    }
+
+    #[test]
+    fn run_guarded_optimization_step_skips_when_plan_not_optimizing() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        let step_ran = Arc::new(AtomicBool::new(false));
+        let step_ran_in = step_ran.clone();
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "fetch_weather_data",
+            Some("fetching_weather"),
+            || {
+                step_ran_in.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(!continue_chain, "chain should abort when plan is not optimizing");
+        assert!(
+            !step_ran.load(Ordering::SeqCst),
+            "step body must not run when guard rejects"
+        );
+    }
+
+    #[test]
+    fn run_guarded_optimization_step_returns_true_when_step_succeeds() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        advance_phase(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            CultivationPlanPhaseName::StartOptimizing,
+            None,
+        )
+        .expect("start optimizing");
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "weather_prediction",
+            Some("predicting_weather"),
+            || Ok(()),
+        );
+
+        assert!(continue_chain, "successful step should continue chain");
+    }
+
+    #[test]
+    fn run_guarded_optimization_step_marks_plan_failed_when_step_errors() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        advance_phase(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            CultivationPlanPhaseName::StartOptimizing,
+            None,
+        )
+        .expect("start optimizing");
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "optimization",
+            Some("optimizing"),
+            || Err("daemon unavailable".into()),
+        );
+
+        assert!(!continue_chain, "failed step should stop chain");
+        assert_eq!(plan_status(&state.sqlite, 1), "failed");
+    }
+
+    #[test]
+    fn broadcast_completed_skips_when_plan_or_fields_not_completed() {
+        let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+        let db = test_pool_with_plan(1);
+        let hub = CableHub::default();
+        let mut rx = rt.block_on(hub.subscribe_plan(1));
+
+        set_plan_status(&db.pool, 1, "optimizing");
+        insert_field_cultivation(&db.pool, 1, 1, "completed");
+        broadcast_completed(&hub, 1, &db.pool);
+
+        let received = rt.block_on(async {
+            tokio::time::timeout(Duration::from_millis(100), rx.recv()).await
+        });
+        assert!(
+            received.is_err(),
+            "optimizing plan must not emit completed broadcast"
+        );
+    }
+
+    #[test]
+    fn broadcast_completed_emits_completed_payload_when_policy_satisfied() {
+        let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+        let db = test_pool_with_plan(1);
+        let hub = CableHub::default();
+        let mut rx = rt.block_on(hub.subscribe_plan(1));
+
+        set_plan_status(&db.pool, 1, "completed");
+        insert_field_cultivation(&db.pool, 1, 1, "completed");
+        broadcast_completed(&hub, 1, &db.pool);
+
+        let payload = rt
+            .block_on(async {
+                tokio::time::timeout(Duration::from_millis(200), rx.recv())
+                    .await
+                    .expect("broadcast should arrive")
+            })
+            .expect("receiver open");
+        let value: Value = serde_json::from_str(&payload).expect("json payload");
+        assert_eq!(value.get("status").and_then(Value::as_str), Some("completed"));
+        assert_eq!(value.get("phase").and_then(Value::as_str), Some("completed"));
+        assert_eq!(value.get("progress").and_then(Value::as_i64), Some(100));
     }
 }
