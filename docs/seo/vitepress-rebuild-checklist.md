@@ -11,9 +11,16 @@ Fix extensionless internal nav links (`/research_reports/...` without `.html`) f
 1. In `.vitepress/config.ts`:
    - Keep `base: '/research/'` (EN: `base: '/research/en/'`).
    - Set `cleanUrls: true` so build outputs `path/index.html` or consistent `.html` links.
-2. Rebuild and copy output into `agrr/public/research/`.
-3. Verify with LB rewrite `/research/*` → strip prefix to research bucket root.
-4. Run `.cursor/skills/research-tools/scripts/sync-research-gcs.sh` from agrr repo.
+2. **Exclude internal work markdown from the build** (do not copy into `research_reports/`):
+   - `commands_template.md`, `README_commands.md`
+   - `用語統一追加調査結果2.md`, `読みにくい・統一されていない箇所リスト.md`
+   - `tomato/commands.md` (or any path outside `{crop}/{NN}_{category}/` report structure)
+   - Move these to a non-published directory (e.g. `_internal/`) in the VitePress source repo.
+3. Rebuild and copy output into `agrr/public/research/`.
+4. Verify with LB rewrite `/research/*` → strip prefix to research bucket root.
+5. Run `.cursor/skills/research-tools/scripts/sync-research-gcs.sh` from agrr repo.
+
+Sitemap generation (`generate-sitemap-lib.mjs`) only indexes canonical crop report paths; non-conforming HTML is skipped even if present in `public/research/`.
 
 ## Verification
 
