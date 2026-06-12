@@ -173,6 +173,7 @@ where
         let crop_output = crops_interactor.call(PlanSaveEnsureUserCropsInput {
             user_id,
             plan_id,
+            region: farm_region.clone(),
         })?;
         for id in &crop_output.skipped_crop_ids {
             result.skipped_items.add_skip("crops", *id);

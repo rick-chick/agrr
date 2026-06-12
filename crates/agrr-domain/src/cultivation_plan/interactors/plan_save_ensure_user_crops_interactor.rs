@@ -3,6 +3,7 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::crop::policies::crop_create_limit_policy;
+use crate::crop::policies::crop_reference_record_policy::region_matches;
 use crate::cultivation_plan::dtos::{
     PlanSaveCropStageCopyPair, PlanSaveEnsureUserCropsInput, PlanSaveEnsureUserCropsOutput,
     PublicPlanSaveCropReferenceRow,
@@ -66,6 +67,10 @@ where
         let mut stage_copy_pairs = Vec::new();
 
         for row in reference_rows {
+            if !region_matches(input.region.as_deref(), row.region.as_deref()) {
+                continue;
+            }
+
             if let Some(existing) = self
                 .user_crop_gateway
                 .find_by_user_id_and_source_crop_id(input.user_id, row.reference_crop_id)?

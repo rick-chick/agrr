@@ -29,6 +29,7 @@ pub struct PlanSaveCropStageCopyPair {
 pub struct PlanSaveEnsureUserCropsInput {
     pub user_id: i64,
     pub plan_id: i64,
+    pub region: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

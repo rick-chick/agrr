@@ -142,6 +142,7 @@
             .call(PlanSaveEnsureUserCropsInput {
                 user_id: 1,
                 plan_id: 5,
+                region: Some("jp".into()),
             })
             .unwrap();
         assert_eq!(out.user_crop_ids, vec![77]);
@@ -168,6 +169,7 @@
         .call(PlanSaveEnsureUserCropsInput {
             user_id: 1,
             plan_id: 5,
+            region: Some("jp".into()),
         })
         .unwrap();
         assert_eq!(out.user_crop_ids, vec![88]);
@@ -181,7 +183,7 @@
     }
 
     #[test]
-    fn creates_user_crop_for_each_row_regardless_of_crop_region() {
+    fn skips_crops_outside_farm_region() {
         let us_row = PublicPlanSaveCropReferenceRow {
             cultivation_plan_crop_id: 2,
             reference_crop_id: 99,
@@ -205,10 +207,11 @@
         .call(PlanSaveEnsureUserCropsInput {
             user_id: 1,
             plan_id: 5,
+            region: Some("jp".into()),
         })
         .unwrap();
-        assert_eq!(out.user_crop_ids, vec![55]);
-        assert_eq!(out.reference_crop_id_to_user_crop_id.get(&99), Some(&55));
+        assert!(out.user_crop_ids.is_empty());
+        assert!(out.reference_crop_id_to_user_crop_id.is_empty());
     }
 
     #[test]
@@ -228,6 +231,7 @@
         .call(PlanSaveEnsureUserCropsInput {
             user_id: 1,
             plan_id: 5,
+            region: Some("jp".into()),
         })
         .unwrap_err();
         assert!(err.downcast_ref::<RecordInvalidError>().is_some());
