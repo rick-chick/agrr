@@ -6,7 +6,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   frontend-test:
@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
