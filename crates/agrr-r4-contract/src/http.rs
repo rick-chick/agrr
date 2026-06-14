@@ -17,7 +17,10 @@ impl ContractClient {
             .to_string();
         Self {
             base_url,
-            client: Client::new(),
+            client: Client::builder()
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .expect("contract HTTP client"),
         }
     }
 
@@ -38,6 +41,25 @@ impl ContractClient {
         body: Option<serde_json::Value>,
     ) -> Response {
         self.request(reqwest::Method::POST, path, session_id, headers, body)
+    }
+
+    pub fn patch(
+        &self,
+        path: &str,
+        session_id: Option<&str>,
+        headers: &HashMap<String, String>,
+        body: Option<serde_json::Value>,
+    ) -> Response {
+        self.request(reqwest::Method::PATCH, path, session_id, headers, body)
+    }
+
+    pub fn delete(
+        &self,
+        path: &str,
+        session_id: Option<&str>,
+        headers: &HashMap<String, String>,
+    ) -> Response {
+        self.request(reqwest::Method::DELETE, path, session_id, headers, None)
     }
 
     fn request(

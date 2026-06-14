@@ -1,0 +1,9 @@
+pub(crate) mod work_record_create_input;
+pub(crate) mod work_record_list_input;
+pub(crate) mod work_record_read;
+pub(crate) mod work_record_update_input;
+
+pub use work_record_create_input::WorkRecordCreateInput;
+pub use work_record_list_input::WorkRecordListInput;
+pub use work_record_read::{WorkRecordRead, WorkRecordTaskScheduleItemSummary};
+pub use work_record_update_input::WorkRecordUpdateInput;

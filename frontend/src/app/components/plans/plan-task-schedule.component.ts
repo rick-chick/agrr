@@ -7,6 +7,7 @@ import { TaskScheduleTimelineComponent } from './task-schedule-timeline.componen
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
+import { PlanWorkNavComponent } from './plan-work-nav.component';
 
 const initialControl: PlanTaskScheduleViewState = {
   loading: true,
@@ -17,12 +18,20 @@ const initialControl: PlanTaskScheduleViewState = {
 @Component({
   selector: 'app-plan-task-schedule',
   standalone: true,
-  imports: [CommonModule, RouterLink, TaskScheduleTimelineComponent, TranslateModule, PlanDisplayNamePipe],
+  imports: [
+    CommonModule,
+    RouterLink,
+    TaskScheduleTimelineComponent,
+    TranslateModule,
+    PlanDisplayNamePipe,
+    PlanWorkNavComponent
+  ],
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
       <section class="page">
         <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedules.back_to_plan' | translate }}</a>
+        <app-plan-work-nav [planId]="planId" />
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {

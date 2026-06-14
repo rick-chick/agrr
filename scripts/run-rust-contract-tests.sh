@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 BINARY="${ROOT}/tmp/agrr-server-contract/agrr-server"
+MIGRATE_BINARY="${ROOT}/tmp/agrr-server-contract/agrr-migrate"
 R4_CONTRACT_TESTS_BIN="${ROOT}/tmp/agrr-server-contract/agrr-r4-contract-tests"
 mkdir -p "$(dirname "$BINARY")"
 
@@ -54,6 +55,43 @@ ensure_agrr_server_binary() {
 
 ensure_agrr_server_binary
 
+ensure_agrr_migrate_binary() {
+  local host_release="${ROOT}/target/release/agrr-migrate"
+  local stamp="${ROOT}/crates/agrr-migrate"
+
+  if [[ -x "$MIGRATE_BINARY" ]] && [[ "${AGRR_MIGRATE_CONTRACT_REBUILD:-}" != "1" ]]; then
+    if [[ ! "$stamp" -nt "$MIGRATE_BINARY" ]]; then
+      return
+    fi
+    echo "==> agrr-migrate sources newer than contract binary; rebuilding"
+  fi
+
+  if command -v cargo >/dev/null 2>&1; then
+    # shellcheck source=/dev/null
+    [[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
+    echo "==> Building agrr-migrate on host (cargo build --release -p agrr-migrate)"
+    if cargo build --release -p agrr-migrate; then
+      if [[ -x "$host_release" ]]; then
+        cp "$host_release" "$MIGRATE_BINARY"
+        chmod +x "$MIGRATE_BINARY"
+        return
+      fi
+    elif [[ -x "$MIGRATE_BINARY" ]]; then
+      echo "==> Host cargo build failed; reusing existing agrr-migrate at $MIGRATE_BINARY"
+      return
+    fi
+    echo "==> agrr-migrate build failed and no cached binary"
+    exit 1
+  fi
+
+  if [[ ! -x "$MIGRATE_BINARY" ]]; then
+    echo "==> cargo not found and no agrr-migrate binary at $MIGRATE_BINARY"
+    exit 1
+  fi
+}
+
+ensure_agrr_migrate_binary
+
 ensure_agrr_r4_contract_tests_binary() {
   local stamp="${ROOT}/crates/agrr-r4-contract"
   local host_built=""
@@ -99,11 +137,16 @@ docker compose --profile test run --rm \
   -e CONTRACT_RUNTIME=rust \
   -e RUST_CONTRACT_BASE_URL=http://127.0.0.1:8080 \
   -v "${BINARY}:/usr/local/bin/agrr-server:ro" \
+  -v "${MIGRATE_BINARY}:/usr/local/bin/agrr-migrate:ro" \
   -v "${R4_CONTRACT_TESTS_BIN}:/usr/local/bin/agrr-r4-contract-tests:ro" \
   test bash -c '
     set -euo pipefail
+    export AGRR_APP_ROOT=/app
     export AGRR_SQLITE_PATH=/app/storage/test.sqlite3
+    export AGRR_CACHE_SQLITE_PATH=/app/storage/test_cache.sqlite3
     export PORT=8080
+    echo "==> Applying pending schema migrations (host agrr-migrate)"
+    agrr-migrate schema run
     export SCHEDULER_AUTH_TOKEN="${SCHEDULER_AUTH_TOKEN:-test_scheduler_token_contract}"
     export AGRR_BACKDOOR_TOKEN="${AGRR_BACKDOOR_TOKEN:-contract-token}"
     export WEATHER_DATA_STORAGE=gcs

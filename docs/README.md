@@ -2,7 +2,9 @@
 
 - **アーキテクチャ（規約本体）**: リポジトリ直下 [`ARCHITECTURE.md`](../ARCHITECTURE.md)
 - **設計メモ**: [`design/`](design/)
+- **作業実績分離（計画）**: [`design/work-record-separation-plan.md`](design/work-record-separation-plan.md)（BE）/ [`design/work-record-gui-plan.md`](design/work-record-gui-plan.md)（GUI）
 - **製品成長の問題点・改善案**: [`product/PRODUCT-GROWTH-ISSUES.md`](product/PRODUCT-GROWTH-ISSUES.md)
+- **導線レビュー（2026-06）**: [`product/USER-FLOW-REVIEW.md`](product/USER-FLOW-REVIEW.md)
 - **本番ベンチ・ログ調査手順**: [`product/PRODUCTION-BENCHMARK-INVESTIGATION.md`](product/PRODUCTION-BENCHMARK-INVESTIGATION.md)
 - **マイグレーション・データ移行**: [`migration/`](migration/)
 - **lib/domain → Rust（完了）**: [`migration/lib-domain-rust/`](migration/lib-domain-rust/)（[`TRACKING.yaml`](migration/lib-domain-rust/TRACKING.yaml)）

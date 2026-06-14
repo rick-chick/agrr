@@ -179,6 +179,14 @@ impl TimelineJsonPresenter {
             .get("status")
             .and_then(|v| v.as_str())
             .unwrap_or("planned");
+        let completed = item
+            .get("completed")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let work_records = item
+            .get("work_records")
+            .cloned()
+            .unwrap_or_else(|| json!([]));
         let mut payload = json!({
             "item_id": id,
             "name": item.get("name").cloned().unwrap_or(Value::Null),
@@ -198,6 +206,8 @@ impl TimelineJsonPresenter {
             "status": status,
             "agricultural_task_id": item.get("agricultural_task_id").cloned().unwrap_or(Value::Null),
             "field_cultivation_id": field_cultivation_id,
+            "completed": completed,
+            "work_records": work_records,
         });
         if let Some(obj) = payload.as_object_mut() {
             obj.insert("details".to_string(), detail_payload(item));
@@ -266,14 +276,9 @@ fn detail_payload(item: &Value) -> Value {
         "amount_unit": item.get("amount_unit").cloned().unwrap_or(Value::Null),
         "source": item.get("source").cloned().unwrap_or(Value::Null),
         "master": item.get("agricultural_task").cloned().unwrap_or(Value::Null),
-        "actual": {
-            "date": item.get("actual_date").cloned().unwrap_or(Value::Null),
-            "notes": item.get("actual_notes").cloned().unwrap_or(Value::Null),
-        },
         "history": {
             "rescheduled_at": item.get("rescheduled_at").cloned().unwrap_or(Value::Null),
             "cancelled_at": item.get("cancelled_at").cloned().unwrap_or(Value::Null),
-            "completed_at": item.get("completed_at").cloned().unwrap_or(Value::Null),
         },
     })
 }
@@ -369,4 +374,36 @@ fn minimap_range(
     let start = start_candidates.into_iter().min().unwrap_or(today);
     let end = end_candidates.into_iter().max().unwrap_or(today);
     (beginning_of_week(start), beginning_of_week(end) + Duration::days(WEEK_LENGTH_DAYS))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detail_payload_omits_legacy_actual_fields() {
+        let item = json!({
+            "stage_name": "s",
+            "stage_order": 1,
+            "gdd_trigger": "0",
+            "gdd_tolerance": "0",
+            "priority": 1,
+            "weather_dependency": "low",
+            "time_per_sqm": "1",
+            "amount": "1",
+            "amount_unit": "kg",
+            "source": "agrr",
+            "actual_date": "2026-01-01",
+            "actual_notes": "old",
+            "rescheduled_at": null,
+            "cancelled_at": null,
+            "completed_at": "2026-01-01",
+        });
+        let details = detail_payload(&item);
+        assert!(details.get("actual").is_none());
+        let history = details.get("history").unwrap().as_object().unwrap();
+        assert!(!history.contains_key("completed_at"));
+        assert!(history.contains_key("rescheduled_at"));
+        assert!(history.contains_key("cancelled_at"));
+    }
 }

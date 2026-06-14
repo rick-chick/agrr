@@ -41,11 +41,16 @@
   background: var(--color-surface);
   padding: 10px var(--space-3);
   border-radius: var(--radius-lg);
-  cursor: grab;
   border: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-2);
+}
+
+.badge--done {
+  background: var(--color-status-complete-bg, #e8f5e9);
+  color: var(--color-status-complete-text, #2d6a4f);
 }
 
 .badge {
@@ -53,14 +58,4 @@
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   text-transform: uppercase;
-}
-
-.badge.status-completed {
-  background: var(--color-status-complete-bg);
-  color: var(--color-status-complete-text);
-}
-
-.badge.status-pending {
-  background: var(--color-status-pending-bg);
-  color: var(--color-status-pending-text);
 }

@@ -1,29 +1,30 @@
-//! Ruby: `Domain::CultivationPlan::Interactors::TaskScheduleItemCompleteInteractor`
+//! Ruby: `Domain::WorkRecord::Interactors::WorkRecordUpdateInteractor`
 
 use std::collections::BTreeMap;
 
 use serde_json::Value;
 
-use crate::cultivation_plan::dtos::TaskScheduleItemCompleteInput;
-use crate::cultivation_plan::gateways::{CultivationPlanGateway, TaskScheduleItemMutationGateway};
-use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
-use crate::cultivation_plan::ports::TaskScheduleItemMutationOutputPort;
+use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::ports::ClockPort;
 use crate::shared::validation::{from_errors, ErrorsInput};
+use crate::work_record::dtos::WorkRecordUpdateInput;
+use crate::work_record::gateways::WorkRecordGateway;
+use crate::work_record::interactors::private_plan_access;
+use crate::work_record::ports::WorkRecordUpdateOutputPort;
 
-pub struct TaskScheduleItemCompleteInteractor<'a, O, P, G, C> {
+pub struct WorkRecordUpdateInteractor<'a, O, P, G, C> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     gateway: &'a G,
     clock: &'a C,
 }
 
-impl<'a, O, P, G, C> TaskScheduleItemCompleteInteractor<'a, O, P, G, C>
+impl<'a, O, P, G, C> WorkRecordUpdateInteractor<'a, O, P, G, C>
 where
-    O: TaskScheduleItemMutationOutputPort,
+    O: WorkRecordUpdateOutputPort,
     P: CultivationPlanGateway,
-    G: TaskScheduleItemMutationGateway,
+    G: WorkRecordGateway,
     C: ClockPort,
 {
     pub fn new(
@@ -44,24 +45,19 @@ where
         &mut self,
         user_id: i64,
         plan_id: i64,
-        item_id: i64,
-        completion_params: &BTreeMap<String, Value>,
+        record_id: i64,
+        params: &BTreeMap<String, Value>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if !task_schedule_private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id) {
+        if !private_plan_access::access_allowed(self.plan_gateway, plan_id, user_id) {
             self.output_port.on_not_found();
             return Ok(());
         }
 
-        let input =
-            TaskScheduleItemCompleteInput::from_completion_params(completion_params, self.clock)?;
-        let payload = self.gateway.complete_item_for_plan(
-            plan_id,
-            item_id,
-            input.actual_date,
-            input.actual_notes.as_deref(),
-            input.completed_at,
-        )?;
-        self.output_port.on_success(payload);
+        let input = WorkRecordUpdateInput::from_params(params, self.clock)?;
+        let record = self
+            .gateway
+            .update(plan_id, record_id, &input, self.clock.now())?;
+        self.output_port.on_success(record);
         Ok(())
     }
 
@@ -69,10 +65,10 @@ where
         &mut self,
         user_id: i64,
         plan_id: i64,
-        item_id: i64,
-        completion_params: &BTreeMap<String, Value>,
+        record_id: i64,
+        params: &BTreeMap<String, Value>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        match self.call(user_id, plan_id, item_id, completion_params) {
+        match self.call(user_id, plan_id, record_id, params) {
             Ok(()) => Ok(()),
             Err(err) if err.downcast_ref::<RecordInvalidError>().is_some() => {
                 let invalid = err.downcast_ref::<RecordInvalidError>().unwrap();
@@ -94,7 +90,10 @@ where
 }
 
 #[cfg(test)]
-mod interactors_task_schedule_item_complete_interactor_test_inline {
+mod interactors_work_record_update_interactor_test_inline {
     use super::*;
-    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/test/cultivation_plan/interactors_task_schedule_item_complete_interactor_test.rs"));
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/work_record/interactors_work_record_update_interactor_test.rs"
+    ));
 }

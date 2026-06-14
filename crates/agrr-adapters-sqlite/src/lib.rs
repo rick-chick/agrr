@@ -26,6 +26,7 @@ pub mod public_plan;
 pub mod shared;
 pub mod soft_delete;
 pub mod weather_data;
+pub mod work_record;
 
 pub use api_keys::UserApiKeyRotationSqliteGateway;
 pub use backdoor::{
@@ -63,6 +64,7 @@ pub use cultivation_plan::{
     CultivationPlanSqliteGateway, OptimizationPlanReadSqliteGateway,
     PlanAllocationAdjustDebugDumpFileGateway, PlanAllocationAdjustReadSqliteGateway,
     PublicPlanSavePersistenceSqliteAdapter, PublicPlanSaveReadSqliteGateway,
+    TaskScheduleItemMutationSqliteGateway,
 };
 pub use farm::FarmSqliteGateway;
 pub use internal_jobs::SchedulerWeatherFarmListSqliteGateway;
@@ -87,3 +89,4 @@ pub use weather_data::{
     PredictedWeatherMetadataSqliteGateway, WeatherDataFarmSqliteGateway,
     WeatherDataGatewayBundle, WeatherDataSqliteGateway,
 };
+pub use work_record::{TaskScheduleItemLookupSqliteGateway, WorkRecordSqliteGateway};

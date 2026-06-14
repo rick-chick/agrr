@@ -335,8 +335,8 @@ impl<'a> PlanSavePlanCopy<'a> {
 
                 let mut item_stmt = conn.prepare(
                     "SELECT task_type, name, stage_name, stage_order, gdd_trigger, gdd_tolerance, scheduled_date, \
-                     priority, source, weather_dependency, time_per_sqm, amount, amount_unit, status, actual_date, \
-                     actual_notes, rescheduled_at, cancelled_at, completed_at, agricultural_task_id, source_agricultural_task_id \
+                     priority, source, weather_dependency, time_per_sqm, amount, amount_unit, status, \
+                     rescheduled_at, cancelled_at, agricultural_task_id, source_agricultural_task_id \
                      FROM task_schedule_items WHERE task_schedule_id = ?1",
                 )?;
                 let items = item_stmt.query_map(params![sched_id], |row| {
@@ -357,11 +357,8 @@ impl<'a> PlanSavePlanCopy<'a> {
                         row.get::<_, Option<String>>(13)?,
                         row.get::<_, Option<String>>(14)?,
                         row.get::<_, Option<String>>(15)?,
-                        row.get::<_, Option<String>>(16)?,
-                        row.get::<_, Option<String>>(17)?,
-                        row.get::<_, Option<String>>(18)?,
-                        row.get::<_, Option<i64>>(19)?,
-                        row.get::<_, Option<i64>>(20)?,
+                        row.get::<_, Option<i64>>(16)?,
+                        row.get::<_, Option<i64>>(17)?,
                     ))
                 })?;
                 for item in items {
@@ -380,11 +377,8 @@ impl<'a> PlanSavePlanCopy<'a> {
                         amount,
                         amount_unit,
                         status,
-                        actual_date,
-                        actual_notes,
                         rescheduled_at,
                         cancelled_at,
-                        completed_at,
                         agricultural_task_id,
                         source_agricultural_task_id,
                     ) = item?;
@@ -404,9 +398,9 @@ impl<'a> PlanSavePlanCopy<'a> {
                     conn.execute(
                         "INSERT INTO task_schedule_items (task_schedule_id, task_type, name, stage_name, stage_order, \
                          gdd_trigger, gdd_tolerance, scheduled_date, priority, source, weather_dependency, time_per_sqm, \
-                         amount, amount_unit, status, actual_date, actual_notes, rescheduled_at, cancelled_at, completed_at, \
+                         amount, amount_unit, status, rescheduled_at, cancelled_at, \
                          agricultural_task_id, source_agricultural_task_id, created_at, updated_at) \
-                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, datetime('now'), datetime('now'))",
+                         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, datetime('now'), datetime('now'))",
                         params![
                             new_schedule_id,
                             task_type,
@@ -423,11 +417,8 @@ impl<'a> PlanSavePlanCopy<'a> {
                             amount,
                             amount_unit,
                             status.unwrap_or_else(|| "planned".to_string()),
-                            actual_date,
-                            actual_notes,
                             rescheduled_at,
                             cancelled_at,
-                            completed_at,
                             mapped_task,
                             source_agricultural_task_id,
                         ],

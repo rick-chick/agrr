@@ -17,7 +17,8 @@ pub fn load_task_schedule_timeline_snapshot(
         let plan = load_plan_read(conn, plan_id)?;
         let scheduled_dates = load_scheduled_dates(conn, plan_id)?;
         let field_contexts = load_field_contexts(conn, plan_id)?;
-        let schedule_rows = load_schedule_rows(conn, plan_id)?;
+        let work_records_by_item = load_work_record_summaries(conn, plan_id)?;
+        let schedule_rows = load_schedule_rows(conn, plan_id, &work_records_by_item)?;
         let mut fields = merge_fields(field_contexts, schedule_rows);
         for field in &mut fields {
             if field.crop_id > 0 {
@@ -184,16 +185,44 @@ fn load_task_options(conn: &rusqlite::Connection, crop_id: i64) -> rusqlite::Res
     rows.collect()
 }
 
+fn load_work_record_summaries(
+    conn: &rusqlite::Connection,
+    plan_id: i64,
+) -> rusqlite::Result<std::collections::BTreeMap<i64, Vec<Value>>> {
+    let mut stmt = conn.prepare(
+        "SELECT wr.task_schedule_item_id, wr.id, wr.actual_date, wr.notes \
+         FROM work_records wr \
+         WHERE wr.cultivation_plan_id = ?1 AND wr.task_schedule_item_id IS NOT NULL \
+         ORDER BY wr.task_schedule_item_id, wr.actual_date ASC",
+    )?;
+    let rows = stmt.query_map(params![plan_id], |row| {
+        let item_id: i64 = row.get(0)?;
+        let record = json!({
+            "id": row.get::<_, i64>(1)?,
+            "actual_date": row.get::<_, String>(2)?,
+            "notes": row.get::<_, Option<String>>(3)?,
+        });
+        Ok((item_id, record))
+    })?;
+    let mut out: std::collections::BTreeMap<i64, Vec<Value>> = std::collections::BTreeMap::new();
+    for row in rows {
+        let (item_id, record) = row?;
+        out.entry(item_id).or_default().push(record);
+    }
+    Ok(out)
+}
+
 fn load_schedule_rows(
     conn: &rusqlite::Connection,
     plan_id: i64,
+    work_records_by_item: &std::collections::BTreeMap<i64, Vec<Value>>,
 ) -> rusqlite::Result<Vec<(i64, Value)>> {
     let mut stmt = conn.prepare(
         "SELECT ts.field_cultivation_id, ts.category, tsi.id, tsi.name, tsi.task_type, tsi.scheduled_date, \
          tsi.stage_name, tsi.stage_order, tsi.gdd_trigger, tsi.gdd_tolerance, tsi.priority, tsi.source, \
          tsi.weather_dependency, tsi.time_per_sqm, tsi.amount, tsi.amount_unit, tsi.status, \
-         tsi.agricultural_task_id, tsi.actual_date, tsi.actual_notes, tsi.rescheduled_at, tsi.cancelled_at, \
-         tsi.completed_at, at.name, at.description, at.time_per_sqm, at.weather_dependency, at.required_tools, \
+         tsi.agricultural_task_id, tsi.rescheduled_at, tsi.cancelled_at, \
+         at.name, at.description, at.time_per_sqm, at.weather_dependency, at.required_tools, \
          at.skill_level, at.task_type \
          FROM task_schedules ts \
          INNER JOIN task_schedule_items tsi ON tsi.task_schedule_id = ts.id \
@@ -220,38 +249,41 @@ fn load_schedule_rows(
         let amount_unit: Option<String> = row.get(15)?;
         let status: String = row.get(16)?;
         let agricultural_task_id: Option<i64> = row.get(17)?;
-        let actual_date: Option<String> = row.get(18)?;
-        let actual_notes: Option<String> = row.get(19)?;
-        let rescheduled_at: Option<String> = row.get(20)?;
-        let cancelled_at: Option<String> = row.get(21)?;
-        let completed_at: Option<String> = row.get(22)?;
-        let at_name: Option<String> = row.get(23)?;
+        let rescheduled_at: Option<String> = row.get(18)?;
+        let cancelled_at: Option<String> = row.get(19)?;
+        let at_name: Option<String> = row.get(20)?;
 
         let mut agricultural_task = None;
         if at_name.is_some() {
             let mut at_obj = json!({ "name": at_name.unwrap() });
-            if let Some(v) = row.get::<_, Option<String>>(24)? {
+            if let Some(v) = row.get::<_, Option<String>>(21)? {
                 at_obj["description"] = json!(v);
             }
-            if let Some(v) = row.get::<_, Option<f64>>(25)? {
+            if let Some(v) = row.get::<_, Option<f64>>(22)? {
                 at_obj["time_per_sqm"] = json!(v.to_string());
             }
-            if let Some(v) = row.get::<_, Option<String>>(26)? {
+            if let Some(v) = row.get::<_, Option<String>>(23)? {
                 at_obj["weather_dependency"] = json!(v);
             }
-            if let Some(v) = row.get::<_, Option<String>>(27)? {
+            if let Some(v) = row.get::<_, Option<String>>(24)? {
                 if let Ok(arr) = serde_json::from_str::<Value>(&v) {
                     at_obj["required_tools"] = arr;
                 }
             }
-            if let Some(v) = row.get::<_, Option<String>>(28)? {
+            if let Some(v) = row.get::<_, Option<String>>(25)? {
                 at_obj["skill_level"] = json!(v);
             }
-            if let Some(v) = row.get::<_, Option<String>>(29)? {
+            if let Some(v) = row.get::<_, Option<String>>(26)? {
                 at_obj["task_type"] = json!(v);
             }
             agricultural_task = Some(at_obj);
         }
+
+        let work_records = work_records_by_item
+            .get(&item_id)
+            .cloned()
+            .unwrap_or_default();
+        let completed = !work_records.is_empty();
 
         let item = json!({
             "id": item_id,
@@ -272,11 +304,10 @@ fn load_schedule_rows(
             "agricultural_task_id": agricultural_task_id,
             "field_cultivation_id": field_cultivation_id,
             "agricultural_task": agricultural_task,
-            "actual_date": actual_date,
-            "actual_notes": actual_notes,
             "rescheduled_at": rescheduled_at,
             "cancelled_at": cancelled_at,
-            "completed_at": completed_at,
+            "completed": completed,
+            "work_records": work_records,
         });
 
         Ok((field_cultivation_id, json!({ "category": category, "items": [item] })))

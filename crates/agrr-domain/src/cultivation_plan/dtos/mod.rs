@@ -62,8 +62,6 @@ pub(crate) mod public_plan_save_pesticide_reference_row;
 pub(crate) mod public_plan_save_pesticide_usage_constraint_row;
 pub(crate) mod public_plan_save_session_data;
 pub(crate) mod task_schedule_crop_task_template_snapshot;
-pub(crate) mod task_schedule_item_complete_input;
-
 pub use plan_save_agricultural_tasks::{
     PlanSaveCropTaskTemplateLinkSnapshot, PlanSaveEnsureUserAgriculturalTasksInput,
     PlanSaveEnsureUserAgriculturalTasksOutput, PlanSaveUserAgriculturalTaskSnapshot,
@@ -119,7 +117,6 @@ pub use public_plan_save_pesticide_reference_row::PublicPlanSavePesticideReferen
 pub use public_plan_save_pesticide_usage_constraint_row::PublicPlanSavePesticideUsageConstraintRow;
 pub use public_plan_save_session_data::PublicPlanSaveSessionData;
 pub use task_schedule_crop_task_template_snapshot::TaskScheduleCropTaskTemplateSnapshot;
-pub use task_schedule_item_complete_input::TaskScheduleItemCompleteInput;
 pub use add_crop_adjust_result::AddCropAdjustResult;
 pub use crop_rows_available_row::CropRowsAvailableRow;
 pub use crop_task_schedule_blueprint::{

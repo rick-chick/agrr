@@ -4,8 +4,8 @@ use rusqlite::Connection;
 use tempfile::tempdir;
 
 #[test]
-fn embedded_primary_latest_version_includes_v3() {
-    assert!(schema::embedded_primary_latest_version() >= 3_i64);
+fn embedded_primary_latest_version_includes_v5() {
+    assert!(schema::embedded_primary_latest_version() >= 5_i64);
 }
 
 #[test]

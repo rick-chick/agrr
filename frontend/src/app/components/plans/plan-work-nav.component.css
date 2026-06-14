@@ -1,0 +1,21 @@
+.plan-work-nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.plan-work-nav__link {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--color-text-secondary, #555);
+  border: 1px solid var(--color-border, #ddd);
+  font-size: 0.875rem;
+}
+
+.plan-work-nav__link--active {
+  background: var(--color-primary, #2d6a4f);
+  color: #fff;
+  border-color: var(--color-primary, #2d6a4f);
+}

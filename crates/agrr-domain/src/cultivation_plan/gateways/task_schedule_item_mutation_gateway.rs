@@ -6,7 +6,7 @@ use crate::cultivation_plan::dtos::{
 };
 use crate::shared::attr::AttrMap;
 use serde_json::Value;
-use time::{Date, OffsetDateTime};
+use time::OffsetDateTime;
 
 pub trait TaskScheduleItemMutationGateway: Send + Sync {
     fn find_field_cultivation_for_create(
@@ -39,13 +39,17 @@ pub trait TaskScheduleItemMutationGateway: Send + Sync {
         attributes: AttrMap,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
 
-    fn complete_item_for_plan(
+    fn skip_item_for_plan(
         &self,
         plan_id: i64,
         item_id: i64,
-        actual_date: Date,
-        actual_notes: Option<&str>,
-        completed_at: OffsetDateTime,
+        cancelled_at: OffsetDateTime,
+    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn unskip_item_for_plan(
+        &self,
+        plan_id: i64,
+        item_id: i64,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
 
     fn deletion_undo_schedule_row_for_item(

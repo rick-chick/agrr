@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
+import { PlanWorkNavComponent } from './plan-work-nav.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
 import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/plan-detail.providers';
@@ -22,6 +23,7 @@ const initialControl: PlanDetailViewState = {
     CommonModule,
     RouterLink,
     PlanGanttClimateShellComponent,
+    PlanWorkNavComponent,
     TranslateModule,
     PlanDisplayNamePipe
   ],
@@ -39,6 +41,7 @@ const initialControl: PlanDetailViewState = {
         </div>
       } @else if (control.plan) {
         <h2 class="plan-detail__title">{{ control.plan.name | planDisplayName }}</h2>
+        <app-plan-work-nav [planId]="planId" />
         @if (control.planData) {
           <div class="plan-detail__body plan-detail-surface">
             <app-plan-gantt-climate-shell [data]="control.planData" [planType]="planType" />
@@ -65,6 +68,10 @@ export class PlanDetailComponent implements PlanDetailView, OnInit {
   }
 
   readonly planType: 'private' | 'public' = 'private';
+
+  get planId(): number {
+    return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
 
   ngOnInit(): void {
     this.presenter.setView(this);

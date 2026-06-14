@@ -64,6 +64,7 @@ pub mod session_auth;
 pub mod state;
 pub mod task_schedule_timeline_json;
 pub mod task_schedules;
+pub mod work_records;
 pub mod weather_prediction_anchors;
 pub mod workbench_payload;
 
@@ -109,6 +110,7 @@ pub async fn run_http_server() {
         .merge(cable::routes())
         .merge(plans::routes())
         .merge(task_schedules::routes())
+        .merge(work_records::routes())
         .merge(cultivation_plans::routes())
         .merge(cultivation_plans_mutations::mutation_routes())
         .merge(field_cultivations::routes())

@@ -57,14 +57,9 @@ export interface TaskDetails {
     skill_level: string;
     task_type: string;
   } | null;
-  actual: {
-    date: string | null;
-    notes: string | null;
-  };
   history: {
     rescheduled_at: string | null;
     cancelled_at: string | null;
-    completed_at: string | null;
   };
 }
 
@@ -73,6 +68,12 @@ export interface TaskBadge {
   priority_level: string;
   status: string;
   category: string;
+}
+
+export interface TaskScheduleItemWorkRecordSummary {
+  id: number;
+  actual_date: string;
+  notes: string | null;
 }
 
 export interface TaskScheduleItem {
@@ -94,6 +95,8 @@ export interface TaskScheduleItem {
   status: string;
   agricultural_task_id: number;
   field_cultivation_id: number;
+  completed: boolean;
+  work_records: TaskScheduleItemWorkRecordSummary[];
   details: TaskDetails;
   badge: TaskBadge;
 }

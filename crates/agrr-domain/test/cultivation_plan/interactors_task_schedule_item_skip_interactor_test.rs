@@ -1,20 +1,25 @@
-// Tests for `interactors/task_schedule_item_complete_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
+// Tests for `interactors/task_schedule_item_skip_interactor.rs`
 
     use crate::cultivation_plan::dtos::CultivationPlanCreateAttrs;
     use crate::cultivation_plan::entities::{CultivationPlanEntity, FieldCultivationEntity};
-    use crate::shared::exceptions::RecordInvalidError;
+    use crate::cultivation_plan::gateways::CultivationPlanGateway;
+    use crate::cultivation_plan::gateways::TaskScheduleItemMutationGateway;
+    use crate::cultivation_plan::ports::TaskScheduleItemMutationOutputPort;
+    use crate::shared::exceptions::RecordNotFoundError;
+    use crate::shared::ports::ClockPort;
+    use serde_json::Value;
+    use std::collections::BTreeMap;
     use std::sync::{Arc, Mutex};
-    use time::macros::{date, datetime};
-    use time::{Date, OffsetDateTime};
+    use time::macros::datetime;
+    use time::OffsetDateTime;
 
     struct FakeClock {
-        today_val: Date,
         now_val: OffsetDateTime,
     }
 
     impl ClockPort for FakeClock {
-        fn today(&self) -> Date {
-            self.today_val
+        fn today(&self) -> time::Date {
+            self.now_val.date()
         }
 
         fn now(&self) -> OffsetDateTime {
@@ -25,7 +30,6 @@
     struct SpyOutput {
         events: Arc<Mutex<Vec<String>>>,
         payload: Arc<Mutex<Option<Value>>>,
-        errors: Arc<Mutex<Option<BTreeMap<String, Vec<String>>>>>,
     }
 
     impl TaskScheduleItemMutationOutputPort for SpyOutput {
@@ -40,11 +44,10 @@
 
         fn on_record_invalid(
             &mut self,
-            errors: BTreeMap<String, Vec<String>>,
+            _: BTreeMap<String, Vec<String>>,
             _: &str,
         ) {
             self.events.lock().unwrap().push("record_invalid".into());
-            *self.errors.lock().unwrap() = Some(errors);
         }
 
         fn on_not_found(&mut self) {
@@ -114,15 +117,13 @@
         }
     }
 
-    enum CompleteOutcome {
-        Ok(Value),
-        ErrRecordInvalid(RecordInvalidError),
-        ErrNotFound,
-    }
-
     struct StubMutationGateway {
-        complete_outcome: CompleteOutcome,
-        complete_calls: Arc<Mutex<Vec<(i64, i64, Date, Option<String>, OffsetDateTime)>>>,
+        skip_payload: Value,
+        unskip_payload: Value,
+        skip_calls: Arc<Mutex<Vec<(i64, i64, OffsetDateTime)>>>,
+        unskip_calls: Arc<Mutex<Vec<(i64, i64)>>>,
+        skip_err: Option<RecordNotFoundError>,
+        unskip_err: Option<RecordNotFoundError>,
     }
 
     impl TaskScheduleItemMutationGateway for StubMutationGateway {
@@ -175,29 +176,29 @@
             unimplemented!()
         }
 
-        fn complete_item_for_plan(
+        fn skip_item_for_plan(
             &self,
             plan_id: i64,
             item_id: i64,
-            actual_date: Date,
-            actual_notes: Option<&str>,
-            completed_at: OffsetDateTime,
+            cancelled_at: OffsetDateTime,
         ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
-            self.complete_calls.lock().unwrap().push((
-                plan_id,
-                item_id,
-                actual_date,
-                actual_notes.map(str::to_string),
-                completed_at,
-            ));
-            match &self.complete_outcome {
-                CompleteOutcome::Ok(v) => Ok(v.clone()),
-                CompleteOutcome::ErrRecordInvalid(e) => Err(Box::new(RecordInvalidError::new(
-                    e.detail_message().map(str::to_string),
-                    e.errors.clone(),
-                ))),
-                CompleteOutcome::ErrNotFound => Err(Box::new(RecordNotFoundError)),
+            self.skip_calls.lock().unwrap().push((plan_id, item_id, cancelled_at));
+            if let Some(_) = self.skip_err {
+                return Err(Box::new(RecordNotFoundError));
             }
+            Ok(self.skip_payload.clone())
+        }
+
+        fn unskip_item_for_plan(
+            &self,
+            plan_id: i64,
+            item_id: i64,
+        ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+            self.unskip_calls.lock().unwrap().push((plan_id, item_id));
+            if let Some(_) = self.unskip_err {
+                return Err(Box::new(RecordNotFoundError));
+            }
+            Ok(self.unskip_payload.clone())
         }
 
         fn deletion_undo_schedule_row_for_item(
@@ -235,188 +236,138 @@
         }
     }
 
-    // Ruby: test "completes item after private plan access check"
     #[test]
-    fn completes_item_after_private_plan_access_check() {
+    fn skips_item_after_private_plan_access_check() {
         let events = Arc::new(Mutex::new(Vec::new()));
         let payload_slot = Arc::new(Mutex::new(None));
-        let errors = Arc::new(Mutex::new(None));
         let mut output = SpyOutput {
             events: Arc::clone(&events),
             payload: Arc::clone(&payload_slot),
-            errors,
         };
-        let complete_calls = Arc::new(Mutex::new(Vec::new()));
+        let skip_calls = Arc::new(Mutex::new(Vec::new()));
         let gateway = StubMutationGateway {
-            complete_outcome: CompleteOutcome::Ok(serde_json::json!({"id": 9, "status": "completed"})),
-            complete_calls: Arc::clone(&complete_calls),
+            skip_payload: serde_json::json!({
+                "id": 9,
+                "status": "skipped",
+                "cancelled_at": "2026-03-01T12:00:00Z"
+            }),
+            unskip_payload: Value::Null,
+            skip_calls: Arc::clone(&skip_calls),
+            unskip_calls: Arc::new(Mutex::new(Vec::new())),
+            skip_err: None,
+            unskip_err: None,
         };
         let clock = FakeClock {
-            today_val: date!(2026-03-01),
             now_val: datetime!(2026-03-01 12:00 UTC),
         };
         let plan_gateway = StubPlanGateway {
             plan: private_plan(1),
         };
         let mut interactor =
-            TaskScheduleItemCompleteInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
 
-        let mut params = BTreeMap::new();
-        params.insert("actual_date".into(), Value::String("2026-04-10".into()));
-        params.insert("notes".into(), Value::String("実施メモ".into()));
-
-        interactor
-            .call_rescuing(1, 2, 9, &params)
-            .unwrap();
+        interactor.call_skip_rescuing(1, 2, 9).unwrap();
 
         assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
-        let calls = complete_calls.lock().unwrap();
+        let calls = skip_calls.lock().unwrap();
         assert_eq!(calls.len(), 1);
         assert_eq!(calls[0].0, 2);
         assert_eq!(calls[0].1, 9);
-        assert_eq!(calls[0].2, date!(2026-04-10));
-        assert_eq!(calls[0].3.as_deref(), Some("実施メモ"));
-        assert_eq!(calls[0].4, datetime!(2026-03-01 12:00 UTC));
+        assert_eq!(calls[0].2, datetime!(2026-03-01 12:00 UTC));
     }
 
-    // Ruby: test "dispatches not_found when private plan access denied"
+    #[test]
+    fn unskips_item_after_private_plan_access_check() {
+        let events = Arc::new(Mutex::new(Vec::new()));
+        let mut output = SpyOutput {
+            events: Arc::clone(&events),
+            payload: Arc::new(Mutex::new(None)),
+        };
+        let unskip_calls = Arc::new(Mutex::new(Vec::new()));
+        let gateway = StubMutationGateway {
+            skip_payload: Value::Null,
+            unskip_payload: serde_json::json!({
+                "id": 9,
+                "status": "planned",
+                "cancelled_at": null
+            }),
+            skip_calls: Arc::new(Mutex::new(Vec::new())),
+            unskip_calls: Arc::clone(&unskip_calls),
+            skip_err: None,
+            unskip_err: None,
+        };
+        let clock = FakeClock {
+            now_val: datetime!(2026-03-01 12:00 UTC),
+        };
+        let plan_gateway = StubPlanGateway {
+            plan: private_plan(1),
+        };
+        let mut interactor =
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
+
+        interactor.call_unskip_rescuing(1, 2, 9).unwrap();
+
+        assert_eq!(&*events.lock().unwrap(), &["success".to_string()]);
+        let calls = unskip_calls.lock().unwrap();
+        assert_eq!(calls.len(), 1);
+        assert_eq!(calls[0], (2, 9));
+    }
+
     #[test]
     fn dispatches_not_found_when_private_plan_access_denied() {
         let events = Arc::new(Mutex::new(Vec::new()));
         let mut output = SpyOutput {
             events: Arc::clone(&events),
             payload: Arc::new(Mutex::new(None)),
-            errors: Arc::new(Mutex::new(None)),
         };
-        let complete_calls = Arc::new(Mutex::new(Vec::new()));
         let gateway = StubMutationGateway {
-            complete_outcome: CompleteOutcome::Ok(Value::Null),
-            complete_calls: Arc::clone(&complete_calls),
+            skip_payload: Value::Null,
+            unskip_payload: Value::Null,
+            skip_calls: Arc::new(Mutex::new(Vec::new())),
+            unskip_calls: Arc::new(Mutex::new(Vec::new())),
+            skip_err: None,
+            unskip_err: None,
         };
         let clock = FakeClock {
-            today_val: date!(2026-03-01),
             now_val: datetime!(2026-03-01 12:00 UTC),
         };
         let plan_gateway = StubPlanGateway {
             plan: private_plan(99),
         };
         let mut interactor =
-            TaskScheduleItemCompleteInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
 
-        interactor.call_rescuing(1, 2, 9, &BTreeMap::new()).unwrap();
+        interactor.call_skip_rescuing(1, 2, 9).unwrap();
 
         assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
-        assert!(complete_calls.lock().unwrap().is_empty());
+        assert!(gateway.skip_calls.lock().unwrap().is_empty());
     }
 
-    // Ruby: test "dispatches record_invalid when completion params have invalid date"
     #[test]
-    fn dispatches_record_invalid_when_completion_params_have_invalid_date() {
+    fn dispatches_not_found_when_gateway_skip_raises_record_not_found() {
         let events = Arc::new(Mutex::new(Vec::new()));
-        let errors = Arc::new(Mutex::new(None));
         let mut output = SpyOutput {
             events: Arc::clone(&events),
             payload: Arc::new(Mutex::new(None)),
-            errors: Arc::clone(&errors),
         };
-        let complete_calls = Arc::new(Mutex::new(Vec::new()));
         let gateway = StubMutationGateway {
-            complete_outcome: CompleteOutcome::Ok(Value::Null),
-            complete_calls: Arc::clone(&complete_calls),
+            skip_payload: Value::Null,
+            unskip_payload: Value::Null,
+            skip_calls: Arc::new(Mutex::new(Vec::new())),
+            unskip_calls: Arc::new(Mutex::new(Vec::new())),
+            skip_err: Some(RecordNotFoundError),
+            unskip_err: None,
         };
         let clock = FakeClock {
-            today_val: date!(2026-03-01),
             now_val: datetime!(2026-03-01 12:00 UTC),
         };
         let plan_gateway = StubPlanGateway {
             plan: private_plan(1),
         };
         let mut interactor =
-            TaskScheduleItemCompleteInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
+            TaskScheduleItemSkipInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
 
-        let mut params = BTreeMap::new();
-        params.insert("actual_date".into(), Value::String("bogus".into()));
-
-        interactor.call_rescuing(1, 2, 9, &params).unwrap();
-
-        assert_eq!(&*events.lock().unwrap(), &["record_invalid".to_string()]);
-        assert!(complete_calls.lock().unwrap().is_empty());
-        assert!(
-            errors
-                .lock()
-                .unwrap()
-                .as_ref()
-                .unwrap()
-                .contains_key("actual_date")
-        );
-    }
-
-    // Ruby: test "dispatches record_invalid when gateway complete raises RecordInvalid"
-    #[test]
-    fn dispatches_record_invalid_when_gateway_complete_raises_record_invalid() {
-        let events = Arc::new(Mutex::new(Vec::new()));
-        let errors = Arc::new(Mutex::new(None));
-        let mut output = SpyOutput {
-            events: Arc::clone(&events),
-            payload: Arc::new(Mutex::new(None)),
-            errors: Arc::clone(&errors),
-        };
-        let mut validation = crate::shared::validation::ValidationErrors::new();
-        validation.add("actual_date", "blank");
-        let gateway = StubMutationGateway {
-            complete_outcome: CompleteOutcome::ErrRecordInvalid(RecordInvalidError::new(
-                Some("invalid".into()),
-                Some(validation),
-            )),
-            complete_calls: Arc::new(Mutex::new(Vec::new())),
-        };
-        let clock = FakeClock {
-            today_val: date!(2026-03-01),
-            now_val: datetime!(2026-03-01 12:00 UTC),
-        };
-        let plan_gateway = StubPlanGateway {
-            plan: private_plan(1),
-        };
-        let mut interactor =
-            TaskScheduleItemCompleteInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
-
-        interactor.call_rescuing(1, 2, 9, &BTreeMap::new()).unwrap();
-
-        assert_eq!(&*events.lock().unwrap(), &["record_invalid".to_string()]);
-        assert!(
-            errors
-                .lock()
-                .unwrap()
-                .as_ref()
-                .unwrap()
-                .contains_key("actual_date")
-        );
-    }
-
-    // Ruby: test "dispatches not_found when gateway complete raises RecordNotFound"
-    #[test]
-    fn dispatches_not_found_when_gateway_complete_raises_record_not_found() {
-        let events = Arc::new(Mutex::new(Vec::new()));
-        let mut output = SpyOutput {
-            events: Arc::clone(&events),
-            payload: Arc::new(Mutex::new(None)),
-            errors: Arc::new(Mutex::new(None)),
-        };
-        let gateway = StubMutationGateway {
-            complete_outcome: CompleteOutcome::ErrNotFound,
-            complete_calls: Arc::new(Mutex::new(Vec::new())),
-        };
-        let clock = FakeClock {
-            today_val: date!(2026-03-01),
-            now_val: datetime!(2026-03-01 12:00 UTC),
-        };
-        let plan_gateway = StubPlanGateway {
-            plan: private_plan(1),
-        };
-        let mut interactor =
-            TaskScheduleItemCompleteInteractor::new(&mut output, &plan_gateway, &gateway, &clock);
-
-        interactor.call_rescuing(1, 2, 9, &BTreeMap::new()).unwrap();
+        interactor.call_skip_rescuing(1, 2, 9).unwrap();
 
         assert_eq!(&*events.lock().unwrap(), &["not_found".to_string()]);
     }

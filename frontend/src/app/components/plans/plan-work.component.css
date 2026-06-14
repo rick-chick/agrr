@@ -1,0 +1,116 @@
+.plan-work__section {
+  margin: 1.25rem 0;
+}
+
+.plan-work__section-title {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.plan-work__section-title--overdue {
+  color: var(--color-danger, #b00020);
+}
+
+.plan-work__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plan-work__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border, #eee);
+  position: relative;
+}
+
+.plan-work__row--done {
+  opacity: 0.85;
+}
+
+.plan-work__row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.plan-work__date {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #666);
+}
+
+.plan-work__name {
+  font-weight: 600;
+}
+
+.plan-work__field {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #666);
+}
+
+.plan-work__done-badge,
+.plan-work__skip-badge {
+  font-size: 0.8rem;
+  color: var(--color-primary, #2d6a4f);
+}
+
+.plan-work__row-actions {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.plan-work__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  background: #fff;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+}
+
+.plan-work__menu button {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.plan-work__menu button:hover {
+  background: var(--color-surface-muted, #f5f5f5);
+}
+
+.plan-work__fab {
+  margin: 2rem 0 1rem;
+  text-align: center;
+}
+
+.plan-work__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.plan-work__empty {
+  color: var(--color-text-secondary, #666);
+  padding: 0.5rem 0;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.875rem;
+}

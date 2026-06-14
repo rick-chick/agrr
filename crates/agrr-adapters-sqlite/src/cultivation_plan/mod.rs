@@ -15,6 +15,7 @@ mod private_snapshot_read_gateway;
 mod crop_rows_available_private_gateway;
 mod rest_plan_read;
 mod rest_plan_read_domain_gateway;
+mod task_schedule_item_mutation_gateway;
 mod task_schedule_timeline_read;
 mod public_plan_save_read_gateway;
 mod public_plan_save_read_sql;
@@ -48,3 +49,4 @@ pub use private_snapshot_read_gateway::CultivationPlanPrivateSnapshotReadSqliteG
 pub use crop_rows_available_private_gateway::CropRowsAvailablePrivateSqliteGateway;
 pub use rest_plan_read::CultivationPlanRestPlanReadSqliteGateway;
 pub use rest_plan_read_domain_gateway::CultivationPlanRestPlanReadDomainSqliteGateway;
+pub use task_schedule_item_mutation_gateway::TaskScheduleItemMutationSqliteGateway;

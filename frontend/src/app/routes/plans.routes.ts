@@ -33,5 +33,19 @@ export const plansRoutes: Routes = [
         (m) => m.PlanTaskScheduleComponent
       ),
     canActivate: [authGuard]
+  },
+  {
+    path: 'plans/:id/work',
+    loadComponent: () =>
+      import('../components/plans/plan-work.component').then((m) => m.PlanWorkComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'plans/:id/work_records',
+    loadComponent: () =>
+      import('../components/plans/plan-work-records.component').then(
+        (m) => m.PlanWorkRecordsComponent
+      ),
+    canActivate: [authGuard]
   }
 ];
