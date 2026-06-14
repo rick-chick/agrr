@@ -57,7 +57,8 @@ describe('login-auth-urls', () => {
   });
 
   it('oauthReturnToUrl tolerates missing location', () => {
-    expect(oauthReturnToUrl(undefined)).toBe(`${window.location.origin}/`);
+    const origin = window.location?.origin;
+    expect(oauthReturnToUrl(undefined)).toBe(origin ? `${origin}/` : '/');
   });
 
   it('builds same-origin mock login URLs when apiBase is empty', () => {

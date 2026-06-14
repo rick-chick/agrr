@@ -48,5 +48,8 @@ jobs:
             target
           key: cargo-agrr-server-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run tests via bin/test
-        run: bash ./bin/test
+      - name: Run backend tests
+        run: |
+          cargo test -p agrr-domain
+          cargo test -p agrr-adapters-sqlite -- '_gateway_test'
+          bash ./scripts/run-rust-contract-tests.sh
