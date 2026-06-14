@@ -479,3 +479,28 @@ pub fn run_plan_finalize_step(
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_support::test_pool_with_plan;
+
+    #[test]
+    fn load_chain_context_returns_none_when_plan_missing() {
+        let db = test_pool_with_plan(1);
+        let ctx = load_chain_context(&db.pool, 999).expect("query");
+        assert!(ctx.is_none());
+    }
+
+    #[test]
+    fn load_chain_context_returns_farm_coordinates() {
+        let db = test_pool_with_plan(1);
+        let ctx = load_chain_context(&db.pool, 1)
+            .expect("query")
+            .expect("plan context");
+        assert_eq!(ctx.farm_id, 1);
+        assert!((ctx.latitude - 35.0).abs() < f64::EPSILON);
+        assert!((ctx.longitude - 139.0).abs() < f64::EPSILON);
+        assert!(ctx.latest_weather_date.is_none());
+    }
+}
+

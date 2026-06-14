@@ -153,7 +153,22 @@ pub(crate) fn broadcast_completed(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::{test_app_state, test_pool_with_plan};
+    use crate::test_support::{
+        test_app_state, test_pool_with_optimizing_plan, test_pool_with_plan,
+    };
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+
+    fn plan_status(pool: &agrr_adapters_sqlite::SqlitePool, plan_id: i64) -> String {
+        pool.with_read(|conn| {
+            conn.query_row(
+                "SELECT status FROM cultivation_plans WHERE id = ?1",
+                rusqlite::params![plan_id],
+                |row| row.get(0),
+            )
+        })
+        .expect("read status")
+    }
 
     #[test]
     fn advance_phase_returns_err_when_plan_missing() {
@@ -169,6 +184,153 @@ mod tests {
         assert!(
             !err.is_empty(),
             "error message should describe failure: {err}"
+        );
+    }
+
+    #[test]
+    fn plan_still_optimizing_is_true_only_for_optimizing_status() {
+        let db = test_pool_with_plan(1);
+        let pool = db.pool.clone();
+        assert!(!plan_still_optimizing(&pool, 1));
+
+        pool.with_write(|conn| {
+            conn.execute(
+                "UPDATE cultivation_plans SET status = 'optimizing' WHERE id = 1",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("set optimizing");
+        assert!(plan_still_optimizing(&pool, 1));
+
+        pool.with_write(|conn| {
+            conn.execute(
+                "UPDATE cultivation_plans SET status = 'failed' WHERE id = 1",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("set failed");
+        assert!(!plan_still_optimizing(&pool, 1));
+    }
+
+    #[test]
+    fn run_guarded_optimization_step_skips_when_plan_not_optimizing() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+        let step_ran = Arc::new(AtomicBool::new(false));
+        let step_ran_in = step_ran.clone();
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "fetch_weather_data",
+            Some("fetching_weather"),
+            || {
+                step_ran_in.store(true, Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(!continue_chain);
+        assert!(!step_ran.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn run_guarded_optimization_step_returns_true_when_step_succeeds() {
+        let db = test_pool_with_optimizing_plan(1);
+        let state = test_app_state(db.pool);
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "weather_prediction",
+            Some("predicting_weather"),
+            || Ok(()),
+        );
+
+        assert!(continue_chain);
+        assert_eq!(plan_status(&state.sqlite, 1), "optimizing");
+    }
+
+    #[test]
+    fn run_guarded_optimization_step_marks_failed_when_step_errors() {
+        let db = test_pool_with_optimizing_plan(1);
+        let state = test_app_state(db.pool);
+
+        let continue_chain = run_guarded_optimization_step(
+            &state,
+            1,
+            "PlansOptimizationChannel",
+            "optimization",
+            Some("optimizing"),
+            || Err("daemon unavailable".into()),
+        );
+
+        assert!(!continue_chain);
+        assert_eq!(plan_status(&state.sqlite, 1), "failed");
+    }
+
+    #[test]
+    fn broadcast_completed_skips_when_field_cultivations_incomplete() {
+        let db = test_pool_with_plan(1);
+        let pool = db.pool.clone();
+        pool.with_write(|conn| {
+            conn.execute(
+                "UPDATE cultivation_plans SET status = 'completed' WHERE id = 1",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO field_cultivations (id, cultivation_plan_id, status)
+                 VALUES (1, 1, 'pending')",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("seed incomplete finalize");
+
+        let hub = CableHub::default();
+        let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+        let mut rx = rt.block_on(hub.subscribe_plan(1));
+
+        broadcast_completed(&hub, 1, &pool);
+
+        assert!(
+            rx.try_recv().is_err(),
+            "must not broadcast completed when field cultivations are not all completed"
+        );
+    }
+
+    #[test]
+    fn broadcast_completed_sends_when_plan_and_fields_completed() {
+        let db = test_pool_with_plan(1);
+        let pool = db.pool.clone();
+        pool.with_write(|conn| {
+            conn.execute(
+                "UPDATE cultivation_plans SET status = 'completed' WHERE id = 1",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO field_cultivations (id, cultivation_plan_id, status)
+                 VALUES (1, 1, 'completed')",
+                [],
+            )?;
+            Ok(())
+        })
+        .expect("seed completed finalize");
+
+        let hub = CableHub::default();
+        let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+        let mut rx = rt.block_on(hub.subscribe_plan(1));
+
+        broadcast_completed(&hub, 1, &pool);
+
+        let payload = rx.try_recv().expect("completed broadcast expected");
+        assert!(
+            payload.contains("\"status\":\"completed\"") && payload.contains("\"progress\":100"),
+            "payload should be completed snapshot: {payload}"
         );
     }
 }
