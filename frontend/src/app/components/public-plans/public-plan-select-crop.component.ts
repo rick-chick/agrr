@@ -172,8 +172,12 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
       this.router.navigate(['/public-plans/new']);
       return;
     }
+    const pendingCropSlug = this.publicPlanStore.state.pendingCropSlug;
     this.resetStateUseCase.execute({});
     this.publicPlanStore.setFarm(farm);
+    if (pendingCropSlug) {
+      this.publicPlanStore.setPendingCropSlug(pendingCropSlug);
+    }
     this.presenter.setView(this);
     this.selectedCrops = [...this.publicPlanStore.state.selectedCrops];
     this.selectedCropIds = new Set(this.selectedCrops.map((c) => c.id));

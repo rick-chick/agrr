@@ -323,12 +323,15 @@ impl PrivatePlanOptimizationJobChainGateway for JobChainAdapter<'_> {
         &self,
         cultivation_plan_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        enqueue_private_plan_weather_prep_chain(
+        if enqueue_private_plan_weather_prep_chain(
             cultivation_plan_id,
             "PlansOptimizationChannel",
             self.state,
-        );
-        Ok(())
+        ) {
+            Ok(())
+        } else {
+            Err("optimization chain could not start".into())
+        }
     }
 }
 
