@@ -49,4 +49,4 @@ jobs:
           key: cargo-agrr-server-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run tests via bin/test
-        run: ./bin/test
+        run: bash ./bin/test

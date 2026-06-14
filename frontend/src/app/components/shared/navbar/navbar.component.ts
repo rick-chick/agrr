@@ -106,7 +106,7 @@ export class NavbarComponent {
     if (typeof window === 'undefined') {
       return {};
     }
-    const path = window.location.pathname;
+    const path = window.location.pathname ?? '';
     const onLogin = path === '/login' || path.endsWith('/login');
     if (onLogin) {
       return {};
