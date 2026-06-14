@@ -203,4 +203,16 @@ mod tests {
             &state
         ));
     }
+
+    #[test]
+    fn returns_false_when_plan_context_missing() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+
+        assert!(!enqueue_private_plan_optimization_chain(
+            999,
+            "PlansOptimizationChannel",
+            &state
+        ));
+    }
 }

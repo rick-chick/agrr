@@ -114,6 +114,21 @@ pub fn test_pool_without_optimization_phase_column(plan_id: i64) -> TestDb {
     TestDb { pool, _file: file }
 }
 
+/// Plan with `status = optimizing` (for chain guard / phase step tests).
+pub fn test_pool_with_optimizing_plan(plan_id: i64) -> TestDb {
+    let db = test_pool_with_plan(plan_id);
+    db.pool
+        .with_write(|conn| {
+            conn.execute(
+                "UPDATE cultivation_plans SET status = 'optimizing' WHERE id = ?1",
+                rusqlite::params![plan_id],
+            )?;
+            Ok(())
+        })
+        .expect("set optimizing");
+    db
+}
+
 pub fn test_app_state(pool: SqlitePool) -> AppState {
     struct NoopWeather;
     impl WeatherDataGateway for NoopWeather {
