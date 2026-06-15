@@ -55,8 +55,8 @@ services:
       context: .
       dockerfile: Dockerfile.test
       network: host
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     entrypoint: ["bash", "/app/scripts/docker-entrypoint-test.sh"]
     volumes:
       - .:/app

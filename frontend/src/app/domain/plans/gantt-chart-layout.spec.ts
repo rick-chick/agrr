@@ -16,7 +16,6 @@ import {
   formatGanttVisibleRangeLabel,
   ganttCropFillColor,
   ganttCropStrokeColor,
-  GanttTimeUnit,
   normalizePlanBounds,
   applyGanttCultivationMove,
   buildGanttAdjustMove,

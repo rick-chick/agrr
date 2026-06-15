@@ -109,7 +109,7 @@ export class NavbarComponent {
     }
     return loginReturnQueryForLocation({
       href: window.location.href || `${window.location.origin}/`,
-      pathname: window.location.pathname,
+      pathname: window.location.pathname ?? '',
       origin: window.location.origin
     });
   }
