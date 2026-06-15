@@ -90,4 +90,14 @@ describe('HomeDemoSectionComponent', () => {
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/public-plans/new'] as const);
   });
+
+  it('refreshes demo gantt when locale changes', () => {
+    fixture.detectChanges();
+    expect(mockDemoStore.syncHomeDemoViewState).toHaveBeenCalledTimes(1);
+
+    const translate = TestBed.inject(TranslateService);
+    translate.use('en');
+
+    expect(mockDemoStore.syncHomeDemoViewState).toHaveBeenCalledTimes(2);
+  });
 });

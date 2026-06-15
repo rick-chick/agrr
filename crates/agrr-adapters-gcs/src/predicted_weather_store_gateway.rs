@@ -79,3 +79,21 @@ impl PredictedWeatherStoreGateway for PredictedWeatherGcsStoreGateway {
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use agrr_domain::weather_data::dtos::PredictedWeatherScope;
+
+    #[test]
+    fn object_key_uses_scope_and_id() {
+        assert_eq!(
+            PredictedWeatherGcsStoreGateway::object_key(PredictedWeatherScope::Location, 42),
+            "predicted_weather/location/42.json"
+        );
+        assert_eq!(
+            PredictedWeatherGcsStoreGateway::object_key(PredictedWeatherScope::Plan, 7),
+            "predicted_weather/plan/7.json"
+        );
+    }
+}

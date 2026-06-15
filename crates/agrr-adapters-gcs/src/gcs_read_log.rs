@@ -30,3 +30,20 @@ pub(crate) fn log_read(bucket: &str, key: &str) {
     };
     eprintln!("{line}");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn set_gcs_read_log_suffix_roundtrip_and_clear() {
+        set_gcs_read_log_suffix(Some(" plan_id=9 step=bootstrap".into()));
+        assert_eq!(
+            gcs_read_log_suffix_snapshot().as_deref(),
+            Some(" plan_id=9 step=bootstrap")
+        );
+
+        set_gcs_read_log_suffix(None);
+        assert_eq!(gcs_read_log_suffix_snapshot(), None);
+    }
+}
