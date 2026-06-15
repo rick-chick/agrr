@@ -16,11 +16,11 @@ ensure_agrr_server_binary() {
   local stamp="${ROOT}/crates/agrr-server/src"
 
   if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
-    echo "==> Building agrr-server via Dockerfile.agrr-server (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1)"
+    echo "==> Building agrr-server via Dockerfile.agrr-server builder stage (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1)"
     local image cid
-    image=$(docker build -q -f Dockerfile.agrr-server .)
+    image=$(docker build -q -f Dockerfile.agrr-server --target builder .)
     cid=$(docker create "$image")
-    docker cp "${cid}:/usr/local/bin/agrr-server" "$BINARY"
+    docker cp "${cid}:/app/target/release/agrr-server" "$BINARY"
     docker rm "$cid" >/dev/null
     chmod +x "$BINARY"
     return
