@@ -1,4 +1,5 @@
 # Backend tests: agrr-domain (cargo) + R4 contract (agrr-r4-contract + agrr-server)
+# CI invokes cargo and scripts directly; bin/test depends on gitignored .cursor/skills.
 name: Backend test
 
 on:
