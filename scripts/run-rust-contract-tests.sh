@@ -15,6 +15,17 @@ ensure_agrr_server_binary() {
   local host_release="${ROOT}/target/release/agrr-server"
   local stamp="${ROOT}/crates/agrr-server/src"
 
+  if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
+    echo "==> Building agrr-server via Dockerfile.agrr-server (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1)"
+    local image cid
+    image=$(docker build -q -f Dockerfile.agrr-server .)
+    cid=$(docker create "$image")
+    docker cp "${cid}:/usr/local/bin/agrr-server" "$BINARY"
+    docker rm "$cid" >/dev/null
+    chmod +x "$BINARY"
+    return
+  fi
+
   if [[ -x "$BINARY" ]] && [[ "${AGRR_SERVER_CONTRACT_REBUILD:-}" != "1" ]]; then
     if [[ ! "$stamp" -nt "$BINARY" ]]; then
       return

@@ -53,4 +53,4 @@ jobs:
         run: |
           cargo test -p agrr-domain
           cargo test -p agrr-adapters-sqlite -- '_gateway_test'
-          bash ./scripts/run-rust-contract-tests.sh
+          AGRR_SERVER_CONTRACT_DOCKER_BUILD=1 bash ./scripts/run-rust-contract-tests.sh
