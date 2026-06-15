@@ -23,9 +23,26 @@ jobs:
   lint:
     uses: ./.github/workflows/lint.yml
 
+  check-deploy-secrets:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          if [ -n "$GCP_SA_KEY" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "GCP deploy secrets are not configured; skipping build-and-deploy."
+          fi
+
   build-and-deploy:
     runs-on: ubuntu-latest
-    needs: [frontend-test, lint]
+    needs: [frontend-test, lint, check-deploy-secrets]
+    if: needs.check-deploy-secrets.outputs.configured == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
