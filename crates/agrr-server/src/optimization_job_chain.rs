@@ -317,6 +317,18 @@ mod tests {
     }
 
     #[test]
+    fn weather_prep_chain_returns_false_when_plan_missing() {
+        let db = test_pool_with_plan(1);
+        let state = test_app_state(db.pool);
+
+        assert!(!enqueue_private_plan_weather_prep_chain(
+            999,
+            "PlansOptimizationChannel",
+            &state
+        ));
+    }
+
+    #[test]
     fn returns_true_and_leaves_plan_pending_before_bootstrap_runs() {
         let db = test_pool_with_plan(1);
         let pool = db.pool.clone();
