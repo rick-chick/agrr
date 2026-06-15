@@ -25,7 +25,7 @@ export class WorkRecordSheetPresenter
     this.view = view;
   }
 
-  onSuccess(dto: CreateWorkRecordSuccessDto | UpdateWorkRecordSuccessDto): void {
+  onSuccess(_dto: CreateWorkRecordSuccessDto | UpdateWorkRecordSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     this.view.control = {
       ...this.view.control,
