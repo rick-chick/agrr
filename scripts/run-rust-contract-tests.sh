@@ -15,6 +15,17 @@ ensure_agrr_server_binary() {
   local host_release="${ROOT}/target/release/agrr-server"
   local stamp="${ROOT}/crates/agrr-server/src"
 
+  if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
+    echo "==> Building agrr-server via Dockerfile.agrr-server builder stage (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1)"
+    local image cid
+    image=$(docker build -q -f Dockerfile.agrr-server --target builder .)
+    cid=$(docker create "$image")
+    docker cp "${cid}:/app/target/release/agrr-server" "$BINARY"
+    docker rm "$cid" >/dev/null
+    chmod +x "$BINARY"
+    return
+  fi
+
   if [[ -x "$BINARY" ]] && [[ "${AGRR_SERVER_CONTRACT_REBUILD:-}" != "1" ]]; then
     if [[ ! "$stamp" -nt "$BINARY" ]]; then
       return
@@ -95,6 +106,23 @@ ensure_agrr_migrate_binary
 ensure_agrr_r4_contract_tests_binary() {
   local stamp="${ROOT}/crates/agrr-r4-contract"
   local host_built=""
+
+  if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
+    echo "==> Building agrr-r4-contract tests in rust:1-bookworm (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1)"
+    docker run --rm \
+      -v "${ROOT}:/app" \
+      -w /app \
+      rust:1-bookworm \
+      cargo build --tests -p agrr-r4-contract
+    host_built="$(find "${ROOT}/target/debug/deps" -maxdepth 1 -name 'contracts-*' -type f ! -name '*.d' -executable 2>/dev/null | head -1)"
+    if [[ -n "$host_built" && -x "$host_built" ]]; then
+      cp "$host_built" "$R4_CONTRACT_TESTS_BIN"
+      chmod +x "$R4_CONTRACT_TESTS_BIN"
+      return
+    fi
+    echo "==> agrr-r4-contract docker build did not produce a test binary"
+    exit 1
+  fi
 
   if [[ -x "$R4_CONTRACT_TESTS_BIN" ]] && [[ "${AGRR_R4_CONTRACT_REBUILD:-}" != "1" ]]; then
     if [[ ! "$stamp" -nt "$R4_CONTRACT_TESTS_BIN" ]]; then

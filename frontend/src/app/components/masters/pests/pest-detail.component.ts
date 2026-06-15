@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { PestDetailView, PestDetailViewState } from './pest-detail.view';
 import { LoadPestDetailUseCase } from '../../../usecase/pests/load-pest-detail.usecase';
 import { DeletePestUseCase } from '../../../usecase/pests/delete-pest.usecase';

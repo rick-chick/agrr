@@ -245,7 +245,6 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   openEdit(record: WorkRecord, fieldName = '', cropName = ''): void {
     this.control = {
       ...initialControl,
-      open: true,
       mode: 'edit',
       form: {
         name: record.name,

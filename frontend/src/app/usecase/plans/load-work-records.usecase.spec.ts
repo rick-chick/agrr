@@ -6,16 +6,6 @@ import { PlanGateway } from './plan-gateway';
 import { LoadWorkRecordsOutputPort } from './load-work-records.output-port';
 import { WorkRecord } from '../../models/plans/work-record';
 
-const plan = {
-  id: 1,
-  name: 'Plan',
-  status: 'active',
-  planning_start_date: '2026-01-01',
-  planning_end_date: '2026-12-31',
-  timeline_generated_at: '2026-06-01',
-  timeline_generated_at_display: '2026-06-01'
-};
-
 function record(id: number, date: string): WorkRecord {
   return {
     id,

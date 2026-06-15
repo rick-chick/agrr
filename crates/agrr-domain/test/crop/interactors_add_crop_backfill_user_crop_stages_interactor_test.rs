@@ -5,6 +5,7 @@ use crate::crop::entities::{
 };
 use rust_decimal::Decimal;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 struct Noop;
 impl LoggerPort for Noop {
@@ -13,8 +14,6 @@ impl LoggerPort for Noop {
     fn error(&self, _: &str) {}
     fn debug(&self, _: &str) {}
 }
-
-static COPY_CALLED: AtomicBool = AtomicBool::new(false);
 
 fn crop(id: i64, is_ref: bool) -> CropEntity {
     CropEntity {
@@ -44,7 +43,16 @@ impl CropSourceCropLookupGateway for SourceLookup {
     }
 }
 
-struct CopyGw;
+struct CopyGw {
+    copy_called: Arc<AtomicBool>,
+}
+
+impl CopyGw {
+    fn new(copy_called: Arc<AtomicBool>) -> Self {
+        Self { copy_called }
+    }
+}
+
 impl CropGateway for CopyGw {
     fn find_by_id(&self, id: i64) -> Result<CropEntity, Box<dyn std::error::Error + Send + Sync>> {
         Ok(crop(id, id == 10))
@@ -73,7 +81,7 @@ impl CropGateway for CopyGw {
         crate::crop::entities::TemperatureRequirementEntity,
         Box<dyn std::error::Error + Send + Sync>,
     > {
-        COPY_CALLED.store(true, Ordering::SeqCst);
+        self.copy_called.store(true, Ordering::SeqCst);
         Ok(TemperatureRequirementEntity::new(9, 2).unwrap())
     }
     fn create_thermal_requirement(
@@ -271,18 +279,20 @@ impl CropGateway for CopyGw {
 
 #[test]
 fn skips_reference_crop() {
-    COPY_CALLED.store(false, Ordering::SeqCst);
+    let copy_called = Arc::new(AtomicBool::new(false));
     let lookup = SourceLookup { source: Some(10) };
-    let i = AddCropBackfillUserCropStagesInteractor::new(&CopyGw, &lookup, &Noop);
+    let gw = CopyGw::new(Arc::clone(&copy_called));
+    let i = AddCropBackfillUserCropStagesInteractor::new(&gw, &lookup, &Noop);
     i.call(&crop(10, true)).unwrap();
-    assert!(!COPY_CALLED.load(Ordering::SeqCst));
+    assert!(!copy_called.load(Ordering::SeqCst));
 }
 
 #[test]
 fn copies_stages_when_user_crop_has_source_crop_id() {
-    COPY_CALLED.store(false, Ordering::SeqCst);
+    let copy_called = Arc::new(AtomicBool::new(false));
     let lookup = SourceLookup { source: Some(10) };
-    let i = AddCropBackfillUserCropStagesInteractor::new(&CopyGw, &lookup, &Noop);
+    let gw = CopyGw::new(Arc::clone(&copy_called));
+    let i = AddCropBackfillUserCropStagesInteractor::new(&gw, &lookup, &Noop);
     i.call(&crop(53, false)).unwrap();
-    assert!(COPY_CALLED.load(Ordering::SeqCst));
+    assert!(copy_called.load(Ordering::SeqCst));
 }

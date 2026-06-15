@@ -1,11 +1,12 @@
 # Backend tests: agrr-domain (cargo) + R4 contract (agrr-r4-contract + agrr-server)
+# CI invokes cargo and scripts directly; bin/test depends on gitignored .cursor/skills.
 name: Backend test
 
 on:
   pull_request:
   push:
     branches:
-      - main
+      - master
 
 concurrency:
   group: rails-test-${{ github.workflow }}-${{ github.ref }}
@@ -17,9 +18,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
 
       - name: Cache migrated test DBs
         uses: actions/cache@v4
@@ -44,5 +49,8 @@ jobs:
             target
           key: cargo-agrr-server-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run tests via bin/test
-        run: ./bin/test
+      - name: Run backend tests
+        run: |
+          cargo test -p agrr-domain
+          cargo test -p agrr-adapters-sqlite -- '_gateway_test'
+          AGRR_SERVER_CONTRACT_DOCKER_BUILD=1 bash ./scripts/run-rust-contract-tests.sh
