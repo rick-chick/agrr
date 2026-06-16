@@ -1,0 +1,31 @@
+name: バグ報告
+description: 再現可能な不具合・誤表示
+title: "[P1] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景 / 再現手順
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完了条件
+      value: |
+        - [ ] 再現テスト（RED）→ 修正（GREEN）
+        - [ ] test-common GREEN

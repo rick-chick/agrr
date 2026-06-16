@@ -15,6 +15,7 @@ disable-model-invocation: true
 - **修正単位**（1 イテレーションで完結する改修の束）ごとに、本スキルのループを **1 回** 回す。
 - 機能一式の Phase 内・CA 違反修正の内側ループ・単発改修のいずれでも、**後片付けを PR 末にまとめない**。
 - 自動起動はしない（`disable-model-invocation: true`）。ユーザーがスキル名を明示したとき、または上記トリガ語で依頼されたときに従う。
+- **例外**: [`github-issue-worker`](../github-issue-worker/SKILL.md) の実装経路では、TDD GREEN 後に **必須**（当該スキルが `disable-model-invocation` を上書きして本ループを適用する）。
 
 ## 原則
 
