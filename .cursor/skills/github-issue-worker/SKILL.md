@@ -230,11 +230,12 @@ Closes #<N>
 EOF
 )"
 gh pr edit --add-label agent-merge
+gh pr ready
 ```
 
 - PR 本文に issue の完了条件チェックリストを写す
 - `Closes #N` を含めマージ時に自動クローズ
-- `agent-merge` で [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) がマージ候補に入る
+- `agent-merge` で [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) がマージ候補に入る（**Draft のままでは dispatch しない** — `gh pr ready` 必須）
 
 ## 7) 終了
 

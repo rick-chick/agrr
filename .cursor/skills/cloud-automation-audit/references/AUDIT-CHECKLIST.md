@@ -29,11 +29,11 @@
 | # | 確認 | クリティカル条件 |
 |---|------|------------------|
 | 1 | SKILL.md が存在し Automation プロンプトのパスと一致 | ファイル欠落・パス typo |
-| 2 | `pr-merge-worker-dispatch.yml` が valid | payload / jq 構文破損・重複 dispatch（Backend test のみ） |
+| 2 | `pr-merge-worker-dispatch.yml` が valid | payload / jq 構文破損・`ci_completed` 時は ruleset 3 context SUCCESS 後のみ dispatch |
 | 3 | ruleset **master CI required** が active | 無い / context 名不一致 → P0 |
 | 4 | Issue Worker PR に `agent-merge` 付与手順が doc にある | 連携断絶 |
 | 5 | 直近 7 日に eligible PR のマージまたは blocked コメント | 毎回失敗の間接証拠 |
-| 6 | Secrets 名が doc と一致 | 未設定は Dashboard 手順（workflow は exit 0） |
+| 6 | Secrets 名が doc と一致 | 未設定は workflow **exit 1**（Actions 失敗で気づく）。Dashboard 手順をレポートに記載 |
 
 ## UX Issue Audit
 
