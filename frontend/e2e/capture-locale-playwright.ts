@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import {
+  APP_LANG_STORAGE_KEY,
   buildCaptureLocaleInitPayload,
   CAPTURE_LOCALES,
   documentHtmlLang,
@@ -9,33 +10,61 @@ export type CaptureLocale = 'ja' | 'en' | 'in';
 export { CAPTURE_LOCALES };
 export { agentPngFilename } from './capture-locales.mjs';
 
+const CAPTURE_LOCALE_COOKIE = 'e2e_capture_locale';
+const CAPTURE_BASE_URL = 'http://127.0.0.1:4200';
+
+let captureLocaleInitScriptInstalled = false;
+
 /** ブラウザ言語検出（app.ts detectBrowserLang）と cookie を E2E 用に固定する */
 export async function installCaptureLocale(page: Page, locale: CaptureLocale): Promise<void> {
   const payload = buildCaptureLocaleInitPayload(locale);
-  await page.addInitScript(
-    ({ navLang: nl, railsLocale: rl, appLang, storageKey }) => {
-      const w = window as Window & { __disableCookieControl?: boolean };
-      w.__disableCookieControl = true;
-      Object.defineProperty(navigator, 'language', {
-        get: () => nl,
-        configurable: true,
-      });
-      Object.defineProperty(navigator, 'languages', {
-        get: () => [nl],
-        configurable: true,
-      });
-      document.cookie = `locale=${rl}; path=/; max-age=31536000`;
-      localStorage.setItem(storageKey, appLang);
+
+  if (!captureLocaleInitScriptInstalled) {
+    captureLocaleInitScriptInstalled = true;
+    await page.addInitScript((storageKey) => {
+      const applyFromCookie = () => {
+        const match = document.cookie.match(/e2e_capture_locale=([^;]+)/);
+        if (!match) {
+          return;
+        }
+        let parsed: {
+          navLang: string;
+          railsLocale: string;
+          appLang: string;
+        };
+        try {
+          parsed = JSON.parse(decodeURIComponent(match[1])) as {
+            navLang: string;
+            railsLocale: string;
+            appLang: string;
+          };
+        } catch {
+          return;
+        }
+        const w = window as Window & { __disableCookieControl?: boolean };
+        w.__disableCookieControl = true;
+        Object.defineProperty(navigator, 'language', {
+          get: () => parsed.navLang,
+          configurable: true,
+        });
+        Object.defineProperty(navigator, 'languages', {
+          get: () => [parsed.navLang],
+          configurable: true,
+        });
+        document.cookie = `locale=${parsed.railsLocale}; path=/; max-age=31536000`;
+        localStorage.setItem(storageKey, parsed.appLang);
+      };
+      applyFromCookie();
+    }, APP_LANG_STORAGE_KEY);
+  }
+
+  await page.context().addCookies([
+    {
+      name: CAPTURE_LOCALE_COOKIE,
+      value: encodeURIComponent(JSON.stringify(payload)),
+      url: CAPTURE_BASE_URL,
     },
-    payload,
-  );
-  // Same-origin navigation keeps localStorage; preset before goto so ja capture does not stick for en/in.
-  await page.evaluate(
-    ({ appLang, storageKey }) => {
-      localStorage.setItem(storageKey, appLang);
-    },
-    { appLang: payload.appLang, storageKey: payload.storageKey },
-  );
+  ]);
 }
 
 /** ngx-translate の読み込みと html lang が期待どおりになるまで待つ */
