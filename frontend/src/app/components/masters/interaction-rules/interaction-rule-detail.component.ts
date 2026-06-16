@@ -46,7 +46,7 @@ const initialControl: InteractionRuleDetailViewState = {
               <dd class="detail-row__value">{{ control.rule.impact_ratio }}</dd>
             </div>
             <div class="detail-row">
-              <dt class="detail-row__term">{{ 'interaction_rules.show.is_directional' | translate }}</dt>
+              <dt class="detail-row__term">{{ 'interaction_rules.show.direction' | translate }}</dt>
               <dd class="detail-row__value">
                 {{ control.rule.is_directional ? ('common.true' | translate) : ('common.false' | translate) }}
               </dd>

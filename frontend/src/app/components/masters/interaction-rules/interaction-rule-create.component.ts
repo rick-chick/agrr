@@ -2,7 +2,7 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { InteractionRuleCreateView, InteractionRuleCreateViewState, InteractionRuleCreateFormData } from './interaction-rule-create.view';
@@ -40,7 +40,11 @@ const initialControl: InteractionRuleCreateViewState = {
         <form (ngSubmit)="createInteractionRule()" #interactionRuleForm="ngForm" class="form-card__form">
           <label class="form-card__field" for="rule_type">
             <span class="form-card__field-label">{{ 'interaction_rules.form.rule_type_label' | translate }}</span>
-            <input id="rule_type" name="rule_type" [(ngModel)]="control.formData.rule_type" required />
+            <select id="rule_type" name="rule_type" [(ngModel)]="control.formData.rule_type" required>
+              @for (code of ruleTypeCodes; track code) {
+                <option [value]="code">{{ ruleTypeLabel(code) }}</option>
+              }
+            </select>
           </label>
           <label class="form-card__field" for="source_group">
             <span class="form-card__field-label">{{ 'interaction_rules.form.source_group_label' | translate }}</span>
@@ -83,6 +87,7 @@ const initialControl: InteractionRuleCreateViewState = {
 export class InteractionRuleCreateComponent implements InteractionRuleCreateView, OnInit {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly useCase = inject(CreateInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleCreatePresenter);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -117,5 +122,13 @@ export class InteractionRuleCreateComponent implements InteractionRuleCreateView
       return this.control.formData.region ?? null;
     }
     return (user as { region?: string | null } | null)?.region ?? null;
+  }
+
+  readonly ruleTypeCodes = ['continuous_cultivation'] as const;
+
+  ruleTypeLabel(code: string): string {
+    const key = `interaction_rules.form.rule_type_codes.${code}`;
+    const t = this.translate.instant(key);
+    return t !== key ? t : code;
   }
 }
