@@ -50,6 +50,45 @@ Prefill で **Trigger が Invalid** になる場合は、UI から手動で cron
 
 フルキャプチャ後に `visual-review-results.md` を commit してから週次 Audit が意味を持つ。
 
+## GitHub CLI 認証（Cloud Agent）
+
+Cloud Agent は **2 種類のトークン**を使い分ける。
+
+| 用途 | トークン | 設定 |
+|------|----------|------|
+| `git clone` / `git push` / PR 作成 | Cursor GitHub App（`ghs_…`） | Dashboard → Integrations → GitHub |
+| `gh issue list` / `gh issue create` / `gh pr comment` | **ユーザー PAT** | Dashboard → Cloud Agents → Secrets |
+
+統合トークンだけでは `gh issue list` が失敗し、`collect-ux-findings.mjs` が `githubLookupStatus: failed` になる（起票禁止）。
+
+### 手順
+
+1. **GitHub App を接続**（未接続なら）
+   - [cursor.com/dashboard](https://cursor.com/dashboard) → **Integrations** → **GitHub** → Connect
+   - `rick-chick/agrr` に read/write（Issues, Pull requests, Contents）
+
+2. **Fine-grained PAT を発行**（GitHub → Settings → Developer settings → Fine-grained tokens）
+   - Repository: `rick-chick/agrr` のみ
+   - Permissions: **Issues** Read and write、**Pull requests** Read and write、**Contents** Read（push は App が担当するが `gh auth setup-git` 用）
+   - 有効期限は運用に合わせて設定
+
+3. **Cursor Secrets に登録**
+   - Dashboard → **Cloud Agents** → **Secrets**（User または Team scope）
+   - 変数名: **`AGRR_GH_PAT`**（値に PAT を貼る）
+   - ❌ `GITHUB_TOKEN` / `GH_TOKEN` は使わない（Cursor が `ghs_…` を上書き注入する場合がある）
+
+4. **リポジトリ側の bootstrap**（`master` にマージ済みであること）
+   - `.cursor/environment.json` の `install` が `.cursor/scripts/cloud-gh-auth.sh` を実行し、`AGRR_GH_PAT` で `gh auth login --with-token` する
+   - Automation の **Repository** を `rick-chick/agrr` / branch `master` に設定
+
+5. **確認** — Automation で **Run test** を実行し、ログで次を確認:
+   - `gh auth status` に `rick-chick`（`gho_` / `github_pat_`）が表示される
+   - `gh issue list --repo rick-chick/agrr --limit 1` が成功する
+
+### Team Owned Automation の場合
+
+Team scope の Secret に `AGRR_GH_PAT` を置く。Personal OAuth ではなく team service account 向けに PAT を発行するか、Team Visible / Private のまま作成者の user-scoped secret が注入されることを Run test で確認する。
+
 ## トラブルシュート
 
 | 症状 | 対処 |
@@ -58,7 +97,9 @@ Prefill で **Trigger が Invalid** になる場合は、UI から手動で cron
 | default branch エラー | `gitConfig.branch` を `master` に明示 |
 | キャプチャ失敗 | Automation では phase 1 を実行しない（UX Audit） |
 | 重複 issue 量産 | `existingIssueCandidates` score ≥ 5 で起票禁止を守る |
-| `githubLookupStatus: failed` | `gh issue create` 禁止。ローカルで `gh auth status` 後に `collect` を再実行 |
+| `githubLookupStatus: failed` | 上記 **GitHub CLI 認証**を実施。`AGRR_GH_PAT` 未設定・`master` 未マージ・Webhook 経路で secret 未注入（既知バグ）を確認 |
+| `gh auth status` が `ghs_…` のみ | `AGRR_GH_PAT` を Secrets に追加し Run test。`GITHUB_TOKEN` 名は使わない |
+| Webhook 起動で secret が空 | 当面は Schedule / Run test / API 起動を使う（Cursor forum 既知バグ） |
 | 課金が高い | Max Mode 固定。頻度を下げるか Team Owned の usage pool を確認 |
 
 ## 参照
