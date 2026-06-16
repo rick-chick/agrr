@@ -42,3 +42,7 @@ jobs:
       - name: UX findings collector unit tests
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.test.mjs
+
+      - name: check-hardcoded-i18n unit tests
+        working-directory: frontend
+        run: node --test scripts/check-hardcoded-i18n.test.mjs
