@@ -14,6 +14,7 @@ import {
   CAPTURE_LOCALES,
   agentPngFilename,
   installCaptureLocale,
+  resetCaptureLocaleStorage,
   waitForCaptureLocaleReady,
   type CaptureLocale,
 } from '../capture-locale-playwright';
@@ -68,6 +69,10 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
     }
 
     resolvedCaptureIds = await loadResolvedCaptureIdsWithBaseline();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await resetCaptureLocaleStorage(page);
   });
 
   for (const r of manifest.routes) {

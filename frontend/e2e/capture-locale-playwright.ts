@@ -11,7 +11,7 @@ export { CAPTURE_LOCALES };
 export { agentPngFilename } from './capture-locales.mjs';
 
 const CAPTURE_LOCALE_COOKIE = 'e2e_capture_locale';
-const CAPTURE_BASE_URL = 'http://127.0.0.1:4200';
+export const CAPTURE_BASE_URL = 'http://127.0.0.1:4200';
 
 let captureLocaleInitScriptInstalled = false;
 
@@ -72,10 +72,23 @@ export async function installCaptureLocale(page: Page, locale: CaptureLocale): P
     await page.evaluate(
       ({ appLang, storageKey }) => {
         localStorage.setItem(storageKey, appLang);
+        (window as Window & { __E2E_CAPTURE_APP_LANG__?: string }).__E2E_CAPTURE_APP_LANG__ =
+          appLang;
       },
       { appLang: payload.appLang, storageKey: APP_LANG_STORAGE_KEY },
     );
   }
+}
+
+/** login-capture 等で汚れた origin storage を dev-session キャプチャ前に戻す */
+export async function resetCaptureLocaleStorage(page: Page): Promise<void> {
+  if (!page.url().startsWith(CAPTURE_BASE_URL)) {
+    await page.goto(`${CAPTURE_BASE_URL}/login`, { waitUntil: 'commit' });
+  }
+  await page.evaluate((storageKey) => {
+    localStorage.removeItem(storageKey);
+    delete (window as Window & { __E2E_CAPTURE_APP_LANG__?: string }).__E2E_CAPTURE_APP_LANG__;
+  }, APP_LANG_STORAGE_KEY);
 }
 
 /** ngx-translate の読み込みと html lang が期待どおりになるまで待つ */

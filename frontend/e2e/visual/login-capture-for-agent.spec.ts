@@ -7,6 +7,7 @@ import {
   CAPTURE_LOCALES,
   agentPngFilename,
   installCaptureLocale,
+  resetCaptureLocaleStorage,
   waitForCaptureLocaleReady,
   type CaptureLocale,
 } from '../capture-locale-playwright';
@@ -50,6 +51,20 @@ captureDescribe('login-capture-for-agent (logged-out session)', () => {
 
   test.beforeEach(async ({ page }) => {
     await disableCookieBanner(page);
+  });
+
+  test.afterAll(async ({ browser }) => {
+    for (const context of browser.contexts()) {
+      const page = context.pages()[0] ?? (await context.newPage());
+      const created = !context.pages().includes(page);
+      try {
+        await resetCaptureLocaleStorage(page);
+      } finally {
+        if (created) {
+          await page.close();
+        }
+      }
+    }
   });
 
   for (const r of loginRoutes) {
