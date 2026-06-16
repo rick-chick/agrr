@@ -19,13 +19,13 @@ function createView(initial: PlanOptimizingViewState = { status: 'pending', prog
 
 describe('PlanOptimizingPresenter', () => {
   it('updates view.control on present(dto)', () => {
-    const { view, control } = createView({ status: 'optimizing', progress: 42 });
+    const harness = createView({ status: 'optimizing', progress: 42 });
     const presenter = new PlanOptimizingPresenter();
-    presenter.setView(view);
+    presenter.setView(harness.view);
 
     presenter.present({ status: 'optimizing', progress: 73 });
 
-    expect(control).toEqual({ status: 'optimizing', progress: 73 });
+    expect(harness.control).toEqual({ status: 'optimizing', progress: 73 });
   });
 
   it('calls onOptimizationCompleted when status becomes completed', () => {
