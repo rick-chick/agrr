@@ -53,6 +53,8 @@ export async function installCaptureLocale(page: Page, locale: CaptureLocale): P
         });
         document.cookie = `locale=${parsed.railsLocale}; path=/; max-age=31536000`;
         localStorage.setItem(storageKey, parsed.appLang);
+        (window as Window & { __E2E_CAPTURE_APP_LANG__?: string }).__E2E_CAPTURE_APP_LANG__ =
+          parsed.appLang;
       };
       applyFromCookie();
     }, APP_LANG_STORAGE_KEY);

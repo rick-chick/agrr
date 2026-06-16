@@ -9,6 +9,19 @@ export type { AppLang };
 
 const STORAGE_KEY = 'agrr.app.lang';
 
+/** Set only by Playwright capture init script (`e2e/capture-locale-playwright.ts`). */
+export const E2E_CAPTURE_APP_LANG_WINDOW_KEY = '__E2E_CAPTURE_APP_LANG__';
+
+export function readE2eCaptureAppLang(): AppLang | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+  const value = (window as Window & { [E2E_CAPTURE_APP_LANG_WINDOW_KEY]?: string })[
+    E2E_CAPTURE_APP_LANG_WINDOW_KEY
+  ];
+  return value === 'ja' || value === 'en' || value === 'in' ? value : undefined;
+}
+
 export function mapFarmRegionToAppLang(region?: string | null): AppLang | undefined {
   switch (region) {
     case 'jp':
@@ -35,6 +48,10 @@ function mapBrowserRegionToAppLang(region: BrowserRegion): AppLang {
 
 /** Initial ngx-translate language: stored preference, else browser locale region. */
 export function resolveInitialAppLang(): AppLang {
+  const fromCapture = readE2eCaptureAppLang();
+  if (fromCapture) {
+    return fromCapture;
+  }
   const fromBrowser = mapBrowserRegionToAppLang(detectBrowserRegion());
   if (typeof localStorage !== 'undefined') {
     const stored = localStorage.getItem(STORAGE_KEY);
