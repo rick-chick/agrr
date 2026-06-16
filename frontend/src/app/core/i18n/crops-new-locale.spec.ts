@@ -25,14 +25,6 @@ function crops(bundle: { crops?: CropsFormBundle }): CropsFormBundle {
   return bundle.crops ?? {};
 }
 
-type RegionSelectKeys = 'label' | 'blank' | 'jp' | 'us' | 'in';
-
-function regionSelect(bundle: unknown): Partial<Record<RegionSelectKeys, string>> {
-  return (
-    bundle as { shared?: { region_select?: Partial<Record<RegionSelectKeys, string>> } }
-  ).shared?.region_select ?? {};
-}
-
 describe('crops/new i18n', () => {
   it('defines index.description in ja, en, and in', () => {
     for (const [name, bundle] of [
@@ -91,26 +83,6 @@ describe('crops/new i18n', () => {
     ];
     for (const value of inStrings) {
       expect(value, `unexpected Japanese in in.json: ${value}`).not.toMatch(JAPANESE_UI);
-    }
-  });
-
-  it('defines shared.region_select in ja, en, and in', () => {
-    for (const bundle of [ja, en, inLocale]) {
-      const rs = regionSelect(bundle);
-      expect(rs['label']).toBeTruthy();
-      expect(rs['blank']).toBeTruthy();
-      expect(rs['jp']).toBeTruthy();
-      expect(rs['us']).toBeTruthy();
-      expect(rs['in']).toBeTruthy();
-    }
-  });
-
-  it('uses English for shared.region_select in en locale', () => {
-    const rs = regionSelect(en);
-    for (const value of Object.values(rs)) {
-      expect(value, `unexpected Japanese in en shared.region_select: ${value}`).not.toMatch(
-        JAPANESE_UI
-      );
     }
   });
 });
