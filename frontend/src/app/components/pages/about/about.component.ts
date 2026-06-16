@@ -54,17 +54,12 @@ import { Subscription } from 'rxjs';
             <li>{{ 'pages.about.operator.operator_name' | translate }}</li>
             <li>{{ 'pages.about.operator.location' | translate }}</li>
             <li>{{ 'pages.about.operator.initiative' | translate }}</li>
-            <li>
-              {{ 'pages.about.operator.contact_html' | translate: { 
-                  email_link: 'support@agrr.net', 
-                  contact_link: ('pages.about.operator.contact_form' | translate) 
-                } }}
-            </li>
-            <li>
-              {{ 'pages.about.operator.ads_notice_html' | translate: { 
-                  privacy_link: ('pages.about.operator.privacy_link_text' | translate) 
-                } }}
-            </li>
+            <li
+              [innerHTML]="'pages.about.operator.contact_html' | translate: operatorContactParams"
+            ></li>
+            <li
+              [innerHTML]="'pages.about.operator.ads_notice_html' | translate: operatorAdsNoticeParams"
+            ></li>
           </ul>
           <p class="page-section-content">{{ 'pages.about.operator.sources_and_updates' | translate }}</p>
         </section>
@@ -87,6 +82,21 @@ export class AboutComponent implements OnInit, OnDestroy {
   private readonly document = inject(DOCUMENT);
   private jsonLdScript: HTMLScriptElement | null = null;
   private langSub?: Subscription;
+
+  get operatorContactParams(): Record<string, string> {
+    const contactText = this.translate.instant('pages.about.operator.contact_form');
+    return {
+      email_link: '<a href="mailto:support@agrr.net">support@agrr.net</a>',
+      contact_link: `<a href="/contact">${contactText}</a>`
+    };
+  }
+
+  get operatorAdsNoticeParams(): Record<string, string> {
+    const privacyText = this.translate.instant('pages.about.operator.privacy_link_text');
+    return {
+      privacy_link: `<a href="/privacy">${privacyText}</a>`
+    };
+  }
 
   ngOnInit(): void {
     this.translate
