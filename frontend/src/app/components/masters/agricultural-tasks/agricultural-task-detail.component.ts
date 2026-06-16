@@ -69,7 +69,7 @@ const initialControl: AgriculturalTaskDetailViewState = {
             @if (control.agriculturalTask.region) {
               <div class="detail-row">
                 <dt class="detail-row__term">{{ 'agricultural_tasks.show.region' | translate }}</dt>
-                <dd class="detail-row__value">{{ control.agriculturalTask.region }}</dd>
+                <dd class="detail-row__value">{{ 'agricultural_tasks.form.region_' + control.agriculturalTask.region | translate }}</dd>
               </div>
             }
             @if (control.agriculturalTask.task_type) {
