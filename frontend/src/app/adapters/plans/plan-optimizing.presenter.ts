@@ -14,9 +14,14 @@ export class PlanOptimizingPresenter implements SubscribePlanOptimizationOutputP
   present(dto: PlanOptimizationMessageDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
+    const nextStatus = dto.status ?? prev.status;
+    const nextProgress = typeof dto.progress === 'number' ? dto.progress : prev.progress;
     this.view.control = {
-      status: dto.status ?? prev.status,
-      progress: typeof dto.progress === 'number' ? dto.progress : prev.progress
+      status: nextStatus,
+      progress: nextProgress
     };
+    if (nextStatus === 'completed' || nextProgress >= 100) {
+      this.view.onOptimizationCompleted?.();
+    }
   }
 }
