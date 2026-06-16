@@ -1,6 +1,6 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 import { PlanOptimizingComponent } from './plan-optimizing.component';
@@ -15,6 +15,7 @@ describe('PlanOptimizingComponent', () => {
   let mockPresenter: PlanOptimizingPresenter;
   let mockCdr: ChangeDetectorRef;
   let mockActivatedRoute: ActivatedRoute;
+  let router: Router;
 
   beforeEach(async () => {
     mockUseCase = { execute: vi.fn() };
@@ -47,6 +48,8 @@ describe('PlanOptimizingComponent', () => {
 
     fixture = TestBed.createComponent(PlanOptimizingComponent);
     component = fixture.componentInstance;
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     const translate = TestBed.inject(TranslateService);
     translate.setDefaultLang('en');
@@ -56,6 +59,7 @@ describe('PlanOptimizingComponent', () => {
       {
         'plans.optimizing_live.back_to_plan': 'Back to plan',
         'plans.optimizing_live.heading': 'Optimizing',
+        'plans.optimizing_live.heading_completed': 'Optimization complete',
         'plans.optimizing_live.progress_label': 'Progress: {{progress}}%'
       },
       true
@@ -70,6 +74,24 @@ describe('PlanOptimizingComponent', () => {
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Progress: 73%');
     expect(textContent).not.toContain('Status:');
+    expect(textContent).toContain('Optimizing');
+    expect(textContent).not.toContain('Optimization complete');
+  });
+
+  it('shows completed heading when progress reaches 100%', () => {
+    component.control = { status: 'optimizing', progress: 100 };
+    fixture.detectChanges();
+
+    const textContent = fixture.nativeElement.textContent;
+    expect(textContent).toContain('Optimization complete');
+    expect(textContent).not.toContain('Optimizing');
+    expect(textContent).toContain('Progress: 100%');
+  });
+
+  it('navigates to plan detail when optimization completes', () => {
+    component.onOptimizationCompleted();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/plans', 13]);
   });
 
   it('initializes with the presenter and executes the use case', () => {
