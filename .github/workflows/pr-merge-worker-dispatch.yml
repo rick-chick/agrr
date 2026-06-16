@@ -1,0 +1,204 @@
+# Dispatches the Cursor PR Merge Worker for eligible PRs.
+#
+# CI dispatch: Backend test workflow_run only (once per push; avoids check_suite / per-job duplicates).
+#   On ci_completed, dispatch only after ruleset required checks are all SUCCESS.
+# PR dispatch: opened (opt-in branches) or labeled agent-merge.
+#
+# Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
+
+name: PR Merge Worker Dispatch
+
+on:
+  pull_request:
+    types: [opened, labeled]
+    branches: [master]
+  workflow_run:
+    workflows:
+      - Backend test
+    types: [completed]
+
+concurrency:
+  group: pr-merge-dispatch-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || 'none' }}
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')
+    steps:
+      - name: Resolve pull request context
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BODY_INPUT: ${{ github.event.pull_request.body }}
+          PR_TITLE_INPUT: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            ACTION="${{ github.event.action }}"
+            HEAD_REF="${{ github.event.pull_request.head.ref }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            PR_BODY_B64=$(printf '%s' "$PR_BODY_INPUT" | base64 -w0)
+            PR_TITLE_B64=$(printf '%s' "$PR_TITLE_INPUT" | base64 -w0)
+            LABEL_NAME="${{ github.event.label.name }}"
+            LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+            PR_URL='${{ github.event.pull_request.html_url }}'
+            PR_AUTHOR='${{ github.event.pull_request.user.login }}'
+          else
+            ACTION="ci_completed"
+            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+            OPEN_PRS=$(gh api "repos/${{ github.repository }}/commits/$HEAD_SHA/pulls" \
+              --jq '[.[] | select(.state == "open")]')
+            OPEN_COUNT=$(echo "$OPEN_PRS" | jq 'length')
+            if [ "$OPEN_COUNT" -eq 0 ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [ "$OPEN_COUNT" -gt 1 ]; then
+              echo "Multiple open PRs for commit $HEAD_SHA; skipping ambiguous dispatch."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            PR_JSON=$(echo "$OPEN_PRS" | jq '.[0]')
+            PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
+            HEAD_REF=$(echo "$PR_JSON" | jq -r '.head.ref')
+            PR_BODY_B64=$(echo "$PR_JSON" | jq -r '.body // ""' | base64 -w0)
+            PR_TITLE_B64=$(echo "$PR_JSON" | jq -r '.title' | base64 -w0)
+            LABEL_NAME=""
+            LABELS=$(echo "$PR_JSON" | jq -r '[.labels[].name] | join(",")')
+            PR_URL=$(echo "$PR_JSON" | jq -r '.html_url')
+            PR_AUTHOR=$(echo "$PR_JSON" | jq -r '.user.login')
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "title_b64=$PR_TITLE_B64" >> "$GITHUB_OUTPUT"
+          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "author=$PR_AUTHOR" >> "$GITHUB_OUTPUT"
+          echo "labels=$LABELS" >> "$GITHUB_OUTPUT"
+          echo "label_name=$LABEL_NAME" >> "$GITHUB_OUTPUT"
+          echo "body_b64=$PR_BODY_B64" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Cursor PR Merge Worker
+        if: steps.pr.outputs.skip != 'true'
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_KEY }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          ACTION: ${{ steps.pr.outputs.action }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          AUTHOR: ${{ steps.pr.outputs.author }}
+          LABELS: ${{ steps.pr.outputs.labels }}
+          LABEL_NAME: ${{ steps.pr.outputs.label_name }}
+          BODY_B64: ${{ steps.pr.outputs.body_b64 }}
+          TITLE_B64: ${{ steps.pr.outputs.title_b64 }}
+        run: |
+          set -euo pipefail
+          PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
+          PR_TITLE=$(printf '%s' "$TITLE_B64" | base64 -d)
+
+          if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
+            echo "CURSOR_PR_MERGE_WEBHOOK_URL or CURSOR_PR_MERGE_WEBHOOK_KEY is not set."
+            echo "Configure secrets after creating the Cursor Automation webhook."
+            exit 1
+          fi
+
+          if echo "$LABELS" | grep -qE '(^|,)agent-no-merge(,|$)|(^|,)do-not-merge(,|$)|(^|,)wip(,|$)|(^|,)agent-merge-blocked(,|$)'; then
+            echo "PR has a merge-blocking label; skipping."
+            exit 0
+          fi
+
+          if echo "$LABELS" | grep -qE '(^|,)agent-merge-in-progress(,|$)'; then
+            echo "agent-merge-in-progress; skipping duplicate dispatch."
+            exit 0
+          fi
+
+          if [ "$ACTION" = "labeled" ] && [ "$LABEL_NAME" != "agent-merge" ]; then
+            echo "labeled event is not agent-merge; skipping."
+            exit 0
+          fi
+
+          eligible=false
+          if echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then eligible=true; fi
+          if echo "$HEAD_REF" | grep -qE '^issue/[0-9]+-'; then eligible=true; fi
+          if echo "$PR_BODY" | grep -q 'Merge-Strategy: agent'; then eligible=true; fi
+          if [ "$eligible" != "true" ]; then
+            echo "PR is not eligible for PR Merge Worker; skipping."
+            exit 0
+          fi
+
+          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepositoryOwner,baseRepositoryOwner,additions,deletions,title)
+          IS_DRAFT=$(echo "$PR_META" | jq -r '.isDraft')
+          REVIEW_DECISION=$(echo "$PR_META" | jq -r '.reviewDecision // ""')
+          BASE_REF=$(echo "$PR_META" | jq -r '.baseRefName')
+          HEAD_OID=$(echo "$PR_META" | jq -r '.headRefOid')
+          HEAD_OWNER=$(echo "$PR_META" | jq -r '.headRepositoryOwner.login')
+          BASE_OWNER=$(echo "$PR_META" | jq -r '.baseRepositoryOwner.login')
+          ADDITIONS=$(echo "$PR_META" | jq -r '.additions')
+          DELETIONS=$(echo "$PR_META" | jq -r '.deletions')
+          TITLE=$(echo "$PR_META" | jq -r '.title')
+
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "Draft PR; skipping."
+            exit 0
+          fi
+          if [ "$HEAD_OWNER" != "$BASE_OWNER" ]; then
+            echo "Fork PR (head owner $HEAD_OWNER != base owner $BASE_OWNER); skipping."
+            exit 0
+          fi
+          if [ "$REVIEW_DECISION" = "CHANGES_REQUESTED" ]; then
+            echo "Changes requested review; skipping."
+            exit 0
+          fi
+          if [ "$BASE_REF" != "master" ]; then
+            echo "Base branch is not master; skipping."
+            exit 0
+          fi
+          if echo "$TITLE" | grep -qiE '\[(WIP|DRAFT)\]'; then
+            echo "Title contains [WIP] or [DRAFT]; skipping."
+            exit 0
+          fi
+          TOTAL_LINES=$((ADDITIONS + DELETIONS))
+          if [ "$TOTAL_LINES" -gt 800 ] && ! echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then
+            echo "PR exceeds 800 changed lines without agent-merge label; skipping."
+            exit 0
+          fi
+          if [ "$HEAD_OID" != "$HEAD_SHA" ]; then
+            echo "Resolved head SHA ($HEAD_SHA) != current PR head ($HEAD_OID); skipping stale dispatch."
+            exit 0
+          fi
+
+          if [ "$ACTION" = "ci_completed" ]; then
+            CHECKS_JSON=$(gh pr checks "$PR_NUMBER" --json name,state)
+            for ctx in rails-test frontend-test "lint / frontend-lint"; do
+              state=$(echo "$CHECKS_JSON" | jq -r --arg ctx "$ctx" '.[] | select(.name == $ctx) | .state' | head -1)
+              if [ "$state" != "SUCCESS" ]; then
+                echo "Required check '$ctx' is not SUCCESS (${state:-missing}); skipping dispatch."
+                exit 0
+              fi
+            done
+          fi
+
+          payload=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --argjson number "$PR_NUMBER" \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg action "$ACTION" \
+            --arg head_ref "$HEAD_REF" \
+            --arg head_sha "$HEAD_SHA" \
+            --arg author "$AUTHOR" \
+            '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, action: $action, head_ref: $head_ref, head_sha: $head_sha, author: $author}')
+          curl -fsS -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $WEBHOOK_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$payload"

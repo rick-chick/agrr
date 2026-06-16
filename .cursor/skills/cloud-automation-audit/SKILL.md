@@ -26,6 +26,7 @@ description: >-
 | 名前 | スキル | cron | 期待する成果 |
 |------|--------|------|--------------|
 | **Issue Worker** | `github-issue-worker` | `0 9 * * 1-5` | 実装 PR または close / blocked / 対象なし |
+| **PR Merge Worker** | `github-pr-merge-worker` | イベント（PR / CI） | squash マージ / 同一ブランチ修正 / skip / blocked |
 | **UX Issue Audit** | `ux-issue-pipeline` § Automation | `0 9 * * 1` | 条件付き issue 起票 or スキップ記録 |
 | **Automation Audit** | `cloud-automation-audit`（本スキル） | `0 10 * * 5` | 監査レポート。クリティカル時のみ PR |
 
@@ -85,11 +86,16 @@ fi
 
 # Issue Worker dispatch
 test -f .github/workflows/issue-worker-dispatch.yml
+
+# PR Merge Worker dispatch
+test -f .github/workflows/pr-merge-worker-dispatch.yml
+gh api repos/rick-chick/agrr/rulesets --jq 'map(select(.name=="master CI required" and .enforcement=="active")) | length' | grep -q '^1$'
 ```
 
 スキル参照パスが存在するか grep 不要で次を **test -f** で確認:
 
 - `.cursor/skills/github-issue-worker/SKILL.md`
+- `.cursor/skills/github-pr-merge-worker/SKILL.md`
 - `.cursor/skills/ux-issue-pipeline/SKILL.md`
 - `.cursor/skills/sequential-cleanup-review-workflow/SKILL.md`
 - `.cursor/environment.json`
