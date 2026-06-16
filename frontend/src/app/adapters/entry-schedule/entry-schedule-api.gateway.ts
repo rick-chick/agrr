@@ -1,4 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpHeaders } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { Farm } from '../../domain/farms/farm';
@@ -13,12 +15,15 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class EntryScheduleApiGateway implements EntryScheduleGateway {
+  private readonly translate = inject(TranslateService);
+
   constructor(private readonly apiClient: ApiService) {}
 
   getEntryScheduleFarms(region?: string): Observable<Farm[]> {
     const params = region ? { region } : undefined;
     return this.apiClient.get<Farm[]>('/api/v1/public_plans/entry_schedule/farms', {
-      params
+      params,
+      headers: this.localeHeaders()
     });
   }
 
@@ -41,7 +46,7 @@ export class EntryScheduleApiGateway implements EntryScheduleGateway {
     }
     return this.apiClient.get<EntryScheduleCropsListResponse>(
       '/api/v1/public_plans/entry_schedule/crops',
-      { params }
+      { params, headers: this.localeHeaders(options?.locale) }
     );
   }
 
@@ -59,7 +64,12 @@ export class EntryScheduleApiGateway implements EntryScheduleGateway {
     }
     return this.apiClient.get<EntryScheduleCropShowResponse>(
       `/api/v1/public_plans/entry_schedule/crops/${cropId}`,
-      { params }
+      { params, headers: this.localeHeaders(options?.locale) }
     );
+  }
+
+  private localeHeaders(locale?: string): HttpHeaders {
+    const lang = locale || this.translate.currentLang || this.translate.defaultLang || 'ja';
+    return new HttpHeaders({ 'Accept-Language': lang });
   }
 }
