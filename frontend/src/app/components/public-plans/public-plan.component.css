@@ -674,6 +674,12 @@
   border: 1px solid var(--color-info);
 }
 
+.status-badge.failed {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border: 1px solid var(--color-error-border-soft);
+}
+
 /* Compact Header（Rails public-plans.css に合わせる） */
 /* ページ遷移で高さがずれないよう、進捗ありヘッダーを固定高さに（🌱 計画 + 1 地域 2 サイズ 3 作物） */
 /* サイズ・作物で同じレイアウト：ヘッダーを折り返さず1行に固定 */
