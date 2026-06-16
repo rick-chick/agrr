@@ -16,6 +16,6 @@
 
 .plan-work-nav__link--active {
   background: var(--color-primary, #2d6a4f);
-  color: #fff;
+  color: var(--color-white);
   border-color: var(--color-primary, #2d6a4f);
 }
