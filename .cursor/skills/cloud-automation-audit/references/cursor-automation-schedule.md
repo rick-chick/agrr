@@ -1,0 +1,139 @@
+# Cursor Automation スケジュール設定（AGRR）
+
+Cloud Agent がリポジトリを clone してスキルに従う。**ローカル Docker / ng は使えない**点に注意。
+
+**正本**: 一覧・prefill・GitHub CLI 手順は **本ファイルのみ**を更新する。他スキルはここへリンクする。
+
+## 一覧
+
+| Automation | スキル | cron（5 フィールド） | TZ | PR |
+|------------|--------|----------------------|-----|-----|
+| **Issue Worker** | `github-issue-worker` | `0 9 * * 1-5` | Asia/Tokyo | ✅ 実装時 |
+| **UX Issue Audit** | `ux-issue-pipeline` § Automation | `0 9 * * 1` | Asia/Tokyo | ❌（起票は条件付き） |
+| **Automation Audit** | `cloud-automation-audit` | `0 10 * * 5` | Asia/Tokyo | ✅ クリティカル修正時のみ |
+
+**Automation Audit** は金曜 10:00 JST。平日 Issue Worker と月曜 UX Audit の**直近 1 週間**を監査する。
+
+## 共通手順
+
+1. [cursor.com/automations](https://cursor.com/automations) → **Create Automation**
+2. **Repository**: `rick-chick/agrr`、branch **`master`**（空欄にしない）
+3. **Trigger** → Schedule → Custom cron（**5 フィールドのみ**）
+   - ❌ `0 0 9 * * 1-5`（6 フィールド）→ `Invalid trigger`
+   - ✅ `0 9 * * 1-5`
+4. **Timezone**: `Asia/Tokyo`
+5. **Tools**:
+   - Issue Worker / Automation Audit → **Pull request creation** ON
+   - UX Issue Audit → OFF
+6. **Memories**: ON 推奨（スキップ理由・失敗記録・監査レポート）
+7. プロンプトは各スキルの「Automation」節をコピー
+8. **Run test** で通ることを確認してから Save
+
+### Prefill URL（フォーム事前入力）
+
+Prefill で **Trigger が Invalid** になる場合は UI から手動で cron を入れ直す。
+
+- **Issue Worker（平日 9:00）**: [prefill を開く](https://cursor.com/automations/new?prefill=eyJuYW1lIjoiQUdSUiBJc3N1ZSBXb3JrZXIgKOW5s-aXpSA5OjAwIEpTVCkiLCJkZXNjcmlwdGlvbiI6InJpY2stY2hpY2svYWdyciDjga7jgqrjg7zjg5fjg7MgaXNzdWUg44KSIDEg5Lu26YG444GzIFRERCDlrp_oo4Ug4oaSIFBSIiwid29ya2Zsb3ciOnsidHJpZ2dlcnMiOlt7ImNyb24iOnsiY3JvbiI6IjAgOSAqICogMS01IiwidGltZXpvbmUiOiJBc2lhL1Rva3lvIn19XSwicHJvbXB0cyI6W3sicHJvbXB0IjoiWW91IGFyZSB0aGUgQUdSUiBHaXRIdWIgSXNzdWUgV29ya2VyIGZvciByZXBvc2l0b3J5IHJpY2stY2hpY2svYWdyci5cblxuUmVhZCBhbmQgZm9sbG93IGAuY3Vyc29yL3NraWxscy9naXRodWItaXNzdWUtd29ya2VyL1NLSUxMLm1kYCBleGFjdGx5LlxuQWZ0ZXIgVEREIEdSRUVOLCBhbHdheXMgcnVuIGAuY3Vyc29yL3NraWxscy9zZXF1ZW50aWFsLWNsZWFudXAtcmV2aWV3LXdvcmtmbG93L1NLSUxMLm1kYCAowqc0KSBiZWZvcmUgb3BlbmluZyBhIFBSLlxuXG5Db25zdHJhaW50czpcbi0gT25lIGlzc3VlIHBlciBydW4gbWF4aW11bS5cbi0gVXNlIHRlc3QtY29tbW9uIG9ubHkgKG5ldmVyIG5wbSB0ZXN0IC8gcmFpbHMgdGVzdCBkaXJlY3RseSkuXG4tIERvIG5vdCBnaXQgY2hlY2tvdXQvc3dpdGNoL3Jlc2V0L3Jlc3RvcmUuXG4tIElmIG5vIGVsaWdpYmxlIGlzc3VlLCBleGl0IHdpdGhvdXQgUFIuIn1dLCJnaXRDb25maWciOnsicmVwbyI6Imh0dHBzOi8vZ2l0aHViLmNvbS9yaWNrLWNoaWNrL2FncnIiLCJyZXBvcyI6WyJodHRwczovL2dpdGh1Yi5jb20vcmljay1jaGljay9hZ3JyIl0sImJyYW5jaCI6Im1hc3RlciJ9LCJtZW1vcnlFbmFibGVkIjp0cnVlLCJhZ2VudE9wdGlvbnMiOnsib3BlblB1bGxSZXN0Ijp0cnVlfX19)
+- **UX Issue Audit（月曜 9:00）**: [prefill を開く](https://cursor.com/automations/new?prefill=eyJuYW1lIjoiQUdSUiBVWCBJc3N1ZSBBdWRpdCAo5pyI5pucIDk6MDAgSlNUKSIsImRlc2NyaXB0aW9uIjoidmlzdWFsLXJldmlldyArIENTUyDnm6Pmn7sg4oaSIGNvbGxlY3Qg4oaSIOODieODqeOCpOODqeODs--8iOmHjeikh-aZguOBr-i1t-elqOOBl-OBquOBhO-8iSIsIndvcmtmbG93Ijp7InRyaWdnZXJzIjpbeyJjcm9uIjp7ImNyb24iOiIwIDkgKiAqIDEiLCJ0aW1lem9uZSI6IkFzaWEvVG9reW8ifX1dLCJwcm9tcHRzIjpbeyJwcm9tcHQiOiJZb3UgYXJlIHRoZSBBR1JSIFVYIElzc3VlIEF1ZGl0IGF1dG9tYXRpb24gZm9yIHJpY2stY2hpY2svYWdyci5cblxuUmVhZCBgLmN1cnNvci9za2lsbHMvdXgtaXNzdWUtcGlwZWxpbmUvU0tJTEwubWRgIHNlY3Rpb24gKipBdXRvbWF0aW9u77yI44K544Kx44K444Ol44O844Or77yJKiogYW5kIGZvbGxvdyBpdCBleGFjdGx5LlxuXG5TdW1tYXJ5OlxuLSBSdW4gcGhhc2VzIDMtNCBvbmx5IChOTyBlMmUgY2FwdHVyZTsgY2xvdWQgaGFzIG5vIGxvY2FsIFJhaWxzL25nKS5cbi0gUnVuIGNvbGxlY3QtdXgtZmluZGluZ3MubWpzIGFuZCB1eC1pc3N1ZS1jcmVhdG9yIGRyeS1ydW4uXG4tIERvIE5PVCBnaCBpc3N1ZSBjcmVhdGUgd2hlbiBleGlzdGluZ0lzc3VlQ2FuZGlkYXRlcyBoYXMgT1BFTiB3aXRoIHNjb3JlID49IDUuXG4tIFdyaXRlIHN1bW1hcnkgdG8gYXV0b21hdGlvbiBtZW1vcnk7IG9wZW4gUFIgb25seSBpZiB2aXN1YWwtcmV2aWV3LXJlc3VsdHMubWQgd2FzIGxlZ2l0aW1hdGVseSB1cGRhdGVkIGluLXJlcG8uXG4tIE5ldmVyIG9wZW4gUFIgZm9yIGltcGxlbWVudGF0aW9uICh0aGF0IGlzIGdpdGh1Yi1pc3N1ZS13b3JrZXIpLiJ9XSwiZ2l0Q29uZmlnIjp7InJlcG8iOiJodHRwczovL2dpdGh1Yi5jb20vcmljay1jaGljay9hZ3JyIiwicmVwb3MiOlsiaHR0cHM6Ly9naXRodWIuY29tL3JpY2stY2hpY2svYWdyciJdLCJicmFuY2giOiJtYXN0ZXIifSwibWVtb3J5RW5hYmxlZCI6dHJ1ZSwiYWdlbnRPcHRpb25zIjp7Im9wZW5QdWxsUmVxdWVzdCI6ZmFsc2V9fX0)
+- **Automation Audit（金曜 10:00）**: [prefill を開く](https://cursor.com/automations/new?prefill=eyJuYW1lIjoiQUdSUiBBdXRvbWF0aW9uIEF1ZGl0ICjph5Hmm5wgMTA6MDAgSlNUKSIsImRlc2NyaXB0aW9uIjoiSXNzdWUgV29ya2VyIC8gVVggQXVkaXQg44Gu5a6f6KGM57WQ5p6c55uj5p-744CC44Kv44Oq44OG44Kj44Kr44Or44GqIHJlcG8g5LiN5YW35ZCI44Gu44G_IFBSIiwid29ya2Zsb3ciOnsidHJpZ2dlcnMiOlt7ImNyb24iOnsiY3JvbiI6IjAgMTAgKiAqIDUiLCJ0aW1lem9uZSI6IkFzaWEvVG9reW8ifX1dLCJwcm9tcHRzIjpbeyJwcm9tcHQiOiJZb3UgYXJlIHRoZSBBR1JSIENsb3VkIEF1dG9tYXRpb24gQXVkaXQgZm9yIHJlcG9zaXRvcnkgcmljay1jaGljay9hZ3JyLlxuXG5SZWFkIGFuZCBmb2xsb3cgYC5jdXJzb3Ivc2tpbGxzL2Nsb3VkLWF1dG9tYXRpb24tYXVkaXQvU0tJTEwubWRgIGV4YWN0bHkuXG5cbkF1ZGl0IHRoZSBsYXN0IDcgZGF5cyBvZiBJc3N1ZSBXb3JrZXIgYW5kIFVYIElzc3VlIEF1ZGl0IHJ1bnMuIEZpeCBPTkxZIGNyaXRpY2FsIGJyZWFrYWdlcyBpbiB0aGUgcmVwb3NpdG9yeSAoYnJva2VuIHNraWxsIHBhdGhzLCBib290c3RyYXAvYXV0aCBzY3JpcHRzLCBmYWlsaW5nIGF1dG9tYXRpb24gc2NyaXB0cywgYnJva2VuIGlzc3VlLXdvcmtlci1kaXNwYXRjaCB3b3JrZmxvdykuIERvIE5PVCBtYWtlIHByb2FjdGl2ZSBpbXByb3ZlbWVudHMsIHByb21wdCB0d2Vha3MsIG9yIHNjaGVkdWxlIGNoYW5nZXMuXG5cbk9wZW4gYSBQUiBvbmx5IHdoZW4gYSBjcml0aWNhbCByZXBvLXNpZGUgZml4IGlzIHJlcXVpcmVkLiBJZiBhbGwgYXV0b21hdGlvbnMgYXJlIGhlYWx0aHkgb3IgaXNzdWVzIGFyZSBEYXNoYm9hcmQtb25seSwgd3JpdGUgdGhlIGF1ZGl0IHJlcG9ydCB0byBhdXRvbWF0aW9uIG1lbW9yeSBhbmQgZXhpdCB3aXRob3V0IGEgUFIuIn1dLCJnaXRDb25maWciOnsicmVwbyI6Imh0dHBzOi8vZ2l0aHViLmNvbS9yaWNrLWNoaWNrL2FncnIiLCJyZXBvcyI6WyJodHRwczovL2dpdGh1Yi5jb20vcmljay1jaGljay9hZ3JyIl0sImJyYW5jaCI6Im1hc3RlciJ9LCJtZW1vcnlFbmFibGVkIjp0cnVlLCJhZ2VudE9wdGlvbnMiOnsib3BlblB1bGxSZXF1ZXN0Ijp0cnVlfX19)
+
+## Issue Worker（実装）
+
+**目的**: オープン issue を 1 件選び TDD → PR。
+
+詳細: [github-issue-worker/SKILL.md](../../github-issue-worker/SKILL.md) §セットアップ
+
+**Webhook**（ラベル即時）: `.github/workflows/issue-worker-dispatch.yml`
+
+| Secret | 内容 |
+|--------|------|
+| `CURSOR_ISSUE_WORKER_WEBHOOK_URL` | Automation の Webhook URL |
+| `CURSOR_ISSUE_WORKER_WEBHOOK_KEY` | Webhook API key |
+
+ラベル `agent-ready` / `agent-close` で起動。
+
+## UX Issue Audit（監査・起票準備）
+
+**目的**: リポジトリ上の `visual-review-results.md` を前提に、CSS 監査 + 草案 + 条件付き起票。**キャプチャはローカル手動**。
+
+詳細: [ux-issue-pipeline/SKILL.md](../../ux-issue-pipeline/SKILL.md) § Automation
+
+フルキャプチャ後に `visual-review-results.md` を commit してから週次 Audit が意味を持つ。
+
+## Automation Audit（実行結果監査）
+
+**目的**: 上記 Automation の実行結果と依存物を監査。**クリティカルな不具合のみ** repo 修正 PR。
+
+**PR を開く条件**: P0/P1 の repo 側根因のみ（[SKILL.md](../SKILL.md) §3）。それ以外は Memory レポートのみ。
+
+### Automation 用プロンプト（コピペ）
+
+```
+You are the AGRR Cloud Automation Audit for repository rick-chick/agrr.
+
+Read and follow `.cursor/skills/cloud-automation-audit/SKILL.md` exactly.
+
+Audit the last 7 days of Issue Worker and UX Issue Audit runs using GitHub side effects and repository smoke tests (you cannot read other automations' run logs or memories). Fix ONLY critical breakages in the repository. Do NOT make proactive improvements.
+
+Open a PR only when a critical repo-side fix is required. Otherwise write the audit report to automation memory and exit without a PR.
+```
+
+## GitHub CLI 認証（Cloud Agent）
+
+Cloud Agent は **2 種類のトークン**を使い分ける。
+
+| 用途 | トークン | 設定 |
+|------|----------|------|
+| `git clone` / `git push` / PR 作成 | Cursor GitHub App（`ghs_…`） | Dashboard → Integrations → GitHub |
+| `gh issue list` / `gh issue create` / `gh pr comment` | **ユーザー PAT** | Dashboard → Cloud Agents → Secrets |
+
+統合トークンだけでは `gh issue list` が失敗し、`collect-ux-findings.mjs` が `githubLookupStatus: failed` になる（起票禁止）。
+
+### 手順
+
+1. **GitHub App を接続**（未接続なら）
+   - [cursor.com/dashboard](https://cursor.com/dashboard) → **Integrations** → **GitHub** → Connect
+   - `rick-chick/agrr` に read/write（Issues, Pull requests, Contents）
+
+2. **Fine-grained PAT を発行**（GitHub → Settings → Developer settings → Fine-grained tokens）
+   - Repository: `rick-chick/agrr` のみ
+   - Permissions: **Issues** Read and write、**Pull requests** Read and write、**Contents** Read
+   - 有効期限は運用に合わせて設定
+
+3. **Cursor Secrets に登録**
+   - Dashboard → **Cloud Agents** → **Secrets**（User または Team scope）
+   - 変数名: **`AGRR_GH_PAT`**
+   - ❌ `GITHUB_TOKEN` / `GH_TOKEN` は使わない
+
+4. **リポジトリ側の bootstrap**（`master` にマージ済みであること）
+   - `.cursor/environment.json` → `.cursor/scripts/cloud-gh-auth.sh`
+   - Automation の **Repository** を `rick-chick/agrr` / branch `master` に設定
+
+5. **確認** — Automation で **Run test**:
+   - `gh auth status` に `gho_` / `github_pat_` が表示される
+   - `gh issue list --repo rick-chick/agrr --limit 1` が成功する
+
+### Team Owned Automation の場合
+
+Team scope の Secret に `AGRR_GH_PAT` を置く。Run test で注入を確認する。
+
+## トラブルシュート
+
+| 症状 | 対処 |
+|------|------|
+| Invalid trigger | cron を 5 フィールドに。TZ を Asia/Tokyo に |
+| default branch エラー | `gitConfig.branch` を `master` に明示 |
+| キャプチャ失敗 | Automation では phase 1 を実行しない（UX Audit） |
+| 重複 issue 量産 | `existingIssueCandidates` score ≥ 5 で起票禁止を守る |
+| `githubLookupStatus: failed` | **GitHub CLI 認証**を実施。1 週は Memory 記録、**2 週連続**で P1 エスカレーション |
+| `gh auth status` が `ghs_…` のみ | `AGRR_GH_PAT` を Secrets に追加 |
+| Webhook secret 空 | Schedule / Run test を使用（既知バグ） |
+| 監査で毎週 PR が開く | [SKILL.md](../SKILL.md) の P0/P1 定義を確認 |
+| 課金が高い | Max Mode 固定。頻度を下げるか Team Owned の usage pool を確認 |
+
+## 参照
+
+- [Cursor Automations 公式](https://cursor.com/docs/cloud-agent/automations)
+- `.cursor/skills/cloud-automation-audit/SKILL.md`
+- `.cursor/skills/github-issue-worker/SKILL.md`
+- `.cursor/skills/ux-issue-pipeline/SKILL.md`
