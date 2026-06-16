@@ -22,12 +22,18 @@ const initialControl: PlanOptimizingViewState = {
       <section class="page">
         <a [routerLink]="['/plans', planId]">{{ 'plans.optimizing_live.back_to_plan' | translate }}</a>
         <h2>
-          {{
+          <span>{{
             (isCompleted
               ? 'plans.optimizing_live.heading_completed'
               : 'plans.optimizing_live.heading'
             ) | translate
-          }}
+          }}</span>
+          <span class="status-badge" [class.status-badge--completed]="isCompleted">{{
+            (isCompleted
+              ? 'plans.optimizing_live.status_badge_completed'
+              : 'plans.optimizing_live.status_badge'
+            ) | translate
+          }}</span>
         </h2>
         <p>{{ 'plans.optimizing_live.progress_label' | translate: { progress: control.progress } }}</p>
       </section>

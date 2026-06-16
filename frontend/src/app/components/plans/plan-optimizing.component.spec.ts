@@ -60,6 +60,8 @@ describe('PlanOptimizingComponent', () => {
         'plans.optimizing_live.back_to_plan': 'Back to plan',
         'plans.optimizing_live.heading': 'Optimizing',
         'plans.optimizing_live.heading_completed': 'Optimization complete',
+        'plans.optimizing_live.status_badge': 'Optimizing',
+        'plans.optimizing_live.status_badge_completed': 'Complete',
         'plans.optimizing_live.progress_label': 'Progress: {{progress}}%'
       },
       true
@@ -84,6 +86,7 @@ describe('PlanOptimizingComponent', () => {
 
     const textContent = fixture.nativeElement.textContent;
     expect(textContent).toContain('Optimization complete');
+    expect(textContent).toContain('Complete');
     expect(textContent).not.toContain('Optimizing');
     expect(textContent).toContain('Progress: 100%');
   });
