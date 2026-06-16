@@ -197,6 +197,20 @@ mod tests {
     }
 
     #[test]
+    fn normalize_locale_maps_supported_and_fallback_tags() {
+        assert_eq!(normalize_locale("ja"), "ja");
+        assert_eq!(normalize_locale("ja-JP"), "ja");
+        assert_eq!(normalize_locale("en"), "en");
+        assert_eq!(normalize_locale("en-US"), "en");
+        assert_eq!(normalize_locale("us"), "en");
+        assert_eq!(normalize_locale("in"), "in");
+        assert_eq!(normalize_locale("hi"), "in");
+        assert_eq!(normalize_locale("hi-IN"), "in");
+        assert_eq!(normalize_locale("fr"), "ja");
+        assert_eq!(normalize_locale("  en, ja;q=0.9  "), "en");
+    }
+
+    #[test]
     fn translates_entry_schedule_disclaimer_from_repo_locales() {
         let dir = locales_dir_from_env();
         if !dir.is_dir() {
