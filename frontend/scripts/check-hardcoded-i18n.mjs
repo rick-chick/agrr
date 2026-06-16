@@ -1,8 +1,13 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const LOCALES = ['ja', 'en', 'in'];
-const SOURCE_EXTENSIONS = new Set(['.ts', '.html']);
+import {
+  LOCALES,
+  SOURCE_EXTENSIONS,
+  collectStaticTranslateKeysFromText,
+  findMissingLocaleKeys
+} from './check-hardcoded-i18n-lib.mjs';
+
 const SOURCE_ROOT = join(process.cwd(), 'src', 'app');
 const I18N_ROOT = join(process.cwd(), 'src', 'assets', 'i18n');
 const enforce = process.argv.includes('--enforce');
@@ -25,51 +30,16 @@ function sourceFiles(dir) {
   return files;
 }
 
-function getNested(catalog, dottedKey) {
-  return dottedKey.split('.').reduce((current, segment) => {
-    if (current == null || typeof current !== 'object') return undefined;
-    return current[segment];
-  }, catalog);
-}
-
-function lineNumberForOffset(text, offset) {
-  let line = 1;
-  for (let i = 0; i < offset; i += 1) {
-    if (text.charCodeAt(i) === 10) line += 1;
-  }
-  return line;
-}
-
-function addMatches(results, text, file, pattern) {
-  for (const match of text.matchAll(pattern)) {
-    const key = match.groups?.key;
-    if (!key || key.includes('${')) continue;
-    results.push({
-      key,
-      file: relative(process.cwd(), file),
-      line: lineNumberForOffset(text, match.index ?? 0)
-    });
-  }
-}
-
 function collectStaticTranslateKeys() {
   const keys = [];
   for (const file of sourceFiles(SOURCE_ROOT)) {
     const text = readFileSync(file, 'utf8');
-    addMatches(keys, text, file, /['"`](?<key>[A-Za-z][A-Za-z0-9_.-]+)['"`]\s*\|\s*translate/g);
-    addMatches(keys, text, file, /\.instant\(\s*['"`](?<key>[A-Za-z][A-Za-z0-9_.-]+)['"`]/g);
+    const filePath = relative(process.cwd(), file);
+    for (const match of collectStaticTranslateKeysFromText(text, filePath)) {
+      keys.push(match);
+    }
   }
   return keys;
-}
-
-function uniqueByLocaleAndKey(rows) {
-  const seen = new Set();
-  return rows.filter((row) => {
-    const identity = `${row.locale}\0${row.key}`;
-    if (seen.has(identity)) return false;
-    seen.add(identity);
-    return true;
-  });
 }
 
 if (!statSync(SOURCE_ROOT).isDirectory()) {
@@ -87,13 +57,7 @@ const catalogs = Object.fromEntries(
 );
 
 const references = collectStaticTranslateKeys();
-const missing = uniqueByLocaleAndKey(
-  references.flatMap((ref) =>
-    LOCALES.flatMap((locale) =>
-      getNested(catalogs[locale], ref.key) === undefined ? [{ ...ref, locale }] : []
-    )
-  )
-).sort((a, b) => a.locale.localeCompare(b.locale) || a.key.localeCompare(b.key));
+const missing = findMissingLocaleKeys(references, catalogs);
 
 if (missing.length === 0) {
   console.log(`check-hardcoded-i18n: OK (${references.length} static references checked)`);
