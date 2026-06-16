@@ -61,7 +61,7 @@ const initialControl: FertilizeDetailViewState = {
             @if (control.fertilize.region) {
               <div class="detail-row">
                 <dt class="detail-row__term">{{ 'fertilizes.form.region_label' | translate }}</dt>
-                <dd class="detail-row__value">{{ control.fertilize.region }}</dd>
+                <dd class="detail-row__value">{{ 'fertilizes.form.region_' + control.fertilize.region | translate }}</dd>
               </div>
             }
           </dl>
