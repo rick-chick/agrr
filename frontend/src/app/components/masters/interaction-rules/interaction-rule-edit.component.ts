@@ -45,7 +45,11 @@ const initialControl: InteractionRuleEditViewState = {
           <form (ngSubmit)="updateInteractionRule()" #interactionRuleForm="ngForm" class="form-card__form">
             <label class="form-card__field" for="rule_type">
               <span class="form-card__field-label">{{ 'interaction_rules.form.rule_type_label' | translate }}</span>
-              <input id="rule_type" name="rule_type" [(ngModel)]="control.formData.rule_type" required />
+              <select id="rule_type" name="rule_type" [(ngModel)]="control.formData.rule_type" required>
+                @for (code of ruleTypeCodes; track code) {
+                  <option [value]="code">{{ ruleTypeLabel(code) }}</option>
+                }
+              </select>
             </label>
             <label class="form-card__field" for="source_group">
               <span class="form-card__field-label">{{ 'interaction_rules.form.source_group_label' | translate }}</span>
@@ -140,5 +144,13 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
       return this.control.formData.region ?? null;
     }
     return (user as { region?: string | null } | null)?.region ?? null;
+  }
+
+  readonly ruleTypeCodes = ['continuous_cultivation'] as const;
+
+  ruleTypeLabel(code: string): string {
+    const key = `interaction_rules.form.rule_type_codes.${code}`;
+    const t = this.translate.instant(key);
+    return t !== key ? t : code;
   }
 }
