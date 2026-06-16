@@ -26,4 +26,22 @@ describe('PesticideApiGateway', () => {
     expect(client.get).toHaveBeenCalledWith('/pesticides');
   });
 
+  it('show maps crop_name and pest_name from API response', async () => {
+    const pesticide: Pesticide = {
+      id: 1,
+      name: 'Spray',
+      crop_id: 51,
+      pest_id: 54,
+      is_reference: false,
+      crop_name: 'Tomato',
+      pest_name: 'Aphid'
+    };
+    vi.mocked(client.get).mockReturnValue(of(pesticide));
+
+    const result = await firstValueFrom(gateway.show(1));
+    expect(result.crop_name).toBe('Tomato');
+    expect(result.pest_name).toBe('Aphid');
+    expect(client.get).toHaveBeenCalledWith('/pesticides/1');
+  });
+
 });
