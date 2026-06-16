@@ -6,6 +6,22 @@
 /** @type {readonly CaptureLocale[]} */
 export const CAPTURE_LOCALES = ['ja', 'en', 'in'];
 
+/** ngx-translate persisted language (`app-locale.ts`); capture must preset before each navigation. */
+export const APP_LANG_STORAGE_KEY = 'agrr.app.lang';
+
+/**
+ * Serializable init-script payload for Playwright capture locale install.
+ * @param {CaptureLocale} locale
+ */
+export function buildCaptureLocaleInitPayload(locale) {
+  return {
+    navLang: navigatorLanguageTag(locale),
+    railsLocale: railsLocaleCookieValue(locale),
+    appLang: locale,
+    storageKey: APP_LANG_STORAGE_KEY,
+  };
+}
+
 /** @param {string} pattern route-manifest の pattern */
 export function pngBasename(pattern) {
   if (pattern === '') return 'home';

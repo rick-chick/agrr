@@ -1,9 +1,8 @@
 import { expect, type Page } from '@playwright/test';
 import {
+  buildCaptureLocaleInitPayload,
   CAPTURE_LOCALES,
   documentHtmlLang,
-  navigatorLanguageTag,
-  railsLocaleCookieValue,
 } from './capture-locales.mjs';
 
 export type CaptureLocale = 'ja' | 'en' | 'in';
@@ -12,10 +11,9 @@ export { agentPngFilename } from './capture-locales.mjs';
 
 /** ブラウザ言語検出（app.ts detectBrowserLang）と cookie を E2E 用に固定する */
 export async function installCaptureLocale(page: Page, locale: CaptureLocale): Promise<void> {
-  const navLang = navigatorLanguageTag(locale);
-  const railsLocale = railsLocaleCookieValue(locale);
+  const payload = buildCaptureLocaleInitPayload(locale);
   await page.addInitScript(
-    ({ navLang: nl, railsLocale: rl }) => {
+    ({ navLang: nl, railsLocale: rl, appLang, storageKey }) => {
       const w = window as Window & { __disableCookieControl?: boolean };
       w.__disableCookieControl = true;
       Object.defineProperty(navigator, 'language', {
@@ -27,8 +25,16 @@ export async function installCaptureLocale(page: Page, locale: CaptureLocale): P
         configurable: true,
       });
       document.cookie = `locale=${rl}; path=/; max-age=31536000`;
+      localStorage.setItem(storageKey, appLang);
     },
-    { navLang, railsLocale },
+    payload,
+  );
+  // Same-origin navigation keeps localStorage; preset before goto so ja capture does not stick for en/in.
+  await page.evaluate(
+    ({ appLang, storageKey }) => {
+      localStorage.setItem(storageKey, appLang);
+    },
+    { appLang: payload.appLang, storageKey: payload.storageKey },
   );
 }
 
