@@ -37,7 +37,11 @@ const initialControl: PublicPlanOptimizingViewState = {
           <div class="compact-header-title">
             <span class="title-icon" aria-hidden="true">🌱</span>
             <span class="title-text">{{ 'public_plans.title' | translate }}</span>
-            <span class="status-badge optimizing">{{ 'public_plans.optimizing.status_badge' | translate }}</span>
+            @if (control.status === 'failed') {
+              <span class="status-badge failed">{{ 'public_plans.optimizing.status_badge_failed' | translate }}</span>
+            } @else {
+              <span class="status-badge optimizing">{{ 'public_plans.optimizing.status_badge' | translate }}</span>
+            }
           </div>
           <div class="compact-subtitle">
             {{ farm?.name }} · {{ 'public_plans.optimizing.crops_count' | translate: { count: selectedCropsCount } }}
