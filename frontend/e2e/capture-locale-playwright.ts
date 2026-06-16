@@ -65,6 +65,15 @@ export async function installCaptureLocale(page: Page, locale: CaptureLocale): P
       url: CAPTURE_BASE_URL,
     },
   ]);
+
+  if (page.url().startsWith(CAPTURE_BASE_URL)) {
+    await page.evaluate(
+      ({ appLang, storageKey }) => {
+        localStorage.setItem(storageKey, appLang);
+      },
+      { appLang: payload.appLang, storageKey: APP_LANG_STORAGE_KEY },
+    );
+  }
 }
 
 /** ngx-translate の読み込みと html lang が期待どおりになるまで待つ */
