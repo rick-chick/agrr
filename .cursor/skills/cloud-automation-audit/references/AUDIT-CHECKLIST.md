@@ -24,6 +24,17 @@
 | 7 | Webhook dispatch: workflow YAML が valid | payload / jq 構文破損 |
 | 8 | Secrets 名が doc と一致 | doc 側 typo のみ repo 修正可。未設定は Dashboard 手順 |
 
+## PR Merge Worker
+
+| # | 確認 | クリティカル条件 |
+|---|------|------------------|
+| 1 | SKILL.md が存在し Automation プロンプトのパスと一致 | ファイル欠落・パス typo |
+| 2 | `pr-merge-worker-dispatch.yml` が valid | payload / jq 構文破損・重複 dispatch（Backend test のみ） |
+| 3 | ruleset **master CI required** が active | 無い / context 名不一致 → P0 |
+| 4 | Issue Worker PR に `agent-merge` 付与手順が doc にある | 連携断絶 |
+| 5 | 直近 7 日に eligible PR のマージまたは blocked コメント | 毎回失敗の間接証拠 |
+| 6 | Secrets 名が doc と一致 | 未設定は Dashboard 手順（workflow は exit 0） |
+
 ## UX Issue Audit
 
 | # | 確認 | クリティカル条件 |

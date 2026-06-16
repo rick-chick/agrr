@@ -1,0 +1,134 @@
+# Dispatches the Cursor PR Merge Worker for eligible PRs.
+#
+# CI dispatch: Backend test workflow_run only (once per push; avoids check_suite / per-job duplicates).
+# PR dispatch: opened (opt-in branches) or labeled agent-merge.
+#
+# Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
+
+name: PR Merge Worker Dispatch
+
+on:
+  pull_request:
+    types: [opened, labeled]
+    branches: [master]
+  workflow_run:
+    workflows:
+      - Backend test
+    types: [completed]
+
+concurrency:
+  group: pr-merge-dispatch-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || 'none' }}
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')
+    steps:
+      - name: Resolve pull request context
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BODY_INPUT: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            ACTION="${{ github.event.action }}"
+            HEAD_REF="${{ github.event.pull_request.head.ref }}"
+            PR_BODY_B64=$(printf '%s' "$PR_BODY_INPUT" | base64 -w0)
+            LABEL_NAME="${{ github.event.label.name }}"
+            LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+            PR_TITLE='${{ github.event.pull_request.title }}'
+            PR_URL='${{ github.event.pull_request.html_url }}'
+            PR_AUTHOR='${{ github.event.pull_request.user.login }}'
+          else
+            ACTION="ci_completed"
+            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+            PR_JSON=$(gh api "repos/${{ github.repository }}/commits/$HEAD_SHA/pulls" --jq '.[0] // empty')
+            if [ -z "$PR_JSON" ] || [ "$PR_JSON" = "null" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
+            HEAD_REF=$(echo "$PR_JSON" | jq -r '.head.ref')
+            PR_BODY_B64=$(echo "$PR_JSON" | jq -r '.body // ""' | base64 -w0)
+            LABEL_NAME=""
+            LABELS=$(echo "$PR_JSON" | jq -r '[.labels[].name] | join(",")')
+            PR_TITLE=$(echo "$PR_JSON" | jq -r '.title')
+            PR_URL=$(echo "$PR_JSON" | jq -r '.html_url')
+            PR_AUTHOR=$(echo "$PR_JSON" | jq -r '.user.login')
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "title<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$PR_TITLE" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+          echo "author=$PR_AUTHOR" >> "$GITHUB_OUTPUT"
+          echo "labels=$LABELS" >> "$GITHUB_OUTPUT"
+          echo "label_name=$LABEL_NAME" >> "$GITHUB_OUTPUT"
+          echo "body_b64=$PR_BODY_B64" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Cursor PR Merge Worker
+        if: steps.pr.outputs.skip != 'true'
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_KEY }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_TITLE: ${{ steps.pr.outputs.title }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          ACTION: ${{ steps.pr.outputs.action }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+          AUTHOR: ${{ steps.pr.outputs.author }}
+          LABELS: ${{ steps.pr.outputs.labels }}
+          LABEL_NAME: ${{ steps.pr.outputs.label_name }}
+          BODY_B64: ${{ steps.pr.outputs.body_b64 }}
+        run: |
+          set -euo pipefail
+          PR_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
+
+          if echo "$LABELS" | grep -qE '(^|,)agent-no-merge(,|$)|(^|,)do-not-merge(,|$)|(^|,)wip(,|$)|(^|,)agent-merge-blocked(,|$)'; then
+            echo "PR has a merge-blocking label; skipping."
+            exit 0
+          fi
+
+          if [ "$ACTION" = "labeled" ] && [ "$LABEL_NAME" != "agent-merge" ]; then
+            echo "labeled event is not agent-merge; skipping."
+            exit 0
+          fi
+
+          eligible=false
+          if echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then eligible=true; fi
+          if echo "$HEAD_REF" | grep -q '^issue/'; then eligible=true; fi
+          if echo "$PR_BODY" | grep -q 'Merge-Strategy: agent'; then eligible=true; fi
+          if [ "$eligible" != "true" ]; then
+            echo "PR is not eligible for PR Merge Worker; skipping."
+            exit 0
+          fi
+
+          if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
+            echo "CURSOR_PR_MERGE_WEBHOOK_URL or CURSOR_PR_MERGE_WEBHOOK_KEY is not set."
+            echo "Configure secrets after creating the Cursor Automation webhook."
+            exit 0
+          fi
+
+          payload=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --argjson number "$PR_NUMBER" \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg action "$ACTION" \
+            --arg head_ref "$HEAD_REF" \
+            --arg author "$AUTHOR" \
+            '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, action: $action, head_ref: $head_ref, author: $author}')
+          curl -fsS -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $WEBHOOK_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$payload"
