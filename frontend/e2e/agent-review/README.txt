@@ -35,3 +35,12 @@ npm run e2e:capture-for-agent
 ## 監査（別コマンド）
 
 CSS トークン当て漏れの列挙: `npm run audit:css-tokens`
+
+## Issue 起票パイプライン
+
+1. 本 README のキャプチャ → `frontend-agent-visual-review`（visual-review-results.md）
+2. `npm run audit:css-tokens`
+3. `node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs`
+4. `.cursor/skills/ux-issue-creator`（重複確認・gh issue create）
+
+詳細: `.cursor/skills/ux-issue-pipeline/SKILL.md`

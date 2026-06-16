@@ -1,0 +1,14 @@
+audit-component-css-tokens: var 外の生色指定 2 件（enforce 対象） | var 内のみ 1 件 | 計 3 件
+
+--- var 外（トークン置換の主対象） ---
+
+src/app/components/plans/gantt-chart.component.css:471  [hex] #fef2f2
+  background: #fef2f2;
+
+src/app/components/plans/gantt-chart.component.css:472  [hex] #ef4444
+  color: #ef4444;
+
+--- var(...) 内のみ（フォールバック等・参考） ---
+
+src/app/components/auth/login/login.component.css:68  [hex] #2196f3
+  background: var(--color-info, #2196f3);

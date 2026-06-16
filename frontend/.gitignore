@@ -51,6 +51,9 @@ __screenshots__/
 
 # Agent 向けに再生成する PNG（Cursor に添付してレビュー）
 /e2e/agent-review/out/
+# UX issue パイプラインの自動生成草案（collect-ux-findings.mjs）
+/e2e/agent-review/ux-findings-draft.json
+/e2e/agent-review/ux-issue-drafts.md
 
 # System files
 .DS_Store

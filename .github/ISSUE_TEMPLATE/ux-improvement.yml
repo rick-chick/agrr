@@ -1,0 +1,80 @@
+name: UX / UI 改善
+description: レイアウト・導線・表示品質の改善（ビジュアルレビュー・UX 監査向け）
+title: "[UX/UI] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **タイトル**: 起票時は `[P0|P1|P2][UX|CSS|i18n|a11y] <pattern>: <要約>` 形式に編集してください（下の優先度・区分と一致させる）。
+        Agent パイプライン: `.cursor/skills/ux-issue-pipeline/SKILL.md`
+        自動起票: `ux-issue-creator` + `collect-ux-findings.mjs`
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: 区分
+      options:
+        - UX
+        - CSS
+        - i18n
+        - a11y
+    validations:
+      required: true
+  - type: input
+    id: pattern
+    attributes:
+      label: ルート pattern（route-manifest）
+      description: 例: `plans/:id/optimizing`, `about`
+      placeholder: plans/:id/optimizing
+    validations:
+      required: true
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景
+      description: 観測事実。visual-review #N や PNG 名を含める
+      placeholder: visual-review #46 で進捗 100% なのに見出しが「最適化中」のまま
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: 対応方針
+      description: 具体的な修正・テスト方針
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完了条件（チェックリスト）
+      description: 1 行 1 項目（`- [ ]` で始める）
+      value: |
+        - [ ] 3 言語キャプチャで指摘が解消
+        - [ ] 関連テスト GREEN（test-common）
+    validations:
+      required: true
+  - type: input
+    id: dependencies
+    attributes:
+      label: 依存 issue
+      description: 例: #13, なし
+      placeholder: なし
+  - type: textarea
+    id: references
+    attributes:
+      label: 参照
+      description: visual-review-results.md 行、PNG、コンポーネント path
+      placeholder: |
+        - visual-review-results.md #46
+        - frontend/e2e/agent-review/out/plans_id_optimizing.ja.png

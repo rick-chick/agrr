@@ -38,3 +38,7 @@ jobs:
 
       - name: ng serve proxy contract
         run: npm run check:proxy-conf
+
+      - name: UX findings collector unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.test.mjs

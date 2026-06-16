@@ -1,0 +1,48 @@
+# Dispatches the Cursor Issue Worker when an issue is labeled agent-ready or agent-close.
+#
+# Setup:
+# 1. Create a Cursor Automation with a Webhook trigger (prompt references
+#    .cursor/skills/github-issue-worker/SKILL.md).
+# 2. Add repository secret CURSOR_ISSUE_WORKER_WEBHOOK_URL (webhook URL).
+# 3. Add repository secret CURSOR_ISSUE_WORKER_WEBHOOK_KEY (webhook API key).
+# 4. Create labels: agent-ready, agent-close, agent-in-progress, agent-blocked, agent-closed
+
+name: Issue Worker Dispatch
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  dispatch:
+    if: contains(fromJSON('["agent-ready", "agent-close"]'), github.event.label.name)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cursor Issue Worker
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          LABEL: ${{ github.event.label.name }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ] || [ -z "$WEBHOOK_KEY" ]; then
+            echo "CURSOR_ISSUE_WORKER_WEBHOOK_URL or CURSOR_ISSUE_WORKER_WEBHOOK_KEY is not set."
+            echo "Configure secrets after creating the Cursor Automation webhook."
+            exit 1
+          fi
+          if [ "$LABEL" = "agent-close" ]; then
+            ACTION="close_with_reason"
+          else
+            ACTION="implement"
+          fi
+          payload=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --argjson number "${{ github.event.issue.number }}" \
+            --arg title "${{ github.event.issue.title }}" \
+            --arg url "${{ github.event.issue.html_url }}" \
+            --arg action "$ACTION" \
+            --arg label "$LABEL" \
+            '{repository: $repo, issue_number: $number, issue_title: $title, issue_url: $url, action: $action, label: $label}')
+          curl -fsS -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $WEBHOOK_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$payload"
