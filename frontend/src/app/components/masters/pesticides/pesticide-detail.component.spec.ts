@@ -50,6 +50,7 @@ describe('PesticideDetailComponent', () => {
   });
 
   it('displays API crop_name and pest_name when present', () => {
+    fixture.detectChanges();
     component.control = {
       loading: false,
       error: null,
@@ -73,6 +74,7 @@ describe('PesticideDetailComponent', () => {
   });
 
   it('falls back to translated ID label when names are missing', () => {
+    fixture.detectChanges();
     component.control = {
       loading: false,
       error: null,
