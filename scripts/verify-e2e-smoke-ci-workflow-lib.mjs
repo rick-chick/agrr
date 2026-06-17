@@ -16,6 +16,7 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'strangler-proxy',
   'playwright install',
   'load-reference-data-container.sh',
+  'mkdir -p lib/core',
 ];
 
 const REQUIRED_README_SNIPPETS = [
