@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  buildHostSelectorData,
   buildManifestData,
   checkManifestFreshness,
 } from './generate-e2e-route-manifest-lib.mjs';
@@ -16,13 +17,17 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const FRONTEND = join(__dirname, '..');
 const OUT = join(FRONTEND, 'e2e', 'route-manifest.json');
 const ROUTE_TO_PNG = join(FRONTEND, 'e2e', 'agent-review', 'route-to-png.md');
+const HOST_SELECTOR_OUT = join(FRONTEND, 'e2e', 'host-selector-by-pattern.generated.ts');
 
 async function writeManifest() {
   const { payload, routeToPngContent } = await buildManifestData(FRONTEND);
+  const { content: hostSelectorContent } = await buildHostSelectorData(FRONTEND);
   await writeFile(OUT, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
   console.log(`wrote ${OUT} (${payload.routes.length} routes)`);
   await writeFile(ROUTE_TO_PNG, routeToPngContent, 'utf8');
   console.log(`wrote ${ROUTE_TO_PNG}`);
+  await writeFile(HOST_SELECTOR_OUT, hostSelectorContent, 'utf8');
+  console.log(`wrote ${HOST_SELECTOR_OUT}`);
 }
 
 async function main() {
@@ -34,7 +39,9 @@ async function main() {
       }
       process.exit(1);
     }
-    console.log('route-manifest.json and route-to-png.md are up to date');
+    console.log(
+      'route-manifest.json, route-to-png.md, and host-selector-by-pattern.generated.ts are up to date',
+    );
     return;
   }
 
