@@ -16,10 +16,17 @@ export function readE2eCaptureAppLang(): AppLang | undefined {
   if (typeof window === 'undefined') {
     return undefined;
   }
-  const value = (window as Window & { [E2E_CAPTURE_APP_LANG_WINDOW_KEY]?: string })[
-    E2E_CAPTURE_APP_LANG_WINDOW_KEY
-  ];
-  return value === 'ja' || value === 'en' || value === 'in' ? value : undefined;
+  const win = window as Window & { [E2E_CAPTURE_APP_LANG_WINDOW_KEY]?: string };
+  const fromWindow = win[E2E_CAPTURE_APP_LANG_WINDOW_KEY];
+  if (fromWindow === 'ja' || fromWindow === 'en' || fromWindow === 'in') {
+    return fromWindow;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = params.get('e2e_capture_locale');
+  if (fromQuery === 'ja' || fromQuery === 'en' || fromQuery === 'in') {
+    return fromQuery;
+  }
+  return undefined;
 }
 
 export function mapFarmRegionToAppLang(region?: string | null): AppLang | undefined {

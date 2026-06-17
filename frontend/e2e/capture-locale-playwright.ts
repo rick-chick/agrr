@@ -22,41 +22,52 @@ export async function installCaptureLocale(page: Page, locale: CaptureLocale): P
   if (!captureLocaleInitScriptInstalled) {
     captureLocaleInitScriptInstalled = true;
     await page.addInitScript((storageKey) => {
-      const applyFromCookie = () => {
-        const match = document.cookie.match(/e2e_capture_locale=([^;]+)/);
-        if (!match) {
-          return;
-        }
-        let parsed: {
+      const applyCaptureLocale = (appLang: string, navLang: string, railsLocale: string) => {
+        const w = window as Window & { __disableCookieControl?: boolean };
+        w.__disableCookieControl = true;
+        Object.defineProperty(navigator, 'language', {
+          get: () => navLang,
+          configurable: true,
+        });
+        Object.defineProperty(navigator, 'languages', {
+          get: () => [navLang],
+          configurable: true,
+        });
+        document.cookie = `locale=${railsLocale}; path=/; max-age=31536000`;
+        localStorage.setItem(storageKey, appLang);
+        (window as Window & { __E2E_CAPTURE_APP_LANG__?: string }).__E2E_CAPTURE_APP_LANG__ =
+          appLang;
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const fromQuery = params.get('e2e_capture_locale');
+      if (fromQuery === 'ja' || fromQuery === 'en' || fromQuery === 'in') {
+        const navLang =
+          fromQuery === 'en' ? 'en-US' : fromQuery === 'in' ? 'hi-IN' : 'ja-JP';
+        const railsLocale = fromQuery === 'en' ? 'us' : fromQuery;
+        applyCaptureLocale(fromQuery, navLang, railsLocale);
+        return;
+      }
+
+      const match = document.cookie.match(/e2e_capture_locale=([^;]+)/);
+      if (!match) {
+        return;
+      }
+      let parsed: {
+        navLang: string;
+        railsLocale: string;
+        appLang: string;
+      };
+      try {
+        parsed = JSON.parse(decodeURIComponent(match[1])) as {
           navLang: string;
           railsLocale: string;
           appLang: string;
         };
-        try {
-          parsed = JSON.parse(decodeURIComponent(match[1])) as {
-            navLang: string;
-            railsLocale: string;
-            appLang: string;
-          };
-        } catch {
-          return;
-        }
-        const w = window as Window & { __disableCookieControl?: boolean };
-        w.__disableCookieControl = true;
-        Object.defineProperty(navigator, 'language', {
-          get: () => parsed.navLang,
-          configurable: true,
-        });
-        Object.defineProperty(navigator, 'languages', {
-          get: () => [parsed.navLang],
-          configurable: true,
-        });
-        document.cookie = `locale=${parsed.railsLocale}; path=/; max-age=31536000`;
-        localStorage.setItem(storageKey, parsed.appLang);
-        (window as Window & { __E2E_CAPTURE_APP_LANG__?: string }).__E2E_CAPTURE_APP_LANG__ =
-          parsed.appLang;
-      };
-      applyFromCookie();
+      } catch {
+        return;
+      }
+      applyCaptureLocale(parsed.appLang, parsed.navLang, parsed.railsLocale);
     }, APP_LANG_STORAGE_KEY);
   }
 
@@ -80,8 +91,14 @@ export async function installCaptureLocale(page: Page, locale: CaptureLocale): P
   }
 }
 
-/** login-capture 等で汚れた origin storage を dev-session キャプチャ前に戻す */
+export function captureGotoUrl(url: string, locale: CaptureLocale): string {
+  const parsed = new URL(url, CAPTURE_BASE_URL);
+  parsed.searchParams.set('e2e_capture_locale', locale);
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+}
 export async function resetCaptureLocaleStorage(page: Page): Promise<void> {
+  await page.context().clearCookies({ name: CAPTURE_LOCALE_COOKIE });
+  await page.context().clearCookies({ name: 'locale' });
   if (!page.url().startsWith(CAPTURE_BASE_URL)) {
     await page.goto(`${CAPTURE_BASE_URL}/login`, { waitUntil: 'commit' });
   }

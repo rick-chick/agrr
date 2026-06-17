@@ -11,13 +11,16 @@ import {
 import { applyResolvedUrl, type ResolvedCaptureIds } from '../resolve-capture-urls';
 import { loadResolvedCaptureIdsWithBaseline } from '../smoke/smoke-helpers';
 import {
-  CAPTURE_LOCALES,
   agentPngFilename,
+  captureGotoUrl,
   installCaptureLocale,
   resetCaptureLocaleStorage,
   waitForCaptureLocaleReady,
   type CaptureLocale,
 } from '../capture-locale-playwright';
+
+/** Capture ja first, then in (before en), then en — avoids stale-in rule after en localStorage. */
+const CAPTURE_LOCALE_ORDER: CaptureLocale[] = ['ja', 'in', 'en'];
 
 type Manifest = { routes: RouteRow[]; generatedAt: string; note: string };
 
@@ -75,6 +78,10 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
     await resetCaptureLocaleStorage(page);
   });
 
+  test.afterEach(async ({ page }) => {
+    await resetCaptureLocaleStorage(page);
+  });
+
   for (const r of manifest.routes) {
     test(`capture-for-agent: ${routeLabel(r)}`, async ({ page }) => {
       if (SKIP_CAPTURE_WITH_DEV_SESSION.has(r.pattern)) {
@@ -86,9 +93,9 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
         ? undefined
         : expectedPathnameFromResolvedGoto(url);
 
-      for (const locale of CAPTURE_LOCALES) {
+      for (const locale of CAPTURE_LOCALE_ORDER) {
         await installCaptureLocale(page, locale);
-        await page.goto(url);
+        await page.goto(captureGotoUrl(url, locale));
         await assertPageValidity(page, r, pathnameExpect);
         await waitForCaptureLocaleReady(page, locale);
         await waitForPageStable(page, r);

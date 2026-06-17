@@ -6,6 +6,7 @@ import { disableCookieBanner } from '../smoke/smoke-helpers';
 import {
   CAPTURE_LOCALES,
   agentPngFilename,
+  captureGotoUrl,
   installCaptureLocale,
   resetCaptureLocaleStorage,
   waitForCaptureLocaleReady,
@@ -71,7 +72,7 @@ captureDescribe('login-capture-for-agent (logged-out session)', () => {
     test(`login-capture-for-agent: ${routeLabel(r)}`, async ({ page }) => {
       for (const locale of CAPTURE_LOCALES) {
         await installCaptureLocale(page, locale);
-        await page.goto(r.url);
+        await page.goto(captureGotoUrl(r.url, locale));
         await assertPageValidity(page, r);
         await waitForCaptureLocaleReady(page, locale);
         await captureForAgent(page, r, locale);

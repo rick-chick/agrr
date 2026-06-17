@@ -102,7 +102,7 @@ describe('resolveInitialAppLang', () => {
     }
   });
 
-  it('prefers Playwright capture lang over stale-in legacy rule', () => {
+  it('prefers Playwright capture query param over stale-in legacy rule', () => {
     const storage = new Map<string, string>([['agrr.app.lang', 'in']]);
     const originalNavigator = globalThis.navigator;
     const originalWindow = globalThis.window;
@@ -116,10 +116,11 @@ describe('resolveInitialAppLang', () => {
       configurable: true,
       value: { languages: ['ja-JP', 'ja'], language: 'ja-JP' }
     });
-    vi.stubGlobal('window', { [E2E_CAPTURE_APP_LANG_WINDOW_KEY]: 'in' });
+    vi.stubGlobal('window', {
+      location: { search: '?e2e_capture_locale=in' }
+    });
 
     try {
-      expect(readE2eCaptureAppLang()).toBe('in');
       expect(resolveInitialAppLang()).toBe('in');
     } finally {
       Object.defineProperty(globalThis, 'navigator', {
