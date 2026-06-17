@@ -126,6 +126,8 @@ export function applyResolvedUrl(pattern: string, url: string, ids: ResolvedCapt
     if (pattern === 'plans/:id') return `/plans/${p}`;
     if (pattern === 'plans/:id/optimizing') return `/plans/${p}/optimizing`;
     if (pattern === 'plans/:id/task_schedule') return `/plans/${p}/task_schedule`;
+    if (pattern === 'plans/:id/work') return `/plans/${p}/work`;
+    if (pattern === 'plans/:id/work_records') return `/plans/${p}/work_records`;
     return url;
   }
 

@@ -58,7 +58,9 @@
 | 45 | `plans/:id` | `/plans/1` | yes | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` |
 | 46 | `plans/:id/optimizing` | `/plans/1/optimizing` | yes | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` |
 | 47 | `plans/:id/task_schedule` | `/plans/1/task_schedule` | yes | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` |
-| 48 | `plans/new` | `/plans/new` | yes | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` |
+| 48 | `plans/:id/work` | `/plans/1/work` | yes | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` |
+| 49 | `plans/:id/work_records` | `/plans/1/work_records` | yes | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` |
+| 50 | `plans/new` | `/plans/new` | yes | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` |
 
 ## キャプチャ前提
 
