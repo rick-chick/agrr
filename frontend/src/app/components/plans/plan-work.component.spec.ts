@@ -1,8 +1,10 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService, TranslationObject } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import inLocale from '../../../assets/i18n/in.json';
+import ja from '../../../assets/i18n/ja.json';
 import { PlanWorkComponent } from './plan-work.component';
 import { PlanWorkViewState } from './plan-work.view';
 import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.usecase';
@@ -190,5 +192,78 @@ describe('PlanWorkComponent mobile UX', () => {
     const fab = fixture.nativeElement.querySelector('.plan-work__fab');
     expect(fab).toBeTruthy();
     expect(fab.classList.contains('plan-work__fab--fixed')).toBe(true);
+  });
+});
+
+describe('PlanWorkComponent in locale labels', () => {
+  let fixture: ComponentFixture<PlanWorkComponent>;
+  let component: PlanWorkComponent;
+  let translate: TranslateService;
+
+  beforeEach(async () => {
+    const loadUseCase = { execute: vi.fn() };
+    const skipUseCase = { execute: vi.fn() };
+    const mockPresenter = { setView: vi.fn(), onSkipSuccessCallback: null };
+    const cdr = { markForCheck: vi.fn() };
+
+    TestBed.overrideComponent(PlanWorkComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
+          { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
+          { provide: PlanWorkPresenter, useValue: mockPresenter },
+          { provide: ChangeDetectorRef, useValue: cdr }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanWorkComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: { get: vi.fn(() => '7') } }
+          }
+        }
+      ]
+    }).compileComponents();
+
+    translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', ja as TranslationObject, true);
+    translate.setTranslation('in', inLocale as TranslationObject, true);
+    translate.setDefaultLang('ja');
+    translate.use('in');
+
+    fixture = TestBed.createComponent(PlanWorkComponent);
+    component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+  });
+
+  it('renders Hindi nav tabs and empty state instead of ja fallback', async () => {
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [],
+      upcoming: []
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const navLinks = fixture.nativeElement.querySelectorAll('.plan-work-nav__link');
+    expect(navLinks.length).toBe(3);
+    expect(navLinks[0].textContent?.trim()).toBe('आज का कार्य');
+    expect(navLinks[1].textContent?.trim()).toBe('पूर्ण अनुसूची');
+    expect(navLinks[2].textContent?.trim()).toBe('कार्य इतिहास');
+
+    const empty = fixture.nativeElement.querySelector('.plan-work__empty');
+    expect(empty?.textContent?.trim()).toBe('आज के लिए कोई कार्य निर्धारित नहीं');
+    expect(empty?.textContent?.trim()).not.toBe('今日の予定はありません');
   });
 });
