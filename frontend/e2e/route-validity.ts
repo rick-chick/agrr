@@ -60,6 +60,8 @@ export const HOST_SELECTOR_BY_PATTERN: Record<string, string> = {
   'plans/:id': 'app-plan-detail',
   'plans/:id/optimizing': 'app-plan-optimizing',
   'plans/:id/task_schedule': 'app-plan-task-schedule',
+  'plans/:id/work': 'app-plan-work',
+  'plans/:id/work_records': 'app-plan-work-records',
 };
 
 export type RouteRow = { pattern: string; url: string; requiresAuth: boolean; source: string };
