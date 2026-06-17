@@ -195,3 +195,28 @@ fn list_index_for_filter_reference_or_owned_includes_reference_and_admin_owned_r
     assert!(ids.contains(&own));
     assert!(!ids.contains(&other_pesticide));
 }
+
+// Regression (#35): show detail JOIN must expose related crop and pest names for API/frontend.
+#[test]
+fn find_pesticide_show_detail_returns_crop_and_pest_names() {
+    let pool = pesticide_test_pool();
+    let user = User::new(1, false);
+    let gw = PesticideSqliteGateway::new(pool.clone());
+
+    let crop_id = insert_crop(&pool, user.id, "Tomato", false);
+    let pest_id = insert_pest(&pool, Some(user.id), "Aphid", false);
+    let pesticide_id = insert_pesticide(
+        &pool,
+        Some(user.id),
+        crop_id,
+        pest_id,
+        "Spray A",
+        false,
+    );
+
+    let detail = gw.find_pesticide_show_detail(pesticide_id).unwrap();
+
+    assert_eq!(detail.pesticide.id, pesticide_id);
+    assert_eq!(detail.crop_name.as_deref(), Some("Tomato"));
+    assert_eq!(detail.pest_name.as_deref(), Some("Aphid"));
+}
