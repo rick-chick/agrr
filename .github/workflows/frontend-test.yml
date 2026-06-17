@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Route manifest coverage
+        run: npm run test:route-manifest-coverage
+
       - name: Unit tests
         run: npm test -- --watch=false
 
