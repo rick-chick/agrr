@@ -34,7 +34,9 @@ fn restore_node(conn: &Connection, node: &Value) -> Result<(), rusqlite::Error> 
                 ("CultivationPlan", "cultivation_plan_fields")
                 | ("CultivationPlan", "cultivation_plan_crops")
                 | ("CultivationPlan", "field_cultivations")
-                | ("CultivationPlan", "task_schedules") => restore_children(conn, child)?,
+                | ("CultivationPlan", "task_schedules")
+                | ("CultivationPlan", "work_records") => restore_children(conn, child)?,
+                ("TaskSchedule", "task_schedule_items") => restore_children(conn, child)?,
                 _ => {}
             }
         }
@@ -65,6 +67,8 @@ fn table_for_model(model: &str) -> Result<&'static str, rusqlite::Error> {
         "CultivationPlanCrop" => Ok("cultivation_plan_crops"),
         "FieldCultivation" => Ok("field_cultivations"),
         "TaskSchedule" => Ok("task_schedules"),
+        "TaskScheduleItem" => Ok("task_schedule_items"),
+        "WorkRecord" => Ok("work_records"),
         "Pest" | "Fertilize" | "Pesticide" | "AgriculturalTask" | "InteractionRule" => {
             master_table_name(model)
         }
