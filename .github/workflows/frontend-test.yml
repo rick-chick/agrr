@@ -33,6 +33,9 @@ jobs:
       - name: Route manifest coverage
         run: npm run test:route-manifest-coverage
 
+      - name: Route manifest freshness
+        run: npm run e2e:manifest:check
+
       - name: Unit tests
         run: npm test -- --watch=false
 
@@ -49,3 +52,7 @@ jobs:
       - name: check-hardcoded-i18n unit tests
         working-directory: frontend
         run: node --test scripts/check-hardcoded-i18n.test.mjs
+
+      - name: generate-e2e-route-manifest unit tests
+        working-directory: frontend
+        run: node --test scripts/generate-e2e-route-manifest.test.mjs
