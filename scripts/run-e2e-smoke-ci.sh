@@ -67,6 +67,9 @@ trap cleanup EXIT
 
 restore_db_cache || true
 
+# Dockerfile.agrr-server COPY lib/core/ requires the directory in build context (binary is optional / gitignored).
+mkdir -p lib/core
+
 echo "==> Building agrr-server image"
 docker compose "${COMPOSE_FILES[@]}" build agrr-server
 
