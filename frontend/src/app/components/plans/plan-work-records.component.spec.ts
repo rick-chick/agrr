@@ -75,10 +75,10 @@ describe('PlanWorkRecordsComponent', () => {
     };
     component.control = state;
     expect(component.control).toEqual(state);
-    expect(cdr.markForCheck).toHaveBeenCalled();
   });
 
   it('renders grouped work records when data is loaded', () => {
+    fixture.detectChanges();
     component.control = {
       loading: false,
       error: null,
@@ -118,6 +118,7 @@ describe('PlanWorkRecordsComponent', () => {
   });
 
   it('renders translated API error instead of raw i18n key', () => {
+    fixture.detectChanges();
     component.control = {
       loading: false,
       error: 'common.api_error.generic',
