@@ -134,8 +134,6 @@ describe('PlanTaskScheduleComponent locale labels', () => {
   let fixture: ComponentFixture<PlanTaskScheduleComponent>;
 
   async function setupLocale(localeId: 'ja' | 'en' | 'in'): Promise<void> {
-    const catalogs = { ja, en, in: inLocale } as const;
-
     loadUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
