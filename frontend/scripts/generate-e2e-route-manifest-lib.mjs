@@ -196,11 +196,18 @@ export async function buildManifestData(frontendRoot) {
     return a.url.localeCompare(b.url);
   });
 
+  const manifestRoutes = deduped.map(({ pattern, url, requiresAuth, source }) => ({
+    pattern,
+    url,
+    requiresAuth,
+    source,
+  }));
+
   const payload = {
     generatedAt: new Date().toISOString(),
     note:
       'path の :param は URL では 1 に置換。`**` は意図的な 404 用パス。Agent 用 PNG は `npm run e2e:capture-for-agent`（Rails development + AuthTest モックログインで付与したセッション、`e2e/.auth/dev-session.json`）で全ルートを ja/en/in の3言語キャプチャする。requiresAuth はルート定義上のフラグ。',
-    routes: deduped,
+    routes: manifestRoutes,
   };
 
   return {
@@ -209,9 +216,15 @@ export async function buildManifestData(frontendRoot) {
   };
 }
 
-/** generatedAt を除き commit 済み manifest と比較する。 */
+/** generatedAt / componentImportPath を除き commit 済み manifest と比較する。 */
 export function normalizeManifestJson(obj) {
-  return JSON.stringify({ note: obj.note, routes: obj.routes }, null, 2);
+  const routes = obj.routes.map(({ pattern, url, requiresAuth, source }) => ({
+    pattern,
+    url,
+    requiresAuth,
+    source,
+  }));
+  return JSON.stringify({ note: obj.note, routes }, null, 2);
 }
 
 export async function checkManifestFreshness(frontendRoot) {
