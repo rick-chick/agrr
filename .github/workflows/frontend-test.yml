@@ -36,6 +36,9 @@ jobs:
       - name: Route manifest freshness
         run: npm run e2e:manifest:check
 
+      - name: Visual review pattern freshness
+        run: npm run e2e:visual-review:check
+
       - name: Unit tests
         run: npm test -- --watch=false
 
@@ -56,3 +59,7 @@ jobs:
       - name: generate-e2e-route-manifest unit tests
         working-directory: frontend
         run: node --test scripts/generate-e2e-route-manifest.test.mjs
+
+      - name: verify-visual-review-fresh unit tests
+        working-directory: frontend
+        run: node --test e2e/agent-review/verify-visual-review-fresh.test.mjs
