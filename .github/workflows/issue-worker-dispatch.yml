@@ -1,48 +1,106 @@
-# Dispatches the Cursor Issue Worker when an issue is labeled agent-ready or agent-close.
+# Dispatches the Cursor Issue Worker when an issue is opened or labeled agent-ready / agent-close.
 #
 # Setup:
 # 1. Create a Cursor Automation with a Webhook trigger (prompt references
-#    .cursor/skills/github-issue-worker/SKILL.md).
+#    .cursor/skills/github-issue-worker/SKILL.md). Remove Schedule trigger if migrating from cron.
 # 2. Add repository secret CURSOR_ISSUE_WORKER_WEBHOOK_URL (webhook URL).
 # 3. Add repository secret CURSOR_ISSUE_WORKER_WEBHOOK_KEY (webhook API key).
-# 4. Create labels: agent-ready, agent-close, agent-in-progress, agent-blocked, agent-closed
+# 4. Create labels: agent-ready, agent-close, agent-in-progress, agent-blocked, agent-closed, agent-skipped
 
 name: Issue Worker Dispatch
 
 on:
   issues:
-    types: [labeled]
+    types: [opened, labeled]
+
+concurrency:
+  group: issue-worker-dispatch-${{ github.event.issue.number }}
+  cancel-in-progress: false
 
 jobs:
   dispatch:
-    if: contains(fromJSON('["agent-ready", "agent-close"]'), github.event.label.name)
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve issue context
+        id: issue
+        env:
+          EVENT_ACTION: ${{ github.event.action }}
+          LABEL_NAME: ${{ github.event.label.name }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
+          ISSUE_BODY_INPUT: ${{ github.event.issue.body }}
+        run: |
+          set -euo pipefail
+          ACTION=""
+          SKIP_REASON=""
+
+          if [ "$EVENT_ACTION" = "labeled" ]; then
+            if [ "$LABEL_NAME" = "agent-close" ]; then
+              ACTION="close_with_reason"
+            elif [ "$LABEL_NAME" = "agent-ready" ]; then
+              ACTION="implement"
+            else
+              SKIP_REASON="labeled event is not agent-ready or agent-close"
+            fi
+          elif [ "$EVENT_ACTION" = "opened" ]; then
+            ACTION="triage"
+            case "$ISSUE_AUTHOR" in
+              dependabot[bot]|renovate[bot]|github-actions[bot])
+                SKIP_REASON="bot-authored issue"
+                ;;
+            esac
+            if [ -z "$SKIP_REASON" ]; then
+              if echo "$ISSUE_LABELS" | grep -qE '(^|,)agent-in-progress(,|$)|(^|,)agent-closed(,|$)|(^|,)wontfix(,|$)|(^|,)invalid(,|$)|(^|,)duplicate(,|$)'; then
+                SKIP_REASON="issue already has a terminal or in-progress label"
+              fi
+            fi
+          else
+            SKIP_REASON="unsupported issue event action: $EVENT_ACTION"
+          fi
+
+          if [ -n "$SKIP_REASON" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "skip_reason=$SKIP_REASON" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BODY_B64=$(printf '%s' "$ISSUE_BODY_INPUT" | base64 -w0)
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "body_b64=$BODY_B64" >> "$GITHUB_OUTPUT"
+          echo "labels=$ISSUE_LABELS" >> "$GITHUB_OUTPUT"
+
       - name: Trigger Cursor Issue Worker
+        if: steps.issue.outputs.skip != 'true'
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
           WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
-          LABEL: ${{ github.event.label.name }}
+          ACTION: ${{ steps.issue.outputs.action }}
+          BODY_B64: ${{ steps.issue.outputs.body_b64 }}
+          LABELS: ${{ steps.issue.outputs.labels }}
         run: |
-          if [ -z "$WEBHOOK_URL" ] || [ -z "$WEBHOOK_KEY" ]; then
+          set -euo pipefail
+          if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
             echo "CURSOR_ISSUE_WORKER_WEBHOOK_URL or CURSOR_ISSUE_WORKER_WEBHOOK_KEY is not set."
             echo "Configure secrets after creating the Cursor Automation webhook."
             exit 1
           fi
-          if [ "$LABEL" = "agent-close" ]; then
-            ACTION="close_with_reason"
-          else
-            ACTION="implement"
-          fi
+          ISSUE_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
           payload=$(jq -n \
             --arg repo "${{ github.repository }}" \
             --argjson number "${{ github.event.issue.number }}" \
             --arg title "${{ github.event.issue.title }}" \
             --arg url "${{ github.event.issue.html_url }}" \
             --arg action "$ACTION" \
-            --arg label "$LABEL" \
-            '{repository: $repo, issue_number: $number, issue_title: $title, issue_url: $url, action: $action, label: $label}')
+            --arg labels "$LABELS" \
+            --arg body "$ISSUE_BODY" \
+            '{repository: $repo, issue_number: $number, issue_title: $title, issue_url: $url, action: $action, labels: $labels, issue_body: $body}')
           curl -fsS -X POST "$WEBHOOK_URL" \
             -H "Authorization: Bearer $WEBHOOK_KEY" \
             -H "Content-Type: application/json" \
             -d "$payload"
+
+      - name: Skip dispatch
+        if: steps.issue.outputs.skip == 'true'
+        run: 'echo "Skipped: ${{ steps.issue.outputs.skip_reason }}"'
