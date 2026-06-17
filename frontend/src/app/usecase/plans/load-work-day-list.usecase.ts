@@ -72,13 +72,6 @@ export function groupWorkDayListRows(
       continue;
     }
 
-    if (isSkipped) {
-      if (item.scheduled_date === today) {
-        todayRows.push(withRecordedToday(row, today));
-      }
-      continue;
-    }
-
     const scheduled = item.scheduled_date;
     if (!scheduled) {
       continue;
