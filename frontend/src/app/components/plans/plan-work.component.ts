@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -63,7 +63,9 @@ const initialControl: PlanWorkViewState = {
               </h3>
               <ul class="plan-work__list">
                 @for (row of control.overdue; track row.item.item_id) {
-                  <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: row }" />
+                  <ng-container
+                    *ngTemplateOutlet="rowTpl; context: { $implicit: row, overdue: true }"
+                  />
                 }
               </ul>
             </section>
@@ -92,8 +94,8 @@ const initialControl: PlanWorkViewState = {
             </section>
           }
 
-          <div class="plan-work__fab">
-            <button type="button" class="btn-primary" (click)="openAdHoc()">
+          <div class="plan-work__fab plan-work__fab--fixed">
+            <button type="button" class="btn-primary plan-work__fab-btn" (click)="openAdHoc()">
               {{ 'plans.work.add_record' | translate }}
             </button>
           </div>
@@ -101,8 +103,12 @@ const initialControl: PlanWorkViewState = {
       </section>
     </main>
 
-    <ng-template #rowTpl let-row>
-      <li class="plan-work__row" [class.plan-work__row--done]="row.recordedToday">
+    <ng-template #rowTpl let-row let-overdue="overdue">
+      <li
+        class="plan-work__row"
+        [class.plan-work__row--done]="row.recordedToday"
+        [class.plan-work__row--overdue]="overdue"
+      >
         <div class="plan-work__row-main">
           <span class="plan-work__date">{{ row.item.scheduled_date }}</span>
           <span class="plan-work__name">{{ row.item.name }}</span>
@@ -116,15 +122,16 @@ const initialControl: PlanWorkViewState = {
         </div>
         <div class="plan-work__row-actions">
           @if (!row.recordedToday && row.item.status !== 'skipped') {
-            <button type="button" class="btn-primary btn-sm" (click)="openComplete(row)">
+            <button type="button" class="btn-primary plan-work__complete-btn" (click)="openComplete(row)">
               {{ 'plans.work.complete' | translate }}
             </button>
           }
           <button
             type="button"
-            class="btn-secondary btn-sm"
+            class="plan-work__menu-btn"
             [attr.aria-label]="'plans.work.menu' | translate"
-            (click)="toggleMenu(row.item.item_id)"
+            [attr.aria-expanded]="openMenuItemId === row.item.item_id"
+            (click)="toggleMenu(row.item.item_id, $event)"
           >⋮</button>
           @if (openMenuItemId === row.item.item_id) {
             <div class="plan-work__menu" role="menu">
@@ -214,8 +221,17 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     this.sheet.openAdHoc(this.control.fields);
   }
 
-  toggleMenu(itemId: number): void {
+  toggleMenu(itemId: number, event?: Event): void {
+    event?.stopPropagation();
     this.openMenuItemId = this.openMenuItemId === itemId ? null : itemId;
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeMenuOnOutsideClick(event: MouseEvent): void {
+    if (this.openMenuItemId === null) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('.plan-work__menu') || target.closest('.plan-work__menu-btn')) return;
+    this.openMenuItemId = null;
   }
 
   skip(row: WorkDayListRowDto): void {
