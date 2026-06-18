@@ -71,3 +71,7 @@ jobs:
       - name: ensure-e2e-baseline bodies unit tests
         working-directory: frontend
         run: node --test e2e/fixtures/ensure-e2e-baseline-bodies.test.mjs
+
+      - name: entry-schedule ids unit tests
+        working-directory: frontend
+        run: node --test e2e/shared/entry-schedule-ids-lib.test.mjs
