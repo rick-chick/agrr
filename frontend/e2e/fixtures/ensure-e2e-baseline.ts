@@ -1,6 +1,7 @@
 import { request, type APIRequestContext } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { buildSegmentPostBody } from './ensure-e2e-baseline-bodies.mjs';
 import {
   E2E_BASELINE_PREFIX,
   findBaselineIdInList,
@@ -37,76 +38,16 @@ async function parseList(res: Awaited<ReturnType<APIRequestContext['get']>>): Pr
 
 type SegmentConfig = {
   segment: MasterSegment;
-  body: (ctx: { cropId: number | null; pestId: number | null }) => unknown;
 };
 
 const SEGMENT_CONFIGS: SegmentConfig[] = [
-  {
-    segment: 'farms',
-    body: () => ({
-      farm: {
-        name: `${E2E_BASELINE_PREFIX} Farm`,
-        region: 'jp',
-        latitude: 35.6812,
-        longitude: 139.7671,
-      },
-    }),
-  },
-  {
-    segment: 'crops',
-    body: () => ({
-      crop: {
-        name: `${E2E_BASELINE_PREFIX} Crop`,
-        variety: 'smoke',
-        area_per_unit: 0.25,
-        revenue_per_area: 5000,
-      },
-    }),
-  },
-  {
-    segment: 'pests',
-    body: () => ({
-      name: `${E2E_BASELINE_PREFIX} Pest`,
-      name_scientific: 'E2e baseline pest',
-      family: 'E2E',
-    }),
-  },
-  {
-    segment: 'pesticides',
-    body: ({ cropId, pestId }) => ({
-      name: `${E2E_BASELINE_PREFIX} Pesticide`,
-      active_ingredient: 'e2e',
-      crop_id: cropId,
-      pest_id: pestId,
-    }),
-  },
-  {
-    segment: 'fertilizes',
-    body: () => ({
-      name: `${E2E_BASELINE_PREFIX} Fertilize`,
-      n: 10,
-      p: 5,
-      k: 5,
-      package_size: 25,
-    }),
-  },
-  {
-    segment: 'agricultural_tasks',
-    body: () => ({
-      name: `${E2E_BASELINE_PREFIX} Task`,
-      description: 'E2E smoke baseline',
-      time_per_sqm: 0.5,
-    }),
-  },
-  {
-    segment: 'interaction_rules',
-    body: () => ({
-      rule_type: 'continuous_cultivation',
-      source_group: `${E2E_BASELINE_PREFIX} Source`,
-      target_group: `${E2E_BASELINE_PREFIX} Target`,
-      impact_ratio: 0.7,
-    }),
-  },
+  { segment: 'farms' },
+  { segment: 'crops' },
+  { segment: 'pests' },
+  { segment: 'pesticides' },
+  { segment: 'fertilizes' },
+  { segment: 'agricultural_tasks' },
+  { segment: 'interaction_rules' },
 ];
 
 async function ensureMasterSegment(
@@ -120,7 +61,7 @@ async function ensureMasterSegment(
   const existing = findBaselineIdInList(rows, config.segment);
   if (existing != null) return existing;
 
-  const postBody = config.body(ctx);
+  const postBody = buildSegmentPostBody(config.segment, ctx);
   if (config.segment === 'pesticides' && (ctx.cropId == null || ctx.pestId == null)) {
     console.warn(`[ensureE2eBaseline] skip pesticides POST: missing crop_id or pest_id`);
     return firstIdFromList(rows);
