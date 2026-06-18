@@ -39,6 +39,15 @@ smokeDescribe('route smoke (Angular + agrr-server session)', () => {
         test.skip(true, 'login routes need logged-out session');
       }
 
+      if (r.pattern === 'entry-schedule/crop/:cropId') {
+        if (resolvedCaptureIds?.cropId == null || resolvedCaptureIds?.farmId == null) {
+          test.skip(true, 'no entry schedule crop resolved');
+        }
+      }
+      if (r.pattern === 'public-plans/results' && resolvedCaptureIds?.publicPlanId == null) {
+        test.skip(true, 'no publicPlanId resolved');
+      }
+
       const url = resolveGotoUrl(r, resolvedCaptureIds);
       await page.goto(url);
 

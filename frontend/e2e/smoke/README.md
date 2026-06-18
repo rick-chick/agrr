@@ -66,5 +66,7 @@ cd .. && bash scripts/run-e2e-smoke-ci.sh
 | `plan has no gantt data` / `no task schedule items` | 計画の最適化・スケジュールデータ |
 | `user farm limit reached (max 4)` | ユーザー農場 4 件上限（farms UI CRUD） |
 | `publicPlanId` 未解決 | route-smoke の公開プラン URL は probe または placeholder |
+| `entry-schedule/crop/:cropId` 未解決 | 参照農場の entry_schedule API に作物が無い |
+| `public-plans/results` 未解決 | 完成済み public cultivation_plan が DB に無い |
 
 `buildResolvedCaptureIds` は各マスタ・private Plan で **`E2E Baseline` プレフィックス一致 id を優先**し、無ければ一覧先頭にフォールバックする（[`../shared/baseline-ids.ts`](../shared/baseline-ids.ts)）。

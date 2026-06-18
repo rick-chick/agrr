@@ -1,4 +1,5 @@
 import type { APIRequestContext } from '@playwright/test';
+import { firstRecordId, pickEntryScheduleCropId } from './shared/entry-schedule-ids-lib.mjs';
 import {
   MASTER_SEGMENTS,
   parseMasterList,
@@ -14,12 +15,28 @@ export type ResolvedCaptureIds = {
   privatePlanId: number | null;
   /** GET public cultivation_plans/:id/data が 200 になる id */
   publicPlanId: number | null;
+  /** GET /api/v1/public_plans/entry_schedule/farms の参照農場 id（masters/farms とは別） */
   farmId: number | null;
   cropId: number | null;
 };
 
 function stripOrigin(base: string): string {
   return base.replace(/\/$/, '');
+}
+
+async function fetchEntryScheduleFarmId(
+  api: APIRequestContext,
+  base: string,
+): Promise<number | null> {
+  const res = await api.get(`${base}/api/v1/public_plans/entry_schedule/farms`, {
+    failOnStatusCode: false,
+  });
+  if (!res.ok()) return null;
+  try {
+    return firstRecordId(await res.json());
+  } catch {
+    return null;
+  }
 }
 
 /** farm_id 単位でエントリ目安 API に載る作物 id（マスタ先頭 crop とは一致しないことがある） */
@@ -34,11 +51,7 @@ async function fetchEntryScheduleCropIdForFarm(
   );
   if (!res.ok()) return null;
   try {
-    const data = (await res.json()) as { crops?: Array<{ id?: unknown }> };
-    const crops = data?.crops;
-    if (!Array.isArray(crops) || crops.length === 0) return null;
-    const first = crops.find((c) => c?.id != null);
-    return first != null ? Number(first.id) : null;
+    return pickEntryScheduleCropId(await res.json());
   } catch {
     return null;
   }
@@ -79,7 +92,7 @@ export async function buildResolvedCaptureIds(
     /* ignore */
   }
 
-  const farmId = masters['farms'] ?? null;
+  const farmId = await fetchEntryScheduleFarmId(api, base);
   let cropId: number | null = null;
   if (farmId != null) {
     cropId = await fetchEntryScheduleCropIdForFarm(api, base, farmId);
@@ -108,16 +121,13 @@ async function probePublicPlanId(api: APIRequestContext, base: string): Promise<
  */
 export function applyResolvedUrl(pattern: string, url: string, ids: ResolvedCaptureIds): string {
   if (pattern.startsWith('public-plans/') && url.includes('planId=')) {
-    const pid = ids.publicPlanId ?? 1;
-    return url.replace(/planId=\d+/, `planId=${pid}`);
+    if (ids.publicPlanId == null) return url;
+    return url.replace(/planId=\d+/, `planId=${ids.publicPlanId}`);
   }
 
   if (pattern === 'entry-schedule/crop/:cropId') {
-    const f = ids.farmId ?? 1;
-    if (ids.cropId != null) {
-      return `/entry-schedule/crop/${ids.cropId}?farmId=${f}`;
-    }
-    return url;
+    if (ids.cropId == null || ids.farmId == null) return url;
+    return `/entry-schedule/crop/${ids.cropId}?farmId=${ids.farmId}`;
   }
 
   if (pattern.startsWith('plans/')) {
