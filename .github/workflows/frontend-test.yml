@@ -63,3 +63,7 @@ jobs:
       - name: verify-visual-review-fresh unit tests
         working-directory: frontend
         run: node --test e2e/agent-review/verify-visual-review-fresh.test.mjs
+
+      - name: e2e capture URL resolution unit tests
+        working-directory: frontend
+        run: node --test e2e/shared/baseline-ids-lib.test.mjs e2e/shared/resolve-capture-urls-lib.test.mjs e2e/route-validity-lib.test.mjs
