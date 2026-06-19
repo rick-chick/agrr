@@ -63,3 +63,7 @@ jobs:
       - name: verify-visual-review-fresh unit tests
         working-directory: frontend
         run: node --test e2e/agent-review/verify-visual-review-fresh.test.mjs
+
+      - name: verify-e2e-smoke-workflow contract tests
+        working-directory: frontend
+        run: node --test scripts/verify-e2e-smoke-workflow-contract.test.mjs

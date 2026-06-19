@@ -14,6 +14,34 @@ npm run test:e2e:smoke
 
 `E2E_CAPTURE_DEV_SESSION=1` により globalSetup が Rust の `/auth/test/mock_login_as/developer` で `e2e/.auth/dev-session.json` を生成する。`E2E_STRANGLER=1` で Playwright は Rails を起動せず nginx :3000 → agrr-server :8080 を利用する。
 
+## CI（GitHub Actions）
+
+PR / `master` 向け workflow: [`.github/workflows/frontend-e2e-smoke.yml`](../../../.github/workflows/frontend-e2e-smoke.yml)
+
+| 項目 | 内容 |
+|------|------|
+| 実行 spec | **`route-smoke.spec.ts` のみ**（`operation-smoke` / ガント touch はローカル。段階的に CI へ拡張可） |
+| バックエンド | `docker compose build agrr-server` → `load-reference-data.sh` → `agrr-server` + `strangler-proxy`（:3000） |
+| フロント | Playwright `webServer` が `ng serve`（:4200）を起動。proxy は :3000 へ |
+| 環境変数 | `E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `E2E_API_ORIGIN=http://127.0.0.1:3000` |
+| 待機 | `.cursor/skills/dev-docker/scripts/ci-wait-smoke-stack.sh`（`/health` または `/up`、既定 180s） |
+| タイムアウト | job 60 分（参照データ投入を含む） |
+
+`ensureE2eBaseline()` は route-smoke の `beforeAll` で dev セッション経由に idempotent 実行される（ローカルと同じ）。
+
+ローカルで CI と同条件の route-smoke のみ:
+
+```bash
+# ターミナル 1
+.cursor/skills/dev-docker/scripts/load-reference-data.sh   # 初回のみ
+docker compose up agrr-server strangler-proxy
+
+# ターミナル 2
+cd frontend
+E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 E2E_API_ORIGIN=http://127.0.0.1:3000 \
+  npx playwright test e2e/smoke/route-smoke.spec.ts
+```
+
 ## API ベースライン（項目 5）
 
 `beforeAll` で `ensureE2eBaseline()`（[`../fixtures/ensure-e2e-baseline.ts`](../fixtures/ensure-e2e-baseline.ts)）が dev セッション経由で次を idempotent に確保する:
