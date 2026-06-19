@@ -193,6 +193,22 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fab).toBeTruthy();
     expect(fab.classList.contains('plan-work__fab--fixed')).toBe(true);
   });
+
+  it('reloads with includeSkipped when show-skipped toggle is checked', () => {
+    renderLoaded();
+    loadUseCase.execute.mockClear();
+
+    const checkbox = fixture.nativeElement.querySelector(
+      '.plan-work__toggle input[type="checkbox"]'
+    ) as HTMLInputElement;
+    expect(checkbox).toBeTruthy();
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change'));
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 7, includeSkipped: true })
+    );
+  });
 });
 
 describe('PlanWorkComponent in locale labels', () => {
