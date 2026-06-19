@@ -262,8 +262,36 @@ fn cultivation_plan_snapshot(conn: &Connection, plan_id: i64) -> rusqlite::Resul
     let mut stmt = conn.prepare("SELECT * FROM task_schedules WHERE cultivation_plan_id = ?1")?;
     let mut rows = stmt.query(params![plan_id])?;
     while let Some(row) = rows.next()? {
+        let schedule_attrs = row_map(row)?;
+        let schedule_id = schedule_attrs
+            .get("id")
+            .and_then(|v| v.as_i64())
+            .ok_or_else(|| rusqlite::Error::InvalidParameterName("task_schedule.id".into()))?;
+        let mut items = Vec::new();
+        let mut item_stmt =
+            conn.prepare("SELECT * FROM task_schedule_items WHERE task_schedule_id = ?1")?;
+        let mut item_rows = item_stmt.query(params![schedule_id])?;
+        while let Some(item_row) = item_rows.next()? {
+            items.push(json!({
+                "model": "TaskScheduleItem",
+                "attributes": row_map(item_row)?,
+                "associations": {}
+            }));
+        }
         task_schedules.push(json!({
             "model": "TaskSchedule",
+            "attributes": schedule_attrs,
+            "associations": {
+                "task_schedule_items": items
+            }
+        }));
+    }
+    let mut work_records = Vec::new();
+    let mut stmt = conn.prepare("SELECT * FROM work_records WHERE cultivation_plan_id = ?1")?;
+    let mut rows = stmt.query(params![plan_id])?;
+    while let Some(row) = rows.next()? {
+        work_records.push(json!({
+            "model": "WorkRecord",
             "attributes": row_map(row)?,
             "associations": {}
         }));
@@ -275,12 +303,17 @@ fn cultivation_plan_snapshot(conn: &Connection, plan_id: i64) -> rusqlite::Resul
             "cultivation_plan_fields": fields,
             "cultivation_plan_crops": crops,
             "field_cultivations": fcs,
-            "task_schedules": task_schedules
+            "task_schedules": task_schedules,
+            "work_records": work_records
         }
     }))
 }
 
 fn delete_cultivation_plan_graph(conn: &Connection, plan_id: i64) -> rusqlite::Result<()> {
+    conn.execute(
+        "DELETE FROM work_records WHERE cultivation_plan_id = ?1",
+        params![plan_id],
+    )?;
     conn.execute(
         "DELETE FROM task_schedule_items WHERE task_schedule_id IN \
          (SELECT id FROM task_schedules WHERE cultivation_plan_id = ?1)",
