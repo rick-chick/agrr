@@ -18,5 +18,7 @@ db/fixtures/*.json filter=lfs diff=lfs merge=lfs -text
 # Docker テスト entrypoint 等が npm で lock を書き換える。LFS ポインタ差分（数千行）を防ぐ。
 package-lock.json -filter -diff -merge text eol=lf
 frontend/package-lock.json -filter -diff -merge text eol=lf
+frontend/package.json -filter -diff -merge text eol=lf
+frontend/src/assets/i18n/*.json -filter -diff -merge text eol=lf
 # Cloud Agent は environment.json を実体 JSON として読む（LFS ポインタ不可）
 .cursor/environment.json -filter -diff -merge text eol=lf

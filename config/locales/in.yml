@@ -43,6 +43,45 @@ in:
 
   # API त्रुटि संदेश (API error messages)
   api:
+    entry_schedule:
+      label:
+        sowing: "बुवाई अवधि (मार्गदर्शक)"
+        transplanting: "रोपाई अवधि (मार्गदर्शक)"
+      phase:
+        label:
+          sowing: "बुवाई"
+          nursery: "नर्सरी"
+          transplant: "रोपाई"
+          harvest: "कटाई"
+        empty:
+          ineligible: "मौजूदा डेटा या तापमान नियमों में उपयुक्त अवधि नहीं मिली।"
+          no_sowing_window: "बुवाई अवधि निकाली नहीं जा सकी।"
+          no_transplant_window: "रोपाई अवधि निकाली नहीं जा सकी।"
+          nursery_gap: "बुवाई और रोपाई के बीच नर्सरी अवधि तय नहीं हो सकी।"
+          no_weather_end: "मौसम पूर्वानुमान की अंतिम तिथि उपलब्ध नहीं है।"
+      flow:
+        summary: "%{phases} का सामान्य प्रवाह (पूर्वानुमान आधारित मार्गदर्शक)"
+        summary_fallback: "विकास प्रवाह का सारांश नहीं बनाया जा सका।"
+        detail_chunk: "%{label} %{range}"
+        month_range: "%{start}–%{end}"
+      timeline:
+        month_summary: "%{labels} का मार्गदर्शक"
+      disclaimer:
+        short: "यह केवल मार्गदर्शक है, परिणाम की गारंटी नहीं। डेटा न होने पर सामान्य अनुमान शामिल हो सकते हैं।"
+      reason:
+        list: "चरण \"%{sowing}\" और \"%{transplant}\" के तापमान बैंड के आधार पर %{days} दिनों के पूर्वानुमान मौसम को जांचा गया।"
+        agrr: "अनुकूलित खेती अवधि: %{start}–%{completion} (लगभग %{days} दिन, GDD %{gdd})। चार चरणों की पट्टियां इस अवधि को लगभग चार भागों में बांटती हैं।"
+        agrr_failed:
+          generic: "खेती अवधि की गणना नहीं हो सकी।"
+          daemon_unavailable: "अनुकूलन सेवा उपलब्ध नहीं है। कृपया बाद में फिर प्रयास करें।"
+          execution_failed: "खेती अवधि का अनुकूलन विफल रहा। कृपया बाद में फिर प्रयास करें।"
+          invalid_response: "अनुकूलन परिणाम समझा नहीं जा सका।"
+          insufficient_weather: "मौसम डेटा अनुपलब्ध है या इस सुविधा के लिए उपयोगी प्रारूप में नहीं है।"
+          disabled: "इस वातावरण में खेती अवधि अनुकूलन अक्षम है।"
+          crop_requirement_error: "संदर्भ फसल डेटा अधूरा है (चरण या तापमान/GDD आवश्यकताएं अनुपलब्ध)। फसल मास्टर जांचें।"
+      errors:
+        weather_location_required: "इस खेत से कोई मौसम स्थान जुड़ा नहीं है।"
+        prediction_failed: "मौसम पूर्वानुमान प्राप्त करने में विफल।"
     errors:
       crop_not_found: "फसल जानकारी नहीं मिली"
       no_weather_data: "कोई मौसम डेटा उपलब्ध नहीं है"

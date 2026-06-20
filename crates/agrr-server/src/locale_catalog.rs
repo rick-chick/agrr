@@ -139,10 +139,19 @@ fn flatten_yaml_owned(prefix: &str, value: &YamlOwned, out: &mut HashMap<String,
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
+
+    fn repo_locales_dir() -> PathBuf {
+        let dir = locales_dir_from_env();
+        if dir.is_dir() {
+            return dir;
+        }
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/locales")
+    }
 
     #[test]
     fn loads_pests_undo_toast_from_repo_locales() {
-        let dir = locales_dir_from_env();
+        let dir = repo_locales_dir();
         if !dir.is_dir() {
             return;
         }
@@ -167,7 +176,7 @@ mod tests {
 
     #[test]
     fn loads_all_repo_locale_files() {
-        let dir = locales_dir_from_env();
+        let dir = repo_locales_dir();
         if !dir.is_dir() {
             return;
         }
@@ -176,7 +185,7 @@ mod tests {
 
     #[test]
     fn translates_api_errors_no_cultivation_period_from_repo_locales() {
-        let dir = locales_dir_from_env();
+        let dir = repo_locales_dir();
         if !dir.is_dir() {
             return;
         }
@@ -212,7 +221,7 @@ mod tests {
 
     #[test]
     fn translates_entry_schedule_disclaimer_from_repo_locales() {
-        let dir = locales_dir_from_env();
+        let dir = repo_locales_dir();
         if !dir.is_dir() {
             return;
         }
@@ -224,5 +233,40 @@ mod tests {
             !msg.is_empty() && !msg.starts_with("api."),
             "expected translated disclaimer, got: {msg}"
         );
+    }
+
+    #[test]
+    fn translates_entry_schedule_api_keys_for_en_and_in() {
+        let dir = repo_locales_dir();
+        if !dir.is_dir() {
+            return;
+        }
+        let catalog = LocaleCatalog::load_from_dir(&dir).expect("load locales");
+        let keys = [
+            "api.entry_schedule.label.sowing",
+            "api.entry_schedule.disclaimer.short",
+            "api.entry_schedule.reason.list",
+        ];
+        for key in keys {
+            let ja = catalog.translate("ja", key).unwrap_or_default();
+            let en = catalog.translate("en", key).unwrap_or_default();
+            let in_msg = catalog.translate("in", key).unwrap_or_default();
+            assert!(
+                !en.is_empty() && !en.starts_with("api."),
+                "en key={key} got: {en}"
+            );
+            assert_ne!(
+                en, ja,
+                "en must not fall back to ja for {key}: {en}"
+            );
+            assert!(
+                !in_msg.is_empty() && !in_msg.starts_with("api."),
+                "in key={key} got: {in_msg}"
+            );
+            assert_ne!(
+                in_msg, ja,
+                "in must not fall back to ja for {key}: {in_msg}"
+            );
+        }
     }
 }
