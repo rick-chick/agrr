@@ -192,7 +192,7 @@ mod tests {
         let catalog = LocaleCatalog::load_from_dir(&dir).expect("load locales");
         let expected = [
             ("ja", "栽培期間が設定されていません"),
-            ("en", "Cultivation period is not set"),
+            ("en", "Cultivation period not set"),
         ];
         for (locale, want) in expected {
             let msg = catalog
