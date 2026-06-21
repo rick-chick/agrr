@@ -1,3 +1,1217 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:1cf8a4950ba787e170b4f86d901d709d067b053bbfdfc0e75b599831f7a17172
-size 33793
+{
+  "トマト": {
+    "name": "トマト",
+    "variety": "大玉",
+    "is_reference": true,
+    "area_per_unit": 0.2,
+    "revenue_per_area": 1500.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "生育期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "収穫期",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "ジャガイモ": {
+    "name": "ジャガイモ",
+    "variety": "男爵",
+    "is_reference": true,
+    "area_per_unit": 0.25,
+    "revenue_per_area": 300.0,
+    "crop_stages": [
+      {
+        "name": "播種〜発芽",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 150.0
+        }
+      },
+      {
+        "name": "発芽〜成長",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 450.0
+        }
+      },
+      {
+        "name": "成長〜収穫",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 750.0
+        }
+      }
+    ]
+  },
+  "玉ねぎ": {
+    "name": "玉ねぎ",
+    "variety": "黄玉ねぎ",
+    "is_reference": true,
+    "area_per_unit": 0.1,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 20.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "成熟期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "キャベツ": {
+    "name": "キャベツ",
+    "variety": "春キャベツ",
+    "is_reference": true,
+    "area_per_unit": 0.25,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 3.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "生育期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 3.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "収穫期",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 3.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "ニンジン": {
+    "name": "ニンジン",
+    "variety": "五寸ニンジン",
+    "is_reference": true,
+    "area_per_unit": 0.1,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "播種〜発芽",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "発芽〜成長",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 18.0,
+          "optimal_max": 24.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "成長〜収穫",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 500.0
+        }
+      }
+    ]
+  },
+  "レタス": {
+    "name": "レタス",
+    "variety": "結球レタス",
+    "is_reference": true,
+    "area_per_unit": 0.1,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "生育期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "収穫期",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      }
+    ]
+  },
+  "ほうれん草": {
+    "name": "ほうれん草",
+    "variety": "一般",
+    "is_reference": true,
+    "area_per_unit": 0.1,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "播種〜発芽",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "発芽〜生育",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "生育〜収穫",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 500.0
+        }
+      }
+    ]
+  },
+  "ナス": {
+    "name": "ナス",
+    "variety": "千両二号",
+    "is_reference": true,
+    "area_per_unit": 0.5,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "生育期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "収穫期",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "キュウリ": {
+    "name": "キュウリ",
+    "variety": "白イボ",
+    "is_reference": true,
+    "area_per_unit": 0.5,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "生育期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "収穫期",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "ピーマン": {
+    "name": "ピーマン",
+    "variety": "京みどり",
+    "is_reference": true,
+    "area_per_unit": 0.25,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 250.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 400.0
+        }
+      },
+      {
+        "name": "生育期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 750.0
+        }
+      },
+      {
+        "name": "収穫期",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1000.0
+        }
+      }
+    ]
+  },
+  "大根": {
+    "name": "大根",
+    "variety": "青首大根",
+    "is_reference": true,
+    "area_per_unit": 0.1,
+    "revenue_per_area": 500.0,
+    "crop_stages": [
+      {
+        "name": "播種〜発芽",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 2.0,
+          "optimal_min": 5.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 100.0
+        }
+      },
+      {
+        "name": "発芽〜成長",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "成長〜収穫",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      }
+    ]
+  },
+  "ブロッコリー": {
+    "name": "ブロッコリー",
+    "variety": "一般",
+    "is_reference": true,
+    "area_per_unit": 0.5,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 3.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 4.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "生育期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 4.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "収穫期",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 4.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      }
+    ]
+  },
+  "白菜": {
+    "name": "白菜",
+    "variety": "結球白菜",
+    "is_reference": true,
+    "area_per_unit": 0.2,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "育苗期",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "定植期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "生育期",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "収穫期",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      }
+    ]
+  },
+  "とうもろこし": {
+    "name": "とうもろこし",
+    "variety": "スイートコーン",
+    "is_reference": true,
+    "area_per_unit": 0.25,
+    "revenue_per_area": 300.0,
+    "crop_stages": [
+      {
+        "name": "播種〜発芽",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "発芽〜成長",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 450.0
+        }
+      },
+      {
+        "name": "成長〜成熟",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 900.0
+        }
+      },
+      {
+        "name": "成熟〜収穫",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      }
+    ]
+  },
+  "かぼちゃ": {
+    "name": "かぼちゃ",
+    "variety": "西洋かぼちゃ",
+    "is_reference": true,
+    "area_per_unit": 1.5,
+    "revenue_per_area": 800.0,
+    "crop_stages": [
+      {
+        "name": "播種〜発芽",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "発芽〜生育期",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "生育期〜収穫",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      }
+    ]
+  }
+}

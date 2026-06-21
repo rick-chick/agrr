@@ -1,3 +1,2870 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:e3469fb4c976bd9bfd5feb3a6b9d45b17ad211eee1ff70008a3ae886f574460c
-size 79584
+{
+  "Almonds": {
+    "name": "Almonds",
+    "variety": "Nonpareil",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 4.0,
+    "revenue_per_area": 400.0,
+    "groups": [
+      "Rosaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Flowering Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Fruit Development Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Apples": {
+    "name": "Apples",
+    "variety": "Red Delicious",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 4.0,
+    "revenue_per_area": 1500.0,
+    "groups": [
+      "Rosaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Flowering Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Fruit Development Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Barley": {
+    "name": "Barley",
+    "variety": "Standard",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.5,
+    "revenue_per_area": 100.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 15.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "Germination to Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growth to Maturity",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 14.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 500.0
+        }
+      },
+      {
+        "name": "Maturity to Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 14.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 700.0
+        }
+      }
+    ]
+  },
+  "Bell Peppers": {
+    "name": "Bell Peppers",
+    "variety": "Green",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 1500.0,
+    "groups": [
+      "Solanaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Seedling Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Transplanting Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growing Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Blueberries": {
+    "name": "Blueberries",
+    "variety": "Highbush",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 1.5,
+    "revenue_per_area": 720.0,
+    "groups": [
+      "Ericaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Seedling Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Transplanting Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Growth Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Broccoli": {
+    "name": "Broccoli",
+    "variety": "Standard",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 1350.0,
+    "groups": [
+      "Brassicaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Seedling Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 4.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Transplanting Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Growing Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 28.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 28.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Cabbage": {
+    "name": "Cabbage",
+    "variety": "Green",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 1000.0,
+    "groups": [
+      "Brassicaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Seedling Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Transplanting Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Growing Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 3.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Carrots": {
+    "name": "Carrots",
+    "variety": "Standard",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.1,
+    "revenue_per_area": 900.0,
+    "groups": [
+      "Apiaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "Germination to Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growth to Harvest",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 500.0
+        }
+      }
+    ]
+  },
+  "Corn": {
+    "name": "Corn",
+    "variety": "Field Corn",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 1.0,
+    "revenue_per_area": 800.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "Vegetative Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 32.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 38.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1400.0
+        }
+      },
+      {
+        "name": "Reproductive Growth",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 33.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1500.0
+        }
+      },
+      {
+        "name": "Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 28.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 38.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1000.0
+        }
+      }
+    ]
+  },
+  "Cotton": {
+    "name": "Cotton",
+    "variety": "Upland Cotton",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 1.0,
+    "revenue_per_area": 900.0,
+    "groups": [
+      "Malvaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 20.0,
+          "optimal_max": 32.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 38.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1500.0
+        }
+      },
+      {
+        "name": "Vegetative Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 25.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 18.0,
+          "high_stress_threshold": 38.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 40.0,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 14.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1800.0
+        }
+      },
+      {
+        "name": "Reproductive Growth",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 22.0,
+          "optimal_max": 32.0,
+          "low_stress_threshold": 18.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 38.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 14.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 2000.0
+        }
+      },
+      {
+        "name": "Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 15.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1500.0
+        }
+      }
+    ]
+  },
+  "Cucumbers": {
+    "name": "Cucumbers",
+    "variety": "Slicing",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.5,
+    "revenue_per_area": 1000.0,
+    "groups": [
+      "Cucurbitaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Seedling Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Transplanting Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growing Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Grapes": {
+    "name": "Grapes",
+    "variety": "Wine",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 2.5,
+    "revenue_per_area": 900.0,
+    "groups": [
+      "Vitaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Germination to Early Growth",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Mid Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Maturity Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "Lettuce": {
+    "name": "Lettuce",
+    "variety": "Iceberg",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 1500.0,
+    "groups": [
+      "Asteraceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "Seedling Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 18.0,
+          "optimal_max": 22.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 250.0
+        }
+      },
+      {
+        "name": "Growing Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 500.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 25.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 30.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 700.0
+        }
+      }
+    ]
+  },
+  "Oats": {
+    "name": "Oats",
+    "variety": "Standard",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 100.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 100.0
+        }
+      },
+      {
+        "name": "Germination to Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growth to Maturity",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity to Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Onions": {
+    "name": "Onions",
+    "variety": "Yellow",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.1,
+    "revenue_per_area": 1000.0,
+    "groups": [
+      "Amaryllidaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 100.0
+        }
+      },
+      {
+        "name": "Germination to Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growth to Maturity",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 5.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity to Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Oranges": {
+    "name": "Oranges",
+    "variety": "Valencia",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 4.0,
+    "revenue_per_area": 2400.0,
+    "groups": [
+      "Rutaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Flowering Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Fruit Development Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Maturity Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "Peanuts": {
+    "name": "Peanuts",
+    "variety": "Runner",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.1,
+    "revenue_per_area": 150.0,
+    "groups": [
+      "Fabaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Germination to Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growth to Maturity",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity to Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Pistachios": {
+    "name": "Pistachios",
+    "variety": "Kerman",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 4.0,
+    "revenue_per_area": 750.0,
+    "groups": [
+      "Anacardiaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Germination to Early Growth",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Mid Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": 34.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "Potatoes": {
+    "name": "Potatoes",
+    "variety": "Russet",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 700.0,
+    "groups": [
+      "Solanaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "Germination to Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growth to Maturity",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 500.0
+        }
+      },
+      {
+        "name": "Maturity to Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 4.0,
+          "optimal_min": 10.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -1.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 150.0
+        }
+      }
+    ]
+  },
+  "Rice": {
+    "name": "Rice",
+    "variety": "Long Grain",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 1.0,
+    "revenue_per_area": 1000.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 12.0,
+          "optimal_min": 20.0,
+          "optimal_max": 32.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 38.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "Vegetative Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 12.0,
+          "optimal_min": 22.0,
+          "optimal_max": 32.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 38.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1400.0
+        }
+      },
+      {
+        "name": "Reproductive Growth",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 12.0,
+          "optimal_min": 22.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 18.0,
+          "high_stress_threshold": 33.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 38.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1500.0
+        }
+      },
+      {
+        "name": "Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 12.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1000.0
+        }
+      }
+    ]
+  },
+  "Rye": {
+    "name": "Rye",
+    "variety": "Standard",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.1,
+    "revenue_per_area": 100.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 4.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 50.0
+        }
+      },
+      {
+        "name": "Germination to Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 20.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Growth to Maturity",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity to Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      }
+    ]
+  },
+  "Sorghum": {
+    "name": "Sorghum",
+    "variety": "Grain",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.5,
+    "revenue_per_area": 160.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 75.0
+        }
+      },
+      {
+        "name": "Germination to Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 600.0
+        }
+      },
+      {
+        "name": "Growth to Maturity",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 25.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 40.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 45.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity to Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 34.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 150.0
+        }
+      }
+    ]
+  },
+  "Soybeans": {
+    "name": "Soybeans",
+    "variety": "Standard",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 1.0,
+    "revenue_per_area": 600.0,
+    "groups": [
+      "Fabaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1000.0
+        }
+      },
+      {
+        "name": "Vegetative Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 22.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 38.0,
+          "max_temperature": 42.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      },
+      {
+        "name": "Reproductive Growth",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 28.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 38.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1300.0
+        }
+      },
+      {
+        "name": "Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 900.0
+        }
+      }
+    ]
+  },
+  "Strawberries": {
+    "name": "Strawberries",
+    "variety": "June-bearing",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.1,
+    "revenue_per_area": 900.0,
+    "groups": [
+      "Rosaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Seedling Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Transplanting Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Growing Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Sugar Beets": {
+    "name": "Sugar Beets",
+    "variety": "Standard",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.1,
+    "revenue_per_area": 15.0,
+    "groups": [
+      "Amaranthaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 5.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Growth Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 38.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Bulking Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 10.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "Sugarcane": {
+    "name": "Sugarcane",
+    "variety": "Standard",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.5,
+    "revenue_per_area": 120.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Germination Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Growth Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1500.0
+        }
+      },
+      {
+        "name": "Maturity Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1500.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1200.0
+        }
+      }
+    ]
+  },
+  "Tomatoes": {
+    "name": "Tomatoes",
+    "variety": "Processing",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 0.25,
+    "revenue_per_area": 1800.0,
+    "groups": [
+      "Solanaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Seedling Stage",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Transplanting Stage",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 100.0
+        }
+      },
+      {
+        "name": "Growing Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 300.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 18.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 32.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Walnuts": {
+    "name": "Walnuts",
+    "variety": "Chandler",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 10.0,
+    "revenue_per_area": 400.0,
+    "groups": [
+      "Juglandaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Germination to Early Growth",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Mid Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Maturity Stage",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Harvest Stage",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -2.0,
+          "sterility_risk_threshold": 30.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Watermelon": {
+    "name": "Watermelon",
+    "variety": "Seedless",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 1.0,
+    "revenue_per_area": 2400.0,
+    "groups": [
+      "Cucurbitaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting to Germination",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 20.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 50.0
+        }
+      },
+      {
+        "name": "Germination to Early Growing",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 25.0,
+          "optimal_max": 35.0,
+          "low_stress_threshold": 15.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": null,
+          "max_temperature": 38.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 8.0,
+          "target_sunshine_hours": 12.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 200.0
+        }
+      },
+      {
+        "name": "Early Growing to Harvest",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 10.0,
+          "optimal_min": 25.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 12.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": 0.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      }
+    ]
+  },
+  "Wheat": {
+    "name": "Wheat",
+    "variety": "Winter Wheat",
+    "is_reference": true,
+    "region": "us",
+    "area_per_unit": 1.0,
+    "revenue_per_area": 500.0,
+    "groups": [
+      "Poaceae"
+    ],
+    "crop_stages": [
+      {
+        "name": "Planting",
+        "order": 1,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 10.0,
+          "optimal_max": 24.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -10.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 5.0,
+          "target_sunshine_hours": 8.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 800.0
+        }
+      },
+      {
+        "name": "Vegetative Growth",
+        "order": 2,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 12.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 0.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -10.0,
+          "sterility_risk_threshold": 33.0,
+          "max_temperature": 38.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1000.0
+        }
+      },
+      {
+        "name": "Reproductive Growth",
+        "order": 3,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 25.0,
+          "low_stress_threshold": 5.0,
+          "high_stress_threshold": 30.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": 32.0,
+          "max_temperature": 35.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 1100.0
+        }
+      },
+      {
+        "name": "Harvest",
+        "order": 4,
+        "temperature_requirement": {
+          "base_temperature": 0.0,
+          "optimal_min": 15.0,
+          "optimal_max": 30.0,
+          "low_stress_threshold": 10.0,
+          "high_stress_threshold": 35.0,
+          "frost_threshold": -5.0,
+          "sterility_risk_threshold": 35.0,
+          "max_temperature": 40.0
+        },
+        "sunshine_requirement": {
+          "minimum_sunshine_hours": 6.0,
+          "target_sunshine_hours": 10.0
+        },
+        "thermal_requirement": {
+          "required_gdd": 900.0
+        }
+      }
+    ]
+  }
+}

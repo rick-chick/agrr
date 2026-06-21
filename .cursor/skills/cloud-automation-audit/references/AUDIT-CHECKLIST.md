@@ -20,8 +20,8 @@
 | 3 | 直近 7 日に `cursor` 由来 PR または blocked コメントの異常パターン | 毎週例外終了の間接証拠 |
 | 4 | `gh issue list` が Cloud Agent で成功 | 今週 fail → P1 注意。2 週連続 fail → P1 |
 | 5 | `agent-in-progress` が 7 日以上滞留 | 同一 issue で run が例外終了し続けている根拠あり |
-| 6 | 平日 run で「対象なし」のみ | **正常** — 修正不要 |
-| 7 | Webhook dispatch: workflow YAML が valid | payload / jq 構文破損 |
+| 6 | issue 作成 dispatch で triage スキップのみ | **正常** — 修正不要（`agent-skipped` 等） |
+| 7 | Webhook dispatch: workflow YAML が valid | payload / jq 構文破損・`opened` / `labeled` 分岐 |
 | 8 | Secrets 名が doc と一致 | doc 側 typo のみ repo 修正可。未設定は Dashboard 手順 |
 
 ## PR Merge Worker

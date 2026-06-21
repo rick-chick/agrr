@@ -11,18 +11,18 @@ echo "==> Schema (refinery)"
 "$M" schema run
 
 echo "==> Reference data (jp, in, us) — may take several minutes"
-"$M" data apply --region jp,in,us --kind base,nutrients,pests,tasks,templates || true
+"$M" data apply --region jp,in,us --kind base,nutrients,pests,tasks,templates
 
 echo "==> India reference repair"
-"$M" data apply --region in --kind repair || true
+"$M" data apply --region in --kind repair
 
 echo "==> US reference crops repair"
-"$M" data apply --region us --kind repair || true
+"$M" data apply --region us --kind repair
 
 echo "==> JP crop task templates"
-"$M" data apply --region jp --kind templates || true
+"$M" data apply --region jp --kind templates
 
 echo "==> Dev fixtures"
-"$M" data apply --region jp,us --kind dev_fixtures || true
+"$M" data apply --region jp,us --kind dev_fixtures
 
 echo "==> Done. DB: $AGRR_SQLITE_PATH"
