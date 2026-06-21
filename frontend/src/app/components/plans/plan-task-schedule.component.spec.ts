@@ -1,0 +1,222 @@
+import { ChangeDetectorRef } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import en from '../../../assets/i18n/en.json';
+import inLocale from '../../../assets/i18n/in.json';
+import ja from '../../../assets/i18n/ja.json';
+import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
+import { PlanTaskSchedulePresenter } from '../../usecase/plans/plan-task-schedule.providers';
+import { PlanTaskScheduleComponent } from './plan-task-schedule.component';
+import type { PlanTaskScheduleViewState } from './plan-task-schedule.view';
+import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
+
+const loadedSchedule: TaskScheduleResponse = {
+  plan: {
+    id: 7,
+    name: 'Main Plan',
+    status: 'completed',
+    planning_start_date: '2026-01-01',
+    planning_end_date: '2026-12-31',
+    timeline_generated_at: '2026-06-01T00:00:00Z',
+    timeline_generated_at_display: '2026-06-01'
+  },
+  week: {
+    start_date: '2026-06-01',
+    end_date: '2026-06-07',
+    label: '2026-06-01',
+    days: []
+  },
+  milestones: [],
+  fields: [],
+  labels: {},
+  minimap: {}
+};
+
+const loadedState: PlanTaskScheduleViewState = {
+  loading: false,
+  error: null,
+  schedule: loadedSchedule
+};
+
+describe('PlanTaskScheduleComponent', () => {
+  let component: PlanTaskScheduleComponent;
+  let fixture: ComponentFixture<PlanTaskScheduleComponent>;
+  let loadUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    loadUseCase = { execute: vi.fn() };
+    mockPresenter = { setView: vi.fn() };
+    cdr = { markForCheck: vi.fn() };
+
+    TestBed.overrideComponent(PlanTaskScheduleComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          { provide: ChangeDetectorRef, useValue: cdr },
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              snapshot: { paramMap: { get: vi.fn(() => '7') } }
+            }
+          }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    component = fixture.componentInstance;
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    vi.restoreAllMocks();
+  });
+
+  it('implements View control getter/setter', () => {
+    const state: PlanTaskScheduleViewState = {
+      loading: false,
+      error: null,
+      schedule: null
+    };
+    component.control = state;
+    expect(component.control).toEqual(state);
+  });
+
+  it('renders empty schedule message when fields are empty', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = loadedState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('No task schedule has been generated yet.');
+    expect(text).not.toContain('plans.task_schedules.no_schedules');
+  });
+
+  it('renders translated API error instead of raw i18n key', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      schedule: null
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const alert = fixture.nativeElement.querySelector('.page-alert-error');
+    expect(alert?.textContent?.trim()).not.toBe('common.api_error.generic');
+  });
+});
+
+describe('PlanTaskScheduleComponent locale labels', () => {
+  let fixture: ComponentFixture<PlanTaskScheduleComponent>;
+
+  async function setupLocale(localeId: 'ja' | 'en' | 'in'): Promise<void> {
+    loadUseCase = { execute: vi.fn() };
+    mockPresenter = { setView: vi.fn() };
+    cdr = { markForCheck: vi.fn() };
+
+    TestBed.resetTestingModule();
+    TestBed.overrideComponent(PlanTaskScheduleComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          { provide: ChangeDetectorRef, useValue: cdr },
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              snapshot: { paramMap: { get: vi.fn(() => '7') } }
+            }
+          }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', ja as TranslationObject, true);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setTranslation('in', inLocale as TranslationObject, true);
+    translate.setDefaultLang('ja');
+    translate.use(localeId);
+
+    fixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.control = loadedState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+  }
+
+  let loadUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+
+  afterEach(() => {
+    fixture?.destroy();
+    vi.restoreAllMocks();
+  });
+
+  it('renders Japanese labels instead of raw i18n keys', async () => {
+    await setupLocale('ja');
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('← 計画詳細に戻る');
+    expect(text).toContain('Main Planの作業予定');
+    expect(text).toContain('作業予定がまだ生成されていません。');
+    expect(text).not.toContain('plans.task_schedules.');
+  });
+
+  it('renders English labels instead of raw i18n keys', async () => {
+    await setupLocale('en');
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('← Back to plan');
+    expect(text).toContain('Task schedule for Main Plan');
+    expect(text).toContain('No task schedule has been generated yet.');
+    expect(text).not.toContain('plans.task_schedules.');
+  });
+
+  it('renders Hindi labels instead of raw i18n keys', async () => {
+    await setupLocale('in');
+
+    const navLinks = fixture.nativeElement.querySelectorAll('.plan-work-nav__link');
+    expect(navLinks.length).toBe(3);
+    expect(navLinks[0].textContent?.trim()).toBe('आज का कार्य');
+    expect(navLinks[1].textContent?.trim()).toBe('पूर्ण अनुसूची');
+    expect(navLinks[2].textContent?.trim()).toBe('कार्य इतिहास');
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('← योजना विवरण पर वापस जाएं');
+    expect(text).toContain('Main Plan की कार्य अनुसूची');
+    expect(text).toContain('अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।');
+    expect(text).not.toContain('plans.task_schedules.');
+  });
+});
