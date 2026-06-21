@@ -273,11 +273,11 @@ mod tests {
     }
 
     #[test]
-    fn translates_entry_schedule_api_keys_for_en_and_in_from_repo_locales() {
+    fn translates_entry_schedule_api_keys_for_ja_en_and_in_from_repo_locales() {
         let dir = test_locales_dir();
         let catalog = LocaleCatalog::load_from_dir(&dir).expect("load locales");
         for key in ENTRY_SCHEDULE_API_KEYS {
-            for locale in ["en", "in"] {
+            for locale in ["ja", "en", "in"] {
                 let msg = catalog.translate(locale, key).unwrap_or_default();
                 assert!(
                     !msg.is_empty() && !msg.starts_with("api."),
@@ -285,6 +285,17 @@ mod tests {
                 );
             }
         }
+        let ja_disclaimer = catalog
+            .translate("ja", "api.entry_schedule.disclaimer.short")
+            .unwrap_or_default();
+        assert!(
+            ja_disclaimer.chars().any(|c| {
+                ('\u{3040}'..='\u{309F}').contains(&c)
+                    || ('\u{30A0}'..='\u{30FF}').contains(&c)
+                    || ('\u{4E00}'..='\u{9FFF}').contains(&c)
+            }),
+            "expected Japanese entry_schedule disclaimer for ja locale, got: {ja_disclaimer}"
+        );
         let in_disclaimer = catalog
             .translate("in", "api.entry_schedule.disclaimer.short")
             .unwrap_or_default();

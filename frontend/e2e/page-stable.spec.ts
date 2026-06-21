@@ -9,6 +9,13 @@ const farmsRoute: RouteRow = {
   source: 'test',
 };
 
+const optimizingRoute: RouteRow = {
+  pattern: 'plans/:id/optimizing',
+  url: '/plans/1/optimizing',
+  requiresAuth: true,
+  source: 'test',
+};
+
 test.describe('waitForPageStable spin probe', () => {
   test('skips long spin probe when stable content is already visible', async ({ page }) => {
     await page.setContent(`
@@ -52,6 +59,20 @@ test.describe('waitForPageStable spin probe', () => {
 
     await waitForPageStable(page, farmsRoute);
     await expect(page.locator('app-farm-list .card-list')).toBeVisible();
+  });
+
+  test('skips master-loading spin probe on plans/:id/optimizing', async ({ page }) => {
+    await page.setContent(`
+      <app-plan-optimizing>
+        <main class="page-main"></main>
+      </app-plan-optimizing>
+    `);
+
+    const start = Date.now();
+    await waitForPageStable(page, optimizingRoute);
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeLessThan(2_500);
   });
 
   test('catches a spinner that appears shortly after initial render', async ({ page }) => {
