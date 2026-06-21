@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
 import {
   assertPageValidity,
