@@ -13,7 +13,14 @@ config/locales/*.yml merge=ours
 *.zip filter=lfs diff=lfs merge=lfs -text
 *.json filter=lfs diff=lfs merge=lfs -text
 lib/core filter=lfs diff=lfs merge=lfs -text
-db/fixtures/*.json filter=lfs diff=lfs merge=lfs -text
+# db/fixtures weather JSON: GCS + config/reference-fixtures.lock.json (not Git/LFS)
+config/reference-fixtures.lock.json -filter -diff -merge text eol=lf
+db/fixtures/reference_crops.json -filter -diff -merge text
+db/fixtures/us_reference_crops.json -filter -diff -merge text
+db/fixtures/india_reference_crops.json -filter -diff -merge text
+crates/agrr-migrate/data/extracted/pests/*.json -filter -diff -merge text
+crates/agrr-migrate/data/extracted/tasks/*.json -filter -diff -merge text
+crates/agrr-migrate/data/extracted/templates/*.json -filter -diff -merge text
 *.bak filter=lfs diff=lfs merge=lfs -text
 # Docker テスト entrypoint 等が npm で lock を書き換える。LFS ポインタ差分（数千行）を防ぐ。
 package-lock.json -filter -diff -merge text eol=lf

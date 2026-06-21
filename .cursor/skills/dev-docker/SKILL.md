@@ -35,10 +35,14 @@ disable-model-invocation: false
 ### 初回 DB
 
 ```bash
+# 天気 fixture（GCS）— 初回 clone 後。gcloud ADC または AGRR_FIXTURES_SOURCE_DIR
+scripts/ensure-reference-fixtures.sh
 .cursor/skills/dev-docker/scripts/load-reference-data.sh      # storage_dev_data volume
 # または（ホスト cargo）
 .cursor/skills/dev-docker/scripts/load-reference-data-host.sh
 ```
+
+`load-reference-data*.sh` は `AGRR_FIXTURES_REQUIRED=1` で ensure を先に実行する。オフラインのみ `AGRR_FIXTURES_SKIP=1`。メンテナ向け upload: `scripts/publish-reference-fixtures.sh`（要 `gcloud`）。
 
 ### 起動・停止（Docker）
 

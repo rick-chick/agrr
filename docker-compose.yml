@@ -15,6 +15,7 @@ services:
     volumes:
       - storage_dev_data:/app/storage
       - ./lib/core:/app/lib/core:ro
+      - ./db/fixtures:/app/db/fixtures:ro
     environment:
       - AGRR_SQLITE_PATH=/app/storage/development.sqlite3
       - AGRR_CACHE_SQLITE_PATH=/app/storage/development_cache.sqlite3

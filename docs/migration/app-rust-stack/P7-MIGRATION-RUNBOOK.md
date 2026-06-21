@@ -80,6 +80,8 @@ Or use [dev-docker `load-reference-data-host.sh`](../../../.cursor/skills/dev-do
 ### Weather fixtures (`base` kind)
 
 - JP/US/IN weather: `db/fixtures/*_reference_weather.json` (~100MB+ per region).
+- **Not in Git/LFS** — version contract: [`config/reference-fixtures.lock.json`](../../../config/reference-fixtures.lock.json). Fetch: [`scripts/ensure-reference-fixtures.sh`](../../../scripts/ensure-reference-fixtures.sh) (GCS `agrr-reference-fixtures`). Upload: [`scripts/publish-reference-fixtures.sh`](../../../scripts/publish-reference-fixtures.sh).
+- `load-reference-data*.sh` and production deploy (`_agrr-server-cloud-run.sh`) call ensure with `AGRR_FIXTURES_REQUIRED=1` before migrate / `docker build`.
 - Loaded via **streaming** top-level farm keys (low peak memory vs full-file parse).
 - Expect several minutes per region on first apply; re-apply is idempotent (skips via `data_migration_history` + upserts).
 - Optional: run one region at a time, e.g. `data apply --region jp --kind base`.
