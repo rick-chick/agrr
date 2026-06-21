@@ -1,0 +1,89 @@
+# Playwright agent-review PNG capture — agrr-server + strangler + ng serve
+name: Frontend E2E capture
+
+on:
+  schedule:
+    # Weekly: Monday 00:00 JST (Sunday 15:00 UTC)
+    - cron: '0 15 * * 0'
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'frontend/src/app/**/routes*.ts'
+      - 'frontend/e2e/route-manifest.json'
+      - 'frontend/e2e/agent-review/route-to-png.md'
+      - 'frontend/scripts/generate-e2e-route-manifest*.mjs'
+      - 'frontend/e2e/visual/**'
+      - 'frontend/e2e/capture-locales.mjs'
+      - 'frontend/e2e/agent-review/verify-capture-complete.mjs'
+      - '.github/workflows/frontend-e2e-capture.yml'
+      - 'scripts/run-e2e-capture-ci.sh'
+      - 'scripts/verify-e2e-capture-ci-workflow-lib.mjs'
+      - 'docker-compose.yml'
+      - 'docker-compose.e2e-ci.yml'
+      - 'Dockerfile.agrr-server'
+      - 'docker/**'
+      - 'crates/agrr-migrate/**'
+
+concurrency:
+  group: frontend-e2e-capture-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-e2e-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: E2E capture CI workflow contract
+        run: node --test scripts/verify-e2e-capture-ci-workflow.test.mjs
+
+      - name: Cache E2E dev SQLite
+        uses: actions/cache@v4
+        with:
+          path: .docker/e2e_dev_db_cache
+          key: e2e-dev-db-${{ hashFiles('crates/agrr-migrate/migrations/**/*.sql', 'db/fixtures/**') }}
+          restore-keys: |
+            e2e-dev-db-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+
+      - name: Run capture-for-agent E2E
+        env:
+          E2E_CI_HEALTH_WAIT_SECS: "240"
+        run: bash scripts/run-e2e-capture-ci.sh
+
+      - name: Upload agent-review PNG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-review-pngs-${{ github.run_number }}
+          path: frontend/e2e/agent-review/out/*.png
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-capture-${{ github.run_number }}
+          path: frontend/playwright-report/
+          if-no-files-found: ignore
