@@ -4,7 +4,7 @@ mod task_schedule_item_lookup_gateway;
 mod work_record_gateway;
 
 #[cfg(test)]
-mod work_record_integration_fixture;
+pub(crate) mod work_record_integration_fixture;
 #[cfg(test)]
 mod work_record_gateway_integration_test;
 #[cfg(test)]
