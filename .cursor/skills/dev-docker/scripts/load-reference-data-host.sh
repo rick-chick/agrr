@@ -7,6 +7,8 @@ ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 cd "$ROOT"
 export AGRR_SQLITE_PATH="${AGRR_SQLITE_PATH:-$ROOT/storage/development.sqlite3}"
 
+AGRR_FIXTURES_REQUIRED=1 "$ROOT/scripts/ensure-reference-fixtures.sh"
+
 echo "==> Schema (refinery)"
 cargo run -p agrr-migrate -- schema run
 

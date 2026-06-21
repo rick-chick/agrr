@@ -1,0 +1,25 @@
+{
+  "version": "2026.02.21",
+  "bucket": "agrr-reference-fixtures",
+  "prefix": "v1/2026.02.21",
+  "files": [
+    {
+      "path": "db/fixtures/reference_weather.json",
+      "object": "reference_weather.json",
+      "sha256": "8a4529989226b4f0f4ca46ea4d05fe288b96407ff929f227a667becb6ebf730e",
+      "size_bytes": 120844852
+    },
+    {
+      "path": "db/fixtures/us_reference_weather.json",
+      "object": "us_reference_weather.json",
+      "sha256": "b11502a8dd6ea7dcff241a42fac6e90c58d2f4ea61719cce5f97f3f91c964ca6",
+      "size_bytes": 125800862
+    },
+    {
+      "path": "db/fixtures/india_reference_weather.json",
+      "object": "india_reference_weather.json",
+      "sha256": "e8c0bbe0c5148b48b4535cdbc38a815e4f2f938001fa7f78973e1f0a8b9c1446",
+      "size_bytes": 136751917
+    }
+  ]
+}

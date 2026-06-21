@@ -32,6 +32,8 @@ git status --short
 
 ### 2. デプロイ実行
 
+`gcp-deploy` は docker build 前に `scripts/ensure-reference-fixtures.sh`（`AGRR_FIXTURES_REQUIRED=1`）で天気 fixture を GCS から取得する。初回は `gcloud auth application-default login` が必要。
+
 ```bash
 .cursor/skills/deploy-server/scripts/gcp-deploy.sh
 # または明示:

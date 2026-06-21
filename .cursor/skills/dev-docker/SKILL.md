@@ -34,11 +34,21 @@ disable-model-invocation: false
 
 ### 初回 DB
 
+天気 fixture（各 ~120MB）は Git/LFS ではなく GCS から取得する（`config/reference-fixtures.lock.json`）。
+
 ```bash
+# 初回のみ: ADC 設定後（load-reference-data が ensure を自動実行）
+gcloud auth application-default login
+scripts/ensure-reference-fixtures.sh   # 手動確認用
+
 .cursor/skills/dev-docker/scripts/load-reference-data.sh      # storage_dev_data volume
 # または（ホスト cargo）
 .cursor/skills/dev-docker/scripts/load-reference-data-host.sh
 ```
+
+オフライン: `AGRR_FIXTURES_SKIP=1` で ensure をスキップ可能（`load-reference-data` は `AGRR_FIXTURES_REQUIRED=1` のため天気なしでは失敗 — 意図的）。
+
+メンテナ: `scripts/publish-reference-fixtures.sh` で GCS upload + lock 更新。
 
 ### 起動・停止（Docker）
 

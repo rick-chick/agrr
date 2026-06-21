@@ -51,6 +51,7 @@ jobs:
 
       - name: Run backend tests
         run: |
+          node --test scripts/ensure-reference-fixtures.test.mjs
           cargo test -p agrr-domain
           cargo test -p agrr-adapters-sqlite -- '_gateway_test'
           AGRR_SERVER_CONTRACT_DOCKER_BUILD=1 bash ./scripts/run-rust-contract-tests.sh
