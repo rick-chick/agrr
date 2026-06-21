@@ -75,8 +75,8 @@ test('committed visual-review-results is parsed and compared to route-manifest',
   const reviewPatterns = parseVisualReviewSummaryPatterns(md);
   const result = compareVisualReviewFreshness({ manifestPatterns, reviewPatterns });
 
-  assert.equal(reviewPatterns.length, 48);
-  assert.equal(manifestPatterns.length, 50);
-  assert.deepEqual(result.missingInReview, ['plans/:id/work', 'plans/:id/work_records']);
+  assert.equal(reviewPatterns.length, manifestPatterns.length);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.missingInReview, []);
   assert.deepEqual(result.extraInReview, []);
 });
