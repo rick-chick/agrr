@@ -140,6 +140,21 @@ fn flatten_yaml_owned(prefix: &str, value: &YamlOwned, out: &mut HashMap<String,
 mod tests {
     use super::*;
 
+    fn test_locales_dir() -> PathBuf {
+        let from_manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/locales");
+        if from_manifest.is_dir() {
+            return from_manifest;
+        }
+        let from_env = locales_dir_from_env();
+        assert!(
+            from_env.is_dir(),
+            "locales dir not found (tried {} and {})",
+            from_manifest.display(),
+            from_env.display()
+        );
+        from_env
+    }
+
     #[test]
     fn loads_pests_undo_toast_from_repo_locales() {
         let dir = locales_dir_from_env();
@@ -210,6 +225,37 @@ mod tests {
         assert_eq!(normalize_locale("  en, ja;q=0.9  "), "en");
     }
 
+    const ENTRY_SCHEDULE_API_KEYS: &[&str] = &[
+        "api.entry_schedule.label.sowing",
+        "api.entry_schedule.label.transplanting",
+        "api.entry_schedule.phase.label.sowing",
+        "api.entry_schedule.phase.label.nursery",
+        "api.entry_schedule.phase.label.transplant",
+        "api.entry_schedule.phase.label.harvest",
+        "api.entry_schedule.phase.empty.ineligible",
+        "api.entry_schedule.phase.empty.no_sowing_window",
+        "api.entry_schedule.phase.empty.no_transplant_window",
+        "api.entry_schedule.phase.empty.nursery_gap",
+        "api.entry_schedule.phase.empty.no_weather_end",
+        "api.entry_schedule.flow.summary",
+        "api.entry_schedule.flow.summary_fallback",
+        "api.entry_schedule.flow.detail_chunk",
+        "api.entry_schedule.flow.month_range",
+        "api.entry_schedule.timeline.month_summary",
+        "api.entry_schedule.disclaimer.short",
+        "api.entry_schedule.reason.list",
+        "api.entry_schedule.reason.agrr",
+        "api.entry_schedule.reason.agrr_failed.generic",
+        "api.entry_schedule.reason.agrr_failed.daemon_unavailable",
+        "api.entry_schedule.reason.agrr_failed.execution_failed",
+        "api.entry_schedule.reason.agrr_failed.invalid_response",
+        "api.entry_schedule.reason.agrr_failed.insufficient_weather",
+        "api.entry_schedule.reason.agrr_failed.disabled",
+        "api.entry_schedule.reason.agrr_failed.crop_requirement_error",
+        "api.entry_schedule.errors.weather_location_required",
+        "api.entry_schedule.errors.prediction_failed",
+    ];
+
     #[test]
     fn translates_entry_schedule_disclaimer_from_repo_locales() {
         let dir = locales_dir_from_env();
@@ -223,6 +269,28 @@ mod tests {
         assert!(
             !msg.is_empty() && !msg.starts_with("api."),
             "expected translated disclaimer, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn translates_entry_schedule_api_keys_for_en_and_in_from_repo_locales() {
+        let dir = test_locales_dir();
+        let catalog = LocaleCatalog::load_from_dir(&dir).expect("load locales");
+        for key in ENTRY_SCHEDULE_API_KEYS {
+            for locale in ["en", "in"] {
+                let msg = catalog.translate(locale, key).unwrap_or_default();
+                assert!(
+                    !msg.is_empty() && !msg.starts_with("api."),
+                    "locale={locale} key={key} got: {msg}"
+                );
+            }
+        }
+        let in_disclaimer = catalog
+            .translate("in", "api.entry_schedule.disclaimer.short")
+            .unwrap_or_default();
+        assert!(
+            in_disclaimer.contains('य'),
+            "expected Hindi entry_schedule disclaimer for in locale, got: {in_disclaimer}"
         );
     }
 }
