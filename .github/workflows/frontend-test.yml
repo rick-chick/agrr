@@ -67,3 +67,15 @@ jobs:
       - name: apply-resolved-url unit tests
         working-directory: frontend
         run: node --test e2e/apply-resolved-url.test.mjs
+
+      - name: verify-e2e-smoke-ci-workflow unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-e2e-smoke-ci-workflow.test.mjs
+
+      - name: ensure-e2e-baseline bodies unit tests
+        working-directory: frontend
+        run: node --test e2e/fixtures/ensure-e2e-baseline-bodies.test.mjs
+
+      - name: entry-schedule ids unit tests
+        working-directory: frontend
+        run: node --test e2e/shared/entry-schedule-ids-lib.test.mjs

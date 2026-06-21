@@ -14,6 +14,26 @@ npm run test:e2e:smoke
 
 `E2E_CAPTURE_DEV_SESSION=1` により globalSetup が Rust の `/auth/test/mock_login_as/developer` で `e2e/.auth/dev-session.json` を生成する。`E2E_STRANGLER=1` で Playwright は Rails を起動せず nginx :3000 → agrr-server :8080 を利用する。
 
+## CI（PR）
+
+GitHub Actions workflow **`.github/workflows/frontend-e2e-smoke.yml`** が PR で **`route-smoke.spec.ts`** を実行する（`operation-smoke` 等はローカル `npm run test:e2e:smoke` のまま）。
+
+| 項目 | 内容 |
+|------|------|
+| 起動 | `docker compose` + `docker-compose.e2e-ci.yml`（`agrr-server` + `strangler-proxy`） |
+| 参照データ | 初回は `load-reference-data-container.sh`、以降は Actions cache（`.docker/e2e_dev_db_cache`） |
+| テスト | リポジトリ root で `bash scripts/run-e2e-smoke-ci.sh` → frontend で `npm run test:e2e:smoke:route`（`route-smoke.spec.ts`） |
+| 環境変数 | `E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1`（`playwright.config.ts` の ng serve webServer 付き） |
+
+`ensureE2eBaseline()` は dev セッション付き smoke と同様、`route-smoke` の `beforeAll` から呼ばれる。CI でも idempotent に `E2E Baseline` マスタ行を確保する。
+
+ローカルで CI と同条件を試す場合（Docker 必須）:
+
+```bash
+cd frontend && npm ci
+cd .. && bash scripts/run-e2e-smoke-ci.sh
+```
+
 ## API ベースライン（項目 5）
 
 `beforeAll` で `ensureE2eBaseline()`（[`../fixtures/ensure-e2e-baseline.ts`](../fixtures/ensure-e2e-baseline.ts)）が dev セッション経由で次を idempotent に確保する:
@@ -46,5 +66,7 @@ npm run test:e2e:smoke
 | `plan has no gantt data` / `no task schedule items` | 計画の最適化・スケジュールデータ |
 | `user farm limit reached (max 4)` | ユーザー農場 4 件上限（farms UI CRUD） |
 | `publicPlanId` 未解決 | route-smoke の公開プラン URL は probe または placeholder |
+| `entry-schedule/crop/:cropId` 未解決 | 参照農場の entry_schedule API に作物が無い |
+| `public-plans/results` 未解決 | 完成済み public cultivation_plan が DB に無い |
 
 `buildResolvedCaptureIds` は各マスタ・private Plan で **`E2E Baseline` プレフィックス一致 id を優先**し、無ければ一覧先頭にフォールバックする（[`../shared/baseline-ids.ts`](../shared/baseline-ids.ts)）。

@@ -56,10 +56,28 @@ test('applyResolvedUrl substitutes public plan query param', () => {
   );
 });
 
+test('applyResolvedUrl leaves public plan url unchanged when publicPlanId is null', () => {
+  const url = '/public-plans/results?planId=1';
+  const ids = { ...baseIds, publicPlanId: null };
+  assert.equal(applyResolvedUrl('public-plans/results', url, ids), url);
+});
+
 test('applyResolvedUrl builds entry-schedule crop url when cropId is known', () => {
   assert.equal(
     applyResolvedUrl('entry-schedule/crop/:cropId', '/entry-schedule/crop/1?farmId=1', baseIds),
     '/entry-schedule/crop/15?farmId=42',
+  );
+});
+
+test('applyResolvedUrl leaves entry-schedule url unchanged when ids are missing', () => {
+  const url = '/entry-schedule/crop/1?farmId=1';
+  assert.equal(
+    applyResolvedUrl('entry-schedule/crop/:cropId', url, { ...baseIds, cropId: null }),
+    url,
+  );
+  assert.equal(
+    applyResolvedUrl('entry-schedule/crop/:cropId', url, { ...baseIds, farmId: null }),
+    url,
   );
 });
 
