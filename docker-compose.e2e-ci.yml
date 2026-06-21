@@ -1,0 +1,5 @@
+# E2E CI: bind-mount storage so Actions cache can restore development.sqlite3
+services:
+  agrr-server:
+    volumes:
+      - ./storage:/app/storage

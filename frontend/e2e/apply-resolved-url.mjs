@@ -26,16 +26,13 @@ export const MASTER_SEGMENTS = [
  */
 export function applyResolvedUrl(pattern, url, ids) {
   if (pattern.startsWith('public-plans/') && url.includes('planId=')) {
-    const pid = ids.publicPlanId ?? 1;
-    return url.replace(/planId=\d+/, `planId=${pid}`);
+    if (ids.publicPlanId == null) return url;
+    return url.replace(/planId=\d+/, `planId=${ids.publicPlanId}`);
   }
 
   if (pattern === 'entry-schedule/crop/:cropId') {
-    const f = ids.farmId ?? 1;
-    if (ids.cropId != null) {
-      return `/entry-schedule/crop/${ids.cropId}?farmId=${f}`;
-    }
-    return url;
+    if (ids.cropId == null || ids.farmId == null) return url;
+    return `/entry-schedule/crop/${ids.cropId}?farmId=${ids.farmId}`;
   }
 
   if (pattern.startsWith('plans/')) {
