@@ -52,10 +52,27 @@ cd .. && bash scripts/run-e2e-smoke-ci.sh
 | ファイル | 内容 |
 |----------|------|
 | `route-smoke.spec.ts` | `route-manifest.json` 全ルート: 正しいホスト表示・ローディング解消・`.error-message` 非表示 |
+| `locale-i18n-smoke.spec.ts` | `route-manifest.json` 全ルート × `ja` / `en` / `in`: 可視 DOM テキストに生キー・`%{...}` 残り・locale 不適切な文字列がないか（`locale-i18n-smoke-lib.mjs`） |
 | `operation-smoke.spec.ts` | ホーム CTA、ナビ、公開 wizard（farm-size → select-crop）、問い合わせ、**farms UI CRUD**、マスタ list/new/detail/edit、ガント UI、作業目安一覧→詳細、API キー、天気、作業予定 D&D など |
 | `gantt-mobile-drag.spec.ts` | **モバイル viewport** + **CDP touch** でガント作付バーを水平ドラッグ: しきい値未満では `adjust` しない、ホールド中のバー追従、指を離すまで POST しない、離したあと **4 日以上**の日付移動を commit（タッチジェスチャの振る舞いはここ。`gantt-chart.component.spec.ts` は配線・テンプレート・デスクトップ `pointercancel` / ゴミ箱のみ） |
 
 `E2E_CAPTURE_DEV_SESSION` 未設定時は smoke は skip（`route-manifest-coverage` 等は `npm run test:e2e` で実行可）。未ログイン向けに `login` / 404 のみ別 describe で実行。
+
+locale i18n smoke のみ実行:
+
+```bash
+npm run test:e2e:smoke:locale-i18n
+```
+
+## i18n 監査の役割分担
+
+| 手段 | 対象 | 実行タイミング |
+|------|------|----------------|
+| `npm run check-hardcoded-i18n` | ソース内の静的 `translate` キーと `assets/i18n/{ja,en,in}.json` の欠損 | 開発・CI（静的） |
+| `locale-i18n-smoke.spec.ts` | **実行時**の可視 DOM テキスト（生キー・`%{...}`・言語混在） | `npm run test:e2e:smoke:locale-i18n`（#47 と同じ dev セッション + strangler 前提） |
+| `frontend-agent-visual-review` | PNG 目視（レイアウト + i18n 列） | `e2e:capture-for-agent` 後 |
+
+ルールは `frontend-agent-visual-review` の「言語・i18n」節と `locale-i18n-smoke-lib.mjs` で共有する。最小 RED→GREEN は `node --test e2e/smoke/locale-i18n-smoke-lib.test.mjs`。
 
 ## 既知の skip（データ依存）
 
