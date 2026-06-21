@@ -1,65 +1,11 @@
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
+import { HOST_SELECTOR_BY_PATTERN_GENERATED } from './host-selector-by-pattern.generated';
+
 /** route-manifest.json の `pattern` をキーに、ルータ到達後に表示されるホストコンポーネントのルートセレクタ */
 export const HOST_SELECTOR_BY_PATTERN: Record<string, string> = {
-  '': 'app-home',
-  '**': 'app-not-found',
-  about: 'app-about',
-  contact: 'app-contact',
-  'entry-schedule': 'app-entry-schedule-list',
-  'entry-schedule/crop/:cropId': 'app-entry-schedule-detail',
-  login: 'app-login',
-  privacy: 'app-privacy',
-  terms: 'app-terms',
-  'public-plans/new': 'app-public-plan-create',
-  'public-plans/select-farm-size': 'app-public-plan-create',
-  'public-plans/select-crop': 'app-public-plan-select-crop',
-  'public-plans/optimizing': 'app-public-plan-optimizing',
-  'public-plans/results': 'app-public-plan-results',
-
-  dashboard: 'app-home',
-
-  farms: 'app-farm-list',
-  'farms/new': 'app-farm-create',
-  'farms/:id/edit': 'app-farm-edit',
-  'farms/:id': 'app-farm-detail',
-
-  crops: 'app-crop-list',
-  'crops/new': 'app-crop-create',
-  'crops/:id/edit': 'app-crop-edit',
-  'crops/:id': 'app-crop-detail',
-
-  pests: 'app-pest-list',
-  'pests/new': 'app-pest-create',
-  'pests/:id/edit': 'app-pest-edit',
-  'pests/:id': 'app-pest-detail',
-
-  fertilizes: 'app-fertilize-list',
-  'fertilizes/new': 'app-fertilize-create',
-  'fertilizes/:id/edit': 'app-fertilize-edit',
-  'fertilizes/:id': 'app-fertilize-detail',
-
-  pesticides: 'app-pesticide-list',
-  'pesticides/new': 'app-pesticide-create',
-  'pesticides/:id/edit': 'app-pesticide-edit',
-  'pesticides/:id': 'app-pesticide-detail',
-
-  agricultural_tasks: 'app-agricultural-task-list',
-  'agricultural_tasks/new': 'app-agricultural-task-create',
-  'agricultural_tasks/:id/edit': 'app-agricultural-task-edit',
-  'agricultural_tasks/:id': 'app-agricultural-task-detail',
-
-  interaction_rules: 'app-interaction-rule-list',
-  'interaction_rules/new': 'app-interaction-rule-create',
-  'interaction_rules/:id/edit': 'app-interaction-rule-edit',
-  'interaction_rules/:id': 'app-interaction-rule-detail',
-
-  plans: 'app-plan-list',
-  'plans/new': 'app-plan-new',
-  'plans/:id': 'app-plan-detail',
-  'plans/:id/optimizing': 'app-plan-optimizing',
-  'plans/:id/task_schedule': 'app-plan-task-schedule',
+  ...HOST_SELECTOR_BY_PATTERN_GENERATED,
 };
 
 export type RouteRow = { pattern: string; url: string; requiresAuth: boolean; source: string };
@@ -109,7 +55,7 @@ export async function assertPageValidity(
   if (!host) {
     throw new Error(
       `[route-validity] pattern "${r.pattern}" に HOST_SELECTOR_BY_PATTERN のエントリがありません。` +
-        ' ルート追加時は e2e/route-validity.ts を更新してください。',
+        ' ルート追加時は npm run e2e:manifest を実行してください。',
     );
   }
 

@@ -9,10 +9,7 @@ import {
   PesticideDetailPresenter,
   PESTICIDE_DETAIL_PROVIDERS
 } from '../../../usecase/pesticides/pesticide-detail.providers';
-import { Crop } from '../../../domain/crops/crop';
-import { Pest } from '../../../domain/pests/pest';
-import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
-import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
+import { Pesticide } from '../../../domain/pesticides/pesticide';
 
 const initialControl: PesticideDetailViewState = {
   loading: true,
@@ -51,11 +48,11 @@ const initialControl: PesticideDetailViewState = {
             }
             <div class="detail-row">
               <dt class="detail-row__term">{{ 'pesticides.show.crop' | translate }}</dt>
-              <dd class="detail-row__value">{{ getCropName(control.pesticide.crop_id) }}</dd>
+              <dd class="detail-row__value">{{ getCropName(control.pesticide) }}</dd>
             </div>
             <div class="detail-row">
               <dt class="detail-row__term">{{ 'pesticides.show.pest' | translate }}</dt>
-              <dd class="detail-row__value">{{ getPestName(control.pesticide.pest_id) }}</dd>
+              <dd class="detail-row__value">{{ getPestName(control.pesticide) }}</dd>
             </div>
             @if (control.pesticide.region) {
               <div class="detail-row">
@@ -83,11 +80,6 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
   private readonly deleteUseCase = inject(DeletePesticideUseCase);
   private readonly presenter = inject(PesticideDetailPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly cropGateway = inject(CROP_GATEWAY);
-  private readonly pestGateway = inject(PEST_GATEWAY);
-
-  crops: Crop[] = [];
-  pests: Pest[] = [];
 
   private _control: PesticideDetailViewState = initialControl;
   get control(): PesticideDetailViewState {
@@ -100,7 +92,6 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
 
   ngOnInit(): void {
     this.presenter.setView(this);
-    this.loadCropsAndPests();
     const pesticideId = Number(this.route.snapshot.paramMap.get('id'));
     if (!pesticideId) {
       this.control = {
@@ -113,19 +104,14 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
     this.load(pesticideId);
   }
 
-  private loadCropsAndPests(): void {
-    this.cropGateway.list().subscribe(crops => this.crops = crops);
-    this.pestGateway.list().subscribe(pests => this.pests = pests);
+  getCropName(pesticide: Pesticide): string {
+    if (pesticide.crop_name) return pesticide.crop_name;
+    return this.translate.instant('pesticides.fallback.crop', { id: pesticide.crop_id });
   }
 
-  getCropName(cropId: number): string {
-    const crop = this.crops.find(c => c.id === cropId);
-    return crop ? crop.name : this.translate.instant('pesticides.fallback.crop', { id: cropId });
-  }
-
-  getPestName(pestId: number): string {
-    const pest = this.pests.find(p => p.id === pestId);
-    return pest ? pest.name : this.translate.instant('pesticides.fallback.pest', { id: pestId });
+  getPestName(pesticide: Pesticide): string {
+    if (pesticide.pest_name) return pesticide.pest_name;
+    return this.translate.instant('pesticides.fallback.pest', { id: pesticide.pest_id });
   }
 
   load(pesticideId: number): void {

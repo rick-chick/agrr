@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { PlanOptimizingView, PlanOptimizingViewState } from './plan-optimizing.view';
@@ -21,7 +21,20 @@ const initialControl: PlanOptimizingViewState = {
     <main class="page-main page-main--fit">
       <section class="page">
         <a [routerLink]="['/plans', planId]">{{ 'plans.optimizing_live.back_to_plan' | translate }}</a>
-        <h2>{{ 'plans.optimizing_live.heading' | translate }}</h2>
+        <h2>
+          <span>{{
+            (isCompleted
+              ? 'plans.optimizing_live.heading_completed'
+              : 'plans.optimizing_live.heading'
+            ) | translate
+          }}</span>
+          <span class="status-badge" [class.status-badge--completed]="isCompleted">{{
+            (isCompleted
+              ? 'plans.optimizing_live.status_badge_completed'
+              : 'plans.optimizing_live.status_badge'
+            ) | translate
+          }}</span>
+        </h2>
         <p>{{ 'plans.optimizing_live.progress_label' | translate: { progress: control.progress } }}</p>
       </section>
     </main>
@@ -30,6 +43,7 @@ const initialControl: PlanOptimizingViewState = {
 })
 export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly useCase = inject(SubscribePlanOptimizationUseCase);
   private readonly presenter = inject(PlanOptimizingPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -38,6 +52,10 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get isCompleted(): boolean {
+    return this.control.status === 'completed' || this.control.progress >= 100;
   }
 
   private _control: PlanOptimizingViewState = initialControl;
@@ -62,6 +80,10 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
         this.channel = ch;
       }
     });
+  }
+
+  onOptimizationCompleted(): void {
+    void this.router.navigate(['/plans', this.planId]);
   }
 
   ngOnDestroy(): void {

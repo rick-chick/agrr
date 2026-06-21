@@ -7,4 +7,6 @@ export interface Pesticide {
   crop_id: number;
   pest_id: number;
   region?: string | null;
+  crop_name?: string | null;
+  pest_name?: string | null;
 }

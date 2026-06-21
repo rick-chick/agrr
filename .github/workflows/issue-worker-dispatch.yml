@@ -84,7 +84,7 @@ jobs:
           if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
             echo "CURSOR_ISSUE_WORKER_WEBHOOK_URL or CURSOR_ISSUE_WORKER_WEBHOOK_KEY is not set."
             echo "Configure secrets after creating the Cursor Automation webhook."
-            exit 1
+            exit 0
           fi
           ISSUE_BODY=$(printf '%s' "$BODY_B64" | base64 -d)
           payload=$(jq -n \

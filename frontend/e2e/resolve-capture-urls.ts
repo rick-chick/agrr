@@ -1,12 +1,8 @@
 import type { APIRequestContext } from '@playwright/test';
-import {
-  MASTER_SEGMENTS,
-  parseMasterList,
-  pickBaselineIdFromList,
-  pickBaselinePlanId,
-} from './shared/baseline-ids';
+import { parseMasterList, pickBaselineIdFromList, pickBaselinePlanId } from './shared/baseline-ids';
 
 export { MASTER_SEGMENTS } from './shared/baseline-ids';
+export { applyResolvedUrl } from './apply-resolved-url.mjs';
 
 export type ResolvedCaptureIds = {
   masters: Record<string, number>;
@@ -102,45 +98,3 @@ async function probePublicPlanId(api: APIRequestContext, base: string): Promise<
   return null;
 }
 
-/**
- * route-manifest.json の静的 url を、buildResolvedCaptureIds の結果で上書きする。
- * 部分文字列置換は多桁 id で誤爆するため、pattern からパスを組み立てる。
- */
-export function applyResolvedUrl(pattern: string, url: string, ids: ResolvedCaptureIds): string {
-  if (pattern.startsWith('public-plans/') && url.includes('planId=')) {
-    const pid = ids.publicPlanId ?? 1;
-    return url.replace(/planId=\d+/, `planId=${pid}`);
-  }
-
-  if (pattern === 'entry-schedule/crop/:cropId') {
-    const f = ids.farmId ?? 1;
-    if (ids.cropId != null) {
-      return `/entry-schedule/crop/${ids.cropId}?farmId=${f}`;
-    }
-    return url;
-  }
-
-  if (pattern.startsWith('plans/')) {
-    const p = ids.privatePlanId;
-    if (p == null) return url;
-    if (pattern === 'plans/:id') return `/plans/${p}`;
-    if (pattern === 'plans/:id/optimizing') return `/plans/${p}/optimizing`;
-    if (pattern === 'plans/:id/task_schedule') return `/plans/${p}/task_schedule`;
-    return url;
-  }
-
-  for (const resource of MASTER_SEGMENTS) {
-    if (pattern === `${resource}/:id`) {
-      const mid = ids.masters[resource];
-      if (mid == null) return url;
-      return `/${resource}/${mid}`;
-    }
-    if (pattern === `${resource}/:id/edit`) {
-      const mid = ids.masters[resource];
-      if (mid == null) return url;
-      return `/${resource}/${mid}/edit`;
-    }
-  }
-
-  return url;
-}

@@ -1,5 +1,6 @@
-import { of } from 'rxjs';
-import { describe, it, expect } from 'vitest';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { describe, it, expect, vi } from 'vitest';
 import { LoadWorkRecordsUseCase, groupWorkRecordsByMonth } from './load-work-records.usecase';
 import { WorkRecordGateway } from './work-record-gateway';
 import { PlanGateway } from './plan-gateway';
@@ -73,5 +74,35 @@ describe('LoadWorkRecordsUseCase', () => {
 
     expect(result!.groups).toHaveLength(1);
     expect(result!.plan.name).toBe('Plan');
+  });
+
+  it('calls onError with i18n key when listWorkRecords fails with 404', () => {
+    const gateway: WorkRecordGateway = {
+      listWorkRecords: () =>
+        throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })),
+      createWorkRecord: () => of({ work_record: record(1, '2026-06-12') }),
+      updateWorkRecord: () => of({ work_record: record(1, '2026-06-12') }),
+      deleteWorkRecord: () => of({ deleted: true }),
+      skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
+      unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
+    };
+    const planGateway: PlanGateway = {
+      listPlans: () => of([]),
+      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active' }),
+      fetchPlanData: () => of({} as never),
+      getPublicPlanData: () => of({} as never),
+      getTaskSchedule: () => of({} as never),
+      deletePlan: () => of({} as never)
+    };
+    const onError = vi.fn();
+    const outputPort: LoadWorkRecordsOutputPort = {
+      present: () => {},
+      onError
+    };
+
+    const useCase = new LoadWorkRecordsUseCase(outputPort, gateway, planGateway);
+    useCase.execute({ planId: 1 });
+
+    expect(onError).toHaveBeenCalledWith({ message: 'common.api_error.not_found' });
   });
 });

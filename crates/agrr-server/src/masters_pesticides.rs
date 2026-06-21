@@ -53,6 +53,15 @@ fn pesticide_json(e: &PesticideEntity) -> Value {
     })
 }
 
+fn pesticide_detail_json(dto: &PesticideDetailOutput) -> Value {
+    let mut value = pesticide_json(&dto.pesticide);
+    if let Some(obj) = value.as_object_mut() {
+        obj.insert("crop_name".into(), json!(dto.crop_name));
+        obj.insert("pest_name".into(), json!(dto.pest_name));
+    }
+    value
+}
+
 fn take_response(
     out: &Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
@@ -104,10 +113,9 @@ async fn index(
 struct DetailPort(Arc<Mutex<Option<Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)>>>>);
 impl PesticideDetailOutputPort for DetailPort {
     fn on_success(&mut self, dto: PesticideDetailOutput) {
-        // Rails `PesticideDetailApiPresenter` returns flat pesticide entity JSON.
         *self.0.lock().unwrap() = Some(Ok((
             StatusCode::OK,
-            Json(pesticide_json(&dto.pesticide)),
+            Json(pesticide_detail_json(&dto)),
         )));
     }
     fn on_failure(&mut self, failure: DetailFailure) {

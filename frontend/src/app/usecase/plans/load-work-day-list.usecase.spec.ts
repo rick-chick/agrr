@@ -152,6 +152,71 @@ describe('LoadWorkDayListUseCase', () => {
     expect(result!.today[0].item.status).toBe('skipped');
   });
 
+  it('includes overdue skipped items when includeSkipped is true', () => {
+    const response = scheduleWithItems([
+      item({ item_id: 1, scheduled_date: '2026-06-08', status: 'skipped', name: '期限超過skip' })
+    ]);
+    let result: LoadWorkDayListDataDto | null = null;
+    const outputPort: LoadWorkDayListOutputPort = {
+      present: (dto) => {
+        result = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    useCase.execute({ planId: 1, today, includeSkipped: true });
+
+    expect(result!.overdue).toHaveLength(1);
+    expect(result!.overdue[0].item.item_id).toBe(1);
+    expect(result!.overdue[0].item.status).toBe('skipped');
+    expect(result!.today).toHaveLength(0);
+    expect(result!.upcoming).toHaveLength(0);
+  });
+
+  it('includes upcoming skipped items when includeSkipped is true', () => {
+    const response = scheduleWithItems([
+      item({ item_id: 2, scheduled_date: '2026-06-14', status: 'skipped', name: '今後skip' })
+    ]);
+    let result: LoadWorkDayListDataDto | null = null;
+    const outputPort: LoadWorkDayListOutputPort = {
+      present: (dto) => {
+        result = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    useCase.execute({ planId: 1, today, includeSkipped: true });
+
+    expect(result!.upcoming).toHaveLength(1);
+    expect(result!.upcoming[0].item.item_id).toBe(2);
+    expect(result!.upcoming[0].item.status).toBe('skipped');
+    expect(result!.overdue).toHaveLength(0);
+    expect(result!.today).toHaveLength(0);
+  });
+
+  it('excludes overdue and upcoming skipped items when includeSkipped is false', () => {
+    const response = scheduleWithItems([
+      item({ item_id: 1, scheduled_date: '2026-06-08', status: 'skipped' }),
+      item({ item_id: 2, scheduled_date: '2026-06-14', status: 'skipped' })
+    ]);
+    let result: LoadWorkDayListDataDto | null = null;
+    const outputPort: LoadWorkDayListOutputPort = {
+      present: (dto) => {
+        result = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    useCase.execute({ planId: 1, today, includeSkipped: false });
+
+    expect(result!.overdue).toHaveLength(0);
+    expect(result!.today).toHaveLength(0);
+    expect(result!.upcoming).toHaveLength(0);
+  });
+
   it('shows completed items only when recorded today', () => {
     const response = scheduleWithItems([
       item({

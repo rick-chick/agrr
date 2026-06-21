@@ -28,6 +28,16 @@ describe('EntryScheduleApiGateway', () => {
     gateway = TestBed.inject(EntryScheduleApiGateway);
   });
 
+  it('sends current ngx locale to entry schedule farms API', async () => {
+    apiClient.get.mockReturnValue(of([]));
+
+    await firstValueFrom(gateway.getEntryScheduleFarms());
+
+    const options = apiClient.get.mock.calls[0][1] as { headers: HttpHeaders };
+    expect(apiClient.get.mock.calls[0][0]).toBe('/api/v1/public_plans/entry_schedule/farms');
+    expect(options.headers.get('Accept-Language')).toBe('in');
+  });
+
   it('sends current ngx locale to entry schedule list API', async () => {
     apiClient.get.mockReturnValue(
       of({

@@ -23,6 +23,15 @@ const locales: { name: string; catalog: JsonRecord }[] = [
 ];
 
 describe('plans.detail i18n catalog', () => {
+  it('defines distinct non-English placeholders for ja and in', () => {
+    const enValue = getNested(en as JsonRecord, PLANS_DETAIL_KEYS[0]) as string;
+    const jaValue = getNested(ja as JsonRecord, PLANS_DETAIL_KEYS[0]) as string;
+    const inValue = getNested(inLocale as JsonRecord, PLANS_DETAIL_KEYS[0]) as string;
+
+    expect(jaValue).not.toBe(enValue);
+    expect(inValue).not.toBe(enValue);
+  });
+
   for (const { name, catalog } of locales) {
     describe(name, () => {
       for (const key of PLANS_DETAIL_KEYS) {

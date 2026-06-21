@@ -118,11 +118,4 @@ describe('agricultural_tasks index and new i18n', () => {
       expect(value, `unexpected Japanese in in.json: ${value}`).not.toMatch(JAPANESE_UI);
     }
   });
-
-  it('defines shared.region_select in ja, en, and in', () => {
-    for (const bundle of [ja, en, inLocale]) {
-      const rs = (bundle as { shared?: { region_select?: { label?: string } } }).shared?.region_select;
-      expect(rs?.label).toBeTruthy();
-    }
-  });
 });

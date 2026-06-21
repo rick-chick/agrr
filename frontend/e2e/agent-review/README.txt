@@ -36,6 +36,15 @@ npm run e2e:capture-for-agent
 
 CSS トークン当て漏れの列挙: `npm run audit:css-tokens`
 
+`visual-review-results.md` と `route-manifest.json` の pattern 一致:
+
+```bash
+npm run e2e:visual-review:check          # 不一致は warn（exit 0）
+npm run e2e:visual-review:check:enforce  # 不一致で exit 1（CI 昇格用）
+```
+
+ルート追加・削除後にサマリ表やメタの `#1–N` が古いまま残っていないか検知する。frontend-test CI では warn モードで実行。
+
 ## Issue 起票パイプライン
 
 1. 本 README のキャプチャ → `frontend-agent-visual-review`（visual-review-results.md）

@@ -1,3 +1,78 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:caa9fb5e77fc5519ea83ee9a6c938224026db7ce4b75b5561a3b139bcd1bd0b4
-size 2477
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "postinstall": "patch-package",
+    "check:proxy-conf": "node scripts/proxy-conf-contract.mjs",
+    "check-hardcoded-i18n": "node scripts/check-hardcoded-i18n.mjs",
+    "check-hardcoded-i18n:enforce": "node scripts/check-hardcoded-i18n.mjs --enforce",
+    "test:e2e": "playwright test",
+    "test:route-manifest-coverage": "playwright test e2e/route-manifest-coverage.spec.ts --config=playwright.manifest.config.ts",
+    "test:e2e:smoke": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/",
+    "test:e2e:ui": "playwright test --ui",
+    "e2e:capture-for-agent": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/visual/route-manifest-visual.spec.ts e2e/visual/login-capture-for-agent.spec.ts && node e2e/agent-review/verify-capture-complete.mjs",
+    "audit:css-tokens": "node scripts/audit-component-css-tokens.mjs",
+    "audit:css-tokens:enforce": "node scripts/audit-component-css-tokens.mjs --enforce",
+    "e2e:manifest": "node scripts/generate-e2e-route-manifest.mjs",
+    "e2e:manifest:check": "node scripts/generate-e2e-route-manifest.mjs --check",
+    "e2e:visual-review:check": "node e2e/agent-review/verify-visual-review-fresh.mjs",
+    "e2e:visual-review:check:enforce": "node e2e/agent-review/verify-visual-review-fresh.mjs --enforce"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "packageManager": "npm@9.2.0",
+  "dependencies": {
+    "@angular/cdk": "^21.2.9",
+    "@angular/common": "^21.2.11",
+    "@angular/compiler": "^21.2.11",
+    "@angular/core": "^21.2.11",
+    "@angular/forms": "^21.2.11",
+    "@angular/material": "^21.2.9",
+    "@angular/platform-browser": "^21.2.11",
+    "@angular/router": "^21.2.11",
+    "@bluehalo/ngx-leaflet": "^21.0.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@types/actioncable": "^5.2.11",
+    "@types/leaflet": "^1.9.21",
+    "actioncable": "^5.2.8-1",
+    "chart.js": "^4.5.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
+    "leaflet": "^1.9.4",
+    "ng2-charts": "^8.0.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.9",
+    "@angular/cli": "^21.2.9",
+    "@angular/compiler-cli": "^21.2.11",
+    "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.59.1",
+    "angular-eslint": "^21.3.1",
+    "eslint": "^9.39.4",
+    "jsdom": "^27.1.0",
+    "parse5": "^7.1.2",
+    "patch-package": "^8.0.1",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.58.2",
+    "vitest": "^4.0.8",
+    "zone.js": "^0.16.0"
+  }
+}

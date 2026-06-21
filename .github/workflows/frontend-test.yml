@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -29,6 +29,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Route manifest coverage
+        run: npm run test:route-manifest-coverage
+
+      - name: Route manifest freshness
+        run: npm run e2e:manifest:check
+
+      - name: Visual review pattern freshness
+        run: npm run e2e:visual-review:check
 
       - name: Unit tests
         run: npm test -- --watch=false
@@ -42,3 +51,19 @@ jobs:
       - name: UX findings collector unit tests
         working-directory: ${{ github.workspace }}
         run: node --test .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.test.mjs
+
+      - name: check-hardcoded-i18n unit tests
+        working-directory: frontend
+        run: node --test scripts/check-hardcoded-i18n.test.mjs
+
+      - name: generate-e2e-route-manifest unit tests
+        working-directory: frontend
+        run: node --test scripts/generate-e2e-route-manifest.test.mjs
+
+      - name: verify-visual-review-fresh unit tests
+        working-directory: frontend
+        run: node --test e2e/agent-review/verify-visual-review-fresh.test.mjs
+
+      - name: apply-resolved-url unit tests
+        working-directory: frontend
+        run: node --test e2e/apply-resolved-url.test.mjs
