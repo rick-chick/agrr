@@ -76,6 +76,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-e2e-smoke-ci-workflow.test.mjs
 
+      - name: verify-e2e-capture-ci-workflow unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-e2e-capture-ci-workflow.test.mjs
+
       - name: ensure-e2e-baseline bodies unit tests
         working-directory: frontend
         run: node --test e2e/fixtures/ensure-e2e-baseline-bodies.test.mjs

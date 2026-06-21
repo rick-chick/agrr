@@ -137,7 +137,7 @@ node .cursor/skills/ux-issue-creator/scripts/collect-ux-findings.mjs
 
 ## Automation（スケジュール）
 
-Cloud Agent 向け。**フェーズ 1–2（キャプチャ・PNG レビュー）は実行しない**（ローカル Rails :3000 + ng :4200 が必要なため）。リポジトリに commit 済みの `visual-review-results.md` を正とする。
+Cloud Agent 向け。**フェーズ 1–2（キャプチャ・PNG レビュー）はローカル Docker が無い場合は CI artifact を利用**する（`.github/workflows/frontend-e2e-capture.yml` 週次・routes/manifest 変更時）。artifact 未取得時はリポジトリに commit 済みの `visual-review-results.md` を正とする。
 
 ### トリガー例
 
@@ -174,10 +174,14 @@ Do NOT implement issues or open implementation PRs.
 If ux-findings-draft.json has sources.githubLookupStatus === "failed", do NOT gh issue create; record failure and exit.
 ```
 
-### ローカルとの役割分担
+### ローカル vs CI の役割分担
 
 | 作業 | 担当 |
 |------|------|
-| キャプチャ + 全画面ビジュアルレビュー | ローカル（開発者 or IDE Agent + Docker） |
+| キャプチャ（`e2e:capture-for-agent`） | **CI**（`.github/workflows/frontend-e2e-capture.yml`）週次・routes/manifest 変更時。PNG は workflow artifact（repo 非 commit） |
+| キャプチャ（開発中・即時） | ローカル（開発者 or IDE Agent + Docker） |
+| 全画面ビジュアルレビュー | ローカル or Cloud Agent（CI artifact 取得後） |
 | CSS 監査 + 草案 + 条件付き起票 | Cursor Automation（本節） |
 | issue 実装 | `github-issue-worker` Automation |
+
+CI キャプチャの詳細（所要時間・artifact 保持・`run-e2e-capture-ci.sh`）は `frontend/e2e/agent-review/README.txt` の「CI」節を正とする。

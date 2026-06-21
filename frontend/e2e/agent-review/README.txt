@@ -45,6 +45,28 @@ npm run e2e:visual-review:check:enforce  # 不一致で exit 1（CI 昇格用）
 
 ルート追加・削除後にサマリ表やメタの `#1–N` が古いまま残っていないか検知する。frontend-test CI では warn モードで実行。
 
+## CI（週次・ルート変更時）
+
+GitHub Actions workflow **`.github/workflows/frontend-e2e-capture.yml`** が **`e2e:capture-for-agent`** を実行し、**`verify-capture-complete`** 通過後に PNG を **workflow artifact** として配布する（repo には commit しない）。
+
+| 項目 | 内容 |
+|------|------|
+| 起動 | 週次（月曜 0:00 JST）・`master` への routes / manifest 変更・`workflow_dispatch` |
+| スタック | `docker compose` + `docker-compose.e2e-ci.yml`（`agrr-server` + `strangler-proxy`）+ Playwright `ng serve` |
+| テスト | リポジトリ root で `bash scripts/run-e2e-capture-ci.sh` → frontend で `npm run e2e:capture-for-agent` |
+| ゲート | `verify-capture-complete.mjs`（ルート数 × 3 言語の PNG 件数） |
+| artifact | `frontend/e2e/agent-review/out/*.png`（保持 14 日。50 ルート × 3 言語 ≈ 150 枚・合計数十 MB 程度） |
+| 所要時間 | 初回（DB ロード + イメージ build）は 60–90 分、キャッシュ済みは 30–50 分程度（runner 性能依存） |
+
+ローカルで CI と同条件を試す場合（Docker 必須）:
+
+```bash
+cd frontend && npm ci
+cd .. && bash scripts/run-e2e-capture-ci.sh
+```
+
+Cloud Agent のビジュアルレビューは artifact 取得後に `frontend-agent-visual-review` を実行できる。詳細は `.cursor/skills/ux-issue-pipeline/SKILL.md` の「ローカル vs CI」。
+
 ## Issue 起票パイプライン
 
 1. 本 README のキャプチャ → `frontend-agent-visual-review`（visual-review-results.md）
