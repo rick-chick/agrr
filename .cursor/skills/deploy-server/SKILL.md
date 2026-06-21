@@ -12,6 +12,7 @@ description: Deploy the backend to GCP Cloud Run (production). agrr-server only 
 - `gcloud` CLI がインストール・認証済み (`gcloud auth login`)
 - Docker が起動中
 - `.env.gcp` がプロジェクトルートに存在 (`env.gcp.example` から作成)
+- 天気 reference fixture: `scripts/ensure-reference-fixtures.sh`（deploy 内で `AGRR_FIXTURES_REQUIRED=1` 自動実行。GCS `agrr-reference-fixtures` + [`config/reference-fixtures.lock.json`](../../../config/reference-fixtures.lock.json)）
 
 ## デプロイ手順
 

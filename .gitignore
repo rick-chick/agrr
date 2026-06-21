@@ -136,6 +136,11 @@ db/cache_schema.rb.tmp
 
 # Ignore reference data that may contain sensitive information
 /db/fixtures/**/*.json
+# Weather JSON: fetched via scripts/ensure-reference-fixtures.sh (GCS lock file)
+# Crops JSON: small reference masters tracked in Git (LFS until budget restored)
+!/db/fixtures/reference_crops.json
+!/db/fixtures/us_reference_crops.json
+!/db/fixtures/india_reference_crops.json
 
 # Track example files while ignoring actual fixtures
 !/db/fixtures/*.example

@@ -158,6 +158,9 @@ ensure_agrr_r4_contract_tests_binary() {
 
 ensure_agrr_r4_contract_tests_binary
 
+echo "==> ensure-reference-fixtures (shell contract)"
+bash "${ROOT}/scripts/ensure-reference-fixtures-test.sh"
+
 echo "==> R4 contract (CONTRACT_RUNTIME=rust, shared test.sqlite3)"
 docker compose --profile test run --rm \
   -e AGRR_TEST_SCRIPT=1 \
