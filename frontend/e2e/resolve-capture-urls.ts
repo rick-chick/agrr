@@ -1,8 +1,13 @@
 import type { APIRequestContext } from '@playwright/test';
 import { firstRecordId, pickEntryScheduleCropId } from './shared/entry-schedule-ids-lib.mjs';
-import { parseMasterList, pickBaselineIdFromList, pickBaselinePlanId } from './shared/baseline-ids';
+import {
+  MASTER_SEGMENTS,
+  parseMasterList,
+  pickBaselineIdFromList,
+  pickBaselinePlanId,
+} from './shared/baseline-ids';
 
-export { MASTER_SEGMENTS } from './shared/baseline-ids';
+export { MASTER_SEGMENTS };
 export { applyResolvedUrl } from './apply-resolved-url.mjs';
 
 export type ResolvedCaptureIds = {
