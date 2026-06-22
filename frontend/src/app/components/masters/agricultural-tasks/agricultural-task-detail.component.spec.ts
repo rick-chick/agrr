@@ -55,7 +55,8 @@ describe('AgriculturalTaskDetailComponent', () => {
         id: 1,
         name: 'Tilling',
         region: 'jp',
-        is_reference: false
+        is_reference: false,
+        required_tools: []
       }
     };
     fixture.detectChanges();

@@ -62,7 +62,8 @@ describe('InteractionRuleDetailComponent', () => {
         target_group: 'Solanaceae',
         impact_ratio: 0.8,
         is_directional: true,
-        is_reference: false
+        is_reference: false,
+        region: null
       }
     };
     fixture.detectChanges();
@@ -84,7 +85,8 @@ describe('InteractionRuleDetailComponent', () => {
         target_group: 'B',
         impact_ratio: 1,
         is_directional: false,
-        is_reference: false
+        is_reference: false,
+        region: null
       }
     };
     fixture.detectChanges();
