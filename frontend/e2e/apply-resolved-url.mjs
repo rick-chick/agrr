@@ -1,25 +1,38 @@
-import { MASTER_SEGMENTS } from './baseline-ids-lib.mjs';
+/** GET /api/v1/masters/:segment の URL セグメント（resolve-capture-urls と共有） */
+export const MASTER_SEGMENTS = [
+  'agricultural_tasks',
+  'crops',
+  'farms',
+  'fertilizes',
+  'interaction_rules',
+  'pesticides',
+  'pests',
+];
 
 /**
- * route-manifest.json の静的 url を、ResolvedCaptureIds の結果で上書きする。
+ * route-manifest.json の静的 url を、buildResolvedCaptureIds の結果で上書きする。
  * 部分文字列置換は多桁 id で誤爆するため、pattern からパスを組み立てる。
  *
  * @param {string} pattern
  * @param {string} url
- * @param {import('./resolve-capture-urls-lib.mjs').ResolvedCaptureIds} ids
+ * @param {{
+ *   masters: Record<string, number>;
+ *   privatePlanId: number | null;
+ *   publicPlanId: number | null;
+ *   farmId: number | null;
+ *   cropId: number | null;
+ * }} ids
+ * @returns {string}
  */
 export function applyResolvedUrl(pattern, url, ids) {
   if (pattern.startsWith('public-plans/') && url.includes('planId=')) {
-    const pid = ids.publicPlanId ?? 1;
-    return url.replace(/planId=\d+/, `planId=${pid}`);
+    if (ids.publicPlanId == null) return url;
+    return url.replace(/planId=\d+/, `planId=${ids.publicPlanId}`);
   }
 
   if (pattern === 'entry-schedule/crop/:cropId') {
-    const f = ids.farmId ?? 1;
-    if (ids.cropId != null) {
-      return `/entry-schedule/crop/${ids.cropId}?farmId=${f}`;
-    }
-    return url;
+    if (ids.cropId == null || ids.farmId == null) return url;
+    return `/entry-schedule/crop/${ids.cropId}?farmId=${ids.farmId}`;
   }
 
   if (pattern.startsWith('plans/')) {

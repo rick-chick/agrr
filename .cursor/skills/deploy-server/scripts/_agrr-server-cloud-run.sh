@@ -81,6 +81,8 @@ _agrr_server_deploy() {
 
   echo "==> Mode: $mode"
   echo "==> Service: $SERVICE"
+  echo "==> Ensuring reference weather fixtures (host) before image build"
+  AGRR_FIXTURES_REQUIRED=1 "${PROJECT_ROOT}/scripts/ensure-reference-fixtures.sh"
   echo "==> Building ${IMAGE}"
   docker build -f Dockerfile.agrr-server -t "${IMAGE}" .
   if [ "$mode" = "production" ]; then

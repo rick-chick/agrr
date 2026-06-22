@@ -64,6 +64,30 @@ jobs:
         working-directory: frontend
         run: node --test e2e/agent-review/verify-visual-review-fresh.test.mjs
 
-      - name: e2e capture URL resolution unit tests
+      - name: apply-resolved-url unit tests
         working-directory: frontend
-        run: node --test e2e/shared/baseline-ids-lib.test.mjs e2e/shared/resolve-capture-urls-lib.test.mjs e2e/route-validity-lib.test.mjs
+        run: node --test e2e/apply-resolved-url.test.mjs
+
+      - name: resolve-capture-urls scope unit tests
+        working-directory: frontend
+        run: node --test e2e/resolve-capture-urls-scope.test.mjs
+
+      - name: verify-e2e-smoke-ci-workflow unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-e2e-smoke-ci-workflow.test.mjs
+
+      - name: verify-e2e-capture-ci-workflow unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-e2e-capture-ci-workflow.test.mjs
+
+      - name: ensure-e2e-baseline bodies unit tests
+        working-directory: frontend
+        run: node --test e2e/fixtures/ensure-e2e-baseline-bodies.test.mjs
+
+      - name: entry-schedule ids unit tests
+        working-directory: frontend
+        run: node --test e2e/shared/entry-schedule-ids-lib.test.mjs
+
+      - name: e2e baseline-ids and route-validity lib unit tests
+        working-directory: frontend
+        run: node --test e2e/shared/baseline-ids-lib.test.mjs e2e/route-validity-lib.test.mjs

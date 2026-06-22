@@ -1,13 +1,14 @@
 import type { APIRequestContext } from '@playwright/test';
+import { firstRecordId, pickEntryScheduleCropId } from './shared/entry-schedule-ids-lib.mjs';
 import {
   MASTER_SEGMENTS,
   parseMasterList,
   pickBaselineIdFromList,
   pickBaselinePlanId,
 } from './shared/baseline-ids';
-import { applyResolvedUrl as applyResolvedUrlLib } from './shared/resolve-capture-urls-lib.mjs';
 
-export { MASTER_SEGMENTS } from './shared/baseline-ids';
+export { MASTER_SEGMENTS };
+export { applyResolvedUrl } from './apply-resolved-url.mjs';
 
 export type ResolvedCaptureIds = {
   masters: Record<string, number>;
@@ -15,12 +16,28 @@ export type ResolvedCaptureIds = {
   privatePlanId: number | null;
   /** GET public cultivation_plans/:id/data が 200 になる id */
   publicPlanId: number | null;
+  /** GET /api/v1/public_plans/entry_schedule/farms の参照農場 id（masters/farms とは別） */
   farmId: number | null;
   cropId: number | null;
 };
 
 function stripOrigin(base: string): string {
   return base.replace(/\/$/, '');
+}
+
+async function fetchEntryScheduleFarmId(
+  api: APIRequestContext,
+  base: string,
+): Promise<number | null> {
+  const res = await api.get(`${base}/api/v1/public_plans/entry_schedule/farms`, {
+    failOnStatusCode: false,
+  });
+  if (!res.ok()) return null;
+  try {
+    return firstRecordId(await res.json());
+  } catch {
+    return null;
+  }
 }
 
 /** farm_id 単位でエントリ目安 API に載る作物 id（マスタ先頭 crop とは一致しないことがある） */
@@ -35,11 +52,7 @@ async function fetchEntryScheduleCropIdForFarm(
   );
   if (!res.ok()) return null;
   try {
-    const data = (await res.json()) as { crops?: Array<{ id?: unknown }> };
-    const crops = data?.crops;
-    if (!Array.isArray(crops) || crops.length === 0) return null;
-    const first = crops.find((c) => c?.id != null);
-    return first != null ? Number(first.id) : null;
+    return pickEntryScheduleCropId(await res.json());
   } catch {
     return null;
   }
@@ -80,7 +93,7 @@ export async function buildResolvedCaptureIds(
     /* ignore */
   }
 
-  const farmId = masters['farms'] ?? null;
+  const farmId = await fetchEntryScheduleFarmId(api, base);
   let cropId: number | null = null;
   if (farmId != null) {
     cropId = await fetchEntryScheduleCropIdForFarm(api, base, farmId);
@@ -101,9 +114,4 @@ async function probePublicPlanId(api: APIRequestContext, base: string): Promise<
     if (res.status() === 200) return id;
   }
   return null;
-}
-
-/** @see ./shared/resolve-capture-urls-lib.mjs */
-export function applyResolvedUrl(pattern: string, url: string, ids: ResolvedCaptureIds): string {
-  return applyResolvedUrlLib(pattern, url, ids);
 }

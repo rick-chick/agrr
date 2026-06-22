@@ -10,12 +10,15 @@ export type CaptureLocale = 'ja' | 'en' | 'in';
 export { CAPTURE_LOCALES };
 export { agentPngFilename } from './capture-locales.mjs';
 
+/** `resolveInitialAppLang` と同じキー（app-locale.ts） */
+const APP_LANG_STORAGE_KEY = 'agrr.app.lang';
+
 /** ブラウザ言語検出（app.ts detectBrowserLang）と cookie を E2E 用に固定する */
 export async function installCaptureLocale(page: Page, locale: CaptureLocale): Promise<void> {
   const navLang = navigatorLanguageTag(locale);
   const railsLocale = railsLocaleCookieValue(locale);
   await page.addInitScript(
-    ({ navLang: nl, railsLocale: rl }) => {
+    ({ navLang: nl, railsLocale: rl, appLang: al, storageKey: sk }) => {
       const w = window as Window & { __disableCookieControl?: boolean };
       w.__disableCookieControl = true;
       Object.defineProperty(navigator, 'language', {
@@ -26,9 +29,14 @@ export async function installCaptureLocale(page: Page, locale: CaptureLocale): P
         get: () => [nl],
         configurable: true,
       });
+      try {
+        localStorage.setItem(sk, al);
+      } catch {
+        /* private mode */
+      }
       document.cookie = `locale=${rl}; path=/; max-age=31536000`;
     },
-    { navLang, railsLocale },
+    { navLang, railsLocale, appLang: locale, storageKey: APP_LANG_STORAGE_KEY },
   );
 }
 
