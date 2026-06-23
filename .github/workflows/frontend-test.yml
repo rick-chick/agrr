@@ -87,3 +87,7 @@ jobs:
       - name: entry-schedule ids unit tests
         working-directory: frontend
         run: node --test e2e/shared/entry-schedule-ids-lib.test.mjs
+
+      - name: e2e baseline-ids and route-validity lib unit tests
+        working-directory: frontend
+        run: node --test e2e/shared/baseline-ids-lib.test.mjs e2e/route-validity-lib.test.mjs
