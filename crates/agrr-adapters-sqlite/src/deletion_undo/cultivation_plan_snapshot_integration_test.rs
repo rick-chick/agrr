@@ -100,6 +100,35 @@ fn cultivation_plan_undo_restores_task_schedule_items_and_work_records() {
         .unwrap();
     let snapshot: serde_json::Value = serde_json::from_str(&snapshot_json).unwrap();
 
+    let work_records = snapshot
+        .pointer("/associations/work_records")
+        .and_then(|v| v.as_array())
+        .unwrap_or_else(|| panic!("snapshot must include work_records association"));
+    assert_eq!(work_records.len(), 1, "snapshot must capture work_records before delete");
+    assert_eq!(
+        work_records[0].get("model").and_then(|v| v.as_str()),
+        Some("WorkRecord")
+    );
+
+    let task_schedules = snapshot
+        .pointer("/associations/task_schedules")
+        .and_then(|v| v.as_array())
+        .unwrap_or_else(|| panic!("snapshot must include task_schedules association"));
+    assert_eq!(task_schedules.len(), 1, "snapshot must capture task_schedules before delete");
+    let nested_items = task_schedules[0]
+        .pointer("/associations/task_schedule_items")
+        .and_then(|v| v.as_array())
+        .unwrap_or_else(|| panic!("task_schedule snapshot must nest task_schedule_items"));
+    assert_eq!(
+        nested_items.len(),
+        1,
+        "snapshot must capture nested task_schedule_items (P6 regression)"
+    );
+    assert_eq!(
+        nested_items[0].get("model").and_then(|v| v.as_str()),
+        Some("TaskScheduleItem")
+    );
+
     pool.with_write(|conn| restore_snapshot(conn, &snapshot))
         .expect("restore snapshot");
 
