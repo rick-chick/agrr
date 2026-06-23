@@ -195,3 +195,21 @@ fn list_index_for_filter_reference_or_owned_includes_reference_and_admin_owned_r
     assert!(ids.contains(&own));
     assert!(!ids.contains(&other_pesticide));
 }
+
+// Regression: detail API must JOIN crop/pest names (not only IDs) — #35
+#[test]
+fn find_pesticide_show_detail_returns_crop_and_pest_names_from_join() {
+    let pool = pesticide_test_pool();
+    let gw = PesticideSqliteGateway::new(pool.clone());
+
+    let crop_id = insert_crop(&pool, 1, "トマト", false);
+    let pest_id = insert_pest(&pool, Some(1), "アブラムシ", false);
+    let pesticide_id =
+        insert_pesticide(&pool, Some(1), crop_id, pest_id, "農薬A", false);
+
+    let detail = gw.find_pesticide_show_detail(pesticide_id).unwrap();
+
+    assert_eq!(detail.pesticide.id, pesticide_id);
+    assert_eq!(detail.crop_name.as_deref(), Some("トマト"));
+    assert_eq!(detail.pest_name.as_deref(), Some("アブラムシ"));
+}
