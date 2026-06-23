@@ -19,7 +19,7 @@ const ALLOWED_MISSING_RATIO: f64 = 0.05;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FetchWeatherDataPerformError {
-    InvalidWeatherApiResponse,
+    InvalidWeatherApiResponse(String),
     InvalidWeatherDataArray,
     ExcessiveMissingWeatherDays,
     MissingOrInvalidWeatherLocation,
@@ -30,7 +30,9 @@ pub enum FetchWeatherDataPerformError {
 impl std::fmt::Display for FetchWeatherDataPerformError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::WeatherDataStorageFailed(msg) => write!(f, "{msg}"),
+            Self::InvalidWeatherApiResponse(msg) | Self::WeatherDataStorageFailed(msg) => {
+                write!(f, "{msg}")
+            }
             other => write!(f, "{other:?}"),
         }
     }
@@ -247,7 +249,7 @@ impl<'a> FetchWeatherDataPerformInteractor<'a> {
         let data_source = self.determine_data_source(farm_id, latitude, longitude);
         self.agrr_weather_gateway
             .fetch_by_date_range(latitude, longitude, start_date, end_date, &data_source)
-            .map_err(|_| FetchWeatherDataPerformError::InvalidWeatherApiResponse)
+            .map_err(|e| FetchWeatherDataPerformError::InvalidWeatherApiResponse(e.to_string()))
     }
 
     /// agrr normal fetch exit 0 with no output file: keep existing store and continue the chain.
