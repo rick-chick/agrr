@@ -2,6 +2,11 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 import { HOST_SELECTOR_BY_PATTERN_GENERATED } from './host-selector-by-pattern.generated';
+import {
+  expectedPathname as expectedPathnameLib,
+  expectedPathnameFromResolvedGoto as expectedPathnameFromResolvedGotoLib,
+  normalizePathname as normalizePathnameLib,
+} from './route-validity-lib.mjs';
 
 /** route-manifest.json の `pattern` をキーに、ルータ到達後に表示されるホストコンポーネントのルートセレクタ */
 export const HOST_SELECTOR_BY_PATTERN: Record<string, string> = {
@@ -10,24 +15,19 @@ export const HOST_SELECTOR_BY_PATTERN: Record<string, string> = {
 
 export type RouteRow = { pattern: string; url: string; requiresAuth: boolean; source: string };
 
-/** リダイレクト後に期待する pathname（末尾スラッシュは正規化で吸収。クエリは除去） */
+/** @see ./route-validity-lib.mjs */
 export function expectedPathname(r: RouteRow): string {
-  const raw = r.url.startsWith('/') ? r.url : `/${r.url}`;
-  const pathOnly = raw.split('?')[0] ?? raw;
-  return pathOnly.replace(/\/$/, '') || '/';
+  return expectedPathnameLib(r);
 }
 
-function normalizePathname(path: string): string {
-  return path.replace(/\/$/, '') || '/';
+/** @see ./route-validity-lib.mjs */
+export function normalizePathname(path: string): string {
+  return normalizePathnameLib(path);
 }
 
-export { normalizePathname };
-
-/** Playwright が実際に開いた href（相対可）から期待 pathname を得る（実行時リゾルブ後の検証用） */
+/** @see ./route-validity-lib.mjs */
 export function expectedPathnameFromResolvedGoto(href: string): string {
-  const raw = href.startsWith('/') ? href : `/${href}`;
-  const pathOnly = raw.split('?')[0] ?? raw;
-  return normalizePathname(pathOnly);
+  return expectedPathnameFromResolvedGotoLib(href);
 }
 
 /**
