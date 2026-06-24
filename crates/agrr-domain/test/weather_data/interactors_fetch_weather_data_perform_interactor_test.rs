@@ -637,3 +637,56 @@ use serde_json::json;
         );
         assert_eq!(err.to_string(), "upsert failed");
     }
+
+    struct FailingAgrrGateway {
+        message: String,
+    }
+
+    impl AgrrWeatherGateway for FailingAgrrGateway {
+        fn fetch_by_date_range(
+            &self,
+            _: f64,
+            _: f64,
+            _: Date,
+            _: Date,
+            _: &str,
+        ) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
+            Err(self.message.clone().into())
+        }
+    }
+
+    #[test]
+    fn preserves_gateway_error_message_when_agrr_fetch_fails() {
+        let harness = PerformHarness::new(
+            None,
+            0,
+            Arc::new(Mutex::new(false)),
+            Some("jp".into()),
+            false,
+            None,
+        );
+        let failing_agrr = FailingAgrrGateway {
+            message: "agrr daemon is not running at /tmp/agrr.sock".into(),
+        };
+        let interactor = FetchWeatherDataPerformInteractor::new(
+            &harness.weather,
+            &harness.farm,
+            &harness.advance,
+            &harness.record,
+            &failing_agrr,
+            &harness.presenter,
+        )
+        .with_skip_api_sleep();
+
+        let err = interactor.call(sample_input()).expect_err("error");
+        assert_eq!(
+            err,
+            FetchWeatherDataPerformError::InvalidWeatherApiResponse(
+                "agrr daemon is not running at /tmp/agrr.sock".into()
+            )
+        );
+        assert_eq!(
+            err.to_string(),
+            "agrr daemon is not running at /tmp/agrr.sock"
+        );
+    }
