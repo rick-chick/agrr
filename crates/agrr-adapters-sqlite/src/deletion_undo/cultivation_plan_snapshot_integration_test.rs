@@ -146,3 +146,68 @@ fn cultivation_plan_undo_restores_task_schedule_items_and_work_records() {
         .unwrap();
     assert_eq!(linked_item_id, Some(seed.task_schedule_item_id));
 }
+
+#[test]
+fn cultivation_plan_undo_via_gateway_perform_restore_marks_event_restored() {
+    use crate::deletion_undo::DeletionUndoSqliteGateway;
+    use agrr_domain::deletion_undo::gateways::DeletionUndoGateway;
+
+    let pool = work_record_integration_pool();
+    ensure_deletion_undo_events_table(&pool);
+    let seed = seed_work_record_crud(&pool);
+
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO work_records (
+               cultivation_plan_id, field_cultivation_id, task_schedule_item_id,
+               agricultural_task_id, name, task_type, actual_date, created_at, updated_at
+             ) VALUES (?1, ?2, ?3, ?4, '実績', 'field_work', '2026-06-02', datetime('now'), datetime('now'))",
+            params![
+                seed.plan_id,
+                seed.field_cultivation_id,
+                seed.task_schedule_item_id,
+                seed.agricultural_task_id
+            ],
+        )
+    })
+    .unwrap();
+
+    let scheduled = schedule_destroy(
+        &pool,
+        "CultivationPlan",
+        seed.plan_id,
+        42,
+        "削除しました",
+        5,
+        BTreeMap::new(),
+    )
+    .expect("schedule destroy");
+
+    assert_eq!(count_task_schedule_items_for_plan(&pool, seed.plan_id), 0);
+    assert_eq!(count_rows(&pool, "work_records", seed.plan_id), 0);
+
+    let gateway = DeletionUndoSqliteGateway::new(pool.clone());
+    gateway
+        .perform_restore(&scheduled.undo_token)
+        .expect("gateway perform_restore");
+
+    let state: String = pool
+        .with_read(|conn| {
+            conn.query_row(
+                "SELECT state FROM deletion_undo_events WHERE id = ?1",
+                params![scheduled.undo_token],
+                |row| row.get(0),
+            )
+        })
+        .unwrap();
+    assert_eq!(state, "restored");
+
+    assert_eq!(count_task_schedule_items_for_plan(&pool, seed.plan_id), 1);
+    assert_eq!(count_rows(&pool, "work_records", seed.plan_id), 1);
+
+    let second = gateway.perform_restore(&scheduled.undo_token);
+    assert!(
+        second.is_err(),
+        "second perform_restore must fail when event is no longer scheduled"
+    );
+}
