@@ -207,3 +207,72 @@ fn gcp_access_token(http: &Client) -> Result<String, WeatherDataGcsError> {
         .map(|s| s.to_string())
         .ok_or(WeatherDataGcsError::AuthFailed)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gcs_io_counters::{reset_for_test, GcsIoSnapshot};
+    use tempfile::TempDir;
+
+    struct CounterTestGuard;
+
+    impl CounterTestGuard {
+        fn new() -> Self {
+            reset_for_test();
+            Self
+        }
+    }
+
+    impl Drop for CounterTestGuard {
+        fn drop(&mut self) {
+            reset_for_test();
+        }
+    }
+
+    fn local_client(root: &Path) -> GcsObjectClient {
+        GcsObjectClient::new(WeatherDataGcsConfig {
+            bucket: "test-bucket".into(),
+            use_http: false,
+            local_root: Some(root.to_path_buf()),
+        })
+    }
+
+    #[test]
+    fn urlencoding_key_encodes_slashes_and_special_characters() {
+        assert_eq!(urlencoding_key("weather/data.json"), "weather%2Fdata.json");
+        assert_eq!(
+            urlencoding_key("predictions/plan 42/2026.json"),
+            "predictions%2Fplan%2042%2F2026.json"
+        );
+        assert_eq!(urlencoding_key("simple-key.txt"), "simple-key.txt");
+    }
+
+    #[test]
+    fn local_root_read_write_list_roundtrip() {
+        let _guard = CounterTestGuard::new();
+        let dir = TempDir::new().unwrap();
+        let client = local_client(dir.path());
+        let before = GcsIoSnapshot::capture();
+
+        client
+            .write_object("weather/farm-1.json", br#"{"lat":35}"#)
+            .expect("write");
+        let read = client
+            .read_object("weather/farm-1.json")
+            .expect("read")
+            .expect("object exists");
+        assert_eq!(read, br#"{"lat":35}"#);
+
+        let names = client
+            .list_object_names("weather/")
+            .expect("list weather prefix");
+        assert!(names.iter().any(|n| n.ends_with("farm-1.json")));
+
+        assert_eq!(client.read_object("missing/key.json").unwrap(), None);
+
+        let (reads, lists, writes) = before.delta_since();
+        assert_eq!(reads, 2, "write + missing read");
+        assert_eq!(lists, 1);
+        assert_eq!(writes, 1);
+    }
+}
