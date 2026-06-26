@@ -207,3 +207,70 @@ fn gcp_access_token(http: &Client) -> Result<String, WeatherDataGcsError> {
         .map(|s| s.to_string())
         .ok_or(WeatherDataGcsError::AuthFailed)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::gcs_io_counters::{reset_for_test, GcsIoSnapshot};
+    use tempfile::TempDir;
+
+    struct CounterTestGuard;
+
+    impl CounterTestGuard {
+        fn new() -> Self {
+            reset_for_test();
+            Self
+        }
+    }
+
+    impl Drop for CounterTestGuard {
+        fn drop(&mut self) {
+            reset_for_test();
+        }
+    }
+
+    fn local_client(root: &Path) -> GcsObjectClient {
+        GcsObjectClient::new(WeatherDataGcsConfig {
+            bucket: "local-test".into(),
+            use_http: false,
+            local_root: Some(root.to_path_buf()),
+        })
+    }
+
+    #[test]
+    fn urlencoding_key_encodes_slashes_and_special_characters() {
+        assert_eq!(urlencoding_key("weather_data/42/2024.json"), "weather_data%2F42%2F2024.json");
+        assert_eq!(urlencoding_key("a b/c+d"), "a%20b%2Fc%2Bd");
+        assert_eq!(urlencoding_key("safe-name_1.2~3"), "safe-name_1.2~3");
+    }
+
+    #[test]
+    fn local_root_read_write_list_round_trip() {
+        let _guard = CounterTestGuard::new();
+        let tmp = TempDir::new().expect("tempdir");
+        let client = local_client(tmp.path());
+
+        assert_eq!(
+            client.read_object("weather_data/1/2024.json").unwrap(),
+            None
+        );
+
+        let before = GcsIoSnapshot::capture();
+        let payload = br#"{"year":2024}"#;
+        client
+            .write_object("weather_data/1/2024.json", payload)
+            .expect("write");
+        assert_eq!(
+            client.read_object("weather_data/1/2024.json").unwrap(),
+            Some(payload.to_vec())
+        );
+
+        let mut names = client
+            .list_object_names("weather_data/1/")
+            .expect("list");
+        names.sort();
+        assert_eq!(names, vec!["weather_data/1/2024.json".to_string()]);
+
+        assert_eq!(before.delta_since(), (1, 1, 1));
+    }
+}
