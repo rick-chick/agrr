@@ -142,9 +142,8 @@ _agrr_server_deploy() {
   )
 
   if [ "$mode" = "production" ]; then
-    # Cold start: /up is ready soon after agrr-server exec; avoid 60s initialDelay.
     deploy_args+=(
-      --min-instances 1
+      --min-instances 0
       --startup-probe=initialDelaySeconds=10,timeoutSeconds=5,periodSeconds=5,failureThreshold=12,httpGet.path=/up,httpGet.port=8080
     )
     deploy_args+=(--set-secrets "SCHEDULER_AUTH_TOKEN=scheduler-auth-token:latest")
