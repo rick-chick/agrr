@@ -656,11 +656,10 @@
         "area_placeholder": "उदाहरण: 1000",
         "daily_fixed_cost_label": "दैनिक निश्चित लागत (₹)",
         "daily_fixed_cost_placeholder": "उदाहरण: 5000",
-        "region_label": "क्षेत्र",
-        "region_placeholder": "उदाहरण: भारत",
         "submit_update": "अपडेट करें",
         "submit_create": "खेत क्षेत्र बनाएं"
-      }
+      },
+      "field_list_item": "{{name}} ({{area}}㎡)"
     },
     "card": {
       "latitude": "अक्षांश",
@@ -710,6 +709,14 @@
       "insufficient_historical_data": "पूर्वानुमान के लिए अपर्याप्त ऐतिहासिक डेटा।",
       "job_queue_failed": "पूर्वानुमान जॉब कतारबद्ध करने में विफल: {{error}}",
       "farm_not_found": "खेत नहीं मिला।"
+    },
+    "form": {
+      "region_label": "क्षेत्र",
+      "region_jp": "जापान",
+      "region_us": "उत्तरी अमेरिका",
+      "region_in": "भारत",
+      "region_blank": "चयनित नहीं",
+      "region_help": "खेती क्षेत्र (केवल व्यवस्थापक)"
     }
   },
   "fields": {

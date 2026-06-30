@@ -121,7 +121,9 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
       this.selectedFarmId = state.farm.id;
       this.selectedFarm = state.farm;
       // Load farms to allow re-selection and avoid stuck loading
-      this.loadFarms(state.farm.region);
+      this.loadFarms(state.farm.region ?? resolveReferenceFarmRegion(
+        this.translate.currentLang || this.translate.defaultLang
+      ));
     } else {
       const region = resolveReferenceFarmRegion(
         this.translate.currentLang || this.translate.defaultLang

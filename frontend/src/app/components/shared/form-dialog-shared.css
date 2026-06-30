@@ -1,0 +1,92 @@
+/* Shared <dialog class="form-dialog"> shell — imported from styles.css (global). */
+
+dialog.form-dialog {
+  box-sizing: border-box;
+  padding: var(--space-4);
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  width: min(100vw - 2 * var(--space-4), var(--form-card-max-width));
+  max-width: var(--form-card-max-width);
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: auto;
+}
+
+dialog.form-dialog::backdrop {
+  background: var(--color-dialog-backdrop);
+}
+
+dialog.form-dialog .form-dialog__title {
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+dialog.form-dialog .page-alert-error {
+  margin-bottom: var(--space-3);
+}
+
+dialog.form-dialog .form-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+dialog.form-dialog .form-card__field {
+  min-width: 0;
+}
+
+dialog.form-dialog .form-card__field input,
+dialog.form-dialog .form-card__field textarea,
+dialog.form-dialog .form-card__field select {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+dialog.form-dialog .form-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  position: static;
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: none;
+  background: transparent;
+}
+
+@media (max-width: 768px) {
+  dialog.form-dialog:modal {
+    box-sizing: border-box;
+    position: fixed;
+    inset: auto 0 0 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px)));
+    margin: 0;
+    transform: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--space-4);
+    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  }
+
+  dialog.form-dialog .form-card__actions {
+    padding: var(--space-3) 0 0;
+    margin: 0;
+  }
+
+  dialog.form-dialog .form-card__actions .btn-primary,
+  dialog.form-dialog .form-card__actions .btn-secondary,
+  dialog.form-dialog .form-card__actions .btn-danger {
+    flex: 1 1 calc(50% - var(--space-1));
+    min-width: 0;
+  }
+}

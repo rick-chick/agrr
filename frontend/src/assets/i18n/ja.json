@@ -1022,11 +1022,10 @@
         "area_placeholder": "例: 1000",
         "daily_fixed_cost_label": "日次固定費用（円）",
         "daily_fixed_cost_placeholder": "例: 5000",
-        "region_label": "地域",
-        "region_placeholder": "例: 日本",
         "submit_update": "更新",
         "submit_create": "圃場を作成"
-      }
+      },
+      "field_list_item": "{{name}}（{{area}}㎡）"
     },
     "card": {
       "latitude": "緯度",

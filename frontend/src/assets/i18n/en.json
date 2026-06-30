@@ -2336,11 +2336,10 @@
         "area_placeholder": "e.g., 1000",
         "daily_fixed_cost_label": "Daily Fixed Cost (¥)",
         "daily_fixed_cost_placeholder": "e.g., 5000",
-        "region_label": "Region",
-        "region_placeholder": "e.g., Japan",
         "submit_update": "Update",
         "submit_create": "Create Field"
-      }
+      },
+      "field_list_item": "{{name}} ({{area}}㎡)"
     },
     "card": {
       "latitude": "Latitude",
@@ -2390,6 +2389,14 @@
       "insufficient_historical_data": "Insufficient historical data for prediction.",
       "job_queue_failed": "Failed to queue prediction job: {{error}}",
       "farm_not_found": "Farm not found."
+    },
+    "form": {
+      "region_label": "Region",
+      "region_jp": "Japan",
+      "region_us": "North America",
+      "region_in": "India",
+      "region_blank": "Not selected",
+      "region_help": "Growing region (admin only)"
     }
   },
   "fields": {

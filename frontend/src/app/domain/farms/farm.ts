@@ -3,7 +3,7 @@ export interface Farm {
   name: string;
   latitude: number;
   longitude: number;
-  region: string;
+  region: string | null;
   description?: string | null;
   weather_data_status?: 'pending' | 'fetching' | 'completed' | 'failed';
   weather_data_progress?: number;

@@ -24,7 +24,7 @@ export class FarmEditPresenter implements LoadFarmForEditOutputPort, UpdateFarmO
       saving: false,
       formData: {
         name: dto.farm.name,
-        region: dto.farm.region,
+        region: dto.farm.region ?? '',
         latitude: dto.farm.latitude,
         longitude: dto.farm.longitude
       }

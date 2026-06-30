@@ -1,5 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 
+@import './app/components/shared/form-dialog-shared.css';
+
 /* ===== デザイントークン（一貫性担保・ハードコード禁止） ===== */
 :root {
   /* 色: 背景・表面 */
