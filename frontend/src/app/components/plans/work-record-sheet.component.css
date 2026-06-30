@@ -1,21 +1,95 @@
+@import '../masters/_master-layout.css';
+
 .form-card__field--row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .form-card__error {
-  color: var(--color-danger, #b00020);
-  font-size: 0.875rem;
-  margin: 0.25rem 0 0;
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
 }
 
 .form-card__label {
   display: block;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
 }
 
-.btn-danger {
+.work-record-sheet__readonly {
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-gray-50);
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.work-record-sheet__hint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.work-record-sheet__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.work-record-sheet__chip {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.work-record-sheet__chip--selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-muted-bg, var(--color-background));
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.work-record-sheet__other-name {
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+}
+
+.work-record-sheet__details-toggle {
+  margin: var(--space-2) 0 var(--space-3);
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.form-dialog .form-card__field input.ng-invalid.ng-touched,
+.form-dialog .form-card__field input.ng-invalid.ng-dirty {
+  border-color: var(--color-error);
+}
+
+.form-dialog .form-card__actions .btn-danger {
   margin-right: auto;
+}
+
+.form-dialog .form-card__actions .btn-primary {
+  min-width: 7rem;
 }

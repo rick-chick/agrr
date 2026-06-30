@@ -25,8 +25,8 @@ describe('PlanApiGateway', () => {
   describe('listPlans', () => {
     it('returns Observable<PlanSummary[]>', async () => {
       const plans: PlanSummary[] = [
-        { id: 1, name: 'Plan 1', status: 'active' },
-        { id: 2, name: 'Plan 2', status: 'completed' }
+        { id: 1, name: 'Plan 1', status: 'active', farm_id: 1 },
+        { id: 2, name: 'Plan 2', status: 'completed', farm_id: 2 }
       ];
       vi.mocked(apiClient.get).mockReturnValue(of(plans));
 
@@ -44,7 +44,7 @@ describe('PlanApiGateway', () => {
 
   describe('fetchPlan', () => {
     it('returns Observable<PlanSummary>', async () => {
-      const plan: PlanSummary = { id: 7, name: 'Plan 7', status: 'active' };
+      const plan: PlanSummary = { id: 7, name: 'Plan 7', status: 'active', farm_id: 1 };
       vi.mocked(apiClient.get).mockReturnValue(of(plan));
 
       const result = await firstValueFrom(gateway.fetchPlan(7));

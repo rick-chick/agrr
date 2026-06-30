@@ -1,6 +1,7 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlanDetailComponent } from './plan-detail.component';
@@ -10,12 +11,13 @@ import { PlanDetailPresenter } from '../../usecase/plans/plan-detail.providers';
 
 describe('PlanDetailComponent', () => {
   let component: PlanDetailComponent;
+  let fixture: ComponentFixture<PlanDetailComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let activatedRoute: {
     snapshot: { paramMap: { get: ReturnType<typeof vi.fn> } };
   };
-  let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+  let cdr: ChangeDetectorRef;
 
   beforeEach(() => {
     loadUseCase = { execute: vi.fn(() => of(undefined)) };
@@ -25,20 +27,21 @@ describe('PlanDetailComponent', () => {
         paramMap: { get: vi.fn(() => '1') }
       }
     };
-    cdr = { markForCheck: vi.fn() };
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
+      imports: [PlanDetailComponent, TranslateModule.forRoot()],
       providers: [
-        PlanDetailComponent,
+        provideRouter([]),
         { provide: ActivatedRoute, useValue: activatedRoute },
         { provide: LoadPlanDetailUseCase, useValue: loadUseCase },
-        { provide: PlanDetailPresenter, useValue: mockPresenter },
-        { provide: ChangeDetectorRef, useValue: cdr }
+        { provide: PlanDetailPresenter, useValue: mockPresenter }
       ]
     });
 
-    component = TestBed.inject(PlanDetailComponent);
+    fixture = TestBed.createComponent(PlanDetailComponent);
+    component = fixture.componentInstance;
+    cdr = (component as unknown as { cdr: ChangeDetectorRef }).cdr;
   });
 
   afterEach(() => {
@@ -52,8 +55,28 @@ describe('PlanDetailComponent', () => {
       plan: null,
       planData: null
     };
+    const markForCheckSpy = vi.spyOn(cdr, 'markForCheck');
     component.control = state;
     expect(component.control).toEqual(state);
-    expect(cdr.markForCheck).toHaveBeenCalled();
+    expect(markForCheckSpy).toHaveBeenCalled();
+  });
+
+  it('does not render work navigation on the plan detail screen', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: {
+        id: 1,
+        name: 'Plan A',
+        status: 'completed',
+        farm_id: 1
+      },
+      planData: null
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-plan-work-nav')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.plan-work-nav')).toBeNull();
   });
 });

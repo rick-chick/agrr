@@ -54,6 +54,7 @@ struct PlanListItem {
     id: i64,
     name: String,
     status: String,
+    farm_id: i64,
 }
 
 #[derive(Serialize)]
@@ -75,6 +76,7 @@ impl PrivateOwnedPlansListOutputPort for ListPresenter {
                 id: row.id,
                 name: row.display_name,
                 status: row.status,
+                farm_id: row.farm_id,
             })
             .collect();
         self.body = Some(Ok(payload));

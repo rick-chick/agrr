@@ -10,12 +10,13 @@ import {
   inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { localTodayIso } from '../../core/local-today';
 import { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet.presenter';
+import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
 import { UpdateWorkRecordUseCase } from '../../usecase/plans/update-work-record.usecase';
@@ -27,6 +28,8 @@ import {
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import {
   WorkRecordSheetFormState,
+  WorkRecordSheetSavedEvent,
+  WorkRecordSheetTaskChip,
   WorkRecordSheetView,
   WorkRecordSheetViewState
 } from './work-record-sheet.view';
@@ -43,7 +46,8 @@ function emptyForm(): WorkRecordSheetFormState {
     fieldName: '',
     cropName: '',
     task_schedule_item_id: null,
-    work_record_id: null
+    work_record_id: null,
+    agricultural_task_id: null
   };
 }
 
@@ -53,7 +57,11 @@ const initialControl: WorkRecordSheetViewState = {
   error: null,
   fieldErrors: {},
   form: emptyForm(),
-  fieldOptions: []
+  fieldOptions: [],
+  showDetails: false,
+  taskChips: [],
+  loadingTaskChips: false,
+  selectedTaskId: null
 };
 
 @Component({
@@ -78,19 +86,81 @@ const initialControl: WorkRecordSheetViewState = {
       }
 
       <form class="form-card__form" (ngSubmit)="submit()" #recordForm="ngForm">
-        <div class="form-card__field">
-          <label for="wr-name">{{ 'plans.work.sheet.name' | translate }}</label>
-          <input
-            id="wr-name"
-            type="text"
-            name="name"
-            [(ngModel)]="control.form.name"
-            required
-          />
-          @if (fieldError('name')) {
-            <p class="form-card__error">{{ fieldError('name') | translate }}</p>
-          }
-        </div>
+        @if (control.mode === 'create-from-item') {
+          <div class="form-card__field">
+            <span class="form-card__label">{{ 'plans.work.sheet.name' | translate }}</span>
+            <p class="work-record-sheet__readonly">{{ control.form.name }}</p>
+          </div>
+          <div class="form-card__field">
+            <span class="form-card__label">{{ 'plans.work.sheet.field' | translate }}</span>
+            <p class="work-record-sheet__readonly">{{ control.form.fieldName }} {{ control.form.cropName }}</p>
+          </div>
+        } @else if (control.mode === 'create-adhoc') {
+          <div class="form-card__field">
+            <span class="form-card__label" id="wr-task-picker-label">{{
+              'plans.work.sheet.task_picker' | translate
+            }}</span>
+            @if (control.loadingTaskChips) {
+              <p class="work-record-sheet__hint">{{ 'common.loading' | translate }}</p>
+            } @else {
+              <div
+                class="work-record-sheet__chips"
+                role="listbox"
+                aria-labelledby="wr-task-picker-label"
+              >
+                @for (chip of control.taskChips; track chip.id) {
+                  <button
+                    type="button"
+                    class="work-record-sheet__chip"
+                    role="option"
+                    [class.work-record-sheet__chip--selected]="control.selectedTaskId === chip.id"
+                    [attr.aria-selected]="control.selectedTaskId === chip.id"
+                    (click)="selectTaskChip(chip)"
+                  >
+                    {{ chip.name }}
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="work-record-sheet__chip work-record-sheet__chip--other"
+                  role="option"
+                  [class.work-record-sheet__chip--selected]="control.selectedTaskId === 'other'"
+                  [attr.aria-selected]="control.selectedTaskId === 'other'"
+                  (click)="selectOtherTask()"
+                >
+                  {{ 'plans.work.sheet.task_other' | translate }}
+                </button>
+              </div>
+            }
+            @if (control.selectedTaskId === 'other') {
+              <input
+                id="wr-name"
+                class="work-record-sheet__other-name"
+                type="text"
+                name="name"
+                [(ngModel)]="control.form.name"
+                [attr.placeholder]="'plans.work.sheet.name' | translate"
+              />
+            }
+            @if (fieldError('name')) {
+              <p class="form-card__error">{{ fieldError('name') | translate }}</p>
+            }
+          </div>
+        } @else {
+          <div class="form-card__field">
+            <label for="wr-name">{{ 'plans.work.sheet.name' | translate }}</label>
+            <input
+              id="wr-name"
+              type="text"
+              name="name"
+              [(ngModel)]="control.form.name"
+              required
+            />
+            @if (fieldError('name')) {
+              <p class="form-card__error">{{ fieldError('name') | translate }}</p>
+            }
+          </div>
+        }
 
         <div class="form-card__field">
           <label for="wr-date">{{ 'plans.work.sheet.actual_date' | translate }}</label>
@@ -100,39 +170,7 @@ const initialControl: WorkRecordSheetViewState = {
           }
         </div>
 
-        <div class="form-card__field form-card__field--row">
-          <div>
-            <label for="wr-amount">{{ 'plans.work.sheet.amount' | translate }}</label>
-            <input id="wr-amount" type="text" name="amount" [(ngModel)]="control.form.amount" />
-          </div>
-          <div>
-            <label for="wr-unit">{{ 'plans.work.sheet.amount_unit' | translate }}</label>
-            <input id="wr-unit" type="text" name="amount_unit" [(ngModel)]="control.form.amount_unit" />
-          </div>
-        </div>
-
-        <div class="form-card__field">
-          <label for="wr-time">{{ 'plans.work.sheet.time_spent' | translate }}</label>
-          <input
-            id="wr-time"
-            type="number"
-            name="time_spent_minutes"
-            min="0"
-            [(ngModel)]="control.form.time_spent_minutes"
-          />
-        </div>
-
-        <div class="form-card__field">
-          <label for="wr-notes">{{ 'plans.work.sheet.notes' | translate }}</label>
-          <textarea id="wr-notes" name="notes" rows="3" [(ngModel)]="control.form.notes"></textarea>
-        </div>
-
-        @if (control.mode === 'create-from-item') {
-          <div class="form-card__field">
-            <span class="form-card__label">{{ 'plans.work.sheet.field' | translate }}</span>
-            <p>{{ control.form.fieldName }} {{ control.form.cropName }}</p>
-          </div>
-        } @else if (control.mode === 'create-adhoc') {
+        @if (control.mode === 'create-adhoc') {
           <div class="form-card__field">
             <label for="wr-field">{{ 'plans.work.sheet.field_select' | translate }}</label>
             <select id="wr-field" name="field_cultivation_id" [(ngModel)]="control.form.field_cultivation_id">
@@ -144,16 +182,59 @@ const initialControl: WorkRecordSheetViewState = {
               }
             </select>
           </div>
-        } @else {
+        } @else if (control.mode === 'edit') {
           <div class="form-card__field">
             <span class="form-card__label">{{ 'plans.work.sheet.field' | translate }}</span>
-            <p>
+            <p class="work-record-sheet__readonly">
               @if (control.form.fieldName) {
                 {{ control.form.fieldName }} {{ control.form.cropName }}
               } @else {
                 {{ 'plans.work_records.badge.adhoc' | translate }}
               }
             </p>
+          </div>
+        }
+
+        @if (control.mode !== 'edit') {
+          <button
+            type="button"
+            class="work-record-sheet__details-toggle"
+            [attr.aria-expanded]="control.showDetails"
+            (click)="toggleDetails()"
+          >
+            {{
+              (control.showDetails ? 'plans.work.sheet.hide_details' : 'plans.work.sheet.show_details')
+                | translate
+            }}
+          </button>
+        }
+
+        @if (control.mode === 'edit' || control.showDetails) {
+          <div class="form-card__field form-card__field--row">
+            <div>
+              <label for="wr-amount">{{ 'plans.work.sheet.amount' | translate }}</label>
+              <input id="wr-amount" type="text" name="amount" [(ngModel)]="control.form.amount" />
+            </div>
+            <div>
+              <label for="wr-unit">{{ 'plans.work.sheet.amount_unit' | translate }}</label>
+              <input id="wr-unit" type="text" name="amount_unit" [(ngModel)]="control.form.amount_unit" />
+            </div>
+          </div>
+
+          <div class="form-card__field">
+            <label for="wr-time">{{ 'plans.work.sheet.time_spent' | translate }}</label>
+            <input
+              id="wr-time"
+              type="number"
+              name="time_spent_minutes"
+              min="0"
+              [(ngModel)]="control.form.time_spent_minutes"
+            />
+          </div>
+
+          <div class="form-card__field">
+            <label for="wr-notes">{{ 'plans.work.sheet.notes' | translate }}</label>
+            <textarea id="wr-notes" name="notes" rows="3" [(ngModel)]="control.form.notes"></textarea>
           </div>
         }
 
@@ -167,7 +248,11 @@ const initialControl: WorkRecordSheetViewState = {
             >{{ 'plans.work_records.sheet.delete' | translate }}</button>
           }
           <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | translate }}</button>
-          <button type="submit" class="btn-primary" [disabled]="control.submitting || !recordForm.valid">
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="control.submitting || !canSubmit(recordForm)"
+          >
             @if (control.mode === 'edit') {
               {{ 'plans.work_records.sheet.save' | translate }}
             } @else {
@@ -182,7 +267,7 @@ const initialControl: WorkRecordSheetViewState = {
 })
 export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   @Input({ required: true }) planId!: number;
-  @Output() saved = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<WorkRecordSheetSavedEvent>();
   @Output() deleted = new EventEmitter<void>();
 
   @ViewChild('sheetDialog') sheetDialogRef!: ElementRef<HTMLDialogElement>;
@@ -190,6 +275,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   private readonly createUseCase = inject(CreateWorkRecordUseCase);
   private readonly updateUseCase = inject(UpdateWorkRecordUseCase);
   private readonly deleteUseCase = inject(DeleteWorkRecordUseCase);
+  private readonly loadTaskListUseCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly presenter = inject(WorkRecordSheetPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
@@ -205,15 +291,17 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
 
   ngOnInit(): void {
     this.presenter.setView(this);
-    this.presenter.onSavedCallback = () => this.saved.emit();
+    this.presenter.onSavedCallback = (event) => this.saved.emit(event);
     this.presenter.onDeletedCallback = () => this.deleted.emit();
   }
 
-  openFromItem(row: WorkDayListRowDto): void {
+  openFromItem(row: WorkDayListRowDto, options?: { fieldErrors?: Record<string, string[]> }): void {
     const { item, fieldName, cropName } = row;
     this.control = {
       ...initialControl,
       mode: 'create-from-item',
+      showDetails: false,
+      fieldErrors: options?.fieldErrors ?? {},
       form: {
         name: item.name,
         actual_date: localTodayIso(),
@@ -225,7 +313,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
         fieldName,
         cropName,
         task_schedule_item_id: item.item_id,
-        work_record_id: null
+        work_record_id: null,
+        agricultural_task_id: item.agricultural_task_id ?? null
       },
       fieldOptions: []
     };
@@ -237,15 +326,18 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       ...initialControl,
       mode: 'create-adhoc',
       form: emptyForm(),
-      fieldOptions
+      fieldOptions,
+      loadingTaskChips: true
     };
     this.sheetDialogRef?.nativeElement?.showModal();
+    this.loadTaskListUseCase.execute();
   }
 
   openEdit(record: WorkRecord, fieldName = '', cropName = ''): void {
     this.control = {
       ...initialControl,
       mode: 'edit',
+      showDetails: true,
       form: {
         name: record.name,
         actual_date: record.actual_date,
@@ -257,11 +349,56 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
         fieldName,
         cropName,
         task_schedule_item_id: record.task_schedule_item_id,
-        work_record_id: record.id
+        work_record_id: record.id,
+        agricultural_task_id: record.agricultural_task_id
       },
       fieldOptions: []
     };
     this.sheetDialogRef?.nativeElement?.showModal();
+  }
+
+  selectTaskChip(chip: WorkRecordSheetTaskChip): void {
+    this.control = {
+      ...this.control,
+      selectedTaskId: chip.id,
+      form: {
+        ...this.control.form,
+        name: chip.name,
+        agricultural_task_id: chip.id
+      }
+    };
+  }
+
+  selectOtherTask(): void {
+    this.control = {
+      ...this.control,
+      selectedTaskId: 'other',
+      form: {
+        ...this.control.form,
+        name: '',
+        agricultural_task_id: null
+      }
+    };
+  }
+
+  toggleDetails(): void {
+    this.control = { ...this.control, showDetails: !this.control.showDetails };
+  }
+
+  canSubmit(recordForm: NgForm): boolean {
+    if (!recordForm.controls['actual_date']?.valid) {
+      return false;
+    }
+    if (this.control.mode === 'edit') {
+      return recordForm.valid === true;
+    }
+    if (this.control.mode === 'create-from-item') {
+      return Boolean(this.control.form.name.trim());
+    }
+    if (this.control.selectedTaskId === 'other') {
+      return Boolean(this.control.form.name.trim());
+    }
+    return this.control.selectedTaskId != null;
   }
 
   close(): void {
@@ -269,7 +406,10 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   }
 
   onDialogClose(): void {
-    this.control = { ...this.control, submitting: false, fieldErrors: {}, error: null };
+    this.control = {
+      ...initialControl,
+      form: emptyForm()
+    };
   }
 
   fieldError(field: string): string | null {
@@ -289,7 +429,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       amount_unit: form.amount_unit,
       time_spent_minutes: form.time_spent_minutes,
       notes: form.notes,
-      field_cultivation_id: form.field_cultivation_id
+      field_cultivation_id: form.field_cultivation_id,
+      agricultural_task_id: form.agricultural_task_id
     };
 
     if (mode === 'edit' && form.work_record_id != null) {

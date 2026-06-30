@@ -52,6 +52,7 @@ describe('PlanWorkRecordsComponent', () => {
       'en',
       {
         'plans.work.back_to_plan': 'Back to plan',
+        'plans.work.back_to_hub': 'Back to work log',
         'plans.work_records.title': 'Work history — {{name}}',
         'plans.work_records.empty': 'No work records yet',
         'plans.work_records.badge.from_schedule': 'From schedule',
@@ -75,6 +76,21 @@ describe('PlanWorkRecordsComponent', () => {
     };
     component.control = state;
     expect(component.control).toEqual(state);
+  });
+
+  it('shows link back to work hub', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: []
+    };
+    fixture.detectChanges();
+
+    const back = fixture.nativeElement.querySelector('.plan-work-header__back');
+    expect(back?.textContent).toContain('Back to work log');
+    expect(fixture.nativeElement.querySelector('.plan-work__back-nav')).toBeNull();
   });
 
   it('renders grouped work records when data is loaded', () => {
@@ -130,6 +146,35 @@ describe('PlanWorkRecordsComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('An error occurred');
     expect(text).not.toContain('common.api_error.generic');
+  });
+
+  it('shows error with retry button and reloads when retry is clicked', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'common.api_error.generic': 'An error occurred',
+        'plans.work.retry': 'Reload'
+      },
+      true
+    );
+
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      plan: null,
+      groups: []
+    };
+    fixture.detectChanges();
+
+    const retryBtn = fixture.nativeElement.querySelector('.plan-work__retry');
+    expect(retryBtn).toBeTruthy();
+    expect(retryBtn.textContent).toContain('Reload');
+
+    loadUseCase.execute.mockClear();
+    retryBtn.click();
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 
   it('loads records on init when planId is valid', () => {

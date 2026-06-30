@@ -94,6 +94,22 @@ describe('PlanTaskScheduleComponent', () => {
     expect(component.control).toEqual(state);
   });
 
+  it('shows link back to work hub', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = loadedState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const back = fixture.nativeElement.querySelector('.plan-work-header__back');
+    expect(back?.textContent).toContain('Back to work log');
+    expect(fixture.nativeElement.querySelector('.plan-work__back-nav')).toBeNull();
+  });
+
   it('renders empty schedule message when fields are empty', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
@@ -108,6 +124,19 @@ describe('PlanTaskScheduleComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('No task schedule has been generated yet.');
     expect(text).not.toContain('plans.task_schedules.no_schedules');
+  });
+
+  it('renders page title in header before work navigation tabs', async () => {
+    fixture.detectChanges();
+    component.control = loadedState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const heading = fixture.nativeElement.querySelector('.page-header .page-title');
+    const nav = fixture.nativeElement.querySelector('.plan-work-nav');
+    expect(heading).toBeTruthy();
+    expect(nav).toBeTruthy();
+    expect(heading!.compareDocumentPosition(nav!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('renders translated API error instead of raw i18n key', async () => {
@@ -127,6 +156,38 @@ describe('PlanTaskScheduleComponent', () => {
 
     const alert = fixture.nativeElement.querySelector('.page-alert-error');
     expect(alert?.textContent?.trim()).not.toBe('common.api_error.generic');
+  });
+
+  it('shows error with retry button and reloads when retry is clicked', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        ...(en as TranslationObject),
+        'common.api_error.generic': 'An error occurred',
+        'plans.work.retry': 'Reload'
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      schedule: null
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const retryBtn = fixture.nativeElement.querySelector('.plan-work__retry');
+    expect(retryBtn).toBeTruthy();
+    expect(retryBtn.textContent).toContain('Reload');
+
+    loadUseCase.execute.mockClear();
+    retryBtn.click();
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 });
 
@@ -188,7 +249,7 @@ describe('PlanTaskScheduleComponent locale labels', () => {
     await setupLocale('ja');
 
     const text = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('← 計画詳細に戻る');
+    expect(text).toContain('計画詳細を見る');
     expect(text).toContain('Main Planの作業予定');
     expect(text).toContain('作業予定がまだ生成されていません。');
     expect(text).not.toContain('plans.task_schedules.');
@@ -198,7 +259,7 @@ describe('PlanTaskScheduleComponent locale labels', () => {
     await setupLocale('en');
 
     const text = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('← Back to plan');
+    expect(text).toContain('View plan details');
     expect(text).toContain('Task schedule for Main Plan');
     expect(text).toContain('No task schedule has been generated yet.');
     expect(text).not.toContain('plans.task_schedules.');
@@ -214,7 +275,7 @@ describe('PlanTaskScheduleComponent locale labels', () => {
     expect(navLinks[2].textContent?.trim()).toBe('कार्य इतिहास');
 
     const text = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('← योजना विवरण पर वापस जाएं');
+    expect(text).toContain('योजना विवरण देखें');
     expect(text).toContain('Main Plan की कार्य अनुसूची');
     expect(text).toContain('अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।');
     expect(text).not.toContain('plans.task_schedules.');

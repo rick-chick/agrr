@@ -38,6 +38,7 @@ export interface WorkRecordCreateRequest {
   time_spent_minutes?: number;
   notes?: string;
   field_cultivation_id?: number;
+  agricultural_task_id?: number;
 }
 
 export interface WorkRecordUpdateRequest {

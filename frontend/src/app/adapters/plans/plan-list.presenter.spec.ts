@@ -51,8 +51,8 @@ describe('PlanListPresenter', () => {
   describe('LoadPlanListOutputPort', () => {
     it('updates view.control on present(dto)', () => {
       const plans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending' },
-        { id: 2, name: 'Plan B', status: 'completed' }
+        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
+        { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
       ];
       const dto: PlanListDataDto = { plans };
 
@@ -81,7 +81,7 @@ describe('PlanListPresenter', () => {
     });
 
     it('does not set error in view.control when scope is not load-plan-list', () => {
-      const initialPlans: PlanSummary[] = [{ id: 1, name: 'Plan A', status: 'pending' }];
+      const initialPlans: PlanSummary[] = [{ id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }];
       const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans };
       lastControl = initialControl;
 
@@ -100,8 +100,8 @@ describe('PlanListPresenter', () => {
   describe('DeletePlanOutputPort', () => {
     it('updates view.control on onSuccess(dto) without undo', () => {
       const initialPlans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending' },
-        { id: 2, name: 'Plan B', status: 'completed' }
+        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
+        { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans };
 
@@ -117,8 +117,8 @@ describe('PlanListPresenter', () => {
 
     it('removes plan and shows undo toast with refresh callback on onSuccess(dto)', () => {
       const initialPlans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending' },
-        { id: 2, name: 'Plan B', status: 'completed' }
+        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
+        { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
       ];
       const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans };
       lastControl = initialControl;
@@ -151,7 +151,7 @@ describe('PlanListPresenter', () => {
 
     it('does not show undo toast when undo is missing', () => {
       const initialPlans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending' }
+        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans };
 
@@ -168,7 +168,7 @@ describe('PlanListPresenter', () => {
 
     it('shows undo toast even when refresh callback is missing', () => {
       const initialPlans: PlanSummary[] = [
-        { id: 1, name: 'Plan A', status: 'pending' }
+        { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
       ];
       lastControl = { loading: false, error: null, plans: initialPlans };
 

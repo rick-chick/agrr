@@ -41,6 +41,7 @@ pub fn user_id_for_session(client: &ContractClient, session_id: &str) -> i64 {
 
 pub struct WorkRecordPlanSeed {
     pub plan_id: i64,
+    pub farm_id: i64,
     pub task_schedule_item_id: i64,
 }
 
@@ -70,6 +71,13 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
     )
     .expect("insert farm");
     let farm_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'Contract Field', 50.0, 0, datetime('now'), datetime('now'))",
+        params![farm_id, user_id],
+    )
+    .expect("insert field");
 
     let crop_name = format!("Contract Crop {suffix}");
     conn.execute(
@@ -156,6 +164,7 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
 
     WorkRecordPlanSeed {
         plan_id,
+        farm_id,
         task_schedule_item_id,
     }
 }

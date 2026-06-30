@@ -19,7 +19,12 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.back_to_plan',
   'plans.task_schedules.general_label',
   'plans.task_schedules.fertilizer_label',
-  'plans.task_schedules.no_schedules'
+  'plans.task_schedules.no_schedules',
+  'plans.task_schedules.status.planned',
+  'plans.task_schedules.status.skipped',
+  'plans.task_schedules.status.completed',
+  'plans.task_schedules.field_section',
+  'plans.task_schedules.field_number'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

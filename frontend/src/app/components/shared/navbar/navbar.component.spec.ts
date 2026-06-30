@@ -1,23 +1,37 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { NavbarComponent } from './navbar.component';
+
+@Component({ template: '' })
+class DummyRouteComponent {}
 
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
   let translate: TranslateService;
+  let router: Router;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [NavbarComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([
+          { path: 'work', component: DummyRouteComponent },
+          { path: 'plans/:id/work', component: DummyRouteComponent },
+          { path: 'plans/:id/task_schedule', component: DummyRouteComponent },
+          { path: 'plans/:id', component: DummyRouteComponent }
+        ])
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(NavbarComponent);
     component = fixture.componentInstance;
     translate = TestBed.inject(TranslateService);
+    router = TestBed.inject(Router);
   });
 
   it('uses /research/ for ja locale', () => {
@@ -67,5 +81,31 @@ describe('NavbarComponent', () => {
         admin: true,
       }),
     ).toBe('डेवलपर');
+  });
+
+  it('marks work log active on /work', async () => {
+    await router.navigateByUrl('/work');
+    fixture.detectChanges();
+    expect(component.isWorkLogNavActive()).toBe(true);
+    expect(component.isPlanNavActive()).toBe(false);
+  });
+
+  it('marks work log active on plan work routes', async () => {
+    await router.navigateByUrl('/plans/12/work');
+    fixture.detectChanges();
+    expect(component.isWorkLogNavActive()).toBe(true);
+    expect(component.isPlanNavActive()).toBe(false);
+  });
+
+  it('marks plan active on plan detail but not on work routes', async () => {
+    await router.navigateByUrl('/plans/12');
+    fixture.detectChanges();
+    expect(component.isPlanNavActive()).toBe(true);
+    expect(component.isWorkLogNavActive()).toBe(false);
+
+    await router.navigateByUrl('/plans/12/task_schedule');
+    fixture.detectChanges();
+    expect(component.isPlanNavActive()).toBe(false);
+    expect(component.isWorkLogNavActive()).toBe(false);
   });
 });

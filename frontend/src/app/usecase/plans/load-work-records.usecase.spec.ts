@@ -55,7 +55,7 @@ describe('LoadWorkRecordsUseCase', () => {
     };
     const planGateway: PlanGateway = {
       listPlans: () => of([]),
-      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active' }),
+      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active', farm_id: 1 }),
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({} as never),
@@ -88,7 +88,7 @@ describe('LoadWorkRecordsUseCase', () => {
     };
     const planGateway: PlanGateway = {
       listPlans: () => of([]),
-      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active' }),
+      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active', farm_id: 1 }),
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({} as never),

@@ -146,8 +146,8 @@ describe('PlanListComponent', () => {
 
   it('displays plans in the list', async () => {
     const plans: PlanSummary[] = [
-      { id: 1, name: 'Plan A', status: 'pending' },
-      { id: 2, name: 'Plan B', status: 'completed' }
+      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
+      { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
     ];
 
     const planTitles = (await renderPlans(plans)).querySelectorAll('.item-card__title');
@@ -158,7 +158,7 @@ describe('PlanListComponent', () => {
 
   it('delete button triggers deletePlan action', async () => {
     const plans: PlanSummary[] = [
-      { id: 1, name: 'Plan A', status: 'pending' }
+      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
     ];
 
     const nativeElement = await renderPlans(plans);
@@ -168,5 +168,14 @@ describe('PlanListComponent', () => {
     deleteButton.click();
 
     expect(deleteSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('does not show a work log shortcut on plan cards', async () => {
+    const nativeElement = await renderPlans([
+      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
+    ]);
+
+    expect(nativeElement.querySelector('.plan-list__work-link')).toBeNull();
+    expect(nativeElement.querySelector('a[href*="/work"]')).toBeNull();
   });
 });

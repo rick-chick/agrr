@@ -6,6 +6,7 @@ use time::Date;
 #[derive(Debug, Clone, PartialEq)]
 pub struct PrivatePlanIndexPlanRow {
     pub id: i64,
+    pub farm_id: i64,
     pub farm_display_name: String,
     pub total_area: f64,
     pub crops_count: i32,

@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { filter, Subscription } from 'rxjs';
 import { loginReturnQueryForLocation } from '../../auth/login/login-auth-urls';
 import { type CurrentUser } from '../../../services/api.service';
 import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
@@ -24,7 +25,8 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
       </button>
       <ul class="nav-links" role="list">
         @if (user) {
-          <li><a class="nav-link" routerLink="/plans" routerLinkActive="is-active">{{ 'nav.plan' | translate }}</a></li>
+          <li><a class="nav-link" routerLink="/plans" [class.is-active]="isPlanNavActive()">{{ 'nav.plan' | translate }}</a></li>
+          <li><a class="nav-link" routerLink="/work" [class.is-active]="isWorkLogNavActive()">{{ 'nav.work_log' | translate }}</a></li>
           <li>
             <app-nav-dropdown
               triggerLabelKey="nav.menu_masters"
@@ -68,8 +70,11 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
   `,
   styleUrls: ['./navbar.component.css'],
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit, OnDestroy {
   private readonly translate = inject(TranslateService);
+  private readonly router = inject(Router);
+  private routerSubscription?: Subscription;
+  private currentPath = '';
 
   @Input() user: CurrentUser | null = null;
   @Input() loading = false;
@@ -83,6 +88,40 @@ export class NavbarComponent {
 
   toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  ngOnInit(): void {
+    this.syncCurrentPath();
+    this.routerSubscription = this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => this.syncCurrentPath());
+  }
+
+  ngOnDestroy(): void {
+    this.routerSubscription?.unsubscribe();
+  }
+
+  isPlanNavActive(): boolean {
+    const path = this.currentPath;
+    if (!path.startsWith('/plans')) {
+      return false;
+    }
+    if (path === '/plans' || path === '/plans/new') {
+      return true;
+    }
+    if (/^\/plans\/\d+\/(work|work_records|task_schedule)(\/|$)/.test(path)) {
+      return false;
+    }
+    return /^\/plans\/\d+(\/|$)/.test(path) || path.startsWith('/plans/');
+  }
+
+  isWorkLogNavActive(): boolean {
+    const path = this.currentPath;
+    return path === '/work' || /^\/plans\/\d+\/(work|work_records)(\/|$)/.test(path);
+  }
+
+  private syncCurrentPath(): void {
+    this.currentPath = this.router.url.split('?')[0] ?? '';
   }
 
   readonly mastersItems: { link: string; labelKey: string }[] = [

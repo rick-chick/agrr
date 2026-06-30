@@ -188,6 +188,8 @@
       "forbidden": "You do not have permission to access this resource",
       "not_found": "Resource not found",
       "network": "A network error occurred",
+      "not_migrated": "This feature is not available yet",
+      "service_unavailable": "Could not connect to the server",
       "generic": "An error occurred"
     }
   },
@@ -214,6 +216,25 @@
       "email_invalid": "Email format is invalid."
     }
   },
+  "work": {
+    "hub": {
+      "title": "Work log",
+      "subtitle": "Choose a farm to record today's work",
+      "error_subtitle": "Could not load farms. Try reloading.",
+      "select_farm": "Select a farm",
+      "no_farms": "No farms registered yet",
+      "no_farms_hint": "Register a farm and fields before recording work.",
+      "create_farm_link": "Register a farm",
+      "creating_plan": "Preparing your plan…",
+      "creating_plan_for": "Preparing the plan for {{name}}…",
+      "farm_meta": "{{count}} fields · {{area}} m² total",
+      "open_work": "Open work",
+      "start_recording": "Start recording",
+      "no_fields_warning": "No valid fields on this farm.",
+      "register_fields_link": "Register fields",
+      "retry": "Reload"
+    }
+  },
   "status": {
     "checking": "Checking..."
   },
@@ -222,6 +243,7 @@
     "open_menu": "Open menu",
     "close_menu": "Close menu",
     "plan": "Plans",
+    "work_log": "Work log",
     "menu_masters": "Master Data",
     "new_plan": "Create Crop Plan",
     "reports": "Reports",
@@ -1156,14 +1178,22 @@
     },
     "task_schedules": {
       "title": "Task schedule for {{name}}",
-      "back_to_plan": "← Back to plan",
+      "back_to_plan": "View plan details",
       "general_label": "General tasks",
       "fertilizer_label": "Fertilizer",
-      "no_schedules": "No task schedule has been generated yet."
+      "no_schedules": "No task schedule has been generated yet.",
+      "status": {
+        "planned": "Planned",
+        "skipped": "Skipped",
+        "completed": "Completed"
+      },
+      "field_section": "{{name}} ({{crop}})",
+      "field_number": "Field {{number}}"
     },
     "work": {
       "title": "Work — {{name}}",
-      "back_to_plan": "← Back to plan",
+      "back_to_plan": "View plan details",
+      "back_to_hub": "Back to work log",
       "nav": {
         "work": "Today's work",
         "schedule": "Full schedule",
@@ -1175,14 +1205,23 @@
         "upcoming": "Next 7 days"
       },
       "complete": "Done",
+      "record_with_details": "Record with details",
       "add_record": "+ Record work",
       "empty_today": "No tasks scheduled for today",
+      "empty_today_hint": "Record unscheduled work here",
       "recorded_today": "Recorded today",
       "skipped_badge": "Skipped",
       "show_skipped": "Show skipped",
       "skip": "Skip",
       "unskip": "Unskip",
       "menu": "Menu",
+      "retry": "Reload",
+      "toast": {
+        "record_saved": "Work recorded",
+        "record_saved_adhoc": "Work recorded. View it in work history."
+      },
+      "recent_adhoc": "Recorded “{{name}}” on {{date}}",
+      "recent_adhoc_history_link": "View work history",
       "sheet": {
         "title": "Record work",
         "name": "Task name",
@@ -1194,7 +1233,11 @@
         "field": "Field",
         "field_select": "Field (optional)",
         "field_optional": "Not selected",
-        "submit": "Save record"
+        "submit": "Save record",
+        "task_picker": "Choose a task",
+        "task_other": "Other",
+        "show_details": "Add details",
+        "hide_details": "Hide details"
       },
       "errors": {
         "name_required": "Task name is required"
@@ -1212,6 +1255,10 @@
         "save": "Save",
         "delete": "Delete",
         "delete_confirm": "Delete this work record?"
+      },
+      "toast": {
+        "record_updated": "Record saved",
+        "record_deleted": "Record deleted"
       }
     },
     "index": {
@@ -2268,6 +2315,14 @@
         "label": "Debug:"
       }
     },
+    "form": {
+      "region_label": "Region",
+      "region_jp": "Japan",
+      "region_us": "North America",
+      "region_in": "India",
+      "region_blank": "Not selected",
+      "region_help": "Growing region (admin only)"
+    },
     "new": {
       "title": "Add New Farm",
       "form": {
@@ -2321,6 +2376,7 @@
       "fields_list": "Fields",
       "fields_list_title": "Fields List",
       "no_fields": "No fields registered yet.",
+      "field_list_item": "{{name}} ({{area}}㎡)",
       "add_first_field": "Add First Field",
       "back_to_list": "Back to Farm List",
       "detail": "Details",
@@ -2338,8 +2394,7 @@
         "daily_fixed_cost_placeholder": "e.g., 5000",
         "submit_update": "Update",
         "submit_create": "Create Field"
-      },
-      "field_list_item": "{{name}} ({{area}}㎡)"
+      }
     },
     "card": {
       "latitude": "Latitude",
@@ -2389,14 +2444,6 @@
       "insufficient_historical_data": "Insufficient historical data for prediction.",
       "job_queue_failed": "Failed to queue prediction job: {{error}}",
       "farm_not_found": "Farm not found."
-    },
-    "form": {
-      "region_label": "Region",
-      "region_jp": "Japan",
-      "region_us": "North America",
-      "region_in": "India",
-      "region_blank": "Not selected",
-      "region_help": "Growing region (admin only)"
     }
   },
   "fields": {

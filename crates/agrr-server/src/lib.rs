@@ -65,6 +65,7 @@ pub mod state;
 pub mod task_schedule_timeline_json;
 pub mod task_schedules;
 pub mod work_records;
+pub mod work_hub;
 pub mod weather_prediction_anchors;
 pub mod workbench_payload;
 
@@ -111,6 +112,7 @@ pub async fn run_http_server() {
         .merge(plans::routes())
         .merge(task_schedules::routes())
         .merge(work_records::routes())
+        .merge(work_hub::routes())
         .merge(cultivation_plans::routes())
         .merge(cultivation_plans_mutations::mutation_routes())
         .merge(field_cultivations::routes())

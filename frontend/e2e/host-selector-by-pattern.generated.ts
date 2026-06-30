@@ -50,4 +50,5 @@ export const HOST_SELECTOR_BY_PATTERN_GENERATED: Record<string, string> = {
   'public-plans/select-crop': 'app-public-plan-select-crop',
   'public-plans/select-farm-size': 'app-public-plan-create',
   terms: 'app-terms',
+  work: 'app-work-hub',
 };

@@ -27,6 +27,21 @@ describe('apiErrorI18nKey', () => {
     );
   });
 
+  it('maps 501 to not_migrated key', () => {
+    expect(apiErrorI18nKey(new HttpErrorResponse({ status: 501, statusText: 'Not Implemented' }))).toBe(
+      'common.api_error.not_migrated'
+    );
+  });
+
+  it('maps 502 and 503 to service_unavailable key', () => {
+    expect(apiErrorI18nKey(new HttpErrorResponse({ status: 502, statusText: 'Bad Gateway' }))).toBe(
+      'common.api_error.service_unavailable'
+    );
+    expect(
+      apiErrorI18nKey(new HttpErrorResponse({ status: 503, statusText: 'Service Unavailable' }))
+    ).toBe('common.api_error.service_unavailable');
+  });
+
   it('maps other HTTP errors to generic key', () => {
     expect(apiErrorI18nKey(new HttpErrorResponse({ status: 500, statusText: 'Server Error' }))).toBe(
       'common.api_error.generic'

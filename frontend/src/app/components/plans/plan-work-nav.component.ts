@@ -7,18 +7,21 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, TranslateModule],
   template: `
-    <nav class="plan-work-nav" aria-label="Work navigation">
+    <nav class="plan-work-nav plan-work-nav--spaced" role="tablist" aria-label="Work navigation">
       <a
+        role="tab"
         [routerLink]="['/plans', planId, 'work']"
         routerLinkActive="plan-work-nav__link--active"
         class="plan-work-nav__link"
       >{{ 'plans.work.nav.work' | translate }}</a>
       <a
+        role="tab"
         [routerLink]="['/plans', planId, 'task_schedule']"
         routerLinkActive="plan-work-nav__link--active"
         class="plan-work-nav__link"
       >{{ 'plans.work.nav.schedule' | translate }}</a>
       <a
+        role="tab"
         [routerLink]="['/plans', planId, 'work_records']"
         routerLinkActive="plan-work-nav__link--active"
         class="plan-work-nav__link"

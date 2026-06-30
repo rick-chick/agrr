@@ -1,15 +1,18 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { formatIsoDateForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
 import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.usecase';
 import { PLAN_WORK_PROVIDERS } from '../../usecase/plans/plan-work.providers';
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
+import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { PlanWorkNavComponent } from './plan-work-nav.component';
+import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { PlanWorkView, PlanWorkViewState } from './plan-work.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
 
@@ -21,7 +24,10 @@ const initialControl: PlanWorkViewState = {
   overdue: [],
   today: [],
   upcoming: [],
-  includeSkipped: false
+  includeSkipped: false,
+  recentAdHocRecord: null,
+  highlightedItemId: null,
+  completingItemId: null
 };
 
 @Component({
@@ -38,23 +44,34 @@ const initialControl: PlanWorkViewState = {
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <section class="page plan-work">
-        <a [routerLink]="['/plans', planId]">{{ 'plans.work.back_to_plan' | translate }}</a>
+      <header class="page-header">
+        <a class="plan-work-header__back" [routerLink]="['/work']">{{
+          'plans.work.back_to_hub' | translate
+        }}</a>
+        @if (control.plan) {
+          <h1 id="plan-work-page-title" class="page-title">{{
+            'plans.work.title' | translate: { name: (control.plan.name | planDisplayName) }
+          }}</h1>
+          <p class="page-description">
+            <a class="plan-work-header__plan-link" [routerLink]="['/plans', planId]">{{
+              'plans.work.back_to_plan' | translate
+            }}</a>
+          </p>
+        }
+      </header>
 
+      <section class="section-card plan-work" aria-labelledby="plan-work-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
-          <div class="page-alert-error" role="alert">
+          <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+              {{ 'plans.work.retry' | translate }}
+            </button>
           </div>
         } @else if (control.plan) {
-          <h2>{{ 'plans.work.title' | translate: { name: (control.plan.name | planDisplayName) } }}</h2>
           <app-plan-work-nav [planId]="planId" />
-
-          <label class="plan-work__toggle">
-            <input type="checkbox" [checked]="control.includeSkipped" (change)="toggleSkipped($event)" />
-            {{ 'plans.work.show_skipped' | translate }}
-          </label>
 
           @if (control.overdue.length) {
             <section class="plan-work__section">
@@ -72,13 +89,59 @@ const initialControl: PlanWorkViewState = {
           }
 
           <section class="plan-work__section">
-            <h3 class="plan-work__section-title">{{ 'plans.work.section.today' | translate: { date: todayLabel } }}</h3>
+            <div class="plan-work__section-header">
+              <h3 class="plan-work__section-title plan-work__section-title--today">{{
+                'plans.work.section.today' | translate: { date: todayLabel }
+              }}</h3>
+              <label class="plan-work__toggle">
+                <input
+                  type="checkbox"
+                  [checked]="control.includeSkipped"
+                  (change)="toggleSkipped($event)"
+                />
+                {{ 'plans.work.show_skipped' | translate }}
+              </label>
+            </div>
             <ul class="plan-work__list">
               @for (row of control.today; track row.item.item_id) {
                 <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: row }" />
               }
               @if (!control.today.length) {
-                <li class="plan-work__empty">{{ 'plans.work.empty_today' | translate }}</li>
+                @if (control.recentAdHocRecord) {
+                  <li class="plan-work__recent-adhoc" role="status" aria-live="polite">
+                    <p class="plan-work__recent-adhoc-message">{{
+                      'plans.work.recent_adhoc'
+                        | translate
+                          : {
+                              name: control.recentAdHocRecord.name,
+                              date: displayDate(control.recentAdHocRecord.actualDate)
+                            }
+                    }}</p>
+                    <a
+                      class="plan-work__recent-adhoc-link"
+                      [routerLink]="['/plans', planId, 'work_records']"
+                    >{{ 'plans.work.recent_adhoc_history_link' | translate }}</a>
+                    <button
+                      type="button"
+                      class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                      (click)="openAdHoc()"
+                    >
+                      {{ 'plans.work.add_record' | translate }}
+                    </button>
+                  </li>
+                } @else {
+                  <li class="plan-work__empty">
+                    <p class="plan-work__empty-message">{{ 'plans.work.empty_today' | translate }}</p>
+                    <p class="plan-work__empty-hint">{{ 'plans.work.empty_today_hint' | translate }}</p>
+                    <button
+                      type="button"
+                      class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                      (click)="openAdHoc()"
+                    >
+                      {{ 'plans.work.add_record' | translate }}
+                    </button>
+                  </li>
+                }
               }
             </ul>
           </section>
@@ -94,11 +157,17 @@ const initialControl: PlanWorkViewState = {
             </section>
           }
 
-          <div class="plan-work__fab plan-work__fab--fixed">
-            <button type="button" class="btn-primary plan-work__fab-btn" (click)="openAdHoc()">
-              {{ 'plans.work.add_record' | translate }}
-            </button>
-          </div>
+          @if (control.today.length) {
+            <footer class="plan-work__fab">
+              <button
+                type="button"
+                class="btn-primary plan-work__fab-btn plan-work__cta--constrained"
+                (click)="openAdHoc()"
+              >
+                {{ 'plans.work.add_record' | translate }}
+              </button>
+            </footer>
+          }
         }
       </section>
     </main>
@@ -108,9 +177,10 @@ const initialControl: PlanWorkViewState = {
         class="plan-work__row"
         [class.plan-work__row--done]="row.recordedToday"
         [class.plan-work__row--overdue]="overdue"
+        [class.plan-work__row--highlight]="control.highlightedItemId === row.item.item_id"
       >
         <div class="plan-work__row-main">
-          <span class="plan-work__date">{{ row.item.scheduled_date }}</span>
+          <span class="plan-work__date">{{ displayDate(row.item.scheduled_date) }}</span>
           <span class="plan-work__name">{{ row.item.name }}</span>
           <span class="plan-work__field">{{ row.fieldName }} {{ row.cropName }}</span>
           @if (row.recordedToday) {
@@ -122,8 +192,17 @@ const initialControl: PlanWorkViewState = {
         </div>
         <div class="plan-work__row-actions">
           @if (!row.recordedToday && row.item.status !== 'skipped') {
-            <button type="button" class="btn-primary plan-work__complete-btn" (click)="openComplete(row)">
-              {{ 'plans.work.complete' | translate }}
+            <button
+              type="button"
+              class="btn-primary plan-work__complete-btn"
+              [disabled]="control.completingItemId === row.item.item_id"
+              (click)="quickComplete(row)"
+            >
+              @if (control.completingItemId === row.item.item_id) {
+                {{ 'common.loading' | translate }}
+              } @else {
+                {{ 'plans.work.complete' | translate }}
+              }
             </button>
           }
           <button
@@ -140,6 +219,9 @@ const initialControl: PlanWorkViewState = {
                   {{ 'plans.work.unskip' | translate }}
                 </button>
               } @else {
+                <button type="button" role="menuitem" (click)="openCompleteWithDetails(row)">
+                  {{ 'plans.work.record_with_details' | translate }}
+                </button>
                 <button type="button" role="menuitem" (click)="skip(row)">
                   {{ 'plans.work.skip' | translate }}
                 </button>
@@ -152,8 +234,8 @@ const initialControl: PlanWorkViewState = {
 
     <app-work-record-sheet
       [planId]="planId"
-      (saved)="reload()"
-      (deleted)="reload()"
+      (saved)="onRecordSaved($event)"
+      (deleted)="reload({ silent: true })"
     />
   `,
   styleUrls: ['./plan-work.component.css']
@@ -164,17 +246,25 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadWorkDayListUseCase);
   private readonly skipUseCase = inject(SkipTaskScheduleItemUseCase);
+  private readonly createUseCase = inject(CreateWorkRecordUseCase);
   private readonly presenter = inject(PlanWorkPresenter);
+  private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   openMenuItemId: number | null = null;
+  private highlightClearTimer: ReturnType<typeof setTimeout> | null = null;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 
   get todayLabel(): string {
-    return localTodayIso();
+    return this.displayDate(localTodayIso());
+  }
+
+  displayDate(iso: string): string {
+    return formatIsoDateForDisplay(iso, this.translate.currentLang);
   }
 
   private _control: PlanWorkViewState = initialControl;
@@ -189,6 +279,18 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.presenter.onSkipSuccessCallback = () => this.reload();
+    this.presenter.onRecordSavedCallback = (event) => this.onRecordSaved(event);
+    this.presenter.onQuickCompleteValidationErrorCallback = (itemId, fieldErrors) => {
+      const row = this.findRowByItemId(itemId);
+      if (row) {
+        this.sheet.openFromItem(row, { fieldErrors });
+      }
+    };
+    this.destroyRef.onDestroy(() => {
+      if (this.highlightClearTimer !== null) {
+        clearTimeout(this.highlightClearTimer);
+      }
+    });
     if (!this.planId) {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
@@ -196,14 +298,48 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     this.reload();
   }
 
-  reload(): void {
+  reload(options?: { silent?: boolean }): void {
     this.openMenuItemId = null;
-    this.control = { ...this.control, loading: true };
+    if (!options?.silent) {
+      this.control = { ...this.control, loading: true, error: null };
+    }
     this.loadUseCase.execute({
       planId: this.planId,
       today: localTodayIso(),
       includeSkipped: this.control.includeSkipped
     });
+  }
+
+  onRecordSaved(event: WorkRecordSheetSavedEvent): void {
+    if (event.mode === 'create-adhoc') {
+      this.control = {
+        ...this.control,
+        recentAdHocRecord: {
+          name: event.workRecord.name,
+          actualDate: event.workRecord.actual_date
+        },
+        highlightedItemId: null
+      };
+    } else if (event.mode === 'create-from-item' && event.workRecord.task_schedule_item_id != null) {
+      this.control = {
+        ...this.control,
+        recentAdHocRecord: null,
+        highlightedItemId: event.workRecord.task_schedule_item_id
+      };
+      const itemId = event.workRecord.task_schedule_item_id;
+      if (this.highlightClearTimer !== null) {
+        clearTimeout(this.highlightClearTimer);
+      }
+      this.highlightClearTimer = setTimeout(() => {
+        if (this.control.highlightedItemId === itemId) {
+          this.control = { ...this.control, highlightedItemId: null };
+        }
+        this.highlightClearTimer = null;
+      }, 3000);
+    } else {
+      this.control = { ...this.control, recentAdHocRecord: null };
+    }
+    this.reload({ silent: true });
   }
 
   toggleSkipped(event: Event): void {
@@ -212,9 +348,26 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     this.reload();
   }
 
-  openComplete(row: WorkDayListRowDto): void {
+  quickComplete(row: WorkDayListRowDto): void {
+    this.openMenuItemId = null;
+    this.control = { ...this.control, completingItemId: row.item.item_id, error: null };
+    this.createUseCase.execute({
+      planId: this.planId,
+      body: {
+        task_schedule_item_id: row.item.item_id,
+        actual_date: localTodayIso()
+      }
+    });
+  }
+
+  openCompleteWithDetails(row: WorkDayListRowDto): void {
     this.openMenuItemId = null;
     this.sheet.openFromItem(row);
+  }
+
+  private findRowByItemId(itemId: number): WorkDayListRowDto | null {
+    const rows = [...this.control.overdue, ...this.control.today, ...this.control.upcoming];
+    return rows.find((row) => row.item.item_id === itemId) ?? null;
   }
 
   openAdHoc(): void {

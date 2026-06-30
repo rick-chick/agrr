@@ -31,6 +31,43 @@ fn cable_route_is_not_global_api_not_migrated_501() {
 }
 
 #[test]
+fn get_plans_authenticated_includes_farm_id() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get("/api/v1/plans", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("plans list JSON");
+    let plans = json.as_array().expect("plans array");
+    let plan = plans
+        .iter()
+        .find(|p| p["id"].as_i64() == Some(seed.plan_id))
+        .expect("seeded plan in list");
+    assert_eq!(seed.farm_id, plan["farm_id"].as_i64().unwrap());
+}
+
+#[test]
+fn get_work_hub_authenticated_returns_farm_rows_with_plan_id() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get("/api/v1/work/hub", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("work hub JSON");
+    let farms = json.as_array().expect("farms array");
+    let farm = farms
+        .iter()
+        .find(|f| f["farm_id"].as_i64() == Some(seed.farm_id))
+        .expect("seeded farm in hub list");
+    assert_eq!(seed.plan_id, farm["plan_id"].as_i64().unwrap());
+    assert!(farm["has_valid_fields"].as_bool().unwrap());
+}
+
+#[test]
 fn post_work_records_unauthenticated_returns_401() {
     let client = ContractClient::from_env();
     let (status, body) = status_and_body(client.post(

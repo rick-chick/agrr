@@ -1007,6 +1007,7 @@
       "fields_list": "圃場一覧",
       "fields_list_title": "圃場一覧",
       "no_fields": "まだ圃場が登録されていません。",
+      "field_list_item": "{{name}}（{{area}}㎡）",
       "add_first_field": "最初の圃場を追加",
       "back_to_list": "農場一覧に戻る",
       "detail": "詳細",
@@ -1024,8 +1025,7 @@
         "daily_fixed_cost_placeholder": "例: 5000",
         "submit_update": "更新",
         "submit_create": "圃場を作成"
-      },
-      "field_list_item": "{{name}}（{{area}}㎡）"
+      }
     },
     "card": {
       "latitude": "緯度",
@@ -1383,6 +1383,8 @@
       "forbidden": "アクセス権限がありません",
       "not_found": "リソースが見つかりません",
       "network": "ネットワークエラーが発生しました",
+      "not_migrated": "この機能はまだ利用できません",
+      "service_unavailable": "サーバーに接続できませんでした",
       "generic": "エラーが発生しました"
     }
   },
@@ -2186,7 +2188,7 @@
     },
     "task_schedules": {
       "title": "{{name}}の作業予定",
-      "back_to_plan": "← 計画詳細に戻る",
+      "back_to_plan": "計画詳細を見る",
       "timeline_generated_at": "生成日時: {{datetime}}",
       "timeline_generated_unknown": "生成日時: 未取得",
       "nav_prev_week": "前の週",
@@ -2194,6 +2196,13 @@
       "nav_today": "今週",
       "week_label": "{{start}} 〜 {{end}}",
       "no_schedules": "作業予定がまだ生成されていません。",
+      "status": {
+        "planned": "予定",
+        "skipped": "スキップ",
+        "completed": "完了"
+      },
+      "field_section": "{{name}}（{{crop}}）",
+      "field_number": "圃場 {{number}}",
       "plan_level_field": "計画全体",
       "field_header": {
         "crop_area": "{{crop}} / {{area}}㎡"
@@ -2263,7 +2272,8 @@
     },
     "work": {
       "title": "{{name}}の作業",
-      "back_to_plan": "← 計画詳細に戻る",
+      "back_to_plan": "計画詳細を見る",
+      "back_to_hub": "作業記録トップへ",
       "nav": {
         "work": "今日の作業",
         "schedule": "全体スケジュール",
@@ -2275,14 +2285,23 @@
         "upcoming": "今後7日"
       },
       "complete": "完了",
+      "record_with_details": "詳細を記録",
       "add_record": "+ 作業を記録",
       "empty_today": "今日の予定はありません",
+      "empty_today_hint": "予定外の作業はここから記録できます",
       "recorded_today": "実績登録済",
       "skipped_badge": "スキップ",
       "show_skipped": "スキップ済みを表示",
       "skip": "スキップ",
       "unskip": "スキップを解除",
       "menu": "メニュー",
+      "retry": "再読み込み",
+      "toast": {
+        "record_saved": "作業を記録しました",
+        "record_saved_adhoc": "作業を記録しました。実績履歴で確認できます"
+      },
+      "recent_adhoc": "「{{name}}」（{{date}}）を記録しました",
+      "recent_adhoc_history_link": "実績履歴で見る",
       "sheet": {
         "title": "作業を記録",
         "name": "作業名",
@@ -2294,7 +2313,11 @@
         "field": "圃場",
         "field_select": "圃場（任意）",
         "field_optional": "未選択",
-        "submit": "記録する"
+        "submit": "記録する",
+        "task_picker": "作業を選ぶ",
+        "task_other": "その他",
+        "show_details": "詳細を追加",
+        "hide_details": "詳細を閉じる"
       },
       "errors": {
         "name_required": "作業名を入力してください"
@@ -2312,7 +2335,30 @@
         "save": "保存する",
         "delete": "削除",
         "delete_confirm": "この実績を削除しますか？"
+      },
+      "toast": {
+        "record_updated": "実績を保存しました",
+        "record_deleted": "実績を削除しました"
       }
+    }
+  },
+  "work": {
+    "hub": {
+      "title": "作業記録",
+      "subtitle": "農場を選んで今日の作業を記録します",
+      "error_subtitle": "農場一覧を読み込めませんでした。再読み込みをお試しください。",
+      "select_farm": "農場を選択",
+      "no_farms": "農場がまだ登録されていません",
+      "no_farms_hint": "作業を記録するには、まず農場と圃場を登録してください。",
+      "create_farm_link": "農場を登録する",
+      "creating_plan": "計画を準備しています…",
+      "creating_plan_for": "「{{name}}」の計画を準備しています…",
+      "farm_meta": "圃場 {{count}} 件・合計 {{area}} ㎡",
+      "open_work": "作業へ",
+      "start_recording": "記録を始める",
+      "no_fields_warning": "有効な圃場がありません。",
+      "register_fields_link": "圃場を登録する",
+      "retry": "再読み込み"
     }
   },
   "status": {
@@ -2323,6 +2369,7 @@
     "open_menu": "メニューを開く",
     "close_menu": "メニューを閉じる",
     "plan": "計画",
+    "work_log": "作業記録",
     "menu_masters": "マスタデータ",
     "new_plan": "作付け計画を作成",
     "reports": "レポート",

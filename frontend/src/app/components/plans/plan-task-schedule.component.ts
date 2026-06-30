@@ -29,20 +29,35 @@ const initialControl: PlanTaskScheduleViewState = {
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <section class="page">
-        <a [routerLink]="['/plans', planId]">{{ 'plans.task_schedules.back_to_plan' | translate }}</a>
-        <app-plan-work-nav [planId]="planId" />
+      <header class="page-header">
+        <a class="plan-work-header__back" [routerLink]="['/work']">{{
+          'plans.work.back_to_hub' | translate
+        }}</a>
+        @if (control.schedule) {
+          <h1 id="plan-work-page-title" class="page-title">{{
+            'plans.task_schedules.title'
+              | translate: { name: (control.schedule.plan.name | planDisplayName) }
+          }}</h1>
+          <p class="page-description">
+            <a class="plan-work-header__plan-link" [routerLink]="['/plans', planId]">{{
+              'plans.task_schedules.back_to_plan' | translate
+            }}</a>
+          </p>
+        }
+      </header>
+
+      <section class="section-card" aria-labelledby="plan-work-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
-          <div class="page-alert-error" role="alert">
+          <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+              {{ 'plans.work.retry' | translate }}
+            </button>
           </div>
         } @else if (control.schedule) {
-          <h2>{{
-            'plans.task_schedules.title'
-              | translate: { name: (control.schedule.plan.name | planDisplayName) }
-          }}</h2>
+          <app-plan-work-nav [planId]="planId" />
           <app-task-schedule-timeline [fields]="control.schedule.fields" />
         }
       </section>
@@ -76,11 +91,16 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
-    this.load(planId);
+    this.reload();
   }
 
-  load(planId: number): void {
-    this.control = { ...this.control, loading: true };
+  reload(): void {
+    const planId = this.planId;
+    if (!planId) {
+      this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
+      return;
+    }
+    this.control = { ...this.control, loading: true, error: null };
     this.useCase.execute({ planId });
   }
 }

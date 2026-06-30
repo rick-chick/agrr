@@ -12,6 +12,7 @@ export interface WorkRecordFormInput {
   time_spent_minutes: string;
   notes: string;
   field_cultivation_id: number | null;
+  agricultural_task_id?: number | null;
 }
 
 export function mapFormToCreateRequest(form: WorkRecordFormInput): WorkRecordCreateRequest {
@@ -28,6 +29,7 @@ export function mapFormToCreateRequest(form: WorkRecordFormInput): WorkRecordCre
   }
 
   body.name = form.name;
+  if (form.agricultural_task_id != null) body.agricultural_task_id = form.agricultural_task_id;
   if (form.field_cultivation_id != null) body.field_cultivation_id = form.field_cultivation_id;
   if (form.amount) body.amount = form.amount;
   if (form.amount_unit) body.amount_unit = form.amount_unit;

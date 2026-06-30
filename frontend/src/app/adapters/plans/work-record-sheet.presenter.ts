@@ -1,6 +1,10 @@
-import { Injectable } from '@angular/core';
-import { WorkRecordSheetView } from '../../components/plans/work-record-sheet.view';
+import { Injectable, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { WorkRecordSheetSavedEvent, WorkRecordSheetView } from '../../components/plans/work-record-sheet.view';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { UndoToastService } from '../../services/undo-toast.service';
+import { AgriculturalTaskListDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-list.dtos';
+import { LoadAgriculturalTaskListOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
 import { CreateWorkRecordOutputPort } from '../../usecase/plans/create-work-record.output-port';
 import {
   CreateWorkRecordSuccessDto,
@@ -15,18 +19,39 @@ import { DeleteWorkRecordOutputPort } from '../../usecase/plans/delete-work-reco
 
 @Injectable()
 export class WorkRecordSheetPresenter
-  implements CreateWorkRecordOutputPort, UpdateWorkRecordOutputPort, DeleteWorkRecordOutputPort
+  implements
+    CreateWorkRecordOutputPort,
+    UpdateWorkRecordOutputPort,
+    DeleteWorkRecordOutputPort,
+    LoadAgriculturalTaskListOutputPort
 {
+  private readonly toast = inject(UndoToastService);
+  private readonly translate = inject(TranslateService);
+
   private view: WorkRecordSheetView | null = null;
-  onSavedCallback: (() => void) | null = null;
+  onSavedCallback: ((event: WorkRecordSheetSavedEvent) => void) | null = null;
   onDeletedCallback: (() => void) | null = null;
 
   setView(view: WorkRecordSheetView): void {
     this.view = view;
   }
 
-  onSuccess(_dto: CreateWorkRecordSuccessDto | UpdateWorkRecordSuccessDto): void {
+  present(dto: AgriculturalTaskListDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      loadingTaskChips: false,
+      taskChips: dto.tasks.map((task) => ({
+        id: task.id,
+        name: task.name,
+        task_type: task.task_type ?? null
+      }))
+    };
+  }
+
+  onSuccess(dto: CreateWorkRecordSuccessDto | UpdateWorkRecordSuccessDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const mode = this.view.control.mode;
     this.view.control = {
       ...this.view.control,
       submitting: false,
@@ -34,7 +59,8 @@ export class WorkRecordSheetPresenter
       error: null
     };
     this.view.close();
-    this.onSavedCallback?.();
+    this.showSavedToast(mode);
+    this.onSavedCallback?.({ workRecord: dto.workRecord, mode });
   }
 
   onValidationError(dto: CreateWorkRecordValidationErrorDto | UpdateWorkRecordValidationErrorDto): void {
@@ -49,6 +75,13 @@ export class WorkRecordSheetPresenter
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    if (this.view.control.loadingTaskChips) {
+      this.view.control = {
+        ...this.view.control,
+        loadingTaskChips: false
+      };
+      return;
+    }
     this.view.control = {
       ...this.view.control,
       submitting: false,
@@ -66,6 +99,17 @@ export class WorkRecordSheetPresenter
       error: null
     };
     this.view.close();
+    this.toast.show(this.translate.instant('plans.work_records.toast.record_deleted'));
     this.onDeletedCallback?.();
+  }
+
+  private showSavedToast(mode: WorkRecordSheetSavedEvent['mode']): void {
+    const key =
+      mode === 'edit'
+        ? 'plans.work_records.toast.record_updated'
+        : mode === 'create-adhoc'
+          ? 'plans.work.toast.record_saved_adhoc'
+          : 'plans.work.toast.record_saved';
+    this.toast.show(this.translate.instant(key));
   }
 }

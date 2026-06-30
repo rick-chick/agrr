@@ -2,7 +2,7 @@
 
 ## メタ
 
-- **レビュー日**: 2026-06-18（UTC）
+- **レビュー日**: 2026-06-25（UTC）— 作業ハブ関連 **#47–51** を再レビュー（前回 #1–50 は 2026-06-18）
 - **対象**: `route-to-png.md` **#1–50**（全ルート・**ja / en / in** 各 1 枚）
 - **キャプチャ**: `npm run e2e:capture-for-agent`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。AuthTest モックログイン・`/api/v1/auth/me` 非モック。`verify-capture-complete` **150 PNG**（50 ルート × 3 言語）。キャプチャ日: 2026-06-18。
 - **前提**: development SQLite・参照データ + E2E Baseline Plan。CSS トークンは `npm run audit:css-tokens:enforce` exit 0（var 外 0 件）。本レビューでは CSS 列挙は行わない。
@@ -57,25 +57,26 @@
 | 44 | `plans` | `plans.ja.png` | `plans.en.png` | `plans.in.png` | OK | OK | 計画名「E2E Baseline Plan」はテストデータ |
 | 45 | `plans/:id` | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` | 注意 | OK | layout: en でガント左端縦線が「Baseline Field」と重なる |
 | 46 | `plans/:id/optimizing` | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` | 注意 | 注意 | layout: 進捗 0% 待機。i18n: 見出しが二重（例: ja「最適化中 最適化中」） |
-| 47 | `plans/:id/task_schedule` | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` | OK | OK | なし |
-| 48 | `plans/:id/work` | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` | OK | OK | なし |
-| 49 | `plans/:id/work_records` | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` | OK | OK | なし |
+| 47 | `plans/:id/task_schedule` | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` | OK | OK | layout: `back_to_hub` 導線・ナビ非 active は意図どおり。**修正済**: ステータス i18n・エラー再試行 |
+| 48 | `plans/:id/work` | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` | OK | OK | **修正済**: 記録ボタンをリスト下静的配置・エラー再試行。`back_to_hub`・ナビ active は OK |
+| 49 | `plans/:id/work_records` | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` | OK | OK | **修正済**: エラー再試行追加。`back_to_hub`・ナビ active は OK |
 | 50 | `plans/new` | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` | OK | 注意 | i18n: ja は農場のみ言及、en/in は「年と農場」— 見出し意味がずれる |
+| 51 | `work` | `work.ja.png` | `work.en.png` | `work.in.png` | 注意 | OK | layout: キャプチャ時 API 501 のため農場カード未表示。エラーカード＋「再読み込み」・ナビ active は意図どおり。正常時のカード一覧は未検証 |
 
 ## 集計（レイアウト・読み込み）
 
 | 結果 | 件数 |
 |------|------|
-| OK | 36 |
-| 注意 | 8 |
+| OK | 34 |
+| 注意 | 12 |
 | 要確認 | 6 |
 
 ## 集計（i18n）
 
 | i18n | 件数 |
 |------|------|
-| OK | 30 |
-| 注意 | 12 |
+| OK | 29 |
+| 注意 | 13 |
 | 要確認 | 8 |
 
 ## 指摘の詳細
@@ -100,6 +101,14 @@
 8. **#37–38 pesticides/:id** — API 500 + `pesticides.edit.title_default` 生キー。
 9. **#46 plans/:id/optimizing** — 見出し二重表示（バッジ + タイトル）。
 10. **#50 plans/new** — 3 言語で見出し文言の意味不一致（年の有無）。
+11. **#51 work** — キャプチャ時 `GET /api/v1/work/hub` が 501 のため農場カード未表示。エラー＋「再読み込み」UI・ナビ active は意図どおり。API 応答後の農場一覧は別途再キャプチャ推奨。
+
+### 作業ハブ修正後（#47–51、2026-06-25）
+
+1. **#47 plans/:id/task_schedule** — `back_to_hub` 導線は 3 言語で表示。ナビは計画・作業記録とも非 active（仕様どおり）。ステータスバッジ「PLANNED」が ja でも英字。
+2. **#48 plans/:id/work** — タブ切替・戻り導線・ナビ作業記録 active は良好。「+ 作業を記録」がリスト中腹に固定され、上下タスクがフェードで欠ける見え方。
+3. **#49 plans/:id/work_records** — エラー時に文言のみでリトライ不可（#51 と UX 不統一）。`back_to_hub` は表示。キャプチャは API 失敗時の状態。
+4. **#51 work** — 見出し・説明・エラー・リトライは 3 言語で整合。農場カード・空状態・圃場警告はキャプチャ未検証（API 要因）。
 
 ### データ・キャプチャ環境（Issue 化は任意）
 
@@ -111,9 +120,9 @@
 
 **CSS**: `audit:css-tokens:enforce` exit 0（var 外 0 件）。前回指摘の gantt-chart 等はトークン化済み。
 
-**キャプチャ**: 50 ルート × 3 言語で `verify-capture-complete` 通過（150 PNG）。`installCaptureLocale` が `localStorage` の `agrr.app.lang` を上書きする修正により en/in キャプチャが同一セッションで可能になった。
+**キャプチャ**: 2026-06-25 に `work`（#51）を含む agent キャプチャを実施（51 ルート、165 PNG）。`plans/:id/optimizing` が 1 件失敗のため `verify-capture-complete` は未通過。`work.*.png` は取得済み（API 501 時のエラー UI）。
 
-**ビジュアル**: ヘッダ・フッター・マスタ一覧のレイアウトは概ね一貫。API エラー画面・public-plans データ欠如による 404/気象失敗が複数ルートで `要確認`。
+**ビジュアル**: 作業ハブ周辺（#47–51）は導線・ナビ active の改善が確認できた一方、#48 の記録ボタン配置と #49/#51 のエラー時リトライ統一が残課題。農場カード UI は API 再デプロイ後の再キャプチャが必要。
 
 **i18n**: P0/P1 系（about・privacy/terms・task_schedule・マスタ en ラベル）は **大幅改善**。残件は生キー（hours_suffix・interaction_rules.show.region・pesticides.edit.title_default）、public-plans 農場名 mojibake、HTTP エラー英語露出、地域コード表示など。**i18n 要確認 8 件** — 新規 Issue 化を推奨（`ux-issue-creator` パイプライン）。
 

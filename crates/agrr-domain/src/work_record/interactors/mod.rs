@@ -1,9 +1,11 @@
 pub(crate) mod private_plan_access;
+pub(crate) mod work_hub_list_interactor;
 pub(crate) mod work_record_create_interactor;
 pub(crate) mod work_record_destroy_interactor;
 pub(crate) mod work_record_list_interactor;
 pub(crate) mod work_record_update_interactor;
 
+pub use work_hub_list_interactor::WorkHubListInteractor;
 pub use work_record_create_interactor::WorkRecordCreateInteractor;
 pub use work_record_destroy_interactor::WorkRecordDestroyInteractor;
 pub use work_record_list_interactor::WorkRecordListInteractor;

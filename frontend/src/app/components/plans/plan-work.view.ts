@@ -10,6 +10,9 @@ export interface PlanWorkViewState {
   today: WorkDayListRowDto[];
   upcoming: WorkDayListRowDto[];
   includeSkipped: boolean;
+  recentAdHocRecord: { name: string; actualDate: string } | null;
+  highlightedItemId: number | null;
+  completingItemId: number | null;
 }
 
 export interface PlanWorkView {

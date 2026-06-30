@@ -43,3 +43,6 @@ pub trait WorkRecordDestroyOutputPort {
     );
     fn on_not_found(&mut self);
 }
+
+pub(crate) mod work_hub_list_output_port;
+pub use work_hub_list_output_port::WorkHubListOutputPort;

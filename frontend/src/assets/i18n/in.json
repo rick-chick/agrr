@@ -588,6 +588,14 @@
         "label": "डीबग:"
       }
     },
+    "form": {
+      "region_label": "क्षेत्र",
+      "region_jp": "जापान",
+      "region_us": "उत्तरी अमेरिका",
+      "region_in": "भारत",
+      "region_blank": "चयनित नहीं",
+      "region_help": "खेती क्षेत्र (केवल व्यवस्थापक)"
+    },
     "new": {
       "title": "नया खेत जोड़ें",
       "form": {
@@ -641,6 +649,7 @@
       "fields_list": "खेत क्षेत्र",
       "fields_list_title": "खेत क्षेत्र सूची",
       "no_fields": "अभी तक कोई खेत क्षेत्र पंजीकृत नहीं।",
+      "field_list_item": "{{name}} ({{area}}㎡)",
       "add_first_field": "पहला खेत क्षेत्र जोड़ें",
       "back_to_list": "खेत सूची पर वापस जाएं",
       "detail": "विवरण",
@@ -658,8 +667,7 @@
         "daily_fixed_cost_placeholder": "उदाहरण: 5000",
         "submit_update": "अपडेट करें",
         "submit_create": "खेत क्षेत्र बनाएं"
-      },
-      "field_list_item": "{{name}} ({{area}}㎡)"
+      }
     },
     "card": {
       "latitude": "अक्षांश",
@@ -709,14 +717,6 @@
       "insufficient_historical_data": "पूर्वानुमान के लिए अपर्याप्त ऐतिहासिक डेटा।",
       "job_queue_failed": "पूर्वानुमान जॉब कतारबद्ध करने में विफल: {{error}}",
       "farm_not_found": "खेत नहीं मिला।"
-    },
-    "form": {
-      "region_label": "क्षेत्र",
-      "region_jp": "जापान",
-      "region_us": "उत्तरी अमेरिका",
-      "region_in": "भारत",
-      "region_blank": "चयनित नहीं",
-      "region_help": "खेती क्षेत्र (केवल व्यवस्थापक)"
     }
   },
   "fields": {
@@ -1023,6 +1023,8 @@
       "forbidden": "इस संसाधन तक पहुँच की अनुमति नहीं है",
       "not_found": "संसाधन नहीं मिला",
       "network": "नेटवर्क त्रुटि हुई",
+      "not_migrated": "यह सुविधा अभी उपलब्ध नहीं है",
+      "service_unavailable": "सर्वर से कनेक्ट नहीं हो सका",
       "generic": "एक त्रुटि हुई"
     }
   },
@@ -1450,14 +1452,22 @@
     },
     "task_schedules": {
       "title": "{{name}} की कार्य अनुसूची",
-      "back_to_plan": "← योजना विवरण पर वापस जाएं",
+      "back_to_plan": "योजना विवरण देखें",
       "general_label": "सामान्य कार्य",
       "fertilizer_label": "उर्वरक",
-      "no_schedules": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।"
+      "no_schedules": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
+      "status": {
+        "planned": "नियोजित",
+        "skipped": "छोड़ा गया",
+        "completed": "पूर्ण"
+      },
+      "field_section": "{{name}} ({{crop}})",
+      "field_number": "खेत क्षेत्र {{number}}"
     },
     "work": {
       "title": "कार्य — {{name}}",
-      "back_to_plan": "← योजना विवरण पर वापस",
+      "back_to_plan": "योजना विवरण देखें",
+      "back_to_hub": "कार्य लॉग पर वापस",
       "nav": {
         "work": "आज का कार्य",
         "schedule": "पूर्ण अनुसूची",
@@ -1469,14 +1479,23 @@
         "upcoming": "अगले 7 दिन"
       },
       "complete": "पूर्ण",
+      "record_with_details": "विवरण के साथ दर्ज करें",
       "add_record": "+ कार्य दर्ज करें",
       "empty_today": "आज के लिए कोई कार्य निर्धारित नहीं",
+      "empty_today_hint": "अनियोजित कार्य यहाँ से दर्ज करें",
       "recorded_today": "आज दर्ज किया गया",
       "skipped_badge": "छोड़ा गया",
       "show_skipped": "छोड़े गए दिखाएं",
       "skip": "छोड़ें",
       "unskip": "छोड़ना रद्द करें",
       "menu": "मेनू",
+      "retry": "पुनः लोड करें",
+      "toast": {
+        "record_saved": "कार्य दर्ज हो गया",
+        "record_saved_adhoc": "कार्य दर्ज हो गया। कार्य इतिहास में देखें।"
+      },
+      "recent_adhoc": "「{{name}}」（{{date}}）दर्ज किया गया",
+      "recent_adhoc_history_link": "कार्य इतिहास देखें",
       "sheet": {
         "title": "कार्य दर्ज करें",
         "name": "कार्य का नाम",
@@ -1488,7 +1507,11 @@
         "field": "खेत क्षेत्र",
         "field_select": "खेत क्षेत्र (वैकल्पिक)",
         "field_optional": "चयनित नहीं",
-        "submit": "दर्ज करें"
+        "submit": "दर्ज करें",
+        "task_picker": "कार्य चुनें",
+        "task_other": "अन्य",
+        "show_details": "विवरण जोड़ें",
+        "hide_details": "विवरण छुपाएं"
       },
       "errors": {
         "name_required": "कार्य का नाम आवश्यक है"
@@ -1506,6 +1529,10 @@
         "save": "सहेजें",
         "delete": "हटाएं",
         "delete_confirm": "क्या आप इस कार्य को हटाना चाहते हैं?"
+      },
+      "toast": {
+        "record_updated": "कार्य सहेजा गया",
+        "record_deleted": "कार्य हटाया गया"
       }
     },
     "index": {
@@ -1805,6 +1832,25 @@
       "network_error": "नेटवर्क त्रुटि हुई"
     }
   },
+  "work": {
+    "hub": {
+      "title": "कार्य लॉग",
+      "subtitle": "आज का कार्य दर्ज करने के लिए खेत चुनें",
+      "error_subtitle": "खेत सूची लोड नहीं हो सकी। पुनः लोड करने का प्रयास करें।",
+      "select_farm": "खेत चुनें",
+      "no_farms": "अभी तक कोई खेत पंजीकृत नहीं",
+      "no_farms_hint": "कार्य दर्ज करने से पहले खेत और खेत क्षेत्र पंजीकृत करें।",
+      "create_farm_link": "खेत पंजीकृत करें",
+      "creating_plan": "योजना तैयार हो रही है…",
+      "creating_plan_for": "{{name}} की योजना तैयार हो रही है…",
+      "farm_meta": "{{count}} खेत क्षेत्र · कुल {{area}} वर्ग मी",
+      "open_work": "कार्य खोलें",
+      "start_recording": "दर्ज करना शुरू करें",
+      "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",
+      "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
+      "retry": "पुनः लोड करें"
+    }
+  },
   "status": {
     "checking": "जाँच हो रही है..."
   },
@@ -1813,6 +1859,7 @@
     "open_menu": "मेनू खोलें",
     "close_menu": "मेनू बंद करें",
     "plan": "योजनाएं",
+    "work_log": "कार्य लॉग",
     "menu_masters": "मास्टर डेटा",
     "new_plan": "फसल योजना बनाएं",
     "reports": "रिपोर्ट",

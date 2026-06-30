@@ -12,7 +12,7 @@ import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response
 
 describe('LoadPlanDetailUseCase', () => {
   it('calls outputPort.present with plan and planData from gateway', () => {
-    const plan: PlanSummary = { id: 7, name: 'Plan 7', status: 'completed' };
+    const plan: PlanSummary = { id: 7, name: 'Plan 7', status: 'completed', farm_id: 1 };
     const planData: CultivationPlanData = {
       success: true,
       data: {

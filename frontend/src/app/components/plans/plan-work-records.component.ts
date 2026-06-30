@@ -32,17 +32,33 @@ const initialControl: PlanWorkRecordsViewState = {
   providers: [...PLAN_WORK_RECORDS_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <section class="page">
-        <a [routerLink]="['/plans', planId]">{{ 'plans.work.back_to_plan' | translate }}</a>
+      <header class="page-header">
+        <a class="plan-work-header__back" [routerLink]="['/work']">{{
+          'plans.work.back_to_hub' | translate
+        }}</a>
+        @if (control.plan) {
+          <h1 id="plan-work-page-title" class="page-title">{{
+            'plans.work_records.title' | translate: { name: (control.plan.name | planDisplayName) }
+          }}</h1>
+          <p class="page-description">
+            <a class="plan-work-header__plan-link" [routerLink]="['/plans', planId]">{{
+              'plans.work.back_to_plan' | translate
+            }}</a>
+          </p>
+        }
+      </header>
 
+      <section class="section-card plan-work-records" aria-labelledby="plan-work-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
-          <div class="page-alert-error" role="alert">
+          <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+              {{ 'plans.work.retry' | translate }}
+            </button>
           </div>
         } @else if (control.plan) {
-          <h2>{{ 'plans.work_records.title' | translate: { name: (control.plan.name | planDisplayName) } }}</h2>
           <app-plan-work-nav [planId]="planId" />
 
           @if (!control.groups.length) {
@@ -83,8 +99,8 @@ const initialControl: PlanWorkRecordsViewState = {
 
     <app-work-record-sheet
       [planId]="planId"
-      (saved)="reload()"
-      (deleted)="reload()"
+      (saved)="reload({ silent: true })"
+      (deleted)="reload({ silent: true })"
     />
   `,
   styleUrls: ['./plan-work-records.component.css']
@@ -119,8 +135,10 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
     this.reload();
   }
 
-  reload(): void {
-    this.control = { ...this.control, loading: true };
+  reload(options?: { silent?: boolean }): void {
+    if (!options?.silent) {
+      this.control = { ...this.control, loading: true, error: null };
+    }
     this.loadUseCase.execute({ planId: this.planId });
   }
 

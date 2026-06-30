@@ -11,6 +11,8 @@ mod plan_allocation_adjust_read_gateway;
 mod field_mutation_gateway;
 mod plan_crop_gateway;
 mod private_read_gateway;
+#[cfg(test)]
+mod private_read_gateway_test;
 mod private_snapshot_read_gateway;
 mod crop_rows_available_private_gateway;
 mod rest_plan_read;
