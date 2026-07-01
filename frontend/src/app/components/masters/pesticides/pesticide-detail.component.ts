@@ -10,11 +10,14 @@ import {
   PESTICIDE_DETAIL_PROVIDERS
 } from '../../../usecase/pesticides/pesticide-detail.providers';
 import { Pesticide } from '../../../domain/pesticides/pesticide';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: PesticideDetailViewState = {
   loading: true,
   error: null,
-  pesticide: null
+  pesticide: null,
+  pendingUndoToast: null
 };
 
 @Component({
@@ -79,6 +82,7 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
   private readonly useCase = inject(LoadPesticideDetailUseCase);
   private readonly deleteUseCase = inject(DeletePesticideUseCase);
   private readonly presenter = inject(PesticideDetailPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PesticideDetailViewState = initialControl;
@@ -86,7 +90,7 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
     return this._control;
   }
   set control(value: PesticideDetailViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

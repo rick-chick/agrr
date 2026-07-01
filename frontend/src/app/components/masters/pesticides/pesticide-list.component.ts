@@ -11,11 +11,14 @@ import {
 } from '../../../usecase/pesticides/pesticide-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: PesticideListViewState = {
   loading: true,
   error: null,
-  pesticides: []
+  pesticides: [],
+  pendingUndoToast: null
 };
 
 @Component({
@@ -71,6 +74,7 @@ export class PesticideListComponent implements PesticideListView, OnInit, OnDest
   private readonly loadUseCase = inject(LoadPesticideListUseCase);
   private readonly deleteUseCase = inject(DeletePesticideUseCase);
   private readonly presenter = inject(PesticideListPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
@@ -80,7 +84,7 @@ export class PesticideListComponent implements PesticideListView, OnInit, OnDest
     return this._control;
   }
   set control(value: PesticideListViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

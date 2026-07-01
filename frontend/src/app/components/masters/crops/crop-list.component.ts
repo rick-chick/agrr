@@ -12,11 +12,14 @@ import {
 } from '../../../usecase/crops/crop-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: CropListViewState = {
   loading: true,
   error: null,
-  crops: []
+  crops: [],
+  pendingUndoToast: null
 };
 
 @Component({
@@ -71,6 +74,7 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
   private readonly loadUseCase = inject(LoadCropListUseCase);
   private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropListPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
@@ -80,7 +84,7 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
     return this._control;
   }
   set control(value: CropListViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

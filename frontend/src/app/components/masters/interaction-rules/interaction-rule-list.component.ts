@@ -14,11 +14,14 @@ import {
 } from '../../../usecase/interaction-rules/interaction-rule-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: InteractionRuleListViewState = {
   loading: true,
   error: null,
-  rules: []
+  rules: [],
+  pendingUndoToast: null
 };
 
 @Component({
@@ -67,6 +70,7 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
   private readonly loadUseCase = inject(LoadInteractionRuleListUseCase);
   private readonly deleteUseCase = inject(DeleteInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleListPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private readonly translate = inject(TranslateService);
@@ -77,7 +81,7 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
     return this._control;
   }
   set control(value: InteractionRuleListViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

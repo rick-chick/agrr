@@ -12,11 +12,14 @@ import {
   AgriculturalTaskDetailPresenter,
   AGRICULTURAL_TASK_DETAIL_PROVIDERS
 } from '../../../usecase/agricultural-tasks/agricultural-task-detail.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: AgriculturalTaskDetailViewState = {
   loading: true,
   error: null,
-  agriculturalTask: null
+  agriculturalTask: null,
+  pendingUndoToast: null
 };
 
 @Component({
@@ -103,6 +106,7 @@ export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailVi
   private readonly useCase = inject(LoadAgriculturalTaskDetailUseCase);
   private readonly deleteUseCase = inject(DeleteAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskDetailPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: AgriculturalTaskDetailViewState = initialControl;
@@ -110,7 +114,7 @@ export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailVi
     return this._control;
   }
   set control(value: AgriculturalTaskDetailViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

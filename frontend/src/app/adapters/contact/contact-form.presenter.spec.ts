@@ -7,7 +7,6 @@ import {
   ContactFormViewState
 } from '../../components/contact-form/contact-form.view';
 import { SendContactMessageSuccessDto } from '../../usecase/contact/send-contact-message.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 
 const translationMap = new Map<string, string>([
   ['contact_form.success.message', 'お問い合わせを受け付けました。'],
@@ -17,12 +16,11 @@ const translationMap = new Map<string, string>([
 
 describe('ContactFormPresenter', () => {
   let presenter: ContactFormPresenter;
-  let mockToast: { show: ReturnType<typeof vi.fn> };
   let lastControl: ContactFormViewState | null;
 
   const view: ContactFormView = {
     get control(): ContactFormViewState {
-      return lastControl ?? { loading: false, sending: false, message: null };
+      return lastControl ?? { loading: false, sending: false, message: null, pendingToastKey: null };
     },
     set control(value: ContactFormViewState) {
       lastControl = value;
@@ -30,8 +28,7 @@ describe('ContactFormPresenter', () => {
   };
 
   beforeEach(() => {
-    mockToast = { show: vi.fn() };
-    lastControl = { loading: false, sending: true, message: null };
+    lastControl = { loading: false, sending: true, message: null, pendingToastKey: null };
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -40,8 +37,7 @@ describe('ContactFormPresenter', () => {
         {
           provide: TranslateService,
           useValue: { instant: vi.fn((key: string) => translationMap.get(key) ?? key) }
-        },
-        { provide: UndoToastService, useValue: mockToast }
+        }
       ]
     });
 
@@ -64,7 +60,7 @@ describe('ContactFormPresenter', () => {
     expect(lastControl?.message?.variant).toBe('success');
     expect(lastControl?.message?.ariaLive).toBe('polite');
     expect(lastControl?.message?.text).toBe('お問い合わせを受け付けました。');
-    expect(mockToast.show).toHaveBeenCalledTimes(1);
+    expect(lastControl?.pendingToastKey).toBe('contact_form.success.toast');
   });
 
   it('shows an error message with assertive live region when sending fails', () => {

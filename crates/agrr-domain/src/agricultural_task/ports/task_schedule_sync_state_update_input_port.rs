@@ -2,7 +2,7 @@
 
 use crate::agricultural_task::dtos::UpdateTaskScheduleSyncStateInput;
 
-pub trait TaskScheduleSyncStateUpdateInputPort: Send + Sync {
+pub(crate) trait TaskScheduleSyncStateUpdateInputPort: Send + Sync {
     fn call(
         &self,
         input: UpdateTaskScheduleSyncStateInput<'_>,

@@ -5,12 +5,12 @@ import { LoadCropListOutputPort } from '../../usecase/crops/load-crop-list.outpu
 import { CropListDataDto } from '../../usecase/crops/load-crop-list.dtos';
 import { DeleteCropOutputPort } from '../../usecase/crops/delete-crop.output-port';
 import { DeleteCropSuccessDto } from '../../usecase/crops/delete-crop.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 
 @Injectable()
 export class CropListPresenter implements LoadCropListOutputPort, DeleteCropOutputPort {
-  private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private view: CropListView | null = null;
 
@@ -23,7 +23,8 @@ export class CropListPresenter implements LoadCropListOutputPort, DeleteCropOutp
     this.view.control = {
       loading: false,
       error: null,
-      crops: dto.crops
+      crops: dto.crops,
+      pendingUndoToast: null
     };
   }
 
@@ -40,18 +41,14 @@ export class CropListPresenter implements LoadCropListOutputPort, DeleteCropOutp
   onSuccess(dto: DeleteCropSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
-    this.view.control = {
+    const nextControl = {
       ...prev,
-      crops: prev.crops.filter((c) => c.id !== dto.deletedCropId)
+      crops: prev.crops.filter((c) => c.id !== dto.deletedCropId),
+      pendingUndoToast: null as PendingUndoToastRequest | null
     };
     if (dto.undo && dto.refresh) {
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        dto.refresh,
-        dto.undo.resource
-      );
+      nextControl.pendingUndoToast = pendingUndoToastFromDeletion(dto.undo, dto.refresh);
     }
+    this.view.control = nextControl;
   }
 }

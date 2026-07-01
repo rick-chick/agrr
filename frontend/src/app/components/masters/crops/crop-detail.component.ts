@@ -9,11 +9,14 @@ import {
   CropDetailPresenter,
   CROP_DETAIL_PROVIDERS
 } from '../../../usecase/crops/crop-detail.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: CropDetailViewState = {
   loading: true,
   error: null,
-  crop: null
+  crop: null,
+  pendingUndoToast: null
 };
 
 @Component({
@@ -117,6 +120,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   private readonly useCase = inject(LoadCropDetailUseCase);
   private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropDetailPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
 
@@ -125,7 +129,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     return this._control;
   }
   set control(value: CropDetailViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { PlanTaskScheduleView } from '../../components/plans/plan-task-schedule.view';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { PlanTaskSchedulePresenter } from './plan-task-schedule.presenter';
+import { PlanTaskScheduleDataDto } from '../../usecase/plans/load-plan-task-schedule.dtos';
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -28,6 +29,61 @@ const loadedSchedule: TaskScheduleResponse = {
   minimap: {}
 };
 
+function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): PlanTaskScheduleView {
+  return {
+    control: {
+      loading: true,
+      error: null,
+      schedule: null,
+      regenerating: false,
+      regenerateError: null,
+      pendingSyncToastKey: null,
+      syncReloadNonce: 0,
+      ...overrides
+    }
+  };
+}
+
+describe('PlanTaskSchedulePresenter load', () => {
+  let presenter: PlanTaskSchedulePresenter;
+  let view: PlanTaskScheduleView;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [PlanTaskSchedulePresenter]
+    });
+    presenter = TestBed.inject(PlanTaskSchedulePresenter);
+    view = createView();
+    presenter.setView(view);
+  });
+
+  it('presents schedule and clears sync toast state', () => {
+    const dto: PlanTaskScheduleDataDto = { schedule: loadedSchedule };
+
+    presenter.present(dto);
+
+    expect(view.control.loading).toBe(false);
+    expect(view.control.error).toBeNull();
+    expect(view.control.schedule).toEqual(loadedSchedule);
+    expect(view.control.regenerating).toBe(false);
+    expect(view.control.regenerateError).toBeNull();
+    expect(view.control.pendingSyncToastKey).toBeNull();
+    expect(view.control.syncReloadNonce).toBe(0);
+  });
+
+  it('sets error state on onError', () => {
+    view.control = createView({ schedule: loadedSchedule }).control;
+
+    presenter.onError({ message: 'Load failed', scope: 'load-plan-task-schedule' });
+
+    expect(view.control.loading).toBe(false);
+    expect(view.control.error).toBe('Load failed');
+    expect(view.control.schedule).toBeNull();
+    expect(view.control.regenerating).toBe(false);
+    expect(view.control.regenerateError).toBeNull();
+  });
+});
+
 describe('PlanTaskSchedulePresenter regenerate', () => {
   let presenter: PlanTaskSchedulePresenter;
   let view: PlanTaskScheduleView;
@@ -36,19 +92,8 @@ describe('PlanTaskSchedulePresenter regenerate', () => {
     TestBed.configureTestingModule({
       providers: [PlanTaskSchedulePresenter]
     });
-
     presenter = TestBed.inject(PlanTaskSchedulePresenter);
-    view = {
-      control: {
-        loading: false,
-        error: null,
-        schedule: loadedSchedule,
-        regenerating: false,
-        regenerateError: null,
-        pendingSyncToastKey: null,
-        syncReloadNonce: 0
-      }
-    };
+    view = createView({ schedule: loadedSchedule });
     presenter.setView(view);
   });
 
@@ -57,6 +102,21 @@ describe('PlanTaskSchedulePresenter regenerate', () => {
 
     expect(view.control.regenerating).toBe(true);
     expect(view.control.regenerateError).toBeNull();
+  });
+
+  it('clears regenerate error on onRegenerateSuccess', () => {
+    view.control = { ...view.control, regenerateError: 'previous error' };
+
+    presenter.onRegenerateSuccess();
+
+    expect(view.control.regenerateError).toBeNull();
+  });
+
+  it('sets regenerate error on onRegenerateError', () => {
+    presenter.onRegenerateError({ message: 'Regen failed', scope: 'regenerate-task-schedule' });
+
+    expect(view.control.regenerating).toBe(false);
+    expect(view.control.regenerateError).toBe('Regen failed');
   });
 });
 
@@ -70,17 +130,7 @@ describe('PlanTaskSchedulePresenter task schedule sync', () => {
     });
 
     presenter = TestBed.inject(PlanTaskSchedulePresenter);
-    view = {
-      control: {
-        loading: false,
-        error: null,
-        schedule: loadedSchedule,
-        regenerating: false,
-        regenerateError: null,
-        pendingSyncToastKey: null,
-        syncReloadNonce: 0
-      }
-    };
+    view = createView({ schedule: loadedSchedule });
     presenter.setView(view);
   });
 

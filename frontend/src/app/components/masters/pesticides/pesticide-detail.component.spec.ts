@@ -62,7 +62,8 @@ describe('PesticideDetailComponent', () => {
         is_reference: false,
         crop_name: 'Tomato',
         pest_name: 'Aphid'
-      }
+      },
+      pendingUndoToast: null
     };
     fixture.detectChanges();
 
@@ -84,7 +85,8 @@ describe('PesticideDetailComponent', () => {
         crop_id: 51,
         pest_id: 54,
         is_reference: false
-      }
+      },
+      pendingUndoToast: null
     };
     fixture.detectChanges();
 

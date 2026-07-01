@@ -6,11 +6,14 @@ import { PestDetailView, PestDetailViewState } from './pest-detail.view';
 import { LoadPestDetailUseCase } from '../../../usecase/pests/load-pest-detail.usecase';
 import { DeletePestUseCase } from '../../../usecase/pests/delete-pest.usecase';
 import { PestDetailPresenter, PEST_DETAIL_PROVIDERS } from '../../../usecase/pests/pest-detail.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: PestDetailViewState = {
   loading: true,
   error: null,
-  pest: null
+  pest: null,
+  pendingUndoToast: null
 };
 
 @Component({
@@ -88,6 +91,7 @@ export class PestDetailComponent implements PestDetailView, OnInit {
   private readonly useCase = inject(LoadPestDetailUseCase);
   private readonly deleteUseCase = inject(DeletePestUseCase);
   private readonly presenter = inject(PestDetailPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PestDetailViewState = initialControl;
@@ -95,7 +99,7 @@ export class PestDetailComponent implements PestDetailView, OnInit {
     return this._control;
   }
   set control(value: PestDetailViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

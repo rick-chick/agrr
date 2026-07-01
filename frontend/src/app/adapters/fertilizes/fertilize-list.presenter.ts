@@ -5,14 +5,14 @@ import { LoadFertilizeListOutputPort } from '../../usecase/fertilizes/load-ferti
 import { FertilizeListDataDto } from '../../usecase/fertilizes/load-fertilize-list.dtos';
 import { DeleteFertilizeOutputPort } from '../../usecase/fertilizes/delete-fertilize.output-port';
 import { DeleteFertilizeSuccessDto } from '../../usecase/fertilizes/delete-fertilize.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 
 @Injectable()
 export class FertilizeListPresenter
   implements LoadFertilizeListOutputPort, DeleteFertilizeOutputPort
 {
-  private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private view: FertilizeListView | null = null;
 
@@ -25,7 +25,8 @@ export class FertilizeListPresenter
     this.view.control = {
       loading: false,
       error: null,
-      fertilizes: dto.fertilizes
+      fertilizes: dto.fertilizes,
+      pendingUndoToast: null
     };
   }
 
@@ -42,18 +43,14 @@ export class FertilizeListPresenter
   onSuccess(dto: DeleteFertilizeSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
-    this.view.control = {
+    const nextControl = {
       ...prev,
-      fertilizes: prev.fertilizes.filter((f) => f.id !== dto.deletedFertilizeId)
+      fertilizes: prev.fertilizes.filter((f) => f.id !== dto.deletedFertilizeId),
+      pendingUndoToast: null as PendingUndoToastRequest | null
     };
     if (dto.undo && dto.refresh) {
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        dto.refresh,
-        dto.undo.resource
-      );
+      nextControl.pendingUndoToast = pendingUndoToastFromDeletion(dto.undo, dto.refresh);
     }
+    this.view.control = nextControl;
   }
 }

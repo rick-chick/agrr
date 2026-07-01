@@ -1,4 +1,4 @@
-import { consumePendingToastKey, PendingToastViewEffectDeps } from './pending-toast-view.effects';
+import { consumePendingToastKey, PendingToastViewEffectDeps } from '../../core/view-effects/pending-toast-view.effects';
 
 interface WorkRecordSheetViewEffectState {
   pendingToastKey: string | null;

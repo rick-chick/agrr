@@ -8,11 +8,14 @@ import { DeletePestUseCase } from '../../../usecase/pests/delete-pest.usecase';
 import { PestListPresenter, PEST_LIST_PROVIDERS } from '../../../usecase/pests/pest-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: PestListViewState = {
   loading: true,
   error: null,
-  pests: []
+  pests: [],
+  pendingUndoToast: null
 };
 
 @Component({
@@ -70,6 +73,7 @@ export class PestListComponent implements PestListView, OnInit, OnDestroy {
   private readonly loadUseCase = inject(LoadPestListUseCase);
   private readonly deleteUseCase = inject(DeletePestUseCase);
   private readonly presenter = inject(PestListPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
@@ -79,7 +83,7 @@ export class PestListComponent implements PestListView, OnInit, OnDestroy {
     return this._control;
   }
   set control(value: PestListViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

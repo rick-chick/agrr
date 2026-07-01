@@ -5,12 +5,12 @@ import { LoadInteractionRuleListOutputPort } from '../../usecase/interaction-rul
 import { InteractionRuleListDataDto } from '../../usecase/interaction-rules/load-interaction-rule-list.dtos';
 import { DeleteInteractionRuleOutputPort } from '../../usecase/interaction-rules/delete-interaction-rule.output-port';
 import { DeleteInteractionRuleSuccessDto } from '../../usecase/interaction-rules/delete-interaction-rule.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 
 @Injectable()
 export class InteractionRuleListPresenter implements LoadInteractionRuleListOutputPort, DeleteInteractionRuleOutputPort {
-  private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private view: InteractionRuleListView | null = null;
 
@@ -23,7 +23,8 @@ export class InteractionRuleListPresenter implements LoadInteractionRuleListOutp
     this.view.control = {
       loading: false,
       error: null,
-      rules: dto.rules
+      rules: dto.rules,
+      pendingUndoToast: null
     };
   }
 
@@ -40,18 +41,14 @@ export class InteractionRuleListPresenter implements LoadInteractionRuleListOutp
   onSuccess(dto: DeleteInteractionRuleSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
-    this.view.control = {
+    const nextControl = {
       ...prev,
-      rules: prev.rules.filter((r) => r.id !== dto.deletedInteractionRuleId)
+      rules: prev.rules.filter((r) => r.id !== dto.deletedInteractionRuleId),
+      pendingUndoToast: null as PendingUndoToastRequest | null
     };
     if (dto.undo && dto.refresh) {
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        dto.refresh,
-        dto.undo.resource
-      );
+      nextControl.pendingUndoToast = pendingUndoToastFromDeletion(dto.undo, dto.refresh);
     }
+    this.view.control = nextControl;
   }
 }

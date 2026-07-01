@@ -5,12 +5,12 @@ import { LoadPlanListOutputPort } from '../../usecase/plans/load-plan-list.outpu
 import { PlanListDataDto } from '../../usecase/plans/load-plan-list.dtos';
 import { DeletePlanOutputPort } from '../../usecase/plans/delete-plan.output-port';
 import { DeletePlanSuccessDto } from '../../usecase/plans/delete-plan.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 
 @Injectable()
 export class PlanListPresenter implements LoadPlanListOutputPort, DeletePlanOutputPort {
-  private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private view: PlanListView | null = null;
 
@@ -23,7 +23,8 @@ export class PlanListPresenter implements LoadPlanListOutputPort, DeletePlanOutp
     this.view.control = {
       loading: false,
       error: null,
-      plans: dto.plans
+      plans: dto.plans,
+      pendingUndoToast: null
     };
   }
 
@@ -40,18 +41,14 @@ export class PlanListPresenter implements LoadPlanListOutputPort, DeletePlanOutp
   onSuccess(dto: DeletePlanSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
-    this.view.control = {
+    const nextControl = {
       ...prev,
-      plans: prev.plans.filter((plan) => plan.id !== dto.deletedPlanId)
+      plans: prev.plans.filter((plan) => plan.id !== dto.deletedPlanId),
+      pendingUndoToast: null as PendingUndoToastRequest | null
     };
     if (dto.undo) {
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        dto.refresh,
-        dto.undo.resource
-      );
+      nextControl.pendingUndoToast = pendingUndoToastFromDeletion(dto.undo, dto.refresh);
     }
+    this.view.control = nextControl;
   }
 }

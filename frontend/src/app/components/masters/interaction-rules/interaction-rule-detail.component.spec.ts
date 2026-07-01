@@ -64,7 +64,8 @@ describe('InteractionRuleDetailComponent', () => {
         is_directional: true,
         is_reference: false,
         region: null
-      }
+      },
+      pendingUndoToast: null
     };
     fixture.detectChanges();
 
@@ -87,7 +88,8 @@ describe('InteractionRuleDetailComponent', () => {
         is_directional: false,
         is_reference: false,
         region: null
-      }
+      },
+      pendingUndoToast: null
     };
     fixture.detectChanges();
 

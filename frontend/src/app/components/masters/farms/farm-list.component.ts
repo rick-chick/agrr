@@ -11,11 +11,14 @@ import {
 } from '../../../usecase/farms/farm-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: FarmListViewState = {
   loading: true,
   error: null,
-  farms: []
+  farms: [],
+  pendingUndoToast: null
 };
 
 @Component({
@@ -78,6 +81,7 @@ export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
   private readonly loadUseCase = inject(LoadFarmListUseCase);
   private readonly deleteUseCase = inject(DeleteFarmUseCase);
   private readonly presenter = inject(FarmListPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
@@ -87,7 +91,7 @@ export class FarmListComponent implements FarmListView, OnInit, OnDestroy {
     return this._control;
   }
   set control(value: FarmListViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

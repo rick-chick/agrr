@@ -4,7 +4,6 @@ import { PesticideDetailPresenter } from './pesticide-detail.presenter';
 import { PesticideDetailView, PesticideDetailViewState } from '../../components/masters/pesticides/pesticide-detail.view';
 import { PesticideDetailDataDto } from '../../usecase/pesticides/load-pesticide-detail.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 
@@ -18,7 +17,6 @@ describe('PesticideDetailPresenter', () => {
     TestBed.configureTestingModule({
       providers: [
         PesticideDetailPresenter,
-        { provide: UndoToastService, useValue: { showWithUndo: vi.fn() } },
         { provide: FlashMessageService, useValue: mockFlashMessageService },
         { provide: ListRefreshBus, useValue: { refresh: vi.fn(), onRefresh: vi.fn(() => () => {}) } }
       ]
@@ -27,7 +25,7 @@ describe('PesticideDetailPresenter', () => {
     lastControl = null;
     const view: PesticideDetailView = {
       get control(): PesticideDetailViewState {
-        return lastControl ?? { loading: true, error: null, pesticide: null };
+        return lastControl ?? { loading: true, error: null, pesticide: null, pendingUndoToast: null };
       },
       set control(value: PesticideDetailViewState) {
         lastControl = value;
@@ -58,7 +56,7 @@ describe('PesticideDetailPresenter', () => {
   });
 
   it('shows error via FlashMessageService on onError(dto)', () => {
-    lastControl = { loading: true, error: null, pesticide: null };
+    lastControl = { loading: true, error: null, pesticide: null, pendingUndoToast: null };
     const dto: ErrorDto = { message: 'Not found' };
 
     presenter.onError(dto);

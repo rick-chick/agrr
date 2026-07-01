@@ -14,11 +14,14 @@ import { LoadAgriculturalTaskListUseCase } from '../../../usecase/agricultural-t
 import { DeleteAgriculturalTaskUseCase } from '../../../usecase/agricultural-tasks/delete-agricultural-task.usecase';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: AgriculturalTaskListViewState = {
   loading: true,
   error: null,
-  tasks: []
+  tasks: [],
+  pendingUndoToast: null
 };
 
 @Component({
@@ -81,6 +84,7 @@ export class AgriculturalTaskListComponent implements AgriculturalTaskListView, 
   private readonly useCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly deleteUseCase = inject(DeleteAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskListPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
@@ -90,7 +94,7 @@ export class AgriculturalTaskListComponent implements AgriculturalTaskListView, 
     return this._control;
   }
   set control(value: AgriculturalTaskListViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

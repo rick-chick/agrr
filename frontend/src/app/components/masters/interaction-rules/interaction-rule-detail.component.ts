@@ -9,11 +9,14 @@ import {
   InteractionRuleDetailPresenter,
   INTERACTION_RULE_DETAIL_PROVIDERS
 } from '../../../usecase/interaction-rules/interaction-rule-detail.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: InteractionRuleDetailViewState = {
   loading: true,
   error: null,
-  rule: null
+  rule: null,
+  pendingUndoToast: null
 };
 
 @Component({
@@ -82,6 +85,7 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
   private readonly useCase = inject(LoadInteractionRuleDetailUseCase);
   private readonly deleteUseCase = inject(DeleteInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleDetailPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: InteractionRuleDetailViewState = initialControl;
@@ -89,7 +93,7 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
     return this._control;
   }
   set control(value: InteractionRuleDetailViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

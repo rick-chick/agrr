@@ -10,8 +10,9 @@ use crate::optimization_chain_phase::{advance_phase, plan_still_optimizing};
 use crate::state::AppState;
 use agrr_adapters_agrr::TaskScheduleProgressAgrrGateway;
 use agrr_adapters_sqlite::{
-    TaskScheduleGenerationReadSqliteGateway, TaskScheduleGenerationTransactionSqliteGateway,
-    TaskScheduleSqliteGateway, TaskScheduleSyncStateSqliteGateway,
+    SqlitePool, TaskScheduleGenerationReadSqliteGateway,
+    TaskScheduleGenerationTransactionSqliteGateway, TaskScheduleSqliteGateway,
+    TaskScheduleSyncStateSqliteGateway,
 };
 use agrr_domain::agricultural_task::constants::task_schedule_sync_states as sync_state;
 use agrr_domain::agricultural_task::dtos::{
@@ -51,24 +52,51 @@ impl TaskScheduleSyncBroadcastPort for CableTaskScheduleSyncBroadcast {
     }
 }
 
+struct TaskScheduleSyncInteractorBundle {
+    gateway: TaskScheduleSyncStateSqliteGateway,
+    broadcast: CableTaskScheduleSyncBroadcast,
+}
+
+impl TaskScheduleSyncInteractorBundle {
+    fn new(state: &AppState, pool: SqlitePool) -> Self {
+        Self {
+            gateway: TaskScheduleSyncStateSqliteGateway::new(pool),
+            broadcast: CableTaskScheduleSyncBroadcast {
+                hub: state.cable_hub.clone(),
+            },
+        }
+    }
+
+    fn interactor(
+        &self,
+    ) -> UpdateTaskScheduleSyncStateInteractor<
+        '_,
+        TaskScheduleSyncStateSqliteGateway,
+        CableTaskScheduleSyncBroadcast,
+    > {
+        UpdateTaskScheduleSyncStateInteractor::new(&self.gateway, &self.broadcast)
+    }
+
+    fn call(
+        &self,
+        input: UpdateTaskScheduleSyncStateInput<'_>,
+    ) -> Result<(), String> {
+        self.interactor().call(input).map_err(|e| e.to_string())
+    }
+}
+
 fn apply_task_schedule_sync_state(
     state: &AppState,
     plan_id: i64,
     sync_state_value: &str,
     sync_error: Option<&str>,
 ) -> Result<(), String> {
-    let gateway = TaskScheduleSyncStateSqliteGateway::new(state.sqlite.clone());
-    let broadcast = CableTaskScheduleSyncBroadcast {
-        hub: state.cable_hub.clone(),
-    };
-    let interactor = UpdateTaskScheduleSyncStateInteractor::new(&gateway, &broadcast);
-    interactor
-        .call(UpdateTaskScheduleSyncStateInput {
-            plan_id,
-            sync_state: sync_state_value,
-            sync_error,
-        })
-        .map_err(|e| e.to_string())
+    let sync = TaskScheduleSyncInteractorBundle::new(state, state.sqlite.clone());
+    sync.call(UpdateTaskScheduleSyncStateInput {
+        plan_id,
+        sync_state: sync_state_value,
+        sync_error,
+    })
 }
 
 fn mark_task_schedule_stale(state: &AppState, plan_id: i64) {
@@ -97,11 +125,7 @@ fn clear_regen_token_if_current(state: &AppState, plan_id: i64, generation: u64)
 
 fn run_task_schedule_generation(state: &AppState, plan_id: i64) -> Result<(), String> {
     let pool = state.sqlite.clone();
-    let sync_gateway = TaskScheduleSyncStateSqliteGateway::new(pool.clone());
-    let broadcast = CableTaskScheduleSyncBroadcast {
-        hub: state.cable_hub.clone(),
-    };
-    let sync_interactor = UpdateTaskScheduleSyncStateInteractor::new(&sync_gateway, &broadcast);
+    let sync = TaskScheduleSyncInteractorBundle::new(state, pool.clone());
 
     let read_gateway = Arc::new(TaskScheduleGenerationReadSqliteGateway::new(
         pool.clone(),
@@ -119,6 +143,7 @@ fn run_task_schedule_generation(state: &AppState, plan_id: i64) -> Result<(), St
         read_gateway.as_ref(),
     );
 
+    let sync_interactor = sync.interactor();
     let orchestrator =
         RunTaskScheduleGenerationInteractor::new(&sync_interactor, &generate_interactor);
 

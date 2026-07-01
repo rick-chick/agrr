@@ -5,14 +5,13 @@ import { LoadPesticideDetailOutputPort } from '../../usecase/pesticides/load-pes
 import { PesticideDetailDataDto } from '../../usecase/pesticides/load-pesticide-detail.dtos';
 import { DeletePesticideOutputPort } from '../../usecase/pesticides/delete-pesticide.output-port';
 import { DeletePesticideSuccessDto } from '../../usecase/pesticides/delete-pesticide.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 
 @Injectable()
 export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, DeletePesticideOutputPort {
-  private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: PesticideDetailView | null = null;
@@ -26,7 +25,8 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
     this.view.control = {
       loading: false,
       error: null,
-      pesticide: dto.pesticide
+      pesticide: dto.pesticide,
+      pendingUndoToast: null
     };
   }
 
@@ -41,15 +41,15 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
   }
 
   onSuccess(dto: DeletePesticideSuccessDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
     if (dto.undo) {
       // 農薬削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.pesticides),
-        dto.undo.resource
-      );
+      this.view.control = {
+        ...this.view.control,
+        pendingUndoToast: pendingUndoToastFromDeletion(dto.undo, () =>
+          this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.pesticides)
+        )
+      };
     }
   }
 }

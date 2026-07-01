@@ -5,14 +5,13 @@ import { LoadAgriculturalTaskDetailOutputPort } from '../../usecase/agricultural
 import { LoadAgriculturalTaskDetailDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-detail.dtos';
 import { DeleteAgriculturalTaskOutputPort } from '../../usecase/agricultural-tasks/delete-agricultural-task.output-port';
 import { DeleteAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tasks/delete-agricultural-task.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 
 @Injectable()
 export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDetailOutputPort, DeleteAgriculturalTaskOutputPort {
-  private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: AgriculturalTaskDetailView | null = null;
@@ -26,7 +25,8 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
     this.view.control = {
       loading: false,
       error: null,
-      agriculturalTask: dto.agriculturalTask
+      agriculturalTask: dto.agriculturalTask,
+      pendingUndoToast: null
     };
   }
 
@@ -41,15 +41,15 @@ export class AgriculturalTaskDetailPresenter implements LoadAgriculturalTaskDeta
   }
 
   onSuccess(dto: DeleteAgriculturalTaskSuccessDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
     if (dto.undo) {
       // 農業作業削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.agriculturalTasks),
-        dto.undo.resource
-      );
+      this.view.control = {
+        ...this.view.control,
+        pendingUndoToast: pendingUndoToastFromDeletion(dto.undo, () =>
+          this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.agriculturalTasks)
+        )
+      };
     }
   }
 }

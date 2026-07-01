@@ -6,31 +6,35 @@ import { FarmDetailDataDto } from '../../usecase/farms/load-farm-detail.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 
 describe('FarmDetailPresenter', () => {
   let presenter: FarmDetailPresenter;
   let view: FarmDetailView;
   let lastControl: FarmDetailViewState | null;
   let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
+  let mockListRefreshBus: ListRefreshBus & { refresh: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
+    mockListRefreshBus = {
+      refresh: vi.fn(),
+      onRefresh: vi.fn(() => () => {})
+    } as unknown as ListRefreshBus & { refresh: ReturnType<typeof vi.fn> };
     TestBed.configureTestingModule({
       providers: [
         FarmDetailPresenter,
-        { provide: UndoToastService, useValue: { showWithUndo: vi.fn() } },
         { provide: FlashMessageService, useValue: mockFlashMessageService },
-        { provide: ListRefreshBus, useValue: { refresh: vi.fn(), onRefresh: vi.fn(() => () => {}) } }
+        { provide: ListRefreshBus, useValue: mockListRefreshBus }
       ]
     });
     presenter = TestBed.inject(FarmDetailPresenter);
     lastControl = null;
     view = {
       get control(): FarmDetailViewState {
-        return lastControl ?? { loading: true, error: null, farm: null, fields: [] };
+        return lastControl ?? { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null };
       },
       set control(value: FarmDetailViewState) {
         lastControl = value;
@@ -65,10 +69,11 @@ describe('FarmDetailPresenter', () => {
       expect(lastControl!.error).toBeNull();
       expect(lastControl!.farm).toEqual(dto.farm);
       expect(lastControl!.fields).toEqual(dto.fields);
+      expect(lastControl!.pendingUndoToast).toBeNull();
     });
 
     it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
-      const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [] };
+      const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Not found' };
@@ -93,7 +98,7 @@ describe('FarmDetailPresenter', () => {
         longitude: 135.0,
         weather_data_status: 'pending' as const
       };
-      lastControl = { loading: false, error: null, farm: initialFarm, fields: [] };
+      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null };
 
       const dto: FarmWeatherUpdateDto = {
         id: 1,
@@ -121,34 +126,50 @@ describe('FarmDetailPresenter', () => {
         longitude: 135.0,
         weather_data_status: 'pending' as const
       };
-      lastControl = { loading: false, error: null, farm: initialFarm, fields: [] };
+      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null };
 
       const dto: FarmWeatherUpdateDto = {
-        id: 2, // different id
+        id: 2,
         weather_data_status: 'completed'
       };
 
       presenter.presentWeather(dto);
 
-      expect(lastControl!.farm!.weather_data_status).toBe('pending'); // unchanged
+      expect(lastControl!.farm!.weather_data_status).toBe('pending');
     });
   });
 
   describe('DeleteFarmOutputPort', () => {
-    it('handles onSuccess(dto) with undo', () => {
+    it('queues pending undo toast with list refresh callback on onSuccess(dto)', () => {
+      lastControl = {
+        loading: false,
+        error: null,
+        farm: { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'completed' },
+        fields: [],
+        pendingUndoToast: null
+      };
+
       const dto: DeleteFarmSuccessDto = {
         deletedFarmId: 1,
         undo: {
           undo_token: 'token123',
           toast_message: 'Farm deleted',
-          undo_path: '/undo_deletion?undo_token=token123'
+          undo_path: '/undo_deletion?undo_token=token123',
+          resource: 'Farm A'
         }
       };
 
-      // onSuccess does not update view.control directly
       presenter.onSuccess(dto);
 
-      // The actual undo handling is done by UndoToastService; on restore, view.reload() is called
+      expect(lastControl!.pendingUndoToast).toEqual({
+        message: 'Farm deleted',
+        undoPath: '/undo_deletion?undo_token=token123',
+        undoToken: 'token123',
+        onRestored: expect.any(Function),
+        resourceLabel: 'Farm A'
+      });
+      lastControl!.pendingUndoToast!.onRestored!();
+      expect(mockListRefreshBus.refresh).toHaveBeenCalledWith(LIST_REFRESH_CHANNEL.farms);
     });
   });
 });

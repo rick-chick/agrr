@@ -5,7 +5,6 @@ import { PlanListView, PlanListViewState } from '../../components/plans/plan-lis
 import { PlanListDataDto } from '../../usecase/plans/load-plan-list.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeletePlanSuccessDto } from '../../usecase/plans/delete-plan.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import { PlanSummary } from '../../domain/plans/plan-summary';
@@ -14,19 +13,14 @@ describe('PlanListPresenter', () => {
   let presenter: PlanListPresenter;
   let view: PlanListView;
   let lastControl: PlanListViewState | null;
-  let mockUndoToastService: UndoToastService & { showWithUndo: ReturnType<typeof vi.fn> };
   let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockUndoToastService = {
-      showWithUndo: vi.fn()
-    } as UndoToastService & { showWithUndo: ReturnType<typeof vi.fn> };
     mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
     TestBed.configureTestingModule({
       providers: [
         PlanListPresenter,
-        { provide: UndoToastService, useValue: mockUndoToastService },
         { provide: FlashMessageService, useValue: mockFlashMessageService }
       ]
     });
@@ -35,7 +29,7 @@ describe('PlanListPresenter', () => {
     lastControl = null;
     view = {
       get control(): PlanListViewState {
-        return lastControl ?? { loading: true, error: null, plans: [] };
+        return lastControl ?? { loading: true, error: null, plans: [], pendingUndoToast: null };
       },
       set control(value: PlanListViewState) {
         lastControl = value;
@@ -65,7 +59,7 @@ describe('PlanListPresenter', () => {
     });
 
     it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
-      const initialControl: PlanListViewState = { loading: true, error: null, plans: [] };
+      const initialControl: PlanListViewState = { loading: true, error: null, plans: [], pendingUndoToast: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Network error', scope: 'load-plan-list' };
@@ -82,7 +76,7 @@ describe('PlanListPresenter', () => {
 
     it('does not set error in view.control when scope is not load-plan-list', () => {
       const initialPlans: PlanSummary[] = [{ id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }];
-      const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans };
+      const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Delete error', scope: 'delete-plan' };
@@ -103,7 +97,7 @@ describe('PlanListPresenter', () => {
         { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
         { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans };
+      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
 
       const dto: DeletePlanSuccessDto = { deletedPlanId: 1 };
 
@@ -112,16 +106,15 @@ describe('PlanListPresenter', () => {
       expect(lastControl).not.toBeNull();
       expect(lastControl!.plans).toHaveLength(1);
       expect(lastControl!.plans[0].id).toBe(2);
-      expect(mockUndoToastService.showWithUndo).not.toHaveBeenCalled();
+      expect(lastControl!.pendingUndoToast).toBeNull();
     });
 
-    it('removes plan and shows undo toast with refresh callback on onSuccess(dto)', () => {
+    it('queues pending undo toast with refresh callback on onSuccess(dto)', () => {
       const initialPlans: PlanSummary[] = [
         { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
         { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
       ];
-      const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans };
-      lastControl = initialControl;
+      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
 
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',
@@ -146,14 +139,20 @@ describe('PlanListPresenter', () => {
       expect(lastControl).not.toBeNull();
       expect(lastControl!.plans).toHaveLength(1);
       expect(lastControl!.plans[0].id).toBe(2);
-      expect(mockUndoToastService.showWithUndo).toHaveBeenCalledTimes(1);
+      expect(lastControl!.pendingUndoToast).toEqual({
+        message: undoResponse.toast_message,
+        undoPath: undoResponse.undo_path,
+        undoToken: undoResponse.undo_token,
+        onRestored: refreshCallback,
+        resourceLabel: undoResponse.resource
+      });
     });
 
-    it('does not show undo toast when undo is missing', () => {
+    it('does not queue undo toast when undo is missing', () => {
       const initialPlans: PlanSummary[] = [
         { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans };
+      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
 
       const dto: DeletePlanSuccessDto = {
         deletedPlanId: 1,
@@ -163,14 +162,14 @@ describe('PlanListPresenter', () => {
       presenter.onSuccess(dto);
 
       expect(lastControl!.plans).toHaveLength(0);
-      expect(mockUndoToastService.showWithUndo).not.toHaveBeenCalled();
+      expect(lastControl!.pendingUndoToast).toBeNull();
     });
 
-    it('shows undo toast even when refresh callback is missing', () => {
+    it('queues undo toast even when refresh callback is missing', () => {
       const initialPlans: PlanSummary[] = [
         { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans };
+      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
 
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',
@@ -186,7 +185,8 @@ describe('PlanListPresenter', () => {
       presenter.onSuccess(dto);
 
       expect(lastControl!.plans).toHaveLength(0);
-      expect(mockUndoToastService.showWithUndo).toHaveBeenCalledTimes(1);
+      expect(lastControl!.pendingUndoToast?.message).toBe('Deleted');
+      expect(lastControl!.pendingUndoToast?.onRestored).toBeUndefined();
     });
   });
 });

@@ -5,12 +5,12 @@ import { LoadPesticideListOutputPort } from '../../usecase/pesticides/load-pesti
 import { PesticideListDataDto } from '../../usecase/pesticides/load-pesticide-list.dtos';
 import { DeletePesticideOutputPort } from '../../usecase/pesticides/delete-pesticide.output-port';
 import { DeletePesticideSuccessDto } from '../../usecase/pesticides/delete-pesticide.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
+import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 
 @Injectable()
 export class PesticideListPresenter implements LoadPesticideListOutputPort, DeletePesticideOutputPort {
-  private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private view: PesticideListView | null = null;
 
@@ -23,7 +23,8 @@ export class PesticideListPresenter implements LoadPesticideListOutputPort, Dele
     this.view.control = {
       loading: false,
       error: null,
-      pesticides: dto.pesticides
+      pesticides: dto.pesticides,
+      pendingUndoToast: null
     };
   }
 
@@ -40,18 +41,14 @@ export class PesticideListPresenter implements LoadPesticideListOutputPort, Dele
   onSuccess(dto: DeletePesticideSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
-    this.view.control = {
+    const nextControl = {
       ...prev,
-      pesticides: prev.pesticides.filter((p) => p.id !== dto.deletedPesticideId)
+      pesticides: prev.pesticides.filter((p) => p.id !== dto.deletedPesticideId),
+      pendingUndoToast: null as PendingUndoToastRequest | null
     };
     if (dto.undo && dto.refresh) {
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        dto.refresh,
-        dto.undo.resource
-      );
+      nextControl.pendingUndoToast = pendingUndoToastFromDeletion(dto.undo, dto.refresh);
     }
+    this.view.control = nextControl;
   }
 }

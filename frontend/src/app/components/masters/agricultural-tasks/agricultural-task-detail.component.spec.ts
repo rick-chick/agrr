@@ -57,7 +57,8 @@ describe('AgriculturalTaskDetailComponent', () => {
         region: 'jp',
         is_reference: false,
         required_tools: []
-      }
+      },
+      pendingUndoToast: null
     };
     fixture.detectChanges();
 

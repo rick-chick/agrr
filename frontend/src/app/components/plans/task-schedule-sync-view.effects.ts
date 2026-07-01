@@ -1,4 +1,4 @@
-import { consumePendingToastKey, TaskScheduleSyncViewEffectDeps } from './pending-toast-view.effects';
+import { consumePendingToastKey, TaskScheduleSyncViewEffectDeps } from '../../core/view-effects/pending-toast-view.effects';
 
 interface TaskScheduleSyncViewEffectState {
   pendingSyncToastKey: string | null;

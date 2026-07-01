@@ -26,7 +26,8 @@ describe('PlanListComponent', () => {
       component.control = {
         loading: false,
         error: null,
-        plans
+        plans,
+        pendingUndoToast: null
       };
       fixture.detectChanges();
       await fixture.whenStable();
@@ -70,7 +71,8 @@ describe('PlanListComponent', () => {
     const state: PlanListViewState = {
       loading: false,
       error: null,
-      plans: []
+      plans: [],
+      pendingUndoToast: null
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -80,7 +82,8 @@ describe('PlanListComponent', () => {
     const state: PlanListViewState = {
       loading: false,
       error: null,
-      plans: []
+      plans: [],
+      pendingUndoToast: null
     };
     component.control = state;
     expect(cdr.markForCheck).toHaveBeenCalled();
@@ -127,7 +130,7 @@ describe('PlanListComponent', () => {
   it('shows create plan link in header', async () => {
     const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
     try {
-      component.control = { loading: false, error: null, plans: [] };
+      component.control = { loading: false, error: null, plans: [], pendingUndoToast: null };
       fixture.detectChanges();
       await fixture.whenStable();
       const link = fixture.nativeElement.querySelector('.page-header--with-action .btn-primary');

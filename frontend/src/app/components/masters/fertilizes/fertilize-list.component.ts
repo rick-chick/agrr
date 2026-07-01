@@ -10,11 +10,14 @@ import {
   FertilizeListPresenter,
   FERTILIZE_LIST_PROVIDERS
 } from '../../../usecase/fertilizes/fertilize-list.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: FertilizeListViewState = {
   loading: true,
   error: null,
-  fertilizes: []
+  fertilizes: [],
+  pendingUndoToast: null
 };
 
 @Component({
@@ -77,6 +80,7 @@ export class FertilizeListComponent implements FertilizeListView, OnInit {
   private readonly loadUseCase = inject(LoadFertilizeListUseCase);
   private readonly deleteUseCase = inject(DeleteFertilizeUseCase);
   private readonly presenter = inject(FertilizeListPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: FertilizeListViewState = initialControl;
@@ -84,7 +88,7 @@ export class FertilizeListComponent implements FertilizeListView, OnInit {
     return this._control;
   }
   set control(value: FertilizeListViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 

@@ -24,11 +24,14 @@ import {
   validatePayload,
   isValidationFailure
 } from '../../domain/contact/contact-message.model';
+import { UndoToastService } from '../../services/undo-toast.service';
+import { applyContactFormViewEffects } from './contact-form-view.effects';
 
 const initialControl: ContactFormViewState = {
   loading: false,
   sending: false,
-  message: null
+  message: null,
+  pendingToastKey: null
 };
 
 @Component({
@@ -136,6 +139,7 @@ export class ContactFormComponent implements ContactFormView, OnInit {
   private readonly useCase = inject(SendContactMessageUseCase);
   private readonly presenter = inject(ContactFormPresenter);
   private readonly translate = inject(TranslateService);
+  private readonly undoToast = inject(UndoToastService);
 
   name: string | null = null;
   email = '';
@@ -148,7 +152,10 @@ export class ContactFormComponent implements ContactFormView, OnInit {
     return this._control;
   }
   set control(value: ContactFormViewState) {
-    this._control = value;
+    this._control = applyContactFormViewEffects(value, {
+      toast: this.undoToast,
+      translate: this.translate
+    });
     this.cdr.detectChanges();
   }
 

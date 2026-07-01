@@ -2,7 +2,7 @@
 
 use crate::agricultural_task::dtos::TaskScheduleGenerateInput;
 
-pub trait TaskScheduleGenerateInputPort: Send + Sync {
+pub(crate) trait TaskScheduleGenerateInputPort: Send + Sync {
     fn call(
         &self,
         input: TaskScheduleGenerateInput,

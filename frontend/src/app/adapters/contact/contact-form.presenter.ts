@@ -9,12 +9,10 @@ import {
 } from '../../components/contact-form/contact-form.view';
 import { SendContactMessageOutputPort } from '../../usecase/contact/send-contact-message.output-port';
 import { SendContactMessageSuccessDto } from '../../usecase/contact/send-contact-message.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 
 @Injectable()
 export class ContactFormPresenter implements SendContactMessageOutputPort {
   private readonly translate = inject(TranslateService);
-  private readonly toast = inject(UndoToastService);
   private readonly messageLiveRegion: Record<ContactFormMessageVariant, ContactFormMessageLiveRegion> = {
     success: 'polite',
     error: 'assertive',
@@ -33,9 +31,9 @@ export class ContactFormPresenter implements SendContactMessageOutputPort {
       ...this.view.control,
       sending: false,
       loading: false,
-      message: this.createMessage('success', 'contact_form.success.message')
+      message: this.createMessage('success', 'contact_form.success.message'),
+      pendingToastKey: 'contact_form.success.toast'
     };
-    this.toast.show(this.translate.instant('contact_form.success.toast'));
   }
 
   onError(dto: ErrorDto): void {

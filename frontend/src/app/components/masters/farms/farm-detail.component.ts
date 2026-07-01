@@ -24,12 +24,15 @@ import {
   FARM_DETAIL_PROVIDERS,
   UpdateFieldPresenter
 } from '../../../usecase/farms/farm-detail.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
   error: null,
   farm: null,
-  fields: []
+  fields: [],
+  pendingUndoToast: null
 };
 
 @Component({
@@ -161,6 +164,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly createFieldPresenter = inject(CreateFieldPresenter);
   private readonly updateFieldPresenter = inject(UpdateFieldPresenter);
   private readonly deleteFieldPresenter = inject(DeleteFieldPresenter);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private channel: Channel | null = null;
@@ -184,7 +188,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     return this._control;
   }
   set control(value: FarmDetailViewState) {
-    this._control = value;
+    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
     this.cdr.markForCheck();
   }
 
