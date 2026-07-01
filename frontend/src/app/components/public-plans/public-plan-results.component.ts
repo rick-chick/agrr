@@ -19,14 +19,15 @@ import {
   setPendingPublicPlanSave
 } from '../../services/public-plans/pending-public-plan-save';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
-import { applyPendingFlashViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
+import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
 
 const initialControl: PublicPlanResultsViewState = {
   loading: true,
   error: null,
   data: null,
   pendingErrorFlash: null,
-  pendingSuccessFlash: null
+  pendingSuccessFlash: null,
+  pendingNavigation: null
 };
 
 @Component({
@@ -94,7 +95,10 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     return this._control;
   }
   set control(value: PublicPlanResultsViewState) {
-    this._control = applyPendingFlashViewEffects(value, { flash: this.flashMessage });
+    this._control = applyPendingFlashAndNavigationViewEffects(value, {
+      flash: this.flashMessage,
+      router: this.router
+    });
     this.cdr.markForCheck();
   }
 

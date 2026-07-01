@@ -1,5 +1,4 @@
-import { Injectable, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Injectable } from '@angular/core';
 import { PublicPlanResultsView } from '../../components/public-plans/public-plan-results.view';
 import { LoadPublicPlanResultsOutputPort } from '../../usecase/public-plans/load-public-plan-results.output-port';
 import { SavePublicPlanOutputPort } from '../../usecase/public-plans/save-public-plan.output-port';
@@ -7,10 +6,10 @@ import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
+import { pendingNavigationTo } from '../../core/view-effects/pending-navigation-presenter.helpers';
 
 @Injectable()
 export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPort, SavePublicPlanOutputPort {
-  private readonly router = inject(Router);
   private view: PublicPlanResultsView | null = null;
 
   setView(view: PublicPlanResultsView): void {
@@ -27,13 +26,11 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
       this.view.control = {
         ...this.view.control,
         pendingErrorFlash: null,
-        pendingSuccessFlash: pendingSuccessFlashFromText(dto.message)
+        pendingSuccessFlash: pendingSuccessFlashFromText(dto.message),
+        pendingNavigation: dto.cultivation_plan_id
+          ? pendingNavigationTo(['/plans', dto.cultivation_plan_id])
+          : pendingNavigationTo(['/plans'])
       };
-      if (dto.cultivation_plan_id) {
-        void this.router.navigate(['/plans', dto.cultivation_plan_id]);
-      } else {
-        void this.router.navigate(['/plans']);
-      }
       return;
     }
     if (!this.view) throw new Error('Presenter: view not set');

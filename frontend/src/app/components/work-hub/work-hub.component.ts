@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { WorkHubPresenter } from '../../adapters/work-hub/work-hub.presenter';
 import { EnsurePlanForFarmUseCase } from '../../usecase/work-hub/ensure-plan-for-farm.usecase';
@@ -8,6 +8,7 @@ import { WorkHubInitUseCase } from '../../usecase/work-hub/work-hub-init.usecase
 import { WORK_HUB_PROVIDERS } from '../../usecase/work-hub/work-hub.providers';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingSuccessFlashViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
+import { applyPendingNavigationViewEffects } from '../../core/view-effects/pending-navigation-view.effects';
 import { WorkHubView, WorkHubViewState } from './work-hub.view';
 
 const initialControl: WorkHubViewState = {
@@ -15,7 +16,8 @@ const initialControl: WorkHubViewState = {
   submitting: false,
   error: null,
   farms: [],
-  pendingSuccessFlash: null
+  pendingSuccessFlash: null,
+  pendingNavigation: null
 };
 
 @Component({
@@ -112,6 +114,7 @@ export class WorkHubComponent implements WorkHubView, OnInit {
   private readonly ensureUseCase = inject(EnsurePlanForFarmUseCase);
   private readonly presenter = inject(WorkHubPresenter);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
   selectedFarmName: string | null = null;
@@ -131,7 +134,8 @@ export class WorkHubComponent implements WorkHubView, OnInit {
     return this._control;
   }
   set control(value: WorkHubViewState) {
-    this._control = applyPendingSuccessFlashViewEffects(value, { flash: this.flashMessage });
+    const withFlash = applyPendingSuccessFlashViewEffects(value, { flash: this.flashMessage });
+    this._control = applyPendingNavigationViewEffects(withFlash, { router: this.router });
     this.cdr.markForCheck();
   }
 

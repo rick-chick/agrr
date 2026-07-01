@@ -1,25 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
 import { CreatePrivatePlanPresenter } from './create-private-plan.presenter';
 import { CreatePrivatePlanResponseDto } from '../../usecase/private-plan-create/create-private-plan.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { Router } from '@angular/router';
 import { PlanNewView, PlanNewViewState } from '../../components/plans/plan-new.view';
 
 describe('CreatePrivatePlanPresenter', () => {
   let presenter: CreatePrivatePlanPresenter;
   let view: PlanNewView;
   let lastControl: PlanNewViewState | null;
-  let mockRouter: Router & { navigate: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockRouter = { navigate: vi.fn() } as Router & { navigate: ReturnType<typeof vi.fn> };
-
     TestBed.configureTestingModule({
-      providers: [
-        CreatePrivatePlanPresenter,
-        { provide: Router, useValue: mockRouter }
-      ]
+      providers: [CreatePrivatePlanPresenter]
     });
     presenter = TestBed.inject(CreatePrivatePlanPresenter);
 
@@ -34,7 +26,8 @@ describe('CreatePrivatePlanPresenter', () => {
           selectedFarmId: null,
           noFieldsWarning: false,
           pendingErrorFlash: null,
-          pendingSuccessFlash: null
+          pendingSuccessFlash: null,
+          pendingNavigation: null
         };
       },
       set control(value: PlanNewViewState) {
@@ -44,12 +37,8 @@ describe('CreatePrivatePlanPresenter', () => {
     presenter.setView(view);
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   describe('CreatePrivatePlanOutputPort', () => {
-    it('queues pending success flash and navigates to plan detail on present(dto)', () => {
+    it('queues pending success flash and navigation to plan detail on present(dto)', () => {
       const dto: CreatePrivatePlanResponseDto = { id: 123 };
 
       presenter.present(dto);
@@ -59,8 +48,9 @@ describe('CreatePrivatePlanPresenter', () => {
         type: 'success',
         text: 'plans.messages.plan_created'
       });
-      expect(mockRouter.navigate).toHaveBeenCalledTimes(1);
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 123]);
+      expect(lastControl!.pendingNavigation).toEqual({
+        commands: ['/plans', 123]
+      });
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBeNull();
     });
@@ -74,7 +64,8 @@ describe('CreatePrivatePlanPresenter', () => {
         selectedFarmId: null,
         noFieldsWarning: false,
         pendingErrorFlash: null,
-        pendingSuccessFlash: null
+        pendingSuccessFlash: null,
+        pendingNavigation: null
       };
       lastControl = initialControl;
 

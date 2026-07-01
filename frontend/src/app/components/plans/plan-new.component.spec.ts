@@ -60,7 +60,8 @@ describe('PlanNewComponent', () => {
       selectedFarmId: 1,
       noFieldsWarning: false,
       pendingErrorFlash: null,
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     component.planName = 'My Plan';
 
@@ -81,7 +82,8 @@ describe('PlanNewComponent', () => {
       selectedFarmId: 1,
       noFieldsWarning: true,
       pendingErrorFlash: null,
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
 
     component.onSubmit(new Event('submit'));

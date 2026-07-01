@@ -1,22 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkHubPresenter } from './work-hub.presenter';
 import { WorkHubViewState } from '../../components/work-hub/work-hub.view';
 
 describe('WorkHubPresenter', () => {
   let presenter: WorkHubPresenter;
-  let navigate: ReturnType<typeof vi.fn>;
   let lastControl: WorkHubViewState;
 
   beforeEach(() => {
-    navigate = vi.fn();
-
     TestBed.configureTestingModule({
-      providers: [
-        WorkHubPresenter,
-        { provide: Router, useValue: { navigate } }
-      ]
+      providers: [WorkHubPresenter]
     });
 
     presenter = TestBed.inject(WorkHubPresenter);
@@ -25,7 +18,8 @@ describe('WorkHubPresenter', () => {
       submitting: false,
       error: null,
       farms: [],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     presenter.setView({
       get control() {
@@ -65,7 +59,8 @@ describe('WorkHubPresenter', () => {
           planId: 9
         }
       ],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     });
   });
 
@@ -75,7 +70,8 @@ describe('WorkHubPresenter', () => {
       submitting: false,
       error: 'old',
       farms: [],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
 
     presenter.beginEnsure();
@@ -85,28 +81,32 @@ describe('WorkHubPresenter', () => {
     expect(lastControl.pendingSuccessFlash).toBeNull();
   });
 
-  it('navigates to work screen on ensure success without pending success flash when plan existed', () => {
+  it('queues navigation to work screen on ensure success without pending success flash when plan existed', () => {
     lastControl = {
       loading: false,
       submitting: true,
       error: null,
       farms: [],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
 
     presenter.onSuccess({ planId: 42, created: false });
 
     expect(lastControl.pendingSuccessFlash).toBeNull();
-    expect(navigate).toHaveBeenCalledWith(['/plans', 42, 'work']);
+    expect(lastControl.pendingNavigation).toEqual({
+      commands: ['/plans', 42, 'work']
+    });
   });
 
-  it('queues pending success flash and navigates when a new plan was created', () => {
+  it('queues pending success flash and navigation when a new plan was created', () => {
     lastControl = {
       loading: false,
       submitting: true,
       error: null,
       farms: [],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
 
     presenter.onSuccess({ planId: 99, created: true });
@@ -115,6 +115,8 @@ describe('WorkHubPresenter', () => {
       type: 'success',
       text: 'plans.messages.plan_created'
     });
-    expect(navigate).toHaveBeenCalledWith(['/plans', 99, 'work']);
+    expect(lastControl.pendingNavigation).toEqual({
+      commands: ['/plans', 99, 'work']
+    });
   });
 });

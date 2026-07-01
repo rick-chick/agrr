@@ -11,8 +11,8 @@ import {
   GanttPlanCoordinatorService,
   GanttPlanMutationOutcome
 } from '../../services/plans/gantt-plan-coordinator.service';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class GanttChartPresenter {
@@ -21,7 +21,6 @@ export class GanttChartPresenter {
 
   constructor(
     private readonly translate: TranslateService,
-    private readonly flashMessageService: FlashMessageService,
     private readonly ganttPlanCoordinator: GanttPlanCoordinatorService
   ) {}
 
@@ -106,7 +105,10 @@ export class GanttChartPresenter {
     if (technicalDetails) {
       text = `${text} (${technicalDetails})`;
     }
-    this.flashMessageService.show({ type: 'error', text });
+    this.view.control = {
+      ...this.view.control,
+      pendingErrorFlash: pendingErrorFlashFromError({ message: text })
+    };
     this.view.setFieldFormLoading(false);
     this.view.clearOptimizationLock();
   }

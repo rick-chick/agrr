@@ -12,10 +12,10 @@ describe('GanttChartPresenter', () => {
   let presenter: GanttChartPresenter;
   let view: GanttChartView;
   let translate: { instant: ReturnType<typeof vi.fn> };
-  let flashMessageService: { show: ReturnType<typeof vi.fn> };
   let coordinator: {
     loadPlanData: ReturnType<typeof vi.fn>;
   };
+  let lastControl: GanttChartView['control'];
 
   const planData = (): CultivationPlanData =>
     ({
@@ -29,7 +29,14 @@ describe('GanttChartPresenter', () => {
     }) as CultivationPlanData;
 
   beforeEach(() => {
+    lastControl = { pendingErrorFlash: null };
     view = {
+      get control() {
+        return lastControl;
+      },
+      set control(value) {
+        lastControl = value;
+      },
       applyRefreshedPlanData: vi.fn(),
       updateChartOnly: vi.fn(),
       resetBarPosition: vi.fn(),
@@ -39,12 +46,10 @@ describe('GanttChartPresenter', () => {
     translate = {
       instant: vi.fn((key: string) => `t:${key}`)
     };
-    flashMessageService = { show: vi.fn() };
     coordinator = { loadPlanData: vi.fn() };
 
     presenter = new GanttChartPresenter(
       translate as never,
-      flashMessageService as never,
       coordinator as unknown as GanttPlanCoordinatorService
     );
     presenter.setView(view);
@@ -59,7 +64,7 @@ describe('GanttChartPresenter', () => {
     );
 
     expect(translate.instant).toHaveBeenCalledWith(GANTT_I18N_KEYS.js.logs.dataRefetchFailed);
-    expect(flashMessageService.show).toHaveBeenCalledWith({
+    expect(lastControl.pendingErrorFlash).toEqual({
       type: 'error',
       text: `t:${GANTT_I18N_KEYS.js.logs.dataRefetchFailed}`
     });
@@ -83,7 +88,7 @@ describe('GanttChartPresenter', () => {
       { revertBarOnMessageFailure: true }
     );
 
-    expect(flashMessageService.show).toHaveBeenCalledWith({
+    expect(lastControl.pendingErrorFlash).toEqual({
       type: 'error',
       text: 'bad request'
     });
@@ -114,7 +119,7 @@ describe('GanttChartPresenter', () => {
 
     presenter.refreshPlanData(7);
 
-    expect(flashMessageService.show).toHaveBeenCalledWith({
+    expect(lastControl.pendingErrorFlash).toEqual({
       type: 'error',
       text: 'network'
     });

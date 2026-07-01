@@ -62,8 +62,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AddCropRequest } from '../../services/plans/plan.service';
 import { GanttPlanCoordinatorService } from '../../services/plans/gantt-plan-coordinator.service';
 import { GanttChartPresenter } from '../../adapters/plans/gantt-chart.presenter';
-import { GanttChartView } from './gantt-chart.view';
+import { GanttChartView, GanttChartViewControl } from './gantt-chart.view';
 import { GanttMobileActionsMenuComponent } from './gantt-mobile-actions-menu.component';
+import { FlashMessageService } from '../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../core/view-effects/pending-error-flash-view.effects';
 
 @Component({
   selector: 'app-gantt-chart',
@@ -506,7 +508,17 @@ export class GanttChartComponent
   showOptimizationLock = false;
   private ganttPlanCoordinator = inject(GanttPlanCoordinatorService);
   private ganttPresenter = inject(GanttChartPresenter);
+  private flashMessage = inject(FlashMessageService);
   private cdr = inject(ChangeDetectorRef);
+
+  private _control: GanttChartViewControl = { pendingErrorFlash: null };
+  get control(): GanttChartViewControl {
+    return this._control;
+  }
+  set control(value: GanttChartViewControl) {
+    this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
+    this.cdr.markForCheck();
+  }
 
   constructor(private translate: TranslateService) {}
 

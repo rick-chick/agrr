@@ -1,6 +1,11 @@
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from './pending-error-flash-view.effects';
 import { PendingErrorFlashRequest } from './pending-error-flash-view.effects';
+import {
+  applyPendingNavigationViewEffects,
+  PendingNavigationRequest
+} from './pending-navigation-view.effects';
+import { Router } from '@angular/router';
 
 export type PendingSuccessFlashRequest = {
   type: 'success';
@@ -37,4 +42,19 @@ export function applyPendingFlashViewEffects<T extends PendingFlashViewEffectSta
   deps: PendingSuccessFlashViewEffectDeps
 ): T {
   return applyPendingSuccessFlashViewEffects(applyPendingErrorFlashViewEffects(state, deps), deps);
+}
+
+type PendingFlashNavigationViewEffectState = PendingFlashViewEffectState & {
+  pendingNavigation: PendingNavigationRequest | null;
+};
+
+interface PendingFlashNavigationViewEffectDeps extends PendingSuccessFlashViewEffectDeps {
+  router: Pick<Router, 'navigate'>;
+}
+
+/** flash 消費後に pending navigation を消費する。 */
+export function applyPendingFlashAndNavigationViewEffects<
+  T extends PendingFlashNavigationViewEffectState
+>(state: T, deps: PendingFlashNavigationViewEffectDeps): T {
+  return applyPendingNavigationViewEffects(applyPendingFlashViewEffects(state, deps), deps);
 }

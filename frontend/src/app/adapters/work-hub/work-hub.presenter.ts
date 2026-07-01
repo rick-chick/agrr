@@ -1,15 +1,14 @@
-import { inject, Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import { Injectable } from '@angular/core';
 import { EnsurePlanForFarmOutputPort } from '../../usecase/work-hub/ensure-plan-for-farm.output-port';
 import { EnsurePlanForFarmSuccessDto } from '../../usecase/work-hub/ensure-plan-for-farm.dtos';
 import { WorkHubInitOutputPort } from '../../usecase/work-hub/work-hub-init.output-port';
 import { WorkHubInitPresentDto } from '../../usecase/work-hub/work-hub-init.dtos';
 import { WorkHubView } from '../../components/work-hub/work-hub.view';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
+import { pendingNavigationTo } from '../../core/view-effects/pending-navigation-presenter.helpers';
 
 @Injectable()
 export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFarmOutputPort {
-  private readonly router = inject(Router);
   private view: WorkHubView | null = null;
 
   setView(view: WorkHubView): void {
@@ -58,8 +57,8 @@ export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFar
       error: null,
       pendingSuccessFlash: dto.created
         ? pendingSuccessFlashFromText('plans.messages.plan_created')
-        : null
+        : null,
+      pendingNavigation: pendingNavigationTo(['/plans', dto.planId, 'work'])
     };
-    void this.router.navigate(['/plans', dto.planId, 'work']);
   }
 }

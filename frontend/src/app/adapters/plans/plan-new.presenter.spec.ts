@@ -29,7 +29,8 @@ describe('PlanNewPresenter', () => {
             selectedFarmId: null,
             noFieldsWarning: false,
             pendingErrorFlash: null,
-            pendingSuccessFlash: null
+            pendingSuccessFlash: null,
+            pendingNavigation: null
           }
         );
       },
@@ -70,7 +71,8 @@ describe('PlanNewPresenter', () => {
       selectedFarmId: null,
       noFieldsWarning: false,
       pendingErrorFlash: null,
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     lastControl = initialControl;
 

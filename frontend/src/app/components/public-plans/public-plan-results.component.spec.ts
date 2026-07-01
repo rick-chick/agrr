@@ -80,7 +80,8 @@ describe('PublicPlanResultsComponent', () => {
       error: null,
       data: null,
       pendingErrorFlash: null,
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     component.control = state;
     expect(component.control).toEqual(state);

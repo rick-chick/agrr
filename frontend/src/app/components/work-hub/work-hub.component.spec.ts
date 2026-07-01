@@ -80,7 +80,8 @@ describe('WorkHubComponent', () => {
       submitting: false,
       error: null,
       farms: [],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     fixture.detectChanges();
 
@@ -111,7 +112,8 @@ describe('WorkHubComponent', () => {
           planId: null
         }
       ],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     fixture.detectChanges();
 
@@ -148,7 +150,8 @@ describe('WorkHubComponent', () => {
           planId: 9
         }
       ],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     fixture.detectChanges();
 
@@ -171,7 +174,8 @@ describe('WorkHubComponent', () => {
           planId: null
         }
       ],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     fixture.detectChanges();
 
@@ -195,7 +199,8 @@ describe('WorkHubComponent', () => {
           planId: null
         }
       ],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     component.selectedFarmName = 'Farm Solo';
     fixture.detectChanges();
@@ -214,7 +219,8 @@ describe('WorkHubComponent', () => {
       submitting: false,
       error: 'common.api_error.generic',
       farms: [],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     fixture.detectChanges();
 
@@ -239,7 +245,8 @@ describe('WorkHubComponent', () => {
           planId: null
         }
       ],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     fixture.detectChanges();
 
@@ -255,7 +262,8 @@ describe('WorkHubComponent', () => {
       submitting: false,
       error: 'common.api_error.generic',
       farms: [],
-      pendingSuccessFlash: null
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     fixture.detectChanges();
 
