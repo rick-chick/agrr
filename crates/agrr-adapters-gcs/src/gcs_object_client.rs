@@ -207,3 +207,45 @@ fn gcp_access_token(http: &Client) -> Result<String, WeatherDataGcsError> {
         .map(|s| s.to_string())
         .ok_or(WeatherDataGcsError::AuthFailed)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::weather_json::WeatherDataGcsConfig;
+    use tempfile::tempdir;
+
+    fn local_client(dir: &std::path::Path) -> GcsObjectClient {
+        GcsObjectClient::new(WeatherDataGcsConfig {
+            bucket: "test-bucket".into(),
+            use_http: false,
+            local_root: Some(dir.to_path_buf()),
+        })
+    }
+
+    #[test]
+    fn urlencoding_key_encodes_slashes_and_special_characters() {
+        assert_eq!(
+            urlencoding_key("weather_data/7/2024.json"),
+            "weather_data%2F7%2F2024.json"
+        );
+        assert_eq!(urlencoding_key("a b+c"), "a%20b%2Bc");
+        assert_eq!(urlencoding_key("safe-name_1.2~3"), "safe-name_1.2~3");
+    }
+
+    #[test]
+    fn local_root_read_write_list_roundtrip() {
+        let dir = tempdir().unwrap();
+        let client = local_client(dir.path());
+        let key = "weather_data/9/2025.json";
+        let payload = br#"{"2025-01-01": {}}"#;
+
+        assert!(client.read_object(key).unwrap().is_none());
+
+        client.write_object(key, payload).unwrap();
+        let read = client.read_object(key).unwrap().expect("written object");
+        assert_eq!(read, payload);
+
+        let names = client.list_object_names("weather_data/9/").unwrap();
+        assert_eq!(names, vec!["weather_data/9/2025.json"]);
+    }
+}
