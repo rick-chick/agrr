@@ -5,14 +5,13 @@ import { LoadPesticideDetailOutputPort } from '../../usecase/pesticides/load-pes
 import { PesticideDetailDataDto } from '../../usecase/pesticides/load-pesticide-detail.dtos';
 import { DeletePesticideOutputPort } from '../../usecase/pesticides/delete-pesticide.output-port';
 import { DeletePesticideSuccessDto } from '../../usecase/pesticides/delete-pesticide.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, DeletePesticideOutputPort {
-  private readonly flashMessage = inject(FlashMessageService);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: PesticideDetailView | null = null;
 
@@ -26,17 +25,18 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
       loading: false,
       error: null,
       pesticide: dto.pesticide,
-      pendingUndoToast: null
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 

@@ -3,6 +3,7 @@ import { LoadPrivatePlanFarmsOutputPort } from '../../usecase/private-plan-creat
 import { PlanNewView } from '../../components/plans/plan-new.view';
 import { PrivatePlanFarmsDataDto } from '../../usecase/private-plan-create/load-private-plan-farms.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
@@ -20,7 +21,8 @@ export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
         error: null,
         farms: dto.farms,
         selectedFarmId: null,
-        noFieldsWarning: false
+        noFieldsWarning: false,
+        pendingErrorFlash: null
       };
     }
   }
@@ -30,7 +32,8 @@ export class PlanNewPresenter implements LoadPrivatePlanFarmsOutputPort {
       this.view.control = {
         ...this.view.control,
         loading: false,
-        error: dto.message
+        error: null,
+        pendingErrorFlash: pendingErrorFlashFromError(dto)
       };
     }
   }

@@ -423,6 +423,7 @@ describe('PlanWorkComponent mobile UX', () => {
       ...initialControl,
       loading: false,
       error: 'common.api_error.generic'
+    
     };
     fixture.detectChanges();
 
@@ -485,6 +486,7 @@ describe('PlanWorkComponent mobile UX', () => {
         task_schedule_sync_state: 'failed',
         task_schedule_sync_error: 'plans.task_schedules.sync_errors.agrr_unavailable'
       }
+    
     };
     fixture.detectChanges();
 

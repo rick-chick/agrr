@@ -14,12 +14,15 @@ import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.serv
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: CropListViewState = {
   loading: true,
   error: null,
   crops: [],
-  pendingUndoToast: null
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -75,6 +78,7 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
   private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropListPresenter);
   private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
@@ -84,7 +88,11 @@ export class CropListComponent implements CropListView, OnInit, OnDestroy {
     return this._control;
   }
   set control(value: CropListViewState) {
-    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 

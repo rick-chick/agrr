@@ -16,12 +16,15 @@ import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.serv
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
 import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: InteractionRuleListViewState = {
   loading: true,
   error: null,
   rules: [],
-  pendingUndoToast: null
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -71,6 +74,7 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
   private readonly deleteUseCase = inject(DeleteInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleListPresenter);
   private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private readonly translate = inject(TranslateService);
@@ -81,7 +85,11 @@ export class InteractionRuleListComponent implements InteractionRuleListView, On
     return this._control;
   }
   set control(value: InteractionRuleListViewState) {
-    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 

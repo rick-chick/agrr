@@ -73,6 +73,7 @@ describe('PlanWorkRecordsComponent', () => {
       error: null,
       plan: null,
       groups: []
+    
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -85,6 +86,7 @@ describe('PlanWorkRecordsComponent', () => {
       error: null,
       plan: { id: 7, name: 'Field plan' },
       groups: []
+    
     };
     fixture.detectChanges();
 
@@ -123,6 +125,7 @@ describe('PlanWorkRecordsComponent', () => {
           ]
         }
       ]
+    
     };
     fixture.detectChanges();
 
@@ -140,6 +143,7 @@ describe('PlanWorkRecordsComponent', () => {
       error: 'common.api_error.generic',
       plan: null,
       groups: []
+    
     };
     fixture.detectChanges();
 
@@ -165,6 +169,7 @@ describe('PlanWorkRecordsComponent', () => {
       error: 'common.api_error.generic',
       plan: null,
       groups: []
+    
     };
     fixture.detectChanges();
 

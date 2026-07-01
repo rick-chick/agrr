@@ -65,7 +65,8 @@ describe('InteractionRuleDetailComponent', () => {
         is_reference: false,
         region: null
       },
-      pendingUndoToast: null
+      pendingUndoToast: null,
+        pendingErrorFlash: null
     };
     fixture.detectChanges();
 
@@ -89,7 +90,8 @@ describe('InteractionRuleDetailComponent', () => {
         is_reference: false,
         region: null
       },
-      pendingUndoToast: null
+      pendingUndoToast: null,
+        pendingErrorFlash: null
     };
     fixture.detectChanges();
 

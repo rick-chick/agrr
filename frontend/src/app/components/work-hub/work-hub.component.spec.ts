@@ -79,7 +79,8 @@ describe('WorkHubComponent', () => {
       loading: false,
       submitting: false,
       error: null,
-      farms: []
+      farms: [],
+      pendingSuccessFlash: null
     };
     fixture.detectChanges();
 
@@ -109,7 +110,8 @@ describe('WorkHubComponent', () => {
           hasValidFields: true,
           planId: null
         }
-      ]
+      ],
+      pendingSuccessFlash: null
     };
     fixture.detectChanges();
 
@@ -145,7 +147,8 @@ describe('WorkHubComponent', () => {
           hasValidFields: true,
           planId: 9
         }
-      ]
+      ],
+      pendingSuccessFlash: null
     };
     fixture.detectChanges();
 
@@ -167,7 +170,8 @@ describe('WorkHubComponent', () => {
           hasValidFields: false,
           planId: null
         }
-      ]
+      ],
+      pendingSuccessFlash: null
     };
     fixture.detectChanges();
 
@@ -190,7 +194,8 @@ describe('WorkHubComponent', () => {
           hasValidFields: true,
           planId: null
         }
-      ]
+      ],
+      pendingSuccessFlash: null
     };
     component.selectedFarmName = 'Farm Solo';
     fixture.detectChanges();
@@ -208,7 +213,8 @@ describe('WorkHubComponent', () => {
       loading: false,
       submitting: false,
       error: 'common.api_error.generic',
-      farms: []
+      farms: [],
+      pendingSuccessFlash: null
     };
     fixture.detectChanges();
 
@@ -232,7 +238,8 @@ describe('WorkHubComponent', () => {
           hasValidFields: true,
           planId: null
         }
-      ]
+      ],
+      pendingSuccessFlash: null
     };
     fixture.detectChanges();
 
@@ -247,7 +254,8 @@ describe('WorkHubComponent', () => {
       loading: false,
       submitting: false,
       error: 'common.api_error.generic',
-      farms: []
+      farms: [],
+      pendingSuccessFlash: null
     };
     fixture.detectChanges();
 

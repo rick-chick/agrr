@@ -1,3 +1,4 @@
+import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-error-flash-view.effects';
 export type InteractionRuleCreateFormData = {
   rule_type: string;
   source_group: string;
@@ -12,6 +13,8 @@ export type InteractionRuleCreateViewState = {
   saving: boolean;
   error: string | null;
   formData: InteractionRuleCreateFormData;
+
+  pendingErrorFlash: PendingErrorFlashRequest | null;
 };
 
 export interface InteractionRuleCreateView {

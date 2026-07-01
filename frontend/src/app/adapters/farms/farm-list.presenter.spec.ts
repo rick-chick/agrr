@@ -5,30 +5,23 @@ import { FarmListView, FarmListViewState } from '../../components/masters/farms/
 import { FarmListDataDto } from '../../usecase/farms/load-farm-list.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
 describe('FarmListPresenter', () => {
   let presenter: FarmListPresenter;
   let view: FarmListView;
   let lastControl: FarmListViewState | null;
-  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
-
     TestBed.configureTestingModule({
-      providers: [
-        FarmListPresenter,
-        { provide: FlashMessageService, useValue: mockFlashMessageService }
-      ]
+      providers: [FarmListPresenter]
     });
     presenter = TestBed.inject(FarmListPresenter);
 
     lastControl = null;
     view = {
       get control(): FarmListViewState {
-        return lastControl ?? { loading: true, error: null, farms: [], pendingUndoToast: null };
+        return lastControl ?? { loading: true, error: null, farms: [], pendingUndoToast: null, pendingErrorFlash: null };
       },
       set control(value: FarmListViewState) {
         lastControl = value;
@@ -57,6 +50,7 @@ describe('FarmListPresenter', () => {
       expect(lastControl!.error).toBeNull();
       expect(lastControl!.farms).toEqual(dto.farms);
       expect(lastControl!.pendingUndoToast).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toBeNull();
     });
 
     it('handles farms with is_reference field for admin users', () => {
@@ -77,20 +71,25 @@ describe('FarmListPresenter', () => {
       expect(lastControl!.farms[1].is_reference).toBe(true);
     });
 
-    it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
-      const initialControl: FarmListViewState = { loading: true, error: null, farms: [], pendingUndoToast: null };
+    it('queues pending error flash and updates view.control on onError(dto)', () => {
+      const initialControl: FarmListViewState = {
+        loading: true,
+        error: null,
+        farms: [],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Network error' };
 
       presenter.onError(dto);
 
-      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Network error' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBeNull();
       expect(lastControl!.farms).toEqual([]);
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Network error' });
     });
   });
 
@@ -100,7 +99,7 @@ describe('FarmListPresenter', () => {
         { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'pending' as const },
         { id: 2, name: 'Farm B', region: 'Region B', latitude: 36.0, longitude: 136.0, weather_data_status: 'completed' as const }
       ];
-      lastControl = { loading: false, error: null, farms: initialFarms, pendingUndoToast: null };
+      lastControl = { loading: false, error: null, farms: initialFarms, pendingUndoToast: null, pendingErrorFlash: null };
 
       const dto: DeleteFarmSuccessDto = { deletedFarmId: 1 };
 
@@ -110,6 +109,7 @@ describe('FarmListPresenter', () => {
       expect(lastControl!.farms).toHaveLength(1);
       expect(lastControl!.farms[0].id).toBe(2);
       expect(lastControl!.pendingUndoToast).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toBeNull();
     });
 
     it('queues pending undo toast with refresh callback on onSuccess(dto)', () => {
@@ -117,7 +117,7 @@ describe('FarmListPresenter', () => {
         { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'pending' as const },
         { id: 2, name: 'Farm B', region: 'Region B', latitude: 36.0, longitude: 136.0, weather_data_status: 'completed' as const }
       ];
-      lastControl = { loading: false, error: null, farms: initialFarms, pendingUndoToast: null };
+      lastControl = { loading: false, error: null, farms: initialFarms, pendingUndoToast: null, pendingErrorFlash: null };
 
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',

@@ -5,7 +5,6 @@ import { PlanListView, PlanListViewState } from '../../components/plans/plan-lis
 import { PlanListDataDto } from '../../usecase/plans/load-plan-list.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeletePlanSuccessDto } from '../../usecase/plans/delete-plan.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 
@@ -13,23 +12,17 @@ describe('PlanListPresenter', () => {
   let presenter: PlanListPresenter;
   let view: PlanListView;
   let lastControl: PlanListViewState | null;
-  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
-
     TestBed.configureTestingModule({
-      providers: [
-        PlanListPresenter,
-        { provide: FlashMessageService, useValue: mockFlashMessageService }
-      ]
+      providers: [PlanListPresenter]
     });
     presenter = TestBed.inject(PlanListPresenter);
 
     lastControl = null;
     view = {
       get control(): PlanListViewState {
-        return lastControl ?? { loading: true, error: null, plans: [], pendingUndoToast: null };
+        return lastControl ?? { loading: true, error: null, plans: [], pendingUndoToast: null, pendingErrorFlash: null };
       },
       set control(value: PlanListViewState) {
         lastControl = value;
@@ -58,16 +51,15 @@ describe('PlanListPresenter', () => {
       expect(lastControl!.plans).toEqual(plans);
     });
 
-    it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
-      const initialControl: PlanListViewState = { loading: true, error: null, plans: [], pendingUndoToast: null };
+    it('queues pending error flash and updates view.control on onError(dto)', () => {
+      const initialControl: PlanListViewState = { loading: true, error: null, plans: [], pendingUndoToast: null, pendingErrorFlash: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Network error', scope: 'load-plan-list' };
 
       presenter.onError(dto);
 
-      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Network error' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Network error' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBe('Network error');
@@ -76,15 +68,14 @@ describe('PlanListPresenter', () => {
 
     it('does not set error in view.control when scope is not load-plan-list', () => {
       const initialPlans: PlanSummary[] = [{ id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }];
-      const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
+      const initialControl: PlanListViewState = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Delete error', scope: 'delete-plan' };
 
       presenter.onError(dto);
 
-      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Delete error' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Delete error' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.error).toBeNull();
       expect(lastControl!.plans).toEqual(initialPlans);
@@ -97,7 +88,7 @@ describe('PlanListPresenter', () => {
         { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
         { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
+      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
 
       const dto: DeletePlanSuccessDto = { deletedPlanId: 1 };
 
@@ -114,7 +105,7 @@ describe('PlanListPresenter', () => {
         { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 },
         { id: 2, name: 'Plan B', status: 'completed', farm_id: 2 }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
+      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
 
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',
@@ -152,7 +143,7 @@ describe('PlanListPresenter', () => {
       const initialPlans: PlanSummary[] = [
         { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
+      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
 
       const dto: DeletePlanSuccessDto = {
         deletedPlanId: 1,
@@ -169,7 +160,7 @@ describe('PlanListPresenter', () => {
       const initialPlans: PlanSummary[] = [
         { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
       ];
-      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null };
+      lastControl = { loading: false, error: null, plans: initialPlans, pendingUndoToast: null, pendingErrorFlash: null };
 
       const undoResponse: DeletionUndoResponse = {
         undo_token: 'token123',

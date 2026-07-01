@@ -1,46 +1,43 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkHubPresenter } from './work-hub.presenter';
-import { FlashMessageService } from '../../services/flash-message.service';
+import { WorkHubViewState } from '../../components/work-hub/work-hub.view';
 
 describe('WorkHubPresenter', () => {
   let presenter: WorkHubPresenter;
   let navigate: ReturnType<typeof vi.fn>;
-  let flashShow: ReturnType<typeof vi.fn>;
+  let lastControl: WorkHubViewState;
 
   beforeEach(() => {
     navigate = vi.fn();
-    flashShow = vi.fn();
 
     TestBed.configureTestingModule({
-      imports: [TranslateModule.forRoot()],
       providers: [
         WorkHubPresenter,
-        { provide: Router, useValue: { navigate } },
-        { provide: FlashMessageService, useValue: { show: flashShow } }
+        { provide: Router, useValue: { navigate } }
       ]
     });
 
     presenter = TestBed.inject(WorkHubPresenter);
-    const translate = TestBed.inject(TranslateService);
-    translate.setDefaultLang('en');
-    translate.use('en');
-    translate.setTranslation('en', { 'plans.messages.plan_created': 'Plan created' }, true);
+    lastControl = {
+      loading: true,
+      submitting: false,
+      error: null,
+      farms: [],
+      pendingSuccessFlash: null
+    };
+    presenter.setView({
+      get control() {
+        return lastControl;
+      },
+      set control(value: WorkHubViewState) {
+        lastControl = value;
+      }
+    });
   });
 
   it('maps loaded farms to view control', () => {
-    const view = {
-      control: {
-        loading: true,
-        submitting: false,
-        error: null,
-        farms: []
-      }
-    };
-    presenter.setView(view);
-
     presenter.present({
       farms: [
         {
@@ -54,7 +51,7 @@ describe('WorkHubPresenter', () => {
       ]
     });
 
-    expect(view.control).toEqual({
+    expect(lastControl).toEqual({
       loading: false,
       submitting: false,
       error: null,
@@ -67,48 +64,56 @@ describe('WorkHubPresenter', () => {
           hasValidFields: true,
           planId: 9
         }
-      ]
+      ],
+      pendingSuccessFlash: null
     });
   });
 
   it('sets submitting when ensure begins', () => {
-    const view = {
-      control: {
-        loading: false,
-        submitting: false,
-        error: 'old',
-        farms: []
-      }
+    lastControl = {
+      loading: false,
+      submitting: false,
+      error: 'old',
+      farms: [],
+      pendingSuccessFlash: null
     };
-    presenter.setView(view);
 
     presenter.beginEnsure();
 
-    expect(view.control.submitting).toBe(true);
-    expect(view.control.error).toBeNull();
+    expect(lastControl.submitting).toBe(true);
+    expect(lastControl.error).toBeNull();
+    expect(lastControl.pendingSuccessFlash).toBeNull();
   });
 
-  it('navigates to work screen on ensure success without flash when plan existed', () => {
-    presenter.setView({
-      control: { loading: false, submitting: true, error: null, farms: [] }
-    });
+  it('navigates to work screen on ensure success without pending success flash when plan existed', () => {
+    lastControl = {
+      loading: false,
+      submitting: true,
+      error: null,
+      farms: [],
+      pendingSuccessFlash: null
+    };
 
     presenter.onSuccess({ planId: 42, created: false });
 
-    expect(flashShow).not.toHaveBeenCalled();
+    expect(lastControl.pendingSuccessFlash).toBeNull();
     expect(navigate).toHaveBeenCalledWith(['/plans', 42, 'work']);
   });
 
-  it('shows flash and navigates when a new plan was created', () => {
-    presenter.setView({
-      control: { loading: false, submitting: true, error: null, farms: [] }
-    });
+  it('queues pending success flash and navigates when a new plan was created', () => {
+    lastControl = {
+      loading: false,
+      submitting: true,
+      error: null,
+      farms: [],
+      pendingSuccessFlash: null
+    };
 
     presenter.onSuccess({ planId: 99, created: true });
 
-    expect(flashShow).toHaveBeenCalledWith({
+    expect(lastControl.pendingSuccessFlash).toEqual({
       type: 'success',
-      text: 'Plan created'
+      text: 'plans.messages.plan_created'
     });
     expect(navigate).toHaveBeenCalledWith(['/plans', 99, 'work']);
   });

@@ -9,13 +9,18 @@ import { PlanNewPresenter, PLAN_NEW_PROVIDERS } from '../../usecase/plans/plan-n
 import { CreatePrivatePlanPresenter } from '../../adapters/private-plan-create/create-private-plan.presenter';
 import { PlanNewView, PlanNewViewState } from './plan-new.view';
 
+import { FlashMessageService } from '../../services/flash-message.service';
+import { applyPendingFlashViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
+
 const initialControl: PlanNewViewState = {
   loading: true,
   submitting: false,
   error: null,
   farms: [],
   selectedFarmId: null,
-  noFieldsWarning: false
+  noFieldsWarning: false,
+  pendingErrorFlash: null,
+  pendingSuccessFlash: null
 };
 
 @Component({
@@ -108,6 +113,7 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly createUseCase = inject(CreatePrivatePlanUseCase);
   private readonly farmsPresenter = inject(PlanNewPresenter);
   private readonly createPresenter = inject(CreatePrivatePlanPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   planName = '';
@@ -117,7 +123,7 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     return this._control;
   }
   set control(value: PlanNewViewState) {
-    this._control = value;
+    this._control = applyPendingFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

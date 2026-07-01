@@ -5,14 +5,13 @@ import { LoadPestDetailOutputPort } from '../../usecase/pests/load-pest-detail.o
 import { PestDetailDataDto } from '../../usecase/pests/load-pest-detail.dtos';
 import { DeletePestOutputPort } from '../../usecase/pests/delete-pest.output-port';
 import { DeletePestSuccessDto } from '../../usecase/pests/delete-pest.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePestOutputPort {
-  private readonly flashMessage = inject(FlashMessageService);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: PestDetailView | null = null;
 
@@ -26,17 +25,18 @@ export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePest
       loading: false,
       error: null,
       pest: dto.pest,
-      pendingUndoToast: null
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 

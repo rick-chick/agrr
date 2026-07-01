@@ -5,12 +5,12 @@ import { LoadPublicPlanResultsOutputPort } from '../../usecase/public-plans/load
 import { SavePublicPlanOutputPort } from '../../usecase/public-plans/save-public-plan.output-port';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { FlashMessageService } from '../../services/flash-message.service';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 
 @Injectable()
 export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPort, SavePublicPlanOutputPort {
   private readonly router = inject(Router);
-  private readonly flashMessage = inject(FlashMessageService);
   private view: PublicPlanResultsView | null = null;
 
   setView(view: PublicPlanResultsView): void {
@@ -23,7 +23,12 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
       | { message: string; cultivation_plan_id?: number; plan_reused?: boolean }
   ): void {
     if ('message' in dto && !('plan' in dto)) {
-      this.flashMessage.show({ type: 'success', text: dto.message });
+      if (!this.view) throw new Error('Presenter: view not set');
+      this.view.control = {
+        ...this.view.control,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: pendingSuccessFlashFromText(dto.message)
+      };
       if (dto.cultivation_plan_id) {
         void this.router.navigate(['/plans', dto.cultivation_plan_id]);
       } else {
@@ -36,29 +41,34 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
       ...this.view.control,
       loading: false,
       error: null,
-      data: dto as CultivationPlanData
+      data: dto as CultivationPlanData,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null
     };
   }
 
   onError(dto: ErrorDto | { message: string }): void {
-    const message = dto.message;
-    this.flashMessage.show({ type: 'error', text: message });
     if (!this.view) {
       return;
     }
+    const pendingErrorFlash = pendingErrorFlashFromError(dto);
     // 保存失敗時はガントを維持（読み込み失敗のみ全画面エラー）
     if (this.view.control.data) {
       this.view.control = {
         ...this.view.control,
-        loading: false
+        loading: false,
+        pendingSuccessFlash: null,
+        pendingErrorFlash
       };
       return;
     }
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: message,
-      data: null
+      error: dto.message,
+      data: null,
+      pendingSuccessFlash: null,
+      pendingErrorFlash
     };
   }
 }

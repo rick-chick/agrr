@@ -110,6 +110,7 @@ describe('PlanTaskScheduleComponent', () => {
       regenerateError: null,
       pendingSyncToastKey: null,
       syncReloadNonce: 0
+    
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -175,6 +176,7 @@ describe('PlanTaskScheduleComponent', () => {
       regenerateError: null,
       pendingSyncToastKey: null,
       syncReloadNonce: 0
+    
     };
     fixture.detectChanges();
     await fixture.whenStable();
@@ -206,6 +208,7 @@ describe('PlanTaskScheduleComponent', () => {
       regenerateError: null,
       pendingSyncToastKey: null,
       syncReloadNonce: 0
+    
     };
     fixture.detectChanges();
     await fixture.whenStable();
@@ -231,6 +234,7 @@ describe('PlanTaskScheduleComponent', () => {
           task_schedule_sync_error: 'plans.task_schedules.sync_errors.agrr_unavailable'
         }
       }
+    
     };
     fixture.detectChanges();
 

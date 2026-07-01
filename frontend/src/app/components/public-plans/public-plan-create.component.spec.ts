@@ -47,6 +47,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
       loading: false,
       error: null,
       farms: []
+    
     };
 
     const detectSpy = vi.spyOn(component.cdr, 'detectChanges');

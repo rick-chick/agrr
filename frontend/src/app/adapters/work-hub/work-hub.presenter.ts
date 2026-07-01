@@ -1,18 +1,15 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { EnsurePlanForFarmOutputPort } from '../../usecase/work-hub/ensure-plan-for-farm.output-port';
 import { EnsurePlanForFarmSuccessDto } from '../../usecase/work-hub/ensure-plan-for-farm.dtos';
 import { WorkHubInitOutputPort } from '../../usecase/work-hub/work-hub-init.output-port';
 import { WorkHubInitPresentDto } from '../../usecase/work-hub/work-hub-init.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { WorkHubView } from '../../components/work-hub/work-hub.view';
+import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 
 @Injectable()
 export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFarmOutputPort {
   private readonly router = inject(Router);
-  private readonly flashMessage = inject(FlashMessageService);
-  private readonly translate = inject(TranslateService);
   private view: WorkHubView | null = null;
 
   setView(view: WorkHubView): void {
@@ -26,7 +23,8 @@ export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFar
       loading: false,
       error: null,
       farms: dto.farms,
-      submitting: false
+      submitting: false,
+      pendingSuccessFlash: null
     };
   }
 
@@ -36,7 +34,8 @@ export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFar
       ...this.view.control,
       loading: false,
       submitting: true,
-      error: null
+      error: null,
+      pendingSuccessFlash: null
     };
   }
 
@@ -46,7 +45,8 @@ export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFar
       ...this.view.control,
       loading: false,
       submitting: false,
-      error: dto.message
+      error: dto.message,
+      pendingSuccessFlash: null
     };
   }
 
@@ -55,14 +55,11 @@ export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFar
     this.view.control = {
       ...this.view.control,
       submitting: false,
-      error: null
+      error: null,
+      pendingSuccessFlash: dto.created
+        ? pendingSuccessFlashFromText('plans.messages.plan_created')
+        : null
     };
-    if (dto.created) {
-      this.flashMessage.show({
-        type: 'success',
-        text: this.translate.instant('plans.messages.plan_created')
-      });
-    }
     void this.router.navigate(['/plans', dto.planId, 'work']);
   }
 }

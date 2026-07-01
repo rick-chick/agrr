@@ -19,16 +19,14 @@ import {
   setPendingPublicPlanSave
 } from '../../services/public-plans/pending-public-plan-save';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
+import { applyPendingFlashViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
 
-/**
- * 無料計画の結果（/public-plans/results）。
- * Rails の `_header` 相当の `.gantt-results-header` サマリーは出さない（ガントと操作に寄せる）。
- * `ja.json` に残る `%{count}` は ngx-translate と非互換のため、Rails 用コピペで戻すと未置換表示になる。
- */
 const initialControl: PublicPlanResultsViewState = {
   loading: true,
   error: null,
-  data: null
+  data: null,
+  pendingErrorFlash: null,
+  pendingSuccessFlash: null
 };
 
 @Component({
@@ -96,7 +94,7 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     return this._control;
   }
   set control(value: PublicPlanResultsViewState) {
-    this._control = value;
+    this._control = applyPendingFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

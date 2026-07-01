@@ -58,7 +58,9 @@ describe('PlanNewComponent', () => {
       error: null,
       farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
       selectedFarmId: 1,
-      noFieldsWarning: false
+      noFieldsWarning: false,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null
     };
     component.planName = 'My Plan';
 
@@ -77,7 +79,9 @@ describe('PlanNewComponent', () => {
       error: null,
       farms: [{ id: 1, name: 'Farm', fieldCount: 0, totalArea: 0, hasValidFields: false }],
       selectedFarmId: 1,
-      noFieldsWarning: true
+      noFieldsWarning: true,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null
     };
 
     component.onSubmit(new Event('submit'));

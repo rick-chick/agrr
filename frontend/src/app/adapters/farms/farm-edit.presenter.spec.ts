@@ -5,27 +5,21 @@ import { FarmEditView, FarmEditViewState } from '../../components/masters/farms/
 import { LoadFarmForEditDataDto } from '../../usecase/farms/load-farm-for-edit.dtos';
 import { UpdateFarmSuccessDto } from '../../usecase/farms/update-farm.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { FlashMessageService } from '../../services/flash-message.service';
 
 describe('FarmEditPresenter', () => {
   let presenter: FarmEditPresenter;
   let view: FarmEditView;
   let lastControl: FarmEditViewState | null;
-  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
     TestBed.configureTestingModule({
-      providers: [
-        FarmEditPresenter,
-        { provide: FlashMessageService, useValue: mockFlashMessageService }
-      ]
+      providers: [FarmEditPresenter]
     });
     presenter = TestBed.inject(FarmEditPresenter);
     lastControl = null;
     view = {
       get control(): FarmEditViewState {
-        return lastControl ?? { loading: true, saving: false, error: null, formData: { name: '', region: '', latitude: 0, longitude: 0 } };
+        return lastControl ?? { loading: true, saving: false, error: null, pendingErrorFlash: null, formData: { name: '', region: '', latitude: 0, longitude: 0 } };
       },
       set control(value: FarmEditViewState) {
         lastControl = value;
@@ -53,6 +47,7 @@ describe('FarmEditPresenter', () => {
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBeNull();
       expect(lastControl!.saving).toBe(false);
+      expect(lastControl!.pendingErrorFlash).toBeNull();
       expect(lastControl!.formData).toEqual({
         name: 'Farm A',
         region: 'Region A',
@@ -61,16 +56,15 @@ describe('FarmEditPresenter', () => {
       });
     });
 
-    it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
-      const initialControl: FarmEditViewState = { loading: true, saving: false, error: null, formData: { name: '', region: '', latitude: 0, longitude: 0 } };
+    it('queues pending error flash and updates view.control on onError(dto)', () => {
+      const initialControl: FarmEditViewState = { loading: true, saving: false, error: null, formData: { name: '', region: '', latitude: 0, longitude: 0 }, pendingErrorFlash: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Not found' };
 
       presenter.onError(dto);
 
-      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Not found' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Not found' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.saving).toBe(false);
@@ -84,6 +78,7 @@ describe('FarmEditPresenter', () => {
         loading: false,
         saving: true,
         error: null,
+        pendingErrorFlash: null,
         formData: { name: 'Updated Farm', region: 'Updated Region', latitude: 36.0, longitude: 136.0 }
       };
       lastControl = initialControl;

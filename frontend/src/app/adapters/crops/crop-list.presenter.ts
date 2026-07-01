@@ -1,17 +1,16 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { CropListView } from '../../components/masters/crops/crop-list.view';
 import { LoadCropListOutputPort } from '../../usecase/crops/load-crop-list.output-port';
 import { CropListDataDto } from '../../usecase/crops/load-crop-list.dtos';
 import { DeleteCropOutputPort } from '../../usecase/crops/delete-crop.output-port';
 import { DeleteCropSuccessDto } from '../../usecase/crops/delete-crop.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class CropListPresenter implements LoadCropListOutputPort, DeleteCropOutputPort {
-  private readonly flashMessage = inject(FlashMessageService);
   private view: CropListView | null = null;
 
   setView(view: CropListView): void {
@@ -24,17 +23,18 @@ export class CropListPresenter implements LoadCropListOutputPort, DeleteCropOutp
       loading: false,
       error: null,
       crops: dto.crops,
-      pendingUndoToast: null
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 

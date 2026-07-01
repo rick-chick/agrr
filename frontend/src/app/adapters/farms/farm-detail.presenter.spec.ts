@@ -6,7 +6,6 @@ import { FarmDetailDataDto } from '../../usecase/farms/load-farm-detail.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
 import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 
@@ -14,11 +13,9 @@ describe('FarmDetailPresenter', () => {
   let presenter: FarmDetailPresenter;
   let view: FarmDetailView;
   let lastControl: FarmDetailViewState | null;
-  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
   let mockListRefreshBus: ListRefreshBus & { refresh: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
     mockListRefreshBus = {
       refresh: vi.fn(),
       onRefresh: vi.fn(() => () => {})
@@ -26,7 +23,6 @@ describe('FarmDetailPresenter', () => {
     TestBed.configureTestingModule({
       providers: [
         FarmDetailPresenter,
-        { provide: FlashMessageService, useValue: mockFlashMessageService },
         { provide: ListRefreshBus, useValue: mockListRefreshBus }
       ]
     });
@@ -34,7 +30,7 @@ describe('FarmDetailPresenter', () => {
     lastControl = null;
     view = {
       get control(): FarmDetailViewState {
-        return lastControl ?? { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null };
+        return lastControl ?? { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
       },
       set control(value: FarmDetailViewState) {
         lastControl = value;
@@ -72,16 +68,15 @@ describe('FarmDetailPresenter', () => {
       expect(lastControl!.pendingUndoToast).toBeNull();
     });
 
-    it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
-      const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null };
+    it('queues pending error flash and updates view.control on onError(dto)', () => {
+      const initialControl: FarmDetailViewState = { loading: true, error: null, farm: null, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
       lastControl = initialControl;
 
       const dto: ErrorDto = { message: 'Not found' };
 
       presenter.onError(dto);
 
-      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Not found' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Not found' });
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBeNull();
@@ -98,7 +93,7 @@ describe('FarmDetailPresenter', () => {
         longitude: 135.0,
         weather_data_status: 'pending' as const
       };
-      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null };
+      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
 
       const dto: FarmWeatherUpdateDto = {
         id: 1,
@@ -126,7 +121,7 @@ describe('FarmDetailPresenter', () => {
         longitude: 135.0,
         weather_data_status: 'pending' as const
       };
-      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null };
+      lastControl = { loading: false, error: null, farm: initialFarm, fields: [], pendingUndoToast: null, pendingErrorFlash: null };
 
       const dto: FarmWeatherUpdateDto = {
         id: 2,
@@ -146,7 +141,8 @@ describe('FarmDetailPresenter', () => {
         error: null,
         farm: { id: 1, name: 'Farm A', region: 'Region A', latitude: 35.0, longitude: 135.0, weather_data_status: 'completed' },
         fields: [],
-        pendingUndoToast: null
+        pendingUndoToast: null,
+        pendingErrorFlash: null
       };
 
       const dto: DeleteFarmSuccessDto = {

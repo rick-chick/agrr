@@ -1,3 +1,4 @@
+import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-error-flash-view.effects';
 export type PesticideEditFormData = {
   name: string;
   active_ingredient: string | null;
@@ -12,6 +13,8 @@ export type PesticideEditViewState = {
   saving: boolean;
   error: string | null;
   formData: PesticideEditFormData;
+
+  pendingErrorFlash: PendingErrorFlashRequest | null;
 };
 
 export interface PesticideEditView {

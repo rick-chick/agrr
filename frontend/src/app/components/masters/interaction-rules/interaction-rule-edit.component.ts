@@ -23,11 +23,16 @@ const initialFormData: InteractionRuleEditFormData = {
   region: null
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: InteractionRuleEditViewState = {
   loading: true,
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -98,6 +103,7 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
   private readonly loadUseCase = inject(LoadInteractionRuleForEditUseCase);
   private readonly updateUseCase = inject(UpdateInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleEditPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: InteractionRuleEditViewState = initialControl;
@@ -105,7 +111,7 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
     return this._control;
   }
   set control(value: InteractionRuleEditViewState) {
-    this._control = value;
+    this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

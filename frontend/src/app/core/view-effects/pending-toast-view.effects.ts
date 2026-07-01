@@ -6,10 +6,6 @@ export interface PendingToastViewEffectDeps {
   translate: Pick<TranslateService, 'instant'>;
 }
 
-export type TaskScheduleSyncViewEffectDeps = PendingToastViewEffectDeps & {
-  onReload: () => void;
-};
-
 export function consumePendingToastKey<T>(
   state: T,
   pendingToastKey: string | null | undefined,

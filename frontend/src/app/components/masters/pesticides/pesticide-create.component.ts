@@ -25,10 +25,15 @@ const initialFormData: PesticideCreateFormData = {
   region: null
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: PesticideCreateViewState = {
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -90,6 +95,7 @@ export class PesticideCreateComponent implements PesticideCreateView, OnInit {
   private readonly router = inject(Router);
   private readonly useCase = inject(CreatePesticideUseCase);
   private readonly presenter = inject(PesticideCreatePresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly cropGateway = inject(CROP_GATEWAY);
   private readonly pestGateway = inject(PEST_GATEWAY);
@@ -102,7 +108,7 @@ export class PesticideCreateComponent implements PesticideCreateView, OnInit {
     return this._control;
   }
   set control(value: PesticideCreateViewState) {
-    this._control = value;
+    this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

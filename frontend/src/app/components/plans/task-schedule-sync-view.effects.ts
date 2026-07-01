@@ -1,4 +1,11 @@
-import { consumePendingToastKey, TaskScheduleSyncViewEffectDeps } from '../../core/view-effects/pending-toast-view.effects';
+import {
+  consumePendingToastKey,
+  PendingToastViewEffectDeps,
+} from '../../core/view-effects/pending-toast-view.effects';
+
+export type TaskScheduleSyncViewEffectDeps = PendingToastViewEffectDeps & {
+  onReload: () => void;
+};
 
 interface TaskScheduleSyncViewEffectState {
   pendingSyncToastKey: string | null;

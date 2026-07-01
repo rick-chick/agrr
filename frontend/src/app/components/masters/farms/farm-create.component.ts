@@ -25,10 +25,15 @@ const initialFormData: FarmCreateFormData = {
   longitude: DEFAULT_LNG
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: FarmCreateViewState = {
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -110,6 +115,7 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateFarmUseCase);
   private readonly presenter = inject(FarmCreatePresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
 
@@ -118,7 +124,7 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
     return this._control;
   }
   set control(value: FarmCreateViewState) {
-    this._control = value;
+    this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

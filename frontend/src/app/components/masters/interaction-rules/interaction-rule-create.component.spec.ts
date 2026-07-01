@@ -81,6 +81,7 @@ describe('InteractionRuleCreateComponent', () => {
     const testState = {
       saving: true,
       error: 'Test error',
+      pendingErrorFlash: null,
       formData: {
         rule_type: 'continuous_cultivation',
         source_group: 'A',
@@ -106,6 +107,7 @@ describe('InteractionRuleCreateComponent', () => {
     component.control = {
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         rule_type: 'continuous_cultivation',
         source_group: 'A',
@@ -114,7 +116,7 @@ describe('InteractionRuleCreateComponent', () => {
         is_directional: false,
         description: null,
         region: 'us'
-      }
+      },
     };
 
     component.createInteractionRule();
@@ -131,6 +133,7 @@ describe('InteractionRuleCreateComponent', () => {
     component.control = {
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         rule_type: 'continuous_cultivation',
         source_group: 'A',
@@ -139,7 +142,7 @@ describe('InteractionRuleCreateComponent', () => {
         is_directional: false,
         description: null,
         region: 'us'
-      }
+      },
     };
 
     component.createInteractionRule();

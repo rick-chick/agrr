@@ -6,13 +6,16 @@ import { WorkHubPresenter } from '../../adapters/work-hub/work-hub.presenter';
 import { EnsurePlanForFarmUseCase } from '../../usecase/work-hub/ensure-plan-for-farm.usecase';
 import { WorkHubInitUseCase } from '../../usecase/work-hub/work-hub-init.usecase';
 import { WORK_HUB_PROVIDERS } from '../../usecase/work-hub/work-hub.providers';
+import { FlashMessageService } from '../../services/flash-message.service';
+import { applyPendingSuccessFlashViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
 import { WorkHubView, WorkHubViewState } from './work-hub.view';
 
 const initialControl: WorkHubViewState = {
   loading: true,
   submitting: false,
   error: null,
-  farms: []
+  farms: [],
+  pendingSuccessFlash: null
 };
 
 @Component({
@@ -108,6 +111,7 @@ export class WorkHubComponent implements WorkHubView, OnInit {
   private readonly initUseCase = inject(WorkHubInitUseCase);
   private readonly ensureUseCase = inject(EnsurePlanForFarmUseCase);
   private readonly presenter = inject(WorkHubPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   selectedFarmName: string | null = null;
@@ -127,7 +131,7 @@ export class WorkHubComponent implements WorkHubView, OnInit {
     return this._control;
   }
   set control(value: WorkHubViewState) {
-    this._control = value;
+    this._control = applyPendingSuccessFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

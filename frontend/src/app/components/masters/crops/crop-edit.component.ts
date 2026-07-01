@@ -39,11 +39,16 @@ function parseGroups(s: string): string[] {
     .filter(Boolean);
 }
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
+
 const initialControl: CropEditViewState = {
   loading: true,
   saving: false,
   error: null,
-  formData: initialFormData
+  formData: initialFormData,
+  pendingErrorFlash: null,
+  pendingSuccessFlash: null
 };
 
 @Component({
@@ -263,6 +268,7 @@ export class CropEditComponent implements CropEditView, OnInit {
   private readonly updateSunshineRequirementUseCase = inject(UpdateSunshineRequirementUseCase);
   private readonly updateNutrientRequirementUseCase = inject(UpdateNutrientRequirementUseCase);
   private readonly presenter = inject(CropEditPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
 
@@ -271,7 +277,7 @@ export class CropEditComponent implements CropEditView, OnInit {
     return this._control;
   }
   set control(value: CropEditViewState) {
-    this._control = value;
+    this._control = applyPendingFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

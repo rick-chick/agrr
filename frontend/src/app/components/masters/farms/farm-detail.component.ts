@@ -26,13 +26,16 @@ import {
 } from '../../../usecase/farms/farm-detail.providers';
 import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
   error: null,
   farm: null,
   fields: [],
-  pendingUndoToast: null
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -165,6 +168,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly updateFieldPresenter = inject(UpdateFieldPresenter);
   private readonly deleteFieldPresenter = inject(DeleteFieldPresenter);
   private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private channel: Channel | null = null;
@@ -188,7 +192,11 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     return this._control;
   }
   set control(value: FarmDetailViewState) {
-    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 

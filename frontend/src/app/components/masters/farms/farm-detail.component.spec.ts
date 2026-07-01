@@ -117,7 +117,8 @@ describe('FarmDetailComponent', () => {
       error: null,
       farm: null,
       fields: [],
-      pendingUndoToast: null
+      pendingUndoToast: null,
+        pendingErrorFlash: null
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -129,7 +130,8 @@ describe('FarmDetailComponent', () => {
       error: null,
       farm: null,
       fields: [],
-      pendingUndoToast: null
+      pendingUndoToast: null,
+        pendingErrorFlash: null
     };
     component.control = state;
     expect(cdr.markForCheck).toHaveBeenCalled();
@@ -248,7 +250,8 @@ describe('FarmDetailComponent', () => {
       error: null,
       farm: { id: 123, name: 'テスト', region: null, latitude: 35.0, longitude: 139.0 },
       fields: [],
-      pendingUndoToast: null
+      pendingUndoToast: null,
+        pendingErrorFlash: null
     };
     fixture.detectChanges();
 
@@ -263,7 +266,8 @@ describe('FarmDetailComponent', () => {
       error: null,
       farm: { id: 123, name: 'テスト', region: 'jp', latitude: 35.0, longitude: 139.0 },
       fields: [],
-      pendingUndoToast: null
+      pendingUndoToast: null,
+        pendingErrorFlash: null
     };
     fixture.detectChanges();
 

@@ -9,10 +9,14 @@ import {
   FERTILIZE_DETAIL_PROVIDERS
 } from '../../../usecase/fertilizes/fertilize-detail.providers';
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: FertilizeDetailViewState = {
   loading: true,
   error: null,
-  fertilize: null
+  fertilize: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -82,6 +86,7 @@ export class FertilizeDetailComponent implements FertilizeDetailView, OnInit {
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadFertilizeDetailUseCase);
   private readonly presenter = inject(FertilizeDetailPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: FertilizeDetailViewState = initialControl;
@@ -89,7 +94,7 @@ export class FertilizeDetailComponent implements FertilizeDetailView, OnInit {
     return this._control;
   }
   set control(value: FertilizeDetailViewState) {
-    this._control = value;
+    this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

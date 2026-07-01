@@ -221,11 +221,13 @@ describe('CropEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
       formData: {
         ...initialFormData,
         name: 'Crop',
         region: 'us'
-      }
+      },
     };
 
     component.updateCrop();
@@ -241,11 +243,13 @@ describe('CropEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
       formData: {
         ...initialFormData,
         name: 'Crop',
         region: 'us'
-      }
+      },
     };
 
     component.updateCrop();
@@ -261,6 +265,8 @@ describe('CropEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
       formData: {
         ...initialFormData,
         crop_stages: [
@@ -274,7 +280,7 @@ describe('CropEditComponent', () => {
             nutrient_requirement: null
           } as CropStage
         ]
-      }
+      },
     };
 
     // This should not throw NG01352 error after adding name attributes
@@ -289,6 +295,8 @@ describe('CropEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
       formData: {
         ...initialFormData,
         crop_stages: [
@@ -302,7 +310,7 @@ describe('CropEditComponent', () => {
             nutrient_requirement: null
           } as CropStage
         ]
-      }
+      },
     };
 
     fixture.detectChanges();

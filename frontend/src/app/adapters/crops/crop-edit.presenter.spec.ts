@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
 import { CropEditPresenter } from './crop-edit.presenter';
 import { CropEditView, CropEditViewState } from '../../components/masters/crops/crop-edit.view';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
@@ -12,22 +11,28 @@ import { UpdateThermalRequirementOutputDto } from '../../usecase/crops/update-th
 import { UpdateSunshineRequirementOutputDto } from '../../usecase/crops/update-sunshine-requirement.dtos';
 import { UpdateNutrientRequirementOutputDto } from '../../usecase/crops/update-nutrient-requirement.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { CropStage } from '../../domain/crops/crop';
 
 describe('CropEditPresenter', () => {
   let presenter: CropEditPresenter;
   let view: CropEditView;
   let lastControl: CropEditViewState | null;
-  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
+
+  const emptyFormData: CropEditViewState['formData'] = {
+    name: '',
+    variety: null,
+    area_per_unit: null,
+    revenue_per_area: null,
+    region: null,
+    groups: [],
+    groupsDisplay: '',
+    is_reference: false,
+    crop_stages: []
+  };
 
   beforeEach(() => {
-    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
     TestBed.configureTestingModule({
-      providers: [
-        CropEditPresenter,
-        { provide: FlashMessageService, useValue: mockFlashMessageService }
-      ]
+      providers: [CropEditPresenter]
     });
     presenter = TestBed.inject(CropEditPresenter);
     lastControl = null;
@@ -37,17 +42,9 @@ describe('CropEditPresenter', () => {
           loading: true,
           saving: false,
           error: null,
-          formData: {
-            name: '',
-            variety: null,
-            area_per_unit: null,
-            revenue_per_area: null,
-            region: null,
-            groups: [],
-            groupsDisplay: '',
-            is_reference: false,
-            crop_stages: []
-          }
+          pendingErrorFlash: null,
+          pendingSuccessFlash: null,
+          formData: emptyFormData
         };
       },
       set control(value: CropEditViewState) {
@@ -90,6 +87,7 @@ describe('CropEditPresenter', () => {
       expect(lastControl).not.toBeNull();
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.error).toBeNull();
+      expect(lastControl!.pendingSuccessFlash).toBeNull();
       expect(lastControl!.formData.name).toBe('Test Crop');
       expect(lastControl!.formData.variety).toBe('Test Variety');
       expect(lastControl!.formData.area_per_unit).toBe(100.0);
@@ -103,11 +101,13 @@ describe('CropEditPresenter', () => {
   });
 
   describe('UpdateCropOutputPort', () => {
-    it('does not update view.control on onSuccess(dto)', () => {
+    it('queues pending success flash and sets saving false on onSuccess(dto)', () => {
       const initialControl: CropEditViewState = {
         loading: false,
         saving: true,
         error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
         formData: {
           name: 'Test Crop',
           variety: 'Test Variety',
@@ -120,7 +120,7 @@ describe('CropEditPresenter', () => {
           crop_stages: []
         }
       };
-      lastControl = { ...initialControl, saving: true };
+      lastControl = { ...initialControl, saving: true, pendingErrorFlash: null };
 
       const dto: UpdateCropSuccessDto = {
         crop: {
@@ -138,15 +138,17 @@ describe('CropEditPresenter', () => {
 
       presenter.onSuccess(dto);
 
-      // onSuccess sets saving to false
       expect(lastControl!.saving).toBe(false);
+      expect(lastControl!.pendingSuccessFlash).toEqual({ type: 'success', text: 'crops.flash.updated' });
     });
 
-    it('shows error via FlashMessageService and updates view.control on onError(dto)', () => {
+    it('queues pending error flash and updates view.control on onError(dto)', () => {
       const initialControl: CropEditViewState = {
         loading: false,
         saving: true,
         error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
         formData: {
           name: 'Test Crop',
           variety: 'Test Variety',
@@ -165,8 +167,8 @@ describe('CropEditPresenter', () => {
 
       presenter.onError(dto);
 
-      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Validation error' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Validation error' });
+      expect(lastControl!.pendingSuccessFlash).toBeNull();
       expect(lastControl!.saving).toBe(false);
       expect(lastControl!.error).toBeNull();
     });
@@ -178,6 +180,8 @@ describe('CropEditPresenter', () => {
         loading: false,
         saving: false,
         error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
         formData: {
           name: 'Test Crop',
           variety: null,
@@ -211,6 +215,7 @@ describe('CropEditPresenter', () => {
 
       expect(lastControl!.formData.crop_stages).toHaveLength(2);
       expect(lastControl!.formData.crop_stages[1]).toEqual(newStage);
+      expect(lastControl!.pendingSuccessFlash).toEqual({ type: 'success', text: 'crops.flash.stage_created' });
     });
   });
 
@@ -220,6 +225,8 @@ describe('CropEditPresenter', () => {
         loading: false,
         saving: false,
         error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
         formData: {
           name: 'Test Crop',
           variety: null,
@@ -253,17 +260,29 @@ describe('CropEditPresenter', () => {
 
       expect(lastControl!.formData.crop_stages).toHaveLength(1);
       expect(lastControl!.formData.crop_stages[0]).toEqual(updatedStage);
+      expect(lastControl!.pendingSuccessFlash).toEqual({ type: 'success', text: 'crops.flash.stage_updated' });
     });
   });
 
   describe('DeleteCropStageOutputPort', () => {
-    it('shows success message on present(dto)', () => {
+    it('queues pending success flash on present(dto)', () => {
+      lastControl = {
+        loading: false,
+        saving: false,
+        error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
+        formData: {
+          ...emptyFormData,
+          crop_stages: [{ id: 1, crop_id: 1, name: 'Stage 1', order: 1 }]
+        }
+      };
+
       const dto: DeleteCropStageOutputDto = { success: true, stageId: 1 };
 
       presenter.present(dto);
 
-      expect(mockFlashMessageService.show).toHaveBeenCalledTimes(1);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'success', text: 'crops.flash.stage_deleted' });
+      expect(lastControl!.pendingSuccessFlash).toEqual({ type: 'success', text: 'crops.flash.stage_deleted' });
     });
   });
 
@@ -273,6 +292,8 @@ describe('CropEditPresenter', () => {
         loading: false,
         saving: false,
         error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
         formData: {
           name: 'Test Crop',
           variety: null,
@@ -311,6 +332,10 @@ describe('CropEditPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.formData.crop_stages[0].temperature_requirement).toEqual(dto.requirement);
+      expect(lastControl!.pendingSuccessFlash).toEqual({
+        type: 'success',
+        text: 'crops.flash.temperature_requirement_updated'
+      });
     });
   });
 
@@ -320,6 +345,8 @@ describe('CropEditPresenter', () => {
         loading: false,
         saving: false,
         error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
         formData: {
           name: 'Test Crop',
           variety: null,
@@ -357,6 +384,10 @@ describe('CropEditPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.formData.crop_stages[0].thermal_requirement).toEqual(dto.requirement);
+      expect(lastControl!.pendingSuccessFlash).toEqual({
+        type: 'success',
+        text: 'crops.flash.thermal_requirement_updated'
+      });
     });
   });
 
@@ -366,6 +397,8 @@ describe('CropEditPresenter', () => {
         loading: false,
         saving: false,
         error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
         formData: {
           name: 'Test Crop',
           variety: null,
@@ -404,6 +437,10 @@ describe('CropEditPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.formData.crop_stages[0].sunshine_requirement).toEqual(dto.requirement);
+      expect(lastControl!.pendingSuccessFlash).toEqual({
+        type: 'success',
+        text: 'crops.flash.sunshine_requirement_updated'
+      });
     });
   });
 
@@ -413,6 +450,8 @@ describe('CropEditPresenter', () => {
         loading: false,
         saving: false,
         error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
         formData: {
           name: 'Test Crop',
           variety: null,
@@ -453,6 +492,10 @@ describe('CropEditPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.formData.crop_stages[0].nutrient_requirement).toEqual(dto.requirement);
+      expect(lastControl!.pendingSuccessFlash).toEqual({
+        type: 'success',
+        text: 'crops.flash.nutrient_requirement_updated'
+      });
     });
   });
 });

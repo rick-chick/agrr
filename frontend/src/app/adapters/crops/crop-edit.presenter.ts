@@ -1,11 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { CropEditView } from '../../components/masters/crops/crop-edit.view';
 import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edit.output-port';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
 import { UpdateCropOutputPort } from '../../usecase/crops/update-crop.output-port';
 import { UpdateCropSuccessDto } from '../../usecase/crops/update-crop.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { CreateCropStageOutputPort } from '../../usecase/crops/create-crop-stage.output-port';
 import { CreateCropStageOutputDto } from '../../usecase/crops/create-crop-stage.dtos';
 import { UpdateCropStageOutputPort } from '../../usecase/crops/update-crop-stage.output-port';
@@ -20,6 +19,8 @@ import { UpdateSunshineRequirementOutputPort } from '../../usecase/crops/update-
 import { UpdateSunshineRequirementOutputDto } from '../../usecase/crops/update-sunshine-requirement.dtos';
 import { UpdateNutrientRequirementOutputPort } from '../../usecase/crops/update-nutrient-requirement.output-port';
 import { UpdateNutrientRequirementOutputDto } from '../../usecase/crops/update-nutrient-requirement.dtos';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 
 @Injectable()
 export class CropEditPresenter implements
@@ -32,7 +33,6 @@ export class CropEditPresenter implements
   UpdateThermalRequirementOutputPort,
   UpdateSunshineRequirementOutputPort,
   UpdateNutrientRequirementOutputPort {
-  private readonly flashMessage = inject(FlashMessageService);
   private view: CropEditView | null = null;
 
   setView(view: CropEditView): void {
@@ -52,6 +52,8 @@ export class CropEditPresenter implements
         ...this.view.control,
         loading: false,
         error: null,
+        pendingSuccessFlash: null,
+        pendingErrorFlash: null,
         formData: {
           name: crop.name,
           variety: crop.variety ?? null,
@@ -96,21 +98,23 @@ export class CropEditPresenter implements
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null
+      error: null,
+      pendingSuccessFlash: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 
   onSuccess(_dto: UpdateCropSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'success', text: 'crops.flash.updated' });
     this.view.control = {
       ...this.view.control,
-      saving: false
+      saving: false,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.updated')
     };
   }
 
@@ -122,9 +126,10 @@ export class CropEditPresenter implements
       formData: {
         ...this.view.control.formData,
         crop_stages: [...currentStages, dto.stage]
-      }
+      },
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_created')
     };
-    this.flashMessage.show({ type: 'success', text: 'crops.flash.stage_created' });
   }
 
   presentUpdateCropStage(dto: UpdateCropStageOutputDto): void {
@@ -138,9 +143,10 @@ export class CropEditPresenter implements
       formData: {
         ...this.view.control.formData,
         crop_stages: updatedStages
-      }
+      },
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_updated')
     };
-    this.flashMessage.show({ type: 'success', text: 'crops.flash.stage_updated' });
   }
 
   presentDeleteCropStage(dto: DeleteCropStageOutputDto): void {
@@ -152,9 +158,10 @@ export class CropEditPresenter implements
       formData: {
         ...this.view.control.formData,
         crop_stages: filteredStages
-      }
+      },
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_deleted')
     };
-    this.flashMessage.show({ type: 'success', text: 'crops.flash.stage_deleted' });
   }
 
   presentUpdateTemperatureRequirement(dto: UpdateTemperatureRequirementOutputDto): void {
@@ -174,9 +181,10 @@ export class CropEditPresenter implements
       formData: {
         ...this.view.control.formData,
         crop_stages: updatedStages
-      }
+      },
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.temperature_requirement_updated')
     };
-    this.flashMessage.show({ type: 'success', text: 'crops.flash.temperature_requirement_updated' });
   }
 
   presentUpdateThermalRequirement(dto: UpdateThermalRequirementOutputDto): void {
@@ -196,9 +204,10 @@ export class CropEditPresenter implements
       formData: {
         ...this.view.control.formData,
         crop_stages: updatedStages
-      }
+      },
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.thermal_requirement_updated')
     };
-    this.flashMessage.show({ type: 'success', text: 'crops.flash.thermal_requirement_updated' });
   }
 
   presentUpdateSunshineRequirement(dto: UpdateSunshineRequirementOutputDto): void {
@@ -218,9 +227,10 @@ export class CropEditPresenter implements
       formData: {
         ...this.view.control.formData,
         crop_stages: updatedStages
-      }
+      },
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.sunshine_requirement_updated')
     };
-    this.flashMessage.show({ type: 'success', text: 'crops.flash.sunshine_requirement_updated' });
   }
 
   presentUpdateNutrientRequirement(dto: UpdateNutrientRequirementOutputDto): void {
@@ -240,8 +250,9 @@ export class CropEditPresenter implements
       formData: {
         ...this.view.control.formData,
         crop_stages: updatedStages
-      }
+      },
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.nutrient_requirement_updated')
     };
-    this.flashMessage.show({ type: 'success', text: 'crops.flash.nutrient_requirement_updated' });
   }
 }

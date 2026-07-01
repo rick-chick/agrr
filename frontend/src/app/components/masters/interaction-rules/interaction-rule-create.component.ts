@@ -22,10 +22,15 @@ const initialFormData: InteractionRuleCreateFormData = {
   region: null
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: InteractionRuleCreateViewState = {
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -90,6 +95,7 @@ export class InteractionRuleCreateComponent implements InteractionRuleCreateView
   private readonly translate = inject(TranslateService);
   private readonly useCase = inject(CreateInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleCreatePresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: InteractionRuleCreateViewState = initialControl;
@@ -97,7 +103,7 @@ export class InteractionRuleCreateComponent implements InteractionRuleCreateView
     return this._control;
   }
   set control(value: InteractionRuleCreateViewState) {
-    this._control = value;
+    this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

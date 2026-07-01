@@ -11,12 +11,15 @@ import {
 } from '../../../usecase/crops/crop-detail.providers';
 import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: CropDetailViewState = {
   loading: true,
   error: null,
   crop: null,
-  pendingUndoToast: null
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -121,6 +124,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   private readonly deleteUseCase = inject(DeleteCropUseCase);
   private readonly presenter = inject(CropDetailPresenter);
   private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
 
@@ -129,7 +133,11 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     return this._control;
   }
   set control(value: CropDetailViewState) {
-    this._control = applyPendingUndoToastViewEffects(value, { toast: this.undoToast });
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 
