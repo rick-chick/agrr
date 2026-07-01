@@ -9,7 +9,8 @@ import { PlanOptimizingPresenter, PLAN_OPTIMIZING_PROVIDERS } from '../../usecas
 
 const initialControl: PlanOptimizingViewState = {
   status: 'pending',
-  progress: 0
+  progress: 0,
+  phaseMessage: ''
 };
 
 @Component({
@@ -36,6 +37,9 @@ const initialControl: PlanOptimizingViewState = {
           }}</span>
         </h2>
         <p>{{ 'plans.optimizing_live.progress_label' | translate: { progress: control.progress } }}</p>
+        @if (control.phaseMessage) {
+          <p class="plan-optimizing__phase-message">{{ control.phaseMessage }}</p>
+        }
       </section>
     </main>
   `,
@@ -71,7 +75,7 @@ export class PlanOptimizingComponent implements PlanOptimizingView, OnDestroy, O
     this.presenter.setView(this);
     const planId = this.planId;
     if (!planId) {
-      this.control = { status: 'invalid_plan_id', progress: 0 };
+      this.control = { status: 'invalid_plan_id', progress: 0, phaseMessage: '' };
       return;
     }
     this.useCase.execute({

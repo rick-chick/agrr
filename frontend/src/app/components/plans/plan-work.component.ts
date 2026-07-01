@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, DestroyRef, HostListener, OnInit, ViewChi
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Channel } from 'actioncable';
 import { formatIsoDateForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
@@ -15,6 +16,11 @@ import { PlanWorkNavComponent } from './plan-work-nav.component';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { PlanWorkView, PlanWorkViewState } from './plan-work.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
+import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
+import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
+import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
+import { UndoToastService } from '../../services/undo-toast.service';
+import { applyPlanWorkViewEffects } from './plan-work-view.effects';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -27,7 +33,12 @@ const initialControl: PlanWorkViewState = {
   includeSkipped: false,
   recentAdHocRecord: null,
   highlightedItemId: null,
-  completingItemId: null
+  completingItemId: null,
+  regenerating: false,
+  regenerateError: null,
+  pendingSyncToastKey: null,
+  pendingRecordSavedToastKey: null,
+  syncReloadNonce: 0
 };
 
 @Component({
@@ -39,7 +50,8 @@ const initialControl: PlanWorkViewState = {
     TranslateModule,
     PlanDisplayNamePipe,
     PlanWorkNavComponent,
-    WorkRecordSheetComponent
+    WorkRecordSheetComponent,
+    TaskScheduleSyncBannerComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
@@ -72,6 +84,14 @@ const initialControl: PlanWorkViewState = {
           </div>
         } @else if (control.plan) {
           <app-plan-work-nav [planId]="planId" />
+
+          <app-task-schedule-sync-banner
+            [syncState]="control.plan.task_schedule_sync_state"
+            [syncError]="control.plan.task_schedule_sync_error"
+            [regenerating]="control.regenerating"
+            [regenerateError]="control.regenerateError"
+            (retry)="regenerateTaskSchedule()"
+          />
 
           @if (control.overdue.length) {
             <section class="plan-work__section">
@@ -247,12 +267,16 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   private readonly loadUseCase = inject(LoadWorkDayListUseCase);
   private readonly skipUseCase = inject(SkipTaskScheduleItemUseCase);
   private readonly createUseCase = inject(CreateWorkRecordUseCase);
+  private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
+  private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
   private readonly presenter = inject(PlanWorkPresenter);
   private readonly translate = inject(TranslateService);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
   openMenuItemId: number | null = null;
+  private syncChannel: Channel | null = null;
   private highlightClearTimer: ReturnType<typeof setTimeout> | null = null;
 
   get planId(): number {
@@ -272,7 +296,11 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     return this._control;
   }
   set control(value: PlanWorkViewState) {
-    this._control = value;
+    this._control = applyPlanWorkViewEffects(this._control, value, {
+      toast: this.undoToast,
+      translate: this.translate,
+      onReload: () => this.reload({ silent: true })
+    });
     this.cdr.markForCheck();
   }
 
@@ -287,6 +315,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       }
     };
     this.destroyRef.onDestroy(() => {
+      this.syncChannel?.unsubscribe();
       if (this.highlightClearTimer !== null) {
         clearTimeout(this.highlightClearTimer);
       }
@@ -295,19 +324,34 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
+    this.subscribeSyncUseCase.execute({
+      planId: this.planId,
+      onSubscribed: (channel) => {
+        this.syncChannel = channel;
+      }
+    });
     this.reload();
   }
 
   reload(options?: { silent?: boolean }): void {
     this.openMenuItemId = null;
     if (!options?.silent) {
-      this.control = { ...this.control, loading: true, error: null };
+      this.control = {
+        ...this.control,
+        loading: true,
+        error: null,
+        regenerateError: null
+      };
     }
     this.loadUseCase.execute({
       planId: this.planId,
       today: localTodayIso(),
       includeSkipped: this.control.includeSkipped
     });
+  }
+
+  regenerateTaskSchedule(): void {
+    this.regenerateUseCase.execute({ planId: this.planId });
   }
 
   onRecordSaved(event: WorkRecordSheetSavedEvent): void {

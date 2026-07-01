@@ -18,6 +18,10 @@ mod crop_rows_available_private_gateway;
 mod rest_plan_read;
 mod rest_plan_read_domain_gateway;
 mod task_schedule_item_mutation_gateway;
+mod task_schedule_gateway;
+mod task_schedule_generation_read_gateway;
+mod task_schedule_generation_transaction_gateway;
+mod task_schedule_sync_state_gateway;
 mod task_schedule_timeline_read;
 mod public_plan_save_read_gateway;
 mod public_plan_save_read_sql;
@@ -28,6 +32,8 @@ mod plan_save_plan_copy;
 mod plan_save_session;
 mod plan_save_support;
 
+#[cfg(test)]
+mod task_schedule_generation_integration_test;
 #[cfg(test)]
 mod plan_save_integration_fixture;
 #[cfg(test)]
@@ -52,3 +58,7 @@ pub use crop_rows_available_private_gateway::CropRowsAvailablePrivateSqliteGatew
 pub use rest_plan_read::CultivationPlanRestPlanReadSqliteGateway;
 pub use rest_plan_read_domain_gateway::CultivationPlanRestPlanReadDomainSqliteGateway;
 pub use task_schedule_item_mutation_gateway::TaskScheduleItemMutationSqliteGateway;
+pub use task_schedule_gateway::TaskScheduleSqliteGateway;
+pub use task_schedule_generation_read_gateway::TaskScheduleGenerationReadSqliteGateway;
+pub use task_schedule_sync_state_gateway::TaskScheduleSyncStateSqliteGateway;
+pub use task_schedule_generation_transaction_gateway::TaskScheduleGenerationTransactionSqliteGateway;

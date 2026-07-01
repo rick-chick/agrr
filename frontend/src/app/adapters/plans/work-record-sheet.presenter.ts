@@ -1,8 +1,6 @@
-import { Injectable, inject } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { Injectable } from '@angular/core';
 import { WorkRecordSheetSavedEvent, WorkRecordSheetView } from '../../components/plans/work-record-sheet.view';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { AgriculturalTaskListDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-list.dtos';
 import { LoadAgriculturalTaskListOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
 import { CreateWorkRecordOutputPort } from '../../usecase/plans/create-work-record.output-port';
@@ -25,9 +23,6 @@ export class WorkRecordSheetPresenter
     DeleteWorkRecordOutputPort,
     LoadAgriculturalTaskListOutputPort
 {
-  private readonly toast = inject(UndoToastService);
-  private readonly translate = inject(TranslateService);
-
   private view: WorkRecordSheetView | null = null;
   onSavedCallback: ((event: WorkRecordSheetSavedEvent) => void) | null = null;
   onDeletedCallback: (() => void) | null = null;
@@ -56,10 +51,10 @@ export class WorkRecordSheetPresenter
       ...this.view.control,
       submitting: false,
       fieldErrors: {},
-      error: null
+      error: null,
+      pendingToastKey: savedToastKey(mode)
     };
     this.view.close();
-    this.showSavedToast(mode);
     this.onSavedCallback?.({ workRecord: dto.workRecord, mode });
   }
 
@@ -96,20 +91,20 @@ export class WorkRecordSheetPresenter
       ...this.view.control,
       submitting: false,
       fieldErrors: {},
-      error: null
+      error: null,
+      pendingToastKey: 'plans.work_records.toast.record_deleted'
     };
     this.view.close();
-    this.toast.show(this.translate.instant('plans.work_records.toast.record_deleted'));
     this.onDeletedCallback?.();
   }
+}
 
-  private showSavedToast(mode: WorkRecordSheetSavedEvent['mode']): void {
-    const key =
-      mode === 'edit'
-        ? 'plans.work_records.toast.record_updated'
-        : mode === 'create-adhoc'
-          ? 'plans.work.toast.record_saved_adhoc'
-          : 'plans.work.toast.record_saved';
-    this.toast.show(this.translate.instant(key));
+function savedToastKey(mode: WorkRecordSheetSavedEvent['mode']): string {
+  if (mode === 'edit') {
+    return 'plans.work_records.toast.record_updated';
   }
+  if (mode === 'create-adhoc') {
+    return 'plans.work.toast.record_saved_adhoc';
+  }
+  return 'plans.work.toast.record_saved';
 }

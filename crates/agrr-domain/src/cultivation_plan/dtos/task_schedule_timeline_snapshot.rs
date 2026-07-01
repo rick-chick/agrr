@@ -20,6 +20,8 @@ pub struct TaskScheduleTimelinePlanRead {
     pub timeline_generated_at: Option<String>,
     pub farm_display_name: String,
     pub total_area: f64,
+    pub task_schedule_sync_state: String,
+    pub task_schedule_sync_error: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

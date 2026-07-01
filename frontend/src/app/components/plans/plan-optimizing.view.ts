@@ -1,6 +1,7 @@
 export type PlanOptimizingViewState = {
   status: string;
   progress: number;
+  phaseMessage: string;
 };
 
 export interface PlanOptimizingView {

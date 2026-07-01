@@ -16,6 +16,8 @@ import { localTodayIso } from '../../core/local-today';
 import { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet.presenter';
+import { UndoToastService } from '../../services/undo-toast.service';
+import { applyWorkRecordSheetViewEffects } from './work-record-sheet-view.effects';
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
@@ -61,7 +63,8 @@ const initialControl: WorkRecordSheetViewState = {
   showDetails: false,
   taskChips: [],
   loadingTaskChips: false,
-  selectedTaskId: null
+  selectedTaskId: null,
+  pendingToastKey: null
 };
 
 @Component({
@@ -279,13 +282,17 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   private readonly presenter = inject(WorkRecordSheetPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
+  private readonly undoToast = inject(UndoToastService);
 
   private _control: WorkRecordSheetViewState = initialControl;
   get control(): WorkRecordSheetViewState {
     return this._control;
   }
   set control(value: WorkRecordSheetViewState) {
-    this._control = value;
+    this._control = applyWorkRecordSheetViewEffects(value, {
+      toast: this.undoToast,
+      translate: this.translate
+    });
     this.cdr.markForCheck();
   }
 

@@ -65,6 +65,8 @@ impl TimelineJsonPresenter {
             "planning_end_date": plan.planning_end_date.map(|d| d.to_string()),
             "timeline_generated_at": plan.timeline_generated_at,
             "timeline_generated_at_display": plan.timeline_generated_at,
+            "task_schedule_sync_state": plan.task_schedule_sync_state,
+            "task_schedule_sync_error": plan.task_schedule_sync_error,
         })
     }
 

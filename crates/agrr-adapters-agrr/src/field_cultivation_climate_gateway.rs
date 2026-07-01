@@ -27,6 +27,10 @@ impl FieldCultivationClimateAgrrGateway {
         }
     }
 
+    pub fn daemon_running(&self) -> bool {
+        self.client.daemon_running()
+    }
+
     fn write_temp_json(data: &Value, prefix: &str) -> Option<NamedTempFile> {
         let file = NamedTempFile::with_prefix(prefix).ok()?;
         std::io::Write::write_all(

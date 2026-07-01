@@ -44,6 +44,8 @@ pub fn test_pool_with_plan(plan_id: i64) -> TestDb {
                session_id TEXT,
                optimization_phase TEXT,
                optimization_phase_message TEXT,
+               task_schedule_sync_state TEXT NOT NULL DEFAULT 'never',
+               task_schedule_sync_error TEXT,
                created_at TEXT DEFAULT (datetime('now')),
                updated_at TEXT DEFAULT (datetime('now'))
              );
@@ -131,6 +133,31 @@ pub fn test_pool_with_optimizing_plan(plan_id: i64) -> TestDb {
     db
 }
 
+/// Minimal plan row for task schedule sync-state tests (no farm / field graph).
+pub fn test_pool_with_sync_plan(plan_id: i64) -> TestDb {
+    let file = NamedTempFile::new().expect("temp db");
+    let path = file.path().to_str().expect("utf8 path");
+    let pool = SqlitePool::new(path);
+    pool.with_write(|conn| {
+        conn.execute_batch(
+            "CREATE TABLE cultivation_plans (
+               id INTEGER PRIMARY KEY,
+               task_schedule_sync_state TEXT NOT NULL DEFAULT 'never',
+               task_schedule_sync_error TEXT,
+               updated_at TEXT DEFAULT (datetime('now'))
+             );",
+        )?;
+        conn.execute(
+            "INSERT INTO cultivation_plans (id, task_schedule_sync_state)
+             VALUES (?1, 'never')",
+            rusqlite::params![plan_id],
+        )?;
+        Ok(())
+    })
+    .expect("seed");
+    TestDb { pool, _file: file }
+}
+
 pub fn test_app_state(pool: SqlitePool) -> AppState {
     struct NoopWeather;
     impl WeatherDataGateway for NoopWeather {
@@ -213,6 +240,8 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
         optimization_chain_dispatcher: Arc::new(JobChainDispatcher::with_max_concurrent_chains(
             Some(DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS),
         )),
+        task_schedule_regen_dispatcher: Arc::new(JobChainDispatcher::new()),
+        task_schedule_regen_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
         farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
         cable_hub: Arc::new(CableHub::default()),
         locale_catalog: Arc::new(LocaleCatalog::from_pairs(

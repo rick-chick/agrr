@@ -4,8 +4,8 @@ mod support;
 
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    developer_session_id, empty_headers, seed_work_record_plan, status_and_body,
-    user_id_for_session,
+    developer_session_id, empty_headers, seed_work_record_plan,
+    set_plan_task_schedule_sync_failed_raw_error, status_and_body, user_id_for_session,
 };
 
 #[test]
@@ -175,4 +175,78 @@ fn patch_task_schedule_item_skip_and_unskip_returns_item_payload() {
         serde_json::from_str(&unskip_body).expect("unskip task schedule item JSON");
     assert_eq!("planned", unskip_json["item"]["status"].as_str().unwrap());
     assert!(unskip_json["item"]["cancelled_at"].is_null());
+}
+
+#[test]
+fn get_task_schedule_includes_sync_state_and_items() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let plan = &json["plan"];
+    assert!(
+        plan.get("task_schedule_sync_state").is_some(),
+        "plan must include task_schedule_sync_state: {body}"
+    );
+    assert!(plan.get("task_schedule_sync_error").is_some());
+
+    let fields = json["fields"].as_array().expect("fields array");
+    assert!(!fields.is_empty(), "{body}");
+    let general = fields[0]["schedules"]["general"]
+        .as_array()
+        .expect("general schedule bucket");
+    assert!(
+        !general.is_empty(),
+        "completed plan seed must expose task schedule items: {body}"
+    );
+}
+
+#[test]
+fn get_task_schedule_normalizes_legacy_raw_sync_error_to_generic_i18n_key() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    set_plan_task_schedule_sync_failed_raw_error(seed.plan_id, "worker timeout");
+
+    let (status, body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let plan = &json["plan"];
+    assert_eq!("failed", plan["task_schedule_sync_state"].as_str().unwrap());
+    assert_eq!(
+        "plans.task_schedules.sync_errors.generic",
+        plan["task_schedule_sync_error"].as_str().unwrap()
+    );
+}
+
+#[test]
+fn post_task_schedule_regenerate_returns_generating() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.post(
+        &format!("/api/v1/plans/{}/task_schedule/regenerate", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("regenerate JSON");
+    assert_eq!(true, json["success"].as_bool().unwrap());
+    assert_eq!("generating", json["task_schedule_sync_state"].as_str().unwrap());
 }

@@ -4,6 +4,7 @@
     use crate::shared::ports::ClockPort;
     use time::{Date, OffsetDateTime};
 
+    use crate::agricultural_task::dtos::TaskScheduleGenerateInput;
     use crate::agricultural_task::gateways::TaskSchedulePlanContext;
     use rust_decimal::Decimal;
     use std::str::FromStr;
@@ -405,7 +406,7 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        interactor.generate(99).expect("generate");
+        interactor.call(TaskScheduleGenerateInput::new(99)).expect("call");
 
         let replaced = task_schedule_gateway.replaced.lock().unwrap();
         assert_eq!(replaced.len(), 2);
@@ -441,8 +442,11 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        let err = interactor.generate(99).unwrap_err();
-        assert!(err.to_string().contains("作業テンプレートが登録されていません"));
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_CROP_TEMPLATES.to_string()
+        );
     }
 
     // Ruby: test "generate! raises ProgressDataMissingError when progress has no records"
@@ -462,8 +466,11 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        let err = interactor.generate(99).unwrap_err();
-        assert!(err.to_string().contains("GDD進捗データが空です"));
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::EMPTY_GDD_PROGRESS.to_string()
+        );
     }
 
     // Ruby: test "progress gateway receives weather data filtered from the start date"
@@ -483,7 +490,7 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        interactor.generate(99).expect("generate");
+        interactor.call(TaskScheduleGenerateInput::new(99)).expect("call");
         let payload = progress_gateway.received.lock().unwrap().last().unwrap().clone();
         let times: Vec<_> = payload
             .weather_data
@@ -520,6 +527,9 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        let err = interactor.generate(99).unwrap_err();
-        assert!(err.to_string().contains("GDDトリガーが設定されていません"));
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_GDD_TRIGGER.to_string()
+        );
     }

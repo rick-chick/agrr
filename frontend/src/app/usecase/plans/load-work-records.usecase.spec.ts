@@ -59,6 +59,7 @@ describe('LoadWorkRecordsUseCase', () => {
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({} as never),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     };
     let result: Parameters<LoadWorkRecordsOutputPort['present']>[0] | null = null;
@@ -92,6 +93,7 @@ describe('LoadWorkRecordsUseCase', () => {
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({} as never),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     };
     const onError = vi.fn();

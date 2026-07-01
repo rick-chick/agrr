@@ -62,6 +62,7 @@ pub mod scheduler_weather_update;
 pub mod runtime_env;
 pub mod session_auth;
 pub mod state;
+pub mod task_schedule_generation;
 pub mod task_schedule_timeline_json;
 pub mod task_schedules;
 pub mod work_records;

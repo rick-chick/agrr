@@ -11,8 +11,11 @@ import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.u
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
+import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
+import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
+import { UndoToastService } from '../../services/undo-toast.service';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
 
 const initialControl: PlanWorkViewState = {
@@ -26,7 +29,12 @@ const initialControl: PlanWorkViewState = {
   includeSkipped: false,
   recentAdHocRecord: null,
   highlightedItemId: null,
-  completingItemId: null
+  completingItemId: null,
+  regenerating: false,
+  regenerateError: null,
+  pendingSyncToastKey: null,
+  pendingRecordSavedToastKey: null,
+  syncReloadNonce: 0
 };
 
 function mockRow(overrides: Partial<TaskScheduleItem> = {}): WorkDayListRowDto {
@@ -72,7 +80,9 @@ const loadedState: PlanWorkViewState = {
     planning_start_date: '2026-01-01',
     planning_end_date: '2026-12-31',
     timeline_generated_at: '2026-06-01T00:00:00Z',
-    timeline_generated_at_display: '2026-06-01'
+    timeline_generated_at_display: '2026-06-01',
+    task_schedule_sync_state: 'ready',
+    task_schedule_sync_error: null
   },
   fields: [],
   overdue: [mockRow({ item_id: 10, name: '遅延作業' })],
@@ -81,7 +91,12 @@ const loadedState: PlanWorkViewState = {
   includeSkipped: false,
   recentAdHocRecord: null,
   highlightedItemId: null,
-  completingItemId: null
+  completingItemId: null,
+  regenerating: false,
+  regenerateError: null,
+  pendingSyncToastKey: null,
+  pendingRecordSavedToastKey: null,
+  syncReloadNonce: 0
 };
 
 describe('PlanWorkComponent mobile UX', () => {
@@ -91,6 +106,8 @@ describe('PlanWorkComponent mobile UX', () => {
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let skipUseCase: { execute: ReturnType<typeof vi.fn> };
   let createUseCase: { execute: ReturnType<typeof vi.fn> };
+  let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
+  let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
     onSkipSuccessCallback: (() => void) | null;
@@ -102,7 +119,13 @@ describe('PlanWorkComponent mobile UX', () => {
     loadUseCase = { execute: vi.fn() };
     skipUseCase = { execute: vi.fn() };
     createUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn(), onSkipSuccessCallback: null, onRecordSavedCallback: null };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
+    mockPresenter = {
+      setView: vi.fn(),
+      onSkipSuccessCallback: null,
+      onRecordSavedCallback: null
+    };
     cdr = { markForCheck: vi.fn() };
 
     TestBed.overrideComponent(PlanWorkComponent, {
@@ -112,6 +135,8 @@ describe('PlanWorkComponent mobile UX', () => {
           { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
           { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
         ]
@@ -122,6 +147,7 @@ describe('PlanWorkComponent mobile UX', () => {
       imports: [PlanWorkComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
+        { provide: UndoToastService, useValue: { show: vi.fn() } },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -449,6 +475,35 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(text).not.toContain('2026-06-25');
     expect(text).not.toContain('2026-06-17');
   });
+
+  it('shows sync banner and calls regenerate use case on retry', () => {
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      plan: {
+        ...loadedState.plan!,
+        task_schedule_sync_state: 'failed',
+        task_schedule_sync_error: 'plans.task_schedules.sync_errors.agrr_unavailable'
+      }
+    };
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('app-task-schedule-sync-banner');
+    expect(banner).toBeTruthy();
+    component.regenerateTaskSchedule();
+    expect(regenerateUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
+  });
+
+  it('subscribes to task schedule sync cable on init', () => {
+    component.ngOnInit();
+
+    expect(mockPresenter.setView).toHaveBeenCalledWith(component);
+    expect(subscribeSyncUseCase.execute).toHaveBeenCalledWith({
+      planId: 7,
+      onSubscribed: expect.any(Function)
+    });
+    expect(loadUseCase.execute).toHaveBeenCalled();
+  });
 });
 
 describe('PlanWorkComponent in locale labels', () => {
@@ -460,7 +515,13 @@ describe('PlanWorkComponent in locale labels', () => {
     const loadUseCase = { execute: vi.fn() };
     const skipUseCase = { execute: vi.fn() };
     const createUseCase = { execute: vi.fn() };
-    const mockPresenter = { setView: vi.fn(), onSkipSuccessCallback: null, onRecordSavedCallback: null };
+    const regenerateUseCase = { execute: vi.fn() };
+    const subscribeSyncUseCase = { execute: vi.fn() };
+    const mockPresenter = {
+      setView: vi.fn(),
+      onSkipSuccessCallback: null,
+      onRecordSavedCallback: null
+    };
     const cdr = { markForCheck: vi.fn() };
 
     TestBed.overrideComponent(PlanWorkComponent, {
@@ -470,6 +531,8 @@ describe('PlanWorkComponent in locale labels', () => {
           { provide: LoadWorkDayListUseCase, useValue: loadUseCase },
           { provide: SkipTaskScheduleItemUseCase, useValue: skipUseCase },
           { provide: CreateWorkRecordUseCase, useValue: createUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           { provide: PlanWorkPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
         ]
@@ -480,6 +543,7 @@ describe('PlanWorkComponent in locale labels', () => {
       imports: [PlanWorkComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
+        { provide: UndoToastService, useValue: { show: vi.fn() } },
         {
           provide: ActivatedRoute,
           useValue: {

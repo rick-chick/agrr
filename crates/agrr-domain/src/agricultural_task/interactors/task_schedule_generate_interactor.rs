@@ -7,20 +7,19 @@ use crate::agricultural_task::constants::schedule_item_types::{
     BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
 };
 use crate::agricultural_task::constants::task_schedule_item_statuses::PLANNED;
-use crate::agricultural_task::dtos::TaskScheduleReplaceItem;
+use crate::agricultural_task::dtos::{TaskScheduleGenerateInput, TaskScheduleReplaceItem};
+use crate::agricultural_task::ports::TaskScheduleGenerateInputPort;
 use crate::agricultural_task::gateways::{
     CultivationPlanGateway, TaskScheduleBlueprint, TaskScheduleCrop, TaskScheduleFieldCultivation,
     TaskScheduleGenerationReadGateway, TaskSchedulePlan, TaskScheduleRelatedTask,
 };
 use crate::agricultural_task::gateways::{ProgressGateway, TaskScheduleGateway};
 use crate::agricultural_task::mappers::task_schedule_generation_context_mapper;
+use crate::agricultural_task::task_schedule_sync_error::TaskScheduleSyncError;
+use crate::agricultural_task::task_schedule_sync_error_keys as sync_errors;
 use crate::shared::helpers::deep_dup;
 use crate::shared::ports::ClockPort;
 use crate::shared::type_converters::cast_big_decimal_json;
-
-#[derive(Debug, Clone, thiserror::Error)]
-#[error("{0}")]
-pub struct TaskScheduleGenerateError(pub String);
 
 pub struct TaskScheduleGenerateInteractor<'a, PG, TG, CP, RG, C> {
     progress_gateway: &'a PG,
@@ -54,18 +53,21 @@ where
         }
     }
 
-    pub fn generate(
+    pub fn call(
         &self,
-        cultivation_plan_id: i64,
+        input: TaskScheduleGenerateInput,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let ctx = self.build_generation_context(cultivation_plan_id)?;
+        let ctx = self.build_generation_context(input.cultivation_plan_id)?;
         let plan = ctx.plan;
 
         if !weather_data_present(&plan.predicted_weather_data) {
-            return Err(Box::new(TaskScheduleGenerateError(format!(
-                "CultivationPlan#{} に気象予測データが存在しません",
-                plan.id
-            ))));
+            return Err(Box::new(TaskScheduleSyncError::new(
+                sync_errors::MISSING_WEATHER,
+                format!(
+                    "CultivationPlan#{} has no predicted weather data",
+                    plan.id
+                ),
+            )));
         }
 
         let mut blueprint_cache = std::collections::HashMap::<i64, Vec<TaskScheduleBlueprint>>::new();
@@ -104,7 +106,6 @@ where
         let mut crop_rows_by_id = std::collections::HashMap::new();
         let mut template_rows_by_crop_id = std::collections::HashMap::new();
         let mut blueprint_rows_by_crop_id = std::collections::HashMap::new();
-        let mut agrr_requirement_by_crop_id = std::collections::HashMap::new();
 
         for crop_id in crop_ids {
             crop_rows_by_id.insert(
@@ -121,11 +122,6 @@ where
                 self.task_schedule_read_gateway
                     .list_crop_task_schedule_blueprint_rows(crop_id)?,
             );
-            agrr_requirement_by_crop_id.insert(
-                crop_id,
-                self.task_schedule_read_gateway
-                    .build_crop_agrr_requirement(crop_id)?,
-            );
         }
 
         Ok(task_schedule_generation_context_mapper::assemble(
@@ -134,7 +130,6 @@ where
             crop_rows_by_id,
             template_rows_by_crop_id,
             blueprint_rows_by_crop_id,
-            agrr_requirement_by_crop_id,
         ))
     }
 
@@ -151,18 +146,24 @@ where
 
         let blueprints = self.blueprints_for(crop, blueprint_cache);
         if blueprints.is_empty() {
-            return Err(Box::new(TaskScheduleGenerateError(format!(
-                "Crop#{} ({}) の作業テンプレートが登録されていません",
-                crop.id, crop.name
-            ))));
+            return Err(Box::new(TaskScheduleSyncError::new(
+                sync_errors::MISSING_CROP_TEMPLATES,
+                format!(
+                    "Crop#{} ({}) has no task schedule blueprints",
+                    crop.id, crop.name
+                ),
+            )));
         }
 
         let (general_blueprints, fertilizer_blueprints) = partition_blueprints(blueprints.as_slice());
         if general_blueprints.is_empty() {
-            return Err(Box::new(TaskScheduleGenerateError(format!(
-                "Crop#{} ({}) の一般作業テンプレートが不足しています",
-                crop.id, crop.name
-            ))));
+            return Err(Box::new(TaskScheduleSyncError::new(
+                sync_errors::MISSING_GENERAL_TEMPLATES,
+                format!(
+                    "Crop#{} ({}) has no general work blueprints",
+                    crop.id, crop.name
+                ),
+            )));
         }
 
         let start_date = field_cultivation
@@ -192,10 +193,13 @@ where
         }
 
         if progress_records.is_empty() {
-            return Err(Box::new(TaskScheduleGenerateError(format!(
-                "GDD進捗データが空です (cultivation_plan_id={})",
-                plan.id
-            ))));
+            return Err(Box::new(TaskScheduleSyncError::new(
+                sync_errors::EMPTY_GDD_PROGRESS,
+                format!(
+                    "progress records empty for cultivation_plan_id={}",
+                    plan.id
+                ),
+            )));
         }
 
         self.create_schedule(plan, field_cultivation, "general", || {
@@ -204,7 +208,6 @@ where
                 .map(|blueprint| {
                     self.item_attributes_for_blueprint(
                         blueprint,
-                        crop,
                         &progress_records,
                         field_cultivation.start_date,
                     )
@@ -219,7 +222,6 @@ where
                     .map(|blueprint| {
                         self.item_attributes_for_blueprint(
                             blueprint,
-                            crop,
                             &progress_records,
                             field_cultivation.start_date,
                         )
@@ -247,17 +249,17 @@ where
     fn item_attributes_for_blueprint(
         &self,
         blueprint: &TaskScheduleBlueprint,
-        crop: &TaskScheduleCrop,
         progress_records: &[ProgressRecord],
         fallback_start_date: Option<Date>,
     ) -> Result<TaskScheduleReplaceItem, Box<dyn std::error::Error + Send + Sync>> {
         let gdd_trigger = blueprint.gdd_trigger.ok_or_else(|| {
-            Box::new(TaskScheduleGenerateError(
-                "GDDトリガーが設定されていません".into(),
+            Box::new(TaskScheduleSyncError::new(
+                sync_errors::MISSING_GDD_TRIGGER,
+                "blueprint gdd_trigger is missing",
             )) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
-        let task = find_agricultural_task_for_blueprint(blueprint, crop);
+        let task = blueprint.agricultural_task.clone();
         let scheduled_date =
             date_for_gdd(progress_records, gdd_trigger, fallback_start_date)?;
 
@@ -363,13 +365,6 @@ fn partition_blueprints(
     (general, fertilizer)
 }
 
-fn find_agricultural_task_for_blueprint(
-    blueprint: &TaskScheduleBlueprint,
-    _crop: &TaskScheduleCrop,
-) -> Option<TaskScheduleRelatedTask> {
-    blueprint.agricultural_task.clone()
-}
-
 fn name_for_blueprint(
     blueprint: &TaskScheduleBlueprint,
     task: Option<&TaskScheduleRelatedTask>,
@@ -418,10 +413,10 @@ fn date_for_gdd(
         if let Some(cumulative) = record.cumulative_gdd {
             if cumulative >= target_gdd {
                 return safe_parse_date(&record.date).ok_or_else(|| {
-                    Box::new(TaskScheduleGenerateError(format!(
-                        "GDD {} に対応する日付が見つかりません",
-                        target_gdd
-                    ))) as Box<dyn std::error::Error + Send + Sync>
+                    Box::new(TaskScheduleSyncError::new(
+                        sync_errors::GDD_DATE_NOT_FOUND,
+                        format!("no date for gdd {}", target_gdd),
+                    )) as Box<dyn std::error::Error + Send + Sync>
                 }).or(Ok(fallback_date.unwrap_or_else(|| {
                     Date::from_calendar_date(1970, time::Month::January, 1).expect("valid")
                 })));
@@ -431,10 +426,10 @@ fn date_for_gdd(
     if let Some(fallback) = fallback_date {
         return Ok(fallback);
     }
-    Err(Box::new(TaskScheduleGenerateError(format!(
-        "GDD {} に対応する日付が見つかりません",
-        target_gdd
-    ))))
+    Err(Box::new(TaskScheduleSyncError::new(
+        sync_errors::GDD_DATE_NOT_FOUND,
+        format!("no date for gdd {}", target_gdd),
+    )))
 }
 
 fn safe_parse_date(value: &str) -> Option<Date> {
@@ -488,6 +483,23 @@ fn filtered_weather_data(weather_data: &serde_json::Value, start_date: Option<Da
     }
 
     duplicated
+}
+
+impl<PG, TG, CP, RG, C> TaskScheduleGenerateInputPort
+    for TaskScheduleGenerateInteractor<'_, PG, TG, CP, RG, C>
+where
+    PG: ProgressGateway,
+    TG: TaskScheduleGateway,
+    CP: CultivationPlanGateway,
+    RG: TaskScheduleGenerationReadGateway,
+    C: ClockPort,
+{
+    fn call(
+        &self,
+        input: TaskScheduleGenerateInput,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        TaskScheduleGenerateInteractor::call(self, input)
+    }
 }
 
 #[cfg(test)]

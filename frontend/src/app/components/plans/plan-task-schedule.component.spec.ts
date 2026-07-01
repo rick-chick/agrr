@@ -8,10 +8,13 @@ import en from '../../../assets/i18n/en.json';
 import inLocale from '../../../assets/i18n/in.json';
 import ja from '../../../assets/i18n/ja.json';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
+import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
+import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { PlanTaskSchedulePresenter } from '../../usecase/plans/plan-task-schedule.providers';
 import { PlanTaskScheduleComponent } from './plan-task-schedule.component';
 import type { PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import { UndoToastService } from '../../services/undo-toast.service';
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -21,7 +24,9 @@ const loadedSchedule: TaskScheduleResponse = {
     planning_start_date: '2026-01-01',
     planning_end_date: '2026-12-31',
     timeline_generated_at: '2026-06-01T00:00:00Z',
-    timeline_generated_at_display: '2026-06-01'
+    timeline_generated_at_display: '2026-06-01',
+    task_schedule_sync_state: 'ready',
+    task_schedule_sync_error: null
   },
   week: {
     start_date: '2026-06-01',
@@ -38,18 +43,28 @@ const loadedSchedule: TaskScheduleResponse = {
 const loadedState: PlanTaskScheduleViewState = {
   loading: false,
   error: null,
-  schedule: loadedSchedule
+  schedule: loadedSchedule,
+  regenerating: false,
+  regenerateError: null,
+  pendingSyncToastKey: null,
+  syncReloadNonce: 0
 };
 
 describe('PlanTaskScheduleComponent', () => {
   let component: PlanTaskScheduleComponent;
   let fixture: ComponentFixture<PlanTaskScheduleComponent>;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
+  let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockPresenter: {
+    setView: ReturnType<typeof vi.fn>;
+  };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     loadUseCase = { execute: vi.fn() };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
@@ -58,6 +73,8 @@ describe('PlanTaskScheduleComponent', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr },
           {
@@ -72,7 +89,7 @@ describe('PlanTaskScheduleComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), { provide: UndoToastService, useValue: { show: vi.fn(), hide: vi.fn() } }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PlanTaskScheduleComponent);
@@ -88,7 +105,11 @@ describe('PlanTaskScheduleComponent', () => {
     const state: PlanTaskScheduleViewState = {
       loading: false,
       error: null,
-      schedule: null
+      schedule: null,
+      regenerating: false,
+      regenerateError: null,
+      pendingSyncToastKey: null,
+      syncReloadNonce: 0
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -149,7 +170,11 @@ describe('PlanTaskScheduleComponent', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.generic',
-      schedule: null
+      schedule: null,
+      regenerating: false,
+      regenerateError: null,
+      pendingSyncToastKey: null,
+      syncReloadNonce: 0
     };
     fixture.detectChanges();
     await fixture.whenStable();
@@ -176,7 +201,11 @@ describe('PlanTaskScheduleComponent', () => {
     component.control = {
       loading: false,
       error: 'common.api_error.generic',
-      schedule: null
+      schedule: null,
+      regenerating: false,
+      regenerateError: null,
+      pendingSyncToastKey: null,
+      syncReloadNonce: 0
     };
     fixture.detectChanges();
     await fixture.whenStable();
@@ -189,6 +218,36 @@ describe('PlanTaskScheduleComponent', () => {
     retryBtn.click();
     expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
+
+  it('calls regenerate use case from sync banner retry', () => {
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        plan: {
+          ...loadedSchedule.plan,
+          task_schedule_sync_state: 'failed',
+          task_schedule_sync_error: 'plans.task_schedules.sync_errors.agrr_unavailable'
+        }
+      }
+    };
+    fixture.detectChanges();
+
+    component.regenerateTaskSchedule();
+    expect(regenerateUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
+  });
+
+  it('subscribes to task schedule sync cable on init', () => {
+    component.ngOnInit();
+
+    expect(mockPresenter.setView).toHaveBeenCalledWith(component);
+    expect(subscribeSyncUseCase.execute).toHaveBeenCalledWith({
+      planId: 7,
+      onSubscribed: expect.any(Function)
+    });
+    expect(loadUseCase.execute).toHaveBeenCalled();
+  });
 });
 
 describe('PlanTaskScheduleComponent locale labels', () => {
@@ -196,6 +255,8 @@ describe('PlanTaskScheduleComponent locale labels', () => {
 
   async function setupLocale(localeId: 'ja' | 'en' | 'in'): Promise<void> {
     loadUseCase = { execute: vi.fn() };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
@@ -205,6 +266,8 @@ describe('PlanTaskScheduleComponent locale labels', () => {
         styleUrls: [],
         providers: [
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
           { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr },
           {
@@ -219,7 +282,7 @@ describe('PlanTaskScheduleComponent locale labels', () => {
 
     await TestBed.configureTestingModule({
       imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), { provide: UndoToastService, useValue: { show: vi.fn(), hide: vi.fn() } }]
     }).compileComponents();
 
     const translate = TestBed.inject(TranslateService);
@@ -237,7 +300,11 @@ describe('PlanTaskScheduleComponent locale labels', () => {
   }
 
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
+  let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockPresenter: {
+    setView: ReturnType<typeof vi.fn>;
+  };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   afterEach(() => {

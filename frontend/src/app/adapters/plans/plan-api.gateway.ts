@@ -33,6 +33,10 @@ export class PlanApiGateway implements PlanGateway {
     return this.apiClient.get<TaskScheduleResponse>(`/api/v1/plans/${planId}/task_schedule`);
   }
 
+  regenerateTaskSchedule(planId: number): Observable<void> {
+    return this.apiClient.post<void>(`/api/v1/plans/${planId}/task_schedule/regenerate`, {});
+  }
+
   deletePlan(planId: number): Observable<DeletionUndoResponse> {
     return this.apiClient.delete<DeletionUndoResponse>(`/api/v1/plans/${planId}`);
   }

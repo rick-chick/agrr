@@ -11,6 +11,7 @@ export interface PlanGateway {
   fetchPlanData(planId: number): Observable<CultivationPlanData>;
   getPublicPlanData(planId: number): Observable<CultivationPlanData>;
   getTaskSchedule(planId: number): Observable<TaskScheduleResponse>;
+  regenerateTaskSchedule(planId: number): Observable<void>;
   deletePlan(planId: number): Observable<DeletionUndoResponse>;
 }
 

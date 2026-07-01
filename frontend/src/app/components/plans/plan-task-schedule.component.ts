@@ -1,18 +1,28 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Channel } from 'actioncable';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
 import { PlanWorkNavComponent } from './plan-work-nav.component';
+import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
+import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
+import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
+import { UndoToastService } from '../../services/undo-toast.service';
+import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
 
 const initialControl: PlanTaskScheduleViewState = {
   loading: true,
   error: null,
-  schedule: null
+  schedule: null,
+  regenerating: false,
+  regenerateError: null,
+  pendingSyncToastKey: null,
+  syncReloadNonce: 0
 };
 
 @Component({
@@ -24,7 +34,8 @@ const initialControl: PlanTaskScheduleViewState = {
     TaskScheduleTimelineComponent,
     TranslateModule,
     PlanDisplayNamePipe,
-    PlanWorkNavComponent
+    PlanWorkNavComponent,
+    TaskScheduleSyncBannerComponent
   ],
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
@@ -58,6 +69,13 @@ const initialControl: PlanTaskScheduleViewState = {
           </div>
         } @else if (control.schedule) {
           <app-plan-work-nav [planId]="planId" />
+          <app-task-schedule-sync-banner
+            [syncState]="control.schedule.plan.task_schedule_sync_state"
+            [syncError]="control.schedule.plan.task_schedule_sync_error"
+            [regenerating]="control.regenerating"
+            [regenerateError]="control.regenerateError"
+            (retry)="regenerateTaskSchedule()"
+          />
           <app-task-schedule-timeline [fields]="control.schedule.fields" />
         }
       </section>
@@ -68,8 +86,15 @@ const initialControl: PlanTaskScheduleViewState = {
 export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
+  private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
+  private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
   private readonly presenter = inject(PlanTaskSchedulePresenter);
+  private readonly translate = inject(TranslateService);
+  private readonly undoToast = inject(UndoToastService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private syncChannel: Channel | null = null;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -80,27 +105,46 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return this._control;
   }
   set control(value: PlanTaskScheduleViewState) {
-    this._control = value;
+    this._control = applyTaskScheduleSyncViewEffects(this._control, value, {
+      toast: this.undoToast,
+      translate: this.translate,
+      onReload: () => this.reload({ silent: true })
+    });
     this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.destroyRef.onDestroy(() => {
+      this.syncChannel?.unsubscribe();
+    });
     const planId = this.planId;
     if (!planId) {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
+    this.subscribeSyncUseCase.execute({
+      planId,
+      onSubscribed: (channel) => {
+        this.syncChannel = channel;
+      }
+    });
     this.reload();
   }
 
-  reload(): void {
+  reload(options?: { silent?: boolean }): void {
     const planId = this.planId;
     if (!planId) {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
-    this.control = { ...this.control, loading: true, error: null };
+    if (!options?.silent) {
+      this.control = { ...this.control, loading: true, error: null, regenerateError: null };
+    }
     this.useCase.execute({ planId });
+  }
+
+  regenerateTaskSchedule(): void {
+    this.regenerateUseCase.execute({ planId: this.planId });
   }
 }

@@ -10,6 +10,7 @@ import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response
 describe('PlanApiGateway', () => {
   let apiClient: {
     get: ReturnType<typeof vi.fn>;
+    post: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
   let gateway: PlanApiGateway;
@@ -17,6 +18,7 @@ describe('PlanApiGateway', () => {
   beforeEach(() => {
     apiClient = {
       get: vi.fn(),
+      post: vi.fn(),
       delete: vi.fn()
     };
     gateway = new PlanApiGateway(apiClient as unknown as ApiService);
@@ -199,7 +201,9 @@ describe('PlanApiGateway', () => {
           planning_start_date: '2025-01-01',
           planning_end_date: '2025-12-31',
           timeline_generated_at: '2025-01-02T12:00:00Z',
-          timeline_generated_at_display: 'Jan 2, 2025'
+          timeline_generated_at_display: 'Jan 2, 2025',
+          task_schedule_sync_state: 'ready',
+          task_schedule_sync_error: null
         },
         week: {
           start_date: '2025-01-01',
@@ -240,6 +244,15 @@ describe('PlanApiGateway', () => {
       vi.mocked(apiClient.get).mockReturnValue(throwError(() => new Error('network error')));
 
       await expect(firstValueFrom(gateway.getTaskSchedule(7))).rejects.toThrow('network error');
+    });
+  });
+
+  describe('regenerateTaskSchedule', () => {
+    it('calls POST /api/v1/plans/:id/task_schedule/regenerate', async () => {
+      vi.mocked(apiClient.post).mockReturnValue(of(undefined));
+
+      await firstValueFrom(gateway.regenerateTaskSchedule(7));
+      expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule/regenerate', {});
     });
   });
 

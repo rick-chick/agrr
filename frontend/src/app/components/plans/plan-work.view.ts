@@ -13,6 +13,11 @@ export interface PlanWorkViewState {
   recentAdHocRecord: { name: string; actualDate: string } | null;
   highlightedItemId: number | null;
   completingItemId: number | null;
+  regenerating: boolean;
+  regenerateError: string | null;
+  pendingSyncToastKey: string | null;
+  pendingRecordSavedToastKey: string | null;
+  syncReloadNonce: number;
 }
 
 export interface PlanWorkView {

@@ -2,8 +2,8 @@
 //!
 //! Phase split:
 //! - Interactor: `PhaseOptimizing` (`StartOptimizing` is broadcast synchronously when the job chain is enqueued)
-//! - `run_optimization_step`: no `PhaseOptimizationCompleted` (Rails-only; no task schedule job in Rust chain)
-//! - Chain on failure: `PhaseFailed` + `optimizing`; success continues to `plan_finalize` → `PhaseCompleted`
+//! - `run_optimization_step`: no `PhaseOptimizationCompleted` (Rails-only bridge before task schedule job)
+//! - Chain on failure: `PhaseFailed` + `optimizing`; success continues to task_schedule_generation → `plan_finalize` → `PhaseCompleted`
 //!
 //! Weather (Rails `CultivationPlanOptimizeInteractor#call` 同様): `get_existing_prediction` のみ。
 //! `predict_for_cultivation_plan` は `run_weather_prediction_step`（Rails `WeatherPredictionJob`）で先行実行。

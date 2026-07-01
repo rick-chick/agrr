@@ -31,3 +31,9 @@
   background: var(--color-success-soft);
   color: var(--color-success);
 }
+
+.plan-optimizing__phase-message {
+  margin-top: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}

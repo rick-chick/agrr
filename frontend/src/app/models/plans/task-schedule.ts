@@ -1,3 +1,5 @@
+export type TaskScheduleSyncState = 'never' | 'failed' | 'generating' | 'stale' | 'ready';
+
 export interface PlanInfo {
   id: number;
   name: string;
@@ -6,6 +8,8 @@ export interface PlanInfo {
   planning_end_date: string;
   timeline_generated_at: string;
   timeline_generated_at_display: string;
+  task_schedule_sync_state: TaskScheduleSyncState | string;
+  task_schedule_sync_error: string | null;
 }
 
 export interface WeekInfo {

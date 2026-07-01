@@ -64,7 +64,9 @@ pub use cultivation_plan::{
     CultivationPlanSqliteGateway, OptimizationPlanReadSqliteGateway,
     PlanAllocationAdjustDebugDumpFileGateway, PlanAllocationAdjustReadSqliteGateway,
     PublicPlanSavePersistenceSqliteAdapter, PublicPlanSaveReadSqliteGateway,
-    TaskScheduleItemMutationSqliteGateway,
+    TaskScheduleGenerationReadSqliteGateway, TaskScheduleGenerationTransactionSqliteGateway,
+    TaskScheduleItemMutationSqliteGateway, TaskScheduleSqliteGateway,
+    TaskScheduleSyncStateSqliteGateway,
 };
 pub use farm::FarmSqliteGateway;
 pub use internal_jobs::SchedulerWeatherFarmListSqliteGateway;

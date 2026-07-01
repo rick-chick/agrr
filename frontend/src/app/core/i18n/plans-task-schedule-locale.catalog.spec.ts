@@ -24,7 +24,22 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.status.skipped',
   'plans.task_schedules.status.completed',
   'plans.task_schedules.field_section',
-  'plans.task_schedules.field_number'
+  'plans.task_schedules.field_number',
+  'plans.task_schedules.sync_never',
+  'plans.task_schedules.sync_failed',
+  'plans.task_schedules.sync_generating',
+  'plans.task_schedules.sync_stale',
+  'plans.task_schedules.sync_updated',
+  'plans.task_schedules.sync_retry',
+  'plans.task_schedules.sync_errors.missing_weather',
+  'plans.task_schedules.sync_errors.missing_crop_templates',
+  'plans.task_schedules.sync_errors.missing_general_templates',
+  'plans.task_schedules.sync_errors.empty_gdd_progress',
+  'plans.task_schedules.sync_errors.missing_gdd_trigger',
+  'plans.task_schedules.sync_errors.gdd_date_not_found',
+  'plans.task_schedules.sync_errors.missing_start_date',
+  'plans.task_schedules.sync_errors.agrr_unavailable',
+  'plans.task_schedules.sync_errors.generic'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

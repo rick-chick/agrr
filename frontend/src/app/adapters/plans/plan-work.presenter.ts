@@ -1,9 +1,7 @@
-import { Injectable, inject } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { Injectable } from '@angular/core';
 import { PlanWorkView } from '../../components/plans/plan-work.view';
 import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { UndoToastService } from '../../services/undo-toast.service';
 import {
   CreateWorkRecordSuccessDto,
   CreateWorkRecordValidationErrorDto
@@ -12,14 +10,25 @@ import { CreateWorkRecordOutputPort } from '../../usecase/plans/create-work-reco
 import { LoadWorkDayListDataDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { LoadWorkDayListOutputPort } from '../../usecase/plans/load-work-day-list.output-port';
 import { SkipTaskScheduleItemOutputPort } from '../../usecase/plans/skip-task-schedule-item.output-port';
+import { RegenerateTaskScheduleOutputPort } from '../../usecase/plans/regenerate-task-schedule.output-port';
+import {
+  SubscribeTaskScheduleSyncOutputPort
+} from '../../usecase/plans/subscribe-task-schedule-sync.output-port';
+import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
+import {
+  applySyncFieldsToPlan,
+  taskScheduleSyncViewPatch
+} from './task-schedule-sync-presenter.helpers';
 
 @Injectable()
 export class PlanWorkPresenter
-  implements LoadWorkDayListOutputPort, SkipTaskScheduleItemOutputPort, CreateWorkRecordOutputPort
+  implements
+    LoadWorkDayListOutputPort,
+    SkipTaskScheduleItemOutputPort,
+    CreateWorkRecordOutputPort,
+    RegenerateTaskScheduleOutputPort,
+    SubscribeTaskScheduleSyncOutputPort
 {
-  private readonly toast = inject(UndoToastService);
-  private readonly translate = inject(TranslateService);
-
   private view: PlanWorkView | null = null;
   onSkipSuccessCallback: (() => void) | null = null;
   onRecordSavedCallback: ((event: WorkRecordSheetSavedEvent) => void) | null = null;
@@ -39,6 +48,53 @@ export class PlanWorkPresenter
     this.onSkipSuccessCallback?.();
   }
 
+  onRegenerateStarted(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      regenerating: true,
+      regenerateError: null
+    };
+  }
+
+  onRegenerateSuccess(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      regenerateError: null
+    };
+  }
+
+  onTaskScheduleSync(message: TaskScheduleSyncMessageDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const plan = this.view.control.plan;
+    if (!plan) {
+      return;
+    }
+
+    const nextPlan = applySyncFieldsToPlan(plan, message);
+    const patch = taskScheduleSyncViewPatch(message.syncState);
+    const current = this.view.control;
+    this.view.control = {
+      ...current,
+      plan: nextPlan,
+      regenerating: patch.regenerating,
+      pendingSyncToastKey: patch.toastI18nKey,
+      syncReloadNonce: patch.requestReload
+        ? current.syncReloadNonce + 1
+        : current.syncReloadNonce
+    };
+  }
+
+  onRegenerateError(dto: ErrorDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      regenerating: false,
+      regenerateError: dto.message
+    };
+  }
+
   present(dto: LoadWorkDayListDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     this.view.control = {
@@ -49,7 +105,12 @@ export class PlanWorkPresenter
       fields: dto.fields,
       overdue: dto.overdue,
       today: dto.today,
-      upcoming: dto.upcoming
+      upcoming: dto.upcoming,
+      regenerating: false,
+      regenerateError: null,
+      pendingSyncToastKey: null,
+      pendingRecordSavedToastKey: null,
+      syncReloadNonce: 0
     };
   }
 
@@ -79,7 +140,9 @@ export class PlanWorkPresenter
       fields: [],
       overdue: [],
       today: [],
-      upcoming: []
+      upcoming: [],
+      regenerating: false,
+      regenerateError: null
     };
   }
 
@@ -88,9 +151,9 @@ export class PlanWorkPresenter
     this.view.control = {
       ...this.view.control,
       completingItemId: null,
-      error: null
+      error: null,
+      pendingRecordSavedToastKey: 'plans.work.toast.record_saved'
     };
-    this.toast.show(this.translate.instant('plans.work.toast.record_saved'));
     this.onRecordSavedCallback?.({
       workRecord: dto.workRecord,
       mode: 'create-from-item'

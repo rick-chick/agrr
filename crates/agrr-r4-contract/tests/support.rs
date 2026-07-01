@@ -110,6 +110,10 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
     )
     .expect("insert cultivation_plan");
     let plan_id = conn.last_insert_rowid();
+    let _ = conn.execute(
+        "UPDATE cultivation_plans SET task_schedule_sync_state = 'ready' WHERE id = ?1",
+        params![plan_id],
+    );
 
     conn.execute(
         "INSERT INTO cultivation_plan_fields (cultivation_plan_id, name, area, created_at, updated_at)
@@ -167,4 +171,18 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
         farm_id,
         task_schedule_item_id,
     }
+}
+
+/// Sets legacy/raw sync error on an existing plan (contract tests for normalization).
+pub fn set_plan_task_schedule_sync_failed_raw_error(plan_id: i64, raw_error: &str) {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE cultivation_plans \
+         SET task_schedule_sync_state = 'failed', task_schedule_sync_error = ?1, updated_at = datetime('now') \
+         WHERE id = ?2",
+        params![raw_error, plan_id],
+    )
+    .expect("update plan sync failed state");
 }

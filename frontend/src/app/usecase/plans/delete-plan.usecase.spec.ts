@@ -14,6 +14,7 @@ describe('DeletePlanUseCase', () => {
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({} as never),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan
     } as PlanGateway);
 

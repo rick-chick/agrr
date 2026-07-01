@@ -1188,7 +1188,24 @@
         "completed": "Completed"
       },
       "field_section": "{{name}} ({{crop}})",
-      "field_number": "Field {{number}}"
+      "field_number": "Field {{number}}",
+      "sync_never": "Task schedules have not been generated yet.",
+      "sync_failed": "Task schedule generation failed.",
+      "sync_generating": "Generating task schedules...",
+      "sync_stale": "Task schedules are out of date with the latest plan.",
+      "sync_updated": "Task schedules have been updated.",
+      "sync_retry": "Regenerate task schedules",
+      "sync_errors": {
+        "missing_weather": "Task schedules could not be generated because weather forecast data is missing.",
+        "missing_crop_templates": "Task schedules could not be generated because crop task templates are missing.",
+        "missing_general_templates": "Task schedules could not be generated because general work templates are missing.",
+        "empty_gdd_progress": "Task schedules could not be generated because GDD progress is empty.",
+        "missing_gdd_trigger": "A task template is missing a GDD trigger.",
+        "gdd_date_not_found": "Could not determine a date for the required GDD.",
+        "missing_start_date": "Task schedules could not be generated because the cultivation start date is missing.",
+        "agrr_unavailable": "Could not reach the AGRR processing service. Please try again later.",
+        "generic": "Task schedule generation failed. Please try again later."
+      }
     },
     "work": {
       "title": "Work — {{name}}",

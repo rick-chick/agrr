@@ -401,7 +401,7 @@ pub fn run_weather_prediction_step(
 /// Rails `OptimizationJob#perform` optimize body only.
 ///
 /// Does **not** advance `phase_optimization_completed` (Rails bridge before
-/// `TaskScheduleGenerationJob`). Rust chain goes optimize → `plan_finalize` → `completed`.
+/// `TaskScheduleGenerationJob`). Rust chain: optimize → task_schedule_generation → `plan_finalize` → `completed`.
 pub fn run_optimization_step(state: &AppState, plan_id: i64, channel: &str) -> Result<(), String> {
     crate::cultivation_plan_optimize::run_cultivation_plan_optimize_interactor(
         state, plan_id, channel,

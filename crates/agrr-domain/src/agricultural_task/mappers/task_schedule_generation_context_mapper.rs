@@ -15,7 +15,6 @@ pub fn assemble(
     crop_rows_by_id: HashMap<i64, TaskScheduleCropRow>,
     template_rows_by_crop_id: HashMap<i64, Vec<TaskScheduleTemplateRow>>,
     blueprint_rows_by_crop_id: HashMap<i64, Vec<TaskScheduleBlueprintRow>>,
-    agrr_requirement_by_crop_id: HashMap<i64, serde_json::Value>,
 ) -> TaskSchedulePlanContext {
     let field_cultivations = field_cultivation_rows
         .into_iter()
@@ -24,14 +23,8 @@ pub fn assemble(
             let crop_row = crop_rows_by_id.get(&crop_id)?;
             let templates = template_rows_by_crop_id.get(&crop_id).cloned().unwrap_or_default();
             let blueprints = blueprint_rows_by_crop_id.get(&crop_id).cloned().unwrap_or_default();
-            let agrr_requirement = agrr_requirement_by_crop_id.get(&crop_id).cloned();
 
-            let crop = crop_snapshot_from(
-                crop_row,
-                templates,
-                blueprints,
-                agrr_requirement,
-            );
+            let crop = crop_snapshot_from(crop_row, templates, blueprints);
 
             Some(TaskScheduleFieldCultivation {
                 id: fc_row.id,
@@ -55,7 +48,6 @@ fn crop_snapshot_from(
     crop_row: &TaskScheduleCropRow,
     template_rows: Vec<TaskScheduleTemplateRow>,
     blueprint_rows: Vec<TaskScheduleBlueprintRow>,
-    _agrr_requirement: Option<serde_json::Value>,
 ) -> TaskScheduleCrop {
     let crop_task_templates = template_rows
         .into_iter()

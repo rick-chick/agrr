@@ -54,7 +54,9 @@ function scheduleWithItems(items: TaskScheduleItem[]): TaskScheduleResponse {
       planning_start_date: '2026-01-01',
       planning_end_date: '2026-12-31',
       timeline_generated_at: '2026-06-01',
-      timeline_generated_at_display: '2026-06-01'
+      timeline_generated_at_display: '2026-06-01',
+      task_schedule_sync_state: 'ready',
+      task_schedule_sync_error: null
     },
     week: { start_date: '2026-06-08', end_date: '2026-06-14', label: 'week', days: [] },
     milestones: [],
@@ -85,6 +87,7 @@ describe('LoadWorkDayListUseCase', () => {
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of(response),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     }) as PlanGateway;
 
@@ -277,6 +280,7 @@ describe('LoadWorkDayListUseCase', () => {
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => throwError(() => new Error('fail')),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     };
     const outputPort: LoadWorkDayListOutputPort = {

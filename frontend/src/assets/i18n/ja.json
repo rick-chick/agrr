@@ -2203,6 +2203,23 @@
       },
       "field_section": "{{name}}（{{crop}}）",
       "field_number": "圃場 {{number}}",
+      "sync_never": "作業予定がまだ生成されていません。",
+      "sync_failed": "作業予定の生成に失敗しました。",
+      "sync_generating": "作業予定を生成しています...",
+      "sync_stale": "計画の変更により作業予定が古くなっています。",
+      "sync_updated": "作業予定を更新しました。",
+      "sync_retry": "作業予定を再生成",
+      "sync_errors": {
+        "missing_weather": "気象予測データがないため作業予定を生成できません。計画の気象データを確認してください。",
+        "missing_crop_templates": "作物の作業テンプレートが未登録のため作業予定を生成できません。",
+        "missing_general_templates": "一般作業のテンプレートが不足しているため作業予定を生成できません。",
+        "empty_gdd_progress": "GDD進捗を計算できなかったため作業予定を生成できません。",
+        "missing_gdd_trigger": "作業テンプレートにGDDトリガーが設定されていません。",
+        "gdd_date_not_found": "GDDに対応する日付を特定できませんでした。",
+        "missing_start_date": "栽培開始日が未設定のため作業予定を生成できません。",
+        "agrr_unavailable": "AGRR処理サービスに接続できません。しばらくしてから再試行してください。",
+        "generic": "作業予定の生成に失敗しました。しばらくしてから再試行してください。"
+      },
       "plan_level_field": "計画全体",
       "field_header": {
         "crop_area": "{{crop}} / {{area}}㎡"

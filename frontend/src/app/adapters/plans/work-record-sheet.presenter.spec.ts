@@ -1,9 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkRecordSheetSavedEvent, WorkRecordSheetView } from '../../components/plans/work-record-sheet.view';
 import { WorkRecord } from '../../models/plans/work-record';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { WorkRecordSheetPresenter } from './work-record-sheet.presenter';
 
 const workRecord: WorkRecord = {
@@ -27,33 +25,14 @@ const workRecord: WorkRecord = {
 describe('WorkRecordSheetPresenter', () => {
   let presenter: WorkRecordSheetPresenter;
   let view: WorkRecordSheetView;
-  let toastShow: ReturnType<typeof vi.fn>;
   let onSavedCallback: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    toastShow = vi.fn();
     onSavedCallback = vi.fn();
 
     TestBed.configureTestingModule({
-      imports: [TranslateModule.forRoot()],
-      providers: [
-        WorkRecordSheetPresenter,
-        { provide: UndoToastService, useValue: { show: toastShow } }
-      ]
+      providers: [WorkRecordSheetPresenter]
     });
-
-    const translate = TestBed.inject(TranslateService);
-    translate.setTranslation(
-      'ja',
-      {
-        'plans.work.toast.record_saved': '作業を記録しました',
-        'plans.work.toast.record_saved_adhoc': '作業を記録しました。実績履歴で確認できます',
-        'plans.work_records.toast.record_updated': '実績を保存しました',
-        'plans.work_records.toast.record_deleted': '実績を削除しました'
-      },
-      true
-    );
-    translate.use('ja');
 
     presenter = TestBed.inject(WorkRecordSheetPresenter);
     view = {
@@ -80,7 +59,8 @@ describe('WorkRecordSheetPresenter', () => {
         showDetails: false,
         taskChips: [],
         loadingTaskChips: false,
-        selectedTaskId: null
+        selectedTaskId: null,
+        pendingToastKey: null
       },
       close: vi.fn()
     };
@@ -88,10 +68,10 @@ describe('WorkRecordSheetPresenter', () => {
     presenter.onSavedCallback = onSavedCallback as (event: WorkRecordSheetSavedEvent) => void;
   });
 
-  it('shows ad-hoc toast and emits saved payload on create success', () => {
+  it('queues ad-hoc toast and emits saved payload on create success', () => {
     presenter.onSuccess({ workRecord });
 
-    expect(toastShow).toHaveBeenCalledWith('作業を記録しました。実績履歴で確認できます');
+    expect(view.control.pendingToastKey).toBe('plans.work.toast.record_saved_adhoc');
     expect(view.close).toHaveBeenCalled();
     expect(onSavedCallback).toHaveBeenCalledWith({
       workRecord,
@@ -99,31 +79,31 @@ describe('WorkRecordSheetPresenter', () => {
     });
   });
 
-  it('shows schedule toast on create-from-item success', () => {
+  it('queues schedule toast on create-from-item success', () => {
     view.control = { ...view.control, mode: 'create-from-item' };
 
     presenter.onSuccess({
       workRecord: { ...workRecord, task_schedule_item_id: 5 }
     });
 
-    expect(toastShow).toHaveBeenCalledWith('作業を記録しました');
+    expect(view.control.pendingToastKey).toBe('plans.work.toast.record_saved');
     expect(onSavedCallback).toHaveBeenCalledWith(
       expect.objectContaining({ mode: 'create-from-item' })
     );
   });
 
-  it('shows updated toast on edit success', () => {
+  it('queues updated toast on edit success', () => {
     view.control = { ...view.control, mode: 'edit' };
 
     presenter.onSuccess({ workRecord });
 
-    expect(toastShow).toHaveBeenCalledWith('実績を保存しました');
+    expect(view.control.pendingToastKey).toBe('plans.work_records.toast.record_updated');
   });
 
-  it('shows deleted toast on delete success', () => {
+  it('queues deleted toast on delete success', () => {
     presenter.onDeleteSuccess();
 
-    expect(toastShow).toHaveBeenCalledWith('実績を削除しました');
+    expect(view.control.pendingToastKey).toBe('plans.work_records.toast.record_deleted');
     expect(view.close).toHaveBeenCalled();
   });
 });

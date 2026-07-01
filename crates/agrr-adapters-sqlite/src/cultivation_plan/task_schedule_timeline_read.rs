@@ -2,6 +2,7 @@
 
 use crate::cultivation_plan::rest_plan_read::compute_plan_display_name;
 use crate::pool::SqlitePool;
+use agrr_domain::agricultural_task::normalize_stored_sync_error;
 use agrr_domain::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
     TaskScheduleTimelineFieldRead, TaskScheduleTimelinePlanRead, TaskScheduleTimelineSnapshot,
 };
@@ -40,7 +41,8 @@ fn load_plan_read(
     let mut stmt = conn.prepare(
         "SELECT cp.id, cp.plan_name, cp.plan_year, cp.status, \
          cp.planning_start_date, cp.planning_end_date, COALESCE(cp.total_area, 0), \
-         COALESCE(f.name, '') \
+         COALESCE(f.name, ''), COALESCE(cp.task_schedule_sync_state, 'never'), \
+         cp.task_schedule_sync_error \
          FROM cultivation_plans cp \
          LEFT JOIN farms f ON f.id = cp.farm_id \
          WHERE cp.id = ?1 LIMIT 1",
@@ -55,6 +57,8 @@ fn load_plan_read(
             row.get::<_, Option<String>>(5)?,
             row.get::<_, f64>(6)?,
             row.get::<_, String>(7)?,
+            row.get::<_, String>(8)?,
+            row.get::<_, Option<String>>(9)?,
         ))
     })?;
 
@@ -67,7 +71,8 @@ fn load_plan_read(
         .optional()?
         .flatten();
 
-    let (id, plan_name, plan_year, status, ps, pe, total_area, farm_display_name) = row;
+    let (id, plan_name, plan_year, status, ps, pe, total_area, farm_display_name, sync_state, sync_error) =
+        row;
     let display_name = compute_plan_display_name(id, plan_name.as_deref(), plan_year, &farm_display_name);
     Ok(TaskScheduleTimelinePlanRead {
         id,
@@ -78,6 +83,8 @@ fn load_plan_read(
         timeline_generated_at,
         farm_display_name,
         total_area,
+        task_schedule_sync_state: sync_state,
+        task_schedule_sync_error: normalize_stored_sync_error(sync_error),
     })
 }
 

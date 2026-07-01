@@ -40,6 +40,7 @@ export interface WorkRecordSheetViewState {
   taskChips: WorkRecordSheetTaskChip[];
   loadingTaskChips: boolean;
   selectedTaskId: number | 'other' | null;
+  pendingToastKey: string | null;
 }
 
 export interface WorkRecordSheetView {

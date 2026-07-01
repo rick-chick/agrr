@@ -62,14 +62,15 @@ describe('PlanOptimizingComponent', () => {
         'plans.optimizing_live.heading_completed': 'Optimization complete',
         'plans.optimizing_live.status_badge': 'Optimizing',
         'plans.optimizing_live.status_badge_completed': 'Complete',
-        'plans.optimizing_live.progress_label': 'Progress: {{progress}}%'
+        'plans.optimizing_live.progress_label': 'Progress: {{progress}}%',
+        'models.cultivation_plan.phases.task_schedule_generating': 'Generating task schedules...'
       },
       true
     );
   });
 
   it('renders progress without showing the redundant status label', () => {
-    const state: PlanOptimizingViewState = { status: 'optimizing', progress: 73 };
+    const state: PlanOptimizingViewState = { status: 'optimizing', progress: 73, phaseMessage: '' };
     component.control = state;
     fixture.detectChanges();
 
@@ -80,8 +81,18 @@ describe('PlanOptimizingComponent', () => {
     expect(textContent).not.toContain('Optimization complete');
   });
 
+  it('shows phase message from cable when present', () => {
+    component.control = {
+      status: 'optimizing',
+      progress: 90,
+      phaseMessage: 'Generating task schedules...'
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Generating task schedules...');
+  });
+
   it('shows completed heading when progress reaches 100%', () => {
-    component.control = { status: 'optimizing', progress: 100 };
+    component.control = { status: 'optimizing', progress: 100, phaseMessage: '' };
     fixture.detectChanges();
 
     const textContent = fixture.nativeElement.textContent;
