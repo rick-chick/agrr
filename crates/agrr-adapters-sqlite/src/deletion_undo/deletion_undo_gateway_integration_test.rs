@@ -15,7 +15,7 @@ use agrr_domain::shared::user::User;
 use rusqlite::params;
 use time::{format_description::well_known::Iso8601, OffsetDateTime};
 
-use crate::interaction_rule::interaction_rule_gateway::InteractionRuleSqliteGateway;
+use crate::interaction_rule::InteractionRuleSqliteGateway;
 
 struct StubTranslator;
 
@@ -108,8 +108,9 @@ fn perform_restore_marks_event_restored_and_rejects_second_restore() {
         .unwrap();
     let rule_id = created.id.expect("id");
 
-    let SoftDeleteWithUndoOutcome::Success(success) =
-        rule_gw.soft_delete_with_undo(&user, rule_id, 5000, &StubTranslator)
+    let SoftDeleteWithUndoOutcome::Success(success) = rule_gw
+        .soft_delete_with_undo(&user, rule_id, 5000, &StubTranslator)
+        .expect("soft delete")
     else {
         panic!("expected soft delete success");
     };
