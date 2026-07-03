@@ -13,7 +13,7 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Keys referenced by plan-work, plan-work-nav, and work-record-sheet on plans/:id/work. */
+/** Keys referenced by plan-work, plan-work-header, and work-record-sheet on plans/:id/work. */
 const PLANS_WORK_KEYS = [
   'plans.work.back_to_plan',
   'plans.work.back_to_hub',
@@ -37,8 +37,8 @@ const PLANS_WORK_KEYS = [
   'plans.work.toast.record_saved_adhoc',
   'plans.work.recent_adhoc',
   'plans.work.recent_adhoc_history_link',
+  'plans.work.nav.aria_label',
   'plans.work.nav.work',
-  'plans.work.nav.schedule',
   'plans.work.nav.history',
   'plans.work.sheet.title',
   'plans.work.sheet.name',
@@ -62,7 +62,6 @@ const PLANS_WORK_KEYS = [
 /** in locale must not reuse ja copy for primary work-screen labels (visual-review #48). */
 const IN_LOCALE_MUST_DIFFER_FROM_JA = [
   'plans.work.nav.work',
-  'plans.work.nav.schedule',
   'plans.work.nav.history',
   'plans.work.empty_today',
   'plans.work.show_skipped',

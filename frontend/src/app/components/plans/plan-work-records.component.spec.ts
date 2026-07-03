@@ -51,8 +51,8 @@ describe('PlanWorkRecordsComponent', () => {
     translate.setTranslation(
       'en',
       {
-        'plans.work.back_to_plan': 'Back to plan',
-        'plans.work.back_to_hub': 'Back to work log',
+        'plans.work.back_to_plan': 'Plan details',
+        'plans.work.back_to_hub': 'Work log list',
         'plans.work.page_title': 'Work log — {{name}}',
         'plans.work_records.empty': 'No work records yet',
         'plans.work_records.empty_hint': 'Record unscheduled work from the Today\'s work tab',
@@ -92,8 +92,8 @@ describe('PlanWorkRecordsComponent', () => {
     };
     fixture.detectChanges();
 
-    const back = fixture.nativeElement.querySelector('.plan-work-header__back');
-    expect(back?.textContent).toContain('Back to work log');
+    const back = fixture.nativeElement.querySelector('.plan-context-header__back');
+    expect(back?.textContent).toContain('Work log list');
     expect(fixture.nativeElement.querySelector('.plan-work__back-nav')).toBeNull();
   });
 

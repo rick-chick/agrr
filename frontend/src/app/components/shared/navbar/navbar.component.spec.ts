@@ -105,7 +105,7 @@ describe('NavbarComponent', () => {
 
     await router.navigateByUrl('/plans/12/task_schedule');
     fixture.detectChanges();
-    expect(component.isPlanNavActive()).toBe(false);
+    expect(component.isPlanNavActive()).toBe(true);
     expect(component.isWorkLogNavActive()).toBe(false);
   });
 });

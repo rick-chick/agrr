@@ -1,14 +1,14 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
 import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/plan-detail.providers';
 import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
 import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
+import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 
 const initialControl: PlanDetailViewState = {
   loading: true,
@@ -22,10 +22,9 @@ const initialControl: PlanDetailViewState = {
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     PlanGanttClimateShellComponent,
     TranslateModule,
-    PlanDisplayNamePipe
+    PlanPlanContextHeaderComponent
   ],
   providers: [
     ...PLAN_DETAIL_PROVIDERS,
@@ -34,9 +33,11 @@ const initialControl: PlanDetailViewState = {
   ],
   template: `
     <main class="page-main">
-      <a class="plan-detail__back" [routerLink]="['/plans']">{{
-        'plans.show.back_to_list' | translate
-      }}</a>
+      <app-plan-plan-context-header
+        [planId]="planId"
+        [planName]="control.plan?.name ?? null"
+        pageTitleKey="plans.show.page_title"
+      />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
@@ -44,7 +45,6 @@ const initialControl: PlanDetailViewState = {
           <p>{{ control.error | translate }}</p>
         </div>
       } @else if (control.plan) {
-        <h2 class="plan-detail__title">{{ control.plan.name | planDisplayName }}</h2>
         @if (control.planData) {
           <div class="plan-detail__body plan-detail-surface">
             <app-plan-gantt-climate-shell [data]="control.planData" [planType]="planType" />

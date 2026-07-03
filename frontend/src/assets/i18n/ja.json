@@ -2140,9 +2140,15 @@
       }
     },
     "show": {
-      "back_to_list": "← 計画一覧に戻る",
+      "back_to_list": "計画一覧へ",
+      "page_title": "{{name}}",
       "optimize_button": "最適化",
-      "view_task_schedule": "作業予定を見る",
+      "open_work": "作業記録へ",
+      "nav": {
+        "aria_label": "計画画面ナビゲーション",
+        "workbench": "作付け計画",
+        "task_schedule": "作業予定表"
+      },
       "copy_plan": "次年度にコピー",
       "delete": "削除",
       "confirms": {
@@ -2187,7 +2193,8 @@
       }
     },
     "task_schedules": {
-      "empty_hint": "作物を追加すると作業予定が生成されます。計画の内容を確認してください。",
+      "page_title": "{{name}}の作業予定表",
+      "empty_hint": "作物を追加すると作業予定が生成されます。上の「作付け計画」タブで計画の内容を確認してください。",
       "timeline_generated_at": "生成日時: {{datetime}}",
       "timeline_generated_unknown": "生成日時: 未取得",
       "nav_prev_week": "前の週",
@@ -2288,11 +2295,11 @@
     },
     "work": {
       "page_title": "{{name}}の作業記録",
-      "back_to_plan": "計画詳細を見る",
-      "back_to_hub": "作業記録トップへ",
+      "back_to_plan": "計画詳細へ",
+      "back_to_hub": "作業記録一覧へ",
       "nav": {
+        "aria_label": "作業記録ナビゲーション",
         "work": "今日の作業",
-        "schedule": "全体スケジュール",
         "history": "実績履歴"
       },
       "section": {

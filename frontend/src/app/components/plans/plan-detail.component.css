@@ -12,23 +12,6 @@
   align-items: stretch;
 }
 
-.plan-detail__back {
-  display: inline-block;
-  margin-bottom: var(--space-4);
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.plan-detail__back:hover {
-  text-decoration: underline;
-}
-
-.plan-detail__title {
-  margin: 0 0 var(--space-4);
-  font-size: var(--font-size-2xl);
-  line-height: 1.25;
-}
-
 .plan-detail__alert {
   margin-top: var(--space-4);
   padding: var(--space-4);

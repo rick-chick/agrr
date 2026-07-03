@@ -163,8 +163,8 @@ describe('PlanWorkComponent mobile UX', () => {
     translate.setTranslation(
       'ja',
       {
-        'plans.work.back_to_plan': '計画に戻る',
-        'plans.work.back_to_hub': '作業記録トップへ',
+        'plans.work.back_to_plan': '計画詳細へ',
+        'plans.work.back_to_hub': '作業記録一覧へ',
         'plans.work.page_title': '作業記録 — {{name}}',
         'plans.work.show_skipped': 'スキップを表示',
         'plans.work.section.overdue': '期限超過 ({{count}})',
@@ -182,8 +182,8 @@ describe('PlanWorkComponent mobile UX', () => {
         'plans.work.menu': 'メニュー',
         'plans.work.skip': 'スキップ',
         'plans.work.unskip': 'スキップ解除',
+        'plans.work.nav.aria_label': '作業記録ナビゲーション',
         'plans.work.nav.work': '作業',
-        'plans.work.nav.schedule': '予定表',
         'plans.work.nav.history': '実績履歴'
       },
       true
@@ -203,24 +203,26 @@ describe('PlanWorkComponent mobile UX', () => {
   it('shows a single primary back link to the work hub in the page header', () => {
     renderLoaded();
     expect(fixture.nativeElement.querySelector('.plan-work__back-nav')).toBeNull();
-    const back = fixture.nativeElement.querySelector('.plan-work-header__back');
-    expect(back?.textContent).toContain('作業記録トップへ');
+    const back = fixture.nativeElement.querySelector('.plan-context-header__back');
+    expect(back?.textContent).toContain('作業記録一覧へ');
   });
 
-  it('shows plan detail as a secondary link in the page description', () => {
+  it('shows plan detail as the forward crumb in the header toolbar', () => {
     renderLoaded();
-    const planLink = fixture.nativeElement.querySelector('.plan-work-header__plan-link');
-    expect(planLink?.textContent).toContain('計画に戻る');
+    const forward = fixture.nativeElement.querySelector('.plan-context-header__forward');
+    expect(forward?.textContent).toContain('計画詳細へ');
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
   });
 
-  it('uses page-header and section-card shell consistent with work hub', () => {
+  it('uses compact page-header with visually hidden title and section-card shell', () => {
     renderLoaded();
-    const header = fixture.nativeElement.querySelector('.page-header');
+    const header = fixture.nativeElement.querySelector('.page-header.page-header--compact');
     const card = fixture.nativeElement.querySelector('.section-card');
     expect(header).toBeTruthy();
     expect(card).toBeTruthy();
     expect(card.contains(header)).toBe(false);
-    expect(header.querySelector('.page-title')).toBeTruthy();
+    expect(header.querySelector('#plan-work-page-title.visually-hidden')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-plan-work-context-nav')).toBeTruthy();
   });
 
   it('keeps section-card bottom padding on plan-work shell', async () => {

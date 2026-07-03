@@ -115,7 +115,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(component.control).toEqual(state);
   });
 
-  it('shows link back to work hub', async () => {
+  it('uses the unified plan context header with back link and cross-context action', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
@@ -126,9 +126,14 @@ describe('PlanTaskScheduleComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const back = fixture.nativeElement.querySelector('.plan-work-header__back');
-    expect(back?.textContent).toContain('Back to work log');
-    expect(fixture.nativeElement.querySelector('.plan-work__back-nav')).toBeNull();
+    const header = fixture.nativeElement.querySelector('.plan-context-header');
+    expect(header).toBeTruthy();
+    const crumbs = header.querySelector('.plan-context-header__crumbs');
+    expect(crumbs?.querySelector('.plan-context-header__back')?.textContent).toContain('Plan list');
+    expect(crumbs?.querySelector('.plan-context-header__forward')?.textContent).toContain('Work log');
+    expect(header.querySelector('.plan-context-header__plan-name')?.textContent).toContain('Main Plan');
+    const workbenchTab = header.querySelector('app-plan-detail-context-nav .plan-context-nav__link');
+    expect(workbenchTab?.getAttribute('href')).toContain('/plans/7');
   });
 
   it('renders empty schedule message when fields are empty', async () => {
@@ -145,19 +150,64 @@ describe('PlanTaskScheduleComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('No task schedule has been generated yet.');
     expect(text).not.toContain('plans.task_schedules.no_schedules');
+    expect(fixture.nativeElement.querySelector('.plan-work__empty')).toBeTruthy();
   });
 
-  it('renders page title in header before work navigation tabs', async () => {
+  it('shows regenerate CTA in empty state when sync never generated', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        plan: {
+          ...loadedSchedule.plan,
+          task_schedule_sync_state: 'never',
+          task_schedule_sync_error: null
+        }
+      }
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const regenerateBtn = fixture.nativeElement.querySelector('.plan-work__empty-cta');
+    expect(regenerateBtn?.textContent).toContain('Regenerate task schedules');
+    expect(fixture.nativeElement.querySelector('app-task-schedule-sync-banner')).toBeNull();
+  });
+
+  it('renders plan context navigation in header before schedule content', async () => {
     fixture.detectChanges();
     component.control = loadedState;
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const heading = fixture.nativeElement.querySelector('.page-header .page-title');
-    const nav = fixture.nativeElement.querySelector('.plan-work-nav');
-    expect(heading).toBeTruthy();
+    const header = fixture.nativeElement.querySelector('.page-header.page-header--compact');
+    const nav = fixture.nativeElement.querySelector('app-plan-detail-context-nav');
+    expect(header).toBeTruthy();
     expect(nav).toBeTruthy();
-    expect(heading!.compareDocumentPosition(nav!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(header!.compareDocumentPosition(nav!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const pageTitle = fixture.nativeElement.querySelector('#plan-context-page-title');
+    expect(pageTitle).toBeTruthy();
+    expect(pageTitle?.classList.contains('visually-hidden')).toBe(true);
+    expect(fixture.nativeElement.querySelector('.plan-context-header__identity')).toBeTruthy();
+  });
+
+  it('does not show empty-state CTA duplicating the workbench tab', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = loadedState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.plan-work__empty-cta-link')).toBeNull();
   });
 
   it('renders translated API error instead of raw i18n key', async () => {
@@ -319,8 +369,10 @@ describe('PlanTaskScheduleComponent locale labels', () => {
     await setupLocale('ja');
 
     const text = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('計画詳細を見る');
-    expect(text).toContain('Main Planの作業予定');
+    expect(text).not.toContain('計画詳細へ');
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
+    expect(text).toContain('計画一覧へ');
+    expect(text).toContain('作業記録へ');
     expect(text).toContain('作業予定がまだ生成されていません。');
     expect(text).not.toContain('plans.task_schedules.');
   });
@@ -329,8 +381,10 @@ describe('PlanTaskScheduleComponent locale labels', () => {
     await setupLocale('en');
 
     const text = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('View plan details');
-    expect(text).toContain('Task schedule for Main Plan');
+    expect(text).not.toContain('Plan details');
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
+    expect(text).toContain('Plan list');
+    expect(text).toContain('Work log');
     expect(text).toContain('No task schedule has been generated yet.');
     expect(text).not.toContain('plans.task_schedules.');
   });
@@ -338,15 +392,11 @@ describe('PlanTaskScheduleComponent locale labels', () => {
   it('renders Hindi labels instead of raw i18n keys', async () => {
     await setupLocale('in');
 
-    const navLinks = fixture.nativeElement.querySelectorAll('.plan-work-nav__link');
-    expect(navLinks.length).toBe(3);
-    expect(navLinks[0].textContent?.trim()).toBe('आज का कार्य');
-    expect(navLinks[1].textContent?.trim()).toBe('पूर्ण अनुसूची');
-    expect(navLinks[2].textContent?.trim()).toBe('कार्य इतिहास');
-
     const text = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('योजना विवरण देखें');
-    expect(text).toContain('Main Plan की कार्य अनुसूची');
+    expect(text).not.toContain('योजना विवरण');
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
+    expect(text).toContain('योजना सूची');
+    expect(text).toContain('कार्य लॉग');
     expect(text).toContain('अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।');
     expect(text).not.toContain('plans.task_schedules.');
   });

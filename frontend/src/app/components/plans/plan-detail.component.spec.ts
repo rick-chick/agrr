@@ -62,7 +62,7 @@ describe('PlanDetailComponent', () => {
     expect(markForCheckSpy).toHaveBeenCalled();
   });
 
-  it('does not render work navigation on the plan detail screen', () => {
+  it('uses the unified plan context header layout', () => {
     fixture.detectChanges();
     component.control = {
       loading: false,
@@ -74,11 +74,15 @@ describe('PlanDetailComponent', () => {
         farm_id: 1
       },
       planData: null
-    
     };
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('app-plan-work-nav')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.plan-work-nav')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-plan-plan-context-header')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-detail__title')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.plan-context-header__crumbs')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-context-header__back')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.plan-context-header__identity')).toBeTruthy();
+    const forward = fixture.nativeElement.querySelector('.plan-context-header__forward');
+    expect(forward?.getAttribute('href')).toContain('/plans/1/work');
   });
 });

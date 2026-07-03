@@ -2,13 +2,12 @@ import { ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angula
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { formatIsoDateForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import { PLAN_WORK_RECORDS_PROVIDERS } from '../../usecase/plans/plan-work-records.providers';
-import { PlanWorkNavComponent } from './plan-work-nav.component';
+import { PlanWorkHeaderComponent } from './plan-work-header.component';
 import { PlanWorkRecordsView, PlanWorkRecordsViewState } from './plan-work-records.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
 
@@ -26,28 +25,13 @@ const initialControl: PlanWorkRecordsViewState = {
     CommonModule,
     RouterLink,
     TranslateModule,
-    PlanDisplayNamePipe,
-    PlanWorkNavComponent,
+    PlanWorkHeaderComponent,
     WorkRecordSheetComponent
   ],
   providers: [...PLAN_WORK_RECORDS_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <header class="page-header">
-        <a class="plan-work-header__back" [routerLink]="['/work']">{{
-          'plans.work.back_to_hub' | translate
-        }}</a>
-        @if (control.plan) {
-          <h1 id="plan-work-page-title" class="page-title">{{
-            'plans.work.page_title' | translate: { name: (control.plan.name | planDisplayName) }
-          }}</h1>
-          <p class="page-description">
-            <a class="plan-work-header__plan-link" [routerLink]="['/plans', planId]">{{
-              'plans.work.back_to_plan' | translate
-            }}</a>
-          </p>
-        }
-      </header>
+      <app-plan-work-header [planId]="planId" [planName]="control.plan?.name ?? null" />
 
       <section class="section-card" aria-labelledby="plan-work-page-title">
         @if (control.loading) {
@@ -60,8 +44,6 @@ const initialControl: PlanWorkRecordsViewState = {
             </button>
           </div>
         } @else if (control.plan) {
-          <app-plan-work-nav [planId]="planId" />
-
           @if (!control.groups.length) {
             <div class="plan-work__empty">
               <p class="plan-work__empty-message">{{ 'plans.work_records.empty' | translate }}</p>

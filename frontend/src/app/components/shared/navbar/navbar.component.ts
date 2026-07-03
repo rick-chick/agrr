@@ -109,7 +109,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (path === '/plans' || path === '/plans/new') {
       return true;
     }
-    if (/^\/plans\/\d+\/(work|work_records|task_schedule)(\/|$)/.test(path)) {
+    if (/^\/plans\/\d+\/(work|work_records)(\/|$)/.test(path)) {
       return false;
     }
     return /^\/plans\/\d+(\/|$)/.test(path) || path.startsWith('/plans/');

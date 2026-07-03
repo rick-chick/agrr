@@ -5,14 +5,13 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { formatIsoDateForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
-import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
 import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.usecase';
 import { PLAN_WORK_PROVIDERS } from '../../usecase/plans/plan-work.providers';
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
-import { PlanWorkNavComponent } from './plan-work-nav.component';
+import { PlanWorkHeaderComponent } from './plan-work-header.component';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { PlanWorkView, PlanWorkViewState } from './plan-work.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
@@ -50,29 +49,14 @@ const initialControl: PlanWorkViewState = {
     CommonModule,
     RouterLink,
     TranslateModule,
-    PlanDisplayNamePipe,
-    PlanWorkNavComponent,
+    PlanWorkHeaderComponent,
     WorkRecordSheetComponent,
     TaskScheduleSyncBannerComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <header class="page-header">
-        <a class="plan-work-header__back" [routerLink]="['/work']">{{
-          'plans.work.back_to_hub' | translate
-        }}</a>
-        @if (control.plan) {
-          <h1 id="plan-work-page-title" class="page-title">{{
-            'plans.work.page_title' | translate: { name: (control.plan.name | planDisplayName) }
-          }}</h1>
-          <p class="page-description">
-            <a class="plan-work-header__plan-link" [routerLink]="['/plans', planId]">{{
-              'plans.work.back_to_plan' | translate
-            }}</a>
-          </p>
-        }
-      </header>
+      <app-plan-work-header [planId]="planId" [planName]="control.plan?.name ?? null" />
 
       <section class="section-card plan-work" aria-labelledby="plan-work-page-title">
         @if (control.loading) {
@@ -85,8 +69,6 @@ const initialControl: PlanWorkViewState = {
             </button>
           </div>
         } @else if (control.plan) {
-          <app-plan-work-nav [planId]="planId" />
-
           <app-task-schedule-sync-banner
             [syncState]="control.plan.task_schedule_sync_state"
             [syncError]="control.plan.task_schedule_sync_error"

@@ -1177,7 +1177,8 @@
       }
     },
     "task_schedules": {
-      "empty_hint": "Add crops to your plan to generate task schedules. Review the plan setup if needed.",
+      "page_title": "Task schedule — {{name}}",
+      "empty_hint": "Add crops to your plan to generate task schedules. Use the Cropping plan tab above to review your plan.",
       "general_label": "General tasks",
       "fertilizer_label": "Fertilizer",
       "no_schedules": "No task schedule has been generated yet.",
@@ -1208,11 +1209,11 @@
     },
     "work": {
       "page_title": "Work log — {{name}}",
-      "back_to_plan": "View plan details",
-      "back_to_hub": "Back to work log",
+      "back_to_plan": "Plan details",
+      "back_to_hub": "Work log list",
       "nav": {
+        "aria_label": "Work log navigation",
         "work": "Today's work",
-        "schedule": "Full schedule",
         "history": "History"
       },
       "section": {
@@ -1423,9 +1424,15 @@
       }
     },
     "show": {
-      "back_to_list": "← Back to List",
+      "back_to_list": "Plan list",
+      "page_title": "{{name}}",
       "optimize_button": "Optimize",
-      "view_task_schedule": "View Task Schedule",
+      "open_work": "Work log",
+      "nav": {
+        "aria_label": "Plan screen navigation",
+        "workbench": "Cropping plan",
+        "task_schedule": "Task schedule"
+      },
       "copy_plan": "Copy to Next Year",
       "delete": "Delete",
       "header": {

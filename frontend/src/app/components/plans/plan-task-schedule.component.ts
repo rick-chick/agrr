@@ -1,14 +1,13 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
-import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
-import { PlanWorkNavComponent } from './plan-work-nav.component';
+import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
@@ -30,34 +29,21 @@ const initialControl: PlanTaskScheduleViewState = {
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink,
     TaskScheduleTimelineComponent,
     TranslateModule,
-    PlanDisplayNamePipe,
-    PlanWorkNavComponent,
+    PlanPlanContextHeaderComponent,
     TaskScheduleSyncBannerComponent
   ],
   providers: [...PLAN_TASK_SCHEDULE_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <header class="page-header">
-        <a class="plan-work-header__back" [routerLink]="['/work']">{{
-          'plans.work.back_to_hub' | translate
-        }}</a>
-        @if (control.schedule) {
-          <h1 id="plan-work-page-title" class="page-title">{{
-            'plans.task_schedules.title'
-              | translate: { name: (control.schedule.plan.name | planDisplayName) }
-          }}</h1>
-          <p class="page-description">
-            <a class="plan-work-header__plan-link" [routerLink]="['/plans', planId]">{{
-              'plans.task_schedules.back_to_plan' | translate
-            }}</a>
-          </p>
-        }
-      </header>
+      <app-plan-plan-context-header
+        [planId]="planId"
+        [planName]="control.schedule?.plan?.name ?? null"
+        pageTitleKey="plans.task_schedules.page_title"
+      />
 
-      <section class="section-card" aria-labelledby="plan-work-page-title">
+      <section class="section-card" aria-labelledby="plan-context-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
@@ -68,15 +54,51 @@ const initialControl: PlanTaskScheduleViewState = {
             </button>
           </div>
         } @else if (control.schedule) {
-          <app-plan-work-nav [planId]="planId" />
-          <app-task-schedule-sync-banner
-            [syncState]="control.schedule.plan.task_schedule_sync_state"
-            [syncError]="control.schedule.plan.task_schedule_sync_error"
-            [regenerating]="control.regenerating"
-            [regenerateError]="control.regenerateError"
-            (retry)="regenerateTaskSchedule()"
-          />
-          <app-task-schedule-timeline [fields]="control.schedule.fields" />
+          @if (scheduleIsEmpty) {
+            @if (syncState === 'generating') {
+              <app-task-schedule-sync-banner
+                [syncState]="syncState"
+                [syncError]="control.schedule.plan.task_schedule_sync_error"
+                [regenerating]="control.regenerating"
+                [regenerateError]="control.regenerateError"
+                (retry)="regenerateTaskSchedule()"
+              />
+            }
+            <div class="plan-work__empty">
+              <p class="plan-work__empty-message">
+                @if (syncState === 'generating') {
+                  {{ 'plans.task_schedules.sync_generating' | translate }}
+                } @else {
+                  {{ 'plans.task_schedules.no_schedules' | translate }}
+                }
+              </p>
+              @if (syncState !== 'generating') {
+                <p class="plan-work__empty-hint">{{ 'plans.task_schedules.empty_hint' | translate }}</p>
+              }
+              @if (showEmptyRegenerate) {
+                <button
+                  type="button"
+                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  [disabled]="control.regenerating"
+                  (click)="regenerateTaskSchedule()"
+                >
+                  {{
+                    (control.regenerating ? 'common.loading' : 'plans.task_schedules.sync_retry')
+                      | translate
+                  }}
+                </button>
+              }
+            </div>
+          } @else {
+            <app-task-schedule-sync-banner
+              [syncState]="syncState"
+              [syncError]="control.schedule.plan.task_schedule_sync_error"
+              [regenerating]="control.regenerating"
+              [regenerateError]="control.regenerateError"
+              (retry)="regenerateTaskSchedule()"
+            />
+            <app-task-schedule-timeline [fields]="control.schedule.fields" />
+          }
         }
       </section>
     </main>
@@ -97,6 +119,18 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get scheduleIsEmpty(): boolean {
+    return (this.control.schedule?.fields.length ?? 0) === 0;
+  }
+
+  get syncState(): string {
+    return this.control.schedule?.plan.task_schedule_sync_state ?? '';
+  }
+
+  get showEmptyRegenerate(): boolean {
+    return this.syncState === 'never' || this.syncState === 'failed' || this.syncState === 'stale';
   }
 
   private _control: PlanTaskScheduleViewState = initialControl;

@@ -6,37 +6,6 @@
   box-sizing: border-box;
 }
 
-.plan-work-header__back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: 2.75rem;
-  margin-bottom: var(--space-2);
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  text-decoration: none;
-}
-
-.plan-work-header__back::before {
-  content: '←';
-}
-
-.plan-work-header__back:hover {
-  text-decoration: underline;
-}
-
-.plan-work-header__plan-link {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  text-decoration: none;
-}
-
-.plan-work-header__plan-link:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
 .page-alert-error {
   margin-top: 0;
   padding: var(--space-4);

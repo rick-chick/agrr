@@ -13,8 +13,16 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Keys referenced by plan-detail / public-plan-results climate placeholder. */
-const PLANS_DETAIL_KEYS = ['plans.detail.select_cultivation_hint'] as const;
+/** Keys referenced by plan-detail, plan-plan-context-header, and climate placeholder. */
+const PLANS_DETAIL_KEYS = [
+  'plans.detail.select_cultivation_hint',
+  'plans.show.page_title',
+  'plans.show.back_to_list',
+  'plans.show.open_work',
+  'plans.show.nav.aria_label',
+  'plans.show.nav.workbench',
+  'plans.show.nav.task_schedule'
+] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
   { name: 'ja', catalog: ja as JsonRecord },
