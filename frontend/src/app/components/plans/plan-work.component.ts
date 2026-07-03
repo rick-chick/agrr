@@ -19,7 +19,7 @@ import { WorkRecordSheetComponent } from './work-record-sheet.component';
 import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
-import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
 
 const initialControl: PlanWorkViewState = {
@@ -270,7 +270,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
   private readonly presenter = inject(PlanWorkPresenter);
   private readonly translate = inject(TranslateService);
-  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -296,8 +296,7 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   }
   set control(value: PlanWorkViewState) {
     this._control = applyPlanWorkViewEffects(this._control, value, {
-      toast: this.undoToast,
-      translate: this.translate,
+      flash: this.flashMessage,
       onReload: () => this.reload({ silent: true })
     });
     this.cdr.markForCheck();

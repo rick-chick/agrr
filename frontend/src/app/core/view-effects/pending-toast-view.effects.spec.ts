@@ -2,36 +2,36 @@ import { vi } from 'vitest';
 import { consumePendingToastKey } from './pending-toast-view.effects';
 
 describe('consumePendingToastKey', () => {
-  it('shows toast and clears key when pendingToastKey is set', () => {
-    const toast = { show: vi.fn() };
-    const translate = { instant: vi.fn().mockReturnValue('Saved') };
+  it('shows success flash and clears key when pendingToastKey is set', () => {
+    const flash = { show: vi.fn() };
 
     const state = { pendingToastKey: 'plans.work.toast.record_saved' };
     const result = consumePendingToastKey(
       state,
       state.pendingToastKey,
       (s) => ({ ...s, pendingToastKey: null }),
-      { toast, translate }
+      { flash }
     );
 
-    expect(translate.instant).toHaveBeenCalledWith('plans.work.toast.record_saved');
-    expect(toast.show).toHaveBeenCalledWith('Saved');
+    expect(flash.show).toHaveBeenCalledWith({
+      type: 'success',
+      text: 'plans.work.toast.record_saved'
+    });
     expect(result.pendingToastKey).toBeNull();
   });
 
   it('returns state unchanged when pendingToastKey is null', () => {
-    const toast = { show: vi.fn() };
-    const translate = { instant: vi.fn() };
+    const flash = { show: vi.fn() };
 
     const state = { pendingToastKey: null };
     const result = consumePendingToastKey(
       state,
       state.pendingToastKey,
       (s) => ({ ...s, pendingToastKey: null }),
-      { toast, translate }
+      { flash }
     );
 
-    expect(toast.show).not.toHaveBeenCalled();
+    expect(flash.show).not.toHaveBeenCalled();
     expect(result).toBe(state);
   });
 });

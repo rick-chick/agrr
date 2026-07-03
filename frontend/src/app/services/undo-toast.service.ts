@@ -31,13 +31,6 @@ export class UndoToastService {
     return this.stateSignal();
   }
 
-  show(message: string) {
-    this.stateSignal.set({
-      visible: true,
-      message: this.localizeToastMessage(message)
-    });
-  }
-
   /**
    * 削除後のトーストを表示し、Undo実行時に復元APIを呼ぶように登録する。
    * @param message トーストに表示するメッセージ

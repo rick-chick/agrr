@@ -24,7 +24,7 @@ import {
   validatePayload,
   isValidationFailure
 } from '../../domain/contact/contact-message.model';
-import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 import { applyContactFormViewEffects } from './contact-form-view.effects';
 
 const initialControl: ContactFormViewState = {
@@ -139,7 +139,7 @@ export class ContactFormComponent implements ContactFormView, OnInit {
   private readonly useCase = inject(SendContactMessageUseCase);
   private readonly presenter = inject(ContactFormPresenter);
   private readonly translate = inject(TranslateService);
-  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
 
   name: string | null = null;
   email = '';
@@ -153,8 +153,7 @@ export class ContactFormComponent implements ContactFormView, OnInit {
   }
   set control(value: ContactFormViewState) {
     this._control = applyContactFormViewEffects(value, {
-      toast: this.undoToast,
-      translate: this.translate
+      flash: this.flashMessage
     });
     this.cdr.detectChanges();
   }

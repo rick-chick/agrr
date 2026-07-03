@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
@@ -12,7 +12,7 @@ import { PlanWorkNavComponent } from './plan-work-nav.component';
 import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
-import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
 
 const initialControl: PlanTaskScheduleViewState = {
@@ -89,8 +89,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
   private readonly presenter = inject(PlanTaskSchedulePresenter);
-  private readonly translate = inject(TranslateService);
-  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -106,8 +105,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   }
   set control(value: PlanTaskScheduleViewState) {
     this._control = applyTaskScheduleSyncViewEffects(this._control, value, {
-      toast: this.undoToast,
-      translate: this.translate,
+      flash: this.flashMessage,
       onReload: () => this.reload({ silent: true })
     });
     this.cdr.markForCheck();

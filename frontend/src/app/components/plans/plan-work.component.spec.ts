@@ -15,7 +15,6 @@ import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-ta
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
 
 const initialControl: PlanWorkViewState = {
@@ -147,7 +146,6 @@ describe('PlanWorkComponent mobile UX', () => {
       imports: [PlanWorkComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
-        { provide: UndoToastService, useValue: { show: vi.fn() } },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -612,7 +610,6 @@ describe('PlanWorkComponent in locale labels', () => {
       imports: [PlanWorkComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
-        { provide: UndoToastService, useValue: { show: vi.fn() } },
         {
           provide: ActivatedRoute,
           useValue: {

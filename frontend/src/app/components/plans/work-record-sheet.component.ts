@@ -11,12 +11,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { localTodayIso } from '../../core/local-today';
 import { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet.presenter';
 import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 import { applyWorkRecordSheetViewEffects } from './work-record-sheet-view.effects';
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
@@ -282,7 +283,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   private readonly loadTaskListUseCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly presenter = inject(WorkRecordSheetPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly translate = inject(TranslateService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly undoToast = inject(UndoToastService);
 
   private _control: WorkRecordSheetViewState = initialControl;
@@ -291,8 +292,8 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   }
   set control(value: WorkRecordSheetViewState) {
     this._control = applyWorkRecordSheetViewEffects(value, {
-      toast: this.undoToast,
-      translate: this.translate
+      flash: this.flashMessage,
+      toast: this.undoToast
     });
     this.cdr.markForCheck();
   }

@@ -1,9 +1,7 @@
-import { TranslateService } from '@ngx-translate/core';
-import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
 
 export interface PendingToastViewEffectDeps {
-  toast: Pick<UndoToastService, 'show'>;
-  translate: Pick<TranslateService, 'instant'>;
+  flash: Pick<FlashMessageService, 'show'>;
 }
 
 export function consumePendingToastKey<T>(
@@ -15,6 +13,6 @@ export function consumePendingToastKey<T>(
   if (!pendingToastKey) {
     return state;
   }
-  deps.toast.show(deps.translate.instant(pendingToastKey));
+  deps.flash.show({ type: 'success', text: pendingToastKey });
   return clearPendingToastKey(state);
 }

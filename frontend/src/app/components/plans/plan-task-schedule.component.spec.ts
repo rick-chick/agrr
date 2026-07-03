@@ -14,7 +14,6 @@ import { PlanTaskSchedulePresenter } from '../../usecase/plans/plan-task-schedul
 import { PlanTaskScheduleComponent } from './plan-task-schedule.component';
 import type { PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
-import { UndoToastService } from '../../services/undo-toast.service';
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -89,7 +88,7 @@ describe('PlanTaskScheduleComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([]), { provide: UndoToastService, useValue: { show: vi.fn(), hide: vi.fn() } }]
+      providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PlanTaskScheduleComponent);
@@ -286,7 +285,7 @@ describe('PlanTaskScheduleComponent locale labels', () => {
 
     await TestBed.configureTestingModule({
       imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([]), { provide: UndoToastService, useValue: { show: vi.fn(), hide: vi.fn() } }]
+      providers: [provideRouter([])]
     }).compileComponents();
 
     const translate = TestBed.inject(TranslateService);
