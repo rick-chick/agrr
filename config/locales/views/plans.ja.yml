@@ -63,6 +63,9 @@ ja:
     task_schedule_items:
       undo:
         toast: "%{name} の予定を削除しました。元に戻すことができます。"
+    work_records:
+      undo:
+        toast: "%{name} を削除しました。元に戻すことができます。"
     
     index:
       title: "計画一覧"

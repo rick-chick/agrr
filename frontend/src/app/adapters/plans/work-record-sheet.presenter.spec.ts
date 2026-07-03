@@ -22,13 +22,23 @@ const workRecord: WorkRecord = {
   task_schedule_item: null
 };
 
+const undoResponse = {
+  undo_token: 'token123',
+  undo_path: '/undo_deletion?undo_token=token123',
+  toast_message: 'plans.work_records.undo.toast:除草',
+  undo_deadline: '2026-02-03T12:00:00Z',
+  auto_hide_after: 5000
+};
+
 describe('WorkRecordSheetPresenter', () => {
   let presenter: WorkRecordSheetPresenter;
   let view: WorkRecordSheetView;
   let onSavedCallback: ReturnType<typeof vi.fn>;
+  let onDeletedCallback: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     onSavedCallback = vi.fn();
+    onDeletedCallback = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [WorkRecordSheetPresenter]
@@ -60,12 +70,14 @@ describe('WorkRecordSheetPresenter', () => {
         taskChips: [],
         loadingTaskChips: false,
         selectedTaskId: null,
-        pendingToastKey: null
+        pendingToastKey: null,
+        pendingUndoToast: null
       },
       close: vi.fn()
     };
     presenter.setView(view);
     presenter.onSavedCallback = onSavedCallback as (event: WorkRecordSheetSavedEvent) => void;
+    presenter.onDeletedCallback = onDeletedCallback as () => void;
   });
 
   it('queues ad-hoc toast and emits saved payload on create success', () => {
@@ -100,10 +112,17 @@ describe('WorkRecordSheetPresenter', () => {
     expect(view.control.pendingToastKey).toBe('plans.work_records.toast.record_updated');
   });
 
-  it('queues deleted toast on delete success', () => {
-    presenter.onDeleteSuccess();
+  it('queues undo toast on delete success', () => {
+    presenter.onDeleteSuccess({ undo: undoResponse });
 
-    expect(view.control.pendingToastKey).toBe('plans.work_records.toast.record_deleted');
+    expect(view.control.pendingUndoToast).toEqual({
+      message: undoResponse.toast_message,
+      undoPath: undoResponse.undo_path,
+      undoToken: undoResponse.undo_token,
+      onRestored: expect.any(Function),
+      resourceLabel: undefined
+    });
     expect(view.close).toHaveBeenCalled();
+    expect(onDeletedCallback).toHaveBeenCalled();
   });
 });

@@ -1270,12 +1270,13 @@
       "sheet": {
         "edit_title": "Edit record",
         "save": "Save",
-        "delete": "Delete",
-        "delete_confirm": "Delete this work record?"
+        "delete": "Delete"
+      },
+      "undo": {
+        "toast": "{{name}} was deleted. You can undo this action."
       },
       "toast": {
-        "record_updated": "Record saved",
-        "record_deleted": "Record deleted"
+        "record_updated": "Record saved"
       }
     },
     "index": {

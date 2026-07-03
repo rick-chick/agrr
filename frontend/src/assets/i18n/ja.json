@@ -2350,12 +2350,13 @@
       "sheet": {
         "edit_title": "実績を編集",
         "save": "保存する",
-        "delete": "削除",
-        "delete_confirm": "この実績を削除しますか？"
+        "delete": "削除"
+      },
+      "undo": {
+        "toast": "{{name}} を削除しました。元に戻すことができます。"
       },
       "toast": {
-        "record_updated": "実績を保存しました",
-        "record_deleted": "実績を削除しました"
+        "record_updated": "実績を保存しました"
       }
     }
   },

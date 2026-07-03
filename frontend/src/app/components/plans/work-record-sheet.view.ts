@@ -1,5 +1,6 @@
 import { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
+import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
 
 export type WorkRecordSheetMode = 'create-from-item' | 'create-adhoc' | 'edit';
 
@@ -41,6 +42,7 @@ export interface WorkRecordSheetViewState {
   loadingTaskChips: boolean;
   selectedTaskId: number | 'other' | null;
   pendingToastKey: string | null;
+  pendingUndoToast: PendingUndoToastRequest | null;
 }
 
 export interface WorkRecordSheetView {

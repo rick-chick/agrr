@@ -144,6 +144,70 @@ fn post_work_records_ad_hoc_without_name_returns_422() {
 }
 
 #[test]
+fn delete_work_records_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.delete(
+        "/api/v1/plans/1/work_records/1",
+        None,
+        &empty_headers(),
+    ));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn delete_work_record_returns_deletion_undo_payload() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (create_status, create_body) = status_and_body(client.post(
+        &format!("/api/v1/plans/{}/work_records", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "contract delete undo"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"]
+        .as_i64()
+        .expect("work_record id");
+
+    let (delete_status, delete_body) = status_and_body(client.delete(
+        &format!(
+            "/api/v1/plans/{}/work_records/{}",
+            seed.plan_id, record_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, delete_status, "{delete_body}");
+    let undo: serde_json::Value =
+        serde_json::from_str(&delete_body).expect("delete work_record undo JSON");
+    let undo_token = undo["undo_token"]
+        .as_str()
+        .expect("undo_token must be a non-empty string");
+    assert!(!undo_token.is_empty(), "{delete_body}");
+    assert_eq!(
+        format!("/undo_deletion?undo_token={undo_token}"),
+        undo["undo_path"].as_str().expect("undo_path")
+    );
+    assert!(
+        undo["toast_message"].as_str().is_some_and(|m| !m.is_empty()),
+        "{delete_body}"
+    );
+    assert!(undo.get("undo_deadline").is_some(), "{delete_body}");
+    assert_eq!(5000, undo["auto_hide_after"].as_i64().unwrap(), "{delete_body}");
+}
+
+#[test]
 fn patch_task_schedule_item_skip_and_unskip_returns_item_payload() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

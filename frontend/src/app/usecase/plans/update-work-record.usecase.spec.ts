@@ -30,7 +30,14 @@ describe('UpdateWorkRecordUseCase', () => {
       listWorkRecords: () => of({ work_records: [] }),
       createWorkRecord: () => of({ work_record: sampleRecord }),
       updateWorkRecord,
-      deleteWorkRecord: () => of({ deleted: true }),
+      deleteWorkRecord: () =>
+        of({
+          undo_token: 'stub',
+          undo_path: '/undo_deletion?undo_token=stub',
+          toast_message: 'stub',
+          undo_deadline: '2026',
+          auto_hide_after: 5000
+        }),
       skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
       unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
     }) as WorkRecordGateway;

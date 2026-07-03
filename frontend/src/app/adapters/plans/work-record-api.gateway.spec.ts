@@ -71,11 +71,18 @@ describe('WorkRecordApiGateway', () => {
     });
   });
 
-  it('deletes work record', async () => {
-    vi.mocked(apiClient.delete).mockReturnValue(of({ deleted: true }));
+  it('deletes work record and returns undo payload', async () => {
+    const undoResponse = {
+      undo_token: 'token123',
+      undo_path: '/undo_deletion?undo_token=token123',
+      toast_message: 'plans.work_records.undo.toast:除草',
+      undo_deadline: '2026-02-03T12:00:00Z',
+      auto_hide_after: 5000
+    };
+    vi.mocked(apiClient.delete).mockReturnValue(of(undoResponse));
 
     const result = await firstValueFrom(gateway.deleteWorkRecord(5, 1));
-    expect(result.deleted).toBe(true);
+    expect(result.undo_token).toBe('token123');
     expect(apiClient.delete).toHaveBeenCalledWith('/api/v1/plans/5/work_records/1');
   });
 

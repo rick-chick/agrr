@@ -8,7 +8,7 @@ export type PendingUndoToastRequest = {
   resourceLabel?: string;
 };
 
-interface PendingUndoToastViewEffectDeps {
+export interface PendingUndoToastViewEffectDeps {
   toast: Pick<UndoToastService, 'showWithUndo'>;
 }
 

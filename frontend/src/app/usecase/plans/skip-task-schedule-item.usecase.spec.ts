@@ -13,7 +13,14 @@ describe('SkipTaskScheduleItemUseCase', () => {
       listWorkRecords: () => of({ work_records: [] }),
       createWorkRecord: () => of({} as never),
       updateWorkRecord: () => of({} as never),
-      deleteWorkRecord: () => of({ deleted: true }),
+      deleteWorkRecord: () =>
+        of({
+          undo_token: 'stub',
+          undo_path: '/undo_deletion?undo_token=stub',
+          toast_message: 'stub',
+          undo_deadline: '2026',
+          auto_hide_after: 5000
+        }),
       skipTaskScheduleItem: skipFn,
       unskipTaskScheduleItem: unskipFn
     }) as WorkRecordGateway;

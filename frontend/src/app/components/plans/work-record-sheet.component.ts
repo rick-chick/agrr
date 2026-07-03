@@ -64,7 +64,8 @@ const initialControl: WorkRecordSheetViewState = {
   taskChips: [],
   loadingTaskChips: false,
   selectedTaskId: null,
-  pendingToastKey: null
+  pendingToastKey: null,
+  pendingUndoToast: null
 };
 
 @Component({
@@ -458,10 +459,6 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   confirmDelete(): void {
     const id = this.control.form.work_record_id;
     if (id == null) return;
-    const message = this.translate.instant('plans.work_records.sheet.delete_confirm');
-    if (!window.confirm(message)) {
-      return;
-    }
     this.control = { ...this.control, submitting: true };
     this.deleteUseCase.execute({ planId: this.planId, workRecordId: id });
   }

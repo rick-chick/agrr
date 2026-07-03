@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { parseDeletionUndoResponse } from '../../domain/shared/parse-deletion-undo-response';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { WORK_RECORD_GATEWAY, WorkRecordGateway } from './work-record-gateway';
 import { DeleteWorkRecordInputDto } from './delete-work-record.dtos';
@@ -17,9 +18,13 @@ export class DeleteWorkRecordUseCase implements DeleteWorkRecordInputPort {
 
   execute(dto: DeleteWorkRecordInputDto): void {
     this.gateway.deleteWorkRecord(dto.planId, dto.workRecordId).subscribe({
-      next: () => {
-        this.outputPort.onDeleteSuccess();
-        dto.onSuccess?.();
+      next: (body) => {
+        const undo = parseDeletionUndoResponse(body);
+        if (!undo) {
+          this.outputPort.onError({ message: 'deletion_undo.restore_failed' });
+          return;
+        }
+        this.outputPort.onDeleteSuccess({ undo });
       },
       error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });

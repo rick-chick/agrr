@@ -59,6 +59,9 @@ us:
     task_schedule_items:
       undo:
         toast: "%{name}'s schedule was deleted. You can undo this action."
+    work_records:
+      undo:
+        toast: "%{name} was deleted. You can undo this action."
     
     index:
       title: "Cultivation Plans"

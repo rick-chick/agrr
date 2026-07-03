@@ -1,9 +1,9 @@
 import { InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
+import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import {
   WorkRecordCreateRequest,
   WorkRecordCreateResponse,
-  WorkRecordDeleteResponse,
   WorkRecordUpdateRequest,
   WorkRecordUpdateResponse,
   WorkRecordsListResponse
@@ -13,7 +13,7 @@ export interface WorkRecordGateway {
   listWorkRecords(planId: number, params?: { from?: string; to?: string; field_cultivation_id?: number }): Observable<WorkRecordsListResponse>;
   createWorkRecord(planId: number, body: WorkRecordCreateRequest): Observable<WorkRecordCreateResponse>;
   updateWorkRecord(planId: number, id: number, body: WorkRecordUpdateRequest): Observable<WorkRecordUpdateResponse>;
-  deleteWorkRecord(planId: number, id: number): Observable<WorkRecordDeleteResponse>;
+  deleteWorkRecord(planId: number, id: number): Observable<DeletionUndoResponse>;
   skipTaskScheduleItem(planId: number, itemId: number): Observable<{ item: { id: number; status: string; cancelled_at: string | null } }>;
   unskipTaskScheduleItem(planId: number, itemId: number): Observable<{ item: { id: number; status: string; cancelled_at: string | null } }>;
 }

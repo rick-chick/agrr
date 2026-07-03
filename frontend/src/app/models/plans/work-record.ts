@@ -61,7 +61,3 @@ export interface WorkRecordCreateResponse {
 export interface WorkRecordUpdateResponse {
   work_record: WorkRecord;
 }
-
-export interface WorkRecordDeleteResponse {
-  deleted: boolean;
-}

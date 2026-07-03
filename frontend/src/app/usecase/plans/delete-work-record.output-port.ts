@@ -1,8 +1,9 @@
 import { InjectionToken } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { DeleteWorkRecordSuccessDto } from './delete-work-record.dtos';
 
 export interface DeleteWorkRecordOutputPort {
-  onDeleteSuccess(): void;
+  onDeleteSuccess(dto: DeleteWorkRecordSuccessDto): void;
   onError(dto: ErrorDto): void;
 }
 

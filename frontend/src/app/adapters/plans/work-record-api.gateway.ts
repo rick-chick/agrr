@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 import {
   WorkRecordCreateRequest,
   WorkRecordCreateResponse,
-  WorkRecordDeleteResponse,
   WorkRecordUpdateRequest,
   WorkRecordUpdateResponse,
   WorkRecordsListResponse
@@ -47,8 +47,8 @@ export class WorkRecordApiGateway implements WorkRecordGateway {
     );
   }
 
-  deleteWorkRecord(planId: number, id: number): Observable<WorkRecordDeleteResponse> {
-    return this.apiClient.delete<WorkRecordDeleteResponse>(`/api/v1/plans/${planId}/work_records/${id}`);
+  deleteWorkRecord(planId: number, id: number): Observable<DeletionUndoResponse> {
+    return this.apiClient.delete<DeletionUndoResponse>(`/api/v1/plans/${planId}/work_records/${id}`);
   }
 
   skipTaskScheduleItem(

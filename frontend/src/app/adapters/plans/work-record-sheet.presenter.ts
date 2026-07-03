@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { WorkRecordSheetSavedEvent, WorkRecordSheetView } from '../../components/plans/work-record-sheet.view';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { AgriculturalTaskListDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-list.dtos';
 import { LoadAgriculturalTaskListOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
 import { CreateWorkRecordOutputPort } from '../../usecase/plans/create-work-record.output-port';
@@ -14,6 +15,7 @@ import {
   UpdateWorkRecordValidationErrorDto
 } from '../../usecase/plans/update-work-record.dtos';
 import { DeleteWorkRecordOutputPort } from '../../usecase/plans/delete-work-record.output-port';
+import { DeleteWorkRecordSuccessDto } from '../../usecase/plans/delete-work-record.dtos';
 
 @Injectable()
 export class WorkRecordSheetPresenter
@@ -85,14 +87,14 @@ export class WorkRecordSheetPresenter
     };
   }
 
-  onDeleteSuccess(): void {
+  onDeleteSuccess(dto: DeleteWorkRecordSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     this.view.control = {
       ...this.view.control,
       submitting: false,
       fieldErrors: {},
       error: null,
-      pendingToastKey: 'plans.work_records.toast.record_deleted'
+      pendingUndoToast: pendingUndoToastFromDeletion(dto.undo, () => this.onDeletedCallback?.())
     };
     this.view.close();
     this.onDeletedCallback?.();
