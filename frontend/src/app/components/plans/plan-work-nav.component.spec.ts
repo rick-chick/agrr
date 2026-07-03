@@ -34,6 +34,19 @@ describe('PlanWorkNavComponent', () => {
     fixture.componentInstance.planId = 1;
   });
 
+  it('clips vertical overflow so tab underlines do not show a vertical scrollbar', async () => {
+    await router.navigateByUrl('/plans/1/work');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const nav = fixture.nativeElement.querySelector('.plan-work-nav');
+    expect(nav).toBeTruthy();
+    const styles = getComputedStyle(nav);
+    expect(styles.overflowY).toBe('hidden');
+    expect(styles.overflowX).toBe('auto');
+  });
+
   it('renders an underline tablist with three work views', async () => {
     await router.navigateByUrl('/plans/1/task_schedule');
     fixture.detectChanges();
