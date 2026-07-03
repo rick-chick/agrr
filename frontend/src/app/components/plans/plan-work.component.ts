@@ -38,6 +38,8 @@ const initialControl: PlanWorkViewState = {
   regenerateError: null,
   pendingSyncToastKey: null,
   pendingRecordSavedToastKey: null,
+  pendingRecordSavedEvent: null,
+  pendingQuickCompleteValidation: null,
   syncReloadNonce: 0
 };
 
@@ -62,7 +64,7 @@ const initialControl: PlanWorkViewState = {
         }}</a>
         @if (control.plan) {
           <h1 id="plan-work-page-title" class="page-title">{{
-            'plans.work.title' | translate: { name: (control.plan.name | planDisplayName) }
+            'plans.work.page_title' | translate: { name: (control.plan.name | planDisplayName) }
           }}</h1>
           <p class="page-description">
             <a class="plan-work-header__plan-link" [routerLink]="['/plans', planId]">{{
@@ -297,21 +299,20 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   set control(value: PlanWorkViewState) {
     this._control = applyPlanWorkViewEffects(this._control, value, {
       flash: this.flashMessage,
-      onReload: () => this.reload({ silent: true })
+      onReload: () => this.reload({ silent: true }),
+      scheduleHighlightClear: (itemId) => this.scheduleHighlightClear(itemId),
+      onQuickCompleteValidation: (itemId, fieldErrors) => {
+        const row = this.findRowByItemId(itemId);
+        if (row) {
+          this.sheet.openFromItem(row, { fieldErrors });
+        }
+      }
     });
     this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
     this.presenter.setView(this);
-    this.presenter.onSkipSuccessCallback = () => this.reload();
-    this.presenter.onRecordSavedCallback = (event) => this.onRecordSaved(event);
-    this.presenter.onQuickCompleteValidationErrorCallback = (itemId, fieldErrors) => {
-      const row = this.findRowByItemId(itemId);
-      if (row) {
-        this.sheet.openFromItem(row, { fieldErrors });
-      }
-    };
     this.destroyRef.onDestroy(() => {
       this.syncChannel?.unsubscribe();
       if (this.highlightClearTimer !== null) {
@@ -353,35 +354,19 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   }
 
   onRecordSaved(event: WorkRecordSheetSavedEvent): void {
-    if (event.mode === 'create-adhoc') {
-      this.control = {
-        ...this.control,
-        recentAdHocRecord: {
-          name: event.workRecord.name,
-          actualDate: event.workRecord.actual_date
-        },
-        highlightedItemId: null
-      };
-    } else if (event.mode === 'create-from-item' && event.workRecord.task_schedule_item_id != null) {
-      this.control = {
-        ...this.control,
-        recentAdHocRecord: null,
-        highlightedItemId: event.workRecord.task_schedule_item_id
-      };
-      const itemId = event.workRecord.task_schedule_item_id;
-      if (this.highlightClearTimer !== null) {
-        clearTimeout(this.highlightClearTimer);
-      }
-      this.highlightClearTimer = setTimeout(() => {
-        if (this.control.highlightedItemId === itemId) {
-          this.control = { ...this.control, highlightedItemId: null };
-        }
-        this.highlightClearTimer = null;
-      }, 3000);
-    } else {
-      this.control = { ...this.control, recentAdHocRecord: null };
+    this.control = { ...this.control, pendingRecordSavedEvent: event };
+  }
+
+  private scheduleHighlightClear(itemId: number): void {
+    if (this.highlightClearTimer !== null) {
+      clearTimeout(this.highlightClearTimer);
     }
-    this.reload({ silent: true });
+    this.highlightClearTimer = setTimeout(() => {
+      if (this.control.highlightedItemId === itemId) {
+        this.control = { ...this.control, highlightedItemId: null };
+      }
+      this.highlightClearTimer = null;
+    }, 3000);
   }
 
   toggleSkipped(event: Event): void {

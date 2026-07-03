@@ -53,8 +53,10 @@ describe('PlanWorkRecordsComponent', () => {
       {
         'plans.work.back_to_plan': 'Back to plan',
         'plans.work.back_to_hub': 'Back to work log',
-        'plans.work_records.title': 'Work history — {{name}}',
+        'plans.work.page_title': 'Work log — {{name}}',
         'plans.work_records.empty': 'No work records yet',
+        'plans.work_records.empty_hint': 'Record unscheduled work from the Today\'s work tab',
+        'plans.work_records.empty_cta': 'Record from Today\'s work',
         'plans.work_records.badge.from_schedule': 'From schedule',
         'plans.work_records.badge.adhoc': 'Ad hoc',
         'common.api_error.generic': 'An error occurred'
@@ -130,10 +132,68 @@ describe('PlanWorkRecordsComponent', () => {
     fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Work history');
+    expect(text).toContain('Work log');
     expect(text).toContain('Weeding');
     expect(text).toContain('From schedule');
     expect(text).not.toContain('No work records yet');
+  });
+
+  it('formats month and date labels for the active locale', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: 5,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('June 2026');
+    expect(text).toContain('June 12, 2026');
+    expect(text).not.toContain('2026-06');
+    expect(text).not.toContain('2026-06-12');
+  });
+
+  it('renders unified empty state with link to today tab', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: []
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-work__empty-message')?.textContent?.trim()).toBe(
+      'No work records yet'
+    );
+    const cta = fixture.nativeElement.querySelector('.plan-work__empty-cta-link');
+    expect(cta?.textContent?.trim()).toBe("Record from Today's work");
+    expect(cta?.getAttribute('href')).toContain('/plans/7/work');
   });
 
   it('renders translated API error instead of raw i18n key', () => {

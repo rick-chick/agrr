@@ -1,13 +1,21 @@
 import { Inject, Injectable } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
+import { WorkRecord } from '../../models/plans/work-record';
 import { FieldSchedule, TaskScheduleItem } from '../../models/plans/task-schedule';
 import { PLAN_GATEWAY, PlanGateway } from './plan-gateway';
-import { LoadWorkDayListInputDto, LoadWorkDayListDataDto, WorkDayListRowDto } from './load-work-day-list.dtos';
+import {
+  LoadWorkDayListInputDto,
+  LoadWorkDayListDataDto,
+  RecentAdHocRecordDto,
+  WorkDayListRowDto
+} from './load-work-day-list.dtos';
 import { LoadWorkDayListInputPort } from './load-work-day-list.input-port';
 import {
   LOAD_WORK_DAY_LIST_OUTPUT_PORT,
   LoadWorkDayListOutputPort
 } from './load-work-day-list.output-port';
+import { WORK_RECORD_GATEWAY, WorkRecordGateway } from './work-record-gateway';
 
 const UPCOMING_DAYS = 7;
 
@@ -47,7 +55,7 @@ function hasWorkRecordOnDate(item: TaskScheduleItem, date: string): boolean {
 
 type WorkDayListRowInput = Omit<WorkDayListRowDto, 'recordedToday'>;
 
-export function groupWorkDayListRows(
+function groupWorkDayListRows(
   rows: WorkDayListRowInput[],
   today: string,
   includeSkipped: boolean
@@ -90,22 +98,44 @@ export function groupWorkDayListRows(
   return { overdue, today: todayRows, upcoming };
 }
 
+export function findTodayAdHocRecord(
+  records: WorkRecord[],
+  today: string
+): RecentAdHocRecordDto | null {
+  const adhocToday = records
+    .filter((record) => record.task_schedule_item_id == null && record.actual_date === today)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  if (!adhocToday) {
+    return null;
+  }
+  return { name: adhocToday.name, actualDate: adhocToday.actual_date };
+}
+
 @Injectable()
 export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
   constructor(
     @Inject(LOAD_WORK_DAY_LIST_OUTPUT_PORT) private readonly outputPort: LoadWorkDayListOutputPort,
-    @Inject(PLAN_GATEWAY) private readonly planGateway: PlanGateway
+    @Inject(PLAN_GATEWAY) private readonly planGateway: PlanGateway,
+    @Inject(WORK_RECORD_GATEWAY) private readonly workRecordGateway: WorkRecordGateway
   ) {}
 
   execute(dto: LoadWorkDayListInputDto): void {
-    this.planGateway.getTaskSchedule(dto.planId).subscribe({
-      next: (schedule) => {
+    forkJoin({
+      schedule: this.planGateway.getTaskSchedule(dto.planId),
+      records: this.workRecordGateway.listWorkRecords(dto.planId)
+    }).subscribe({
+      next: ({ schedule, records }) => {
         const rows = schedule.fields.flatMap(flattenFieldItems);
         const grouped = groupWorkDayListRows(rows, dto.today, dto.includeSkipped ?? false);
+        const recentAdHocRecord =
+          grouped.today.length === 0
+            ? findTodayAdHocRecord(records.work_records, dto.today)
+            : null;
         this.outputPort.present({
           plan: schedule.plan,
           fields: schedule.fields,
-          ...grouped
+          ...grouped,
+          recentAdHocRecord
         });
       },
       error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })

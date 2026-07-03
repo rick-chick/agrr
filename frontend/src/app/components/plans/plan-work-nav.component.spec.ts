@@ -64,4 +64,25 @@ describe('PlanWorkNavComponent', () => {
     expect(links[0].classList.contains('btn-primary')).toBe(false);
     expect(nav?.classList.contains('plan-work-nav--spaced')).toBe(true);
   });
+
+  it('renders Hindi nav tabs instead of ja fallback', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('in', {
+      'plans.work.nav.work': 'आज का कार्य',
+      'plans.work.nav.schedule': 'पूर्ण अनुसूची',
+      'plans.work.nav.history': 'कार्य इतिहास'
+    });
+    translate.use('in');
+
+    await router.navigateByUrl('/plans/1/work_records');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const navLinks = fixture.nativeElement.querySelectorAll('.plan-work-nav__link');
+    expect(navLinks.length).toBe(3);
+    expect(navLinks[0].textContent?.trim()).toBe('आज का कार्य');
+    expect(navLinks[1].textContent?.trim()).toBe('पूर्ण अनुसूची');
+    expect(navLinks[2].textContent?.trim()).toBe('कार्य इतिहास');
+  });
 });

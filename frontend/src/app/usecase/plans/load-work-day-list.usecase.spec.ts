@@ -1,10 +1,12 @@
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
-import { LoadWorkDayListUseCase } from './load-work-day-list.usecase';
+import { findTodayAdHocRecord, LoadWorkDayListUseCase } from './load-work-day-list.usecase';
 import { PlanGateway } from './plan-gateway';
 import { LoadWorkDayListOutputPort } from './load-work-day-list.output-port';
 import { LoadWorkDayListDataDto } from './load-work-day-list.dtos';
 import { TaskScheduleItem, TaskScheduleResponse } from '../../models/plans/task-schedule';
+import { WorkRecord } from '../../models/plans/work-record';
+import { WorkRecordGateway } from './work-record-gateway';
 
 const baseDetails = {
   stage: { name: 'stage', order: 1 },
@@ -91,6 +93,35 @@ describe('LoadWorkDayListUseCase', () => {
       deletePlan: () => of({} as never)
     }) as PlanGateway;
 
+  const createWorkRecordGateway = (records: WorkRecord[] = []): WorkRecordGateway =>
+    ({
+      listWorkRecords: () => of({ work_records: records }),
+      createWorkRecord: () => of({} as never),
+      updateWorkRecord: () => of({} as never),
+      deleteWorkRecord: () => of({} as never),
+      skipTaskScheduleItem: () => of({} as never),
+      unskipTaskScheduleItem: () => of({} as never)
+    }) as WorkRecordGateway;
+
+  const adhocRecord = (overrides: Partial<WorkRecord> & { actual_date: string; name: string }): WorkRecord => ({
+    id: 1,
+    cultivation_plan_id: 1,
+    field_cultivation_id: null,
+    task_schedule_item_id: null,
+    agricultural_task_id: null,
+    name: overrides.name,
+    task_type: null,
+    actual_date: overrides.actual_date,
+    amount: null,
+    amount_unit: null,
+    time_spent_minutes: null,
+    notes: null,
+    created_at: overrides.created_at ?? overrides.actual_date,
+    updated_at: overrides.updated_at ?? overrides.actual_date,
+    task_schedule_item: null,
+    ...overrides
+  });
+
   it('groups overdue, today, and upcoming items', () => {
     const response = scheduleWithItems([
       item({ item_id: 1, scheduled_date: '2026-06-08', name: '追肥' }),
@@ -105,7 +136,11 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
     useCase.execute({ planId: 1, today });
 
     expect(result!.overdue).toHaveLength(1);
@@ -128,7 +163,11 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
     useCase.execute({ planId: 1, today });
 
     expect(result!.overdue).toHaveLength(0);
@@ -148,7 +187,11 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
     useCase.execute({ planId: 1, today, includeSkipped: true });
 
     expect(result!.today).toHaveLength(1);
@@ -167,7 +210,11 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
     useCase.execute({ planId: 1, today, includeSkipped: true });
 
     expect(result!.overdue).toHaveLength(1);
@@ -189,7 +236,11 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
     useCase.execute({ planId: 1, today, includeSkipped: true });
 
     expect(result!.upcoming).toHaveLength(1);
@@ -212,7 +263,11 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
     useCase.execute({ planId: 1, today, includeSkipped: false });
 
     expect(result!.overdue).toHaveLength(0);
@@ -245,7 +300,11 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
     useCase.execute({ planId: 1, today });
 
     expect(result!.today).toHaveLength(1);
@@ -266,7 +325,11 @@ describe('LoadWorkDayListUseCase', () => {
       onError: () => {}
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, createGateway(response));
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
     useCase.execute({ planId: 1, today });
 
     expect(result!.upcoming).toHaveLength(0);
@@ -288,9 +351,102 @@ describe('LoadWorkDayListUseCase', () => {
       onError
     };
 
-    const useCase = new LoadWorkDayListUseCase(outputPort, gateway);
+    const useCase = new LoadWorkDayListUseCase(outputPort, gateway, createWorkRecordGateway());
     useCase.execute({ planId: 1, today });
 
     expect(onError).toHaveBeenCalled();
+  });
+
+  it('returns recent ad hoc record for today when today list is empty', () => {
+    const response = scheduleWithItems([]);
+    let result: LoadWorkDayListDataDto | null = null;
+    const outputPort: LoadWorkDayListOutputPort = {
+      present: (dto) => {
+        result = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway([
+        adhocRecord({ id: 2, name: '規格選別', actual_date: today, created_at: '2026-06-12T10:00:00Z' }),
+        adhocRecord({ id: 1, name: '古い記録', actual_date: '2026-06-10' })
+      ])
+    );
+    useCase.execute({ planId: 1, today });
+
+    expect(result!.today).toHaveLength(0);
+    expect(result!.recentAdHocRecord).toEqual({ name: '規格選別', actualDate: today });
+  });
+
+  it('does not return recent ad hoc record when today has scheduled items', () => {
+    const response = scheduleWithItems([
+      item({ item_id: 1, scheduled_date: today, name: '防除' })
+    ]);
+    let result: LoadWorkDayListDataDto | null = null;
+    const outputPort: LoadWorkDayListOutputPort = {
+      present: (dto) => {
+        result = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway([adhocRecord({ name: '規格選別', actual_date: today })])
+    );
+    useCase.execute({ planId: 1, today });
+
+    expect(result!.today).toHaveLength(1);
+    expect(result!.recentAdHocRecord).toBeNull();
+  });
+});
+
+describe('findTodayAdHocRecord', () => {
+  it('picks the latest ad hoc record for today', () => {
+    const records: WorkRecord[] = [
+      {
+        id: 1,
+        cultivation_plan_id: 1,
+        field_cultivation_id: null,
+        task_schedule_item_id: null,
+        agricultural_task_id: null,
+        name: '古い',
+        task_type: null,
+        actual_date: '2026-06-12',
+        amount: null,
+        amount_unit: null,
+        time_spent_minutes: null,
+        notes: null,
+        created_at: '2026-06-12T08:00:00Z',
+        updated_at: '2026-06-12T08:00:00Z',
+        task_schedule_item: null
+      },
+      {
+        id: 2,
+        cultivation_plan_id: 1,
+        field_cultivation_id: null,
+        task_schedule_item_id: null,
+        agricultural_task_id: null,
+        name: '最新',
+        task_type: null,
+        actual_date: '2026-06-12',
+        amount: null,
+        amount_unit: null,
+        time_spent_minutes: null,
+        notes: null,
+        created_at: '2026-06-12T12:00:00Z',
+        updated_at: '2026-06-12T12:00:00Z',
+        task_schedule_item: null
+      }
+    ];
+
+    expect(findTodayAdHocRecord(records, '2026-06-12')).toEqual({
+      name: '最新',
+      actualDate: '2026-06-12'
+    });
   });
 });

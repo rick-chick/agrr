@@ -2187,8 +2187,7 @@
       }
     },
     "task_schedules": {
-      "title": "{{name}}の作業予定",
-      "back_to_plan": "計画詳細を見る",
+      "empty_hint": "作物を追加すると作業予定が生成されます。計画の内容を確認してください。",
       "timeline_generated_at": "生成日時: {{datetime}}",
       "timeline_generated_unknown": "生成日時: 未取得",
       "nav_prev_week": "前の週",
@@ -2288,7 +2287,7 @@
       }
     },
     "work": {
-      "title": "{{name}}の作業",
+      "page_title": "{{name}}の作業記録",
       "back_to_plan": "計画詳細を見る",
       "back_to_hub": "作業記録トップへ",
       "nav": {
@@ -2341,8 +2340,9 @@
       }
     },
     "work_records": {
-      "title": "{{name}}の実績履歴",
       "empty": "実績がまだありません",
+      "empty_hint": "今日の作業タブから予定外の作業を記録できます",
+      "empty_cta": "今日の作業で記録する",
       "badge": {
         "from_schedule": "予定由来",
         "adhoc": "予定外"

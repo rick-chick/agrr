@@ -1,5 +1,6 @@
 import { FieldSchedule, PlanInfo } from '../../models/plans/task-schedule';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
+import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 
 export interface PlanWorkViewState {
   loading: boolean;
@@ -17,6 +18,11 @@ export interface PlanWorkViewState {
   regenerateError: string | null;
   pendingSyncToastKey: string | null;
   pendingRecordSavedToastKey: string | null;
+  pendingRecordSavedEvent: WorkRecordSheetSavedEvent | null;
+  pendingQuickCompleteValidation: {
+    itemId: number;
+    fieldErrors: Record<string, string[]>;
+  } | null;
   syncReloadNonce: number;
 }
 

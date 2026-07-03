@@ -17,7 +17,7 @@ function getNested(obj: JsonRecord, path: string): unknown {
 const PLANS_WORK_KEYS = [
   'plans.work.back_to_plan',
   'plans.work.back_to_hub',
-  'plans.work.title',
+  'plans.work.page_title',
   'plans.work.show_skipped',
   'plans.work.section.overdue',
   'plans.work.section.today',

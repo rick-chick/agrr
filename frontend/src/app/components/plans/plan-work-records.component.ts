@@ -1,8 +1,9 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
+import { formatIsoDateForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
@@ -38,7 +39,7 @@ const initialControl: PlanWorkRecordsViewState = {
         }}</a>
         @if (control.plan) {
           <h1 id="plan-work-page-title" class="page-title">{{
-            'plans.work_records.title' | translate: { name: (control.plan.name | planDisplayName) }
+            'plans.work.page_title' | translate: { name: (control.plan.name | planDisplayName) }
           }}</h1>
           <p class="page-description">
             <a class="plan-work-header__plan-link" [routerLink]="['/plans', planId]">{{
@@ -48,7 +49,7 @@ const initialControl: PlanWorkRecordsViewState = {
         }
       </header>
 
-      <section class="section-card plan-work-records" aria-labelledby="plan-work-page-title">
+      <section class="section-card" aria-labelledby="plan-work-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
@@ -62,17 +63,24 @@ const initialControl: PlanWorkRecordsViewState = {
           <app-plan-work-nav [planId]="planId" />
 
           @if (!control.groups.length) {
-            <p class="plan-work-records__empty">{{ 'plans.work_records.empty' | translate }}</p>
+            <div class="plan-work__empty">
+              <p class="plan-work__empty-message">{{ 'plans.work_records.empty' | translate }}</p>
+              <p class="plan-work__empty-hint">{{ 'plans.work_records.empty_hint' | translate }}</p>
+              <a
+                class="plan-work__empty-cta-link plan-work__cta--constrained"
+                [routerLink]="['/plans', planId, 'work']"
+              >{{ 'plans.work_records.empty_cta' | translate }}</a>
+            </div>
           }
 
           @for (group of control.groups; track group.monthLabel) {
             <section class="plan-work-records__month">
-              <h3>{{ group.monthLabel }}</h3>
+              <h3>{{ displayMonth(group.monthLabel) }}</h3>
               <ul class="plan-work-records__list">
                 @for (record of group.records; track record.id) {
                   <li>
                     <button type="button" class="plan-work-records__row" (click)="openEdit(record)">
-                      <span class="plan-work-records__date">{{ record.actual_date }}</span>
+                      <span class="plan-work-records__date">{{ displayDate(record.actual_date) }}</span>
                       <span class="plan-work-records__name">{{ record.name }}</span>
                       @if (record.task_schedule_item_id) {
                         <span class="plan-work-records__badge plan-work-records__badge--scheduled">
@@ -112,6 +120,7 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
   private readonly loadUseCase = inject(LoadWorkRecordsUseCase);
   private readonly presenter = inject(PlanWorkRecordsPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -144,5 +153,13 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   openEdit(record: WorkRecord): void {
     this.sheet.openEdit(record);
+  }
+
+  displayDate(iso: string): string {
+    return formatIsoDateForDisplay(iso, this.translate.currentLang);
+  }
+
+  displayMonth(isoYm: string): string {
+    return formatIsoMonthForDisplay(isoYm, this.translate.currentLang);
   }
 }

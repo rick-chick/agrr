@@ -30,3 +30,21 @@ export function formatIsoDateForDisplay(iso: string, lang: string): string {
     day: 'numeric'
   }).format(date);
 }
+
+/** Formats YYYY-MM for display in the user's app language. */
+export function formatIsoMonthForDisplay(isoYm: string, lang: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(isoYm);
+  if (!match) {
+    return isoYm;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const date = new Date(year, month - 1, 1);
+  if (Number.isNaN(date.getTime())) {
+    return isoYm;
+  }
+  return new Intl.DateTimeFormat(appLangToBcp47(lang), {
+    year: 'numeric',
+    month: 'long'
+  }).format(date);
+}

@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { PlanWorkView } from '../../components/plans/plan-work.view';
-import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import {
   CreateWorkRecordSuccessDto,
@@ -30,11 +29,6 @@ export class PlanWorkPresenter
     SubscribeTaskScheduleSyncOutputPort
 {
   private view: PlanWorkView | null = null;
-  onSkipSuccessCallback: (() => void) | null = null;
-  onRecordSavedCallback: ((event: WorkRecordSheetSavedEvent) => void) | null = null;
-  onQuickCompleteValidationErrorCallback:
-    | ((itemId: number, fieldErrors: Record<string, string[]>) => void)
-    | null = null;
 
   setView(view: PlanWorkView): void {
     this.view = view;
@@ -45,7 +39,11 @@ export class PlanWorkPresenter
       this.handleQuickCompleteSuccess(dto);
       return;
     }
-    this.onSkipSuccessCallback?.();
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      syncReloadNonce: this.view.control.syncReloadNonce + 1
+    };
   }
 
   onRegenerateStarted(): void {
@@ -106,10 +104,13 @@ export class PlanWorkPresenter
       overdue: dto.overdue,
       today: dto.today,
       upcoming: dto.upcoming,
+      recentAdHocRecord: dto.recentAdHocRecord,
       regenerating: false,
       regenerateError: null,
       pendingSyncToastKey: null,
       pendingRecordSavedToastKey: null,
+      pendingRecordSavedEvent: null,
+      pendingQuickCompleteValidation: null,
       syncReloadNonce: 0
     };
   }
@@ -118,8 +119,11 @@ export class PlanWorkPresenter
     if (!this.view) throw new Error('Presenter: view not set');
     const itemId = this.view.control.completingItemId;
     if (itemId == null) return;
-    this.view.control = { ...this.view.control, completingItemId: null };
-    this.onQuickCompleteValidationErrorCallback?.(itemId, dto.fieldErrors);
+    this.view.control = {
+      ...this.view.control,
+      completingItemId: null,
+      pendingQuickCompleteValidation: { itemId, fieldErrors: dto.fieldErrors }
+    };
   }
 
   onError(dto: ErrorDto): void {
@@ -152,11 +156,11 @@ export class PlanWorkPresenter
       ...this.view.control,
       completingItemId: null,
       error: null,
-      pendingRecordSavedToastKey: 'plans.work.toast.record_saved'
+      pendingRecordSavedToastKey: 'plans.work.toast.record_saved',
+      pendingRecordSavedEvent: {
+        workRecord: dto.workRecord,
+        mode: 'create-from-item'
+      }
     };
-    this.onRecordSavedCallback?.({
-      workRecord: dto.workRecord,
-      mode: 'create-from-item'
-    });
   }
 }

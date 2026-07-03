@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlanWorkView } from '../../components/plans/plan-work.view';
-import { WorkRecordSheetSavedEvent } from '../../components/plans/work-record-sheet.view';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PlanWorkPresenter } from './plan-work.presenter';
 
@@ -23,14 +22,32 @@ const workRecord: WorkRecord = {
   task_schedule_item: null
 };
 
+const baseControl = {
+  loading: false,
+  error: null,
+  plan: null,
+  fields: [],
+  overdue: [],
+  today: [],
+  upcoming: [],
+  includeSkipped: false,
+  recentAdHocRecord: null,
+  highlightedItemId: null,
+  completingItemId: null as number | null,
+  regenerating: false,
+  regenerateError: null,
+  pendingSyncToastKey: null,
+  pendingRecordSavedToastKey: null,
+  pendingRecordSavedEvent: null,
+  pendingQuickCompleteValidation: null,
+  syncReloadNonce: 0
+};
+
 describe('PlanWorkPresenter quick complete', () => {
   let presenter: PlanWorkPresenter;
   let view: PlanWorkView;
-  let onRecordSavedCallback: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    onRecordSavedCallback = vi.fn();
-
     TestBed.configureTestingModule({
       providers: [PlanWorkPresenter]
     });
@@ -38,37 +55,32 @@ describe('PlanWorkPresenter quick complete', () => {
     presenter = TestBed.inject(PlanWorkPresenter);
     view = {
       control: {
-        loading: false,
-        error: null,
-        plan: null,
-        fields: [],
-        overdue: [],
-        today: [],
-        upcoming: [],
-        includeSkipped: false,
-        recentAdHocRecord: null,
-        highlightedItemId: null,
-        completingItemId: 11,
-        regenerating: false,
-        regenerateError: null,
-        pendingSyncToastKey: null,
-        pendingRecordSavedToastKey: null,
-        syncReloadNonce: 0
+        ...baseControl,
+        completingItemId: 11
       }
     };
     presenter.setView(view);
-    presenter.onRecordSavedCallback = onRecordSavedCallback as (event: WorkRecordSheetSavedEvent) => void;
   });
 
-  it('queues record saved toast and emits saved event on quick complete success', () => {
+  it('queues record saved toast and pending saved event on quick complete success', () => {
     presenter.onSuccess({ workRecord });
 
     expect(view.control.pendingRecordSavedToastKey).toBe('plans.work.toast.record_saved');
-    expect(onRecordSavedCallback).toHaveBeenCalledWith({
+    expect(view.control.pendingRecordSavedEvent).toEqual({
       workRecord,
       mode: 'create-from-item'
     });
     expect(view.control.completingItemId).toBeNull();
+  });
+
+  it('queues validation sheet state on quick complete validation error', () => {
+    presenter.onValidationError({ fieldErrors: { actual_date: ['required'] } });
+
+    expect(view.control.completingItemId).toBeNull();
+    expect(view.control.pendingQuickCompleteValidation).toEqual({
+      itemId: 11,
+      fieldErrors: { actual_date: ['required'] }
+    });
   });
 
   it('clears completingItemId on quick complete error', () => {
@@ -84,6 +96,85 @@ describe('PlanWorkPresenter quick complete', () => {
     expect(view.control.regenerating).toBe(true);
     expect(view.control.regenerateError).toBeNull();
   });
+
+  it('clears regenerate error on regenerate success', () => {
+    view.control = {
+      ...view.control,
+      regenerating: true,
+      regenerateError: 'plans.task_schedules.sync_errors.generic'
+    };
+
+    presenter.onRegenerateSuccess();
+
+    expect(view.control.regenerateError).toBeNull();
+  });
+});
+
+describe('PlanWorkPresenter skip success', () => {
+  let presenter: PlanWorkPresenter;
+  let view: PlanWorkView;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [PlanWorkPresenter]
+    });
+
+    presenter = TestBed.inject(PlanWorkPresenter);
+    view = { control: { ...baseControl } };
+    presenter.setView(view);
+  });
+
+  it('requests list reload via syncReloadNonce when skip succeeds', () => {
+    presenter.onSuccess();
+
+    expect(view.control.syncReloadNonce).toBe(1);
+  });
+});
+
+describe('PlanWorkPresenter load error', () => {
+  let presenter: PlanWorkPresenter;
+  let view: PlanWorkView;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [PlanWorkPresenter]
+    });
+
+    presenter = TestBed.inject(PlanWorkPresenter);
+    view = { control: { ...baseControl } };
+    presenter.setView(view);
+  });
+
+  it('surfaces load errors and clears list data', () => {
+    presenter.onError({ message: 'common.api_error.generic' });
+
+    expect(view.control.loading).toBe(false);
+    expect(view.control.error).toBe('common.api_error.generic');
+    expect(view.control.plan).toBeNull();
+    expect(view.control.today).toEqual([]);
+  });
+});
+
+describe('PlanWorkPresenter regenerate error', () => {
+  let presenter: PlanWorkPresenter;
+  let view: PlanWorkView;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [PlanWorkPresenter]
+    });
+
+    presenter = TestBed.inject(PlanWorkPresenter);
+    view = { control: { ...baseControl, regenerating: true } };
+    presenter.setView(view);
+  });
+
+  it('stores regenerate error and stops regenerating', () => {
+    presenter.onRegenerateError({ message: 'plans.task_schedules.sync_errors.generic' });
+
+    expect(view.control.regenerating).toBe(false);
+    expect(view.control.regenerateError).toBe('plans.task_schedules.sync_errors.generic');
+  });
 });
 
 describe('PlanWorkPresenter task schedule sync', () => {
@@ -98,8 +189,7 @@ describe('PlanWorkPresenter task schedule sync', () => {
     presenter = TestBed.inject(PlanWorkPresenter);
     view = {
       control: {
-        loading: false,
-        error: null,
+        ...baseControl,
         plan: {
           id: 7,
           name: 'テスト計画',
@@ -110,23 +200,19 @@ describe('PlanWorkPresenter task schedule sync', () => {
           timeline_generated_at_display: '2026-06-01',
           task_schedule_sync_state: 'stale',
           task_schedule_sync_error: null
-        },
-        fields: [],
-        overdue: [],
-        today: [],
-        upcoming: [],
-        includeSkipped: false,
-        recentAdHocRecord: null,
-        highlightedItemId: null,
-        completingItemId: null,
-        regenerating: false,
-        regenerateError: null,
-        pendingSyncToastKey: null,
-        pendingRecordSavedToastKey: null,
-        syncReloadNonce: 0
+        }
       }
     };
     presenter.setView(view);
+  });
+
+  it('ignores sync updates when plan is not loaded yet', () => {
+    view.control = { ...baseControl, plan: null };
+
+    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null });
+
+    expect(view.control.syncReloadNonce).toBe(0);
+    expect(view.control.pendingSyncToastKey).toBeNull();
   });
 
   it('updates plan sync state and queues toast/reload when ready', () => {
@@ -151,5 +237,21 @@ describe('PlanWorkPresenter task schedule sync', () => {
     expect(view.control.regenerating).toBe(false);
     expect(view.control.pendingSyncToastKey).toBeNull();
     expect(view.control.syncReloadNonce).toBe(1);
+  });
+
+  it('sets recentAdHocRecord from loaded work day list data', () => {
+    presenter.present({
+      plan: view.control.plan!,
+      fields: [],
+      overdue: [],
+      today: [],
+      upcoming: [],
+      recentAdHocRecord: { name: '規格選別', actualDate: '2026-06-12' }
+    });
+
+    expect(view.control.recentAdHocRecord).toEqual({
+      name: '規格選別',
+      actualDate: '2026-06-12'
+    });
   });
 });

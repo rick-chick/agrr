@@ -1177,8 +1177,7 @@
       }
     },
     "task_schedules": {
-      "title": "Task schedule for {{name}}",
-      "back_to_plan": "View plan details",
+      "empty_hint": "Add crops to your plan to generate task schedules. Review the plan setup if needed.",
       "general_label": "General tasks",
       "fertilizer_label": "Fertilizer",
       "no_schedules": "No task schedule has been generated yet.",
@@ -1208,7 +1207,7 @@
       }
     },
     "work": {
-      "title": "Work — {{name}}",
+      "page_title": "Work log — {{name}}",
       "back_to_plan": "View plan details",
       "back_to_hub": "Back to work log",
       "nav": {
@@ -1261,8 +1260,9 @@
       }
     },
     "work_records": {
-      "title": "Work history — {{name}}",
       "empty": "No work records yet",
+      "empty_hint": "Record unscheduled work from the Today's work tab",
+      "empty_cta": "Record from Today's work",
       "badge": {
         "from_schedule": "From schedule",
         "adhoc": "Ad hoc"

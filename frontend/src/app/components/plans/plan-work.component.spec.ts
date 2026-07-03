@@ -13,7 +13,6 @@ import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
-import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import { TaskScheduleItem } from '../../models/plans/task-schedule';
 
@@ -33,6 +32,8 @@ const initialControl: PlanWorkViewState = {
   regenerateError: null,
   pendingSyncToastKey: null,
   pendingRecordSavedToastKey: null,
+  pendingRecordSavedEvent: null,
+  pendingQuickCompleteValidation: null,
   syncReloadNonce: 0
 };
 
@@ -95,6 +96,8 @@ const loadedState: PlanWorkViewState = {
   regenerateError: null,
   pendingSyncToastKey: null,
   pendingRecordSavedToastKey: null,
+  pendingRecordSavedEvent: null,
+  pendingQuickCompleteValidation: null,
   syncReloadNonce: 0
 };
 
@@ -109,8 +112,6 @@ describe('PlanWorkComponent mobile UX', () => {
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
-    onSkipSuccessCallback: (() => void) | null;
-    onRecordSavedCallback: ((event: WorkRecordSheetSavedEvent) => void) | null;
   };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
@@ -121,9 +122,7 @@ describe('PlanWorkComponent mobile UX', () => {
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
     mockPresenter = {
-      setView: vi.fn(),
-      onSkipSuccessCallback: null,
-      onRecordSavedCallback: null
+      setView: vi.fn()
     };
     cdr = { markForCheck: vi.fn() };
 
@@ -166,7 +165,7 @@ describe('PlanWorkComponent mobile UX', () => {
       {
         'plans.work.back_to_plan': '計画に戻る',
         'plans.work.back_to_hub': '作業記録トップへ',
-        'plans.work.title': '作業 — {{name}}',
+        'plans.work.page_title': '作業記録 — {{name}}',
         'plans.work.show_skipped': 'スキップを表示',
         'plans.work.section.overdue': '期限超過 ({{count}})',
         'plans.work.section.today': '今日 {{date}}',
@@ -585,9 +584,7 @@ describe('PlanWorkComponent in locale labels', () => {
     const regenerateUseCase = { execute: vi.fn() };
     const subscribeSyncUseCase = { execute: vi.fn() };
     const mockPresenter = {
-      setView: vi.fn(),
-      onSkipSuccessCallback: null,
-      onRecordSavedCallback: null
+      setView: vi.fn()
     };
     const cdr = { markForCheck: vi.fn() };
 
@@ -633,7 +630,7 @@ describe('PlanWorkComponent in locale labels', () => {
     fixture.destroy();
   });
 
-  it('renders Hindi nav tabs and empty state instead of ja fallback', async () => {
+  it('renders Hindi empty state instead of ja fallback', async () => {
     fixture.detectChanges();
     component.control = {
       ...loadedState,
@@ -643,12 +640,6 @@ describe('PlanWorkComponent in locale labels', () => {
     };
     fixture.detectChanges();
     await fixture.whenStable();
-
-    const navLinks = fixture.nativeElement.querySelectorAll('.plan-work-nav__link');
-    expect(navLinks.length).toBe(3);
-    expect(navLinks[0].textContent?.trim()).toBe('आज का कार्य');
-    expect(navLinks[1].textContent?.trim()).toBe('पूर्ण अनुसूची');
-    expect(navLinks[2].textContent?.trim()).toBe('कार्य इतिहास');
 
     const emptyMessage = fixture.nativeElement.querySelector('.plan-work__empty-message');
     expect(emptyMessage?.textContent?.trim()).toBe('आज के लिए कोई कार्य निर्धारित नहीं');

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { appLangToBcp47, formatIsoDateForDisplay } from './format-display-date';
+import {
+  appLangToBcp47,
+  formatIsoDateForDisplay,
+  formatIsoMonthForDisplay
+} from './format-display-date';
 
 describe('formatIsoDateForDisplay', () => {
   it('formats ISO dates for Japanese locale', () => {
@@ -12,6 +16,20 @@ describe('formatIsoDateForDisplay', () => {
 
   it('returns original string when not ISO date', () => {
     expect(formatIsoDateForDisplay('invalid', 'ja')).toBe('invalid');
+  });
+});
+
+describe('formatIsoMonthForDisplay', () => {
+  it('formats ISO year-month for Japanese locale', () => {
+    expect(formatIsoMonthForDisplay('2026-07', 'ja')).toBe('2026年7月');
+  });
+
+  it('formats ISO year-month for English locale', () => {
+    expect(formatIsoMonthForDisplay('2026-07', 'en')).toBe('July 2026');
+  });
+
+  it('returns original string when not ISO year-month', () => {
+    expect(formatIsoMonthForDisplay('invalid', 'ja')).toBe('invalid');
   });
 });
 

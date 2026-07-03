@@ -68,8 +68,3 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-.plan-work-records__empty {
-  color: var(--color-text-secondary, #666);
-  margin: 2rem 0;
-}
