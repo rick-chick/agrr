@@ -7,6 +7,8 @@ import en from '../../../assets/i18n/en.json';
 import inLocale from '../../../assets/i18n/in.json';
 import ja from '../../../assets/i18n/ja.json';
 import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
+import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
+import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 
 @Component({
@@ -101,7 +103,8 @@ describe('PlanGanttClimateShellComponent', () => {
 
     beforeEach(async () => {
       await TestBed.configureTestingModule({
-        imports: [PlanGanttClimateShellComponent, TranslateModule.forRoot()]
+        imports: [PlanGanttClimateShellComponent, TranslateModule.forRoot()],
+        providers: [...GANTT_CHART_API_PROVIDERS, ...PLAN_FIELD_CLIMATE_API_PROVIDERS]
       })
         .overrideComponent(PlanGanttClimateShellComponent, {
           set: {
@@ -110,7 +113,8 @@ describe('PlanGanttClimateShellComponent', () => {
               StubGanttChartComponent,
               StubPlanFieldClimateComponent,
               TranslateModule
-            ]
+            ],
+            providers: []
           }
         })
         .compileComponents();

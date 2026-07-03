@@ -10,6 +10,8 @@ import {
   PublicPlanResultsPresenter,
   PUBLIC_PLAN_RESULTS_PROVIDERS
 } from '../../usecase/public-plans/public-plan-results.providers';
+import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
+import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
@@ -34,7 +36,11 @@ const initialControl: PublicPlanResultsViewState = {
   selector: 'app-public-plan-results',
   standalone: true,
   imports: [CommonModule, PlanGanttClimateShellComponent, TranslateModule, RouterLink],
-  providers: [...PUBLIC_PLAN_RESULTS_PROVIDERS],
+  providers: [
+    ...PUBLIC_PLAN_RESULTS_PROVIDERS,
+    ...GANTT_CHART_API_PROVIDERS,
+    ...PLAN_FIELD_CLIMATE_API_PROVIDERS
+  ],
   template: `
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>

@@ -1,45 +1,68 @@
 import { Injectable } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 
 import { GanttChartView } from '../../components/plans/gantt-chart.view';
-import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
-import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
-import { resolveGanttPlanMutationFailureAction } from '../../domain/plans/gantt-plan-mutation';
 import {
-  extractHttpErrorMessage,
-  GanttPlanCoordinatorService,
-  GanttPlanMutationOutcome
-} from '../../services/plans/gantt-plan-coordinator.service';
+  GanttPlanMutationOutcome,
+  resolveGanttPlanMutationFailureAction
+} from '../../domain/plans/gantt-plan-mutation';
 import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
+import {
+  LoadGanttPlanDataEmptyDto,
+  LoadGanttPlanDataErrorDto,
+  LoadGanttPlanDataLoadedDto
+} from '../../usecase/plans/load-gantt-plan-data.dtos';
+import { LoadGanttPlanDataOutputPort } from '../../usecase/plans/load-gantt-plan-data.output-port';
+import { RunGanttPlanMutationOutputPort } from '../../usecase/plans/run-gantt-plan-mutation.output-port';
+import { RunGanttPlanMutationResultDto } from '../../usecase/plans/run-gantt-plan-mutation.dtos';
+import { GanttMutationPresentationOptions } from '../../usecase/plans/run-gantt-plan-mutation.dtos';
 
 @Injectable()
-export class GanttChartPresenter {
+export class GanttChartPresenter implements LoadGanttPlanDataOutputPort, RunGanttPlanMutationOutputPort {
   private view: GanttChartView | null = null;
-  private planType: CultivationPlanContextType = 'private';
 
-  constructor(
-    private readonly translate: TranslateService,
-    private readonly ganttPlanCoordinator: GanttPlanCoordinatorService
-  ) {}
+  constructor(private readonly translate: TranslateService) {}
 
   setView(view: GanttChartView): void {
     this.view = view;
   }
 
-  bindPlanContext(planType: CultivationPlanContextType): void {
-    this.planType = planType;
+  onMutationOutcome(outcome: GanttPlanMutationOutcome, context: RunGanttPlanMutationResultDto): void {
+    if (this.view) {
+      this.view.setFieldFormLoading(false);
+    }
+    this.applyMutationOutcome(outcome, context.planId, context.presentation);
   }
 
-  applyMutationOutcome(
+  onPlanDataLoaded(dto: LoadGanttPlanDataLoadedDto): void {
+    if (!this.view) {
+      throw new Error('GanttChartPresenter: view not set');
+    }
+    if (dto.purpose === 'refresh') {
+      this.view.applyRefreshedPlanData(dto.data);
+      return;
+    }
+    this.view.applyBarResetPlanData(dto.data);
+  }
+
+  onPlanDataEmpty(dto: LoadGanttPlanDataEmptyDto): void {
+    if (!this.view) {
+      throw new Error('GanttChartPresenter: view not set');
+    }
+    if (dto.purpose === 'refresh') {
+      this.view.clearOptimizationLock();
+    }
+  }
+
+  onLoadError(dto: LoadGanttPlanDataErrorDto): void {
+    this.showOperationError(dto.message);
+  }
+
+  private applyMutationOutcome(
     outcome: GanttPlanMutationOutcome,
     planId: number,
-    options: {
-      onRefetchFailure?: 'refresh' | 'update_chart';
-      revertBarOnMessageFailure?: boolean;
-      onSuccess?: (data: CultivationPlanData) => void;
-    } = {}
+    options: GanttMutationPresentationOptions = {}
   ): void {
     if (!this.view) {
       throw new Error('GanttChartPresenter: view not set');
@@ -53,7 +76,7 @@ export class GanttChartPresenter {
           if (action.recovery === 'update_chart') {
             this.view.updateChartOnly();
           } else {
-            this.refreshPlanData(planId);
+            this.view.requestPlanRefresh(planId);
           }
           return;
         case 'refetch_error':
@@ -61,7 +84,7 @@ export class GanttChartPresenter {
           if (action.recovery === 'update_chart') {
             this.view.updateChartOnly();
           } else {
-            this.refreshPlanData(planId);
+            this.view.requestPlanRefresh(planId);
           }
           return;
         case 'message':
@@ -77,34 +100,12 @@ export class GanttChartPresenter {
     onSuccess(outcome.data);
   }
 
-  refreshPlanData(planId: number): void {
+  private showOperationError(message?: string): void {
     if (!this.view) {
       throw new Error('GanttChartPresenter: view not set');
     }
 
-    this.ganttPlanCoordinator.loadPlanData(this.planType, planId).subscribe({
-      next: (planData) => {
-        if (planData) {
-          this.view!.applyRefreshedPlanData(planData);
-        } else {
-          this.view!.clearOptimizationLock();
-        }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.showOperationError(extractHttpErrorMessage(error));
-      }
-    });
-  }
-
-  showOperationError(message?: string, technicalDetails?: string): void {
-    if (!this.view) {
-      throw new Error('GanttChartPresenter: view not set');
-    }
-
-    let text = this.formatErrorText(message);
-    if (technicalDetails) {
-      text = `${text} (${technicalDetails})`;
-    }
+    const text = this.formatErrorText(message);
     this.view.control = {
       ...this.view.control,
       pendingErrorFlash: pendingErrorFlashFromError({ message: text })

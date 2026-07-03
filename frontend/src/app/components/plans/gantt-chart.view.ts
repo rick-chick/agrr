@@ -9,6 +9,8 @@ export interface GanttChartViewControl {
 export interface GanttChartView {
   control: GanttChartViewControl;
   applyRefreshedPlanData(planData: CultivationPlanData): void;
+  applyBarResetPlanData(planData: CultivationPlanData): void;
+  requestPlanRefresh(planId: number): void;
   updateChartOnly(): void;
   resetBarPosition(): void;
   clearOptimizationLock(): void;

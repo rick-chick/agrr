@@ -1,20 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
 
 import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
 import { GanttChartPresenter } from './gantt-chart.presenter';
 import { GanttChartView } from '../../components/plans/gantt-chart.view';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
-import { GanttPlanCoordinatorService } from '../../services/plans/gantt-plan-coordinator.service';
 
 describe('GanttChartPresenter', () => {
   let presenter: GanttChartPresenter;
   let view: GanttChartView;
   let translate: { instant: ReturnType<typeof vi.fn> };
-  let coordinator: {
-    loadPlanData: ReturnType<typeof vi.fn>;
-  };
   let lastControl: GanttChartView['control'];
 
   const planData = (): CultivationPlanData =>
@@ -38,6 +32,8 @@ describe('GanttChartPresenter', () => {
         lastControl = value;
       },
       applyRefreshedPlanData: vi.fn(),
+      applyBarResetPlanData: vi.fn(),
+      requestPlanRefresh: vi.fn(),
       updateChartOnly: vi.fn(),
       resetBarPosition: vi.fn(),
       clearOptimizationLock: vi.fn(),
@@ -46,21 +42,15 @@ describe('GanttChartPresenter', () => {
     translate = {
       instant: vi.fn((key: string) => `t:${key}`)
     };
-    coordinator = { loadPlanData: vi.fn() };
 
-    presenter = new GanttChartPresenter(
-      translate as never,
-      coordinator as unknown as GanttPlanCoordinatorService
-    );
+    presenter = new GanttChartPresenter(translate as never);
     presenter.setView(view);
-    presenter.bindPlanContext('private');
   });
 
   it('shows translated refetch_failed and updates chart when configured', () => {
-    presenter.applyMutationOutcome(
+    presenter.onMutationOutcome(
       { status: 'failure', failure: { refetchFailed: true } },
-      7,
-      { onRefetchFailure: 'update_chart' }
+      { planId: 7, presentation: { onRefetchFailure: 'update_chart' } }
     );
 
     expect(translate.instant).toHaveBeenCalledWith(GANTT_I18N_KEYS.js.logs.dataRefetchFailed);
@@ -72,20 +62,19 @@ describe('GanttChartPresenter', () => {
     expect(view.clearOptimizationLock).toHaveBeenCalled();
   });
 
-  it('reloads plan data on refetch_error by default', () => {
-    coordinator.loadPlanData.mockReturnValue(of(planData()));
+  it('requests plan refresh on refetch_error by default', () => {
+    presenter.onMutationOutcome(
+      { status: 'failure', failure: { refetchError: true } },
+      { planId: 7 }
+    );
 
-    presenter.applyMutationOutcome({ status: 'failure', failure: { refetchError: true } }, 7);
-
-    expect(coordinator.loadPlanData).toHaveBeenCalledWith('private', 7);
-    expect(view.applyRefreshedPlanData).toHaveBeenCalled();
+    expect(view.requestPlanRefresh).toHaveBeenCalledWith(7);
   });
 
   it('shows API message and reverts bar on message failure', () => {
-    presenter.applyMutationOutcome(
+    presenter.onMutationOutcome(
       { status: 'failure', failure: { message: 'bad request' } },
-      7,
-      { revertBarOnMessageFailure: true }
+      { planId: 7, presentation: { revertBarOnMessageFailure: true } }
     );
 
     expect(lastControl.pendingErrorFlash).toEqual({
@@ -97,31 +86,42 @@ describe('GanttChartPresenter', () => {
 
   it('applies refreshed plan data on success', () => {
     const data = planData();
-    presenter.applyMutationOutcome({ status: 'success', data }, 7);
+    presenter.onMutationOutcome({ status: 'success', data }, { planId: 7 });
 
     expect(view.applyRefreshedPlanData).toHaveBeenCalledWith(data);
   });
 
-  it('refreshPlanData applies data when coordinator returns plan', () => {
+  it('onPlanDataLoaded refreshes view data for refresh purpose', () => {
     const data = planData();
-    coordinator.loadPlanData.mockReturnValue(of(data));
+    presenter.onPlanDataLoaded({ data, purpose: 'refresh' });
 
-    presenter.refreshPlanData(7);
-
-    expect(coordinator.loadPlanData).toHaveBeenCalledWith('private', 7);
     expect(view.applyRefreshedPlanData).toHaveBeenCalledWith(data);
   });
 
-  it('refreshPlanData surfaces HTTP errors', () => {
-    coordinator.loadPlanData.mockReturnValue(
-      throwError(() => new HttpErrorResponse({ error: { message: 'network' }, status: 500 }))
-    );
+  it('onPlanDataLoaded resets bar layout for reset_bar purpose', () => {
+    const data = planData();
+    presenter.onPlanDataLoaded({ data, purpose: 'reset_bar' });
 
-    presenter.refreshPlanData(7);
+    expect(view.applyBarResetPlanData).toHaveBeenCalledWith(data);
+  });
 
+  it('onLoadError surfaces HTTP errors', () => {
+    presenter.onLoadError({ message: 'common.api_error.generic', purpose: 'refresh' });
+
+    expect(translate.instant).toHaveBeenCalledWith('common.api_error.generic');
     expect(lastControl.pendingErrorFlash).toEqual({
       type: 'error',
-      text: 'network'
+      text: 't:common.api_error.generic'
     });
+  });
+
+  it('onMutationOutcome clears field form loading before applying outcome', () => {
+    presenter.onMutationOutcome(
+      { status: 'success', data: planData() },
+      { planId: 7, presentation: undefined }
+    );
+
+    expect(view.setFieldFormLoading).toHaveBeenCalledWith(false);
+    expect(view.applyRefreshedPlanData).toHaveBeenCalled();
   });
 });

@@ -8,13 +8,20 @@ import {
   HOME_DEMO_HINT_I18N_KEYS,
   HOME_INDEX_DEMO_UI_I18N_KEYS
 } from '../../domain/plans/home-index.content';
+import { buildLandingDemoLabels } from '../../domain/plans/landing-demo-labels';
 import { PUBLIC_PLAN_CREATE_ROUTE } from '../../routes/public-plans.routes';
-import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.service';
+import { HomeDemoSectionView } from './home-demo-section.view';
+import {
+  HOME_DEMO_SECTION_PROVIDERS,
+  HomeDemoSectionPresenter
+} from '../../usecase/plans/home-demo-section.providers';
+import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-demo-plan.usecase';
 
 @Component({
   selector: 'app-home-demo-section',
   standalone: true,
   imports: [TranslateModule, PlanGanttClimateShellComponent],
+  providers: [...HOME_DEMO_SECTION_PROVIDERS],
   template: `
     <section
       id="home-demo"
@@ -38,34 +45,39 @@ import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.s
   `,
   styleUrls: ['./home-demo-section.component.css', '../plans/plan-detail-surface.css']
 })
-export class HomeDemoSectionComponent implements OnInit, OnDestroy {
+export class HomeDemoSectionComponent implements OnInit, OnDestroy, HomeDemoSectionView {
   readonly demoUi = HOME_INDEX_DEMO_UI_I18N_KEYS;
   readonly demoHintKeys = HOME_DEMO_HINT_I18N_KEYS;
 
   private readonly router = inject(Router);
-  private readonly demoStore = inject(DemoGanttPlanStore);
   private readonly translate = inject(TranslateService);
+  private readonly homeDemoPresenter = inject(HomeDemoSectionPresenter);
+  private readonly syncLandingDemoPlanUseCase = inject(SyncLandingDemoPlanUseCase);
   private langChangeSub: Subscription | null = null;
 
   demoPlanData!: CultivationPlanData;
 
-  constructor() {
-    this.refreshViewState();
-  }
-
   ngOnInit(): void {
-    this.langChangeSub = this.translate.onLangChange.subscribe(() => this.refreshViewState());
+    this.homeDemoPresenter.setView(this);
+    this.syncLocalizedDemoPlan();
+    this.langChangeSub = this.translate.onLangChange.subscribe(() => this.syncLocalizedDemoPlan());
   }
 
   ngOnDestroy(): void {
     this.langChangeSub?.unsubscribe();
   }
 
+  applyDemoPlanData(planData: CultivationPlanData): void {
+    this.demoPlanData = planData;
+  }
+
   navigateToPlan(): void {
     void this.router.navigate(PUBLIC_PLAN_CREATE_ROUTE);
   }
 
-  private refreshViewState(): void {
-    this.demoPlanData = this.demoStore.syncHomeDemoViewState(this.translate).planData;
+  private syncLocalizedDemoPlan(): void {
+    this.syncLandingDemoPlanUseCase.execute({
+      labels: buildLandingDemoLabels(this.translate)
+    });
   }
 }

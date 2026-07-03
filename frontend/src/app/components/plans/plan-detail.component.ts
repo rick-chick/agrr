@@ -7,6 +7,8 @@ import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.compo
 import { PlanDetailView, PlanDetailViewState } from './plan-detail.view';
 import { LoadPlanDetailUseCase } from '../../usecase/plans/load-plan-detail.usecase';
 import { PlanDetailPresenter, PLAN_DETAIL_PROVIDERS } from '../../usecase/plans/plan-detail.providers';
+import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
+import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 
 const initialControl: PlanDetailViewState = {
   loading: true,
@@ -25,7 +27,11 @@ const initialControl: PlanDetailViewState = {
     TranslateModule,
     PlanDisplayNamePipe
   ],
-  providers: [...PLAN_DETAIL_PROVIDERS],
+  providers: [
+    ...PLAN_DETAIL_PROVIDERS,
+    ...GANTT_CHART_API_PROVIDERS,
+    ...PLAN_FIELD_CLIMATE_API_PROVIDERS
+  ],
   template: `
     <main class="page-main">
       <a class="plan-detail__back" [routerLink]="['/plans']">{{

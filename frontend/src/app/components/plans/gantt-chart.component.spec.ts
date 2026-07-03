@@ -1,53 +1,47 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { of } from 'rxjs';
 
 import { GanttChartComponent } from './gantt-chart.component';
-import { GanttPlanCoordinatorService } from '../../services/plans/gantt-plan-coordinator.service';
-import { GanttChartPresenter } from '../../adapters/plans/gantt-chart.presenter';
 import { CultivationData } from '../../domain/plans/cultivation-plan-data';
+import { GANTT_PLAN_GATEWAY } from '../../usecase/plans/gantt-plan-gateway';
+import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
+import { LoadGanttPlanDataUseCase } from '../../usecase/plans/load-gantt-plan-data.usecase';
+import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-mutation.usecase';
 
 /**
  * Component tests: template wiring, action bar (desktop/mobile host), desktop pointercancel, trash dropzone.
  * Mobile overflow menu UI → gantt-mobile-actions-menu.component.spec.ts.
- * Domain layout → gantt-chart-layout.spec.ts; coordinator HTTP → gantt-plan-coordinator.service.spec.ts;
- * presenter mutations → gantt-chart.presenter.spec.ts; mobile touch drag → e2e/gantt-mobile-drag.spec.ts.
+ * Domain layout → gantt-chart-layout.spec.ts; gateway HTTP → gantt-plan-api.gateway.spec.ts;
+ * presenter mutations → gantt-chart.presenter.spec.ts; use cases → load/run-gantt-plan-mutation.usecase.spec.ts; mobile touch drag → e2e/gantt-mobile-drag.spec.ts.
  */
 describe('GanttChartComponent', () => {
   let component: GanttChartComponent;
   let fixture: ComponentFixture<GanttChartComponent>;
-  let ganttPlanCoordinator: GanttPlanCoordinatorService;
+  let runGanttPlanMutationUseCase: { execute: ReturnType<typeof vi.fn> };
   let mobileLayoutMatches = false;
 
   beforeEach(async () => {
-    const coordinatorMock = {
-      adjustCultivationMove: vi.fn(),
-      loadPlanData: vi.fn().mockReturnValue(of(null)),
-      addCrop: vi.fn(),
-      removeCultivation: vi.fn(),
-      addField: vi.fn(),
-      removeField: vi.fn()
-    };
+    runGanttPlanMutationUseCase = { execute: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [
         GanttChartComponent,
-        HttpClientTestingModule,
         TranslateModule.forRoot()
       ],
       providers: [
-        { provide: GanttPlanCoordinatorService, useValue: coordinatorMock },
-        GanttChartPresenter
+        ...GANTT_CHART_API_PROVIDERS,
+        { provide: GANTT_PLAN_GATEWAY, useValue: {} },
+        { provide: RunGanttPlanMutationUseCase, useValue: runGanttPlanMutationUseCase },
+        { provide: LoadGanttPlanDataUseCase, useValue: { execute: vi.fn() } }
       ]
     })
+      .overrideComponent(GanttChartComponent, { set: { providers: [] } })
     .compileComponents();
 
     fixture = TestBed.createComponent(GanttChartComponent);
     component = fixture.componentInstance;
     component.ngOnInit();
-    ganttPlanCoordinator = TestBed.inject(GanttPlanCoordinatorService);
 
     // Configure simple translations required by these tests
     const translate = TestBed.inject(TranslateService);
@@ -177,12 +171,6 @@ describe('GanttChartComponent', () => {
           cultivations: [cultivation]
         }
       } as any;
-      ganttPlanCoordinator.removeCultivation = vi.fn().mockReturnValue(
-        of({ status: 'success', data: component.data! })
-      );
-      ganttPlanCoordinator.removeField = vi.fn().mockReturnValue(
-        of({ status: 'success', data: component.data! })
-      );
     });
 
     it('does not remove cultivation when confirm is cancelled', () => {
@@ -190,7 +178,7 @@ describe('GanttChartComponent', () => {
 
       component.confirmRemoveCultivation(cultivation);
 
-      expect(ganttPlanCoordinator.removeCultivation).not.toHaveBeenCalled();
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
       vi.unstubAllGlobals();
     });
 
@@ -200,7 +188,7 @@ describe('GanttChartComponent', () => {
 
       component.confirmRemoveField(group);
 
-      expect(ganttPlanCoordinator.removeField).not.toHaveBeenCalled();
+      expect(runGanttPlanMutationUseCase.execute).not.toHaveBeenCalled();
       vi.unstubAllGlobals();
     });
   });

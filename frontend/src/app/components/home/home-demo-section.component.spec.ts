@@ -4,10 +4,11 @@ import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomeDemoSectionComponent } from './home-demo-section.component';
-import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.service';
 import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { buildLandingDemoPlanFixture } from '../../domain/plans/landing-demo-plan.fixture';
 import { LANDING_DEMO_LABELS_FIXTURE } from '../../domain/plans/landing-demo-i18n.keys';
+import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-demo-plan.usecase';
+import { HomeDemoSectionPresenter } from '../../adapters/plans/home-demo-section.presenter';
 
 @Component({
   selector: 'app-plan-gantt-climate-shell',
@@ -22,21 +23,24 @@ class StubPlanGanttClimateShellComponent {
 describe('HomeDemoSectionComponent', () => {
   let fixture: ComponentFixture<HomeDemoSectionComponent>;
   let mockRouter: { navigate: ReturnType<typeof vi.fn> };
-  let mockDemoStore: { syncHomeDemoViewState: ReturnType<typeof vi.fn> };
+  let mockSyncUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     mockRouter = { navigate: vi.fn() };
-    mockDemoStore = { syncHomeDemoViewState: vi.fn() };
+    mockSyncUseCase = { execute: vi.fn() };
+    mockPresenter = { setView: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [HomeDemoSectionComponent, TranslateModule.forRoot()],
       providers: [
         { provide: Router, useValue: mockRouter },
-        { provide: DemoGanttPlanStore, useValue: mockDemoStore }
+        { provide: SyncLandingDemoPlanUseCase, useValue: mockSyncUseCase },
+        { provide: HomeDemoSectionPresenter, useValue: mockPresenter }
       ]
     })
       .overrideComponent(HomeDemoSectionComponent, {
-        set: { imports: [TranslateModule, StubPlanGanttClimateShellComponent] }
+        set: { imports: [TranslateModule, StubPlanGanttClimateShellComponent], providers: [] }
       })
       .compileComponents();
 
@@ -53,7 +57,25 @@ describe('HomeDemoSectionComponent', () => {
                 tap: 'クリックで気象・GDD',
                 add: '作物を追加'
               },
-              cta_create: '地域と作物を選んで計画を作る'
+              cta_create: '地域と作物を選んで計画を作る',
+              fixture: {
+                plan_name: 'デモ計画',
+                farm_name: 'デモ農場',
+                field_a: 'A',
+                field_b: 'B',
+                field_c: 'C',
+                crop_tomato: 'トマト',
+                crop_cucumber: 'キュウリ',
+                crop_eggplant: 'ナス',
+                crop_pepper: 'ピーマン',
+                variety_pepper: 'vp',
+                variety_eggplant: 've',
+                stage_germination: 'sg',
+                stage_growth: 'sgr',
+                stage_harvest: 'sh',
+                gdd_stage_growing: 'gg',
+                gdd_stage_pre_harvest: 'gph'
+              }
             }
           }
         }
@@ -62,9 +84,12 @@ describe('HomeDemoSectionComponent', () => {
     );
     translate.use('ja');
 
-    mockDemoStore.syncHomeDemoViewState.mockReturnValue({
-      planData: buildLandingDemoPlanFixture(LANDING_DEMO_LABELS_FIXTURE)
+    mockSyncUseCase.execute.mockImplementation(({ labels }) => {
+      fixture?.componentInstance.applyDemoPlanData(
+        buildLandingDemoPlanFixture(labels ?? LANDING_DEMO_LABELS_FIXTURE)
+      );
     });
+
     fixture = TestBed.createComponent(HomeDemoSectionComponent);
   });
 
@@ -91,13 +116,14 @@ describe('HomeDemoSectionComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/public-plans/new'] as const);
   });
 
-  it('refreshes demo gantt when locale changes', () => {
+  it('syncs localized demo plan when locale changes', () => {
     fixture.detectChanges();
-    expect(mockDemoStore.syncHomeDemoViewState).toHaveBeenCalledTimes(1);
+    expect(mockSyncUseCase.execute).toHaveBeenCalledTimes(1);
+    expect(mockPresenter.setView).toHaveBeenCalledWith(fixture.componentInstance);
 
     const translate = TestBed.inject(TranslateService);
     translate.use('en');
 
-    expect(mockDemoStore.syncHomeDemoViewState).toHaveBeenCalledTimes(2);
+    expect(mockSyncUseCase.execute).toHaveBeenCalledTimes(2);
   });
 });

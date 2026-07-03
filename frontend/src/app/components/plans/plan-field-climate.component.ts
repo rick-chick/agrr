@@ -29,7 +29,6 @@ import { LoadFieldClimateUseCase } from '../../usecase/plans/field-climate/load-
 import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
 import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
-import { PLAN_FIELD_CLIMATE_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 
 const INITIAL_STATE: PlanFieldClimateViewState = {
   loading: false,
@@ -53,7 +52,6 @@ type StageTemperatureBand = {
   selector: 'app-plan-field-climate',
   standalone: true,
   imports: [CommonModule, TranslateModule],
-  providers: [...PLAN_FIELD_CLIMATE_PROVIDERS],
   template: `
     <section class="plan-field-climate">
       <header class="plan-field-climate__header">

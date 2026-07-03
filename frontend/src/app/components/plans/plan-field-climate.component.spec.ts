@@ -9,6 +9,7 @@ import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load
 import { LoadFieldClimateUseCase } from '../../usecase/plans/field-climate/load-field-climate.usecase';
 import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
 import { PlanFieldClimateComponent } from './plan-field-climate.component';
+import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 
 vi.mock('chart.js/auto', () => ({
   default: class ChartMock {
@@ -185,8 +186,11 @@ describe('PlanFieldClimateComponent (template)', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PlanFieldClimateComponent, TranslateModule.forRoot()]
-    }).compileComponents();
+      imports: [PlanFieldClimateComponent, TranslateModule.forRoot()],
+      providers: [...PLAN_FIELD_CLIMATE_API_PROVIDERS]
+    })
+      .overrideComponent(PlanFieldClimateComponent, { set: { providers: [] } })
+      .compileComponents();
 
     fixture = TestBed.createComponent(PlanFieldClimateComponent);
     component = fixture.componentInstance;

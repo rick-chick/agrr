@@ -1,19 +1,17 @@
 import { Injectable } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import {
-  AddCropRequest,
-  AddFieldRequest
-} from './plan.service';
+  GanttAddCropRequest,
+  GanttAddFieldRequest
+} from '../../usecase/plans/gantt-plan-mutation.dtos';
 import {
-  GanttPlanMutationOutcome,
-  ganttMutationFailure,
-  ganttMutationSuccess
-} from './gantt-plan-coordinator.service';
+  GanttPlanMutationCommandResult,
+  ganttMutationCommandFailure,
+  ganttMutationCommandSuccess
+} from '../../domain/plans/gantt-plan-mutation';
 import { CultivationPlanData, CultivationData } from '../../domain/plans/cultivation-plan-data';
 import { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
-import { buildLandingDemoLabels } from '../../domain/plans/landing-demo-labels';
 import { buildLandingDemoPlanFixture } from '../../domain/plans/landing-demo-plan.fixture';
 import { buildLandingDemoClimateForCultivation } from '../../domain/plans/landing-demo-climate.fixture';
 import {
@@ -35,7 +33,7 @@ function clonePlan(data: CultivationPlanData): CultivationPlanData {
 }
 
 @Injectable({ providedIn: 'root' })
-export class DemoGanttPlanStore {
+export class DemoGanttPlanMemoryGateway {
   private labels: LandingDemoLabels = LANDING_DEMO_LABELS_FIXTURE;
   private state: CultivationPlanData = clonePlan(buildLandingDemoPlanFixture(this.labels));
   private nextCultivationId = 2000;
@@ -46,25 +44,6 @@ export class DemoGanttPlanStore {
     this.state = clonePlan(buildLandingDemoPlanFixture(labels));
     this.nextCultivationId = 2000;
     this.nextFieldId = 200;
-  }
-
-  /** Rebuild demo fixture labels from ngx-translate and return a fresh snapshot. */
-  syncFromTranslate(translate: Pick<TranslateService, 'instant'>): CultivationPlanData {
-    this.initialize(buildLandingDemoLabels(translate));
-    return this.getSnapshot();
-  }
-
-  /** Landing demo section view model (localized plan data). */
-  syncHomeDemoViewState(translate: Pick<TranslateService, 'instant'>): {
-    planData: CultivationPlanData;
-  } {
-    return {
-      planData: this.syncFromTranslate(translate)
-    };
-  }
-
-  resetToInitial(): void {
-    this.initialize(this.labels);
   }
 
   getSnapshot(): CultivationPlanData {
@@ -89,19 +68,19 @@ export class DemoGanttPlanStore {
     cultivationId: number;
     toFieldId: number;
     newStartDate: Date;
-  }): Observable<GanttPlanMutationOutcome> {
+  }): Observable<GanttPlanMutationCommandResult> {
     if (input.planId !== LANDING_DEMO_PLAN_ID) {
-      return of(ganttMutationFailure({}));
+      return of(ganttMutationCommandFailure());
     }
     const data = clonePlan(this.state);
     const cultivation = data.data.cultivations.find((c) => c.id === input.cultivationId);
     if (!cultivation) {
-      return of(ganttMutationFailure({ message: 'cultivation not found' }));
+      return of(ganttMutationCommandFailure('cultivation not found'));
     }
     const fieldGroups = buildGanttFieldGroups(data.data.fields, data.data.cultivations);
     const targetIndex = fieldGroups.findIndex((g) => g.fieldId === input.toFieldId);
     if (targetIndex < 0) {
-      return of(ganttMutationFailure({ message: 'field not found' }));
+      return of(ganttMutationCommandFailure('field not found'));
     }
     const target = fieldGroups[targetIndex]!;
     applyGanttCultivationMove({
@@ -112,23 +91,23 @@ export class DemoGanttPlanStore {
       newStartDate: input.newStartDate
     });
     this.state = data;
-    return of(ganttMutationSuccess(this.getSnapshot())).pipe(delay(DEMO_MUTATION_DELAY_MS));
+    return of(ganttMutationCommandSuccess()).pipe(delay(DEMO_MUTATION_DELAY_MS));
   }
 
-  addCrop(planId: number, payload: AddCropRequest): Observable<GanttPlanMutationOutcome> {
+  addCrop(planId: number, payload: GanttAddCropRequest): Observable<GanttPlanMutationCommandResult> {
     if (planId !== LANDING_DEMO_PLAN_ID) {
-      return of(ganttMutationFailure({}));
+      return of(ganttMutationCommandFailure());
     }
     const data = clonePlan(this.state);
     const crop =
       data.data.available_crops?.find((c) => c.id === payload.crop_id) ??
       data.data.crops.find((c) => c.id === payload.crop_id);
     if (!crop) {
-      return of(ganttMutationFailure({ message: 'crop not found' }));
+      return of(ganttMutationCommandFailure('crop not found'));
     }
     const field = data.data.fields[0];
     if (!field) {
-      return of(ganttMutationFailure({ message: 'no field' }));
+      return of(ganttMutationCommandFailure('no field'));
     }
     const startIso = payload.display_start_date ?? data.data.planning_start_date;
     const start = new Date(startIso);
@@ -152,22 +131,22 @@ export class DemoGanttPlanStore {
     };
     data.data.cultivations = [...data.data.cultivations, newCultivation];
     this.state = data;
-    return of(ganttMutationSuccess(this.getSnapshot())).pipe(delay(DEMO_MUTATION_DELAY_MS));
+    return of(ganttMutationCommandSuccess()).pipe(delay(DEMO_MUTATION_DELAY_MS));
   }
 
-  removeCultivation(planId: number, cultivationId: number): Observable<GanttPlanMutationOutcome> {
+  removeCultivation(planId: number, cultivationId: number): Observable<GanttPlanMutationCommandResult> {
     if (planId !== LANDING_DEMO_PLAN_ID) {
-      return of(ganttMutationFailure({}));
+      return of(ganttMutationCommandFailure());
     }
     const data = clonePlan(this.state);
     data.data.cultivations = data.data.cultivations.filter((c) => c.id !== cultivationId);
     this.state = data;
-    return of(ganttMutationSuccess(this.getSnapshot())).pipe(delay(DEMO_MUTATION_DELAY_MS));
+    return of(ganttMutationCommandSuccess()).pipe(delay(DEMO_MUTATION_DELAY_MS));
   }
 
-  addField(planId: number, payload: AddFieldRequest): Observable<GanttPlanMutationOutcome> {
+  addField(planId: number, payload: GanttAddFieldRequest): Observable<GanttPlanMutationCommandResult> {
     if (planId !== LANDING_DEMO_PLAN_ID) {
-      return of(ganttMutationFailure({}));
+      return of(ganttMutationCommandFailure());
     }
     const data = clonePlan(this.state);
     const id = this.nextFieldId++;
@@ -182,17 +161,17 @@ export class DemoGanttPlanStore {
       }
     ];
     this.state = data;
-    return of(ganttMutationSuccess(this.getSnapshot())).pipe(delay(DEMO_MUTATION_DELAY_MS));
+    return of(ganttMutationCommandSuccess()).pipe(delay(DEMO_MUTATION_DELAY_MS));
   }
 
-  removeField(planId: number, fieldId: number): Observable<GanttPlanMutationOutcome> {
+  removeField(planId: number, fieldId: number): Observable<GanttPlanMutationCommandResult> {
     if (planId !== LANDING_DEMO_PLAN_ID) {
-      return of(ganttMutationFailure({}));
+      return of(ganttMutationCommandFailure());
     }
     const data = clonePlan(this.state);
     data.data.fields = data.data.fields.filter((f) => f.id !== fieldId);
     data.data.cultivations = data.data.cultivations.filter((c) => c.field_id !== fieldId);
     this.state = data;
-    return of(ganttMutationSuccess(this.getSnapshot())).pipe(delay(DEMO_MUTATION_DELAY_MS));
+    return of(ganttMutationCommandSuccess()).pipe(delay(DEMO_MUTATION_DELAY_MS));
   }
 }

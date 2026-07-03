@@ -1,28 +1,19 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { FieldCultivationClimateData } from '../../domain/plans/field-cultivation-climate-data';
 import { FieldClimateGateway } from '../../usecase/plans/field-climate/field-climate.gateway';
 import { FetchFieldClimateDataRequestDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
-import { DemoGanttPlanStore } from '../../services/plans/demo-gantt-plan-store.service';
 
 @Injectable()
 export class FieldClimateApiGateway implements FieldClimateGateway {
-  constructor(
-    private readonly apiClient: ApiService,
-    private readonly demoPlanStore: DemoGanttPlanStore
-  ) {}
+  constructor(private readonly apiClient: ApiService) {}
 
   fetchFieldClimateData(
     dto: FetchFieldClimateDataRequestDto
   ): Observable<FieldCultivationClimateData> {
     if (dto.planType === 'demo') {
-      const climate = this.demoPlanStore.getDemoClimate(dto.fieldCultivationId);
-      if (!climate) {
-        return throwError(() => new Error('demo climate not found'));
-      }
-      return of(climate).pipe(delay(150));
+      return throwError(() => new Error('demo plan type is not supported by API gateway'));
     }
 
     const basePath =
