@@ -188,13 +188,6 @@
   font-weight: var(--font-weight-semibold, 600);
 }
 
-.plan-work__cta--constrained {
-  display: block;
-  width: 100%;
-  max-width: 20rem;
-  margin-inline: auto;
-}
-
 .plan-work__toggle {
   display: inline-flex;
   align-items: center;
@@ -226,9 +219,6 @@
 }
 
 .plan-work__recent-adhoc {
-  padding: var(--space-5) var(--space-4);
-  text-align: center;
-  border-radius: var(--radius-lg);
   background: var(--color-success-muted-bg);
   border: 1px solid var(--color-success-muted-border);
 }
@@ -250,32 +240,4 @@
 
 .plan-work__recent-adhoc-link:hover {
   text-decoration: underline;
-}
-
-.plan-work__empty {
-  padding: var(--space-5) var(--space-4);
-  text-align: center;
-  border-radius: var(--radius-lg);
-  border: none;
-  background: var(--color-gray-50);
-}
-
-.plan-work__empty-message {
-  margin: 0;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text);
-}
-
-.plan-work__empty-hint {
-  margin: var(--space-2) 0 var(--space-4);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.plan-work__empty-cta {
-  min-height: 3rem;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold, 600);
 }

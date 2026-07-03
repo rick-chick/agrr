@@ -390,6 +390,42 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fixture.nativeElement.textContent).toContain('予定外除草');
   });
 
+  it('renders recent ad-hoc feedback as a section panel outside the task list', () => {
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [],
+      upcoming: [],
+      recentAdHocRecord: {
+        name: '規格選別',
+        actualDate: '2026-07-03'
+      }
+    };
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('.plan-work__recent-adhoc');
+    expect(panel?.tagName).toBe('DIV');
+    expect(panel?.closest('.plan-work__list')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.plan-work__list')).toBeNull();
+  });
+
+  it('renders empty today state as a section panel outside the task list', () => {
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [],
+      upcoming: []
+    };
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector('.plan-work__empty');
+    expect(panel?.tagName).toBe('DIV');
+    expect(panel?.closest('.plan-work__list')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.plan-work__list')).toBeNull();
+  });
+
   it('highlights the completed schedule row after recording from item', () => {
     renderLoaded();
     component.onRecordSaved({

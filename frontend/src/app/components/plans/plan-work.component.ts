@@ -122,48 +122,47 @@ const initialControl: PlanWorkViewState = {
                 {{ 'plans.work.show_skipped' | translate }}
               </label>
             </div>
-            <ul class="plan-work__list">
-              @for (row of control.today; track row.item.item_id) {
-                <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: row }" />
-              }
-              @if (!control.today.length) {
-                @if (control.recentAdHocRecord) {
-                  <li class="plan-work__recent-adhoc" role="status" aria-live="polite">
-                    <p class="plan-work__recent-adhoc-message">{{
-                      'plans.work.recent_adhoc'
-                        | translate
-                          : {
-                              name: control.recentAdHocRecord.name,
-                              date: displayDate(control.recentAdHocRecord.actualDate)
-                            }
-                    }}</p>
-                    <a
-                      class="plan-work__recent-adhoc-link"
-                      [routerLink]="['/plans', planId, 'work_records']"
-                    >{{ 'plans.work.recent_adhoc_history_link' | translate }}</a>
-                    <button
-                      type="button"
-                      class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
-                      (click)="openAdHoc()"
-                    >
-                      {{ 'plans.work.add_record' | translate }}
-                    </button>
-                  </li>
-                } @else {
-                  <li class="plan-work__empty">
-                    <p class="plan-work__empty-message">{{ 'plans.work.empty_today' | translate }}</p>
-                    <p class="plan-work__empty-hint">{{ 'plans.work.empty_today_hint' | translate }}</p>
-                    <button
-                      type="button"
-                      class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
-                      (click)="openAdHoc()"
-                    >
-                      {{ 'plans.work.add_record' | translate }}
-                    </button>
-                  </li>
+            @if (control.today.length) {
+              <ul class="plan-work__list">
+                @for (row of control.today; track row.item.item_id) {
+                  <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: row }" />
                 }
-              }
-            </ul>
+              </ul>
+            } @else if (control.recentAdHocRecord) {
+              <div class="plan-work__recent-adhoc" role="status" aria-live="polite">
+                <p class="plan-work__recent-adhoc-message">{{
+                  'plans.work.recent_adhoc'
+                    | translate
+                      : {
+                          name: control.recentAdHocRecord.name,
+                          date: displayDate(control.recentAdHocRecord.actualDate)
+                        }
+                }}</p>
+                <a
+                  class="plan-work__recent-adhoc-link"
+                  [routerLink]="['/plans', planId, 'work_records']"
+                >{{ 'plans.work.recent_adhoc_history_link' | translate }}</a>
+                <button
+                  type="button"
+                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  (click)="openAdHoc()"
+                >
+                  {{ 'plans.work.add_record' | translate }}
+                </button>
+              </div>
+            } @else {
+              <div class="plan-work__empty">
+                <p class="plan-work__empty-message">{{ 'plans.work.empty_today' | translate }}</p>
+                <p class="plan-work__empty-hint">{{ 'plans.work.empty_today_hint' | translate }}</p>
+                <button
+                  type="button"
+                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  (click)="openAdHoc()"
+                >
+                  {{ 'plans.work.add_record' | translate }}
+                </button>
+              </div>
+            }
           </section>
 
           @if (control.upcoming.length) {
