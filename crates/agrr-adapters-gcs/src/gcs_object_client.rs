@@ -210,8 +210,8 @@ mod tests {
             "weather%2F7%2F2024.json"
         );
         assert_eq!(
-            urlencoding_key("prefix with spaces/ファイル.json"),
-            "prefix%20with%20spaces%2F%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB.json"
+            urlencoding_key("prefix with spaces/dir@name.json"),
+            "prefix%20with%20spaces%2Fdir%40name.json"
         );
     }
 

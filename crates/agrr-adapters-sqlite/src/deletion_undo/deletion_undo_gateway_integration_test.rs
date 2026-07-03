@@ -1,36 +1,14 @@
 //! Integration: `DeletionUndoSqliteGateway::perform_restore` state machine.
 
 use super::DeletionUndoSqliteGateway;
+use super::schedule::schedule_destroy;
 use crate::pool::SqlitePool;
 use agrr_domain::deletion_undo::exceptions::{
     DeletionUndoNotFoundError, DeletionUndoRestoreConflictError,
 };
 use agrr_domain::deletion_undo::gateways::DeletionUndoGateway;
-use agrr_domain::shared::attr::{attr_map_from_pairs, AttrValue};
-use agrr_domain::shared::user::User;
-use agrr_domain::interaction_rule::gateways::{
-    InteractionRuleGateway, SoftDeleteWithUndoOutcome,
-};
-use crate::interaction_rule::interaction_rule_gateway::InteractionRuleSqliteGateway;
-use agrr_domain::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use rusqlite::params;
-
-struct StubTranslator;
-
-impl TranslatorPort for StubTranslator {
-    fn translate(&self, key: &str, _: &TranslateOptions) -> String {
-        key.to_string()
-    }
-
-    fn localize(
-        &self,
-        _: time::Date,
-        _: Option<&str>,
-        _: &TranslateOptions,
-    ) -> String {
-        String::new()
-    }
-}
+use std::collections::BTreeMap;
 
 fn gateway_test_pool() -> SqlitePool {
     let dir = std::env::temp_dir().join(format!("agrr_du_gw_{}", std::process::id()));
@@ -64,37 +42,31 @@ fn gateway_test_pool() -> SqlitePool {
     pool
 }
 
+fn insert_interaction_rule(pool: &SqlitePool) -> i64 {
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO interaction_rules (user_id, rule_type, source_group, target_group, impact_ratio, is_directional, region, is_reference, created_at, updated_at) \
+             VALUES (42, 'continuous_cultivation', 'ナス科', 'ナス科', 0.7, 1, 'jp', 0, datetime('now'), datetime('now'))",
+            [],
+        )?;
+        Ok(conn.last_insert_rowid())
+    })
+    .unwrap()
+}
+
 fn schedule_interaction_rule_undo(pool: &SqlitePool) -> String {
-    let user = User::new(42, false);
-    let gw = InteractionRuleSqliteGateway::new(pool.clone());
-    let created = gw
-        .create_for_user(
-            &user,
-            attr_map_from_pairs([
-                ("rule_type", AttrValue::from("continuous_cultivation")),
-                ("source_group", AttrValue::from("ナス科")),
-                ("target_group", AttrValue::from("ナス科")),
-                ("impact_ratio", AttrValue::Str("0.7".into())),
-                ("region", AttrValue::from("jp")),
-                ("is_reference", AttrValue::Bool(false)),
-            ]),
-        )
-        .unwrap();
-    let rule_id = created.id.expect("id");
-
-    let SoftDeleteWithUndoOutcome::Success(success) = gw
-        .soft_delete_with_undo(&user, rule_id, 5000, &StubTranslator)
-        .expect("soft delete")
-    else {
-        panic!("expected soft delete success");
-    };
-
-    success
-        .undo
-        .get("undo_token")
-        .and_then(|v| v.as_str())
-        .expect("undo_token")
-        .to_string()
+    let rule_id = insert_interaction_rule(pool);
+    schedule_destroy(
+        pool,
+        "InteractionRule",
+        rule_id,
+        42,
+        "削除しました",
+        5,
+        BTreeMap::new(),
+    )
+    .expect("schedule destroy")
+    .undo_token
 }
 
 fn event_state(pool: &SqlitePool, token: &str) -> String {
