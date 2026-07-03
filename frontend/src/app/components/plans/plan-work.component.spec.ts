@@ -226,6 +226,37 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(header.querySelector('.page-title')).toBeTruthy();
   });
 
+  it('keeps section-card bottom padding on plan-work shell', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [PlanWorkComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: { get: vi.fn(() => '7') } }
+          }
+        }
+      ]
+    }).compileComponents();
+
+    const styledFixture = TestBed.createComponent(PlanWorkComponent);
+    styledFixture.detectChanges();
+    styledFixture.componentInstance.control = {
+      ...loadedState,
+      overdue: [],
+      today: [],
+      upcoming: []
+    };
+    styledFixture.detectChanges();
+
+    const card = styledFixture.nativeElement.querySelector('.section-card.plan-work') as HTMLElement;
+    expect(card).toBeTruthy();
+    expect(getComputedStyle(card).paddingBottom).not.toBe('0px');
+    styledFixture.destroy();
+  });
+
   it('uses a large primary complete button with 44px min touch target', () => {
     renderLoaded();
     const completeBtn = fixture.nativeElement.querySelector('.plan-work__complete-btn');

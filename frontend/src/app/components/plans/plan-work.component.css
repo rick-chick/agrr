@@ -1,8 +1,14 @@
 @import '../masters/_master-layout.css';
 @import './plan-work-shared.css';
 
-.plan-work {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+.plan-work.section-card {
+  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+  .plan-work.section-card {
+    padding-bottom: calc(var(--space-1) + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .plan-work__section {
