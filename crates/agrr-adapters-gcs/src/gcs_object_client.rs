@@ -189,6 +189,54 @@ fn object_media_url(bucket: &str, key: &str) -> String {
     )
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::weather_json::WeatherDataGcsConfig;
+    use tempfile::tempdir;
+
+    #[test]
+    fn urlencoding_key_preserves_slashes_as_percent_two_f_and_encodes_special_chars() {
+        assert_eq!(
+            urlencoding_key("weather_data/42/2024.json"),
+            "weather_data%2F42%2F2024.json"
+        );
+        assert_eq!(
+            urlencoding_key("predicted_weather/plan/7.json"),
+            "predicted_weather%2Fplan%2F7.json"
+        );
+        assert_eq!(urlencoding_key("a b+c"), "a%20b%2Bc");
+        assert_eq!(urlencoding_key("plain"), "plain");
+    }
+
+    #[test]
+    fn local_root_read_write_list_roundtrip() {
+        let dir = tempdir().expect("tempdir");
+        let config = WeatherDataGcsConfig {
+            bucket: "test-bucket".into(),
+            use_http: false,
+            local_root: Some(dir.path().to_path_buf()),
+        };
+        let client = GcsObjectClient::new(config);
+        let key = "predicted_weather/plan/99.json";
+        let payload = br#"{"ok":true}"#;
+
+        assert_eq!(client.read_object(key).expect("read missing"), None);
+
+        client.write_object(key, payload).expect("write");
+
+        assert_eq!(
+            client.read_object(key).expect("read after write"),
+            Some(payload.to_vec())
+        );
+
+        let names = client
+            .list_object_names("predicted_weather/plan/")
+            .expect("list");
+        assert!(names.iter().any(|name| name == key));
+    }
+}
+
 fn gcp_access_token(http: &Client) -> Result<String, WeatherDataGcsError> {
     let resp = http
         .get("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token")
