@@ -1,4 +1,11 @@
-export type TaskScheduleSyncState = 'never' | 'failed' | 'generating' | 'stale' | 'ready';
+import type { TaskScheduleSyncState } from '../../domain/plans/task-schedule-sync-state';
+
+export type { TaskScheduleSyncState };
+
+export interface PlanRemediationCrop {
+  crop_id: number;
+  crop_name: string;
+}
 
 export interface PlanInfo {
   id: number;
@@ -10,6 +17,8 @@ export interface PlanInfo {
   timeline_generated_at_display: string;
   task_schedule_sync_state: TaskScheduleSyncState | string;
   task_schedule_sync_error: string | null;
+  task_schedule_sync_error_crop_id: number | null;
+  remediation_crops?: PlanRemediationCrop[];
 }
 
 export interface WeekInfo {

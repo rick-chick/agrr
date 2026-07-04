@@ -34,6 +34,7 @@ pub mod masters_auth;
 pub mod masters_agricultural_tasks;
 pub mod masters_crop_requirements;
 pub mod masters_crop_agricultural_tasks;
+pub mod masters_crop_task_schedule_blueprints;
 pub mod masters_crop_context;
 pub mod masters_crop_pests;
 pub mod masters_crop_pesticides;
@@ -130,6 +131,7 @@ pub async fn run_http_server() {
         .merge(masters_crop_stages::routes())
         .merge(masters_crop_pests::routes())
         .merge(masters_crop_agricultural_tasks::routes())
+        .merge(masters_crop_task_schedule_blueprints::routes())
         .merge(masters_crop_pesticides::routes())
         .merge(masters_crop_requirements::routes())
         .merge(masters_pests::routes())

@@ -63,7 +63,8 @@ describe('PlanOptimizationChannelGateway', () => {
       });
       expect(onReceived).toHaveBeenCalledWith({
         syncState: 'ready',
-        syncError: null
+        syncError: null,
+        syncErrorCropId: null
       });
     });
 
@@ -93,7 +94,27 @@ describe('PlanOptimizationChannelGateway', () => {
 
       expect(onReceived).toHaveBeenCalledWith({
         syncState: 'failed',
-        syncError: 'plans.task_schedules.sync_errors.agrr_unavailable'
+        syncError: 'plans.task_schedules.sync_errors.agrr_unavailable',
+        syncErrorCropId: null
+      });
+    });
+
+    it('forwards sync error crop id from cable payload', () => {
+      const { gateway, getReceived } = createGateway();
+      const onReceived = vi.fn();
+
+      gateway.subscribeTaskScheduleSync(7, { received: onReceived });
+      getReceived()?.({
+        type: 'task_schedule_sync',
+        task_schedule_sync_state: 'failed',
+        task_schedule_sync_error: 'plans.task_schedules.sync_errors.missing_crop_blueprints',
+        task_schedule_sync_error_crop_id: 15
+      });
+
+      expect(onReceived).toHaveBeenCalledWith({
+        syncState: 'failed',
+        syncError: 'plans.task_schedules.sync_errors.missing_crop_blueprints',
+        syncErrorCropId: 15
       });
     });
 
@@ -110,7 +131,8 @@ describe('PlanOptimizationChannelGateway', () => {
 
       expect(onReceived).toHaveBeenCalledWith({
         syncState: 'failed',
-        syncError: 'plans.task_schedules.sync_errors.generic'
+        syncError: 'plans.task_schedules.sync_errors.generic',
+        syncErrorCropId: null
       });
     });
   });

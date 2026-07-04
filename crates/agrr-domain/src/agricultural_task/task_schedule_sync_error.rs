@@ -8,6 +8,7 @@ const SYNC_ERROR_I18N_PREFIX: &str = "plans.task_schedules.sync_errors.";
 pub struct TaskScheduleSyncError {
     i18n_key: &'static str,
     log_detail: String,
+    crop_id: Option<i64>,
 }
 
 impl TaskScheduleSyncError {
@@ -15,11 +16,28 @@ impl TaskScheduleSyncError {
         Self {
             i18n_key,
             log_detail: log_detail.into(),
+            crop_id: None,
+        }
+    }
+
+    pub fn with_crop_id(
+        i18n_key: &'static str,
+        log_detail: impl Into<String>,
+        crop_id: i64,
+    ) -> Self {
+        Self {
+            i18n_key,
+            log_detail: log_detail.into(),
+            crop_id: Some(crop_id),
         }
     }
 
     pub(crate) fn i18n_key(&self) -> &'static str {
         self.i18n_key
+    }
+
+    pub(crate) fn crop_id(&self) -> Option<i64> {
+        self.crop_id
     }
 }
 
@@ -55,6 +73,19 @@ pub fn task_schedule_sync_error_i18n_key(
         current = e.source();
     }
     keys::GENERIC.to_string()
+}
+
+pub fn task_schedule_sync_error_crop_id(
+    err: &(dyn std::error::Error + Send + Sync + 'static),
+) -> Option<i64> {
+    let mut current: Option<&dyn std::error::Error> = Some(err);
+    while let Some(e) = current {
+        if let Some(ts) = e.downcast_ref::<TaskScheduleSyncError>() {
+            return ts.crop_id();
+        }
+        current = e.source();
+    }
+    None
 }
 
 #[cfg(test)]

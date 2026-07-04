@@ -363,7 +363,9 @@
         let crop = TaskScheduleCrop {
             id: 1,
             name: "トマト".into(),
-            crop_task_templates: vec![],
+            crop_task_templates: vec![TaskScheduleCropTaskTemplate {
+                agricultural_task: Some(soil_task()),
+            }],
             crop_task_schedule_blueprints: vec![
                 general_blueprint,
                 basal_blueprint,
@@ -420,9 +422,9 @@
         assert_eq!(fertilizer.items.last().unwrap().scheduled_date, Date::from_calendar_date(2025, time::Month::April, 6).unwrap());
     }
 
-    // Ruby: test "generate! raises TemplateMissingError when crop has no blueprints"
+    // Ruby: test "generate! raises when crop has no blueprints"
     #[test]
-    fn generate_raises_template_missing_when_no_blueprints() {
+    fn generate_raises_blueprint_missing_when_no_blueprints() {
         let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
         if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
             if let Some(crop) = fc.crop.as_mut() {
@@ -445,7 +447,43 @@
         let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
         assert_eq!(
             crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_CROP_BLUEPRINTS.to_string()
+        );
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
+            Some(1)
+        );
+    }
+
+    #[test]
+    fn generate_raises_template_missing_when_no_templates() {
+        let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
+            if let Some(crop) = fc.crop.as_mut() {
+                crop.crop_task_templates.clear();
+            }
+        }
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
             crate::agricultural_task::task_schedule_sync_error_keys::MISSING_CROP_TEMPLATES.to_string()
+        );
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
+            Some(1)
         );
     }
 

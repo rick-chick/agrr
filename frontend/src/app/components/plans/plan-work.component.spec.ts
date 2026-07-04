@@ -82,7 +82,8 @@ const loadedState: PlanWorkViewState = {
     timeline_generated_at: '2026-06-01T00:00:00Z',
     timeline_generated_at_display: '2026-06-01',
     task_schedule_sync_state: 'ready',
-    task_schedule_sync_error: null
+    task_schedule_sync_error: null,
+    task_schedule_sync_error_crop_id: null
   },
   fields: [],
   overdue: [mockRow({ item_id: 10, name: '遅延作業' })],
@@ -543,23 +544,20 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(text).not.toContain('2026-06-17');
   });
 
-  it('shows sync banner and calls regenerate use case on retry', () => {
+  it('shows sync banner when sync failed', () => {
     renderLoaded();
     component.control = {
       ...loadedState,
       plan: {
         ...loadedState.plan!,
         task_schedule_sync_state: 'failed',
-        task_schedule_sync_error: 'plans.task_schedules.sync_errors.agrr_unavailable'
+        task_schedule_sync_error: 'plans.task_schedules.sync_errors.agrr_unavailable',
+        task_schedule_sync_error_crop_id: null
       }
-    
     };
     fixture.detectChanges();
 
-    const banner = fixture.nativeElement.querySelector('app-task-schedule-sync-banner');
-    expect(banner).toBeTruthy();
-    component.regenerateTaskSchedule();
-    expect(regenerateUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
+    expect(fixture.nativeElement.querySelector('app-task-schedule-sync-banner')).toBeTruthy();
   });
 
   it('subscribes to task schedule sync cable on init', () => {

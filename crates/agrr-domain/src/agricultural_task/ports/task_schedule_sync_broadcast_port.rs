@@ -6,5 +6,6 @@ pub trait TaskScheduleSyncBroadcastPort: Send + Sync {
         plan_id: i64,
         sync_state: &str,
         sync_error: Option<&str>,
+        sync_error_crop_id: Option<i64>,
     );
 }

@@ -20,7 +20,7 @@ use agrr_domain::work_record::ports::{
 use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
-    routing::{delete, get, patch, post},
+    routing::{get, patch},
     Json, Router,
 };
 use axum_extra::extract::cookie::CookieJar;

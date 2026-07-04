@@ -7,7 +7,7 @@ use crate::agricultural_task::interactors::UpdateTaskScheduleSyncStateInteractor
 use crate::agricultural_task::ports::TaskScheduleSyncBroadcastPort;
 
 struct SpyGateway {
-    updates: Arc<Mutex<Vec<(i64, String, Option<String>)>>>,
+    updates: Arc<Mutex<Vec<(i64, String, Option<String>, Option<i64>)>>>,
 }
 
 impl TaskScheduleSyncStateGateway for SpyGateway {
@@ -16,11 +16,13 @@ impl TaskScheduleSyncStateGateway for SpyGateway {
         plan_id: i64,
         sync_state: &str,
         sync_error: Option<&str>,
+        sync_error_crop_id: Option<i64>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.updates.lock().expect("lock").push((
             plan_id,
             sync_state.to_string(),
             sync_error.map(str::to_string),
+            sync_error_crop_id,
         ));
         Ok(())
     }
@@ -34,7 +36,7 @@ impl TaskScheduleSyncStateGateway for SpyGateway {
 }
 
 struct SpyBroadcast {
-    messages: Arc<Mutex<Vec<(i64, String, Option<String>)>>>,
+    messages: Arc<Mutex<Vec<(i64, String, Option<String>, Option<i64>)>>>,
 }
 
 impl TaskScheduleSyncBroadcastPort for SpyBroadcast {
@@ -43,11 +45,13 @@ impl TaskScheduleSyncBroadcastPort for SpyBroadcast {
         plan_id: i64,
         sync_state: &str,
         sync_error: Option<&str>,
+        sync_error_crop_id: Option<i64>,
     ) {
         self.messages.lock().expect("lock").push((
             plan_id,
             sync_state.to_string(),
             sync_error.map(str::to_string),
+            sync_error_crop_id,
         ));
     }
 }
@@ -69,6 +73,7 @@ fn update_task_schedule_sync_state_persists_and_broadcasts() {
             plan_id: 7,
             sync_state: task_schedule_sync_states::FAILED,
             sync_error: Some("plans.task_schedules.sync_errors.generic"),
+            sync_error_crop_id: Some(3),
         })
         .expect("update sync state");
 
@@ -77,7 +82,8 @@ fn update_task_schedule_sync_state_persists_and_broadcasts() {
         (
             7,
             task_schedule_sync_states::FAILED.to_string(),
-            Some("plans.task_schedules.sync_errors.generic".to_string())
+            Some("plans.task_schedules.sync_errors.generic".to_string()),
+            Some(3)
         )
     );
     assert_eq!(

@@ -15,4 +15,9 @@ pub trait CropMastersTaskTemplateGateway: Send + Sync {
         agricultural_task_id: i64,
         attributes: CropTaskTemplatePersistAttributes,
     ) -> Result<CropTaskTemplateEntity, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn list_by_crop_id(
+        &self,
+        crop_id: i64,
+    ) -> Result<Vec<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>>;
 }

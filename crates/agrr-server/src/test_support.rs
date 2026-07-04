@@ -46,6 +46,7 @@ pub fn test_pool_with_plan(plan_id: i64) -> TestDb {
                optimization_phase_message TEXT,
                task_schedule_sync_state TEXT NOT NULL DEFAULT 'never',
                task_schedule_sync_error TEXT,
+               task_schedule_sync_error_crop_id INTEGER,
                created_at TEXT DEFAULT (datetime('now')),
                updated_at TEXT DEFAULT (datetime('now'))
              );
@@ -144,6 +145,7 @@ pub fn test_pool_with_sync_plan(plan_id: i64) -> TestDb {
                id INTEGER PRIMARY KEY,
                task_schedule_sync_state TEXT NOT NULL DEFAULT 'never',
                task_schedule_sync_error TEXT,
+               task_schedule_sync_error_crop_id INTEGER,
                updated_at TEXT DEFAULT (datetime('now'))
              );",
         )?;

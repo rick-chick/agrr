@@ -31,11 +31,13 @@ where
             input.plan_id,
             input.sync_state,
             input.sync_error,
+            input.sync_error_crop_id,
         )?;
         self.sync_broadcast_port.broadcast_sync_state(
             input.plan_id,
             input.sync_state,
             input.sync_error,
+            input.sync_error_crop_id,
         );
         Ok(())
     }

@@ -22,6 +22,7 @@ pub struct TaskScheduleTimelinePlanRead {
     pub total_area: f64,
     pub task_schedule_sync_state: String,
     pub task_schedule_sync_error: Option<String>,
+    pub task_schedule_sync_error_crop_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

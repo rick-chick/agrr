@@ -20,12 +20,14 @@ impl TaskScheduleSyncStateGateway for TaskScheduleSyncStateSqliteGateway {
         plan_id: i64,
         sync_state: &str,
         sync_error: Option<&str>,
+        sync_error_crop_id: Option<i64>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_write_box(|conn| {
             conn.execute(
                 "UPDATE cultivation_plans SET task_schedule_sync_state = ?1, \
-                 task_schedule_sync_error = ?2, updated_at = datetime('now') WHERE id = ?3",
-                params![sync_state, sync_error, plan_id],
+                 task_schedule_sync_error = ?2, task_schedule_sync_error_crop_id = ?3, \
+                 updated_at = datetime('now') WHERE id = ?4",
+                params![sync_state, sync_error, sync_error_crop_id, plan_id],
             )?;
             Ok(())
         })
@@ -75,6 +77,7 @@ mod task_schedule_sync_state_gateway_integration_test {
                    id INTEGER PRIMARY KEY,
                    task_schedule_sync_state TEXT NOT NULL DEFAULT 'never',
                    task_schedule_sync_error TEXT,
+                   task_schedule_sync_error_crop_id INTEGER,
                    updated_at TEXT
                  );",
             )?;
@@ -99,6 +102,7 @@ mod task_schedule_sync_state_gateway_integration_test {
                 1,
                 task_schedule_sync_states::FAILED,
                 Some("plans.task_schedules.sync_errors.generic"),
+                Some(9),
             )
             .expect("update sync state");
 
@@ -120,5 +124,15 @@ mod task_schedule_sync_state_gateway_integration_test {
             error.as_deref(),
             Some("plans.task_schedules.sync_errors.generic")
         );
+        let crop_id: Option<i64> = pool
+            .with_read(|conn| {
+                conn.query_row(
+                    "SELECT task_schedule_sync_error_crop_id FROM cultivation_plans WHERE id = 1",
+                    params![],
+                    |row| row.get(0),
+                )
+            })
+            .expect("read sync error crop id");
+        assert_eq!(crop_id, Some(9));
     }
 }

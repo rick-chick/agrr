@@ -42,7 +42,7 @@ fn load_plan_read(
         "SELECT cp.id, cp.plan_name, cp.plan_year, cp.status, \
          cp.planning_start_date, cp.planning_end_date, COALESCE(cp.total_area, 0), \
          COALESCE(f.name, ''), COALESCE(cp.task_schedule_sync_state, 'never'), \
-         cp.task_schedule_sync_error \
+         cp.task_schedule_sync_error, cp.task_schedule_sync_error_crop_id \
          FROM cultivation_plans cp \
          LEFT JOIN farms f ON f.id = cp.farm_id \
          WHERE cp.id = ?1 LIMIT 1",
@@ -59,6 +59,7 @@ fn load_plan_read(
             row.get::<_, String>(7)?,
             row.get::<_, String>(8)?,
             row.get::<_, Option<String>>(9)?,
+            row.get::<_, Option<i64>>(10)?,
         ))
     })?;
 
@@ -71,8 +72,19 @@ fn load_plan_read(
         .optional()?
         .flatten();
 
-    let (id, plan_name, plan_year, status, ps, pe, total_area, farm_display_name, sync_state, sync_error) =
-        row;
+    let (
+        id,
+        plan_name,
+        plan_year,
+        status,
+        ps,
+        pe,
+        total_area,
+        farm_display_name,
+        sync_state,
+        sync_error,
+        sync_error_crop_id,
+    ) = row;
     let display_name = compute_plan_display_name(id, plan_name.as_deref(), plan_year, &farm_display_name);
     Ok(TaskScheduleTimelinePlanRead {
         id,
@@ -85,6 +97,7 @@ fn load_plan_read(
         total_area,
         task_schedule_sync_state: sync_state,
         task_schedule_sync_error: normalize_stored_sync_error(sync_error),
+        task_schedule_sync_error_crop_id: sync_error_crop_id,
     })
 }
 
@@ -123,13 +136,12 @@ fn load_field_contexts(
 ) -> rusqlite::Result<Vec<FieldContext>> {
     let mut stmt = conn.prepare(
         "SELECT DISTINCT fc.id, COALESCE(cpf.name, ''), \
-         COALESCE(cpc.name, cr.name, ''), COALESCE(fc.area, 0), cpc.crop_id \
-         FROM task_schedules ts \
-         INNER JOIN field_cultivations fc ON fc.id = ts.field_cultivation_id \
+         COALESCE(cpc.name, cr.name, ''), COALESCE(fc.area, 0), COALESCE(cpc.crop_id, 0) \
+         FROM field_cultivations fc \
          LEFT JOIN cultivation_plan_fields cpf ON cpf.id = fc.cultivation_plan_field_id \
          LEFT JOIN cultivation_plan_crops cpc ON cpc.id = fc.cultivation_plan_crop_id \
          LEFT JOIN crops cr ON cr.id = cpc.crop_id \
-         WHERE ts.cultivation_plan_id = ?1",
+         WHERE fc.cultivation_plan_id = ?1",
     )?;
     let rows = stmt.query_map(params![plan_id], |row| {
         Ok(FieldContext {
@@ -138,7 +150,7 @@ fn load_field_contexts(
             name: row.get(1)?,
             crop_name: row.get(2)?,
             area_sqm: row.get(3)?,
-            crop_id: row.get::<_, Option<i64>>(4)?.unwrap_or(0),
+            crop_id: row.get::<_, i64>(4)?,
         })
     })?;
     rows.collect()

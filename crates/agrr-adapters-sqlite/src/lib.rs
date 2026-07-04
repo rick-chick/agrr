@@ -42,7 +42,9 @@ pub use auth::{
 };
 pub use contact_messages::ContactMessageSqliteGateway;
 pub use crop::{
-    CropAiUpsertSqlitePersistence, CropMastersTaskTemplateSqliteGateway, CropSqliteGateway,
+    CropAiUpsertSqlitePersistence, CropAgrrRequirementSqliteGateway,
+    CropMastersTaskScheduleBlueprintSqliteGateway, CropMastersTaskTemplateSqliteGateway,
+    CropSqliteGateway,
     CropSourceCropLookupSqliteGateway, CropStageSqliteGateway,
     NutrientRequirementSqliteGateway,
     SunshineRequirementSqliteGateway, TemperatureRequirementSqliteGateway,

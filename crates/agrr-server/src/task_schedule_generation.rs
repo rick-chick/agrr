@@ -20,8 +20,8 @@ use agrr_domain::agricultural_task::dtos::{
     UpdateTaskScheduleSyncStateInput,
 };
 use agrr_domain::agricultural_task::interactors::{
-    RunTaskScheduleGenerationInteractor, TaskScheduleGenerateInteractor,
-    UpdateTaskScheduleSyncStateInteractor,
+    RunTaskScheduleGenerationInteractor, TaskScheduleEnsureBlueprintsInteractor,
+    TaskScheduleGenerateInteractor, UpdateTaskScheduleSyncStateInteractor,
 };
 use agrr_domain::agricultural_task::ports::TaskScheduleSyncBroadcastPort;
 use agrr_domain::cultivation_plan::dtos::CultivationPlanPhaseName;
@@ -40,6 +40,7 @@ impl TaskScheduleSyncBroadcastPort for CableTaskScheduleSyncBroadcast {
         plan_id: i64,
         sync_state: &str,
         sync_error: Option<&str>,
+        sync_error_crop_id: Option<i64>,
     ) {
         self.hub.broadcast_plan_message(
             plan_id,
@@ -47,6 +48,7 @@ impl TaskScheduleSyncBroadcastPort for CableTaskScheduleSyncBroadcast {
                 "type": "task_schedule_sync",
                 "task_schedule_sync_state": sync_state,
                 "task_schedule_sync_error": sync_error,
+                "task_schedule_sync_error_crop_id": sync_error_crop_id,
             }),
         );
     }
@@ -90,17 +92,19 @@ fn apply_task_schedule_sync_state(
     plan_id: i64,
     sync_state_value: &str,
     sync_error: Option<&str>,
+    sync_error_crop_id: Option<i64>,
 ) -> Result<(), String> {
     let sync = TaskScheduleSyncInteractorBundle::new(state, state.sqlite.clone());
     sync.call(UpdateTaskScheduleSyncStateInput {
         plan_id,
         sync_state: sync_state_value,
         sync_error,
+        sync_error_crop_id,
     })
 }
 
 fn mark_task_schedule_stale(state: &AppState, plan_id: i64) {
-    let _ = apply_task_schedule_sync_state(state, plan_id, sync_state::STALE, None);
+    let _ = apply_task_schedule_sync_state(state, plan_id, sync_state::STALE, None, None);
 }
 
 fn bump_regen_token(state: &AppState, plan_id: i64) -> u64 {
@@ -132,7 +136,7 @@ fn run_task_schedule_generation(state: &AppState, plan_id: i64) -> Result<(), St
         state.predicted_weather.store.clone(),
     ));
     let progress_gateway = TaskScheduleProgressAgrrGateway::from_env(read_gateway.clone());
-    let task_schedule_gateway = TaskScheduleSqliteGateway::new(pool);
+    let task_schedule_gateway = TaskScheduleSqliteGateway::new(pool.clone());
     let cultivation_plan_gateway = TaskScheduleGenerationTransactionSqliteGateway::new();
     let clock = SystemClock;
     let generate_interactor = TaskScheduleGenerateInteractor::new(
@@ -143,9 +147,14 @@ fn run_task_schedule_generation(state: &AppState, plan_id: i64) -> Result<(), St
         read_gateway.as_ref(),
     );
 
+    let ensure_interactor = TaskScheduleEnsureBlueprintsInteractor::new();
+
     let sync_interactor = sync.interactor();
-    let orchestrator =
-        RunTaskScheduleGenerationInteractor::new(&sync_interactor, &generate_interactor);
+    let orchestrator = RunTaskScheduleGenerationInteractor::new(
+        &sync_interactor,
+        &ensure_interactor,
+        &generate_interactor,
+    );
 
     match orchestrator.call(RunTaskScheduleGenerationInput::new(plan_id)) {
         Ok(RunTaskScheduleGenerationOutcome::Ready) => {

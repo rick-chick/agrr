@@ -106,4 +106,19 @@ impl CropMastersTaskTemplateGateway for CropMastersTaskTemplateSqliteGateway {
             conn.query_row(&sql, params![id], Self::map_entity)
         })
     }
+
+    fn list_by_crop_id(
+        &self,
+        crop_id: i64,
+    ) -> Result<Vec<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        let sql = format!(
+            "SELECT {} FROM crop_task_templates WHERE crop_id = ?1 ORDER BY id",
+            Self::SELECT_COLS
+        );
+        self.pool.with_read_box(|conn| {
+            let mut stmt = conn.prepare(&sql)?;
+            let rows = stmt.query_map(params![crop_id], Self::map_entity)?;
+            rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+        })
+    }
 }

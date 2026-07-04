@@ -9,10 +9,66 @@
 .task-schedule-sync-banner__detail {
   margin-top: var(--space-2);
   font-size: var(--font-size-sm);
+  line-height: 1.5;
 }
 
 .task-schedule-sync-banner__retry {
   margin-top: var(--space-3);
+}
+
+.task-schedule-sync-banner__wizard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  max-width: 24rem;
+}
+
+.task-schedule-sync-banner__wizard-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3rem;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary-border-soft, var(--color-border));
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1.35;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.task-schedule-sync-banner__wizard-cta:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-primary);
+  text-decoration: none;
+}
+
+.task-schedule-sync-banner__wizard-cta:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.task-schedule-sync-banner__wizard-cta-label {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text);
+}
+
+.task-schedule-sync-banner__wizard-cta-hint {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal, 400);
+  color: var(--color-text-secondary);
+}
+
+.page-alert-error .task-schedule-sync-banner__wizard-cta {
+  background: var(--color-surface);
 }
 
 .page-alert-warning {

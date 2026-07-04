@@ -42,7 +42,63 @@ pub fn user_id_for_session(client: &ContractClient, session_id: &str) -> i64 {
 pub struct WorkRecordPlanSeed {
     pub plan_id: i64,
     pub farm_id: i64,
+    pub crop_id: i64,
     pub task_schedule_item_id: i64,
+}
+
+pub struct MastersCropSeed {
+    pub crop_id: i64,
+}
+
+pub struct MastersCropBlueprintCreateSeed {
+    pub crop_id: i64,
+    pub agricultural_task_id: i64,
+}
+
+/// Seeds a user-owned non-reference crop for masters blueprint API tests.
+pub fn seed_masters_crop(user_id: i64) -> MastersCropSeed {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let crop_name = format!("Contract Blueprint Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (user_id, name, variety, is_reference, created_at, updated_at)
+         VALUES (?1, ?2, 'V1', 0, datetime('now'), datetime('now'))",
+        params![user_id, crop_name],
+    )
+    .expect("insert crop");
+    MastersCropSeed {
+        crop_id: conn.last_insert_rowid(),
+    }
+}
+
+/// Seeds crop + agricultural task template for manual blueprint create tests.
+pub fn seed_masters_crop_with_task_template(user_id: i64) -> MastersCropBlueprintCreateSeed {
+    let crop = seed_masters_crop(user_id);
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let task_name = format!("Contract Blueprint Task {suffix}");
+    conn.execute(
+        "INSERT INTO agricultural_tasks (name, is_reference, user_id, task_type, created_at, updated_at)
+         VALUES (?1, 0, ?2, 'field_work', datetime('now'), datetime('now'))",
+        params![task_name, user_id],
+    )
+    .expect("insert agricultural_task");
+    let agricultural_task_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO crop_task_templates (
+            crop_id, agricultural_task_id, name, is_reference, ai_state, created_at, updated_at
+         ) VALUES (?1, ?2, ?3, 0, 'pending', datetime('now'), datetime('now'))",
+        params![crop.crop_id, agricultural_task_id, task_name],
+    )
+    .expect("insert crop_task_template");
+    MastersCropBlueprintCreateSeed {
+        crop_id: crop.crop_id,
+        agricultural_task_id,
+    }
 }
 
 fn seed_suffix() -> String {
@@ -169,20 +225,51 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
     WorkRecordPlanSeed {
         plan_id,
         farm_id,
+        crop_id,
         task_schedule_item_id,
     }
 }
 
-/// Sets legacy/raw sync error on an existing plan (contract tests for normalization).
-pub fn set_plan_task_schedule_sync_failed_raw_error(plan_id: i64, raw_error: &str) {
+/// Sets failed sync state with optional crop context for remediation links.
+pub fn set_plan_task_schedule_sync_failed(
+    plan_id: i64,
+    sync_error: &str,
+    sync_error_crop_id: Option<i64>,
+) {
     let path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
     let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
     conn.execute(
         "UPDATE cultivation_plans \
-         SET task_schedule_sync_state = 'failed', task_schedule_sync_error = ?1, updated_at = datetime('now') \
-         WHERE id = ?2",
-        params![raw_error, plan_id],
+         SET task_schedule_sync_state = 'failed', task_schedule_sync_error = ?1, \
+             task_schedule_sync_error_crop_id = ?2, updated_at = datetime('now') \
+         WHERE id = ?3",
+        params![sync_error, sync_error_crop_id, plan_id],
     )
     .expect("update plan sync failed state");
+}
+
+/// Sets legacy/raw sync error on an existing plan (contract tests for normalization).
+pub fn set_plan_task_schedule_sync_failed_raw_error(plan_id: i64, raw_error: &str) {
+    set_plan_task_schedule_sync_failed(plan_id, raw_error, None);
+}
+
+/// Removes generated schedules so contract tests can simulate failed-first-generation plans.
+pub fn clear_plan_task_schedules(plan_id: i64) {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    conn.execute(
+        "DELETE FROM task_schedule_items
+         WHERE task_schedule_id IN (
+           SELECT id FROM task_schedules WHERE cultivation_plan_id = ?1
+         )",
+        params![plan_id],
+    )
+    .expect("delete task_schedule_items");
+    conn.execute(
+        "DELETE FROM task_schedules WHERE cultivation_plan_id = ?1",
+        params![plan_id],
+    )
+    .expect("delete task_schedules");
 }

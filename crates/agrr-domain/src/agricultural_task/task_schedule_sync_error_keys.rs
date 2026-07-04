@@ -2,6 +2,7 @@
 
 pub const MISSING_WEATHER: &str = "plans.task_schedules.sync_errors.missing_weather";
 pub const MISSING_CROP_TEMPLATES: &str = "plans.task_schedules.sync_errors.missing_crop_templates";
+pub const MISSING_CROP_BLUEPRINTS: &str = "plans.task_schedules.sync_errors.missing_crop_blueprints";
 pub const MISSING_GENERAL_TEMPLATES: &str = "plans.task_schedules.sync_errors.missing_general_templates";
 pub const EMPTY_GDD_PROGRESS: &str = "plans.task_schedules.sync_errors.empty_gdd_progress";
 pub const MISSING_GDD_TRIGGER: &str = "plans.task_schedules.sync_errors.missing_gdd_trigger";

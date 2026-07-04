@@ -58,7 +58,8 @@ function scheduleWithItems(items: TaskScheduleItem[]): TaskScheduleResponse {
       timeline_generated_at: '2026-06-01',
       timeline_generated_at_display: '2026-06-01',
       task_schedule_sync_state: 'ready',
-      task_schedule_sync_error: null
+      task_schedule_sync_error: null,
+      task_schedule_sync_error_crop_id: null
     },
     week: { start_date: '2026-06-08', end_date: '2026-06-14', label: 'week', days: [] },
     milestones: [],

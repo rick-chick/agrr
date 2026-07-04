@@ -199,7 +199,8 @@ describe('PlanWorkPresenter task schedule sync', () => {
           timeline_generated_at: '2026-06-01T00:00:00Z',
           timeline_generated_at_display: '2026-06-01',
           task_schedule_sync_state: 'stale',
-          task_schedule_sync_error: null
+          task_schedule_sync_error: null,
+          task_schedule_sync_error_crop_id: null
         }
       }
     };
@@ -209,14 +210,14 @@ describe('PlanWorkPresenter task schedule sync', () => {
   it('ignores sync updates when plan is not loaded yet', () => {
     view.control = { ...baseControl, plan: null };
 
-    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null });
+    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null, syncErrorCropId: null });
 
     expect(view.control.syncReloadNonce).toBe(0);
     expect(view.control.pendingSyncToastKey).toBeNull();
   });
 
   it('updates plan sync state and queues toast/reload when ready', () => {
-    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null });
+    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null, syncErrorCropId: null });
 
     expect(view.control.plan?.task_schedule_sync_state).toBe('ready');
     expect(view.control.regenerating).toBe(false);
@@ -227,7 +228,8 @@ describe('PlanWorkPresenter task schedule sync', () => {
   it('queues reload without toast when failed', () => {
     presenter.onTaskScheduleSync({
       syncState: 'failed',
-      syncError: 'plans.task_schedules.sync_errors.agrr_unavailable'
+      syncError: 'plans.task_schedules.sync_errors.agrr_unavailable',
+      syncErrorCropId: null
     });
 
     expect(view.control.plan?.task_schedule_sync_state).toBe('failed');

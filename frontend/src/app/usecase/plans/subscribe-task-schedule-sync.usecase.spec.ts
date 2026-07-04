@@ -27,7 +27,11 @@ describe('SubscribeTaskScheduleSyncUseCase', () => {
     expect(gateway.subscribeTaskScheduleSync).toHaveBeenCalledWith(7, expect.any(Object));
     expect(onSubscribed).toHaveBeenCalledWith(channel);
 
-    const dto: TaskScheduleSyncMessageDto = { syncState: 'ready', syncError: null };
+    const dto: TaskScheduleSyncMessageDto = {
+      syncState: 'ready',
+      syncError: null,
+      syncErrorCropId: null
+    };
     received?.(dto);
     expect(outputPort.onTaskScheduleSync).toHaveBeenCalledWith(dto);
   });

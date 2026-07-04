@@ -10,7 +10,8 @@ use crate::agricultural_task::constants::task_schedule_item_statuses::PLANNED;
 use crate::agricultural_task::dtos::{TaskScheduleGenerateInput, TaskScheduleReplaceItem};
 use crate::agricultural_task::ports::TaskScheduleGenerateInputPort;
 use crate::agricultural_task::gateways::{
-    CultivationPlanGateway, TaskScheduleBlueprint, TaskScheduleCrop, TaskScheduleFieldCultivation,
+    CultivationPlanGateway, TaskScheduleBlueprint, TaskScheduleCrop,
+    TaskScheduleCropTaskTemplate, TaskScheduleFieldCultivation,
     TaskScheduleGenerationReadGateway, TaskSchedulePlan, TaskScheduleRelatedTask,
 };
 use crate::agricultural_task::gateways::{ProgressGateway, TaskScheduleGateway};
@@ -144,25 +145,38 @@ where
             None => return Ok(()),
         };
 
+        if crop.crop_task_templates.is_empty() {
+            return Err(Box::new(TaskScheduleSyncError::with_crop_id(
+                sync_errors::MISSING_CROP_TEMPLATES,
+                format!(
+                    "Crop#{} ({}) has no crop task templates",
+                    crop.id, crop.name
+                ),
+                crop.id,
+            )));
+        }
+
         let blueprints = self.blueprints_for(crop, blueprint_cache);
         if blueprints.is_empty() {
-            return Err(Box::new(TaskScheduleSyncError::new(
-                sync_errors::MISSING_CROP_TEMPLATES,
+            return Err(Box::new(TaskScheduleSyncError::with_crop_id(
+                sync_errors::MISSING_CROP_BLUEPRINTS,
                 format!(
                     "Crop#{} ({}) has no task schedule blueprints",
                     crop.id, crop.name
                 ),
+                crop.id,
             )));
         }
 
         let (general_blueprints, fertilizer_blueprints) = partition_blueprints(blueprints.as_slice());
         if general_blueprints.is_empty() {
-            return Err(Box::new(TaskScheduleSyncError::new(
+            return Err(Box::new(TaskScheduleSyncError::with_crop_id(
                 sync_errors::MISSING_GENERAL_TEMPLATES,
                 format!(
                     "Crop#{} ({}) has no general work blueprints",
                     crop.id, crop.name
                 ),
+                crop.id,
             )));
         }
 

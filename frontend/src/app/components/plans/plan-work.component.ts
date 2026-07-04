@@ -20,6 +20,7 @@ import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-ta
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
+import { buildCropBannerContext, mergeCropBannerContext } from '../../adapters/plans/task-schedule-sync-presenter.helpers';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -72,6 +73,10 @@ const initialControl: PlanWorkViewState = {
           <app-task-schedule-sync-banner
             [syncState]="control.plan.task_schedule_sync_state"
             [syncError]="control.plan.task_schedule_sync_error"
+            [syncErrorCropId]="control.plan.task_schedule_sync_error_crop_id"
+            [cropIds]="cropIdsForBanner"
+            [cropNames]="cropNamesForBanner"
+            [planId]="planId"
             [regenerating]="control.regenerating"
             [regenerateError]="control.regenerateError"
             (retry)="regenerateTaskSchedule()"
@@ -264,6 +269,18 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  private get cropBannerContext(): ReturnType<typeof mergeCropBannerContext> {
+    return mergeCropBannerContext(this.control.fields, this.control.plan?.remediation_crops);
+  }
+
+  get cropIdsForBanner(): number[] {
+    return this.cropBannerContext.cropIds;
+  }
+
+  get cropNamesForBanner(): Record<number, string> {
+    return this.cropBannerContext.cropNames;
   }
 
   get todayLabel(): string {

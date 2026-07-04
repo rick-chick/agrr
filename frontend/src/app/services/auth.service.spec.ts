@@ -18,6 +18,8 @@ class AuthServiceLogic {
       tap((user: any) => {
         if (user.api_key) {
           this.apiKeyService.setApiKey(user.api_key);
+        } else {
+          this.apiKeyService.clearApiKey();
         }
         user.region = user.region ?? detectBrowserRegion();
         this.userSignal = user;
@@ -62,6 +64,21 @@ describe('AuthService Logic Verification', () => {
       clearApiKey: vi.fn()
     };
     service = new AuthServiceLogic(apiService, apiKeyService);
+  });
+
+  it('should clear stale API key when current user has no api_key', async () => {
+    const mockUser = {
+      id: 1,
+      name: 'Test User',
+      api_key: null
+    };
+
+    apiService.getCurrentUser.mockReturnValue(of({ user: mockUser }));
+
+    await firstValueFrom(service.loadCurrentUser());
+
+    expect(apiKeyService.clearApiKey).toHaveBeenCalled();
+    expect(apiKeyService.setApiKey).not.toHaveBeenCalled();
   });
 
   it('should set API key when loading current user', async () => {

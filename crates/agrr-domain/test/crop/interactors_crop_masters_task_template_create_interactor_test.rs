@@ -317,6 +317,12 @@
                 updated_at: None,
             })
         }
+        fn list_by_crop_id(
+            &self,
+            _: i64,
+        ) -> Result<Vec<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>> {
+            Ok(vec![])
+        }
     }
 
     struct TaskGw;

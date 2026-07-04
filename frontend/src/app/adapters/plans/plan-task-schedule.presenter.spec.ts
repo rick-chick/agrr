@@ -15,7 +15,8 @@ const loadedSchedule: TaskScheduleResponse = {
     timeline_generated_at: '2026-06-01T00:00:00Z',
     timeline_generated_at_display: '2026-06-01',
     task_schedule_sync_state: 'stale',
-    task_schedule_sync_error: null
+    task_schedule_sync_error: null,
+    task_schedule_sync_error_crop_id: null
   },
   week: {
     start_date: '2026-06-01',
@@ -135,7 +136,7 @@ describe('PlanTaskSchedulePresenter task schedule sync', () => {
   });
 
   it('updates schedule plan sync state and queues toast/reload when ready', () => {
-    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null });
+    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null, syncErrorCropId: null });
 
     expect(view.control.schedule?.plan.task_schedule_sync_state).toBe('ready');
     expect(view.control.regenerating).toBe(false);
@@ -146,7 +147,7 @@ describe('PlanTaskSchedulePresenter task schedule sync', () => {
   it('ignores sync messages when schedule is not loaded', () => {
     view.control = { ...view.control, schedule: null };
 
-    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null });
+    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null, syncErrorCropId: null });
 
     expect(view.control.syncReloadNonce).toBe(0);
     expect(view.control.pendingSyncToastKey).toBeNull();

@@ -31,6 +31,51 @@ export function formatIsoDateForDisplay(iso: string, lang: string): string {
   }).format(date);
 }
 
+function parseAppDateTime(value: string): Date | null {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnly) {
+    const date = new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const sqlite = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(value);
+  if (sqlite) {
+    const date = new Date(
+      Number(sqlite[1]),
+      Number(sqlite[2]) - 1,
+      Number(sqlite[3]),
+      Number(sqlite[4]),
+      Number(sqlite[5]),
+      Number(sqlite[6])
+    );
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/** Formats ISO/SQLite timestamps for display in the user's app language. */
+export function formatIsoDateTimeForDisplay(value: string, lang: string): string {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnly) {
+    return formatIsoDateForDisplay(value, lang);
+  }
+
+  const date = parseAppDateTime(value);
+  if (!date) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(appLangToBcp47(lang), {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(date);
+}
+
 /** Formats YYYY-MM for display in the user's app language. */
 export function formatIsoMonthForDisplay(isoYm: string, lang: string): string {
   const match = /^(\d{4})-(\d{2})$/.exec(isoYm);

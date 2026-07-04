@@ -67,7 +67,23 @@ impl TimelineJsonPresenter {
             "timeline_generated_at_display": plan.timeline_generated_at,
             "task_schedule_sync_state": plan.task_schedule_sync_state,
             "task_schedule_sync_error": plan.task_schedule_sync_error,
+            "task_schedule_sync_error_crop_id": plan.task_schedule_sync_error_crop_id,
+            "remediation_crops": self.remediation_crops_payload(),
         })
+    }
+
+    fn remediation_crops_payload(&self) -> Vec<Value> {
+        let mut seen = std::collections::HashSet::new();
+        let mut out = Vec::new();
+        for field in &self.timeline.fields {
+            if field.crop_id > 0 && seen.insert(field.crop_id) {
+                out.push(json!({
+                    "crop_id": field.crop_id,
+                    "crop_name": field.crop_name,
+                }));
+            }
+        }
+        out
     }
 
     fn week_payload(&self) -> Value {
@@ -156,7 +172,9 @@ impl TimelineJsonPresenter {
             }
         }
 
-        if categorized.values().all(|v| v.as_array().map(|a| a.is_empty()).unwrap_or(true)) {
+        if categorized.values().all(|v| v.as_array().map(|a| a.is_empty()).unwrap_or(true))
+            && !field.schedules.is_empty()
+        {
             return None;
         }
 
@@ -381,6 +399,65 @@ fn minimap_range(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use agrr_domain::cultivation_plan::dtos::{
+        TaskScheduleTimeline, TaskScheduleTimelineFieldRead, TaskScheduleTimelinePlanRead,
+    };
+    use time::{Date, Month};
+
+    fn sample_plan() -> TaskScheduleTimelinePlanRead {
+        TaskScheduleTimelinePlanRead {
+            id: 1,
+            display_name: "Plan".into(),
+            status: "completed".into(),
+            planning_start_date: None,
+            planning_end_date: None,
+            timeline_generated_at: None,
+            farm_display_name: "Farm".into(),
+            total_area: 50.0,
+            task_schedule_sync_state: "failed".into(),
+            task_schedule_sync_error: Some(
+                "plans.task_schedules.sync_errors.generic".into(),
+            ),
+            task_schedule_sync_error_crop_id: None,
+        }
+    }
+
+    #[test]
+    fn fields_payload_includes_crops_when_schedules_not_generated() {
+        let today = Date::from_calendar_date(2026, Month::July, 4).expect("date");
+        let timeline = TaskScheduleTimeline {
+            plan: sample_plan(),
+            fields: vec![TaskScheduleTimelineFieldRead {
+                id: 10,
+                name: "F1".into(),
+                crop_name: "Tomato".into(),
+                area_sqm: 50.0,
+                field_cultivation_id: 10,
+                crop_id: 42,
+                task_options: vec![],
+                schedules: vec![],
+            }],
+            scheduled_dates: vec![],
+            today,
+        };
+        let body = to_json_body(
+            timeline,
+            TaskScheduleQuery {
+                week_start: None,
+                field_cultivation_id: None,
+                category: None,
+            },
+        );
+        let fields = body["fields"].as_array().expect("fields");
+        assert_eq!(1, fields.len());
+        assert_eq!(42, fields[0]["crop_id"].as_i64().unwrap());
+        assert_eq!("Tomato", fields[0]["crop_name"].as_str().unwrap());
+        let remediation = body["plan"]["remediation_crops"]
+            .as_array()
+            .expect("remediation_crops");
+        assert_eq!(1, remediation.len());
+        assert_eq!(42, remediation[0]["crop_id"].as_i64().unwrap());
+    }
 
     #[test]
     fn detail_payload_omits_legacy_actual_fields() {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   appLangToBcp47,
   formatIsoDateForDisplay,
+  formatIsoDateTimeForDisplay,
   formatIsoMonthForDisplay
 } from './format-display-date';
 
@@ -16,6 +17,24 @@ describe('formatIsoDateForDisplay', () => {
 
   it('returns original string when not ISO date', () => {
     expect(formatIsoDateForDisplay('invalid', 'ja')).toBe('invalid');
+  });
+});
+
+describe('formatIsoDateTimeForDisplay', () => {
+  it('formats SQLite datetime for Japanese locale', () => {
+    expect(formatIsoDateTimeForDisplay('2026-06-25 09:03:01', 'ja')).toBe('2026年6月25日 9:03');
+  });
+
+  it('formats SQLite datetime for English locale', () => {
+    expect(formatIsoDateTimeForDisplay('2026-06-25 09:03:01', 'en')).toBe('June 25, 2026 at 9:03 AM');
+  });
+
+  it('formats date-only values like formatIsoDateForDisplay', () => {
+    expect(formatIsoDateTimeForDisplay('2026-06-25', 'ja')).toBe('2026年6月25日');
+  });
+
+  it('returns original string when not parseable', () => {
+    expect(formatIsoDateTimeForDisplay('invalid', 'ja')).toBe('invalid');
   });
 });
 

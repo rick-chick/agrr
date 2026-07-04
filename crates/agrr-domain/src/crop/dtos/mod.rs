@@ -3,6 +3,9 @@ pub(crate) mod agricultural_task_snapshot;
 pub(crate) mod authorized_crop_loaded;
 pub(crate) mod authorized_crop_stage_in_crop_context;
 pub(crate) mod crop_ai_create_failure;
+pub(crate) mod crop_blueprint_ai_failure;
+pub(crate) mod crop_blueprint_regenerate_failure;
+pub(crate) mod crop_task_schedule_blueprint_persist_attrs;
 pub(crate) mod crop_ai_create_output;
 pub(crate) mod crop_create_input;
 pub(crate) mod crop_create_limit_exceeded_failure;
@@ -25,6 +28,14 @@ pub(crate) mod crop_stage_update_input;
 pub(crate) mod crop_task_template_persist_attributes;
 pub(crate) mod crop_update_input;
 pub(crate) mod http_status;
+pub(crate) mod masters_crop_task_schedule_blueprint;
+pub(crate) mod masters_crop_task_schedule_blueprint_create_failure;
+pub(crate) mod masters_crop_task_schedule_blueprint_create_input;
+pub(crate) mod masters_crop_task_schedule_blueprint_destroy_input;
+pub(crate) mod masters_crop_task_schedule_blueprint_failure;
+pub(crate) mod masters_crop_task_schedule_blueprint_index_input;
+pub(crate) mod masters_crop_task_schedule_blueprint_regenerate_input;
+pub(crate) mod masters_crop_task_schedule_blueprint_update_input;
 pub(crate) mod masters_crop_task_template;
 pub(crate) mod masters_crop_task_template_create_failure;
 pub(crate) mod masters_crop_task_template_create_input;
@@ -43,6 +54,11 @@ pub use agricultural_task_snapshot::AgriculturalTaskSnapshot;
 pub use authorized_crop_loaded::AuthorizedCropLoaded;
 pub use authorized_crop_stage_in_crop_context::AuthorizedCropStageInCropContext;
 pub use crop_ai_create_failure::CropAiCreateFailure;
+pub use crop_blueprint_ai_failure::CropBlueprintAiFailure;
+pub use crop_blueprint_regenerate_failure::{
+    CropBlueprintRegenerateFailure, CropBlueprintRegenerateFailureReason,
+};
+pub use crop_task_schedule_blueprint_persist_attrs::CropTaskScheduleBlueprintPersistAttrs;
 pub use crop_ai_create_output::CropAiCreateOutput;
 pub use crop_create_input::CropCreateInput;
 pub use crop_create_limit_exceeded_failure::CropCreateLimitExceededFailure;
@@ -65,6 +81,21 @@ pub use crop_stage_update_input::CropStageUpdateInput;
 pub use crop_task_template_persist_attributes::CropTaskTemplatePersistAttributes;
 pub use crop_update_input::CropUpdateInput;
 pub use http_status::HttpStatus;
+pub use masters_crop_task_schedule_blueprint::MastersCropTaskScheduleBlueprint;
+pub use masters_crop_task_schedule_blueprint_create_failure::{
+    MastersCropTaskScheduleBlueprintCreateFailure,
+    MastersCropTaskScheduleBlueprintCreateFailureReason,
+};
+pub use masters_crop_task_schedule_blueprint_create_input::MastersCropTaskScheduleBlueprintCreateInput;
+pub use masters_crop_task_schedule_blueprint_destroy_input::MastersCropTaskScheduleBlueprintDestroyInput;
+pub use masters_crop_task_schedule_blueprint_failure::{
+    MastersCropTaskScheduleBlueprintFailure, MastersCropTaskScheduleBlueprintFailureReason,
+};
+pub use masters_crop_task_schedule_blueprint_index_input::MastersCropTaskScheduleBlueprintIndexInput;
+pub use masters_crop_task_schedule_blueprint_regenerate_input::{
+    CropRegenerateTaskScheduleBlueprintsInput, MastersCropTaskScheduleBlueprintRegenerateInput,
+};
+pub use masters_crop_task_schedule_blueprint_update_input::MastersCropTaskScheduleBlueprintUpdateInput;
 pub use masters_crop_task_template::MastersCropTaskTemplate;
 pub use masters_crop_task_template_create_failure::{
     MastersCropTaskTemplateCreateFailure, MastersCropTaskTemplateCreateFailureReason,

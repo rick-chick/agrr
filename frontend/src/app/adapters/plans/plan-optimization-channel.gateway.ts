@@ -50,10 +50,13 @@ export class PlanOptimizationChannelGateway implements PlanOptimizationGateway {
       return null;
     }
     const syncError = payload['task_schedule_sync_error'];
+    const syncErrorCropId = payload['task_schedule_sync_error_crop_id'];
     return {
       syncState,
       syncError:
-        typeof syncError === 'string' ? normalizeTaskScheduleSyncError(syncError) : null
+        typeof syncError === 'string' ? normalizeTaskScheduleSyncError(syncError) : null,
+      syncErrorCropId:
+        typeof syncErrorCropId === 'number' && syncErrorCropId > 0 ? syncErrorCropId : null
     };
   }
 }
