@@ -1,22 +1,22 @@
 import type { Crop } from './crop';
-import type { MastersCropTaskTemplate } from './masters-crop-task-template';
+import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
 
 export interface BlueprintGenerationReadiness {
-  templatesReady: boolean;
+  blueprintsReady: boolean;
   stageRequirementsReady: boolean;
   ready: boolean;
 }
 
 export function blueprintGenerationReadiness(
   crop: Crop | null | undefined,
-  templates: MastersCropTaskTemplate[]
+  blueprints: CropTaskScheduleBlueprint[]
 ): BlueprintGenerationReadiness {
-  const templatesReady = templates.length >= 1;
+  const blueprintsReady = blueprints.length >= 1;
   const stageRequirementsReady = hasCompleteStageRequirements(crop);
   return {
-    templatesReady,
+    blueprintsReady,
     stageRequirementsReady,
-    ready: templatesReady && stageRequirementsReady
+    ready: blueprintsReady && stageRequirementsReady
   };
 }
 

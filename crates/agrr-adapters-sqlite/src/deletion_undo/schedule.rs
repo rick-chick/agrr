@@ -464,10 +464,6 @@ fn delete_crop_graph(conn: &Connection, crop_id: i64) -> rusqlite::Result<()> {
         "DELETE FROM crop_task_schedule_blueprints WHERE crop_id = ?1",
         params![crop_id],
     )?;
-    conn.execute(
-        "DELETE FROM crop_task_templates WHERE crop_id = ?1",
-        params![crop_id],
-    )?;
     let deleted = conn.execute("DELETE FROM crops WHERE id = ?1", params![crop_id])?;
     if deleted == 0 {
         return Err(rusqlite::Error::QueryReturnedNoRows);

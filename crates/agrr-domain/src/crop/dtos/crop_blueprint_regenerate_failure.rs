@@ -1,7 +1,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CropBlueprintRegenerateFailureReason {
     CropNotFound,
-    MissingTaskTemplates,
+    MissingBlueprints,
     MissingAgrrRequirement,
     BlueprintRegenerationFromAgrrFailed,
     AiUnavailable,

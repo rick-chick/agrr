@@ -25,7 +25,6 @@ pub(crate) mod crop_stage_list_input;
 pub(crate) mod crop_stage_list_output;
 pub(crate) mod crop_stage_output;
 pub(crate) mod crop_stage_update_input;
-pub(crate) mod crop_task_template_persist_attributes;
 pub(crate) mod crop_update_input;
 pub(crate) mod http_status;
 pub(crate) mod masters_crop_task_schedule_blueprint;
@@ -36,14 +35,6 @@ pub(crate) mod masters_crop_task_schedule_blueprint_failure;
 pub(crate) mod masters_crop_task_schedule_blueprint_index_input;
 pub(crate) mod masters_crop_task_schedule_blueprint_regenerate_input;
 pub(crate) mod masters_crop_task_schedule_blueprint_update_input;
-pub(crate) mod masters_crop_task_template;
-pub(crate) mod masters_crop_task_template_create_failure;
-pub(crate) mod masters_crop_task_template_create_input;
-pub(crate) mod masters_crop_task_template_create_output;
-pub(crate) mod masters_crop_task_template_destroy_input;
-pub(crate) mod masters_crop_task_template_index_input;
-pub(crate) mod masters_crop_task_template_masters_failure;
-pub(crate) mod masters_crop_task_template_update_input;
 pub(crate) mod nutrient_requirement_update_input;
 pub(crate) mod sunshine_requirement_update_input;
 pub(crate) mod temperature_requirement_update_input;
@@ -78,7 +69,6 @@ pub use crop_stage_list_input::CropStageListInput;
 pub use crop_stage_list_output::CropStageListOutput;
 pub use crop_stage_output::CropStageOutput;
 pub use crop_stage_update_input::CropStageUpdateInput;
-pub use crop_task_template_persist_attributes::CropTaskTemplatePersistAttributes;
 pub use crop_update_input::CropUpdateInput;
 pub use http_status::HttpStatus;
 pub use masters_crop_task_schedule_blueprint::MastersCropTaskScheduleBlueprint;
@@ -96,18 +86,6 @@ pub use masters_crop_task_schedule_blueprint_regenerate_input::{
     CropRegenerateTaskScheduleBlueprintsInput, MastersCropTaskScheduleBlueprintRegenerateInput,
 };
 pub use masters_crop_task_schedule_blueprint_update_input::MastersCropTaskScheduleBlueprintUpdateInput;
-pub use masters_crop_task_template::MastersCropTaskTemplate;
-pub use masters_crop_task_template_create_failure::{
-    MastersCropTaskTemplateCreateFailure, MastersCropTaskTemplateCreateFailureReason,
-};
-pub use masters_crop_task_template_create_input::MastersCropTaskTemplateCreateInput;
-pub use masters_crop_task_template_create_output::MastersCropTaskTemplateCreateOutput;
-pub use masters_crop_task_template_destroy_input::MastersCropTaskTemplateDestroyInput;
-pub use masters_crop_task_template_index_input::MastersCropTaskTemplateIndexInput;
-pub use masters_crop_task_template_masters_failure::{
-    MastersCropTaskTemplateMastersFailure, MastersCropTaskTemplateMastersFailureReason,
-};
-pub use masters_crop_task_template_update_input::MastersCropTaskTemplateUpdateInput;
 pub use nutrient_requirement_update_input::NutrientRequirementUpdateInput;
 pub use sunshine_requirement_update_input::SunshineRequirementUpdateInput;
 pub use temperature_requirement_update_input::TemperatureRequirementUpdateInput;

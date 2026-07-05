@@ -6,7 +6,8 @@ import {
   TASK_SCHEDULE_SYNC_ERROR_GENERIC,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES,
-  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES
+  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES,
+  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS
 } from './task-schedule-sync-error';
 
 describe('normalizeTaskScheduleSyncError', () => {
@@ -35,6 +36,9 @@ describe('isActionableDataDeficiencySyncError', () => {
     );
     expect(
       isActionableDataDeficiencySyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES)
+    ).toBe(true);
+    expect(
+      isActionableDataDeficiencySyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS)
     ).toBe(true);
   });
 

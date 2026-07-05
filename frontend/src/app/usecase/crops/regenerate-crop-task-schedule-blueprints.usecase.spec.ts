@@ -40,7 +40,7 @@ describe('RegenerateCropTaskScheduleBlueprintsUseCase', () => {
         () =>
           new HttpErrorResponse({
             status: 422,
-            error: { error: 'templates missing', error_code: 'missing_task_templates' }
+            error: { error: 'blueprints missing', error_code: 'missing_blueprints' }
           })
       )
     );
@@ -49,7 +49,7 @@ describe('RegenerateCropTaskScheduleBlueprintsUseCase', () => {
 
     expect(outputPort.onRegenerateStarted).toHaveBeenCalled();
     expect(outputPort.onError).toHaveBeenCalledWith({
-      message: 'crops.show.blueprint_errors.missing_task_templates'
+      message: 'crops.show.blueprint_errors.missing_blueprints'
     });
   });
 

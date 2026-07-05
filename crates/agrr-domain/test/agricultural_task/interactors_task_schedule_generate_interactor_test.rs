@@ -5,7 +5,7 @@
     use time::{Date, OffsetDateTime};
 
     use crate::agricultural_task::dtos::TaskScheduleGenerateInput;
-    use crate::agricultural_task::gateways::TaskSchedulePlanContext;
+    use crate::agricultural_task::gateways::{TaskSchedulePlanContext, TaskScheduleRelatedTask};
     use rust_decimal::Decimal;
     use std::str::FromStr;
     use std::sync::Mutex;
@@ -93,30 +93,6 @@
                 id: crop.id,
                 name: crop.name.clone(),
             })
-        }
-
-        fn list_crop_task_template_rows(
-            &self,
-            crop_id: i64,
-        ) -> Result<
-            Vec<crate::agricultural_task::gateways::TaskScheduleTemplateRow>,
-            Box<dyn std::error::Error + Send + Sync>,
-        > {
-            let crop = self
-                .ctx
-                .plan
-                .field_cultivations
-                .iter()
-                .filter_map(|fc| fc.crop.as_ref())
-                .find(|c| c.id == crop_id)
-                .ok_or_else(|| "crop not found".to_string())?;
-            Ok(crop
-                .crop_task_templates
-                .iter()
-                .map(|t| crate::agricultural_task::gateways::TaskScheduleTemplateRow {
-                    agricultural_task: t.agricultural_task.clone(),
-                })
-                .collect())
         }
 
         fn list_crop_task_schedule_blueprint_rows(
@@ -363,9 +339,6 @@
         let crop = TaskScheduleCrop {
             id: 1,
             name: "トマト".into(),
-            crop_task_templates: vec![TaskScheduleCropTaskTemplate {
-                agricultural_task: Some(soil_task()),
-            }],
             crop_task_schedule_blueprints: vec![
                 general_blueprint,
                 basal_blueprint,
@@ -456,11 +429,13 @@
     }
 
     #[test]
-    fn generate_raises_template_missing_when_no_templates() {
+    fn generate_raises_general_blueprint_missing_when_only_fertilizer_blueprints() {
         let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
         if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
             if let Some(crop) = fc.crop.as_mut() {
-                crop.crop_task_templates.clear();
+                crop.crop_task_schedule_blueprints.retain(|b| {
+                    b.task_type == BASAL_FERTILIZATION || b.task_type == TOPDRESS_FERTILIZATION
+                });
             }
         }
         let cultivation_plan_gateway = FakeCultivationPlanGateway;
@@ -479,11 +454,7 @@
         let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
         assert_eq!(
             crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
-            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_CROP_TEMPLATES.to_string()
-        );
-        assert_eq!(
-            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
-            Some(1)
+            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_GENERAL_BLUEPRINTS.to_string()
         );
     }
 

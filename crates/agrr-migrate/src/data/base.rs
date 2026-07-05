@@ -839,10 +839,6 @@ fn remove_reference_crops_without_stages(
                 "DELETE FROM crop_task_schedule_blueprints WHERE crop_id = ?1",
                 params![crop_id],
             )?;
-            tx.execute(
-                "DELETE FROM crop_task_templates WHERE crop_id = ?1",
-                params![crop_id],
-            )?;
             tx.execute("DELETE FROM pesticides WHERE crop_id = ?1", params![crop_id])?;
             tx.execute("DELETE FROM free_crop_plans WHERE crop_id = ?1", params![crop_id])?;
             tx.execute(

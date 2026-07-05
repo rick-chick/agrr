@@ -1,7 +1,9 @@
 //! JSON shape for `GET /api/v1/plans/:id/task_schedule` (Rails `TaskScheduleTimelineHtmlPresenter#as_json`).
 
 use agrr_domain::cultivation_plan::dtos::{
-    TaskScheduleTimeline, TaskScheduleTimelineFieldRead,
+    TaskScheduleTimeline, TaskScheduleTimelineAgriculturalTaskRead, TaskScheduleTimelineFieldRead,
+    TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineTaskOptionRead,
+    TaskScheduleTimelineWorkRecordSummaryRead,
 };
 use serde_json::{json, Map, Value};
 use time::{Date, Duration, Weekday};
@@ -134,20 +136,15 @@ impl TimelineJsonPresenter {
         categorized.insert("unscheduled".to_string(), json!([]));
 
         for schedule in &field.schedules {
-            let category = schedule
-                .get("category")
-                .and_then(|v| v.as_str())
-                .unwrap_or(CATEGORY_GENERAL);
+            let category = schedule.category.as_str();
             if !self.include_category(category) {
                 continue;
             }
-            let items = schedule.get("items").and_then(|v| v.as_array());
-            let Some(items) = items else { continue };
-            for item in items {
+            for item in &schedule.items {
                 let serialized = self.serialize_item(item, category, field.field_cultivation_id);
                 let scheduled_date = item
-                    .get("scheduled_date")
-                    .and_then(|v| v.as_str())
+                    .scheduled_date
+                    .as_deref()
                     .and_then(|s| Date::parse(s, &time::format_description::well_known::Iso8601::DATE).ok());
                 if scheduled_date.is_none() {
                     categorized
@@ -178,6 +175,12 @@ impl TimelineJsonPresenter {
             return None;
         }
 
+        let task_options: Vec<Value> = field
+            .task_options
+            .iter()
+            .map(task_option_payload)
+            .collect();
+
         let mut field_info = json!({
             "id": field.id,
             "name": field.name,
@@ -185,7 +188,7 @@ impl TimelineJsonPresenter {
             "area_sqm": field.area_sqm,
             "field_cultivation_id": field.field_cultivation_id,
             "crop_id": field.crop_id,
-            "task_options": field.task_options,
+            "task_options": task_options,
         });
         if let Some(obj) = field_info.as_object_mut() {
             obj.insert("schedules".to_string(), Value::Object(categorized));
@@ -193,40 +196,38 @@ impl TimelineJsonPresenter {
         Some(field_info)
     }
 
-    fn serialize_item(&self, item: &Value, category: &str, field_cultivation_id: i64) -> Value {
-        let id = item.get("id").and_then(|v| v.as_i64()).unwrap_or(0);
-        let status = item
-            .get("status")
-            .and_then(|v| v.as_str())
-            .unwrap_or("planned");
-        let completed = item
-            .get("completed")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-        let work_records = item
-            .get("work_records")
-            .cloned()
-            .unwrap_or_else(|| json!([]));
+    fn serialize_item(
+        &self,
+        item: &TaskScheduleTimelineScheduleItemRead,
+        category: &str,
+        field_cultivation_id: i64,
+    ) -> Value {
+        let status = item.status.as_str();
+        let work_records: Vec<Value> = item
+            .work_records
+            .iter()
+            .map(work_record_payload)
+            .collect();
         let mut payload = json!({
-            "item_id": id,
-            "name": item.get("name").cloned().unwrap_or(Value::Null),
-            "task_type": item.get("task_type").cloned().unwrap_or(Value::Null),
+            "item_id": item.id,
+            "name": item.name,
+            "task_type": item.task_type,
             "category": category,
-            "scheduled_date": item.get("scheduled_date").cloned().unwrap_or(Value::Null),
-            "stage_name": item.get("stage_name").cloned().unwrap_or(Value::Null),
-            "stage_order": item.get("stage_order").cloned().unwrap_or(Value::Null),
-            "gdd_trigger": item.get("gdd_trigger").cloned().unwrap_or(Value::Null),
-            "gdd_tolerance": item.get("gdd_tolerance").cloned().unwrap_or(Value::Null),
-            "priority": item.get("priority").cloned().unwrap_or(Value::Null),
-            "source": item.get("source").cloned().unwrap_or(Value::Null),
-            "weather_dependency": item.get("weather_dependency").cloned().unwrap_or(Value::Null),
-            "time_per_sqm": item.get("time_per_sqm").cloned().unwrap_or(Value::Null),
-            "amount": item.get("amount").cloned().unwrap_or(Value::Null),
-            "amount_unit": item.get("amount_unit").cloned().unwrap_or(Value::Null),
+            "scheduled_date": item.scheduled_date,
+            "stage_name": item.stage_name,
+            "stage_order": item.stage_order,
+            "gdd_trigger": optional_f64_as_string(item.gdd_trigger),
+            "gdd_tolerance": optional_f64_as_string(item.gdd_tolerance),
+            "priority": item.priority,
+            "source": item.source,
+            "weather_dependency": item.weather_dependency,
+            "time_per_sqm": optional_f64_as_string(item.time_per_sqm),
+            "amount": optional_f64_as_string(item.amount),
+            "amount_unit": item.amount_unit,
             "status": status,
-            "agricultural_task_id": item.get("agricultural_task_id").cloned().unwrap_or(Value::Null),
+            "agricultural_task_id": item.agricultural_task_id,
             "field_cultivation_id": field_cultivation_id,
-            "completed": completed,
+            "completed": item.completed,
             "work_records": work_records,
         });
         if let Some(obj) = payload.as_object_mut() {
@@ -234,11 +235,12 @@ impl TimelineJsonPresenter {
             obj.insert(
                 "badge".to_string(),
                 json!({
-                    "type": item.pointer("/agricultural_task/task_type")
-                        .or_else(|| item.get("task_type"))
-                        .cloned()
-                        .unwrap_or(Value::Null),
-                    "priority_level": priority_level(item.get("priority").and_then(|v| v.as_i64())),
+                    "type": item
+                        .agricultural_task
+                        .as_ref()
+                        .and_then(|at| at.task_type.clone())
+                        .unwrap_or_else(|| item.task_type.clone()),
+                    "priority_level": priority_level(item.priority.map(i64::from)),
                     "status": status,
                     "category": category,
                 }),
@@ -279,28 +281,96 @@ impl TimelineJsonPresenter {
     }
 }
 
-fn detail_payload(item: &Value) -> Value {
+fn task_option_payload(option: &TaskScheduleTimelineTaskOptionRead) -> Value {
+    let mut payload = json!({
+        "agricultural_task_id": option.agricultural_task_id,
+        "template_id": option.agricultural_task_id,
+        "name": option.name,
+        "task_type": option.task_type,
+    });
+    if let Some(obj) = payload.as_object_mut() {
+        if let Some(v) = &option.description {
+            obj.insert("description".into(), json!(v));
+        }
+        if let Some(v) = &option.weather_dependency {
+            obj.insert("weather_dependency".into(), json!(v));
+        }
+        if let Some(v) = option.time_per_sqm {
+            obj.insert("time_per_sqm".into(), json!(v.to_string()));
+        }
+        if let Some(v) = &option.required_tools {
+            obj.insert("required_tools".into(), json!(v));
+        }
+        if let Some(v) = &option.skill_level {
+            obj.insert("skill_level".into(), json!(v));
+        }
+    }
+    payload
+}
+
+fn work_record_payload(record: &TaskScheduleTimelineWorkRecordSummaryRead) -> Value {
+    json!({
+        "id": record.id,
+        "actual_date": record.actual_date,
+        "notes": record.notes,
+    })
+}
+
+fn agricultural_task_payload(task: &TaskScheduleTimelineAgriculturalTaskRead) -> Value {
+    let mut payload = json!({ "name": task.name });
+    if let Some(obj) = payload.as_object_mut() {
+        if let Some(v) = &task.description {
+            obj.insert("description".into(), json!(v));
+        }
+        if let Some(v) = task.time_per_sqm {
+            obj.insert("time_per_sqm".into(), json!(v.to_string()));
+        }
+        if let Some(v) = &task.weather_dependency {
+            obj.insert("weather_dependency".into(), json!(v));
+        }
+        if let Some(v) = &task.required_tools {
+            obj.insert("required_tools".into(), json!(v));
+        }
+        if let Some(v) = &task.skill_level {
+            obj.insert("skill_level".into(), json!(v));
+        }
+        if let Some(v) = &task.task_type {
+            obj.insert("task_type".into(), json!(v));
+        }
+    }
+    payload
+}
+
+fn detail_payload(item: &TaskScheduleTimelineScheduleItemRead) -> Value {
     json!({
         "stage": {
-            "name": item.get("stage_name").cloned().unwrap_or(Value::Null),
-            "order": item.get("stage_order").cloned().unwrap_or(Value::Null),
+            "name": item.stage_name,
+            "order": item.stage_order,
         },
         "gdd": {
-            "trigger": item.get("gdd_trigger").cloned().unwrap_or(Value::Null),
-            "tolerance": item.get("gdd_tolerance").cloned().unwrap_or(Value::Null),
+            "trigger": optional_f64_as_string(item.gdd_trigger),
+            "tolerance": optional_f64_as_string(item.gdd_tolerance),
         },
-        "priority": item.get("priority").cloned().unwrap_or(Value::Null),
-        "weather_dependency": item.get("weather_dependency").cloned().unwrap_or(Value::Null),
-        "time_per_sqm": item.get("time_per_sqm").cloned().unwrap_or(Value::Null),
-        "amount": item.get("amount").cloned().unwrap_or(Value::Null),
-        "amount_unit": item.get("amount_unit").cloned().unwrap_or(Value::Null),
-        "source": item.get("source").cloned().unwrap_or(Value::Null),
-        "master": item.get("agricultural_task").cloned().unwrap_or(Value::Null),
+        "priority": item.priority,
+        "weather_dependency": item.weather_dependency,
+        "time_per_sqm": optional_f64_as_string(item.time_per_sqm),
+        "amount": optional_f64_as_string(item.amount),
+        "amount_unit": item.amount_unit,
+        "source": item.source,
+        "master": item
+            .agricultural_task
+            .as_ref()
+            .map(agricultural_task_payload)
+            .unwrap_or(Value::Null),
         "history": {
-            "rescheduled_at": item.get("rescheduled_at").cloned().unwrap_or(Value::Null),
-            "cancelled_at": item.get("cancelled_at").cloned().unwrap_or(Value::Null),
+            "rescheduled_at": item.rescheduled_at,
+            "cancelled_at": item.cancelled_at,
         },
     })
+}
+
+fn optional_f64_as_string(value: Option<f64>) -> Value {
+    value.map(|v| json!(v.to_string())).unwrap_or(Value::Null)
 }
 
 fn priority_level(value: Option<i64>) -> &'static str {
@@ -401,6 +471,8 @@ mod tests {
     use super::*;
     use agrr_domain::cultivation_plan::dtos::{
         TaskScheduleTimeline, TaskScheduleTimelineFieldRead, TaskScheduleTimelinePlanRead,
+        TaskScheduleTimelineScheduleItemRead, TaskScheduleTimelineScheduleRead,
+        TaskScheduleTimelineTaskOptionRead,
     };
     use time::{Date, Month};
 
@@ -461,28 +533,112 @@ mod tests {
 
     #[test]
     fn detail_payload_omits_legacy_actual_fields() {
-        let item = json!({
-            "stage_name": "s",
-            "stage_order": 1,
-            "gdd_trigger": "0",
-            "gdd_tolerance": "0",
-            "priority": 1,
-            "weather_dependency": "low",
-            "time_per_sqm": "1",
-            "amount": "1",
-            "amount_unit": "kg",
-            "source": "agrr",
-            "actual_date": "2026-01-01",
-            "actual_notes": "old",
-            "rescheduled_at": null,
-            "cancelled_at": null,
-            "completed_at": "2026-01-01",
-        });
+        let item = TaskScheduleTimelineScheduleItemRead {
+            id: 1,
+            name: "task".into(),
+            task_type: "field_work".into(),
+            scheduled_date: None,
+            stage_name: Some("s".into()),
+            stage_order: Some(1),
+            gdd_trigger: Some(0.0),
+            gdd_tolerance: Some(0.0),
+            priority: Some(1),
+            source: "agrr".into(),
+            weather_dependency: Some("low".into()),
+            time_per_sqm: Some(1.0),
+            amount: Some(1.0),
+            amount_unit: Some("kg".into()),
+            status: "planned".into(),
+            agricultural_task_id: None,
+            field_cultivation_id: 10,
+            agricultural_task: None,
+            rescheduled_at: None,
+            cancelled_at: None,
+            completed: false,
+            work_records: vec![],
+        };
         let details = detail_payload(&item);
         assert!(details.get("actual").is_none());
         let history = details.get("history").unwrap().as_object().unwrap();
         assert!(!history.contains_key("completed_at"));
         assert!(history.contains_key("rescheduled_at"));
         assert!(history.contains_key("cancelled_at"));
+    }
+
+    #[test]
+    fn task_option_payload_includes_template_id_alias() {
+        let payload = task_option_payload(&TaskScheduleTimelineTaskOptionRead {
+            agricultural_task_id: 501,
+            name: "Weeding".into(),
+            task_type: "field_work".into(),
+            description: None,
+            weather_dependency: None,
+            time_per_sqm: None,
+            required_tools: None,
+            skill_level: None,
+        });
+        assert_eq!(501, payload["agricultural_task_id"].as_i64().unwrap());
+        assert_eq!(501, payload["template_id"].as_i64().unwrap());
+    }
+
+    #[test]
+    fn fields_payload_serializes_scheduled_items_in_week() {
+        let today = Date::from_calendar_date(2026, Month::July, 5).expect("date");
+        let timeline = TaskScheduleTimeline {
+            plan: sample_plan(),
+            fields: vec![TaskScheduleTimelineFieldRead {
+                id: 10,
+                name: "F1".into(),
+                crop_name: "Tomato".into(),
+                area_sqm: 50.0,
+                field_cultivation_id: 10,
+                crop_id: 42,
+                task_options: vec![],
+                schedules: vec![TaskScheduleTimelineScheduleRead {
+                    category: "general".into(),
+                    items: vec![TaskScheduleTimelineScheduleItemRead {
+                        id: 1001,
+                        name: "Weed".into(),
+                        task_type: "field_work".into(),
+                        scheduled_date: Some("2026-07-05".into()),
+                        stage_name: None,
+                        stage_order: None,
+                        gdd_trigger: None,
+                        gdd_tolerance: None,
+                        priority: None,
+                        source: "agrr".into(),
+                        weather_dependency: None,
+                        time_per_sqm: None,
+                        amount: None,
+                        amount_unit: None,
+                        status: "planned".into(),
+                        agricultural_task_id: Some(501),
+                        field_cultivation_id: 10,
+                        agricultural_task: None,
+                        rescheduled_at: None,
+                        cancelled_at: None,
+                        completed: false,
+                        work_records: vec![],
+                    }],
+                }],
+            }],
+            scheduled_dates: vec![today],
+            today,
+        };
+        let body = to_json_body(
+            timeline,
+            TaskScheduleQuery {
+                week_start: Some("2026-07-05".into()),
+                field_cultivation_id: None,
+                category: None,
+            },
+        );
+        let fields = body["fields"].as_array().expect("fields");
+        assert_eq!(1, fields.len());
+        let general = fields[0]["schedules"]["general"]
+            .as_array()
+            .expect("general");
+        assert_eq!(1, general.len());
+        assert_eq!(1001, general[0]["item_id"].as_i64().unwrap());
     }
 }

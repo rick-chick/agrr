@@ -1,5 +1,9 @@
 @import '../_master-layout.css';
 
+.master-error {
+  color: var(--color-error);
+}
+
 .crop-detail__plan-wizard-banner {
   margin-bottom: var(--space-4);
   padding: var(--space-4);
@@ -20,21 +24,6 @@
   font-size: var(--font-size-sm);
   line-height: 1.5;
   color: var(--color-text-secondary);
-}
-
-.crop-detail__step-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.125rem var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-  background: var(--color-surface-hover);
-  border: 1px solid var(--color-border);
-  flex-shrink: 0;
 }
 
 .section-card > .section-title {
@@ -317,10 +306,6 @@
   white-space: nowrap;
 }
 
-.crop-detail__template-add .form-card__field {
-  margin-bottom: var(--space-3);
-}
-
 .crop-detail__card-remove {
   box-sizing: border-box;
   background: var(--color-surface);
@@ -378,62 +363,86 @@
   margin: 0;
 }
 
-/* STEP 1 と同じ card-list グリッド。潰れ防止は body+actions の 2 分割と min-width のみ */
-.blueprint-card .item-card__body {
-  flex: 1 1 0;
-  min-width: 9.5rem;
+/* STEP 1 と同じ card-list グリッド。カード内は縦積み（ヘッダー + フィールド行） */
+article.item-card.blueprint-card {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  min-height: auto;
+  gap: 0;
 }
 
-.blueprint-card .item-card__body:hover {
-  color: var(--color-text);
+.blueprint-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
 }
 
-.blueprint-card .item-card__title {
+.blueprint-card__header .item-card__title {
+  margin-bottom: 0;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-wrap: break-word;
   word-break: normal;
 }
 
-.blueprint-card .item-card__meta {
-  display: block;
+.blueprint-card__remove {
+  flex-shrink: 0;
+  min-height: auto;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  background: transparent;
+  font-size: var(--font-size-xs);
 }
 
-@media (min-width: 640px) {
-  article.item-card.blueprint-card {
-    flex-wrap: wrap;
-    align-items: flex-end;
+.blueprint-card__remove:hover {
+  background: var(--color-error-bg-soft, #fef2f2);
+  border-color: transparent;
+}
+
+.blueprint-card__fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .blueprint-card__fields {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 9rem);
+    align-items: end;
   }
 
-  .blueprint-card .item-card__actions {
-    flex: 0 0 auto;
-    margin-inline-start: auto;
+  .blueprint-card__fields--gdd-only {
+    grid-template-columns: minmax(0, 9rem);
   }
 }
 
-.blueprint-card__gdd {
+.blueprint-card__field {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  font-size: var(--font-size-sm);
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.blueprint-card__gdd-label {
+.blueprint-card__field-label {
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
-  white-space: nowrap;
 }
 
-.blueprint-card__gdd .crop-detail__template-add-input-wrap {
-  width: auto;
-  flex: 0 1 8.5rem;
-  max-width: 8.5rem;
-}
-
-.blueprint-card__gdd .crop-detail__template-add-input {
+.blueprint-card__select,
+.blueprint-card__input {
   min-height: 2rem;
   padding: var(--space-1) var(--space-2);
   font-size: var(--font-size-sm);
+}
+
+.blueprint-card__gdd .crop-detail__template-add-input-wrap {
+  width: 100%;
 }
 
 .blueprint-card__gdd .crop-detail__template-add-input-unit {
@@ -441,7 +450,8 @@
   font-size: var(--font-size-xs);
 }
 
-.blueprint-card__gdd .crop-detail__template-add-input:disabled {
+.blueprint-card__gdd .crop-detail__template-add-input:disabled,
+.blueprint-card__select:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

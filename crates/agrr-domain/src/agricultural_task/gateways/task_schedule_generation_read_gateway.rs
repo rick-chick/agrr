@@ -27,11 +27,6 @@ pub struct TaskScheduleCropRow {
 }
 
 #[derive(Debug, Clone)]
-pub struct TaskScheduleTemplateRow {
-    pub agricultural_task: Option<TaskScheduleRelatedTask>,
-}
-
-#[derive(Debug, Clone)]
 pub struct TaskScheduleBlueprintRow {
     pub id: i64,
     pub task_type: String,
@@ -64,11 +59,6 @@ pub trait TaskScheduleGenerationReadGateway: Send + Sync {
         &self,
         crop_id: i64,
     ) -> Result<TaskScheduleCropRow, Box<dyn std::error::Error + Send + Sync>>;
-
-    fn list_crop_task_template_rows(
-        &self,
-        crop_id: i64,
-    ) -> Result<Vec<TaskScheduleTemplateRow>, Box<dyn std::error::Error + Send + Sync>>;
 
     fn list_crop_task_schedule_blueprint_rows(
         &self,

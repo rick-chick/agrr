@@ -47,10 +47,17 @@ export const REGENERATE_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT =
     'REGENERATE_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT'
   );
 
+export interface CropStageOrderName {
+  order: number;
+  name: string;
+}
+
 export interface UpdateCropTaskScheduleBlueprintInputDto {
   cropId: number;
   blueprintId: number;
-  gddTrigger: number;
+  gddTrigger?: number;
+  stageOrder?: number | null;
+  cropStages?: CropStageOrderName[];
 }
 
 export interface UpdateCropTaskScheduleBlueprintDataDto {
@@ -98,9 +105,9 @@ export const DELETE_CROP_TASK_SCHEDULE_BLUEPRINT_OUTPUT_PORT =
 export interface CreateCropTaskScheduleBlueprintInputDto {
   cropId: number;
   agriculturalTaskId: number;
-  stageOrder: number;
-  stageName: string | null;
-  gddTrigger: number;
+  stageOrder?: number | null;
+  stageName?: string | null;
+  gddTrigger?: number | null;
 }
 
 export interface CreateCropTaskScheduleBlueprintDataDto {

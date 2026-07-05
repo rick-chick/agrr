@@ -1,8 +1,8 @@
 //! `CropMastersTaskScheduleBlueprintGateway` — masters crop task schedule blueprint CRUD.
 
 use crate::crop::crop_task_schedule_blueprint_sqlite::{
-    delete_blueprint_by_id, insert_blueprint, list_blueprints_by_crop_id, replace_all_blueprints_for_crop,
-    update_blueprint,
+    apply_regenerated_blueprints_for_crop, delete_blueprint_by_id, insert_blueprint,
+    list_blueprints_by_crop_id, replace_all_blueprints_for_crop, update_blueprint,
 };
 use crate::pool::SqlitePool;
 use agrr_domain::crop::dtos::{
@@ -61,5 +61,14 @@ impl CropMastersTaskScheduleBlueprintGateway for CropMastersTaskScheduleBlueprin
     ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>>
     {
         replace_all_blueprints_for_crop(&self.pool, crop_id, records)
+    }
+
+    fn apply_regenerated_for_crop(
+        &self,
+        crop_id: i64,
+        records: &[CropTaskScheduleBlueprintPersistAttrs],
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>>
+    {
+        apply_regenerated_blueprints_for_crop(&self.pool, crop_id, records)
     }
 }

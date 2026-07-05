@@ -7,7 +7,6 @@ use crate::shared::attr::AttrMap;
 use crate::shared::dtos::Error;
 use crate::shared::user::User;
 use crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter;
-use serde_json::Value;
 
 /// Ruby: `Domain::Crop::Gateways::CropGateway`
 pub trait CropGateway: Send + Sync {
@@ -47,10 +46,6 @@ pub trait CropGateway: Send + Sync {
     fn create_nutrient_requirement(&self, crop_stage_id: i64, input: NutrientRequirementUpdateInput) -> Result<NutrientRequirementEntity, Box<dyn std::error::Error + Send + Sync>>;
     fn update_nutrient_requirement(&self, crop_stage_id: i64, input: NutrientRequirementUpdateInput) -> Result<NutrientRequirementEntity, Box<dyn std::error::Error + Send + Sync>>;
     fn delete_nutrient_requirement(&self, crop_stage_id: i64) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
-
-    fn masters_crop_agricultural_task_templates_index_rows(&self, crop_id: i64) -> Result<Vec<Value>, Box<dyn std::error::Error + Send + Sync>>;
-    fn update_masters_crop_task_template_for_api(&self, crop_id: i64, template_id: i64, attributes: Value) -> Result<UpdateMastersCropTaskTemplateOutcome, Box<dyn std::error::Error + Send + Sync>>;
-    fn delete_masters_crop_task_template(&self, crop_id: i64, template_id: i64) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 }
 
 #[derive(Debug, Clone)]
@@ -59,8 +54,3 @@ pub enum SoftDeleteWithUndoOutcome {
     Failure(Error),
 }
 
-#[derive(Debug, Clone)]
-pub enum UpdateMastersCropTaskTemplateOutcome {
-    Ok { row: Value },
-    ValidationFailed { errors: Vec<String> },
-}

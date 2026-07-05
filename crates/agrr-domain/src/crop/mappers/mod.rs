@@ -1,5 +1,6 @@
+pub mod blueprint_attribute_lookup;
 pub mod crop_delete_usage_mapper;
-pub mod crop_task_template_agrr_mapper;
+pub mod crop_blueprint_agrr_mapper;
 pub mod task_schedule_blueprint_generator;
 
 pub use crate::crop::dtos::CropDeleteUsageSnapshot;

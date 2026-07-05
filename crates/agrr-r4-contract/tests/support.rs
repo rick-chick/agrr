@@ -14,6 +14,18 @@ pub fn status_and_body(response: reqwest::blocking::Response) -> (u16, String) {
     (status, body)
 }
 
+/// Asserts deprecated crop agricultural_tasks API returns 410 Gone.
+pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
+    assert_eq!(410, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(body).expect("gone JSON");
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("crop_task_template_api_removed"),
+        "{body}"
+    );
+    assert!(json.get("error").is_some(), "{body}");
+}
+
 pub fn developer_session_id(client: &ContractClient) -> String {
     let response = client.get("/auth/test/developer", None, &empty_headers());
     for value in response.headers().get_all("set-cookie") {
@@ -73,8 +85,8 @@ pub fn seed_masters_crop(user_id: i64) -> MastersCropSeed {
     }
 }
 
-/// Seeds crop + agricultural task template for manual blueprint create tests.
-pub fn seed_masters_crop_with_task_template(user_id: i64) -> MastersCropBlueprintCreateSeed {
+/// Seeds crop + pending manual blueprint for blueprint create tests.
+pub fn seed_masters_crop_with_manual_blueprint(user_id: i64) -> MastersCropBlueprintCreateSeed {
     let crop = seed_masters_crop(user_id);
     let path =
         std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
@@ -89,12 +101,13 @@ pub fn seed_masters_crop_with_task_template(user_id: i64) -> MastersCropBlueprin
     .expect("insert agricultural_task");
     let agricultural_task_id = conn.last_insert_rowid();
     conn.execute(
-        "INSERT INTO crop_task_templates (
-            crop_id, agricultural_task_id, name, is_reference, ai_state, created_at, updated_at
-         ) VALUES (?1, ?2, ?3, 0, 'pending', datetime('now'), datetime('now'))",
+        "INSERT INTO crop_task_schedule_blueprints (
+            crop_id, agricultural_task_id, stage_order, stage_name, gdd_trigger, gdd_tolerance,
+            task_type, source, priority, name, created_at, updated_at
+         ) VALUES (?1, ?2, NULL, NULL, NULL, NULL, 'field_work', 'manual', 1, ?3, datetime('now'), datetime('now'))",
         params![crop.crop_id, agricultural_task_id, task_name],
     )
-    .expect("insert crop_task_template");
+    .expect("insert manual blueprint");
     MastersCropBlueprintCreateSeed {
         crop_id: crop.crop_id,
         agricultural_task_id,

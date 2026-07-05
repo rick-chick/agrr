@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 const BLUEPRINT_ERROR_PREFIX = 'crops.show.blueprint_errors.';
 
 const KNOWN_ERROR_CODES = new Set([
-  'missing_task_templates',
+  'missing_blueprints',
   'missing_agrr_requirement',
   'blueprint_generation_failed',
   'ai_unavailable',
@@ -12,7 +12,7 @@ const KNOWN_ERROR_CODES = new Set([
 ]);
 
 const READINESS_BLOCKING_ERROR_CODES = new Set([
-  'missing_task_templates',
+  'missing_blueprints',
   'missing_agrr_requirement'
 ]);
 

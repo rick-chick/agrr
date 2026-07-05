@@ -4,6 +4,7 @@ export const TASK_SCHEDULE_SYNC_ERROR_GENERIC = `${TASK_SCHEDULE_SYNC_ERROR_PREF
 export const TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES = `${TASK_SCHEDULE_SYNC_ERROR_PREFIX}missing_crop_templates`;
 export const TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS = `${TASK_SCHEDULE_SYNC_ERROR_PREFIX}missing_crop_blueprints`;
 export const TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES = `${TASK_SCHEDULE_SYNC_ERROR_PREFIX}missing_general_templates`;
+export const TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS = `${TASK_SCHEDULE_SYNC_ERROR_PREFIX}missing_general_blueprints`;
 
 export { TASK_SCHEDULE_SYNC_ERROR_PREFIX };
 
@@ -11,6 +12,7 @@ const NAMED_DETAIL_SYNC_ERRORS = new Set([
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES,
+  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS,
   TASK_SCHEDULE_SYNC_ERROR_GENERIC
 ]);
 
@@ -46,21 +48,20 @@ export function syncErrorDetailTranslateParams(
 }
 
 export function cropMasterLinkFragmentForSyncError(syncError: string | null): string | null {
-  if (syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES) {
-    return 'task-templates-heading';
-  }
   if (
+    syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES ||
     syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS ||
-    syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES
+    syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES ||
+    syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS
   ) {
     return 'blueprints-heading';
   }
   return null;
 }
 
-/** Crop detail registration wizard entry fragment (STEP 1 unless error targets blueprints). */
+/** Crop detail registration wizard entry fragment. */
 export function cropWizardFragmentForSyncError(syncError: string | null): string {
-  return cropMasterLinkFragmentForSyncError(syncError) ?? 'task-templates-heading';
+  return cropMasterLinkFragmentForSyncError(syncError) ?? 'blueprints-heading';
 }
 
 export const TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY = `${TASK_SCHEDULE_SYNC_ERROR_PREFIX}crop_wizard_link`;
@@ -74,7 +75,8 @@ export function cropMasterRemediationLinkKey(
   const actionableErrors = new Set([
     TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES,
     TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS,
-    TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES
+    TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES,
+    TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS
   ]);
 
   if (syncError != null && actionableErrors.has(syncError)) {

@@ -8,11 +8,10 @@ use crate::crop::entities::{
     CropEntity, CropStageEntity, NutrientRequirementEntity, SunshineRequirementEntity,
     TemperatureRequirementEntity, ThermalRequirementEntity,
 };
-use crate::crop::gateways::{CropGateway, SoftDeleteWithUndoOutcome, UpdateMastersCropTaskTemplateOutcome};
+use crate::crop::gateways::{CropGateway, SoftDeleteWithUndoOutcome};
 use crate::shared::attr::AttrMap;
 use crate::shared::user::User;
 use crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter;
-use serde_json::Value;
 
 pub struct CropGatewayStub;
 
@@ -183,27 +182,6 @@ impl CropGateway for CropGatewayStub {
     }
     fn delete_nutrient_requirement(
         &self,
-        _: i64,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        unimplemented!()
-    }
-    fn masters_crop_agricultural_task_templates_index_rows(
-        &self,
-        _: i64,
-    ) -> Result<Vec<Value>, Box<dyn std::error::Error + Send + Sync>> {
-        unimplemented!()
-    }
-    fn update_masters_crop_task_template_for_api(
-        &self,
-        _: i64,
-        _: i64,
-        _: Value,
-    ) -> Result<UpdateMastersCropTaskTemplateOutcome, Box<dyn std::error::Error + Send + Sync>> {
-        unimplemented!()
-    }
-    fn delete_masters_crop_task_template(
-        &self,
-        _: i64,
         _: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()

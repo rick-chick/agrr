@@ -43,7 +43,7 @@ pub use auth::{
 pub use contact_messages::ContactMessageSqliteGateway;
 pub use crop::{
     CropAiUpsertSqlitePersistence, CropAgrrRequirementSqliteGateway,
-    CropMastersTaskScheduleBlueprintSqliteGateway, CropMastersTaskTemplateSqliteGateway,
+    CropMastersTaskScheduleBlueprintSqliteGateway,
     CropSqliteGateway,
     CropSourceCropLookupSqliteGateway, CropStageSqliteGateway,
     NutrientRequirementSqliteGateway,
@@ -55,7 +55,7 @@ pub use fertilize::FertilizeSqliteGateway;
 pub use pesticide::{PesticideCropSqliteGateway, PesticideSqliteGateway};
 pub use interaction_rule::{InteractionRulePlanReadSqliteGateway, InteractionRuleSqliteGateway};
 pub use agricultural_task::{
-    AgTaskCropSqliteGateway, AgriculturalTaskSqliteGateway, CropTaskTemplateSqliteGateway,
+    AgTaskCropSqliteGateway, AgriculturalTaskSqliteGateway,
 };
 pub use pest::{CropPestSqliteGateway, PestCropSqliteGateway, PestSqliteGateway};
 pub use cultivation_plan::{

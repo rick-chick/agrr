@@ -30,16 +30,6 @@ pub fn view_allowed(user: &User, is_reference: bool, user_id: Option<i64>) -> bo
     user.admin || is_reference || user_id == Some(user.id)
 }
 
-/// マスター API: 作物に紐付ける農業タスクは参照タスクまたは自ユーザーのタスクのみ
-pub fn masters_crop_task_template_associate_allowed(
-    user: &User,
-    is_reference: bool,
-    user_id: Option<i64>,
-) -> bool {
-    let _ = user;
-    is_reference || user_id == Some(user.id)
-}
-
 pub fn edit_allowed(user: &User, is_reference: bool, user_id: Option<i64>) -> bool {
     user.admin || (!is_reference && user_id == Some(user.id))
 }

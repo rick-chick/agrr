@@ -1,53 +1,5 @@
 in:
   crops:
-    agricultural_tasks:
-      flash:
-        template_created: "चयनित कार्य से टेम्पलेट बनाया गया।"
-        template_already_exists: "इस कार्य का टेम्पलेट पहले से मौजूद है।"
-        no_permission: "आपको अनुमति नहीं है।"
-        redirect_to_create: "नया कार्य बनाने के लिए कार्य निर्माण पेज पर जाएँ।"
-        template_updated: "टेम्पलेट अपडेट किया गया।"
-        template_deleted: "टेम्पलेट हटाया गया।"
-      index:
-        title: "कार्य टेम्पलेट सूची"
-        new_agricultural_task: "टेम्पलेट जोड़ें"
-        reference_task: "संदर्भ टेम्पलेट"
-        back_to_crop: "फसल पर वापस जाएँ"
-        actions:
-          show: "विस्तार"
-          edit: "संपादित करें"
-          delete: "हटाएँ"
-          delete_confirm: "क्या आप इस टेम्पलेट को हटाना चाहते हैं?"
-        empty:
-          icon: "🔧"
-          title: "अभी तक कोई टेम्पलेट उपलब्ध नहीं है"
-          description: "शेड्यूल बनाते समय पुन: उपयोग के लिए टेम्पलेट जोड़ें।"
-          button: "टेम्पलेट जोड़ें"
-      new:
-        title: "कार्य टेम्पलेट जोड़ें"
-        associate_existing_task: "मौजूदा कार्य से टेम्पलेट बनाएँ"
-        select_existing_task: "टेम्पलेट बनाने के लिए कार्य चुनें"
-        select_task_placeholder: "कार्य चुनें"
-        associate_button: "टेम्पलेट बनाएं"
-        no_unassociated_tasks: "टेम्पलेट बनाने योग्य कार्य उपलब्ध नहीं हैं। कृपया नया कार्य बनाएँ।"
-        create_new_task: "नया कार्य बनाएँ"
-        create_new_task_description: "यदि नया कार्य चाहिए, तो कार्य निर्माण पेज पर जाएँ।"
-        go_to_create: "कार्य निर्माण पेज पर जाएँ"
-        back_to_list: "सूची पर वापस जाएँ"
-
-      edit:
-        title: "टेम्पलेट संपादित करें"
-        back_to_list: "सूची पर वापस जाएँ"
-        form:
-          name_label: "टेम्पलेट नाम"
-          description_label: "विवरण"
-          time_per_sqm_label: "समय (घंटे/㎡)"
-          weather_dependency_label: "मौसम निर्भरता"
-          skill_level_label: "कौशल स्तर"
-          required_tools_label: "आवश्यक उपकरण"
-          required_tools_hint: "प्रत्येक पंक्ति में एक उपकरण दर्ज करें"
-          submit_update: "टेम्पलेट अपडेट करें"
-
     form:
       name_label: "नाम"
       variety_label: "किस्म"
@@ -136,7 +88,7 @@ in:
       created: "फसल सफलतापूर्वक बनाई गई।"
       updated: "फसल सफलतापूर्वक अपडेट की गई।"
       destroyed: "फसल हटाई गई।"
-      task_schedule_blueprints_generated: "कार्य टेम्पलेट अपडेट कर दिए गए हैं।"
+      task_schedule_blueprints_generated: "कार्य योजना पुन: उत्पन्न की गई।"
       task_schedule_blueprints_failed: "कार्य टेम्पलेट बनाने में विफल। कृपया लॉग की जाँच करें।"
       reference_only_admin: "केवल व्यवस्थापक संदर्भ फसलें बना सकते हैं।"
       reference_flag_admin_only: "केवल व्यवस्थापक संदर्भ ध्वज बदल सकते हैं।"
@@ -183,10 +135,6 @@ in:
       pest_family_label: "कुल"
       pest_order_label: "गण"
       pest_occurrence_label: "घटनाकाल"
-      agricultural_tasks_title: "कार्य टेम्पलेट"
-      no_agricultural_tasks_description: "अभी तक कोई कार्य टेम्पलेट उपलब्ध नहीं है।"
-      manage_agricultural_tasks: "कार्य टेम्पलेट प्रबंधन"
-      reference_task: "संदर्भ टेम्पलेट"
       stages_title: "वृद्धि चरण"
       stage_order: "क्रम"
       stage_name: "चरण का नाम"
@@ -226,8 +174,8 @@ in:
       source_reference_label: "संदर्भ डेटा"
       source_user_label: "उपयोगकर्ता द्वारा बनाया गया"
       manual_task_hint: "इस कार्य को AI योजना से लिंक करने पर यह शेड्यूल अनुकूलन में शामिल होगा।"
-      generate_task_schedule_blueprints_button: "AI से कार्य टेम्पलेट अपडेट करें"
-      generate_task_schedule_blueprints_confirm: "क्या आप AGRR AI से इस फसल के कार्य टेम्पलेट पुनः बनाना चाहते हैं?"
+      generate_task_schedule_blueprints_button: "AI सुझाव आयात करें"
+      generate_task_schedule_blueprints_confirm: "सभी कार्य योजनाएँ AI सुझावों से बदल दी जाएँगी। मैन्युअल पंजीकरण मिट जाएगा। जारी रखें?"
       back_to_list: "फसल सूची पर वापस जाएं"
       edit: "संपादित करें"
       delete: "हटाएं"

@@ -9,7 +9,8 @@ import {
   TASK_SCHEDULE_SYNC_ERROR_GENERIC,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES,
-  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES
+  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES,
+  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS
 } from './task-schedule-sync-error-i18n';
 
 describe('syncErrorDetailTranslateKey', () => {
@@ -52,9 +53,9 @@ describe('syncErrorDetailTranslateParams', () => {
 });
 
 describe('cropMasterLinkFragmentForSyncError', () => {
-  it('maps template errors to task templates anchor', () => {
+  it('maps template errors to blueprints anchor', () => {
     expect(cropMasterLinkFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES)).toBe(
-      'task-templates-heading'
+      'blueprints-heading'
     );
   });
 
@@ -69,12 +70,18 @@ describe('cropMasterLinkFragmentForSyncError', () => {
       cropMasterLinkFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES)
     ).toBe('blueprints-heading');
   });
+
+  it('maps general blueprint errors to blueprints anchor', () => {
+    expect(
+      cropMasterLinkFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS)
+    ).toBe('blueprints-heading');
+  });
 });
 
 describe('cropWizardFragmentForSyncError', () => {
-  it('defaults generic errors to step 1 anchor', () => {
+  it('defaults generic errors to blueprints anchor', () => {
     expect(cropWizardFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_GENERIC)).toBe(
-      'task-templates-heading'
+      'blueprints-heading'
     );
   });
 
@@ -141,5 +148,24 @@ describe('cropMasterRemediationLinkKey', () => {
         false
       )
     ).toBe(`${TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES}_link`);
+  });
+
+  it('uses shared wizard link for general blueprint errors with crop context', () => {
+    expect(
+      cropMasterRemediationLinkKey(
+        TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS,
+        'failed',
+        'Tomato',
+        true
+      )
+    ).toBe(TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY);
+    expect(
+      cropMasterRemediationLinkKey(
+        TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS,
+        'failed',
+        null,
+        false
+      )
+    ).toBe(`${TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS}_link`);
   });
 });

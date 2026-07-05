@@ -4,9 +4,10 @@ mod support;
 
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    developer_session_id, empty_headers, seed_masters_crop, seed_masters_crop_with_task_template,
-    seed_work_record_plan, set_plan_task_schedule_sync_failed,
-    set_plan_task_schedule_sync_failed_raw_error, clear_plan_task_schedules, status_and_body, user_id_for_session,
+    assert_crop_task_template_api_removed, clear_plan_task_schedules, developer_session_id,
+    empty_headers, seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_work_record_plan,
+    set_plan_task_schedule_sync_failed, set_plan_task_schedule_sync_failed_raw_error, status_and_body,
+    user_id_for_session,
 };
 
 #[test]
@@ -414,7 +415,7 @@ fn get_masters_crop_task_schedule_blueprints_authenticated_returns_array() {
 }
 
 #[test]
-fn post_masters_crop_task_schedule_blueprints_regenerate_without_templates_returns_422() {
+fn post_masters_crop_task_schedule_blueprints_regenerate_without_blueprints_returns_422() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
@@ -433,14 +434,14 @@ fn post_masters_crop_task_schedule_blueprints_regenerate_without_templates_retur
     let json: serde_json::Value = serde_json::from_str(&body).expect("regenerate error JSON");
     assert_eq!(
         json.get("error_code").and_then(|v| v.as_str()),
-        Some("missing_task_templates"),
+        Some("missing_blueprints"),
         "{body}"
     );
     assert!(json.get("error").is_some(), "{body}");
 }
 
 #[test]
-fn post_masters_crop_task_schedule_blueprints_create_without_template_returns_422() {
+fn post_masters_crop_task_schedule_blueprints_create_without_agricultural_task_returns_422() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
@@ -465,17 +466,17 @@ fn post_masters_crop_task_schedule_blueprints_create_without_template_returns_42
     let json: serde_json::Value = serde_json::from_str(&body_text).expect("create error JSON");
     assert_eq!(
         json.get("error_code").and_then(|v| v.as_str()),
-        Some("task_template_not_registered"),
+        Some("agricultural_task_not_found"),
         "{body_text}"
     );
 }
 
 #[test]
-fn post_masters_crop_task_schedule_blueprints_create_with_template_returns_201() {
+fn post_masters_crop_task_schedule_blueprints_create_with_manual_blueprint_returns_201() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
-    let seed = seed_masters_crop_with_task_template(user_id);
+    let seed = seed_masters_crop_with_manual_blueprint(user_id);
     let body = serde_json::json!({
         "agricultural_task_id": seed.agricultural_task_id,
         "stage_order": 1,
@@ -500,4 +501,104 @@ fn post_masters_crop_task_schedule_blueprints_create_with_template_returns_201()
         json["agricultural_task_id"].as_i64().unwrap()
     );
     assert_eq!("manual", json["source"].as_str().unwrap());
+    let task_name = json["name"]
+        .as_str()
+        .or_else(|| json["agricultural_task"]["name"].as_str());
+    assert!(
+        task_name.is_some() && !task_name.unwrap().is_empty(),
+        "blueprint must expose agricultural task name: {body_text}"
+    );
+}
+
+#[test]
+fn get_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
+}
+
+#[test]
+fn post_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "obsolete" })),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
+}
+
+#[test]
+fn put_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.put(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks/1",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "obsolete" })),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
+}
+
+#[test]
+fn patch_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.patch(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks/1",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "obsolete" })),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
+}
+
+#[test]
+fn delete_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.delete(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks/1",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
 }

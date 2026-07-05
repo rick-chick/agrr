@@ -352,7 +352,6 @@
       "task_schedule_blueprints_generated": "作業予定を更新しました。",
       "task_schedule_blueprints_failed": "作業予定の生成に失敗しました。ログを確認してください。",
       "task_not_found": "指定された作業が見つかりません。",
-      "toggle_task_template_failed": "作業テンプレートの選択/解除に失敗しました。",
       "blueprint_position_updated": "作業予定カードの位置を更新しました。",
       "blueprint_update_failed": "作業予定カードの位置更新に失敗しました。",
       "blueprint_not_found": "指定された作業予定カードが見つかりません。",
@@ -451,12 +450,6 @@
       "pest_family_label": "科",
       "pest_order_label": "目",
       "pest_occurrence_label": "発生時期",
-      "agricultural_tasks_title": "作業テンプレート",
-      "agricultural_tasks_step_label": "STEP 1",
-      "agricultural_tasks_description": "この作物で行う作業を登録します。ここで登録した作業をもとに、下の作業予定をAIが生成します。",
-      "no_agricultural_tasks_description": "作業テンプレートがまだ登録されていません。",
-      "manage_agricultural_tasks": "作業テンプレートを管理",
-      "reference_task": "参照テンプレート",
       "stages_title": "生育ステージ",
       "stage_order": "順序",
       "stage_name": "ステージ名",
@@ -488,16 +481,17 @@
       "task_schedule_blueprints_axis_gdd_total": "GDD累積量（総計 {{total}}）",
       "task_schedule_blueprints_order_tooltip": "順番 {{order}}",
       "no_task_schedule_blueprints": "作業予定はまだありません。下のフォームから1件ずつ追加してください。",
+      "unnamed_blueprint": "（作業名未設定）",
       "priority_label": "優先度",
       "source_label": "データソース",
       "notes_label": "メモ",
       "gdd_trigger": "GDDトリガー",
+      "gdd_trigger_placeholder": "未設定",
       "gdd_tolerance": "GDD許容幅",
       "origin_ai_label": "AI提案",
       "origin_manual_label": "手動作業",
       "manual_task_type_label": "利用可能なテンプレート",
       "manual_task_count": "{{count}}件",
-      "available_task_templates_title": "利用可能な作業テンプレート",
       "available_task_count": "{{count}}件",
       "source_reference_label": "参照データ",
       "source_user_label": "ユーザー作成",
@@ -506,27 +500,30 @@
       "generate_task_schedule_blueprints_confirm": "AIの提案で作業予定をすべて置き換えます。手動で登録した内容は失われます。よろしいですか？",
       "manual_blueprint_add": {
         "title": "作業予定を手動で追加",
-        "description": "農場のやり方に合わせて、生育ステージ・作業・積算温度を登録します。",
-        "prerequisites": "作業テンプレートと生育ステージ（積算温度要件）を先に登録してください。",
+        "description": "作業マスタから選び、必要に応じて生育ステージと積算温度を登録します。",
         "stage_label": "生育ステージ",
         "stage_placeholder": "ステージを選択",
         "task_label": "作業",
-        "task_placeholder": "作業テンプレートを選択",
+        "task_placeholder": "作業を選択",
         "gdd_label": "積算温度",
+        "optional": "（任意）",
         "submit": "作業予定を追加",
-        "ai_hint": "AIの提案をたたき台にしたい場合のみ、下のボタンを使ってください。既存の作業予定はすべて置き換わります。"
+        "ai_hint": "AIの提案をたたき台にしたい場合のみ、下のボタンを使ってください。既存の作業予定はすべて置き換わります。",
+        "no_unassociated_tasks": "登録できる作業マスタがありません。先に作業を作成してください。",
+        "no_unassociated_tasks_all_used": "未登録の作業マスタがありません。上の一覧を確認するか、新しい作業を作成してください。",
+        "go_to_create": "作業を新規作成"
       },
       "blueprint_readiness": {
         "title": "AI生成の前に必要な情報",
-        "templates_ready": "作業テンプレートが登録されています",
-        "templates_missing": "作業テンプレートが未登録です",
-        "templates_action": "作業テンプレートを登録する",
+        "blueprints_ready": "作業予定が1件以上登録されています",
+        "blueprints_missing": "作業予定が未登録です",
+        "blueprints_action": "作業予定を登録する",
         "stages_ready": "生育ステージの基準温度と必要GDDが設定されています",
         "stages_missing": "生育ステージの基準温度または必要GDDが未設定です",
         "stages_action": "作物を編集してステージ要件を設定する"
       },
       "blueprint_errors": {
-        "missing_task_templates": "作業テンプレートが未登録のため、作業予定を生成できません。",
+        "missing_blueprints": "作業予定が未登録のため、AIによる提案を取り込めません。",
         "missing_agrr_requirement": "生育ステージの基準温度または必要GDDが不足しているため、作業予定を生成できません。",
         "blueprint_generation_failed": "AGRRの応答から作業予定を生成できませんでした。下の「再試行」を押すか、しばらくしてからもう一度お試しください。",
         "ai_unavailable": "AGRR処理サービスに接続できません。しばらくしてから下の「再試行」をお試しください。",
@@ -538,7 +535,7 @@
       "delete_blueprint_confirm": "この作業予定を削除しますか？",
       "return_to_plan": "作業記録に戻る",
       "from_plan_wizard_title": "計画の作業予定を作るための登録",
-      "from_plan_wizard_lead": "STEP 1（作業テンプレート）→ STEP 2（作業予定）の順に登録を完了してください。完了したら「作業記録に戻る」から計画へ戻れます。",
+      "from_plan_wizard_lead": "下のフォームから作業予定を登録してください。完了したら「作業記録に戻る」から計画へ戻れます。",
       "back_to_list": "作物一覧に戻る",
       "confirm_delete": "この作物を削除しますか？",
       "form": {
@@ -639,62 +636,6 @@
         "back_to_list": "一覧に戻る",
         "back_to_crop": "作物に戻る",
         "edit": "編集"
-      }
-    },
-    "agricultural_tasks": {
-      "flash": {
-        "template_created": "既存の作業からテンプレートを作成しました。",
-        "template_already_exists": "この作業は既にテンプレート化されています。",
-        "no_permission": "権限がありません。",
-        "redirect_to_create": "新しい作業を作成する場合は、作業作成画面に移動します。",
-        "template_updated": "テンプレートを更新しました。",
-        "template_deleted": "テンプレートを削除しました。"
-      },
-      "index": {
-        "title": "作業テンプレート一覧",
-        "new_agricultural_task": "テンプレートを追加",
-        "reference_task": "参照テンプレート",
-        "back_to_crop": "作物に戻る",
-        "actions": {
-          "show": "詳細",
-          "edit": "編集",
-          "delete": "削除",
-          "delete_confirm": "このテンプレートを削除しますか？"
-        },
-        "empty": {
-          "icon": "🔧",
-          "title": "まだ作業テンプレートがありません",
-          "description": "テンプレートを追加すると予定作成で再利用できます。",
-          "button": "テンプレートを追加"
-        }
-      },
-      "new": {
-        "title": "作業テンプレートを追加",
-        "associate_existing_task": "既存の作業からテンプレートを作成",
-        "associate_existing_task_description": "作業マスタに登録済みの作業から、この作物のテンプレートを追加します。",
-        "select_existing_task": "テンプレート化する作業を選択",
-        "select_task_placeholder": "作業を選択してください",
-        "associate_button": "テンプレートを作成",
-        "no_unassociated_tasks": "作業マスタに、まだこの作物のテンプレートになっていない作業がありません。",
-        "no_unassociated_tasks_all_templated": "未登録の作業マスタはありません。上の一覧が、この作物に登録済みの作業テンプレートです。別の作業を追加するには、作業マスタで新規作成してください。",
-        "create_new_task": "新しい作業を作成",
-        "create_new_task_description": "新しい作業を作成する場合は、作業作成画面に移動します。",
-        "go_to_create": "作業作成画面へ",
-        "back_to_list": "一覧に戻る"
-      },
-      "edit": {
-        "title": "テンプレートを編集",
-        "back_to_list": "一覧に戻る",
-        "form": {
-          "name_label": "テンプレート名",
-          "description_label": "説明",
-          "time_per_sqm_label": "作業時間 (時間/㎡)",
-          "weather_dependency_label": "天候依存度",
-          "skill_level_label": "スキルレベル",
-          "required_tools_label": "必要な道具",
-          "required_tools_hint": "改行区切りで複数入力できます",
-          "submit_update": "更新する"
-        }
       }
     },
     "errors": {
@@ -2259,8 +2200,11 @@
         "missing_general_templates": "一般作業の作業予定が不足しているため、計画の作業スケジュールを生成できません。",
         "missing_general_templates_named": "「{{cropName}}」の一般作業の作業予定が不足しているため、計画の作業スケジュールを生成できません。",
         "missing_general_templates_link": "作物一覧で一般作業の作業予定を登録する",
+        "missing_general_blueprints": "一般作業の作業予定が不足しているため、計画の作業スケジュールを生成できません。",
+        "missing_general_blueprints_named": "「{{cropName}}」の一般作業の作業予定が不足しているため、計画の作業スケジュールを生成できません。",
+        "missing_general_blueprints_link": "作物一覧で一般作業の作業予定を登録する",
         "empty_gdd_progress": "GDD進捗を計算できなかったため作業予定を生成できません。",
-        "missing_gdd_trigger": "作業テンプレートにGDDトリガーが設定されていません。",
+        "missing_gdd_trigger": "作業予定にGDDトリガーが設定されていません。",
         "gdd_date_not_found": "GDDに対応する日付を特定できませんでした。",
         "missing_start_date": "栽培開始日が未設定のため作業予定を生成できません。",
         "agrr_unavailable": "AGRR処理サービスに接続できません。しばらくしてから再試行してください。",

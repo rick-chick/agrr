@@ -3,10 +3,7 @@
 use crate::adapters::PassthroughTranslator;
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
-use agrr_adapters_sqlite::{
-    AgTaskCropSqliteGateway, AgriculturalTaskSqliteGateway, CropTaskTemplateSqliteGateway,
-    UserLookupSqliteGateway,
-};
+use agrr_adapters_sqlite::{AgriculturalTaskSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::gateways::UserLookupGateway;
 use agrr_domain::agricultural_task::dtos::{
@@ -265,8 +262,6 @@ async fn update(
     let out = Arc::new(Mutex::new(None));
     let pool = state.sqlite.clone();
     let gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
-    let crop_gw = AgTaskCropSqliteGateway::new(pool.clone());
-    let template_gw = CropTaskTemplateSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     let translator = PassthroughTranslator;
     let mut port = UpdatePort(out.clone());
@@ -274,8 +269,6 @@ async fn update(
         &mut port,
         user_id,
         &gateway,
-        &crop_gw,
-        &template_gw,
         &translator,
         &user_lookup,
     );

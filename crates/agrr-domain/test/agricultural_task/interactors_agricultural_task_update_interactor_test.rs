@@ -1,8 +1,6 @@
 // Tests for `interactors/agricultural_task_update_interactor.rs` (Ruby parity under test/domain/agricultural_task/).
 
     use crate::agricultural_task::entities::{AgriculturalTaskEntity, AgriculturalTaskEntityAttrs};
-    use crate::agricultural_task::entities::CropTaskTemplateLinkEntity;
-    use crate::agricultural_task::gateways::CropRecord;
     use crate::shared::user::User;
 
     struct MockUserLookup {
@@ -59,72 +57,6 @@
             updated_at: None,
         })
         .expect("valid")
-    }
-
-    struct NullCropGateways;
-
-    impl CropGateway for NullCropGateways {
-        fn list_by_is_reference(
-            &self,
-            _: bool,
-            _: Option<&str>,
-        ) -> Result<Vec<CropRecord>, Box<dyn std::error::Error + Send + Sync>> {
-            Ok(vec![])
-        }
-
-        fn list_by_user_id(
-            &self,
-            _: i64,
-            _: Option<&str>,
-        ) -> Result<Vec<CropRecord>, Box<dyn std::error::Error + Send + Sync>> {
-            Ok(vec![])
-        }
-
-
-    fn find_by_id(
-            &self,
-            _: i64,
-        ) -> Result<CropRecord, Box<dyn std::error::Error + Send + Sync>> {
-            Err(Box::new(RecordNotFoundError))
-        }
-    }
-
-    struct NullTemplateGateway;
-
-    impl CropTaskTemplateGateway for NullTemplateGateway {
-        fn list_by_agricultural_task_id(
-            &self,
-            _: i64,
-        ) -> Result<Vec<CropTaskTemplateLinkEntity>, Box<dyn std::error::Error + Send + Sync>>
-        {
-            Ok(vec![])
-        }
-
-        fn find_by_agricultural_task_id_and_crop_id(
-            &self,
-            _: i64,
-            _: i64,
-        ) -> Result<Option<CropTaskTemplateLinkEntity>, Box<dyn std::error::Error + Send + Sync>>
-        {
-            Ok(None)
-        }
-
-        fn create(
-            &self,
-            _: i64,
-            _: i64,
-            _: AttrMap,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
-        }
-
-        fn delete(
-            &self,
-            _: i64,
-            _: i64,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            Ok(())
-        }
     }
 
     // Ruby: test "calls on_success when gateway updates"
@@ -266,8 +198,6 @@
             &mut output,
             user_id,
             &gateway,
-            &NullCropGateways,
-            &NullTemplateGateway,
             &StubTranslator,
             &user_lookup,
         );
@@ -399,8 +329,6 @@
             &mut output,
             user_id,
             &gateway,
-            &NullCropGateways,
-            &NullTemplateGateway,
             &StubTranslator,
             &user_lookup,
         );
@@ -535,8 +463,6 @@
             &mut output,
             user_id,
             &gateway,
-            &NullCropGateways,
-            &NullTemplateGateway,
             &StubTranslator,
             &user_lookup,
         );
@@ -685,8 +611,6 @@
             &mut output,
             user_id,
             &gateway,
-            &NullCropGateways,
-            &NullTemplateGateway,
             &StubTranslator,
             &user_lookup,
         );

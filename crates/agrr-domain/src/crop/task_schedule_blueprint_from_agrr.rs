@@ -20,6 +20,7 @@ pub struct TaskScheduleBlueprintRow {
     pub amount_unit: Option<String>,
     pub weather_dependency: Option<String>,
     pub time_per_sqm: Option<Decimal>,
+    pub name: Option<String>,
 }
 
 pub fn general_row(
@@ -30,7 +31,10 @@ pub fn general_row(
     template_weather_dependency: Option<&str>,
     template_time_per_sqm: Option<Decimal>,
 ) -> TaskScheduleBlueprintRow {
-    let agrr_task_name = task.get("name").or_else(|| task.get("description")).and_then(|v| v.as_str());
+    let agrr_task_name = task
+        .get("name")
+        .or_else(|| task.get("description"))
+        .and_then(|v| v.as_str());
     TaskScheduleBlueprintRow {
         crop_id,
         agricultural_task_id,
@@ -41,11 +45,19 @@ pub fn general_row(
         task_type: schedule_item_types::FIELD_WORK.to_string(),
         source: "agrr_schedule".into(),
         priority: integer_value(task.get("priority")),
-        description: agrr_task_name.map(str::to_string).or_else(|| template_description.map(str::to_string)),
+        description: agrr_task_name
+            .map(str::to_string)
+            .or_else(|| template_description.map(str::to_string)),
         amount: None,
         amount_unit: None,
-        weather_dependency: task.get("weather_dependency").and_then(|v| v.as_str()).map(str::to_string).or_else(|| template_weather_dependency.map(str::to_string)),
-        time_per_sqm: decimal_value(task.get("time_per_sqm").and_then(|v| v.as_str())).or(template_time_per_sqm),
+        weather_dependency: task
+            .get("weather_dependency")
+            .and_then(|v| v.as_str())
+            .map(str::to_string)
+            .or_else(|| template_weather_dependency.map(str::to_string)),
+        time_per_sqm: decimal_value(task.get("time_per_sqm").and_then(|v| v.as_str()))
+            .or(template_time_per_sqm),
+        name: agrr_task_name.map(str::to_string),
     }
 }
 
@@ -77,8 +89,14 @@ pub fn fertilizer_row(
         description: Some(fixed_stage_name.into()).or_else(|| template_description.map(str::to_string)),
         amount,
         amount_unit: entry.get("amount_unit").and_then(|v| v.as_str()).map(str::to_string).or_else(|| if amount_specified(amount_raw) { Some("g/m2".into()) } else { None }),
-        weather_dependency: entry.get("weather_dependency").and_then(|v| v.as_str()).map(str::to_string).or_else(|| template_weather_dependency.map(str::to_string)),
-        time_per_sqm: decimal_value(entry.get("time_per_sqm").and_then(|v| v.as_str())).or(template_time_per_sqm),
+        weather_dependency: entry
+            .get("weather_dependency")
+            .and_then(|v| v.as_str())
+            .map(str::to_string)
+            .or_else(|| template_weather_dependency.map(str::to_string)),
+        time_per_sqm: decimal_value(entry.get("time_per_sqm").and_then(|v| v.as_str()))
+            .or(template_time_per_sqm),
+        name: Some(fixed_stage_name.into()),
     }
 }
 

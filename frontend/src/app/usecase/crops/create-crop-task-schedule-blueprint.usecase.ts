@@ -23,9 +23,9 @@ export class CreateCropTaskScheduleBlueprintUseCase implements CreateCropTaskSch
     this.gateway
       .create(dto.cropId, {
         agricultural_task_id: dto.agriculturalTaskId,
-        stage_order: dto.stageOrder,
-        stage_name: dto.stageName,
-        gdd_trigger: dto.gddTrigger
+        stage_order: dto.stageOrder ?? null,
+        stage_name: dto.stageName ?? null,
+        gdd_trigger: dto.gddTrigger ?? null
       })
       .subscribe({
         next: (blueprint) => this.outputPort.present({ blueprint }),

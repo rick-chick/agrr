@@ -137,18 +137,6 @@ CREATE TABLE thermal_requirements (
   created_at TEXT,
   updated_at TEXT
 );
-CREATE TABLE crop_task_templates (
-  id INTEGER PRIMARY KEY,
-  crop_id INTEGER NOT NULL,
-  agricultural_task_id INTEGER NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  time_per_sqm REAL,
-  weather_dependency TEXT,
-  is_reference INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT,
-  updated_at TEXT
-);
 CREATE TABLE crop_task_schedule_blueprints (
   id INTEGER PRIMARY KEY,
   crop_id INTEGER NOT NULL,
@@ -317,11 +305,6 @@ fn seed_generation_fixture(pool: &SqlitePool) -> GenerationSeed {
             params![agricultural_task_id],
         )?;
         conn.execute(
-            "INSERT INTO crop_task_templates (crop_id, agricultural_task_id, name, description, time_per_sqm, weather_dependency, is_reference, created_at, updated_at)
-             VALUES (?1, ?2, '土壌準備', 'soil prep', 0.1, 'low', 1, datetime('now'), datetime('now'))",
-            params![crop_id, agricultural_task_id],
-        )?;
-        conn.execute(
             "INSERT INTO crop_task_schedule_blueprints (id, crop_id, agricultural_task_id, stage_order, stage_name, gdd_trigger, gdd_tolerance, task_type, source, priority, weather_dependency, time_per_sqm, created_at, updated_at)
              VALUES (1, ?1, ?2, 1, '土壌準備', 0.0, 5.0, 'field_work', 'agrr_schedule', 1, 'low', 0.1, datetime('now'), datetime('now'))",
             params![crop_id, agricultural_task_id],
@@ -406,14 +389,6 @@ fn read_gateway_loads_plan_field_crop_blueprint_and_agrr_requirement() {
         .find_crop_row(seed.crop_id)
         .expect("crop row");
     assert_eq!(crop_row.name, "トマト");
-
-    let templates = read_gateway
-        .list_crop_task_template_rows(seed.crop_id)
-        .expect("templates");
-    assert_eq!(templates.len(), 1);
-    let task = templates[0].agricultural_task.as_ref().expect("task");
-    assert_eq!(task.id, seed.agricultural_task_id);
-    assert_eq!(task.name, "土壌準備");
 
     let blueprints = read_gateway
         .list_crop_task_schedule_blueprint_rows(seed.crop_id)

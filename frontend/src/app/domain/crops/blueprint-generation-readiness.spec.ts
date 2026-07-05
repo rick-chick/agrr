@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { blueprintGenerationReadiness } from './blueprint-generation-readiness';
 import type { Crop } from './crop';
-import type { MastersCropTaskTemplate } from './masters-crop-task-template';
+import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
 
 const baseCrop: Crop = {
   id: 1,
@@ -10,17 +10,29 @@ const baseCrop: Crop = {
   groups: []
 };
 
-const template: MastersCropTaskTemplate = {
+const blueprint: CropTaskScheduleBlueprint = {
   id: 10,
   crop_id: 1,
   agricultural_task_id: 5,
+  source_agricultural_task_id: null,
+  stage_order: 1,
+  stage_name: 'Vegetative',
+  gdd_trigger: 100,
+  gdd_tolerance: null,
+  task_type: 'field_work',
+  source: 'manual',
+  priority: 1,
+  amount: null,
+  amount_unit: null,
+  description: null,
+  weather_dependency: null,
+  time_per_sqm: null,
   name: 'Weeding',
-  required_tools: [],
-  agricultural_task: { id: 5, name: 'Weeding', is_reference: false }
+  agricultural_task: { id: 5, name: 'Weeding' }
 };
 
 describe('blueprintGenerationReadiness', () => {
-  it('is not ready when templates are missing', () => {
+  it('is not ready when blueprints are missing', () => {
     const result = blueprintGenerationReadiness(
       {
         ...baseCrop,
@@ -41,14 +53,14 @@ describe('blueprintGenerationReadiness', () => {
       },
       []
     );
-    expect(result.templatesReady).toBe(false);
+    expect(result.blueprintsReady).toBe(false);
     expect(result.stageRequirementsReady).toBe(true);
     expect(result.ready).toBe(false);
   });
 
   it('is not ready when no stage has base temperature and required GDD', () => {
-    const result = blueprintGenerationReadiness(baseCrop, [template]);
-    expect(result.templatesReady).toBe(true);
+    const result = blueprintGenerationReadiness(baseCrop, [blueprint]);
+    expect(result.blueprintsReady).toBe(true);
     expect(result.stageRequirementsReady).toBe(false);
     expect(result.ready).toBe(false);
   });
@@ -67,13 +79,13 @@ describe('blueprintGenerationReadiness', () => {
           }
         ]
       },
-      [template]
+      [blueprint]
     );
     expect(result.stageRequirementsReady).toBe(false);
     expect(result.ready).toBe(false);
   });
 
-  it('is ready when templates and complete stage requirements exist', () => {
+  it('is ready when blueprints and complete stage requirements exist', () => {
     const result = blueprintGenerationReadiness(
       {
         ...baseCrop,
@@ -92,7 +104,7 @@ describe('blueprintGenerationReadiness', () => {
           }
         ]
       },
-      [template]
+      [blueprint]
     );
     expect(result.ready).toBe(true);
   });

@@ -1207,8 +1207,11 @@
         "missing_general_templates": "Task schedules could not be generated because general work blueprints are missing.",
         "missing_general_templates_named": "Task schedules could not be generated because general work blueprints for \"{{cropName}}\" are missing.",
         "missing_general_templates_link": "Register general work blueprints from crop list",
+        "missing_general_blueprints": "Task schedules could not be generated because general work blueprints are missing.",
+        "missing_general_blueprints_named": "Task schedules could not be generated because general work blueprints for \"{{cropName}}\" are missing.",
+        "missing_general_blueprints_link": "Register general work blueprints from crop list",
         "empty_gdd_progress": "Task schedules could not be generated because GDD progress is empty.",
-        "missing_gdd_trigger": "A task template is missing a GDD trigger.",
+        "missing_gdd_trigger": "A task schedule blueprint is missing a GDD trigger.",
         "gdd_date_not_found": "Could not determine a date for the required GDD.",
         "missing_start_date": "Task schedules could not be generated because the cultivation start date is missing.",
         "agrr_unavailable": "Could not reach the AGRR processing service. Please try again later.",
@@ -1701,62 +1704,6 @@
     "undo": {
       "toast": "{{name}} was deleted. You can undo this action."
     },
-    "agricultural_tasks": {
-      "flash": {
-        "template_created": "Template created from the selected task.",
-        "template_already_exists": "A template for this task already exists.",
-        "no_permission": "You do not have permission.",
-        "redirect_to_create": "To create a new task, go to the task creation page.",
-        "template_updated": "Template updated.",
-        "template_deleted": "Template deleted."
-      },
-      "index": {
-        "title": "Task Templates",
-        "new_agricultural_task": "Add Template",
-        "reference_task": "Reference Template",
-        "back_to_crop": "Back to Crop",
-        "actions": {
-          "show": "Details",
-          "edit": "Edit",
-          "delete": "Delete",
-          "delete_confirm": "Delete this template?"
-        },
-        "empty": {
-          "icon": "🔧",
-          "title": "No templates yet",
-          "description": "Add templates to reuse them when creating schedules.",
-          "button": "Add Template"
-        }
-      },
-      "new": {
-        "title": "Add Task Template",
-        "associate_existing_task": "Create Template from Existing Task",
-        "associate_existing_task_description": "Add a template for this crop from a task already registered in the work master.",
-        "select_existing_task": "Select a task to convert",
-        "select_task_placeholder": "Select a task",
-        "associate_button": "Create Template",
-        "no_unassociated_tasks": "No work-master tasks remain that are not yet templates for this crop.",
-        "no_unassociated_tasks_all_templated": "No unregistered work-master tasks remain. The list above shows templates already registered for this crop. To add another task, create it in the work master.",
-        "create_new_task": "Create New Task",
-        "create_new_task_description": "If you need a brand-new task, open the task creation page.",
-        "go_to_create": "Go to Task Creation",
-        "back_to_list": "Back to List"
-      },
-      "edit": {
-        "title": "Edit Template",
-        "back_to_list": "Back to List",
-        "form": {
-          "name_label": "Template Name",
-          "description_label": "Description",
-          "time_per_sqm_label": "Time per sqm (h)",
-          "weather_dependency_label": "Weather Dependency",
-          "skill_level_label": "Skill Level",
-          "required_tools_label": "Required Tools",
-          "required_tools_hint": "Enter one per line",
-          "submit_update": "Update Template"
-        }
-      }
-    },
     "form": {
       "name_label": "Name",
       "variety_label": "Variety",
@@ -1942,12 +1889,6 @@
       "pest_family_label": "Family",
       "pest_order_label": "Order",
       "pest_occurrence_label": "Season",
-      "agricultural_tasks_title": "Task Templates",
-      "agricultural_tasks_step_label": "STEP 1",
-      "agricultural_tasks_description": "Register tasks for this crop. The task plan below is generated from these templates.",
-      "no_agricultural_tasks_description": "No task templates registered yet.",
-      "manage_agricultural_tasks": "Manage Task Templates",
-      "reference_task": "Reference Template",
       "stages_title": "Growth Stages",
       "stage_order": "Order",
       "stage_name": "Stage Name",
@@ -1979,10 +1920,12 @@
       "task_schedule_blueprints_axis_gdd_total": "Cumulative GDD (Total {{total}})",
       "task_schedule_blueprints_order_tooltip": "Order {{order}}",
       "no_task_schedule_blueprints": "No task plans yet. Add them one by one using the form below.",
+      "unnamed_blueprint": "(Task name not set)",
       "priority_label": "Priority",
       "source_label": "Source",
       "notes_label": "Notes",
       "gdd_trigger": "GDD Trigger",
+      "gdd_trigger_placeholder": "Not set",
       "gdd_tolerance": "GDD Tolerance",
       "origin_ai_label": "AI",
       "origin_manual_label": "Manual",
@@ -1995,27 +1938,30 @@
       "generate_task_schedule_blueprints_confirm": "Replace all task plans with AI suggestions. Manually registered plans will be lost. Continue?",
       "manual_blueprint_add": {
         "title": "Add task plan manually",
-        "description": "Register the growth stage, task, and cumulative temperature (GDD) for your farm practices.",
-        "prerequisites": "Register task templates and growth stages (with GDD requirements) first.",
+        "description": "Select a task from the master list and optionally set the growth stage and cumulative temperature (GDD).",
         "stage_label": "Growth stage",
         "stage_placeholder": "Select a stage",
         "task_label": "Task",
-        "task_placeholder": "Select a task template",
+        "task_placeholder": "Select a task",
         "gdd_label": "Cumulative temperature (GDD)",
+        "optional": "(optional)",
         "submit": "Add task plan",
-        "ai_hint": "Use the button below only if you want AI suggestions as a starting point. It replaces all existing task plans."
+        "ai_hint": "Use the button below only if you want AI suggestions as a starting point. It replaces all existing task plans.",
+        "no_unassociated_tasks": "No tasks are available in the master list. Create a task first.",
+        "no_unassociated_tasks_all_used": "All master tasks are already in this task plan. Review the list above or create a new task.",
+        "go_to_create": "Create a task"
       },
       "blueprint_readiness": {
         "title": "Required before AI generation",
-        "templates_ready": "Task templates are registered",
-        "templates_missing": "No task templates registered",
-        "templates_action": "Register task templates",
+        "blueprints_ready": "At least one task plan is registered",
+        "blueprints_missing": "No task plans registered yet",
+        "blueprints_action": "Register task plans",
         "stages_ready": "Growth stages have base temperature and required GDD",
         "stages_missing": "Growth stages are missing base temperature or required GDD",
         "stages_action": "Edit crop to configure stage requirements"
       },
       "blueprint_errors": {
-        "missing_task_templates": "Task plans cannot be generated because no task templates are registered.",
+        "missing_blueprints": "AI suggestions cannot be imported because no task plans are registered yet.",
         "missing_agrr_requirement": "Task plans cannot be generated because growth stage requirements are incomplete.",
         "blueprint_generation_failed": "Could not build task plans from the AGRR response. Use \"Try again\" below or wait and retry.",
         "ai_unavailable": "Could not reach the AGRR processing service. Use \"Try again\" below or wait and retry.",
@@ -2027,7 +1973,7 @@
       "delete_blueprint_confirm": "Delete this task plan?",
       "return_to_plan": "Return to plan",
       "from_plan_wizard_title": "Registration for this plan's task schedules",
-      "from_plan_wizard_lead": "Complete STEP 1 (task templates), then STEP 2 (task schedule blueprints). When finished, use \"Return to plan\" to go back.",
+      "from_plan_wizard_lead": "Register task plans using the form below. When finished, use \"Return to plan\" to go back.",
       "back_to_list": "Back to Crops",
       "confirm_delete": "Are you sure you want to delete this crop?",
       "form": {

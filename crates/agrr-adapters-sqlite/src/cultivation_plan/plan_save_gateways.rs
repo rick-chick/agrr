@@ -3,7 +3,7 @@
 use crate::pool::SqlitePool;
 use agrr_domain::cultivation_plan::dtos::{
     CropTaskScheduleBlueprintCreateAttrs, CropTaskScheduleBlueprintRow,
-    PlanSaveCropTaskTemplateLinkSnapshot, PlanSaveFieldSnapshot, PlanSaveReferenceFarmSnapshot,
+    PlanSaveFieldSnapshot, PlanSaveReferenceFarmSnapshot,
     PlanSaveUserAgriculturalTaskSnapshot, PlanSaveUserCropSnapshot, PlanSaveUserFarmSnapshot,
     PlanSaveUserFertilizeSnapshot, PlanSaveUserInteractionRuleSnapshot, PlanSaveUserPestSnapshot,
     PlanSaveUserPesticideSnapshot,
@@ -504,41 +504,6 @@ impl PlanSaveUserAgriculturalTaskGateway for PlanSaveUserAgriculturalTaskGw {
                 )
                 .optional()?;
             Ok(PlanSaveUserAgriculturalTaskSnapshot { id, name })
-        })
-    }
-
-    fn find_crop_task_template(
-        &self,
-        crop_id: i64,
-        agricultural_task_id: i64,
-    ) -> Result<Option<PlanSaveCropTaskTemplateLinkSnapshot>, Box<dyn std::error::Error + Send + Sync>>
-    {
-        self.pool.with_read_box(|conn| {
-            conn.query_row(
-                "SELECT id FROM crop_task_templates WHERE crop_id = ?1 AND agricultural_task_id = ?2",
-                params![crop_id, agricultural_task_id],
-                |row| Ok(PlanSaveCropTaskTemplateLinkSnapshot { id: row.get(0)? }),
-            )
-            .optional()
-            .map_err(Into::into)
-        })
-    }
-
-    fn create_crop_task_template(
-        &self,
-        crop_id: i64,
-        agricultural_task_id: i64,
-        attributes: AttrMap,
-    ) -> Result<PlanSaveCropTaskTemplateLinkSnapshot, Box<dyn std::error::Error + Send + Sync>> {
-        let mut attrs = attributes;
-        attrs.insert("crop_id".into(), AttrValue::Int(crop_id));
-        attrs.insert(
-            "agricultural_task_id".into(),
-            AttrValue::Int(agricultural_task_id),
-        );
-        self.pool.with_write_box(|conn| {
-            let id = insert_from_attr_map(conn, "crop_task_templates", &attrs)?;
-            Ok(PlanSaveCropTaskTemplateLinkSnapshot { id })
         })
     }
 }

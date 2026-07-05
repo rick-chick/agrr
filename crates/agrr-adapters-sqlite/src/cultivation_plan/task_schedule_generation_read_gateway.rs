@@ -8,7 +8,6 @@ use crate::pool::SqlitePool;
 use agrr_domain::agricultural_task::gateways::{
     TaskScheduleBlueprintRow, TaskScheduleCropRow, TaskScheduleFieldCultivationRow,
     TaskScheduleGenerationReadGateway, TaskSchedulePlanRow, TaskScheduleRelatedTask,
-    TaskScheduleTemplateRow,
 };
 use agrr_domain::weather_data::dtos::PredictedWeatherScope;
 use agrr_domain::weather_data::gateways::PredictedWeatherStoreGateway;
@@ -161,33 +160,6 @@ impl TaskScheduleGenerationReadGateway for TaskScheduleGenerationReadSqliteGatew
                     })
                 },
             )
-        })
-    }
-
-    fn list_crop_task_template_rows(
-        &self,
-        crop_id: i64,
-    ) -> Result<Vec<TaskScheduleTemplateRow>, Box<dyn std::error::Error + Send + Sync>> {
-        self.pool.with_read_box(|conn| {
-            let mut stmt = conn.prepare(
-                "SELECT at.id, at.name, at.description, at.weather_dependency, at.time_per_sqm \
-                 FROM crop_task_templates ctt \
-                 LEFT JOIN agricultural_tasks at ON at.id = ctt.agricultural_task_id \
-                 WHERE ctt.crop_id = ?1 \
-                 ORDER BY ctt.id",
-            )?;
-            let rows = stmt.query_map(params![crop_id], |row| {
-                Ok(TaskScheduleTemplateRow {
-                    agricultural_task: map_related_task(
-                        row.get(0)?,
-                        row.get(1)?,
-                        row.get(2)?,
-                        row.get(3)?,
-                        row.get(4)?,
-                    ),
-                })
-            })?;
-            rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
         })
     }
 

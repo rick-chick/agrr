@@ -1,11 +1,13 @@
+use crate::agricultural_task::constants::schedule_item_types::FIELD_WORK;
+use crate::agricultural_task::entities::AgriculturalTaskEntity;
+use crate::agricultural_task::gateways::AgriculturalTaskGateway;
 use crate::crop::dtos::{
     CropBlueprintAiFailure, CropBlueprintRegenerateFailureReason, CropRegenerateTaskScheduleBlueprintsInput,
-    HttpStatus,
+    HttpStatus, MastersCropTaskScheduleBlueprint,
 };
-use crate::crop::entities::{CropEntity, CropTaskTemplateEntity};
+use crate::crop::entities::CropEntity;
 use crate::crop::gateways::{
     CropAgrrRequirementGateway, CropGateway, CropMastersTaskScheduleBlueprintGateway,
-    CropMastersTaskTemplateGateway,
 };
 use crate::crop::interactors::crop_regenerate_task_schedule_blueprints_interactor::CropRegenerateTaskScheduleBlueprintsInteractor;
 use crate::crop::ports::{CropFertilizePlanAiQueryGateway, CropScheduleAiQueryGateway};
@@ -16,19 +18,29 @@ use std::str::FromStr;
 
 struct TestHarness {
     crop_gw: CropGw,
-    template_gw: TemplateGw,
     blueprint_gw: BlueprintGw,
+    agricultural_task_gw: AgriculturalTaskGw,
     req_gw: ReqGw,
     schedule_gw: ScheduleGw,
     fertilize_gw: FertilizeGw,
 }
 
 impl TestHarness {
-    fn interactor(&self) -> CropRegenerateTaskScheduleBlueprintsInteractor<'_, CropGw, TemplateGw, BlueprintGw, ReqGw, ScheduleGw, FertilizeGw> {
+    fn interactor(
+        &self,
+    ) -> CropRegenerateTaskScheduleBlueprintsInteractor<
+        '_,
+        CropGw,
+        BlueprintGw,
+        ReqGw,
+        AgriculturalTaskGw,
+        ScheduleGw,
+        FertilizeGw,
+    > {
         CropRegenerateTaskScheduleBlueprintsInteractor::new(
             &self.crop_gw,
-            &self.template_gw,
             &self.blueprint_gw,
+            &self.agricultural_task_gw,
             &self.req_gw,
             &self.schedule_gw,
             &self.fertilize_gw,
@@ -239,73 +251,23 @@ impl CropGateway for CropGw {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Err("unsupported".into())
     }
-    fn masters_crop_agricultural_task_templates_index_rows(
-        &self,
-        _: i64,
-    ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(vec![])
-    }
-    fn update_masters_crop_task_template_for_api(
-        &self,
-        _: i64,
-        _: i64,
-        _: serde_json::Value,
-    ) -> Result<
-        crate::crop::gateways::UpdateMastersCropTaskTemplateOutcome,
-        Box<dyn std::error::Error + Send + Sync>,
-    > {
-        Err("unsupported".into())
-    }
-    fn delete_masters_crop_task_template(
-        &self,
-        _: i64,
-        _: i64,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        Err("unsupported".into())
-    }
 }
 
-struct TemplateGw {
-    templates: Vec<CropTaskTemplateEntity>,
+struct BlueprintGw {
+    blueprints: Vec<MastersCropTaskScheduleBlueprint>,
 }
-
-impl CropMastersTaskTemplateGateway for TemplateGw {
-    fn find_by_agricultural_task_id_and_crop_id(
-        &self,
-        _: i64,
-        _: i64,
-    ) -> Result<Option<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(None)
-    }
-    fn create_detail(
-        &self,
-        _: i64,
-        _: i64,
-        _: crate::crop::dtos::CropTaskTemplatePersistAttributes,
-    ) -> Result<CropTaskTemplateEntity, Box<dyn std::error::Error + Send + Sync>> {
-        Err("unsupported".into())
-    }
-    fn list_by_crop_id(
-        &self,
-        _: i64,
-    ) -> Result<Vec<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(self.templates.clone())
-    }
-}
-
-struct BlueprintGw;
 
 impl CropMastersTaskScheduleBlueprintGateway for BlueprintGw {
     fn list_by_crop_id(
         &self,
         _: i64,
-    ) -> Result<Vec<crate::crop::dtos::MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(vec![])
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(self.blueprints.clone())
     }
     fn create(
         &self,
         _: crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs,
-    ) -> Result<crate::crop::dtos::MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
         Err("unsupported".into())
     }
     fn update(
@@ -313,7 +275,7 @@ impl CropMastersTaskScheduleBlueprintGateway for BlueprintGw {
         _: i64,
         _: i64,
         _: serde_json::Value,
-    ) -> Result<crate::crop::dtos::MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
         Err("unsupported".into())
     }
     fn delete_by_id(
@@ -327,8 +289,102 @@ impl CropMastersTaskScheduleBlueprintGateway for BlueprintGw {
         &self,
         _: i64,
         _: &[crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs],
-    ) -> Result<Vec<crate::crop::dtos::MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(vec![])
+    }
+    fn apply_regenerated_for_crop(
+        &self,
+        _: i64,
+        _: &[crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs],
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(self.blueprints.clone())
+    }
+}
+
+struct AgriculturalTaskGw {
+    tasks: Vec<AgriculturalTaskEntity>,
+}
+
+impl AgriculturalTaskGateway for AgriculturalTaskGw {
+    fn list_user_owned_tasks(
+        &self,
+        _: i64,
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+    fn list_reference_tasks(
+        &self,
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+    fn list_user_and_reference_tasks(
+        &self,
+        _: i64,
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+    fn find_agricultural_task_show_detail(
+        &self,
+        _: i64,
+    ) -> Result<crate::agricultural_task::dtos::AgriculturalTaskShowDetail, Box<dyn std::error::Error + Send + Sync>> {
+        Err("unsupported".into())
+    }
+    fn find_by_id(
+        &self,
+        id: i64,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        self.tasks
+            .iter()
+            .find(|task| task.id == Some(id))
+            .cloned()
+            .ok_or_else(|| Box::new(RecordNotFoundError) as _)
+    }
+    fn find_by_reference_and_name(
+        &self,
+        _: &str,
+    ) -> Result<Option<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(None)
+    }
+    fn find_by_user_id_and_name(
+        &self,
+        _: i64,
+        _: &str,
+    ) -> Result<Option<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(None)
+    }
+    fn create(
+        &self,
+        _: crate::shared::attr::AttrMap,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        Err("unsupported".into())
+    }
+    fn update(
+        &self,
+        _: i64,
+        _: crate::shared::attr::AttrMap,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        Err("unsupported".into())
+    }
+    fn within_transaction<F, T>(&self, block: F) -> T
+    where
+        F: FnOnce() -> T,
+    {
+        block()
+    }
+    fn soft_delete_with_undo(
+        &self,
+        _: &crate::shared::user::User,
+        _: i64,
+        _: i64,
+        _: &str,
+    ) -> Result<
+        crate::agricultural_task::gateways::SoftDeleteUndoResult,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
+        Err("unsupported".into())
     }
 }
 
@@ -398,30 +454,58 @@ fn sample_crop() -> CropEntity {
     }
 }
 
-fn sample_template() -> CropTaskTemplateEntity {
-    CropTaskTemplateEntity {
+fn sample_blueprint() -> MastersCropTaskScheduleBlueprint {
+    MastersCropTaskScheduleBlueprint {
         id: 10,
         crop_id: 1,
-        agricultural_task_id: 100,
+        agricultural_task_id: Some(100),
+        source_agricultural_task_id: None,
+        stage_order: None,
+        stage_name: None,
+        gdd_trigger: None,
+        gdd_tolerance: None,
+        task_type: FIELD_WORK.into(),
+        source: "manual".into(),
+        priority: 1,
+        amount: None,
+        amount_unit: None,
+        description: None,
+        weather_dependency: None,
+        time_per_sqm: Some(Decimal::from_str("1.0").unwrap()),
+        name: None,
+        created_at: None,
+        updated_at: None,
+    }
+}
+
+fn sample_agricultural_task() -> AgriculturalTaskEntity {
+    AgriculturalTaskEntity {
+        id: Some(100),
+        user_id: Some(1),
         name: "除草".into(),
         description: None,
-        time_per_sqm: Some(Decimal::from_str("1.0").unwrap()),
+        time_per_sqm: Some(1.0),
         weather_dependency: None,
         required_tools: vec![],
         skill_level: None,
+        region: None,
+        task_type: Some(FIELD_WORK.into()),
+        is_reference: false,
         created_at: None,
         updated_at: None,
     }
 }
 
 #[test]
-fn regenerate_fails_when_templates_empty() {
+fn regenerate_fails_when_blueprints_empty() {
     let harness = TestHarness {
         crop_gw: CropGw {
             crop: Some(sample_crop()),
         },
-        template_gw: TemplateGw { templates: vec![] },
-        blueprint_gw: BlueprintGw,
+        blueprint_gw: BlueprintGw {
+            blueprints: vec![],
+        },
+        agricultural_task_gw: AgriculturalTaskGw { tasks: vec![] },
         req_gw: ReqGw { requirement: None },
         schedule_gw: ScheduleGw {
             response: Ok(json!({})),
@@ -436,7 +520,7 @@ fn regenerate_fails_when_templates_empty() {
         .unwrap_err();
     assert_eq!(
         err.reason,
-        CropBlueprintRegenerateFailureReason::MissingTaskTemplates
+        CropBlueprintRegenerateFailureReason::MissingBlueprints
     );
 }
 
@@ -446,10 +530,12 @@ fn regenerate_succeeds_with_stub_ai_responses() {
         crop_gw: CropGw {
             crop: Some(sample_crop()),
         },
-        template_gw: TemplateGw {
-            templates: vec![sample_template()],
+        blueprint_gw: BlueprintGw {
+            blueprints: vec![sample_blueprint()],
         },
-        blueprint_gw: BlueprintGw,
+        agricultural_task_gw: AgriculturalTaskGw {
+            tasks: vec![sample_agricultural_task()],
+        },
         req_gw: ReqGw {
             requirement: Some(json!({"stage_requirements": [{"name": "stage1"}]})),
         },
@@ -464,7 +550,7 @@ fn regenerate_succeeds_with_stub_ai_responses() {
         .interactor()
         .call(CropRegenerateTaskScheduleBlueprintsInput::new(1))
         .expect("regenerate");
-    assert!(rows.is_empty());
+    assert_eq!(rows.len(), 1);
 }
 
 #[test]
@@ -473,10 +559,12 @@ fn regenerate_maps_daemon_unavailable_to_ai_unavailable() {
         crop_gw: CropGw {
             crop: Some(sample_crop()),
         },
-        template_gw: TemplateGw {
-            templates: vec![sample_template()],
+        blueprint_gw: BlueprintGw {
+            blueprints: vec![sample_blueprint()],
         },
-        blueprint_gw: BlueprintGw,
+        agricultural_task_gw: AgriculturalTaskGw {
+            tasks: vec![sample_agricultural_task()],
+        },
         req_gw: ReqGw {
             requirement: Some(json!({"stage_requirements": []})),
         },

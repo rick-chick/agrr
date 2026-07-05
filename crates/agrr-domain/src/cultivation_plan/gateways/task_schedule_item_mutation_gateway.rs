@@ -1,7 +1,7 @@
 //! Ruby: `Domain::CultivationPlan::Gateways::TaskScheduleItemMutationGateway`
 
 use crate::cultivation_plan::dtos::{
-    TaskScheduleCropTaskTemplateSnapshot, TaskScheduleFieldCultivationSnapshot,
+    TaskScheduleAgriculturalTaskSnapshot, TaskScheduleFieldCultivationSnapshot,
     TaskScheduleItemAmountSnapshot, TaskScheduleItemDeletionUndoScheduleRow,
 };
 use crate::shared::attr::AttrMap;
@@ -15,10 +15,10 @@ pub trait TaskScheduleItemMutationGateway: Send + Sync {
         field_cultivation_id: i64,
     ) -> Result<TaskScheduleFieldCultivationSnapshot, Box<dyn std::error::Error + Send + Sync>>;
 
-    fn find_crop_task_template_for_mutation(
+    fn find_agricultural_task_for_mutation(
         &self,
-        template_id: Option<i64>,
-    ) -> Result<Option<TaskScheduleCropTaskTemplateSnapshot>, Box<dyn std::error::Error + Send + Sync>>;
+        agricultural_task_id: Option<i64>,
+    ) -> Result<Option<TaskScheduleAgriculturalTaskSnapshot>, Box<dyn std::error::Error + Send + Sync>>;
 
     fn find_item_amount_snapshot(
         &self,

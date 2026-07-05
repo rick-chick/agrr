@@ -1,8 +1,12 @@
 //! i18n keys for task schedule generation failures (stored in API / Cable / DB).
 
 pub const MISSING_WEATHER: &str = "plans.task_schedules.sync_errors.missing_weather";
+/// Legacy stored value; generation no longer emits this key (blueprint-only gate).
 pub const MISSING_CROP_TEMPLATES: &str = "plans.task_schedules.sync_errors.missing_crop_templates";
 pub const MISSING_CROP_BLUEPRINTS: &str = "plans.task_schedules.sync_errors.missing_crop_blueprints";
+pub const MISSING_GENERAL_BLUEPRINTS: &str =
+    "plans.task_schedules.sync_errors.missing_general_blueprints";
+/// Legacy alias kept for stored sync errors written before blueprint-only migration.
 pub const MISSING_GENERAL_TEMPLATES: &str = "plans.task_schedules.sync_errors.missing_general_templates";
 pub const EMPTY_GDD_PROGRESS: &str = "plans.task_schedules.sync_errors.empty_gdd_progress";
 pub const MISSING_GDD_TRIGGER: &str = "plans.task_schedules.sync_errors.missing_gdd_trigger";

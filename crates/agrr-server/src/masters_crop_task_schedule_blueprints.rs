@@ -5,8 +5,8 @@ use crate::masters_crop_context::{auth_user, internal_error};
 use crate::state::AppState;
 use agrr_adapters_agrr::{CropFertilizePlanAiQueryDaemonGateway, CropScheduleAiQueryDaemonGateway};
 use agrr_adapters_sqlite::{
-    CropAgrrRequirementSqliteGateway, CropMastersTaskScheduleBlueprintSqliteGateway,
-    CropMastersTaskTemplateSqliteGateway, CropSqliteGateway, UserLookupSqliteGateway,
+    AgriculturalTaskSqliteGateway, CropAgrrRequirementSqliteGateway,
+    CropMastersTaskScheduleBlueprintSqliteGateway, CropSqliteGateway, UserLookupSqliteGateway,
 };
 use agrr_domain::crop::dtos::{
     CropBlueprintRegenerateFailureReason, MastersCropTaskScheduleBlueprint,
@@ -63,7 +63,7 @@ fn blueprint_json(b: &MastersCropTaskScheduleBlueprint) -> Value {
         "source_agricultural_task_id": b.source_agricultural_task_id,
         "stage_order": b.stage_order,
         "stage_name": b.stage_name,
-        "gdd_trigger": decimal_to_json_f64(Some(b.gdd_trigger)),
+        "gdd_trigger": decimal_to_json_f64(b.gdd_trigger),
         "gdd_tolerance": decimal_to_json_f64(b.gdd_tolerance),
         "task_type": b.task_type,
         "source": b.source,
@@ -145,7 +145,7 @@ async fn create(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
-    let template_gateway = CropMastersTaskTemplateSqliteGateway::new(pool.clone());
+    let agricultural_task_gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
     let blueprint_gateway = CropMastersTaskScheduleBlueprintSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
     struct Port {
@@ -163,7 +163,7 @@ async fn create(
     let mut interactor = CropMastersTaskScheduleBlueprintCreateInteractor::new(
         &mut port,
         &crop_gateway,
-        &template_gateway,
+        &agricultural_task_gateway,
         &blueprint_gateway,
         &user_lookup,
     );
@@ -191,7 +191,7 @@ async fn regenerate(
     let user_id = auth_user(auth);
     let pool = state.sqlite.clone();
     let crop_gateway = CropSqliteGateway::new(pool.clone());
-    let template_gateway = CropMastersTaskTemplateSqliteGateway::new(pool.clone());
+    let agricultural_task_gateway = AgriculturalTaskSqliteGateway::new(pool.clone());
     let blueprint_gateway = CropMastersTaskScheduleBlueprintSqliteGateway::new(pool.clone());
     let agrr_req_gateway = CropAgrrRequirementSqliteGateway::new(pool.clone());
     let user_lookup = UserLookupSqliteGateway::new(pool);
@@ -199,8 +199,8 @@ async fn regenerate(
     let fertilize_gateway = CropFertilizePlanAiQueryDaemonGateway::from_env();
     let regenerate_core = CropRegenerateTaskScheduleBlueprintsInteractor::new(
         &crop_gateway,
-        &template_gateway,
         &blueprint_gateway,
+        &agricultural_task_gateway,
         &agrr_req_gateway,
         &schedule_gateway,
         &fertilize_gateway,
@@ -371,11 +371,11 @@ fn create_failure_response(
             StatusCode::NOT_FOUND,
             Json(json!({"error": "Crop not found", "error_code": "crop_not_found"})),
         ),
-        TaskTemplateNotRegistered => (
+        AgriculturalTaskNotFound => (
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({
-                "error": "Task template is not registered for this crop",
-                "error_code": "task_template_not_registered"
+                "error": "Agricultural task not found",
+                "error_code": "agricultural_task_not_found"
             })),
         ),
         Duplicate => (
@@ -398,7 +398,7 @@ fn regenerate_failure_response(
     use CropBlueprintRegenerateFailureReason::*;
     let (status, error_code) = match failure.reason {
         CropNotFound => (StatusCode::NOT_FOUND, "crop_not_found"),
-        MissingTaskTemplates => (StatusCode::UNPROCESSABLE_ENTITY, "missing_task_templates"),
+        MissingBlueprints => (StatusCode::UNPROCESSABLE_ENTITY, "missing_blueprints"),
         MissingAgrrRequirement => (StatusCode::UNPROCESSABLE_ENTITY, "missing_agrr_requirement"),
         BlueprintRegenerationFromAgrrFailed => {
             (StatusCode::UNPROCESSABLE_ENTITY, "blueprint_generation_failed")

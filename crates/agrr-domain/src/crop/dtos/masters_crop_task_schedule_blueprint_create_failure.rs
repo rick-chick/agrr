@@ -4,7 +4,7 @@ pub enum MastersCropTaskScheduleBlueprintCreateFailureReason {
     MissingGddTrigger,
     InvalidStageOrder,
     CropNotFound,
-    TaskTemplateNotRegistered,
+    AgriculturalTaskNotFound,
     Duplicate,
     ValidationFailed,
 }

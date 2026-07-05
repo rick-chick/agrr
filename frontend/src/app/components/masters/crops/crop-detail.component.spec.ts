@@ -10,17 +10,18 @@ import type { CropDetailViewState } from './crop-detail.view';
 import { CropDetailPresenter } from '../../../usecase/crops/crop-detail.providers';
 import { LoadCropDetailUseCase } from '../../../usecase/crops/load-crop-detail.usecase';
 import { DeleteCropUseCase } from '../../../usecase/crops/delete-crop.usecase';
-import { LoadCropTaskTemplatesUseCase } from '../../../usecase/crops/load-crop-task-templates.usecase';
-import { CreateCropTaskTemplateUseCase } from '../../../usecase/crops/create-crop-task-template.usecase';
-import { DeleteCropTaskTemplateUseCase } from '../../../usecase/crops/delete-crop-task-template.usecase';
 import { LoadAgriculturalTaskListUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { CreateCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/create-crop-task-schedule-blueprint.usecase';
 import { RegenerateCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/regenerate-crop-task-schedule-blueprints.usecase';
 import { UpdateCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/update-crop-task-schedule-blueprint.usecase';
 import { DeleteCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/delete-crop-task-schedule-blueprint.usecase';
+import {
+  defaultBlueprintReadiness,
+  withCropDetailDisplayState
+} from '../../../core/crops/crop-detail-display-state';
 
-const loadedState: CropDetailViewState = {
+const loadedState: CropDetailViewState = withCropDetailDisplayState({
   loading: false,
   error: null,
   crop: {
@@ -39,17 +40,7 @@ const loadedState: CropDetailViewState = {
   pendingUndoToast: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  taskTemplatesLoading: false,
-  taskTemplates: [
-    {
-      id: 10,
-      crop_id: 3,
-      agricultural_task_id: 5,
-      name: 'Weeding',
-      required_tools: [],
-      agricultural_task: { id: 5, name: 'Weeding', is_reference: false }
-    }
-  ],
+  fromPlanId: null,
   agriculturalTasksLoading: false,
   agriculturalTasks: [
     { id: 5, name: 'Weeding', required_tools: [], is_reference: false },
@@ -58,8 +49,6 @@ const loadedState: CropDetailViewState = {
   unassociatedAgriculturalTasks: [
     { id: 6, name: 'Fertilizing', required_tools: [], is_reference: false }
   ],
-  selectedAgriculturalTaskId: null,
-  taskTemplateCreating: false,
   blueprintsLoading: false,
   blueprints: [
     {
@@ -84,14 +73,23 @@ const loadedState: CropDetailViewState = {
     }
   ],
   blueprintsRegenerating: false,
-  blueprintGddSavingId: null,
+  blueprintSavingId: null,
   blueprintGddDrafts: { 20: 120 },
+  blueprintStageDrafts: { 20: 1 },
   blueprintRegenerateError: null,
   selectedBlueprintStageOrder: null,
   selectedBlueprintAgriculturalTaskId: null,
   blueprintCreateGddTrigger: null,
-  blueprintCreating: false
-};
+  blueprintCreating: false,
+  blueprintReadiness: defaultBlueprintReadiness(),
+  canRegenerateBlueprints: false,
+  canCreateBlueprint: false,
+  blueprintStageNameForCreate: null,
+  showBlueprintReadinessChecklist: false,
+  blueprintSectionDescriptionKey: 'crops.show.task_schedule_blueprints_description_empty_html',
+  showBlueprintEmptyState: true,
+  showBlueprintRegenerateRetry: false
+});
 
 const cropWithReadyStages = {
   ...loadedState.crop!,
@@ -113,20 +111,17 @@ const cropWithReadyStages = {
   ]
 };
 
-const readyState: CropDetailViewState = {
+const readyState: CropDetailViewState = withCropDetailDisplayState({
   ...loadedState,
   crop: cropWithReadyStages
-};
+});
 
 describe('CropDetailComponent', () => {
   let fixture: ComponentFixture<CropDetailComponent>;
   let component: CropDetailComponent;
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
-  let loadTaskTemplatesUseCase: { execute: ReturnType<typeof vi.fn> };
   let loadAgriculturalTasksUseCase: { execute: ReturnType<typeof vi.fn> };
   let loadBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
-  let createTaskTemplateUseCase: { execute: ReturnType<typeof vi.fn> };
-  let deleteTaskTemplateUseCase: { execute: ReturnType<typeof vi.fn> };
   let createBlueprintUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let updateBlueprintUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -142,11 +137,8 @@ describe('CropDetailComponent', () => {
 
   beforeEach(async () => {
     loadUseCase = { execute: vi.fn() };
-    loadTaskTemplatesUseCase = { execute: vi.fn() };
     loadAgriculturalTasksUseCase = { execute: vi.fn() };
     loadBlueprintsUseCase = { execute: vi.fn() };
-    createTaskTemplateUseCase = { execute: vi.fn() };
-    deleteTaskTemplateUseCase = { execute: vi.fn() };
     createBlueprintUseCase = { execute: vi.fn() };
     regenerateBlueprintsUseCase = { execute: vi.fn() };
     updateBlueprintUseCase = { execute: vi.fn() };
@@ -166,9 +158,6 @@ describe('CropDetailComponent', () => {
         providers: [
           { provide: LoadCropDetailUseCase, useValue: loadUseCase },
           { provide: DeleteCropUseCase, useValue: { execute: vi.fn() } },
-          { provide: LoadCropTaskTemplatesUseCase, useValue: loadTaskTemplatesUseCase },
-          { provide: CreateCropTaskTemplateUseCase, useValue: createTaskTemplateUseCase },
-          { provide: DeleteCropTaskTemplateUseCase, useValue: deleteTaskTemplateUseCase },
           { provide: LoadAgriculturalTaskListUseCase, useValue: loadAgriculturalTasksUseCase },
           { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: loadBlueprintsUseCase },
           { provide: RegenerateCropTaskScheduleBlueprintsUseCase, useValue: regenerateBlueprintsUseCase },
@@ -198,18 +187,42 @@ describe('CropDetailComponent', () => {
     component.ngOnInit();
     expect(mockPresenter.setView).toHaveBeenCalledWith(component);
     expect(loadUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
-    expect(loadTaskTemplatesUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
     expect(loadAgriculturalTasksUseCase.execute).toHaveBeenCalled();
     expect(loadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
   });
 
-  it('creates task template when agricultural task is selected', () => {
-    component.control = { ...loadedState, selectedAgriculturalTaskId: 6 };
-    component.createTaskTemplate();
-    expect(createTaskTemplateUseCase.execute).toHaveBeenCalledWith({
-      cropId: 3,
-      agriculturalTaskId: 6
-    });
+  it('shows error message when control has error and no crop', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          errors: {
+            invalid_id: 'Invalid crop ID'
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      loading: false,
+      error: 'Invalid crop ID',
+      crop: null,
+      agriculturalTasksLoading: false,
+      blueprintsLoading: false
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const errorEl = fixture.nativeElement.querySelector('.master-error');
+    expect(errorEl).toBeTruthy();
+    expect(errorEl?.textContent).toContain('Invalid crop ID');
+    expect(fixture.nativeElement.querySelector('.detail-card')).toBeFalsy();
   });
 
   it('regenerates blueprints after confirm when readiness is satisfied', () => {
@@ -228,7 +241,7 @@ describe('CropDetailComponent', () => {
           show: {
             return_to_plan: 'Return to plan',
             from_plan_wizard_title: 'Registration for this plan',
-            from_plan_wizard_lead: 'Complete STEP 1 then STEP 2.'
+            from_plan_wizard_lead: 'Register task plans using the form below.'
           }
         }
       },
@@ -241,7 +254,7 @@ describe('CropDetailComponent', () => {
     );
 
     fixture.detectChanges();
-    component.control = loadedState;
+    component.control = { ...loadedState, fromPlanId: 7 };
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -265,8 +278,8 @@ describe('CropDetailComponent', () => {
             generate_task_schedule_blueprints_button: 'Regenerate Task Plan (AI)',
             blueprint_readiness: {
               title: 'Required before AI generation',
-              templates_missing: 'No task templates registered',
-              templates_action: 'Register task templates',
+              blueprints_missing: 'No task plans registered yet',
+              blueprints_action: 'Register task plans',
               stages_missing: 'Growth stages are missing base temperature or required GDD',
               stages_action: 'Edit crop to configure stage requirements'
             }
@@ -289,11 +302,11 @@ describe('CropDetailComponent', () => {
     expect(button.disabled).toBe(true);
     expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Growth stages are missing');
-    expect(fixture.nativeElement.querySelector('a[href="#task-templates-heading"]')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('a[href="#blueprints-heading"]')).toBeFalsy();
     expect(fixture.nativeElement.querySelector('a[href="/crops/3/edit"]')).toBeTruthy();
   });
 
-  it('enables regenerate button when templates and stage requirements are ready', async () => {
+  it('enables regenerate button when blueprints and stage requirements are ready', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
@@ -322,39 +335,72 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeFalsy();
   });
 
-  it('creates blueprint manually when stage, task, and gdd are selected', () => {
+  it('enables create blueprint button when task is selected via onBlueprintTaskChange', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const button = fixture.nativeElement.querySelector(
+      '.crop-detail__template-add-actions .btn-primary'
+    ) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+
+    component.onBlueprintTaskChange(6);
+    fixture.detectChanges();
+
+    expect(component.control.canCreateBlueprint).toBe(true);
+    expect(button.disabled).toBe(false);
+  });
+
+  it('creates blueprint with task only when stage and gdd are omitted', () => {
     component.control = {
-      ...readyState,
-      selectedBlueprintStageOrder: 1,
-      selectedBlueprintAgriculturalTaskId: 5,
-      blueprintCreateGddTrigger: 120
+      ...loadedState,
+      selectedBlueprintAgriculturalTaskId: 6,
+      canCreateBlueprint: true
     };
     component.createBlueprint();
     expect(createBlueprintUseCase.execute).toHaveBeenCalledWith({
       cropId: 3,
-      agriculturalTaskId: 5,
+      agriculturalTaskId: 6,
+      stageOrder: null,
+      stageName: null,
+      gddTrigger: null
+    });
+  });
+
+  it('creates blueprint with stage and gdd when provided', () => {
+    component.control = withCropDetailDisplayState({
+      ...readyState,
+      selectedBlueprintStageOrder: 1,
+      selectedBlueprintAgriculturalTaskId: 6,
+      blueprintCreateGddTrigger: 120
+    });
+    component.createBlueprint();
+    expect(createBlueprintUseCase.execute).toHaveBeenCalledWith({
+      cropId: 3,
+      agriculturalTaskId: 6,
       stageOrder: 1,
       stageName: 'Vegetative',
       gddTrigger: 120
     });
   });
 
-  it('shows step badges and always-visible template section description', async () => {
+  it('renders unified task plan section without separate template section', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
       {
         crops: {
           show: {
-            agricultural_tasks_title: 'Task Templates',
-            agricultural_tasks_step_label: 'STEP 1',
-            agricultural_tasks_description:
-              'Register tasks for this crop. The task plan below is generated from these templates.',
             task_schedule_blueprints_title: 'Task Plan',
-            task_schedule_blueprints_step_label: 'STEP 2',
-            generate_task_schedule_blueprints_button: 'Regenerate Task Plan (AI)',
             task_schedule_blueprints_description_html: 'Review AI-suggested task plans.',
-            task_schedule_blueprints_description_empty_html: 'Press the button above to generate.'
+            generate_task_schedule_blueprints_button: 'Regenerate Task Plan (AI)'
           }
         }
       },
@@ -368,21 +414,13 @@ describe('CropDetailComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const templateSection = fixture.nativeElement.querySelector(
-      '#task-templates-heading'
-    )?.closest('section');
-    const blueprintSection = fixture.nativeElement.querySelector(
-      '#blueprints-heading'
-    )?.closest('section');
-
-    expect(templateSection?.querySelector('.crop-detail__step-badge')?.textContent).toContain('STEP 1');
-    expect(blueprintSection?.querySelector('.crop-detail__step-badge')?.textContent).toContain('STEP 2');
-    expect(templateSection?.textContent).toContain(
-      'Register tasks for this crop. The task plan below is generated from these templates.'
-    );
+    expect(fixture.nativeElement.querySelector('#blueprints-heading')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#task-templates-heading')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.crop-detail__step-badge')).toBeFalsy();
+    expect(fixture.nativeElement.textContent).toContain('Task Plan');
   });
 
-  it('renders manual blueprint add form when readiness is satisfied', async () => {
+  it('renders manual blueprint add form with master task picker', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
@@ -391,10 +429,11 @@ describe('CropDetailComponent', () => {
           show: {
             manual_blueprint_add: {
               title: 'Add task plan manually',
-              description: 'Register stage, task, and GDD.',
+              description: 'Select a task from the master list.',
               stage_label: 'Growth stage',
               task_label: 'Task',
               gdd_label: 'GDD',
+              optional: '(optional)',
               submit: 'Add task plan',
               ai_hint: 'AI replaces all plans.'
             },
@@ -418,6 +457,7 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('#blueprint-task-picker')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('#blueprint-gdd-input')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Add task plan manually');
+    expect(fixture.nativeElement.textContent).toContain('(optional)');
   });
 
   it('renders blueprint cards with shared card-list layout, GDD input, and delete label', async () => {
@@ -440,30 +480,65 @@ describe('CropDetailComponent', () => {
         readyState.blueprints[0],
         { ...readyState.blueprints[0], id: 21, stage_order: 2, stage_name: 'Flowering' }
       ],
-      blueprintGddDrafts: { 20: 120, 21: 80 }
+      blueprintGddDrafts: { 20: 120, 21: 80 },
+      blueprintStageDrafts: { 20: 1, 21: 2 }
     };
     fixture.detectChanges();
     await fixture.whenStable();
 
     const blueprintList = fixture.nativeElement.querySelector('.crop-detail__blueprint-list');
-    const templateList = fixture.nativeElement.querySelector(
-      '#task-templates-heading'
-    )?.closest('section')?.querySelector('.card-list');
     const card = fixture.nativeElement.querySelector('.blueprint-card');
     const gddField = card?.querySelector('.blueprint-card__gdd');
-    const deleteButton = card?.querySelector('.item-card__actions .crop-detail__card-remove');
+    const deleteButton = card?.querySelector('.blueprint-card__header .crop-detail__card-remove');
 
     expect(blueprintList?.classList.contains('card-list')).toBe(true);
-    expect(templateList).toBeTruthy();
     expect(fixture.nativeElement.querySelectorAll('.blueprint-card').length).toBe(2);
-    expect(card?.querySelector('.item-card__body')).toBeTruthy();
-    expect(card?.querySelector('.item-card__actions')).toBeTruthy();
-    expect(card?.querySelector('.item-card__body .blueprint-card__gdd')).toBeTruthy();
-    expect(gddField?.querySelector('.crop-detail__template-add-input-wrap')).toBeTruthy();
+    expect(card?.querySelector('.blueprint-card__header')).toBeTruthy();
+    expect(card?.querySelector('.blueprint-card__fields')).toBeTruthy();
     expect(gddField?.querySelector('#gdd-20.crop-detail__template-add-input')).toBeTruthy();
-    expect(gddField?.querySelector('.crop-detail__template-add-input-unit')).toBeTruthy();
     expect(deleteButton?.textContent?.trim()).toBe('Delete');
     expect(deleteButton?.getAttribute('aria-label')).toBe('Delete task plan');
+  });
+
+  it('shows GDD input for blueprints without gdd_trigger so users can set it later', async () => {
+    fixture.detectChanges();
+    component.control = {
+      ...readyState,
+      blueprints: [
+        {
+          ...readyState.blueprints[0],
+          id: 22,
+          stage_name: null,
+          gdd_trigger: null,
+          name: 'Weeding'
+        }
+      ],
+      blueprintGddDrafts: {}
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('#gdd-22.crop-detail__template-add-input')).toBeTruthy();
+  });
+
+  it('renders stage select on blueprint cards and patches stage on change', () => {
+    fixture.detectChanges();
+    component.control = {
+      ...readyState,
+      blueprintStageDrafts: { 20: 1 }
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#stage-20')).toBeTruthy();
+
+    component.onBlueprintStageDraftChange(20, null);
+
+    expect(updateBlueprintUseCase.execute).toHaveBeenCalledWith({
+      cropId: 3,
+      blueprintId: 20,
+      stageOrder: null,
+      cropStages: [{ order: 1, name: 'Vegetative' }]
+    });
   });
 
   it('does not show task type or missing-task placeholder on blueprint cards', async () => {
@@ -479,7 +554,7 @@ describe('CropDetailComponent', () => {
         {
           ...readyState.blueprints[0],
           agricultural_task: undefined,
-          name: undefined,
+          name: 'Plowing only',
           description: 'Plowing only'
         }
       ],
@@ -494,7 +569,7 @@ describe('CropDetailComponent', () => {
     expect(text).not.toContain('Unlinked task');
   });
 
-  it('renders task templates and blueprint sections', async () => {
+  it('renders task plan section with blueprint list', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
@@ -506,11 +581,8 @@ describe('CropDetailComponent', () => {
     await fixture.whenStable();
 
     const text = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('Task Templates');
-    expect(text).toContain('Weeding');
     expect(text).toContain('Task Plan');
-    expect(text).toContain('Early weeding');
-    expect(fixture.nativeElement.querySelector('#task-templates-heading')).toBeTruthy();
+    expect(text).toContain('Weeding');
     expect(fixture.nativeElement.querySelector('#blueprints-heading')).toBeTruthy();
   });
 
@@ -595,7 +667,7 @@ describe('CropDetailComponent', () => {
     translate.use('en');
 
     fixture.detectChanges();
-    component.control = { ...readyState, blueprints: [] };
+    component.control = withCropDetailDisplayState({ ...readyState, blueprints: [] });
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -633,25 +705,6 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('These tasks were suggested by the AI.');
   });
 
-  it('uses subsection layout for template add area and subdued card remove buttons', async () => {
-    const translate = TestBed.inject(TranslateService);
-    translate.setTranslation('en', en as TranslationObject, true);
-    translate.setDefaultLang('en');
-    translate.use('en');
-
-    fixture.detectChanges();
-    component.control = loadedState;
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.querySelector('.crop-detail__template-add')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-detail__template-add.form-card')).toBeFalsy();
-    expect(
-      fixture.nativeElement.querySelector('.card-list .crop-detail__card-remove')
-    ).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.card-list .btn-danger')).toBeFalsy();
-  });
-
   it('renders inline picker form when unassociated agricultural tasks exist', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
@@ -663,25 +716,24 @@ describe('CropDetailComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('.crop-detail__template-add-form')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('#agricultural-task-picker')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-detail__blueprint-add-form')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#blueprint-task-picker')).toBeTruthy();
     expect(
       fixture.nativeElement.querySelector('.crop-detail__template-add-actions .btn-primary')
     ).toBeTruthy();
   });
 
-  it('explains all work-master tasks are already templated when picker is empty but templates exist', async () => {
+  it('explains all master tasks are already used when picker is empty but blueprints exist', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
       {
         crops: {
-          agricultural_tasks: {
-            new: {
-              associate_existing_task: 'Create Template from Existing Task',
-              no_unassociated_tasks_all_templated:
-                'The list above shows templates already registered for this crop.',
-              go_to_create: 'Go to Task Creation'
+          show: {
+            manual_blueprint_add: {
+              no_unassociated_tasks_all_used:
+                'All master tasks are already in this task plan.',
+              go_to_create: 'Create a task'
             }
           }
         }
@@ -692,12 +744,15 @@ describe('CropDetailComponent', () => {
     translate.use('en');
 
     fixture.detectChanges();
-    component.control = { ...loadedState, unassociatedAgriculturalTasks: [] };
+    component.control = withCropDetailDisplayState({
+      ...loadedState,
+      agriculturalTasks: [loadedState.agriculturalTasks[0]]
+    });
     fixture.detectChanges();
     await fixture.whenStable();
 
     const text = fixture.nativeElement.textContent ?? '';
-    expect(text).toContain('The list above shows templates already registered for this crop.');
+    expect(text).toContain('All master tasks are already in this task plan.');
     expect(
       fixture.nativeElement.querySelector('.crop-detail__template-add-empty .btn-secondary')
     ).toBeTruthy();
@@ -725,11 +780,10 @@ describe('CropDetailComponent', () => {
     translate.use('en');
 
     fixture.detectChanges();
-    component.control = {
+    component.control = withCropDetailDisplayState({
       ...readyState,
-      blueprints: [],
       blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
-    };
+    });
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -772,7 +826,7 @@ describe('CropDetailComponent', () => {
     const target = { scrollIntoView } as unknown as HTMLElement;
     const getElementById = vi.spyOn(document, 'getElementById').mockReturnValue(target);
 
-    component.control = { ...readyState, blueprintsLoading: false, taskTemplatesLoading: false };
+    component.control = { ...readyState, blueprintsLoading: false };
     fixture.detectChanges();
     await Promise.resolve();
     await fixture.whenStable();

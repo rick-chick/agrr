@@ -1,8 +1,7 @@
 // Tests for `interactors/plan_save_ensure_user_agricultural_tasks_interactor.rs` (Ruby parity under test/domain/cultivation_plan/).
 
     use crate::cultivation_plan::dtos::{
-        PlanSaveCropTaskTemplateLinkSnapshot, PlanSaveUserAgriculturalTaskSnapshot,
-        PublicPlanSaveCropTaskTemplateLinkRow, PublicPlanSaveFieldDatum, PublicPlanSaveHeaderSnapshot,
+        PlanSaveUserAgriculturalTaskSnapshot, PublicPlanSaveFieldDatum, PublicPlanSaveHeaderSnapshot,
     };
     use crate::cultivation_plan::interactors::plan_save_test_support::{
         CapturingLogger, FakeTranslator,
@@ -77,7 +76,6 @@
 
     struct MockUserAgTask {
         existing: Option<PlanSaveUserAgriculturalTaskSnapshot>,
-        template_exists: bool,
     }
 
     impl PlanSaveUserAgriculturalTaskGateway for MockUserAgTask {
@@ -100,28 +98,6 @@
                 name: Some("作業A".into()),
             })
         }
-        fn find_crop_task_template(
-            &self,
-            _: i64,
-            _: i64,
-        ) -> Result<Option<PlanSaveCropTaskTemplateLinkSnapshot>, Box<dyn std::error::Error + Send + Sync>>
-        {
-            Ok(if self.template_exists {
-                Some(PlanSaveCropTaskTemplateLinkSnapshot { id: 501 })
-            } else {
-                None
-            })
-        }
-        fn create_crop_task_template(
-            &self,
-            _: i64,
-            _: i64,
-            attrs: AttrMap,
-        ) -> Result<PlanSaveCropTaskTemplateLinkSnapshot, Box<dyn std::error::Error + Send + Sync>>
-        {
-            assert_eq!(attrs.get("name"), Some(&AttrValue::from("作業A")));
-            Ok(PlanSaveCropTaskTemplateLinkSnapshot { id: 501 })
-        }
     }
 
     fn agricultural_task_row() -> PublicPlanSaveAgriculturalTaskReferenceRow {
@@ -137,18 +113,6 @@
             task_type_id: None,
             region: Some("jp".into()),
             linked_reference_crop_ids: vec![10],
-            template_links: vec![PublicPlanSaveCropTaskTemplateLinkRow {
-                reference_crop_id: 10,
-                name: Some("作業A".into()),
-                time_per_sqm: Some(1.5),
-                description: None,
-                weather_dependency: None,
-                required_tools: None,
-                skill_level: None,
-                task_type: None,
-                task_type_id: None,
-                is_reference: false,
-            }],
         }
     }
 
@@ -165,10 +129,7 @@
     #[test]
     fn returns_empty_output_without_read_when_reference_crop_ids_empty() {
         let read = MockRead { rows: vec![] };
-        let user_gw = MockUserAgTask {
-            existing: None,
-            template_exists: false,
-        };
+        let user_gw = MockUserAgTask { existing: None };
         let logger = CapturingLogger::new();
         let out = PlanSaveEnsureUserAgriculturalTasksInteractor::new(
             &read, &user_gw, &logger, &FakeTranslator,
@@ -183,14 +144,11 @@
     }
 
     #[test]
-    fn creates_user_agricultural_task_and_crop_task_template_when_intersecting() {
+    fn creates_user_agricultural_task_when_intersecting_blueprint_linked_crop() {
         let read = MockRead {
             rows: vec![agricultural_task_row()],
         };
-        let user_gw = MockUserAgTask {
-            existing: None,
-            template_exists: false,
-        };
+        let user_gw = MockUserAgTask { existing: None };
         let logger = CapturingLogger::new();
         let out = PlanSaveEnsureUserAgriculturalTasksInteractor::new(
             &read, &user_gw, &logger, &FakeTranslator,

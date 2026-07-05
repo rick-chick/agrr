@@ -3,32 +3,42 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { CropDetailPresenter } from './crop-detail.presenter';
 import { CropDetailView, CropDetailViewState } from '../../components/masters/crops/crop-detail.view';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
+import {
+  defaultBlueprintReadiness,
+  withCropDetailDisplayState
+} from './crop-detail-presenter.helpers';
 
-const baseControl: CropDetailViewState = {
+const baseControl: CropDetailViewState = withCropDetailDisplayState({
   loading: false,
   error: null,
   crop: { id: 3, name: 'Tomato', is_reference: false, groups: [] },
   pendingUndoToast: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  taskTemplatesLoading: false,
-  taskTemplates: [],
+  fromPlanId: null,
   agriculturalTasksLoading: false,
   agriculturalTasks: [],
   unassociatedAgriculturalTasks: [],
-  selectedAgriculturalTaskId: null,
-  taskTemplateCreating: false,
   blueprintsLoading: false,
   blueprints: [],
   blueprintsRegenerating: false,
-  blueprintGddSavingId: null,
+  blueprintSavingId: null,
   blueprintGddDrafts: {},
+  blueprintStageDrafts: {},
   blueprintRegenerateError: null,
   selectedBlueprintStageOrder: null,
   selectedBlueprintAgriculturalTaskId: null,
   blueprintCreateGddTrigger: null,
-  blueprintCreating: false
-};
+  blueprintCreating: false,
+  blueprintReadiness: defaultBlueprintReadiness(),
+  canRegenerateBlueprints: false,
+  canCreateBlueprint: false,
+  blueprintStageNameForCreate: null,
+  showBlueprintReadinessChecklist: false,
+  blueprintSectionDescriptionKey: 'crops.show.task_schedule_blueprints_description_empty_html',
+  showBlueprintEmptyState: true,
+  showBlueprintRegenerateRetry: false
+});
 
 describe('CropDetailPresenter', () => {
   let presenter: CropDetailPresenter;
@@ -57,11 +67,11 @@ describe('CropDetailPresenter', () => {
     lastControl = { ...baseControl, blueprintsRegenerating: true };
 
     presenter.onError({
-      message: 'crops.show.blueprint_errors.missing_task_templates'
+      message: 'crops.show.blueprint_errors.missing_blueprints'
     });
 
     expect(lastControl.blueprintRegenerateError).toBe(
-      'crops.show.blueprint_errors.missing_task_templates'
+      'crops.show.blueprint_errors.missing_blueprints'
     );
     expect(lastControl.pendingErrorFlash).toBeNull();
     expect(lastControl.blueprintsRegenerating).toBe(false);
@@ -109,19 +119,30 @@ describe('CropDetailPresenter', () => {
 
     expect(lastControl.blueprintRegenerateError).toBeNull();
     expect(lastControl.blueprintsRegenerating).toBe(false);
+    expect(lastControl.blueprintStageDrafts).toEqual({ 1: 1 });
   });
 
-  it('filters unassociated agricultural tasks for picker', () => {
+  it('filters unassociated agricultural tasks by existing blueprints', () => {
     lastControl = {
       ...baseControl,
-      taskTemplates: [
+      blueprints: [
         {
-          id: 10,
+          id: 20,
           crop_id: 3,
           agricultural_task_id: 5,
-          name: 'Weeding',
-          required_tools: [],
-          agricultural_task: { id: 5, name: 'Weeding', is_reference: false }
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          gdd_trigger: 100,
+          gdd_tolerance: null,
+          task_type: 'field_work',
+          source: 'manual',
+          priority: 1,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null
         }
       ]
     };
@@ -172,5 +193,110 @@ describe('CropDetailPresenter', () => {
     expect(lastControl.blueprints).toHaveLength(1);
     expect(lastControl.blueprints[0].source).toBe('manual');
     expect(lastControl.blueprintGddDrafts[22]).toBe(120);
+    expect(lastControl.blueprintStageDrafts[22]).toBe(1);
+  });
+
+  it('sets blueprintSavingId when blueprint update starts', () => {
+    presenter.onUpdateStarted(42);
+
+    expect(lastControl.blueprintSavingId).toBe(42);
+  });
+
+  it('syncs blueprintStageDrafts and clears saving id on blueprint update present', () => {
+    const existingBlueprint = {
+      id: 10,
+      crop_id: 3,
+      agricultural_task_id: 5,
+      source_agricultural_task_id: null,
+      stage_order: 1,
+      stage_name: 'Vegetative',
+      gdd_trigger: 100,
+      gdd_tolerance: null,
+      task_type: 'field_work' as const,
+      source: 'agrr' as const,
+      priority: 1,
+      amount: null,
+      amount_unit: null,
+      description: null,
+      weather_dependency: null,
+      time_per_sqm: null
+    };
+    lastControl = {
+      ...baseControl,
+      blueprintSavingId: 10,
+      blueprints: [existingBlueprint],
+      blueprintGddDrafts: { 10: 100 },
+      blueprintStageDrafts: { 10: 1 }
+    };
+
+    presenter.present({
+      blueprint: {
+        ...existingBlueprint,
+        stage_order: 2,
+        gdd_trigger: 150
+      }
+    });
+
+    expect(lastControl.blueprintSavingId).toBeNull();
+    expect(lastControl.blueprintStageDrafts[10]).toBe(2);
+    expect(lastControl.blueprintGddDrafts[10]).toBe(150);
+    expect(lastControl.blueprints[0].stage_order).toBe(2);
+    expect(lastControl.blueprints[0].gdd_trigger).toBe(150);
+  });
+
+  it('derives blueprint display state when crop detail is presented', () => {
+    lastControl = {
+      ...baseControl,
+      crop: {
+        id: 3,
+        name: 'Tomato',
+        is_reference: false,
+        groups: [],
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 3,
+            name: 'Vegetative',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10,
+              optimal_min: 15,
+              optimal_max: 25
+            },
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 500 }
+          }
+        ]
+      },
+      blueprints: [
+        {
+          id: 1,
+          crop_id: 3,
+          agricultural_task_id: 5,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          gdd_trigger: 100,
+          gdd_tolerance: null,
+          task_type: 'field_work',
+          source: 'agrr',
+          priority: 1,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null
+        }
+      ]
+    };
+
+    presenter.present({ crop: lastControl.crop! });
+
+    expect(lastControl.canRegenerateBlueprints).toBe(true);
+    expect(lastControl.showBlueprintReadinessChecklist).toBe(false);
+    expect(lastControl.blueprintSectionDescriptionKey).toBe(
+      'crops.show.task_schedule_blueprints_description_html'
+    );
   });
 });

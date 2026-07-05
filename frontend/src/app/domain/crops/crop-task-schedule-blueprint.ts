@@ -10,9 +10,9 @@ export interface CropTaskScheduleBlueprint {
   crop_id: number;
   agricultural_task_id: number | null;
   source_agricultural_task_id: number | null;
-  stage_order: number;
+  stage_order: number | null;
   stage_name: string | null;
-  gdd_trigger: number;
+  gdd_trigger: number | null;
   gdd_tolerance: number | null;
   task_type: string;
   source: string;

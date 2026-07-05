@@ -4,16 +4,14 @@ use std::collections::HashMap;
 
 use crate::agricultural_task::gateways::{
     TaskScheduleBlueprint, TaskScheduleBlueprintRow, TaskScheduleCrop, TaskScheduleCropRow,
-    TaskScheduleCropTaskTemplate, TaskScheduleFieldCultivation, TaskScheduleFieldCultivationRow,
-    TaskSchedulePlan, TaskSchedulePlanContext, TaskSchedulePlanRow,
-    TaskScheduleTemplateRow,
+    TaskScheduleFieldCultivation, TaskScheduleFieldCultivationRow, TaskSchedulePlan,
+    TaskSchedulePlanContext, TaskSchedulePlanRow,
 };
 
 pub fn assemble(
     plan_row: TaskSchedulePlanRow,
     field_cultivation_rows: Vec<TaskScheduleFieldCultivationRow>,
     crop_rows_by_id: HashMap<i64, TaskScheduleCropRow>,
-    template_rows_by_crop_id: HashMap<i64, Vec<TaskScheduleTemplateRow>>,
     blueprint_rows_by_crop_id: HashMap<i64, Vec<TaskScheduleBlueprintRow>>,
 ) -> TaskSchedulePlanContext {
     let field_cultivations = field_cultivation_rows
@@ -21,10 +19,9 @@ pub fn assemble(
         .filter_map(|fc_row| {
             let crop_id = fc_row.crop_id?;
             let crop_row = crop_rows_by_id.get(&crop_id)?;
-            let templates = template_rows_by_crop_id.get(&crop_id).cloned().unwrap_or_default();
             let blueprints = blueprint_rows_by_crop_id.get(&crop_id).cloned().unwrap_or_default();
 
-            let crop = crop_snapshot_from(crop_row, templates, blueprints);
+            let crop = crop_snapshot_from(crop_row, blueprints);
 
             Some(TaskScheduleFieldCultivation {
                 id: fc_row.id,
@@ -46,16 +43,8 @@ pub fn assemble(
 
 fn crop_snapshot_from(
     crop_row: &TaskScheduleCropRow,
-    template_rows: Vec<TaskScheduleTemplateRow>,
     blueprint_rows: Vec<TaskScheduleBlueprintRow>,
 ) -> TaskScheduleCrop {
-    let crop_task_templates = template_rows
-        .into_iter()
-        .map(|row| TaskScheduleCropTaskTemplate {
-            agricultural_task: row.agricultural_task,
-        })
-        .collect();
-
     let crop_task_schedule_blueprints = blueprint_rows
         .into_iter()
         .map(|row| TaskScheduleBlueprint {
@@ -78,7 +67,6 @@ fn crop_snapshot_from(
     TaskScheduleCrop {
         id: crop_row.id,
         name: crop_row.name.clone(),
-        crop_task_templates,
         crop_task_schedule_blueprints,
     }
 }

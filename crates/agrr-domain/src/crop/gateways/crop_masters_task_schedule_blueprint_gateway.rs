@@ -33,4 +33,11 @@ pub trait CropMastersTaskScheduleBlueprintGateway: Send + Sync {
         crop_id: i64,
         records: &[CropTaskScheduleBlueprintPersistAttrs],
     ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>>;
+
+    /// Merge AI regeneration: update field-work rows in place, replace fertilize rows.
+    fn apply_regenerated_for_crop(
+        &self,
+        crop_id: i64,
+        records: &[CropTaskScheduleBlueprintPersistAttrs],
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>>;
 }

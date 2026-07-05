@@ -7,10 +7,10 @@ use crate::crop::dtos::{
     MastersCropTaskScheduleBlueprintCreateFailureReason,
     MastersCropTaskScheduleBlueprintCreateInput,
 };
-use crate::crop::entities::{CropEntity, CropTaskTemplateEntity};
-use crate::crop::gateways::{
-    CropGateway, CropMastersTaskScheduleBlueprintGateway, CropMastersTaskTemplateGateway,
-};
+use crate::agricultural_task::entities::AgriculturalTaskEntity;
+use crate::agricultural_task::gateways::AgriculturalTaskGateway;
+use crate::crop::entities::CropEntity;
+use crate::crop::gateways::{CropGateway, CropMastersTaskScheduleBlueprintGateway};
 use crate::crop::interactors::crop_masters_task_schedule_blueprint_create_interactor::CropMastersTaskScheduleBlueprintCreateInteractor;
 use crate::crop::policies::masters_crop_task_schedule_blueprint_create_policy::MANUAL_BLUEPRINT_SOURCE;
 use crate::crop::ports::CropMastersTaskScheduleBlueprintCreateOutputPort;
@@ -57,17 +57,19 @@ fn crop() -> CropEntity {
     }
 }
 
-fn template() -> CropTaskTemplateEntity {
-    CropTaskTemplateEntity {
-        id: 10,
-        crop_id: 2,
-        agricultural_task_id: 3,
+fn agricultural_task() -> AgriculturalTaskEntity {
+    AgriculturalTaskEntity {
+        id: Some(3),
+        user_id: Some(1),
         name: "T".into(),
         description: None,
         time_per_sqm: None,
         weather_dependency: None,
         required_tools: vec![],
         skill_level: None,
+        region: None,
+        task_type: Some(FIELD_WORK.into()),
+        is_reference: false,
         created_at: None,
         updated_at: None,
     }
@@ -93,9 +95,9 @@ fn created_blueprint() -> MastersCropTaskScheduleBlueprint {
         crop_id: 2,
         agricultural_task_id: Some(3),
         source_agricultural_task_id: None,
-        stage_order: 1,
+        stage_order: Some(1),
         stage_name: None,
-        gdd_trigger: Decimal::from(100),
+        gdd_trigger: Some(Decimal::from(100)),
         gdd_tolerance: None,
         task_type: FIELD_WORK.into(),
         source: MANUAL_BLUEPRINT_SOURCE.into(),
@@ -117,9 +119,9 @@ fn existing_blueprint() -> MastersCropTaskScheduleBlueprint {
         crop_id: 2,
         agricultural_task_id: Some(3),
         source_agricultural_task_id: None,
-        stage_order: 1,
+        stage_order: Some(1),
         stage_name: None,
-        gdd_trigger: Decimal::from(50),
+        gdd_trigger: Some(Decimal::from(50)),
         gdd_tolerance: None,
         task_type: FIELD_WORK.into(),
         source: MANUAL_BLUEPRINT_SOURCE.into(),
@@ -361,86 +363,188 @@ impl CropGateway for SuccessGw {
         unimplemented!()
     }
 
-    fn masters_crop_agricultural_task_templates_index_rows(
+
+
+}
+
+struct FoundAgriculturalTaskGw;
+
+impl AgriculturalTaskGateway for FoundAgriculturalTaskGw {
+    fn list_user_owned_tasks(
         &self,
         _: i64,
-    ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>> {
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
 
-    fn update_masters_crop_task_template_for_api(
+    fn list_reference_tasks(
+        &self,
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn list_user_and_reference_tasks(
         &self,
         _: i64,
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn find_agricultural_task_show_detail(
+        &self,
         _: i64,
-        _: serde_json::Value,
+    ) -> Result<crate::agricultural_task::dtos::AgriculturalTaskShowDetail, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn find_by_id(
+        &self,
+        _: i64,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(agricultural_task())
+    }
+
+    fn find_by_reference_and_name(
+        &self,
+        _: &str,
+    ) -> Result<Option<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn find_by_user_id_and_name(
+        &self,
+        _: i64,
+        _: &str,
+    ) -> Result<Option<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn create(
+        &self,
+        _: crate::shared::attr::AttrMap,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn update(
+        &self,
+        _: i64,
+        _: crate::shared::attr::AttrMap,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn within_transaction<F, T>(&self, block: F) -> T
+    where
+        F: FnOnce() -> T,
+    {
+        block()
+    }
+
+    fn soft_delete_with_undo(
+        &self,
+        _: &User,
+        _: i64,
+        _: i64,
+        _: &str,
     ) -> Result<
-        crate::crop::gateways::UpdateMastersCropTaskTemplateOutcome,
+        crate::agricultural_task::gateways::SoftDeleteUndoResult,
         Box<dyn std::error::Error + Send + Sync>,
     > {
         unimplemented!()
     }
-
-    fn delete_masters_crop_task_template(
-        &self,
-        _: i64,
-        _: i64,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        unimplemented!()
-    }
 }
 
-struct RegisteredTemplateGw;
+struct MissingAgriculturalTaskGw;
 
-impl CropMastersTaskTemplateGateway for RegisteredTemplateGw {
-    fn find_by_agricultural_task_id_and_crop_id(
+impl AgriculturalTaskGateway for MissingAgriculturalTaskGw {
+    fn list_user_owned_tasks(
         &self,
         _: i64,
-        _: i64,
-    ) -> Result<Option<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(Some(template()))
-    }
-
-    fn create_detail(
-        &self,
-        _: i64,
-        _: i64,
-        _: crate::crop::dtos::CropTaskTemplatePersistAttributes,
-    ) -> Result<CropTaskTemplateEntity, Box<dyn std::error::Error + Send + Sync>> {
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
 
-    fn list_by_crop_id(
+    fn list_reference_tasks(
         &self,
-        _: i64,
-    ) -> Result<Vec<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        unimplemented!()
-    }
-}
-
-struct MissingTemplateGw;
-
-impl CropMastersTaskTemplateGateway for MissingTemplateGw {
-    fn find_by_agricultural_task_id_and_crop_id(
-        &self,
-        _: i64,
-        _: i64,
-    ) -> Result<Option<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(None)
-    }
-
-    fn create_detail(
-        &self,
-        _: i64,
-        _: i64,
-        _: crate::crop::dtos::CropTaskTemplatePersistAttributes,
-    ) -> Result<CropTaskTemplateEntity, Box<dyn std::error::Error + Send + Sync>> {
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
 
-    fn list_by_crop_id(
+    fn list_user_and_reference_tasks(
         &self,
         _: i64,
-    ) -> Result<Vec<CropTaskTemplateEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        _: Option<&str>,
+    ) -> Result<Vec<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn find_agricultural_task_show_detail(
+        &self,
+        _: i64,
+    ) -> Result<crate::agricultural_task::dtos::AgriculturalTaskShowDetail, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn find_by_id(
+        &self,
+        _: i64,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        Err(Box::new(crate::shared::exceptions::RecordNotFoundError))
+    }
+
+    fn find_by_reference_and_name(
+        &self,
+        _: &str,
+    ) -> Result<Option<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn find_by_user_id_and_name(
+        &self,
+        _: i64,
+        _: &str,
+    ) -> Result<Option<AgriculturalTaskEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn create(
+        &self,
+        _: crate::shared::attr::AttrMap,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn update(
+        &self,
+        _: i64,
+        _: crate::shared::attr::AttrMap,
+    ) -> Result<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn within_transaction<F, T>(&self, block: F) -> T
+    where
+        F: FnOnce() -> T,
+    {
+        block()
+    }
+
+    fn soft_delete_with_undo(
+        &self,
+        _: &User,
+        _: i64,
+        _: i64,
+        _: &str,
+    ) -> Result<
+        crate::agricultural_task::gateways::SoftDeleteUndoResult,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
         unimplemented!()
     }
 }
@@ -480,6 +584,14 @@ impl CropMastersTaskScheduleBlueprintGateway for SuccessBlueprintGw {
     }
 
     fn replace_all_for_crop(
+        &self,
+        _: i64,
+        _: &[CropTaskScheduleBlueprintPersistAttrs],
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn apply_regenerated_for_crop(
         &self,
         _: i64,
         _: &[CropTaskScheduleBlueprintPersistAttrs],
@@ -529,10 +641,18 @@ impl CropMastersTaskScheduleBlueprintGateway for DuplicateBlueprintGw {
     ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
+
+    fn apply_regenerated_for_crop(
+        &self,
+        _: i64,
+        _: &[CropTaskScheduleBlueprintPersistAttrs],
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
 }
 
 #[test]
-fn should_create_blueprint_successfully_when_template_registered_and_input_valid() {
+fn should_create_blueprint_successfully_when_agricultural_task_exists_and_input_valid() {
     let mut out = Spy {
         success: false,
         failure: None,
@@ -541,7 +661,7 @@ fn should_create_blueprint_successfully_when_template_registered_and_input_valid
     let mut interactor = CropMastersTaskScheduleBlueprintCreateInteractor::new(
         &mut out,
         &SuccessGw,
-        &RegisteredTemplateGw,
+        &FoundAgriculturalTaskGw,
         &SuccessBlueprintGw,
         &user_lookup,
     );
@@ -551,7 +671,7 @@ fn should_create_blueprint_successfully_when_template_registered_and_input_valid
 }
 
 #[test]
-fn should_return_failure_when_task_template_not_registered() {
+fn should_create_blueprint_without_gdd_and_stage_when_omitted() {
     let mut out = Spy {
         success: false,
         failure: None,
@@ -560,7 +680,29 @@ fn should_return_failure_when_task_template_not_registered() {
     let mut interactor = CropMastersTaskScheduleBlueprintCreateInteractor::new(
         &mut out,
         &SuccessGw,
-        &MissingTemplateGw,
+        &FoundAgriculturalTaskGw,
+        &SuccessBlueprintGw,
+        &user_lookup,
+    );
+    let mut input = valid_input();
+    input.stage_order = None;
+    input.gdd_trigger = None;
+    interactor.call(input).unwrap();
+    assert!(out.success);
+    assert_eq!(out.failure, None);
+}
+
+#[test]
+fn should_return_failure_when_agricultural_task_not_found() {
+    let mut out = Spy {
+        success: false,
+        failure: None,
+    };
+    let user_lookup = StubLookup(User::new(1, false));
+    let mut interactor = CropMastersTaskScheduleBlueprintCreateInteractor::new(
+        &mut out,
+        &SuccessGw,
+        &MissingAgriculturalTaskGw,
         &SuccessBlueprintGw,
         &user_lookup,
     );
@@ -568,7 +710,7 @@ fn should_return_failure_when_task_template_not_registered() {
     assert!(!out.success);
     assert_eq!(
         out.failure,
-        Some(MastersCropTaskScheduleBlueprintCreateFailureReason::TaskTemplateNotRegistered)
+        Some(MastersCropTaskScheduleBlueprintCreateFailureReason::AgriculturalTaskNotFound)
     );
 }
 
@@ -582,7 +724,7 @@ fn should_return_failure_when_duplicate_stage_order_and_agricultural_task_id_exi
     let mut interactor = CropMastersTaskScheduleBlueprintCreateInteractor::new(
         &mut out,
         &SuccessGw,
-        &RegisteredTemplateGw,
+        &FoundAgriculturalTaskGw,
         &DuplicateBlueprintGw,
         &user_lookup,
     );

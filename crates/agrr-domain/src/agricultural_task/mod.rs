@@ -6,7 +6,6 @@ pub mod entities;
 pub mod gateways;
 pub mod mappers;
 pub mod interactors;
-pub mod policies;
 pub mod ports;
 pub mod task_schedule_sync_error;
 pub mod task_schedule_sync_error_keys;

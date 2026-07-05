@@ -8,7 +8,7 @@ use super::public_plan_save_reference_snapshot_sqlite::{
 };
 use agrr_domain::cultivation_plan::dtos::{
     PublicPlanSaveAgriculturalTaskReferenceRow, PublicPlanSaveCropReferenceRow,
-    PublicPlanSaveCropTaskTemplateLinkRow, PublicPlanSaveFertilizeReferenceRow,
+    PublicPlanSaveFertilizeReferenceRow,
     PublicPlanSaveFieldDatum, PublicPlanSaveHeaderSnapshot,
     PublicPlanSaveInteractionRuleReferenceRow, PublicPlanSavePestReferenceRow,
     PublicPlanSavePesticideReferenceRow,
@@ -55,6 +55,19 @@ fn map_agricultural_task_row(
 
 fn parse_required_tools(raw: Option<String>) -> Option<Vec<String>> {
     raw.and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok())
+}
+
+fn load_blueprint_linked_crop_ids(
+    conn: &rusqlite::Connection,
+    reference_agricultural_task_id: i64,
+) -> rusqlite::Result<Vec<i64>> {
+    let mut stmt = conn.prepare(
+        "SELECT DISTINCT crop_id FROM crop_task_schedule_blueprints \
+         WHERE agricultural_task_id = ?1 OR source_agricultural_task_id = ?1 \
+         ORDER BY crop_id",
+    )?;
+    let rows = stmt.query_map(params![reference_agricultural_task_id], |row| row.get(0))?;
+    rows.collect()
 }
 
 impl PublicPlanSaveReadGateway for PublicPlanSaveReadSqliteGateway {
@@ -216,36 +229,7 @@ impl PublicPlanSaveReadGateway for PublicPlanSaveReadSqliteGateway {
                     task_type,
                     task_region,
                 ) = task?;
-                let mut template_stmt = conn.prepare(
-                    "SELECT ctt.crop_id, ctt.name, ctt.description, ctt.time_per_sqm, ctt.weather_dependency, ctt.required_tools, \
-                     ctt.skill_level, ctt.task_type, ctt.task_type_id, c.is_reference \
-                     FROM crop_task_templates ctt INNER JOIN crops c ON c.id = ctt.crop_id \
-                     WHERE ctt.agricultural_task_id = ?1 ORDER BY ctt.id",
-                )?;
-                let templates = template_stmt.query_map(params![task_id], |row| {
-                    let tools_raw: Option<String> = row.get(5)?;
-                    Ok(PublicPlanSaveCropTaskTemplateLinkRow {
-                        reference_crop_id: row.get(0)?,
-                        name: row.get(1)?,
-                        description: row.get(2)?,
-                        time_per_sqm: row.get(3)?,
-                        weather_dependency: row.get(4)?,
-                        required_tools: parse_required_tools(tools_raw),
-                        skill_level: row.get(6)?,
-                        task_type: row.get(7)?,
-                        task_type_id: row.get(8)?,
-                        is_reference: row.get::<_, i64>(9)? != 0,
-                    })
-                })?;
-                let mut template_links = Vec::new();
-                let mut linked_crop_ids = Vec::new();
-                for link in templates {
-                    let link = link?;
-                    linked_crop_ids.push(link.reference_crop_id);
-                    template_links.push(link);
-                }
-                linked_crop_ids.sort_unstable();
-                linked_crop_ids.dedup();
+                let linked_crop_ids = load_blueprint_linked_crop_ids(conn, task_id)?;
                 out.push(PublicPlanSaveAgriculturalTaskReferenceRow {
                     reference_agricultural_task_id: task_id,
                     name,
@@ -258,7 +242,6 @@ impl PublicPlanSaveReadGateway for PublicPlanSaveReadSqliteGateway {
                     task_type_id: None,
                     region: task_region,
                     linked_reference_crop_ids: linked_crop_ids,
-                    template_links,
                 });
             }
             Ok(out)

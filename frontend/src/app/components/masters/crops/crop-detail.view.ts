@@ -1,6 +1,6 @@
 import { Crop } from '../../../domain/crops/crop';
-import { MastersCropTaskTemplate } from '../../../domain/crops/masters-crop-task-template';
 import { CropTaskScheduleBlueprint } from '../../../domain/crops/crop-task-schedule-blueprint';
+import { BlueprintGenerationReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { AgriculturalTask } from '../../../domain/agricultural-tasks/agricultural-task';
 import { PendingUndoToastRequest } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-error-flash-view.effects';
@@ -14,25 +14,33 @@ export type CropDetailViewState = {
   pendingErrorFlash: PendingErrorFlashRequest | null;
   pendingSuccessFlash: PendingSuccessFlashRequest | null;
 
-  taskTemplatesLoading: boolean;
-  taskTemplates: MastersCropTaskTemplate[];
+  fromPlanId: number | null;
+
   agriculturalTasksLoading: boolean;
   agriculturalTasks: AgriculturalTask[];
   unassociatedAgriculturalTasks: AgriculturalTask[];
-  selectedAgriculturalTaskId: number | null;
-  taskTemplateCreating: boolean;
 
   blueprintsLoading: boolean;
   blueprints: CropTaskScheduleBlueprint[];
   blueprintsRegenerating: boolean;
-  blueprintGddSavingId: number | null;
-  blueprintGddDrafts: Record<number, number>;
+  blueprintSavingId: number | null;
+  blueprintGddDrafts: Record<number, number | null>;
+  blueprintStageDrafts: Record<number, number | null>;
   blueprintRegenerateError: string | null;
 
   selectedBlueprintStageOrder: number | null;
   selectedBlueprintAgriculturalTaskId: number | null;
   blueprintCreateGddTrigger: number | null;
   blueprintCreating: boolean;
+
+  blueprintReadiness: BlueprintGenerationReadiness;
+  canRegenerateBlueprints: boolean;
+  canCreateBlueprint: boolean;
+  blueprintStageNameForCreate: string | null;
+  showBlueprintReadinessChecklist: boolean;
+  blueprintSectionDescriptionKey: string;
+  showBlueprintEmptyState: boolean;
+  showBlueprintRegenerateRetry: boolean;
 };
 
 export interface CropDetailView {

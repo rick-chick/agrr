@@ -41,16 +41,6 @@ impl TaskScheduleGenerationReadGateway for StubReadGateway {
         unimplemented!()
     }
 
-    fn list_crop_task_template_rows(
-        &self,
-        _: i64,
-    ) -> Result<
-        Vec<agrr_domain::agricultural_task::gateways::TaskScheduleTemplateRow>,
-        Box<dyn std::error::Error + Send + Sync>,
-    > {
-        unimplemented!()
-    }
-
     fn list_crop_task_schedule_blueprint_rows(
         &self,
         _: i64,
@@ -87,7 +77,6 @@ fn progress_gateway_reports_daemon_unavailable_when_daemon_not_running() {
     let crop = TaskScheduleCrop {
         id: 1,
         name: "stub".into(),
-        crop_task_templates: vec![],
         crop_task_schedule_blueprints: vec![],
     };
     let err = gateway
@@ -122,7 +111,6 @@ fn progress_gateway_requires_start_date() {
     let crop = TaskScheduleCrop {
         id: 1,
         name: "stub".into(),
-        crop_task_templates: vec![],
         crop_task_schedule_blueprints: vec![],
     };
     let err = gateway

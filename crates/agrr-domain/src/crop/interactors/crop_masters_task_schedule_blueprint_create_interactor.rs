@@ -1,11 +1,12 @@
 //! Ruby: `Domain::Crop::Interactors::CropMastersTaskScheduleBlueprintCreateInteractor`
 
+use crate::agricultural_task::gateways::AgriculturalTaskGateway;
 use crate::crop::dtos::{
     MastersCropTaskScheduleBlueprintCreateFailure,
     MastersCropTaskScheduleBlueprintCreateFailureReason,
     MastersCropTaskScheduleBlueprintCreateInput,
 };
-use crate::crop::gateways::{CropGateway, CropMastersTaskScheduleBlueprintGateway, CropMastersTaskTemplateGateway};
+use crate::crop::gateways::{CropGateway, CropMastersTaskScheduleBlueprintGateway};
 use crate::crop::policies::{
     crop_masters_crop_edit_access, masters_crop_task_schedule_blueprint_create_policy,
 };
@@ -14,18 +15,18 @@ use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::crop_policy;
 
-pub struct CropMastersTaskScheduleBlueprintCreateInteractor<'a, G, TG, BG, O, U> {
+pub struct CropMastersTaskScheduleBlueprintCreateInteractor<'a, G, AG, BG, O, U> {
     output_port: &'a mut O,
     crop_gateway: &'a G,
-    template_gateway: &'a TG,
+    agricultural_task_gateway: &'a AG,
     blueprint_gateway: &'a BG,
     user_lookup: &'a U,
 }
 
-impl<'a, G, TG, BG, O, U> CropMastersTaskScheduleBlueprintCreateInteractor<'a, G, TG, BG, O, U>
+impl<'a, G, AG, BG, O, U> CropMastersTaskScheduleBlueprintCreateInteractor<'a, G, AG, BG, O, U>
 where
     G: CropGateway,
-    TG: CropMastersTaskTemplateGateway,
+    AG: AgriculturalTaskGateway,
     BG: CropMastersTaskScheduleBlueprintGateway,
     O: CropMastersTaskScheduleBlueprintCreateOutputPort,
     U: UserLookupGateway,
@@ -33,14 +34,14 @@ where
     pub fn new(
         output_port: &'a mut O,
         crop_gateway: &'a G,
-        template_gateway: &'a TG,
+        agricultural_task_gateway: &'a AG,
         blueprint_gateway: &'a BG,
         user_lookup: &'a U,
     ) -> Self {
         Self {
             output_port,
             crop_gateway,
-            template_gateway,
+            agricultural_task_gateway,
             blueprint_gateway,
             user_lookup,
         }
@@ -61,23 +62,23 @@ where
         };
 
         let stage_order = match input.stage_order {
-            Some(order) if order > 0 => order,
-            _ => {
+            Some(order) if order <= 0 => {
                 self.output_port.on_failure(MastersCropTaskScheduleBlueprintCreateFailure::new(
                     MastersCropTaskScheduleBlueprintCreateFailureReason::InvalidStageOrder,
                 ));
                 return Ok(());
             }
+            other => other,
         };
 
         let gdd_trigger = match input.gdd_trigger {
-            Some(value) if value.is_finite() && value >= 0.0 => value,
-            _ => {
+            Some(value) if !value.is_finite() || value < 0.0 => {
                 self.output_port.on_failure(MastersCropTaskScheduleBlueprintCreateFailure::new(
                     MastersCropTaskScheduleBlueprintCreateFailureReason::MissingGddTrigger,
                 ));
                 return Ok(());
             }
+            other => other,
         };
 
         let user = self.user_lookup.find(input.user_id);
@@ -100,15 +101,16 @@ where
             return Ok(());
         }
 
-        let template = self
-            .template_gateway
-            .find_by_agricultural_task_id_and_crop_id(task_id, input.crop_id)?;
-        if template.is_none() {
-            self.output_port.on_failure(MastersCropTaskScheduleBlueprintCreateFailure::new(
-                MastersCropTaskScheduleBlueprintCreateFailureReason::TaskTemplateNotRegistered,
-            ));
-            return Ok(());
-        }
+        let agricultural_task = match self.agricultural_task_gateway.find_by_id(task_id) {
+            Ok(entity) => entity,
+            Err(err) if err.downcast_ref::<RecordNotFoundError>().is_some() => {
+                self.output_port.on_failure(MastersCropTaskScheduleBlueprintCreateFailure::new(
+                    MastersCropTaskScheduleBlueprintCreateFailureReason::AgriculturalTaskNotFound,
+                ));
+                return Ok(());
+            }
+            Err(err) => return Err(err),
+        };
 
         let existing = self.blueprint_gateway.list_by_crop_id(input.crop_id)?;
         if masters_crop_task_schedule_blueprint_create_policy::duplicate(
@@ -127,6 +129,7 @@ where
             task_id,
             stage_order,
             gdd_trigger,
+            &agricultural_task,
         );
 
         match self.blueprint_gateway.create(persist_attrs) {

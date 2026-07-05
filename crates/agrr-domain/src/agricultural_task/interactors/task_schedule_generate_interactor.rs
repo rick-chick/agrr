@@ -11,11 +11,12 @@ use crate::agricultural_task::dtos::{TaskScheduleGenerateInput, TaskScheduleRepl
 use crate::agricultural_task::ports::TaskScheduleGenerateInputPort;
 use crate::agricultural_task::gateways::{
     CultivationPlanGateway, TaskScheduleBlueprint, TaskScheduleCrop,
-    TaskScheduleCropTaskTemplate, TaskScheduleFieldCultivation,
-    TaskScheduleGenerationReadGateway, TaskSchedulePlan, TaskScheduleRelatedTask,
+    TaskScheduleFieldCultivation, TaskScheduleGenerationReadGateway, TaskSchedulePlan,
 };
 use crate::agricultural_task::gateways::{ProgressGateway, TaskScheduleGateway};
-use crate::agricultural_task::mappers::task_schedule_generation_context_mapper;
+use crate::agricultural_task::mappers::{
+    task_schedule_generation_context_mapper, task_schedule_item_name_mapper,
+};
 use crate::agricultural_task::task_schedule_sync_error::TaskScheduleSyncError;
 use crate::agricultural_task::task_schedule_sync_error_keys as sync_errors;
 use crate::shared::helpers::deep_dup;
@@ -105,18 +106,12 @@ where
         }
 
         let mut crop_rows_by_id = std::collections::HashMap::new();
-        let mut template_rows_by_crop_id = std::collections::HashMap::new();
         let mut blueprint_rows_by_crop_id = std::collections::HashMap::new();
 
         for crop_id in crop_ids {
             crop_rows_by_id.insert(
                 crop_id,
                 self.task_schedule_read_gateway.find_crop_row(crop_id)?,
-            );
-            template_rows_by_crop_id.insert(
-                crop_id,
-                self.task_schedule_read_gateway
-                    .list_crop_task_template_rows(crop_id)?,
             );
             blueprint_rows_by_crop_id.insert(
                 crop_id,
@@ -129,7 +124,6 @@ where
             plan_row,
             field_rows,
             crop_rows_by_id,
-            template_rows_by_crop_id,
             blueprint_rows_by_crop_id,
         ))
     }
@@ -144,17 +138,6 @@ where
             Some(c) => c,
             None => return Ok(()),
         };
-
-        if crop.crop_task_templates.is_empty() {
-            return Err(Box::new(TaskScheduleSyncError::with_crop_id(
-                sync_errors::MISSING_CROP_TEMPLATES,
-                format!(
-                    "Crop#{} ({}) has no crop task templates",
-                    crop.id, crop.name
-                ),
-                crop.id,
-            )));
-        }
 
         let blueprints = self.blueprints_for(crop, blueprint_cache);
         if blueprints.is_empty() {
@@ -171,7 +154,7 @@ where
         let (general_blueprints, fertilizer_blueprints) = partition_blueprints(blueprints.as_slice());
         if general_blueprints.is_empty() {
             return Err(Box::new(TaskScheduleSyncError::with_crop_id(
-                sync_errors::MISSING_GENERAL_TEMPLATES,
+                sync_errors::MISSING_GENERAL_BLUEPRINTS,
                 format!(
                     "Crop#{} ({}) has no general work blueprints",
                     crop.id, crop.name
@@ -295,7 +278,7 @@ where
         Ok(TaskScheduleReplaceItem {
             task_type: blueprint.task_type.clone(),
             agricultural_task_id: task.as_ref().map(|t| t.id),
-            name: name_for_blueprint(blueprint, task.as_ref()),
+            name: task_schedule_item_name_mapper::name_for_blueprint(blueprint, task.as_ref()),
             description,
             stage_name: blueprint.stage_name.clone(),
             stage_order: blueprint.stage_order,
@@ -377,27 +360,6 @@ fn partition_blueprints(
         }
     }
     (general, fertilizer)
-}
-
-fn name_for_blueprint(
-    blueprint: &TaskScheduleBlueprint,
-    task: Option<&TaskScheduleRelatedTask>,
-) -> String {
-    if let Some(task) = task {
-        if !task.name.trim().is_empty() {
-            return task.name.clone();
-        }
-    }
-    if let Some(ref desc) = blueprint.description {
-        if !desc.trim().is_empty() {
-            return desc.clone();
-        }
-    }
-    match blueprint.task_type.as_str() {
-        BASAL_FERTILIZATION => "基肥施用".into(),
-        TOPDRESS_FERTILIZATION => "追肥施用".into(),
-        _ => "field_task".into(),
-    }
 }
 
 fn progress_records_from_json(data: &serde_json::Value) -> Vec<ProgressRecord> {

@@ -147,22 +147,6 @@ CREATE TABLE nutrient_requirements (
   created_at TEXT,
   updated_at TEXT
 );
-CREATE TABLE crop_task_templates (
-  id INTEGER PRIMARY KEY,
-  crop_id INTEGER NOT NULL,
-  agricultural_task_id INTEGER NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  time_per_sqm REAL,
-  weather_dependency TEXT,
-  required_tools TEXT,
-  skill_level TEXT,
-  task_type TEXT,
-  task_type_id INTEGER,
-  is_reference INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT,
-  updated_at TEXT
-);
 CREATE TABLE cultivation_plans (
   id INTEGER PRIMARY KEY,
   farm_id INTEGER NOT NULL,
@@ -275,6 +259,7 @@ CREATE TABLE crop_task_schedule_blueprints (
   description TEXT,
   weather_dependency TEXT,
   time_per_sqm REAL,
+  name TEXT,
   created_at TEXT,
   updated_at TEXT
 );
@@ -470,8 +455,8 @@ pub fn seed_task_schedule_copy(pool: &SqlitePool) -> TaskScheduleCopySeed {
             params![reference_task_id],
         )?;
         conn.execute(
-            "INSERT INTO crop_task_templates (crop_id, agricultural_task_id, name, description, time_per_sqm, weather_dependency, required_tools, skill_level, is_reference, created_at, updated_at)
-             VALUES (?1, ?2, '除草作業', '雑草を取り除く作業', 0.5, 'low', '[\"ホー\"]', 'beginner', 1, datetime('now'), datetime('now'))",
+            "INSERT INTO crop_task_schedule_blueprints (crop_id, agricultural_task_id, stage_order, gdd_trigger, task_type, source, priority, name, description, time_per_sqm, weather_dependency, created_at, updated_at)
+             VALUES (?1, ?2, NULL, NULL, 'field_work', 'manual', 1, '除草作業', '雑草を取り除く作業', 0.5, 'low', datetime('now'), datetime('now'))",
             params![reference_crop_id, reference_task_id],
         )?;
         conn.execute(

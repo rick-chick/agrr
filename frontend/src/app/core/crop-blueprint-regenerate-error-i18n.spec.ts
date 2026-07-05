@@ -9,10 +9,10 @@ describe('cropBlueprintRegenerateErrorI18nKey', () => {
   it('maps error_code from response body to blueprint error i18n key', () => {
     const error = new HttpErrorResponse({
       status: 422,
-      error: { error: 'msg', error_code: 'missing_task_templates' }
+      error: { error: 'msg', error_code: 'missing_blueprints' }
     });
     expect(cropBlueprintRegenerateErrorI18nKey(error)).toBe(
-      'crops.show.blueprint_errors.missing_task_templates'
+      'crops.show.blueprint_errors.missing_blueprints'
     );
   });
 
@@ -33,7 +33,7 @@ describe('cropBlueprintRegenerateErrorI18nKey', () => {
 describe('blueprintRegenerateErrorShowsRetry', () => {
   it('returns false for readiness-blocking errors', () => {
     expect(
-      blueprintRegenerateErrorShowsRetry('crops.show.blueprint_errors.missing_task_templates')
+      blueprintRegenerateErrorShowsRetry('crops.show.blueprint_errors.missing_blueprints')
     ).toBe(false);
     expect(
       blueprintRegenerateErrorShowsRetry('crops.show.blueprint_errors.missing_agrr_requirement')

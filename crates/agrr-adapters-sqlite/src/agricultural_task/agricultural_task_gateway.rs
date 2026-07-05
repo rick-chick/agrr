@@ -136,9 +136,9 @@ impl AgriculturalTaskGateway for AgriculturalTaskSqliteGateway {
         let task = self.find_by_id(id)?;
         let associated_crops = self.pool.with_read_box(|conn| {
             let mut stmt = conn.prepare(
-                "SELECT c.id, c.name FROM crops c \
-                 INNER JOIN crop_task_templates ctt ON ctt.crop_id = c.id \
-                 WHERE ctt.agricultural_task_id = ?1 ORDER BY c.name",
+                "SELECT DISTINCT c.id, c.name FROM crops c \
+                 INNER JOIN crop_task_schedule_blueprints b ON b.crop_id = c.id \
+                 WHERE b.agricultural_task_id = ?1 ORDER BY c.name",
             )?;
             let rows = stmt.query_map(params![id], |row| {
                 Ok(AssociatedCrop {

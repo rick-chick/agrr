@@ -22,39 +22,6 @@
         assert_eq!(h.get("is_reference"), Some(&AttrValue::Bool(false)));
     }
 
-    // Ruby: test "masters_crop_task_template_associate_allowed? allows reference task for another owner"
-    #[test]
-    fn masters_crop_task_template_associate_allowed_allows_reference_task_for_another_owner() {
-        let regular = user(9, false);
-        assert!(masters_crop_task_template_associate_allowed(
-            &regular,
-            true,
-            Some(99)
-        ));
-    }
-
-    // Ruby: test "masters_crop_task_template_associate_allowed? allows own non-reference task"
-    #[test]
-    fn masters_crop_task_template_associate_allowed_allows_own_non_reference_task() {
-        let regular = user(9, false);
-        assert!(masters_crop_task_template_associate_allowed(
-            &regular,
-            false,
-            Some(9)
-        ));
-    }
-
-    // Ruby: test "masters_crop_task_template_associate_allowed? rejects other user non-reference task"
-    #[test]
-    fn masters_crop_task_template_associate_allowed_rejects_other_user_non_reference_task() {
-        let regular = user(9, false);
-        assert!(!masters_crop_task_template_associate_allowed(
-            &regular,
-            false,
-            Some(99)
-        ));
-    }
-
     // Ruby: test "view_allowed? for own task"
     #[test]
     fn view_allowed_for_own_task() {
