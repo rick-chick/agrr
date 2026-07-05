@@ -1,3 +1,4 @@
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
@@ -19,7 +20,8 @@ import { DeleteCropTaskScheduleBlueprintUseCase } from '../../../usecase/crops/d
 import {
   defaultBlueprintReadiness,
   withCropDetailDisplayState
-} from '../../../core/crops/crop-detail-display-state';
+} from '../../../adapters/crops/crop-detail-presenter.helpers';
+import type { CropTaskScheduleBlueprint } from '../../../domain/crops/crop-task-schedule-blueprint';
 
 const loadedState: CropDetailViewState = withCropDetailDisplayState({
   loading: false,
@@ -75,7 +77,7 @@ const loadedState: CropDetailViewState = withCropDetailDisplayState({
   blueprintsRegenerating: false,
   blueprintSavingId: null,
   blueprintGddDrafts: { 20: 120 },
-  blueprintStageDrafts: { 20: 1 },
+  blueprintStageLanes: [],
   blueprintRegenerateError: null,
   selectedBlueprintStageOrder: null,
   selectedBlueprintAgriculturalTaskId: null,
@@ -107,6 +109,20 @@ const cropWithReadyStages = {
         optimal_max: 25
       },
       thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 500 }
+    },
+    {
+      id: 2,
+      crop_id: 3,
+      name: 'Flowering',
+      order: 2,
+      temperature_requirement: {
+        id: 2,
+        crop_stage_id: 2,
+        base_temperature: 10,
+        optimal_min: 15,
+        optimal_max: 25
+      },
+      thermal_requirement: { id: 2, crop_stage_id: 2, required_gdd: 800 }
     }
   ]
 };
@@ -460,13 +476,21 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('(optional)');
   });
 
-  it('renders blueprint cards with shared card-list layout, GDD input, and delete label', async () => {
+  it('renders blueprint cards in stage lanes sorted by GDD with delete label', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
       {
         common: { delete: 'Delete' },
-        crops: { show: { delete_blueprint: 'Delete task plan' } }
+        crops: {
+          show: {
+            delete_blueprint: 'Delete task plan',
+            blueprint_stage_lane: {
+              unassigned: 'No stage assigned',
+              board_label: 'Task plans grouped by growth stage'
+            }
+          }
+        }
       },
       true
     );
@@ -474,71 +498,114 @@ describe('CropDetailComponent', () => {
     translate.use('en');
 
     fixture.detectChanges();
-    component.control = {
+    component.control = withCropDetailDisplayState({
       ...readyState,
       blueprints: [
         readyState.blueprints[0],
-        { ...readyState.blueprints[0], id: 21, stage_order: 2, stage_name: 'Flowering' }
+        {
+          ...readyState.blueprints[0],
+          id: 21,
+          stage_order: 2,
+          stage_name: 'Flowering',
+          gdd_trigger: 80
+        },
+        {
+          ...readyState.blueprints[0],
+          id: 22,
+          stage_order: null,
+          stage_name: null,
+          gdd_trigger: null
+        }
       ],
-      blueprintGddDrafts: { 20: 120, 21: 80 },
-      blueprintStageDrafts: { 20: 1, 21: 2 }
-    };
+      blueprintGddDrafts: { 20: 120, 21: 80, 22: null }
+    });
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const blueprintList = fixture.nativeElement.querySelector('.crop-detail__blueprint-list');
+    const board = fixture.nativeElement.querySelector('.blueprint-stage-board');
     const card = fixture.nativeElement.querySelector('.blueprint-card');
-    const gddField = card?.querySelector('.blueprint-card__gdd');
+    const gddInput = fixture.nativeElement.querySelector('#gdd-20.crop-detail__template-add-input');
     const deleteButton = card?.querySelector('.blueprint-card__header .crop-detail__card-remove');
 
-    expect(blueprintList?.classList.contains('card-list')).toBe(true);
-    expect(fixture.nativeElement.querySelectorAll('.blueprint-card').length).toBe(2);
+    expect(board).toBeTruthy();
+    expect(fixture.nativeElement.querySelectorAll('.blueprint-stage-lane').length).toBe(3);
+    expect(fixture.nativeElement.textContent).toContain('No stage assigned');
+    expect(fixture.nativeElement.querySelectorAll('.blueprint-card').length).toBe(3);
+    expect(fixture.nativeElement.querySelector('#stage-20')).toBeFalsy();
     expect(card?.querySelector('.blueprint-card__header')).toBeTruthy();
-    expect(card?.querySelector('.blueprint-card__fields')).toBeTruthy();
-    expect(gddField?.querySelector('#gdd-20.crop-detail__template-add-input')).toBeTruthy();
+    expect(gddInput).toBeTruthy();
     expect(deleteButton?.textContent?.trim()).toBe('Delete');
     expect(deleteButton?.getAttribute('aria-label')).toBe('Delete task plan');
   });
 
   it('shows GDD input for blueprints without gdd_trigger so users can set it later', async () => {
     fixture.detectChanges();
-    component.control = {
+    component.control = withCropDetailDisplayState({
       ...readyState,
       blueprints: [
         {
           ...readyState.blueprints[0],
           id: 22,
+          stage_order: null,
           stage_name: null,
           gdd_trigger: null,
           name: 'Weeding'
         }
       ],
       blueprintGddDrafts: {}
-    };
+    });
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('#gdd-22.crop-detail__template-add-input')).toBeTruthy();
   });
 
-  it('renders stage select on blueprint cards and patches stage on change', () => {
+  it('patches blueprint stage when dropped onto another stage lane', () => {
     fixture.detectChanges();
-    component.control = {
-      ...readyState,
-      blueprintStageDrafts: { 20: 1 }
-    };
+    component.control = readyState;
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('#stage-20')).toBeTruthy();
-
-    component.onBlueprintStageDraftChange(20, null);
+    component.onBlueprintDropped(
+      {
+        previousContainer: { data: readyState.blueprintStageLanes[1].blueprints },
+        container: { data: readyState.blueprintStageLanes[0].blueprints },
+        previousIndex: 0,
+        currentIndex: 0,
+        item: { data: readyState.blueprints[0] }
+      } as CdkDragDrop<CropTaskScheduleBlueprint[]>,
+      null
+    );
 
     expect(updateBlueprintUseCase.execute).toHaveBeenCalledWith({
       cropId: 3,
       blueprintId: 20,
       stageOrder: null,
-      cropStages: [{ order: 1, name: 'Vegetative' }]
+      cropStages: [
+        { order: 1, name: 'Vegetative' },
+        { order: 2, name: 'Flowering' }
+      ]
     });
+  });
+
+  it('does not patch blueprint stage when dropped within the same lane', () => {
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+
+    const lane = readyState.blueprintStageLanes[1];
+    const container = { data: lane.blueprints };
+    component.onBlueprintDropped(
+      {
+        previousContainer: container,
+        container: container,
+        previousIndex: 0,
+        currentIndex: 0,
+        item: { data: lane.blueprints[0] }
+      } as CdkDragDrop<CropTaskScheduleBlueprint[]>,
+      1
+    );
+
+    expect(updateBlueprintUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('does not show task type or missing-task placeholder on blueprint cards', async () => {
@@ -548,7 +615,7 @@ describe('CropDetailComponent', () => {
     translate.use('en');
 
     fixture.detectChanges();
-    component.control = {
+    component.control = withCropDetailDisplayState({
       ...readyState,
       blueprints: [
         {
@@ -559,7 +626,7 @@ describe('CropDetailComponent', () => {
         }
       ],
       blueprintGddDrafts: { 20: 120 }
-    };
+    });
     fixture.detectChanges();
     await fixture.whenStable();
 

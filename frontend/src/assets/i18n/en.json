@@ -1971,6 +1971,11 @@
       },
       "delete_blueprint": "Delete task plan",
       "delete_blueprint_confirm": "Delete this task plan?",
+      "blueprint_stage_lane": {
+        "unassigned": "No stage assigned",
+        "board_label": "Task plans grouped by growth stage",
+        "keyboard_hint": "Drag a card to another growth stage row to change its stage. If you use keyboard only, set the stage in the add form below."
+      },
       "return_to_plan": "Return to plan",
       "from_plan_wizard_title": "Registration for this plan's task schedules",
       "from_plan_wizard_lead": "Register task plans using the form below. When finished, use \"Return to plan\" to go back.",

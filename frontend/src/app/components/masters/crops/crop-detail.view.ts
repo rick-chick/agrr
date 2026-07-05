@@ -1,4 +1,5 @@
 import { Crop } from '../../../domain/crops/crop';
+import { BlueprintStageLane } from '../../../domain/crops/blueprint-stage-grouping';
 import { CropTaskScheduleBlueprint } from '../../../domain/crops/crop-task-schedule-blueprint';
 import { BlueprintGenerationReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { AgriculturalTask } from '../../../domain/agricultural-tasks/agricultural-task';
@@ -25,7 +26,7 @@ export type CropDetailViewState = {
   blueprintsRegenerating: boolean;
   blueprintSavingId: number | null;
   blueprintGddDrafts: Record<number, number | null>;
-  blueprintStageDrafts: Record<number, number | null>;
+  blueprintStageLanes: BlueprintStageLane[];
   blueprintRegenerateError: string | null;
 
   selectedBlueprintStageOrder: number | null;

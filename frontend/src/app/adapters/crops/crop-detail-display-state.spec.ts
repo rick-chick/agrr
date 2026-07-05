@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  defaultBlueprintReadiness,
-  parseFromPlanId,
-  withCropDetailDisplayState
-} from './crop-detail-display-state';
+import { defaultBlueprintReadiness } from '../../domain/crops/blueprint-generation-readiness';
+import { withCropDetailDisplayState } from './crop-detail-display-state';
 import type { CropDetailViewState } from '../../components/masters/crops/crop-detail.view';
 
 const baseControl: CropDetailViewState = {
@@ -65,7 +62,7 @@ const baseControl: CropDetailViewState = {
   blueprintsRegenerating: false,
   blueprintSavingId: null,
   blueprintGddDrafts: {},
-  blueprintStageDrafts: {},
+  blueprintStageLanes: [],
   blueprintRegenerateError: null,
   selectedBlueprintStageOrder: null,
   selectedBlueprintAgriculturalTaskId: null,
@@ -80,18 +77,6 @@ const baseControl: CropDetailViewState = {
   showBlueprintEmptyState: true,
   showBlueprintRegenerateRetry: false
 };
-
-describe('parseFromPlanId', () => {
-  it('returns null for missing or invalid query values', () => {
-    expect(parseFromPlanId(null)).toBeNull();
-    expect(parseFromPlanId('0')).toBeNull();
-    expect(parseFromPlanId('abc')).toBeNull();
-  });
-
-  it('returns positive numeric plan id', () => {
-    expect(parseFromPlanId('7')).toBe(7);
-  });
-});
 
 describe('withCropDetailDisplayState', () => {
   it('enriches blueprint display names from agricultural tasks when API omits name', () => {
@@ -176,5 +161,12 @@ describe('withCropDetailDisplayState', () => {
     });
     expect(failed.showBlueprintEmptyState).toBe(false);
     expect(failed.showBlueprintRegenerateRetry).toBe(true);
+  });
+
+  it('groups blueprints into stage lanes for the board layout', () => {
+    const result = withCropDetailDisplayState(baseControl);
+
+    expect(result.blueprintStageLanes.map((lane) => lane.stageOrder)).toEqual([null, 1]);
+    expect(result.blueprintStageLanes[1].blueprints.map((b) => b.id)).toEqual([20]);
   });
 });

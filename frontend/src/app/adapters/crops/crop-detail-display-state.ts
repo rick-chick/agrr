@@ -1,20 +1,10 @@
-import { blueprintRegenerateErrorShowsRetry } from '../crop-blueprint-regenerate-error-i18n';
-import {
-  blueprintGenerationReadiness,
-  type BlueprintGenerationReadiness
-} from '../../domain/crops/blueprint-generation-readiness';
+import { blueprintRegenerateErrorShowsRetry } from '../../core/crop-blueprint-regenerate-error-i18n';
+import { blueprintGenerationReadiness } from '../../domain/crops/blueprint-generation-readiness';
 import { AgriculturalTask } from '../../domain/agricultural-tasks/agricultural-task';
+import { groupBlueprintsByStage } from '../../domain/crops/blueprint-stage-grouping';
 import { CropTaskScheduleBlueprint } from '../../domain/crops/crop-task-schedule-blueprint';
 import { CropDetailViewState } from '../../components/masters/crops/crop-detail.view';
 import { cropStageNameForOrder } from '../../domain/crops/crop-stage-name';
-
-export function parseFromPlanId(raw: string | null): number | null {
-  if (raw == null) {
-    return null;
-  }
-  const id = Number(raw);
-  return id > 0 ? id : null;
-}
 
 function unassociatedAgriculturalTasks(
   blueprints: CropTaskScheduleBlueprint[],
@@ -65,14 +55,6 @@ function blueprintStageNameForCreate(control: CropDetailViewState): string | nul
   return cropStageNameForOrder(control.crop, control.selectedBlueprintStageOrder);
 }
 
-export function defaultBlueprintReadiness(): BlueprintGenerationReadiness {
-  return {
-    blueprintsReady: false,
-    stageRequirementsReady: false,
-    ready: false
-  };
-}
-
 export function withCropDetailDisplayState(control: CropDetailViewState): CropDetailViewState {
   const blueprints = enrichBlueprintsWithAgriculturalTasks(
     control.blueprints,
@@ -84,6 +66,7 @@ export function withCropDetailDisplayState(control: CropDetailViewState): CropDe
   return {
     ...control,
     blueprints,
+    blueprintStageLanes: groupBlueprintsByStage(control.crop?.crop_stages ?? [], blueprints),
     unassociatedAgriculturalTasks: unassociatedAgriculturalTasks(
       blueprints,
       control.agriculturalTasks

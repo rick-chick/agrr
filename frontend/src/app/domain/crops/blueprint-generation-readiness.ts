@@ -7,6 +7,14 @@ export interface BlueprintGenerationReadiness {
   ready: boolean;
 }
 
+export function defaultBlueprintReadiness(): BlueprintGenerationReadiness {
+  return {
+    blueprintsReady: false,
+    stageRequirementsReady: false,
+    ready: false
+  };
+}
+
 export function blueprintGenerationReadiness(
   crop: Crop | null | undefined,
   blueprints: CropTaskScheduleBlueprint[]

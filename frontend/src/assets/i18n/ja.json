@@ -533,6 +533,11 @@
       },
       "delete_blueprint": "作業予定を削除",
       "delete_blueprint_confirm": "この作業予定を削除しますか？",
+      "blueprint_stage_lane": {
+        "unassigned": "ステージ未設定",
+        "board_label": "生育ステージごとの作業予定",
+        "keyboard_hint": "ポインターでカードを別の生育ステージの行へドラッグしてステージを変更できます。キーボードのみの操作では、下の追加フォームの生育ステージ選択をご利用ください。"
+      },
       "return_to_plan": "作業記録に戻る",
       "from_plan_wizard_title": "計画の作業予定を作るための登録",
       "from_plan_wizard_lead": "下のフォームから作業予定を登録してください。完了したら「作業記録に戻る」から計画へ戻れます。",

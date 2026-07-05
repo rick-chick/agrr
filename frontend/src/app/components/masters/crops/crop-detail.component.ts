@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { CropDetailView, CropDetailViewState } from './crop-detail.view';
 import { LoadCropDetailUseCase } from '../../../usecase/crops/load-crop-detail.usecase';
 import { DeleteCropUseCase } from '../../../usecase/crops/delete-crop.usecase';
@@ -21,11 +22,11 @@ import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pen
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { formatIsoDateTimeForDisplay } from '../../../core/format-display-date';
-import { cropStageNameForOrder } from '../../../domain/crops/crop-stage-name';
-import {
-  parseFromPlanId,
-  defaultBlueprintReadiness
-} from '../../../core/crops/crop-detail-display-state';
+import { BlueprintStageLane } from '../../../domain/crops/blueprint-stage-grouping';
+import { CropTaskScheduleBlueprint } from '../../../domain/crops/crop-task-schedule-blueprint';
+import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
+import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
+import { withCropDetailDisplayState } from '../../../adapters/crops/crop-detail-presenter.helpers';
 
 const initialControl: CropDetailViewState = {
   loading: true,
@@ -43,7 +44,7 @@ const initialControl: CropDetailViewState = {
   blueprintsRegenerating: false,
   blueprintSavingId: null,
   blueprintGddDrafts: {},
-  blueprintStageDrafts: {},
+  blueprintStageLanes: [],
   blueprintRegenerateError: null,
   selectedBlueprintStageOrder: null,
   selectedBlueprintAgriculturalTaskId: null,
@@ -62,7 +63,7 @@ const initialControl: CropDetailViewState = {
 @Component({
   selector: 'app-crop-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, DragDropModule],
   providers: [...CROP_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
@@ -246,86 +247,110 @@ const initialControl: CropDetailViewState = {
           } @else if (control.showBlueprintEmptyState) {
             <p>{{ 'crops.show.no_task_schedule_blueprints' | translate }}</p>
           } @else {
-            <ul class="card-list crop-detail__blueprint-list" role="list">
-              @for (blueprint of control.blueprints; track blueprint.id) {
-                <li class="card-list__item">
-                  <article class="item-card blueprint-card">
-                    <div class="blueprint-card__header">
-                      <span class="item-card__title">
-                        @if (blueprint.agricultural_task?.name || blueprint.name) {
-                          {{ blueprint.agricultural_task?.name || blueprint.name }}
-                        } @else {
-                          {{ 'crops.show.unnamed_blueprint' | translate }}
-                        }
-                      </span>
-                      <button
-                        type="button"
-                        class="crop-detail__card-remove blueprint-card__remove"
-                        (click)="deleteBlueprint(blueprint.id)"
-                        [attr.aria-label]="'crops.show.delete_blueprint' | translate"
-                      >
-                        {{ 'common.delete' | translate }}
-                      </button>
+            @if (control.crop?.crop_stages?.length) {
+              <div
+                class="blueprint-stage-board"
+                role="list"
+                cdkDropListGroup
+                [attr.aria-label]="'crops.show.blueprint_stage_lane.board_label' | translate"
+              >
+                <p class="blueprint-stage-board__keyboard-hint sr-only">
+                  {{ 'crops.show.blueprint_stage_lane.keyboard_hint' | translate }}
+                </p>
+                @for (lane of control.blueprintStageLanes; track blueprintLaneId(lane)) {
+                  <div class="blueprint-stage-lane" role="listitem">
+                    <div class="blueprint-stage-lane__label">
+                      @if (lane.stageOrder == null) {
+                        {{ 'crops.show.blueprint_stage_lane.unassigned' | translate }}
+                      } @else {
+                        {{ lane.stageName }}
+                      }
                     </div>
                     <div
-                      class="blueprint-card__fields"
-                      [class.blueprint-card__fields--gdd-only]="!control.crop?.crop_stages?.length"
+                      class="blueprint-stage-lane__cards"
+                      cdkDropList
+                      cdkDropListOrientation="horizontal"
+                      [id]="blueprintLaneId(lane)"
+                      [cdkDropListData]="lane.blueprints"
+                      (cdkDropListDropped)="onBlueprintDropped($event, lane.stageOrder)"
                     >
-                      @if (control.crop?.crop_stages?.length) {
-                        <label class="blueprint-card__field blueprint-card__stage" [attr.for]="'stage-' + blueprint.id">
-                          <span class="blueprint-card__field-label">
-                            {{ 'crops.show.manual_blueprint_add.stage_label' | translate }}
-                          </span>
-                          <select
-                            [id]="'stage-' + blueprint.id"
-                            class="crop-detail__template-add-select blueprint-card__select"
-                            [class.crop-detail__select--placeholder]="
-                              control.blueprintStageDrafts[blueprint.id] == null
-                            "
-                            [ngModel]="control.blueprintStageDrafts[blueprint.id]"
-                            (ngModelChange)="onBlueprintStageDraftChange(blueprint.id, $event)"
-                            [disabled]="control.blueprintSavingId === blueprint.id"
-                          >
-                            <option [ngValue]="null">
-                              {{ 'crops.show.manual_blueprint_add.stage_placeholder' | translate }}
-                            </option>
-                            @for (stage of control.crop?.crop_stages ?? []; track stage.id) {
-                              <option [ngValue]="stage.order">{{ stage.name }}</option>
-                            }
-                          </select>
-                        </label>
-                      }
-                      <label class="blueprint-card__field blueprint-card__gdd" [attr.for]="'gdd-' + blueprint.id">
-                        <span class="blueprint-card__field-label">
-                          {{ 'crops.show.gdd_trigger' | translate }}
-                        </span>
-                        <span class="crop-detail__template-add-input-wrap">
-                          <input
-                            [id]="'gdd-' + blueprint.id"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            class="crop-detail__template-add-input blueprint-card__input"
-                            [ngModel]="control.blueprintGddDrafts[blueprint.id]"
-                            (ngModelChange)="onGddDraftChange(blueprint.id, $event)"
-                            (change)="saveBlueprintGdd(blueprint.id)"
-                            [disabled]="control.blueprintSavingId === blueprint.id"
-                            [attr.placeholder]="
-                              blueprint.gdd_trigger == null
-                                ? ('crops.show.gdd_trigger_placeholder' | translate)
-                                : null
-                            "
+                      @for (blueprint of lane.blueprints; track blueprint.id) {
+                        <article
+                          class="item-card blueprint-card"
+                          cdkDrag
+                          [cdkDragData]="blueprint"
+                          [cdkDragDisabled]="control.blueprintSavingId === blueprint.id"
+                        >
+                          <ng-container
+                            *ngTemplateOutlet="blueprintCardBody; context: { $implicit: blueprint }"
                           />
-                          <span class="crop-detail__template-add-input-unit" aria-hidden="true">
-                            {{ 'crops.show.gdd_unit' | translate }}
-                          </span>
-                        </span>
-                      </label>
+                        </article>
+                      }
                     </div>
-                  </article>
-                </li>
-              }
-            </ul>
+                  </div>
+                }
+              </div>
+            } @else {
+              <ul class="card-list" role="list">
+                @for (blueprint of control.blueprints; track blueprint.id) {
+                  <li class="card-list__item">
+                    <article class="item-card blueprint-card">
+                      <ng-container
+                        *ngTemplateOutlet="blueprintCardBody; context: { $implicit: blueprint }"
+                      />
+                    </article>
+                  </li>
+                }
+              </ul>
+            }
+
+            <ng-template #blueprintCardBody let-blueprint>
+              <div class="blueprint-card__header">
+                <span class="item-card__title">
+                  @if (blueprint.agricultural_task?.name || blueprint.name) {
+                    {{ blueprint.agricultural_task?.name || blueprint.name }}
+                  } @else {
+                    {{ 'crops.show.unnamed_blueprint' | translate }}
+                  }
+                </span>
+                <button
+                  type="button"
+                  class="crop-detail__card-remove blueprint-card__remove"
+                  (click)="deleteBlueprint(blueprint.id)"
+                  [attr.aria-label]="'crops.show.delete_blueprint' | translate"
+                >
+                  {{ 'common.delete' | translate }}
+                </button>
+              </div>
+              <div class="blueprint-card__fields blueprint-card__fields--gdd-only">
+                <label class="blueprint-card__field blueprint-card__gdd" [attr.for]="'gdd-' + blueprint.id">
+                  <span class="blueprint-card__field-label">
+                    {{ 'crops.show.gdd_trigger' | translate }}
+                  </span>
+                  <span class="crop-detail__template-add-input-wrap">
+                    <input
+                      [id]="'gdd-' + blueprint.id"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      class="crop-detail__template-add-input blueprint-card__input"
+                      [ngModel]="control.blueprintGddDrafts[blueprint.id]"
+                      (ngModelChange)="onGddDraftChange(blueprint.id, $event)"
+                      (change)="saveBlueprintGdd(blueprint.id)"
+                      [disabled]="control.blueprintSavingId === blueprint.id"
+                      [attr.placeholder]="
+                        blueprint.gdd_trigger == null
+                          ? ('crops.show.gdd_trigger_placeholder' | translate)
+                          : null
+                      "
+                    />
+                    <span class="crop-detail__template-add-input-unit" aria-hidden="true">
+                      {{ 'crops.show.gdd_unit' | translate }}
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </ng-template>
           }
 
           <div class="crop-detail__subsection crop-detail__blueprint-add">
@@ -557,20 +582,17 @@ export class CropDetailComponent implements CropDetailView, OnInit {
   }
 
   onBlueprintStageChange(stageOrder: number | null): void {
-    this.control = {
+    this.control = withCropDetailDisplayState({
       ...this.control,
-      selectedBlueprintStageOrder: stageOrder,
-      blueprintStageNameForCreate: cropStageNameForOrder(this.control.crop, stageOrder)
-    };
+      selectedBlueprintStageOrder: stageOrder
+    });
   }
 
   onBlueprintTaskChange(agriculturalTaskId: number | null): void {
-    this.control = {
+    this.control = withCropDetailDisplayState({
       ...this.control,
-      selectedBlueprintAgriculturalTaskId: agriculturalTaskId,
-      canCreateBlueprint:
-        !this.control.blueprintCreating && agriculturalTaskId != null
-    };
+      selectedBlueprintAgriculturalTaskId: agriculturalTaskId
+    });
   }
 
   onBlueprintGddCreateChange(value: number | null): void {
@@ -585,11 +607,10 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     }
     const stageOrder = this.control.selectedBlueprintStageOrder;
     const gddTrigger = this.control.blueprintCreateGddTrigger;
-    this.control = {
+    this.control = withCropDetailDisplayState({
       ...this.control,
-      blueprintCreating: true,
-      canCreateBlueprint: false
-    };
+      blueprintCreating: true
+    });
     this.createBlueprintUseCase.execute({
       cropId,
       agriculturalTaskId,
@@ -607,6 +628,21 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     this.regenerateBlueprintsUseCase.execute({ cropId });
   }
 
+  onBlueprintDropped(
+    event: CdkDragDrop<CropTaskScheduleBlueprint[]>,
+    targetStageOrder: number | null
+  ): void {
+    if (event.previousContainer === event.container) {
+      return;
+    }
+    const blueprint = event.item.data as CropTaskScheduleBlueprint;
+    this.saveBlueprintStage(blueprint.id, targetStageOrder);
+  }
+
+  blueprintLaneId(lane: BlueprintStageLane): string {
+    return lane.stageOrder == null ? 'blueprint-lane-unassigned' : `blueprint-lane-${lane.stageOrder}`;
+  }
+
   onGddDraftChange(blueprintId: number, value: number): void {
     this.control = {
       ...this.control,
@@ -617,23 +653,9 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     };
   }
 
-  onBlueprintStageDraftChange(blueprintId: number, stageOrder: number | null): void {
-    this.control = {
-      ...this.control,
-      blueprintStageDrafts: {
-        ...this.control.blueprintStageDrafts,
-        [blueprintId]: stageOrder
-      }
-    };
-    this.saveBlueprintStage(blueprintId, stageOrder);
-  }
-
-  saveBlueprintStage(blueprintId: number, stageOrder?: number | null): void {
+  saveBlueprintStage(blueprintId: number, stageOrder: number | null): void {
     const cropId = this.control.crop?.id;
     if (!cropId) return;
-    const order =
-      stageOrder !== undefined ? stageOrder : this.control.blueprintStageDrafts[blueprintId];
-    if (order === undefined) return;
     const cropStages = this.control.crop?.crop_stages?.map((stage) => ({
       order: stage.order,
       name: stage.name
@@ -641,7 +663,7 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     this.updateBlueprintUseCase.execute({
       cropId,
       blueprintId,
-      stageOrder: order,
+      stageOrder,
       cropStages
     });
   }

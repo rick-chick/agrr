@@ -24,7 +24,7 @@ const baseControl: CropDetailViewState = withCropDetailDisplayState({
   blueprintsRegenerating: false,
   blueprintSavingId: null,
   blueprintGddDrafts: {},
-  blueprintStageDrafts: {},
+  blueprintStageLanes: [],
   blueprintRegenerateError: null,
   selectedBlueprintStageOrder: null,
   selectedBlueprintAgriculturalTaskId: null,
@@ -119,7 +119,7 @@ describe('CropDetailPresenter', () => {
 
     expect(lastControl.blueprintRegenerateError).toBeNull();
     expect(lastControl.blueprintsRegenerating).toBe(false);
-    expect(lastControl.blueprintStageDrafts).toEqual({ 1: 1 });
+    expect(lastControl.blueprintGddDrafts).toEqual({ 1: 100 });
   });
 
   it('filters unassociated agricultural tasks by existing blueprints', () => {
@@ -193,7 +193,6 @@ describe('CropDetailPresenter', () => {
     expect(lastControl.blueprints).toHaveLength(1);
     expect(lastControl.blueprints[0].source).toBe('manual');
     expect(lastControl.blueprintGddDrafts[22]).toBe(120);
-    expect(lastControl.blueprintStageDrafts[22]).toBe(1);
   });
 
   it('sets blueprintSavingId when blueprint update starts', () => {
@@ -202,7 +201,7 @@ describe('CropDetailPresenter', () => {
     expect(lastControl.blueprintSavingId).toBe(42);
   });
 
-  it('syncs blueprintStageDrafts and clears saving id on blueprint update present', () => {
+  it('updates blueprint stage and recomputes stage lanes on blueprint update present', () => {
     const existingBlueprint = {
       id: 10,
       crop_id: 3,
@@ -221,27 +220,36 @@ describe('CropDetailPresenter', () => {
       weather_dependency: null,
       time_per_sqm: null
     };
-    lastControl = {
+    lastControl = withCropDetailDisplayState({
       ...baseControl,
+      crop: {
+        id: 3,
+        name: 'Tomato',
+        is_reference: false,
+        groups: [],
+        crop_stages: [
+          { id: 1, crop_id: 3, name: 'Vegetative', order: 1 },
+          { id: 2, crop_id: 3, name: 'Flowering', order: 2 }
+        ]
+      },
       blueprintSavingId: 10,
       blueprints: [existingBlueprint],
-      blueprintGddDrafts: { 10: 100 },
-      blueprintStageDrafts: { 10: 1 }
-    };
+      blueprintGddDrafts: { 10: 100 }
+    });
 
     presenter.present({
       blueprint: {
         ...existingBlueprint,
         stage_order: 2,
+        stage_name: 'Flowering',
         gdd_trigger: 150
       }
     });
 
     expect(lastControl.blueprintSavingId).toBeNull();
-    expect(lastControl.blueprintStageDrafts[10]).toBe(2);
     expect(lastControl.blueprintGddDrafts[10]).toBe(150);
     expect(lastControl.blueprints[0].stage_order).toBe(2);
-    expect(lastControl.blueprints[0].gdd_trigger).toBe(150);
+    expect(lastControl.blueprintStageLanes[2].blueprints.map((b) => b.id)).toEqual([10]);
   });
 
   it('derives blueprint display state when crop detail is presented', () => {

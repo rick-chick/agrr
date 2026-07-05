@@ -25,7 +25,7 @@ import {
 } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { LoadAgriculturalTaskListOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
 import { AgriculturalTaskListDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-list.dtos';
-import { withCropDetailDisplayState } from '../../core/crops/crop-detail-display-state';
+import { withCropDetailDisplayState } from './crop-detail-display-state';
 
 type BlueprintListDto =
   | LoadCropTaskScheduleBlueprintsDataDto
@@ -90,7 +90,6 @@ export class CropDetailPresenter
 
     if ('blueprints' in dto) {
       const drafts = Object.fromEntries(dto.blueprints.map((b) => [b.id, b.gdd_trigger]));
-      const stageDrafts = Object.fromEntries(dto.blueprints.map((b) => [b.id, b.stage_order]));
       const wasRegenerating = this.view.control.blueprintsRegenerating;
       this.view.control = withCropDetailDisplayState({
         ...this.view.control,
@@ -98,7 +97,6 @@ export class CropDetailPresenter
         blueprintsRegenerating: false,
         blueprints: dto.blueprints,
         blueprintGddDrafts: drafts,
-        blueprintStageDrafts: stageDrafts,
         blueprintRegenerateError: null,
         pendingErrorFlash: null,
         pendingSuccessFlash: wasRegenerating
@@ -121,10 +119,6 @@ export class CropDetailPresenter
             ...this.view.control.blueprintGddDrafts,
             [dto.blueprint.id]: dto.blueprint.gdd_trigger
           },
-          blueprintStageDrafts: {
-            ...this.view.control.blueprintStageDrafts,
-            [dto.blueprint.id]: dto.blueprint.stage_order
-          },
           pendingErrorFlash: null,
           pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.blueprint_position_updated')
         });
@@ -142,10 +136,6 @@ export class CropDetailPresenter
           ...this.view.control.blueprintGddDrafts,
           [dto.blueprint.id]: dto.blueprint.gdd_trigger
         },
-        blueprintStageDrafts: {
-          ...this.view.control.blueprintStageDrafts,
-          [dto.blueprint.id]: dto.blueprint.stage_order
-        },
         blueprintRegenerateError: null,
         pendingErrorFlash: null,
         pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.blueprint_created')
@@ -155,13 +145,10 @@ export class CropDetailPresenter
 
     if ('blueprintId' in dto) {
       const { [dto.blueprintId]: _removedGdd, ...remainingGddDrafts } = this.view.control.blueprintGddDrafts;
-      const { [dto.blueprintId]: _removedStage, ...remainingStageDrafts } =
-        this.view.control.blueprintStageDrafts;
       this.view.control = withCropDetailDisplayState({
         ...this.view.control,
         blueprints: this.view.control.blueprints.filter((b) => b.id !== dto.blueprintId),
         blueprintGddDrafts: remainingGddDrafts,
-        blueprintStageDrafts: remainingStageDrafts,
         pendingErrorFlash: null,
         pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.blueprint_deleted')
       });
