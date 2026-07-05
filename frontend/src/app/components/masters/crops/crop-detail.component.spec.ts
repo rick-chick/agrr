@@ -140,7 +140,7 @@ describe('CropDetailComponent', () => {
   let loadBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let createBlueprintUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
-  let updateBlueprintUseCase: { execute: ReturnType<typeof vi.fn> };
+  let updateBlueprintUseCase: { execute: ReturnType<typeof vi.fn>; executeDrop: ReturnType<typeof vi.fn> };
   let deleteBlueprintUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let mockActivatedRoute: {
@@ -157,7 +157,7 @@ describe('CropDetailComponent', () => {
     loadBlueprintsUseCase = { execute: vi.fn() };
     createBlueprintUseCase = { execute: vi.fn() };
     regenerateBlueprintsUseCase = { execute: vi.fn() };
-    updateBlueprintUseCase = { execute: vi.fn() };
+    updateBlueprintUseCase = { execute: vi.fn(), executeDrop: vi.fn() };
     deleteBlueprintUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
     mockActivatedRoute = {
@@ -560,51 +560,34 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('#gdd-22.crop-detail__template-add-input')).toBeTruthy();
   });
 
-  it('patches blueprint stage when dropped onto another stage lane', () => {
+  it('delegates blueprint drop to update use case with crop context', () => {
     fixture.detectChanges();
     component.control = readyState;
     fixture.detectChanges();
 
+    const blueprint = readyState.blueprints[0];
     component.onBlueprintDropped(
       {
         previousContainer: { data: readyState.blueprintStageLanes[1].blueprints },
         container: { data: readyState.blueprintStageLanes[0].blueprints },
         previousIndex: 0,
         currentIndex: 0,
-        item: { data: readyState.blueprints[0] }
+        item: { data: blueprint }
       } as CdkDragDrop<CropTaskScheduleBlueprint[]>,
       null
     );
 
-    expect(updateBlueprintUseCase.execute).toHaveBeenCalledWith({
+    expect(updateBlueprintUseCase.executeDrop).toHaveBeenCalledWith({
       cropId: 3,
-      blueprintId: 20,
-      stageOrder: null,
+      dragged: blueprint,
+      targetStageOrder: null,
+      laneBlueprints: readyState.blueprintStageLanes[0].blueprints,
+      dropIndex: 0,
       cropStages: [
         { order: 1, name: 'Vegetative' },
         { order: 2, name: 'Flowering' }
       ]
     });
-  });
-
-  it('does not patch blueprint stage when dropped within the same lane', () => {
-    fixture.detectChanges();
-    component.control = readyState;
-    fixture.detectChanges();
-
-    const lane = readyState.blueprintStageLanes[1];
-    const container = { data: lane.blueprints };
-    component.onBlueprintDropped(
-      {
-        previousContainer: container,
-        container: container,
-        previousIndex: 0,
-        currentIndex: 0,
-        item: { data: lane.blueprints[0] }
-      } as CdkDragDrop<CropTaskScheduleBlueprint[]>,
-      1
-    );
-
     expect(updateBlueprintUseCase.execute).not.toHaveBeenCalled();
   });
 

@@ -60,12 +60,22 @@ export interface UpdateCropTaskScheduleBlueprintInputDto {
   cropStages?: CropStageOrderName[];
 }
 
+export interface ApplyBlueprintDropInputDto {
+  cropId: number;
+  dragged: CropTaskScheduleBlueprint;
+  targetStageOrder: number | null;
+  laneBlueprints: ReadonlyArray<CropTaskScheduleBlueprint>;
+  dropIndex: number;
+  cropStages?: CropStageOrderName[];
+}
+
 export interface UpdateCropTaskScheduleBlueprintDataDto {
   blueprint: CropTaskScheduleBlueprint;
 }
 
 export interface UpdateCropTaskScheduleBlueprintInputPort {
   execute(dto: UpdateCropTaskScheduleBlueprintInputDto): void;
+  executeDrop(dto: ApplyBlueprintDropInputDto): void;
 }
 
 export interface UpdateCropTaskScheduleBlueprintOutputPort {

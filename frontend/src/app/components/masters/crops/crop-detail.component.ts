@@ -632,11 +632,21 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     event: CdkDragDrop<CropTaskScheduleBlueprint[]>,
     targetStageOrder: number | null
   ): void {
-    if (event.previousContainer === event.container) {
-      return;
-    }
+    const cropId = this.control.crop?.id;
+    if (!cropId) return;
     const blueprint = event.item.data as CropTaskScheduleBlueprint;
-    this.saveBlueprintStage(blueprint.id, targetStageOrder);
+    const cropStages = this.control.crop?.crop_stages?.map((stage) => ({
+      order: stage.order,
+      name: stage.name
+    }));
+    this.updateBlueprintUseCase.executeDrop({
+      cropId,
+      dragged: blueprint,
+      targetStageOrder,
+      laneBlueprints: event.container.data,
+      dropIndex: event.currentIndex,
+      cropStages
+    });
   }
 
   blueprintLaneId(lane: BlueprintStageLane): string {
@@ -651,21 +661,6 @@ export class CropDetailComponent implements CropDetailView, OnInit {
         [blueprintId]: value
       }
     };
-  }
-
-  saveBlueprintStage(blueprintId: number, stageOrder: number | null): void {
-    const cropId = this.control.crop?.id;
-    if (!cropId) return;
-    const cropStages = this.control.crop?.crop_stages?.map((stage) => ({
-      order: stage.order,
-      name: stage.name
-    }));
-    this.updateBlueprintUseCase.execute({
-      cropId,
-      blueprintId,
-      stageOrder,
-      cropStages
-    });
   }
 
   saveBlueprintGdd(blueprintId: number): void {

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { resolveBlueprintDropUpdate } from '../../domain/crops/resolve-blueprint-gdd-from-drop';
 import { stageNameForOrder } from '../../domain/crops/crop-stage-name';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import {
@@ -7,6 +8,7 @@ import {
 } from './crop-task-schedule-blueprint-gateway';
 import {
   UPDATE_CROP_TASK_SCHEDULE_BLUEPRINT_OUTPUT_PORT,
+  ApplyBlueprintDropInputDto,
   UpdateCropTaskScheduleBlueprintInputDto,
   UpdateCropTaskScheduleBlueprintInputPort,
   UpdateCropTaskScheduleBlueprintOutputPort
@@ -41,5 +43,24 @@ export class UpdateCropTaskScheduleBlueprintUseCase implements UpdateCropTaskSch
         next: (blueprint) => this.outputPort.present({ blueprint }),
         error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
       });
+  }
+
+  executeDrop(dto: ApplyBlueprintDropInputDto): void {
+    const update = resolveBlueprintDropUpdate({
+      dragged: dto.dragged,
+      targetStageOrder: dto.targetStageOrder,
+      laneBlueprints: dto.laneBlueprints,
+      dropIndex: dto.dropIndex
+    });
+    if (!update.shouldCommit) {
+      return;
+    }
+    this.execute({
+      cropId: dto.cropId,
+      blueprintId: dto.dragged.id,
+      ...(update.stageOrder !== undefined ? { stageOrder: update.stageOrder } : {}),
+      ...(update.gddTrigger !== undefined ? { gddTrigger: update.gddTrigger } : {}),
+      cropStages: dto.cropStages
+    });
   }
 }
