@@ -85,6 +85,38 @@ describe('blueprintGenerationReadiness', () => {
     expect(result.ready).toBe(false);
   });
 
+  it('is not ready when only fertilizer blueprints exist', () => {
+    const result = blueprintGenerationReadiness(
+      {
+        ...baseCrop,
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: 'Vegetative',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10
+            },
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
+          }
+        ]
+      },
+      [
+        {
+          ...blueprint,
+          id: 11,
+          task_type: 'basal_fertilization',
+          name: 'Basal fertilization'
+        }
+      ]
+    );
+    expect(result.blueprintsReady).toBe(false);
+    expect(result.ready).toBe(false);
+  });
+
   it('is ready when blueprints and complete stage requirements exist', () => {
     const result = blueprintGenerationReadiness(
       {

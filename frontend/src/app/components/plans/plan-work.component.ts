@@ -77,6 +77,7 @@ const initialControl: PlanWorkViewState = {
             [cropIds]="cropIdsForBanner"
             [cropNames]="cropNamesForBanner"
             [planId]="planId"
+            returnTab="work"
             [regenerating]="control.regenerating"
             [regenerateError]="control.regenerateError"
             (retry)="regenerateTaskSchedule()"

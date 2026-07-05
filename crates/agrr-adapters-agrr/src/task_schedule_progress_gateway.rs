@@ -2,11 +2,12 @@
 
 use std::sync::Arc;
 
+use agrr_domain::agricultural_task::TaskScheduleSyncError;
+use agrr_domain::agricultural_task::mappers::task_schedule_progress_failure_mapper::progress_unavailable_sync_error;
+use agrr_domain::agricultural_task::task_schedule_sync_error_keys as sync_errors;
 use agrr_domain::agricultural_task::gateways::{
     ProgressGateway, TaskScheduleCrop, TaskScheduleGenerationReadGateway,
 };
-use agrr_domain::agricultural_task::TaskScheduleSyncError;
-use agrr_domain::agricultural_task::task_schedule_sync_error_keys as sync_errors;
 use agrr_domain::field_cultivation::gateways::FieldCultivationClimateProgressGateway;
 use serde_json::Value;
 use time::Date;
@@ -37,6 +38,10 @@ impl TaskScheduleProgressAgrrGateway {
     }
 }
 
+fn progress_gateway_error(message: &str) -> Box<dyn std::error::Error + Send + Sync> {
+    Box::new(progress_unavailable_sync_error(message))
+}
+
 impl ProgressGateway for TaskScheduleProgressAgrrGateway {
     fn calculate_progress(
         &self,
@@ -51,20 +56,8 @@ impl ProgressGateway for TaskScheduleProgressAgrrGateway {
                 "start date is required for progress calculation",
             )) as Box<dyn std::error::Error + Send + Sync>
         })?;
-        let result = self
-            .climate
-            .calculate_progress(&crop_requirement, start_date, weather_data);
-        let empty = result
-            .get("progress_records")
-            .and_then(|v| v.as_array())
-            .map(|records| records.is_empty())
-            .unwrap_or(true);
-        if empty && !self.climate.daemon_running() {
-            return Err(Box::new(TaskScheduleSyncError::new(
-                sync_errors::AGRR_UNAVAILABLE,
-                "agrr daemon is not running",
-            )));
-        }
-        Ok(result)
+        self.climate
+            .calculate_progress(&crop_requirement, start_date, weather_data)
+            .map_err(|err| progress_gateway_error(&err.to_string()))
     }
 }

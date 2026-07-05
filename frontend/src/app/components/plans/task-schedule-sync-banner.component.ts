@@ -8,6 +8,7 @@ import {
   type TaskScheduleSyncBannerViewModel
 } from '../../adapters/plans/task-schedule-sync-presenter.helpers';
 import type { TaskScheduleSyncCropNames } from '../../domain/plans/task-schedule-sync-error';
+import type { PlanWizardReturnTab } from '../../domain/crops/plan-wizard-context';
 
 @Component({
   selector: 'app-task-schedule-sync-banner',
@@ -54,16 +55,6 @@ import type { TaskScheduleSyncCropNames } from '../../domain/plans/task-schedule
             }
           </div>
         }
-        @if (vm.showGenericPlanLink) {
-          <div class="task-schedule-sync-banner__wizard-actions">
-            <a
-              [routerLink]="['/plans', planId]"
-              class="task-schedule-sync-banner__wizard-cta task-schedule-sync-banner__link--primary"
-            >
-              {{ 'plans.task_schedules.sync_errors.generic_plan_link' | translate }}
-            </a>
-          </div>
-        }
         @if (regenerateError) {
           <p class="task-schedule-sync-banner__detail">{{ regenerateError | translate }}</p>
         }
@@ -90,20 +81,40 @@ export class TaskScheduleSyncBannerComponent {
   @Input() cropIds: number[] = [];
   @Input() cropNames: TaskScheduleSyncCropNames = {};
   @Input() planId = 0;
+  @Input() returnTab: PlanWizardReturnTab = 'task_schedule';
   @Input() syncErrorCropId: number | null = null;
   @Input() regenerating = false;
   @Input() regenerateError: string | null = null;
   @Output() retry = new EventEmitter<void>();
 
+  private cachedVm: TaskScheduleSyncBannerViewModel | null = null;
+  private cachedVmInputsKey: string | null = null;
+
   get vm(): TaskScheduleSyncBannerViewModel {
-    return buildTaskScheduleSyncBannerViewModel({
+    const inputsKey = JSON.stringify({
       syncState: this.syncState,
       syncError: this.syncError,
       cropIds: this.cropIds,
       cropNames: this.cropNames,
       planId: this.planId,
       syncErrorCropId: this.syncErrorCropId,
-      regenerateError: this.regenerateError
+      regenerateError: this.regenerateError,
+      returnTab: this.returnTab
     });
+    if (this.cachedVmInputsKey === inputsKey && this.cachedVm != null) {
+      return this.cachedVm;
+    }
+    this.cachedVm = buildTaskScheduleSyncBannerViewModel({
+      syncState: this.syncState,
+      syncError: this.syncError,
+      cropIds: this.cropIds,
+      cropNames: this.cropNames,
+      planId: this.planId,
+      syncErrorCropId: this.syncErrorCropId,
+      regenerateError: this.regenerateError,
+      returnTab: this.returnTab
+    });
+    this.cachedVmInputsKey = inputsKey;
+    return this.cachedVm;
   }
 }

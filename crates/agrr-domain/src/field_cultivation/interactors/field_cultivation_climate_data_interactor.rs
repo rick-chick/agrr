@@ -305,11 +305,10 @@ fn build_climate_output(
         context.completion_date,
     );
     let crop_requirement = climate_crop_agrr_requirement_from_entity(crop_entity);
-    let progress_result = interactor.climate_progress_gateway.calculate_progress(
-        &crop_requirement,
-        context.start_date,
-        weather_payload,
-    );
+    let progress_result = interactor
+        .climate_progress_gateway
+        .calculate_progress(&crop_requirement, context.start_date, weather_payload)
+        .unwrap_or_else(|_| json!({ "progress_records": [] }));
     build_output(context, &weather_records, &progress_result)
 }
 

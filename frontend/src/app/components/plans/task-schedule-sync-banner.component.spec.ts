@@ -63,10 +63,26 @@ describe('TaskScheduleSyncBannerComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Generating...');
   });
 
-  it('hides retry for stale state', () => {
+  it('shows retry for stale state', () => {
     component.syncState = 'stale';
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.task-schedule-sync-banner__retry')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Schedules are stale.');
+  });
+
+  it('reuses cached view model when inputs are unchanged', () => {
+    component.syncState = 'failed';
+    component.syncError = 'plans.task_schedules.sync_errors.agrr_unavailable';
+    const first = component.vm;
+    const second = component.vm;
+    expect(second).toBe(first);
+  });
+
+  it('rebuilds view model when inputs change', () => {
+    component.syncState = 'failed';
+    component.syncError = 'plans.task_schedules.sync_errors.agrr_unavailable';
+    const before = component.vm;
+    component.syncError = 'plans.task_schedules.sync_errors.generic';
+    expect(component.vm).not.toBe(before);
   });
 });

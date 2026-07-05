@@ -4,6 +4,9 @@
     use crate::shared::ports::ClockPort;
     use time::{Date, OffsetDateTime};
 
+    use crate::agricultural_task::constants::schedule_item_types::{
+        BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
+    };
     use crate::agricultural_task::dtos::TaskScheduleGenerateInput;
     use crate::agricultural_task::gateways::{TaskSchedulePlanContext, TaskScheduleRelatedTask};
     use rust_decimal::Decimal;
@@ -480,6 +483,10 @@
             crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
             crate::agricultural_task::task_schedule_sync_error_keys::EMPTY_GDD_PROGRESS.to_string()
         );
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
+            Some(1)
+        );
     }
 
     // Ruby: test "progress gateway receives weather data filtered from the start date"
@@ -540,5 +547,9 @@
         assert_eq!(
             crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
             crate::agricultural_task::task_schedule_sync_error_keys::MISSING_GDD_TRIGGER.to_string()
+        );
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
+            Some(1)
         );
     }

@@ -1,11 +1,7 @@
 //! Ruby: `Domain::AgriculturalTask::Interactors::TaskScheduleGenerateInteractor`
 
-use rust_decimal::Decimal;
 use time::Date;
 
-use crate::agricultural_task::constants::schedule_item_types::{
-    BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
-};
 use crate::agricultural_task::constants::task_schedule_item_statuses::PLANNED;
 use crate::agricultural_task::dtos::{TaskScheduleGenerateInput, TaskScheduleReplaceItem};
 use crate::agricultural_task::ports::TaskScheduleGenerateInputPort;
@@ -17,11 +13,14 @@ use crate::agricultural_task::gateways::{ProgressGateway, TaskScheduleGateway};
 use crate::agricultural_task::mappers::{
     task_schedule_generation_context_mapper, task_schedule_item_name_mapper,
 };
+use crate::agricultural_task::mappers::task_schedule_blueprint_partition_mapper::partition_blueprints;
+use crate::agricultural_task::mappers::task_schedule_progress_mapper::{
+    date_for_gdd, filtered_weather_data, progress_records_from_json, safe_parse_date,
+    weather_data_present, ProgressRecord,
+};
 use crate::agricultural_task::task_schedule_sync_error::TaskScheduleSyncError;
 use crate::agricultural_task::task_schedule_sync_error_keys as sync_errors;
-use crate::shared::helpers::deep_dup;
 use crate::shared::ports::ClockPort;
-use crate::shared::type_converters::cast_big_decimal_json;
 
 pub struct TaskScheduleGenerateInteractor<'a, PG, TG, CP, RG, C> {
     progress_gateway: &'a PG,
@@ -190,12 +189,13 @@ where
         }
 
         if progress_records.is_empty() {
-            return Err(Box::new(TaskScheduleSyncError::new(
+            return Err(Box::new(TaskScheduleSyncError::with_crop_id(
                 sync_errors::EMPTY_GDD_PROGRESS,
                 format!(
                     "progress records empty for cultivation_plan_id={}",
                     plan.id
                 ),
+                crop.id,
             )));
         }
 
@@ -207,6 +207,7 @@ where
                         blueprint,
                         &progress_records,
                         field_cultivation.start_date,
+                        crop.id,
                     )
                 })
                 .collect::<Result<Vec<_>, _>>()
@@ -221,6 +222,7 @@ where
                             blueprint,
                             &progress_records,
                             field_cultivation.start_date,
+                            crop.id,
                         )
                     })
                     .collect::<Result<Vec<_>, _>>()
@@ -248,17 +250,19 @@ where
         blueprint: &TaskScheduleBlueprint,
         progress_records: &[ProgressRecord],
         fallback_start_date: Option<Date>,
+        crop_id: i64,
     ) -> Result<TaskScheduleReplaceItem, Box<dyn std::error::Error + Send + Sync>> {
         let gdd_trigger = blueprint.gdd_trigger.ok_or_else(|| {
-            Box::new(TaskScheduleSyncError::new(
+            Box::new(TaskScheduleSyncError::with_crop_id(
                 sync_errors::MISSING_GDD_TRIGGER,
                 "blueprint gdd_trigger is missing",
+                crop_id,
             )) as Box<dyn std::error::Error + Send + Sync>
         })?;
 
         let task = blueprint.agricultural_task.clone();
         let scheduled_date =
-            date_for_gdd(progress_records, gdd_trigger, fallback_start_date)?;
+            date_for_gdd(progress_records, gdd_trigger, fallback_start_date, crop_id)?;
 
         let description = blueprint
             .description
@@ -334,131 +338,6 @@ where
         )?;
         Ok(())
     }
-}
-
-#[derive(Debug, Clone)]
-struct ProgressRecord {
-    date: String,
-    cumulative_gdd: Option<Decimal>,
-}
-
-fn weather_data_present(data: &serde_json::Value) -> bool {
-    !data.is_null() && data.as_object().is_some_and(|o| !o.is_empty())
-        || data.as_array().is_some_and(|a| !a.is_empty())
-}
-
-fn partition_blueprints(
-    blueprints: &[TaskScheduleBlueprint],
-) -> (Vec<&TaskScheduleBlueprint>, Vec<&TaskScheduleBlueprint>) {
-    let mut general = Vec::new();
-    let mut fertilizer = Vec::new();
-    for blueprint in blueprints {
-        match blueprint.task_type.as_str() {
-            FIELD_WORK => general.push(blueprint),
-            BASAL_FERTILIZATION | TOPDRESS_FERTILIZATION => fertilizer.push(blueprint),
-            _ => {}
-        }
-    }
-    (general, fertilizer)
-}
-
-fn progress_records_from_json(data: &serde_json::Value) -> Vec<ProgressRecord> {
-    data.get("progress_records")
-        .and_then(|v| v.as_array())
-        .map(|arr| {
-            arr.iter()
-                .filter_map(|record| {
-                    let date = record.get("date")?.as_str()?.to_string();
-                    let cumulative_gdd = cast_big_decimal_json(record.get("cumulative_gdd"));
-                    Some(ProgressRecord {
-                        date,
-                        cumulative_gdd,
-                    })
-                })
-                .collect()
-        })
-        .unwrap_or_default()
-}
-
-fn date_for_gdd(
-    progress_records: &[ProgressRecord],
-    target_gdd: Decimal,
-    fallback_date: Option<Date>,
-) -> Result<Date, Box<dyn std::error::Error + Send + Sync>> {
-    for record in progress_records {
-        if let Some(cumulative) = record.cumulative_gdd {
-            if cumulative >= target_gdd {
-                return safe_parse_date(&record.date).ok_or_else(|| {
-                    Box::new(TaskScheduleSyncError::new(
-                        sync_errors::GDD_DATE_NOT_FOUND,
-                        format!("no date for gdd {}", target_gdd),
-                    )) as Box<dyn std::error::Error + Send + Sync>
-                }).or(Ok(fallback_date.unwrap_or_else(|| {
-                    Date::from_calendar_date(1970, time::Month::January, 1).expect("valid")
-                })));
-            }
-        }
-    }
-    if let Some(fallback) = fallback_date {
-        return Ok(fallback);
-    }
-    Err(Box::new(TaskScheduleSyncError::new(
-        sync_errors::GDD_DATE_NOT_FOUND,
-        format!("no date for gdd {}", target_gdd),
-    )))
-}
-
-fn safe_parse_date(value: &str) -> Option<Date> {
-    let trimmed = value.trim();
-    if trimmed.len() < 10 {
-        return None;
-    }
-    let date_part = &trimmed[..10];
-    let parts: Vec<&str> = date_part.split('-').collect();
-    if parts.len() != 3 {
-        return None;
-    }
-    let year: i32 = parts[0].parse().ok()?;
-    let month_num: u8 = parts[1].parse().ok()?;
-    let day: u8 = parts[2].parse().ok()?;
-    let month = time::Month::try_from(month_num).ok()?;
-    Date::from_calendar_date(year, month, day).ok()
-}
-
-fn filtered_weather_data(weather_data: &serde_json::Value, start_date: Option<Date>) -> serde_json::Value {
-    let Some(start_date) = start_date else {
-        return weather_data.clone();
-    };
-    let Some(_obj) = weather_data.as_object() else {
-        return weather_data.clone();
-    };
-
-    let mut duplicated = deep_dup(weather_data);
-    let data_array = duplicated
-        .get("data")
-        .and_then(|v| v.as_array())
-        .cloned()
-        .unwrap_or_default();
-
-    let filtered: Vec<serde_json::Value> = data_array
-        .into_iter()
-        .filter(|entry| {
-            entry
-                .get("time")
-                .and_then(|v| v.as_str())
-                .and_then(safe_parse_date)
-                .map(|d| d >= start_date)
-                .unwrap_or(false)
-        })
-        .collect();
-
-    if !filtered.is_empty() {
-        if let Some(obj) = duplicated.as_object_mut() {
-            obj.insert("data".into(), serde_json::Value::Array(filtered));
-        }
-    }
-
-    duplicated
 }
 
 impl<PG, TG, CP, RG, C> TaskScheduleGenerateInputPort

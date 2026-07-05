@@ -154,7 +154,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(fixture.nativeElement.querySelector('.plan-work__empty')).toBeTruthy();
   });
 
-  it('shows regenerate CTA in empty state when sync never generated', async () => {
+  it('shows regenerate CTA in banner when sync never generated', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
@@ -176,9 +176,11 @@ describe('PlanTaskScheduleComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const regenerateBtn = fixture.nativeElement.querySelector('.plan-work__empty-cta');
-    expect(regenerateBtn?.textContent).toContain('Regenerate task schedules');
-    expect(fixture.nativeElement.querySelector('app-task-schedule-sync-banner')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.plan-work__empty-cta')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-task-schedule-sync-banner')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.task-schedule-sync-banner__retry')?.textContent).toContain(
+      'Regenerate task schedules'
+    );
   });
 
   it('renders plan context navigation in header before schedule content', async () => {

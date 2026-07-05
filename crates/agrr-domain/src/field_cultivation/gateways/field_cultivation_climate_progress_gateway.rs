@@ -8,5 +8,5 @@ pub trait FieldCultivationClimateProgressGateway: Send + Sync {
         crop_requirement: &Value,
         start_date: Date,
         weather_payload: &Value,
-    ) -> Value;
+    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
 }

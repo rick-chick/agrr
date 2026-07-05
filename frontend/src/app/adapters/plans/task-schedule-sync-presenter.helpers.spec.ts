@@ -9,12 +9,16 @@ import {
   taskScheduleSyncViewPatch
 } from './task-schedule-sync-presenter.helpers';
 import {
+  TASK_SCHEDULE_SYNC_CROP_STAGES_LINK_KEY,
   TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY,
+  TASK_SCHEDULE_SYNC_ERROR_EMPTY_GDD_PROGRESS,
   TASK_SCHEDULE_SYNC_ERROR_GENERIC,
+  TASK_SCHEDULE_SYNC_GENERIC_PLAN_LINK_KEY,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES,
-  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS
-} from '../../core/task-schedule-sync-error-i18n';
+  TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS,
+  TASK_SCHEDULE_SYNC_PLAN_CONTEXT_LINK_KEY
+} from '../../domain/plans/task-schedule-sync-error-keys';
 
 describe('taskScheduleSyncViewPatch', () => {
   it('marks generating state as in-flight regeneration', () => {
@@ -158,8 +162,8 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     });
     expect(vm.showCropWizardLinks).toBe(true);
     expect(vm.cropBannerEntries).toHaveLength(2);
-    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7 });
-    expect(vm.showRetry).toBe(false);
+    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7, returnTo: 'task_schedule' });
+    expect(vm.showRetry).toBe(true);
   });
 
   it('uses single wizard link for targeted blueprint deficiency', () => {
@@ -175,7 +179,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     expect(vm.showCropWizardLinks).toBe(false);
     expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY);
     expect(vm.cropsRouterLink).toEqual(['/crops', 42, 'task_schedule_blueprints']);
-    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7 });
+    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7, returnTo: 'task_schedule' });
     expect(vm.showRetry).toBe(false);
   });
 
@@ -241,6 +245,48 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     expect(vm.remediationLinkParams).toEqual({ cropName: '#42' });
   });
 
+  it('guides missing gdd trigger to blueprint wizard for the failing crop', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'failed',
+      syncError: 'plans.task_schedules.sync_errors.missing_gdd_trigger',
+      cropIds: [79, 80],
+      cropNames: { 79: 'レタス', 80: 'トマト' },
+      planId: 12,
+      syncErrorCropId: 79,
+      regenerateError: null,
+      returnTab: 'task_schedule'
+    });
+    expect(vm.showCropWizardLinks).toBe(false);
+    expect(vm.showRetry).toBe(false);
+    expect(vm.syncErrorDetailKey).toBe(
+      'plans.task_schedules.sync_errors.missing_gdd_trigger_named'
+    );
+    expect(vm.remediationLinkKey).toBe(
+      'plans.task_schedules.sync_errors.missing_gdd_trigger_wizard_link'
+    );
+    expect(vm.cropsRouterLink).toEqual(['/crops', 79, 'task_schedule_blueprints']);
+    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 12, returnTo: 'task_schedule' });
+  });
+
+  it('lists blueprint wizard links for missing gdd trigger with multiple crops', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'failed',
+      syncError: 'plans.task_schedules.sync_errors.missing_gdd_trigger',
+      cropIds: [79, 80],
+      cropNames: { 79: 'レタス', 80: 'トマト' },
+      planId: 12,
+      syncErrorCropId: null,
+      regenerateError: null,
+      returnTab: 'task_schedule'
+    });
+    expect(vm.showCropWizardLinks).toBe(true);
+    expect(vm.showRetry).toBe(false);
+    expect(vm.cropWizardLinkKey).toBe(
+      'plans.task_schedules.sync_errors.missing_gdd_trigger_wizard_link'
+    );
+    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 12, returnTo: 'task_schedule' });
+  });
+
   it('shows generic single-crop wizard links', () => {
     const vm = buildTaskScheduleSyncBannerViewModel({
       syncState: 'failed',
@@ -255,8 +301,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     expect(vm.cropBannerEntries).toEqual([{ cropId: 42, label: 'Tomato' }]);
     expect(vm.syncErrorDetailKey).toBe(`${TASK_SCHEDULE_SYNC_ERROR_GENERIC}_single`);
     expect(vm.syncErrorDetailParams).toEqual({ cropName: 'Tomato' });
-    expect(vm.showRetry).toBe(false);
-    expect(vm.showGenericPlanLink).toBe(false);
+    expect(vm.showRetry).toBe(true);
     expect(vm.remediationLinkKey).toBeNull();
   });
 
@@ -276,8 +321,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
       { cropId: 99, label: 'Lettuce' }
     ]);
     expect(vm.syncErrorDetailKey).toBe(`${TASK_SCHEDULE_SYNC_ERROR_GENERIC}_multi`);
-    expect(vm.showRetry).toBe(false);
-    expect(vm.showGenericPlanLink).toBe(false);
+    expect(vm.showRetry).toBe(true);
     expect(vm.remediationLinkKey).toBeNull();
   });
 
@@ -291,10 +335,89 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
       syncErrorCropId: null,
       regenerateError: null
     });
-    expect(vm.showGenericPlanLink).toBe(true);
+    expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_GENERIC_PLAN_LINK_KEY);
+    expect(vm.cropsRouterLink).toEqual(['/plans', 7]);
     expect(vm.syncErrorDetailKey).toBe(`${TASK_SCHEDULE_SYNC_ERROR_GENERIC}_no_plan_crops`);
     expect(vm.showCropWizardLinks).toBe(false);
-    expect(vm.showRetry).toBe(false);
+    expect(vm.showRetry).toBe(true);
+  });
+
+  it('routes empty gdd progress to crop stages when one crop is known', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'failed',
+      syncError: TASK_SCHEDULE_SYNC_ERROR_EMPTY_GDD_PROGRESS,
+      cropIds: [42],
+      cropNames: { 42: 'Tomato' },
+      planId: 7,
+      syncErrorCropId: null,
+      regenerateError: null
+    });
+    expect(vm.syncErrorDetailKey).toBe(`${TASK_SCHEDULE_SYNC_ERROR_EMPTY_GDD_PROGRESS}_named`);
+    expect(vm.syncErrorDetailParams).toEqual({ cropName: 'Tomato' });
+    expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_CROP_STAGES_LINK_KEY);
+    expect(vm.cropsRouterLink).toEqual(['/crops', 42, 'stages']);
+    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7, returnTo: 'task_schedule' });
+    expect(vm.showRetry).toBe(true);
+  });
+
+  it('shows named empty gdd progress detail when syncErrorCropId is present', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'failed',
+      syncError: TASK_SCHEDULE_SYNC_ERROR_EMPTY_GDD_PROGRESS,
+      cropIds: [42, 99],
+      cropNames: { 42: 'Tomato', 99: 'Lettuce' },
+      planId: 7,
+      syncErrorCropId: 42,
+      regenerateError: null
+    });
+    expect(vm.syncErrorDetailKey).toBe(`${TASK_SCHEDULE_SYNC_ERROR_EMPTY_GDD_PROGRESS}_named`);
+    expect(vm.syncErrorDetailParams).toEqual({ cropName: 'Tomato' });
+    expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_CROP_STAGES_LINK_KEY);
+    expect(vm.cropsRouterLink).toEqual(['/crops', 42, 'stages']);
+    expect(vm.remediationLinkParams).toEqual({ cropName: 'Tomato' });
+    expect(vm.showRetry).toBe(true);
+  });
+
+  it('routes empty gdd progress to plan context when multiple crops are present', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'failed',
+      syncError: TASK_SCHEDULE_SYNC_ERROR_EMPTY_GDD_PROGRESS,
+      cropIds: [42, 99],
+      cropNames: { 42: 'Tomato', 99: 'Lettuce' },
+      planId: 7,
+      syncErrorCropId: null,
+      regenerateError: null
+    });
+    expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_PLAN_CONTEXT_LINK_KEY);
+    expect(vm.cropsRouterLink).toEqual(['/plans', 7]);
+    expect(vm.showRetry).toBe(true);
+  });
+
+  it('offers retry for stale schedules', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'stale',
+      syncError: null,
+      cropIds: [42],
+      cropNames: { 42: 'Tomato' },
+      planId: 7,
+      syncErrorCropId: null,
+      regenerateError: null
+    });
+    expect(vm.showRetry).toBe(true);
+  });
+
+  it('passes work return tab into wizard query params', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'failed',
+      syncError: TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS,
+      cropIds: [42],
+      cropNames: { 42: 'Tomato' },
+      planId: 7,
+      syncErrorCropId: 42,
+      regenerateError: null,
+      returnTab: 'work'
+    });
+    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7, returnTo: 'work' });
   });
 
   it('includes sync error crop in generic wizard links when plan crops are unknown', () => {
@@ -309,7 +432,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     });
     expect(vm.showCropWizardLinks).toBe(true);
     expect(vm.cropBannerEntries).toEqual([{ cropId: 42, label: '#42' }]);
-    expect(vm.showRetry).toBe(false);
+    expect(vm.showRetry).toBe(true);
   });
 
   it('shows missing general blueprints named detail and single remediation link', () => {
@@ -366,7 +489,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
       { cropId: 42, label: 'Tomato' },
       { cropId: 99, label: 'Lettuce' }
     ]);
-    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7 });
+    expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7, returnTo: 'task_schedule' });
     expect(vm.showRetry).toBe(false);
     expect(vm.remediationLinkKey).toBeNull();
   });

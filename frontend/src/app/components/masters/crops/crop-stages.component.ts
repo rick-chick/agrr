@@ -18,6 +18,12 @@ import {
 } from '../../../usecase/crops/crop-stages.providers';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
+import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
+import {
+  parsePlanWizardReturnTab,
+  planWizardReturnPath,
+  type PlanWizardReturnTab
+} from '../../../domain/crops/plan-wizard-context';
 
 const initialFormData: CropStagesFormData = {
   name: '',
@@ -44,11 +50,27 @@ const initialControl: CropStagesViewState = {
       } @else if (control.error) {
         <p class="master-loading master-error">{{ control.error }}</p>
       } @else {
+        @if (fromPlanId) {
+          <div class="crop-blueprints__plan-wizard-banner" role="status">
+            <p class="crop-blueprints__plan-wizard-banner-title">
+              {{ 'crops.show.from_plan_wizard_title' | translate }}
+            </p>
+            <p class="crop-blueprints__plan-wizard-banner-lead">
+              {{ 'crops.show.from_plan_stages_wizard_lead' | translate }}
+            </p>
+          </div>
+        }
+
         <header class="page-header crop-stages__page-header">
           <nav class="crop-stages__nav" aria-label="{{ 'crops.edit.stages_title' | translate }}">
             <a [routerLink]="['/crops', cropId]" class="crop-stages__back-link">
               {{ 'common.back' | translate }}
             </a>
+            @if (fromPlanId) {
+              <a [routerLink]="planReturnPath" class="btn-secondary">
+                {{ 'crops.show.return_to_plan' | translate }}
+              </a>
+            }
           </nav>
           <h1 class="page-title">{{ control.formData.name }}</h1>
           <p class="page-description">{{ 'crops.edit.stages_title' | translate }}</p>
@@ -220,8 +242,17 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 
+  fromPlanId: number | null = null;
+  returnTab: PlanWizardReturnTab = 'task_schedule';
+
+  get planReturnPath(): (string | number)[] {
+    return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
+    this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
+    this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
     if (!this.cropId) {
       this.control = {
         ...initialControl,

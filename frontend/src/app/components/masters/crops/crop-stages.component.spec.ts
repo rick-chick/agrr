@@ -23,7 +23,12 @@ const initialFormData = {
 describe('CropStagesComponent', () => {
   let component: CropStagesComponent;
   let fixture: ComponentFixture<CropStagesComponent>;
-  let mockActivatedRoute: { snapshot: { paramMap: { get: () => string } } };
+  let mockActivatedRoute: {
+    snapshot: {
+      paramMap: { get: (key: string) => string | null };
+      queryParamMap: { get: (key: string) => string | null };
+    };
+  };
   let mockLoadUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockCreateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -38,7 +43,10 @@ describe('CropStagesComponent', () => {
     mockActivatedRoute = {
       snapshot: {
         paramMap: {
-          get: () => '1'
+          get: (key: string) => (key === 'id' ? '1' : null)
+        },
+        queryParamMap: {
+          get: () => null
         }
       }
     };

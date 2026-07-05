@@ -1,11 +1,18 @@
 import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
 import {
-  cropMasterRemediationLinkKey,
   syncErrorDetailTranslateKey,
-  syncErrorDetailTranslateParams,
-  TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY,
-  TASK_SCHEDULE_SYNC_ERROR_GENERIC
+  syncErrorDetailTranslateParams
 } from '../../core/task-schedule-sync-error-i18n';
+import {
+  syncErrorRemediationRoute,
+  syncErrorWizardLinkKey
+} from './task-schedule-sync-remediation.mapper';
+import { TASK_SCHEDULE_SYNC_ERROR_GENERIC } from '../../domain/plans/task-schedule-sync-error-keys';
+import {
+  cropPlanWizardQueryParams,
+  type CropPlanWizardQueryParams,
+  type PlanWizardReturnTab
+} from '../../domain/crops/plan-wizard-context';
 import {
   isActionableDataDeficiencySyncError,
   resolveCropName,
@@ -148,8 +155,7 @@ export interface TaskScheduleSyncBannerViewModel {
   cropBannerEntries: CropBannerEntry[];
   cropWizardLinkKey: string;
   cropsRouterLink: string | (string | number)[];
-  cropMasterQueryParams: { fromPlan: number } | null;
-  showGenericPlanLink: boolean;
+  cropMasterQueryParams: CropPlanWizardQueryParams | Record<string, string | number> | null;
   showRetry: boolean;
 }
 
@@ -161,6 +167,7 @@ export interface TaskScheduleSyncBannerViewInput {
   planId: number;
   syncErrorCropId: number | null;
   regenerateError: string | null;
+  returnTab?: PlanWizardReturnTab;
 }
 
 function uniqueCropIds(cropIds: number[]): number[] {
@@ -218,27 +225,27 @@ export function buildTaskScheduleSyncBannerViewModel(
   const detailCropName =
     targetCropName ??
     (fallbackName && !fallbackName.startsWith('#') ? fallbackName : null);
-  const remediationLinkKey = showCropWizardLinks
+  const returnTab = input.returnTab ?? 'task_schedule';
+  const wizardQueryParams =
+    input.planId > 0 ? cropPlanWizardQueryParams(input.planId, returnTab) : null;
+  const remediation = showCropWizardLinks
     ? null
-    : cropMasterRemediationLinkKey(
+    : syncErrorRemediationRoute(
         input.syncError,
-        input.syncState,
+        input.planId,
+        returnTab,
+        targetCropId,
         targetCropName,
         targetCropId != null
       );
-  const showGenericPlanLink =
-    input.syncError === TASK_SCHEDULE_SYNC_ERROR_GENERIC &&
-    cropBannerEntries.length === 0 &&
-    input.planId > 0;
+  const remediationLinkKey = remediation?.linkKey ?? null;
   const showRetry =
     input.syncState !== 'generating' &&
-    input.syncState !== 'stale' &&
-    !isActionableDataDeficiencySyncError(input.syncError) &&
-    !showCropWizardLinks &&
-    !showGenericPlanLink &&
-    !(
-      input.syncError === TASK_SCHEDULE_SYNC_ERROR_GENERIC && targetCropName != null
-    );
+    (input.syncState === 'never' ||
+      input.syncState === 'stale' ||
+      (input.syncState === 'failed' &&
+        (input.syncError === TASK_SCHEDULE_SYNC_ERROR_GENERIC ||
+          (!isActionableDataDeficiencySyncError(input.syncError) && !showCropWizardLinks))));
 
   return {
     visible:
@@ -266,13 +273,14 @@ export function buildTaskScheduleSyncBannerViewModel(
     },
     showCropWizardLinks,
     cropBannerEntries,
-    cropWizardLinkKey: TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY,
+    cropWizardLinkKey: syncErrorWizardLinkKey(input.syncError!),
     cropsRouterLink:
-      targetCropId != null
+      remediation?.routerLink ??
+      (targetCropId != null
         ? ['/crops', targetCropId, 'task_schedule_blueprints']
-        : '/crops',
-    cropMasterQueryParams: input.planId > 0 ? { fromPlan: input.planId } : null,
-    showGenericPlanLink,
+        : '/crops'),
+    cropMasterQueryParams:
+      remediation?.queryParams ?? (showCropWizardLinks ? wizardQueryParams : null),
     showRetry
   };
 }

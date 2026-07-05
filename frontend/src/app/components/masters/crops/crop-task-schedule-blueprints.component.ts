@@ -25,6 +25,12 @@ import { BlueprintStageLane } from '../../../domain/crops/blueprint-stage-groupi
 import { CropTaskScheduleBlueprint } from '../../../domain/crops/crop-task-schedule-blueprint';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
+import {
+  cropPlanWizardQueryParams,
+  parsePlanWizardReturnTab,
+  planWizardReturnPath,
+  type PlanWizardReturnTab
+} from '../../../domain/crops/plan-wizard-context';
 import { withCropBlueprintDisplayState } from '../../../adapters/crops/crop-blueprints-display-state';
 
 const initialControl: CropTaskScheduleBlueprintsViewState = {
@@ -87,7 +93,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
               {{ 'common.back' | translate }}
             </a>
             @if (control.fromPlanId) {
-              <a [routerLink]="['/plans', control.fromPlanId, 'work']" class="btn-secondary">
+              <a [routerLink]="planReturnPath" class="btn-secondary">
                 {{ 'crops.show.return_to_plan' | translate }}
               </a>
             }
@@ -126,7 +132,11 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                     <span>{{ 'crops.show.blueprint_readiness.stages_ready' | translate }}</span>
                   } @else {
                     <span>{{ 'crops.show.blueprint_readiness.stages_missing' | translate }}</span>
-                    <a [routerLink]="['/crops', control.crop.id, 'stages']" class="blueprint-readiness__link">
+                    <a
+                      [routerLink]="['/crops', control.crop.id, 'stages']"
+                      [queryParams]="wizardQueryParams"
+                      class="blueprint-readiness__link"
+                    >
                       {{ 'crops.show.blueprint_readiness.stages_action' | translate }}
                     </a>
                   }
@@ -147,7 +157,11 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
               }
               @if (!control.blueprintReadiness.stageRequirementsReady) {
                 <p>
-                  <a [routerLink]="['/crops', control.crop.id, 'stages']" class="blueprint-readiness__link">
+                  <a
+                    [routerLink]="['/crops', control.crop.id, 'stages']"
+                    [queryParams]="wizardQueryParams"
+                    class="blueprint-readiness__link"
+                  >
                     {{ 'crops.show.blueprint_readiness.stages_action' | translate }}
                   </a>
                 </p>
@@ -428,6 +442,18 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
 
+  returnTab: PlanWizardReturnTab = 'task_schedule';
+
+  get planReturnPath(): (string | number)[] {
+    const planId = this.control.fromPlanId;
+    return planId != null ? planWizardReturnPath(planId, this.returnTab) : [];
+  }
+
+  get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {
+    const planId = this.control.fromPlanId;
+    return planId != null ? cropPlanWizardQueryParams(planId, this.returnTab) : null;
+  }
+
   private _control: CropTaskScheduleBlueprintsViewState = initialControl;
   get control(): CropTaskScheduleBlueprintsViewState {
     return this._control;
@@ -447,6 +473,7 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   ngOnInit(): void {
     this.presenter.setView(this);
     const fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
+    this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
     const cropId = Number(this.route.snapshot.paramMap.get('id'));
     if (!cropId) {
       this.control = {

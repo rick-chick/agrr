@@ -1,6 +1,8 @@
 import type { Crop } from './crop';
 import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
 
+const FIELD_WORK_TASK_TYPE = 'field_work';
+
 export interface BlueprintGenerationReadiness {
   blueprintsReady: boolean;
   stageRequirementsReady: boolean;
@@ -19,7 +21,9 @@ export function blueprintGenerationReadiness(
   crop: Crop | null | undefined,
   blueprints: CropTaskScheduleBlueprint[]
 ): BlueprintGenerationReadiness {
-  const blueprintsReady = blueprints.length >= 1;
+  const blueprintsReady = blueprints.some(
+    (blueprint) => blueprint.task_type === FIELD_WORK_TASK_TYPE
+  );
   const stageRequirementsReady = hasCompleteStageRequirements(crop);
   return {
     blueprintsReady,

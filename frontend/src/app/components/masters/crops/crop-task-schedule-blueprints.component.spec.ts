@@ -226,7 +226,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('a[href*="/plans/7/work"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a[href*="/plans/7/task_schedule"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
   });
 

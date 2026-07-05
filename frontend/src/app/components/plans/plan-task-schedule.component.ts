@@ -9,7 +9,6 @@ import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
 import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
-import { isActionableDataDeficiencySyncError } from '../../domain/plans/task-schedule-sync-error';
 import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
@@ -57,7 +56,12 @@ const initialControl: PlanTaskScheduleViewState = {
           </div>
         } @else if (control.schedule) {
           @if (scheduleIsEmpty) {
-            @if (syncState === 'generating' || syncState === 'failed') {
+            @if (
+              syncState === 'generating' ||
+              syncState === 'failed' ||
+              syncState === 'never' ||
+              syncState === 'stale'
+            ) {
               <app-task-schedule-sync-banner
                 [syncState]="syncState"
                 [syncError]="control.schedule.plan.task_schedule_sync_error"
@@ -65,6 +69,7 @@ const initialControl: PlanTaskScheduleViewState = {
                 [cropIds]="cropIdsForBanner"
                 [cropNames]="cropNamesForBanner"
                 [planId]="planId"
+                returnTab="task_schedule"
                 [regenerating]="control.regenerating"
                 [regenerateError]="control.regenerateError"
                 (retry)="regenerateTaskSchedule()"
@@ -81,19 +86,6 @@ const initialControl: PlanTaskScheduleViewState = {
               @if (syncState !== 'generating') {
                 <p class="plan-work__empty-hint">{{ 'plans.task_schedules.empty_hint' | translate }}</p>
               }
-              @if (showEmptyRegenerate) {
-                <button
-                  type="button"
-                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
-                  [disabled]="control.regenerating"
-                  (click)="regenerateTaskSchedule()"
-                >
-                  {{
-                    (control.regenerating ? 'common.loading' : 'plans.task_schedules.sync_retry')
-                      | translate
-                  }}
-                </button>
-              }
             </div>
           } @else {
             <app-task-schedule-sync-banner
@@ -103,6 +95,7 @@ const initialControl: PlanTaskScheduleViewState = {
               [cropIds]="cropIdsForBanner"
               [cropNames]="cropNamesForBanner"
               [planId]="planId"
+              returnTab="task_schedule"
               [regenerating]="control.regenerating"
               [regenerateError]="control.regenerateError"
               (retry)="regenerateTaskSchedule()"
@@ -137,15 +130,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   get syncState(): string {
     return this.control.schedule?.plan.task_schedule_sync_state ?? '';
-  }
-
-  get showEmptyRegenerate(): boolean {
-    if (
-      isActionableDataDeficiencySyncError(this.control.schedule?.plan.task_schedule_sync_error ?? null)
-    ) {
-      return false;
-    }
-    return this.syncState === 'never' || this.syncState === 'failed' || this.syncState === 'stale';
   }
 
   private get cropBannerContext(): ReturnType<typeof mergeCropBannerContext> {
