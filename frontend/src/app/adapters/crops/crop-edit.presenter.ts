@@ -5,95 +5,37 @@ import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edi
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
 import { UpdateCropOutputPort } from '../../usecase/crops/update-crop.output-port';
 import { UpdateCropSuccessDto } from '../../usecase/crops/update-crop.dtos';
-import { CreateCropStageOutputPort } from '../../usecase/crops/create-crop-stage.output-port';
-import { CreateCropStageOutputDto } from '../../usecase/crops/create-crop-stage.dtos';
-import { UpdateCropStageOutputPort } from '../../usecase/crops/update-crop-stage.output-port';
-import { UpdateCropStageOutputDto } from '../../usecase/crops/update-crop-stage.dtos';
-import { DeleteCropStageOutputPort } from '../../usecase/crops/delete-crop-stage.output-port';
-import { DeleteCropStageOutputDto } from '../../usecase/crops/delete-crop-stage.dtos';
-import { UpdateTemperatureRequirementOutputPort } from '../../usecase/crops/update-temperature-requirement.output-port';
-import { UpdateTemperatureRequirementOutputDto } from '../../usecase/crops/update-temperature-requirement.dtos';
-import { UpdateThermalRequirementOutputPort } from '../../usecase/crops/update-thermal-requirement.output-port';
-import { UpdateThermalRequirementOutputDto } from '../../usecase/crops/update-thermal-requirement.dtos';
-import { UpdateSunshineRequirementOutputPort } from '../../usecase/crops/update-sunshine-requirement.output-port';
-import { UpdateSunshineRequirementOutputDto } from '../../usecase/crops/update-sunshine-requirement.dtos';
-import { UpdateNutrientRequirementOutputPort } from '../../usecase/crops/update-nutrient-requirement.output-port';
-import { UpdateNutrientRequirementOutputDto } from '../../usecase/crops/update-nutrient-requirement.dtos';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 
 @Injectable()
-export class CropEditPresenter implements
-  LoadCropForEditOutputPort,
-  UpdateCropOutputPort,
-  CreateCropStageOutputPort,
-  UpdateCropStageOutputPort,
-  DeleteCropStageOutputPort,
-  UpdateTemperatureRequirementOutputPort,
-  UpdateThermalRequirementOutputPort,
-  UpdateSunshineRequirementOutputPort,
-  UpdateNutrientRequirementOutputPort {
+export class CropEditPresenter implements LoadCropForEditOutputPort, UpdateCropOutputPort {
   private view: CropEditView | null = null;
 
   setView(view: CropEditView): void {
     this.view = view;
   }
 
-  // Function overloads for present method
-  present(dto: LoadCropForEditDataDto): void;
-  present(dto: CreateCropStageOutputDto | UpdateCropStageOutputDto | DeleteCropStageOutputDto | UpdateTemperatureRequirementOutputDto | UpdateThermalRequirementOutputDto | UpdateSunshineRequirementOutputDto | UpdateNutrientRequirementOutputDto): void;
-  present(dto: LoadCropForEditDataDto | CreateCropStageOutputDto | UpdateCropStageOutputDto | DeleteCropStageOutputDto | UpdateTemperatureRequirementOutputDto | UpdateThermalRequirementOutputDto | UpdateSunshineRequirementOutputDto | UpdateNutrientRequirementOutputDto): void {
+  present(dto: LoadCropForEditDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    
-    // LoadCropForEditDataDto has 'crop' property
-    if ('crop' in dto) {
-      const crop = (dto as LoadCropForEditDataDto).crop;
-      this.view.control = {
-        ...this.view.control,
-        loading: false,
-        error: null,
-        pendingSuccessFlash: null,
-        pendingErrorFlash: null,
-        formData: {
-          name: crop.name,
-          variety: crop.variety ?? null,
-          area_per_unit: crop.area_per_unit ?? null,
-          revenue_per_area: crop.revenue_per_area ?? null,
-          region: crop.region ?? null,
-          groups: crop.groups ?? [],
-          groupsDisplay: (crop.groups ?? []).join(', '),
-          is_reference: crop.is_reference ?? false,
-          crop_stages: crop.crop_stages ?? []
-        }
-      };
-      return;
-    }
-    
-    // Type guards for other DTOs
-    if ('stage' in dto && !('success' in dto)) {
-      // CreateCropStageOutputDto or UpdateCropStageOutputDto
-      const existingStage = this.view.control.formData.crop_stages.find(s => s.id === dto.stage.id);
-      if (existingStage) {
-        this.presentUpdateCropStage(dto as UpdateCropStageOutputDto);
-      } else {
-        this.presentCreateCropStage(dto as CreateCropStageOutputDto);
+    const crop = dto.crop;
+    this.view.control = {
+      ...this.view.control,
+      loading: false,
+      error: null,
+      pendingSuccessFlash: null,
+      pendingErrorFlash: null,
+      formData: {
+        name: crop.name,
+        variety: crop.variety ?? null,
+        area_per_unit: crop.area_per_unit ?? null,
+        revenue_per_area: crop.revenue_per_area ?? null,
+        region: crop.region ?? null,
+        groups: crop.groups ?? [],
+        groupsDisplay: (crop.groups ?? []).join(', '),
+        is_reference: crop.is_reference ?? false
       }
-    } else if ('success' in dto && 'stageId' in dto) {
-      // DeleteCropStageOutputDto
-      this.presentDeleteCropStage(dto as DeleteCropStageOutputDto);
-    } else if ('requirement' in dto) {
-      // Requirement DTOs - check requirement type by properties
-      const req = dto.requirement as any;
-      if ('base_temperature' in req || 'optimal_min' in req || 'optimal_max' in req) {
-        this.presentUpdateTemperatureRequirement(dto as UpdateTemperatureRequirementOutputDto);
-      } else if ('required_gdd' in req) {
-        this.presentUpdateThermalRequirement(dto as UpdateThermalRequirementOutputDto);
-      } else if ('minimum_sunshine_hours' in req || 'target_sunshine_hours' in req) {
-        this.presentUpdateSunshineRequirement(dto as UpdateSunshineRequirementOutputDto);
-      } else if ('daily_uptake_n' in req || 'daily_uptake_p' in req || 'daily_uptake_k' in req) {
-        this.presentUpdateNutrientRequirement(dto as UpdateNutrientRequirementOutputDto);
-      }
-    }
+    };
   }
 
   onError(dto: ErrorDto): void {
@@ -115,144 +57,6 @@ export class CropEditPresenter implements
       saving: false,
       pendingErrorFlash: null,
       pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.updated')
-    };
-  }
-
-  presentCreateCropStage(dto: CreateCropStageOutputDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    this.view.control = {
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: [...currentStages, dto.stage]
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_created')
-    };
-  }
-
-  presentUpdateCropStage(dto: UpdateCropStageOutputDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    const updatedStages = currentStages.map(stage =>
-      stage.id === dto.stage.id ? dto.stage : stage
-    );
-    this.view.control = {
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: updatedStages
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_updated')
-    };
-  }
-
-  presentDeleteCropStage(dto: DeleteCropStageOutputDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    const filteredStages = currentStages.filter(stage => stage.id !== dto.stageId);
-    this.view.control = {
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: filteredStages
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_deleted')
-    };
-  }
-
-  presentUpdateTemperatureRequirement(dto: UpdateTemperatureRequirementOutputDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    const updatedStages = currentStages.map(stage => {
-      if (stage.id === dto.requirement.crop_stage_id) {
-        return {
-          ...stage,
-          temperature_requirement: dto.requirement
-        };
-      }
-      return stage;
-    });
-    this.view.control = {
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: updatedStages
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.temperature_requirement_updated')
-    };
-  }
-
-  presentUpdateThermalRequirement(dto: UpdateThermalRequirementOutputDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    const updatedStages = currentStages.map(stage => {
-      if (stage.id === dto.requirement.crop_stage_id) {
-        return {
-          ...stage,
-          thermal_requirement: dto.requirement
-        };
-      }
-      return stage;
-    });
-    this.view.control = {
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: updatedStages
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.thermal_requirement_updated')
-    };
-  }
-
-  presentUpdateSunshineRequirement(dto: UpdateSunshineRequirementOutputDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    const updatedStages = currentStages.map(stage => {
-      if (stage.id === dto.requirement.crop_stage_id) {
-        return {
-          ...stage,
-          sunshine_requirement: dto.requirement
-        };
-      }
-      return stage;
-    });
-    this.view.control = {
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: updatedStages
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.sunshine_requirement_updated')
-    };
-  }
-
-  presentUpdateNutrientRequirement(dto: UpdateNutrientRequirementOutputDto): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    const updatedStages = currentStages.map(stage => {
-      if (stage.id === dto.requirement.crop_stage_id) {
-        return {
-          ...stage,
-          nutrient_requirement: dto.requirement
-        };
-      }
-      return stage;
-    });
-    this.view.control = {
-      ...this.view.control,
-      formData: {
-        ...this.view.control.formData,
-        crop_stages: updatedStages
-      },
-      pendingErrorFlash: null,
-      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.nutrient_requirement_updated')
     };
   }
 }

@@ -158,7 +158,6 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     });
     expect(vm.showCropWizardLinks).toBe(true);
     expect(vm.cropBannerEntries).toHaveLength(2);
-    expect(vm.cropWizardFragment).toBe('blueprints-heading');
     expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7 });
     expect(vm.showRetry).toBe(false);
   });
@@ -175,8 +174,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     });
     expect(vm.showCropWizardLinks).toBe(false);
     expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY);
-    expect(vm.cropWizardFragment).toBe('blueprints-heading');
-    expect(vm.cropsRouterLink).toEqual(['/crops', 42]);
+    expect(vm.cropsRouterLink).toEqual(['/crops', 42, 'task_schedule_blueprints']);
     expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7 });
     expect(vm.showRetry).toBe(false);
   });
@@ -207,7 +205,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
       syncErrorCropId: 15,
       regenerateError: null
     });
-    expect(vm.cropsRouterLink).toEqual(['/crops', 15]);
+    expect(vm.cropsRouterLink).toEqual(['/crops', 15, 'task_schedule_blueprints']);
     expect(vm.remediationLinkParams).toEqual({ cropName: '#15' });
   });
 
@@ -224,7 +222,6 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     expect(vm.showCropWizardLinks).toBe(false);
     expect(vm.remediationLinkKey).toBe(`${TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES}_link`);
     expect(vm.cropsRouterLink).toBe('/crops');
-    expect(vm.cropWizardFragment).toBe('blueprints-heading');
     expect(vm.showRetry).toBe(false);
   });
 
@@ -240,8 +237,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     });
     expect(vm.showCropWizardLinks).toBe(false);
     expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY);
-    expect(vm.cropsRouterLink).toEqual(['/crops', 42]);
-    expect(vm.cropWizardFragment).toBe('blueprints-heading');
+    expect(vm.cropsRouterLink).toEqual(['/crops', 42, 'task_schedule_blueprints']);
     expect(vm.remediationLinkParams).toEqual({ cropName: '#42' });
   });
 
@@ -332,8 +328,7 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
     expect(vm.syncErrorDetailParams).toEqual({ cropName: 'Tomato' });
     expect(vm.showCropWizardLinks).toBe(false);
     expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY);
-    expect(vm.cropsRouterLink).toEqual(['/crops', 42]);
-    expect(vm.cropWizardFragment).toBe('blueprints-heading');
+    expect(vm.cropsRouterLink).toEqual(['/crops', 42, 'task_schedule_blueprints']);
     expect(vm.remediationLinkParams).toEqual({ cropName: 'Tomato' });
     expect(vm.showRetry).toBe(false);
   });
@@ -371,7 +366,6 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
       { cropId: 42, label: 'Tomato' },
       { cropId: 99, label: 'Lettuce' }
     ]);
-    expect(vm.cropWizardFragment).toBe('blueprints-heading');
     expect(vm.cropMasterQueryParams).toEqual({ fromPlan: 7 });
     expect(vm.showRetry).toBe(false);
     expect(vm.remediationLinkKey).toBeNull();

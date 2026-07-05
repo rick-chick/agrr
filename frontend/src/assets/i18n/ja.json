@@ -475,6 +475,11 @@
       "daily_uptake_p": "リン (P) 吸収量",
       "daily_uptake_k": "カリウム (K) 吸収量",
       "task_schedule_blueprints_title": "作業予定",
+      "blueprint_summary": {
+        "count": "{{count}}件の作業予定",
+        "setup_required": "生育ステージまたは作業予定の設定が未完了です。",
+        "edit_action": "作業予定を編集"
+      },
       "task_schedule_blueprints_step_label": "STEP 2",
       "task_schedule_blueprints_description_html": "AIが提案した作業予定です。内容を確認し、必要があればこの画面で積算温度や関連作業を調整してください。栽培計画を作成すると、この作業予定をもとに作業スケジュールが自動で作られます。",
       "task_schedule_blueprints_description_empty_html": "下のフォームから、生育ステージごとの作業と積算温度を登録してください。栽培計画を作成すると、この作業予定をもとに作業スケジュールが自動で作られます。",
@@ -520,7 +525,7 @@
         "blueprints_action": "作業予定を登録する",
         "stages_ready": "生育ステージの基準温度と必要GDDが設定されています",
         "stages_missing": "生育ステージの基準温度または必要GDDが未設定です",
-        "stages_action": "作物を編集してステージ要件を設定する"
+        "stages_action": "生育ステージを設定する"
       },
       "blueprint_errors": {
         "missing_blueprints": "作業予定が未登録のため、AIによる提案を取り込めません。",

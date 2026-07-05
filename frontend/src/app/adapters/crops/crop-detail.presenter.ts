@@ -9,39 +9,15 @@ import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
-import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
-import { isBlueprintRegenerateErrorKey } from '../../core/crop-blueprint-regenerate-error-i18n';
 import {
-  CreateCropTaskScheduleBlueprintDataDto,
-  CreateCropTaskScheduleBlueprintOutputPort,
-  DeleteCropTaskScheduleBlueprintDataDto,
-  DeleteCropTaskScheduleBlueprintOutputPort,
   LoadCropTaskScheduleBlueprintsDataDto,
-  LoadCropTaskScheduleBlueprintsOutputPort,
-  RegenerateCropTaskScheduleBlueprintsDataDto,
-  RegenerateCropTaskScheduleBlueprintsOutputPort,
-  UpdateCropTaskScheduleBlueprintDataDto,
-  UpdateCropTaskScheduleBlueprintOutputPort
+  LoadCropTaskScheduleBlueprintsOutputPort
 } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
-import { LoadAgriculturalTaskListOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
-import { AgriculturalTaskListDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-list.dtos';
-import { withCropDetailDisplayState } from './crop-detail-display-state';
-
-type BlueprintListDto =
-  | LoadCropTaskScheduleBlueprintsDataDto
-  | RegenerateCropTaskScheduleBlueprintsDataDto;
+import { withCropDetailSummaryState } from './crop-detail-display-state';
 
 @Injectable()
 export class CropDetailPresenter
-  implements
-    LoadCropDetailOutputPort,
-    DeleteCropOutputPort,
-    LoadAgriculturalTaskListOutputPort,
-    LoadCropTaskScheduleBlueprintsOutputPort,
-    RegenerateCropTaskScheduleBlueprintsOutputPort,
-    UpdateCropTaskScheduleBlueprintOutputPort,
-    DeleteCropTaskScheduleBlueprintOutputPort,
-    CreateCropTaskScheduleBlueprintOutputPort
+  implements LoadCropDetailOutputPort, DeleteCropOutputPort, LoadCropTaskScheduleBlueprintsOutputPort
 {
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: CropDetailView | null = null;
@@ -51,24 +27,12 @@ export class CropDetailPresenter
   }
 
   present(dto: CropDetailDataDto): void;
-  present(dto: AgriculturalTaskListDataDto): void;
-  present(dto: BlueprintListDto): void;
-  present(dto: CreateCropTaskScheduleBlueprintDataDto): void;
-  present(dto: UpdateCropTaskScheduleBlueprintDataDto): void;
-  present(dto: DeleteCropTaskScheduleBlueprintDataDto): void;
-  present(
-    dto:
-      | CropDetailDataDto
-      | AgriculturalTaskListDataDto
-      | BlueprintListDto
-      | CreateCropTaskScheduleBlueprintDataDto
-      | UpdateCropTaskScheduleBlueprintDataDto
-      | DeleteCropTaskScheduleBlueprintDataDto
-  ): void {
+  present(dto: LoadCropTaskScheduleBlueprintsDataDto): void;
+  present(dto: CropDetailDataDto | LoadCropTaskScheduleBlueprintsDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
 
     if ('crop' in dto) {
-      this.view.control = withCropDetailDisplayState({
+      this.view.control = withCropDetailSummaryState({
         ...this.view.control,
         loading: false,
         error: null,
@@ -79,121 +43,33 @@ export class CropDetailPresenter
       return;
     }
 
-    if ('tasks' in dto) {
-      this.view.control = withCropDetailDisplayState({
-        ...this.view.control,
-        agriculturalTasksLoading: false,
-        agriculturalTasks: dto.tasks
-      });
-      return;
-    }
-
     if ('blueprints' in dto) {
-      const drafts = Object.fromEntries(dto.blueprints.map((b) => [b.id, b.gdd_trigger]));
-      const wasRegenerating = this.view.control.blueprintsRegenerating;
-      this.view.control = withCropDetailDisplayState({
-        ...this.view.control,
-        blueprintsLoading: false,
-        blueprintsRegenerating: false,
-        blueprints: dto.blueprints,
-        blueprintGddDrafts: drafts,
-        blueprintRegenerateError: null,
-        pendingErrorFlash: null,
-        pendingSuccessFlash: wasRegenerating
-          ? pendingSuccessFlashFromText('crops.flash.task_schedule_blueprints_generated')
-          : this.view.control.pendingSuccessFlash
-      });
-      return;
-    }
-
-    if ('blueprint' in dto) {
-      const exists = this.view.control.blueprints.some((b) => b.id === dto.blueprint.id);
-      if (exists) {
-        this.view.control = withCropDetailDisplayState({
+      this.view.control = withCropDetailSummaryState(
+        {
           ...this.view.control,
-          blueprintSavingId: null,
-          blueprints: this.view.control.blueprints.map((b) =>
-            b.id === dto.blueprint.id ? dto.blueprint : b
-          ),
-          blueprintGddDrafts: {
-            ...this.view.control.blueprintGddDrafts,
-            [dto.blueprint.id]: dto.blueprint.gdd_trigger
-          },
-          pendingErrorFlash: null,
-          pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.blueprint_position_updated')
-        });
-        return;
-      }
-
-      this.view.control = withCropDetailDisplayState({
-        ...this.view.control,
-        blueprintCreating: false,
-        selectedBlueprintStageOrder: null,
-        selectedBlueprintAgriculturalTaskId: null,
-        blueprintCreateGddTrigger: null,
-        blueprints: [...this.view.control.blueprints, dto.blueprint],
-        blueprintGddDrafts: {
-          ...this.view.control.blueprintGddDrafts,
-          [dto.blueprint.id]: dto.blueprint.gdd_trigger
+          blueprintsLoading: false,
+          pendingErrorFlash: null
         },
-        blueprintRegenerateError: null,
-        pendingErrorFlash: null,
-        pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.blueprint_created')
-      });
-      return;
+        dto.blueprints
+      );
     }
-
-    if ('blueprintId' in dto) {
-      const { [dto.blueprintId]: _removedGdd, ...remainingGddDrafts } = this.view.control.blueprintGddDrafts;
-      this.view.control = withCropDetailDisplayState({
-        ...this.view.control,
-        blueprints: this.view.control.blueprints.filter((b) => b.id !== dto.blueprintId),
-        blueprintGddDrafts: remainingGddDrafts,
-        pendingErrorFlash: null,
-        pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.blueprint_deleted')
-      });
-    }
-  }
-
-  onRegenerateStarted(): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    this.view.control = withCropDetailDisplayState({
-      ...this.view.control,
-      blueprintsRegenerating: true
-    });
-  }
-
-  onUpdateStarted(blueprintId: number): void {
-    if (!this.view) throw new Error('Presenter: view not set');
-    this.view.control = withCropDetailDisplayState({
-      ...this.view.control,
-      blueprintSavingId: blueprintId
-    });
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    const wasRegenerating = this.view.control.blueprintsRegenerating;
-    const inlineBlueprintError =
-      wasRegenerating && isBlueprintRegenerateErrorKey(dto.message) ? dto.message : null;
-    this.view.control = withCropDetailDisplayState({
+    this.view.control = withCropDetailSummaryState({
       ...this.view.control,
       loading: false,
-      agriculturalTasksLoading: false,
       blueprintsLoading: false,
-      blueprintsRegenerating: false,
-      blueprintSavingId: null,
-      blueprintCreating: false,
       error: null,
-      blueprintRegenerateError: inlineBlueprintError ?? this.view.control.blueprintRegenerateError,
-      pendingErrorFlash: inlineBlueprintError ? null : pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     });
   }
 
   onSuccess(dto: DeleteCropSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     if (dto.undo) {
-      this.view.control = withCropDetailDisplayState({
+      this.view.control = withCropDetailSummaryState({
         ...this.view.control,
         pendingUndoToast: pendingUndoToastFromDeletion(dto.undo, () =>
           this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.crops)

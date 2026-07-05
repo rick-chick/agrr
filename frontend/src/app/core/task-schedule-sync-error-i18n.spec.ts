@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  cropMasterLinkFragmentForSyncError,
   cropMasterRemediationLinkKey,
-  cropWizardFragmentForSyncError,
   syncErrorDetailTranslateKey,
   syncErrorDetailTranslateParams,
   TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY,
@@ -49,46 +47,6 @@ describe('syncErrorDetailTranslateParams', () => {
   it('passes cropName only when present', () => {
     expect(syncErrorDetailTranslateParams('トマト')).toEqual({ cropName: 'トマト' });
     expect(syncErrorDetailTranslateParams(null)).toEqual({});
-  });
-});
-
-describe('cropMasterLinkFragmentForSyncError', () => {
-  it('maps template errors to blueprints anchor', () => {
-    expect(cropMasterLinkFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES)).toBe(
-      'blueprints-heading'
-    );
-  });
-
-  it('maps blueprint errors to blueprints anchor', () => {
-    expect(cropMasterLinkFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS)).toBe(
-      'blueprints-heading'
-    );
-  });
-
-  it('maps general template errors to blueprints anchor', () => {
-    expect(
-      cropMasterLinkFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES)
-    ).toBe('blueprints-heading');
-  });
-
-  it('maps general blueprint errors to blueprints anchor', () => {
-    expect(
-      cropMasterLinkFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS)
-    ).toBe('blueprints-heading');
-  });
-});
-
-describe('cropWizardFragmentForSyncError', () => {
-  it('defaults generic errors to blueprints anchor', () => {
-    expect(cropWizardFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_GENERIC)).toBe(
-      'blueprints-heading'
-    );
-  });
-
-  it('uses blueprint anchor for blueprint deficiency errors', () => {
-    expect(cropWizardFragmentForSyncError(TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS)).toBe(
-      'blueprints-heading'
-    );
   });
 });
 

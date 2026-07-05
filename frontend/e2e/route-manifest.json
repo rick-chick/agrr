@@ -123,6 +123,18 @@
       "source": "masters.routes.ts"
     },
     {
+      "pattern": "crops/:id/stages",
+      "url": "/crops/1/stages",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
+      "pattern": "crops/:id/task_schedule_blueprints",
+      "url": "/crops/1/task_schedule_blueprints",
+      "requiresAuth": true,
+      "source": "masters.routes.ts"
+    },
+    {
       "pattern": "crops/:id/edit",
       "url": "/crops/1/edit",
       "requiresAuth": true,

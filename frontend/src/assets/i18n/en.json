@@ -1914,6 +1914,11 @@
       "daily_uptake_p": "Phosphorus (P) Uptake",
       "daily_uptake_k": "Potassium (K) Uptake",
       "task_schedule_blueprints_title": "Task Plan",
+      "blueprint_summary": {
+        "count": "{{count}} task plan(s)",
+        "setup_required": "Growth stages or task plans are not fully configured yet.",
+        "edit_action": "Edit task plans"
+      },
       "task_schedule_blueprints_step_label": "STEP 2",
       "task_schedule_blueprints_description_html": "These tasks were suggested by the AI. Review them here and adjust cumulative temperature (GDD) and linked tasks on this screen when needed. When you create a cultivation plan, work schedules are generated automatically from this task plan.",
       "task_schedule_blueprints_description_empty_html": "Use the form below to register tasks and cumulative temperature (GDD) for each growth stage. When you create a cultivation plan, work schedules are generated automatically from this task plan.",
@@ -1958,7 +1963,7 @@
         "blueprints_action": "Register task plans",
         "stages_ready": "Growth stages have base temperature and required GDD",
         "stages_missing": "Growth stages are missing base temperature or required GDD",
-        "stages_action": "Edit crop to configure stage requirements"
+        "stages_action": "Configure growth stages"
       },
       "blueprint_errors": {
         "missing_blueprints": "AI suggestions cannot be imported because no task plans are registered yet.",

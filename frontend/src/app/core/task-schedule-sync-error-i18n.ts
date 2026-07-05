@@ -47,23 +47,6 @@ export function syncErrorDetailTranslateParams(
   return cropName ? { cropName } : {};
 }
 
-export function cropMasterLinkFragmentForSyncError(syncError: string | null): string | null {
-  if (
-    syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES ||
-    syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS ||
-    syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_TEMPLATES ||
-    syncError === TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS
-  ) {
-    return 'blueprints-heading';
-  }
-  return null;
-}
-
-/** Crop detail registration wizard entry fragment. */
-export function cropWizardFragmentForSyncError(syncError: string | null): string {
-  return cropMasterLinkFragmentForSyncError(syncError) ?? 'blueprints-heading';
-}
-
 export const TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY = `${TASK_SCHEDULE_SYNC_ERROR_PREFIX}crop_wizard_link`;
 
 export function cropMasterRemediationLinkKey(

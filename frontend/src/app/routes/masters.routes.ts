@@ -45,6 +45,20 @@ export const mastersRoutes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'crops/:id/stages',
+    loadComponent: () =>
+      import('../components/masters/crops/crop-stages.component').then((m) => m.CropStagesComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'crops/:id/task_schedule_blueprints',
+    loadComponent: () =>
+      import('../components/masters/crops/crop-task-schedule-blueprints.component').then(
+        (m) => m.CropTaskScheduleBlueprintsComponent
+      ),
+    canActivate: [authGuard]
+  },
+  {
     path: 'crops/:id',
     loadComponent: () =>
       import('../components/masters/crops/crop-detail.component').then((m) => m.CropDetailComponent),

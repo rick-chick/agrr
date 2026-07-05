@@ -28,7 +28,6 @@ import type { TaskScheduleSyncCropNames } from '../../domain/plans/task-schedule
           <div class="task-schedule-sync-banner__wizard-actions">
             <a
               [routerLink]="vm.cropsRouterLink"
-              [fragment]="vm.cropWizardFragment"
               [queryParams]="vm.cropMasterQueryParams"
               class="task-schedule-sync-banner__wizard-cta task-schedule-sync-banner__link--primary"
             >
@@ -41,8 +40,7 @@ import type { TaskScheduleSyncCropNames } from '../../domain/plans/task-schedule
             @for (entry of vm.cropBannerEntries; track entry.cropId) {
               <a
                 role="listitem"
-                [routerLink]="['/crops', entry.cropId]"
-                [fragment]="vm.cropWizardFragment"
+                [routerLink]="['/crops', entry.cropId, 'task_schedule_blueprints']"
                 [queryParams]="vm.cropMasterQueryParams"
                 class="task-schedule-sync-banner__wizard-cta task-schedule-sync-banner__crop-link"
               >

@@ -1,7 +1,6 @@
 import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
 import {
   cropMasterRemediationLinkKey,
-  cropWizardFragmentForSyncError,
   syncErrorDetailTranslateKey,
   syncErrorDetailTranslateParams,
   TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY,
@@ -147,7 +146,6 @@ export interface TaskScheduleSyncBannerViewModel {
   remediationLinkParams: { cropName: string };
   showCropWizardLinks: boolean;
   cropBannerEntries: CropBannerEntry[];
-  cropWizardFragment: string;
   cropWizardLinkKey: string;
   cropsRouterLink: string | (string | number)[];
   cropMasterQueryParams: { fromPlan: number } | null;
@@ -268,9 +266,11 @@ export function buildTaskScheduleSyncBannerViewModel(
     },
     showCropWizardLinks,
     cropBannerEntries,
-    cropWizardFragment: cropWizardFragmentForSyncError(input.syncError),
     cropWizardLinkKey: TASK_SCHEDULE_SYNC_CROP_WIZARD_LINK_KEY,
-    cropsRouterLink: targetCropId != null ? ['/crops', targetCropId] : '/crops',
+    cropsRouterLink:
+      targetCropId != null
+        ? ['/crops', targetCropId, 'task_schedule_blueprints']
+        : '/crops',
     cropMasterQueryParams: input.planId > 0 ? { fromPlan: input.planId } : null,
     showGenericPlanLink,
     showRetry

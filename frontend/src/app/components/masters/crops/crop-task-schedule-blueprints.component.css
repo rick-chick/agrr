@@ -1,0 +1,526 @@
+@import '../_master-layout.css';
+
+.master-error {
+  color: var(--color-error);
+}
+
+.crop-blueprints__plan-wizard-banner {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-primary-border-soft, #bfdbfe);
+  background: var(--color-primary-bg-soft, #eff6ff);
+}
+
+.crop-blueprints__plan-wizard-banner-title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text);
+}
+
+.crop-blueprints__plan-wizard-banner-lead {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.crop-blueprints__page-header {
+  margin-bottom: var(--space-4);
+}
+
+.crop-blueprints__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.crop-blueprints__back-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.crop-blueprints__back-link:hover {
+  text-decoration: underline;
+}
+
+.section-card > .section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.crop-blueprints__template-add-form.crop-blueprints__blueprint-add-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .crop-blueprints__template-add-form.crop-blueprints__blueprint-add-form {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 9rem) auto;
+    align-items: end;
+  }
+}
+
+.crop-blueprints__blueprint-ai-import {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.crop-blueprints__blueprints-header {
+  margin-bottom: 0;
+}
+
+.section-card__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: 0;
+}
+
+.section-card__header-actions .section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.section-card__description {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.crop-blueprints__subsection {
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-divider);
+}
+
+.crop-blueprints__subsection-title {
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.crop-blueprints__subsection-description {
+  margin: 0 0 var(--space-3) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.crop-blueprints__template-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-hover);
+}
+
+@media (min-width: 640px) {
+  .crop-blueprints__template-add-form:not(.crop-blueprints__blueprint-add-form) {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+
+.crop-blueprints__template-add-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.crop-blueprints__template-add-label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+}
+
+.crop-blueprints__blueprint-add-form input[type='number'] {
+  width: 100%;
+  max-width: none;
+}
+
+.crop-blueprints__template-add-select,
+.crop-blueprints__template-add-field select,
+.crop-blueprints__template-add-input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: var(--touch-target-min, 2.75rem);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  line-height: 1.4;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.crop-blueprints__template-add-select,
+.crop-blueprints__template-add-field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: calc(var(--space-8) + 0.125rem);
+  cursor: pointer;
+}
+
+.crop-blueprints__select--placeholder {
+  color: var(--color-text-secondary);
+}
+
+.crop-blueprints__template-add-select:hover,
+.crop-blueprints__template-add-field select:hover,
+.crop-blueprints__template-add-input:hover {
+  border-color: var(--color-input-hover);
+}
+
+.crop-blueprints__template-add-select:focus,
+.crop-blueprints__template-add-field select:focus,
+.crop-blueprints__template-add-input:focus {
+  outline: none;
+  border-color: var(--color-input-focus);
+  box-shadow: var(--shadow-input-focus);
+}
+
+.crop-blueprints__template-add-input-wrap {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.crop-blueprints__template-add-input-wrap .crop-blueprints__template-add-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+  -moz-appearance: textfield;
+}
+
+.crop-blueprints__template-add-input-wrap .crop-blueprints__template-add-input::-webkit-outer-spin-button,
+.crop-blueprints__template-add-input-wrap .crop-blueprints__template-add-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.crop-blueprints__template-add-input-unit {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-left: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: var(--color-surface-hover);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.crop-blueprints__template-add-input-wrap:focus-within .crop-blueprints__template-add-input,
+.crop-blueprints__template-add-input-wrap:focus-within .crop-blueprints__template-add-input-unit {
+  border-color: var(--color-input-focus);
+}
+
+.crop-blueprints__template-add-input-wrap:focus-within {
+  box-shadow: var(--shadow-input-focus);
+  border-radius: var(--radius-md);
+}
+
+.crop-blueprints__template-add-input-wrap:focus-within .crop-blueprints__template-add-input {
+  box-shadow: none;
+}
+
+.crop-blueprints__template-add-actions {
+  flex: 0 0 auto;
+}
+
+.crop-blueprints__template-add-actions .btn-primary {
+  width: 100%;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .crop-blueprints__template-add-actions .btn-primary {
+    width: auto;
+    min-width: 10rem;
+  }
+}
+
+.crop-blueprints__template-add-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-hover);
+}
+
+@media (min-width: 640px) {
+  .crop-blueprints__template-add-empty {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+}
+
+.crop-blueprints__template-add-empty-message {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.crop-blueprints__template-add-cta {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.crop-blueprints__card-remove {
+  box-sizing: border-box;
+  background: var(--color-surface);
+  color: var(--color-error);
+  min-height: var(--touch-target-min);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crop-blueprints__card-remove:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-error);
+}
+
+.crop-blueprints__card-remove:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.blueprint-readiness {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-hover);
+}
+
+.blueprint-readiness__title {
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.blueprint-readiness__list {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.blueprint-readiness__item--ok {
+  color: var(--color-success, var(--color-text));
+}
+
+.blueprint-readiness__link {
+  margin-left: var(--space-2);
+}
+
+.blueprint-regenerate-error {
+  margin: 0;
+}
+
+article.item-card.blueprint-card {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  min-height: auto;
+  gap: 0;
+}
+
+.blueprint-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.blueprint-card__header .item-card__title {
+  margin-bottom: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.blueprint-card__remove {
+  flex-shrink: 0;
+  min-height: auto;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  background: transparent;
+  font-size: var(--font-size-xs);
+}
+
+.blueprint-card__remove:hover {
+  background: var(--color-error-bg-soft, #fef2f2);
+  border-color: transparent;
+}
+
+.blueprint-card__fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .blueprint-card__fields--gdd-only {
+    grid-template-columns: minmax(0, 9rem);
+  }
+}
+
+.blueprint-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.blueprint-card__field-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.blueprint-card__input {
+  min-height: 2rem;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.blueprint-card__gdd .crop-blueprints__template-add-input-wrap {
+  width: 100%;
+}
+
+.blueprint-card__gdd .crop-blueprints__template-add-input-unit {
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+}
+
+.blueprint-card__gdd .crop-blueprints__template-add-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.blueprint-stage-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.blueprint-stage-board__keyboard-hint.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.blueprint-stage-lane {
+  display: grid;
+  grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .blueprint-stage-lane {
+    grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+  }
+}
+
+.blueprint-stage-lane__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  padding-top: var(--space-2);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.blueprint-stage-lane__cards {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: var(--space-2);
+  min-height: 3rem;
+  padding: var(--space-2);
+  border: 1px dashed var(--color-border-subtle, #d1d5db);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--color-surface-subtle, #f9fafb);
+  overflow-x: auto;
+}
+
+.blueprint-stage-lane__cards.cdk-drop-list-dragging .blueprint-card:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.blueprint-stage-lane__cards .blueprint-card {
+  flex: 0 1 12rem;
+  width: auto;
+  max-width: 100%;
+  min-width: min(100%, 10.5rem);
+  cursor: grab;
+}
+
+.blueprint-stage-lane__cards .blueprint-card.cdk-drag-disabled {
+  cursor: not-allowed;
+}
+
+.blueprint-stage-lane__cards .blueprint-card.cdk-drag-preview {
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.12));
+}
+
+.blueprint-stage-lane__cards .blueprint-card.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.blueprint-stage-lane__cards .blueprint-card.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

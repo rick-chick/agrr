@@ -354,6 +354,11 @@
       "celsius_unit": "°C",
       "stage_name": "चरण नाम",
       "task_schedule_blueprints_title": "कार्य योजना",
+      "blueprint_summary": {
+        "count": "{{count}} कार्य योजना",
+        "setup_required": "वृद्धि चरण या कार्य योजना पूरी तरह कॉन्फ़िगर नहीं है।",
+        "edit_action": "कार्य योजना संपादित करें"
+      },
       "task_schedule_blueprints_step_label": "STEP 2",
       "task_schedule_blueprints_description_html": "ये कार्य AI द्वारा सुझाए गए हैं। यहाँ समीक्षा करें और आवश्यकतानुसार इस स्क्रीन पर संचित तापमान (GDD) और संबद्ध कार्य समायोजित करें। खेती योजना बनाने पर, इस कार्य योजना से कार्य अनुसूची स्वचालित रूप से बनती है।",
       "task_schedule_blueprints_description_empty_html": "नीचे के फॉर्म से प्रत्येक वृद्धि चरण के लिए कार्य और संचित तापमान (GDD) पंजीकृत करें। खेती योजना बनाने पर, इस कार्य योजना से कार्य अनुसूची स्वचालित रूप से बनती है।",
