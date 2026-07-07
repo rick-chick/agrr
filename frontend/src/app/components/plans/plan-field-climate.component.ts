@@ -14,6 +14,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import Chart from 'chart.js/auto';
 import type { ChartConfiguration, ChartDataset, Plugin } from 'chart.js';
 import 'chartjs-adapter-date-fns';
@@ -51,7 +52,7 @@ type StageTemperatureBand = {
 @Component({
   selector: 'app-plan-field-climate',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, TranslateModule, RouterLink],
   template: `
     <section class="plan-field-climate">
       <header class="plan-field-climate__header">
@@ -75,6 +76,15 @@ type StageTemperatureBand = {
             }}</span>
             <span>{{ headerPeriod }}</span>
           </div>
+          @if (planId && fieldCultivationId) {
+            <a
+              class="plan-field-climate__task-schedule-link"
+              [routerLink]="['/plans', planId, 'task_schedule']"
+              [queryParams]="{ field_cultivation_id: fieldCultivationId }"
+            >
+              {{ 'plans.field_climate.open_task_schedule' | translate }}
+            </a>
+          }
         </div>
         <button
           type="button"
@@ -194,6 +204,7 @@ export class PlanFieldClimateComponent
     OnDestroy
 {
   @Input() fieldCultivationId: number | null = null;
+  @Input() planId: number | null = null;
   @Input() planType: CultivationPlanContextType = 'private';
   @Input() displayStartDate: string | null = null;
   @Input() displayEndDate: string | null = null;

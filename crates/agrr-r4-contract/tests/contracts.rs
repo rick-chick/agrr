@@ -276,6 +276,119 @@ fn get_task_schedule_includes_sync_state_and_items() {
 }
 
 #[test]
+fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    assert!(
+        json["milestones"].as_array().is_some(),
+        "milestones array required for API compat: {body}"
+    );
+    assert!(
+        json["labels"].is_object(),
+        "labels object required for API compat: {body}"
+    );
+    let days = json["week"]["days"]
+        .as_array()
+        .expect("week.days array required for API compat");
+    assert_eq!(7, days.len(), "{body}");
+    assert!(days[0]["date"].as_str().is_some());
+    assert!(days[0]["weekday"].as_str().is_some());
+    assert!(days[0]["is_today"].is_boolean());
+}
+
+#[test]
+fn get_task_schedule_scope_plan_includes_scheduled_items_and_cultivation_period() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH");
+    let conn = rusqlite::Connection::open(&path).expect("open sqlite");
+    conn.execute(
+        "UPDATE field_cultivations SET start_date = '2026-05-01', completion_date = '2026-09-30' \
+         WHERE cultivation_plan_id = ?1",
+        rusqlite::params![seed.plan_id],
+    )
+    .expect("set cultivation period");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/plans/{}/task_schedule?scope=plan&week_start=2026-07-05",
+            seed.plan_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let fields = json["fields"].as_array().expect("fields array");
+    assert_eq!(1, fields.len(), "{body}");
+    assert_eq!("2026-05-01", fields[0]["cultivation_start_date"].as_str().unwrap());
+    assert_eq!("2026-09-30", fields[0]["cultivation_end_date"].as_str().unwrap());
+    let general = fields[0]["schedules"]["general"]
+        .as_array()
+        .expect("general schedule bucket");
+    assert!(
+        !general.is_empty(),
+        "plan scope must include items outside the requested week: {body}"
+    );
+}
+
+#[test]
+fn get_task_schedule_scope_week_filters_to_requested_week() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/plans/{}/task_schedule?scope=week&week_start=2026-06-01",
+            seed.plan_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let fields = json["fields"].as_array().expect("fields array");
+    assert_eq!(1, fields.len(), "{body}");
+    let general = fields[0]["schedules"]["general"]
+        .as_array()
+        .expect("general schedule bucket");
+    assert_eq!(1, general.len(), "{body}");
+    assert_eq!("2026-06-02", general[0]["scheduled_date"].as_str().unwrap());
+
+    let (far_status, far_body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/plans/{}/task_schedule?scope=week&week_start=2026-12-01",
+            seed.plan_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, far_status, "{far_body}");
+    let far_json: serde_json::Value =
+        serde_json::from_str(&far_body).expect("task schedule JSON (far week)");
+    let far_fields = far_json["fields"].as_array().expect("fields array");
+    assert!(
+        far_fields.is_empty(),
+        "week scope must hide fields with only out-of-week schedules: {far_body}"
+    );
+}
+
+#[test]
 fn get_task_schedule_normalizes_legacy_raw_sync_error_to_generic_i18n_key() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

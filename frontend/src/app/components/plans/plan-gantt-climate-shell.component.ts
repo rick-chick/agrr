@@ -38,6 +38,7 @@ export type CultivationSelectionEvent = {
         @if (selectedCultivationId) {
           <app-plan-field-climate
             [fieldCultivationId]="selectedCultivationId"
+            [planId]="planId"
             [planType]="selectedPlanType"
             [displayStartDate]="visibleRangeStartDate"
             [displayEndDate]="visibleRangeEndDate"
@@ -55,6 +56,7 @@ export type CultivationSelectionEvent = {
 export class PlanGanttClimateShellComponent {
   @Input({ required: true }) data!: CultivationPlanData;
   @Input() planType: CultivationPlanContextType = 'private';
+  @Input() planId: number | null = null;
 
   selectedCultivationId: number | null = null;
   selectedPlanType: CultivationPlanContextType = this.planType;

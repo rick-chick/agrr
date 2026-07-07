@@ -466,8 +466,20 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
     const next = applyPendingFlashViewEffects(withFromPlan, {
       flash: this.flashMessage
     });
-    this._control = next;
+    this._control = this.applyFromPlanDescriptionKey(next);
     this.cdr.markForCheck();
+  }
+
+  private applyFromPlanDescriptionKey(
+    state: CropTaskScheduleBlueprintsViewState
+  ): CropTaskScheduleBlueprintsViewState {
+    if (state.fromPlanId == null) {
+      return state;
+    }
+    return {
+      ...state,
+      blueprintSectionDescriptionKey: 'crops.show.task_schedule_blueprints_description_from_plan_html'
+    };
   }
 
   ngOnInit(): void {

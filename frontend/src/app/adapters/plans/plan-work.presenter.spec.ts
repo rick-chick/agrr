@@ -32,6 +32,7 @@ const baseControl = {
   upcoming: [],
   includeSkipped: false,
   recentAdHocRecord: null,
+  nextScheduled: null,
   highlightedItemId: null,
   completingItemId: null as number | null,
   regenerating: false,
@@ -248,7 +249,8 @@ describe('PlanWorkPresenter task schedule sync', () => {
       overdue: [],
       today: [],
       upcoming: [],
-      recentAdHocRecord: { name: '規格選別', actualDate: '2026-06-12' }
+      recentAdHocRecord: { name: '規格選別', actualDate: '2026-06-12' },
+      nextScheduled: null
     });
 
     expect(view.control.recentAdHocRecord).toEqual({

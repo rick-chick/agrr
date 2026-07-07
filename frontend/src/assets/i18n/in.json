@@ -353,15 +353,16 @@
       "optimal_temperature": "इष्टतम तापमान",
       "celsius_unit": "°C",
       "stage_name": "चरण नाम",
-      "task_schedule_blueprints_title": "कार्य योजना",
+      "task_schedule_blueprints_title": "कार्य अनुसूची टेम्पलेट",
       "blueprint_summary": {
         "count": "{{count}} कार्य योजना",
         "setup_required": "वृद्धि चरण या कार्य योजना पूरी तरह कॉन्फ़िगर नहीं है।",
         "edit_action": "कार्य योजना संपादित करें"
       },
       "task_schedule_blueprints_step_label": "STEP 2",
-      "task_schedule_blueprints_description_html": "ये कार्य AI द्वारा सुझाए गए हैं। यहाँ समीक्षा करें और आवश्यकतानुसार इस स्क्रीन पर संचित तापमान (GDD) और संबद्ध कार्य समायोजित करें। खेती योजना बनाने पर, इस कार्य योजना से कार्य अनुसूची स्वचालित रूप से बनती है।",
-      "task_schedule_blueprints_description_empty_html": "नीचे के फॉर्म से प्रत्येक वृद्धि चरण के लिए कार्य और संचित तापमान (GDD) पंजीकृत करें। खेती योजना बनाने पर, इस कार्य योजना से कार्य अनुसूची स्वचालित रूप से बनती है।",
+      "task_schedule_blueprints_description_html": "इस फसल के लिए कार्य अनुसूची टेम्पलेट। AI द्वारा सुझाए गए कार्यों की समीक्षा करें और आवश्यकतानुसार संचित तापमान (GDD) और संबद्ध कार्य समायोजित करें। खेती योजना बनाने पर, इन टेम्पलेट से योजना की कार्य अनुसूची स्वचालित रूप से बनती है।",
+      "task_schedule_blueprints_description_empty_html": "नीचे के फॉर्म से प्रत्येक वृद्धि चरण के लिए कार्य और संचित तापमान (GDD) टेम्पलेट के रूप में पंजीकृत करें। खेती योजना बनाने पर, इन टेम्पलेट से योजना की कार्य अनुसूची स्वचालित रूप से बनती है।",
+      "task_schedule_blueprints_description_from_plan_html": "इस योजना की कार्य अनुसूची पहले से बन चुकी है। भविष्य में योजना बनाने या पुनः उत्पन्न करने पर कार्य अनुसूची समायोजित करने के लिए यहाँ टेम्पलेट संपादित करें।",
       "no_task_schedule_blueprints": "अभी तक कोई कार्य योजना नहीं है। नीचे के फॉर्म से एक-एक करके जोड़ें।",
       "unnamed_blueprint": "(कार्य नाम सेट नहीं)",
       "gdd_trigger": "GDD ट्रिगर",
@@ -1505,7 +1506,8 @@
         "daily_gdd": "दैनिक संचयी तापमान",
         "tooltip_format": "dd/MM/yyyy",
         "required_cumulative_gdd": "आवश्यक संचयी तापमान"
-      }
+      },
+      "open_task_schedule": "इस खेत के लिए कार्य अनुसूची खोलें"
     },
     "detail": {
       "select_cultivation_hint": "जलवायु डेटा देखने के लिए चार्ट पर खेती बार चुनें।"
@@ -1520,9 +1522,21 @@
     },
     "task_schedules": {
       "page_title": "कार्य अनुसूची — {{name}}",
+      "page_intro": "रोपण योजना की खेती अवधि के आधार पर कार्य और तिथियाँ स्वचालित रूप से गणना की जाती हैं। आज के कार्य «कार्य रिकॉर्ड» में देखें।",
       "empty_hint": "कार्य अनुसूची बनाने के लिए योजना में फसलें जोड़ें। ऊपर के \"खेती योजना\" टैब से योजना की समीक्षा करें।",
+      "empty_ready_no_fields": "कार्य अनुसूची तैयार है, लेकिन प्रदर्शित करने के लिए कोई खेत नहीं है। \"खेती योजना\" टैब में खेत और फसलें जाँचें।",
+      "timeline_generated_at": "निर्माण समय: {{datetime}}",
+      "timeline_generated_unknown": "निर्माण समय: अनुपलब्ध",
+      "view_mode_plan": "सूची",
+      "view_mode_week": "सप्ताह",
+      "nav_prev_week": "पिछला सप्ताह",
+      "nav_next_week": "अगला सप्ताह",
+      "nav_today": "इस सप्ताह",
+      "week_label": "{{start}} – {{end}}",
       "general_label": "सामान्य कार्य",
       "fertilizer_label": "उर्वरक",
+      "fertilizer_empty": "कोई उर्वरक कार्य निर्धारित नहीं",
+      "unscheduled_title": "अनिर्धारित कार्य",
       "no_schedules": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
       "status": {
         "planned": "नियोजित",
@@ -1531,6 +1545,11 @@
       },
       "field_section": "{{name}} ({{crop}})",
       "field_number": "खेत क्षेत्र {{number}}",
+      "cultivation_period": "खेती अवधि {{start}} – {{end}}",
+      "summary": "{{fields}} खेत · {{tasks}} कार्य",
+      "view_all_fields": "सभी खेत देखें",
+      "back_to_planting_plan": "फसल योजना पर वापस जाएं",
+      "field_no_tasks": "इस स्तंभ में कोई निर्धारित कार्य नहीं",
       "sync_never": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
       "sync_failed": "कार्य अनुसूची बनाने में विफल।",
       "sync_generating": "कार्य अनुसूची तैयार की जा रही है...",
@@ -1572,6 +1591,16 @@
         "plan_context_link": "योजना के खेत और मौसम की जाँच करें",
         "crop_stages_link": "«{{cropName}}» के वृद्धि चरण देखें",
         "generic_plan_link": "योजना के खेत और फसल देखें"
+      },
+      "detail": {
+        "title": "कार्य विवरण",
+        "empty": "विवरण देखने के लिए कार्य चुनें",
+        "scheduled_date": "निर्धारित तिथि",
+        "stage": "चरण",
+        "amount": "उर्वरक मात्रा",
+        "master_name": "कार्य मास्टर",
+        "master_description": "विवरण",
+        "not_applicable": "लागू नहीं"
       }
     },
     "work": {
@@ -1593,6 +1622,7 @@
       "add_record": "+ कार्य दर्ज करें",
       "empty_today": "आज के लिए कोई कार्य निर्धारित नहीं",
       "empty_today_hint": "अनियोजित कार्य यहाँ से दर्ज करें",
+      "next_scheduled": "अगला निर्धारित: {{date}} — {{name}} ({{field}})",
       "recorded_today": "आज दर्ज किया गया",
       "skipped_badge": "छोड़ा गया",
       "show_skipped": "छोड़े गए दिखाएं",

@@ -1,6 +1,10 @@
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
-import { findTodayAdHocRecord, LoadWorkDayListUseCase } from './load-work-day-list.usecase';
+import {
+  findNextScheduled,
+  findTodayAdHocRecord,
+  LoadWorkDayListUseCase
+} from './load-work-day-list.usecase';
 import { PlanGateway } from './plan-gateway';
 import { LoadWorkDayListOutputPort } from './load-work-day-list.output-port';
 import { LoadWorkDayListDataDto } from './load-work-day-list.dtos';
@@ -76,7 +80,7 @@ function scheduleWithItems(items: TaskScheduleItem[]): TaskScheduleResponse {
       }
     ],
     labels: {},
-    minimap: {}
+    minimap: { start_date: '', end_date: '', weeks: [] }
   };
 }
 
@@ -382,6 +386,56 @@ describe('LoadWorkDayListUseCase', () => {
     expect(result!.recentAdHocRecord).toEqual({ name: '規格選別', actualDate: today });
   });
 
+  it('returns nextScheduled when overdue, today, and upcoming are all empty', () => {
+    const response = scheduleWithItems([
+      item({ item_id: 1, scheduled_date: '2026-06-20', name: '遠い収穫' })
+    ]);
+    let result: LoadWorkDayListDataDto | null = null;
+    const outputPort: LoadWorkDayListOutputPort = {
+      present: (dto) => {
+        result = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
+    useCase.execute({ planId: 1, today });
+
+    expect(result!.overdue).toHaveLength(0);
+    expect(result!.today).toHaveLength(0);
+    expect(result!.upcoming).toHaveLength(0);
+    expect(result!.nextScheduled?.item.item_id).toBe(1);
+    expect(result!.nextScheduled?.item.name).toBe('遠い収穫');
+  });
+
+  it('does not return nextScheduled when upcoming has items within 7 days', () => {
+    const response = scheduleWithItems([
+      item({ item_id: 1, scheduled_date: '2026-06-14', name: '今週の作業' }),
+      item({ item_id: 2, scheduled_date: '2026-06-20', name: '遠い作業' })
+    ]);
+    let result: LoadWorkDayListDataDto | null = null;
+    const outputPort: LoadWorkDayListOutputPort = {
+      present: (dto) => {
+        result = dto;
+      },
+      onError: () => {}
+    };
+
+    const useCase = new LoadWorkDayListUseCase(
+      outputPort,
+      createGateway(response),
+      createWorkRecordGateway()
+    );
+    useCase.execute({ planId: 1, today });
+
+    expect(result!.upcoming).toHaveLength(1);
+    expect(result!.nextScheduled).toBeNull();
+  });
+
   it('does not return recent ad hoc record when today has scheduled items', () => {
     const response = scheduleWithItems([
       item({ item_id: 1, scheduled_date: today, name: '防除' })
@@ -403,6 +457,65 @@ describe('LoadWorkDayListUseCase', () => {
 
     expect(result!.today).toHaveLength(1);
     expect(result!.recentAdHocRecord).toBeNull();
+  });
+});
+
+describe('findNextScheduled', () => {
+  const today = '2026-06-12';
+  const row = (
+    overrides: Partial<TaskScheduleItem> & { item_id: number; scheduled_date: string | null }
+  ) => ({
+    item: item(overrides),
+    fieldName: '第1圃場',
+    cropName: 'トマト'
+  });
+
+  it('picks the nearest future scheduled item', () => {
+    const result = findNextScheduled(
+      [
+        row({ item_id: 1, scheduled_date: '2026-06-20', name: '遠い' }),
+        row({ item_id: 2, scheduled_date: '2026-06-15', name: '近い' })
+      ],
+      today,
+      false
+    );
+
+    expect(result?.item.item_id).toBe(2);
+    expect(result?.item.name).toBe('近い');
+  });
+
+  it('returns null when only past or today-dated items exist', () => {
+    expect(
+      findNextScheduled(
+        [row({ item_id: 1, scheduled_date: '2026-06-10', name: '過去' })],
+        today,
+        false
+      )
+    ).toBeNull();
+    expect(
+      findNextScheduled(
+        [row({ item_id: 2, scheduled_date: today, name: '今日' })],
+        today,
+        false
+      )
+    ).toBeNull();
+  });
+
+  it('excludes skipped items unless includeSkipped is true', () => {
+    expect(
+      findNextScheduled(
+        [row({ item_id: 1, scheduled_date: '2026-06-15', status: 'skipped' })],
+        today,
+        false
+      )
+    ).toBeNull();
+    expect(
+      findNextScheduled(
+        [row({ item_id: 1, scheduled_date: '2026-06-15', status: 'skipped' })],
+        today,
+        true
+      )?.item.status
+    ).toBe('skipped');
   });
 });
 

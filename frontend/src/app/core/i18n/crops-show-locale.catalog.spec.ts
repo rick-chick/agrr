@@ -41,6 +41,7 @@ const CROPS_SHOW_KEYS = [
   'crops.show.blueprint_summary.edit_action',
   'crops.show.task_schedule_blueprints_description_html',
   'crops.show.task_schedule_blueprints_description_empty_html',
+  'crops.show.task_schedule_blueprints_description_from_plan_html',
   'crops.show.no_task_schedule_blueprints',
   'crops.show.gdd_trigger',
   'crops.show.stage_name',

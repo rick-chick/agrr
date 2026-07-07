@@ -37,7 +37,7 @@ describe('LoadPlanDetailUseCase', () => {
       fetchPlan: () => of(plan),
       fetchPlanData: () => of(planData),
       getPublicPlanData: () => of(planData),
-      getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: {} } as TaskScheduleResponse),
+      getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: { start_date: '', end_date: '', weeks: [] } } as TaskScheduleResponse),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)
     };
@@ -91,7 +91,7 @@ describe('LoadPlanDetailUseCase', () => {
           milestones: [],
           fields: [],
           labels: {},
-          minimap: {}
+          minimap: { start_date: '', end_date: '', weeks: [] }
         } as TaskScheduleResponse),
       regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)

@@ -57,6 +57,7 @@ struct TimelineParams {
     week_start: Option<String>,
     field_cultivation_id: Option<i64>,
     category: Option<String>,
+    scope: Option<String>,
 }
 
 struct TimelinePresenter {
@@ -130,6 +131,7 @@ async fn show_task_schedule(
                 week_start: params.week_start,
                 field_cultivation_id: params.field_cultivation_id,
                 category: params.category,
+                scope: params.scope,
             };
             Ok(Json(to_json_body(timeline, query)))
         }

@@ -1163,7 +1163,8 @@
         "daily_gdd": "Daily GDD",
         "tooltip_format": "yyyy-MM-dd",
         "required_cumulative_gdd": "Required cumulative GDD"
-      }
+      },
+      "open_task_schedule": "Open task schedule for this field"
     },
     "detail": {
       "select_cultivation_hint": "Select a cultivation bar on the chart to view climate data."
@@ -1178,9 +1179,21 @@
     },
     "task_schedules": {
       "page_title": "Task schedule — {{name}}",
+      "page_intro": "Tasks and dates are calculated from your planting plan cultivation periods. Check today's work under Work Records.",
       "empty_hint": "Add crops to your plan to generate task schedules. Use the Cropping plan tab above to review your plan.",
+      "empty_ready_no_fields": "Task schedules are ready, but there are no fields to display. Check fields and crops on the Cropping plan tab.",
+      "timeline_generated_at": "Generated: {{datetime}}",
+      "timeline_generated_unknown": "Generated: unavailable",
+      "view_mode_plan": "List",
+      "view_mode_week": "Week",
+      "nav_prev_week": "Previous week",
+      "nav_next_week": "Next week",
+      "nav_today": "This week",
+      "week_label": "{{start}} – {{end}}",
       "general_label": "General tasks",
       "fertilizer_label": "Fertilizer",
+      "fertilizer_empty": "No fertilizer tasks scheduled",
+      "unscheduled_title": "Unscheduled tasks",
       "no_schedules": "No task schedule has been generated yet.",
       "status": {
         "planned": "Planned",
@@ -1189,6 +1202,11 @@
       },
       "field_section": "{{name}} ({{crop}})",
       "field_number": "Field {{number}}",
+      "cultivation_period": "Cultivation {{start}} – {{end}}",
+      "summary": "{{fields}} fields · {{tasks}} tasks",
+      "view_all_fields": "View all fields",
+      "back_to_planting_plan": "Back to cropping plan",
+      "field_no_tasks": "No tasks scheduled in this column",
       "sync_never": "Task schedules have not been generated yet.",
       "sync_failed": "Task schedule generation failed.",
       "sync_generating": "Generating task schedules...",
@@ -1230,6 +1248,16 @@
         "plan_context_link": "Review plan fields and weather",
         "crop_stages_link": "Review growth stages for \"{{cropName}}\"",
         "generic_plan_link": "Open plan fields and crops"
+      },
+      "detail": {
+        "title": "Task details",
+        "empty": "Select a task to view details",
+        "scheduled_date": "Scheduled date",
+        "stage": "Stage",
+        "amount": "Fertilizer amount",
+        "master_name": "Task master",
+        "master_description": "Description",
+        "not_applicable": "N/A"
       }
     },
     "work": {
@@ -1251,6 +1279,7 @@
       "add_record": "+ Record work",
       "empty_today": "No tasks scheduled for today",
       "empty_today_hint": "Record unscheduled work here",
+      "next_scheduled": "Next scheduled: {{date}} — {{name}} ({{field}})",
       "recorded_today": "Recorded today",
       "skipped_badge": "Skipped",
       "show_skipped": "Show skipped",
@@ -1921,15 +1950,16 @@
       "daily_uptake_n": "Nitrogen (N) Uptake",
       "daily_uptake_p": "Phosphorus (P) Uptake",
       "daily_uptake_k": "Potassium (K) Uptake",
-      "task_schedule_blueprints_title": "Task Plan",
+      "task_schedule_blueprints_title": "Task Schedule Templates",
       "blueprint_summary": {
         "count": "{{count}} task plan(s)",
         "setup_required": "Growth stages or task plans are not fully configured yet.",
         "edit_action": "Edit task plans"
       },
       "task_schedule_blueprints_step_label": "STEP 2",
-      "task_schedule_blueprints_description_html": "These tasks were suggested by the AI. Review them here and adjust cumulative temperature (GDD) and linked tasks on this screen when needed. When you create a cultivation plan, work schedules are generated automatically from this task plan.",
-      "task_schedule_blueprints_description_empty_html": "Use the form below to register tasks and cumulative temperature (GDD) for each growth stage. When you create a cultivation plan, work schedules are generated automatically from this task plan.",
+      "task_schedule_blueprints_description_html": "Task schedule templates for this crop. Review AI-suggested tasks and adjust cumulative temperature (GDD) and linked tasks when needed. When you create a cultivation plan, work schedules for the plan are generated automatically from these templates.",
+      "task_schedule_blueprints_description_empty_html": "Use the form below to register tasks and cumulative temperature (GDD) for each growth stage as templates. When you create a cultivation plan, work schedules for the plan are generated automatically from these templates.",
+      "task_schedule_blueprints_description_from_plan_html": "Work schedules for this plan have already been generated. Edit these templates to adjust work schedules when you create or regenerate plans in the future.",
       "task_schedule_blueprints_axis_gdd_total": "Cumulative GDD (Total {{total}})",
       "task_schedule_blueprints_order_tooltip": "Order {{order}}",
       "no_task_schedule_blueprints": "No task plans yet. Add them one by one using the form below.",

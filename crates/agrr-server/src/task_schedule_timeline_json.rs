@@ -28,6 +28,7 @@ pub struct TaskScheduleQuery {
     pub week_start: Option<String>,
     pub field_cultivation_id: Option<i64>,
     pub category: Option<String>,
+    pub scope: Option<String>,
 }
 
 struct TimelineJsonPresenter {
@@ -129,6 +130,13 @@ impl TimelineJsonPresenter {
         }
     }
 
+    fn is_plan_scope(&self) -> bool {
+        match self.query.scope.as_deref() {
+            None | Some("plan") => true,
+            _ => false,
+        }
+    }
+
     fn serialize_field(&self, field: &TaskScheduleTimelineFieldRead) -> Option<Value> {
         let mut categorized: Map<String, Value> = Map::new();
         categorized.insert(CATEGORY_GENERAL.to_string(), json!([]));
@@ -153,6 +161,18 @@ impl TimelineJsonPresenter {
                         .as_array_mut()
                         .unwrap()
                         .push(serialized);
+                } else if self.is_plan_scope() {
+                    let bucket = if category == CATEGORY_FERTILIZER {
+                        CATEGORY_FERTILIZER
+                    } else {
+                        CATEGORY_GENERAL
+                    };
+                    categorized
+                        .get_mut(bucket)
+                        .unwrap()
+                        .as_array_mut()
+                        .unwrap()
+                        .push(serialized);
                 } else if self.week_range().contains(&scheduled_date.unwrap()) {
                     let bucket = if category == CATEGORY_FERTILIZER {
                         CATEGORY_FERTILIZER
@@ -169,7 +189,8 @@ impl TimelineJsonPresenter {
             }
         }
 
-        if categorized.values().all(|v| v.as_array().map(|a| a.is_empty()).unwrap_or(true))
+        if !self.is_plan_scope()
+            && categorized.values().all(|v| v.as_array().map(|a| a.is_empty()).unwrap_or(true))
             && !field.schedules.is_empty()
         {
             return None;
@@ -188,6 +209,8 @@ impl TimelineJsonPresenter {
             "area_sqm": field.area_sqm,
             "field_cultivation_id": field.field_cultivation_id,
             "crop_id": field.crop_id,
+            "cultivation_start_date": field.cultivation_start_date.map(|d| d.to_string()),
+            "cultivation_end_date": field.cultivation_end_date.map(|d| d.to_string()),
             "task_options": task_options,
         });
         if let Some(obj) = field_info.as_object_mut() {
@@ -476,6 +499,60 @@ mod tests {
     };
     use time::{Date, Month};
 
+    fn sample_field(
+        schedules: Vec<TaskScheduleTimelineScheduleRead>,
+        cultivation_start: Option<Date>,
+        cultivation_end: Option<Date>,
+    ) -> TaskScheduleTimelineFieldRead {
+        TaskScheduleTimelineFieldRead {
+            id: 10,
+            name: "F1".into(),
+            crop_name: "Tomato".into(),
+            area_sqm: 50.0,
+            field_cultivation_id: 10,
+            crop_id: 42,
+            cultivation_start_date: cultivation_start,
+            cultivation_end_date: cultivation_end,
+            task_options: vec![],
+            schedules,
+        }
+    }
+
+    fn sample_scheduled_item(scheduled_date: &str) -> TaskScheduleTimelineScheduleItemRead {
+        TaskScheduleTimelineScheduleItemRead {
+            id: 1001,
+            name: "Weed".into(),
+            task_type: "field_work".into(),
+            scheduled_date: Some(scheduled_date.into()),
+            stage_name: None,
+            stage_order: None,
+            gdd_trigger: None,
+            gdd_tolerance: None,
+            priority: None,
+            source: "agrr".into(),
+            weather_dependency: None,
+            time_per_sqm: None,
+            amount: None,
+            amount_unit: None,
+            status: "planned".into(),
+            agricultural_task_id: Some(501),
+            field_cultivation_id: 10,
+            agricultural_task: None,
+            rescheduled_at: None,
+            cancelled_at: None,
+            completed: false,
+            work_records: vec![],
+        }
+    }
+
+    fn default_query() -> TaskScheduleQuery {
+        TaskScheduleQuery {
+            week_start: None,
+            field_cultivation_id: None,
+            category: None,
+            scope: None,
+        }
+    }
     fn sample_plan() -> TaskScheduleTimelinePlanRead {
         TaskScheduleTimelinePlanRead {
             id: 1,
@@ -499,27 +576,11 @@ mod tests {
         let today = Date::from_calendar_date(2026, Month::July, 4).expect("date");
         let timeline = TaskScheduleTimeline {
             plan: sample_plan(),
-            fields: vec![TaskScheduleTimelineFieldRead {
-                id: 10,
-                name: "F1".into(),
-                crop_name: "Tomato".into(),
-                area_sqm: 50.0,
-                field_cultivation_id: 10,
-                crop_id: 42,
-                task_options: vec![],
-                schedules: vec![],
-            }],
+            fields: vec![sample_field(vec![], None, None)],
             scheduled_dates: vec![],
             today,
         };
-        let body = to_json_body(
-            timeline,
-            TaskScheduleQuery {
-                week_start: None,
-                field_cultivation_id: None,
-                category: None,
-            },
-        );
+        let body = to_json_body(timeline, default_query());
         let fields = body["fields"].as_array().expect("fields");
         assert_eq!(1, fields.len());
         assert_eq!(42, fields[0]["crop_id"].as_i64().unwrap());
@@ -586,42 +647,14 @@ mod tests {
         let today = Date::from_calendar_date(2026, Month::July, 5).expect("date");
         let timeline = TaskScheduleTimeline {
             plan: sample_plan(),
-            fields: vec![TaskScheduleTimelineFieldRead {
-                id: 10,
-                name: "F1".into(),
-                crop_name: "Tomato".into(),
-                area_sqm: 50.0,
-                field_cultivation_id: 10,
-                crop_id: 42,
-                task_options: vec![],
-                schedules: vec![TaskScheduleTimelineScheduleRead {
+            fields: vec![sample_field(
+                vec![TaskScheduleTimelineScheduleRead {
                     category: "general".into(),
-                    items: vec![TaskScheduleTimelineScheduleItemRead {
-                        id: 1001,
-                        name: "Weed".into(),
-                        task_type: "field_work".into(),
-                        scheduled_date: Some("2026-07-05".into()),
-                        stage_name: None,
-                        stage_order: None,
-                        gdd_trigger: None,
-                        gdd_tolerance: None,
-                        priority: None,
-                        source: "agrr".into(),
-                        weather_dependency: None,
-                        time_per_sqm: None,
-                        amount: None,
-                        amount_unit: None,
-                        status: "planned".into(),
-                        agricultural_task_id: Some(501),
-                        field_cultivation_id: 10,
-                        agricultural_task: None,
-                        rescheduled_at: None,
-                        cancelled_at: None,
-                        completed: false,
-                        work_records: vec![],
-                    }],
+                    items: vec![sample_scheduled_item("2026-07-05")],
                 }],
-            }],
+                None,
+                None,
+            )],
             scheduled_dates: vec![today],
             today,
         };
@@ -631,6 +664,7 @@ mod tests {
                 week_start: Some("2026-07-05".into()),
                 field_cultivation_id: None,
                 category: None,
+                scope: Some("week".into()),
             },
         );
         let fields = body["fields"].as_array().expect("fields");
@@ -640,5 +674,70 @@ mod tests {
             .expect("general");
         assert_eq!(1, general.len());
         assert_eq!(1001, general[0]["item_id"].as_i64().unwrap());
+    }
+
+    #[test]
+    fn plan_scope_includes_out_of_week_dated_items() {
+        let today = Date::from_calendar_date(2026, Month::July, 5).expect("date");
+        let timeline = TaskScheduleTimeline {
+            plan: sample_plan(),
+            fields: vec![sample_field(
+                vec![TaskScheduleTimelineScheduleRead {
+                    category: "general".into(),
+                    items: vec![sample_scheduled_item("2026-06-01")],
+                }],
+                Some(Date::from_calendar_date(2026, Month::May, 1).expect("date")),
+                Some(Date::from_calendar_date(2026, Month::September, 30).expect("date")),
+            )],
+            scheduled_dates: vec![Date::from_calendar_date(2026, Month::June, 1).expect("date")],
+            today,
+        };
+        let body = to_json_body(
+            timeline,
+            TaskScheduleQuery {
+                week_start: Some("2026-07-05".into()),
+                field_cultivation_id: None,
+                category: None,
+                scope: Some("plan".into()),
+            },
+        );
+        let fields = body["fields"].as_array().expect("fields");
+        assert_eq!(1, fields.len());
+        assert_eq!("2026-05-01", fields[0]["cultivation_start_date"].as_str().unwrap());
+        assert_eq!("2026-09-30", fields[0]["cultivation_end_date"].as_str().unwrap());
+        let general = fields[0]["schedules"]["general"]
+            .as_array()
+            .expect("general");
+        assert_eq!(1, general.len(), "plan scope should include out-of-week item");
+        assert_eq!(1001, general[0]["item_id"].as_i64().unwrap());
+    }
+
+    #[test]
+    fn week_scope_hides_field_with_only_out_of_week_schedules() {
+        let today = Date::from_calendar_date(2026, Month::July, 5).expect("date");
+        let timeline = TaskScheduleTimeline {
+            plan: sample_plan(),
+            fields: vec![sample_field(
+                vec![TaskScheduleTimelineScheduleRead {
+                    category: "general".into(),
+                    items: vec![sample_scheduled_item("2026-06-01")],
+                }],
+                None,
+                None,
+            )],
+            scheduled_dates: vec![Date::from_calendar_date(2026, Month::June, 1).expect("date")],
+            today,
+        };
+        let body = to_json_body(
+            timeline,
+            TaskScheduleQuery {
+                week_start: Some("2026-07-05".into()),
+                field_cultivation_id: None,
+                category: None,
+                scope: Some("week".into()),
+            },
+        );
+        let fields = body["fields"].as_array().expect("fields");
+        assert!(fields.is_empty(), "week scope should hide field with only out-of-week schedules");
     }
 }

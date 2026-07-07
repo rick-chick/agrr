@@ -105,6 +105,7 @@ export class PlanWorkPresenter
       today: dto.today,
       upcoming: dto.upcoming,
       recentAdHocRecord: dto.recentAdHocRecord,
+      nextScheduled: dto.nextScheduled,
       regenerating: false,
       regenerateError: null,
       pendingSyncToastKey: null,
@@ -145,6 +146,7 @@ export class PlanWorkPresenter
       overdue: [],
       today: [],
       upcoming: [],
+      nextScheduled: null,
       regenerating: false,
       regenerateError: null
     };

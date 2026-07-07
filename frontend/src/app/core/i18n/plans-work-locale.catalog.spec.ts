@@ -24,6 +24,7 @@ const PLANS_WORK_KEYS = [
   'plans.work.section.upcoming',
   'plans.work.empty_today',
   'plans.work.empty_today_hint',
+  'plans.work.next_scheduled',
   'plans.work.add_record',
   'plans.work.recorded_today',
   'plans.work.skipped_badge',

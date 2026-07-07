@@ -474,15 +474,16 @@
       "daily_uptake_n": "窒素 (N) 吸収量",
       "daily_uptake_p": "リン (P) 吸収量",
       "daily_uptake_k": "カリウム (K) 吸収量",
-      "task_schedule_blueprints_title": "作業予定",
+      "task_schedule_blueprints_title": "作業予定テンプレート",
       "blueprint_summary": {
         "count": "{{count}}件の作業予定",
         "setup_required": "生育ステージまたは作業予定の設定が未完了です。",
         "edit_action": "作業予定を編集"
       },
       "task_schedule_blueprints_step_label": "STEP 2",
-      "task_schedule_blueprints_description_html": "AIが提案した作業予定です。内容を確認し、必要があればこの画面で積算温度や関連作業を調整してください。栽培計画を作成すると、この作業予定をもとに作業スケジュールが自動で作られます。",
-      "task_schedule_blueprints_description_empty_html": "下のフォームから、生育ステージごとの作業と積算温度を登録してください。栽培計画を作成すると、この作業予定をもとに作業スケジュールが自動で作られます。",
+      "task_schedule_blueprints_description_html": "作物ごとの作業予定テンプレートです。AIが提案した内容を確認し、必要があれば積算温度や関連作業を調整してください。栽培計画を作成すると、このテンプレートをもとに計画の作業スケジュールが自動で作られます。",
+      "task_schedule_blueprints_description_empty_html": "下のフォームから、生育ステージごとの作業と積算温度をテンプレートとして登録してください。栽培計画を作成すると、このテンプレートをもとに計画の作業スケジュールが自動で作られます。",
+      "task_schedule_blueprints_description_from_plan_html": "この計画の作業スケジュールはすでに生成されています。ここでテンプレートを編集すると、今後の計画作成や再生成時の作業スケジュールに反映されます。",
       "task_schedule_blueprints_axis_gdd_total": "GDD累積量（総計 {{total}}）",
       "task_schedule_blueprints_order_tooltip": "順番 {{order}}",
       "no_task_schedule_blueprints": "作業予定はまだありません。下のフォームから1件ずつ追加してください。",
@@ -2019,7 +2020,8 @@
         "daily_gdd": "日別積算温度",
         "tooltip_format": "yyyy/MM/dd",
         "required_cumulative_gdd": "必要積算温度"
-      }
+      },
+      "open_task_schedule": "この圃場の作業予定を見る"
     },
     "detail": {
       "select_cultivation_hint": "ガントチャートの栽培バーを選択すると、気候データが表示されます。"
@@ -2178,13 +2180,21 @@
     },
     "task_schedules": {
       "page_title": "{{name}}の作業予定表",
+      "page_intro": "作付け計画の栽培期間をもとに、作業と実施日を自動計算しています。今日やる作業は「作業記録」から確認できます。",
       "empty_hint": "作物を追加すると作業予定が生成されます。上の「作付け計画」タブで計画の内容を確認してください。",
+      "empty_ready_no_fields": "作業予定の生成は完了していますが、表示する圃場がありません。「作付け計画」タブで圃場と作物を確認してください。",
       "timeline_generated_at": "生成日時: {{datetime}}",
       "timeline_generated_unknown": "生成日時: 未取得",
       "nav_prev_week": "前の週",
       "nav_next_week": "次の週",
       "nav_today": "今週",
       "week_label": "{{start}} 〜 {{end}}",
+      "view_mode_plan": "一覧",
+      "view_mode_week": "週",
+      "general_label": "一般作業",
+      "fertilizer_label": "施肥",
+      "fertilizer_empty": "施肥予定はありません",
+      "unscheduled_title": "未確定の作業",
       "no_schedules": "作業予定がまだ生成されていません。",
       "status": {
         "planned": "予定",
@@ -2193,6 +2203,11 @@
       },
       "field_section": "{{name}}（{{crop}}）",
       "field_number": "圃場 {{number}}",
+      "cultivation_period": "栽培期間 {{start}} 〜 {{end}}",
+      "summary": "{{fields}} 圃場 · {{tasks}} 件の作業",
+      "view_all_fields": "すべての圃場を表示",
+      "back_to_planting_plan": "作付け計画に戻る",
+      "field_no_tasks": "この列に予定された作業はありません",
       "sync_never": "作業予定がまだ生成されていません。",
       "sync_failed": "作業予定の生成に失敗しました。",
       "sync_generating": "作業予定を生成しています...",
@@ -2235,71 +2250,15 @@
         "crop_stages_link": "「{{cropName}}」の生育ステージを確認する",
         "generic_plan_link": "計画のほ場・作物を確認する"
       },
-      "plan_level_field": "計画全体",
-      "field_header": {
-        "crop_area": "{{crop}} / {{area}}㎡"
-      },
-      "general_label": "一般作業",
-      "fertilizer_label": "施肥",
-      "unscheduled_title": "未確定の作業",
-      "empty_cell": "予定なし",
-      "loading": "読み込み中...",
-      "fetch_error": "作業予定の取得に失敗しました。時間をおいて再度お試しください。",
-      "generated_label": "生成日時",
-      "add_task": "予定追加",
       "detail": {
         "title": "作業詳細",
         "empty": "タスクを選択すると詳細が表示されます",
         "scheduled_date": "予定日",
         "stage": "ステージ",
-        "priority_high": "高",
-        "priority_medium": "中",
-        "priority_low": "低",
-        "priority_unknown": "未設定",
-        "time_per_sqm": "作業時間 (h/㎡)",
         "amount": "施肥量",
-        "amount_unit": "g/㎡",
         "master_name": "作業マスタ",
         "master_description": "作業説明",
-        "required_tools": "必要な工具",
-        "skill_level_labels": {
-          "beginner": "初級",
-          "intermediate": "中級",
-          "advanced": "上級"
-        },
-        "not_applicable": "該当なし",
-        "statuses": {
-          "completed": "完了",
-          "delayed": "遅延",
-          "adjusted": "調整済み"
-        },
-        "actions": {
-          "reschedule": "日付を変更",
-          "reschedule_label": "新しい日付",
-          "updated": "予定を更新しました",
-          "update_failed": "更新に失敗しました",
-          "date_required": "日付を入力してください",
-          "submit": "保存",
-          "cancel_form": "閉じる",
-          "complete": "実績を登録",
-          "completed": "実績を登録しました",
-          "complete_failed": "登録に失敗しました",
-          "actual_date": "実施日",
-          "notes": "メモ",
-          "notes_placeholder": "記録したい内容があれば入力してください",
-          "confirm_cancel": "この予定をキャンセルしますか？",
-          "cancel": "予定をキャンセル",
-          "cancel_failed": "キャンセルに失敗しました",
-          "task_name": "作業名",
-          "task_name_placeholder": "例: 温室換気",
-          "crop": "作物",
-          "crop_required": "作物を選択してください",
-          "category": "カテゴリ",
-          "scheduled_date": "予定日",
-          "name_required": "作業名を入力してください",
-          "created": "予定を追加しました",
-          "create_failed": "追加に失敗しました"
-        }
+        "not_applicable": "該当なし"
       }
     },
     "work": {
@@ -2321,6 +2280,7 @@
       "add_record": "+ 作業を記録",
       "empty_today": "今日の予定はありません",
       "empty_today_hint": "予定外の作業はここから記録できます",
+      "next_scheduled": "次の予定: {{date}} — {{name}}（{{field}}）",
       "recorded_today": "実績登録済",
       "skipped_badge": "スキップ",
       "show_skipped": "スキップ済みを表示",

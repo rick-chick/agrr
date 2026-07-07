@@ -5,12 +5,21 @@ import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
+export interface TaskScheduleQueryOptions {
+  scope?: 'plan' | 'week';
+  weekStart?: string;
+  fieldCultivationId?: number;
+}
+
 export interface PlanGateway {
   listPlans(): Observable<PlanSummary[]>;
   fetchPlan(planId: number): Observable<PlanSummary>;
   fetchPlanData(planId: number): Observable<CultivationPlanData>;
   getPublicPlanData(planId: number): Observable<CultivationPlanData>;
-  getTaskSchedule(planId: number): Observable<TaskScheduleResponse>;
+  getTaskSchedule(
+    planId: number,
+    options?: TaskScheduleQueryOptions
+  ): Observable<TaskScheduleResponse>;
   regenerateTaskSchedule(planId: number): Observable<void>;
   deletePlan(planId: number): Observable<DeletionUndoResponse>;
 }

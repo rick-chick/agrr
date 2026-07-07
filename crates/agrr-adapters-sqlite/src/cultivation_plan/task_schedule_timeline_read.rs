@@ -130,6 +130,8 @@ struct FieldContext {
     crop_name: String,
     area_sqm: f64,
     crop_id: i64,
+    start_date: Option<Date>,
+    completion_date: Option<Date>,
 }
 
 fn load_field_contexts(
@@ -138,7 +140,8 @@ fn load_field_contexts(
 ) -> rusqlite::Result<Vec<FieldContext>> {
     let mut stmt = conn.prepare(
         "SELECT DISTINCT fc.id, COALESCE(cpf.name, ''), \
-         COALESCE(cpc.name, cr.name, ''), COALESCE(fc.area, 0), COALESCE(cpc.crop_id, 0) \
+         COALESCE(cpc.name, cr.name, ''), COALESCE(fc.area, 0), COALESCE(cpc.crop_id, 0), \
+         fc.start_date, fc.completion_date \
          FROM field_cultivations fc \
          LEFT JOIN cultivation_plan_fields cpf ON cpf.id = fc.cultivation_plan_field_id \
          LEFT JOIN cultivation_plan_crops cpc ON cpc.id = fc.cultivation_plan_crop_id \
@@ -153,6 +156,8 @@ fn load_field_contexts(
             crop_name: row.get(2)?,
             area_sqm: row.get(3)?,
             crop_id: row.get::<_, i64>(4)?,
+            start_date: parse_date_opt(row.get::<_, Option<String>>(5)?.as_deref()),
+            completion_date: parse_date_opt(row.get::<_, Option<String>>(6)?.as_deref()),
         })
     })?;
     rows.collect()
@@ -356,6 +361,8 @@ fn merge_fields(
             area_sqm: ctx.area_sqm,
             field_cultivation_id: ctx.field_cultivation_id,
             crop_id: ctx.crop_id,
+            cultivation_start_date: ctx.start_date,
+            cultivation_end_date: ctx.completion_date,
             task_options: vec![],
             schedules: schedules_by_fc
                 .remove(&ctx.field_cultivation_id)
@@ -408,7 +415,8 @@ CREATE TABLE cultivation_plan_crops (
 CREATE TABLE crops (id INTEGER PRIMARY KEY, name TEXT);
 CREATE TABLE field_cultivations (
   id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER,
-  cultivation_plan_field_id INTEGER, cultivation_plan_crop_id INTEGER, area REAL
+  cultivation_plan_field_id INTEGER, cultivation_plan_crop_id INTEGER, area REAL,
+  start_date TEXT, completion_date TEXT
 );
 CREATE TABLE agricultural_tasks (
   id INTEGER PRIMARY KEY, user_id INTEGER, is_reference INTEGER NOT NULL DEFAULT 0,
@@ -468,8 +476,8 @@ CREATE TABLE work_records (
                 [],
             )?;
             conn.execute(
-                "INSERT INTO field_cultivations (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area)
-                 VALUES (100, 1, 10, 20, 50.0)",
+                "INSERT INTO field_cultivations (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, start_date, completion_date)
+                 VALUES (100, 1, 10, 20, 50.0, '2026-05-01', '2026-09-30')",
                 [],
             )?;
             conn.execute(
@@ -510,6 +518,14 @@ CREATE TABLE work_records (
         let field = snapshot.fields.first().expect("field");
         assert_eq!(field.field_cultivation_id, 100);
         assert_eq!(field.crop_id, 42);
+        assert_eq!(
+            field.cultivation_start_date,
+            Some(Date::parse("2026-05-01", &Iso8601::DATE).expect("date"))
+        );
+        assert_eq!(
+            field.cultivation_end_date,
+            Some(Date::parse("2026-09-30", &Iso8601::DATE).expect("date"))
+        );
         assert_eq!(field.task_options.len(), 1);
         assert_eq!(field.task_options[0].agricultural_task_id, 501);
         assert_eq!(field.task_options[0].name, "Weeding");

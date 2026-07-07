@@ -98,6 +98,35 @@ function groupWorkDayListRows(
   return { overdue, today: todayRows, upcoming };
 }
 
+export function findNextScheduled(
+  rows: WorkDayListRowInput[],
+  today: string,
+  includeSkipped: boolean
+): WorkDayListRowDto | null {
+  let nearest: WorkDayListRowInput | null = null;
+  let nearestDate: string | null = null;
+
+  for (const row of rows) {
+    const { item } = row;
+    if (item.completed) {
+      continue;
+    }
+    if (item.status === 'skipped' && !includeSkipped) {
+      continue;
+    }
+    const scheduled = item.scheduled_date;
+    if (!scheduled || scheduled <= today) {
+      continue;
+    }
+    if (nearestDate == null || scheduled < nearestDate) {
+      nearest = row;
+      nearestDate = scheduled;
+    }
+  }
+
+  return nearest ? withRecordedToday(nearest, today) : null;
+}
+
 export function findTodayAdHocRecord(
   records: WorkRecord[],
   today: string
@@ -121,7 +150,7 @@ export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
 
   execute(dto: LoadWorkDayListInputDto): void {
     forkJoin({
-      schedule: this.planGateway.getTaskSchedule(dto.planId),
+      schedule: this.planGateway.getTaskSchedule(dto.planId, { scope: 'plan' }),
       records: this.workRecordGateway.listWorkRecords(dto.planId)
     }).subscribe({
       next: ({ schedule, records }) => {
@@ -131,11 +160,19 @@ export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
           grouped.today.length === 0
             ? findTodayAdHocRecord(records.work_records, dto.today)
             : null;
+        const listsEmpty =
+          grouped.overdue.length === 0 &&
+          grouped.today.length === 0 &&
+          grouped.upcoming.length === 0;
+        const nextScheduled = listsEmpty
+          ? findNextScheduled(rows, dto.today, dto.includeSkipped ?? false)
+          : null;
         this.outputPort.present({
           plan: schedule.plan,
           fields: schedule.fields,
           ...grouped,
-          recentAdHocRecord
+          recentAdHocRecord,
+          nextScheduled
         });
       },
       error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })

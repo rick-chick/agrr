@@ -27,7 +27,7 @@ const loadedSchedule: TaskScheduleResponse = {
   milestones: [],
   fields: [],
   labels: {},
-  minimap: {}
+  minimap: { start_date: '', end_date: '', weeks: [] }
 };
 
 function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): PlanTaskScheduleView {

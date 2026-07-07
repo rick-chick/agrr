@@ -32,6 +32,8 @@ pub struct TaskScheduleTimelineFieldRead {
     pub area_sqm: f64,
     pub field_cultivation_id: i64,
     pub crop_id: i64,
+    pub cultivation_start_date: Option<Date>,
+    pub cultivation_end_date: Option<Date>,
     pub task_options: Vec<TaskScheduleTimelineTaskOptionRead>,
     pub schedules: Vec<TaskScheduleTimelineScheduleRead>,
 }

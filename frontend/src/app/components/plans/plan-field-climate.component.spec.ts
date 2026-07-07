@@ -1,5 +1,6 @@
 import { SimpleChange, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
@@ -187,7 +188,7 @@ describe('PlanFieldClimateComponent (template)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PlanFieldClimateComponent, TranslateModule.forRoot()],
-      providers: [...PLAN_FIELD_CLIMATE_API_PROVIDERS]
+      providers: [...PLAN_FIELD_CLIMATE_API_PROVIDERS, provideRouter([])]
     })
       .overrideComponent(PlanFieldClimateComponent, { set: { providers: [] } })
       .compileComponents();
@@ -217,5 +218,27 @@ describe('PlanFieldClimateComponent (template)', () => {
 
     const charts = (fixture.nativeElement as HTMLElement).querySelector('.plan-field-climate__charts');
     expect(charts?.classList.contains('plan-field-climate__charts--tab-gdd')).toBe(true);
+  });
+
+  it('renders task schedule link when planId and fieldCultivationId are set', async () => {
+    component.planId = 7;
+    component.fieldCultivationId = 42;
+    component.control = { loading: false, error: null, climateData: sampleData };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const link = fixture.nativeElement.querySelector('.plan-field-climate__task-schedule-link');
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toContain('/plans/7/task_schedule');
+    expect(link.getAttribute('href')).toContain('field_cultivation_id=42');
+  });
+
+  it('does not render task schedule link without planId', () => {
+    component.planId = null;
+    component.fieldCultivationId = 42;
+    component.control = { loading: false, error: null, climateData: sampleData };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-field-climate__task-schedule-link')).toBeNull();
   });
 });

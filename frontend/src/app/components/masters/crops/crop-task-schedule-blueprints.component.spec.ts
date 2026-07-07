@@ -200,6 +200,39 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(fixture.nativeElement.querySelector('a[href="/crops/3"]')).toBeTruthy();
   });
 
+  it('uses from-plan description when fromPlan query param is set', async () => {
+    const fromPlanDescription =
+      'Task schedules for this plan are already generated. Edit these templates to adjust future schedules.';
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            task_schedule_blueprints_description_from_plan_html: fromPlanDescription,
+            task_schedule_blueprints_description_html: 'Default with blueprints',
+            task_schedule_blueprints_description_empty_html: 'Default empty'
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+      key === 'fromPlan' ? '7' : null
+    );
+
+    fixture.detectChanges();
+    component.control = { ...readyState, fromPlanId: 7 };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const description = fixture.nativeElement.querySelector('.section-card__description');
+    expect(description?.textContent).toContain('already generated');
+    expect(description?.textContent).not.toContain('Default with blueprints');
+  });
+
   it('shows return-to-plan link when fromPlan query param is set', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(

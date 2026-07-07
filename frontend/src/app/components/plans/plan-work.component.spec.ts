@@ -26,6 +26,7 @@ const initialControl: PlanWorkViewState = {
   upcoming: [],
   includeSkipped: false,
   recentAdHocRecord: null,
+  nextScheduled: null,
   highlightedItemId: null,
   completingItemId: null,
   regenerating: false,
@@ -91,6 +92,7 @@ const loadedState: PlanWorkViewState = {
   upcoming: [],
   includeSkipped: false,
   recentAdHocRecord: null,
+  nextScheduled: null,
   highlightedItemId: null,
   completingItemId: null,
   regenerating: false,
@@ -324,6 +326,37 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fabBtn?.classList.contains('btn-primary')).toBe(true);
     expect(fabBtn?.classList.contains('plan-work__cta--constrained')).toBe(true);
     expect(fixture.nativeElement.querySelector('.plan-work__empty-cta')).toBeNull();
+  });
+
+  it('shows next scheduled hint in empty today state', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.next_scheduled': '次の予定: {{date}} — {{name}}（{{field}}）',
+        'plans.work.empty_today': '今日の作業はありません',
+        'plans.work.empty_today_hint': '予定外の作業は下のボタンから記録できます',
+        'plans.work.add_record': '+ 実績を登録'
+      },
+      true
+    );
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [],
+      upcoming: [],
+      nextScheduled: mockRow({
+        item_id: 20,
+        name: '追肥',
+        scheduled_date: '2026-07-01'
+      })
+    };
+    fixture.detectChanges();
+
+    const hint = fixture.nativeElement.querySelector('.plan-work__empty-hint');
+    expect(hint?.textContent).toContain('追肥');
+    expect(hint?.textContent).toContain('次の予定');
+    expect(hint?.textContent).not.toContain('予定外の作業');
   });
 
   it('embeds add-record in empty state and hides footer when today has no tasks', () => {

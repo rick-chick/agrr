@@ -25,4 +25,5 @@ export interface LoadWorkDayListDataDto {
   today: WorkDayListRowDto[];
   upcoming: WorkDayListRowDto[];
   recentAdHocRecord: RecentAdHocRecordDto | null;
+  nextScheduled: WorkDayListRowDto | null;
 }

@@ -20,7 +20,7 @@ import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-ta
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
-import { buildCropBannerContext, mergeCropBannerContext } from '../../adapters/plans/task-schedule-sync-presenter.helpers';
+import { mergeCropBannerContext } from '../../adapters/plans/task-schedule-sync-presenter.helpers';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -32,6 +32,7 @@ const initialControl: PlanWorkViewState = {
   upcoming: [],
   includeSkipped: false,
   recentAdHocRecord: null,
+  nextScheduled: null,
   highlightedItemId: null,
   completingItemId: null,
   regenerating: false,
@@ -143,7 +144,19 @@ const initialControl: PlanWorkViewState = {
             } @else {
               <div class="plan-work__empty">
                 <p class="plan-work__empty-message">{{ 'plans.work.empty_today' | translate }}</p>
-                <p class="plan-work__empty-hint">{{ 'plans.work.empty_today_hint' | translate }}</p>
+                @if (control.nextScheduled) {
+                  <p class="plan-work__empty-hint">{{
+                    'plans.work.next_scheduled'
+                      | translate
+                        : {
+                            name: control.nextScheduled.item.name,
+                            date: displayDate(control.nextScheduled.item.scheduled_date!),
+                            field: control.nextScheduled.fieldName
+                          }
+                  }}</p>
+                } @else {
+                  <p class="plan-work__empty-hint">{{ 'plans.work.empty_today_hint' | translate }}</p>
+                }
                 <button
                   type="button"
                   class="btn-primary plan-work__empty-cta plan-work__cta--constrained"

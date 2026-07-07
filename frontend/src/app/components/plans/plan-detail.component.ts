@@ -47,7 +47,11 @@ const initialControl: PlanDetailViewState = {
       } @else if (control.plan) {
         @if (control.planData) {
           <div class="plan-detail__body plan-detail-surface">
-            <app-plan-gantt-climate-shell [data]="control.planData" [planType]="planType" />
+            <app-plan-gantt-climate-shell
+              [data]="control.planData"
+              [planType]="planType"
+              [planId]="planId"
+            />
           </div>
         }
       }
