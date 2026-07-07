@@ -278,8 +278,8 @@ describe('CropStagesComponent', () => {
             required_gdd: '必要GDD',
             sunshine_requirement: '日照',
             nutrient_requirement: '栄養',
-            stage_cumulative_gdd_range: '定植から {{start}}〜{{end}} ℃·日',
-            stage_cumulative_gdd_missing: '必要積算温度を入力すると、定植からの累積範囲が表示されます'
+            stage_cumulative_gdd_range: '{{start}}〜{{end}} ℃·日（累積）',
+            stage_cumulative_gdd_missing: '必要積算温度を入力すると表示されます'
           }
         },
         common: {
@@ -317,6 +317,6 @@ describe('CropStagesComponent', () => {
 
     const cumulativeGdd = fixture.nativeElement.querySelector('.crop-stage-cumulative-gdd');
     expect(cumulativeGdd).toBeTruthy();
-    expect(cumulativeGdd.textContent).toContain('定植から 0〜200');
+    expect(cumulativeGdd.textContent).toContain('0〜200');
   });
 });

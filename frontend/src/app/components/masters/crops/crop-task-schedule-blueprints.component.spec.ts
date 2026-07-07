@@ -396,7 +396,8 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     const segment = fixture.nativeElement.querySelector('.blueprint-gdd-axis__segment');
     expect(segment).toBeTruthy();
     expect(segment.textContent).toMatch(/Vegetative/i);
-    expect(segment.textContent).toMatch(/from planting/i);
+    expect(segment.textContent).toMatch(/0.?500/i);
+    expect(segment.textContent).toMatch(/℃·day/i);
   });
 
   it('renders GDD intro copy when crop has growth stages', async () => {

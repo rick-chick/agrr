@@ -215,9 +215,6 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                       | translate: { total: gddAxisTotalGdd(control.cumulativeGddTimelineSegments) }
                   "
                 >
-                  <p class="blueprint-gdd-axis__hint">
-                    {{ 'crops.show.task_schedule_blueprints_gdd_axis_hint' | translate }}
-                  </p>
                   <div class="blueprint-gdd-axis__bar">
                     @for (segment of control.cumulativeGddTimelineSegments; track segment.stageOrder) {
                       <div
@@ -404,7 +401,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                       [id]="'gdd-error-' + blueprint.id"
                       role="alert"
                     >
-                      {{ gddValidationMessage(gddError, blueprint.stage_order, blueprint.stage_name) }}
+                      {{ gddValidationMessage(gddError, blueprint.stage_order) }}
                     </span>
                   }
                 </label>
@@ -523,8 +520,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                       {{
                         gddValidationMessage(
                           createGddError,
-                          control.selectedBlueprintStageOrder,
-                          control.blueprintStageNameForCreate
+                          control.selectedBlueprintStageOrder
                         )
                       }}
                     </span>
@@ -684,13 +680,11 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
 
   gddValidationMessage(
     error: BlueprintGddValidationError,
-    stageOrder: number | null,
-    stageName: string | null
+    stageOrder: number | null
   ): string {
     const stages = this.control.crop?.crop_stages ?? [];
     const range =
       stageOrder == null ? null : stageCumulativeGddRange(stages, stageOrder);
-    const resolvedStageName = stageName ?? '';
     switch (error) {
       case 'missing_stage':
         return this.translate.instant('crops.show.blueprint_gdd_errors.missing_stage');
@@ -698,7 +692,6 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
         return this.translate.instant('crops.show.blueprint_gdd_errors.stage_gdd_missing');
       case 'out_of_range':
         return this.translate.instant('crops.show.blueprint_gdd_errors.out_of_range', {
-          stageName: resolvedStageName,
           start: range?.cumulativeGddStart ?? 0,
           end: range?.cumulativeGddEnd ?? 0
         });

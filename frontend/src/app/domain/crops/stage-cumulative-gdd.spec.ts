@@ -55,4 +55,43 @@ describe('buildStageCumulativeGddByOrder', () => {
       gddRangeMissing: false
     });
   });
+
+  it('coerces string required_gdd from API/forms to numbers when summing', () => {
+    const stages: CropStage[] = [
+      {
+        id: 1,
+        crop_id: 1,
+        name: 'Stage 1',
+        order: 1,
+        thermal_requirement: {
+          id: 1,
+          crop_stage_id: 1,
+          required_gdd: '800' as unknown as number
+        }
+      },
+      {
+        id: 2,
+        crop_id: 1,
+        name: 'Stage 2',
+        order: 2,
+        thermal_requirement: {
+          id: 2,
+          crop_stage_id: 2,
+          required_gdd: '800' as unknown as number
+        }
+      }
+    ];
+
+    const map = buildStageCumulativeGddByOrder(stages);
+    expect(map.get(1)).toEqual({
+      cumulativeGddStart: 0,
+      cumulativeGddEnd: 800,
+      gddRangeMissing: false
+    });
+    expect(map.get(2)).toEqual({
+      cumulativeGddStart: 800,
+      cumulativeGddEnd: 1600,
+      gddRangeMissing: false
+    });
+  });
 });

@@ -10,6 +10,14 @@ function sortedStages(stages: CropStage[]): CropStage[] {
   return [...stages].sort((a, b) => a.order - b.order);
 }
 
+function parseRequiredGdd(value: unknown): number | null {
+  if (value == null || value === '') {
+    return null;
+  }
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function stageCumulativeGddRange(
   stages: CropStage[],
   stageOrder: number
@@ -31,7 +39,7 @@ export function buildStageCumulativeGddByOrder(
   let cumulative = 0;
 
   for (const cropStage of sortedStages(stages)) {
-    const requiredGdd = cropStage.thermal_requirement?.required_gdd;
+    const requiredGdd = parseRequiredGdd(cropStage.thermal_requirement?.required_gdd);
     if (requiredGdd == null) {
       map.set(cropStage.order, {
         cumulativeGddStart: null,
