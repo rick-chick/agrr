@@ -1,5 +1,8 @@
 import { Crop } from '../../../domain/crops/crop';
 import { BlueprintStageLane } from '../../../domain/crops/blueprint-stage-grouping';
+import type { BlueprintGddValidationError } from '../../../domain/crops/blueprint-gdd-validation';
+import type { CumulativeGddTimelineSegment } from '../../../domain/crops/cumulative-gdd-timeline';
+import type { StageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import { CropTaskScheduleBlueprint } from '../../../domain/crops/crop-task-schedule-blueprint';
 import { BlueprintGenerationReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { AgriculturalTask } from '../../../domain/agricultural-tasks/agricultural-task';
@@ -24,7 +27,14 @@ export type CropTaskScheduleBlueprintsViewState = {
   blueprintsRegenerating: boolean;
   blueprintSavingId: number | null;
   blueprintGddDrafts: Record<number, number | null>;
+  blueprintGddTouched: Record<number, boolean>;
   blueprintStageLanes: BlueprintStageLane[];
+  cumulativeGddTimelineSegments: CumulativeGddTimelineSegment[];
+  blueprintGddErrors: Record<number, BlueprintGddValidationError | null>;
+  blueprintLaneOutOfRangeCounts: Record<number, number>;
+  blueprintCreateGddError: BlueprintGddValidationError | null;
+  blueprintCreateFormAttempted: boolean;
+  selectedStageGddRange: StageCumulativeGddRange | null;
   blueprintRegenerateError: string | null;
 
   selectedBlueprintStageOrder: number | null;

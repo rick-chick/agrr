@@ -24,6 +24,8 @@ import {
   planWizardReturnPath,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
+import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
+import type { CropStage } from '../../../domain/crops/crop';
 
 const initialFormData: CropStagesFormData = {
   name: '',
@@ -159,6 +161,21 @@ const initialControl: CropStagesViewState = {
                           <input type="number" step="0.1" name="thermal_gdd_{{ stage.id }}" [ngModel]="stage.thermal_requirement?.required_gdd ?? null"
                                  (ngModelChange)="onThermalFieldChange(stage.id, 'required_gdd', $event)" />
                         </label>
+                        <p class="crop-stage-cumulative-gdd" role="status">
+                          @if (stageCumulativeGddRangeFor(stage); as range) {
+                            @if (range.gddRangeMissing) {
+                              {{ 'crops.edit.stage_cumulative_gdd_missing' | translate }}
+                            } @else {
+                              {{
+                                'crops.edit.stage_cumulative_gdd_range'
+                                  | translate: {
+                                      start: range.cumulativeGddStart,
+                                      end: range.cumulativeGddEnd
+                                    }
+                              }}
+                            }
+                          }
+                        </p>
                       </div>
                     </div>
 
@@ -360,6 +377,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
     (stage.thermal_requirement as any)[field] = value;
     this.updateThermalRequirement(stageId, { [field]: value });
+    this.cdr.markForCheck();
+  }
+
+  stageCumulativeGddRangeFor(stage: CropStage) {
+    return stageCumulativeGddRange(this.control.formData.crop_stages, stage.order);
   }
 
   onSunshineFieldChange(stageId: number, field: string, value: number | null): void {

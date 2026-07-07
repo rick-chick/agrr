@@ -22,7 +22,10 @@ import {
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { BlueprintStageLane } from '../../../domain/crops/blueprint-stage-grouping';
+import type { CumulativeGddTimelineSegment } from '../../../domain/crops/cumulative-gdd-timeline';
 import { CropTaskScheduleBlueprint } from '../../../domain/crops/crop-task-schedule-blueprint';
+import type { BlueprintGddValidationError } from '../../../domain/crops/blueprint-gdd-validation';
+import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
 import {
@@ -31,7 +34,6 @@ import {
   planWizardReturnPath,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
-import { withCropBlueprintDisplayState } from '../../../adapters/crops/crop-blueprints-display-state';
 
 const initialControl: CropTaskScheduleBlueprintsViewState = {
   loading: true,
@@ -48,7 +50,14 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
   blueprintsRegenerating: false,
   blueprintSavingId: null,
   blueprintGddDrafts: {},
+  blueprintGddTouched: {},
   blueprintStageLanes: [],
+  cumulativeGddTimelineSegments: [],
+  blueprintGddErrors: {},
+  blueprintLaneOutOfRangeCounts: {},
+  blueprintCreateGddError: null,
+  blueprintCreateFormAttempted: false,
+  selectedStageGddRange: null,
   blueprintRegenerateError: null,
   selectedBlueprintStageOrder: null,
   selectedBlueprintAgriculturalTaskId: null,
@@ -112,6 +121,11 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
             class="section-card__description"
             [innerHTML]="control.blueprintSectionDescriptionKey | translate"
           ></p>
+          @if (control.crop?.crop_stages?.length) {
+            <p class="crop-blueprints__gdd-intro">
+              {{ 'crops.show.task_schedule_blueprints_gdd_intro' | translate }}
+            </p>
+          }
 
           @if (control.showBlueprintReadinessChecklist) {
             <div class="blueprint-readiness" role="status">
@@ -192,6 +206,41 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
             <p>{{ 'crops.show.no_task_schedule_blueprints' | translate }}</p>
           } @else {
             @if (control.crop?.crop_stages?.length) {
+              @if (control.cumulativeGddTimelineSegments.length) {
+                <div
+                  class="blueprint-gdd-axis"
+                  role="img"
+                  [attr.aria-label]="
+                    'crops.show.task_schedule_blueprints_gdd_axis_label'
+                      | translate: { total: gddAxisTotalGdd(control.cumulativeGddTimelineSegments) }
+                  "
+                >
+                  <p class="blueprint-gdd-axis__hint">
+                    {{ 'crops.show.task_schedule_blueprints_gdd_axis_hint' | translate }}
+                  </p>
+                  <div class="blueprint-gdd-axis__bar">
+                    @for (segment of control.cumulativeGddTimelineSegments; track segment.stageOrder) {
+                      <div
+                        class="blueprint-gdd-axis__segment"
+                        [style.flex-grow]="segment.cumulativeGddEnd - segment.cumulativeGddStart"
+                      >
+                        <span class="blueprint-gdd-axis__segment-label">
+                          <span class="blueprint-gdd-axis__segment-name">{{ segment.stageName }}</span>
+                          <span class="blueprint-gdd-axis__segment-gdd">
+                            {{
+                              'crops.show.blueprint_stage_lane.gdd_range'
+                                | translate: {
+                                    start: segment.cumulativeGddStart,
+                                    end: segment.cumulativeGddEnd
+                                  }
+                            }}
+                          </span>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
               <div
                 class="blueprint-stage-board"
                 role="list"
@@ -205,9 +254,45 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                   <div class="blueprint-stage-lane" role="listitem">
                     <div class="blueprint-stage-lane__label">
                       @if (lane.stageOrder == null) {
-                        {{ 'crops.show.blueprint_stage_lane.unassigned' | translate }}
+                        <span class="blueprint-stage-lane__name">
+                          {{ 'crops.show.blueprint_stage_lane.unassigned' | translate }}
+                        </span>
+                        <span class="blueprint-stage-lane__gdd-range blueprint-stage-lane__gdd-range--warn">
+                          {{ 'crops.show.blueprint_stage_lane.unassigned_hint' | translate }}
+                        </span>
                       } @else {
-                        {{ lane.stageName }}
+                        <span class="blueprint-stage-lane__name">{{ lane.stageName }}</span>
+                        @if (lane.gddRangeMissing) {
+                          <span class="blueprint-stage-lane__gdd-range blueprint-stage-lane__gdd-range--warn">
+                            {{ 'crops.show.blueprint_stage_lane.gdd_range_missing' | translate }}
+                          </span>
+                        } @else {
+                          <span class="blueprint-stage-lane__gdd-range">
+                            {{
+                              'crops.show.blueprint_stage_lane.gdd_range'
+                                | translate: {
+                                    start: lane.cumulativeGddStart,
+                                    end: lane.cumulativeGddEnd
+                                  }
+                            }}
+                          </span>
+                        }
+                        @if (
+                          lane.stageOrder != null &&
+                          control.blueprintLaneOutOfRangeCounts[lane.stageOrder];
+                          as outOfRangeCount
+                        ) {
+                          <span class="blueprint-stage-lane__lane-warning" role="status">
+                            {{
+                              'crops.show.blueprint_stage_lane.out_of_range_count'
+                                | translate: {
+                                    count: outOfRangeCount,
+                                    start: lane.cumulativeGddStart,
+                                    end: lane.cumulativeGddEnd
+                                  }
+                            }}
+                          </span>
+                        }
                       }
                     </div>
                     <div
@@ -271,6 +356,11 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                   <span class="blueprint-card__field-label">
                     {{ 'crops.show.gdd_trigger' | translate }}
                   </span>
+                  @if (blueprint.gdd_trigger == null && control.blueprintGddDrafts[blueprint.id] == null) {
+                    <span class="blueprint-card__unset-badge" role="status">
+                      {{ 'crops.show.blueprint_gdd_unset' | translate }}
+                    </span>
+                  }
                   <span class="crop-blueprints__template-add-input-wrap">
                     <input
                       [id]="'gdd-' + blueprint.id"
@@ -278,13 +368,25 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                       step="0.01"
                       min="0"
                       class="crop-blueprints__template-add-input blueprint-card__input"
+                      [class.blueprint-card__input--invalid]="
+                        control.blueprintGddTouched[blueprint.id] &&
+                        control.blueprintGddErrors[blueprint.id]
+                      "
                       [ngModel]="control.blueprintGddDrafts[blueprint.id]"
                       (ngModelChange)="onGddDraftChange(blueprint.id, $event)"
                       (change)="saveBlueprintGdd(blueprint.id)"
                       [disabled]="control.blueprintSavingId === blueprint.id"
-                      [attr.placeholder]="
-                        blueprint.gdd_trigger == null
-                          ? ('crops.show.gdd_trigger_placeholder' | translate)
+                      [attr.placeholder]="gddPlaceholderForBlueprint(blueprint)"
+                      [attr.aria-invalid]="
+                        control.blueprintGddTouched[blueprint.id] &&
+                        control.blueprintGddErrors[blueprint.id]
+                          ? true
+                          : null
+                      "
+                      [attr.aria-describedby]="
+                        control.blueprintGddTouched[blueprint.id] &&
+                        control.blueprintGddErrors[blueprint.id]
+                          ? 'gdd-error-' + blueprint.id
                           : null
                       "
                     />
@@ -292,6 +394,19 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                       {{ 'crops.show.gdd_unit' | translate }}
                     </span>
                   </span>
+                  @if (
+                    control.blueprintGddTouched[blueprint.id] &&
+                    control.blueprintGddErrors[blueprint.id];
+                    as gddError
+                  ) {
+                    <span
+                      class="blueprint-card__field-error"
+                      [id]="'gdd-error-' + blueprint.id"
+                      role="alert"
+                    >
+                      {{ gddValidationMessage(gddError, blueprint.stage_order, blueprint.stage_name) }}
+                    </span>
+                  }
                 </label>
               </div>
             </ng-template>
@@ -346,7 +461,6 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                   <label class="crop-blueprints__template-add-field" for="blueprint-stage-picker">
                     <span class="crop-blueprints__template-add-label">
                       {{ 'crops.show.manual_blueprint_add.stage_label' | translate }}
-                      <span class="crop-blueprints__optional-label">{{ 'crops.show.manual_blueprint_add.optional' | translate }}</span>
                     </span>
                     <select
                       id="blueprint-stage-picker"
@@ -368,8 +482,18 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                 <label class="crop-blueprints__template-add-field" for="blueprint-gdd-input">
                   <span class="crop-blueprints__template-add-label">
                     {{ 'crops.show.manual_blueprint_add.gdd_label' | translate }}
-                    <span class="crop-blueprints__optional-label">{{ 'crops.show.manual_blueprint_add.optional' | translate }}</span>
                   </span>
+                  @if (control.selectedStageGddRange && !control.selectedStageGddRange.gddRangeMissing) {
+                    <span class="crop-blueprints__template-add-hint">
+                      {{
+                        'crops.show.manual_blueprint_add.gdd_range_hint'
+                          | translate: {
+                              start: control.selectedStageGddRange.cumulativeGddStart,
+                              end: control.selectedStageGddRange.cumulativeGddEnd
+                            }
+                      }}
+                    </span>
+                  }
                   <span class="crop-blueprints__template-add-input-wrap">
                     <input
                       id="blueprint-gdd-input"
@@ -378,13 +502,33 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                       min="0"
                       name="blueprintCreateGddTrigger"
                       class="crop-blueprints__template-add-input"
+                      [class.blueprint-card__input--invalid]="
+                        control.blueprintCreateFormAttempted && control.blueprintCreateGddError
+                      "
                       [ngModel]="control.blueprintCreateGddTrigger"
                       (ngModelChange)="onBlueprintGddCreateChange($event)"
+                      [attr.placeholder]="createGddPlaceholder()"
+                      [attr.aria-invalid]="
+                        control.blueprintCreateFormAttempted && control.blueprintCreateGddError
+                          ? true
+                          : null
+                      "
                     />
                     <span class="crop-blueprints__template-add-input-unit" aria-hidden="true">
                       {{ 'crops.show.gdd_unit' | translate }}
                     </span>
                   </span>
+                  @if (control.blueprintCreateFormAttempted && control.blueprintCreateGddError; as createGddError) {
+                    <span class="blueprint-card__field-error" role="alert">
+                      {{
+                        gddValidationMessage(
+                          createGddError,
+                          control.selectedBlueprintStageOrder,
+                          control.blueprintStageNameForCreate
+                        )
+                      }}
+                    </span>
+                  }
                 </label>
                 <div class="crop-blueprints__template-add-actions">
                   <button
@@ -527,21 +671,61 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   }
 
   onBlueprintStageChange(stageOrder: number | null): void {
-    this.control = withCropBlueprintDisplayState({
-      ...this.control,
-      selectedBlueprintStageOrder: stageOrder
-    });
+    this.presenter.applyLocalControl({ selectedBlueprintStageOrder: stageOrder });
   }
 
   onBlueprintTaskChange(agriculturalTaskId: number | null): void {
-    this.control = withCropBlueprintDisplayState({
-      ...this.control,
-      selectedBlueprintAgriculturalTaskId: agriculturalTaskId
-    });
+    this.presenter.applyLocalControl({ selectedBlueprintAgriculturalTaskId: agriculturalTaskId });
   }
 
   onBlueprintGddCreateChange(value: number | null): void {
-    this.control = { ...this.control, blueprintCreateGddTrigger: value };
+    this.presenter.applyLocalControl({ blueprintCreateGddTrigger: value });
+  }
+
+  gddValidationMessage(
+    error: BlueprintGddValidationError,
+    stageOrder: number | null,
+    stageName: string | null
+  ): string {
+    const stages = this.control.crop?.crop_stages ?? [];
+    const range =
+      stageOrder == null ? null : stageCumulativeGddRange(stages, stageOrder);
+    const resolvedStageName = stageName ?? '';
+    switch (error) {
+      case 'missing_stage':
+        return this.translate.instant('crops.show.blueprint_gdd_errors.missing_stage');
+      case 'stage_gdd_missing':
+        return this.translate.instant('crops.show.blueprint_gdd_errors.stage_gdd_missing');
+      case 'out_of_range':
+        return this.translate.instant('crops.show.blueprint_gdd_errors.out_of_range', {
+          stageName: resolvedStageName,
+          start: range?.cumulativeGddStart ?? 0,
+          end: range?.cumulativeGddEnd ?? 0
+        });
+    }
+  }
+
+  gddPlaceholderForBlueprint(blueprint: CropTaskScheduleBlueprint): string | null {
+    if (blueprint.gdd_trigger != null) {
+      return null;
+    }
+    const stages = this.control.crop?.crop_stages ?? [];
+    if (blueprint.stage_order == null || stages.length === 0) {
+      return this.translate.instant('crops.show.gdd_trigger_placeholder');
+    }
+    const range = stageCumulativeGddRange(stages, blueprint.stage_order);
+    if (range.gddRangeMissing || range.cumulativeGddStart == null) {
+      return this.translate.instant('crops.show.gdd_trigger_placeholder');
+    }
+    return String(range.cumulativeGddStart);
+  }
+
+  createGddPlaceholder(): string | null {
+    const range = this.control.selectedStageGddRange;
+    if (!range || range.gddRangeMissing || range.cumulativeGddStart == null) {
+      return this.translate.instant('crops.show.gdd_trigger_placeholder');
+    }
+    return String(range.cumulativeGddStart);
   }
 
   createBlueprint(): void {
@@ -550,12 +734,17 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
     if (!cropId || agriculturalTaskId == null) {
       return;
     }
+
+    this.presenter.applyLocalControl({ blueprintCreateFormAttempted: true });
+
+    if (!this.control.canCreateBlueprint) {
+      return;
+    }
+
     const stageOrder = this.control.selectedBlueprintStageOrder;
     const gddTrigger = this.control.blueprintCreateGddTrigger;
-    this.control = withCropBlueprintDisplayState({
-      ...this.control,
-      blueprintCreating: true
-    });
+
+    this.presenter.applyLocalControl({ blueprintCreating: true });
     this.createBlueprintUseCase.execute({
       cropId,
       agriculturalTaskId,
@@ -593,24 +782,46 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
     });
   }
 
+  gddAxisTotalGdd(segments: CumulativeGddTimelineSegment[]): number {
+    if (!segments.length) {
+      return 0;
+    }
+    return segments[segments.length - 1].cumulativeGddEnd;
+  }
+
   blueprintLaneId(lane: BlueprintStageLane): string {
     return lane.stageOrder == null ? 'blueprint-lane-unassigned' : `blueprint-lane-${lane.stageOrder}`;
   }
 
   onGddDraftChange(blueprintId: number, value: number): void {
-    this.control = {
-      ...this.control,
+    this.presenter.applyLocalControl({
+      blueprintGddTouched: {
+        ...this.control.blueprintGddTouched,
+        [blueprintId]: true
+      },
       blueprintGddDrafts: {
         ...this.control.blueprintGddDrafts,
         [blueprintId]: value
       }
-    };
+    });
   }
 
   saveBlueprintGdd(blueprintId: number): void {
     const cropId = this.control.crop?.id;
     const gddTrigger = this.control.blueprintGddDrafts[blueprintId];
     if (!cropId || gddTrigger == null || Number.isNaN(gddTrigger)) return;
+
+    this.presenter.applyLocalControl({
+      blueprintGddTouched: {
+        ...this.control.blueprintGddTouched,
+        [blueprintId]: true
+      }
+    });
+
+    if (this.control.blueprintGddErrors[blueprintId]) {
+      return;
+    }
+
     this.updateBlueprintUseCase.execute({ cropId, blueprintId, gddTrigger });
   }
 

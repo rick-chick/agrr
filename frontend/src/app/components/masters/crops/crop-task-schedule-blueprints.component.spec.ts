@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import en from '../../../../assets/i18n/en.json';
 import { CropTaskScheduleBlueprintsComponent } from './crop-task-schedule-blueprints.component';
 import type { CropTaskScheduleBlueprintsViewState } from './crop-task-schedule-blueprints.view';
-import { CropTaskScheduleBlueprintsPresenter } from '../../../usecase/crops/crop-task-schedule-blueprints.providers';
+import { CropTaskScheduleBlueprintsPresenter } from '../../../adapters/crops/crop-task-schedule-blueprints.presenter';
 import { LoadCropDetailUseCase } from '../../../usecase/crops/load-crop-detail.usecase';
 import { LoadAgriculturalTaskListUseCase } from '../../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
@@ -75,7 +75,14 @@ const loadedState: CropTaskScheduleBlueprintsViewState = withCropBlueprintDispla
   blueprintsRegenerating: false,
   blueprintSavingId: null,
   blueprintGddDrafts: { 20: 120 },
+  blueprintGddTouched: {},
   blueprintStageLanes: [],
+  cumulativeGddTimelineSegments: [],
+  blueprintGddErrors: {},
+  blueprintLaneOutOfRangeCounts: {},
+  blueprintCreateGddError: null,
+  blueprintCreateFormAttempted: false,
+  selectedStageGddRange: null,
   blueprintRegenerateError: null,
   selectedBlueprintStageOrder: null,
   selectedBlueprintAgriculturalTaskId: null,
@@ -126,7 +133,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
   let regenerateBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let updateBlueprintUseCase: { execute: ReturnType<typeof vi.fn>; executeDrop: ReturnType<typeof vi.fn> };
   let deleteBlueprintUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: { setView: ReturnType<typeof vi.fn> };
+  let presenter: CropTaskScheduleBlueprintsPresenter;
   let mockActivatedRoute: {
     snapshot: {
       paramMap: { get: ReturnType<typeof vi.fn> };
@@ -142,7 +149,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     regenerateBlueprintsUseCase = { execute: vi.fn() };
     updateBlueprintUseCase = { execute: vi.fn(), executeDrop: vi.fn() };
     deleteBlueprintUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
+    presenter = new CropTaskScheduleBlueprintsPresenter();
     mockActivatedRoute = {
       snapshot: {
         paramMap: { get: vi.fn(() => '3') },
@@ -161,7 +168,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
           { provide: CreateCropTaskScheduleBlueprintUseCase, useValue: createBlueprintUseCase },
           { provide: UpdateCropTaskScheduleBlueprintUseCase, useValue: updateBlueprintUseCase },
           { provide: DeleteCropTaskScheduleBlueprintUseCase, useValue: deleteBlueprintUseCase },
-          { provide: CropTaskScheduleBlueprintsPresenter, useValue: mockPresenter },
+          { provide: CropTaskScheduleBlueprintsPresenter, useValue: presenter },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } },
           { provide: ActivatedRoute, useValue: mockActivatedRoute }
         ]
@@ -175,11 +182,13 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
 
     fixture = TestBed.createComponent(CropTaskScheduleBlueprintsComponent);
     component = fixture.componentInstance;
+    presenter.setView(component);
   });
 
   it('loads crop detail and task sections on init', () => {
+    const setViewSpy = vi.spyOn(presenter, 'setView');
     component.ngOnInit();
-    expect(mockPresenter.setView).toHaveBeenCalledWith(component);
+    expect(setViewSpy).toHaveBeenCalledWith(component);
     expect(loadUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
     expect(loadAgriculturalTasksUseCase.execute).toHaveBeenCalled();
     expect(loadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
@@ -298,18 +307,28 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(fixture.nativeElement.querySelector('a[href="/crops/3/stages"]')).toBeTruthy();
   });
 
-  it('creates blueprint with task only when stage and gdd are omitted', () => {
-    component.control = {
-      ...loadedState,
+  it('requires stage when crop has stages before creating blueprint', () => {
+    component.control = withCropBlueprintDisplayState({
+      ...readyState,
+      selectedBlueprintAgriculturalTaskId: 6
+    });
+    component.createBlueprint();
+    expect(createBlueprintUseCase.execute).not.toHaveBeenCalled();
+    expect(component.control.blueprintCreateFormAttempted).toBe(true);
+  });
+
+  it('creates blueprint when task and stage are selected', () => {
+    component.control = withCropBlueprintDisplayState({
+      ...readyState,
       selectedBlueprintAgriculturalTaskId: 6,
-      canCreateBlueprint: true
-    };
+      selectedBlueprintStageOrder: 1
+    });
     component.createBlueprint();
     expect(createBlueprintUseCase.execute).toHaveBeenCalledWith({
       cropId: 3,
       agriculturalTaskId: 6,
-      stageOrder: null,
-      stageName: null,
+      stageOrder: 1,
+      stageName: 'Vegetative',
       gddTrigger: null
     });
   });
@@ -333,5 +352,68 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
 
     expect(updateBlueprintUseCase.executeDrop).toHaveBeenCalled();
     expect(updateBlueprintUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('shows lane out-of-range warning when blueprint GDD is outside stage band', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const outOfRangeState = withCropBlueprintDisplayState({
+      ...readyState,
+      blueprints: [{ ...readyState.blueprints[0], gdd_trigger: 600 }],
+      blueprintGddDrafts: { 20: 600 }
+    });
+
+    fixture.detectChanges();
+    component.control = outOfRangeState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(outOfRangeState.blueprintLaneOutOfRangeCounts[1]).toBe(1);
+    const warning = fixture.nativeElement.querySelector('.blueprint-stage-lane__lane-warning');
+    expect(warning).toBeTruthy();
+    expect(warning.textContent).toMatch(/out of range/i);
+  });
+
+  it('renders GDD axis when crop has stages with cumulative GDD', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(readyState.cumulativeGddTimelineSegments.length).toBeGreaterThan(0);
+    const axis = fixture.nativeElement.querySelector('.blueprint-gdd-axis');
+    expect(axis).toBeTruthy();
+    expect(axis.getAttribute('role')).toBe('img');
+    expect(axis.getAttribute('aria-label')).toContain('500');
+    const segment = fixture.nativeElement.querySelector('.blueprint-gdd-axis__segment');
+    expect(segment).toBeTruthy();
+    expect(segment.textContent).toMatch(/Vegetative/i);
+    expect(segment.textContent).toMatch(/from planting/i);
+  });
+
+  it('renders GDD intro copy when crop has growth stages', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const intro = fixture.nativeElement.querySelector('.crop-blueprints__gdd-intro');
+    expect(intro).toBeTruthy();
+    expect(intro.textContent).toContain(
+      translate.instant('crops.show.task_schedule_blueprints_gdd_intro')
+    );
   });
 });

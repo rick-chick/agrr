@@ -21,6 +21,8 @@ import {
 import { LoadAgriculturalTaskListOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
 import { AgriculturalTaskListDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-list.dtos';
 import { withCropBlueprintDisplayState } from './crop-blueprints-display-state';
+import { blueprintGddDraftsFromBlueprints } from '../../domain/crops/blueprint-gdd-coordinates';
+import { CropTaskScheduleBlueprintsViewState } from '../../components/masters/crops/crop-task-schedule-blueprints.view';
 
 type BlueprintListDto =
   | LoadCropTaskScheduleBlueprintsDataDto
@@ -81,7 +83,7 @@ export class CropTaskScheduleBlueprintsPresenter
     }
 
     if ('blueprints' in dto) {
-      const drafts = Object.fromEntries(dto.blueprints.map((b) => [b.id, b.gdd_trigger]));
+      const drafts = blueprintGddDraftsFromBlueprints(dto.blueprints);
       const wasRegenerating = this.view.control.blueprintsRegenerating;
       this.view.control = withCropBlueprintDisplayState({
         ...this.view.control,
@@ -89,6 +91,7 @@ export class CropTaskScheduleBlueprintsPresenter
         blueprintsRegenerating: false,
         blueprints: dto.blueprints,
         blueprintGddDrafts: drafts,
+        blueprintGddTouched: {},
         blueprintRegenerateError: null,
         pendingErrorFlash: null,
         pendingSuccessFlash: wasRegenerating
@@ -111,6 +114,10 @@ export class CropTaskScheduleBlueprintsPresenter
             ...this.view.control.blueprintGddDrafts,
             [dto.blueprint.id]: dto.blueprint.gdd_trigger
           },
+          blueprintGddTouched: {
+            ...this.view.control.blueprintGddTouched,
+            [dto.blueprint.id]: false
+          },
           pendingErrorFlash: null,
           pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.blueprint_position_updated')
         });
@@ -123,10 +130,15 @@ export class CropTaskScheduleBlueprintsPresenter
         selectedBlueprintStageOrder: null,
         selectedBlueprintAgriculturalTaskId: null,
         blueprintCreateGddTrigger: null,
+        blueprintCreateFormAttempted: false,
         blueprints: [...this.view.control.blueprints, dto.blueprint],
         blueprintGddDrafts: {
           ...this.view.control.blueprintGddDrafts,
           [dto.blueprint.id]: dto.blueprint.gdd_trigger
+        },
+        blueprintGddTouched: {
+          ...this.view.control.blueprintGddTouched,
+          [dto.blueprint.id]: false
         },
         blueprintRegenerateError: null,
         pendingErrorFlash: null,
@@ -137,10 +149,13 @@ export class CropTaskScheduleBlueprintsPresenter
 
     if ('blueprintId' in dto) {
       const { [dto.blueprintId]: _removedGdd, ...remainingGddDrafts } = this.view.control.blueprintGddDrafts;
+      const { [dto.blueprintId]: _removedTouched, ...remainingTouched } =
+        this.view.control.blueprintGddTouched;
       this.view.control = withCropBlueprintDisplayState({
         ...this.view.control,
         blueprints: this.view.control.blueprints.filter((b) => b.id !== dto.blueprintId),
         blueprintGddDrafts: remainingGddDrafts,
+        blueprintGddTouched: remainingTouched,
         pendingErrorFlash: null,
         pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.blueprint_deleted')
       });
@@ -160,6 +175,14 @@ export class CropTaskScheduleBlueprintsPresenter
     this.view.control = withCropBlueprintDisplayState({
       ...this.view.control,
       blueprintSavingId: blueprintId
+    });
+  }
+
+  applyLocalControl(patch: Partial<CropTaskScheduleBlueprintsViewState>): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = withCropBlueprintDisplayState({
+      ...this.view.control,
+      ...patch
     });
   }
 

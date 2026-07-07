@@ -33,14 +33,18 @@ function blueprint(
 }
 
 describe('groupBlueprintsByStage', () => {
-  it('returns unassigned lane first then stages in order', () => {
+  it('omits empty unassigned lane when stages exist', () => {
     const lanes = groupBlueprintsByStage(stages, []);
 
+    expect(lanes.map((lane) => lane.stageOrder)).toEqual([1, 2, 3]);
+    expect(lanes[0].stageName).toBe('Germination');
+  });
+
+  it('includes unassigned lane when it has blueprints', () => {
+    const lanes = groupBlueprintsByStage(stages, [blueprint({ id: 10, stage_order: null })]);
+
     expect(lanes.map((lane) => lane.stageOrder)).toEqual([null, 1, 2, 3]);
-    expect(lanes[0].stageName).toBeNull();
-    expect(lanes[1].stageName).toBe('Germination');
-    expect(lanes[2].stageName).toBe('Vegetative');
-    expect(lanes[3].stageName).toBe('Harvest');
+    expect(lanes[0].blueprints.map((b) => b.id)).toEqual([10]);
   });
 
   it('places blueprints without stage_order in the unassigned lane', () => {
@@ -53,6 +57,20 @@ describe('groupBlueprintsByStage', () => {
     expect(lanes[2].blueprints.map((b) => b.id)).toEqual([11]);
   });
 
+  it('sorts blueprints within a lane by draft GDD when present', () => {
+    const lanes = groupBlueprintsByStage(
+      stages,
+      [
+        blueprint({ id: 30, stage_order: 1, gdd_trigger: 120 }),
+        blueprint({ id: 31, stage_order: 1, gdd_trigger: 50 }),
+        blueprint({ id: 32, stage_order: 1, gdd_trigger: 200 })
+      ],
+      { 30: 10, 32: 80 }
+    );
+
+    expect(lanes[0].blueprints.map((b) => b.id)).toEqual([30, 31, 32]);
+  });
+
   it('sorts blueprints within a lane by gdd_trigger ascending with null last', () => {
     const lanes = groupBlueprintsByStage(stages, [
       blueprint({ id: 30, stage_order: 1, gdd_trigger: 120 }),
@@ -60,7 +78,7 @@ describe('groupBlueprintsByStage', () => {
       blueprint({ id: 32, stage_order: 1, gdd_trigger: 50 })
     ]);
 
-    expect(lanes[1].blueprints.map((b) => b.id)).toEqual([32, 30, 31]);
+    expect(lanes[0].blueprints.map((b) => b.id)).toEqual([32, 30, 31]);
   });
 
   it('uses id as tiebreaker when gdd_trigger is equal', () => {
@@ -69,7 +87,7 @@ describe('groupBlueprintsByStage', () => {
       blueprint({ id: 39, stage_order: 2, gdd_trigger: 100 })
     ]);
 
-    expect(lanes[2].blueprints.map((b) => b.id)).toEqual([39, 40]);
+    expect(lanes[1].blueprints.map((b) => b.id)).toEqual([39, 40]);
   });
 
   it('returns only unassigned lane when crop has no stages', () => {
@@ -88,8 +106,27 @@ describe('groupBlueprintsByStage', () => {
       blueprint({ id: 60, stage_order: 1, gdd_trigger: 10 })
     ]);
 
-    expect(lanes).toHaveLength(4);
+    expect(lanes).toHaveLength(3);
+    expect(lanes[1].blueprints).toEqual([]);
     expect(lanes[2].blueprints).toEqual([]);
-    expect(lanes[3].blueprints).toEqual([]);
+  });
+
+  it('includes cumulative GDD range on stage lanes', () => {
+    const stagesWithGdd: CropStage[] = [
+      { id: 1, crop_id: 1, name: 'Germination', order: 1, thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 } },
+      { id: 2, crop_id: 1, name: 'Vegetative', order: 2, thermal_requirement: { id: 2, crop_stage_id: 2, required_gdd: 300 } }
+    ];
+    const lanes = groupBlueprintsByStage(stagesWithGdd, []);
+
+    expect(lanes[0]).toMatchObject({
+      cumulativeGddStart: 0,
+      cumulativeGddEnd: 200,
+      gddRangeMissing: false
+    });
+    expect(lanes[1]).toMatchObject({
+      cumulativeGddStart: 200,
+      cumulativeGddEnd: 500,
+      gddRangeMissing: false
+    });
   });
 });

@@ -785,7 +785,7 @@ flowchart TB
 
 ### i18n
 
-`@ngx-translate` with `frontend/src/assets/i18n/ja.json` and `en.json`.
+`@ngx-translate` with `frontend/src/assets/i18n/ja.json`, `en.json`, and `in.json`.
 
 ### Routing
 

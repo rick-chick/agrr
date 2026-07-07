@@ -107,10 +107,6 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-
   it('should load crop on init', () => {
     expect(component.cropId).toBe(1);
     fixture.detectChanges();
@@ -261,5 +257,66 @@ describe('CropStagesComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('a[href="/crops/1"]')).toBeTruthy();
+  });
+
+  it('shows cumulative GDD range when stage has required_gdd', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage 1'
+          },
+          edit: {
+            stage_title: 'ステージ {{order}}',
+            stages_title: '生育ステージ',
+            stage_name: 'ステージ名',
+            stage_order: '順序',
+            requirements_title: '要件',
+            temperature_requirement: '温度',
+            thermal_requirement: '積算温度',
+            required_gdd: '必要GDD',
+            sunshine_requirement: '日照',
+            nutrient_requirement: '栄養',
+            stage_cumulative_gdd_range: '定植から {{start}}〜{{end}} ℃·日',
+            stage_cumulative_gdd_missing: '必要積算温度を入力すると、定植からの累積範囲が表示されます'
+          }
+        },
+        common: {
+          back: '戻る',
+          delete: '削除'
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    const cumulativeGdd = fixture.nativeElement.querySelector('.crop-stage-cumulative-gdd');
+    expect(cumulativeGdd).toBeTruthy();
+    expect(cumulativeGdd.textContent).toContain('定植から 0〜200');
   });
 });
