@@ -47,7 +47,7 @@ export type CropTaskScheduleBlueprintsViewState = {
   canCreateBlueprint: boolean;
   blueprintStageNameForCreate: string | null;
   showBlueprintReadinessChecklist: boolean;
-  blueprintSectionDescriptionKey: string;
+  blueprintSectionDescriptionKey: string | null;
   showBlueprintEmptyState: boolean;
   showBlueprintRegenerateRetry: boolean;
 };

@@ -87,7 +87,7 @@ const baseControl: CropTaskScheduleBlueprintsViewState = {
   canCreateBlueprint: false,
   blueprintStageNameForCreate: null,
   showBlueprintReadinessChecklist: false,
-  blueprintSectionDescriptionKey: 'crops.show.task_schedule_blueprints_description_empty_html',
+  blueprintSectionDescriptionKey: null,
   showBlueprintEmptyState: true,
   showBlueprintRegenerateRetry: false
 };
@@ -177,6 +177,240 @@ describe('withCropBlueprintDisplayState', () => {
       cumulativeGddStart: 200,
       cumulativeGddEnd: 500,
       gddRangeMissing: false
+    });
+  });
+
+  it('omits section lead when no blueprints are registered', () => {
+    const next = withCropBlueprintDisplayState({
+      ...baseControl,
+      blueprints: []
+    });
+    expect(next.blueprintSectionDescriptionKey).toBeNull();
+  });
+
+  it('shows section lead when blueprints exist', () => {
+    const next = withCropBlueprintDisplayState({
+      ...baseControl,
+      blueprints: [blueprint({ id: 10, gdd_trigger: 50 })]
+    });
+    expect(next.blueprintSectionDescriptionKey).toBe('crops.show.task_schedule_blueprints_lead');
+  });
+
+  it('omits section lead when fromPlanId is set even if blueprints exist', () => {
+    const next = withCropBlueprintDisplayState({
+      ...baseControl,
+      fromPlanId: 7,
+      blueprints: [blueprint({ id: 10, gdd_trigger: 50 })]
+    });
+    expect(next.blueprintSectionDescriptionKey).toBeNull();
+  });
+
+  describe('showBlueprintEmptyState', () => {
+    it('is true when blueprints are empty and there is no regenerate error', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        blueprints: [],
+        blueprintRegenerateError: null
+      });
+      expect(next.showBlueprintEmptyState).toBe(true);
+    });
+
+    it('is false when blueprints exist', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        blueprints: [blueprint({ id: 10, gdd_trigger: 50 })],
+        blueprintRegenerateError: null
+      });
+      expect(next.showBlueprintEmptyState).toBe(false);
+    });
+
+    it('is false when a regenerate error is present even if blueprints are empty', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        blueprints: [],
+        blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
+      });
+      expect(next.showBlueprintEmptyState).toBe(false);
+    });
+  });
+
+  describe('showBlueprintRegenerateRetry', () => {
+    const cropWithRequirements = {
+      ...baseControl.crop!,
+      crop_stages: [
+        {
+          id: 1,
+          crop_id: 1,
+          name: '定植期',
+          order: 1,
+          temperature_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            base_temperature: 10,
+            optimal_min: 15,
+            optimal_max: 25
+          },
+          thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 }
+        }
+      ]
+    };
+
+    it('is true when readiness is ready and regenerate error allows retry', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        crop: cropWithRequirements,
+        blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })],
+        blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
+      });
+      expect(next.showBlueprintRegenerateRetry).toBe(true);
+    });
+
+    it('is false when readiness is not ready', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        crop: baseControl.crop,
+        blueprints: [],
+        blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
+      });
+      expect(next.showBlueprintRegenerateRetry).toBe(false);
+    });
+
+    it('is false when there is no regenerate error', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        crop: cropWithRequirements,
+        blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })],
+        blueprintRegenerateError: null
+      });
+      expect(next.showBlueprintRegenerateRetry).toBe(false);
+    });
+
+    it('is false when regenerate error blocks retry', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        crop: cropWithRequirements,
+        blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })],
+        blueprintRegenerateError: 'crops.show.blueprint_errors.missing_blueprints'
+      });
+      expect(next.showBlueprintRegenerateRetry).toBe(false);
+    });
+  });
+
+  describe('showBlueprintReadinessChecklist', () => {
+    it('is true when not loading, readiness is incomplete, and not regenerating', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        blueprintsLoading: false,
+        blueprints: [],
+        blueprintsRegenerating: false
+      });
+      expect(next.showBlueprintReadinessChecklist).toBe(true);
+    });
+
+    it('is false while blueprints are loading', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        blueprintsLoading: true,
+        blueprints: [],
+        blueprintsRegenerating: false
+      });
+      expect(next.showBlueprintReadinessChecklist).toBe(false);
+    });
+
+    it('is false when readiness is satisfied', () => {
+      const cropWithRequirements = {
+        ...baseControl.crop!,
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: '定植期',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10,
+              optimal_min: 15,
+              optimal_max: 25
+            },
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 }
+          }
+        ]
+      };
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        crop: cropWithRequirements,
+        blueprintsLoading: false,
+        blueprints: [blueprint({ id: 10, task_type: 'field_work', gdd_trigger: 50 })],
+        blueprintsRegenerating: false
+      });
+      expect(next.showBlueprintReadinessChecklist).toBe(false);
+    });
+
+    it('is false while blueprints are regenerating', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        blueprintsLoading: false,
+        blueprints: [],
+        blueprintsRegenerating: true
+      });
+      expect(next.showBlueprintReadinessChecklist).toBe(false);
+    });
+  });
+
+  describe('unassociatedAgriculturalTasks and blueprint enrichment', () => {
+    const agriculturalTasks = [
+      { id: 1, name: 'Weeding', required_tools: [], is_reference: false },
+      { id: 2, name: 'Fertilizing', required_tools: [], is_reference: false },
+      { id: 3, name: 'Harvesting', required_tools: [], is_reference: false }
+    ];
+
+    it('excludes agricultural tasks already linked to blueprints', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        agriculturalTasks,
+        blueprints: [blueprint({ id: 10, agricultural_task_id: 1, gdd_trigger: 50 })]
+      });
+      expect(next.unassociatedAgriculturalTasks.map((task) => task.id)).toEqual([2, 3]);
+    });
+
+    it('enriches blueprints with agricultural task names when blueprint name is missing', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        agriculturalTasks,
+        blueprints: [
+          blueprint({
+            id: 10,
+            agricultural_task_id: 2,
+            name: undefined,
+            agricultural_task: undefined,
+            gdd_trigger: 50
+          })
+        ]
+      });
+      expect(next.blueprints[0].name).toBe('Fertilizing');
+      expect(next.blueprints[0].agricultural_task).toEqual({
+        id: 2,
+        name: 'Fertilizing',
+        description: null,
+        is_reference: false
+      });
+    });
+
+    it('leaves blueprints unchanged when they already have a display name', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        agriculturalTasks,
+        blueprints: [
+          blueprint({
+            id: 10,
+            agricultural_task_id: 2,
+            name: 'Custom label',
+            gdd_trigger: 50
+          })
+        ]
+      });
+      expect(next.blueprints[0].name).toBe('Custom label');
     });
   });
 

@@ -16,7 +16,7 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Keys referenced by crop-detail.component.ts on the crops show screen. */
+/** Keys referenced by crop-detail and crop-task-schedule-blueprints screens. */
 const CROPS_SHOW_KEYS = [
   'crops.show.name',
   'crops.show.variety',
@@ -35,14 +35,14 @@ const CROPS_SHOW_KEYS = [
   'crops.show.celsius_unit',
   'crops.show.from_plan_wizard_title',
   'crops.show.from_plan_wizard_lead',
+  'crops.show.return_to_plan',
+  'crops.show.unnamed_blueprint',
   'crops.show.task_schedule_blueprints_title',
   'crops.show.blueprint_summary.count',
   'crops.show.blueprint_summary.setup_required',
   'crops.show.blueprint_summary.edit_action',
-  'crops.show.task_schedule_blueprints_description_html',
-  'crops.show.task_schedule_blueprints_description_empty_html',
-  'crops.show.task_schedule_blueprints_description_from_plan_html',
-  'crops.show.task_schedule_blueprints_gdd_intro',
+  'crops.show.task_schedule_blueprints_lead',
+  'crops.show.task_schedule_blueprints_gdd_axis_caption',
   'crops.show.task_schedule_blueprints_gdd_axis_label',
   'crops.show.no_task_schedule_blueprints',
   'crops.show.gdd_trigger',
@@ -60,7 +60,6 @@ const CROPS_SHOW_KEYS = [
   'crops.show.blueprint_stage_lane.keyboard_hint',
   'crops.show.manual_blueprint_add.gdd_range_hint',
   'crops.show.manual_blueprint_add.title',
-  'crops.show.manual_blueprint_add.description',
   'crops.show.manual_blueprint_add.stage_label',
   'crops.show.manual_blueprint_add.stage_placeholder',
   'crops.show.manual_blueprint_add.task_label',
@@ -91,7 +90,8 @@ const CROPS_SHOW_KEYS = [
   'crops.show.delete_blueprint_confirm',
   'crops.form.region_jp',
   'crops.form.region_us',
-  'crops.form.region_in'
+  'crops.form.region_in',
+  'crops.errors.invalid_id'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

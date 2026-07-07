@@ -105,11 +105,8 @@
   font-size: var(--font-size-sm);
 }
 
-.crop-blueprints__gdd-intro {
-  margin: var(--space-2) 0 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
+.crop-blueprints__section-lead {
+  margin-bottom: var(--space-3);
 }
 
 .crop-blueprints__template-add-hint {
@@ -130,12 +127,6 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   color: var(--color-text);
-}
-
-.crop-blueprints__subsection-description {
-  margin: 0 0 var(--space-3) 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
 }
 
 .crop-blueprints__template-add-form {
@@ -479,6 +470,13 @@ article.item-card.blueprint-card {
 
 .blueprint-gdd-axis {
   margin-bottom: var(--space-3);
+}
+
+.blueprint-gdd-axis__caption {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
 }
 
 .blueprint-gdd-axis__bar {

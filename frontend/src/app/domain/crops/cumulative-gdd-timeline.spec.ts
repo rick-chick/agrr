@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cumulativeGddTimelineSegments } from './cumulative-gdd-timeline';
+import { cumulativeGddTimelineSegments, gddAxisTotalGdd } from './cumulative-gdd-timeline';
 import type { CropStage } from './crop';
 
 function stage(
@@ -65,5 +65,30 @@ describe('cumulativeGddTimelineSegments', () => {
 
   it('returns an empty array when no stage has required_gdd', () => {
     expect(cumulativeGddTimelineSegments([stage(1, null), stage(2, undefined)])).toEqual([]);
+  });
+});
+
+describe('gddAxisTotalGdd', () => {
+  it('returns 0 when segments are empty', () => {
+    expect(gddAxisTotalGdd([])).toBe(0);
+  });
+
+  it('returns cumulativeGddEnd of the last segment', () => {
+    expect(
+      gddAxisTotalGdd([
+        {
+          stageOrder: 1,
+          stageName: '定植期',
+          cumulativeGddStart: 0,
+          cumulativeGddEnd: 200
+        },
+        {
+          stageOrder: 2,
+          stageName: '生育期',
+          cumulativeGddStart: 200,
+          cumulativeGddEnd: 300
+        }
+      ])
+    ).toBe(300);
   });
 });

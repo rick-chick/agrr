@@ -86,7 +86,7 @@ const baseControl: CropTaskScheduleBlueprintsViewState = withCropBlueprintDispla
   canCreateBlueprint: false,
   blueprintStageNameForCreate: null,
   showBlueprintReadinessChecklist: false,
-  blueprintSectionDescriptionKey: 'crops.show.task_schedule_blueprints_description_empty_html',
+  blueprintSectionDescriptionKey: null,
   showBlueprintEmptyState: true,
   showBlueprintRegenerateRetry: false
 });
@@ -138,5 +138,28 @@ describe('CropTaskScheduleBlueprintsPresenter', () => {
     expect(lastControl.blueprints).toEqual(dto.blueprints);
     expect(lastControl.blueprintGddDrafts).toEqual({ 10: 80, 11: 120 });
     expect(lastControl.blueprintGddTouched).toEqual({});
+  });
+
+  it('onRegenerateStarted sets blueprintsRegenerating to true', () => {
+    presenter.onRegenerateStarted();
+    expect(lastControl.blueprintsRegenerating).toBe(true);
+  });
+
+  it('onError stores inline blueprint regenerate error when regenerating', () => {
+    lastControl = { ...baseControl, blueprintsRegenerating: true };
+
+    presenter.onError({ message: 'crops.show.blueprint_errors.generic' });
+
+    expect(lastControl.blueprintsRegenerating).toBe(false);
+    expect(lastControl.blueprintRegenerateError).toBe('crops.show.blueprint_errors.generic');
+    expect(lastControl.pendingErrorFlash).toBeNull();
+  });
+
+  it('onError sets pending error flash for non-blueprint errors', () => {
+    presenter.onError({ message: 'crops.flash.load_failed' });
+
+    expect(lastControl.blueprintRegenerateError).toBeNull();
+    expect(lastControl.pendingErrorFlash).not.toBeNull();
+    expect(lastControl.pendingErrorFlash?.text).toBe('crops.flash.load_failed');
   });
 });

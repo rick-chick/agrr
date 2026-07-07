@@ -93,7 +93,7 @@ const loadedState: CropTaskScheduleBlueprintsViewState = withCropBlueprintDispla
   canCreateBlueprint: false,
   blueprintStageNameForCreate: null,
   showBlueprintReadinessChecklist: false,
-  blueprintSectionDescriptionKey: 'crops.show.task_schedule_blueprints_description_empty_html',
+  blueprintSectionDescriptionKey: null,
   showBlueprintEmptyState: true,
   showBlueprintRegenerateRetry: false
 });
@@ -209,18 +209,16 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(fixture.nativeElement.querySelector('a[href="/crops/3"]')).toBeTruthy();
   });
 
-  it('uses from-plan description when fromPlan query param is set', async () => {
-    const fromPlanDescription =
-      'Task schedules for this plan are already generated. Edit these templates to adjust future schedules.';
+  it('hides section lead when fromPlan query param is set', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
       {
         crops: {
           show: {
-            task_schedule_blueprints_description_from_plan_html: fromPlanDescription,
-            task_schedule_blueprints_description_html: 'Default with blueprints',
-            task_schedule_blueprints_description_empty_html: 'Default empty'
+            task_schedule_blueprints_lead: 'Plans use these templates.',
+            from_plan_wizard_title: 'Registration for this plan',
+            from_plan_wizard_lead: 'Register task plans using the form below.'
           }
         }
       },
@@ -233,13 +231,60 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     );
 
     fixture.detectChanges();
-    component.control = { ...readyState, fromPlanId: 7 };
+    component.control = withCropBlueprintDisplayState({
+      ...readyState,
+      fromPlanId: 7
+    });
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const description = fixture.nativeElement.querySelector('.section-card__description');
-    expect(description?.textContent).toContain('already generated');
-    expect(description?.textContent).not.toContain('Default with blueprints');
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__section-lead')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
+  });
+
+  it('shows section lead when blueprints exist and not from plan', async () => {
+    const lead = 'Plans use these templates.';
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            task_schedule_blueprints_lead: lead
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const leadEl = fixture.nativeElement.querySelector('.crop-blueprints__section-lead');
+    expect(leadEl?.textContent).toContain(lead);
+  });
+
+  it('omits manual add and AI hint paragraphs in favor of form layout', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = readyState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const subsectionDescriptions = fixture.nativeElement.querySelectorAll(
+      '.crop-blueprints__subsection-description'
+    );
+    expect(subsectionDescriptions.length).toBe(0);
+    const aiButton = fixture.nativeElement.querySelector('.crop-blueprints__blueprint-ai-import button');
+    expect(aiButton?.getAttribute('title')).toContain('AI');
   });
 
   it('shows return-to-plan link when fromPlan query param is set', async () => {
@@ -264,7 +309,10 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     );
 
     fixture.detectChanges();
-    component.control = { ...loadedState, fromPlanId: 7 };
+    component.control = withCropBlueprintDisplayState({
+      ...loadedState,
+      fromPlanId: 7
+    });
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -400,9 +448,24 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(segment.textContent).toMatch(/℃·day/i);
   });
 
-  it('renders GDD intro copy when crop has growth stages', async () => {
+  it('renders GDD axis caption when crop has growth stages', async () => {
+    const caption = 'Cumulative from crop start (not from stage start).';
     const translate = TestBed.inject(TranslateService);
-    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            task_schedule_blueprints_gdd_axis_caption: caption,
+            task_schedule_blueprints_gdd_axis_label: 'Cumulative GDD (total {{total}} ℃·day)',
+            blueprint_stage_lane: {
+              gdd_range: '{{start}}–{{end}} ℃·day'
+            }
+          }
+        }
+      },
+      true
+    );
     translate.setDefaultLang('en');
     translate.use('en');
 
@@ -411,10 +474,192 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const intro = fixture.nativeElement.querySelector('.crop-blueprints__gdd-intro');
-    expect(intro).toBeTruthy();
-    expect(intro.textContent).toContain(
-      translate.instant('crops.show.task_schedule_blueprints_gdd_intro')
+    const axisCaption = fixture.nativeElement.querySelector('.blueprint-gdd-axis__caption');
+    expect(axisCaption).toBeTruthy();
+    expect(axisCaption.textContent).toContain(caption);
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__gdd-intro')).toBeFalsy();
+  });
+
+  it('shows GDD validation message in DOM when draft is touched and invalid', async () => {
+    const outOfRangeMessage = 'GDD must be between 0 and 500.';
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            blueprint_gdd_errors: { out_of_range: outOfRangeMessage },
+            gdd_trigger: 'GDD trigger',
+            gdd_unit: '℃·day'
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const invalidState = withCropBlueprintDisplayState({
+      ...readyState,
+      blueprints: [{ ...readyState.blueprints[0], gdd_trigger: 600 }],
+      blueprintGddDrafts: { 20: 600 },
+      blueprintGddTouched: { 20: true }
+    });
+
+    fixture.detectChanges();
+    component.control = invalidState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const errorEl = fixture.nativeElement.querySelector('#gdd-error-20');
+    expect(errorEl).toBeTruthy();
+    expect(errorEl.textContent).toContain(outOfRangeMessage);
+  });
+
+  it('sets GDD input placeholder from stage cumulative range when trigger is unset', async () => {
+    const placeholder = 'Enter cumulative GDD';
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            gdd_trigger_placeholder: placeholder,
+            gdd_trigger: 'GDD trigger',
+            gdd_unit: '℃·day',
+            blueprint_gdd_unset: 'Not set'
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const unsetGddState = withCropBlueprintDisplayState({
+      ...readyState,
+      blueprints: [{ ...readyState.blueprints[0], gdd_trigger: null }],
+      blueprintGddDrafts: { 20: null }
+    });
+
+    fixture.detectChanges();
+    component.control = unsetGddState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = fixture.nativeElement.querySelector('#gdd-20') as HTMLInputElement | null;
+    expect(input).toBeTruthy();
+    expect(input?.getAttribute('placeholder')).toBe('0');
+  });
+
+  it('shows regenerate retry button when showBlueprintRegenerateRetry is true', async () => {
+    const retryLabel = 'Try again';
+    const errorMessage = 'Blueprint generation failed.';
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            blueprint_errors: {
+              generic: errorMessage,
+              retry_action: retryLabel
+            }
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const retryState = withCropBlueprintDisplayState({
+      ...readyState,
+      blueprintRegenerateError: 'crops.show.blueprint_errors.generic'
+    });
+    expect(retryState.showBlueprintRegenerateRetry).toBe(true);
+
+    fixture.detectChanges();
+    component.control = retryState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const alert = fixture.nativeElement.querySelector('.blueprint-regenerate-error');
+    expect(alert?.textContent).toContain(errorMessage);
+    const retryButton = fixture.nativeElement.querySelector(
+      '.blueprint-regenerate-error button.btn-secondary'
+    );
+    expect(retryButton).toBeTruthy();
+    expect(retryButton.textContent).toContain(retryLabel);
+  });
+
+  it('hides regenerate retry button when showBlueprintRegenerateRetry is false', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            blueprint_errors: {
+              missing_blueprints: 'Add a field-work blueprint first.',
+              retry_action: 'Try again'
+            }
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const noRetryState = withCropBlueprintDisplayState({
+      ...readyState,
+      blueprintRegenerateError: 'crops.show.blueprint_errors.missing_blueprints'
+    });
+    expect(noRetryState.showBlueprintRegenerateRetry).toBe(false);
+
+    fixture.detectChanges();
+    component.control = noRetryState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('.blueprint-regenerate-error button.btn-secondary')
+    ).toBeFalsy();
+  });
+
+  it('shows invalid crop id error on init when route id is missing', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      { crops: { errors: { invalid_id: 'Invalid crop ID' } } },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+    mockActivatedRoute.snapshot.paramMap.get.mockReturnValue(null);
+
+    component.ngOnInit();
+
+    expect(component.control.error).toBe('Invalid crop ID');
+    expect(loadUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('control setter recomputes derived display state on partial updates', () => {
+    component.control = withCropBlueprintDisplayState({
+      ...loadedState,
+      crop: cropWithReadyStages,
+      blueprints: []
+    });
+    expect(component.control.blueprintSectionDescriptionKey).toBeNull();
+
+    component.control = {
+      ...component.control,
+      blueprints: loadedState.blueprints
+    };
+
+    expect(component.control.blueprintSectionDescriptionKey).toBe(
+      'crops.show.task_schedule_blueprints_lead'
     );
   });
 });

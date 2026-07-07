@@ -481,10 +481,8 @@
         "setup_required": "生育ステージまたは作業予定の設定が未完了です。",
         "edit_action": "作業予定を編集"
       },
-      "task_schedule_blueprints_description_html": "作物ごとの作業予定テンプレートです。AIが提案した内容を確認し、必要があれば積算温度や関連作業を調整してください。栽培計画を作成すると、このテンプレートをもとに計画の作業スケジュールが自動で作られます。",
-      "task_schedule_blueprints_description_empty_html": "下のフォームから、生育ステージごとの作業と積算温度をテンプレートとして登録してください。栽培計画を作成すると、このテンプレートをもとに計画の作業スケジュールが自動で作られます。",
-      "task_schedule_blueprints_description_from_plan_html": "この計画の作業スケジュールはすでに生成されています。ここでテンプレートを編集すると、今後の計画作成や再生成時の作業スケジュールに反映されます。",
-      "task_schedule_blueprints_gdd_intro": "作業タイミングは栽培開始からの累積積算温度（℃·日）です。ステージ先頭からの値ではありません。",
+      "task_schedule_blueprints_lead": "栽培計画の作業スケジュールは、このテンプレートから自動生成されます。",
+      "task_schedule_blueprints_gdd_axis_caption": "栽培開始からの累積（ステージ先頭からではありません）",
       "task_schedule_blueprints_gdd_axis_label": "累積積算温度（合計 {{total}} ℃·日）",
       "no_task_schedule_blueprints": "作業予定はまだありません。下のフォームから1件ずつ追加してください。",
       "unnamed_blueprint": "（作業名未設定）",
@@ -511,7 +509,6 @@
       "generate_task_schedule_blueprints_confirm": "AIの提案で作業予定をすべて置き換えます。手動で登録した内容は失われます。よろしいですか？",
       "manual_blueprint_add": {
         "title": "作業予定を手動で追加",
-        "description": "作業マスタから選び、生育ステージと作業タイミングを登録します。",
         "stage_label": "生育ステージ",
         "stage_placeholder": "ステージを選択",
         "task_label": "作業",

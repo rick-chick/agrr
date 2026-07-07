@@ -1957,10 +1957,8 @@
         "setup_required": "Growth stages or task plans are not fully configured yet.",
         "edit_action": "Edit task plans"
       },
-      "task_schedule_blueprints_description_html": "Task schedule templates for this crop. Review AI-suggested tasks and adjust cumulative temperature (GDD) and linked tasks when needed. When you create a cultivation plan, work schedules for the plan are generated automatically from these templates.",
-      "task_schedule_blueprints_description_empty_html": "Use the form below to register tasks and cumulative temperature (GDD) for each growth stage as templates. When you create a cultivation plan, work schedules for the plan are generated automatically from these templates.",
-      "task_schedule_blueprints_description_from_plan_html": "Work schedules for this plan have already been generated. Edit these templates to adjust work schedules when you create or regenerate plans in the future.",
-      "task_schedule_blueprints_gdd_intro": "Task timing uses cumulative GDD (℃·day) from crop start, not offset within a stage.",
+      "task_schedule_blueprints_lead": "When you create a cultivation plan, work schedules are generated automatically from these templates.",
+      "task_schedule_blueprints_gdd_axis_caption": "Cumulative from crop start (not from stage start).",
       "task_schedule_blueprints_gdd_axis_label": "Cumulative GDD (total {{total}} ℃·day)",
       "no_task_schedule_blueprints": "No task plans yet. Add them one by one using the form below.",
       "unnamed_blueprint": "(Task name not set)",
@@ -1986,7 +1984,6 @@
       "generate_task_schedule_blueprints_confirm": "Replace all task plans with AI suggestions. Manually registered plans will be lost. Continue?",
       "manual_blueprint_add": {
         "title": "Add task plan manually",
-        "description": "Select a task from the master list and set the growth stage and task timing.",
         "stage_label": "Growth stage",
         "stage_placeholder": "Select a stage",
         "task_label": "Task",

@@ -29,3 +29,10 @@ export function cumulativeGddTimelineSegments(
 
   return segments;
 }
+
+export function gddAxisTotalGdd(segments: CumulativeGddTimelineSegment[]): number {
+  if (!segments.length) {
+    return 0;
+  }
+  return segments[segments.length - 1].cumulativeGddEnd;
+}
