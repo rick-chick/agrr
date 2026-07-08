@@ -357,6 +357,9 @@
       "task_schedule_blueprints_title": "कार्य अनुसूची टेम्पलेट",
       "blueprint_summary": {
         "count": "{{count}} कार्य योजना",
+        "attention_suffix": "({{count}} पर ध्यान दें)",
+        "task_gdd_line": "{{taskName}} — {{gdd}}",
+        "timing_required": "समय आवश्यक",
         "setup_required": "वृद्धि चरण या कार्य योजना पूरी तरह कॉन्फ़िगर नहीं है।",
         "edit_action": "कार्य योजना संपादित करें"
       },

@@ -17,7 +17,8 @@ const baseControl: CropDetailViewState = withCropDetailSummaryState({
   pendingSuccessFlash: null,
   blueprintsLoading: false,
   blueprintCount: 0,
-  blueprintReadiness: defaultBlueprintReadiness()
+  blueprintReadiness: defaultBlueprintReadiness(),
+  blueprintSummary: null
 });
 
 describe('CropDetailPresenter', () => {

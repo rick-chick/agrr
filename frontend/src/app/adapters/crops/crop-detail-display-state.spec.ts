@@ -33,7 +33,8 @@ const baseControl: CropDetailViewState = {
   pendingSuccessFlash: null,
   blueprintsLoading: false,
   blueprintCount: 0,
-  blueprintReadiness: defaultBlueprintReadiness()
+  blueprintReadiness: defaultBlueprintReadiness(),
+  blueprintSummary: null
 };
 
 describe('withCropDetailSummaryState', () => {
@@ -63,6 +64,75 @@ describe('withCropDetailSummaryState', () => {
     expect(next.blueprintReadiness.blueprintsReady).toBe(true);
     expect(next.blueprintReadiness.stageRequirementsReady).toBe(true);
     expect(next.blueprintReadiness.ready).toBe(true);
+    expect(next.blueprintSummary?.lanes).toHaveLength(1);
+    expect(next.blueprintSummary?.lanes[0].items[0].taskName).toBeNull();
+    expect(next.blueprintSummary?.attentionCount).toBe(0);
+  });
+
+  it('builds blueprint summary lanes when crop and blueprints are present', () => {
+    const next = withCropDetailSummaryState(
+      baseControl,
+      [
+        {
+          id: 20,
+          crop_id: 3,
+          agricultural_task_id: 5,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          gdd_trigger: 100,
+          gdd_tolerance: null,
+          task_type: 'field_work',
+          source: 'agrr',
+          priority: 1,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null,
+          name: 'Weeding'
+        }
+      ]
+    );
+
+    expect(next.blueprintSummary?.lanes[0].items[0].taskName).toBe('Weeding');
+    expect(next.blueprintSummary?.attentionCount).toBe(0);
+  });
+
+  it('keeps blueprintSummary null while blueprints are loading', () => {
+    const next = withCropDetailSummaryState(
+      { ...baseControl, blueprintsLoading: true },
+      [{ id: 1, crop_id: 3, agricultural_task_id: 5, source_agricultural_task_id: null, stage_order: 1, stage_name: 'S', gdd_trigger: 10, gdd_tolerance: null, task_type: 'field_work', source: 'manual', priority: 1, amount: null, amount_unit: null, description: null, weather_dependency: null, time_per_sqm: null }]
+    );
+
+    expect(next.blueprintSummary).toBeNull();
+  });
+
+  it('reports attention count for unset timing', () => {
+    const next = withCropDetailSummaryState(baseControl, [
+      {
+        id: 20,
+        crop_id: 3,
+        agricultural_task_id: 5,
+        source_agricultural_task_id: null,
+        stage_order: 1,
+        stage_name: 'Vegetative',
+        gdd_trigger: null,
+        gdd_tolerance: null,
+        task_type: 'field_work',
+        source: 'agrr',
+        priority: 1,
+        amount: null,
+        amount_unit: null,
+        description: null,
+        weather_dependency: null,
+        time_per_sqm: null,
+        name: 'Irrigation'
+      }
+    ]);
+
+    expect(next.blueprintSummary?.unsetTimingCount).toBe(1);
+    expect(next.blueprintSummary?.attentionCount).toBe(1);
   });
 
   it('reports setup required when stages lack requirements', () => {

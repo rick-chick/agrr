@@ -16,6 +16,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { formatIsoDateTimeForDisplay } from '../../../core/format-display-date';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
+import type { BlueprintDetailSummaryItem } from '../../../domain/crops/blueprint-detail-summary';
 
 const initialControl: CropDetailViewState = {
   loading: true,
@@ -26,7 +27,8 @@ const initialControl: CropDetailViewState = {
   pendingSuccessFlash: null,
   blueprintsLoading: true,
   blueprintCount: 0,
-  blueprintReadiness: defaultBlueprintReadiness()
+  blueprintReadiness: defaultBlueprintReadiness(),
+  blueprintSummary: null
 };
 
 @Component({
@@ -142,11 +144,108 @@ const initialControl: CropDetailViewState = {
                 'crops.show.blueprint_summary.count'
                   | translate: { count: control.blueprintCount }
               }}
+              @if (control.blueprintSummary && control.blueprintSummary.attentionCount > 0) {
+                <span class="crop-detail__blueprint-summary-attention">
+                  {{
+                    'crops.show.blueprint_summary.attention_suffix'
+                      | translate: { count: control.blueprintSummary.attentionCount }
+                  }}
+                </span>
+              }
             </p>
             @if (!control.blueprintReadiness.ready) {
               <p class="crop-detail__blueprint-summary-hint" role="status">
                 {{ 'crops.show.blueprint_summary.setup_required' | translate }}
               </p>
+            }
+            @if (control.blueprintSummary && control.blueprintCount === 0) {
+              <p class="crop-detail__blueprint-summary-empty">
+                {{ 'crops.show.no_task_schedule_blueprints' | translate }}
+              </p>
+            } @else if (control.blueprintSummary && control.blueprintSummary.lanes.length > 0) {
+              <div class="blueprint-summary-grid">
+                @for (lane of control.blueprintSummary!.lanes; track blueprintSummaryLaneId(lane)) {
+                  <div class="blueprint-summary-card">
+                    <h3 class="blueprint-summary-card__title">
+                      @if (lane.stageOrder == null) {
+                        {{ 'crops.show.blueprint_stage_lane.unassigned' | translate }}
+                      } @else {
+                        {{ lane.stageName }}
+                      }
+                    </h3>
+                    @if (lane.stageOrder != null) {
+                      @if (lane.gddRangeMissing) {
+                        <p class="blueprint-summary-card__gdd-range blueprint-summary-card__gdd-range--warn">
+                          {{ 'crops.show.blueprint_stage_lane.gdd_range_missing' | translate }}
+                        </p>
+                      } @else {
+                        <p class="blueprint-summary-card__gdd-range">
+                          {{
+                            'crops.show.blueprint_stage_lane.gdd_range'
+                              | translate: {
+                                  start: lane.cumulativeGddStart,
+                                  end: lane.cumulativeGddEnd
+                                }
+                          }}
+                        </p>
+                      }
+                    } @else {
+                      <p class="blueprint-summary-card__gdd-range blueprint-summary-card__gdd-range--warn">
+                        {{ 'crops.show.blueprint_stage_lane.unassigned_hint' | translate }}
+                      </p>
+                    }
+                    @if (
+                      lane.stageOrder != null &&
+                      lane.outOfRangeCount > 0 &&
+                      !lane.gddRangeMissing
+                    ) {
+                      <p class="blueprint-summary-card__lane-warning" role="status">
+                        {{
+                          'crops.show.blueprint_stage_lane.out_of_range_count'
+                            | translate: {
+                                count: lane.outOfRangeCount,
+                                start: lane.cumulativeGddStart,
+                                end: lane.cumulativeGddEnd
+                              }
+                        }}
+                      </p>
+                    }
+                    <ul class="blueprint-summary-card__tasks">
+                      @for (item of lane.items; track item.id) {
+                        <li
+                          class="blueprint-summary-card__task"
+                          [class.blueprint-summary-card__task--attention]="
+                            item.gddError === 'out_of_range' || item.gddError === 'missing_stage'
+                          "
+                        >
+                          @if (item.gddTrigger != null) {
+                            <span>
+                              {{
+                                'crops.show.blueprint_summary.task_gdd_line'
+                                  | translate: {
+                                      taskName: blueprintSummaryTaskName(item),
+                                      gdd: item.gddTrigger
+                                    }
+                              }}
+                              {{ 'crops.show.gdd_unit' | translate }}
+                            </span>
+                          } @else if (item.gddError === 'gdd_required') {
+                            <span>{{ blueprintSummaryTaskName(item) }}</span>
+                            <span class="blueprint-summary-card__attention-badge" role="status">
+                              {{ 'crops.show.blueprint_summary.timing_required' | translate }}
+                            </span>
+                          } @else {
+                            <span>{{ blueprintSummaryTaskName(item) }}</span>
+                            <span class="blueprint-summary-card__unset-badge" role="status">
+                              {{ 'crops.show.blueprint_gdd_unset' | translate }}
+                            </span>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
             }
             <a
               [routerLink]="['/crops', control.crop.id, 'task_schedule_blueprints']"
@@ -190,6 +289,14 @@ export class CropDetailComponent implements CropDetailView, OnInit {
 
   displayDateTime(value: string): string {
     return formatIsoDateTimeForDisplay(value, this.translate.currentLang);
+  }
+
+  blueprintSummaryLaneId(lane: { stageOrder: number | null }): string {
+    return lane.stageOrder == null ? 'unassigned' : String(lane.stageOrder);
+  }
+
+  blueprintSummaryTaskName(item: BlueprintDetailSummaryItem): string {
+    return item.taskName?.trim() || this.translate.instant('crops.show.unnamed_blueprint');
   }
 
   ngOnInit(): void {
