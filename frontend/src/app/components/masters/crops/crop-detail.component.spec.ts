@@ -207,6 +207,57 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-detail__stage-task-badge')).toBeTruthy();
   });
 
+  it('renders cultivation template action buttons with equal secondary styling', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Schedules are generated from these templates.',
+            blueprint_readiness: {
+              detail_title: 'Configuration status',
+              stages_ready: 'Stages ready',
+              blueprints_ready: 'Task plans ready',
+              stages_edit_action: 'Edit growth stages',
+              stages_action: 'Configure growth stages'
+            },
+            blueprint_summary: {
+              count: '{{count}} task plan(s)',
+              edit_action: 'Edit task plans',
+              empty_on_detail: 'No task plans in this stage yet.'
+            },
+            stage_required_gdd_label: 'Required GDD for this stage',
+            gdd_unit: '°C·day',
+            blueprint_stage_lane: {
+              gdd_range: '{{start}}–{{end}} °C·day',
+              board_label: 'Task plans by stage'
+            },
+            unnamed_blueprint: '(Unnamed task)'
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = loadedState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const actionLinks = fixture.nativeElement.querySelectorAll(
+      '.crop-detail__cultivation-actions a'
+    ) as NodeListOf<HTMLAnchorElement>;
+    expect(actionLinks).toHaveLength(2);
+    for (const link of Array.from(actionLinks)) {
+      expect(link.classList.contains('btn-secondary')).toBe(true);
+      expect(link.classList.contains('btn-primary')).toBe(false);
+    }
+  });
+
   it('groups tasks with the same gdd trigger into one badge row', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
