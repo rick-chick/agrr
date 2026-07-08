@@ -40,7 +40,6 @@ const CROPS_SHOW_KEYS = [
   'crops.show.task_schedule_blueprints_title',
   'crops.show.blueprint_summary.count',
   'crops.show.blueprint_summary.attention_suffix',
-  'crops.show.blueprint_summary.task_gdd_line',
   'crops.show.blueprint_summary.timing_required',
   'crops.show.blueprint_summary.setup_required',
   'crops.show.blueprint_summary.edit_action',

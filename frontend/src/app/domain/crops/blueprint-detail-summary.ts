@@ -11,6 +11,11 @@ export type BlueprintDetailSummaryItem = {
   gddError: BlueprintGddValidationError | null;
 };
 
+export type BlueprintDetailSummaryGddGroup = {
+  gddTrigger: number | null;
+  items: BlueprintDetailSummaryItem[];
+};
+
 export type BlueprintDetailSummaryLane = {
   stageOrder: number | null;
   stageName: string | null;
@@ -19,6 +24,7 @@ export type BlueprintDetailSummaryLane = {
   gddRangeMissing: boolean;
   outOfRangeCount: number;
   items: BlueprintDetailSummaryItem[];
+  gddGroups: BlueprintDetailSummaryGddGroup[];
 };
 
 export type BlueprintDetailSummary = {
@@ -28,7 +34,7 @@ export type BlueprintDetailSummary = {
   attentionCount: number;
 };
 
-export const emptyBlueprintDetailSummary = (): BlueprintDetailSummary => ({
+const emptyBlueprintDetailSummary = (): BlueprintDetailSummary => ({
   lanes: [],
   unsetTimingCount: 0,
   issueCount: 0,
@@ -95,6 +101,31 @@ function laneOutOfRangeCount(items: BlueprintDetailSummaryItem[]): number {
   ).length;
 }
 
+function normalizeGddTrigger(gddTrigger: number | null): number | null {
+  if (gddTrigger == null || Number.isNaN(gddTrigger)) {
+    return null;
+  }
+  return gddTrigger;
+}
+
+function groupBlueprintSummaryItemsByGdd(
+  items: BlueprintDetailSummaryItem[]
+): BlueprintDetailSummaryGddGroup[] {
+  const groups: BlueprintDetailSummaryGddGroup[] = [];
+
+  for (const item of items) {
+    const gddTrigger = normalizeGddTrigger(item.gddTrigger);
+    const last = groups[groups.length - 1];
+    if (last != null && last.gddTrigger === gddTrigger) {
+      last.items.push(item);
+      continue;
+    }
+    groups.push({ gddTrigger, items: [item] });
+  }
+
+  return groups;
+}
+
 export function buildBlueprintDetailSummary(
   stages: CropStage[],
   blueprints: CropTaskScheduleBlueprint[]
@@ -132,7 +163,8 @@ export function buildBlueprintDetailSummary(
         cumulativeGddEnd: lane.cumulativeGddEnd,
         gddRangeMissing: lane.gddRangeMissing,
         outOfRangeCount: laneOutOfRangeCount(items),
-        items
+        items,
+        gddGroups: groupBlueprintSummaryItemsByGdd(items)
       };
     });
 

@@ -99,6 +99,62 @@ describe('withCropDetailSummaryState', () => {
     expect(next.blueprintSummary?.attentionCount).toBe(0);
   });
 
+  it('passes gddGroups from buildBlueprintDetailSummary through view state', () => {
+    const next = withCropDetailSummaryState(
+      baseControl,
+      [
+        {
+          id: 20,
+          crop_id: 3,
+          agricultural_task_id: 5,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          gdd_trigger: 200,
+          gdd_tolerance: null,
+          task_type: 'field_work',
+          source: 'agrr',
+          priority: 1,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null,
+          name: 'Planting'
+        },
+        {
+          id: 21,
+          crop_id: 3,
+          agricultural_task_id: 6,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          gdd_trigger: 200,
+          gdd_tolerance: null,
+          task_type: 'field_work',
+          source: 'agrr',
+          priority: 2,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null,
+          name: 'Tilling'
+        }
+      ]
+    );
+
+    expect(next.blueprintSummary?.lanes[0].gddGroups).toEqual([
+      {
+        gddTrigger: 200,
+        items: [
+          expect.objectContaining({ taskName: 'Planting' }),
+          expect.objectContaining({ taskName: 'Tilling' })
+        ]
+      }
+    ]);
+  });
+
   it('keeps blueprintSummary null while blueprints are loading', () => {
     const next = withCropDetailSummaryState(
       { ...baseControl, blueprintsLoading: true },

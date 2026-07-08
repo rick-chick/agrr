@@ -479,7 +479,6 @@
       "blueprint_summary": {
         "count": "{{count}}件の作業予定",
         "attention_suffix": "（{{count}}件は要確認）",
-        "task_gdd_line": "{{taskName}} — {{gdd}}",
         "timing_required": "タイミング要指定",
         "setup_required": "生育ステージまたは作業予定の設定が未完了です。",
         "edit_action": "作業予定を編集"

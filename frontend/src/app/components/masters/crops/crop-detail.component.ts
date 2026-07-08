@@ -16,7 +16,10 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { formatIsoDateTimeForDisplay } from '../../../core/format-display-date';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
-import type { BlueprintDetailSummaryItem } from '../../../domain/crops/blueprint-detail-summary';
+import type {
+  BlueprintDetailSummaryGddGroup,
+  BlueprintDetailSummaryItem
+} from '../../../domain/crops/blueprint-detail-summary';
 
 const initialControl: CropDetailViewState = {
   loading: true,
@@ -210,39 +213,55 @@ const initialControl: CropDetailViewState = {
                         }}
                       </p>
                     }
-                    <ul class="blueprint-summary-card__tasks">
-                      @for (item of lane.items; track item.id) {
-                        <li
-                          class="blueprint-summary-card__task"
-                          [class.blueprint-summary-card__task--attention]="
-                            item.gddError === 'out_of_range' || item.gddError === 'missing_stage'
-                          "
-                        >
-                          @if (item.gddTrigger != null) {
-                            <span>
-                              {{
-                                'crops.show.blueprint_summary.task_gdd_line'
-                                  | translate: {
-                                      taskName: blueprintSummaryTaskName(item),
-                                      gdd: item.gddTrigger
-                                    }
-                              }}
-                              {{ 'crops.show.gdd_unit' | translate }}
-                            </span>
-                          } @else if (item.gddError === 'gdd_required') {
-                            <span>{{ blueprintSummaryTaskName(item) }}</span>
-                            <span class="blueprint-summary-card__attention-badge" role="status">
-                              {{ 'crops.show.blueprint_summary.timing_required' | translate }}
-                            </span>
-                          } @else {
-                            <span>{{ blueprintSummaryTaskName(item) }}</span>
-                            <span class="blueprint-summary-card__unset-badge" role="status">
-                              {{ 'crops.show.blueprint_gdd_unset' | translate }}
-                            </span>
+                    <div class="blueprint-summary-card__gdd-groups">
+                      @for (
+                        group of lane.gddGroups;
+                        track blueprintSummaryGddGroupId(group, $index)
+                      ) {
+                        <div class="blueprint-summary-card__gdd-group">
+                          @if (group.gddTrigger != null) {
+                            <p class="blueprint-summary-card__gdd-group-label">
+                              {{ group.gddTrigger }}{{ 'crops.show.gdd_unit' | translate }}
+                            </p>
                           }
-                        </li>
+                          <ul class="blueprint-summary-card__badges" role="list">
+                            @for (item of group.items; track item.id) {
+                              <li
+                                class="blueprint-summary-card__badge"
+                                [class.blueprint-summary-card__badge--attention]="
+                                  item.gddError === 'out_of_range' ||
+                                  item.gddError === 'missing_stage' ||
+                                  item.gddError === 'gdd_required'
+                                "
+                              >
+                                <span class="blueprint-summary-card__badge-label">
+                                  {{ blueprintSummaryTaskName(item) }}
+                                </span>
+                                @if (item.gddError === 'gdd_required') {
+                                  <span
+                                    class="blueprint-summary-card__badge-status"
+                                    role="status"
+                                  >
+                                    {{
+                                      'crops.show.blueprint_summary.timing_required' | translate
+                                    }}
+                                  </span>
+                                } @else if (
+                                  item.gddTrigger == null && item.gddError == null
+                                ) {
+                                  <span
+                                    class="blueprint-summary-card__badge-status"
+                                    role="status"
+                                  >
+                                    {{ 'crops.show.blueprint_gdd_unset' | translate }}
+                                  </span>
+                                }
+                              </li>
+                            }
+                          </ul>
+                        </div>
                       }
-                    </ul>
+                    </div>
                   </div>
                 }
               </div>
@@ -293,6 +312,15 @@ export class CropDetailComponent implements CropDetailView, OnInit {
 
   blueprintSummaryLaneId(lane: { stageOrder: number | null }): string {
     return lane.stageOrder == null ? 'unassigned' : String(lane.stageOrder);
+  }
+
+  blueprintSummaryGddGroupId(
+    group: BlueprintDetailSummaryGddGroup,
+    index: number
+  ): string {
+    const gddId = group.gddTrigger == null ? 'unset' : String(group.gddTrigger);
+    const firstItemId = group.items[0]?.id ?? index;
+    return `${gddId}-${firstItemId}`;
   }
 
   blueprintSummaryTaskName(item: BlueprintDetailSummaryItem): string {

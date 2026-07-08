@@ -148,4 +148,64 @@ describe('buildBlueprintDetailSummary', () => {
     expect(summary.lanes[0].outOfRangeCount).toBe(1);
     expect(summary.lanes[1].outOfRangeCount).toBe(1);
   });
+
+  it('groups lane items by gdd_trigger for badge display', () => {
+    const summary = buildBlueprintDetailSummary(stages, [
+      blueprint({ id: 1, stage_order: 2, gdd_trigger: 200, name: '定植' }),
+      blueprint({ id: 2, stage_order: 2, gdd_trigger: 200, name: '耕耘' }),
+      blueprint({ id: 3, stage_order: 2, gdd_trigger: 200, name: '基肥' })
+    ]);
+
+    const lane = summary.lanes.find((entry) => entry.stageOrder === 2);
+    expect(lane?.gddGroups).toEqual([
+      {
+        gddTrigger: 200,
+        items: [
+          expect.objectContaining({ taskName: '定植', gddTrigger: 200 }),
+          expect.objectContaining({ taskName: '耕耘', gddTrigger: 200 }),
+          expect.objectContaining({ taskName: '基肥', gddTrigger: 200 })
+        ]
+      }
+    ]);
+  });
+
+  it('creates separate gdd groups when triggers differ within a lane', () => {
+    const summary = buildBlueprintDetailSummary(stages, [
+      blueprint({ id: 1, stage_order: 1, gdd_trigger: 50, name: '播種' }),
+      blueprint({ id: 2, stage_order: 1, gdd_trigger: 150, name: '灌水' }),
+      blueprint({ id: 3, stage_order: 1, gdd_trigger: 150, name: '間引き' })
+    ]);
+
+    expect(summary.lanes[0].gddGroups).toEqual([
+      {
+        gddTrigger: 50,
+        items: [expect.objectContaining({ taskName: '播種' })]
+      },
+      {
+        gddTrigger: 150,
+        items: [
+          expect.objectContaining({ taskName: '灌水' }),
+          expect.objectContaining({ taskName: '間引き' })
+        ]
+      }
+    ]);
+  });
+
+  it('places unset timing items in a null gdd group at the end of the lane', () => {
+    const summary = buildBlueprintDetailSummary(stages, [
+      blueprint({ id: 1, stage_order: 1, gdd_trigger: 100, name: '除草' }),
+      blueprint({ id: 2, stage_order: 1, gdd_trigger: null, name: '灌水' })
+    ]);
+
+    expect(summary.lanes[0].gddGroups).toEqual([
+      {
+        gddTrigger: 100,
+        items: [expect.objectContaining({ taskName: '除草' })]
+      },
+      {
+        gddTrigger: null,
+        items: [expect.objectContaining({ taskName: '灌水', gddTrigger: null })]
+      }
+    ]);
+  });
 });

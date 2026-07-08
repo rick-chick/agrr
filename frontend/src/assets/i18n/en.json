@@ -1955,7 +1955,6 @@
       "blueprint_summary": {
         "count": "{{count}} task plan(s)",
         "attention_suffix": "({{count}} need attention)",
-        "task_gdd_line": "{{taskName}} — {{gdd}}",
         "timing_required": "Timing required",
         "setup_required": "Growth stages or task plans are not fully configured yet.",
         "edit_action": "Edit task plans"

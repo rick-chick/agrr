@@ -158,7 +158,6 @@ describe('CropDetailComponent', () => {
             blueprint_summary: {
               count: '{{count}} task plan(s)',
               attention_suffix: '({{count}} need attention)',
-              task_gdd_line: '{{taskName}} — {{gdd}}',
               edit_action: 'Edit task plans'
             },
             gdd_unit: '℃·day',
@@ -187,6 +186,115 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('#blueprints-heading')).toBeFalsy();
     expect(fixture.nativeElement.textContent).toContain('Weeding');
     expect(fixture.nativeElement.textContent).toContain('120');
+    expect(fixture.nativeElement.querySelector('.blueprint-summary-card__badge')).toBeTruthy();
+  });
+
+  it('groups tasks with the same gdd trigger into one badge row', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            task_schedule_blueprints_title: 'Task Plan',
+            blueprint_summary: {
+              count: '{{count}} task plan(s)',
+              edit_action: 'Edit task plans'
+            },
+            gdd_unit: '℃·day',
+            blueprint_stage_lane: {
+              gdd_range: '{{start}}–{{end}} ℃·day'
+            },
+            unnamed_blueprint: '(Unnamed task)'
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = withCropDetailSummaryState(
+      {
+        ...loadedState,
+        blueprintCount: 3,
+        blueprintReadiness: { ...defaultBlueprintReadiness(), blueprintsReady: true, ready: true }
+      },
+      [
+        {
+          id: 20,
+          crop_id: 3,
+          agricultural_task_id: 5,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          gdd_trigger: 200,
+          gdd_tolerance: null,
+          task_type: 'field_work',
+          source: 'manual',
+          priority: 1,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null,
+          name: 'Planting'
+        },
+        {
+          id: 21,
+          crop_id: 3,
+          agricultural_task_id: 6,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          gdd_trigger: 200,
+          gdd_tolerance: null,
+          task_type: 'field_work',
+          source: 'manual',
+          priority: 2,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null,
+          name: 'Tilling'
+        },
+        {
+          id: 22,
+          crop_id: 3,
+          agricultural_task_id: 7,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Vegetative',
+          gdd_trigger: 200,
+          gdd_tolerance: null,
+          task_type: 'field_work',
+          source: 'manual',
+          priority: 3,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null,
+          name: 'Basal fertilizer'
+        }
+      ]
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const gddLabels = fixture.nativeElement.querySelectorAll(
+      '.blueprint-summary-card__gdd-group-label'
+    );
+    expect(gddLabels).toHaveLength(1);
+    expect(gddLabels[0].textContent).toContain('200');
+    expect(fixture.nativeElement.querySelectorAll('.blueprint-summary-card__badge')).toHaveLength(
+      3
+    );
+    expect(fixture.nativeElement.textContent).toContain('Planting');
+    expect(fixture.nativeElement.textContent).toContain('Tilling');
+    expect(fixture.nativeElement.textContent).toContain('Basal fertilizer');
   });
 
   it('shows attention suffix when blueprint summary has attention items', async () => {
