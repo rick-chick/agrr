@@ -67,7 +67,7 @@ fn skip_ws<R: Read + Seek>(reader: &mut R) -> anyhow::Result<()> {
 
 fn read_json_string<R: Read>(reader: &mut R) -> anyhow::Result<String> {
     expect_byte(reader, b'"')?;
-    let mut out = String::new();
+    let mut out = Vec::new();
     loop {
         let mut buf = [0u8; 1];
         reader.read_exact(&mut buf)?;
@@ -76,12 +76,12 @@ fn read_json_string<R: Read>(reader: &mut R) -> anyhow::Result<String> {
             b'\\' => {
                 reader.read_exact(&mut buf)?;
                 match buf[0] {
-                    b'"' | b'\\' | b'/' => out.push(buf[0] as char),
-                    b'b' => out.push('\u{0008}'),
-                    b'f' => out.push('\u{000C}'),
-                    b'n' => out.push('\n'),
-                    b'r' => out.push('\r'),
-                    b't' => out.push('\t'),
+                    b'"' | b'\\' | b'/' => out.push(buf[0]),
+                    b'b' => out.push(0x08),
+                    b'f' => out.push(0x0C),
+                    b'n' => out.push(b'\n'),
+                    b'r' => out.push(b'\r'),
+                    b't' => out.push(b'\t'),
                     b'u' => {
                         let mut hex = [0u8; 4];
                         reader.read_exact(&mut hex)?;
@@ -89,19 +89,18 @@ fn read_json_string<R: Read>(reader: &mut R) -> anyhow::Result<String> {
                             std::str::from_utf8(&hex).context("unicode escape")?,
                             16,
                         )?;
-                        if let Some(c) = char::from_u32(code as u32) {
-                            out.push(c);
-                        } else {
-                            bail!("invalid unicode escape");
-                        }
+                        let c = char::from_u32(code as u32).context("invalid unicode escape")?;
+                        let mut enc = [0u8; 4];
+                        let encoded = c.encode_utf8(&mut enc);
+                        out.extend_from_slice(encoded.as_bytes());
                     }
                     _ => bail!("invalid JSON escape"),
                 }
             }
-            b => out.push(b as char),
+            b => out.push(b),
         }
     }
-    Ok(out)
+    String::from_utf8(out).context("JSON string utf8")
 }
 
 fn read_json_value<R: Read + Seek>(reader: &mut R) -> anyhow::Result<String> {

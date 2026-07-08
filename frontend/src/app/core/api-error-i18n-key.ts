@@ -14,6 +14,12 @@ export function apiErrorI18nKey(error: unknown): string {
     if (error.status === 404) {
       return 'common.api_error.not_found';
     }
+    if (error.status === 501) {
+      return 'common.api_error.not_migrated';
+    }
+    if (error.status === 502 || error.status === 503) {
+      return 'common.api_error.service_unavailable';
+    }
     if (error.status === 0) {
       return 'common.api_error.network';
     }

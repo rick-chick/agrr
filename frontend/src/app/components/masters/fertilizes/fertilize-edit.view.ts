@@ -1,3 +1,4 @@
+import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-error-flash-view.effects';
 export type FertilizeEditFormData = {
   name: string;
   n: number | null;
@@ -13,6 +14,8 @@ export type FertilizeEditViewState = {
   saving: boolean;
   error: string | null;
   formData: FertilizeEditFormData;
+
+  pendingErrorFlash: PendingErrorFlashRequest | null;
 };
 
 export interface FertilizeEditView {

@@ -49,16 +49,24 @@ describe('LoadWorkRecordsUseCase', () => {
         of({ work_records: [record(1, '2026-06-12')] }),
       createWorkRecord: () => of({ work_record: record(1, '2026-06-12') }),
       updateWorkRecord: () => of({ work_record: record(1, '2026-06-12') }),
-      deleteWorkRecord: () => of({ deleted: true }),
+      deleteWorkRecord: () =>
+        of({
+          undo_token: 'stub',
+          undo_path: '/undo_deletion?undo_token=stub',
+          toast_message: 'stub',
+          undo_deadline: '2026',
+          auto_hide_after: 5000
+        }),
       skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
       unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
     };
     const planGateway: PlanGateway = {
       listPlans: () => of([]),
-      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active' }),
+      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active', farm_id: 1 }),
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({} as never),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     };
     let result: Parameters<LoadWorkRecordsOutputPort['present']>[0] | null = null;
@@ -82,16 +90,24 @@ describe('LoadWorkRecordsUseCase', () => {
         throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })),
       createWorkRecord: () => of({ work_record: record(1, '2026-06-12') }),
       updateWorkRecord: () => of({ work_record: record(1, '2026-06-12') }),
-      deleteWorkRecord: () => of({ deleted: true }),
+      deleteWorkRecord: () =>
+        of({
+          undo_token: 'stub',
+          undo_path: '/undo_deletion?undo_token=stub',
+          toast_message: 'stub',
+          undo_deadline: '2026',
+          auto_hide_after: 5000
+        }),
       skipTaskScheduleItem: () => of({ item: { id: 1, status: 'skipped', cancelled_at: null } }),
       unskipTaskScheduleItem: () => of({ item: { id: 1, status: 'planned', cancelled_at: null } })
     };
     const planGateway: PlanGateway = {
       listPlans: () => of([]),
-      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active' }),
+      fetchPlan: () => of({ id: 1, name: 'Plan', status: 'active', farm_id: 1 }),
       fetchPlanData: () => of({} as never),
       getPublicPlanData: () => of({} as never),
       getTaskSchedule: () => of({} as never),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as never)
     };
     const onError = vi.fn();

@@ -10,6 +10,8 @@ import {
   PublicPlanResultsPresenter,
   PUBLIC_PLAN_RESULTS_PROVIDERS
 } from '../../usecase/public-plans/public-plan-results.providers';
+import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
+import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
@@ -19,23 +21,26 @@ import {
   setPendingPublicPlanSave
 } from '../../services/public-plans/pending-public-plan-save';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
+import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
 
-/**
- * 無料計画の結果（/public-plans/results）。
- * Rails の `_header` 相当の `.gantt-results-header` サマリーは出さない（ガントと操作に寄せる）。
- * `ja.json` に残る `%{count}` は ngx-translate と非互換のため、Rails 用コピペで戻すと未置換表示になる。
- */
 const initialControl: PublicPlanResultsViewState = {
   loading: true,
   error: null,
-  data: null
+  data: null,
+  pendingErrorFlash: null,
+  pendingSuccessFlash: null,
+  pendingNavigation: null
 };
 
 @Component({
   selector: 'app-public-plan-results',
   standalone: true,
   imports: [CommonModule, PlanGanttClimateShellComponent, TranslateModule, RouterLink],
-  providers: [...PUBLIC_PLAN_RESULTS_PROVIDERS],
+  providers: [
+    ...PUBLIC_PLAN_RESULTS_PROVIDERS,
+    ...GANTT_CHART_API_PROVIDERS,
+    ...PLAN_FIELD_CLIMATE_API_PROVIDERS
+  ],
   template: `
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
@@ -96,7 +101,10 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
     return this._control;
   }
   set control(value: PublicPlanResultsViewState) {
-    this._control = value;
+    this._control = applyPendingFlashAndNavigationViewEffects(value, {
+      flash: this.flashMessage,
+      router: this.router
+    });
     this.cdr.markForCheck();
   }
 

@@ -7,6 +7,7 @@ use serde_json::Value;
 #[derive(Debug, Clone, PartialEq)]
 pub struct TaskScheduleBlueprintRow {
     pub crop_id: i64,
+    pub blueprint_id: Option<i64>,
     pub agricultural_task_id: i64,
     pub stage_order: Option<i64>,
     pub stage_name: Option<String>,
@@ -20,19 +21,25 @@ pub struct TaskScheduleBlueprintRow {
     pub amount_unit: Option<String>,
     pub weather_dependency: Option<String>,
     pub time_per_sqm: Option<Decimal>,
+    pub name: Option<String>,
 }
 
 pub fn general_row(
     crop_id: i64,
     task: &Value,
+    blueprint_id: i64,
     agricultural_task_id: i64,
     template_description: Option<&str>,
     template_weather_dependency: Option<&str>,
     template_time_per_sqm: Option<Decimal>,
 ) -> TaskScheduleBlueprintRow {
-    let agrr_task_name = task.get("name").or_else(|| task.get("description")).and_then(|v| v.as_str());
+    let agrr_task_name = task
+        .get("name")
+        .or_else(|| task.get("description"))
+        .and_then(|v| v.as_str());
     TaskScheduleBlueprintRow {
         crop_id,
+        blueprint_id: Some(blueprint_id),
         agricultural_task_id,
         stage_order: integer_value(task.get("stage_order")),
         stage_name: task.get("stage_name").and_then(|v| v.as_str()).map(str::to_string),
@@ -41,11 +48,19 @@ pub fn general_row(
         task_type: schedule_item_types::FIELD_WORK.to_string(),
         source: "agrr_schedule".into(),
         priority: integer_value(task.get("priority")),
-        description: agrr_task_name.map(str::to_string).or_else(|| template_description.map(str::to_string)),
+        description: agrr_task_name
+            .map(str::to_string)
+            .or_else(|| template_description.map(str::to_string)),
         amount: None,
         amount_unit: None,
-        weather_dependency: task.get("weather_dependency").and_then(|v| v.as_str()).map(str::to_string).or_else(|| template_weather_dependency.map(str::to_string)),
-        time_per_sqm: decimal_value(task.get("time_per_sqm").and_then(|v| v.as_str())).or(template_time_per_sqm),
+        weather_dependency: task
+            .get("weather_dependency")
+            .and_then(|v| v.as_str())
+            .map(str::to_string)
+            .or_else(|| template_weather_dependency.map(str::to_string)),
+        time_per_sqm: decimal_value(task.get("time_per_sqm").and_then(|v| v.as_str()))
+            .or(template_time_per_sqm),
+        name: agrr_task_name.map(str::to_string),
     }
 }
 
@@ -66,6 +81,7 @@ pub fn fertilizer_row(
     let amount = decimal_value(amount_raw.and_then(|v| v.as_str()));
     TaskScheduleBlueprintRow {
         crop_id,
+        blueprint_id: None,
         agricultural_task_id,
         stage_order: integer_value(entry.get("stage_order")),
         stage_name: Some(fixed_stage_name.into()),
@@ -77,8 +93,14 @@ pub fn fertilizer_row(
         description: Some(fixed_stage_name.into()).or_else(|| template_description.map(str::to_string)),
         amount,
         amount_unit: entry.get("amount_unit").and_then(|v| v.as_str()).map(str::to_string).or_else(|| if amount_specified(amount_raw) { Some("g/m2".into()) } else { None }),
-        weather_dependency: entry.get("weather_dependency").and_then(|v| v.as_str()).map(str::to_string).or_else(|| template_weather_dependency.map(str::to_string)),
-        time_per_sqm: decimal_value(entry.get("time_per_sqm").and_then(|v| v.as_str())).or(template_time_per_sqm),
+        weather_dependency: entry
+            .get("weather_dependency")
+            .and_then(|v| v.as_str())
+            .map(str::to_string)
+            .or_else(|| template_weather_dependency.map(str::to_string)),
+        time_per_sqm: decimal_value(entry.get("time_per_sqm").and_then(|v| v.as_str()))
+            .or(template_time_per_sqm),
+        name: Some(fixed_stage_name.into()),
     }
 }
 

@@ -14,6 +14,18 @@ pub fn status_and_body(response: reqwest::blocking::Response) -> (u16, String) {
     (status, body)
 }
 
+/// Asserts deprecated crop agricultural_tasks API returns 410 Gone.
+pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
+    assert_eq!(410, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(body).expect("gone JSON");
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("crop_task_template_api_removed"),
+        "{body}"
+    );
+    assert!(json.get("error").is_some(), "{body}");
+}
+
 pub fn developer_session_id(client: &ContractClient) -> String {
     let response = client.get("/auth/test/developer", None, &empty_headers());
     for value in response.headers().get_all("set-cookie") {
@@ -41,7 +53,65 @@ pub fn user_id_for_session(client: &ContractClient, session_id: &str) -> i64 {
 
 pub struct WorkRecordPlanSeed {
     pub plan_id: i64,
+    pub farm_id: i64,
+    pub crop_id: i64,
     pub task_schedule_item_id: i64,
+}
+
+pub struct MastersCropSeed {
+    pub crop_id: i64,
+}
+
+pub struct MastersCropBlueprintCreateSeed {
+    pub crop_id: i64,
+    pub agricultural_task_id: i64,
+}
+
+/// Seeds a user-owned non-reference crop for masters blueprint API tests.
+pub fn seed_masters_crop(user_id: i64) -> MastersCropSeed {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let crop_name = format!("Contract Blueprint Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (user_id, name, variety, is_reference, created_at, updated_at)
+         VALUES (?1, ?2, 'V1', 0, datetime('now'), datetime('now'))",
+        params![user_id, crop_name],
+    )
+    .expect("insert crop");
+    MastersCropSeed {
+        crop_id: conn.last_insert_rowid(),
+    }
+}
+
+/// Seeds crop + pending manual blueprint for blueprint create tests.
+pub fn seed_masters_crop_with_manual_blueprint(user_id: i64) -> MastersCropBlueprintCreateSeed {
+    let crop = seed_masters_crop(user_id);
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let task_name = format!("Contract Blueprint Task {suffix}");
+    conn.execute(
+        "INSERT INTO agricultural_tasks (name, is_reference, user_id, task_type, created_at, updated_at)
+         VALUES (?1, 0, ?2, 'field_work', datetime('now'), datetime('now'))",
+        params![task_name, user_id],
+    )
+    .expect("insert agricultural_task");
+    let agricultural_task_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO crop_task_schedule_blueprints (
+            crop_id, agricultural_task_id, stage_order, stage_name, gdd_trigger, gdd_tolerance,
+            task_type, source, priority, name, created_at, updated_at
+         ) VALUES (?1, ?2, NULL, NULL, NULL, NULL, 'field_work', 'manual', 1, ?3, datetime('now'), datetime('now'))",
+        params![crop.crop_id, agricultural_task_id, task_name],
+    )
+    .expect("insert manual blueprint");
+    MastersCropBlueprintCreateSeed {
+        crop_id: crop.crop_id,
+        agricultural_task_id,
+    }
 }
 
 fn seed_suffix() -> String {
@@ -70,6 +140,13 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
     )
     .expect("insert farm");
     let farm_id = conn.last_insert_rowid();
+
+    conn.execute(
+        "INSERT INTO fields (farm_id, user_id, name, area, daily_fixed_cost, created_at, updated_at)
+         VALUES (?1, ?2, 'Contract Field', 50.0, 0, datetime('now'), datetime('now'))",
+        params![farm_id, user_id],
+    )
+    .expect("insert field");
 
     let crop_name = format!("Contract Crop {suffix}");
     conn.execute(
@@ -102,6 +179,10 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
     )
     .expect("insert cultivation_plan");
     let plan_id = conn.last_insert_rowid();
+    let _ = conn.execute(
+        "UPDATE cultivation_plans SET task_schedule_sync_state = 'ready' WHERE id = ?1",
+        params![plan_id],
+    );
 
     conn.execute(
         "INSERT INTO cultivation_plan_fields (cultivation_plan_id, name, area, created_at, updated_at)
@@ -156,6 +237,52 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
 
     WorkRecordPlanSeed {
         plan_id,
+        farm_id,
+        crop_id,
         task_schedule_item_id,
     }
+}
+
+/// Sets failed sync state with optional crop context for remediation links.
+pub fn set_plan_task_schedule_sync_failed(
+    plan_id: i64,
+    sync_error: &str,
+    sync_error_crop_id: Option<i64>,
+) {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    conn.execute(
+        "UPDATE cultivation_plans \
+         SET task_schedule_sync_state = 'failed', task_schedule_sync_error = ?1, \
+             task_schedule_sync_error_crop_id = ?2, updated_at = datetime('now') \
+         WHERE id = ?3",
+        params![sync_error, sync_error_crop_id, plan_id],
+    )
+    .expect("update plan sync failed state");
+}
+
+/// Sets legacy/raw sync error on an existing plan (contract tests for normalization).
+pub fn set_plan_task_schedule_sync_failed_raw_error(plan_id: i64, raw_error: &str) {
+    set_plan_task_schedule_sync_failed(plan_id, raw_error, None);
+}
+
+/// Removes generated schedules so contract tests can simulate failed-first-generation plans.
+pub fn clear_plan_task_schedules(plan_id: i64) {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    conn.execute(
+        "DELETE FROM task_schedule_items
+         WHERE task_schedule_id IN (
+           SELECT id FROM task_schedules WHERE cultivation_plan_id = ?1
+         )",
+        params![plan_id],
+    )
+    .expect("delete task_schedule_items");
+    conn.execute(
+        "DELETE FROM task_schedules WHERE cultivation_plan_id = ?1",
+        params![plan_id],
+    )
+    .expect("delete task_schedules");
 }

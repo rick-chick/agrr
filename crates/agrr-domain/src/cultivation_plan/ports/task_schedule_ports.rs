@@ -18,6 +18,11 @@ pub trait TaskScheduleItemMutationOutputPort {
     fn on_not_found(&mut self);
 }
 
+pub trait RegenerateTaskScheduleOutputPort {
+    fn on_success(&mut self);
+    fn on_not_found(&mut self);
+}
+
 pub trait PrivatePlanInitializeFromSelectionOutputPort {
     fn on_success(
         &mut self,

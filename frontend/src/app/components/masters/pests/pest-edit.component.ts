@@ -20,11 +20,16 @@ const initialFormData: PestEditFormData = {
   region: null
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: PestEditViewState = {
   loading: true,
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -93,6 +98,7 @@ export class PestEditComponent implements PestEditView, OnInit {
   private readonly loadUseCase = inject(LoadPestForEditUseCase);
   private readonly updateUseCase = inject(UpdatePestUseCase);
   private readonly presenter = inject(PestEditPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PestEditViewState = initialControl;
@@ -100,7 +106,10 @@ export class PestEditComponent implements PestEditView, OnInit {
     return this._control;
   }
   set control(value: PestEditViewState) {
-    this._control = this.applyUserRegion(value);
+    const next = applyPendingErrorFlashViewEffects(this.applyUserRegion(value), {
+      flash: this.flashMessage
+    });
+    this._control = next;
     this.cdr.markForCheck();
   }
 

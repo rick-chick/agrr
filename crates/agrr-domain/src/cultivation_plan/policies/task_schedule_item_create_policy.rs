@@ -6,13 +6,13 @@ use rust_decimal::Decimal;
 use time::Date;
 
 use crate::agricultural_task::constants::schedule_item_types::FIELD_WORK;
-use crate::cultivation_plan::dtos::TaskScheduleCropTaskTemplateSnapshot;
+use crate::cultivation_plan::dtos::TaskScheduleAgriculturalTaskSnapshot;
 use crate::cultivation_plan::helpers::parse_iso_date;
 use crate::shared::exceptions::RecordInvalidError;
 use crate::shared::validation::ValidationErrors;
 
 pub const CROP_REQUIRED_MESSAGE: &str = "作物を選択してください";
-pub const INVALID_TEMPLATE_MESSAGE: &str = "選択した作業テンプレートは利用できません";
+pub const INVALID_AGRICULTURAL_TASK_MESSAGE: &str = "選択した作業は利用できません";
 pub const NAME_REQUIRED_MESSAGE: &str = "作業名を入力してください";
 pub const INVALID_SCHEDULED_DATE_MESSAGE: &str = "無効な日付が指定されました";
 
@@ -53,15 +53,12 @@ pub fn validate_crop_selection(
     raise_record_invalid(Some(CROP_REQUIRED_MESSAGE), None, None)
 }
 
-pub fn validate_template(
-    field_crop_id: Option<i64>,
-    template: Option<&TaskScheduleCropTaskTemplateSnapshot>,
+pub fn validate_agricultural_task(
+    submitted_task_id: Option<i64>,
+    task: Option<&TaskScheduleAgriculturalTaskSnapshot>,
 ) -> Result<(), RecordInvalidError> {
-    let Some(template) = template else {
-        return Ok(());
-    };
-    if field_crop_id.is_none() || template.crop_id != field_crop_id.unwrap_or(-1) {
-        return raise_record_invalid(Some(INVALID_TEMPLATE_MESSAGE), None, None);
+    if submitted_task_id.is_some() && task.is_none() {
+        return raise_record_invalid(Some(INVALID_AGRICULTURAL_TASK_MESSAGE), None, None);
     }
     Ok(())
 }
@@ -80,18 +77,18 @@ pub fn parse_scheduled_date(raw_value: &str) -> Result<Date, RecordInvalidError>
 
 pub fn build_create_attributes(
     raw_params: &BTreeMap<String, Option<String>>,
-    template: Option<&TaskScheduleCropTaskTemplateSnapshot>,
+    agricultural_task: Option<&TaskScheduleAgriculturalTaskSnapshot>,
 ) -> Result<TaskScheduleItemCreateAttributes, RecordInvalidError> {
     let name = raw_params
         .get("name")
         .and_then(|v| v.as_deref())
         .filter(|s| present_str(Some(s)))
         .map(str::to_string)
-        .or_else(|| template.map(|t| t.name.clone()));
+        .or_else(|| agricultural_task.map(|t| t.name.clone()));
     ensure_name_present(name.as_deref())?;
 
-    let task_type = if let Some(t) = template {
-        t.task_type
+    let task_type = if let Some(task) = agricultural_task {
+        task.task_type
             .clone()
             .unwrap_or_else(|| FIELD_WORK.to_string())
     } else {
@@ -102,8 +99,8 @@ pub fn build_create_attributes(
             .unwrap_or_else(|| FIELD_WORK.to_string())
     };
 
-    let source = if template.is_some() {
-        "template_entry"
+    let source = if agricultural_task.is_some() {
+        "agricultural_task_entry"
     } else {
         "manual_entry"
     };
@@ -116,7 +113,7 @@ pub fn build_create_attributes(
             .get("description")
             .and_then(|v| v.clone())
             .filter(|s| present_str(Some(s.as_str())))
-            .or_else(|| template.and_then(|t| t.description.clone())),
+            .or_else(|| agricultural_task.and_then(|t| t.description.clone())),
         scheduled_date: raw_params.get("scheduled_date").and_then(|v| v.clone()),
         stage_name: raw_params.get("stage_name").and_then(|v| v.clone()),
         stage_order: parse_i32_param(raw_params.get("stage_order")),
@@ -126,15 +123,15 @@ pub fn build_create_attributes(
             .get("weather_dependency")
             .and_then(|v| v.clone())
             .filter(|s| present_str(Some(s.as_str())))
-            .or_else(|| template.and_then(|t| t.weather_dependency.clone())),
-        time_per_sqm: template.and_then(|t| t.time_per_sqm),
+            .or_else(|| agricultural_task.and_then(|t| t.weather_dependency.clone())),
+        time_per_sqm: agricultural_task.and_then(|t| t.time_per_sqm),
         amount: None,
         amount_unit: raw_params.get("amount_unit").and_then(|v| v.clone()),
         agricultural_task_id: raw_params
             .get("agricultural_task_id")
             .and_then(|v| v.as_deref())
             .and_then(|s| s.parse().ok())
-            .or_else(|| template.map(|t| t.agricultural_task_id)),
+            .or_else(|| agricultural_task.map(|t| t.id)),
         cultivation_plan_crop_id: parse_i64_param(raw_params.get("cultivation_plan_crop_id")),
     })
 }

@@ -13,24 +13,33 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Keys referenced by plan-work, plan-work-nav, and work-record-sheet on plans/:id/work. */
+/** Keys referenced by plan-work, plan-work-header, and work-record-sheet on plans/:id/work. */
 const PLANS_WORK_KEYS = [
   'plans.work.back_to_plan',
-  'plans.work.title',
+  'plans.work.back_to_hub',
+  'plans.work.page_title',
   'plans.work.show_skipped',
   'plans.work.section.overdue',
   'plans.work.section.today',
   'plans.work.section.upcoming',
   'plans.work.empty_today',
+  'plans.work.empty_today_hint',
+  'plans.work.next_scheduled',
   'plans.work.add_record',
   'plans.work.recorded_today',
   'plans.work.skipped_badge',
   'plans.work.complete',
+  'plans.work.record_with_details',
   'plans.work.menu',
   'plans.work.skip',
   'plans.work.unskip',
+  'plans.work.retry',
+  'plans.work.toast.record_saved',
+  'plans.work.toast.record_saved_adhoc',
+  'plans.work.recent_adhoc',
+  'plans.work.recent_adhoc_history_link',
+  'plans.work.nav.aria_label',
   'plans.work.nav.work',
-  'plans.work.nav.schedule',
   'plans.work.nav.history',
   'plans.work.sheet.title',
   'plans.work.sheet.name',
@@ -43,6 +52,10 @@ const PLANS_WORK_KEYS = [
   'plans.work.sheet.field_select',
   'plans.work.sheet.field_optional',
   'plans.work.sheet.submit',
+  'plans.work.sheet.task_picker',
+  'plans.work.sheet.task_other',
+  'plans.work.sheet.show_details',
+  'plans.work.sheet.hide_details',
   'plans.work.errors.name_required',
   'plans.errors.invalid_id'
 ] as const;
@@ -50,7 +63,6 @@ const PLANS_WORK_KEYS = [
 /** in locale must not reuse ja copy for primary work-screen labels (visual-review #48). */
 const IN_LOCALE_MUST_DIFFER_FROM_JA = [
   'plans.work.nav.work',
-  'plans.work.nav.schedule',
   'plans.work.nav.history',
   'plans.work.empty_today',
   'plans.work.show_skipped',

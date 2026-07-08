@@ -1,27 +1,67 @@
 @import '../masters/_master-layout.css';
+@import './plan-work-shared.css';
 
-:host {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
+.plan-task-schedule__page-intro {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
-.page-alert-error {
-  margin-top: var(--space-4);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-error-border-soft);
-  background: var(--color-error-bg);
-  color: var(--color-error-dark);
+.plan-task-schedule__intro {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
 }
 
-.page-alert-error p {
+.plan-task-schedule__generated-at,
+.plan-task-schedule__summary {
   margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
-.page {
-  background: var(--color-surface);
-  padding: var(--space-5);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-divider);
+.plan-task-schedule__summary {
+  margin-top: var(--space-1);
+}
+
+.plan-task-schedule__filter-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.plan-task-schedule__filter-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.plan-task-schedule__filter-link:hover {
+  text-decoration: underline;
+}
+
+.plan-task-schedule__regenerate-details {
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.plan-task-schedule__regenerate-details summary {
+  cursor: pointer;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.plan-task-schedule__regenerate-body {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.plan-task-schedule__regenerate-error {
+  margin: 0;
+  color: var(--color-danger, #b42318);
+  font-size: var(--font-size-sm);
 }

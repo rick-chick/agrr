@@ -1,3 +1,4 @@
+import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-error-flash-view.effects';
 export type FarmCreateFormData = {
   name: string;
   region: string;
@@ -9,6 +10,8 @@ export type FarmCreateViewState = {
   saving: boolean;
   error: string | null;
   formData: FarmCreateFormData;
+
+  pendingErrorFlash: PendingErrorFlashRequest | null;
 };
 
 export interface FarmCreateView {

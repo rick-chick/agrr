@@ -19,6 +19,8 @@ function getNested(obj: JsonRecord, path: string): unknown {
 /** Keys referenced by farm-detail (farms show screen). */
 const FARMS_SHOW_KEYS = [
   'farms.show.location',
+  'farms.form.region_blank',
+  'farms.form.region_jp',
   'farms.show.back_to_list',
   'farms.show.weather_status',
   'farms.show.weather_progress',
@@ -35,8 +37,7 @@ const FARMS_SHOW_KEYS = [
   'farms.show.field_form.area_placeholder',
   'farms.show.field_form.daily_fixed_cost_label',
   'farms.show.field_form.daily_fixed_cost_placeholder',
-  'farms.show.field_form.region_label',
-  'farms.show.field_form.region_placeholder',
+  'farms.show.field_list_item',
   'farms.show.field_form.submit_update',
   'farms.show.field_form.submit_create'
 ] as const;

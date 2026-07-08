@@ -2,11 +2,14 @@
 
 use crate::cultivation_plan::rest_plan_read::compute_plan_display_name;
 use crate::pool::SqlitePool;
+use agrr_domain::agricultural_task::normalize_stored_sync_error;
 use agrr_domain::cultivation_plan::dtos::task_schedule_timeline_snapshot::{
-    TaskScheduleTimelineFieldRead, TaskScheduleTimelinePlanRead, TaskScheduleTimelineSnapshot,
+    TaskScheduleTimelineAgriculturalTaskRead, TaskScheduleTimelineFieldRead,
+    TaskScheduleTimelinePlanRead, TaskScheduleTimelineScheduleItemRead,
+    TaskScheduleTimelineScheduleRead, TaskScheduleTimelineSnapshot,
+    TaskScheduleTimelineTaskOptionRead, TaskScheduleTimelineWorkRecordSummaryRead,
 };
 use rusqlite::{params, OptionalExtension};
-use serde_json::{json, Value};
 use time::{Date, format_description::well_known::Iso8601};
 
 pub fn load_task_schedule_timeline_snapshot(
@@ -22,7 +25,7 @@ pub fn load_task_schedule_timeline_snapshot(
         let mut fields = merge_fields(field_contexts, schedule_rows);
         for field in &mut fields {
             if field.crop_id > 0 {
-                field.task_options = load_task_options(conn, field.crop_id)?;
+                field.task_options = load_task_options(conn, plan_id)?;
             }
         }
         Ok(TaskScheduleTimelineSnapshot {
@@ -40,7 +43,8 @@ fn load_plan_read(
     let mut stmt = conn.prepare(
         "SELECT cp.id, cp.plan_name, cp.plan_year, cp.status, \
          cp.planning_start_date, cp.planning_end_date, COALESCE(cp.total_area, 0), \
-         COALESCE(f.name, '') \
+         COALESCE(f.name, ''), COALESCE(cp.task_schedule_sync_state, 'never'), \
+         cp.task_schedule_sync_error, cp.task_schedule_sync_error_crop_id \
          FROM cultivation_plans cp \
          LEFT JOIN farms f ON f.id = cp.farm_id \
          WHERE cp.id = ?1 LIMIT 1",
@@ -55,6 +59,9 @@ fn load_plan_read(
             row.get::<_, Option<String>>(5)?,
             row.get::<_, f64>(6)?,
             row.get::<_, String>(7)?,
+            row.get::<_, String>(8)?,
+            row.get::<_, Option<String>>(9)?,
+            row.get::<_, Option<i64>>(10)?,
         ))
     })?;
 
@@ -67,7 +74,19 @@ fn load_plan_read(
         .optional()?
         .flatten();
 
-    let (id, plan_name, plan_year, status, ps, pe, total_area, farm_display_name) = row;
+    let (
+        id,
+        plan_name,
+        plan_year,
+        status,
+        ps,
+        pe,
+        total_area,
+        farm_display_name,
+        sync_state,
+        sync_error,
+        sync_error_crop_id,
+    ) = row;
     let display_name = compute_plan_display_name(id, plan_name.as_deref(), plan_year, &farm_display_name);
     Ok(TaskScheduleTimelinePlanRead {
         id,
@@ -78,6 +97,9 @@ fn load_plan_read(
         timeline_generated_at,
         farm_display_name,
         total_area,
+        task_schedule_sync_state: sync_state,
+        task_schedule_sync_error: normalize_stored_sync_error(sync_error),
+        task_schedule_sync_error_crop_id: sync_error_crop_id,
     })
 }
 
@@ -108,6 +130,8 @@ struct FieldContext {
     crop_name: String,
     area_sqm: f64,
     crop_id: i64,
+    start_date: Option<Date>,
+    completion_date: Option<Date>,
 }
 
 fn load_field_contexts(
@@ -116,13 +140,13 @@ fn load_field_contexts(
 ) -> rusqlite::Result<Vec<FieldContext>> {
     let mut stmt = conn.prepare(
         "SELECT DISTINCT fc.id, COALESCE(cpf.name, ''), \
-         COALESCE(cpc.name, cr.name, ''), COALESCE(fc.area, 0), cpc.crop_id \
-         FROM task_schedules ts \
-         INNER JOIN field_cultivations fc ON fc.id = ts.field_cultivation_id \
+         COALESCE(cpc.name, cr.name, ''), COALESCE(fc.area, 0), COALESCE(cpc.crop_id, 0), \
+         fc.start_date, fc.completion_date \
+         FROM field_cultivations fc \
          LEFT JOIN cultivation_plan_fields cpf ON cpf.id = fc.cultivation_plan_field_id \
          LEFT JOIN cultivation_plan_crops cpc ON cpc.id = fc.cultivation_plan_crop_id \
          LEFT JOIN crops cr ON cr.id = cpc.crop_id \
-         WHERE ts.cultivation_plan_id = ?1",
+         WHERE fc.cultivation_plan_id = ?1",
     )?;
     let rows = stmt.query_map(params![plan_id], |row| {
         Ok(FieldContext {
@@ -131,56 +155,40 @@ fn load_field_contexts(
             name: row.get(1)?,
             crop_name: row.get(2)?,
             area_sqm: row.get(3)?,
-            crop_id: row.get::<_, Option<i64>>(4)?.unwrap_or(0),
+            crop_id: row.get::<_, i64>(4)?,
+            start_date: parse_date_opt(row.get::<_, Option<String>>(5)?.as_deref()),
+            completion_date: parse_date_opt(row.get::<_, Option<String>>(6)?.as_deref()),
         })
     })?;
     rows.collect()
 }
 
-fn load_task_options(conn: &rusqlite::Connection, crop_id: i64) -> rusqlite::Result<Vec<Value>> {
+fn load_task_options(
+    conn: &rusqlite::Connection,
+    plan_id: i64,
+) -> rusqlite::Result<Vec<TaskScheduleTimelineTaskOptionRead>> {
     let mut stmt = conn.prepare(
-        "SELECT ctt.id, ctt.name, COALESCE(ctt.task_type, 'field_work'), ctt.agricultural_task_id, \
-         ctt.description, ctt.weather_dependency, ctt.time_per_sqm, ctt.required_tools, ctt.skill_level \
-         FROM crop_task_templates ctt \
-         WHERE ctt.crop_id = ?1 \
-         ORDER BY ctt.name ASC",
+        "SELECT at.id, at.name, COALESCE(at.task_type, 'field_work'), at.description, \
+         at.weather_dependency, at.time_per_sqm, at.required_tools, at.skill_level \
+         FROM agricultural_tasks at \
+         WHERE at.is_reference = 1 OR at.user_id = ( \
+           SELECT f.user_id FROM cultivation_plans cp \
+           INNER JOIN farms f ON f.id = cp.farm_id \
+           WHERE cp.id = ?1 \
+         ) \
+         ORDER BY at.name ASC",
     )?;
-    let rows = stmt.query_map(params![crop_id], |row| {
-        let template_id: i64 = row.get(0)?;
-        let name: String = row.get(1)?;
-        let task_type: String = row.get(2)?;
-        let agricultural_task_id: Option<i64> = row.get(3)?;
-        let description: Option<String> = row.get(4)?;
-        let weather_dependency: Option<String> = row.get(5)?;
-        let time_per_sqm: Option<f64> = row.get(6)?;
-        let required_tools: Option<String> = row.get(7)?;
-        let skill_level: Option<String> = row.get(8)?;
-        let mut obj = json!({
-            "template_id": template_id,
-            "name": name,
-            "task_type": task_type,
-        });
-        if let Some(v) = agricultural_task_id {
-            obj["agricultural_task_id"] = json!(v);
-        }
-        if let Some(v) = description {
-            obj["description"] = json!(v);
-        }
-        if let Some(v) = weather_dependency {
-            obj["weather_dependency"] = json!(v);
-        }
-        if let Some(v) = time_per_sqm {
-            obj["time_per_sqm"] = json!(v.to_string());
-        }
-        if let Some(v) = required_tools {
-            if let Ok(arr) = serde_json::from_str::<Value>(&v) {
-                obj["required_tools"] = arr;
-            }
-        }
-        if let Some(v) = skill_level {
-            obj["skill_level"] = json!(v);
-        }
-        Ok(obj)
+    let rows = stmt.query_map(params![plan_id], |row| {
+        Ok(TaskScheduleTimelineTaskOptionRead {
+            agricultural_task_id: row.get(0)?,
+            name: row.get(1)?,
+            task_type: row.get(2)?,
+            description: row.get(3)?,
+            weather_dependency: row.get(4)?,
+            time_per_sqm: row.get(5)?,
+            required_tools: parse_required_tools(row.get(6)?),
+            skill_level: row.get(7)?,
+        })
     })?;
     rows.collect()
 }
@@ -188,7 +196,7 @@ fn load_task_options(conn: &rusqlite::Connection, crop_id: i64) -> rusqlite::Res
 fn load_work_record_summaries(
     conn: &rusqlite::Connection,
     plan_id: i64,
-) -> rusqlite::Result<std::collections::BTreeMap<i64, Vec<Value>>> {
+) -> rusqlite::Result<std::collections::BTreeMap<i64, Vec<TaskScheduleTimelineWorkRecordSummaryRead>>> {
     let mut stmt = conn.prepare(
         "SELECT wr.task_schedule_item_id, wr.id, wr.actual_date, wr.notes \
          FROM work_records wr \
@@ -196,15 +204,17 @@ fn load_work_record_summaries(
          ORDER BY wr.task_schedule_item_id, wr.actual_date ASC",
     )?;
     let rows = stmt.query_map(params![plan_id], |row| {
-        let item_id: i64 = row.get(0)?;
-        let record = json!({
-            "id": row.get::<_, i64>(1)?,
-            "actual_date": row.get::<_, String>(2)?,
-            "notes": row.get::<_, Option<String>>(3)?,
-        });
-        Ok((item_id, record))
+        Ok((
+            row.get::<_, i64>(0)?,
+            TaskScheduleTimelineWorkRecordSummaryRead {
+                id: row.get(1)?,
+                actual_date: row.get(2)?,
+                notes: row.get(3)?,
+            },
+        ))
     })?;
-    let mut out: std::collections::BTreeMap<i64, Vec<Value>> = std::collections::BTreeMap::new();
+    let mut out: std::collections::BTreeMap<i64, Vec<TaskScheduleTimelineWorkRecordSummaryRead>> =
+        std::collections::BTreeMap::new();
     for row in rows {
         let (item_id, record) = row?;
         out.entry(item_id).or_default().push(record);
@@ -215,8 +225,11 @@ fn load_work_record_summaries(
 fn load_schedule_rows(
     conn: &rusqlite::Connection,
     plan_id: i64,
-    work_records_by_item: &std::collections::BTreeMap<i64, Vec<Value>>,
-) -> rusqlite::Result<Vec<(i64, Value)>> {
+    work_records_by_item: &std::collections::BTreeMap<
+        i64,
+        Vec<TaskScheduleTimelineWorkRecordSummaryRead>,
+    >,
+) -> rusqlite::Result<Vec<(i64, TaskScheduleTimelineScheduleRead)>> {
     let mut stmt = conn.prepare(
         "SELECT ts.field_cultivation_id, ts.category, tsi.id, tsi.name, tsi.task_type, tsi.scheduled_date, \
          tsi.stage_name, tsi.stage_order, tsi.gdd_trigger, tsi.gdd_tolerance, tsi.priority, tsi.source, \
@@ -253,31 +266,19 @@ fn load_schedule_rows(
         let cancelled_at: Option<String> = row.get(19)?;
         let at_name: Option<String> = row.get(20)?;
 
-        let mut agricultural_task = None;
-        if at_name.is_some() {
-            let mut at_obj = json!({ "name": at_name.unwrap() });
-            if let Some(v) = row.get::<_, Option<String>>(21)? {
-                at_obj["description"] = json!(v);
-            }
-            if let Some(v) = row.get::<_, Option<f64>>(22)? {
-                at_obj["time_per_sqm"] = json!(v.to_string());
-            }
-            if let Some(v) = row.get::<_, Option<String>>(23)? {
-                at_obj["weather_dependency"] = json!(v);
-            }
-            if let Some(v) = row.get::<_, Option<String>>(24)? {
-                if let Ok(arr) = serde_json::from_str::<Value>(&v) {
-                    at_obj["required_tools"] = arr;
-                }
-            }
-            if let Some(v) = row.get::<_, Option<String>>(25)? {
-                at_obj["skill_level"] = json!(v);
-            }
-            if let Some(v) = row.get::<_, Option<String>>(26)? {
-                at_obj["task_type"] = json!(v);
-            }
-            agricultural_task = Some(at_obj);
-        }
+        let agricultural_task = if at_name.is_some() {
+            Some(TaskScheduleTimelineAgriculturalTaskRead {
+                name: at_name.unwrap(),
+                description: row.get(21)?,
+                time_per_sqm: row.get(22)?,
+                weather_dependency: row.get(23)?,
+                required_tools: parse_required_tools(row.get(24)?),
+                skill_level: row.get(25)?,
+                task_type: row.get(26)?,
+            })
+        } else {
+            None
+        };
 
         let work_records = work_records_by_item
             .get(&item_id)
@@ -285,53 +286,54 @@ fn load_schedule_rows(
             .unwrap_or_default();
         let completed = !work_records.is_empty();
 
-        let item = json!({
-            "id": item_id,
-            "name": name,
-            "task_type": task_type,
-            "scheduled_date": scheduled_date,
-            "stage_name": stage_name,
-            "stage_order": stage_order,
-            "gdd_trigger": gdd_trigger.map(|v| v.to_string()),
-            "gdd_tolerance": gdd_tolerance.map(|v| v.to_string()),
-            "priority": priority,
-            "source": source,
-            "weather_dependency": weather_dependency,
-            "time_per_sqm": time_per_sqm.map(|v| v.to_string()),
-            "amount": amount.map(|v| v.to_string()),
-            "amount_unit": amount_unit,
-            "status": status,
-            "agricultural_task_id": agricultural_task_id,
-            "field_cultivation_id": field_cultivation_id,
-            "agricultural_task": agricultural_task,
-            "rescheduled_at": rescheduled_at,
-            "cancelled_at": cancelled_at,
-            "completed": completed,
-            "work_records": work_records,
-        });
+        let item = TaskScheduleTimelineScheduleItemRead {
+            id: item_id,
+            name,
+            task_type,
+            scheduled_date,
+            stage_name,
+            stage_order,
+            gdd_trigger,
+            gdd_tolerance,
+            priority,
+            source,
+            weather_dependency,
+            time_per_sqm,
+            amount,
+            amount_unit,
+            status,
+            agricultural_task_id,
+            field_cultivation_id,
+            agricultural_task,
+            rescheduled_at,
+            cancelled_at,
+            completed,
+            work_records,
+        };
 
-        Ok((field_cultivation_id, json!({ "category": category, "items": [item] })))
+        Ok((
+            field_cultivation_id,
+            TaskScheduleTimelineScheduleRead {
+                category,
+                items: vec![item],
+            },
+        ))
     })?;
 
-    let mut merged: std::collections::BTreeMap<(i64, String), Vec<Value>> =
+    let mut merged: std::collections::BTreeMap<(i64, String), Vec<TaskScheduleTimelineScheduleItemRead>> =
         std::collections::BTreeMap::new();
     for row in rows {
         let (fc_id, schedule) = row?;
-        let category = schedule["category"].as_str().unwrap_or("general").to_string();
-        let key = (fc_id, category);
+        let key = (fc_id, schedule.category);
         let entry = merged.entry(key).or_default();
-        if let Some(items) = schedule.get("items").and_then(|v| v.as_array()) {
-            for item in items {
-                entry.push(item.clone());
-            }
-        }
+        entry.extend(schedule.items);
     }
 
     let mut out = Vec::new();
     for ((fc_id, category), items) in merged {
         out.push((
             fc_id,
-            json!({ "category": category, "items": items }),
+            TaskScheduleTimelineScheduleRead { category, items },
         ));
     }
     Ok(out)
@@ -339,9 +341,9 @@ fn load_schedule_rows(
 
 fn merge_fields(
     contexts: Vec<FieldContext>,
-    schedule_rows: Vec<(i64, Value)>,
+    schedule_rows: Vec<(i64, TaskScheduleTimelineScheduleRead)>,
 ) -> Vec<TaskScheduleTimelineFieldRead> {
-    let mut schedules_by_fc: std::collections::BTreeMap<i64, Vec<Value>> =
+    let mut schedules_by_fc: std::collections::BTreeMap<i64, Vec<TaskScheduleTimelineScheduleRead>> =
         std::collections::BTreeMap::new();
     for (fc_id, schedule) in schedule_rows {
         schedules_by_fc
@@ -359,6 +361,8 @@ fn merge_fields(
             area_sqm: ctx.area_sqm,
             field_cultivation_id: ctx.field_cultivation_id,
             crop_id: ctx.crop_id,
+            cultivation_start_date: ctx.start_date,
+            cultivation_end_date: ctx.completion_date,
             task_options: vec![],
             schedules: schedules_by_fc
                 .remove(&ctx.field_cultivation_id)
@@ -370,4 +374,174 @@ fn merge_fields(
 fn parse_date_opt(s: Option<&str>) -> Option<Date> {
     let s = s?;
     Date::parse(s, &Iso8601::DATE).ok()
+}
+
+fn parse_required_tools(raw: Option<String>) -> Option<Vec<String>> {
+    let raw = raw?;
+    if let Ok(values) = serde_json::from_str::<Vec<String>>(&raw) {
+        return Some(values);
+    }
+    if let Ok(value) = serde_json::from_str::<serde_json::Value>(&raw) {
+        if let Some(arr) = value.as_array() {
+            return Some(
+                arr.iter()
+                    .filter_map(|entry| entry.as_str().map(String::from))
+                    .collect(),
+            );
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pool::SqlitePool;
+
+    const TIMELINE_DDL: &str = "
+CREATE TABLE farms (id INTEGER PRIMARY KEY, user_id INTEGER, name TEXT);
+CREATE TABLE cultivation_plans (
+  id INTEGER PRIMARY KEY, farm_id INTEGER, plan_name TEXT, plan_year INTEGER,
+  status TEXT, planning_start_date TEXT, planning_end_date TEXT, total_area REAL,
+  task_schedule_sync_state TEXT, task_schedule_sync_error TEXT,
+  task_schedule_sync_error_crop_id INTEGER
+);
+CREATE TABLE cultivation_plan_fields (
+  id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER, name TEXT
+);
+CREATE TABLE cultivation_plan_crops (
+  id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER, name TEXT, crop_id INTEGER
+);
+CREATE TABLE crops (id INTEGER PRIMARY KEY, name TEXT);
+CREATE TABLE field_cultivations (
+  id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER,
+  cultivation_plan_field_id INTEGER, cultivation_plan_crop_id INTEGER, area REAL,
+  start_date TEXT, completion_date TEXT
+);
+CREATE TABLE agricultural_tasks (
+  id INTEGER PRIMARY KEY, user_id INTEGER, is_reference INTEGER NOT NULL DEFAULT 0,
+  name TEXT NOT NULL, task_type TEXT, description TEXT, weather_dependency TEXT,
+  time_per_sqm REAL, required_tools TEXT, skill_level TEXT
+);
+CREATE TABLE task_schedules (
+  id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER, field_cultivation_id INTEGER,
+  category TEXT NOT NULL, generated_at TEXT
+);
+CREATE TABLE task_schedule_items (
+  id INTEGER PRIMARY KEY, task_schedule_id INTEGER, name TEXT, task_type TEXT,
+  scheduled_date TEXT, stage_name TEXT, stage_order INTEGER, gdd_trigger REAL,
+  gdd_tolerance REAL, priority INTEGER, source TEXT, weather_dependency TEXT,
+  time_per_sqm REAL, amount REAL, amount_unit TEXT, status TEXT,
+  agricultural_task_id INTEGER, rescheduled_at TEXT, cancelled_at TEXT
+);
+CREATE TABLE work_records (
+  id INTEGER PRIMARY KEY, cultivation_plan_id INTEGER, task_schedule_item_id INTEGER,
+  actual_date TEXT, notes TEXT
+);
+";
+
+    fn temp_pool() -> SqlitePool {
+        let dir = std::env::temp_dir().join(format!("agrr_ts_tl_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(format!(
+            "ts_tl_{}_{}.sqlite3",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let pool = SqlitePool::new(path.to_str().unwrap());
+        pool.with_write(|conn| {
+            conn.execute_batch(TIMELINE_DDL)?;
+            conn.execute(
+                "INSERT INTO farms (id, user_id, name) VALUES (1, 7, 'Farm A')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO cultivation_plans (id, farm_id, plan_name, plan_year, status, total_area, task_schedule_sync_state)
+                 VALUES (1, 1, 'Plan', 2026, 'completed', 100.0, 'synced')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO cultivation_plan_fields (id, cultivation_plan_id, name) VALUES (10, 1, 'Field 1')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO crops (id, name) VALUES (42, 'Tomato')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO cultivation_plan_crops (id, cultivation_plan_id, name, crop_id) VALUES (20, 1, 'Tomato', 42)",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO field_cultivations (id, cultivation_plan_id, cultivation_plan_field_id, cultivation_plan_crop_id, area, start_date, completion_date)
+                 VALUES (100, 1, 10, 20, 50.0, '2026-05-01', '2026-09-30')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO agricultural_tasks (id, user_id, is_reference, name, task_type, required_tools)
+                 VALUES (501, 7, 0, 'Weeding', 'field_work', '[\"hoe\"]')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO task_schedules (id, cultivation_plan_id, field_cultivation_id, category, generated_at)
+                 VALUES (900, 1, 100, 'general', '2026-07-01T00:00:00Z')",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO task_schedule_items (id, task_schedule_id, name, task_type, scheduled_date, source, status, agricultural_task_id)
+                 VALUES (1001, 900, 'Weed', 'field_work', '2026-07-05', 'agrr', 'planned', 501)",
+                [],
+            )?;
+            conn.execute(
+                "INSERT INTO work_records (id, cultivation_plan_id, task_schedule_item_id, actual_date, notes)
+                 VALUES (2001, 1, 1001, '2026-07-05', 'done')",
+                [],
+            )?;
+            Ok(())
+        })
+        .unwrap();
+        pool
+    }
+
+    #[test]
+    fn load_snapshot_assembles_typed_task_options_and_schedule_rows() {
+        let pool = temp_pool();
+        let snapshot = load_task_schedule_timeline_snapshot(&pool, 1).expect("snapshot");
+
+        assert_eq!(snapshot.plan.id, 1);
+        assert_eq!(snapshot.plan.display_name, "Plan (2026)");
+        assert_eq!(snapshot.scheduled_dates.len(), 1);
+
+        let field = snapshot.fields.first().expect("field");
+        assert_eq!(field.field_cultivation_id, 100);
+        assert_eq!(field.crop_id, 42);
+        assert_eq!(
+            field.cultivation_start_date,
+            Some(Date::parse("2026-05-01", &Iso8601::DATE).expect("date"))
+        );
+        assert_eq!(
+            field.cultivation_end_date,
+            Some(Date::parse("2026-09-30", &Iso8601::DATE).expect("date"))
+        );
+        assert_eq!(field.task_options.len(), 1);
+        assert_eq!(field.task_options[0].agricultural_task_id, 501);
+        assert_eq!(field.task_options[0].name, "Weeding");
+        assert_eq!(
+            field.task_options[0].required_tools,
+            Some(vec!["hoe".to_string()])
+        );
+
+        let schedule = field.schedules.first().expect("schedule");
+        assert_eq!(schedule.category, "general");
+        let item = schedule.items.first().expect("item");
+        assert_eq!(item.id, 1001);
+        assert!(item.completed);
+        assert_eq!(item.work_records.len(), 1);
+        assert_eq!(item.work_records[0].actual_date, "2026-07-05");
+        let master = item.agricultural_task.as_ref().expect("master");
+        assert_eq!(master.name, "Weeding");
+    }
 }

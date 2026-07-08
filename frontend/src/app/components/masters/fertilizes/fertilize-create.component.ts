@@ -22,10 +22,15 @@ const initialFormData: FertilizeCreateFormData = {
   region: null
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: FertilizeCreateViewState = {
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -85,6 +90,7 @@ export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateFertilizeUseCase);
   private readonly presenter = inject(FertilizeCreatePresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: FertilizeCreateViewState = initialControl;
@@ -92,7 +98,7 @@ export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
     return this._control;
   }
   set control(value: FertilizeCreateViewState) {
-    this._control = value;
+    this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 

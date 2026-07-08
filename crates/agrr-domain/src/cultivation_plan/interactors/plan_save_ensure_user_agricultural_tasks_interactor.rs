@@ -9,9 +9,7 @@ use crate::cultivation_plan::dtos::{
 use crate::cultivation_plan::gateways::{
     PlanSaveUserAgriculturalTaskGateway, PublicPlanSaveReadGateway,
 };
-use crate::cultivation_plan::mappers::{
-    agricultural_task_attributes_for_create, crop_task_template_attributes_for_create,
-};
+use crate::cultivation_plan::mappers::agricultural_task_attributes_for_create;
 use crate::cultivation_plan::helpers::attr_map_from_json;
 use crate::shared::ports::{LoggerPort, TranslatorPort};
 
@@ -73,11 +71,6 @@ where
                     row.reference_agricultural_task_id,
                 )?
             {
-                self.sync_crop_task_templates(
-                    &row,
-                    &existing,
-                    &input.reference_crop_id_to_user_crop_id,
-                )?;
                 skipped_agricultural_task_ids.push(existing.id);
                 user_agricultural_task_ids.push(existing.id);
                 reference_agricultural_task_id_to_user_task_id
@@ -85,7 +78,7 @@ where
                 continue;
             }
 
-                let created = self.create_user_agricultural_task(&input, &row)?;
+            let created = self.create_user_agricultural_task(&input, &row)?;
             user_agricultural_task_ids.push(created.id);
             reference_agricultural_task_id_to_user_task_id
                 .insert(row.reference_agricultural_task_id, created.id);
@@ -114,47 +107,8 @@ where
             row,
             input.region.as_deref(),
         ));
-        let created = self
-            .user_agricultural_task_gateway
-            .create(input.user_id, attributes)?;
-        self.sync_crop_task_templates(
-            row,
-            &created,
-            &input.reference_crop_id_to_user_crop_id,
-        )?;
-        Ok(created)
-    }
-
-    fn sync_crop_task_templates(
-        &self,
-        row: &PublicPlanSaveAgriculturalTaskReferenceRow,
-        user_task_snapshot: &PlanSaveUserAgriculturalTaskSnapshot,
-        reference_crop_id_to_user_crop_id: &HashMap<i64, i64>,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        for link_row in &row.template_links {
-            let Some(user_crop_id) = reference_crop_id_to_user_crop_id.get(&link_row.reference_crop_id)
-            else {
-                continue;
-            };
-            if self
-                .user_agricultural_task_gateway
-                .find_crop_task_template(*user_crop_id, user_task_snapshot.id)?
-                .is_some()
-            {
-                continue;
-            }
-            let attributes = attr_map_from_json(crop_task_template_attributes_for_create(
-                link_row,
-                row,
-                user_task_snapshot.name.as_deref(),
-            ));
-            self.user_agricultural_task_gateway.create_crop_task_template(
-                *user_crop_id,
-                user_task_snapshot.id,
-                attributes,
-            )?;
-        }
-        Ok(())
+        self.user_agricultural_task_gateway
+            .create(input.user_id, attributes)
     }
 }
 

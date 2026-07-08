@@ -1,6 +1,6 @@
 // Tests for `policies/task_schedule_item_create_policy.rs` (Ruby parity under test/domain/cultivation_plan/).
 
-    use crate::cultivation_plan::dtos::TaskScheduleCropTaskTemplateSnapshot;
+    use crate::cultivation_plan::dtos::TaskScheduleAgriculturalTaskSnapshot;
     use rust_decimal::Decimal;
     use std::str::FromStr;
 
@@ -24,40 +24,41 @@
             .contains('物'));
     }
 
-    // Ruby: test "validate_template! raises when template crop does not match field crop"
     #[test]
-    fn validate_template_raises_when_template_crop_mismatch() {
-        let template = TaskScheduleCropTaskTemplateSnapshot {
-            id: 1,
-            crop_id: 99,
-            name: "T".into(),
+    fn validate_agricultural_task_raises_when_task_id_submitted_but_not_found() {
+        assert!(validate_agricultural_task(Some(99), None).is_err());
+    }
+
+    #[test]
+    fn validate_agricultural_task_passes_when_task_found() {
+        let task = TaskScheduleAgriculturalTaskSnapshot {
+            id: 3,
+            name: "作業".into(),
             description: None,
-            task_type: None,
+            task_type: Some(FIELD_WORK.into()),
             weather_dependency: None,
             time_per_sqm: None,
-            agricultural_task_id: 1,
         };
-        assert!(validate_template(Some(5), Some(&template)).is_err());
+        assert!(validate_agricultural_task(Some(3), Some(&task)).is_ok());
     }
 
     // Ruby: test "build_create_attributes uses template name when name omitted"
     #[test]
-    fn build_create_attributes_uses_template_name_when_name_omitted() {
-        let template = TaskScheduleCropTaskTemplateSnapshot {
-            id: 1,
-            crop_id: 5,
-            name: "テンプレ作業".into(),
+    fn build_create_attributes_uses_agricultural_task_name_when_name_omitted() {
+        let task = TaskScheduleAgriculturalTaskSnapshot {
+            id: 3,
+            name: "作業A".into(),
             description: Some("説明".into()),
             task_type: Some(FIELD_WORK.into()),
             weather_dependency: Some("low".into()),
             time_per_sqm: Some(Decimal::from_str("0.2").unwrap()),
-            agricultural_task_id: 3,
         };
         let mut params = BTreeMap::new();
         params.insert("field_cultivation_id".into(), Some("1".into()));
         params.insert("name".into(), None);
 
-        let attrs = build_create_attributes(&params, Some(&template)).unwrap();
-        assert_eq!(attrs.name, "テンプレ作業");
-        assert_eq!(attrs.source, "template_entry");
+        let attrs = build_create_attributes(&params, Some(&task)).unwrap();
+        assert_eq!(attrs.name, "作業A");
+        assert_eq!(attrs.source, "agricultural_task_entry");
+        assert_eq!(attrs.agricultural_task_id, Some(3));
     }

@@ -36,6 +36,7 @@ const FIELD_CLIMATE_KEYS = [
   'plans.field_climate.chart.daily_gdd',
   'plans.field_climate.chart.tooltip_format',
   'plans.field_climate.chart.required_cumulative_gdd',
+  'plans.field_climate.open_task_schedule',
   'plans.detail.select_cultivation_hint'
 ] as const;
 

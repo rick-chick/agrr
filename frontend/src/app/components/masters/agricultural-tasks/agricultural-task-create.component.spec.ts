@@ -73,6 +73,7 @@ describe('AgriculturalTaskCreateComponent', () => {
     component.control = {
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'New Task',
         description: 'New Description',
@@ -82,13 +83,14 @@ describe('AgriculturalTaskCreateComponent', () => {
         skill_level: 'beginner',
         region: 'us',
         task_type: 'automated'
-      }
+      },
     };
 
     // Directly set _control to ensure it's not saving
     (component as any)._control = {
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'New Task',
         description: 'New Description',
@@ -121,6 +123,7 @@ describe('AgriculturalTaskCreateComponent', () => {
     component.control = {
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'New Task',
         description: 'New Description',
@@ -130,11 +133,12 @@ describe('AgriculturalTaskCreateComponent', () => {
         skill_level: 'beginner',
         region: null,
         task_type: 'automated'
-      }
+      },
     };
     (component as any)._control = {
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'New Task',
         description: 'New Description',

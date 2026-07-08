@@ -1,35 +1,32 @@
 import { TestBed } from '@angular/core/testing';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { PublicPlanResultsPresenter } from './public-plan-results.presenter';
 import { PublicPlanResultsView, PublicPlanResultsViewState } from '../../components/public-plans/public-plan-results.view';
-import { Router } from '@angular/router';
-import { FlashMessageService } from '../../services/flash-message.service';
 
 describe('PublicPlanResultsPresenter', () => {
   let presenter: PublicPlanResultsPresenter;
   let view: PublicPlanResultsView;
   let lastControl: PublicPlanResultsViewState | null;
-  let mockRouter: Router & { navigate: ReturnType<typeof vi.fn> };
-  let mockFlashMessageService: FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     TestBed.resetTestingModule();
-    mockRouter = { navigate: vi.fn() } as Router & { navigate: ReturnType<typeof vi.fn> };
-    mockFlashMessageService = { show: vi.fn() } as FlashMessageService & { show: ReturnType<typeof vi.fn> };
 
     TestBed.configureTestingModule({
-      providers: [
-        PublicPlanResultsPresenter,
-        { provide: Router, useValue: mockRouter },
-        { provide: FlashMessageService, useValue: mockFlashMessageService }
-      ]
+      providers: [PublicPlanResultsPresenter]
     });
 
     presenter = TestBed.inject(PublicPlanResultsPresenter);
     lastControl = null;
     view = {
       get control(): PublicPlanResultsViewState {
-        return lastControl ?? { loading: true, error: null, data: null };
+        return lastControl ?? {
+          loading: true,
+          error: null,
+          data: null,
+          pendingErrorFlash: null,
+          pendingSuccessFlash: null,
+          pendingNavigation: null
+        };
       },
       set control(value: PublicPlanResultsViewState) {
         lastControl = value;
@@ -39,47 +36,57 @@ describe('PublicPlanResultsPresenter', () => {
   });
 
   describe('SavePublicPlanOutputPort', () => {
-    it('navigates to plan detail when cultivation_plan_id is returned', () => {
+    it('queues navigation to plan detail when cultivation_plan_id is returned', () => {
       presenter.present({
         message: 'Plan saved successfully',
         plan_reused: false,
         cultivation_plan_id: 99
       });
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 99]);
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({
+      expect(lastControl!.pendingNavigation).toEqual({ commands: ['/plans', 99] });
+      expect(lastControl!.pendingSuccessFlash).toEqual({
         type: 'success',
         text: 'Plan saved successfully'
       });
-      expect(lastControl).toBeNull();
     });
 
-    it('navigates to plans list when cultivation_plan_id is absent', () => {
+    it('queues navigation to plans list when cultivation_plan_id is absent', () => {
       presenter.present({ message: 'Plan saved successfully', plan_reused: false });
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans']);
+      expect(lastControl!.pendingNavigation).toEqual({ commands: ['/plans'] });
+      expect(lastControl!.pendingSuccessFlash).toEqual({
+        type: 'success',
+        text: 'Plan saved successfully'
+      });
     });
 
-    it('navigates to existing plan detail when plan_reused', () => {
+    it('queues navigation to existing plan detail when plan_reused', () => {
       presenter.present({
         message: 'Plan already exists',
         plan_reused: true,
         cultivation_plan_id: 42
       });
 
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/plans', 42]);
+      expect(lastControl!.pendingNavigation).toEqual({ commands: ['/plans', 42] });
+      expect(lastControl!.pendingSuccessFlash).toEqual({
+        type: 'success',
+        text: 'Plan already exists'
+      });
     });
 
     it('keeps gantt data and only flashes on save error when data is already loaded', () => {
       lastControl = {
         loading: false,
         error: null,
-        data: { id: 1 } as never
+        data: { id: 1 } as never,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
+        pendingNavigation: null
       };
 
       presenter.onError({ message: 'Failed to save plan' });
 
-      expect(mockFlashMessageService.show).toHaveBeenCalledWith({ type: 'error', text: 'Failed to save plan' });
+      expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Failed to save plan' });
       expect(lastControl!.data).toEqual({ id: 1 });
       expect(lastControl!.error).toBeNull();
     });

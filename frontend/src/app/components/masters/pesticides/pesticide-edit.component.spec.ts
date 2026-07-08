@@ -75,6 +75,7 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Pesticide',
         active_ingredient: 'Test Ingredient',
@@ -82,7 +83,7 @@ describe('PesticideEditComponent', () => {
         crop_id: 1,
         pest_id: 1,
         region: 'jp'
-      }
+      },
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -107,6 +108,7 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Pesticide',
         active_ingredient: 'Test Ingredient',
@@ -114,7 +116,7 @@ describe('PesticideEditComponent', () => {
         crop_id: 1,
         pest_id: 1,
         region: 'jp'
-      }
+      },
     };
 
     component.updatePesticide();
@@ -136,6 +138,7 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: '',
         active_ingredient: 'Test Ingredient',
@@ -143,7 +146,7 @@ describe('PesticideEditComponent', () => {
         crop_id: 1,
         pest_id: 1,
         region: 'jp'
-      }
+      },
     };
 
     component.updatePesticide();
@@ -156,6 +159,7 @@ describe('PesticideEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Pesticide',
         active_ingredient: 'Test Ingredient',
@@ -163,7 +167,7 @@ describe('PesticideEditComponent', () => {
         crop_id: 1,
         pest_id: 1,
         region: 'jp'
-      }
+      },
     };
 
     component.updatePesticide();

@@ -5,7 +5,7 @@ import { PlanSummary } from '../../domain/plans/plan-summary';
 import { PlanDetailDataDto } from '../../usecase/plans/load-plan-detail.dtos';
 
 describe('PlanDetailPresenter', () => {
-  const plan: PlanSummary = { id: 1, name: 'Plan A', status: 'pending' };
+  const plan: PlanSummary = { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 };
   const planData: CultivationPlanData = {
     success: true,
     data: {

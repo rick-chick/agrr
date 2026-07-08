@@ -233,30 +233,6 @@
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()
         }
-        fn masters_crop_agricultural_task_templates_index_rows(
-            &self,
-            _: i64,
-        ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
-        }
-        fn update_masters_crop_task_template_for_api(
-            &self,
-            _: i64,
-            _: i64,
-            _: serde_json::Value,
-        ) -> Result<
-            crate::crop::gateways::UpdateMastersCropTaskTemplateOutcome,
-            Box<dyn std::error::Error + Send + Sync>,
-        > {
-            unimplemented!()
-        }
-        fn delete_masters_crop_task_template(
-            &self,
-            _: i64,
-            _: i64,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
-        }
     }
 
     struct InvalidGateway;
@@ -467,30 +443,6 @@
         }
         fn delete_nutrient_requirement(
             &self,
-            _: i64,
-        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
-        }
-        fn masters_crop_agricultural_task_templates_index_rows(
-            &self,
-            _: i64,
-        ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>> {
-            unimplemented!()
-        }
-        fn update_masters_crop_task_template_for_api(
-            &self,
-            _: i64,
-            _: i64,
-            _: serde_json::Value,
-        ) -> Result<
-            crate::crop::gateways::UpdateMastersCropTaskTemplateOutcome,
-            Box<dyn std::error::Error + Send + Sync>,
-        > {
-            unimplemented!()
-        }
-        fn delete_masters_crop_task_template(
-            &self,
-            _: i64,
             _: i64,
         ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             unimplemented!()

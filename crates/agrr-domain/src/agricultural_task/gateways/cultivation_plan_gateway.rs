@@ -23,13 +23,7 @@ pub struct TaskScheduleFieldCultivation {
 pub struct TaskScheduleCrop {
     pub id: i64,
     pub name: String,
-    pub crop_task_templates: Vec<TaskScheduleCropTaskTemplate>,
     pub crop_task_schedule_blueprints: Vec<TaskScheduleBlueprint>,
-}
-
-#[derive(Debug, Clone)]
-pub struct TaskScheduleCropTaskTemplate {
-    pub agricultural_task: Option<TaskScheduleRelatedTask>,
 }
 
 #[derive(Debug, Clone)]

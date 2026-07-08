@@ -1,15 +1,14 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { AgriculturalTaskEditView } from '../../components/masters/agricultural-tasks/agricultural-task-edit.view';
 import { LoadAgriculturalTaskForEditOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-for-edit.output-port';
 import { LoadAgriculturalTaskForEditDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-for-edit.dtos';
 import { UpdateAgriculturalTaskOutputPort } from '../../usecase/agricultural-tasks/update-agricultural-task.output-port';
 import { UpdateAgriculturalTaskSuccessDto } from '../../usecase/agricultural-tasks/update-agricultural-task.dtos';
-import { FlashMessageService } from '../../services/flash-message.service';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class AgriculturalTaskEditPresenter implements LoadAgriculturalTaskForEditOutputPort, UpdateAgriculturalTaskOutputPort {
-  private readonly flashMessage = inject(FlashMessageService);
   private view: AgriculturalTaskEditView | null = null;
 
   setView(view: AgriculturalTaskEditView): void {
@@ -33,17 +32,19 @@ export class AgriculturalTaskEditPresenter implements LoadAgriculturalTaskForEdi
         region: agriculturalTask.region ?? null,
         task_type: agriculturalTask.task_type ?? null
       }
+    ,
+      pendingErrorFlash: null
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 

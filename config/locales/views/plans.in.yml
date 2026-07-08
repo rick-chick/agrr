@@ -58,6 +58,9 @@ in:
     task_schedule_items:
       undo:
         toast: "%{name} का शेड्यूल हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+    work_records:
+      undo:
+        toast: "%{name} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     
     index:
       title: "खेती योजनाएँ"

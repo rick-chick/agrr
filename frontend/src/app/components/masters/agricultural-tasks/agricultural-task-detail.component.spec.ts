@@ -51,13 +51,15 @@ describe('AgriculturalTaskDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
+      pendingErrorFlash: null,
       agriculturalTask: {
         id: 1,
         name: 'Tilling',
         region: 'jp',
         is_reference: false,
         required_tools: []
-      }
+      },
+      pendingUndoToast: null,
     };
     fixture.detectChanges();
 

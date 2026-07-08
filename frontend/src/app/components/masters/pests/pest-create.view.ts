@@ -1,3 +1,4 @@
+import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-error-flash-view.effects';
 export type PestCreateFormData = {
   name: string;
   name_scientific: string | null;
@@ -12,6 +13,8 @@ export type PestCreateViewState = {
   saving: boolean;
   error: string | null;
   formData: PestCreateFormData;
+
+  pendingErrorFlash: PendingErrorFlashRequest | null;
 };
 
 export interface PestCreateView {

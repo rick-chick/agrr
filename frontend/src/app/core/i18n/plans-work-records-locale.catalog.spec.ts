@@ -13,17 +13,25 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Keys referenced by plan-work-records and plan-work-nav on the history screen. */
+/** Keys referenced by plan-work-records and plan-work-header on the history screen. */
 const PLANS_WORK_RECORDS_KEYS = [
   'plans.work.back_to_plan',
-  'plans.work_records.title',
+  'plans.work.back_to_hub',
+  'plans.work.page_title',
+  'plans.work.nav.aria_label',
+  'plans.work.nav.work',
+  'plans.work.nav.history',
+  'plans.work.retry',
   'plans.work_records.empty',
+  'plans.work_records.empty_hint',
+  'plans.work_records.empty_cta',
   'plans.work_records.badge.from_schedule',
   'plans.work_records.badge.adhoc',
   'plans.work_records.sheet.edit_title',
   'plans.work_records.sheet.save',
   'plans.work_records.sheet.delete',
-  'plans.work_records.sheet.delete_confirm'
+  'plans.work_records.undo.toast',
+  'plans.work_records.toast.record_updated'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

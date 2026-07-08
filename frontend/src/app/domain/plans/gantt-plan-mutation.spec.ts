@@ -6,7 +6,7 @@ import {
 } from './gantt-plan-mutation';
 
 describe('gantt-plan-mutation', () => {
-  it('classifyGanttPlanMutationFailure maps coordinator failure flags', () => {
+  it('classifyGanttPlanMutationFailure maps mutation failure flags', () => {
     expect(classifyGanttPlanMutationFailure({ refetchFailed: true })).toEqual({
       kind: 'refetch_failed'
     });

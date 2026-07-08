@@ -21,11 +21,16 @@ const initialFormData: FarmEditFormData = {
   longitude: 0
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: FarmEditViewState = {
   loading: true,
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -111,6 +116,7 @@ export class FarmEditComponent implements FarmEditView, OnInit {
   private readonly loadUseCase = inject(LoadFarmForEditUseCase);
   private readonly updateUseCase = inject(UpdateFarmUseCase);
   private readonly presenter = inject(FarmEditPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
@@ -120,7 +126,10 @@ export class FarmEditComponent implements FarmEditView, OnInit {
     return this._control;
   }
   set control(value: FarmEditViewState) {
-    this._control = this.applyUserRegionToControl(value);
+    const next = applyPendingErrorFlashViewEffects(this.applyUserRegionToControl(value), {
+      flash: this.flashMessage
+    });
+    this._control = next;
     this.cdr.markForCheck();
   }
 

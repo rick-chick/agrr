@@ -83,6 +83,7 @@ describe('AgriculturalTaskEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Task',
         description: 'Test Description',
@@ -92,7 +93,7 @@ describe('AgriculturalTaskEditComponent', () => {
         skill_level: 'intermediate',
         region: 'jp',
         task_type: 'manual'
-      }
+      },
     };
 
     // Directly set _control to ensure it's not saving
@@ -100,6 +101,7 @@ describe('AgriculturalTaskEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Task',
         description: 'Test Description',
@@ -134,6 +136,7 @@ describe('AgriculturalTaskEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Task',
         description: 'Test Description',
@@ -143,12 +146,13 @@ describe('AgriculturalTaskEditComponent', () => {
         skill_level: 'intermediate',
         region: null,
         task_type: 'manual'
-      }
+      },
     };
     (component as any)._control = {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Task',
         description: 'Test Description',

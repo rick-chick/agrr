@@ -1,13 +1,12 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { CreateFieldOutputPort } from '../../usecase/farms/create-field.output-port';
 import { FarmDetailView } from '../../components/masters/farms/farm-detail.view';
 import { CreateFieldOutputDto } from '../../usecase/farms/create-field.dtos';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { FlashMessageService } from '../../services/flash-message.service';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class CreateFieldPresenter implements CreateFieldOutputPort {
-  private readonly flashMessage = inject(FlashMessageService);
   private view: FarmDetailView | null = null;
 
   setView(view: FarmDetailView): void {
@@ -21,11 +20,11 @@ export class CreateFieldPresenter implements CreateFieldOutputPort {
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 }

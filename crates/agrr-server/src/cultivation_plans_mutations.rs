@@ -287,7 +287,11 @@ where
                 Json(json!({"success": false, "message": e.to_string()})),
             )
         })?;
-    map_add_crop_outcome(presenter.body)
+    let outcome = map_add_crop_outcome(presenter.body);
+    if outcome.is_ok() {
+        crate::task_schedule_generation::enqueue_task_schedule_regen_debounced(state, plan_id);
+    }
+    outcome
 }
 
 async fn add_crop(
@@ -501,7 +505,11 @@ pub(crate) async fn run_remove_field(
                 Json(json!({"success": false, "message": e.to_string()})),
             )
         })?;
-    map_remove_field_outcome(presenter.body)
+    let outcome = map_remove_field_outcome(presenter.body);
+    if outcome.is_ok() {
+        crate::task_schedule_generation::enqueue_task_schedule_regen_debounced(state, plan_id);
+    }
+    outcome
 }
 
 async fn remove_field(
@@ -689,7 +697,10 @@ pub(crate) async fn run_adjust_plan(
         })?;
 
     match presenter.body {
-        Some(AdjustOutcome::Success(v)) => Ok(Json(v)),
+        Some(AdjustOutcome::Success(v)) => {
+            crate::task_schedule_generation::enqueue_task_schedule_regen_debounced(state, plan_id);
+            Ok(Json(v))
+        }
         Some(AdjustOutcome::Failure(status, v)) => Err((status, Json(v))),
         None => Err((
             StatusCode::INTERNAL_SERVER_ERROR,

@@ -145,6 +145,20 @@ CREATE INDEX index_work_records_on_plan_and_date
   ON work_records (cultivation_plan_id, actual_date);
 CREATE INDEX index_work_records_on_task_schedule_item_id
   ON work_records (task_schedule_item_id);
+CREATE TABLE deletion_undo_events (
+  id TEXT PRIMARY KEY,
+  resource_type TEXT NOT NULL,
+  resource_id TEXT NOT NULL,
+  snapshot TEXT NOT NULL DEFAULT '{}',
+  metadata TEXT NOT NULL DEFAULT '{}',
+  deleted_by_id INTEGER,
+  expires_at TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'scheduled',
+  restored_at TEXT,
+  finalized_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
 ";
 
 pub fn seed_work_record_crud(pool: &SqlitePool) -> WorkRecordCrudSeed {

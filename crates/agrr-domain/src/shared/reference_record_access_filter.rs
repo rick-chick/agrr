@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 
-use crate::shared::policies::agricultural_task_policy;
 use crate::shared::user::User;
 
 /// Policy module bound to [`ReferenceRecordAccessFilter`] (Ruby: `policy_module` class).
@@ -34,18 +33,5 @@ impl<P: RecordAccessPolicy> ReferenceRecordAccessFilter<P> {
 
     pub fn edit_allows(&self, is_reference: bool, record_user_id: Option<i64>) -> bool {
         P::edit_allowed(&self.user, is_reference, record_user_id)
-    }
-
-    /// Crop task template association (always `AgriculturalTaskPolicy`, Ruby parity).
-    pub fn agricultural_task_template_associate_allows(
-        &self,
-        is_reference: bool,
-        record_user_id: Option<i64>,
-    ) -> bool {
-        agricultural_task_policy::masters_crop_task_template_associate_allowed(
-            &self.user,
-            is_reference,
-            record_user_id,
-        )
     }
 }

@@ -19,6 +19,8 @@ const COMMON_API_ERROR_KEYS = [
   'common.api_error.forbidden',
   'common.api_error.not_found',
   'common.api_error.network',
+  'common.api_error.not_migrated',
+  'common.api_error.service_unavailable',
   'common.api_error.generic'
 ] as const;
 

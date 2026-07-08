@@ -138,11 +138,11 @@
             unimplemented!()
         }
 
-        fn find_crop_task_template_for_mutation(
+        fn find_agricultural_task_for_mutation(
             &self,
             _: Option<i64>,
         ) -> Result<
-            Option<crate::cultivation_plan::dtos::TaskScheduleCropTaskTemplateSnapshot>,
+            Option<crate::cultivation_plan::dtos::TaskScheduleAgriculturalTaskSnapshot>,
             Box<dyn std::error::Error + Send + Sync>,
         > {
             unimplemented!()

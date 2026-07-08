@@ -1,4 +1,5 @@
-import { CropStage } from '../../../domain/crops/crop';
+import { PendingErrorFlashRequest } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { PendingSuccessFlashRequest } from '../../../core/view-effects/pending-success-flash-view.effects';
 
 export type CropEditFormData = {
   name: string;
@@ -9,7 +10,6 @@ export type CropEditFormData = {
   groups: string[];
   groupsDisplay: string;
   is_reference: boolean;
-  crop_stages: CropStage[];
 };
 
 export type CropEditViewState = {
@@ -17,6 +17,9 @@ export type CropEditViewState = {
   saving: boolean;
   error: string | null;
   formData: CropEditFormData;
+
+  pendingErrorFlash: PendingErrorFlashRequest | null;
+  pendingSuccessFlash: PendingSuccessFlashRequest | null;
 };
 
 export interface CropEditView {

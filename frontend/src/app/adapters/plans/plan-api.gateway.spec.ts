@@ -10,6 +10,7 @@ import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response
 describe('PlanApiGateway', () => {
   let apiClient: {
     get: ReturnType<typeof vi.fn>;
+    post: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
   let gateway: PlanApiGateway;
@@ -17,6 +18,7 @@ describe('PlanApiGateway', () => {
   beforeEach(() => {
     apiClient = {
       get: vi.fn(),
+      post: vi.fn(),
       delete: vi.fn()
     };
     gateway = new PlanApiGateway(apiClient as unknown as ApiService);
@@ -25,8 +27,8 @@ describe('PlanApiGateway', () => {
   describe('listPlans', () => {
     it('returns Observable<PlanSummary[]>', async () => {
       const plans: PlanSummary[] = [
-        { id: 1, name: 'Plan 1', status: 'active' },
-        { id: 2, name: 'Plan 2', status: 'completed' }
+        { id: 1, name: 'Plan 1', status: 'active', farm_id: 1 },
+        { id: 2, name: 'Plan 2', status: 'completed', farm_id: 2 }
       ];
       vi.mocked(apiClient.get).mockReturnValue(of(plans));
 
@@ -44,7 +46,7 @@ describe('PlanApiGateway', () => {
 
   describe('fetchPlan', () => {
     it('returns Observable<PlanSummary>', async () => {
-      const plan: PlanSummary = { id: 7, name: 'Plan 7', status: 'active' };
+      const plan: PlanSummary = { id: 7, name: 'Plan 7', status: 'active', farm_id: 1 };
       vi.mocked(apiClient.get).mockReturnValue(of(plan));
 
       const result = await firstValueFrom(gateway.fetchPlan(7));
@@ -199,7 +201,10 @@ describe('PlanApiGateway', () => {
           planning_start_date: '2025-01-01',
           planning_end_date: '2025-12-31',
           timeline_generated_at: '2025-01-02T12:00:00Z',
-          timeline_generated_at_display: 'Jan 2, 2025'
+          timeline_generated_at_display: 'Jan 2, 2025',
+          task_schedule_sync_state: 'ready',
+          task_schedule_sync_error: null,
+          task_schedule_sync_error_crop_id: null
         },
         week: {
           start_date: '2025-01-01',
@@ -227,19 +232,58 @@ describe('PlanApiGateway', () => {
           }
         ],
         labels: {},
-        minimap: {}
+        minimap: { start_date: '', end_date: '', weeks: [] }
       };
       vi.mocked(apiClient.get).mockReturnValue(of(taskSchedule));
 
       const result = await firstValueFrom(gateway.getTaskSchedule(7));
       expect(result).toEqual(taskSchedule);
-      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule');
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule', {
+        params: { scope: 'plan' }
+      });
+    });
+
+    it('passes scope=plan when options specify plan scope', async () => {
+      vi.mocked(apiClient.get).mockReturnValue(of({} as TaskScheduleResponse));
+
+      await firstValueFrom(gateway.getTaskSchedule(7, { scope: 'plan' }));
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule', {
+        params: { scope: 'plan' }
+      });
+    });
+
+    it('passes week scope and optional query params', async () => {
+      vi.mocked(apiClient.get).mockReturnValue(of({} as TaskScheduleResponse));
+
+      await firstValueFrom(
+        gateway.getTaskSchedule(7, {
+          scope: 'week',
+          weekStart: '2026-06-01',
+          fieldCultivationId: 42
+        })
+      );
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule', {
+        params: {
+          scope: 'week',
+          week_start: '2026-06-01',
+          field_cultivation_id: '42'
+        }
+      });
     });
 
     it('forwards error when api fails', async () => {
       vi.mocked(apiClient.get).mockReturnValue(throwError(() => new Error('network error')));
 
       await expect(firstValueFrom(gateway.getTaskSchedule(7))).rejects.toThrow('network error');
+    });
+  });
+
+  describe('regenerateTaskSchedule', () => {
+    it('calls POST /api/v1/plans/:id/task_schedule/regenerate', async () => {
+      vi.mocked(apiClient.post).mockReturnValue(of(undefined));
+
+      await firstValueFrom(gateway.regenerateTaskSchedule(7));
+      expect(apiClient.post).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule/regenerate', {});
     });
   });
 

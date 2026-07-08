@@ -101,6 +101,7 @@ describe('PesticideCreateComponent', () => {
     const testState = {
       saving: true,
       error: 'Test error',
+      pendingErrorFlash: null,
       formData: {
         name: 'Test',
         active_ingredient: null,
@@ -124,6 +125,7 @@ describe('PesticideCreateComponent', () => {
     component.control = {
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test',
         active_ingredient: null,
@@ -131,7 +133,7 @@ describe('PesticideCreateComponent', () => {
         crop_id: 1,
         pest_id: 1,
         region: null
-      }
+      },
     };
 
     component.createPesticide();
@@ -143,6 +145,7 @@ describe('PesticideCreateComponent', () => {
     component.control = {
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test',
         active_ingredient: null,
@@ -150,7 +153,7 @@ describe('PesticideCreateComponent', () => {
         crop_id: 1,
         pest_id: 1,
         region: 'us'
-      }
+      },
     };
 
     component.createPesticide();

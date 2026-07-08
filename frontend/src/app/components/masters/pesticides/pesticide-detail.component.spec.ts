@@ -54,6 +54,7 @@ describe('PesticideDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
+      pendingErrorFlash: null,
       pesticide: {
         id: 1,
         name: 'Spray A',
@@ -62,7 +63,8 @@ describe('PesticideDetailComponent', () => {
         is_reference: false,
         crop_name: 'Tomato',
         pest_name: 'Aphid'
-      }
+      },
+      pendingUndoToast: null,
     };
     fixture.detectChanges();
 
@@ -78,13 +80,15 @@ describe('PesticideDetailComponent', () => {
     component.control = {
       loading: false,
       error: null,
+      pendingErrorFlash: null,
       pesticide: {
         id: 1,
         name: 'Spray A',
         crop_id: 51,
         pest_id: 54,
         is_reference: false
-      }
+      },
+      pendingUndoToast: null,
     };
     fixture.detectChanges();
 

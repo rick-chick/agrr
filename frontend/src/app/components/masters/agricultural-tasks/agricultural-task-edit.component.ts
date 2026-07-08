@@ -28,11 +28,16 @@ const initialFormData: AgriculturalTaskEditFormData = {
   task_type: null
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: AgriculturalTaskEditViewState = {
   loading: true,
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -124,6 +129,7 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
   private readonly loadUseCase = inject(LoadAgriculturalTaskForEditUseCase);
   private readonly updateUseCase = inject(UpdateAgriculturalTaskUseCase);
   private readonly presenter = inject(AgriculturalTaskEditPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: AgriculturalTaskEditViewState = initialControl;
@@ -131,7 +137,10 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
     return this._control;
   }
   set control(value: AgriculturalTaskEditViewState) {
-    this._control = this.applyUserRegionIfNeeded(value);
+    const next = applyPendingErrorFlashViewEffects(this.applyUserRegionIfNeeded(value), {
+      flash: this.flashMessage
+    });
+    this._control = next;
     this.cdr.markForCheck();
   }
 

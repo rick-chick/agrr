@@ -10,11 +10,17 @@ import {
   FertilizeListPresenter,
   FERTILIZE_LIST_PROVIDERS
 } from '../../../usecase/fertilizes/fertilize-list.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: FertilizeListViewState = {
   loading: true,
   error: null,
-  fertilizes: []
+  fertilizes: [],
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -77,6 +83,8 @@ export class FertilizeListComponent implements FertilizeListView, OnInit {
   private readonly loadUseCase = inject(LoadFertilizeListUseCase);
   private readonly deleteUseCase = inject(DeleteFertilizeUseCase);
   private readonly presenter = inject(FertilizeListPresenter);
+  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: FertilizeListViewState = initialControl;
@@ -84,7 +92,11 @@ export class FertilizeListComponent implements FertilizeListView, OnInit {
     return this._control;
   }
   set control(value: FertilizeListViewState) {
-    this._control = value;
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 

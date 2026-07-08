@@ -4,6 +4,10 @@ export type PlanTaskScheduleViewState = {
   loading: boolean;
   error: string | null;
   schedule: TaskScheduleResponse | null;
+  regenerating: boolean;
+  regenerateError: string | null;
+  pendingSyncToastKey: string | null;
+  syncReloadNonce: number;
 };
 
 export interface PlanTaskScheduleView {

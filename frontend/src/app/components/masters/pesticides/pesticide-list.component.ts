@@ -11,11 +11,17 @@ import {
 } from '../../../usecase/pesticides/pesticide-list.providers';
 import { ListRefreshBus } from '../../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../../core/list-refresh/list-refresh-keys';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: PesticideListViewState = {
   loading: true,
   error: null,
-  pesticides: []
+  pesticides: [],
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -71,6 +77,8 @@ export class PesticideListComponent implements PesticideListView, OnInit, OnDest
   private readonly loadUseCase = inject(LoadPesticideListUseCase);
   private readonly deleteUseCase = inject(DeletePesticideUseCase);
   private readonly presenter = inject(PesticideListPresenter);
+  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private unsubRefresh: (() => void) | null = null;
@@ -80,7 +88,11 @@ export class PesticideListComponent implements PesticideListView, OnInit, OnDest
     return this._control;
   }
   set control(value: PesticideListViewState) {
-    this._control = value;
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 

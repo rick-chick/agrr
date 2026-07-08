@@ -12,7 +12,7 @@ import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response
 
 describe('LoadPlanDetailUseCase', () => {
   it('calls outputPort.present with plan and planData from gateway', () => {
-    const plan: PlanSummary = { id: 7, name: 'Plan 7', status: 'completed' };
+    const plan: PlanSummary = { id: 7, name: 'Plan 7', status: 'completed', farm_id: 1 };
     const planData: CultivationPlanData = {
       success: true,
       data: {
@@ -37,7 +37,8 @@ describe('LoadPlanDetailUseCase', () => {
       fetchPlan: () => of(plan),
       fetchPlanData: () => of(planData),
       getPublicPlanData: () => of(planData),
-      getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: {} } as TaskScheduleResponse),
+      getTaskSchedule: () => of({ plan: {} as never, week: {} as never, milestones: [], fields: [], labels: {}, minimap: { start_date: '', end_date: '', weeks: [] } } as TaskScheduleResponse),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)
     };
 
@@ -90,8 +91,9 @@ describe('LoadPlanDetailUseCase', () => {
           milestones: [],
           fields: [],
           labels: {},
-          minimap: {}
+          minimap: { start_date: '', end_date: '', weeks: [] }
         } as TaskScheduleResponse),
+      regenerateTaskSchedule: () => of(undefined),
       deletePlan: () => of({} as DeletionUndoResponse)
     };
 

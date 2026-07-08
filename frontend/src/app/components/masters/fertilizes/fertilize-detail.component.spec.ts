@@ -52,6 +52,7 @@ describe('FertilizeDetailComponent', () => {
     fixture.componentInstance.control = {
       loading: false,
       error: null,
+      pendingErrorFlash: null,
       fertilize: {
         id: 1,
         name: 'NPK 10-10-10',

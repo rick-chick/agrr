@@ -1,6 +1,8 @@
 use crate::cable::CableHub;
 use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
 use crate::jobs::JobChainDispatcher;
+use std::collections::HashMap;
+use std::sync::Mutex;
 use crate::locale_catalog::{locales_dir_from_env, LocaleCatalog};
 use crate::locale_translator::LocaleTranslator;
 use crate::request_locale::locale_from_headers;
@@ -27,6 +29,10 @@ pub struct AppState {
     pub weather_fetch_job_dispatcher: Arc<JobChainDispatcher>,
     /// Cultivation-plan optimization chains only (`fetch_weather` → predict → optimize → finalize).
     pub optimization_chain_dispatcher: Arc<JobChainDispatcher>,
+    /// Debounced task schedule regen after adjust / add_crop / remove (separate from optimization).
+    pub task_schedule_regen_dispatcher: Arc<JobChainDispatcher>,
+    /// Per-plan generation counter for debounce (last enqueue wins).
+    pub task_schedule_regen_tokens: Arc<Mutex<HashMap<i64, u64>>>,
     /// Serializes optimization-chain `fetch_weather` per `farm_id` (concurrent plans, same farm).
     pub farm_weather_fetch_locks: FarmWeatherFetchLocks,
     pub cable_hub: Arc<CableHub>,
@@ -80,6 +86,8 @@ impl AppState {
             optimization_chain_dispatcher: Arc::new(JobChainDispatcher::with_max_concurrent_chains(
                 Some(optimization_max_concurrent_chains_from_env()),
             )),
+            task_schedule_regen_dispatcher: Arc::new(JobChainDispatcher::new()),
+            task_schedule_regen_tokens: Arc::new(Mutex::new(HashMap::new())),
             farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
             cable_hub: Arc::new(CableHub::default()),
         }

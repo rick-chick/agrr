@@ -1,5 +1,10 @@
+import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
+
 export interface DeleteWorkRecordInputDto {
   planId: number;
   workRecordId: number;
-  onSuccess?: () => void;
+}
+
+export interface DeleteWorkRecordSuccessDto {
+  undo: DeletionUndoResponse;
 }

@@ -1,3 +1,17 @@
+import { CultivationPlanData } from './cultivation-plan-data';
+
+export type GanttPlanMutationCommandResult =
+  | { success: true }
+  | { success: false; message?: string };
+
+export function ganttMutationCommandSuccess(): GanttPlanMutationCommandResult {
+  return { success: true };
+}
+
+export function ganttMutationCommandFailure(message?: string): GanttPlanMutationCommandResult {
+  return { success: false, message };
+}
+
 export type GanttPlanMutationFailure = {
   message?: string;
   refetchFailed?: boolean;
@@ -33,6 +47,18 @@ export function classifyGanttPlanMutationFailure(
     return { kind: 'refetch_error' };
   }
   return { kind: 'message', message: failure.message };
+}
+
+export type GanttPlanMutationOutcome =
+  | { status: 'success'; data: CultivationPlanData }
+  | { status: 'failure'; failure: GanttPlanMutationFailure };
+
+export function ganttMutationSuccess(data: CultivationPlanData): GanttPlanMutationOutcome {
+  return { status: 'success', data };
+}
+
+export function ganttMutationFailure(failure: GanttPlanMutationFailure): GanttPlanMutationOutcome {
+  return { status: 'failure', failure };
 }
 
 export function resolveGanttPlanMutationFailureAction(

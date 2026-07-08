@@ -42,7 +42,9 @@ pub use auth::{
 };
 pub use contact_messages::ContactMessageSqliteGateway;
 pub use crop::{
-    CropAiUpsertSqlitePersistence, CropMastersTaskTemplateSqliteGateway, CropSqliteGateway,
+    CropAiUpsertSqlitePersistence, CropAgrrRequirementSqliteGateway,
+    CropMastersTaskScheduleBlueprintSqliteGateway,
+    CropSqliteGateway,
     CropSourceCropLookupSqliteGateway, CropStageSqliteGateway,
     NutrientRequirementSqliteGateway,
     SunshineRequirementSqliteGateway, TemperatureRequirementSqliteGateway,
@@ -53,7 +55,7 @@ pub use fertilize::FertilizeSqliteGateway;
 pub use pesticide::{PesticideCropSqliteGateway, PesticideSqliteGateway};
 pub use interaction_rule::{InteractionRulePlanReadSqliteGateway, InteractionRuleSqliteGateway};
 pub use agricultural_task::{
-    AgTaskCropSqliteGateway, AgriculturalTaskSqliteGateway, CropTaskTemplateSqliteGateway,
+    AgTaskCropSqliteGateway, AgriculturalTaskSqliteGateway,
 };
 pub use pest::{CropPestSqliteGateway, PestCropSqliteGateway, PestSqliteGateway};
 pub use cultivation_plan::{
@@ -64,7 +66,9 @@ pub use cultivation_plan::{
     CultivationPlanSqliteGateway, OptimizationPlanReadSqliteGateway,
     PlanAllocationAdjustDebugDumpFileGateway, PlanAllocationAdjustReadSqliteGateway,
     PublicPlanSavePersistenceSqliteAdapter, PublicPlanSaveReadSqliteGateway,
-    TaskScheduleItemMutationSqliteGateway,
+    TaskScheduleGenerationReadSqliteGateway, TaskScheduleGenerationTransactionSqliteGateway,
+    TaskScheduleItemMutationSqliteGateway, TaskScheduleSqliteGateway,
+    TaskScheduleSyncStateSqliteGateway,
 };
 pub use farm::FarmSqliteGateway;
 pub use internal_jobs::SchedulerWeatherFarmListSqliteGateway;
@@ -89,4 +93,4 @@ pub use weather_data::{
     PredictedWeatherMetadataSqliteGateway, WeatherDataFarmSqliteGateway,
     WeatherDataGatewayBundle, WeatherDataSqliteGateway,
 };
-pub use work_record::{TaskScheduleItemLookupSqliteGateway, WorkRecordSqliteGateway};
+pub use work_record::{TaskScheduleItemLookupSqliteGateway, WorkHubReadSqliteGateway, WorkRecordSqliteGateway};

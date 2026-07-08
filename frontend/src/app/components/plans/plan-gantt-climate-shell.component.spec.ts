@@ -7,6 +7,8 @@ import en from '../../../assets/i18n/en.json';
 import inLocale from '../../../assets/i18n/in.json';
 import ja from '../../../assets/i18n/ja.json';
 import { PlanGanttClimateShellComponent } from './plan-gantt-climate-shell.component';
+import { GANTT_CHART_API_PROVIDERS } from '../../usecase/plans/gantt-chart.providers';
+import { PLAN_FIELD_CLIMATE_API_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 import type { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 
 @Component({
@@ -21,11 +23,12 @@ class StubGanttChartComponent {
 
 @Component({
   selector: 'app-plan-field-climate',
-  template: '',
+  template: '<span class="stub-plan-id">{{ planId }}</span>',
   standalone: true
 })
 class StubPlanFieldClimateComponent {
   @Input({ required: true }) fieldCultivationId!: number;
+  @Input() planId: number | null = null;
   @Input() planType: 'private' | 'public' | 'demo' = 'private';
   @Input() displayStartDate: string | null = null;
   @Input() displayEndDate: string | null = null;
@@ -82,6 +85,38 @@ describe('PlanGanttClimateShellComponent', () => {
       expect(component.selectedCultivationId).toBeNull();
       expect(component.selectedPlanType).toBe('private');
     });
+
+    it('passes planId to the climate panel when a cultivation is selected', async () => {
+      await TestBed.configureTestingModule({
+        imports: [PlanGanttClimateShellComponent, TranslateModule.forRoot()],
+        providers: [...GANTT_CHART_API_PROVIDERS, ...PLAN_FIELD_CLIMATE_API_PROVIDERS]
+      })
+        .overrideComponent(PlanGanttClimateShellComponent, {
+          set: {
+            imports: [
+              CommonModule,
+              StubGanttChartComponent,
+              StubPlanFieldClimateComponent,
+              TranslateModule
+            ],
+            providers: []
+          }
+        })
+        .compileComponents();
+
+      const shellFixture = TestBed.createComponent(PlanGanttClimateShellComponent);
+      shellFixture.componentInstance.data = sampleData;
+      shellFixture.componentInstance.planId = 42;
+      shellFixture.componentInstance.handleCultivationSelection({
+        cultivationId: 5,
+        planType: 'private'
+      });
+      shellFixture.detectChanges();
+
+      const climate = shellFixture.nativeElement.querySelector('app-plan-field-climate');
+      expect(climate).toBeTruthy();
+      expect(shellFixture.nativeElement.querySelector('.stub-plan-id')?.textContent?.trim()).toBe('42');
+    });
   });
 
   it('maps gantt visible range to ISO date strings', () => {
@@ -101,7 +136,8 @@ describe('PlanGanttClimateShellComponent', () => {
 
     beforeEach(async () => {
       await TestBed.configureTestingModule({
-        imports: [PlanGanttClimateShellComponent, TranslateModule.forRoot()]
+        imports: [PlanGanttClimateShellComponent, TranslateModule.forRoot()],
+        providers: [...GANTT_CHART_API_PROVIDERS, ...PLAN_FIELD_CLIMATE_API_PROVIDERS]
       })
         .overrideComponent(PlanGanttClimateShellComponent, {
           set: {
@@ -110,7 +146,8 @@ describe('PlanGanttClimateShellComponent', () => {
               StubGanttChartComponent,
               StubPlanFieldClimateComponent,
               TranslateModule
-            ]
+            ],
+            providers: []
           }
         })
         .compileComponents();

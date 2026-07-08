@@ -3,7 +3,7 @@
 use crate::pool::SqlitePool;
 use agrr_domain::agricultural_task::constants::task_schedule_item_statuses::{PLANNED, SKIPPED};
 use agrr_domain::cultivation_plan::dtos::{
-    TaskScheduleCropTaskTemplateSnapshot, TaskScheduleFieldCultivationSnapshot,
+    TaskScheduleAgriculturalTaskSnapshot, TaskScheduleFieldCultivationSnapshot,
     TaskScheduleItemAmountSnapshot, TaskScheduleItemDeletionUndoScheduleRow,
 };
 use agrr_domain::cultivation_plan::gateways::TaskScheduleItemMutationGateway;
@@ -47,10 +47,10 @@ impl TaskScheduleItemMutationGateway for TaskScheduleItemMutationSqliteGateway {
         Err("not implemented".into())
     }
 
-    fn find_crop_task_template_for_mutation(
+    fn find_agricultural_task_for_mutation(
         &self,
-        _template_id: Option<i64>,
-    ) -> Result<Option<TaskScheduleCropTaskTemplateSnapshot>, Box<dyn std::error::Error + Send + Sync>>
+        _agricultural_task_id: Option<i64>,
+    ) -> Result<Option<TaskScheduleAgriculturalTaskSnapshot>, Box<dyn std::error::Error + Send + Sync>>
     {
         Err("not implemented".into())
     }

@@ -24,11 +24,14 @@ import {
   validatePayload,
   isValidationFailure
 } from '../../domain/contact/contact-message.model';
+import { FlashMessageService } from '../../services/flash-message.service';
+import { applyContactFormViewEffects } from './contact-form-view.effects';
 
 const initialControl: ContactFormViewState = {
   loading: false,
   sending: false,
-  message: null
+  message: null,
+  pendingToastKey: null
 };
 
 @Component({
@@ -136,6 +139,7 @@ export class ContactFormComponent implements ContactFormView, OnInit {
   private readonly useCase = inject(SendContactMessageUseCase);
   private readonly presenter = inject(ContactFormPresenter);
   private readonly translate = inject(TranslateService);
+  private readonly flashMessage = inject(FlashMessageService);
 
   name: string | null = null;
   email = '';
@@ -148,7 +152,9 @@ export class ContactFormComponent implements ContactFormView, OnInit {
     return this._control;
   }
   set control(value: ContactFormViewState) {
-    this._control = value;
+    this._control = applyContactFormViewEffects(value, {
+      flash: this.flashMessage
+    });
     this.cdr.detectChanges();
   }
 

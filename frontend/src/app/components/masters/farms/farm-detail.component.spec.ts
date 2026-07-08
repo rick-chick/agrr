@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 import { FarmDetailComponent } from './farm-detail.component';
 import { LoadFarmDetailUseCase } from '../../../usecase/farms/load-farm-detail.usecase';
@@ -26,6 +26,7 @@ import { FARM_GATEWAY } from '../../../usecase/farms/farm-gateway';
 import { FARM_WEATHER_GATEWAY } from '../../../usecase/farms/farm-weather-gateway';
 import { FarmDetailViewState } from './farm-detail.view';
 import { Field } from '../../../domain/farms/field';
+import { AuthService } from '../../../services/auth.service';
 
 describe('FarmDetailComponent', () => {
   let component: FarmDetailComponent;
@@ -41,6 +42,8 @@ describe('FarmDetailComponent', () => {
   let updateFieldPresenter: { setView: ReturnType<typeof vi.fn> };
   let deleteFieldPresenter: { setView: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
+  let auth: { user: ReturnType<typeof vi.fn> };
+  let translate: TranslateService;
 
   beforeEach(async () => {
     loadUseCase = { execute: vi.fn() };
@@ -54,6 +57,7 @@ describe('FarmDetailComponent', () => {
     updateFieldPresenter = { setView: vi.fn() };
     deleteFieldPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
+    auth = { user: vi.fn(() => null) };
 
     await TestBed.configureTestingModule({
       imports: [FarmDetailComponent, TranslateModule.forRoot()],
@@ -82,7 +86,8 @@ describe('FarmDetailComponent', () => {
             { provide: UPDATE_FIELD_OUTPUT_PORT, useExisting: UpdateFieldPresenter },
             { provide: DELETE_FIELD_OUTPUT_PORT, useExisting: DeleteFieldPresenter },
             { provide: FARM_GATEWAY, useValue: {} },
-            { provide: FARM_WEATHER_GATEWAY, useValue: {} }
+            { provide: FARM_WEATHER_GATEWAY, useValue: {} },
+            { provide: AuthService, useValue: auth }
           ]
         }
       })
@@ -90,6 +95,17 @@ describe('FarmDetailComponent', () => {
 
     fixture = TestBed.createComponent(FarmDetailComponent);
     component = fixture.componentInstance;
+    translate = TestBed.inject(TranslateService);
+    translate.setTranslation('ja', {
+      farms: {
+        show: { location: '地域' },
+        form: {
+          region_blank: '未選択',
+          region_jp: '日本'
+        }
+      }
+    });
+    translate.use('ja');
 
     // Replace ChangeDetectorRef with mock
     Object.defineProperty(component, 'cdr', { value: cdr });
@@ -100,7 +116,9 @@ describe('FarmDetailComponent', () => {
       loading: false,
       error: null,
       farm: null,
-      fields: []
+      fields: [],
+      pendingUndoToast: null,
+        pendingErrorFlash: null
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -111,7 +129,9 @@ describe('FarmDetailComponent', () => {
       loading: false,
       error: null,
       farm: null,
-      fields: []
+      fields: [],
+      pendingUndoToast: null,
+        pendingErrorFlash: null
     };
     component.control = state;
     expect(cdr.markForCheck).toHaveBeenCalled();
@@ -138,15 +158,16 @@ describe('FarmDetailComponent', () => {
     });
   });
 
-  it('calls createFieldUseCase.execute on submitFieldForm with valid inputs', () => {
-    const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
+  it('calls createFieldUseCase.execute on submitFieldForm with valid inputs for admin', () => {
+    auth.user.mockReturnValue({ admin: true, region: 'us' });
+    const farm = { id: 123, name: 'Test Farm', region: 'jp', latitude: 0, longitude: 0 };
     component.control = { ...component.control, farm };
     component.editingField = null;
     component.fieldFormModel = {
       name: 'Field Name',
       area: 10,
       daily_fixed_cost: 100,
-      region: 'Region'
+      region: 'jp'
     };
 
     component.submitFieldForm();
@@ -156,13 +177,108 @@ describe('FarmDetailComponent', () => {
         name: 'Field Name',
         area: 10,
         daily_fixed_cost: 100,
-        region: 'Region'
+        region: 'jp'
       }
     });
   });
 
+  it('uses user region for non-admin on submitFieldForm', () => {
+    auth.user.mockReturnValue({ admin: false, region: 'us' });
+    const farm = { id: 123, name: 'Test Farm', region: 'jp', latitude: 0, longitude: 0 };
+    component.control = { ...component.control, farm };
+    component.editingField = null;
+    component.fieldFormModel = {
+      name: 'Field Name',
+      area: 10,
+      daily_fixed_cost: 100,
+      region: ''
+    };
+
+    component.submitFieldForm();
+    expect(createFieldUseCase.execute).toHaveBeenCalledWith({
+      farmId: 123,
+      payload: {
+        name: 'Field Name',
+        area: 10,
+        daily_fixed_cost: 100,
+        region: 'us'
+      }
+    });
+  });
+
+  it('defaults region from farm when opening create field form', () => {
+    const farm = { id: 123, name: 'Test Farm', region: 'jp', latitude: 0, longitude: 0 };
+    component.control = { ...component.control, farm };
+
+    component.openFieldForm();
+
+    expect(component.fieldFormModel.region).toBe('jp');
+  });
+
+  it('renders field form dialog with shared form layout classes', () => {
+    const farm = { id: 123, name: 'Test Farm', region: 'jp', latitude: 0, longitude: 0 };
+    component.control = { ...component.control, farm, loading: false };
+    fixture.detectChanges();
+
+    const dialog = fixture.nativeElement.querySelector('dialog.form-dialog');
+    expect(dialog).toBeTruthy();
+    expect(fixture.nativeElement.querySelectorAll('.form-card__field')).toHaveLength(3);
+    expect(fixture.nativeElement.querySelector('.form-card__actions .btn-primary')).toBeTruthy();
+  });
+
+  it('shows region select for admin in field form', () => {
+    auth.user.mockReturnValue({ admin: true, region: 'jp' });
+    const farm = { id: 123, name: 'Test Farm', region: 'jp', latitude: 0, longitude: 0 };
+    component.control = { ...component.control, farm, loading: false };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-region-select')).toBeTruthy();
+  });
+
+  it('hides region select for non-admin in field form', () => {
+    auth.user.mockReturnValue({ admin: false, region: 'jp' });
+    const farm = { id: 123, name: 'Test Farm', region: 'jp', latitude: 0, longitude: 0 };
+    component.control = { ...component.control, farm, loading: false };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-region-select')).toBeFalsy();
+  });
+
+  it('renders region blank label when farm region is null', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farm: { id: 123, name: 'テスト', region: null, latitude: 35.0, longitude: 139.0 },
+      fields: [],
+      pendingUndoToast: null,
+        pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).not.toContain('farms.form.region_null');
+    expect(text).toContain('未選択');
+  });
+
+  it('renders translated region label for known region code', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farm: { id: 123, name: 'テスト', region: 'jp', latitude: 35.0, longitude: 139.0 },
+      fields: [],
+      pendingUndoToast: null,
+        pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('日本');
+    expect(text).not.toContain('region_jp');
+  });
+
   it('calls updateFieldUseCase.execute on submitFieldForm when editing', () => {
-    const farm = { id: 123, name: 'Test Farm', region: 'Test Region', latitude: 0, longitude: 0 };
+    auth.user.mockReturnValue({ admin: true, region: 'jp' });
+    const farm = { id: 123, name: 'Test Farm', region: 'jp', latitude: 0, longitude: 0 };
     const field: Field = {
       id: 456,
       farm_id: 1,
@@ -171,7 +287,7 @@ describe('FarmDetailComponent', () => {
       description: null,
       area: 5,
       daily_fixed_cost: 50,
-      region: 'Old Region',
+      region: 'jp',
       created_at: '2023-01-01',
       updated_at: '2023-01-01'
     };
@@ -181,7 +297,7 @@ describe('FarmDetailComponent', () => {
       name: 'New Name',
       area: 15,
       daily_fixed_cost: 150,
-      region: 'New Region'
+      region: 'us'
     };
 
     component.submitFieldForm();
@@ -191,7 +307,7 @@ describe('FarmDetailComponent', () => {
         name: 'New Name',
         area: 15,
         daily_fixed_cost: 150,
-        region: 'New Region'
+        region: 'us'
       }
     });
   });

@@ -1,17 +1,16 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { PesticideListView } from '../../components/masters/pesticides/pesticide-list.view';
 import { LoadPesticideListOutputPort } from '../../usecase/pesticides/load-pesticide-list.output-port';
 import { PesticideListDataDto } from '../../usecase/pesticides/load-pesticide-list.dtos';
 import { DeletePesticideOutputPort } from '../../usecase/pesticides/delete-pesticide.output-port';
 import { DeletePesticideSuccessDto } from '../../usecase/pesticides/delete-pesticide.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
-import { FlashMessageService } from '../../services/flash-message.service';
+import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class PesticideListPresenter implements LoadPesticideListOutputPort, DeletePesticideOutputPort {
-  private readonly undoToast = inject(UndoToastService);
-  private readonly flashMessage = inject(FlashMessageService);
   private view: PesticideListView | null = null;
 
   setView(view: PesticideListView): void {
@@ -23,35 +22,33 @@ export class PesticideListPresenter implements LoadPesticideListOutputPort, Dele
     this.view.control = {
       loading: false,
       error: null,
-      pesticides: dto.pesticides
+      pesticides: dto.pesticides,
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 
   onSuccess(dto: DeletePesticideSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
-    this.view.control = {
+    const nextControl = {
       ...prev,
-      pesticides: prev.pesticides.filter((p) => p.id !== dto.deletedPesticideId)
+      pesticides: prev.pesticides.filter((p) => p.id !== dto.deletedPesticideId),
+      pendingUndoToast: null as PendingUndoToastRequest | null
     };
     if (dto.undo && dto.refresh) {
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        dto.refresh,
-        dto.undo.resource
-      );
+      nextControl.pendingUndoToast = pendingUndoToastFromDeletion(dto.undo, dto.refresh);
     }
+    this.view.control = nextControl;
   }
 }

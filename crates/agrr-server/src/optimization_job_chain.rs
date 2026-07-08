@@ -138,6 +138,32 @@ pub fn enqueue_private_plan_optimization_chain(plan_id: i64, channel: &str, stat
     }
 
     {
+        let state = state_clone.clone();
+        let channel = channel.clone();
+        steps.push(JobStep {
+            name: "task_schedule_generation",
+            run: Arc::new(move || {
+                let state = state.clone();
+                let channel = channel.clone();
+                Box::pin(async move {
+                    run_guarded_optimization_step(
+                        &state,
+                        plan_id,
+                        &channel,
+                        "task_schedule_generation",
+                        None,
+                        || {
+                            crate::task_schedule_generation::run_task_schedule_generation_step(
+                                &state, plan_id, &channel,
+                            )
+                        },
+                    )
+                })
+            }),
+        });
+    }
+
+    {
         let hub = hub.clone();
         let channel = channel.clone();
         let state = state_clone.clone();

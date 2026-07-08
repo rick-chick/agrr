@@ -53,6 +53,16 @@ impl ContractClient {
         self.request(reqwest::Method::PATCH, path, session_id, headers, body)
     }
 
+    pub fn put(
+        &self,
+        path: &str,
+        session_id: Option<&str>,
+        headers: &HashMap<String, String>,
+        body: Option<serde_json::Value>,
+    ) -> Response {
+        self.request(reqwest::Method::PUT, path, session_id, headers, body)
+    }
+
     pub fn delete(
         &self,
         path: &str,

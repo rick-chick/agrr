@@ -115,7 +115,8 @@ describe('InteractionRuleEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      formData: { ...initialFormData, region: 'jp' }
+      pendingErrorFlash: null,
+      formData: { ...initialFormData, region: 'jp' },
     };
 
     component.updateInteractionRule();
@@ -131,7 +132,8 @@ describe('InteractionRuleEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      formData: { ...initialFormData, region: 'jp' }
+      pendingErrorFlash: null,
+      formData: { ...initialFormData, region: 'jp' },
     };
 
     component.updateInteractionRule();
@@ -146,7 +148,8 @@ describe('InteractionRuleEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
-      formData: { ...initialFormData, region: 'jp' }
+      pendingErrorFlash: null,
+      formData: { ...initialFormData, region: 'jp' },
     };
 
     fixture.detectChanges();

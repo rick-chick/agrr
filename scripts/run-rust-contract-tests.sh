@@ -10,10 +10,43 @@ MIGRATE_BINARY="${ROOT}/tmp/agrr-server-contract/agrr-migrate"
 R4_CONTRACT_TESTS_BIN="${ROOT}/tmp/agrr-server-contract/agrr-r4-contract-tests"
 mkdir -p "$(dirname "$BINARY")"
 
+# Directory mtime does not advance when files inside are edited; compare leaf sources.
+contract_rust_sources_newer_than() {
+  local binary="$1"
+  shift
+  local dir
+  for dir in "$@"; do
+    if find "$dir" -type f \( -name '*.rs' -o -name 'Cargo.toml' \) -newer "$binary" -print -quit | grep -q .; then
+      return 0
+    fi
+  done
+  if [[ -f "${ROOT}/Cargo.lock" ]] && [[ "${ROOT}/Cargo.lock" -nt "$binary" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+needs_contract_binary_rebuild() {
+  local binary="$1"
+  local force_flag="$2"
+  shift 2
+  [[ ! -x "$binary" ]] && return 0
+  if [[ "${!force_flag:-}" == "1" ]]; then
+    return 0
+  fi
+  contract_rust_sources_newer_than "$binary" "$@"
+}
+
 ensure_agrr_server_binary() {
   local host_debug="${ROOT}/target/debug/agrr-server"
   local host_release="${ROOT}/target/release/agrr-server"
-  local stamp="${ROOT}/crates/agrr-server/src"
+  local -a source_dirs=(
+    "${ROOT}/crates/agrr-server"
+    "${ROOT}/crates/agrr-domain"
+    "${ROOT}/crates/agrr-adapters-sqlite"
+    "${ROOT}/crates/agrr-adapters-agrr"
+    "${ROOT}/crates/agrr-adapters-gcs"
+  )
 
   if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
     echo "==> Building agrr-server via Dockerfile.agrr-server builder stage (AGRR_SERVER_CONTRACT_DOCKER_BUILD=1)"
@@ -26,11 +59,11 @@ ensure_agrr_server_binary() {
     return
   fi
 
-  if [[ -x "$BINARY" ]] && [[ "${AGRR_SERVER_CONTRACT_REBUILD:-}" != "1" ]]; then
-    if [[ ! "$stamp" -nt "$BINARY" ]]; then
-      return
-    fi
-    echo "==> agrr-server sources newer than contract binary; rebuilding"
+  if [[ -x "$BINARY" ]] && ! needs_contract_binary_rebuild "$BINARY" AGRR_SERVER_CONTRACT_REBUILD "${source_dirs[@]}"; then
+    return
+  fi
+  if [[ -x "$BINARY" ]]; then
+    echo "==> agrr-server workspace sources newer than contract binary; rebuilding"
   fi
 
   if command -v cargo >/dev/null 2>&1; then
@@ -68,12 +101,14 @@ ensure_agrr_server_binary
 
 ensure_agrr_migrate_binary() {
   local host_release="${ROOT}/target/release/agrr-migrate"
-  local stamp="${ROOT}/crates/agrr-migrate"
+  local -a source_dirs=("${ROOT}/crates/agrr-migrate")
 
-  if [[ -x "$MIGRATE_BINARY" ]] && [[ "${AGRR_MIGRATE_CONTRACT_REBUILD:-}" != "1" ]]; then
-    if [[ ! "$stamp" -nt "$MIGRATE_BINARY" ]]; then
+  if [[ -x "$MIGRATE_BINARY" ]] && ! needs_contract_binary_rebuild "$MIGRATE_BINARY" AGRR_MIGRATE_CONTRACT_REBUILD "${source_dirs[@]}"; then
+    if ! find "${ROOT}/crates/agrr-migrate/migrations" -type f -name '*.sql' -newer "$MIGRATE_BINARY" -print -quit | grep -q .; then
       return
     fi
+    echo "==> agrr-migrate embedded SQL newer than contract binary; rebuilding"
+  elif [[ -x "$MIGRATE_BINARY" ]]; then
     echo "==> agrr-migrate sources newer than contract binary; rebuilding"
   fi
 
@@ -104,7 +139,7 @@ ensure_agrr_migrate_binary() {
 ensure_agrr_migrate_binary
 
 ensure_agrr_r4_contract_tests_binary() {
-  local stamp="${ROOT}/crates/agrr-r4-contract"
+  local -a source_dirs=("${ROOT}/crates/agrr-r4-contract")
   local host_built=""
 
   if [[ "${AGRR_SERVER_CONTRACT_DOCKER_BUILD:-}" == "1" ]] && command -v docker >/dev/null 2>&1; then
@@ -124,10 +159,10 @@ ensure_agrr_r4_contract_tests_binary() {
     exit 1
   fi
 
-  if [[ -x "$R4_CONTRACT_TESTS_BIN" ]] && [[ "${AGRR_R4_CONTRACT_REBUILD:-}" != "1" ]]; then
-    if [[ ! "$stamp" -nt "$R4_CONTRACT_TESTS_BIN" ]]; then
-      return
-    fi
+  if [[ -x "$R4_CONTRACT_TESTS_BIN" ]] && ! needs_contract_binary_rebuild "$R4_CONTRACT_TESTS_BIN" AGRR_R4_CONTRACT_REBUILD "${source_dirs[@]}"; then
+    return
+  fi
+  if [[ -x "$R4_CONTRACT_TESTS_BIN" ]]; then
     echo "==> agrr-r4-contract sources newer than contract test binary; rebuilding"
   fi
 

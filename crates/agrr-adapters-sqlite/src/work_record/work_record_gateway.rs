@@ -1,11 +1,14 @@
 //! Ruby: `WorkRecordActiveRecordGateway`
 
 use crate::pool::SqlitePool;
+use crate::soft_delete::{schedule_soft_delete_json, SoftDeleteJsonOutcome};
 use agrr_domain::cultivation_plan::helpers::parse_iso_date;
 use agrr_domain::work_record::dtos::{
     WorkRecordListInput, WorkRecordRead, WorkRecordTaskScheduleItemSummary, WorkRecordUpdateInput,
 };
-use agrr_domain::work_record::gateways::{WorkRecordCreatePersistAttrs, WorkRecordGateway};
+use agrr_domain::work_record::gateways::{
+    WorkRecordCreatePersistAttrs, WorkRecordDestroyGatewayOutcome, WorkRecordGateway,
+};
 use rusqlite::{params, types::Value};
 use rust_decimal::Decimal;
 use std::str::FromStr;
@@ -235,18 +238,26 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
 
     fn destroy(
         &self,
-        plan_id: i64,
+        _plan_id: i64,
         record_id: i64,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.pool.with_write_box(|conn| {
-            let affected = conn.execute(
-                "DELETE FROM work_records WHERE cultivation_plan_id = ?1 AND id = ?2",
-                params![plan_id, record_id],
-            )?;
-            if affected == 0 {
-                return Err(rusqlite::Error::QueryReturnedNoRows);
+        actor_id: i64,
+        toast_message: &str,
+    ) -> Result<WorkRecordDestroyGatewayOutcome, Box<dyn std::error::Error + Send + Sync>> {
+        match schedule_soft_delete_json(
+            self.pool.clone(),
+            "WorkRecord",
+            record_id,
+            actor_id,
+            toast_message,
+            5000,
+            None,
+        ) {
+            SoftDeleteJsonOutcome::Success(body) => {
+                Ok(WorkRecordDestroyGatewayOutcome::Success { undo: body })
             }
-            Ok(())
-        })
+            SoftDeleteJsonOutcome::Failure(error) => {
+                Ok(WorkRecordDestroyGatewayOutcome::Failure(error))
+            }
+        }
     }
 }

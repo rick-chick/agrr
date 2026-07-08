@@ -4,7 +4,11 @@
     use crate::shared::ports::ClockPort;
     use time::{Date, OffsetDateTime};
 
-    use crate::agricultural_task::gateways::TaskSchedulePlanContext;
+    use crate::agricultural_task::constants::schedule_item_types::{
+        BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
+    };
+    use crate::agricultural_task::dtos::TaskScheduleGenerateInput;
+    use crate::agricultural_task::gateways::{TaskSchedulePlanContext, TaskScheduleRelatedTask};
     use rust_decimal::Decimal;
     use std::str::FromStr;
     use std::sync::Mutex;
@@ -92,30 +96,6 @@
                 id: crop.id,
                 name: crop.name.clone(),
             })
-        }
-
-        fn list_crop_task_template_rows(
-            &self,
-            crop_id: i64,
-        ) -> Result<
-            Vec<crate::agricultural_task::gateways::TaskScheduleTemplateRow>,
-            Box<dyn std::error::Error + Send + Sync>,
-        > {
-            let crop = self
-                .ctx
-                .plan
-                .field_cultivations
-                .iter()
-                .filter_map(|fc| fc.crop.as_ref())
-                .find(|c| c.id == crop_id)
-                .ok_or_else(|| "crop not found".to_string())?;
-            Ok(crop
-                .crop_task_templates
-                .iter()
-                .map(|t| crate::agricultural_task::gateways::TaskScheduleTemplateRow {
-                    agricultural_task: t.agricultural_task.clone(),
-                })
-                .collect())
         }
 
         fn list_crop_task_schedule_blueprint_rows(
@@ -362,7 +342,6 @@
         let crop = TaskScheduleCrop {
             id: 1,
             name: "トマト".into(),
-            crop_task_templates: vec![],
             crop_task_schedule_blueprints: vec![
                 general_blueprint,
                 basal_blueprint,
@@ -405,7 +384,7 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        interactor.generate(99).expect("generate");
+        interactor.call(TaskScheduleGenerateInput::new(99)).expect("call");
 
         let replaced = task_schedule_gateway.replaced.lock().unwrap();
         assert_eq!(replaced.len(), 2);
@@ -419,9 +398,9 @@
         assert_eq!(fertilizer.items.last().unwrap().scheduled_date, Date::from_calendar_date(2025, time::Month::April, 6).unwrap());
     }
 
-    // Ruby: test "generate! raises TemplateMissingError when crop has no blueprints"
+    // Ruby: test "generate! raises when crop has no blueprints"
     #[test]
-    fn generate_raises_template_missing_when_no_blueprints() {
+    fn generate_raises_blueprint_missing_when_no_blueprints() {
         let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
         if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
             if let Some(crop) = fc.crop.as_mut() {
@@ -441,8 +420,45 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        let err = interactor.generate(99).unwrap_err();
-        assert!(err.to_string().contains("作業テンプレートが登録されていません"));
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_CROP_BLUEPRINTS.to_string()
+        );
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
+            Some(1)
+        );
+    }
+
+    #[test]
+    fn generate_raises_general_blueprint_missing_when_only_fertilizer_blueprints() {
+        let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
+            if let Some(crop) = fc.crop.as_mut() {
+                crop.crop_task_schedule_blueprints.retain(|b| {
+                    b.task_type == BASAL_FERTILIZATION || b.task_type == TOPDRESS_FERTILIZATION
+                });
+            }
+        }
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_GENERAL_BLUEPRINTS.to_string()
+        );
     }
 
     // Ruby: test "generate! raises ProgressDataMissingError when progress has no records"
@@ -462,8 +478,15 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        let err = interactor.generate(99).unwrap_err();
-        assert!(err.to_string().contains("GDD進捗データが空です"));
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::EMPTY_GDD_PROGRESS.to_string()
+        );
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
+            Some(1)
+        );
     }
 
     // Ruby: test "progress gateway receives weather data filtered from the start date"
@@ -483,7 +506,7 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        interactor.generate(99).expect("generate");
+        interactor.call(TaskScheduleGenerateInput::new(99)).expect("call");
         let payload = progress_gateway.received.lock().unwrap().last().unwrap().clone();
         let times: Vec<_> = payload
             .weather_data
@@ -520,6 +543,13 @@
             &cultivation_plan_gateway,
             &task_schedule_read_gateway,
         );
-        let err = interactor.generate(99).unwrap_err();
-        assert!(err.to_string().contains("GDDトリガーが設定されていません"));
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_GDD_TRIGGER.to_string()
+        );
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
+            Some(1)
+        );
     }

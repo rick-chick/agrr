@@ -148,7 +148,9 @@ impl WorkRecordGateway for StubWorkRecordGateway {
         &self,
         _: i64,
         _: i64,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        _: i64,
+        _: &str,
+    ) -> Result<crate::work_record::gateways::WorkRecordDestroyGatewayOutcome, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
 }

@@ -442,7 +442,7 @@ article.item-card:hover {
 }
 
 @media (max-width: 768px) {
-  .form-card__actions {
+  .form-card .form-card__actions {
     position: sticky;
     bottom: 0;
     padding: var(--space-3) var(--space-4);
@@ -453,7 +453,7 @@ article.item-card:hover {
 }
 
 @media (max-width: 480px) {
-  .form-card__actions {
+  .form-card .form-card__actions {
     padding: var(--space-3);
     margin: 0 calc(-1 * var(--space-3)) calc(-1 * var(--space-3));
   }

@@ -1,17 +1,26 @@
-import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Channel } from 'actioncable';
+import { formatIsoDateForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
-import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
 import { LoadWorkDayListUseCase } from '../../usecase/plans/load-work-day-list.usecase';
 import { PLAN_WORK_PROVIDERS } from '../../usecase/plans/plan-work.providers';
 import { SkipTaskScheduleItemUseCase } from '../../usecase/plans/skip-task-schedule-item.usecase';
+import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
-import { PlanWorkNavComponent } from './plan-work-nav.component';
+import { PlanWorkHeaderComponent } from './plan-work-header.component';
+import { WorkRecordSheetSavedEvent } from './work-record-sheet.view';
 import { PlanWorkView, PlanWorkViewState } from './plan-work.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
+import { TaskScheduleSyncBannerComponent } from './task-schedule-sync-banner.component';
+import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-task-schedule.usecase';
+import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
+import { FlashMessageService } from '../../services/flash-message.service';
+import { applyPlanWorkViewEffects } from './plan-work-view.effects';
+import { mergeCropBannerContext } from '../../adapters/plans/task-schedule-sync-presenter.helpers';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -21,7 +30,18 @@ const initialControl: PlanWorkViewState = {
   overdue: [],
   today: [],
   upcoming: [],
-  includeSkipped: false
+  includeSkipped: false,
+  recentAdHocRecord: null,
+  nextScheduled: null,
+  highlightedItemId: null,
+  completingItemId: null,
+  regenerating: false,
+  regenerateError: null,
+  pendingSyncToastKey: null,
+  pendingRecordSavedToastKey: null,
+  pendingRecordSavedEvent: null,
+  pendingQuickCompleteValidation: null,
+  syncReloadNonce: 0
 };
 
 @Component({
@@ -31,30 +51,38 @@ const initialControl: PlanWorkViewState = {
     CommonModule,
     RouterLink,
     TranslateModule,
-    PlanDisplayNamePipe,
-    PlanWorkNavComponent,
-    WorkRecordSheetComponent
+    PlanWorkHeaderComponent,
+    WorkRecordSheetComponent,
+    TaskScheduleSyncBannerComponent
   ],
   providers: [...PLAN_WORK_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <section class="page plan-work">
-        <a [routerLink]="['/plans', planId]">{{ 'plans.work.back_to_plan' | translate }}</a>
+      <app-plan-work-header [planId]="planId" [planName]="control.plan?.name ?? null" />
 
+      <section class="section-card plan-work" aria-labelledby="plan-work-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
-          <div class="page-alert-error" role="alert">
+          <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+              {{ 'plans.work.retry' | translate }}
+            </button>
           </div>
         } @else if (control.plan) {
-          <h2>{{ 'plans.work.title' | translate: { name: (control.plan.name | planDisplayName) } }}</h2>
-          <app-plan-work-nav [planId]="planId" />
-
-          <label class="plan-work__toggle">
-            <input type="checkbox" [checked]="control.includeSkipped" (change)="toggleSkipped($event)" />
-            {{ 'plans.work.show_skipped' | translate }}
-          </label>
+          <app-task-schedule-sync-banner
+            [syncState]="control.plan.task_schedule_sync_state"
+            [syncError]="control.plan.task_schedule_sync_error"
+            [syncErrorCropId]="control.plan.task_schedule_sync_error_crop_id"
+            [cropIds]="cropIdsForBanner"
+            [cropNames]="cropNamesForBanner"
+            [planId]="planId"
+            returnTab="work"
+            [regenerating]="control.regenerating"
+            [regenerateError]="control.regenerateError"
+            (retry)="regenerateTaskSchedule()"
+          />
 
           @if (control.overdue.length) {
             <section class="plan-work__section">
@@ -72,15 +100,72 @@ const initialControl: PlanWorkViewState = {
           }
 
           <section class="plan-work__section">
-            <h3 class="plan-work__section-title">{{ 'plans.work.section.today' | translate: { date: todayLabel } }}</h3>
-            <ul class="plan-work__list">
-              @for (row of control.today; track row.item.item_id) {
-                <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: row }" />
-              }
-              @if (!control.today.length) {
-                <li class="plan-work__empty">{{ 'plans.work.empty_today' | translate }}</li>
-              }
-            </ul>
+            <div class="plan-work__section-header">
+              <h3 class="plan-work__section-title plan-work__section-title--today">{{
+                'plans.work.section.today' | translate: { date: todayLabel }
+              }}</h3>
+              <label class="plan-work__toggle">
+                <input
+                  type="checkbox"
+                  [checked]="control.includeSkipped"
+                  (change)="toggleSkipped($event)"
+                />
+                {{ 'plans.work.show_skipped' | translate }}
+              </label>
+            </div>
+            @if (control.today.length) {
+              <ul class="plan-work__list">
+                @for (row of control.today; track row.item.item_id) {
+                  <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: row }" />
+                }
+              </ul>
+            } @else if (control.recentAdHocRecord) {
+              <div class="plan-work__recent-adhoc" role="status" aria-live="polite">
+                <p class="plan-work__recent-adhoc-message">{{
+                  'plans.work.recent_adhoc'
+                    | translate
+                      : {
+                          name: control.recentAdHocRecord.name,
+                          date: displayDate(control.recentAdHocRecord.actualDate)
+                        }
+                }}</p>
+                <a
+                  class="plan-work__recent-adhoc-link"
+                  [routerLink]="['/plans', planId, 'work_records']"
+                >{{ 'plans.work.recent_adhoc_history_link' | translate }}</a>
+                <button
+                  type="button"
+                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  (click)="openAdHoc()"
+                >
+                  {{ 'plans.work.add_record' | translate }}
+                </button>
+              </div>
+            } @else {
+              <div class="plan-work__empty">
+                <p class="plan-work__empty-message">{{ 'plans.work.empty_today' | translate }}</p>
+                @if (control.nextScheduled) {
+                  <p class="plan-work__empty-hint">{{
+                    'plans.work.next_scheduled'
+                      | translate
+                        : {
+                            name: control.nextScheduled.item.name,
+                            date: displayDate(control.nextScheduled.item.scheduled_date!),
+                            field: control.nextScheduled.fieldName
+                          }
+                  }}</p>
+                } @else {
+                  <p class="plan-work__empty-hint">{{ 'plans.work.empty_today_hint' | translate }}</p>
+                }
+                <button
+                  type="button"
+                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  (click)="openAdHoc()"
+                >
+                  {{ 'plans.work.add_record' | translate }}
+                </button>
+              </div>
+            }
           </section>
 
           @if (control.upcoming.length) {
@@ -94,11 +179,17 @@ const initialControl: PlanWorkViewState = {
             </section>
           }
 
-          <div class="plan-work__fab plan-work__fab--fixed">
-            <button type="button" class="btn-primary plan-work__fab-btn" (click)="openAdHoc()">
-              {{ 'plans.work.add_record' | translate }}
-            </button>
-          </div>
+          @if (control.today.length) {
+            <footer class="plan-work__fab">
+              <button
+                type="button"
+                class="btn-primary plan-work__fab-btn plan-work__cta--constrained"
+                (click)="openAdHoc()"
+              >
+                {{ 'plans.work.add_record' | translate }}
+              </button>
+            </footer>
+          }
         }
       </section>
     </main>
@@ -108,9 +199,10 @@ const initialControl: PlanWorkViewState = {
         class="plan-work__row"
         [class.plan-work__row--done]="row.recordedToday"
         [class.plan-work__row--overdue]="overdue"
+        [class.plan-work__row--highlight]="control.highlightedItemId === row.item.item_id"
       >
         <div class="plan-work__row-main">
-          <span class="plan-work__date">{{ row.item.scheduled_date }}</span>
+          <span class="plan-work__date">{{ displayDate(row.item.scheduled_date) }}</span>
           <span class="plan-work__name">{{ row.item.name }}</span>
           <span class="plan-work__field">{{ row.fieldName }} {{ row.cropName }}</span>
           @if (row.recordedToday) {
@@ -122,8 +214,17 @@ const initialControl: PlanWorkViewState = {
         </div>
         <div class="plan-work__row-actions">
           @if (!row.recordedToday && row.item.status !== 'skipped') {
-            <button type="button" class="btn-primary plan-work__complete-btn" (click)="openComplete(row)">
-              {{ 'plans.work.complete' | translate }}
+            <button
+              type="button"
+              class="btn-primary plan-work__complete-btn"
+              [disabled]="control.completingItemId === row.item.item_id"
+              (click)="quickComplete(row)"
+            >
+              @if (control.completingItemId === row.item.item_id) {
+                {{ 'common.loading' | translate }}
+              } @else {
+                {{ 'plans.work.complete' | translate }}
+              }
             </button>
           }
           <button
@@ -140,6 +241,9 @@ const initialControl: PlanWorkViewState = {
                   {{ 'plans.work.unskip' | translate }}
                 </button>
               } @else {
+                <button type="button" role="menuitem" (click)="openCompleteWithDetails(row)">
+                  {{ 'plans.work.record_with_details' | translate }}
+                </button>
                 <button type="button" role="menuitem" (click)="skip(row)">
                   {{ 'plans.work.skip' | translate }}
                 </button>
@@ -152,8 +256,8 @@ const initialControl: PlanWorkViewState = {
 
     <app-work-record-sheet
       [planId]="planId"
-      (saved)="reload()"
-      (deleted)="reload()"
+      (saved)="onRecordSaved($event)"
+      (deleted)="reload({ silent: true })"
     />
   `,
   styleUrls: ['./plan-work.component.css']
@@ -164,17 +268,41 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadWorkDayListUseCase);
   private readonly skipUseCase = inject(SkipTaskScheduleItemUseCase);
+  private readonly createUseCase = inject(CreateWorkRecordUseCase);
+  private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
+  private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
   private readonly presenter = inject(PlanWorkPresenter);
+  private readonly translate = inject(TranslateService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   openMenuItemId: number | null = null;
+  private syncChannel: Channel | null = null;
+  private highlightClearTimer: ReturnType<typeof setTimeout> | null = null;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 
+  private get cropBannerContext(): ReturnType<typeof mergeCropBannerContext> {
+    return mergeCropBannerContext(this.control.fields, this.control.plan?.remediation_crops);
+  }
+
+  get cropIdsForBanner(): number[] {
+    return this.cropBannerContext.cropIds;
+  }
+
+  get cropNamesForBanner(): Record<number, string> {
+    return this.cropBannerContext.cropNames;
+  }
+
   get todayLabel(): string {
-    return localTodayIso();
+    return this.displayDate(localTodayIso());
+  }
+
+  displayDate(iso: string): string {
+    return formatIsoDateForDisplay(iso, this.translate.currentLang);
   }
 
   private _control: PlanWorkViewState = initialControl;
@@ -182,28 +310,76 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     return this._control;
   }
   set control(value: PlanWorkViewState) {
-    this._control = value;
+    this._control = applyPlanWorkViewEffects(this._control, value, {
+      flash: this.flashMessage,
+      onReload: () => this.reload({ silent: true }),
+      scheduleHighlightClear: (itemId) => this.scheduleHighlightClear(itemId),
+      onQuickCompleteValidation: (itemId, fieldErrors) => {
+        const row = this.findRowByItemId(itemId);
+        if (row) {
+          this.sheet.openFromItem(row, { fieldErrors });
+        }
+      }
+    });
     this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
     this.presenter.setView(this);
-    this.presenter.onSkipSuccessCallback = () => this.reload();
+    this.destroyRef.onDestroy(() => {
+      this.syncChannel?.unsubscribe();
+      if (this.highlightClearTimer !== null) {
+        clearTimeout(this.highlightClearTimer);
+      }
+    });
     if (!this.planId) {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
+    this.subscribeSyncUseCase.execute({
+      planId: this.planId,
+      onSubscribed: (channel) => {
+        this.syncChannel = channel;
+      }
+    });
     this.reload();
   }
 
-  reload(): void {
+  reload(options?: { silent?: boolean }): void {
     this.openMenuItemId = null;
-    this.control = { ...this.control, loading: true };
+    if (!options?.silent) {
+      this.control = {
+        ...this.control,
+        loading: true,
+        error: null,
+        regenerateError: null
+      };
+    }
     this.loadUseCase.execute({
       planId: this.planId,
       today: localTodayIso(),
       includeSkipped: this.control.includeSkipped
     });
+  }
+
+  regenerateTaskSchedule(): void {
+    this.regenerateUseCase.execute({ planId: this.planId });
+  }
+
+  onRecordSaved(event: WorkRecordSheetSavedEvent): void {
+    this.control = { ...this.control, pendingRecordSavedEvent: event };
+  }
+
+  private scheduleHighlightClear(itemId: number): void {
+    if (this.highlightClearTimer !== null) {
+      clearTimeout(this.highlightClearTimer);
+    }
+    this.highlightClearTimer = setTimeout(() => {
+      if (this.control.highlightedItemId === itemId) {
+        this.control = { ...this.control, highlightedItemId: null };
+      }
+      this.highlightClearTimer = null;
+    }, 3000);
   }
 
   toggleSkipped(event: Event): void {
@@ -212,9 +388,26 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     this.reload();
   }
 
-  openComplete(row: WorkDayListRowDto): void {
+  quickComplete(row: WorkDayListRowDto): void {
+    this.openMenuItemId = null;
+    this.control = { ...this.control, completingItemId: row.item.item_id, error: null };
+    this.createUseCase.execute({
+      planId: this.planId,
+      body: {
+        task_schedule_item_id: row.item.item_id,
+        actual_date: localTodayIso()
+      }
+    });
+  }
+
+  openCompleteWithDetails(row: WorkDayListRowDto): void {
     this.openMenuItemId = null;
     this.sheet.openFromItem(row);
+  }
+
+  private findRowByItemId(itemId: number): WorkDayListRowDto | null {
+    const rows = [...this.control.overdue, ...this.control.today, ...this.control.upcoming];
+    return rows.find((row) => row.item.item_id === itemId) ?? null;
   }
 
   openAdHoc(): void {

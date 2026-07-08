@@ -180,7 +180,8 @@ sequenceDiagram
 | PlanSave persist step (crop / pest) | `PlanSaveEnsureUserCropsInteractor` / `PlanSaveEnsureUserPestsInteractor` + `PublicPlanSaveReadGateway` 行 DTO + `PlanSaveUserCropGateway` / `PlanSaveUserPestGateway`（find/create のみ；戻り値 `PlanSaveUserCropSnapshot` / `PlanSaveUserPestSnapshot`；template-copy 手渡しは `PlanSaveTemplateCopyIntegrity#crop_records_for_template_copy` / `#pest_records_for_template_copy`） |
 | PlanSave persist step (fertilize) | `PlanSaveEnsureUserFertilizesInteractor` + `PublicPlanSaveReadGateway`（`list_fertilize_reference_rows` / `exists_fertilize_name?`）+ `PlanSaveUserFertilizeGateway`（find/create のみ；戻り値 `PlanSaveUserFertilizeSnapshot`；template-copy 手渡しは `PlanSaveTemplateCopyIntegrity#fertilize_records_for_template_copy` — domain gateway に `list_by_ids` なし） |
 | PlanSave persist step (pesticide) | `PlanSaveEnsureUserPesticidesInteractor` + `PublicPlanSaveReadGateway`（`list_pesticide_reference_rows`）+ `PlanSaveUserPesticideGateway`（`find_by_*` / `create` と optional 子 kwargs のみ；戻り値 `PlanSaveUserPesticideSnapshot`；template-copy は `PlanSaveTemplateCopyIntegrity#pesticide_records_for_template_copy`） |
-| PlanSave persist step (agricultural_task) | `PlanSaveEnsureUserAgriculturalTasksInteractor` + `PublicPlanSaveReadGateway`（`list_agricultural_task_reference_rows`）+ `PlanSaveUserAgriculturalTaskGateway`（find/create + `find_crop_task_template` / `create_crop_task_template`；戻り値 `PlanSaveUserAgriculturalTaskSnapshot`；template-copy は `PlanSaveTemplateCopyIntegrity#agricultural_task_records_for_template_copy` — `user_id` でスコープ） |
+| PlanSave persist step (agricultural_task) | `PlanSaveEnsureUserAgriculturalTasksInteractor` + `PublicPlanSaveReadGateway`（`list_agricultural_task_reference_rows` — `linked_reference_crop_ids` は `crop_task_schedule_blueprints` 由来；プラン作物と交差する reference 作業のみ）+ `PlanSaveUserAgriculturalTaskGateway`（`find_by_user_id_and_source_agricultural_task_id` / `create` のみ；戻り値 `PlanSaveUserAgriculturalTaskSnapshot`；template-copy は `PlanSaveTemplateCopyIntegrity#agricultural_task_records_for_template_copy` — `user_id` でスコープ） |
+| PlanSave persist step (crop_task_schedule_blueprint) | `CropTaskScheduleBlueprintCopyInteractor` + `CropTaskScheduleBlueprintGateway`（reference crop の blueprint を user crop へ複製；`agricultural_task_id` は `PlanSaveEnsureUserAgriculturalTasksInteractor` の `reference_agricultural_task_id_to_user_task_id` でリマップ） |
 | PlanSave persist step (interaction_rule) | `PlanSaveEnsureUserInteractionRulesInteractor` + `PublicPlanSaveReadGateway`（`list_interaction_rule_reference_rows`）+ `PlanSaveUserInteractionRuleGateway`（`find_by_*` / `create` / `update`；戻り値 `PlanSaveUserInteractionRuleSnapshot`；template-copy は `PlanSaveTemplateCopyIntegrity#interaction_rule_records_for_template_copy` — `user_id` でスコープ） |
 | Domain combine | `CultivationPlanWorkbenchSnapshotMapper` (read snapshots → `CultivationPlanWorkbenchSnapshot`) |
 | Response shape | `RetrieveCultivationPlanApiPresenter` + `CultivationPlanWorkbenchPayloadMapper` (adapter mapper only) |
@@ -784,7 +785,7 @@ flowchart TB
 
 ### i18n
 
-`@ngx-translate` with `frontend/src/assets/i18n/ja.json` and `en.json`.
+`@ngx-translate` with `frontend/src/assets/i18n/ja.json`, `en.json`, and `in.json`.
 
 ### Routing
 

@@ -4,7 +4,9 @@ mod support;
 
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    developer_session_id, empty_headers, seed_work_record_plan, status_and_body,
+    assert_crop_task_template_api_removed, clear_plan_task_schedules, developer_session_id,
+    empty_headers, seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_work_record_plan,
+    set_plan_task_schedule_sync_failed, set_plan_task_schedule_sync_failed_raw_error, status_and_body,
     user_id_for_session,
 };
 
@@ -28,6 +30,43 @@ fn cable_route_is_not_global_api_not_migrated_501() {
         501, status,
         "cable must be handled by agrr-server, not global 501 fallback: {body}"
     );
+}
+
+#[test]
+fn get_plans_authenticated_includes_farm_id() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get("/api/v1/plans", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("plans list JSON");
+    let plans = json.as_array().expect("plans array");
+    let plan = plans
+        .iter()
+        .find(|p| p["id"].as_i64() == Some(seed.plan_id))
+        .expect("seeded plan in list");
+    assert_eq!(seed.farm_id, plan["farm_id"].as_i64().unwrap());
+}
+
+#[test]
+fn get_work_hub_authenticated_returns_farm_rows_with_plan_id() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get("/api/v1/work/hub", Some(&session_id), &empty_headers()));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("work hub JSON");
+    let farms = json.as_array().expect("farms array");
+    let farm = farms
+        .iter()
+        .find(|f| f["farm_id"].as_i64() == Some(seed.farm_id))
+        .expect("seeded farm in hub list");
+    assert_eq!(seed.plan_id, farm["plan_id"].as_i64().unwrap());
+    assert!(farm["has_valid_fields"].as_bool().unwrap());
 }
 
 #[test]
@@ -107,6 +146,70 @@ fn post_work_records_ad_hoc_without_name_returns_422() {
 }
 
 #[test]
+fn delete_work_records_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.delete(
+        "/api/v1/plans/1/work_records/1",
+        None,
+        &empty_headers(),
+    ));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn delete_work_record_returns_deletion_undo_payload() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (create_status, create_body) = status_and_body(client.post(
+        &format!("/api/v1/plans/{}/work_records", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "contract delete undo"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"]
+        .as_i64()
+        .expect("work_record id");
+
+    let (delete_status, delete_body) = status_and_body(client.delete(
+        &format!(
+            "/api/v1/plans/{}/work_records/{}",
+            seed.plan_id, record_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, delete_status, "{delete_body}");
+    let undo: serde_json::Value =
+        serde_json::from_str(&delete_body).expect("delete work_record undo JSON");
+    let undo_token = undo["undo_token"]
+        .as_str()
+        .expect("undo_token must be a non-empty string");
+    assert!(!undo_token.is_empty(), "{delete_body}");
+    assert_eq!(
+        format!("/undo_deletion?undo_token={undo_token}"),
+        undo["undo_path"].as_str().expect("undo_path")
+    );
+    assert!(
+        undo["toast_message"].as_str().is_some_and(|m| !m.is_empty()),
+        "{delete_body}"
+    );
+    assert!(undo.get("undo_deadline").is_some(), "{delete_body}");
+    assert_eq!(5000, undo["auto_hide_after"].as_i64().unwrap(), "{delete_body}");
+}
+
+#[test]
 fn patch_task_schedule_item_skip_and_unskip_returns_item_payload() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
@@ -138,4 +241,477 @@ fn patch_task_schedule_item_skip_and_unskip_returns_item_payload() {
         serde_json::from_str(&unskip_body).expect("unskip task schedule item JSON");
     assert_eq!("planned", unskip_json["item"]["status"].as_str().unwrap());
     assert!(unskip_json["item"]["cancelled_at"].is_null());
+}
+
+#[test]
+fn get_task_schedule_includes_sync_state_and_items() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let plan = &json["plan"];
+    assert!(
+        plan.get("task_schedule_sync_state").is_some(),
+        "plan must include task_schedule_sync_state: {body}"
+    );
+    assert!(plan.get("task_schedule_sync_error").is_some());
+
+    let fields = json["fields"].as_array().expect("fields array");
+    assert!(!fields.is_empty(), "{body}");
+    let general = fields[0]["schedules"]["general"]
+        .as_array()
+        .expect("general schedule bucket");
+    assert!(
+        !general.is_empty(),
+        "completed plan seed must expose task schedule items: {body}"
+    );
+}
+
+#[test]
+fn get_task_schedule_includes_compat_milestones_labels_and_week_days() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    assert!(
+        json["milestones"].as_array().is_some(),
+        "milestones array required for API compat: {body}"
+    );
+    assert!(
+        json["labels"].is_object(),
+        "labels object required for API compat: {body}"
+    );
+    let days = json["week"]["days"]
+        .as_array()
+        .expect("week.days array required for API compat");
+    assert_eq!(7, days.len(), "{body}");
+    assert!(days[0]["date"].as_str().is_some());
+    assert!(days[0]["weekday"].as_str().is_some());
+    assert!(days[0]["is_today"].is_boolean());
+}
+
+#[test]
+fn get_task_schedule_scope_plan_includes_scheduled_items_and_cultivation_period() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let path = std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH");
+    let conn = rusqlite::Connection::open(&path).expect("open sqlite");
+    conn.execute(
+        "UPDATE field_cultivations SET start_date = '2026-05-01', completion_date = '2026-09-30' \
+         WHERE cultivation_plan_id = ?1",
+        rusqlite::params![seed.plan_id],
+    )
+    .expect("set cultivation period");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/plans/{}/task_schedule?scope=plan&week_start=2026-07-05",
+            seed.plan_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let fields = json["fields"].as_array().expect("fields array");
+    assert_eq!(1, fields.len(), "{body}");
+    assert_eq!("2026-05-01", fields[0]["cultivation_start_date"].as_str().unwrap());
+    assert_eq!("2026-09-30", fields[0]["cultivation_end_date"].as_str().unwrap());
+    let general = fields[0]["schedules"]["general"]
+        .as_array()
+        .expect("general schedule bucket");
+    assert!(
+        !general.is_empty(),
+        "plan scope must include items outside the requested week: {body}"
+    );
+}
+
+#[test]
+fn get_task_schedule_scope_week_filters_to_requested_week() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/plans/{}/task_schedule?scope=week&week_start=2026-06-01",
+            seed.plan_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let fields = json["fields"].as_array().expect("fields array");
+    assert_eq!(1, fields.len(), "{body}");
+    let general = fields[0]["schedules"]["general"]
+        .as_array()
+        .expect("general schedule bucket");
+    assert_eq!(1, general.len(), "{body}");
+    assert_eq!("2026-06-02", general[0]["scheduled_date"].as_str().unwrap());
+
+    let (far_status, far_body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/plans/{}/task_schedule?scope=week&week_start=2026-12-01",
+            seed.plan_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, far_status, "{far_body}");
+    let far_json: serde_json::Value =
+        serde_json::from_str(&far_body).expect("task schedule JSON (far week)");
+    let far_fields = far_json["fields"].as_array().expect("fields array");
+    assert!(
+        far_fields.is_empty(),
+        "week scope must hide fields with only out-of-week schedules: {far_body}"
+    );
+}
+
+#[test]
+fn get_task_schedule_normalizes_legacy_raw_sync_error_to_generic_i18n_key() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    set_plan_task_schedule_sync_failed_raw_error(seed.plan_id, "worker timeout");
+
+    let (status, body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let plan = &json["plan"];
+    assert_eq!("failed", plan["task_schedule_sync_state"].as_str().unwrap());
+    assert_eq!(
+        "plans.task_schedules.sync_errors.generic",
+        plan["task_schedule_sync_error"].as_str().unwrap()
+    );
+}
+
+#[test]
+fn get_task_schedule_exposes_sync_error_crop_id_for_missing_blueprints() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    set_plan_task_schedule_sync_failed(
+        seed.plan_id,
+        "plans.task_schedules.sync_errors.missing_crop_blueprints",
+        Some(seed.crop_id),
+    );
+
+    let (status, body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let plan = &json["plan"];
+    assert_eq!("failed", plan["task_schedule_sync_state"].as_str().unwrap());
+    assert_eq!(
+        "plans.task_schedules.sync_errors.missing_crop_blueprints",
+        plan["task_schedule_sync_error"].as_str().unwrap()
+    );
+    assert_eq!(seed.crop_id, plan["task_schedule_sync_error_crop_id"].as_i64().unwrap());
+}
+
+#[test]
+fn get_task_schedule_includes_plan_crops_when_sync_failed_without_schedules() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+    clear_plan_task_schedules(seed.plan_id);
+    set_plan_task_schedule_sync_failed(
+        seed.plan_id,
+        "plans.task_schedules.sync_errors.generic",
+        None,
+    );
+
+    let (status, body) = status_and_body(client.get(
+        &format!("/api/v1/plans/{}/task_schedule", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("task schedule JSON");
+    let fields = json["fields"].as_array().expect("fields array");
+    assert!(
+        !fields.is_empty(),
+        "fields must include plan crops even when task_schedules are absent: {body}"
+    );
+    let field = &fields[0];
+    assert_eq!(seed.crop_id, field["crop_id"].as_i64().unwrap());
+    assert!(
+        field["crop_name"].as_str().unwrap().contains("Contract Crop"),
+        "crop_name must be present for banner remediation: {body}"
+    );
+    let remediation = json["plan"]["remediation_crops"]
+        .as_array()
+        .expect("remediation_crops");
+    assert_eq!(1, remediation.len());
+    assert_eq!(seed.crop_id, remediation[0]["crop_id"].as_i64().unwrap());
+}
+
+#[test]
+fn post_task_schedule_regenerate_returns_generating() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (status, body) = status_and_body(client.post(
+        &format!("/api/v1/plans/{}/task_schedule/regenerate", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("regenerate JSON");
+    assert_eq!(true, json["success"].as_bool().unwrap());
+    assert_eq!("generating", json["task_schedule_sync_state"].as_str().unwrap());
+}
+
+#[test]
+fn get_masters_crop_task_schedule_blueprints_unauthenticated_returns_401() {
+    let client = ContractClient::from_env();
+    let (status, body) = status_and_body(client.get(
+        "/api/v1/masters/crops/1/task_schedule_blueprints",
+        None,
+        &empty_headers(),
+    ));
+    assert_eq!(401, status, "{body}");
+}
+
+#[test]
+fn get_masters_crop_task_schedule_blueprints_authenticated_returns_array() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("blueprints JSON");
+    assert!(json.is_array(), "{body}");
+}
+
+#[test]
+fn post_masters_crop_task_schedule_blueprints_regenerate_without_blueprints_returns_422() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints/regenerate",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(422, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("regenerate error JSON");
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("missing_blueprints"),
+        "{body}"
+    );
+    assert!(json.get("error").is_some(), "{body}");
+}
+
+#[test]
+fn post_masters_crop_task_schedule_blueprints_create_without_agricultural_task_returns_422() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+    let body = serde_json::json!({
+        "agricultural_task_id": 999_999,
+        "stage_order": 1,
+        "stage_name": "Vegetative",
+        "gdd_trigger": 100.0
+    });
+
+    let (status, body_text) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(body.clone()),
+    ));
+    assert_eq!(422, status, "{body_text}");
+    let json: serde_json::Value = serde_json::from_str(&body_text).expect("create error JSON");
+    assert_eq!(
+        json.get("error_code").and_then(|v| v.as_str()),
+        Some("agricultural_task_not_found"),
+        "{body_text}"
+    );
+}
+
+#[test]
+fn post_masters_crop_task_schedule_blueprints_create_with_manual_blueprint_returns_201() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop_with_manual_blueprint(user_id);
+    let body = serde_json::json!({
+        "agricultural_task_id": seed.agricultural_task_id,
+        "stage_order": 1,
+        "stage_name": "Vegetative",
+        "gdd_trigger": 120.0
+    });
+
+    let (status, body_text) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(body.clone()),
+    ));
+    assert_eq!(201, status, "{body_text}");
+    let json: serde_json::Value = serde_json::from_str(&body_text).expect("create JSON");
+    assert_eq!(seed.crop_id, json["crop_id"].as_i64().unwrap());
+    assert_eq!(
+        seed.agricultural_task_id,
+        json["agricultural_task_id"].as_i64().unwrap()
+    );
+    assert_eq!("manual", json["source"].as_str().unwrap());
+    let task_name = json["name"]
+        .as_str()
+        .or_else(|| json["agricultural_task"]["name"].as_str());
+    assert!(
+        task_name.is_some() && !task_name.unwrap().is_empty(),
+        "blueprint must expose agricultural task name: {body_text}"
+    );
+}
+
+#[test]
+fn get_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
+}
+
+#[test]
+fn post_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "obsolete" })),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
+}
+
+#[test]
+fn put_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.put(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks/1",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "obsolete" })),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
+}
+
+#[test]
+fn patch_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.patch(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks/1",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "name": "obsolete" })),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
+}
+
+#[test]
+fn delete_masters_crop_agricultural_tasks_returns_410_gone() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, body) = status_and_body(client.delete(
+        &format!(
+            "/api/v1/masters/crops/{}/agricultural_tasks/1",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_crop_task_template_api_removed(status, &body);
 }

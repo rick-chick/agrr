@@ -8,19 +8,19 @@ use crate::state::AppState;
 use agrr_adapters_sqlite::{
     CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway, WorkRecordSqliteGateway,
 };
-use agrr_domain::work_record::dtos::WorkRecordRead;
+use agrr_domain::work_record::dtos::{WorkRecordDestroyOutput, WorkRecordRead};
 use agrr_domain::work_record::interactors::{
     WorkRecordCreateInteractor, WorkRecordDestroyInteractor, WorkRecordListInteractor,
     WorkRecordUpdateInteractor,
 };
 use agrr_domain::work_record::ports::{
-    WorkRecordCreateOutputPort, WorkRecordDestroyOutputPort, WorkRecordListOutputPort,
+    DestroyFailure, WorkRecordCreateOutputPort, WorkRecordDestroyOutputPort, WorkRecordListOutputPort,
     WorkRecordUpdateOutputPort,
 };
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
-    routing::{delete, get, patch, post},
+    http::{HeaderMap, StatusCode},
+    routing::{get, patch},
     Json, Router,
 };
 use axum_extra::extract::cookie::CookieJar;
@@ -78,9 +78,10 @@ enum ListOutcome {
 }
 
 enum DestroyOutcome {
-    Success,
+    Success(Value),
     NotFound,
     RecordInvalid(BTreeMap<String, Vec<String>>),
+    Failure(String),
 }
 
 impl WorkRecordCreateOutputPort for CreatePresenter {
@@ -138,8 +139,16 @@ impl WorkRecordUpdateOutputPort for UpdatePresenter {
 }
 
 impl WorkRecordDestroyOutputPort for DestroyPresenter {
-    fn on_success(&mut self) {
-        self.body = Some(DestroyOutcome::Success);
+    fn on_success(&mut self, output: WorkRecordDestroyOutput) {
+        self.body = Some(DestroyOutcome::Success(output.undo));
+    }
+
+    fn on_failure(&mut self, error: DestroyFailure) {
+        match error {
+            DestroyFailure::Error(e) => {
+                self.body = Some(DestroyOutcome::Failure(e.message));
+            }
+        }
     }
 
     fn on_record_invalid(
@@ -336,6 +345,7 @@ async fn update_work_record(
 async fn destroy_work_record(
     State(state): State<AppState>,
     jar: CookieJar,
+    headers: HeaderMap,
     Path((plan_id, record_id)): Path<(i64, i64)>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = user_id_from_session(&state, &jar).map_err(|_| unauthorized())?;
@@ -343,18 +353,27 @@ async fn destroy_work_record(
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let work_record_gateway = WorkRecordSqliteGateway::new(pool);
+    let translator = state.locale_translator(&headers);
     let mut presenter = DestroyPresenter { body: None };
 
-    let mut interactor =
-        WorkRecordDestroyInteractor::new(&mut presenter, &plan_gateway, &work_record_gateway);
+    let mut interactor = WorkRecordDestroyInteractor::new(
+        &mut presenter,
+        &plan_gateway,
+        &work_record_gateway,
+        &translator,
+    );
     interactor
         .call_rescuing(user_id, plan_id, record_id)
         .map_err(|_| internal_error())?;
 
     match presenter.body {
-        Some(DestroyOutcome::Success) => Ok(Json(json!({"deleted": true}))),
+        Some(DestroyOutcome::Success(undo)) => Ok(Json(undo)),
         Some(DestroyOutcome::NotFound) => Err(not_found()),
         Some(DestroyOutcome::RecordInvalid(errors)) => Err(record_invalid(errors)),
+        Some(DestroyOutcome::Failure(message)) => Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": [message]})),
+        )),
         None => Err(internal_error()),
     }
 }

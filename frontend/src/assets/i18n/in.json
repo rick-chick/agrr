@@ -233,6 +233,19 @@
     "undo": {
       "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
     },
+    "flash": {
+      "created": "फसल सफलतापूर्वक बनाई गई।",
+      "updated": "फसल सफलतापूर्वक अपडेट की गई।",
+      "destroyed": "फसल सफलतापूर्वक हटाई गई।",
+      "task_schedule_blueprints_generated": "कार्य योजना पुन: उत्पन्न की गई।",
+      "task_schedule_blueprints_failed": "कार्य योजना पुन: उत्पन्न करने में विफल। कृपया लॉग जाँचें।",
+      "blueprint_position_updated": "कार्य योजना की स्थिति अपडेट की गई।",
+      "blueprint_update_failed": "कार्य योजना की स्थिति अपडेट करने में विफल।",
+      "blueprint_not_found": "निर्दिष्ट कार्य योजना नहीं मिली।",
+      "blueprint_deleted": "कार्य योजना हटाई गई।",
+      "blueprint_created": "कार्य योजना जोड़ी गई।",
+      "blueprint_delete_failed": "कार्य योजना हटाने में विफल।"
+    },
     "form": {
       "name_label": "नाम",
       "variety_label": "किस्म",
@@ -309,6 +322,8 @@
       "sterility_risk_threshold": "बाँझपन जोखिम सीमा (°C)",
       "max_temperature": "अधिकतम तापमान (°C)",
       "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
+      "stage_cumulative_gdd_range": "{{start}}–{{end}} ℃·दिन (संचयी)",
+      "stage_cumulative_gdd_missing": "सीमा दिखाने के लिए आवश्यक GDD दर्ज करें",
       "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
       "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
       "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",
@@ -334,11 +349,85 @@
       "region": "क्षेत्र",
       "created_at": "बनाया गया",
       "updated_at": "अपडेट किया गया",
-      "stages_title": "वृद्धि चरण",
-      "required_gdd": "आवश्यक GDD",
+      "no_stages_description": "कृपया इस फसल के लिए वृद्धि चरण जोड़ें।",
+      "stage_required_gdd_label": "इस चरण के लिए आवश्यक GDD",
       "gdd_unit": "°C·दिन",
       "optimal_temperature": "इष्टतम तापमान",
-      "celsius_unit": "°C"
+      "celsius_unit": "°C",
+      "task_schedule_blueprints_title": "कार्य अनुसूची टेम्पलेट",
+      "cultivation_template_title": "खेती टेम्पलेट",
+      "blueprint_summary": {
+        "count": "{{count}} कार्य योजना",
+        "attention_suffix": "({{count}} पर ध्यान दें)",
+        "timing_required": "समय आवश्यक",
+        "setup_required": "वृद्धि चरण या कार्य योजना पूरी तरह कॉन्फ़िगर नहीं है।",
+        "edit_action": "कार्य योजना संपादित करें",
+        "empty_on_detail": "अभी तक कोई कार्य योजना नहीं है।"
+      },
+      "task_schedule_blueprints_lead": "खेती योजना बनाने पर, इन टेम्पलेट से योजना की कार्य अनुसूची स्वचालित रूप से बनती है।",
+      "task_schedule_blueprints_gdd_axis_caption": "फसल शुरुआत से संचयी (चरण शुरुआत से नहीं)।",
+      "task_schedule_blueprints_gdd_axis_label": "संचयी GDD (कुल {{total}} ℃·दिन)",
+      "no_task_schedule_blueprints": "अभी तक कोई कार्य योजना नहीं है। नीचे के फॉर्म से एक-एक करके जोड़ें।",
+      "unnamed_blueprint": "(कार्य नाम सेट नहीं)",
+      "gdd_trigger": "समय (℃·दिन)",
+      "gdd_trigger_placeholder": "सेट नहीं",
+      "blueprint_gdd_unset": "समय सेट नहीं",
+      "blueprint_gdd_errors": {
+        "missing_stage": "वृद्धि चरण चुनें।",
+        "stage_gdd_missing": "इस चरण के लिए आवश्यक संचित तापमान सेट नहीं है।",
+        "out_of_range": "{{start}}–{{end}} ℃·दिन की सीमा में मान दर्ज करें।",
+        "gdd_required": "इस चरण में वही कार्य पहले से है। स्लॉट अलग करने के लिए समय (℃·दिन) दर्ज करें।"
+      },
+      "generate_task_schedule_blueprints_button": "AI सुझाव आयात करें",
+      "generate_task_schedule_blueprints_confirm": "सभी कार्य योजनाएँ AI सुझावों से बदल दी जाएँगी। मैन्युअल पंजीकरण मिट जाएगा। जारी रखें?",
+      "manual_blueprint_add": {
+        "title": "कार्य योजना मैन्युअल जोड़ें",
+        "stage_label": "वृद्धि चरण",
+        "stage_placeholder": "चरण चुनें",
+        "task_label": "कार्य",
+        "task_placeholder": "कार्य चुनें",
+        "gdd_label": "समय (℃·दिन)",
+        "gdd_range_hint": "सीमा: {{start}}–{{end}} ℃·दिन",
+        "submit": "कार्य योजना जोड़ें",
+        "ai_hint": "AI सुझाव को केवल शुरुआती ड्राफ्ट के रूप में चाहिए तो नीचे का बटन उपयोग करें। मौजूदा सभी कार्य योजनाएँ बदल दी जाएँगी।",
+        "no_unassociated_tasks": "मास्टर सूची में कोई कार्य उपलब्ध नहीं है। पहले कार्य बनाएँ।",
+        "go_to_create": "नया कार्य बनाएँ"
+      },
+      "blueprint_readiness": {
+        "title": "AI पुन: उत्पादन से पहले आवश्यक",
+        "detail_title": "कॉन्फ़िगरेशन स्थिति",
+        "blueprints_ready": "कम से कम एक कार्य योजना पंजीकृत है",
+        "blueprints_missing": "अभी तक कोई कार्य योजना पंजीकृत नहीं",
+        "blueprints_action": "कार्य योजना पंजीकृत करें",
+        "stages_ready": "वृद्धि चरणों में आधार तापमान और आवश्यक GDD सेट है",
+        "stages_missing": "वृद्धि चरणों में आधार तापमान या आवश्यक GDD अनुपलब्ध",
+        "stages_action": "वृद्धि चरण सेट करें",
+        "stages_edit_action": "वृद्धि चरण संपादित करें"
+      },
+      "blueprint_errors": {
+        "missing_blueprints": "कार्य योजना पंजीकृत न होने के कारण AI सुझाव आयात नहीं किए जा सकते।",
+        "missing_agrr_requirement": "वृद्धि चरण आवश्यकताएँ अधूरी होने के कारण कार्य योजना नहीं बनाई जा सकी।",
+        "blueprint_generation_failed": "AGRR प्रतिक्रिया से कार्य योजना नहीं बनाई जा सकी। नीचे \"पुनः प्रयास करें\" दबाएँ या बाद में पुनः प्रयास करें।",
+        "ai_unavailable": "AGRR प्रसंस्करण सेवा से कनेक्ट नहीं हो सका। नीचे \"पुनः प्रयास करें\" दबाएँ या बाद में पुनः प्रयास करें।",
+        "ai_execution_failed": "AGRR से कार्य योजना पुन: उत्पन्न करने में विफल। नीचे \"पुनः प्रयास करें\" दबाएँ या बाद में पुनः प्रयास करें।",
+        "generic": "कार्य योजना पुन: उत्पन्न करने में विफल। पूर्वापेक्षाएँ पूर्ण हैं। नीचे \"पुनः प्रयास करें\" दबाएँ या बाद में पुनः प्रयास करें।",
+        "retry_action": "पुनः प्रयास करें"
+      },
+      "delete_blueprint": "कार्य योजना हटाएं",
+      "delete_blueprint_confirm": "क्या आप इस कार्य योजना को हटाना चाहते हैं?",
+      "blueprint_stage_lane": {
+        "unassigned": "चरण असाइन नहीं",
+        "unassigned_hint": "वृद्धि चरण असाइन करें",
+        "gdd_range": "{{start}}–{{end}} °C·दिन",
+        "gdd_range_missing": "आवश्यक संचित तापमान सेट नहीं",
+        "out_of_range_count": "सीमा से बाहर {{count}} ({{start}}–{{end}} ℃·दिन)",
+        "board_label": "वृद्धि चरण के अनुसार कार्य योजना",
+        "keyboard_hint": "कार्ड खींचकर चरण बदलें। समय (℃·दिन) प्रत्येक कार्ड या नीचे के फॉर्म से दर्ज करें।"
+      },
+      "return_to_plan": "योजना के कार्य लॉग पर वापस जाएँ",
+      "from_plan_wizard_title": "इस योजना की कार्य अनुसूची के लिए पंजीकरण",
+      "from_plan_wizard_lead": "नीचे के फॉर्म से कार्य योजना पंजीकृत करें। समाप्त होने पर \"योजना के कार्य लॉग पर वापस जाएँ\" से वापस जाएँ।",
+      "from_plan_stages_wizard_lead": "प्रत्येक वृद्धि चरण के लिए आधार तापमान और आवश्यक GDD सेट करें। समाप्त होने पर योजना पर लौटकर कार्य अनुसूची पुनः बनाएँ।"
     }
   },
   "pests": {
@@ -588,6 +677,14 @@
         "label": "डीबग:"
       }
     },
+    "form": {
+      "region_label": "क्षेत्र",
+      "region_jp": "जापान",
+      "region_us": "उत्तरी अमेरिका",
+      "region_in": "भारत",
+      "region_blank": "चयनित नहीं",
+      "region_help": "खेती क्षेत्र (केवल व्यवस्थापक)"
+    },
     "new": {
       "title": "नया खेत जोड़ें",
       "form": {
@@ -641,6 +738,7 @@
       "fields_list": "खेत क्षेत्र",
       "fields_list_title": "खेत क्षेत्र सूची",
       "no_fields": "अभी तक कोई खेत क्षेत्र पंजीकृत नहीं।",
+      "field_list_item": "{{name}} ({{area}}㎡)",
       "add_first_field": "पहला खेत क्षेत्र जोड़ें",
       "back_to_list": "खेत सूची पर वापस जाएं",
       "detail": "विवरण",
@@ -656,8 +754,6 @@
         "area_placeholder": "उदाहरण: 1000",
         "daily_fixed_cost_label": "दैनिक निश्चित लागत (₹)",
         "daily_fixed_cost_placeholder": "उदाहरण: 5000",
-        "region_label": "क्षेत्र",
-        "region_placeholder": "उदाहरण: भारत",
         "submit_update": "अपडेट करें",
         "submit_create": "खेत क्षेत्र बनाएं"
       }
@@ -1016,6 +1112,8 @@
       "forbidden": "इस संसाधन तक पहुँच की अनुमति नहीं है",
       "not_found": "संसाधन नहीं मिला",
       "network": "नेटवर्क त्रुटि हुई",
+      "not_migrated": "यह सुविधा अभी उपलब्ध नहीं है",
+      "service_unavailable": "सर्वर से कनेक्ट नहीं हो सका",
       "generic": "एक त्रुटि हुई"
     }
   },
@@ -1428,7 +1526,8 @@
         "daily_gdd": "दैनिक संचयी तापमान",
         "tooltip_format": "dd/MM/yyyy",
         "required_cumulative_gdd": "आवश्यक संचयी तापमान"
-      }
+      },
+      "open_task_schedule": "इस खेत के लिए कार्य अनुसूची खोलें"
     },
     "detail": {
       "select_cultivation_hint": "जलवायु डेटा देखने के लिए चार्ट पर खेती बार चुनें।"
@@ -1442,18 +1541,95 @@
       }
     },
     "task_schedules": {
-      "title": "{{name}} की कार्य अनुसूची",
-      "back_to_plan": "← योजना विवरण पर वापस जाएं",
+      "page_title": "कार्य अनुसूची — {{name}}",
+      "page_intro": "रोपण योजना की खेती अवधि के आधार पर कार्य और तिथियाँ स्वचालित रूप से गणना की जाती हैं। आज के कार्य «कार्य रिकॉर्ड» में देखें।",
+      "empty_hint": "कार्य अनुसूची बनाने के लिए योजना में फसलें जोड़ें। ऊपर के \"खेती योजना\" टैब से योजना की समीक्षा करें।",
+      "empty_ready_no_fields": "कार्य अनुसूची तैयार है, लेकिन प्रदर्शित करने के लिए कोई खेत नहीं है। \"खेती योजना\" टैब में खेत और फसलें जाँचें।",
+      "timeline_generated_at": "निर्माण समय: {{datetime}}",
+      "timeline_generated_unknown": "निर्माण समय: अनुपलब्ध",
+      "view_mode_plan": "सूची",
+      "view_mode_week": "सप्ताह",
+      "nav_prev_week": "पिछला सप्ताह",
+      "nav_next_week": "अगला सप्ताह",
+      "nav_today": "इस सप्ताह",
+      "week_label": "{{start}} – {{end}}",
       "general_label": "सामान्य कार्य",
       "fertilizer_label": "उर्वरक",
-      "no_schedules": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।"
+      "fertilizer_empty": "कोई उर्वरक कार्य निर्धारित नहीं",
+      "unscheduled_title": "अनिर्धारित कार्य",
+      "no_schedules": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
+      "status": {
+        "planned": "नियोजित",
+        "skipped": "छोड़ा गया",
+        "completed": "पूर्ण"
+      },
+      "field_section": "{{name}} ({{crop}})",
+      "field_number": "खेत क्षेत्र {{number}}",
+      "cultivation_period": "खेती अवधि {{start}} – {{end}}",
+      "summary": "{{fields}} खेत · {{tasks}} कार्य",
+      "view_all_fields": "सभी खेत देखें",
+      "back_to_planting_plan": "फसल योजना पर वापस जाएं",
+      "field_no_tasks": "इस स्तंभ में कोई निर्धारित कार्य नहीं",
+      "sync_never": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
+      "sync_failed": "कार्य अनुसूची बनाने में विफल।",
+      "sync_generating": "कार्य अनुसूची तैयार की जा रही है...",
+      "sync_stale": "योजना में बदलाव के कारण कार्य अनुसूची पुरानी हो गई है।",
+      "sync_updated": "कार्य अनुसूची अपडेट हो गई है।",
+      "sync_retry": "कार्य अनुसूची पुनः बनाएँ",
+      "sync_wizard_cta_hint": "पंजीकरण विज़ार्ड खोलें",
+      "sync_errors": {
+        "missing_weather": "मौसम पूर्वानुमान डेटा न होने के कारण कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_crop_templates": "फसल कार्य टेम्पलेट न होने के कारण योजना कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_crop_templates_named": "«{{cropName}}» के कार्य टेम्पलेट न होने के कारण योजना कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_crop_templates_link": "फसल सूची से कार्य टेम्पलेट पंजीकृत करें",
+        "missing_crop_blueprints": "फसल कार्य योजना न होने के कारण योजना कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_crop_blueprints_named": "«{{cropName}}» की कार्य योजना न होने के कारण योजना कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_crop_blueprints_link": "फसल सूची से कार्य योजना पंजीकृत करें",
+        "missing_general_templates": "सामान्य कार्य योजना की कमी के कारण योजना कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_general_templates_named": "«{{cropName}}» की सामान्य कार्य योजना की कमी के कारण योजना कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_general_templates_link": "फसल सूची से सामान्य कार्य योजना पंजीकृत करें",
+        "missing_general_blueprints": "सामान्य कार्य योजना की कमी के कारण योजना कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_general_blueprints_named": "«{{cropName}}» की सामान्य कार्य योजना की कमी के कारण योजना कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_general_blueprints_link": "फसल सूची से सामान्य कार्य योजना पंजीकृत करें",
+        "empty_gdd_progress": "GDD प्रगति खाली होने के कारण कार्य अनुसूची नहीं बनाई जा सकी।",
+        "empty_gdd_progress_named": "{{cropName}} के लिए GDD प्रगति खाली होने के कारण कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_gdd_trigger": "फसल कार्य योजना में GDD ट्रिगर न होने के कारण कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_gdd_trigger_named": "{{cropName}} की कार्य योजना में GDD ट्रिगर न होने के कारण कार्य अनुसूची नहीं बनाई जा सकी।",
+        "missing_gdd_trigger_link": "फसल सूची से कार्य योजना की समीक्षा करें",
+        "missing_gdd_trigger_wizard_link": "{{cropName}} की कार्य योजना में GDD ट्रिगर सेट करें",
+        "gdd_date_not_found": "GDD प्रगति से तिथि न मिलने के कारण कार्य अनुसूची नहीं बनाई जा सकी।",
+        "gdd_date_not_found_named": "{{cropName}} के लिए GDD ट्रिगर की तिथि निर्धारित नहीं हो सकी। वृद्धि चरण और GDD ट्रिगर की जाँच करें।",
+        "gdd_date_not_found_link": "फसल सूची से कार्य योजना की समीक्षा करें",
+        "gdd_date_not_found_wizard_link": "{{cropName}} की कार्य योजना की समीक्षा करें",
+        "missing_start_date": "खेती प्रारंभ तिथि न होने के कारण कार्य अनुसूची नहीं बनाई जा सकी।",
+        "agrr_unavailable": "AGRR प्रसंस्करण सेवा से कनेक्ट नहीं हो सका। बाद में पुनः प्रयास करें।",
+        "generic": "कार्य अनुसूची नहीं बनाई जा सकी।",
+        "generic_single": "«{{cropName}}» की सेटिंग जाँचें, या सेटअप पूरा होने पर पुनः प्रयास करें।",
+        "generic_multi": "कार्य अनुसूची नहीं बनाई जा सकी। नीचे दी गई फसलों की सेटिंग जाँचें, या सेटअप पूरा होने पर पुनः प्रयास करें।",
+        "generic_no_plan_crops": "इस योजना में कोई फसल नहीं मिली। योजना के खेत और फसल जाँचें।",
+        "crop_wizard_link": "«{{cropName}}» का पंजीकरण विज़ार्ड खोलें",
+        "plan_context_link": "योजना के खेत और मौसम की जाँच करें",
+        "crop_stages_link": "«{{cropName}}» के वृद्धि चरण देखें",
+        "generic_plan_link": "योजना के खेत और फसल देखें"
+      },
+      "detail": {
+        "title": "कार्य विवरण",
+        "empty": "विवरण देखने के लिए कार्य चुनें",
+        "scheduled_date": "निर्धारित तिथि",
+        "stage": "चरण",
+        "amount": "उर्वरक मात्रा",
+        "master_name": "कार्य मास्टर",
+        "master_description": "विवरण",
+        "not_applicable": "लागू नहीं"
+      }
     },
     "work": {
-      "title": "कार्य — {{name}}",
-      "back_to_plan": "← योजना विवरण पर वापस",
+      "page_title": "कार्य लॉग — {{name}}",
+      "back_to_plan": "योजना विवरण",
+      "back_to_hub": "कार्य लॉग सूची",
       "nav": {
+        "aria_label": "कार्य लॉग नेविगेशन",
         "work": "आज का कार्य",
-        "schedule": "पूर्ण अनुसूची",
         "history": "कार्य इतिहास"
       },
       "section": {
@@ -1462,14 +1638,24 @@
         "upcoming": "अगले 7 दिन"
       },
       "complete": "पूर्ण",
+      "record_with_details": "विवरण के साथ दर्ज करें",
       "add_record": "+ कार्य दर्ज करें",
       "empty_today": "आज के लिए कोई कार्य निर्धारित नहीं",
+      "empty_today_hint": "अनियोजित कार्य यहाँ से दर्ज करें",
+      "next_scheduled": "अगला निर्धारित: {{date}} — {{name}} ({{field}})",
       "recorded_today": "आज दर्ज किया गया",
       "skipped_badge": "छोड़ा गया",
       "show_skipped": "छोड़े गए दिखाएं",
       "skip": "छोड़ें",
       "unskip": "छोड़ना रद्द करें",
       "menu": "मेनू",
+      "retry": "पुनः लोड करें",
+      "toast": {
+        "record_saved": "कार्य दर्ज हो गया",
+        "record_saved_adhoc": "कार्य दर्ज हो गया। कार्य इतिहास में देखें।"
+      },
+      "recent_adhoc": "「{{name}}」（{{date}}）दर्ज किया गया",
+      "recent_adhoc_history_link": "कार्य इतिहास देखें",
       "sheet": {
         "title": "कार्य दर्ज करें",
         "name": "कार्य का नाम",
@@ -1481,15 +1667,20 @@
         "field": "खेत क्षेत्र",
         "field_select": "खेत क्षेत्र (वैकल्पिक)",
         "field_optional": "चयनित नहीं",
-        "submit": "दर्ज करें"
+        "submit": "दर्ज करें",
+        "task_picker": "कार्य चुनें",
+        "task_other": "अन्य",
+        "show_details": "विवरण जोड़ें",
+        "hide_details": "विवरण छुपाएं"
       },
       "errors": {
         "name_required": "कार्य का नाम आवश्यक है"
       }
     },
     "work_records": {
-      "title": "कार्य इतिहास — {{name}}",
       "empty": "अभी तक कोई कार्य दर्ज नहीं",
+      "empty_hint": "आज का कार्य टैब से अनियोजित कार्य दर्ज करें",
+      "empty_cta": "आज का कार्य से दर्ज करें",
       "badge": {
         "from_schedule": "अनुसूची से",
         "adhoc": "अनियोजित"
@@ -1497,8 +1688,13 @@
       "sheet": {
         "edit_title": "कार्य संपादित करें",
         "save": "सहेजें",
-        "delete": "हटाएं",
-        "delete_confirm": "क्या आप इस कार्य को हटाना चाहते हैं?"
+        "delete": "हटाएं"
+      },
+      "undo": {
+        "toast": "{{name}} हटाया गया। आप इस क्रिया को पूर्ववत कर सकते हैं।"
+      },
+      "toast": {
+        "record_updated": "कार्य सहेजा गया"
       }
     },
     "index": {
@@ -1640,9 +1836,15 @@
       }
     },
     "show": {
-      "back_to_list": "← सूची पर वापस जाएं",
+      "back_to_list": "योजना सूची",
+      "page_title": "{{name}}",
       "optimize_button": "अनुकूलित करें",
-      "view_task_schedule": "कार्य अनुसूची देखें",
+      "open_work": "कार्य लॉग",
+      "nav": {
+        "aria_label": "योजना स्क्रीन नेविगेशन",
+        "workbench": "खेती योजना",
+        "task_schedule": "कार्य अनुसूची"
+      },
       "copy_plan": "अगले वर्ष में कॉपी करें",
       "delete": "हटाएं",
       "header": {
@@ -1798,6 +2000,25 @@
       "network_error": "नेटवर्क त्रुटि हुई"
     }
   },
+  "work": {
+    "hub": {
+      "title": "कार्य लॉग",
+      "subtitle": "आज का कार्य दर्ज करने के लिए खेत चुनें",
+      "error_subtitle": "खेत सूची लोड नहीं हो सकी। पुनः लोड करने का प्रयास करें।",
+      "select_farm": "खेत चुनें",
+      "no_farms": "अभी तक कोई खेत पंजीकृत नहीं",
+      "no_farms_hint": "कार्य दर्ज करने से पहले खेत और खेत क्षेत्र पंजीकृत करें।",
+      "create_farm_link": "खेत पंजीकृत करें",
+      "creating_plan": "योजना तैयार हो रही है…",
+      "creating_plan_for": "{{name}} की योजना तैयार हो रही है…",
+      "farm_meta": "{{count}} खेत क्षेत्र · कुल {{area}} वर्ग मी",
+      "open_work": "कार्य खोलें",
+      "start_recording": "दर्ज करना शुरू करें",
+      "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",
+      "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
+      "retry": "पुनः लोड करें"
+    }
+  },
   "status": {
     "checking": "जाँच हो रही है..."
   },
@@ -1806,6 +2027,7 @@
     "open_menu": "मेनू खोलें",
     "close_menu": "मेनू बंद करें",
     "plan": "योजनाएं",
+    "work_log": "कार्य लॉग",
     "menu_masters": "मास्टर डेटा",
     "new_plan": "फसल योजना बनाएं",
     "reports": "रिपोर्ट",

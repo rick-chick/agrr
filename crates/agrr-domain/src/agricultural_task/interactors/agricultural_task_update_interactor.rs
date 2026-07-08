@@ -1,21 +1,15 @@
 //! Ruby: `Domain::AgriculturalTask::Interactors::AgriculturalTaskUpdateInteractor`
 
-use std::collections::HashSet;
-
 use crate::agricultural_task::dtos::AgriculturalTaskUpdateInput;
 use crate::agricultural_task::entities::AgriculturalTaskEntity;
-use crate::agricultural_task::gateways::{
-    AgriculturalTaskGateway, CropGateway, CropTaskTemplateGateway,
-};
+use crate::agricultural_task::gateways::AgriculturalTaskGateway;
 use crate::agricultural_task::interactors::attr_helpers::str_present;
-use crate::agricultural_task::policies::CropTaskTemplateSyncPolicy;
 use crate::agricultural_task::ports::{AgriculturalTaskUpdateOutputPort, UpdateFailure};
 use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
 use crate::shared::dtos::{Error, ReferenceFlagChangeDeniedFailure};
 use crate::shared::exceptions::RecordNotFoundError;
 use crate::shared::gateways::UserLookupGateway;
 use crate::shared::policies::agricultural_task_policy;
-use crate::shared::policies::crop_policy;
 use crate::shared::policies::referencable_resource_policy::{
     duplicate_name_record, reference_flag_change_allowed, reference_record_user_id_valid,
 };
@@ -23,21 +17,17 @@ use crate::shared::ports::translator_port::{TranslateOptions, TranslatorPort};
 use crate::shared::reference_record_authorization;
 use crate::shared::type_converters::cast_boolean_attr;
 
-pub struct AgriculturalTaskUpdateInteractor<'a, G, CG, TG, O, U, T> {
+pub struct AgriculturalTaskUpdateInteractor<'a, G, O, U, T> {
     output_port: &'a mut O,
     gateway: &'a G,
-    crop_gateway: &'a CG,
-    crop_task_template_gateway: &'a TG,
     user_id: i64,
     translator: &'a T,
     user_lookup: &'a U,
 }
 
-impl<'a, G, CG, TG, O, U, T> AgriculturalTaskUpdateInteractor<'a, G, CG, TG, O, U, T>
+impl<'a, G, O, U, T> AgriculturalTaskUpdateInteractor<'a, G, O, U, T>
 where
     G: AgriculturalTaskGateway,
-    CG: CropGateway,
-    TG: CropTaskTemplateGateway,
     O: AgriculturalTaskUpdateOutputPort,
     U: UserLookupGateway,
     T: TranslatorPort,
@@ -46,16 +36,12 @@ where
         output_port: &'a mut O,
         user_id: i64,
         gateway: &'a G,
-        crop_gateway: &'a CG,
-        crop_task_template_gateway: &'a TG,
         translator: &'a T,
         user_lookup: &'a U,
     ) -> Self {
         Self {
             output_port,
             gateway,
-            crop_gateway,
-            crop_task_template_gateway,
             user_id,
             translator,
             user_lookup,
@@ -133,7 +119,6 @@ where
             attrs.insert("is_reference".into(), AttrValue::Bool(v));
         }
 
-        let sync_ids = update_input.selected_crop_ids;
         let normalized = agricultural_task_policy::normalize_attrs_for_update(
             &user,
             attr_map_from_pairs([("is_reference", AttrValue::Bool(current.reference()))]),
@@ -181,11 +166,7 @@ where
         }
 
         let task_entity = self.gateway.within_transaction(|| {
-            let entity = self.gateway.update(update_input.id, normalized)?;
-            if let Some(selected_crop_ids) = sync_ids {
-                self.sync_crop_task_templates(&entity, &selected_crop_ids, &user)?;
-            }
-            Ok::<AgriculturalTaskEntity, Box<dyn std::error::Error + Send + Sync>>(entity)
+            self.gateway.update(update_input.id, normalized)
         })?;
 
         self.output_port.on_success(task_entity);
@@ -204,99 +185,6 @@ where
             self.gateway
                 .find_by_user_id_and_name(user_id.unwrap_or(self.user_id), name)
         }
-    }
-
-    fn sync_crop_task_templates(
-        &self,
-        task_entity: &AgriculturalTaskEntity,
-        selected_crop_ids: &[i64],
-        user: &crate::shared::user::User,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let region_filter =
-            CropTaskTemplateSyncPolicy::crop_associate_region_filter(task_entity.region.as_deref());
-        let scope_crop_ids = self.associate_scope_crop_ids(task_entity, region_filter.as_deref(), user)?;
-        let scope_crop_id_set: HashSet<i64> = scope_crop_ids.iter().copied().collect();
-        let allowed_crop_ids =
-            CropTaskTemplateSyncPolicy::allowed_crop_ids(&scope_crop_ids, selected_crop_ids);
-        let current_template_crop_ids = self
-            .crop_task_template_gateway
-            .list_by_agricultural_task_id(task_entity.id.unwrap_or(0))?
-            .into_iter()
-            .map(|link| link.crop_id)
-            .collect::<Vec<_>>();
-        let crops_to_add = CropTaskTemplateSyncPolicy::crops_to_add(
-            &allowed_crop_ids,
-            &current_template_crop_ids,
-        );
-        let crops_to_remove = CropTaskTemplateSyncPolicy::crops_to_remove(
-            &allowed_crop_ids,
-            &current_template_crop_ids,
-        );
-        let template_attrs =
-            CropTaskTemplateSyncPolicy::template_attributes_from_task_entity(task_entity);
-        let task_id = task_entity.id.unwrap_or(0);
-
-        for crop_id in crops_to_add {
-            let crop_found = scope_crop_id_set.contains(&crop_id);
-            let template_exists = self.template_link_exists(task_id, crop_id)?;
-            if CropTaskTemplateSyncPolicy::skip_template_create(crop_found, template_exists) {
-                continue;
-            }
-            self.crop_task_template_gateway
-                .create(task_id, crop_id, template_attrs.clone())?;
-        }
-
-        for crop_id in crops_to_remove {
-            let crop_found = self.crop_record_exists(crop_id);
-            let template_exists = self.template_link_exists(task_id, crop_id)?;
-            if CropTaskTemplateSyncPolicy::skip_template_remove(crop_found, template_exists) {
-                continue;
-            }
-            self.crop_task_template_gateway.delete(task_id, crop_id)?;
-        }
-
-        Ok(())
-    }
-
-    fn associate_scope_crop_ids(
-        &self,
-        task_entity: &AgriculturalTaskEntity,
-        region_filter: Option<&str>,
-        user: &crate::shared::user::User,
-    ) -> Result<Vec<i64>, Box<dyn std::error::Error + Send + Sync>> {
-        if task_entity.reference() {
-            Ok(self
-                .crop_gateway
-                .list_by_is_reference(true, region_filter)?
-                .into_iter()
-                .map(|c| c.id)
-                .collect())
-        } else {
-            Ok(self
-                .crop_gateway
-                .list_by_user_id(task_entity.user_id.unwrap_or(self.user_id), region_filter)?
-                .into_iter()
-                .filter(|crop| {
-                    crop_policy::edit_allowed(user, crop.is_reference, crop.user_id)
-                })
-                .map(|c| c.id)
-                .collect())
-        }
-    }
-
-    fn crop_record_exists(&self, crop_id: i64) -> bool {
-        self.crop_gateway.find_by_id(crop_id).is_ok()
-    }
-
-    fn template_link_exists(
-        &self,
-        agricultural_task_id: i64,
-        crop_id: i64,
-    ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(self
-            .crop_task_template_gateway
-            .find_by_agricultural_task_id_and_crop_id(agricultural_task_id, crop_id)?
-            .is_some())
     }
 }
 

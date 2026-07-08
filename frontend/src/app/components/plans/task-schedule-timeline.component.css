@@ -1,8 +1,33 @@
+.timeline-layout {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
 .timeline {
+  flex: 1;
+  min-width: 0;
   background: var(--color-surface);
   border-radius: var(--radius-xl);
   padding: var(--space-4);
   border: 1px solid var(--color-divider);
+}
+
+.timeline-layout > app-task-schedule-item-detail {
+  flex: 0 0 280px;
+  max-width: 320px;
+}
+
+@media (max-width: 960px) {
+  .timeline-layout {
+    flex-direction: column;
+  }
+
+  .timeline-layout > app-task-schedule-item-detail {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: none;
+  }
 }
 
 .field-section {
@@ -13,6 +38,16 @@
 
 .field-section:last-child {
   border-bottom: none;
+}
+
+.field-section__plan-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.field-section__plan-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
 }
 
 .schedule-columns {
@@ -35,9 +70,12 @@
   background: var(--color-background);
   padding: var(--space-2);
   border-radius: var(--radius-lg);
+  list-style: none;
+  padding-left: var(--space-2);
 }
 
 .item {
+  width: 100%;
   background: var(--color-surface);
   padding: 10px var(--space-3);
   border-radius: var(--radius-lg);
@@ -46,6 +84,54 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
+}
+
+.item--selectable {
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.item--selectable:hover {
+  border-color: var(--color-accent);
+}
+
+.item--selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.item__name {
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.item__date {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.item__badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.column-empty {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
 }
 
 .badge--done {
@@ -57,5 +143,10 @@
   font-size: 10px;
   padding: 2px 6px;
   border-radius: var(--radius-sm);
-  text-transform: uppercase;
+}
+
+.badge--status {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: none;
 }

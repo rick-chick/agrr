@@ -34,6 +34,7 @@ pub(crate) mod task_schedule_field_cultivation_snapshot;
 pub(crate) mod task_schedule_generation_context;
 pub(crate) mod task_schedule_item_amount_snapshot;
 pub(crate) mod task_schedule_item_deletion_undo_schedule_row;
+pub(crate) mod regenerate_task_schedule_input;
 pub(crate) mod task_schedule_timeline;
 pub mod task_schedule_timeline_snapshot;
 pub(crate) mod plan_save_agricultural_tasks;
@@ -61,11 +62,10 @@ pub(crate) mod public_plan_save_pesticide_application_detail_row;
 pub(crate) mod public_plan_save_pesticide_reference_row;
 pub(crate) mod public_plan_save_pesticide_usage_constraint_row;
 pub(crate) mod public_plan_save_session_data;
-pub(crate) mod task_schedule_crop_task_template_snapshot;
+pub(crate) mod task_schedule_agricultural_task_snapshot;
 pub use plan_save_agricultural_tasks::{
-    PlanSaveCropTaskTemplateLinkSnapshot, PlanSaveEnsureUserAgriculturalTasksInput,
-    PlanSaveEnsureUserAgriculturalTasksOutput, PlanSaveUserAgriculturalTaskSnapshot,
-    PublicPlanSaveAgriculturalTaskReferenceRow, PublicPlanSaveCropTaskTemplateLinkRow,
+    PlanSaveEnsureUserAgriculturalTasksInput, PlanSaveEnsureUserAgriculturalTasksOutput,
+    PlanSaveUserAgriculturalTaskSnapshot, PublicPlanSaveAgriculturalTaskReferenceRow,
 };
 pub use plan_save_crops::{
     PlanSaveCropStageCopyPair, PlanSaveEnsureUserCropsInput, PlanSaveEnsureUserCropsOutput,
@@ -116,7 +116,7 @@ pub use public_plan_save_pesticide_application_detail_row::PublicPlanSavePestici
 pub use public_plan_save_pesticide_reference_row::PublicPlanSavePesticideReferenceRow;
 pub use public_plan_save_pesticide_usage_constraint_row::PublicPlanSavePesticideUsageConstraintRow;
 pub use public_plan_save_session_data::PublicPlanSaveSessionData;
-pub use task_schedule_crop_task_template_snapshot::TaskScheduleCropTaskTemplateSnapshot;
+pub use task_schedule_agricultural_task_snapshot::TaskScheduleAgriculturalTaskSnapshot;
 pub use add_crop_adjust_result::AddCropAdjustResult;
 pub use crop_rows_available_row::CropRowsAvailableRow;
 pub use crop_task_schedule_blueprint::{
@@ -163,11 +163,15 @@ pub use public_plan_save_skipped_items::PublicPlanSaveSkippedItems;
 pub use public_plan_save_success::PublicPlanSaveSuccess;
 pub use public_plan_save_input::PublicPlanSaveInput;
 pub use public_plan_save_workspace::PublicPlanSaveWorkspace;
+pub use regenerate_task_schedule_input::RegenerateTaskScheduleInput;
 pub use task_schedule_field_cultivation_snapshot::TaskScheduleFieldCultivationSnapshot;
 pub use task_schedule_generation_context::TaskScheduleGenerationContext;
 pub use task_schedule_item_amount_snapshot::TaskScheduleItemAmountSnapshot;
 pub use task_schedule_item_deletion_undo_schedule_row::TaskScheduleItemDeletionUndoScheduleRow;
 pub use task_schedule_timeline::TaskScheduleTimeline;
 pub use task_schedule_timeline_snapshot::{
-    TaskScheduleTimelineFieldRead, TaskScheduleTimelinePlanRead, TaskScheduleTimelineSnapshot,
+    TaskScheduleTimelineAgriculturalTaskRead, TaskScheduleTimelineFieldRead,
+    TaskScheduleTimelinePlanRead, TaskScheduleTimelineScheduleItemRead,
+    TaskScheduleTimelineScheduleRead, TaskScheduleTimelineSnapshot,
+    TaskScheduleTimelineTaskOptionRead, TaskScheduleTimelineWorkRecordSummaryRead,
 };

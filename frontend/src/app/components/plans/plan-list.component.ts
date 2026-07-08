@@ -7,11 +7,17 @@ import { PlanListView, PlanListViewState } from './plan-list.view';
 import { LoadPlanListUseCase } from '../../usecase/plans/load-plan-list.usecase';
 import { DeletePlanUseCase } from '../../usecase/plans/delete-plan.usecase';
 import { PlanListPresenter, PLAN_LIST_PROVIDERS } from '../../usecase/plans/plan-list.providers';
+import { UndoToastService } from '../../services/undo-toast.service';
+import { FlashMessageService } from '../../services/flash-message.service';
+import { applyPendingUndoToastViewEffects } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { applyPendingErrorFlashViewEffects } from '../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: PlanListViewState = {
   loading: true,
   error: null,
-  plans: []
+  plans: [],
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -75,6 +81,8 @@ export class PlanListComponent implements PlanListView, OnInit {
   private readonly loadUseCase = inject(LoadPlanListUseCase);
   private readonly deleteUseCase = inject(DeletePlanUseCase);
   private readonly presenter = inject(PlanListPresenter);
+  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PlanListViewState = initialControl;
@@ -82,7 +90,11 @@ export class PlanListComponent implements PlanListView, OnInit {
     return this._control;
   }
   set control(value: PlanListViewState) {
-    this._control = value;
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 

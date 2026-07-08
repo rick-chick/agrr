@@ -1,13 +1,13 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { PlanDisplayNamePipe } from '../../core/plan-display-name.pipe';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { formatIsoDateForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import { PLAN_WORK_RECORDS_PROVIDERS } from '../../usecase/plans/plan-work-records.providers';
-import { PlanWorkNavComponent } from './plan-work-nav.component';
+import { PlanWorkHeaderComponent } from './plan-work-header.component';
 import { PlanWorkRecordsView, PlanWorkRecordsViewState } from './plan-work-records.view';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
 
@@ -25,38 +25,44 @@ const initialControl: PlanWorkRecordsViewState = {
     CommonModule,
     RouterLink,
     TranslateModule,
-    PlanDisplayNamePipe,
-    PlanWorkNavComponent,
+    PlanWorkHeaderComponent,
     WorkRecordSheetComponent
   ],
   providers: [...PLAN_WORK_RECORDS_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
-      <section class="page">
-        <a [routerLink]="['/plans', planId]">{{ 'plans.work.back_to_plan' | translate }}</a>
+      <app-plan-work-header [planId]="planId" [planName]="control.plan?.name ?? null" />
 
+      <section class="section-card" aria-labelledby="plan-work-page-title">
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else if (control.error) {
-          <div class="page-alert-error" role="alert">
+          <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
+            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+              {{ 'plans.work.retry' | translate }}
+            </button>
           </div>
         } @else if (control.plan) {
-          <h2>{{ 'plans.work_records.title' | translate: { name: (control.plan.name | planDisplayName) } }}</h2>
-          <app-plan-work-nav [planId]="planId" />
-
           @if (!control.groups.length) {
-            <p class="plan-work-records__empty">{{ 'plans.work_records.empty' | translate }}</p>
+            <div class="plan-work__empty">
+              <p class="plan-work__empty-message">{{ 'plans.work_records.empty' | translate }}</p>
+              <p class="plan-work__empty-hint">{{ 'plans.work_records.empty_hint' | translate }}</p>
+              <a
+                class="plan-work__empty-cta-link plan-work__cta--constrained"
+                [routerLink]="['/plans', planId, 'work']"
+              >{{ 'plans.work_records.empty_cta' | translate }}</a>
+            </div>
           }
 
           @for (group of control.groups; track group.monthLabel) {
             <section class="plan-work-records__month">
-              <h3>{{ group.monthLabel }}</h3>
+              <h3>{{ displayMonth(group.monthLabel) }}</h3>
               <ul class="plan-work-records__list">
                 @for (record of group.records; track record.id) {
                   <li>
                     <button type="button" class="plan-work-records__row" (click)="openEdit(record)">
-                      <span class="plan-work-records__date">{{ record.actual_date }}</span>
+                      <span class="plan-work-records__date">{{ displayDate(record.actual_date) }}</span>
                       <span class="plan-work-records__name">{{ record.name }}</span>
                       @if (record.task_schedule_item_id) {
                         <span class="plan-work-records__badge plan-work-records__badge--scheduled">
@@ -83,8 +89,8 @@ const initialControl: PlanWorkRecordsViewState = {
 
     <app-work-record-sheet
       [planId]="planId"
-      (saved)="reload()"
-      (deleted)="reload()"
+      (saved)="reload({ silent: true })"
+      (deleted)="reload({ silent: true })"
     />
   `,
   styleUrls: ['./plan-work-records.component.css']
@@ -96,6 +102,7 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
   private readonly loadUseCase = inject(LoadWorkRecordsUseCase);
   private readonly presenter = inject(PlanWorkRecordsPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -119,12 +126,22 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
     this.reload();
   }
 
-  reload(): void {
-    this.control = { ...this.control, loading: true };
+  reload(options?: { silent?: boolean }): void {
+    if (!options?.silent) {
+      this.control = { ...this.control, loading: true, error: null };
+    }
     this.loadUseCase.execute({ planId: this.planId });
   }
 
   openEdit(record: WorkRecord): void {
     this.sheet.openEdit(record);
+  }
+
+  displayDate(iso: string): string {
+    return formatIsoDateForDisplay(iso, this.translate.currentLang);
+  }
+
+  displayMonth(isoYm: string): string {
+    return formatIsoMonthForDisplay(isoYm, this.translate.currentLang);
   }
 }

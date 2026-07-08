@@ -1,0 +1,59 @@
+@import '../masters/_master-layout.css';
+
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.work-hub-empty-hint {
+  margin-block: 0.75rem;
+  color: var(--color-text-muted, #666);
+}
+
+.work-hub__submitting {
+  margin-bottom: 1rem;
+}
+
+.work-hub__error {
+  margin-bottom: 1rem;
+}
+
+.work-hub__retry {
+  margin-top: 0.75rem;
+}
+
+.work-hub__section-title {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.work-hub__farm-btn {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.work-hub__farm-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.work-hub__meta,
+.work-hub__cta {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.work-hub__cta {
+  color: var(--color-primary, #2f6f3e);
+  font-weight: 600;
+}
+
+.work-hub__warning {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+}

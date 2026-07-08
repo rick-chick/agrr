@@ -106,6 +106,13 @@ pub fn schedule_destroy(
                     return Err(rusqlite::Error::QueryReturnedNoRows);
                 }
             }
+            "WorkRecord" => {
+                let deleted =
+                    conn.execute("DELETE FROM work_records WHERE id = ?1", params![resource_id])?;
+                if deleted == 0 {
+                    return Err(rusqlite::Error::QueryReturnedNoRows);
+                }
+            }
             _ => {
                 return Err(rusqlite::Error::InvalidParameterName(
                     resource_type.into(),
@@ -170,6 +177,7 @@ fn resource_label(
         "Pesticide" => "SELECT name FROM pesticides WHERE id = ?1",
         "AgriculturalTask" => "SELECT name FROM agricultural_tasks WHERE id = ?1",
         "InteractionRule" => "SELECT rule_type || ' ' || source_group FROM interaction_rules WHERE id = ?1",
+        "WorkRecord" => "SELECT name FROM work_records WHERE id = ?1",
         _ => return Ok(format!("{resource_type} #{resource_id}")),
     };
     conn.query_row(sql, params![resource_id], |row| row.get(0))
@@ -195,6 +203,7 @@ fn build_snapshot(
         "InteractionRule" => {
             single_table_snapshot(conn, "InteractionRule", "interaction_rules", resource_id)
         }
+        "WorkRecord" => single_table_snapshot(conn, "WorkRecord", "work_records", resource_id),
         _ => Err(rusqlite::Error::InvalidParameterName(
             resource_type.into(),
         )),
@@ -453,10 +462,6 @@ fn delete_crop_graph(conn: &Connection, crop_id: i64) -> rusqlite::Result<()> {
     conn.execute("DELETE FROM crop_pests WHERE crop_id = ?1", params![crop_id])?;
     conn.execute(
         "DELETE FROM crop_task_schedule_blueprints WHERE crop_id = ?1",
-        params![crop_id],
-    )?;
-    conn.execute(
-        "DELETE FROM crop_task_templates WHERE crop_id = ?1",
         params![crop_id],
     )?;
     let deleted = conn.execute("DELETE FROM crops WHERE id = ?1", params![crop_id])?;

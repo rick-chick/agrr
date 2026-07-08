@@ -14,6 +14,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import Chart from 'chart.js/auto';
 import type { ChartConfiguration, ChartDataset, Plugin } from 'chart.js';
 import 'chartjs-adapter-date-fns';
@@ -29,7 +30,6 @@ import { LoadFieldClimateUseCase } from '../../usecase/plans/field-climate/load-
 import { LoadFieldClimateInputDto } from '../../usecase/plans/field-climate/load-field-climate.dtos';
 import { CultivationPlanContextType } from '../../domain/plans/cultivation-plan-context-type';
 import { PlanFieldClimatePresenter } from '../../adapters/plans/plan-field-climate.presenter';
-import { PLAN_FIELD_CLIMATE_PROVIDERS } from '../../usecase/plans/plan-field-climate.providers';
 
 const INITIAL_STATE: PlanFieldClimateViewState = {
   loading: false,
@@ -52,8 +52,7 @@ type StageTemperatureBand = {
 @Component({
   selector: 'app-plan-field-climate',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
-  providers: [...PLAN_FIELD_CLIMATE_PROVIDERS],
+  imports: [CommonModule, TranslateModule, RouterLink],
   template: `
     <section class="plan-field-climate">
       <header class="plan-field-climate__header">
@@ -77,6 +76,15 @@ type StageTemperatureBand = {
             }}</span>
             <span>{{ headerPeriod }}</span>
           </div>
+          @if (planId && fieldCultivationId) {
+            <a
+              class="plan-field-climate__task-schedule-link"
+              [routerLink]="['/plans', planId, 'task_schedule']"
+              [queryParams]="{ field_cultivation_id: fieldCultivationId }"
+            >
+              {{ 'plans.field_climate.open_task_schedule' | translate }}
+            </a>
+          }
         </div>
         <button
           type="button"
@@ -196,6 +204,7 @@ export class PlanFieldClimateComponent
     OnDestroy
 {
   @Input() fieldCultivationId: number | null = null;
+  @Input() planId: number | null = null;
   @Input() planType: CultivationPlanContextType = 'private';
   @Input() displayStartDate: string | null = null;
   @Input() displayEndDate: string | null = null;

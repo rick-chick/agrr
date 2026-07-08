@@ -1,12 +1,11 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::TaskScheduleItemCreateInteractor`
 
-use std::collections::BTreeMap;
-
 use crate::cultivation_plan::gateways::{CultivationPlanGateway, TaskScheduleItemMutationGateway};
 use crate::cultivation_plan::interactors::task_schedule_private_plan_access;
+use crate::cultivation_plan::mappers::{attrs_to_params, create_attrs_to_attr_map};
 use crate::cultivation_plan::policies::task_schedule_item_create_policy;
 use crate::cultivation_plan::ports::TaskScheduleItemMutationOutputPort;
-use crate::shared::attr::{attr_map_from_pairs, AttrMap, AttrValue};
+use crate::shared::attr::AttrMap;
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 use crate::shared::validation::{from_errors, ErrorsInput};
 
@@ -30,36 +29,6 @@ where
         }
     }
 
-    fn attrs_to_params(attrs: &AttrMap) -> BTreeMap<String, Option<String>> {
-        attrs
-            .iter()
-            .map(|(k, v)| {
-                let val = match v {
-                    AttrValue::Str(s) => Some(s.clone()),
-                    AttrValue::Int(i) => Some(i.to_string()),
-                    AttrValue::Bool(b) => Some(b.to_string()),
-                    AttrValue::Null => None,
-                };
-                (k.clone(), val)
-            })
-            .collect()
-    }
-
-    fn create_attrs_to_attr_map(
-        attrs: &task_schedule_item_create_policy::TaskScheduleItemCreateAttributes,
-    ) -> AttrMap {
-        let mut pairs = Vec::new();
-        if let Some(id) = attrs.field_cultivation_id {
-            pairs.push(("field_cultivation_id".to_string(), AttrValue::Int(id)));
-        }
-        pairs.push(("task_type".to_string(), AttrValue::Str(attrs.task_type.clone())));
-        pairs.push(("name".to_string(), AttrValue::Str(attrs.name.clone())));
-        if let Some(d) = &attrs.scheduled_date {
-            pairs.push(("scheduled_date".to_string(), AttrValue::Str(d.clone())));
-        }
-        attr_map_from_pairs(pairs)
-    }
-
     pub fn call(
         &mut self,
         user_id: i64,
@@ -71,7 +40,7 @@ where
             return Ok(());
         }
 
-        let params = Self::attrs_to_params(&attributes);
+        let params = attrs_to_params(&attributes);
         let field_cultivation_id = params
             .get("field_cultivation_id")
             .and_then(|v| v.as_deref())
@@ -82,13 +51,13 @@ where
             .gateway
             .find_field_cultivation_for_create(plan_id, field_cultivation_id)?;
 
-        let template_id = params
-            .get("crop_task_template_id")
+        let agricultural_task_id = params
+            .get("agricultural_task_id")
             .and_then(|v| v.as_deref())
             .and_then(|s| s.parse().ok());
-        let template = self
+        let agricultural_task = self
             .gateway
-            .find_crop_task_template_for_mutation(template_id)?;
+            .find_agricultural_task_for_mutation(agricultural_task_id)?;
 
         let submitted_crop_id = params
             .get("cultivation_plan_crop_id")
@@ -99,14 +68,16 @@ where
             Some(field_cultivation.cultivation_plan_crop_id),
             submitted_crop_id,
         )?;
-        task_schedule_item_create_policy::validate_template(
-            Some(field_cultivation.crop_id),
-            template.as_ref(),
+        task_schedule_item_create_policy::validate_agricultural_task(
+            agricultural_task_id,
+            agricultural_task.as_ref(),
         )?;
 
-        let create_attrs =
-            task_schedule_item_create_policy::build_create_attributes(&params, template.as_ref())?;
-        let gateway_attrs = Self::create_attrs_to_attr_map(&create_attrs);
+        let create_attrs = task_schedule_item_create_policy::build_create_attributes(
+            &params,
+            agricultural_task.as_ref(),
+        )?;
+        let gateway_attrs = create_attrs_to_attr_map(&create_attrs);
         let payload = self.gateway.create(plan_id, gateway_attrs)?;
         self.output_port.on_created(payload);
         Ok(())

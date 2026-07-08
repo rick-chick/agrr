@@ -18,7 +18,7 @@ export const LANDING_DEMO_I18N_KEYS = {
   gddStagePreHarvest: 'home.index.demo.fixture.gdd_stage_pre_harvest'
 } as const;
 
-/** Fixture label keys for DemoGanttPlanStore; kept in sync with landing-demo-locale.catalog.spec. */
+/** Fixture label keys for DemoGanttPlanMemoryGateway; kept in sync with landing-demo-locale.catalog.spec. */
 export const LANDING_DEMO_CATALOG_KEYS = Object.values(LANDING_DEMO_I18N_KEYS);
 
 export type LandingDemoLabels = {

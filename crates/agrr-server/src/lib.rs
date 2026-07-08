@@ -34,6 +34,7 @@ pub mod masters_auth;
 pub mod masters_agricultural_tasks;
 pub mod masters_crop_requirements;
 pub mod masters_crop_agricultural_tasks;
+pub mod masters_crop_task_schedule_blueprints;
 pub mod masters_crop_context;
 pub mod masters_crop_pests;
 pub mod masters_crop_pesticides;
@@ -62,9 +63,11 @@ pub mod scheduler_weather_update;
 pub mod runtime_env;
 pub mod session_auth;
 pub mod state;
+pub mod task_schedule_generation;
 pub mod task_schedule_timeline_json;
 pub mod task_schedules;
 pub mod work_records;
+pub mod work_hub;
 pub mod weather_prediction_anchors;
 pub mod workbench_payload;
 
@@ -111,6 +114,7 @@ pub async fn run_http_server() {
         .merge(plans::routes())
         .merge(task_schedules::routes())
         .merge(work_records::routes())
+        .merge(work_hub::routes())
         .merge(cultivation_plans::routes())
         .merge(cultivation_plans_mutations::mutation_routes())
         .merge(field_cultivations::routes())
@@ -127,6 +131,7 @@ pub async fn run_http_server() {
         .merge(masters_crop_stages::routes())
         .merge(masters_crop_pests::routes())
         .merge(masters_crop_agricultural_tasks::routes())
+        .merge(masters_crop_task_schedule_blueprints::routes())
         .merge(masters_crop_pesticides::routes())
         .merge(masters_crop_requirements::routes())
         .merge(masters_pests::routes())

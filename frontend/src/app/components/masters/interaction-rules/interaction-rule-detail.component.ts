@@ -9,11 +9,17 @@ import {
   InteractionRuleDetailPresenter,
   INTERACTION_RULE_DETAIL_PROVIDERS
 } from '../../../usecase/interaction-rules/interaction-rule-detail.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: InteractionRuleDetailViewState = {
   loading: true,
   error: null,
-  rule: null
+  rule: null,
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -82,6 +88,8 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
   private readonly useCase = inject(LoadInteractionRuleDetailUseCase);
   private readonly deleteUseCase = inject(DeleteInteractionRuleUseCase);
   private readonly presenter = inject(InteractionRuleDetailPresenter);
+  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: InteractionRuleDetailViewState = initialControl;
@@ -89,7 +97,11 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
     return this._control;
   }
   set control(value: InteractionRuleDetailViewState) {
-    this._control = value;
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 

@@ -1,3 +1,12 @@
+import type { TaskScheduleSyncState } from '../../domain/plans/task-schedule-sync-state';
+
+export type { TaskScheduleSyncState };
+
+export interface PlanRemediationCrop {
+  crop_id: number;
+  crop_name: string;
+}
+
 export interface PlanInfo {
   id: number;
   name: string;
@@ -6,13 +15,18 @@ export interface PlanInfo {
   planning_end_date: string;
   timeline_generated_at: string;
   timeline_generated_at_display: string;
+  task_schedule_sync_state: TaskScheduleSyncState | string;
+  task_schedule_sync_error: string | null;
+  task_schedule_sync_error_crop_id: number | null;
+  remediation_crops?: PlanRemediationCrop[];
 }
 
 export interface WeekInfo {
   start_date: string;
   end_date: string;
   label: string;
-  days: DayInfo[];
+  /** Present in API JSON; week grid UI not wired in Angular yet. */
+  days?: DayInfo[];
 }
 
 export interface DayInfo {
@@ -65,9 +79,10 @@ export interface TaskDetails {
 
 export interface TaskBadge {
   type: string;
-  priority_level: string;
-  status: string;
-  category: string;
+  /** Legacy API fields; timeline uses type + item.status only. */
+  priority_level?: string;
+  status?: string;
+  category?: string;
 }
 
 export interface TaskScheduleItemWorkRecordSummary {
@@ -82,10 +97,11 @@ export interface TaskScheduleItem {
   task_type: string;
   category: string;
   scheduled_date: string | null;
-  stage_name: string;
-  stage_order: number;
-  gdd_trigger: string;
-  gdd_tolerance: string;
+  /** Legacy API duplicates; UI reads details.stage / details.gdd. */
+  stage_name?: string;
+  stage_order?: number;
+  gdd_trigger?: string;
+  gdd_tolerance?: string;
   priority: number;
   source: string;
   weather_dependency: string;
@@ -108,12 +124,30 @@ export interface FieldSchedule {
   area_sqm: number;
   field_cultivation_id: number;
   crop_id: number;
-  task_options: TaskOption[];
+  cultivation_start_date?: string | null;
+  cultivation_end_date?: string | null;
+  /** Present in API JSON; not used by task-schedule timeline yet. */
+  task_options?: TaskOption[];
   schedules: {
     general: TaskScheduleItem[];
     fertilizer: TaskScheduleItem[];
     unscheduled: TaskScheduleItem[];
   };
+}
+
+export interface TaskScheduleMinimapWeek {
+  start_date: string;
+  label: string;
+  /** Present in API JSON; week-nav UI uses start_date/label only. */
+  task_count?: number;
+  density?: string;
+  month_key?: string;
+}
+
+export interface TaskScheduleMinimap {
+  start_date: string;
+  end_date: string;
+  weeks: TaskScheduleMinimapWeek[];
 }
 
 export interface TaskScheduleResponse {
@@ -122,5 +156,5 @@ export interface TaskScheduleResponse {
   milestones: any[];
   fields: FieldSchedule[];
   labels: any;
-  minimap: any;
+  minimap: TaskScheduleMinimap;
 }

@@ -63,12 +63,13 @@ describe('FarmEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
         latitude: 35.0,
         longitude: 135.0
-      }
+      },
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -79,12 +80,13 @@ describe('FarmEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
         latitude: 35.0,
         longitude: 135.0
-      }
+      },
     };
     component.control = state;
     expect(cdr.markForCheck).toHaveBeenCalled();
@@ -116,12 +118,13 @@ describe('FarmEditComponent', () => {
       loading: false,
       saving: false,
       error: null,
+      pendingErrorFlash: null,
       formData: {
         name: 'Test Farm',
         region: 'Test Region',
         latitude: 35.0,
         longitude: 135.0
-      }
+      },
     };
     component.control = state;
     expect(component.control.formData.region).toBe('jp');

@@ -13,10 +13,17 @@ export interface LoadWorkDayListInputDto {
   includeSkipped?: boolean;
 }
 
+export interface RecentAdHocRecordDto {
+  name: string;
+  actualDate: string;
+}
+
 export interface LoadWorkDayListDataDto {
   plan: PlanInfo;
   fields: FieldSchedule[];
   overdue: WorkDayListRowDto[];
   today: WorkDayListRowDto[];
   upcoming: WorkDayListRowDto[];
+  recentAdHocRecord: RecentAdHocRecordDto | null;
+  nextScheduled: WorkDayListRowDto | null;
 }

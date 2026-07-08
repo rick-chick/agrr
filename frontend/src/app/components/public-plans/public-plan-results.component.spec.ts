@@ -78,7 +78,10 @@ describe('PublicPlanResultsComponent', () => {
     const state: PublicPlanResultsViewState = {
       loading: false,
       error: null,
-      data: null
+      data: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
     };
     component.control = state;
     expect(component.control).toEqual(state);

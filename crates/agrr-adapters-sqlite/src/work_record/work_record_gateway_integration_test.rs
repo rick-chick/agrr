@@ -6,7 +6,8 @@ use super::work_record_integration_fixture::{seed_work_record_crud, work_record_
 use agrr_domain::shared::exceptions::RecordNotFoundError;
 use agrr_domain::work_record::dtos::{WorkRecordListInput, WorkRecordUpdateInput};
 use agrr_domain::work_record::gateways::{
-    TaskScheduleItemLookupGateway, WorkRecordCreatePersistAttrs, WorkRecordGateway,
+    TaskScheduleItemLookupGateway, WorkRecordCreatePersistAttrs, WorkRecordDestroyGatewayOutcome,
+    WorkRecordGateway,
 };
 use rust_decimal::Decimal;
 use std::str::FromStr;
@@ -88,9 +89,16 @@ fn work_record_gateway_crud_roundtrip() {
     assert_eq!(Some("修正メモ".into()), updated.notes);
     assert_eq!(Some(60), updated.time_spent_minutes);
 
-    gateway
-        .destroy(seed.plan_id, created.id)
+    let destroy_outcome = gateway
+        .destroy(seed.plan_id, created.id, 1, "toast")
         .expect("destroy");
+    let undo = match destroy_outcome {
+        WorkRecordDestroyGatewayOutcome::Success { undo } => undo,
+        WorkRecordDestroyGatewayOutcome::Failure(error) => {
+            panic!("expected destroy success, got failure: {}", error.message)
+        }
+    };
+    assert!(undo.get("undo_token").and_then(|v| v.as_str()).is_some());
 
     let err = gateway
         .find_for_plan(seed.plan_id, created.id)

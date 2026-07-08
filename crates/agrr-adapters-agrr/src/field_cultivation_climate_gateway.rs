@@ -5,7 +5,6 @@ use agrr_domain::field_cultivation::gateways::{
     FieldCultivationClimateProgressGateway, FieldCultivationPredictionGateway,
 };
 use serde_json::Value;
-use tempfile::NamedTempFile;
 use time::Date;
 
 use crate::agrr_daemon_debug_dump::{copy_temp_file_to_debug, write_json_value_to_debug};
@@ -14,7 +13,7 @@ use crate::daemon_response::{
     ensure_daemon_command_success, parse_daemon_json_payload, read_daemon_output_json_file,
 };
 use crate::daemon_temp_file::write_temp_json_path;
-use crate::progress_daemon_normalize::{empty_progress_result, normalize_progress_result};
+use crate::progress_daemon_normalize::normalize_progress_result;
 
 pub struct FieldCultivationClimateAgrrGateway {
     client: AgrrDaemonClient,
@@ -27,15 +26,37 @@ impl FieldCultivationClimateAgrrGateway {
         }
     }
 
-    fn write_temp_json(data: &Value, prefix: &str) -> Option<NamedTempFile> {
-        let file = NamedTempFile::with_prefix(prefix).ok()?;
-        std::io::Write::write_all(
-            &mut file.as_file(),
-            serde_json::to_string(data).ok()?.as_bytes(),
-        )
-        .ok()?;
-        file.as_file().sync_all().ok()?;
-        Some(file)
+    pub fn daemon_running(&self) -> bool {
+        self.client.daemon_running()
+    }
+
+    /// Task schedule generation uses this to distinguish daemon failures from legitimately empty progress.
+    pub fn calculate_progress_result(
+        &self,
+        crop_requirement: &Value,
+        start_date: Date,
+        weather_payload: &Value,
+    ) -> Result<Value, AgrrDaemonError> {
+        let crop_path = write_temp_json_path(crop_requirement, "progress_crop")
+            .map_err(AgrrDaemonError::Io)?;
+        let weather_path = write_temp_json_path(weather_payload, "progress_weather")
+            .map_err(AgrrDaemonError::Io)?;
+        copy_temp_file_to_debug(&crop_path, "progress_crop");
+        copy_temp_file_to_debug(&weather_path, "progress_weather");
+        let args = vec![
+            "progress".into(),
+            "--crop-file".into(),
+            crop_path.to_string_lossy().into_owned(),
+            "--start-date".into(),
+            start_date.to_string(),
+            "--weather-file".into(),
+            weather_path.to_string_lossy().into_owned(),
+            "--format".into(),
+            "json".into(),
+        ];
+        let wrapper = self.client.execute_daemon_args(&args)?;
+        let payload = parse_daemon_json_payload(&wrapper)?;
+        Ok(normalize_progress_result(&payload))
     }
 }
 
@@ -45,35 +66,9 @@ impl FieldCultivationClimateProgressGateway for FieldCultivationClimateAgrrGatew
         crop_requirement: &Value,
         start_date: Date,
         weather_payload: &Value,
-    ) -> Value {
-        let Some(crop_file) = Self::write_temp_json(crop_requirement, "progress_crop") else {
-            return empty_progress_result();
-        };
-        let Some(weather_file) = Self::write_temp_json(weather_payload, "progress_weather") else {
-            return empty_progress_result();
-        };
-        copy_temp_file_to_debug(crop_file.path(), "progress_crop");
-        copy_temp_file_to_debug(weather_file.path(), "progress_weather");
-        // Rails `DaemonClient#progress`: no leading dummy_path (BaseGatewayV2 strips it).
-        let args = vec![
-            "progress".into(),
-            "--crop-file".into(),
-            crop_file.path().to_string_lossy().into_owned(),
-            "--start-date".into(),
-            start_date.to_string(),
-            "--weather-file".into(),
-            weather_file.path().to_string_lossy().into_owned(),
-            "--format".into(),
-            "json".into(),
-        ];
-        match self.client.execute_daemon_args(&args) {
-            Ok(wrapper) => match parse_daemon_json_payload(&wrapper) {
-                Ok(payload) => normalize_progress_result(&payload),
-                Err(_) => empty_progress_result(),
-            },
-            Err(AgrrDaemonError::NotRunning(_)) => empty_progress_result(),
-            Err(_) => empty_progress_result(),
-        }
+    ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+        self.calculate_progress_result(crop_requirement, start_date, weather_payload)
+            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)
     }
 }
 

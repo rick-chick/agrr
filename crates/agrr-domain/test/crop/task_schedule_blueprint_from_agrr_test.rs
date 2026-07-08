@@ -19,10 +19,12 @@ use serde_json::json;
     // Ruby: test "general_row uses field_work task type"
     #[test]
     fn general_row_uses_field_work_task_type() {
-        let row = general_row(5, &json!({"task_id":"9","stage_order":1,"gdd_trigger":0}), 9, None, None, None);
+        let row = general_row(5, &json!({"task_id":"9","stage_order":1,"gdd_trigger":0}), 9, 100, None, None, None);
         assert_eq!(row.task_type, schedule_item_types::FIELD_WORK);
         assert_eq!(row.source, "agrr_schedule");
         assert_eq!(row.crop_id, 5);
+        assert_eq!(row.blueprint_id, Some(9));
+        assert_eq!(row.agricultural_task_id, 100);
     }
 
     // Ruby: test "integer_value and decimal_value coerce API-like strings"

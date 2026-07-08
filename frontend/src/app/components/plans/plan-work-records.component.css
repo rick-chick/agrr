@@ -1,3 +1,6 @@
+@import '../masters/_master-layout.css';
+@import './plan-work-shared.css';
+
 .plan-work-records__month {
   margin: 1.5rem 0;
 }
@@ -64,9 +67,4 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.plan-work-records__empty {
-  color: var(--color-text-secondary, #666);
-  margin: 2rem 0;
 }

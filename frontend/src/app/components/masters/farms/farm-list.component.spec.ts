@@ -63,7 +63,9 @@ describe('FarmListComponent', () => {
     const state: FarmListViewState = {
       loading: false,
       error: null,
-      farms: []
+      farms: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -73,7 +75,9 @@ describe('FarmListComponent', () => {
     const state: FarmListViewState = {
       loading: false,
       error: null,
-      farms: []
+      farms: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
     component.control = state;
     expect(cdr.markForCheck).toHaveBeenCalled();
@@ -108,7 +112,9 @@ describe('FarmListComponent', () => {
     component.control = {
       loading: false,
       error: null,
-      farms
+      farms,
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
 
     fixture.detectChanges();

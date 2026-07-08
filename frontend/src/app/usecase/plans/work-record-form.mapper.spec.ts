@@ -42,6 +42,18 @@ describe('work-record-form.mapper', () => {
     expect(body.task_schedule_item_id).toBeUndefined();
   });
 
+  it('maps ad hoc create with agricultural_task_id from chip selection', () => {
+    const body = mapFormToCreateRequest({
+      ...baseForm,
+      task_schedule_item_id: null,
+      name: '除草',
+      agricultural_task_id: 5
+    });
+
+    expect(body.agricultural_task_id).toBe(5);
+    expect(body.name).toBe('除草');
+  });
+
   it('maps update request from form', () => {
     const body = mapFormToUpdateRequest(baseForm);
     expect(body).toEqual({

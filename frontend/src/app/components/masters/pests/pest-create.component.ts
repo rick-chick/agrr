@@ -19,10 +19,15 @@ const initialFormData: PestCreateFormData = {
   region: null
 };
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: PestCreateViewState = {
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -82,6 +87,7 @@ export class PestCreateComponent implements PestCreateView, OnInit {
   private readonly router = inject(Router);
   private readonly useCase = inject(CreatePestUseCase);
   private readonly presenter = inject(PestCreatePresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PestCreateViewState = initialControl;
@@ -89,7 +95,10 @@ export class PestCreateComponent implements PestCreateView, OnInit {
     return this._control;
   }
   set control(value: PestCreateViewState) {
-    this._control = this.applyUserRegion(value);
+    const next = applyPendingErrorFlashViewEffects(this.applyUserRegion(value), {
+      flash: this.flashMessage
+    });
+    this._control = next;
     this.cdr.markForCheck();
   }
 

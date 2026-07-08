@@ -3,6 +3,7 @@
 use rust_decimal::Decimal;
 use time::{Date, OffsetDateTime};
 
+use crate::shared::dtos::Error;
 use crate::work_record::dtos::{WorkRecordListInput, WorkRecordRead, WorkRecordUpdateInput};
 
 /// Attributes persisted on create (built by interactor after prefill).
@@ -53,5 +54,13 @@ pub trait WorkRecordGateway: Send + Sync {
         &self,
         plan_id: i64,
         record_id: i64,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+        actor_id: i64,
+        toast_message: &str,
+    ) -> Result<WorkRecordDestroyGatewayOutcome, Box<dyn std::error::Error + Send + Sync>>;
+}
+
+#[derive(Debug, Clone)]
+pub enum WorkRecordDestroyGatewayOutcome {
+    Success { undo: serde_json::Value },
+    Failure(Error),
 }

@@ -1,17 +1,16 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
 import { FarmListView } from '../../components/masters/farms/farm-list.view';
 import { LoadFarmListOutputPort } from '../../usecase/farms/load-farm-list.output-port';
 import { FarmListDataDto } from '../../usecase/farms/load-farm-list.dtos';
 import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-port';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
-import { FlashMessageService } from '../../services/flash-message.service';
+import { PendingUndoToastRequest } from '../../core/view-effects/pending-undo-toast-view.effects';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutputPort {
-  private readonly undoToast = inject(UndoToastService);
-  private readonly flashMessage = inject(FlashMessageService);
   private view: FarmListView | null = null;
 
   setView(view: FarmListView): void {
@@ -23,35 +22,33 @@ export class FarmListPresenter implements LoadFarmListOutputPort, DeleteFarmOutp
     this.view.control = {
       loading: false,
       error: null,
-      farms: dto.farms
+      farms: dto.farms,
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 
   onSuccess(dto: DeleteFarmSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const prev = this.view.control;
-    this.view.control = {
+    const nextControl = {
       ...prev,
-      farms: prev.farms.filter((f) => f.id !== dto.deletedFarmId)
+      farms: prev.farms.filter((f) => f.id !== dto.deletedFarmId),
+      pendingUndoToast: null as PendingUndoToastRequest | null
     };
     if (dto.undo && dto.refresh) {
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        dto.refresh,
-        dto.undo.resource
-      );
+      nextControl.pendingUndoToast = pendingUndoToastFromDeletion(dto.undo, dto.refresh);
     }
+    this.view.control = nextControl;
   }
 }

@@ -10,7 +10,6 @@ pub(crate) mod private_plan_detail_mapper;
 pub(crate) mod plan_allocation_adjust_agrr_payload_mapper;
 pub(crate) mod plan_allocation_adjust_read_snapshot_parts;
 pub(crate) mod plan_save_agricultural_task_attributes_mapper;
-pub(crate) mod plan_save_crop_task_template_attributes_mapper;
 pub(crate) mod plan_save_fertilize_attributes_mapper;
 pub(crate) mod plan_save_fertilize_unique_name;
 pub(crate) mod plan_save_field_create_attributes_mapper;
@@ -18,6 +17,7 @@ pub(crate) mod plan_save_interaction_rule_attributes_mapper;
 pub(crate) mod plan_save_pest_attributes_mapper;
 pub(crate) mod plan_save_pesticide_attributes_mapper;
 pub(crate) mod public_plan_save_session_data_mapper;
+pub(crate) mod task_schedule_item_create_attributes_mapper;
 pub mod task_schedule_timeline_mapper;
 
 pub use agrr_adjust_allocation_row_mapper::build_current_allocation;
@@ -37,7 +37,6 @@ pub use plan_allocation_adjust_agrr_payload_mapper::{
 };
 pub use plan_allocation_adjust_read_snapshot_parts::PlanAllocationAdjustReadSnapshotParts;
 pub use plan_save_agricultural_task_attributes_mapper::attributes_for_create as agricultural_task_attributes_for_create;
-pub use plan_save_crop_task_template_attributes_mapper::attributes_for_create as crop_task_template_attributes_for_create;
 pub use plan_save_fertilize_attributes_mapper::attributes_for_create as fertilize_attributes_for_create;
 pub use plan_save_fertilize_unique_name::resolve_unique_name as resolve_fertilize_unique_name;
 pub use plan_save_pest_attributes_mapper::attributes_for_create as pest_attributes_for_create;
@@ -47,4 +46,7 @@ pub use plan_save_field_create_attributes_mapper::{
 pub use plan_save_interaction_rule_attributes_mapper::attributes_for_create as interaction_rule_attributes_for_create;
 pub use plan_save_pesticide_attributes_mapper::PlanSavePesticideAttributesMapper;
 pub use public_plan_save_session_data_mapper::from_snapshots as session_data_from_snapshots;
+pub use task_schedule_item_create_attributes_mapper::{
+    attrs_to_params, create_attrs_to_attr_map,
+};
 pub use task_schedule_timeline_mapper::TaskScheduleTimelineMapper;

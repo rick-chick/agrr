@@ -10,18 +10,21 @@ use agrr_adapters_sqlite::{
     CultivationPlanPrivateSnapshotReadSqliteGateway, CultivationPlanSqliteGateway,
     TaskScheduleItemMutationSqliteGateway, UserLookupSqliteGateway,
 };
+use agrr_domain::agricultural_task::constants::task_schedule_sync_states;
 use agrr_domain::cultivation_plan::dtos::TaskScheduleTimeline;
+use agrr_domain::cultivation_plan::dtos::RegenerateTaskScheduleInput;
 use agrr_domain::cultivation_plan::interactors::{
-    TaskScheduleItemSkipInteractor, TaskScheduleTimelineInteractor,
+    RegenerateTaskScheduleInteractor, TaskScheduleItemSkipInteractor, TaskScheduleTimelineInteractor,
 };
 use agrr_domain::cultivation_plan::ports::{
-    TaskScheduleItemMutationOutputPort, TaskScheduleTimelineOutputPort,
+    RegenerateTaskScheduleOutputPort, TaskScheduleItemMutationOutputPort,
+    TaskScheduleRegenEnqueuePort, TaskScheduleTimelineOutputPort,
 };
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::RecordNotFoundError;
 use axum::{
     extract::{Path, Query, State},
-    routing::{get, patch},
+    routing::{get, patch, post},
     Json, Router,
 };
 use axum_extra::extract::cookie::CookieJar;
@@ -43,6 +46,10 @@ pub fn routes() -> Router<AppState> {
             "/api/v1/plans/{plan_id}/task_schedule/items/{item_id}/unskip",
             patch(unskip_task_schedule_item),
         )
+        .route(
+            "/api/v1/plans/{id}/task_schedule/regenerate",
+            post(regenerate_task_schedule),
+        )
 }
 
 #[derive(Deserialize, Default)]
@@ -50,6 +57,7 @@ struct TimelineParams {
     week_start: Option<String>,
     field_cultivation_id: Option<i64>,
     category: Option<String>,
+    scope: Option<String>,
 }
 
 struct TimelinePresenter {
@@ -123,6 +131,7 @@ async fn show_task_schedule(
                 week_start: params.week_start,
                 field_cultivation_id: params.field_cultivation_id,
                 category: params.category,
+                scope: params.scope,
             };
             Ok(Json(to_json_body(timeline, query)))
         }
@@ -245,5 +254,86 @@ async fn run_skip_mutation(
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({"errors": ["no response"]})),
         )),
+    }
+}
+
+async fn regenerate_task_schedule(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Path(plan_id): Path<i64>,
+) -> Result<Json<Value>, (axum::http::StatusCode, Json<Value>)> {
+    let user_id = user_id_from_session(&state, &jar).map_err(|status| {
+        (
+            status,
+            Json(json!({"errors": ["unauthorized"]})),
+        )
+    })?;
+
+    let pool = state.sqlite.clone();
+    let plan_gateway = CultivationPlanSqliteGateway::new(pool);
+    let enqueue = TaskScheduleRegenEnqueueAdapter {
+        state: state.clone(),
+    };
+    let mut presenter = RegeneratePresenter { body: None };
+
+    let mut interactor = RegenerateTaskScheduleInteractor::new(
+        &mut presenter,
+        &plan_gateway,
+        &enqueue,
+    );
+
+    if let Err(_) = interactor.call(RegenerateTaskScheduleInput { user_id, plan_id }) {
+        return Err((
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"errors": ["internal"]})),
+        ));
+    }
+
+    match presenter.body {
+        Some(RegenerateOutcome::Success(body)) => Ok(Json(body)),
+        Some(RegenerateOutcome::NotFound) => Err((
+            axum::http::StatusCode::NOT_FOUND,
+            Json(json!({"errors": ["plans.errors.not_found"]})),
+        )),
+        None => Err((
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"errors": ["no response"]})),
+        )),
+    }
+}
+
+struct TaskScheduleRegenEnqueueAdapter {
+    state: AppState,
+}
+
+impl TaskScheduleRegenEnqueuePort for TaskScheduleRegenEnqueueAdapter {
+    fn enqueue_immediate(
+        &self,
+        plan_id: i64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        crate::task_schedule_generation::enqueue_task_schedule_regen_immediate(&self.state, plan_id);
+        Ok(())
+    }
+}
+
+struct RegeneratePresenter {
+    body: Option<RegenerateOutcome>,
+}
+
+enum RegenerateOutcome {
+    Success(Value),
+    NotFound,
+}
+
+impl RegenerateTaskScheduleOutputPort for RegeneratePresenter {
+    fn on_success(&mut self) {
+        self.body = Some(RegenerateOutcome::Success(json!({
+            "success": true,
+            "task_schedule_sync_state": task_schedule_sync_states::GENERATING,
+        })));
+    }
+
+    fn on_not_found(&mut self) {
+        self.body = Some(RegenerateOutcome::NotFound);
     }
 }

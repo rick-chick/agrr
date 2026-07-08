@@ -27,7 +27,8 @@ const TOAST_KEYS_WITH_NAME = [
   'fields.undo.toast',
   'interaction_rules.undo.toast',
   'plans.undo.toast',
-  'plans.task_schedule_items.undo.toast'
+  'plans.task_schedule_items.undo.toast',
+  'plans.work_records.undo.toast'
 ] as const;
 
 /** Static undo UI labels (no name interpolation). */

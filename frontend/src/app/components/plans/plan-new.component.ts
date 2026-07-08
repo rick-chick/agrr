@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
@@ -9,13 +9,19 @@ import { PlanNewPresenter, PLAN_NEW_PROVIDERS } from '../../usecase/plans/plan-n
 import { CreatePrivatePlanPresenter } from '../../adapters/private-plan-create/create-private-plan.presenter';
 import { PlanNewView, PlanNewViewState } from './plan-new.view';
 
+import { FlashMessageService } from '../../services/flash-message.service';
+import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
+
 const initialControl: PlanNewViewState = {
   loading: true,
   submitting: false,
   error: null,
   farms: [],
   selectedFarmId: null,
-  noFieldsWarning: false
+  noFieldsWarning: false,
+  pendingErrorFlash: null,
+  pendingSuccessFlash: null,
+  pendingNavigation: null
 };
 
 @Component({
@@ -108,6 +114,8 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly createUseCase = inject(CreatePrivatePlanUseCase);
   private readonly farmsPresenter = inject(PlanNewPresenter);
   private readonly createPresenter = inject(CreatePrivatePlanPresenter);
+  private readonly flashMessage = inject(FlashMessageService);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
   planName = '';
@@ -117,7 +125,10 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     return this._control;
   }
   set control(value: PlanNewViewState) {
-    this._control = value;
+    this._control = applyPendingFlashAndNavigationViewEffects(value, {
+      flash: this.flashMessage,
+      router: this.router
+    });
     this.cdr.markForCheck();
   }
 

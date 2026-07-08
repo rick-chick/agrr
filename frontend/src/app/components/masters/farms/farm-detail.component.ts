@@ -7,6 +7,10 @@ import { Channel } from 'actioncable';
 import { FarmMapComponent } from './farm-map.component';
 import { FarmDetailView, FarmDetailViewState } from './farm-detail.view';
 import { Field } from '../../../domain/farms/field';
+import { AuthService } from '../../../services/auth.service';
+import { CurrentUser } from '../../../services/api.service';
+import { detectBrowserRegion } from '../../../core/browser-region';
+import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { LoadFarmDetailUseCase } from '../../../usecase/farms/load-farm-detail.usecase';
 import { SubscribeFarmWeatherUseCase } from '../../../usecase/farms/subscribe-farm-weather.usecase';
 import { DeleteFarmUseCase } from '../../../usecase/farms/delete-farm.usecase';
@@ -20,18 +24,24 @@ import {
   FARM_DETAIL_PROVIDERS,
   UpdateFieldPresenter
 } from '../../../usecase/farms/farm-detail.providers';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
   error: null,
   farm: null,
-  fields: []
+  fields: [],
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
   selector: 'app-farm-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FarmMapComponent, TranslateModule, FormsModule],
+  imports: [CommonModule, RouterLink, FarmMapComponent, TranslateModule, FormsModule, RegionSelectComponent],
   providers: [...FARM_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
@@ -45,7 +55,13 @@ const initialControl: FarmDetailViewState = {
           <dl class="detail-card__list">
             <div class="detail-row">
               <dt class="detail-row__term">{{ 'farms.show.location' | translate }}</dt>
-              <dd class="detail-row__value">{{ control.farm.region }}</dd>
+              <dd class="detail-row__value">
+                @if (control.farm.region) {
+                  {{ 'farms.form.region_' + control.farm.region | translate }}
+                } @else {
+                  {{ 'farms.form.region_blank' | translate }}
+                }
+              </dd>
             </div>
           </dl>
           <div class="detail-card__actions">
@@ -91,7 +107,7 @@ const initialControl: FarmDetailViewState = {
                 <li class="card-list__item">
                   <article class="item-card">
                     <div class="item-card__body">
-                      <span class="item-card__title">{{ field.name }} ({{ field.area ?? '-' }} ha)</span>
+                      <span class="item-card__title">{{ 'farms.show.field_list_item' | translate: { name: field.name, area: field.area ?? '-' } }}</span>
                     </div>
                     <div class="item-card__actions">
                       <button type="button" class="btn-secondary" (click)="openFieldForm(field)">{{ 'common.edit' | translate }}</button>
@@ -110,21 +126,24 @@ const initialControl: FarmDetailViewState = {
       <h3 class="form-dialog__title">{{ (editingField ? 'farms.show.field_form.edit_title' : 'farms.show.field_form.add_title') | translate }}</h3>
       <form class="form-card__form" (ngSubmit)="submitFieldForm()" #fieldForm="ngForm">
         <div class="form-card__field">
-          <label for="field-name">{{ 'farms.show.field_form.name_label' | translate }}</label>
+          <label class="form-card__field-label" for="field-name">{{ 'farms.show.field_form.name_label' | translate }}</label>
           <input id="field-name" type="text" name="name" [(ngModel)]="fieldFormModel.name" [placeholder]="'farms.show.field_form.name_placeholder' | translate" required>
         </div>
         <div class="form-card__field">
-          <label for="field-area">{{ 'farms.show.field_form.area_label' | translate }}</label>
-          <input id="field-area" type="number" name="area" step="0.01" [(ngModel)]="fieldFormModel.area" [placeholder]="'farms.show.field_form.area_placeholder' | translate">
+          <label class="form-card__field-label" for="field-area">{{ 'farms.show.field_form.area_label' | translate }}</label>
+          <input id="field-area" type="number" name="area" step="0.01" min="0" [(ngModel)]="fieldFormModel.area" [placeholder]="'farms.show.field_form.area_placeholder' | translate">
         </div>
         <div class="form-card__field">
-          <label for="field-cost">{{ 'farms.show.field_form.daily_fixed_cost_label' | translate }}</label>
-          <input id="field-cost" type="number" name="daily_fixed_cost" step="0.01" [(ngModel)]="fieldFormModel.daily_fixed_cost" [placeholder]="'farms.show.field_form.daily_fixed_cost_placeholder' | translate">
+          <label class="form-card__field-label" for="field-cost">{{ 'farms.show.field_form.daily_fixed_cost_label' | translate }}</label>
+          <input id="field-cost" type="number" name="daily_fixed_cost" step="0.01" min="0" [(ngModel)]="fieldFormModel.daily_fixed_cost" [placeholder]="'farms.show.field_form.daily_fixed_cost_placeholder' | translate">
         </div>
-        <div class="form-card__field">
-          <label for="field-region">{{ 'farms.show.field_form.region_label' | translate }}</label>
-          <input id="field-region" type="text" name="region" [(ngModel)]="fieldFormModel.region" [placeholder]="'farms.show.field_form.region_placeholder' | translate">
-        </div>
+        @if (isAdmin) {
+          <app-region-select
+            id="field-region"
+            [region]="fieldFormModel.region"
+            (regionChange)="fieldFormModel.region = $event"
+          ></app-region-select>
+        }
         <div class="form-card__actions">
           <button type="button" class="btn-secondary" (click)="closeFieldForm()">{{ 'common.cancel' | translate }}</button>
           <button type="submit" class="btn-primary" [disabled]="!fieldForm.valid">{{ (editingField ? 'farms.show.field_form.submit_update' : 'farms.show.field_form.submit_create') | translate }}</button>
@@ -135,6 +154,7 @@ const initialControl: FarmDetailViewState = {
   styleUrls: ['./farm-detail.component.css']
 })
 export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
+  readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadFarmDetailUseCase);
@@ -147,6 +167,8 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   private readonly createFieldPresenter = inject(CreateFieldPresenter);
   private readonly updateFieldPresenter = inject(UpdateFieldPresenter);
   private readonly deleteFieldPresenter = inject(DeleteFieldPresenter);
+  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private channel: Channel | null = null;
@@ -158,15 +180,23 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
     name: '',
     area: null as number | null,
     daily_fixed_cost: null as number | null,
-    region: ''
+    region: null as string | null
   };
+
+  get isAdmin(): boolean {
+    return this.auth.user()?.admin ?? false;
+  }
 
   private _control: FarmDetailViewState = initialControl;
   get control(): FarmDetailViewState {
     return this._control;
   }
   set control(value: FarmDetailViewState) {
-    this._control = value;
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 
@@ -225,14 +255,14 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
         name: field.name,
         area: field.area,
         daily_fixed_cost: field.daily_fixed_cost,
-        region: field.region ?? ''
+        region: field.region ?? null
       };
     } else {
       this.fieldFormModel = {
         name: '',
         area: null,
         daily_fixed_cost: null,
-        region: ''
+        region: this.control.farm?.region ?? null
       };
     }
     this.fieldFormDialogRef?.nativeElement?.showModal();
@@ -246,8 +276,10 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
   submitFieldForm(): void {
     if (!this.control.farm) return;
 
-    const { name, area, daily_fixed_cost, region } = this.fieldFormModel;
+    const { name, area, daily_fixed_cost } = this.fieldFormModel;
     if (!name?.trim()) return;
+
+    const region = this.resolveRegionForSubmit();
 
     if (this.editingField) {
       this.updateFieldUseCase.execute({
@@ -256,7 +288,7 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
           name: name.trim(),
           area,
           daily_fixed_cost,
-          region: region?.trim() || null
+          region
         }
       });
     } else {
@@ -266,11 +298,23 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
           name: name.trim(),
           area,
           daily_fixed_cost,
-          region: region?.trim() || null
+          region
         }
       });
     }
     this.closeFieldForm();
+  }
+
+  private resolveRegionForSubmit(): string | null {
+    if (this.isAdmin) {
+      return this.fieldFormModel.region || null;
+    }
+    return this.currentUserRegion ?? this.fieldFormModel.region;
+  }
+
+  private get currentUserRegion(): string | null {
+    const user = this.auth.user() as CurrentUser | null;
+    return user?.region ?? detectBrowserRegion();
   }
 
   trackByFieldId(_index: number, field: Field): number {

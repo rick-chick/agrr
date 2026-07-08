@@ -10,11 +10,17 @@ import {
   PESTICIDE_DETAIL_PROVIDERS
 } from '../../../usecase/pesticides/pesticide-detail.providers';
 import { Pesticide } from '../../../domain/pesticides/pesticide';
+import { UndoToastService } from '../../../services/undo-toast.service';
+import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 
 const initialControl: PesticideDetailViewState = {
   loading: true,
   error: null,
-  pesticide: null
+  pesticide: null,
+  pendingUndoToast: null,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -79,6 +85,8 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
   private readonly useCase = inject(LoadPesticideDetailUseCase);
   private readonly deleteUseCase = inject(DeletePesticideUseCase);
   private readonly presenter = inject(PesticideDetailPresenter);
+  private readonly undoToast = inject(UndoToastService);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: PesticideDetailViewState = initialControl;
@@ -86,7 +94,11 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
     return this._control;
   }
   set control(value: PesticideDetailViewState) {
-    this._control = value;
+    const next = applyPendingUndoToastViewEffects(
+      applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage }),
+      { toast: this.undoToast }
+    );
+    this._control = next;
     this.cdr.markForCheck();
   }
 

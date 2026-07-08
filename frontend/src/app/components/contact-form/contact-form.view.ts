@@ -11,6 +11,7 @@ export interface ContactFormViewState {
   loading: boolean;
   sending: boolean;
   message: ContactFormMessage | null;
+  pendingToastKey: string | null;
 }
 
 export interface ContactFormView {

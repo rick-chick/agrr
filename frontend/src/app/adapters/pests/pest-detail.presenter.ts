@@ -5,15 +5,13 @@ import { LoadPestDetailOutputPort } from '../../usecase/pests/load-pest-detail.o
 import { PestDetailDataDto } from '../../usecase/pests/load-pest-detail.dtos';
 import { DeletePestOutputPort } from '../../usecase/pests/delete-pest.output-port';
 import { DeletePestSuccessDto } from '../../usecase/pests/delete-pest.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePestOutputPort {
-  private readonly undoToast = inject(UndoToastService);
-  private readonly flashMessage = inject(FlashMessageService);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: PestDetailView | null = null;
 
@@ -26,30 +24,32 @@ export class PestDetailPresenter implements LoadPestDetailOutputPort, DeletePest
     this.view.control = {
       loading: false,
       error: null,
-      pest: dto.pest
+      pest: dto.pest,
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 
   onSuccess(dto: DeletePestSuccessDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
     if (dto.undo) {
       // 害虫削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.pests),
-        dto.undo.resource
-      );
+      this.view.control = {
+        ...this.view.control,
+        pendingUndoToast: pendingUndoToastFromDeletion(dto.undo, () =>
+          this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.pests)
+        )
+      };
     }
   }
 }

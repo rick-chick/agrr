@@ -7,17 +7,15 @@ import { SubscribeFarmWeatherOutputPort } from '../../usecase/farms/subscribe-fa
 import { FarmWeatherUpdateDto } from '../../usecase/farms/subscribe-farm-weather.dtos';
 import { DeleteFarmOutputPort } from '../../usecase/farms/delete-farm.output-port';
 import { DeleteFarmSuccessDto } from '../../usecase/farms/delete-farm.dtos';
-import { UndoToastService } from '../../services/undo-toast.service';
-import { FlashMessageService } from '../../services/flash-message.service';
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
+import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
+import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class FarmDetailPresenter
   implements LoadFarmDetailOutputPort, SubscribeFarmWeatherOutputPort, DeleteFarmOutputPort
 {
-  private readonly undoToast = inject(UndoToastService);
-  private readonly flashMessage = inject(FlashMessageService);
   private readonly listRefreshBus = inject(ListRefreshBus);
   private view: FarmDetailView | null = null;
 
@@ -31,17 +29,19 @@ export class FarmDetailPresenter
       loading: false,
       error: null,
       farm: dto.farm,
-      fields: dto.fields
+      fields: dto.fields,
+      pendingUndoToast: null,
+      pendingErrorFlash: null
     };
   }
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    this.flashMessage.show({ type: 'error', text: dto.message });
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null
+      error: null,
+      pendingErrorFlash: pendingErrorFlashFromError(dto)
     };
   }
 
@@ -65,19 +65,21 @@ export class FarmDetailPresenter
         weather_data_total_years:
           weatherDto.weather_data_total_years ?? prev.farm.weather_data_total_years
       }
+    ,
+      pendingErrorFlash: null
     };
   }
 
   onSuccess(dto: DeleteFarmSuccessDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
     if (dto.undo) {
       // 農場削除後は一覧へ遷移するため、Undo 時は一覧を再読込する（detail は破棄済みの可能性あり）
-      this.undoToast.showWithUndo(
-        dto.undo.toast_message,
-        dto.undo.undo_path,
-        dto.undo.undo_token,
-        () => this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.farms),
-        dto.undo.resource
-      );
+      this.view.control = {
+        ...this.view.control,
+        pendingUndoToast: pendingUndoToastFromDeletion(dto.undo, () =>
+          this.listRefreshBus.refresh(LIST_REFRESH_CHANNEL.farms)
+        )
+      };
     }
   }
 }

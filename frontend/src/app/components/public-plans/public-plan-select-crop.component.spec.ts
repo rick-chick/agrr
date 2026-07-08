@@ -70,6 +70,7 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
       error: null,
       crops: [],
       saving: false
+    
     };
 
     const markForCheckSpy = vi.spyOn(component.cdr, 'markForCheck');

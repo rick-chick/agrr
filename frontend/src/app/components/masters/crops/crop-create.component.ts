@@ -30,10 +30,15 @@ function parseGroups(s: string): string[] {
     .filter(Boolean);
 }
 
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+
 const initialControl: CropCreateViewState = {
   saving: false,
   error: null,
   formData: initialFormData
+,
+  pendingErrorFlash: null
 };
 
 @Component({
@@ -96,6 +101,7 @@ export class CropCreateComponent implements CropCreateView, OnInit {
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateCropUseCase);
   private readonly presenter = inject(CropCreatePresenter);
+  private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private _control: CropCreateViewState = initialControl;
@@ -103,7 +109,7 @@ export class CropCreateComponent implements CropCreateView, OnInit {
     return this._control;
   }
   set control(value: CropCreateViewState) {
-    this._control = value;
+    this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
   }
 
