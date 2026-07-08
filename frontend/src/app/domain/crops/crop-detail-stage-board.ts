@@ -1,8 +1,7 @@
 import {
   buildBlueprintDetailSummary,
   type BlueprintDetailSummary,
-  type BlueprintDetailSummaryGddGroup,
-  type BlueprintDetailSummaryItem
+  type BlueprintDetailSummaryGddGroup
 } from './blueprint-detail-summary';
 import type { CropStage } from './crop';
 import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';

@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
 import { FarmCreatePresenter } from './farm-create.presenter';
 import { FarmCreateView, FarmCreateViewState } from '../../components/masters/farms/farm-create.view';
 import { CreateFarmSuccessDto } from '../../usecase/farms/create-farm.dtos';

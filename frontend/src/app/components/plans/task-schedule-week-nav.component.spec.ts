@@ -4,10 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '../../../assets/i18n/en.json';
 import type { TaskScheduleMinimap, WeekInfo } from '../../models/plans/task-schedule';
-import {
-  TaskScheduleWeekNavComponent,
-  type TaskScheduleViewMode
-} from './task-schedule-week-nav.component';
+import { TaskScheduleWeekNavComponent } from './task-schedule-week-nav.component';
 
 const weekInfo: WeekInfo = {
   start_date: '2026-06-01',

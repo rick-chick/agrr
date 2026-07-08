@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
 import { FarmEditPresenter } from './farm-edit.presenter';
 import { FarmEditView, FarmEditViewState } from '../../components/masters/farms/farm-edit.view';
 import { LoadFarmForEditDataDto } from '../../usecase/farms/load-farm-for-edit.dtos';

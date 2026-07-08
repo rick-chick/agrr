@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { WorkHubPresenter } from './work-hub.presenter';
 import { WorkHubViewState } from '../../components/work-hub/work-hub.view';
 
