@@ -365,13 +365,45 @@ describe('withCropBlueprintDisplayState', () => {
       { id: 3, name: 'Harvesting', required_tools: [], is_reference: false }
     ];
 
-    it('excludes agricultural tasks already linked to blueprints', () => {
+    it('keeps all agricultural tasks selectable even when already linked to blueprints', () => {
       const next = withCropBlueprintDisplayState({
         ...baseControl,
         agriculturalTasks,
         blueprints: [blueprint({ id: 10, agricultural_task_id: 1, gdd_trigger: 50 })]
       });
-      expect(next.unassociatedAgriculturalTasks.map((task) => task.id)).toEqual([2, 3]);
+      expect(next.unassociatedAgriculturalTasks.map((task) => task.id)).toEqual([1, 2, 3]);
+    });
+
+    it('requires GDD when adding a second blueprint with the same stage and task', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        agriculturalTasks,
+        blueprints: [
+          blueprint({ id: 10, agricultural_task_id: 1, stage_order: 1, gdd_trigger: 50 })
+        ],
+        selectedBlueprintAgriculturalTaskId: 1,
+        selectedBlueprintStageOrder: 1,
+        blueprintCreateFormAttempted: true,
+        blueprintCreateGddTrigger: null
+      });
+      expect(next.blueprintCreateGddError).toBe('gdd_required');
+      expect(next.canCreateBlueprint).toBe(false);
+    });
+
+    it('allows creating a second blueprint when GDD distinguishes the slot', () => {
+      const next = withCropBlueprintDisplayState({
+        ...baseControl,
+        agriculturalTasks,
+        blueprints: [
+          blueprint({ id: 10, agricultural_task_id: 1, stage_order: 1, gdd_trigger: 50 })
+        ],
+        selectedBlueprintAgriculturalTaskId: 1,
+        selectedBlueprintStageOrder: 1,
+        blueprintCreateGddTrigger: 120,
+        blueprintCreateFormAttempted: true
+      });
+      expect(next.blueprintCreateGddError).toBeNull();
+      expect(next.canCreateBlueprint).toBe(true);
     });
 
     it('enriches blueprints with agricultural task names when blueprint name is missing', () => {

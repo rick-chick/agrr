@@ -29,6 +29,8 @@ export function gddValidationMessage(
         start: range?.cumulativeGddStart ?? 0,
         end: range?.cumulativeGddEnd ?? 0
       });
+    case 'gdd_required':
+      return instant('crops.show.blueprint_gdd_errors.gdd_required');
   }
 }
 

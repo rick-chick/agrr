@@ -117,6 +117,7 @@ where
             &existing,
             stage_order,
             task_id,
+            gdd_trigger,
         ) {
             self.output_port.on_failure(MastersCropTaskScheduleBlueprintCreateFailure::new(
                 MastersCropTaskScheduleBlueprintCreateFailureReason::Duplicate,

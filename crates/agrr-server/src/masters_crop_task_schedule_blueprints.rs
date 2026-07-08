@@ -381,7 +381,7 @@ fn create_failure_response(
         Duplicate => (
             StatusCode::UNPROCESSABLE_ENTITY,
             Json(json!({
-                "error": "A task plan for this stage and task already exists",
+                "error": "A task plan for this stage, task, and GDD timing already exists",
                 "error_code": "duplicate_blueprint"
             })),
         ),
@@ -427,6 +427,13 @@ fn blueprint_failure_response(
         BlueprintNotFound => (
             StatusCode::NOT_FOUND,
             Json(json!({"error": "Blueprint not found"})),
+        ),
+        Duplicate => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({
+                "error": "A task plan for this stage, task, and GDD timing already exists",
+                "error_code": "duplicate_blueprint"
+            })),
         ),
     }
 }

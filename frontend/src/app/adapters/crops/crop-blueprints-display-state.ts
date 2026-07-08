@@ -11,19 +11,39 @@ import { blueprintGddValidationError } from '../../domain/crops/blueprint-gdd-va
 import { CropTaskScheduleBlueprint } from '../../domain/crops/crop-task-schedule-blueprint';
 import { CropTaskScheduleBlueprintsViewState } from '../../components/masters/crops/crop-task-schedule-blueprints.view';
 import { cropStageNameForOrder } from '../../domain/crops/crop-stage-name';
+import type { CropStage } from '../../domain/crops/crop';
 import { cumulativeGddTimelineSegments } from '../../domain/crops/cumulative-gdd-timeline';
 import { stageCumulativeGddRange } from '../../domain/crops/stage-cumulative-gdd';
 
-function unassociatedAgriculturalTasks(
+function hasBlueprintWithSameStageAndTask(
   blueprints: CropTaskScheduleBlueprint[],
-  agriculturalTasks: AgriculturalTask[]
-): AgriculturalTask[] {
-  const usedIds = new Set(
-    blueprints
-      .map((b) => b.agricultural_task_id)
-      .filter((id): id is number => id != null)
+  stageOrder: number | null,
+  agriculturalTaskId: number | null
+): boolean {
+  if (stageOrder == null || agriculturalTaskId == null) {
+    return false;
+  }
+  return blueprints.some(
+    (blueprint) =>
+      blueprint.stage_order === stageOrder &&
+      blueprint.agricultural_task_id === agriculturalTaskId
   );
-  return agriculturalTasks.filter((task) => !usedIds.has(task.id));
+}
+
+function blueprintCreateGddValidationError(
+  blueprints: CropTaskScheduleBlueprint[],
+  stages: CropStage[],
+  stageOrder: number | null,
+  agriculturalTaskId: number | null,
+  gddTrigger: number | null
+): BlueprintGddValidationError | null {
+  if (
+    hasBlueprintWithSameStageAndTask(blueprints, stageOrder, agriculturalTaskId) &&
+    (gddTrigger == null || Number.isNaN(gddTrigger))
+  ) {
+    return 'gdd_required';
+  }
+  return blueprintGddValidationError(stages, stageOrder, gddTrigger);
 }
 
 function enrichBlueprintsWithAgriculturalTasks(
@@ -77,7 +97,10 @@ function visibleBlueprintGddErrors(
   return visible;
 }
 
-function canCreateBlueprint(control: CropTaskScheduleBlueprintsViewState): boolean {
+function canCreateBlueprint(
+  control: CropTaskScheduleBlueprintsViewState,
+  blueprints: CropTaskScheduleBlueprint[]
+): boolean {
   if (control.blueprintCreating || control.selectedBlueprintAgriculturalTaskId == null) {
     return false;
   }
@@ -88,15 +111,18 @@ function canCreateBlueprint(control: CropTaskScheduleBlueprintsViewState): boole
   if (!control.blueprintCreateFormAttempted) {
     return true;
   }
-  const createError = blueprintGddValidationError(
+  const createError = blueprintCreateGddValidationError(
+    blueprints,
     stages,
     control.selectedBlueprintStageOrder,
+    control.selectedBlueprintAgriculturalTaskId,
     control.blueprintCreateGddTrigger
   );
   return (
     createError !== 'out_of_range' &&
     createError !== 'stage_gdd_missing' &&
-    createError !== 'missing_stage'
+    createError !== 'missing_stage' &&
+    createError !== 'gdd_required'
   );
 }
 
@@ -131,9 +157,11 @@ export function withCropBlueprintDisplayState(
   );
   const blueprintCreateGddError: BlueprintGddValidationError | null =
     control.blueprintCreateFormAttempted
-      ? blueprintGddValidationError(
+      ? blueprintCreateGddValidationError(
+          blueprints,
           stages,
           control.selectedBlueprintStageOrder,
+          control.selectedBlueprintAgriculturalTaskId,
           control.blueprintCreateGddTrigger
         )
       : null;
@@ -152,13 +180,10 @@ export function withCropBlueprintDisplayState(
     blueprintLaneOutOfRangeCounts,
     blueprintCreateGddError,
     selectedStageGddRange,
-    unassociatedAgriculturalTasks: unassociatedAgriculturalTasks(
-      blueprints,
-      control.agriculturalTasks
-    ),
+    unassociatedAgriculturalTasks: control.agriculturalTasks,
     blueprintReadiness,
     canRegenerateBlueprints: blueprintReadiness.ready && !control.blueprintsRegenerating,
-    canCreateBlueprint: canCreateBlueprint(control),
+    canCreateBlueprint: canCreateBlueprint(control, blueprints),
     blueprintStageNameForCreate: blueprintStageNameForCreate(control),
     showBlueprintReadinessChecklist:
       !control.blueprintsLoading &&

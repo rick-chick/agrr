@@ -201,6 +201,7 @@ export class CropTaskScheduleBlueprintsPresenter
       blueprintCreating: false,
       error: null,
       blueprintRegenerateError: inlineBlueprintError ?? this.view.control.blueprintRegenerateError,
+      pendingSuccessFlash: null,
       pendingErrorFlash: inlineBlueprintError ? null : pendingErrorFlashFromError(dto)
     });
   }

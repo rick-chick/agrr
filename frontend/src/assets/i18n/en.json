@@ -1971,7 +1971,8 @@
       "blueprint_gdd_errors": {
         "missing_stage": "Select a growth stage.",
         "stage_gdd_missing": "Required GDD for this stage is not set.",
-        "out_of_range": "Enter a value between {{start}} and {{end}} ℃·day."
+        "out_of_range": "Enter a value between {{start}} and {{end}} ℃·day.",
+        "gdd_required": "This stage already has the same task. Enter a timing (℃·day) to distinguish the slot."
       },
       "origin_ai_label": "AI",
       "origin_manual_label": "Manual",
@@ -1993,7 +1994,6 @@
         "submit": "Add task plan",
         "ai_hint": "Use the button below only if you want AI suggestions as a starting point. It replaces all existing task plans.",
         "no_unassociated_tasks": "No tasks are available in the master list. Create a task first.",
-        "no_unassociated_tasks_all_used": "All master tasks are already in this task plan. Review the list above or create a new task.",
         "go_to_create": "Create a task"
       },
       "blueprint_readiness": {

@@ -8,9 +8,6 @@ pub fn to_agrr_format(
     blueprint: &MastersCropTaskScheduleBlueprint,
     agricultural_task: &AgriculturalTaskEntity,
 ) -> Value {
-    let task_id = blueprint
-        .agricultural_task_id
-        .unwrap_or_else(|| agricultural_task.id.unwrap_or(0));
     let name = blueprint
         .name
         .clone()
@@ -27,7 +24,8 @@ pub fn to_agrr_format(
         .or(agricultural_task.time_per_sqm);
 
     let mut obj = json!({
-        "task_id": task_id.to_string(),
+        "task_id": blueprint.id.to_string(),
+        "blueprint_id": blueprint.id.to_string(),
         "name": name,
         "description": description,
         "weather_dependency": weather_dependency,
@@ -72,9 +70,9 @@ mod crop_blueprint_agrr_mapper_test_inline {
     use std::str::FromStr;
 
     #[test]
-    fn to_agrr_format_uses_agricultural_task_id_as_task_id() {
+    fn to_agrr_format_uses_blueprint_id_as_task_id() {
         let blueprint = MastersCropTaskScheduleBlueprint {
-            id: 1,
+            id: 17,
             crop_id: 2,
             agricultural_task_id: Some(42),
             source_agricultural_task_id: None,
@@ -110,7 +108,8 @@ mod crop_blueprint_agrr_mapper_test_inline {
             updated_at: None,
         };
         let fmt = to_agrr_format(&blueprint, &agricultural_task);
-        assert_eq!(fmt["task_id"], "42");
+        assert_eq!(fmt["task_id"], "17");
+        assert_eq!(fmt["blueprint_id"], "17");
         assert_eq!(fmt["name"], "除草");
         assert_eq!(fmt["time_per_sqm"], 0.5_f64);
     }

@@ -419,15 +419,10 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
             </h3>
             @if (control.agriculturalTasksLoading) {
               <p class="master-loading">{{ 'common.loading' | translate }}</p>
-            } @else if (!control.unassociatedAgriculturalTasks.length) {
+            } @else if (!control.agriculturalTasks.length) {
               <div class="crop-blueprints__template-add-empty">
                 <p class="crop-blueprints__template-add-empty-message">
-                  {{
-                    (control.blueprints.length
-                      ? 'crops.show.manual_blueprint_add.no_unassociated_tasks_all_used'
-                      : 'crops.show.manual_blueprint_add.no_unassociated_tasks')
-                      | translate
-                  }}
+                  {{ 'crops.show.manual_blueprint_add.no_unassociated_tasks' | translate }}
                 </p>
                 <a routerLink="/agricultural_tasks/new" class="btn-secondary crop-blueprints__template-add-cta">
                   {{ 'crops.show.manual_blueprint_add.go_to_create' | translate }}

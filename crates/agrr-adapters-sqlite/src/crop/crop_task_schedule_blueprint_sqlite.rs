@@ -93,15 +93,78 @@ pub fn delete_all_blueprints_for_crop(
     })
 }
 
-fn delete_fertilize_blueprints_for_crop(
-    conn: &rusqlite::Connection,
+pub fn delete_fertilize_blueprints_for_crop(
+    pool: &SqlitePool,
     crop_id: i64,
-) -> rusqlite::Result<()> {
-    conn.execute(
-        "DELETE FROM crop_task_schedule_blueprints WHERE crop_id = ?1 AND task_type IN (?2, ?3)",
-        params![crop_id, BASAL_FERTILIZATION, TOPDRESS_FERTILIZATION],
-    )?;
-    Ok(())
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pool.with_write_box(|conn| {
+        conn.execute(
+            "DELETE FROM crop_task_schedule_blueprints WHERE crop_id = ?1 AND task_type IN (?2, ?3)",
+            params![crop_id, BASAL_FERTILIZATION, TOPDRESS_FERTILIZATION],
+        )?;
+        Ok(())
+    })
+}
+
+fn parse_optional_f64(value: Option<&String>) -> Option<f64> {
+    value.and_then(|v| v.parse().ok())
+}
+
+pub fn update_regenerated_field_work(
+    pool: &SqlitePool,
+    crop_id: i64,
+    blueprint_id: i64,
+    rec: &CropTaskScheduleBlueprintPersistAttrs,
+) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+    let exists = pool.with_read_box(|conn| {
+        conn.query_row(
+            "SELECT COUNT(*) FROM crop_task_schedule_blueprints WHERE id = ?1 AND crop_id = ?2",
+            params![blueprint_id, crop_id],
+            |row| row.get::<_, i64>(0),
+        )
+    })?;
+    if exists == 0 {
+        return Err(Box::new(RecordNotFoundError));
+    }
+
+    pool.with_write_box(|conn| {
+        conn.execute(
+            "UPDATE crop_task_schedule_blueprints SET \
+             stage_order = ?3, \
+             stage_name = ?4, \
+             gdd_trigger = ?5, \
+             gdd_tolerance = ?6, \
+             task_type = ?7, \
+             source = ?8, \
+             priority = ?9, \
+             description = COALESCE(?10, description), \
+             weather_dependency = COALESCE(?11, weather_dependency), \
+             time_per_sqm = COALESCE(?12, time_per_sqm), \
+             name = COALESCE(?13, name), \
+             updated_at = datetime('now') \
+             WHERE id = ?1 AND crop_id = ?2",
+            params![
+                blueprint_id,
+                crop_id,
+                rec.stage_order,
+                rec.stage_name,
+                parse_optional_f64(rec.gdd_trigger.as_ref()),
+                parse_optional_f64(rec.gdd_tolerance.as_ref()),
+                rec.task_type,
+                rec.source,
+                rec.priority,
+                rec.description,
+                rec.weather_dependency,
+                parse_optional_f64(rec.time_per_sqm.as_ref()),
+                rec.name,
+            ],
+        )?;
+
+        let sql = format!(
+            "SELECT {SELECT_COLS} FROM crop_task_schedule_blueprints WHERE id = ?1"
+        );
+        conn.query_row(&sql, params![blueprint_id], map_blueprint_entity)
+    })
 }
 
 pub fn bulk_insert_blueprints(
@@ -270,107 +333,3 @@ pub fn replace_all_blueprints_for_crop(
     list_blueprints_by_crop_id(pool, crop_id)
 }
 
-pub fn apply_regenerated_blueprints_for_crop(
-    pool: &SqlitePool,
-    crop_id: i64,
-    records: &[CropTaskScheduleBlueprintPersistAttrs],
-) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
-    pool.with_write_box(|conn| {
-        delete_fertilize_blueprints_for_crop(conn, crop_id)?;
-
-        for rec in records {
-            if rec.task_type == BASAL_FERTILIZATION || rec.task_type == TOPDRESS_FERTILIZATION {
-                conn.execute(
-                    "INSERT INTO crop_task_schedule_blueprints (crop_id, agricultural_task_id, source_agricultural_task_id, \
-                     stage_order, stage_name, gdd_trigger, gdd_tolerance, task_type, source, priority, amount, amount_unit, \
-                     description, weather_dependency, time_per_sqm, name, created_at, updated_at) \
-                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, datetime('now'), datetime('now'))",
-                    params![
-                        rec.crop_id,
-                        rec.agricultural_task_id,
-                        rec.source_agricultural_task_id,
-                        rec.stage_order,
-                        rec.stage_name,
-                        rec.gdd_trigger,
-                        rec.gdd_tolerance,
-                        rec.task_type,
-                        rec.source,
-                        rec.priority,
-                        rec.amount,
-                        rec.amount_unit,
-                        rec.description,
-                        rec.weather_dependency,
-                        rec.time_per_sqm,
-                        rec.name,
-                    ],
-                )?;
-                continue;
-            }
-
-            let Some(task_id) = rec.agricultural_task_id else {
-                continue;
-            };
-
-            let updated = conn.execute(
-                "UPDATE crop_task_schedule_blueprints SET \
-                 stage_order = ?3, \
-                 stage_name = ?4, \
-                 gdd_trigger = ?5, \
-                 gdd_tolerance = ?6, \
-                 task_type = ?7, \
-                 source = ?8, \
-                 priority = ?9, \
-                 description = COALESCE(?10, description), \
-                 weather_dependency = COALESCE(?11, weather_dependency), \
-                 time_per_sqm = COALESCE(?12, time_per_sqm), \
-                 name = COALESCE(?13, name), \
-                 updated_at = datetime('now') \
-                 WHERE crop_id = ?1 AND agricultural_task_id = ?2",
-                params![
-                    crop_id,
-                    task_id,
-                    rec.stage_order,
-                    rec.stage_name,
-                    rec.gdd_trigger,
-                    rec.gdd_tolerance,
-                    rec.task_type,
-                    rec.source,
-                    rec.priority,
-                    rec.description,
-                    rec.weather_dependency,
-                    rec.time_per_sqm,
-                    rec.name,
-                ],
-            )?;
-
-            if updated == 0 {
-                conn.execute(
-                    "INSERT INTO crop_task_schedule_blueprints (crop_id, agricultural_task_id, source_agricultural_task_id, \
-                     stage_order, stage_name, gdd_trigger, gdd_tolerance, task_type, source, priority, amount, amount_unit, \
-                     description, weather_dependency, time_per_sqm, name, created_at, updated_at) \
-                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, datetime('now'), datetime('now'))",
-                    params![
-                        rec.crop_id,
-                        rec.agricultural_task_id,
-                        rec.source_agricultural_task_id,
-                        rec.stage_order,
-                        rec.stage_name,
-                        rec.gdd_trigger,
-                        rec.gdd_tolerance,
-                        rec.task_type,
-                        rec.source,
-                        rec.priority,
-                        rec.amount,
-                        rec.amount_unit,
-                        rec.description,
-                        rec.weather_dependency,
-                        rec.time_per_sqm,
-                        rec.name,
-                    ],
-                )?;
-            }
-        }
-        Ok(())
-    })?;
-    list_blueprints_by_crop_id(pool, crop_id)
-}

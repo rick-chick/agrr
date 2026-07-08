@@ -61,6 +61,12 @@ describe('gddValidationMessage', () => {
     );
   });
 
+  it('returns gdd_required message key', () => {
+    expect(gddValidationMessage(instant, 'gdd_required', [], null)).toBe(
+      'crops.show.blueprint_gdd_errors.gdd_required'
+    );
+  });
+
   it('returns out_of_range message with cumulative GDD bounds', () => {
     const stages = [stage(1, 200), stage(2, 300)];
     const message = gddValidationMessage(instant, 'out_of_range', stages, 2);

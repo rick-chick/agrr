@@ -121,7 +121,7 @@ fn existing_blueprint() -> MastersCropTaskScheduleBlueprint {
         source_agricultural_task_id: None,
         stage_order: Some(1),
         stage_name: None,
-        gdd_trigger: Some(Decimal::from(50)),
+        gdd_trigger: Some(Decimal::from(100)),
         gdd_tolerance: None,
         task_type: FIELD_WORK.into(),
         source: MANUAL_BLUEPRINT_SOURCE.into(),
@@ -591,11 +591,19 @@ impl CropMastersTaskScheduleBlueprintGateway for SuccessBlueprintGw {
         unimplemented!()
     }
 
-    fn apply_regenerated_for_crop(
+    fn delete_fertilize_blueprints_for_crop(
         &self,
         _: i64,
-        _: &[CropTaskScheduleBlueprintPersistAttrs],
-    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn update_regenerated_field_work(
+        &self,
+        _: i64,
+        _: i64,
+        _: &CropTaskScheduleBlueprintPersistAttrs,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
 }
@@ -642,11 +650,19 @@ impl CropMastersTaskScheduleBlueprintGateway for DuplicateBlueprintGw {
         unimplemented!()
     }
 
-    fn apply_regenerated_for_crop(
+    fn delete_fertilize_blueprints_for_crop(
         &self,
         _: i64,
-        _: &[CropTaskScheduleBlueprintPersistAttrs],
-    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn update_regenerated_field_work(
+        &self,
+        _: i64,
+        _: i64,
+        _: &CropTaskScheduleBlueprintPersistAttrs,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
 }
@@ -715,7 +731,88 @@ fn should_return_failure_when_agricultural_task_not_found() {
 }
 
 #[test]
-fn should_return_failure_when_duplicate_stage_order_and_agricultural_task_id_exist() {
+fn should_succeed_when_same_stage_and_task_but_different_gdd() {
+    let mut out = Spy {
+        success: false,
+        failure: None,
+    };
+    let user_lookup = StubLookup(User::new(1, false));
+    let mut interactor = CropMastersTaskScheduleBlueprintCreateInteractor::new(
+        &mut out,
+        &SuccessGw,
+        &FoundAgriculturalTaskGw,
+        &DifferentGddBlueprintGw,
+        &user_lookup,
+    );
+    interactor.call(valid_input()).unwrap();
+    assert!(out.success);
+    assert!(out.failure.is_none());
+}
+
+struct DifferentGddBlueprintGw;
+
+impl CropMastersTaskScheduleBlueprintGateway for DifferentGddBlueprintGw {
+    fn list_by_crop_id(
+        &self,
+        _: i64,
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![MastersCropTaskScheduleBlueprint {
+            gdd_trigger: Some(Decimal::from(50)),
+            ..existing_blueprint()
+        }])
+    }
+
+    fn create(
+        &self,
+        _: CropTaskScheduleBlueprintPersistAttrs,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(created_blueprint())
+    }
+
+    fn update(
+        &self,
+        _: i64,
+        _: i64,
+        _: serde_json::Value,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn delete_by_id(
+        &self,
+        _: i64,
+        _: i64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn replace_all_for_crop(
+        &self,
+        _: i64,
+        _: &[CropTaskScheduleBlueprintPersistAttrs],
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn delete_fertilize_blueprints_for_crop(
+        &self,
+        _: i64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn update_regenerated_field_work(
+        &self,
+        _: i64,
+        _: i64,
+        _: &CropTaskScheduleBlueprintPersistAttrs,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+}
+
+#[test]
+fn should_return_failure_when_duplicate_stage_order_task_and_gdd_exist() {
     let mut out = Spy {
         success: false,
         failure: None,

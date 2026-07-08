@@ -15,6 +15,7 @@ use crate::shared::exceptions::RecordNotFoundError;
 use rust_decimal::Decimal;
 use serde_json::json;
 use std::str::FromStr;
+use std::sync::Mutex;
 
 struct TestHarness {
     crop_gw: CropGw,
@@ -292,12 +293,19 @@ impl CropMastersTaskScheduleBlueprintGateway for BlueprintGw {
     ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(vec![])
     }
-    fn apply_regenerated_for_crop(
+    fn delete_fertilize_blueprints_for_crop(
         &self,
         _: i64,
-        _: &[crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs],
-    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(self.blueprints.clone())
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+    fn update_regenerated_field_work(
+        &self,
+        _: i64,
+        _: i64,
+        _: &crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(self.blueprints.first().cloned().expect("blueprint"))
     }
 }
 
@@ -540,7 +548,7 @@ fn regenerate_succeeds_with_stub_ai_responses() {
             requirement: Some(json!({"stage_requirements": [{"name": "stage1"}]})),
         },
         schedule_gw: ScheduleGw {
-            response: Ok(json!({"task_schedules": [{"task_id": "100", "stage_order": 1, "gdd_trigger": "50"}]})),
+            response: Ok(json!({"task_schedules": [{"task_id": "10", "stage_order": 1, "gdd_trigger": "50"}]})),
         },
         fertilize_gw: FertilizeGw {
             response: Ok(json!({"schedule": []})),
@@ -551,6 +559,123 @@ fn regenerate_succeeds_with_stub_ai_responses() {
         .call(CropRegenerateTaskScheduleBlueprintsInput::new(1))
         .expect("regenerate");
     assert_eq!(rows.len(), 1);
+}
+
+#[test]
+fn regenerate_updates_two_field_work_slots_by_blueprint_id() {
+    let blueprint_a = MastersCropTaskScheduleBlueprint {
+        id: 17,
+        stage_order: None,
+        ..sample_blueprint()
+    };
+    let blueprint_b = MastersCropTaskScheduleBlueprint {
+        id: 18,
+        stage_order: None,
+        ..sample_blueprint()
+    };
+    let captured: Mutex<Vec<crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs>> =
+        Mutex::new(Vec::new());
+    let crop_gw = CropGw {
+        crop: Some(sample_crop()),
+    };
+    let blueprint_gw = CapturingBlueprintGw {
+        blueprints: vec![blueprint_a, blueprint_b],
+        captured: &captured,
+    };
+    let agricultural_task_gw = AgriculturalTaskGw {
+        tasks: vec![sample_agricultural_task()],
+    };
+    let req_gw = ReqGw {
+        requirement: Some(json!({"stage_requirements": [{"name": "stage1", "order": 1}]})),
+    };
+    let schedule_gw = ScheduleGw {
+        response: Ok(json!({
+            "task_schedules": [
+                {"task_id": "17", "stage_order": 1, "gdd_trigger": "80"},
+                {"task_id": "18", "stage_order": 1, "gdd_trigger": "150"}
+            ]
+        })),
+    };
+    let fertilize_gw = FertilizeGw {
+        response: Ok(json!({"schedule": []})),
+    };
+    let mut interactor = CropRegenerateTaskScheduleBlueprintsInteractor::new(
+        &crop_gw,
+        &blueprint_gw,
+        &agricultural_task_gw,
+        &req_gw,
+        &schedule_gw,
+        &fertilize_gw,
+    );
+    interactor
+        .call(CropRegenerateTaskScheduleBlueprintsInput::new(1))
+        .expect("regenerate");
+    let records = captured.lock().expect("captured").clone();
+    assert_eq!(records.len(), 2);
+    assert_eq!(records[0].blueprint_id, Some(17));
+    assert_eq!(records[1].blueprint_id, Some(18));
+    assert_eq!(records[0].gdd_trigger.as_ref().map(|v| v.to_string()), Some("80".into()));
+    assert_eq!(records[1].gdd_trigger.as_ref().map(|v| v.to_string()), Some("150".into()));
+}
+
+struct CapturingBlueprintGw<'a> {
+    blueprints: Vec<MastersCropTaskScheduleBlueprint>,
+    captured: &'a Mutex<Vec<crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs>>,
+}
+
+impl CropMastersTaskScheduleBlueprintGateway for CapturingBlueprintGw<'_> {
+    fn list_by_crop_id(
+        &self,
+        _: i64,
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(self.blueprints.clone())
+    }
+    fn create(
+        &self,
+        _: crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+        Err("unsupported".into())
+    }
+    fn update(
+        &self,
+        _: i64,
+        _: i64,
+        _: serde_json::Value,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+        Err("unsupported".into())
+    }
+    fn delete_by_id(
+        &self,
+        _: i64,
+        _: i64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Err("unsupported".into())
+    }
+    fn replace_all_for_crop(
+        &self,
+        _: i64,
+        _: &[crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs],
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(vec![])
+    }
+    fn delete_fertilize_blueprints_for_crop(
+        &self,
+        _: i64,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
+    }
+    fn update_regenerated_field_work(
+        &self,
+        _: i64,
+        _: i64,
+        attrs: &crate::crop::dtos::CropTaskScheduleBlueprintPersistAttrs,
+    ) -> Result<MastersCropTaskScheduleBlueprint, Box<dyn std::error::Error + Send + Sync>> {
+        self.captured
+            .lock()
+            .expect("captured")
+            .push(attrs.clone());
+        Ok(self.blueprints[0].clone())
+    }
 }
 
 #[test]

@@ -99,7 +99,7 @@ fn build_attribute_lookup_prefers_blueprint_fields_over_task_master() {
     )];
     let tasks = vec![sample_task(42, Some("task desc"), Some("low"), Some(0.5))];
 
-    let lookup = build_attribute_lookup(&blueprints, &tasks);
+    let lookup = build_attribute_lookup_by_agricultural_task_id(&blueprints, &tasks);
 
     let snapshot = lookup.get(&42).expect("task 42");
     assert_eq!(snapshot.description.as_deref(), Some("bp desc"));
@@ -112,7 +112,7 @@ fn build_attribute_lookup_falls_back_to_task_master_when_blueprint_empty() {
     let blueprints = vec![sample_blueprint(42, None, None, None)];
     let tasks = vec![sample_task(42, Some("task desc"), Some("low"), Some(0.5))];
 
-    let lookup = build_attribute_lookup(&blueprints, &tasks);
+    let lookup = build_attribute_lookup_by_agricultural_task_id(&blueprints, &tasks);
 
     let snapshot = lookup.get(&42).expect("task 42");
     assert_eq!(snapshot.description.as_deref(), Some("task desc"));
@@ -125,7 +125,7 @@ fn build_attribute_lookup_skips_blueprints_without_agricultural_task_id() {
     let mut blueprint = sample_blueprint(42, Some("desc"), None, None);
     blueprint.agricultural_task_id = None;
 
-    let lookup = build_attribute_lookup(&[blueprint], &[]);
+    let lookup = build_attribute_lookup_by_agricultural_task_id(&[blueprint], &[]);
 
     assert!(lookup.is_empty());
 }

@@ -495,7 +495,8 @@
       "blueprint_gdd_errors": {
         "missing_stage": "生育ステージを選択してください。",
         "stage_gdd_missing": "このステージの必要積算温度が未設定です",
-        "out_of_range": "{{start}}〜{{end}} ℃·日の範囲で指定してください"
+        "out_of_range": "{{start}}〜{{end}} ℃·日の範囲で指定してください",
+        "gdd_required": "同じステージに同じ作業が既にあるため、作業タイミング（℃·日）を指定してください"
       },
       "origin_ai_label": "AI提案",
       "origin_manual_label": "手動作業",
@@ -518,7 +519,6 @@
         "submit": "作業予定を追加",
         "ai_hint": "AIの提案をたたき台にしたい場合のみ、下のボタンを使ってください。既存の作業予定はすべて置き換わります。",
         "no_unassociated_tasks": "登録できる作業マスタがありません。先に作業を作成してください。",
-        "no_unassociated_tasks_all_used": "未登録の作業マスタがありません。上の一覧を確認するか、新しい作業を作成してください。",
         "go_to_create": "作業を新規作成"
       },
       "blueprint_readiness": {

@@ -4,7 +4,8 @@ import type { CropStage } from './crop';
 export type BlueprintGddValidationError =
   | 'missing_stage'
   | 'out_of_range'
-  | 'stage_gdd_missing';
+  | 'stage_gdd_missing'
+  | 'gdd_required';
 
 export function blueprintGddValidationError(
   stages: CropStage[],

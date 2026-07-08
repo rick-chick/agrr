@@ -30,8 +30,29 @@ pub fn merge_blueprint_task_attributes(
     }
 }
 
-/// Build per-task attribute snapshots from blueprint rows merged with agricultural task master.
-pub fn build_attribute_lookup(
+/// Build per-blueprint attribute snapshots from blueprint rows merged with agricultural task master.
+pub fn build_attribute_lookup_by_blueprint_id(
+    blueprints: &[MastersCropTaskScheduleBlueprint],
+    agricultural_tasks: &[AgriculturalTaskEntity],
+) -> HashMap<i64, BlueprintAttributeSnapshot> {
+    let mut lookup = HashMap::new();
+    for blueprint in blueprints {
+        let Some(task_id) = blueprint.agricultural_task_id else {
+            continue;
+        };
+        let agricultural_task = agricultural_tasks
+            .iter()
+            .find(|task| task.id == Some(task_id));
+        lookup.insert(
+            blueprint.id,
+            merge_blueprint_task_attributes(blueprint, agricultural_task),
+        );
+    }
+    lookup
+}
+
+/// Build per-agricultural-task attribute snapshots (fertilizer agrr responses).
+pub fn build_attribute_lookup_by_agricultural_task_id(
     blueprints: &[MastersCropTaskScheduleBlueprint],
     agricultural_tasks: &[AgriculturalTaskEntity],
 ) -> HashMap<i64, BlueprintAttributeSnapshot> {

@@ -3,6 +3,7 @@ use crate::crop::dtos::{
     CropTaskScheduleBlueprintPersistAttrs, MastersCropTaskScheduleBlueprint,
     MastersCropTaskScheduleBlueprintCreateInput,
 };
+use crate::crop::policies::masters_crop_task_schedule_blueprint_duplicate_policy;
 
 pub const MANUAL_BLUEPRINT_SOURCE: &str = "manual";
 
@@ -10,17 +11,15 @@ pub fn duplicate(
     existing: &[MastersCropTaskScheduleBlueprint],
     stage_order: Option<i32>,
     agricultural_task_id: i64,
+    gdd_trigger: Option<f64>,
 ) -> bool {
-    existing.iter().any(|row| {
-        if row.agricultural_task_id != Some(agricultural_task_id) {
-            return false;
-        }
-        match (stage_order, row.stage_order) {
-            (None, None) => true,
-            (Some(order), Some(existing_order)) => order == existing_order,
-            _ => false,
-        }
-    })
+    masters_crop_task_schedule_blueprint_duplicate_policy::conflicts_with_existing(
+        existing,
+        None,
+        agricultural_task_id,
+        stage_order,
+        gdd_trigger,
+    )
 }
 
 pub fn build_persist_attributes(
@@ -32,6 +31,7 @@ pub fn build_persist_attributes(
 ) -> CropTaskScheduleBlueprintPersistAttrs {
     CropTaskScheduleBlueprintPersistAttrs {
         crop_id: input.crop_id,
+        blueprint_id: None,
         agricultural_task_id: Some(agricultural_task_id),
         source_agricultural_task_id: None,
         stage_order,

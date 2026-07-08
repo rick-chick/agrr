@@ -2,6 +2,7 @@
 pub enum MastersCropTaskScheduleBlueprintFailureReason {
     CropNotFound,
     BlueprintNotFound,
+    Duplicate,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

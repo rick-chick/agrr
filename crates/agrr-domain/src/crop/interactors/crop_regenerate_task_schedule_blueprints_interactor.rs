@@ -1,6 +1,8 @@
 //! Ruby: `CropTaskScheduleBlueprintRegenerationActiveRecordGateway` orchestration in domain.
 
-use crate::agricultural_task::constants::schedule_item_types::FIELD_WORK;
+use crate::agricultural_task::constants::schedule_item_types::{
+    BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
+};
 use crate::agricultural_task::gateways::AgriculturalTaskGateway;
 use crate::crop::dtos::{
     CropBlueprintAiFailure, CropBlueprintRegenerateFailure, CropBlueprintRegenerateFailureReason,
@@ -182,9 +184,29 @@ where
             .fetch_fertilize_plan(&crop_requirement, true, 2)
             .map_err(map_ai_failure)?;
 
-        let attribute_lookup =
-            blueprint_attribute_lookup::build_attribute_lookup(&blueprints, &agricultural_tasks);
-        let generator = TaskScheduleBlueprintGenerator::new(crop_id, attribute_lookup);
+        let attribute_by_blueprint = blueprint_attribute_lookup::build_attribute_lookup_by_blueprint_id(
+            &blueprints,
+            &agricultural_tasks,
+        );
+        let attribute_by_agricultural_task =
+            blueprint_attribute_lookup::build_attribute_lookup_by_agricultural_task_id(
+                &blueprints,
+                &agricultural_tasks,
+            );
+        let agricultural_task_id_by_blueprint: std::collections::HashMap<i64, i64> = blueprints
+            .iter()
+            .filter_map(|blueprint| {
+                blueprint
+                    .agricultural_task_id
+                    .map(|task_id| (blueprint.id, task_id))
+            })
+            .collect();
+        let generator = TaskScheduleBlueprintGenerator::new(
+            crop_id,
+            attribute_by_blueprint,
+            attribute_by_agricultural_task,
+            agricultural_task_id_by_blueprint,
+        );
         let blueprint_rows =
             generator.build_from_responses(&schedule_response, &fertilize_response);
 
@@ -200,14 +222,38 @@ where
             .map(CropTaskScheduleBlueprintPersistAttrs::from)
             .collect();
 
+        self.apply_regenerated_blueprints(crop_id, &persist_attrs)
+    }
+
+    fn apply_regenerated_blueprints(
+        &self,
+        crop_id: i64,
+        records: &[CropTaskScheduleBlueprintPersistAttrs],
+    ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, CropBlueprintRegenerateFailure> {
         self.blueprint_gateway
-            .apply_regenerated_for_crop(crop_id, &persist_attrs)
-            .map_err(|e| {
-                CropBlueprintRegenerateFailure::new(
-                    CropBlueprintRegenerateFailureReason::AiExecutionFailed,
-                    e.to_string(),
-                )
-            })
+            .delete_fertilize_blueprints_for_crop(crop_id)
+            .map_err(map_gateway_failure)?;
+
+        for rec in records {
+            if rec.task_type == BASAL_FERTILIZATION || rec.task_type == TOPDRESS_FERTILIZATION {
+                self.blueprint_gateway
+                    .create(rec.clone())
+                    .map_err(map_gateway_failure)?;
+                continue;
+            }
+
+            let Some(blueprint_id) = rec.blueprint_id else {
+                continue;
+            };
+
+            self.blueprint_gateway
+                .update_regenerated_field_work(crop_id, blueprint_id, rec)
+                .map_err(map_gateway_failure)?;
+        }
+
+        self.blueprint_gateway
+            .list_by_crop_id(crop_id)
+            .map_err(map_gateway_failure)
     }
 }
 
@@ -227,6 +273,15 @@ where
     ) -> Result<Vec<MastersCropTaskScheduleBlueprint>, CropBlueprintRegenerateFailure> {
         self.regenerate_for_crop(input.crop_id)
     }
+}
+
+fn map_gateway_failure(
+    e: Box<dyn std::error::Error + Send + Sync>,
+) -> CropBlueprintRegenerateFailure {
+    CropBlueprintRegenerateFailure::new(
+        CropBlueprintRegenerateFailureReason::AiExecutionFailed,
+        e.to_string(),
+    )
 }
 
 fn map_ai_failure(failure: CropBlueprintAiFailure) -> CropBlueprintRegenerateFailure {

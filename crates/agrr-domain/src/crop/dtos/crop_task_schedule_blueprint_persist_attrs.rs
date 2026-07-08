@@ -2,6 +2,7 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct CropTaskScheduleBlueprintPersistAttrs {
     pub crop_id: i64,
+    pub blueprint_id: Option<i64>,
     pub agricultural_task_id: Option<i64>,
     pub source_agricultural_task_id: Option<i64>,
     pub stage_order: Option<i32>,
@@ -29,6 +30,7 @@ impl From<crate::crop::task_schedule_blueprint_from_agrr::TaskScheduleBlueprintR
         }
         Self {
             crop_id: row.crop_id,
+            blueprint_id: row.blueprint_id,
             agricultural_task_id: Some(row.agricultural_task_id),
             source_agricultural_task_id: None,
             stage_order: row.stage_order.map(|v| v as i32),
