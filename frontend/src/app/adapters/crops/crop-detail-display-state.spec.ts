@@ -34,7 +34,9 @@ const baseControl: CropDetailViewState = {
   blueprintsLoading: false,
   blueprintCount: 0,
   blueprintReadiness: defaultBlueprintReadiness(),
-  blueprintSummary: null
+  blueprintSummary: null,
+  stageBoardColumns: [],
+  cumulativeGddTimelineSegments: []
 };
 
 describe('withCropDetailSummaryState', () => {
@@ -202,5 +204,58 @@ describe('withCropDetailSummaryState', () => {
 
     expect(next.blueprintCount).toBe(0);
     expect(next.blueprintReadiness.ready).toBe(false);
+  });
+
+  it('builds stage board columns and cumulative timeline segments when loaded', () => {
+    const next = withCropDetailSummaryState(baseControl, [
+      {
+        id: 20,
+        crop_id: 3,
+        agricultural_task_id: 5,
+        source_agricultural_task_id: null,
+        stage_order: 1,
+        stage_name: 'Vegetative',
+        gdd_trigger: 0,
+        gdd_tolerance: null,
+        task_type: 'field_work',
+        source: 'agrr',
+        priority: 1,
+        amount: null,
+        amount_unit: null,
+        description: null,
+        weather_dependency: null,
+        time_per_sqm: null,
+        name: 'Sowing'
+      }
+    ]);
+
+    expect(next.stageBoardColumns).toHaveLength(1);
+    expect(next.stageBoardColumns[0]).toMatchObject({
+      stageOrder: 1,
+      requiredGdd: 500,
+      optimalMin: 15,
+      optimalMax: 25,
+      cumulativeGddStart: 0,
+      cumulativeGddEnd: 500
+    });
+    expect(next.stageBoardColumns[0].gddGroups[0].items[0].taskName).toBe('Sowing');
+    expect(next.cumulativeGddTimelineSegments).toEqual([
+      {
+        stageOrder: 1,
+        stageName: 'Vegetative',
+        cumulativeGddStart: 0,
+        cumulativeGddEnd: 500
+      }
+    ]);
+  });
+
+  it('keeps stage board empty while blueprints are loading', () => {
+    const next = withCropDetailSummaryState(
+      { ...baseControl, blueprintsLoading: true },
+      []
+    );
+
+    expect(next.stageBoardColumns).toEqual([]);
+    expect(next.cumulativeGddTimelineSegments).toEqual([]);
   });
 });

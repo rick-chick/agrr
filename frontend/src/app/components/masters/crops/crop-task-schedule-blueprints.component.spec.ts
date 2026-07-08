@@ -490,7 +490,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(segment).toBeTruthy();
     expect(segment.textContent).toMatch(/Vegetative/i);
     expect(segment.textContent).toMatch(/0.?500/i);
-    expect(segment.textContent).toMatch(/℃·day/i);
+    expect(segment.textContent).toMatch(/°C·day/i);
   });
 
   it('renders GDD axis caption when crop has growth stages', async () => {

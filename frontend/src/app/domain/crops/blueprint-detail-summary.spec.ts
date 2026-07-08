@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildBlueprintDetailSummary } from './blueprint-detail-summary';
+import {
+  buildBlueprintDetailSummary,
+  shouldShowBlueprintSummaryGddGroupLabel,
+  blueprintDetailSummaryItemNeedsAttention
+} from './blueprint-detail-summary';
 import type { CropStage } from './crop';
 import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
 
@@ -207,5 +211,70 @@ describe('buildBlueprintDetailSummary', () => {
         items: [expect.objectContaining({ taskName: '灌水', gddTrigger: null })]
       }
     ]);
+  });
+});
+
+describe('shouldShowBlueprintSummaryGddGroupLabel', () => {
+  it('hides the label when gdd trigger equals lane cumulative start', () => {
+    expect(
+      shouldShowBlueprintSummaryGddGroupLabel(
+        { cumulativeGddStart: 0 },
+        { gddTrigger: 0 }
+      )
+    ).toBe(false);
+    expect(
+      shouldShowBlueprintSummaryGddGroupLabel(
+        { cumulativeGddStart: 800 },
+        { gddTrigger: 800 }
+      )
+    ).toBe(false);
+  });
+
+  it('shows the label for later triggers within the lane', () => {
+    expect(
+      shouldShowBlueprintSummaryGddGroupLabel(
+        { cumulativeGddStart: 2400 },
+        { gddTrigger: 2800 }
+      )
+    ).toBe(true);
+  });
+
+  it('shows the label when timing is unset or lane start is missing', () => {
+    expect(
+      shouldShowBlueprintSummaryGddGroupLabel(
+        { cumulativeGddStart: 0 },
+        { gddTrigger: null }
+      )
+    ).toBe(true);
+    expect(
+      shouldShowBlueprintSummaryGddGroupLabel(
+        { cumulativeGddStart: null },
+        { gddTrigger: 100 }
+      )
+    ).toBe(true);
+  });
+});
+
+describe('blueprintDetailSummaryItemNeedsAttention', () => {
+  it('returns true when gddError indicates attention', () => {
+    expect(
+      blueprintDetailSummaryItemNeedsAttention({
+        id: 1,
+        taskName: 'A',
+        gddTrigger: 10,
+        gddError: 'out_of_range'
+      })
+    ).toBe(true);
+  });
+
+  it('returns false when gddError is null', () => {
+    expect(
+      blueprintDetailSummaryItemNeedsAttention({
+        id: 1,
+        taskName: 'A',
+        gddTrigger: 10,
+        gddError: null
+      })
+    ).toBe(false);
   });
 });

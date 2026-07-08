@@ -1,34 +1,21 @@
 @import '../_master-layout.css';
+@import './_crop-blueprint-shared.css';
 
 .master-error {
   color: var(--color-error);
 }
 
-.stages-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: var(--space-4);
-  margin-top: var(--space-4);
-}
-
-.stage-card {
-  border: 1px solid var(--color-border);
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-hover);
-}
-
-.stage-card__title {
-  margin: 0 0 var(--space-2) 0;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-primary);
-}
-
-.stage-details p {
-  margin: 0 0 var(--space-1) 0;
+.crop-detail__cultivation-lead {
+  margin: 0;
   font-size: var(--font-size-sm);
-  color: var(--color-text);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.crop-detail__stages-empty {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .crop-detail__blueprint-summary-count {
@@ -41,56 +28,86 @@
   color: var(--color-warning, var(--color-text-secondary));
 }
 
-.crop-detail__blueprint-summary-empty {
+.crop-detail__blueprint-summary-hint {
   margin: 0 0 var(--space-3) 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
-.blueprint-summary-grid {
+.crop-detail__stage-board {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
   gap: var(--space-4);
   margin: var(--space-4) 0 var(--space-3) 0;
 }
 
-.blueprint-summary-card {
+.crop-detail__stage-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   border: 1px solid var(--color-border);
   padding: var(--space-4);
   border-radius: var(--radius-md);
   background: var(--color-surface-hover);
+  min-height: 0;
 }
 
-.blueprint-summary-card__title {
-  margin: 0 0 var(--space-1) 0;
+.crop-detail__stage-column-title {
+  margin: 0;
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   color: var(--color-primary);
 }
 
-.blueprint-summary-card__gdd-range {
-  margin: 0 0 var(--space-2) 0;
+.crop-detail__stage-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.crop-detail__stage-requirement {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.crop-detail__stage-cumulative-range {
+  margin: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
-.blueprint-summary-card__gdd-range--warn {
+.crop-detail__stage-cumulative-range--warn {
   color: var(--color-warning, var(--color-text-secondary));
 }
 
-.blueprint-summary-card__gdd-groups {
+.crop-detail__stage-lane-warning {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+}
+
+.crop-detail__stage-tasks-empty {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.crop-detail__stage-task-groups {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  margin-top: auto;
 }
 
-.blueprint-summary-card__gdd-group-label {
+.crop-detail__stage-task-group-label {
   margin: 0 0 var(--space-1) 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
-.blueprint-summary-card__badges {
+.crop-detail__stage-task-badges {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -99,7 +116,7 @@
   list-style: none;
 }
 
-.blueprint-summary-card__badge {
+.crop-detail__stage-task-badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -112,33 +129,24 @@
   color: var(--color-text);
 }
 
-.blueprint-summary-card__badge--attention {
+.crop-detail__stage-task-badge--attention {
   border-color: var(--color-error);
   color: var(--color-error);
 }
 
-.blueprint-summary-card__badge-label {
+.crop-detail__stage-task-badge-label {
   min-width: 0;
 }
 
-.blueprint-summary-card__badge-status {
+.crop-detail__stage-task-badge-status {
   flex-shrink: 0;
   font-size: var(--font-size-xs, 0.75rem);
   color: var(--color-warning, var(--color-text-secondary));
 }
 
-.blueprint-summary-card__lane-warning {
-  margin: 0 0 var(--space-2) 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-error);
-}
-
-.crop-detail__blueprint-summary-hint {
-  margin: 0 0 var(--space-3) 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.crop-detail__blueprint-summary-cta {
-  display: inline-flex;
+.crop-detail__cultivation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }

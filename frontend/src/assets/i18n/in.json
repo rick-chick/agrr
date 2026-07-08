@@ -349,18 +349,20 @@
       "region": "क्षेत्र",
       "created_at": "बनाया गया",
       "updated_at": "अपडेट किया गया",
-      "stages_title": "वृद्धि चरण",
-      "required_gdd": "आवश्यक GDD",
+      "no_stages_description": "कृपया इस फसल के लिए वृद्धि चरण जोड़ें।",
+      "stage_required_gdd_label": "इस चरण के लिए आवश्यक GDD",
       "gdd_unit": "°C·दिन",
       "optimal_temperature": "इष्टतम तापमान",
       "celsius_unit": "°C",
       "task_schedule_blueprints_title": "कार्य अनुसूची टेम्पलेट",
+      "cultivation_template_title": "खेती टेम्पलेट",
       "blueprint_summary": {
         "count": "{{count}} कार्य योजना",
         "attention_suffix": "({{count}} पर ध्यान दें)",
         "timing_required": "समय आवश्यक",
         "setup_required": "वृद्धि चरण या कार्य योजना पूरी तरह कॉन्फ़िगर नहीं है।",
-        "edit_action": "कार्य योजना संपादित करें"
+        "edit_action": "कार्य योजना संपादित करें",
+        "empty_on_detail": "अभी तक कोई कार्य योजना नहीं है।"
       },
       "task_schedule_blueprints_lead": "खेती योजना बनाने पर, इन टेम्पलेट से योजना की कार्य अनुसूची स्वचालित रूप से बनती है।",
       "task_schedule_blueprints_gdd_axis_caption": "फसल शुरुआत से संचयी (चरण शुरुआत से नहीं)।",
@@ -393,12 +395,14 @@
       },
       "blueprint_readiness": {
         "title": "AI पुन: उत्पादन से पहले आवश्यक",
+        "detail_title": "कॉन्फ़िगरेशन स्थिति",
         "blueprints_ready": "कम से कम एक कार्य योजना पंजीकृत है",
         "blueprints_missing": "अभी तक कोई कार्य योजना पंजीकृत नहीं",
         "blueprints_action": "कार्य योजना पंजीकृत करें",
         "stages_ready": "वृद्धि चरणों में आधार तापमान और आवश्यक GDD सेट है",
         "stages_missing": "वृद्धि चरणों में आधार तापमान या आवश्यक GDD अनुपलब्ध",
-        "stages_action": "चरण आवश्यकताएँ सेट करने के लिए फसल संपादित करें"
+        "stages_action": "वृद्धि चरण सेट करें",
+        "stages_edit_action": "वृद्धि चरण संपादित करें"
       },
       "blueprint_errors": {
         "missing_blueprints": "कार्य योजना पंजीकृत न होने के कारण AI सुझाव आयात नहीं किए जा सकते।",
@@ -414,7 +418,7 @@
       "blueprint_stage_lane": {
         "unassigned": "चरण असाइन नहीं",
         "unassigned_hint": "वृद्धि चरण असाइन करें",
-        "gdd_range": "{{start}}–{{end}} ℃·दिन",
+        "gdd_range": "{{start}}–{{end}} °C·दिन",
         "gdd_range_missing": "आवश्यक संचित तापमान सेट नहीं",
         "out_of_range_count": "सीमा से बाहर {{count}} ({{start}}–{{end}} ℃·दिन)",
         "board_label": "वृद्धि चरण के अनुसार कार्य योजना",

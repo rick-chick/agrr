@@ -45,8 +45,10 @@ const loadedState: CropDetailViewState = withCropDetailSummaryState(
     pendingSuccessFlash: null,
     blueprintsLoading: false,
     blueprintCount: 1,
-    blueprintReadiness: { ...defaultBlueprintReadiness(), blueprintsReady: true, ready: false },
-    blueprintSummary: null
+    blueprintReadiness: defaultBlueprintReadiness(),
+    blueprintSummary: null,
+    stageBoardColumns: [],
+    cumulativeGddTimelineSegments: []
   },
   [
     {
@@ -147,23 +149,36 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('.master-error')?.textContent).toContain('Invalid crop ID');
   });
 
-  it('links to task schedule blueprints page from summary', async () => {
+  it('renders unified cultivation template section with task link', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
       {
         crops: {
           show: {
-            task_schedule_blueprints_title: 'Task Plan',
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Schedules are generated from these templates.',
+            blueprint_readiness: {
+              detail_title: 'Configuration status',
+              stages_ready: 'Stages ready',
+              blueprints_ready: 'Task plans ready'
+            },
             blueprint_summary: {
               count: '{{count}} task plan(s)',
               attention_suffix: '({{count}} need attention)',
-              edit_action: 'Edit task plans'
+              edit_action: 'Edit task plans',
+              empty_on_detail: 'No task plans in this stage yet.'
             },
-            gdd_unit: '℃·day',
+            stage_required_gdd_label: 'Required GDD for this stage',
+            gdd_unit: '°C·day',
+            celsius_unit: '°C',
+            optimal_temperature: 'Optimal temperature',
             blueprint_stage_lane: {
-              gdd_range: '{{start}}–{{end}} ℃·day'
+              gdd_range: '{{start}}–{{end}} °C·day',
+              board_label: 'Task plans by stage'
             },
+            task_schedule_blueprints_gdd_axis_caption: 'Cumulative from crop start',
+            task_schedule_blueprints_gdd_axis_label: 'Total {{total}} °C·day',
             unnamed_blueprint: '(Unnamed task)'
           }
         }
@@ -178,15 +193,18 @@ describe('CropDetailComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
+    expect(fixture.nativeElement.querySelectorAll('.crop-detail__cultivation-template')).toHaveLength(1);
+    expect(fixture.nativeElement.querySelector('#cultivation-template-heading')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Cultivation template');
+    expect(fixture.nativeElement.textContent).toContain('Cumulative from crop start');
+    expect(fixture.nativeElement.textContent).toContain('Configuration status');
     const link = fixture.nativeElement.querySelector(
       'a[href*="/crops/3/task_schedule_blueprints"]'
     ) as HTMLAnchorElement | null;
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain('Edit task plans');
-    expect(fixture.nativeElement.querySelector('#blueprints-heading')).toBeFalsy();
     expect(fixture.nativeElement.textContent).toContain('Weeding');
-    expect(fixture.nativeElement.textContent).toContain('120');
-    expect(fixture.nativeElement.querySelector('.blueprint-summary-card__badge')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-detail__stage-task-badge')).toBeTruthy();
   });
 
   it('groups tasks with the same gdd trigger into one badge row', async () => {
@@ -196,14 +214,25 @@ describe('CropDetailComponent', () => {
       {
         crops: {
           show: {
-            task_schedule_blueprints_title: 'Task Plan',
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Lead',
+            blueprint_readiness: {
+              detail_title: 'Status',
+              stages_ready: 'Stages ready',
+              blueprints_ready: 'Ready',
+              stages_edit_action: 'Edit growth stages',
+              stages_action: 'Configure growth stages'
+            },
             blueprint_summary: {
               count: '{{count}} task plan(s)',
-              edit_action: 'Edit task plans'
+              edit_action: 'Edit task plans',
+              empty_on_detail: 'No task plans in this stage yet.'
             },
-            gdd_unit: '℃·day',
+            stage_required_gdd_label: 'Required GDD for this stage',
+            gdd_unit: '°C·day',
             blueprint_stage_lane: {
-              gdd_range: '{{start}}–{{end}} ℃·day'
+              gdd_range: '{{start}}–{{end}} °C·day',
+              board_label: 'Task plans by stage'
             },
             unnamed_blueprint: '(Unnamed task)'
           }
@@ -285,11 +314,11 @@ describe('CropDetailComponent', () => {
     await fixture.whenStable();
 
     const gddLabels = fixture.nativeElement.querySelectorAll(
-      '.blueprint-summary-card__gdd-group-label'
+      '.crop-detail__stage-task-group-label'
     );
     expect(gddLabels).toHaveLength(1);
     expect(gddLabels[0].textContent).toContain('200');
-    expect(fixture.nativeElement.querySelectorAll('.blueprint-summary-card__badge')).toHaveLength(
+    expect(fixture.nativeElement.querySelectorAll('.crop-detail__stage-task-badge')).toHaveLength(
       3
     );
     expect(fixture.nativeElement.textContent).toContain('Planting');
@@ -304,17 +333,29 @@ describe('CropDetailComponent', () => {
       {
         crops: {
           show: {
-            task_schedule_blueprints_title: 'Task Plan',
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Lead',
+            blueprint_readiness: {
+              detail_title: 'Status',
+              stages_ready: 'Stages ready',
+              blueprints_ready: 'Ready',
+              blueprints_missing: 'Missing',
+              stages_edit_action: 'Edit growth stages',
+              stages_action: 'Configure growth stages'
+            },
             blueprint_summary: {
               count: '{{count}} task plan(s)',
               attention_suffix: '({{count}} need attention)',
-              edit_action: 'Edit task plans'
+              edit_action: 'Edit task plans',
+              empty_on_detail: 'No task plans in this stage yet.'
             },
             blueprint_gdd_unset: 'Timing unset',
-            no_task_schedule_blueprints: 'No task plans yet.',
+            stage_required_gdd_label: 'Required GDD for this stage',
+            gdd_unit: '°C·day',
             blueprint_stage_lane: {
-              gdd_range: '{{start}}–{{end}} ℃·day',
-              gdd_range_missing: 'Required GDD missing'
+              gdd_range: '{{start}}–{{end}} °C·day',
+              gdd_range_missing: 'Required GDD missing',
+              board_label: 'Task plans by stage'
             },
             unnamed_blueprint: '(Unnamed task)'
           }
@@ -360,18 +401,101 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Timing unset');
   });
 
-  it('shows empty message when there are no blueprints', async () => {
+  it('applies attention styling to out-of-range blueprint badges', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
       {
         crops: {
           show: {
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Lead',
+            blueprint_readiness: {
+              detail_title: 'Status',
+              stages_ready: 'Stages ready',
+              blueprints_ready: 'Ready',
+              stages_edit_action: 'Edit growth stages',
+              stages_action: 'Configure growth stages'
+            },
             blueprint_summary: {
               count: '{{count}} task plan(s)',
-              edit_action: 'Edit task plans'
+              edit_action: 'Edit task plans',
+              empty_on_detail: 'No task plans in this stage yet.'
             },
-            no_task_schedule_blueprints: 'No task plans yet.'
+            stage_required_gdd_label: 'Required GDD for this stage',
+            gdd_unit: '°C·day',
+            blueprint_stage_lane: {
+              gdd_range: '{{start}}–{{end}} °C·day',
+              board_label: 'Task plans by stage'
+            },
+            unnamed_blueprint: '(Unnamed task)'
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = withCropDetailSummaryState(loadedState, [
+      {
+        id: 21,
+        crop_id: 3,
+        agricultural_task_id: 5,
+        source_agricultural_task_id: null,
+        stage_order: 1,
+        stage_name: 'Vegetative',
+        gdd_trigger: 900,
+        gdd_tolerance: null,
+        task_type: 'field_work',
+        source: 'manual',
+        priority: 1,
+        amount: null,
+        amount_unit: null,
+        description: null,
+        weather_dependency: null,
+        time_per_sqm: null,
+        name: 'Out of range task'
+      }
+    ]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('.crop-detail__stage-task-badge--attention')
+    ).toBeTruthy();
+  });
+
+  it('shows per-column empty message when a stage has no blueprints', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Lead',
+            blueprint_readiness: {
+              detail_title: 'Status',
+              stages_ready: 'Stages ready',
+              stages_missing: 'Stages missing',
+              blueprints_ready: 'Ready',
+              blueprints_missing: 'Missing',
+              stages_edit_action: 'Edit growth stages',
+              stages_action: 'Configure growth stages'
+            },
+            blueprint_summary: {
+              count: '{{count}} task plan(s)',
+              edit_action: 'Edit task plans',
+              empty_on_detail: 'No task plans in this stage yet.'
+            },
+            stage_required_gdd_label: 'Required GDD for this stage',
+            gdd_unit: '°C·day',
+            blueprint_stage_lane: {
+              gdd_range: '{{start}}–{{end}} °C·day',
+              board_label: 'Task plans by stage'
+            }
           }
         }
       },
@@ -388,7 +512,115 @@ describe('CropDetailComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.textContent).toContain('No task plans yet.');
+    expect(fixture.nativeElement.textContent).toContain('No task plans in this stage yet.');
+  });
+
+  it('uses edit stages CTA when stage requirements are ready', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Lead',
+            blueprint_readiness: {
+              detail_title: 'Status',
+              stages_ready: 'Stages ready',
+              blueprints_ready: 'Ready',
+              stages_edit_action: 'Edit growth stages',
+              stages_action: 'Configure growth stages'
+            },
+            blueprint_summary: {
+              count: '{{count}} task plan(s)',
+              edit_action: 'Edit task plans',
+              empty_on_detail: 'No task plans in this stage yet.'
+            },
+            stage_required_gdd_label: 'Required GDD for this stage',
+            gdd_unit: '°C·day',
+            blueprint_stage_lane: {
+              gdd_range: '{{start}}–{{end}} °C·day',
+              board_label: 'Task plans by stage'
+            }
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      blueprintReadiness: {
+        ...defaultBlueprintReadiness(),
+        stageRequirementsReady: true,
+        blueprintsReady: true,
+        ready: true
+      }
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const stagesLink = fixture.nativeElement.querySelector(
+      'a[href*="/crops/3/stages"]'
+    ) as HTMLAnchorElement | null;
+    expect(stagesLink?.textContent).toContain('Edit growth stages');
+  });
+
+  it('hides gdd group label when trigger matches cumulative range start', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Lead',
+            blueprint_readiness: {
+              detail_title: 'Status',
+              stages_ready: 'Stages ready',
+              blueprints_ready: 'Ready',
+              stages_edit_action: 'Edit growth stages',
+              stages_action: 'Configure growth stages'
+            },
+            unnamed_blueprint: '(Unnamed task)'
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = withCropDetailSummaryState(loadedState, [
+      {
+        id: 20,
+        crop_id: 3,
+        agricultural_task_id: 5,
+        source_agricultural_task_id: null,
+        stage_order: 1,
+        stage_name: 'Vegetative',
+        gdd_trigger: 0,
+        gdd_tolerance: null,
+        task_type: 'field_work',
+        source: 'manual',
+        priority: 1,
+        amount: null,
+        amount_unit: null,
+        description: null,
+        weather_dependency: null,
+        time_per_sqm: null,
+        name: 'Sowing'
+      }
+    ]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelectorAll('.crop-detail__stage-task-group-label')).toHaveLength(0);
+    expect(fixture.nativeElement.textContent).toContain('Sowing');
   });
 
   it('formats created_at using the active app language', async () => {

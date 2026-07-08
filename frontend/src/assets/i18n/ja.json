@@ -452,9 +452,7 @@
       "pest_family_label": "科",
       "pest_order_label": "目",
       "pest_occurrence_label": "発生時期",
-      "stages_title": "生育ステージ",
       "stage_order": "順序",
-      "no_stages_title": "まだ生育ステージが登録されていません",
       "no_stages_description": "この作物の生育ステージを追加してください。",
       "temperature_requirement": "温度要件",
       "thermal_requirement": "熱要件（GDD）",
@@ -468,7 +466,7 @@
       "frost_threshold": "霜閾値",
       "sterility_risk_threshold": "不稔リスク閾値",
       "max_temperature": "最大限界温度",
-      "required_gdd": "必要積算温度",
+      "stage_required_gdd_label": "このステージの必要積算温度",
       "gdd_unit": "°C·日",
       "minimum_sunshine_hours": "最低日照時間",
       "target_sunshine_hours": "目標日照時間",
@@ -476,12 +474,14 @@
       "daily_uptake_p": "リン (P) 吸収量",
       "daily_uptake_k": "カリウム (K) 吸収量",
       "task_schedule_blueprints_title": "作業予定テンプレート",
+      "cultivation_template_title": "栽培テンプレート",
       "blueprint_summary": {
         "count": "{{count}}件の作業予定",
         "attention_suffix": "（{{count}}件は要確認）",
         "timing_required": "タイミング要指定",
         "setup_required": "生育ステージまたは作業予定の設定が未完了です。",
-        "edit_action": "作業予定を編集"
+        "edit_action": "作業予定を編集",
+        "empty_on_detail": "作業予定はまだありません。"
       },
       "task_schedule_blueprints_lead": "栽培計画の作業スケジュールは、このテンプレートから自動生成されます。",
       "task_schedule_blueprints_gdd_axis_caption": "栽培開始からの累積（ステージ先頭からではありません）",
@@ -525,12 +525,14 @@
       },
       "blueprint_readiness": {
         "title": "AI生成の前に必要な情報",
+        "detail_title": "設定状況",
         "blueprints_ready": "作業予定が1件以上登録されています",
         "blueprints_missing": "作業予定が未登録です",
         "blueprints_action": "作業予定を登録する",
         "stages_ready": "生育ステージの基準温度と必要積算温度が設定されています",
         "stages_missing": "生育ステージの基準温度または必要積算温度が未設定です",
-        "stages_action": "生育ステージを設定する"
+        "stages_action": "生育ステージを設定する",
+        "stages_edit_action": "生育ステージを編集"
       },
       "blueprint_errors": {
         "missing_blueprints": "作業予定が未登録のため、AIによる提案を取り込めません。",
@@ -546,7 +548,7 @@
       "blueprint_stage_lane": {
         "unassigned": "ステージ未設定",
         "unassigned_hint": "生育ステージを設定してください",
-        "gdd_range": "{{start}}〜{{end}} ℃·日",
+        "gdd_range": "{{start}}〜{{end}} °C·日",
         "gdd_range_missing": "必要積算温度が未設定",
         "out_of_range_count": "範囲外 {{count}} 件（{{start}}〜{{end}} ℃·日）",
         "board_label": "生育ステージごとの作業予定",

@@ -1928,9 +1928,7 @@
       "pest_family_label": "Family",
       "pest_order_label": "Order",
       "pest_occurrence_label": "Season",
-      "stages_title": "Growth Stages",
       "stage_order": "Order",
-      "no_stages_title": "No growth stages registered yet",
       "no_stages_description": "Please add growth stages for this crop.",
       "temperature_requirement": "Temperature Requirements",
       "thermal_requirement": "Thermal Requirements (GDD)",
@@ -1944,7 +1942,7 @@
       "frost_threshold": "Frost Threshold",
       "sterility_risk_threshold": "Sterility Risk Threshold",
       "max_temperature": "Maximum Temperature",
-      "required_gdd": "Required GDD",
+      "stage_required_gdd_label": "Required GDD for this stage",
       "gdd_unit": "°C·day",
       "minimum_sunshine_hours": "Minimum Sunshine Hours",
       "target_sunshine_hours": "Target Sunshine Hours",
@@ -1952,12 +1950,14 @@
       "daily_uptake_p": "Phosphorus (P) Uptake",
       "daily_uptake_k": "Potassium (K) Uptake",
       "task_schedule_blueprints_title": "Task Schedule Templates",
+      "cultivation_template_title": "Cultivation template",
       "blueprint_summary": {
         "count": "{{count}} task plan(s)",
         "attention_suffix": "({{count}} need attention)",
         "timing_required": "Timing required",
         "setup_required": "Growth stages or task plans are not fully configured yet.",
-        "edit_action": "Edit task plans"
+        "edit_action": "Edit task plans",
+        "empty_on_detail": "No task plans yet."
       },
       "task_schedule_blueprints_lead": "When you create a cultivation plan, work schedules are generated automatically from these templates.",
       "task_schedule_blueprints_gdd_axis_caption": "Cumulative from crop start (not from stage start).",
@@ -2000,12 +2000,14 @@
       },
       "blueprint_readiness": {
         "title": "Required before AI generation",
+        "detail_title": "Configuration status",
         "blueprints_ready": "At least one task plan is registered",
         "blueprints_missing": "No task plans registered yet",
         "blueprints_action": "Register task plans",
         "stages_ready": "Growth stages have base temperature and required GDD",
         "stages_missing": "Growth stages are missing base temperature or required GDD",
-        "stages_action": "Configure growth stages"
+        "stages_action": "Configure growth stages",
+        "stages_edit_action": "Edit growth stages"
       },
       "blueprint_errors": {
         "missing_blueprints": "AI suggestions cannot be imported because no task plans are registered yet.",
@@ -2021,7 +2023,7 @@
       "blueprint_stage_lane": {
         "unassigned": "No stage assigned",
         "unassigned_hint": "Assign a growth stage",
-        "gdd_range": "{{start}}–{{end}} ℃·day",
+        "gdd_range": "{{start}}–{{end}} °C·day",
         "gdd_range_missing": "Required GDD not set",
         "out_of_range_count": "{{count}} out of range ({{start}}–{{end}} ℃·day)",
         "board_label": "Task plans grouped by growth stage",

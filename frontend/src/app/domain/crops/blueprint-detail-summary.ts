@@ -175,3 +175,26 @@ export function buildBlueprintDetailSummary(
     attentionCount: unsetTimingCount + issueCount
   };
 }
+
+export function shouldShowBlueprintSummaryGddGroupLabel(
+  lane: { cumulativeGddStart: number | null },
+  group: { gddTrigger: number | null }
+): boolean {
+  if (group.gddTrigger == null) {
+    return true;
+  }
+  if (lane.cumulativeGddStart == null) {
+    return true;
+  }
+  return group.gddTrigger !== lane.cumulativeGddStart;
+}
+
+export function blueprintDetailSummaryItemNeedsAttention(
+  item: BlueprintDetailSummaryItem
+): boolean {
+  return (
+    item.gddError === 'out_of_range' ||
+    item.gddError === 'missing_stage' ||
+    item.gddError === 'gdd_required'
+  );
+}

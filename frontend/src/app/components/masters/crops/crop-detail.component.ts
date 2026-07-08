@@ -20,6 +20,15 @@ import type {
   BlueprintDetailSummaryGddGroup,
   BlueprintDetailSummaryItem
 } from '../../../domain/crops/blueprint-detail-summary';
+import {
+  shouldShowBlueprintSummaryGddGroupLabel,
+  blueprintDetailSummaryItemNeedsAttention as domainBlueprintDetailSummaryItemNeedsAttention
+} from '../../../domain/crops/blueprint-detail-summary';
+import type { CropDetailStageColumn } from '../../../domain/crops/crop-detail-stage-board';
+import {
+  gddAxisTotalGdd,
+  type CumulativeGddTimelineSegment
+} from '../../../domain/crops/cumulative-gdd-timeline';
 
 const initialControl: CropDetailViewState = {
   loading: true,
@@ -31,7 +40,9 @@ const initialControl: CropDetailViewState = {
   blueprintsLoading: true,
   blueprintCount: 0,
   blueprintReadiness: defaultBlueprintReadiness(),
-  blueprintSummary: null
+  blueprintSummary: null,
+  stageBoardColumns: [],
+  cumulativeGddTimelineSegments: []
 };
 
 @Component({
@@ -103,44 +114,42 @@ const initialControl: CropDetailViewState = {
           </div>
         </section>
 
-        <section class="section-card" aria-labelledby="stages-heading">
-          <h2 id="stages-heading" class="section-title">{{ 'crops.show.stages_title' | translate }}</h2>
-          @if (control.crop.crop_stages?.length) {
-            <div class="stages-grid">
-              @for (stage of control.crop.crop_stages; track stage.id) {
-                <div class="stage-card">
-                  <h3 class="stage-card__title">{{ stage.name }}</h3>
-                  <div class="stage-details">
-                    @if (stage.thermal_requirement) {
-                      <p><strong>{{ 'crops.show.required_gdd' | translate }}:</strong>
-                        {{ stage.thermal_requirement.required_gdd }} {{ 'crops.show.gdd_unit' | translate }}</p>
-                    }
-                    @if (stage.temperature_requirement) {
-                      <p><strong>{{ 'crops.show.optimal_temperature' | translate }}:</strong>
-                        {{ stage.temperature_requirement.optimal_min }}{{ 'crops.show.celsius_unit' | translate }}
-                        - {{ stage.temperature_requirement.optimal_max }}{{ 'crops.show.celsius_unit' | translate }}</p>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="crop-detail__stages-empty">{{ 'crops.show.no_stages_description' | translate }}</p>
-          }
-          <a
-            [routerLink]="['/crops', control.crop.id, 'stages']"
-            class="btn-secondary crop-detail__stages-cta"
-          >
-            {{ 'crops.show.blueprint_readiness.stages_action' | translate }}
-          </a>
-        </section>
-
-        <section class="section-card crop-detail__blueprint-summary" aria-labelledby="blueprints-summary-heading">
-          <h2 id="blueprints-summary-heading" class="section-title">
-            {{ 'crops.show.task_schedule_blueprints_title' | translate }}
+        <section class="section-card crop-detail__cultivation-template" aria-labelledby="cultivation-template-heading">
+          <h2 id="cultivation-template-heading" class="section-title">
+            {{ 'crops.show.cultivation_template_title' | translate }}
           </h2>
+          <p class="section-card__description crop-detail__cultivation-lead">
+            {{ 'crops.show.task_schedule_blueprints_lead' | translate }}
+          </p>
+
+          @if (!control.blueprintsLoading) {
+            <div class="blueprint-readiness" role="status">
+              <p class="blueprint-readiness__title">
+                {{ 'crops.show.blueprint_readiness.detail_title' | translate }}
+              </p>
+              <ul class="blueprint-readiness__list">
+                <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.stageRequirementsReady">
+                  @if (control.blueprintReadiness.stageRequirementsReady) {
+                    <span>{{ 'crops.show.blueprint_readiness.stages_ready' | translate }}</span>
+                  } @else {
+                    <span>{{ 'crops.show.blueprint_readiness.stages_missing' | translate }}</span>
+                  }
+                </li>
+                <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.blueprintsReady">
+                  @if (control.blueprintReadiness.blueprintsReady) {
+                    <span>{{ 'crops.show.blueprint_readiness.blueprints_ready' | translate }}</span>
+                  } @else {
+                    <span>{{ 'crops.show.blueprint_readiness.blueprints_missing' | translate }}</span>
+                  }
+                </li>
+              </ul>
+            </div>
+          }
+
           @if (control.blueprintsLoading) {
             <p class="master-loading">{{ 'common.loading' | translate }}</p>
+          } @else if (!control.crop.crop_stages?.length) {
+            <p class="crop-detail__stages-empty">{{ 'crops.show.no_stages_description' | translate }}</p>
           } @else {
             <p class="crop-detail__blueprint-summary-count">
               {{
@@ -161,87 +170,145 @@ const initialControl: CropDetailViewState = {
                 {{ 'crops.show.blueprint_summary.setup_required' | translate }}
               </p>
             }
-            @if (control.blueprintSummary && control.blueprintCount === 0) {
-              <p class="crop-detail__blueprint-summary-empty">
-                {{ 'crops.show.no_task_schedule_blueprints' | translate }}
-              </p>
-            } @else if (control.blueprintSummary && control.blueprintSummary.lanes.length > 0) {
-              <div class="blueprint-summary-grid">
-                @for (lane of control.blueprintSummary!.lanes; track blueprintSummaryLaneId(lane)) {
-                  <div class="blueprint-summary-card">
-                    <h3 class="blueprint-summary-card__title">
-                      @if (lane.stageOrder == null) {
-                        {{ 'crops.show.blueprint_stage_lane.unassigned' | translate }}
-                      } @else {
-                        {{ lane.stageName }}
+            @if (control.cumulativeGddTimelineSegments.length) {
+              <div
+                class="blueprint-gdd-axis"
+                role="img"
+                [attr.aria-label]="
+                  'crops.show.task_schedule_blueprints_gdd_axis_label'
+                    | translate: {
+                        total: gddAxisTotal(control.cumulativeGddTimelineSegments)
                       }
-                    </h3>
-                    @if (lane.stageOrder != null) {
-                      @if (lane.gddRangeMissing) {
-                        <p class="blueprint-summary-card__gdd-range blueprint-summary-card__gdd-range--warn">
-                          {{ 'crops.show.blueprint_stage_lane.gdd_range_missing' | translate }}
-                        </p>
-                      } @else {
-                        <p class="blueprint-summary-card__gdd-range">
+                "
+              >
+                <p class="blueprint-gdd-axis__caption">
+                  {{ 'crops.show.task_schedule_blueprints_gdd_axis_caption' | translate }}
+                </p>
+                <div class="blueprint-gdd-axis__bar">
+                  @for (
+                    segment of control.cumulativeGddTimelineSegments;
+                    track segment.stageOrder
+                  ) {
+                    <div
+                      class="blueprint-gdd-axis__segment"
+                      [style.flex-grow]="segment.cumulativeGddEnd - segment.cumulativeGddStart"
+                    >
+                      <span class="blueprint-gdd-axis__segment-label">
+                        <span class="blueprint-gdd-axis__segment-name">{{ segment.stageName }}</span>
+                        <span class="blueprint-gdd-axis__segment-gdd">
                           {{
                             'crops.show.blueprint_stage_lane.gdd_range'
                               | translate: {
-                                  start: lane.cumulativeGddStart,
-                                  end: lane.cumulativeGddEnd
+                                  start: segment.cumulativeGddStart,
+                                  end: segment.cumulativeGddEnd
                                 }
                           }}
+                        </span>
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+            <div
+              class="crop-detail__stage-board"
+              role="list"
+              [attr.aria-label]="'crops.show.blueprint_stage_lane.board_label' | translate"
+            >
+              @for (column of control.stageBoardColumns; track stageBoardColumnId(column)) {
+                <div class="crop-detail__stage-column" role="listitem">
+                  <h3 class="crop-detail__stage-column-title">
+                    @if (column.stageOrder == null) {
+                      {{ 'crops.show.blueprint_stage_lane.unassigned' | translate }}
+                    } @else {
+                      {{ column.stageName }}
+                    }
+                  </h3>
+                  @if (column.stageOrder != null) {
+                    <div class="crop-detail__stage-requirements">
+                      @if (column.requiredGdd != null) {
+                        <p class="crop-detail__stage-requirement">
+                          <strong>{{ 'crops.show.stage_required_gdd_label' | translate }}:</strong>
+                          {{ column.requiredGdd }} {{ 'crops.show.gdd_unit' | translate }}
                         </p>
                       }
-                    } @else {
-                      <p class="blueprint-summary-card__gdd-range blueprint-summary-card__gdd-range--warn">
-                        {{ 'crops.show.blueprint_stage_lane.unassigned_hint' | translate }}
+                      @if (column.optimalMin != null && column.optimalMax != null) {
+                        <p class="crop-detail__stage-requirement">
+                          <strong>{{ 'crops.show.optimal_temperature' | translate }}:</strong>
+                          {{ column.optimalMin }}{{ 'crops.show.celsius_unit' | translate }}
+                          - {{ column.optimalMax }}{{ 'crops.show.celsius_unit' | translate }}
+                        </p>
+                      }
+                    </div>
+                    @if (column.gddRangeMissing) {
+                      <p class="crop-detail__stage-cumulative-range crop-detail__stage-cumulative-range--warn">
+                        {{ 'crops.show.blueprint_stage_lane.gdd_range_missing' | translate }}
                       </p>
-                    }
-                    @if (
-                      lane.stageOrder != null &&
-                      lane.outOfRangeCount > 0 &&
-                      !lane.gddRangeMissing
+                    } @else if (
+                      column.cumulativeGddStart != null && column.cumulativeGddEnd != null
                     ) {
-                      <p class="blueprint-summary-card__lane-warning" role="status">
+                      <p class="crop-detail__stage-cumulative-range">
                         {{
-                          'crops.show.blueprint_stage_lane.out_of_range_count'
+                          'crops.show.blueprint_stage_lane.gdd_range'
                             | translate: {
-                                count: lane.outOfRangeCount,
-                                start: lane.cumulativeGddStart,
-                                end: lane.cumulativeGddEnd
+                                start: column.cumulativeGddStart,
+                                end: column.cumulativeGddEnd
                               }
                         }}
                       </p>
                     }
-                    <div class="blueprint-summary-card__gdd-groups">
+                  } @else {
+                    <p class="crop-detail__stage-cumulative-range crop-detail__stage-cumulative-range--warn">
+                      {{ 'crops.show.blueprint_stage_lane.unassigned_hint' | translate }}
+                    </p>
+                  }
+                  @if (
+                    column.stageOrder != null &&
+                    column.outOfRangeCount > 0 &&
+                    !column.gddRangeMissing
+                  ) {
+                    <p class="crop-detail__stage-lane-warning" role="status">
+                      {{
+                        'crops.show.blueprint_stage_lane.out_of_range_count'
+                          | translate: {
+                              count: column.outOfRangeCount,
+                              start: column.cumulativeGddStart,
+                              end: column.cumulativeGddEnd
+                            }
+                      }}
+                    </p>
+                  }
+                  @if (column.gddGroups.length === 0) {
+                    <p class="crop-detail__stage-tasks-empty">
+                      {{ 'crops.show.blueprint_summary.empty_on_detail' | translate }}
+                    </p>
+                  } @else {
+                    <div class="crop-detail__stage-task-groups">
                       @for (
-                        group of lane.gddGroups;
+                        group of column.gddGroups;
                         track blueprintSummaryGddGroupId(group, $index)
                       ) {
-                        <div class="blueprint-summary-card__gdd-group">
-                          @if (group.gddTrigger != null) {
-                            <p class="blueprint-summary-card__gdd-group-label">
-                              {{ group.gddTrigger }}{{ 'crops.show.gdd_unit' | translate }}
+                        <div class="crop-detail__stage-task-group">
+                          @if (showBlueprintSummaryGddGroupLabel(column, group)) {
+                            <p class="crop-detail__stage-task-group-label">
+                              @if (group.gddTrigger != null) {
+                                {{ group.gddTrigger }}{{ 'crops.show.gdd_unit' | translate }}
+                              }
                             </p>
                           }
-                          <ul class="blueprint-summary-card__badges" role="list">
+                          <ul class="crop-detail__stage-task-badges" role="list">
                             @for (item of group.items; track item.id) {
                               <li
-                                class="blueprint-summary-card__badge"
-                                [class.blueprint-summary-card__badge--attention]="
-                                  item.gddError === 'out_of_range' ||
-                                  item.gddError === 'missing_stage' ||
-                                  item.gddError === 'gdd_required'
+                                class="crop-detail__stage-task-badge"
+                                [class.crop-detail__stage-task-badge--attention]="
+                                  blueprintDetailSummaryItemNeedsAttention(item)
                                 "
                               >
-                                <span class="blueprint-summary-card__badge-label">
+                                <span class="crop-detail__stage-task-badge-label">
                                   {{ blueprintSummaryTaskName(item) }}
                                 </span>
                                 @if (item.gddError === 'gdd_required') {
-                                  <span
-                                    class="blueprint-summary-card__badge-status"
-                                    role="status"
-                                  >
+                                  <span class="crop-detail__stage-task-badge-status" role="status">
                                     {{
                                       'crops.show.blueprint_summary.timing_required' | translate
                                     }}
@@ -249,10 +316,7 @@ const initialControl: CropDetailViewState = {
                                 } @else if (
                                   item.gddTrigger == null && item.gddError == null
                                 ) {
-                                  <span
-                                    class="blueprint-summary-card__badge-status"
-                                    role="status"
-                                  >
+                                  <span class="crop-detail__stage-task-badge-status" role="status">
                                     {{ 'crops.show.blueprint_gdd_unset' | translate }}
                                   </span>
                                 }
@@ -262,17 +326,31 @@ const initialControl: CropDetailViewState = {
                         </div>
                       }
                     </div>
-                  </div>
-                }
-              </div>
-            }
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <div class="crop-detail__cultivation-actions">
+            <a
+              [routerLink]="['/crops', control.crop.id, 'stages']"
+              class="btn-secondary"
+            >
+              {{
+                (control.blueprintReadiness.stageRequirementsReady
+                  ? 'crops.show.blueprint_readiness.stages_edit_action'
+                  : 'crops.show.blueprint_readiness.stages_action')
+                  | translate
+              }}
+            </a>
             <a
               [routerLink]="['/crops', control.crop.id, 'task_schedule_blueprints']"
-              class="btn-primary crop-detail__blueprint-summary-cta"
+              class="btn-primary"
             >
               {{ 'crops.show.blueprint_summary.edit_action' | translate }}
             </a>
-          }
+          </div>
         </section>
       }
     </main>
@@ -310,8 +388,23 @@ export class CropDetailComponent implements CropDetailView, OnInit {
     return formatIsoDateTimeForDisplay(value, this.translate.currentLang);
   }
 
-  blueprintSummaryLaneId(lane: { stageOrder: number | null }): string {
-    return lane.stageOrder == null ? 'unassigned' : String(lane.stageOrder);
+  stageBoardColumnId(column: CropDetailStageColumn): string {
+    return column.stageOrder == null ? 'unassigned' : String(column.stageOrder);
+  }
+
+  gddAxisTotal(segments: CumulativeGddTimelineSegment[]): number {
+    return gddAxisTotalGdd(segments);
+  }
+
+  showBlueprintSummaryGddGroupLabel(
+    column: CropDetailStageColumn,
+    group: BlueprintDetailSummaryGddGroup
+  ): boolean {
+    return shouldShowBlueprintSummaryGddGroupLabel(column, group);
+  }
+
+  blueprintDetailSummaryItemNeedsAttention(item: BlueprintDetailSummaryItem): boolean {
+    return domainBlueprintDetailSummaryItemNeedsAttention(item);
   }
 
   blueprintSummaryGddGroupId(

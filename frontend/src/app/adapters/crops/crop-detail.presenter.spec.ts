@@ -18,7 +18,9 @@ const baseControl: CropDetailViewState = withCropDetailSummaryState({
   blueprintsLoading: false,
   blueprintCount: 0,
   blueprintReadiness: defaultBlueprintReadiness(),
-  blueprintSummary: null
+  blueprintSummary: null,
+  stageBoardColumns: [],
+  cumulativeGddTimelineSegments: []
 });
 
 describe('CropDetailPresenter', () => {
