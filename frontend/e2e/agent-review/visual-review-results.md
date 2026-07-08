@@ -7,6 +7,12 @@
 - **キャプチャ**: `npm run e2e:capture-for-agent`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1` `AGRR_DEV_API_URL=http://127.0.0.1:8080`）。AuthTest モックログイン・`/api/v1/auth/me` 非モック。`verify-capture-complete` **150 PNG**（50 ルート × 3 言語）。キャプチャ日: 2026-06-18。
 - **前提**: development SQLite・参照データ + E2E Baseline Plan。CSS トークンは `npm run audit:css-tokens:enforce` exit 0（var 外 0 件）。本レビューでは CSS 列挙は行わない。
 
+## 追記メタ（作業テンプレート / blueprint UI）
+
+- **レビュー日**: 2026-07-03（UTC）
+- **対象**: `route-to-png.md` **#20** `crops/:id`（ja / en / in）、コードレビュー補足 **#47** 導線
+- **キャプチャ**: `playwright test route-manifest-visual.spec.ts --grep "crops/:id"`（`E2E_CAPTURE_DEV_SESSION=1` `E2E_STRANGLER=1`）。`crops_id.{ja,en,in}.png` を再取得（実装後 UI を反映）。
+
 ## サマリ表
 
 | # | pattern | ja | en | in | 結果 | i18n | 指摘 |
@@ -30,38 +36,40 @@
 | 17 | `agricultural_tasks/:id/edit` | `agricultural_tasks_id_edit.ja.png` | `agricultural_tasks_id_edit.en.png` | `agricultural_tasks_id_edit.in.png` | OK | OK | なし |
 | 18 | `agricultural_tasks/new` | `agricultural_tasks_new.ja.png` | `agricultural_tasks_new.en.png` | `agricultural_tasks_new.in.png` | OK | OK | なし |
 | 19 | `crops` | `crops.ja.png` | `crops.en.png` | `crops.in.png` | OK | 注意 | i18n: en で品種名と「Reference Crop」がスペースなしで連結 |
-| 20 | `crops/:id` | `crops_id.ja.png` | `crops_id.en.png` | `crops_id.in.png` | OK | 注意 | i18n: ja/in で作成日・更新日が英語日時形式のまま |
+| 20 | `crops/:id` | `crops_id.ja.png` | `crops_id.en.png` | `crops_id.in.png` | OK | OK | layout: 3 カード縦積み・空状態は明瞭。i18n: 作業予定セクションの用語統一・作成日/更新日のロケール表示（2026-07-03 修正） |
 | 21 | `crops/:id/edit` | `crops_id_edit.ja.png` | `crops_id_edit.en.png` | `crops_id_edit.in.png` | OK | OK | なし |
-| 22 | `crops/new` | `crops_new.ja.png` | `crops_new.en.png` | `crops_new.in.png` | OK | OK | なし |
-| 23 | `dashboard` | `dashboard.ja.png` | `dashboard.en.png` | `dashboard.in.png` | OK | OK | なし |
-| 24 | `farms` | `farms.ja.png` | `farms.en.png` | `farms.in.png` | OK | OK | なし |
-| 25 | `farms/:id` | `farms_id.ja.png` | `farms_id.en.png` | `farms_id.in.png` | OK | 注意 | i18n: 地域がコード `jp` のまま（ja/en/in 共通） |
-| 26 | `farms/:id/edit` | `farms_id_edit.ja.png` | `farms_id_edit.en.png` | `farms_id_edit.in.png` | OK | OK | なし |
-| 27 | `farms/new` | `farms_new.ja.png` | `farms_new.en.png` | `farms_new.in.png` | OK | OK | なし |
-| 28 | `fertilizes` | `fertilizes.ja.png` | `fertilizes.en.png` | `fertilizes.in.png` | OK | OK | なし |
-| 29 | `fertilizes/:id` | `fertilizes_id.ja.png` | `fertilizes_id.en.png` | `fertilizes_id.in.png` | 要確認 | 注意 | layout: API 404 で本文未表示。i18n: エラー文言が英語の生 HTTP メッセージ |
-| 30 | `fertilizes/:id/edit` | `fertilizes_id_edit.ja.png` | `fertilizes_id_edit.en.png` | `fertilizes_id_edit.in.png` | 要確認 | 注意 | layout: 404 でフォーム空。i18n: 見出し欠落・エラー英語 |
-| 31 | `fertilizes/new` | `fertilizes_new.ja.png` | `fertilizes_new.en.png` | `fertilizes_new.in.png` | OK | OK | なし |
-| 32 | `interaction_rules` | `interaction_rules.ja.png` | `interaction_rules.en.png` | `interaction_rules.in.png` | OK | OK | なし |
-| 33 | `interaction_rules/:id` | `interaction_rules_id.ja.png` | `interaction_rules_id.en.png` | `interaction_rules_id.in.png` | OK | 要確認 | i18n: `interaction_rules.show.region` 生キー（3 言語） |
-| 34 | `interaction_rules/:id/edit` | `interaction_rules_id_edit.ja.png` | `interaction_rules_id_edit.en.png` | `interaction_rules_id_edit.in.png` | OK | OK | なし |
-| 35 | `interaction_rules/new` | `interaction_rules_new.ja.png` | `interaction_rules_new.en.png` | `interaction_rules_new.in.png` | OK | OK | なし |
-| 36 | `pesticides` | `pesticides.ja.png` | `pesticides.en.png` | `pesticides.in.png` | OK | OK | なし |
-| 37 | `pesticides/:id` | `pesticides_id.ja.png` | `pesticides_id.en.png` | `pesticides_id.in.png` | 要確認 | 注意 | layout: API 500 で本文未表示。i18n: エラー文言が英語の生 HTTP メッセージ |
-| 38 | `pesticides/:id/edit` | `pesticides_id_edit.ja.png` | `pesticides_id_edit.en.png` | `pesticides_id_edit.in.png` | 要確認 | 要確認 | layout: 500 でフォーム空。i18n: `pesticides.edit.title_default` 生キー（3 言語） |
-| 39 | `pesticides/new` | `pesticides_new.ja.png` | `pesticides_new.en.png` | `pesticides_new.in.png` | OK | OK | なし |
-| 40 | `pests` | `pests.ja.png` | `pests.en.png` | `pests.in.png` | OK | OK | マスタ害虫名の多言語混在はデータ由来 |
-| 41 | `pests/:id` | `pests_id.ja.png` | `pests_id.en.png` | `pests_id.in.png` | OK | 注意 | i18n: Region が `us` コード。説明・発生季節は英語データのまま |
-| 42 | `pests/:id/edit` | `pests_id_edit.ja.png` | `pests_id_edit.en.png` | `pests_id_edit.in.png` | OK | 注意 | i18n: 説明・発生季節フィールドが ja/in でも英語 |
-| 43 | `pests/new` | `pests_new.ja.png` | `pests_new.en.png` | `pests_new.in.png` | OK | OK | なし |
-| 44 | `plans` | `plans.ja.png` | `plans.en.png` | `plans.in.png` | OK | OK | 計画名「E2E Baseline Plan」はテストデータ |
-| 45 | `plans/:id` | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` | 注意 | OK | layout: en でガント左端縦線が「Baseline Field」と重なる |
-| 46 | `plans/:id/optimizing` | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` | 注意 | 注意 | layout: 進捗 0% 待機。i18n: 見出しが二重（例: ja「最適化中 最適化中」） |
-| 47 | `plans/:id/task_schedule` | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` | OK | OK | layout: `back_to_hub` 導線・ナビ非 active は意図どおり。**修正済**: ステータス i18n・エラー再試行 |
-| 48 | `plans/:id/work` | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` | OK | OK | **修正済**: 記録ボタンをリスト下静的配置・エラー再試行。`back_to_hub`・ナビ active は OK |
-| 49 | `plans/:id/work_records` | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` | OK | OK | **修正済**: エラー再試行追加。`back_to_hub`・ナビ active は OK |
-| 50 | `plans/new` | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` | OK | 注意 | i18n: ja は農場のみ言及、en/in は「年と農場」— 見出し意味がずれる |
-| 51 | `work` | `work.ja.png` | `work.en.png` | `work.in.png` | 注意 | OK | layout: キャプチャ時 API 501 のため農場カード未表示。エラーカード＋「再読み込み」・ナビ active は意図どおり。正常時のカード一覧は未検証 |
+| 22 | `crops/:id/stages` | `crops_id_stages.ja.png` | `crops_id_stages.en.png` | `crops_id_stages.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
+| 23 | `crops/:id/task_schedule_blueprints` | `crops_id_task_schedule_blueprints.ja.png` | `crops_id_task_schedule_blueprints.en.png` | `crops_id_task_schedule_blueprints.in.png` | 未レビュー | 未レビュー | 新規ルート — キャプチャ未実施 |
+| 24 | `crops/new` | `crops_new.ja.png` | `crops_new.en.png` | `crops_new.in.png` | OK | OK | なし |
+| 25 | `dashboard` | `dashboard.ja.png` | `dashboard.en.png` | `dashboard.in.png` | OK | OK | なし |
+| 26 | `farms` | `farms.ja.png` | `farms.en.png` | `farms.in.png` | OK | OK | なし |
+| 27 | `farms/:id` | `farms_id.ja.png` | `farms_id.en.png` | `farms_id.in.png` | OK | 注意 | i18n: 地域がコード `jp` のまま（ja/en/in 共通） |
+| 28 | `farms/:id/edit` | `farms_id_edit.ja.png` | `farms_id_edit.en.png` | `farms_id_edit.in.png` | OK | OK | なし |
+| 29 | `farms/new` | `farms_new.ja.png` | `farms_new.en.png` | `farms_new.in.png` | OK | OK | なし |
+| 30 | `fertilizes` | `fertilizes.ja.png` | `fertilizes.en.png` | `fertilizes.in.png` | OK | OK | なし |
+| 31 | `fertilizes/:id` | `fertilizes_id.ja.png` | `fertilizes_id.en.png` | `fertilizes_id.in.png` | 要確認 | 注意 | layout: API 404 で本文未表示。i18n: エラー文言が英語の生 HTTP メッセージ |
+| 32 | `fertilizes/:id/edit` | `fertilizes_id_edit.ja.png` | `fertilizes_id_edit.en.png` | `fertilizes_id_edit.in.png` | 要確認 | 注意 | layout: 404 でフォーム空。i18n: 見出し欠落・エラー英語 |
+| 33 | `fertilizes/new` | `fertilizes_new.ja.png` | `fertilizes_new.en.png` | `fertilizes_new.in.png` | OK | OK | なし |
+| 34 | `interaction_rules` | `interaction_rules.ja.png` | `interaction_rules.en.png` | `interaction_rules.in.png` | OK | OK | なし |
+| 35 | `interaction_rules/:id` | `interaction_rules_id.ja.png` | `interaction_rules_id.en.png` | `interaction_rules_id.in.png` | OK | 要確認 | i18n: `interaction_rules.show.region` 生キー（3 言語） |
+| 36 | `interaction_rules/:id/edit` | `interaction_rules_id_edit.ja.png` | `interaction_rules_id_edit.en.png` | `interaction_rules_id_edit.in.png` | OK | OK | なし |
+| 37 | `interaction_rules/new` | `interaction_rules_new.ja.png` | `interaction_rules_new.en.png` | `interaction_rules_new.in.png` | OK | OK | なし |
+| 38 | `pesticides` | `pesticides.ja.png` | `pesticides.en.png` | `pesticides.in.png` | OK | OK | なし |
+| 39 | `pesticides/:id` | `pesticides_id.ja.png` | `pesticides_id.en.png` | `pesticides_id.in.png` | 要確認 | 注意 | layout: API 500 で本文未表示。i18n: エラー文言が英語の生 HTTP メッセージ |
+| 40 | `pesticides/:id/edit` | `pesticides_id_edit.ja.png` | `pesticides_id_edit.en.png` | `pesticides_id_edit.in.png` | 要確認 | 要確認 | layout: 500 でフォーム空。i18n: `pesticides.edit.title_default` 生キー（3 言語） |
+| 41 | `pesticides/new` | `pesticides_new.ja.png` | `pesticides_new.en.png` | `pesticides_new.in.png` | OK | OK | なし |
+| 42 | `pests` | `pests.ja.png` | `pests.en.png` | `pests.in.png` | OK | OK | マスタ害虫名の多言語混在はデータ由来 |
+| 43 | `pests/:id` | `pests_id.ja.png` | `pests_id.en.png` | `pests_id.in.png` | OK | 注意 | i18n: Region が `us` コード。説明・発生季節は英語データのまま |
+| 44 | `pests/:id/edit` | `pests_id_edit.ja.png` | `pests_id_edit.en.png` | `pests_id_edit.in.png` | OK | 注意 | i18n: 説明・発生季節フィールドが ja/in でも英語 |
+| 45 | `pests/new` | `pests_new.ja.png` | `pests_new.en.png` | `pests_new.in.png` | OK | OK | なし |
+| 46 | `plans` | `plans.ja.png` | `plans.en.png` | `plans.in.png` | OK | OK | 計画名「E2E Baseline Plan」はテストデータ |
+| 47 | `plans/:id` | `plans_id.ja.png` | `plans_id.en.png` | `plans_id.in.png` | 注意 | OK | layout: en でガント左端縦線が「Baseline Field」と重なる |
+| 48 | `plans/:id/optimizing` | `plans_id_optimizing.ja.png` | `plans_id_optimizing.en.png` | `plans_id_optimizing.in.png` | 注意 | 注意 | layout: 進捗 0% 待機。i18n: 見出しが二重（例: ja「最適化中 最適化中」） |
+| 49 | `plans/:id/task_schedule` | `plans_id_task_schedule.ja.png` | `plans_id_task_schedule.en.png` | `plans_id_task_schedule.in.png` | OK | OK | layout: `back_to_hub` 導線・ナビ非 active は意図どおり。**修正済**: ステータス i18n・エラー再試行 |
+| 50 | `plans/:id/work` | `plans_id_work.ja.png` | `plans_id_work.en.png` | `plans_id_work.in.png` | OK | OK | **修正済**: 記録ボタンをリスト下静的配置・エラー再試行。`back_to_hub`・ナビ active は OK |
+| 51 | `plans/:id/work_records` | `plans_id_work_records.ja.png` | `plans_id_work_records.en.png` | `plans_id_work_records.in.png` | OK | OK | **修正済**: エラー再試行追加。`back_to_hub`・ナビ active は OK |
+| 52 | `plans/new` | `plans_new.ja.png` | `plans_new.en.png` | `plans_new.in.png` | OK | 注意 | i18n: ja は農場のみ言及、en/in は「年と農場」— 見出し意味がずれる |
+| 53 | `work` | `work.ja.png` | `work.en.png` | `work.in.png` | 注意 | OK | layout: キャプチャ時 API 501 のため農場カード未表示。エラーカード＋「再読み込み」・ナビ active は意図どおり。正常時のカード一覧は未検証 |
 
 ## 集計（レイアウト・読み込み）
 
@@ -109,6 +117,14 @@
 2. **#48 plans/:id/work** — タブ切替・戻り導線・ナビ作業記録 active は良好。「+ 作業を記録」がリスト中腹に固定され、上下タスクがフェードで欠ける見え方。
 3. **#49 plans/:id/work_records** — エラー時に文言のみでリトライ不可（#51 と UX 不統一）。`back_to_hub` は表示。キャプチャは API 失敗時の状態。
 4. **#51 work** — 見出し・説明・エラー・リトライは 3 言語で整合。農場カード・空状態・圃場警告はキャプチャ未検証（API 要因）。
+
+### 作業テンプレート / blueprint UI（#20 再レビュー 2026-07-03）
+
+1. **#20 crops/:id** — layout: 作物詳細＋「作業テンプレート」＋「作業予定」の 3 段構成は意図が読み取れる。**2026-07-03 修正**: 作業予定セクションの用語統一、作成日/更新日を `formatIsoDateTimeForDisplay` でアプリ言語に合わせて表示。
+
+### フロー（コード + #47 導線）
+
+- `missing_crop_templates` バナーは単一作物時 `/crops/:id`、複数時 `/crops` へリンク（**2026-07-03 修正**）。
 
 ### データ・キャプチャ環境（Issue 化は任意）
 
