@@ -381,6 +381,51 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     });
   });
 
+  it('saves blueprint GDD on blur after draft edits without reordering cards while typing', () => {
+    const twoBlueprintState = withCropBlueprintDisplayState({
+      ...readyState,
+      blueprints: [
+        readyState.blueprints[0],
+        {
+          ...readyState.blueprints[0],
+          id: 21,
+          agricultural_task_id: 6,
+          name: 'Fertilizing',
+          agricultural_task: { id: 6, name: 'Fertilizing' },
+          gdd_trigger: 50
+        }
+      ],
+      blueprintGddDrafts: { 20: 120, 21: 50 }
+    });
+
+    fixture.detectChanges();
+    component.control = twoBlueprintState;
+    fixture.detectChanges();
+
+    expect(twoBlueprintState.blueprintStageLanes[0].blueprints.map((b) => b.id)).toEqual([
+      21, 20
+    ]);
+
+    component.onGddDraftChange(20, 10);
+    const draftState = withCropBlueprintDisplayState({
+      ...component.control,
+      blueprintGddDrafts: { ...component.control.blueprintGddDrafts, 20: 10 }
+    });
+    component.control = draftState;
+    fixture.detectChanges();
+
+    expect(draftState.blueprintStageLanes[0].blueprints.map((b) => b.id)).toEqual([21, 20]);
+    expect(updateBlueprintUseCase.execute).not.toHaveBeenCalled();
+
+    component.control = draftState;
+    component.saveBlueprintGdd(20);
+    expect(updateBlueprintUseCase.execute).toHaveBeenCalledWith({
+      cropId: 3,
+      blueprintId: 20,
+      gddTrigger: 10
+    });
+  });
+
   it('delegates blueprint drop to update use case with crop context', () => {
     fixture.detectChanges();
     component.control = readyState;

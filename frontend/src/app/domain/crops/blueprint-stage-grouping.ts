@@ -11,23 +11,16 @@ export interface BlueprintStageLane {
   blueprints: CropTaskScheduleBlueprint[];
 }
 
-function gddForSort(
-  blueprint: CropTaskScheduleBlueprint,
-  drafts: Record<number, number | null>
-): number | null {
-  if (Object.hasOwn(drafts, blueprint.id)) {
-    return drafts[blueprint.id];
-  }
+function gddForSort(blueprint: CropTaskScheduleBlueprint): number | null {
   return blueprint.gdd_trigger;
 }
 
 function compareBlueprintsByGdd(
   a: CropTaskScheduleBlueprint,
-  b: CropTaskScheduleBlueprint,
-  drafts: Record<number, number | null>
+  b: CropTaskScheduleBlueprint
 ): number {
-  const aGdd = gddForSort(a, drafts);
-  const bGdd = gddForSort(b, drafts);
+  const aGdd = gddForSort(a);
+  const bGdd = gddForSort(b);
   if (aGdd == null && bGdd == null) {
     return a.id - b.id;
   }
@@ -47,29 +40,25 @@ function sortStages(stages: CropStage[]): CropStage[] {
   return [...stages].sort((a, b) => a.order - b.order);
 }
 
-function unassignedLane(
-  blueprints: CropTaskScheduleBlueprint[],
-  drafts: Record<number, number | null>
-): BlueprintStageLane {
+function unassignedLane(blueprints: CropTaskScheduleBlueprint[]): BlueprintStageLane {
   return {
     stageOrder: null,
     stageName: null,
     cumulativeGddStart: null,
     cumulativeGddEnd: null,
     gddRangeMissing: false,
-    blueprints: [...blueprints].sort((a, b) => compareBlueprintsByGdd(a, b, drafts))
+    blueprints: [...blueprints].sort((a, b) => compareBlueprintsByGdd(a, b))
   };
 }
 
 export function groupBlueprintsByStage(
   stages: CropStage[],
-  blueprints: CropTaskScheduleBlueprint[],
-  blueprintGddDrafts: Record<number, number | null> = {}
+  blueprints: CropTaskScheduleBlueprint[]
 ): BlueprintStageLane[] {
   const sortedStages = sortStages(stages);
 
   if (sortedStages.length === 0) {
-    return [unassignedLane(blueprints, blueprintGddDrafts)];
+    return [unassignedLane(blueprints)];
   }
 
   const cumulativeByOrder = buildStageCumulativeGddByOrder(sortedStages);
@@ -104,7 +93,7 @@ export function groupBlueprintsByStage(
   }
 
   for (const lane of lanes) {
-    lane.blueprints.sort((a, b) => compareBlueprintsByGdd(a, b, blueprintGddDrafts));
+    lane.blueprints.sort((a, b) => compareBlueprintsByGdd(a, b));
   }
 
   return lanes.filter(

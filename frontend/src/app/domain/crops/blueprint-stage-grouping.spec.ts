@@ -57,18 +57,14 @@ describe('groupBlueprintsByStage', () => {
     expect(lanes[2].blueprints.map((b) => b.id)).toEqual([11]);
   });
 
-  it('sorts blueprints within a lane by draft GDD when present', () => {
-    const lanes = groupBlueprintsByStage(
-      stages,
-      [
-        blueprint({ id: 30, stage_order: 1, gdd_trigger: 120 }),
-        blueprint({ id: 31, stage_order: 1, gdd_trigger: 50 }),
-        blueprint({ id: 32, stage_order: 1, gdd_trigger: 200 })
-      ],
-      { 30: 10, 32: 80 }
-    );
+  it('keeps card order by saved gdd_trigger while user is editing a draft', () => {
+    const lanes = groupBlueprintsByStage(stages, [
+      blueprint({ id: 30, stage_order: 1, gdd_trigger: 120 }),
+      blueprint({ id: 31, stage_order: 1, gdd_trigger: 50 }),
+      blueprint({ id: 32, stage_order: 1, gdd_trigger: 200 })
+    ]);
 
-    expect(lanes[0].blueprints.map((b) => b.id)).toEqual([30, 31, 32]);
+    expect(lanes[0].blueprints.map((b) => b.id)).toEqual([31, 30, 32]);
   });
 
   it('sorts blueprints within a lane by gdd_trigger ascending with null last', () => {

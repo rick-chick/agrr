@@ -375,7 +375,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                       "
                       [ngModel]="control.blueprintGddDrafts[blueprint.id]"
                       (ngModelChange)="onGddDraftChange(blueprint.id, $event)"
-                      (change)="saveBlueprintGdd(blueprint.id)"
+                      (blur)="saveBlueprintGdd(blueprint.id)"
                       [disabled]="control.blueprintSavingId === blueprint.id"
                       [attr.placeholder]="gddPlaceholderForBlueprint(blueprint)"
                       [attr.aria-invalid]="
