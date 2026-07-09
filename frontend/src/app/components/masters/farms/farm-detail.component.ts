@@ -28,6 +28,8 @@ import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialControl: FarmDetailViewState = {
   loading: true,
@@ -41,10 +43,19 @@ const initialControl: FarmDetailViewState = {
 @Component({
   selector: 'app-farm-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FarmMapComponent, TranslateModule, FormsModule, RegionSelectComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    FarmMapComponent,
+    TranslateModule,
+    FormsModule,
+    RegionSelectComponent,
+    MasterContextHeaderComponent
+  ],
   providers: [...FARM_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
@@ -66,7 +77,6 @@ const initialControl: FarmDetailViewState = {
           </dl>
           <div class="detail-card__actions">
             <a [routerLink]="['/farms', control.farm.id, 'edit']" class="btn-primary">{{ 'common.edit' | translate }}</a>
-            <a [routerLink]="['/farms']" class="btn-secondary">{{ 'farms.show.back_to_list' | translate }}</a>
             <button type="button" class="btn-danger" (click)="deleteFarm()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>
@@ -185,6 +195,16 @@ export class FarmDetailComponent implements FarmDetailView, OnInit, OnDestroy {
 
   get isAdmin(): boolean {
     return this.auth.user()?.admin ?? false;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'farms.index.title', routerLink: ['/farms'] }
+    ];
+    if (this.control.farm) {
+      crumbs.push({ label: this.control.farm.name });
+    }
+    return crumbs;
   }
 
   private _control: FarmDetailViewState = initialControl;

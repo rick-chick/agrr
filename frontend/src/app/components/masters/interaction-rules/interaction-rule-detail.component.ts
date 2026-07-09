@@ -13,6 +13,8 @@ import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialControl: InteractionRuleDetailViewState = {
   loading: true,
@@ -25,10 +27,11 @@ const initialControl: InteractionRuleDetailViewState = {
 @Component({
   selector: 'app-interaction-rule-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...INTERACTION_RULE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.rule) {
@@ -72,7 +75,6 @@ const initialControl: InteractionRuleDetailViewState = {
           </dl>
           <div class="detail-card__actions">
             <a [routerLink]="['/interaction_rules', control.rule.id, 'edit']" class="btn-primary">{{ 'common.edit' | translate }}</a>
-            <a [routerLink]="['/interaction_rules']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             <button type="button" class="btn-danger" (click)="deleteInteractionRule()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>
@@ -91,6 +93,18 @@ export class InteractionRuleDetailComponent implements InteractionRuleDetailView
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] }
+    ];
+    if (this.control.rule) {
+      crumbs.push({
+        label: `${this.control.rule.source_group} → ${this.control.rule.target_group}`
+      });
+    }
+    return crumbs;
+  }
 
   private _control: InteractionRuleDetailViewState = initialControl;
   get control(): InteractionRuleDetailViewState {

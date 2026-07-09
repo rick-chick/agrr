@@ -147,6 +147,57 @@ describe('CropDetailComponent', () => {
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('.master-error')?.textContent).toContain('Invalid crop ID');
+    expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
+  });
+
+  it('shows master context header and omits back button from detail-card__actions', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          index: { title: 'Crops' },
+          show: {
+            name: 'Name',
+            region: 'Region',
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Lead',
+            blueprint_readiness: {
+              detail_title: 'Status',
+              stages_ready: 'Stages ready',
+              blueprints_ready: 'Ready'
+            },
+            blueprint_summary: {
+              count: '{{count}} task plan(s)',
+              edit_action: 'Edit task plans',
+              create_action: 'Create task plans'
+            }
+          },
+          form: { region_jp: 'Japan' }
+        },
+        common: { edit: 'Edit', delete: 'Delete' }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = loadedState;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/crops');
+    expect(backLink?.textContent?.trim()).toContain('Crops');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      'Tomato'
+    );
+    expect(
+      fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 
   it('renders unified cultivation template section with task link', async () => {
