@@ -19,11 +19,6 @@ import {
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
-import {
-  parsePlanWizardReturnTab,
-  planWizardReturnPath,
-  type PlanWizardReturnTab
-} from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import type { CropStage } from '../../../domain/crops/crop';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
@@ -65,13 +60,8 @@ const initialControl: CropStagesViewState = {
           </div>
         }
 
+        <app-master-context-header [crumbs]="contextCrumbs" />
         <header class="page-header crop-stages__page-header">
-          <app-master-context-header [crumbs]="contextCrumbs" />
-          @if (fromPlanId) {
-            <a [routerLink]="planReturnPath" class="btn-secondary crop-stages__return-to-plan">
-              {{ 'crops.show.return_to_plan' | translate }}
-            </a>
-          }
           <h1 class="page-title">{{ control.formData.name }}</h1>
           <p class="page-description">{{ 'crops.edit.stages_title' | translate }}</p>
         </header>
@@ -258,11 +248,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   fromPlanId: number | null = null;
-  returnTab: PlanWizardReturnTab = 'task_schedule';
-
-  get planReturnPath(): (string | number)[] {
-    return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
-  }
 
   get contextCrumbs(): MasterContextCrumb[] {
     const crumbs: MasterContextCrumb[] = [
@@ -279,7 +264,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
-    this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
     if (!this.cropId) {
       this.control = {
         ...initialControl,

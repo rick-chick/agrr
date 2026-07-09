@@ -4,11 +4,6 @@
   margin-bottom: 1.5rem;
 }
 
-.crop-stages__return-to-plan {
-  display: inline-flex;
-  margin-bottom: var(--space-3, 0.75rem);
-}
-
 .crop-stages-section__title {
   font-size: 1.25rem;
   font-weight: 600;

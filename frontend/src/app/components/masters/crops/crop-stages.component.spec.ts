@@ -242,7 +242,7 @@ describe('CropStagesComponent', () => {
     expect(stageTitleElement.textContent).toContain('ステージ 1');
   });
 
-  it('should link back to crop detail via breadcrumbs', () => {
+  it('shows three-level breadcrumb above page-header and omits return-to-plan button', () => {
     component.control = {
       loading: false,
       error: null,
@@ -256,6 +256,14 @@ describe('CropStagesComponent', () => {
 
     fixture.detectChanges();
 
+    const contextHeader = fixture.nativeElement.querySelector('app-master-context-header');
+    const pageHeader = fixture.nativeElement.querySelector('.crop-stages__page-header');
+    expect(contextHeader).toBeTruthy();
+    expect(pageHeader).toBeTruthy();
+    expect(
+      contextHeader.compareDocumentPosition(pageHeader) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
     const backLink = fixture.nativeElement.querySelector(
       'a.master-context-header__back'
     ) as HTMLAnchorElement;
@@ -268,8 +276,29 @@ describe('CropStagesComponent', () => {
     expect(cropDetailLink?.textContent?.trim()).toBe('Tomato');
 
     expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages__back-link')).toBeNull();
-    expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeNull();
+  });
+
+  it('shows plan wizard banner without return-to-plan when fromPlan query param is set', () => {
+    mockActivatedRoute.snapshot.queryParamMap.get = (key: string) =>
+      key === 'fromPlan' ? '7' : null;
+    component.fromPlanId = 7;
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato'
+      }
+    };
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href*="/plans/7/"]')).toBeNull();
   });
 
   it('shows cumulative GDD range when stage has required_gdd', () => {
