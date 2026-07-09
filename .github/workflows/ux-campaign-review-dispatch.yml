@@ -1,0 +1,151 @@
+# Dispatches UX Campaign Loop (post-merge review) after eligible PRs merge to master.
+#
+# Setup: see .cursor/skills/ux-campaign-loop/SKILL.md §セットアップ
+#
+# Secrets: CURSOR_UX_CAMPAIGN_REVIEW_WEBHOOK_URL, CURSOR_UX_CAMPAIGN_REVIEW_WEBHOOK_KEY
+
+name: UX Campaign Review Dispatch
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to treat as merged (for manual re-review)
+        required: true
+        type: number
+      campaign_id:
+        description: Campaign id (default breadcrumb)
+        required: false
+        default: breadcrumb
+        type: string
+
+concurrency:
+  group: ux-campaign-review-${{ github.event.pull_request.number || github.event.inputs.pr_number || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve pull request context
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR: ${{ github.event.inputs.pr_number }}
+          INPUT_CAMPAIGN: ${{ github.event.inputs.campaign_id }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            PR_NUMBER="$INPUT_PR"
+            MERGED="true"
+            CAMPAIGN_ID="${INPUT_CAMPAIGN:-breadcrumb}"
+            PR_JSON=$(gh pr view "$PR_NUMBER" --json number,title,htmlUrl,merged,headRefName,body,labels)
+            PR_TITLE=$(echo "$PR_JSON" | jq -r '.title')
+            PR_URL=$(echo "$PR_JSON" | jq -r '.htmlUrl')
+            HEAD_REF=$(echo "$PR_JSON" | jq -r '.headRefName')
+            PR_BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
+            MERGED_ACTUAL=$(echo "$PR_JSON" | jq -r '.merged')
+            if [ "$MERGED_ACTUAL" != "true" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "skip_reason=workflow_dispatch PR is not merged" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          else
+            MERGED="${{ github.event.pull_request.merged }}"
+            if [ "$MERGED" != "true" ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "skip_reason=PR closed without merge" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_URL="${{ github.event.pull_request.html_url }}"
+            HEAD_REF="${{ github.event.pull_request.head.ref }}"
+            PR_BODY_INPUT="${{ github.event.pull_request.body }}"
+            PR_BODY=$(printf '%s' "$PR_BODY_INPUT")
+            CAMPAIGN_ID="breadcrumb"
+          fi
+
+          LINKED_ISSUES=$(printf '%s' "$PR_BODY" | grep -oiE '(closes|fixes|resolves)\s+#([0-9]+)' | grep -oiE '#[0-9]+' | tr -d '#' | sort -u | tr '\n' ',' | sed 's/,$//')
+          CAMPAIGN_MATCH="false"
+
+          if printf '%s' "$PR_BODY" | grep -qiE 'ux-campaign:breadcrumb|戻るボタン.*パンくず|パンくず.*戻る'; then
+            CAMPAIGN_MATCH="true"
+          fi
+
+          if [ -n "$LINKED_ISSUES" ]; then
+            IFS=',' read -ra NUMS <<< "$LINKED_ISSUES"
+            for num in "${NUMS[@]}"; do
+              [ -z "$num" ] && continue
+              LABELS=$(gh issue view "$num" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
+              if echo "$LABELS" | grep -q 'ux-campaign:breadcrumb'; then
+                CAMPAIGN_MATCH="true"
+              fi
+              ISSUE_BODY=$(gh issue view "$num" --json body --jq '.body // ""' 2>/dev/null || echo "")
+              if printf '%s' "$ISSUE_BODY" | grep -qiE 'ux-campaign:breadcrumb|戻るボタン.*パンくず|パンくず.*戻る'; then
+                CAMPAIGN_MATCH="true"
+              fi
+            done
+          fi
+
+          if [ "$CAMPAIGN_MATCH" != "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "skip_reason=PR is not part of breadcrumb UX campaign" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "title=$PR_TITLE" >> "$GITHUB_OUTPUT"
+          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "head_ref=$HEAD_REF" >> "$GITHUB_OUTPUT"
+          echo "campaign_id=$CAMPAIGN_ID" >> "$GITHUB_OUTPUT"
+          echo "linked_issues=$LINKED_ISSUES" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Cursor UX Campaign Review
+        if: steps.pr.outputs.skip != 'true'
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_UX_CAMPAIGN_REVIEW_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_UX_CAMPAIGN_REVIEW_WEBHOOK_KEY }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PR_TITLE: ${{ steps.pr.outputs.title }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+          CAMPAIGN_ID: ${{ steps.pr.outputs.campaign_id }}
+          LINKED_ISSUES: ${{ steps.pr.outputs.linked_issues }}
+        run: |
+          set -euo pipefail
+          if [ -z "${WEBHOOK_URL:-}" ] || [ -z "${WEBHOOK_KEY:-}" ]; then
+            echo "CURSOR_UX_CAMPAIGN_REVIEW_WEBHOOK_URL or KEY is not set."
+            echo "Configure secrets after creating the Cursor Automation webhook."
+            exit 0
+          fi
+
+          LINKED_JSON='[]'
+          if [ -n "${LINKED_ISSUES:-}" ]; then
+            LINKED_JSON=$(printf '%s' "$LINKED_ISSUES" | tr ',' '\n' | grep -E '^[0-9]+$' | jq -R 'tonumber' | jq -s '.')
+          fi
+
+          payload=$(jq -n \
+            --arg repo "${{ github.repository }}" \
+            --argjson number "$PR_NUMBER" \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg head_ref "$HEAD_REF" \
+            --arg campaign_id "$CAMPAIGN_ID" \
+            --argjson merged true \
+            --argjson linked_issue_numbers "$LINKED_JSON" \
+            '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, merged: $merged, head_ref: $head_ref, campaign_id: $campaign_id, linked_issue_numbers: $linked_issue_numbers}')
+          curl -fsS -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $WEBHOOK_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$payload"
+
+      - name: Skip dispatch
+        if: steps.pr.outputs.skip == 'true'
+        run: 'echo "Skipped: ${{ steps.pr.outputs.skip_reason }}"'

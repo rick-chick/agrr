@@ -54,6 +54,7 @@ __screenshots__/
 # UX issue パイプラインの自動生成草案（collect-ux-findings.mjs）
 /e2e/agent-review/ux-findings-draft.json
 /e2e/agent-review/ux-issue-drafts.md
+/e2e/agent-review/breadcrumb-campaign-scan.json
 
 # System files
 .DS_Store

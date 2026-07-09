@@ -1,0 +1,67 @@
+# Mechanical cleanup outer-loop: checkout + run-outer-loop.sh dispatch-once.
+#
+# Secrets: CLEANUP_OUTER_LOOP_WEBHOOK_URL, CLEANUP_OUTER_LOOP_WEBHOOK_KEY
+
+name: Cleanup Outer Loop Dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      parent_slug:
+        description: Parent cleanup slug (e.g. plan-work-ux)
+        required: true
+        type: string
+      unit_name:
+        description: Optional unit display name
+        required: false
+        type: string
+  repository_dispatch:
+    types: [cleanup_outer_loop_continue]
+
+concurrency:
+  group: cleanup-outer-loop-${{ github.event.inputs.parent_slug || github.event.client_payload.parent_slug }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve slug
+        id: ctx
+        env:
+          INPUT_SLUG: ${{ github.event.inputs.parent_slug }}
+          PAYLOAD_SLUG: ${{ github.event.client_payload.parent_slug }}
+          INPUT_UNIT: ${{ github.event.inputs.unit_name }}
+          PAYLOAD_UNIT: ${{ github.event.client_payload.unit_name }}
+        run: |
+          set -euo pipefail
+          SLUG="${INPUT_SLUG:-${PAYLOAD_SLUG:-}}"
+          if [ -z "$SLUG" ]; then
+            echo "error: parent_slug required" >&2
+            exit 1
+          fi
+          UNIT="${INPUT_UNIT:-${PAYLOAD_UNIT:-$SLUG}}"
+          echo "parent_slug=$SLUG" >> "$GITHUB_OUTPUT"
+          echo "unit_name=$UNIT" >> "$GITHUB_OUTPUT"
+
+      - name: Mechanical dispatch (one backlog item)
+        env:
+          CLEANUP_OUTER_LOOP_WEBHOOK_URL: ${{ secrets.CLEANUP_OUTER_LOOP_WEBHOOK_URL }}
+          CLEANUP_OUTER_LOOP_WEBHOOK_KEY: ${{ secrets.CLEANUP_OUTER_LOOP_WEBHOOK_KEY }}
+          PARENT_SLUG: ${{ steps.ctx.outputs.parent_slug }}
+          UNIT_NAME: ${{ steps.ctx.outputs.unit_name }}
+        run: |
+          set -euo pipefail
+          set +e
+          out=$(.cursor/skills/sequential-cleanup-review-workflow/scripts/run-outer-loop.sh \
+            --parent-slug "$PARENT_SLUG" --unit-name "$UNIT_NAME" run-mechanical 2>&1)
+          ec=$?
+          set -e
+          echo "$out"
+          case "$ec" in
+            0) echo "Outer loop complete." ;;
+            2) echo "Agent dispatched for one item; chain continues via cleanup-agent-handoff.sh." ;;
+            *) exit "$ec" ;;
+          esac

@@ -31,6 +31,16 @@ describe('FarmListComponent', () => {
     })
       .overrideComponent(FarmListComponent, {
         set: {
+          styleUrls: [],
+          styles: [
+            `
+              .btn-danger {
+                background: #ffffff;
+                color: #dc2626;
+                border: 1px solid #e2e8f0;
+              }
+            `
+          ],
           providers: [
             { provide: LoadFarmListUseCase, useValue: loadUseCase },
             { provide: DeleteFarmUseCase, useValue: deleteUseCase },
@@ -101,6 +111,37 @@ describe('FarmListComponent', () => {
     component.ngOnInit();
     expect(presenter.setView).toHaveBeenCalledWith(component);
     expect(loadUseCase.execute).toHaveBeenCalled();
+  });
+
+  it('delete button uses outline destructive style (surface background, error text)', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: 1,
+          name: 'User Farm',
+          region: 'jp',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+
+    fixture.detectChanges();
+
+    const deleteButton = fixture.nativeElement.querySelector(
+      '.item-card__actions .btn-danger'
+    ) as HTMLButtonElement;
+    expect(deleteButton).toBeTruthy();
+
+    const style = getComputedStyle(deleteButton);
+    expect(style.backgroundColor).toBe('rgb(255, 255, 255)');
+    expect(style.color).toBe('rgb(220, 38, 38)');
   });
 
   it('displays reference farms with (参照) indicator', () => {
