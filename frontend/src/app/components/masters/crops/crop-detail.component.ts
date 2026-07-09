@@ -346,7 +346,7 @@ const initialControl: CropDetailViewState = {
             </a>
             <a
               [routerLink]="['/crops', control.crop.id, 'task_schedule_blueprints']"
-              class="btn-primary"
+              class="btn-secondary"
             >
               {{ 'crops.show.blueprint_summary.edit_action' | translate }}
             </a>
