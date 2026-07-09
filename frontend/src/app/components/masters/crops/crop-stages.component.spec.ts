@@ -242,7 +242,7 @@ describe('CropStagesComponent', () => {
     expect(stageTitleElement.textContent).toContain('ステージ 1');
   });
 
-  it('should link back to crop detail', () => {
+  it('should link back to crop detail via breadcrumbs', () => {
     component.control = {
       loading: false,
       error: null,
@@ -256,7 +256,20 @@ describe('CropStagesComponent', () => {
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('a[href="/crops/1"]')).toBeTruthy();
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/crops');
+
+    const cropDetailLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__link'
+    ) as HTMLAnchorElement;
+    expect(cropDetailLink?.getAttribute('href')).toBe('/crops/1');
+    expect(cropDetailLink?.textContent?.trim()).toBe('Tomato');
+
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages__back-link')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
   it('shows cumulative GDD range when stage has required_gdd', () => {

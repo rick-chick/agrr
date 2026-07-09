@@ -39,6 +39,8 @@ import {
   planWizardReturnPath,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialControl: CropTaskScheduleBlueprintsViewState = {
   loading: true,
@@ -81,7 +83,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
 @Component({
   selector: 'app-crop-task-schedule-blueprints',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, DragDropModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, DragDropModule, MasterContextHeaderComponent],
   providers: [...CROP_TASK_SCHEDULE_BLUEPRINTS_PROVIDERS],
   template: `
     <main class="page-main">
@@ -102,16 +104,12 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
         }
 
         <header class="page-header crop-blueprints__page-header">
-          <nav class="crop-blueprints__nav" aria-label="{{ 'crops.show.task_schedule_blueprints_title' | translate }}">
-            <a [routerLink]="['/crops', control.crop.id]" class="crop-blueprints__back-link">
-              {{ 'common.back' | translate }}
+          <app-master-context-header [crumbs]="contextCrumbs" />
+          @if (control.fromPlanId) {
+            <a [routerLink]="planReturnPath" class="btn-secondary crop-blueprints__return-to-plan">
+              {{ 'crops.show.return_to_plan' | translate }}
             </a>
-            @if (control.fromPlanId) {
-              <a [routerLink]="planReturnPath" class="btn-secondary">
-                {{ 'crops.show.return_to_plan' | translate }}
-              </a>
-            }
-          </nav>
+          }
           <h1 class="page-title">{{ control.crop.name }}</h1>
           <p class="page-description">{{ 'crops.show.task_schedule_blueprints_title' | translate }}</p>
         </header>
@@ -584,6 +582,18 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   get planReturnPath(): (string | number)[] {
     const planId = this.control.fromPlanId;
     return planId != null ? planWizardReturnPath(planId, this.returnTab) : [];
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'crops.index.title', routerLink: ['/crops'] }
+    ];
+    const crop = this.control.crop;
+    if (crop) {
+      crumbs.push({ label: crop.name, routerLink: ['/crops', crop.id] });
+    }
+    crumbs.push({ labelKey: 'crops.show.task_schedule_blueprints_title' });
+    return crumbs;
   }
 
   get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {

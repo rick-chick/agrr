@@ -194,7 +194,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(loadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 3 });
   });
 
-  it('shows page header with crop name and back link to crop detail', async () => {
+  it('shows page header with crop name and breadcrumb link to crop detail', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
@@ -206,7 +206,21 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('.page-title')?.textContent).toContain('Tomato');
-    expect(fixture.nativeElement.querySelector('a[href="/crops/3"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/crops');
+
+    const cropDetailLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__link'
+    ) as HTMLAnchorElement;
+    expect(cropDetailLink?.getAttribute('href')).toBe('/crops/3');
+    expect(cropDetailLink?.textContent?.trim()).toBe('Tomato');
+
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__back-link')).toBeNull();
   });
 
   it('hides section lead when fromPlan query param is set', async () => {

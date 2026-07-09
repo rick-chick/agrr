@@ -31,22 +31,9 @@
   margin-bottom: var(--space-4);
 }
 
-.crop-blueprints__nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+.crop-blueprints__return-to-plan {
+  display: inline-flex;
   margin-bottom: var(--space-3);
-}
-
-.crop-blueprints__back-link {
-  font-size: var(--font-size-sm);
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.crop-blueprints__back-link:hover {
-  text-decoration: underline;
 }
 
 .section-card > .section-title {
