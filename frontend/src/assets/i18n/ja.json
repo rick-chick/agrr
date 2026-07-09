@@ -147,10 +147,10 @@
       "application_method": "施用方法",
       "created_at": "作成日",
       "updated_at": "更新日",
-      "back_to_list": "農薬一覧に戻る",
       "edit": "編集",
       "delete": "削除",
-      "confirm_delete": "この農薬を削除しますか？"
+      "confirm_delete": "この農薬を削除しますか？",
+      "back_to_list": "農薬一覧に戻る"
     }
   },
   "agricultural_tasks": {
@@ -248,10 +248,10 @@
       "associated_crops": "関連する作物",
       "reference_crop": "参照作物",
       "no_crops_associated": "この作業に紐づく作物はありません。",
-      "back_to_list": "作業一覧に戻る",
       "edit": "編集",
       "delete": "削除",
-      "confirm_delete": "この作業を削除しますか？"
+      "confirm_delete": "この作業を削除しますか？",
+      "back_to_list": "作業一覧に戻る"
     }
   },
   "crops": {
@@ -554,11 +554,9 @@
         "board_label": "生育ステージごとの作業予定",
         "keyboard_hint": "カードをドラッグしてステージを変更できます。作業タイミング（℃·日）は各カードまたは下の追加フォームから入力してください。"
       },
-      "return_to_plan": "作業記録に戻る",
       "from_plan_wizard_title": "計画の作業予定を作るための登録",
       "from_plan_wizard_lead": "下のフォームから作業予定を登録してください。完了したら「作業記録に戻る」から計画へ戻れます。",
       "from_plan_stages_wizard_lead": "生育ステージの基準温度と必要積算温度を設定してください。完了したら計画へ戻って作業予定を再生成してください。",
-      "back_to_list": "作物一覧に戻る",
       "confirm_delete": "この作物を削除しますか？",
       "form": {
         "name_label": "名前",
@@ -585,7 +583,9 @@
         "errors": {
           "title": "{{count}}件のエラーがあります："
         }
-      }
+      },
+      "return_to_plan": "作業記録に戻る",
+      "back_to_list": "作物一覧に戻る"
     },
     "pests": {
       "flash": {
@@ -655,9 +655,9 @@
         "timing_hint": "タイミング",
         "created_at": "作成日",
         "updated_at": "更新日",
-        "back_to_list": "一覧に戻る",
         "back_to_crop": "作物に戻る",
-        "edit": "編集"
+        "edit": "編集",
+        "back_to_list": "一覧に戻る"
       }
     },
     "errors": {
@@ -791,13 +791,13 @@
       "timing_hint": "タイミング",
       "created_at": "作成日",
       "updated_at": "更新日",
-      "back_to_list": "害虫一覧に戻る",
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この害虫を削除しますか？",
       "crops_title": "関連付けられている作物",
       "reference_crop": "参照作物",
-      "no_crops_description": "まだ関連付けられている作物がありません。"
+      "no_crops_description": "まだ関連付けられている作物がありません。",
+      "back_to_list": "害虫一覧に戻る"
     },
     "errors": {
       "invalid_id": "害虫IDが不正です。"
@@ -884,10 +884,10 @@
       "package_size": "容量",
       "created_at": "作成日",
       "updated_at": "更新日",
-      "back_to_list": "肥料一覧に戻る",
       "edit": "編集",
       "delete": "削除",
-      "confirm_delete": "この肥料を削除しますか？"
+      "confirm_delete": "この肥料を削除しますか？",
+      "back_to_list": "肥料一覧に戻る"
     }
   },
   "farms": {
@@ -1004,7 +1004,6 @@
       "no_fields": "まだ圃場が登録されていません。",
       "field_list_item": "{{name}}（{{area}}㎡）",
       "add_first_field": "最初の圃場を追加",
-      "back_to_list": "農場一覧に戻る",
       "detail": "詳細",
       "map": {
         "title": "地図"
@@ -1020,7 +1019,8 @@
         "daily_fixed_cost_placeholder": "例: 5000",
         "submit_update": "更新",
         "submit_create": "圃場を作成"
-      }
+      },
+      "back_to_list": "農場一覧に戻る"
     },
     "card": {
       "latitude": "緯度",
@@ -1096,10 +1096,6 @@
     "index": {
       "title": "圃場一覧",
       "new_field": "新しい圃場を追加",
-      "breadcrumb": {
-        "farms": "農場一覧",
-        "current": "圃場一覧"
-      },
       "actions": {
         "detail": "詳細",
         "edit": "編集",
@@ -1111,15 +1107,14 @@
         "title": "まだ圃場が登録されていません",
         "description": "最初の圃場を追加して始めましょう。",
         "button": "圃場を追加"
+      },
+      "breadcrumb": {
+        "farms": "農場一覧",
+        "current": "圃場一覧"
       }
     },
     "new": {
       "title": "新しい圃場を追加",
-      "breadcrumb": {
-        "farms": "農場一覧",
-        "fields": "圃場一覧",
-        "current": "新しい圃場"
-      },
       "form": {
         "name_label": "圃場名",
         "name_placeholder": "例: 北側の田んぼ",
@@ -1135,15 +1130,15 @@
       },
       "errors": {
         "title": "{{count}}件のエラーがあります："
+      },
+      "breadcrumb": {
+        "farms": "農場一覧",
+        "fields": "圃場一覧",
+        "current": "新しい圃場"
       }
     },
     "edit": {
       "title": "圃場を編集",
-      "breadcrumb": {
-        "farms": "農場一覧",
-        "fields": "圃場一覧",
-        "edit": "編集"
-      },
       "form": {
         "name_label": "圃場名",
         "name_placeholder": "例: 北側の田んぼ",
@@ -1159,13 +1154,14 @@
       },
       "errors": {
         "title": "{{count}}件のエラーがあります："
+      },
+      "breadcrumb": {
+        "farms": "農場一覧",
+        "fields": "圃場一覧",
+        "edit": "編集"
       }
     },
     "show": {
-      "breadcrumb": {
-        "farms": "農場一覧",
-        "fields": "圃場一覧"
-      },
       "name": "名前",
       "area": "面積",
       "daily_cost": "日次固定費用",
@@ -1173,11 +1169,15 @@
       "created_at": "作成日",
       "updated_at": "更新日",
       "info": "圃場情報",
-      "back_to_list": "圃場一覧に戻る",
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この圃場を削除しますか？",
-      "back": "戻る"
+      "back": "戻る",
+      "breadcrumb": {
+        "farms": "農場一覧",
+        "fields": "圃場一覧"
+      },
+      "back_to_list": "圃場一覧に戻る"
     }
   },
   "interaction_rules": {
@@ -1359,7 +1359,6 @@
     "cancel": "キャンセル",
     "edit": "編集",
     "delete": "削除",
-    "back": "戻る",
     "confirm": "確認",
     "search": "検索",
     "create": "作成",
@@ -1381,7 +1380,8 @@
       "not_migrated": "この機能はまだ利用できません",
       "service_unavailable": "サーバーに接続できませんでした",
       "generic": "エラーが発生しました"
-    }
+    },
+    "back": "戻る"
   },
   "contact_form": {
     "name": "お名前",
@@ -1746,6 +1746,7 @@
       "field_removed": "圃場を削除しました。"
     },
     "title": "計画",
+    "breadcrumb_root": "無料作付け計画",
     "steps": {
       "region": "地域",
       "crop": "作物",
@@ -1790,6 +1791,7 @@
     },
     "optimizing": {
       "title": "計画",
+      "breadcrumb": "最適化中",
       "status_badge": "最適化中",
       "crops_count": "{{count}}種類の作物",
       "error_message": "最適化状況の取得に失敗しました。\n\n以下のいずれかをお試しください：\n• ページをリロード（F5キー）\n• ブラウザのキャッシュをクリア\n• しばらく時間をおいてから再度アクセス\n\n問題が解決しない場合は、新しい計画を作成してください。",
@@ -1813,6 +1815,7 @@
       "status_badge_failed": "作成失敗"
     },
     "results": {
+      "breadcrumb": "結果",
       "create_new_plan": "← 新しい計画を作成",
       "view_my_plans": "マイプランを見る",
       "chart_title": "気象データと作物成長分析",
@@ -2071,6 +2074,7 @@
       }
     },
     "new": {
+      "breadcrumb": "新規作成",
       "title": "📅 農場を選択してください",
       "subtitle": "計画を作成する農場を選択してください",
       "plan_name_label": "計画名（将来的に複数計画を管理できます）",

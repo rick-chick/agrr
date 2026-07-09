@@ -1,4 +1,11 @@
-/* マスタ画面共通レイアウト（design-angular-material SAMPLES.md 準拠・トークンのみ） */
+/* マスタ画面共通レイアウト（design-angular-material SAMPLES.md 準拠・トークンのみ）
+ *
+ * ボタン規約:
+ * - 主アクション → .btn-primary（filled primary）
+ * - 副アクション → .btn-secondary（outline neutral）
+ * - 削除・破壊的操作 → .btn-danger（outline: surface 背景 + error 文字 + border）
+ * 画面固有クラスで削除スタイルを新規定義しない（.btn-danger に統一）
+ */
 
 /* ===== 1. ページレイアウト ===== */
 .page-main {

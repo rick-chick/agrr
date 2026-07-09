@@ -169,7 +169,6 @@
     "cancel": "Cancel",
     "edit": "Edit",
     "delete": "Delete",
-    "back": "Back",
     "confirm": "Confirm",
     "search": "Search",
     "create": "Create",
@@ -191,7 +190,8 @@
       "not_migrated": "This feature is not available yet",
       "service_unavailable": "Could not connect to the server",
       "generic": "An error occurred"
-    }
+    },
+    "back": "Back"
   },
   "contact_form": {
     "name": "Name",
@@ -892,6 +892,7 @@
       "field_added": "Field added."
     },
     "title": "Crop Planning",
+    "breadcrumb_root": "Free Crop Plans",
     "steps": {
       "region": "Region",
       "crop": "Crop",
@@ -936,6 +937,7 @@
     },
     "optimizing": {
       "title": "Crop Planning",
+      "breadcrumb": "Optimizing",
       "status_badge": "Optimizing",
       "crops_count": "{{count}} crop types",
       "hint": "",
@@ -960,6 +962,7 @@
       "status_badge_failed": "Failed"
     },
     "results": {
+      "breadcrumb": "Results",
       "create_new_plan": "← Create New Plan",
       "view_my_plans": "View My Plans",
       "chart_title": "Climate Data and Crop Growth Analysis",
@@ -1361,6 +1364,7 @@
       }
     },
     "new": {
+      "breadcrumb": "New plan",
       "title": "📅 Select Year and Farm",
       "subtitle": "Choose the year and farm for your cultivation plan",
       "plan_name_label": "Plan Name",
@@ -1630,10 +1634,10 @@
       "application_method": "Application Method",
       "created_at": "Created",
       "updated_at": "Updated",
-      "back_to_list": "Back to Pesticides",
       "edit": "Edit",
       "delete": "Delete",
-      "confirm_delete": "Are you sure you want to delete this pesticide?"
+      "confirm_delete": "Are you sure you want to delete this pesticide?",
+      "back_to_list": "Back to Pesticides"
     }
   },
   "agricultural_tasks": {
@@ -1731,10 +1735,10 @@
       "associated_crops": "Associated Crops",
       "reference_crop": "Reference Crop",
       "no_crops_associated": "No crops associated.",
-      "back_to_list": "Back to List",
       "edit": "Edit",
       "delete": "Delete",
-      "confirm_delete": "Delete this task?"
+      "confirm_delete": "Delete this task?",
+      "back_to_list": "Back to List"
     }
   },
   "crops": {
@@ -2029,11 +2033,9 @@
         "board_label": "Task plans grouped by growth stage",
         "keyboard_hint": "Drag cards to change stages. Enter timing (℃·day) on each card or in the add form below."
       },
-      "return_to_plan": "Return to plan",
       "from_plan_wizard_title": "Registration for this plan's task schedules",
       "from_plan_wizard_lead": "Register task plans using the form below. When finished, use \"Return to plan\" to go back.",
       "from_plan_stages_wizard_lead": "Set base temperature and required GDD for each growth stage. When finished, return to the plan and regenerate task schedules.",
-      "back_to_list": "Back to Crops",
       "confirm_delete": "Are you sure you want to delete this crop?",
       "form": {
         "name_label": "Name",
@@ -2060,7 +2062,9 @@
         "errors": {
           "title": "{{count}} errors occurred:"
         }
-      }
+      },
+      "return_to_plan": "Return to plan",
+      "back_to_list": "Back to Crops"
     },
     "pests": {
       "flash": {
@@ -2130,9 +2134,9 @@
         "timing_hint": "Timing",
         "created_at": "Created",
         "updated_at": "Updated",
-        "back_to_list": "Back to List",
         "back_to_crop": "Back to Crop",
-        "edit": "Edit"
+        "edit": "Edit",
+        "back_to_list": "Back to List"
       }
     },
     "errors": {
@@ -2266,13 +2270,13 @@
       "timing_hint": "Timing",
       "created_at": "Created",
       "updated_at": "Updated",
-      "back_to_list": "Back to Pests",
       "edit": "Edit",
       "delete": "Delete",
       "confirm_delete": "Are you sure you want to delete this pest?",
       "crops_title": "Associated Crops",
       "reference_crop": "Reference Crop",
-      "no_crops_description": "No crops are associated with this pest yet."
+      "no_crops_description": "No crops are associated with this pest yet.",
+      "back_to_list": "Back to Pests"
     },
     "errors": {
       "invalid_id": "Invalid pest ID."
@@ -2359,10 +2363,10 @@
       "package_size": "Package Size",
       "created_at": "Created",
       "updated_at": "Updated",
-      "back_to_list": "Back to Fertilizers",
       "edit": "Edit",
       "delete": "Delete",
-      "confirm_delete": "Are you sure you want to delete this fertilizer?"
+      "confirm_delete": "Are you sure you want to delete this fertilizer?",
+      "back_to_list": "Back to Fertilizers"
     }
   },
   "farms": {
@@ -2461,7 +2465,6 @@
       "no_fields": "No fields registered yet.",
       "field_list_item": "{{name}} ({{area}}㎡)",
       "add_first_field": "Add First Field",
-      "back_to_list": "Back to Farm List",
       "detail": "Details",
       "map": {
         "title": "Map"
@@ -2477,7 +2480,8 @@
         "daily_fixed_cost_placeholder": "e.g., 5000",
         "submit_update": "Update",
         "submit_create": "Create Field"
-      }
+      },
+      "back_to_list": "Back to Farm List"
     },
     "card": {
       "latitude": "Latitude",
@@ -2553,10 +2557,6 @@
     "index": {
       "title": "Fields",
       "new_field": "Add New Field",
-      "breadcrumb": {
-        "farms": "Farms",
-        "current": "Fields"
-      },
       "actions": {
         "detail": "Details",
         "edit": "Edit",
@@ -2568,15 +2568,14 @@
         "title": "No fields registered yet",
         "description": "Add your first field to get started.",
         "button": "Add Field"
+      },
+      "breadcrumb": {
+        "farms": "Farms",
+        "current": "Fields"
       }
     },
     "new": {
       "title": "Add New Field",
-      "breadcrumb": {
-        "farms": "Farms",
-        "fields": "Fields",
-        "current": "New Field"
-      },
       "form": {
         "name_label": "Field Name",
         "name_placeholder": "e.g., North Rice Field",
@@ -2592,32 +2591,37 @@
       },
       "errors": {
         "title": "{{count}} errors occurred:"
+      },
+      "breadcrumb": {
+        "farms": "Farms",
+        "fields": "Fields",
+        "current": "New Field"
       }
     },
     "edit": {
       "title": "Edit Field",
-      "breadcrumb": {
-        "farms": "Farms",
-        "current": "Edit Field"
-      },
       "form": {
         "submit": "Update Field",
         "cancel": "Cancel"
       },
       "errors": {
         "title": "{{count}} errors occurred:"
+      },
+      "breadcrumb": {
+        "farms": "Farms",
+        "current": "Edit Field"
       }
     },
     "show": {
-      "breadcrumb": {
-        "farms": "Farms",
-        "fields": "Fields"
-      },
       "info": "Field Information",
       "edit": "Edit",
       "delete": "Delete",
       "delete_confirm": "Are you sure you want to delete this field?",
-      "back": "Back"
+      "back": "Back",
+      "breadcrumb": {
+        "farms": "Farms",
+        "fields": "Fields"
+      }
     }
   },
   "interaction_rules": {

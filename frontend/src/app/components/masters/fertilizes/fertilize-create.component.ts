@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { FertilizeCreateView, FertilizeCreateViewState, FertilizeCreateFormData } from './fertilize-create.view';
@@ -36,10 +38,11 @@ const initialControl: FertilizeCreateViewState = {
 @Component({
   selector: 'app-fertilize-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...FERTILIZE_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'fertilizes.new.title' | translate }}</h2>
         <form (ngSubmit)="createFertilize()" #fertilizeForm="ngForm" class="form-card__form">
@@ -77,7 +80,6 @@ const initialControl: FertilizeCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
               {{ 'fertilizes.form.submit_create' | translate }}
             </button>
-            <a routerLink="/fertilizes" class="btn-secondary">{{ 'fertilizes.show.back_to_list' | translate }}</a>
           </div>
         </form>
       </section>
@@ -100,6 +102,13 @@ export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
   set control(value: FertilizeCreateViewState) {
     this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'fertilizes.index.title', routerLink: ['/fertilizes'] },
+      { labelKey: 'fertilizes.new.title' }
+    ];
   }
 
   ngOnInit(): void {

@@ -369,4 +369,68 @@ describe('FarmDetailComponent', () => {
     };
     expect(component.trackByFieldId(0, field)).toBe(456);
   });
+
+  it('shows master context header and omits back button from detail-card__actions', () => {
+    translate.setTranslation('ja', {
+      farms: {
+        index: { title: '農場一覧' },
+        show: { location: '地域' },
+        form: { region_blank: '未選択' }
+      }
+    });
+    component.control = {
+      loading: false,
+      error: null,
+      farm: { id: 123, name: 'テスト農場', region: null, latitude: 35.0, longitude: 139.0 },
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/farms');
+    expect(backLink?.textContent?.trim()).toContain('農場一覧');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      'テスト農場'
+    );
+    expect(
+      fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
+    ).toHaveLength(0);
+  });
+
+  it('keeps list breadcrumb link while loading', () => {
+    translate.setTranslation('ja', {
+      farms: { index: { title: '農場一覧' } }
+    });
+    component.control = {
+      loading: true,
+      error: null,
+      farm: null,
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeNull();
+  });
+
+  it('keeps list breadcrumb link on error', () => {
+    translate.setTranslation('ja', {
+      farms: { index: { title: '農場一覧' } }
+    });
+    component.control = {
+      loading: false,
+      error: 'Not found',
+      farm: null,
+      fields: [],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
+  });
 });

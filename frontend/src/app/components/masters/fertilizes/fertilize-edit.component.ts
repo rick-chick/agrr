@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -38,10 +40,11 @@ const initialControl: FertilizeEditViewState = {
 @Component({
   selector: 'app-fertilize-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...FERTILIZE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
           {{ 'fertilizes.edit.title' | translate:{ name: control.formData.name } }}
@@ -84,7 +87,6 @@ const initialControl: FertilizeEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
                 {{ 'fertilizes.form.submit_update' | translate }}
               </button>
-              <a routerLink="/fertilizes" class="btn-secondary">{{ 'fertilizes.show.back_to_list' | translate }}</a>
             </div>
           </form>
         }
@@ -114,6 +116,20 @@ export class FertilizeEditComponent implements FertilizeEditView, OnInit {
 
   private get fertilizeId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'fertilizes.index.title', routerLink: ['/fertilizes'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/fertilizes', this.fertilizeId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   ngOnInit(): void {

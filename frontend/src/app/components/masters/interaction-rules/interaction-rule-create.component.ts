@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -36,10 +38,11 @@ const initialControl: InteractionRuleCreateViewState = {
 @Component({
   selector: 'app-interaction-rule-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...INTERACTION_RULE_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'interaction_rules.new.title' | translate }}</h2>
         <form (ngSubmit)="createInteractionRule()" #interactionRuleForm="ngForm" class="form-card__form">
@@ -81,7 +84,6 @@ const initialControl: InteractionRuleCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
               {{ 'interaction_rules.form.submit_create' | translate }}
             </button>
-            <a [routerLink]="['/interaction_rules']" class="btn-secondary">{{ 'common.back' | translate }}</a>
           </div>
         </form>
       </section>
@@ -105,6 +107,13 @@ export class InteractionRuleCreateComponent implements InteractionRuleCreateView
   set control(value: InteractionRuleCreateViewState) {
     this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] },
+      { labelKey: 'interaction_rules.new.title' }
+    ];
   }
 
   ngOnInit(): void {

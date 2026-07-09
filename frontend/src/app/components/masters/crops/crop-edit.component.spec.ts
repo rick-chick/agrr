@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -54,6 +54,7 @@ describe('CropEditComponent', () => {
       ],
       providers: [
         CropEditPresenter,
+        provideRouter([]),
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: LoadCropForEditUseCase, useValue: mockLoadUseCase },
         { provide: UpdateCropUseCase, useValue: mockUpdateUseCase },
@@ -133,6 +134,70 @@ describe('CropEditComponent', () => {
 
     expect(mockUpdateUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ region: 'us' })
+    );
+  });
+
+  it('shows three-level breadcrumb with detail link and omits back from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: { index: { title: 'Crops' } },
+        common: { edit: 'Edit' }
+      },
+      true
+    );
+    translate.use('en');
+
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato'
+      }
+    };
+    fixture.detectChanges();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/crops');
+    const detailLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__link'
+    ) as HTMLAnchorElement;
+    expect(detailLink?.getAttribute('href')).toBe('/crops/1');
+    expect(detailLink?.textContent?.trim()).toBe('Tomato');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      'Edit'
+    );
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
+  });
+
+  it('keeps list breadcrumb without entity name while loading', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', { crops: { index: { title: 'Crops' } }, common: { edit: 'Edit' } }, true);
+    translate.use('en');
+
+    component.control = {
+      loading: true,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: initialFormData
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a.master-context-header__link')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      'Edit'
     );
   });
 });

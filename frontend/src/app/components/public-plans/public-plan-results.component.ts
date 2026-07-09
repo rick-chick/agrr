@@ -22,6 +22,8 @@ import {
 } from '../../services/public-plans/pending-public-plan-save';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
+import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
+import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 
 const initialControl: PublicPlanResultsViewState = {
   loading: true,
@@ -35,7 +37,7 @@ const initialControl: PublicPlanResultsViewState = {
 @Component({
   selector: 'app-public-plan-results',
   standalone: true,
-  imports: [CommonModule, PlanGanttClimateShellComponent, TranslateModule, RouterLink],
+  imports: [CommonModule, PlanGanttClimateShellComponent, TranslateModule, RouterLink, PublicPlanContextHeaderComponent],
   providers: [
     ...PUBLIC_PLAN_RESULTS_PROVIDERS,
     ...GANTT_CHART_API_PROVIDERS,
@@ -45,6 +47,7 @@ const initialControl: PublicPlanResultsViewState = {
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
+        <app-public-plan-context-header [crumbs]="contextCrumbs" />
         @if (control.loading) {
           <div class="loading-state">
             <p>{{ 'public_plans.results.loading_data' | translate }}</p>
@@ -93,6 +96,13 @@ export class PublicPlanResultsComponent implements PublicPlanResultsView, OnInit
   protected readonly auth = inject(AuthService);
 
   readonly planType: 'private' | 'public' = 'public';
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'public_plans.breadcrumb_root', routerLink: ['/public-plans/new'] },
+      { labelKey: 'public_plans.results.breadcrumb' }
+    ];
+  }
 
   private pendingSaveTriggered = false;
 

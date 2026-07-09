@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { PesticideDetailComponent } from './pesticide-detail.component';
 import { LoadPesticideDetailUseCase } from '../../../usecase/pesticides/load-pesticide-detail.usecase';
@@ -16,6 +16,7 @@ describe('PesticideDetailComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PesticideDetailComponent, TranslateModule.forRoot()],
       providers: [
+        provideRouter([]),
         PesticideDetailPresenter,
         {
           provide: ActivatedRoute,
@@ -95,5 +96,53 @@ describe('PesticideDetailComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('Crop (ID:51)');
     expect(el.textContent).toContain('Pest (ID:54)');
+  });
+
+  it('shows master context header and omits back button from detail-card__actions', () => {
+    translate.setTranslation('en', {
+      pesticides: {
+        index: { title: 'Pesticides' },
+        show: {
+          name: 'Name',
+          crop: 'Crop',
+          pest: 'Pest',
+          edit: 'Edit',
+          delete: 'Delete'
+        },
+        fallback: {
+          crop: 'Crop (ID:{{id}})',
+          pest: 'Pest (ID:{{id}})'
+        }
+      }
+    });
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pesticide: {
+        id: 1,
+        name: 'Spray A',
+        crop_id: 51,
+        pest_id: 54,
+        is_reference: false,
+        crop_name: 'Tomato',
+        pest_name: 'Aphid'
+      },
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/pesticides');
+    expect(backLink?.textContent?.trim()).toContain('Pesticides');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      'Spray A'
+    );
+    expect(
+      fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });

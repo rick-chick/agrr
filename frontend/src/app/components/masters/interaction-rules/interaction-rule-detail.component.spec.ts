@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 
@@ -16,6 +16,7 @@ describe('InteractionRuleDetailComponent', () => {
     await TestBed.configureTestingModule({
       imports: [InteractionRuleDetailComponent, TranslateModule.forRoot()],
       providers: [
+        provideRouter([]),
         InteractionRuleDetailPresenter,
         {
           provide: ActivatedRoute,
@@ -98,5 +99,56 @@ describe('InteractionRuleDetailComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('No');
     expect(el.textContent).not.toContain('common.false');
+  });
+
+  it('shows master context header and omits back button from detail-card__actions', () => {
+    translate.setTranslation('en', {
+      common: { true: 'Yes', false: 'No', edit: 'Edit', delete: 'Delete' },
+      interaction_rules: {
+        index: { title: 'Rotation rules' },
+        show: {
+          rule_type: 'Rule type',
+          source_group: 'Source',
+          target_group: 'Target',
+          impact_ratio: 'Impact',
+          direction: 'Direction'
+        },
+        form: {
+          rule_type_codes: {
+            continuous_cultivation: 'Continuous cultivation inhibition'
+          }
+        }
+      }
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      rule: {
+        id: 1,
+        rule_type: 'continuous_cultivation',
+        source_group: 'Solanaceae',
+        target_group: 'Brassicaceae',
+        impact_ratio: 0.8,
+        is_directional: true,
+        is_reference: false,
+        region: null
+      },
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/interaction_rules');
+    expect(backLink?.textContent?.trim()).toContain('Rotation rules');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      'Solanaceae → Brassicaceae'
+    );
+    expect(
+      fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });

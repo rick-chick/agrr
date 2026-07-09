@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { FarmCreateView, FarmCreateViewState, FarmCreateFormData } from './farm-create.view';
 import { CreateFarmUseCase } from '../../../usecase/farms/create-farm.usecase';
 import {
@@ -39,10 +41,11 @@ const initialControl: FarmCreateViewState = {
 @Component({
   selector: 'app-farm-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, RegionSelectComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...FARM_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.new.title' | translate }}</h2>
         <form (ngSubmit)="createFarm()" #farmForm="ngForm" class="form-card__form">
@@ -102,7 +105,6 @@ const initialControl: FarmCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">
               {{ 'farms.new.form.submit' | translate }}
             </button>
-            <a routerLink="/farms" class="btn-secondary">{{ 'farms.show.back_to_list' | translate }}</a>
           </div>
         </form>
       </section>
@@ -126,6 +128,13 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
   set control(value: FarmCreateViewState) {
     this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'farms.index.title', routerLink: ['/farms'] },
+      { labelKey: 'farms.new.title' }
+    ];
   }
 
   ngOnInit(): void {

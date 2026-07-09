@@ -14,6 +14,8 @@ import { PublicPlanStore } from '../../services/public-plans/public-plan-store.s
 import { Crop } from '../../domain/crops/crop';
 import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
 import { findCropByResearchSlug } from '../../domain/public-plans/research-crop-slug';
+import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
+import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 
 const initialControl: PublicPlanSelectCropViewState = {
   loading: true,
@@ -25,12 +27,13 @@ const initialControl: PublicPlanSelectCropViewState = {
 @Component({
   selector: 'app-public-plan-select-crop',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, PublicPlanContextHeaderComponent],
   providers: [...PUBLIC_PLAN_SELECT_CROP_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
+        <app-public-plan-context-header [crumbs]="contextCrumbs" />
         <div class="compact-header-card">
           <div class="compact-header-title">
             <span class="title-icon" aria-hidden="true">🌱</span>
@@ -103,9 +106,6 @@ const initialControl: PublicPlanSelectCropViewState = {
           <div class="fixed-bottom-bar-container">
             <div class="fixed-bottom-bar-content">
               <div class="fixed-bottom-bar-left">
-                <a routerLink="/public-plans/new" class="btn btn-white back-button">
-                  {{ 'public_plans.select_crop.bottom_bar.back_button' | translate }}
-                </a>
                 <div class="selection-counter-group">
                   <span class="counter-label">{{ 'public_plans.select_crop.bottom_bar.selected_label' | translate }}</span>
                   <div class="counter-badge" aria-live="polite">{{ selectedCropIds.size }}</div>
@@ -144,6 +144,13 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
 
   selectedCropIds = new Set<number>();
   selectedCrops: Crop[] = [];
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'public_plans.breadcrumb_root', routerLink: ['/public-plans/new'] },
+      { labelKey: 'public_plans.steps.crop' }
+    ];
+  }
 
   get farm() {
     const farm = this.publicPlanStore.state.farm;
