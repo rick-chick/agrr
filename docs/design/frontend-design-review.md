@@ -29,6 +29,12 @@ Angular Material デザインスキル（`.cursor/skills/design-angular-material
 - [ ] 色・余白・角丸がすべて `var(--color-*)` / `var(--space-*)` / `var(--radius-*)` になっている（生の hex/px なし）
 - [ ] 不足トークンは `styles.css` の `:root` に追加してから使用している
 
+### ボタン（破壊的操作）
+
+- [ ] **削除・破壊的操作**は `.btn-danger`（outline: `background: var(--color-surface)`, `color: var(--color-error)`, `border: 1px solid var(--color-border)`、hover で `border-color: var(--color-error)`）
+- [ ] **主アクション**は `.btn-primary`（filled primary）、**副アクション**は `.btn-secondary`（outline neutral）
+- [ ] 画面固有クラスで削除スタイルを新規定義しない（既存 ad-hoc クラスは段階的に `.btn-danger` へ寄せる）
+
 ### HTML・セマンティクス
 
 - [ ] 見出し階層が飛んでいない（h1 → h2 → h3 の順）
