@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { PlanOptimizingView, PlanOptimizingViewState } from './plan-optimizing.view';
 import { SubscribePlanOptimizationUseCase } from '../../usecase/plans/subscribe-plan-optimization.usecase';
 import { PlanOptimizingPresenter, PLAN_OPTIMIZING_PROVIDERS } from '../../usecase/plans/plan-optimizing.providers';
+import { PlanPlanContextHeaderComponent } from './plan-plan-context-header.component';
 
 const initialControl: PlanOptimizingViewState = {
   status: 'pending',
@@ -16,12 +17,16 @@ const initialControl: PlanOptimizingViewState = {
 @Component({
   selector: 'app-plan-optimizing',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, TranslateModule, PlanPlanContextHeaderComponent],
   providers: [...PLAN_OPTIMIZING_PROVIDERS],
   template: `
     <main class="page-main page-main--fit">
+      <app-plan-plan-context-header
+        [planId]="planId"
+        [planName]="null"
+        pageTitleKey="plans.optimizing_live.heading"
+      />
       <section class="page">
-        <a [routerLink]="['/plans', planId]">{{ 'plans.optimizing_live.back_to_plan' | translate }}</a>
         <h2>
           <span>{{
             (isCompleted

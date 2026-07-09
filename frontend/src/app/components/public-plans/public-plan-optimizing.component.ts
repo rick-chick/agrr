@@ -17,6 +17,8 @@ import {
   PUBLIC_PLAN_OPTIMIZING_PROVIDERS
 } from '../../usecase/public-plans/public-plan-optimizing.providers';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
+import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 
 const initialControl: PublicPlanOptimizingViewState = {
   status: 'pending',
@@ -27,12 +29,13 @@ const initialControl: PublicPlanOptimizingViewState = {
 @Component({
   selector: 'app-public-plan-optimizing',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, PublicPlanContextHeaderComponent],
   providers: [...PUBLIC_PLAN_OPTIMIZING_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper pb-0">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
+        <app-public-plan-context-header [crumbs]="contextCrumbs" />
         <div class="compact-header-card">
           <div class="compact-header-title">
             <span class="title-icon" aria-hidden="true">🌱</span>
@@ -130,6 +133,14 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   get selectedCropsCount() {
     return this.publicPlanStore.state.selectedCrops.length;
   }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'public_plans.breadcrumb_root', routerLink: ['/public-plans/new'] },
+      { labelKey: 'public_plans.optimizing.breadcrumb' }
+    ];
+  }
+
   /** snapshot は遅延ルート初回描画でクエリ未確定になりうるため、初期化は queryParamMap で行う */
   private resolvedPlanId = 0;
 

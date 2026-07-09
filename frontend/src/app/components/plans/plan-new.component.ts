@@ -8,6 +8,8 @@ import { CreatePrivatePlanUseCase } from '../../usecase/private-plan-create/crea
 import { PlanNewPresenter, PLAN_NEW_PROVIDERS } from '../../usecase/plans/plan-new.providers';
 import { CreatePrivatePlanPresenter } from '../../adapters/private-plan-create/create-private-plan.presenter';
 import { PlanNewView, PlanNewViewState } from './plan-new.view';
+import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingFlashAndNavigationViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
@@ -27,10 +29,11 @@ const initialControl: PlanNewViewState = {
 @Component({
   selector: 'app-plan-new',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, FormsModule],
+  imports: [CommonModule, RouterLink, TranslateModule, FormsModule, MasterContextHeaderComponent],
   providers: [...PLAN_NEW_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <header class="page-header">
         <h1 id="page-title" class="page-title">{{ 'plans.new.title' | translate }}</h1>
         <p class="page-description">{{ 'plans.new.subtitle' | translate }}</p>
@@ -93,7 +96,6 @@ const initialControl: PlanNewViewState = {
               }
             </div>
             <div class="form-actions">
-              <a routerLink="/plans" class="btn-secondary">{{ 'common.cancel' | translate }}</a>
               <button
                 type="submit"
                 class="btn-primary"
@@ -119,6 +121,13 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   planName = '';
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'plans.index.title', routerLink: ['/plans'] },
+      { labelKey: 'plans.new.breadcrumb' }
+    ];
+  }
 
   private _control: PlanNewViewState = initialControl;
   get control(): PlanNewViewState {

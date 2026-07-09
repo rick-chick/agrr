@@ -14,6 +14,8 @@ import { PublicPlanStore } from '../../services/public-plans/public-plan-store.s
 import { Farm } from '../../domain/farms/farm';
 import { resolveReferenceFarmRegion } from '../../core/browser-region';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
+import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
+import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 const initialControl: PublicPlanCreateViewState = {
   loading: true,
   error: null,
@@ -24,12 +26,13 @@ const initialControl: PublicPlanCreateViewState = {
   selector: 'app-public-plan-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, PublicPlanContextHeaderComponent],
   providers: [...PUBLIC_PLAN_CREATE_PROVIDERS],
   template: `
     <main class="page-main public-plans-wrapper">
       <h1 class="visually-hidden">{{ 'public_plans.title' | translate }}</h1>
       <div class="free-plans-container">
+        <app-public-plan-context-header [crumbs]="contextCrumbs" />
         <div class="compact-header-card">
           <div class="compact-header-title">
             <span class="title-icon" aria-hidden="true">🌱</span>
@@ -97,6 +100,11 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
 
   selectedFarmId: number | null = null;
   selectedFarm: Farm | null = null;
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [{ labelKey: 'public_plans.breadcrumb_root' }];
+  }
+
   // Note: region selection UI removed. Region is auto-detected and not exposed to the user.
 
   private _control: PublicPlanCreateViewState = initialControl;
