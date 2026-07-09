@@ -94,11 +94,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.syncCurrentPath();
     this.routerSubscription = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(() => this.syncCurrentPath());
+      .subscribe(() => {
+        this.syncCurrentPath();
+        this.closeMobileMenu();
+      });
   }
 
   ngOnDestroy(): void {
     this.routerSubscription?.unsubscribe();
+  }
+
+  private closeMobileMenu(): void {
+    this.isMenuOpen = false;
+    this.openDropdownId = null;
   }
 
   isPlanNavActive(): boolean {
