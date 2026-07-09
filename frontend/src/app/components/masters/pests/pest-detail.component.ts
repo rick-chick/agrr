@@ -10,6 +10,8 @@ import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialControl: PestDetailViewState = {
   loading: true,
@@ -22,10 +24,11 @@ const initialControl: PestDetailViewState = {
 @Component({
   selector: 'app-pest-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...PEST_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.pest) {
@@ -77,7 +80,6 @@ const initialControl: PestDetailViewState = {
             <a [routerLink]="['/pests', control.pest.id, 'edit']" class="btn-primary">
               {{ 'pests.show.edit' | translate }}
             </a>
-            <a [routerLink]="['/pests']" class="btn-secondary">{{ 'pests.show.back_to_list' | translate }}</a>
             <button type="button" class="btn-danger" (click)="deletePest()">
               {{ 'pests.show.delete' | translate }}
             </button>
@@ -97,6 +99,16 @@ export class PestDetailComponent implements PestDetailView, OnInit {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'pests.index.title', routerLink: ['/pests'] }
+    ];
+    if (this.control.pest) {
+      crumbs.push({ label: this.control.pest.name });
+    }
+    return crumbs;
+  }
 
   private _control: PestDetailViewState = initialControl;
   get control(): PestDetailViewState {

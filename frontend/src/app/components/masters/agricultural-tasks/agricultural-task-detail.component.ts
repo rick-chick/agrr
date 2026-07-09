@@ -16,6 +16,8 @@ import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialControl: AgriculturalTaskDetailViewState = {
   loading: true,
@@ -28,10 +30,11 @@ const initialControl: AgriculturalTaskDetailViewState = {
 @Component({
   selector: 'app-agricultural-task-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...AGRICULTURAL_TASK_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.agriculturalTask) {
@@ -89,9 +92,6 @@ const initialControl: AgriculturalTaskDetailViewState = {
             <a [routerLink]="['/agricultural_tasks', control.agriculturalTask.id, 'edit']" class="btn-primary">
               {{ 'agricultural_tasks.show.edit' | translate }}
             </a>
-            <a [routerLink]="['/agricultural_tasks']" class="btn-secondary">
-              {{ 'agricultural_tasks.show.back_to_list' | translate }}
-            </a>
             <button type="button" class="btn-danger" (click)="deleteAgriculturalTask()">
               {{ 'agricultural_tasks.show.delete' | translate }}
             </button>
@@ -112,6 +112,16 @@ export class AgriculturalTaskDetailComponent implements AgriculturalTaskDetailVi
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'agricultural_tasks.index.title', routerLink: ['/agricultural_tasks'] }
+    ];
+    if (this.control.agriculturalTask) {
+      crumbs.push({ label: this.control.agriculturalTask.name });
+    }
+    return crumbs;
+  }
 
   private _control: AgriculturalTaskDetailViewState = initialControl;
   get control(): AgriculturalTaskDetailViewState {

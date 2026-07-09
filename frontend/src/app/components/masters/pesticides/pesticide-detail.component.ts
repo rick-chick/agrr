@@ -14,6 +14,8 @@ import { UndoToastService } from '../../../services/undo-toast.service';
 import { applyPendingUndoToastViewEffects } from '../../../core/view-effects/pending-undo-toast-view.effects';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialControl: PesticideDetailViewState = {
   loading: true,
@@ -26,10 +28,11 @@ const initialControl: PesticideDetailViewState = {
 @Component({
   selector: 'app-pesticide-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...PESTICIDE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.pesticide) {
@@ -69,7 +72,6 @@ const initialControl: PesticideDetailViewState = {
           </dl>
           <div class="detail-card__actions">
             <a [routerLink]="['/pesticides', control.pesticide.id, 'edit']" class="btn-primary">{{ 'pesticides.show.edit' | translate }}</a>
-            <a [routerLink]="['/pesticides']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             <button type="button" class="btn-danger" (click)="deletePesticide()">{{ 'pesticides.show.delete' | translate }}</button>
           </div>
         </section>
@@ -88,6 +90,16 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
   private readonly undoToast = inject(UndoToastService);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'pesticides.index.title', routerLink: ['/pesticides'] }
+    ];
+    if (this.control.pesticide) {
+      crumbs.push({ label: this.control.pesticide.name });
+    }
+    return crumbs;
+  }
 
   private _control: PesticideDetailViewState = initialControl;
   get control(): PesticideDetailViewState {

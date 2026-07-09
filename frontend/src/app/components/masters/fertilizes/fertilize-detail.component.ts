@@ -11,6 +11,8 @@ import {
 
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialControl: FertilizeDetailViewState = {
   loading: true,
@@ -22,10 +24,11 @@ const initialControl: FertilizeDetailViewState = {
 @Component({
   selector: 'app-fertilize-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...FERTILIZE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.fertilize) {
@@ -73,7 +76,6 @@ const initialControl: FertilizeDetailViewState = {
             <a [routerLink]="['/fertilizes', control.fertilize.id, 'edit']" class="btn-primary">
               {{ 'fertilizes.show.edit' | translate }}
             </a>
-            <a [routerLink]="['/fertilizes']" class="btn-secondary">{{ 'fertilizes.show.back_to_list' | translate }}</a>
           </div>
         </section>
       }
@@ -88,6 +90,16 @@ export class FertilizeDetailComponent implements FertilizeDetailView, OnInit {
   private readonly presenter = inject(FertilizeDetailPresenter);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'fertilizes.index.title', routerLink: ['/fertilizes'] }
+    ];
+    if (this.control.fertilize) {
+      crumbs.push({ label: this.control.fertilize.name });
+    }
+    return crumbs;
+  }
 
   private _control: FertilizeDetailViewState = initialControl;
   get control(): FertilizeDetailViewState {
