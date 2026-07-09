@@ -35,7 +35,6 @@ const CROPS_SHOW_KEYS = [
   'crops.show.celsius_unit',
   'crops.show.from_plan_wizard_title',
   'crops.show.from_plan_wizard_lead',
-  'crops.show.return_to_plan',
   'crops.show.unnamed_blueprint',
   'crops.show.task_schedule_blueprints_title',
   'crops.show.blueprint_summary.count',
