@@ -36,7 +36,6 @@ import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
 import {
   cropPlanWizardQueryParams,
   parsePlanWizardReturnTab,
-  planWizardReturnPath,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
@@ -92,6 +91,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
       } @else if (control.error) {
         <p class="master-loading master-error">{{ control.error }}</p>
       } @else if (control.crop) {
+        <app-master-context-header [crumbs]="contextCrumbs" />
         @if (control.fromPlanId) {
           <div class="crop-blueprints__plan-wizard-banner" role="status">
             <p class="crop-blueprints__plan-wizard-banner-title">
@@ -104,12 +104,6 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
         }
 
         <header class="page-header crop-blueprints__page-header">
-          <app-master-context-header [crumbs]="contextCrumbs" />
-          @if (control.fromPlanId) {
-            <a [routerLink]="planReturnPath" class="btn-secondary crop-blueprints__return-to-plan">
-              {{ 'crops.show.return_to_plan' | translate }}
-            </a>
-          }
           <h1 class="page-title">{{ control.crop.name }}</h1>
           <p class="page-description">{{ 'crops.show.task_schedule_blueprints_title' | translate }}</p>
         </header>
@@ -578,11 +572,6 @@ export class CropTaskScheduleBlueprintsComponent implements CropTaskScheduleBlue
   protected readonly blueprintLaneId = blueprintLaneId;
 
   returnTab: PlanWizardReturnTab = 'task_schedule';
-
-  get planReturnPath(): (string | number)[] {
-    const planId = this.control.fromPlanId;
-    return planId != null ? planWizardReturnPath(planId, this.returnTab) : [];
-  }
 
   get contextCrumbs(): MasterContextCrumb[] {
     const crumbs: MasterContextCrumb[] = [

@@ -31,11 +31,6 @@
   margin-bottom: var(--space-4);
 }
 
-.crop-blueprints__return-to-plan {
-  display: inline-flex;
-  margin-bottom: var(--space-3);
-}
-
 .section-card > .section-title {
   display: flex;
   align-items: center;

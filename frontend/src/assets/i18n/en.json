@@ -2026,9 +2026,8 @@
         "board_label": "Task plans grouped by growth stage",
         "keyboard_hint": "Drag cards to change stages. Enter timing (℃·day) on each card or in the add form below."
       },
-      "return_to_plan": "Return to plan",
       "from_plan_wizard_title": "Registration for this plan's task schedules",
-      "from_plan_wizard_lead": "Register task plans using the form below. When finished, use \"Return to plan\" to go back.",
+      "from_plan_wizard_lead": "Register task plans using the form below. When finished, use the breadcrumb to return to the plan.",
       "from_plan_stages_wizard_lead": "Set base temperature and required GDD for each growth stage. When finished, return to the plan and regenerate task schedules.",
       "confirm_delete": "Are you sure you want to delete this crop?",
       "form": {
