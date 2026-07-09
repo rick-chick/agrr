@@ -206,27 +206,28 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     await fixture.whenStable();
 
     expect(fixture.nativeElement.querySelector('.page-title')?.textContent).toContain('Tomato');
-    expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
 
-    const contextHeader = fixture.nativeElement.querySelector('app-master-context-header');
-    const pageHeader = fixture.nativeElement.querySelector('.crop-blueprints__page-header');
-    expect(
-      contextHeader.compareDocumentPosition(pageHeader) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    const pageMain = fixture.nativeElement.querySelector('.page-main');
+    const breadcrumb = pageMain?.querySelector(':scope > app-master-context-header');
+    const pageHeader = pageMain?.querySelector(':scope > .page-header');
+    expect(breadcrumb).toBeTruthy();
+    expect(pageHeader).toBeTruthy();
+    expect(pageHeader?.querySelector('app-master-context-header')).toBeNull();
 
-    const backLink = fixture.nativeElement.querySelector(
+    const backLink = breadcrumb?.querySelector(
       'a.master-context-header__back'
     ) as HTMLAnchorElement;
     expect(backLink?.getAttribute('href')).toBe('/crops');
 
-    const cropDetailLink = fixture.nativeElement.querySelector(
+    const cropDetailLink = breadcrumb?.querySelector(
       'a.master-context-header__link'
     ) as HTMLAnchorElement;
     expect(cropDetailLink?.getAttribute('href')).toBe('/crops/3');
     expect(cropDetailLink?.textContent?.trim()).toBe('Tomato');
 
-    expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeTruthy();
+    expect(breadcrumb?.querySelector('[aria-current="page"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-blueprints__back-link')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__return-to-plan')).toBeNull();
   });
 
   it('hides section lead when fromPlan query param is set', async () => {
@@ -307,7 +308,7 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     expect(aiButton?.getAttribute('title')).toContain('AI');
   });
 
-  it('shows plan wizard banner without return-to-plan when fromPlan query param is set', async () => {
+  it('omits return-to-plan link when fromPlan query param is set', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
       'en',
@@ -335,16 +336,10 @@ describe('CropTaskScheduleBlueprintsComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const contextHeader = fixture.nativeElement.querySelector('app-master-context-header');
-    const pageHeader = fixture.nativeElement.querySelector('.crop-blueprints__page-header');
-    expect(contextHeader).toBeTruthy();
-    expect(pageHeader).toBeTruthy();
-    expect(
-      contextHeader.compareDocumentPosition(pageHeader) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-blueprints__return-to-plan')).toBeNull();
     expect(fixture.nativeElement.querySelector('a[href*="/plans/7/task_schedule"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__return-to-plan')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
   it('regenerates blueprints after confirm when readiness is satisfied', () => {

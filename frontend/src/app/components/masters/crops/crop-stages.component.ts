@@ -49,6 +49,7 @@ const initialControl: CropStagesViewState = {
       } @else if (control.error) {
         <p class="master-loading master-error">{{ control.error }}</p>
       } @else {
+        <app-master-context-header [crumbs]="contextCrumbs" />
         @if (fromPlanId) {
           <div class="crop-blueprints__plan-wizard-banner" role="status">
             <p class="crop-blueprints__plan-wizard-banner-title">

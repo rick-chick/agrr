@@ -25,8 +25,8 @@ describe('CropStagesComponent', () => {
   let fixture: ComponentFixture<CropStagesComponent>;
   let mockActivatedRoute: {
     snapshot: {
-      paramMap: { get: (key: string) => string | null };
-      queryParamMap: { get: (key: string) => string | null };
+      paramMap: { get: ReturnType<typeof vi.fn> };
+      queryParamMap: { get: ReturnType<typeof vi.fn> };
     };
   };
   let mockLoadUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -43,10 +43,10 @@ describe('CropStagesComponent', () => {
     mockActivatedRoute = {
       snapshot: {
         paramMap: {
-          get: (key: string) => (key === 'id' ? '1' : null)
+          get: vi.fn((key: string) => (key === 'id' ? '1' : null))
         },
         queryParamMap: {
-          get: () => null
+          get: vi.fn(() => null)
         }
       }
     };
@@ -242,7 +242,7 @@ describe('CropStagesComponent', () => {
     expect(stageTitleElement.textContent).toContain('ステージ 1');
   });
 
-  it('shows three-level breadcrumb above page-header and omits return-to-plan button', () => {
+  it('should link back to crop detail via breadcrumbs', () => {
     component.control = {
       loading: false,
       error: null,
@@ -256,32 +256,33 @@ describe('CropStagesComponent', () => {
 
     fixture.detectChanges();
 
-    const contextHeader = fixture.nativeElement.querySelector('app-master-context-header');
-    const pageHeader = fixture.nativeElement.querySelector('.crop-stages__page-header');
-    expect(contextHeader).toBeTruthy();
+    const pageMain = fixture.nativeElement.querySelector('.page-main');
+    const breadcrumb = pageMain?.querySelector(':scope > app-master-context-header');
+    const pageHeader = pageMain?.querySelector(':scope > .page-header');
+    expect(breadcrumb).toBeTruthy();
     expect(pageHeader).toBeTruthy();
-    expect(
-      contextHeader.compareDocumentPosition(pageHeader) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(pageHeader?.querySelector('app-master-context-header')).toBeNull();
 
-    const backLink = fixture.nativeElement.querySelector(
+    const backLink = breadcrumb?.querySelector(
       'a.master-context-header__back'
     ) as HTMLAnchorElement;
     expect(backLink?.getAttribute('href')).toBe('/crops');
 
-    const cropDetailLink = fixture.nativeElement.querySelector(
+    const cropDetailLink = breadcrumb?.querySelector(
       'a.master-context-header__link'
     ) as HTMLAnchorElement;
     expect(cropDetailLink?.getAttribute('href')).toBe('/crops/1');
     expect(cropDetailLink?.textContent?.trim()).toBe('Tomato');
 
-    expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeTruthy();
+    expect(breadcrumb?.querySelector('[aria-current="page"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages__back-link')).toBeNull();
     expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeNull();
   });
 
-  it('shows plan wizard banner without return-to-plan when fromPlan query param is set', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get = (key: string) =>
-      key === 'fromPlan' ? '7' : null;
+  it('omits return-to-plan link when fromPlan query param is set', () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+      key === 'fromPlan' ? '7' : null
+    );
     component.fromPlanId = 7;
     component.control = {
       loading: false,
@@ -296,9 +297,10 @@ describe('CropStagesComponent', () => {
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('a[href*="/plans/7"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeNull();
-    expect(fixture.nativeElement.querySelector('a[href*="/plans/7/"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
   it('shows cumulative GDD range when stage has required_gdd', () => {
