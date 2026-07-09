@@ -189,6 +189,45 @@ fn object_media_url(bucket: &str, key: &str) -> String {
     )
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn urlencoding_key_percent_encodes_special_chars_and_slashes() {
+        assert_eq!(
+            urlencoding_key("weather_data/42/2024.json"),
+            "weather_data%2F42%2F2024.json"
+        );
+        assert_eq!(urlencoding_key("a b+c"), "a%20b%2Bc");
+        assert_eq!(urlencoding_key("safe-name_1.0~"), "safe-name_1.0~");
+    }
+
+    #[test]
+    fn local_root_read_write_list_roundtrip() {
+        let dir = tempdir().unwrap();
+        let client = GcsObjectClient::new(WeatherDataGcsConfig {
+            bucket: "test-bucket".into(),
+            use_http: false,
+            local_root: Some(dir.path().to_path_buf()),
+        });
+
+        let key = "weather_data/7/2024.json";
+        let payload = br#"{"2024-01-01":{"temperature_max":10.0}}"#;
+        client.write_object(key, payload).expect("write");
+        let read = client.read_object(key).expect("read");
+        assert_eq!(read.as_deref(), Some(payload.as_slice()));
+
+        let names = client
+            .list_object_names("weather_data/7/")
+            .expect("list");
+        assert_eq!(names, vec![key.to_string()]);
+
+        assert_eq!(client.read_object("missing/key.json").unwrap(), None);
+    }
+}
+
 fn gcp_access_token(http: &Client) -> Result<String, WeatherDataGcsError> {
     let resp = http
         .get("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token")
