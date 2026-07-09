@@ -8,6 +8,9 @@
         BASAL_FERTILIZATION, FIELD_WORK, TOPDRESS_FERTILIZATION,
     };
     use crate::agricultural_task::dtos::TaskScheduleGenerateInput;
+    use crate::agricultural_task::dtos::{
+        TaskSchedulePlanMutations, TaskScheduleReplaceItem,
+    };
     use crate::agricultural_task::gateways::{TaskSchedulePlanContext, TaskScheduleRelatedTask};
     use rust_decimal::Decimal;
     use std::str::FromStr;
@@ -206,6 +209,36 @@
                 _generated_at: generated_at,
                 items,
             });
+            Ok(())
+        }
+
+        fn apply_plan_schedule_mutations(
+            &self,
+            plan_mutations: &TaskSchedulePlanMutations,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            for mutation in &plan_mutations.mutations {
+                match mutation {
+                    crate::agricultural_task::dtos::TaskScheduleFieldMutation::DeleteAll {
+                        field_cultivation_id,
+                        category,
+                    } => self.delete_all_for_field_category(
+                        plan_mutations.cultivation_plan_id,
+                        *field_cultivation_id,
+                        category,
+                    )?,
+                    crate::agricultural_task::dtos::TaskScheduleFieldMutation::Replace {
+                        field_cultivation_id,
+                        category,
+                        items,
+                    } => self.replace_schedule_for_field_category(
+                        plan_mutations.cultivation_plan_id,
+                        *field_cultivation_id,
+                        category,
+                        plan_mutations.generated_at,
+                        items.clone(),
+                    )?,
+                }
+            }
             Ok(())
         }
     }
