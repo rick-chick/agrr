@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -15,22 +15,12 @@ import { AuthService } from '../../../services/auth.service';
 describe('InteractionRuleCreateComponent', () => {
   let component: InteractionRuleCreateComponent;
   let fixture: ComponentFixture<InteractionRuleCreateComponent>;
-  let mockRouter: any;
   let mockPresenter: any;
   let mockCreateUseCase: any;
   let mockAuthService: any;
   let currentUser: { admin: boolean; region?: string | null } | null;
 
   beforeEach(async () => {
-    mockRouter = {
-      navigate: vi.fn(),
-      events: { subscribe: vi.fn() },
-      routerState: {},
-      url: '',
-      createUrlTree: vi.fn(),
-      serializeUrl: vi.fn()
-    };
-
     mockPresenter = {
       setView: vi.fn()
     };

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InteractionRuleEditComponent } from './interaction-rule-edit.component';
@@ -24,7 +23,6 @@ describe('InteractionRuleEditComponent', () => {
   let component: InteractionRuleEditComponent;
   let fixture: ComponentFixture<InteractionRuleEditComponent>;
   let mockActivatedRoute: any;
-  let mockRouter: any;
   let mockLoadUseCase: any;
   let mockUpdateUseCase: any;
   let mockPresenter: any;
@@ -37,12 +35,6 @@ describe('InteractionRuleEditComponent', () => {
           get: () => '1'
         }
       }
-    };
-    mockRouter = {
-      navigate: vi.fn(),
-      events: of(),
-      createUrlTree: vi.fn(() => ({})),
-      serializeUrl: vi.fn(() => '')
     };
     mockLoadUseCase = { execute: vi.fn() };
     mockUpdateUseCase = { execute: vi.fn() };
