@@ -177,6 +177,21 @@ describe('PlanListComponent', () => {
     expect(deleteSpy).toHaveBeenCalledWith(1);
   });
 
+  it('delete button uses outline danger style (not filled red background)', async () => {
+    const nativeElement = await renderPlans([
+      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
+    ]);
+    const deleteButton = nativeElement.querySelector(
+      '.item-card__actions .btn-danger'
+    ) as HTMLElement;
+    expect(deleteButton).toBeTruthy();
+
+    const styles = getComputedStyle(deleteButton);
+    expect(styles.color).not.toBe('var(--color-text-on-primary)');
+    expect(styles.color).toBe('var(--color-error)');
+    expect(styles.borderStyle).not.toBe('none');
+  });
+
   it('does not show a work log shortcut on plan cards', async () => {
     const nativeElement = await renderPlans([
       { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }

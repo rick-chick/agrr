@@ -1,4 +1,11 @@
-/* マスタ画面共通レイアウト（design-angular-material SAMPLES.md 準拠・トークンのみ） */
+/* マスタ画面共通レイアウト（design-angular-material SAMPLES.md 準拠・トークンのみ）
+ *
+ * ボタン規約:
+ * - 主アクション → .btn-primary（filled primary）
+ * - 副アクション → .btn-secondary（outline neutral）
+ * - 削除・破壊的操作 → .btn-danger（outline: surface 背景 + error 文字 + border）
+ * 画面固有クラスで削除スタイルを新規定義しない（.btn-danger に統一）
+ */
 
 /* ===== 1. ページレイアウト ===== */
 .page-main {
@@ -460,7 +467,7 @@ article.item-card:hover {
 }
 
 /* ボタン（マスタ共通・トークン・7d タップ領域） */
-/* box-sizing: border-box で border ありの .btn-secondary と border なしの .btn-danger の高さを揃える */
+/* box-sizing: border-box で .btn-secondary / .btn-danger（いずれも border あり）の高さを揃える */
 .btn-primary,
 .btn-secondary,
 .btn-danger {
@@ -512,12 +519,12 @@ article.item-card:hover {
 }
 
 .btn-danger {
-  background: var(--color-error);
-  color: var(--color-text-on-primary);
+  background: var(--color-surface);
+  color: var(--color-error);
   min-height: var(--touch-target-min);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
-  border: none;
+  border: 1px solid var(--color-border);
   font-size: var(--font-size-sm);
   cursor: pointer;
   display: inline-flex;
@@ -526,7 +533,8 @@ article.item-card:hover {
 }
 
 .btn-danger:hover {
-  background: var(--color-error-dark);
+  background: var(--color-surface-hover);
+  border-color: var(--color-error);
 }
 
 .btn-danger:focus-visible {
