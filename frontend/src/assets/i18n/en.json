@@ -169,7 +169,6 @@
     "cancel": "Cancel",
     "edit": "Edit",
     "delete": "Delete",
-    "back": "Back",
     "confirm": "Confirm",
     "search": "Search",
     "create": "Create",
@@ -1630,7 +1629,6 @@
       "application_method": "Application Method",
       "created_at": "Created",
       "updated_at": "Updated",
-      "back_to_list": "Back to Pesticides",
       "edit": "Edit",
       "delete": "Delete",
       "confirm_delete": "Are you sure you want to delete this pesticide?"
@@ -1731,7 +1729,6 @@
       "associated_crops": "Associated Crops",
       "reference_crop": "Reference Crop",
       "no_crops_associated": "No crops associated.",
-      "back_to_list": "Back to List",
       "edit": "Edit",
       "delete": "Delete",
       "confirm_delete": "Delete this task?"
@@ -2033,7 +2030,6 @@
       "from_plan_wizard_title": "Registration for this plan's task schedules",
       "from_plan_wizard_lead": "Register task plans using the form below. When finished, use \"Return to plan\" to go back.",
       "from_plan_stages_wizard_lead": "Set base temperature and required GDD for each growth stage. When finished, return to the plan and regenerate task schedules.",
-      "back_to_list": "Back to Crops",
       "confirm_delete": "Are you sure you want to delete this crop?",
       "form": {
         "name_label": "Name",
@@ -2098,12 +2094,10 @@
         "select_pest_placeholder": "Select a pest",
         "associate_button": "Associate",
         "no_unassociated_pests": "No unassociated pests available. Please create a new pest.",
-        "create_new_pest": "Create New Pest",
-        "back_to_list": "Back to List"
+        "create_new_pest": "Create New Pest"
       },
       "edit": {
-        "title": "Edit {{pest_name}}",
-        "back_to_list": "Back to List"
+        "title": "Edit {{pest_name}}"
       },
       "show": {
         "reference_pest": "Reference Pest",
@@ -2266,7 +2260,6 @@
       "timing_hint": "Timing",
       "created_at": "Created",
       "updated_at": "Updated",
-      "back_to_list": "Back to Pests",
       "edit": "Edit",
       "delete": "Delete",
       "confirm_delete": "Are you sure you want to delete this pest?",
@@ -2359,7 +2352,6 @@
       "package_size": "Package Size",
       "created_at": "Created",
       "updated_at": "Updated",
-      "back_to_list": "Back to Fertilizers",
       "edit": "Edit",
       "delete": "Delete",
       "confirm_delete": "Are you sure you want to delete this fertilizer?"
@@ -2461,7 +2453,6 @@
       "no_fields": "No fields registered yet.",
       "field_list_item": "{{name}} ({{area}}㎡)",
       "add_first_field": "Add First Field",
-      "back_to_list": "Back to Farm List",
       "detail": "Details",
       "map": {
         "title": "Map"
@@ -2553,10 +2544,6 @@
     "index": {
       "title": "Fields",
       "new_field": "Add New Field",
-      "breadcrumb": {
-        "farms": "Farms",
-        "current": "Fields"
-      },
       "actions": {
         "detail": "Details",
         "edit": "Edit",
@@ -2572,11 +2559,6 @@
     },
     "new": {
       "title": "Add New Field",
-      "breadcrumb": {
-        "farms": "Farms",
-        "fields": "Fields",
-        "current": "New Field"
-      },
       "form": {
         "name_label": "Field Name",
         "name_placeholder": "e.g., North Rice Field",
@@ -2596,10 +2578,6 @@
     },
     "edit": {
       "title": "Edit Field",
-      "breadcrumb": {
-        "farms": "Farms",
-        "current": "Edit Field"
-      },
       "form": {
         "submit": "Update Field",
         "cancel": "Cancel"
@@ -2609,10 +2587,6 @@
       }
     },
     "show": {
-      "breadcrumb": {
-        "farms": "Farms",
-        "fields": "Fields"
-      },
       "info": "Field Information",
       "edit": "Edit",
       "delete": "Delete",
@@ -2720,8 +2694,7 @@
       "no_impact": "No impact",
       "edit": "Edit",
       "delete": "Delete",
-      "confirm_delete": "Are you sure you want to delete this rule?",
-      "back_to_list": "Back to List"
+      "confirm_delete": "Are you sure you want to delete this rule?"
     }
   },
   "api_keys": {

@@ -34,7 +34,6 @@ type PestsBundle = {
     region?: string;
     edit?: string;
     delete?: string;
-    back_to_list?: string;
     confirm_delete?: string;
   };
   errors?: { invalid_id?: string };

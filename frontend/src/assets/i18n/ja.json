@@ -147,7 +147,6 @@
       "application_method": "施用方法",
       "created_at": "作成日",
       "updated_at": "更新日",
-      "back_to_list": "農薬一覧に戻る",
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この農薬を削除しますか？"
@@ -248,7 +247,6 @@
       "associated_crops": "関連する作物",
       "reference_crop": "参照作物",
       "no_crops_associated": "この作業に紐づく作物はありません。",
-      "back_to_list": "作業一覧に戻る",
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この作業を削除しますか？"
@@ -558,7 +556,6 @@
       "from_plan_wizard_title": "計画の作業予定を作るための登録",
       "from_plan_wizard_lead": "下のフォームから作業予定を登録してください。完了したら「作業記録に戻る」から計画へ戻れます。",
       "from_plan_stages_wizard_lead": "生育ステージの基準温度と必要積算温度を設定してください。完了したら計画へ戻って作業予定を再生成してください。",
-      "back_to_list": "作物一覧に戻る",
       "confirm_delete": "この作物を削除しますか？",
       "form": {
         "name_label": "名前",
@@ -623,12 +620,10 @@
         "select_pest_placeholder": "害虫を選択してください",
         "associate_button": "関連付ける",
         "no_unassociated_pests": "関連付け可能な害虫がありません。新しい害虫を作成してください。",
-        "create_new_pest": "新しい害虫を作成",
-        "back_to_list": "一覧に戻る"
+        "create_new_pest": "新しい害虫を作成"
       },
       "edit": {
-        "title": "{{pest_name}}を編集",
-        "back_to_list": "一覧に戻る"
+        "title": "{{pest_name}}を編集"
       },
       "show": {
         "reference_pest": "参照害虫",
@@ -791,7 +786,6 @@
       "timing_hint": "タイミング",
       "created_at": "作成日",
       "updated_at": "更新日",
-      "back_to_list": "害虫一覧に戻る",
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この害虫を削除しますか？",
@@ -884,7 +878,6 @@
       "package_size": "容量",
       "created_at": "作成日",
       "updated_at": "更新日",
-      "back_to_list": "肥料一覧に戻る",
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この肥料を削除しますか？"
@@ -1004,7 +997,6 @@
       "no_fields": "まだ圃場が登録されていません。",
       "field_list_item": "{{name}}（{{area}}㎡）",
       "add_first_field": "最初の圃場を追加",
-      "back_to_list": "農場一覧に戻る",
       "detail": "詳細",
       "map": {
         "title": "地図"
@@ -1096,10 +1088,6 @@
     "index": {
       "title": "圃場一覧",
       "new_field": "新しい圃場を追加",
-      "breadcrumb": {
-        "farms": "農場一覧",
-        "current": "圃場一覧"
-      },
       "actions": {
         "detail": "詳細",
         "edit": "編集",
@@ -1115,11 +1103,6 @@
     },
     "new": {
       "title": "新しい圃場を追加",
-      "breadcrumb": {
-        "farms": "農場一覧",
-        "fields": "圃場一覧",
-        "current": "新しい圃場"
-      },
       "form": {
         "name_label": "圃場名",
         "name_placeholder": "例: 北側の田んぼ",
@@ -1139,11 +1122,6 @@
     },
     "edit": {
       "title": "圃場を編集",
-      "breadcrumb": {
-        "farms": "農場一覧",
-        "fields": "圃場一覧",
-        "edit": "編集"
-      },
       "form": {
         "name_label": "圃場名",
         "name_placeholder": "例: 北側の田んぼ",
@@ -1162,10 +1140,6 @@
       }
     },
     "show": {
-      "breadcrumb": {
-        "farms": "農場一覧",
-        "fields": "圃場一覧"
-      },
       "name": "名前",
       "area": "面積",
       "daily_cost": "日次固定費用",
@@ -1173,7 +1147,6 @@
       "created_at": "作成日",
       "updated_at": "更新日",
       "info": "圃場情報",
-      "back_to_list": "圃場一覧に戻る",
       "edit": "編集",
       "delete": "削除",
       "confirm_delete": "この圃場を削除しますか？",
@@ -1286,8 +1259,7 @@
       "no_impact": "影響なし",
       "edit": "編集",
       "delete": "削除",
-      "confirm_delete": "このルールを削除しますか？",
-      "back_to_list": "一覧に戻る"
+      "confirm_delete": "このルールを削除しますか？"
     }
   },
   "time": {
@@ -1359,7 +1331,6 @@
     "cancel": "キャンセル",
     "edit": "編集",
     "delete": "削除",
-    "back": "戻る",
     "confirm": "確認",
     "search": "検索",
     "create": "作成",
