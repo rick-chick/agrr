@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { FarmEditView, FarmEditViewState, FarmEditFormData } from './farm-edit.view';
 import { LoadFarmForEditUseCase } from '../../../usecase/farms/load-farm-for-edit.usecase';
 import { UpdateFarmUseCase } from '../../../usecase/farms/update-farm.usecase';
@@ -36,10 +38,11 @@ const initialControl: FarmEditViewState = {
 @Component({
   selector: 'app-farm-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, FarmMapComponent, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...FARM_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.edit.title' | translate }}</h2>
         @if (control.loading) {
@@ -101,7 +104,6 @@ const initialControl: FarmEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">
                 {{ 'farms.edit.form.submit' | translate }}
               </button>
-              <a routerLink="/farms" class="btn-secondary">{{ 'farms.show.back_to_list' | translate }}</a>
             </div>
           </form>
         }
@@ -135,6 +137,20 @@ export class FarmEditComponent implements FarmEditView, OnInit {
 
   private get farmId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'farms.index.title', routerLink: ['/farms'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/farms', this.farmId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   ngOnInit(): void {

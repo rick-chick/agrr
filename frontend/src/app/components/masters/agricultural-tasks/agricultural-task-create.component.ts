@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import {
@@ -41,10 +43,11 @@ const initialControl: AgriculturalTaskCreateViewState = {
 @Component({
   selector: 'app-agricultural-task-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...AGRICULTURAL_TASK_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
           {{ 'agricultural_tasks.new.title' | translate }}
@@ -104,7 +107,6 @@ const initialControl: AgriculturalTaskCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="taskForm.invalid || control.saving">
               {{ 'agricultural_tasks.form.submit_create' | translate }}
             </button>
-            <a [routerLink]="['/agricultural_tasks']" class="btn-secondary">{{ 'common.back' | translate }}</a>
           </div>
         </form>
       </section>
@@ -130,6 +132,13 @@ export class AgriculturalTaskCreateComponent implements AgriculturalTaskCreateVi
     });
     this._control = next;
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'agricultural_tasks.index.title', routerLink: ['/agricultural_tasks'] },
+      { labelKey: 'agricultural_tasks.new.title' }
+    ];
   }
 
   ngOnInit(): void {

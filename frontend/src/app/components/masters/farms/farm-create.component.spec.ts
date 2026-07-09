@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { FarmCreateComponent } from './farm-create.component';
@@ -167,5 +167,29 @@ describe('FarmCreateComponent', () => {
       longitude: 135.0,
       onSuccess: expect.any(Function)
     });
+  });
+
+  it('shows master context header and omits back link from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        farms: { index: { title: 'Farms' }, new: { title: 'Add New Farm' } }
+      },
+      true
+    );
+    translate.use('en');
+    fixture.detectChanges();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/farms');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      'Add New Farm'
+    );
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });

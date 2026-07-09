@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -38,10 +40,11 @@ const initialControl: InteractionRuleEditViewState = {
 @Component({
   selector: 'app-interaction-rule-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...INTERACTION_RULE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'interaction_rules.edit.title' | translate }}</h2>
         @if (control.loading) {
@@ -86,7 +89,6 @@ const initialControl: InteractionRuleEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
                 {{ 'interaction_rules.form.submit_update' | translate }}
               </button>
-              <a [routerLink]="['/interaction_rules']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             </div>
           </form>
         }
@@ -117,6 +119,21 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
 
   private get interactionRuleId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] }
+    ];
+    const { source_group, target_group } = this.control.formData;
+    if (!this.control.loading && source_group && target_group) {
+      crumbs.push({
+        label: `${source_group} → ${target_group}`,
+        routerLink: ['/interaction_rules', this.interactionRuleId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   ngOnInit(): void {
