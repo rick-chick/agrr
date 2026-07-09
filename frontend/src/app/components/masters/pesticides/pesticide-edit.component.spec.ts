@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { PesticideEditComponent } from './pesticide-edit.component';
@@ -41,6 +41,7 @@ describe('PesticideEditComponent', () => {
       imports: [PesticideEditComponent, TranslateModule.forRoot()],
       providers: [
         PesticideEditPresenter,
+        provideRouter([]),
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: LoadPesticideForEditUseCase, useValue: mockLoadUseCase },
         { provide: UpdatePesticideUseCase, useValue: mockUpdateUseCase },
@@ -178,5 +179,43 @@ describe('PesticideEditComponent', () => {
     fixture.detectChanges();
     expect(mockCropGateway.list).toHaveBeenCalled();
     expect(mockPestGateway.list).toHaveBeenCalled();
+  });
+
+  it('shows three-level breadcrumb with detail link and omits back from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        pesticides: { index: { title: 'Pesticides' } },
+        common: { edit: 'Edit' }
+      },
+      true
+    );
+    translate.use('en');
+
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      formData: {
+        name: 'Spray A',
+        active_ingredient: null,
+        description: null,
+        crop_id: 1,
+        pest_id: 1,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    const detailLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__link'
+    ) as HTMLAnchorElement;
+    expect(detailLink?.getAttribute('href')).toBe('/pesticides/123');
+    expect(detailLink?.textContent?.trim()).toBe('Spray A');
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });

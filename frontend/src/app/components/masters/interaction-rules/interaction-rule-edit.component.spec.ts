@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -56,8 +56,7 @@ describe('InteractionRuleEditComponent', () => {
         TranslateModule.forRoot({ fallbackLang: 'en' })
       ],
       providers: [
-        // Provide route and router at module level; component-level providers
-        // (defined in the component) will be overridden below.
+        provideRouter([]),
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: Router, useValue: mockRouter }
       ]
@@ -156,5 +155,40 @@ describe('InteractionRuleEditComponent', () => {
 
     const regionSelect = fixture.nativeElement.querySelector('app-region-select');
     expect(regionSelect).toBeNull();
+  });
+
+  it('shows three-level breadcrumb with detail link and omits back from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        interaction_rules: { index: { title: 'Rotations' } },
+        common: { edit: 'Edit' }
+      },
+      true
+    );
+    translate.use('en');
+
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      formData: {
+        ...initialFormData,
+        source_group: 'Tomato',
+        target_group: 'Potato'
+      }
+    };
+    fixture.detectChanges();
+
+    const detailLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__link'
+    ) as HTMLAnchorElement;
+    expect(detailLink?.getAttribute('href')).toBe('/interaction_rules/1');
+    expect(detailLink?.textContent?.trim()).toBe('Tomato → Potato');
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });

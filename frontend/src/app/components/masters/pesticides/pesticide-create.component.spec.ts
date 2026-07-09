@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, ActivatedRoute } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { Router, ActivatedRoute, provideRouter } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { PesticideCreateComponent } from './pesticide-create.component';
@@ -64,6 +64,7 @@ describe('PesticideCreateComponent', () => {
       imports: [PesticideCreateComponent, TranslateModule.forRoot()],
       providers: [
         { provide: PesticideCreatePresenter, useValue: mockPresenter },
+        provideRouter([]),
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: CreatePesticideUseCase, useValue: mockCreateUseCase },
@@ -158,5 +159,26 @@ describe('PesticideCreateComponent', () => {
 
     component.createPesticide();
     expect(mockCreateUseCase.execute).toHaveBeenCalledWith(expect.objectContaining({ region: 'us' }));
+  });
+
+  it('shows master context header and omits back link from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        pesticides: { index: { title: 'Pesticides' }, new: { title: 'Add New Pesticide' } }
+      },
+      true
+    );
+    translate.use('en');
+    fixture.detectChanges();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink?.getAttribute('href')).toBe('/pesticides');
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });
