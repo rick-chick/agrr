@@ -90,8 +90,9 @@ describe('InteractionRuleEditComponent', () => {
       'interaction_rules.form.direction_label': 'Direction',
       'interaction_rules.form.description_label': 'Description',
       'interaction_rules.form.submit_update': 'Update',
-      'common.back': 'Back',
-      'interaction_rules.errors.invalid_id': 'Invalid interaction rule id.'
+      'interaction_rules.errors.invalid_id': 'Invalid interaction rule id.',
+      'interaction_rules.index.title': 'Interaction Rules',
+      'common.edit': 'Edit'
     });
     translate.use('en');
   });

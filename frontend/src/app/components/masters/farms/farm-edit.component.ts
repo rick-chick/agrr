@@ -13,6 +13,8 @@ import { FarmMapComponent } from './farm-map.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { AuthService } from '../../../services/auth.service';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: FarmEditFormData = {
   name: '',
@@ -36,10 +38,11 @@ const initialControl: FarmEditViewState = {
 @Component({
   selector: 'app-farm-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...FARM_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.edit.title' | translate }}</h2>
         @if (control.loading) {
@@ -101,7 +104,6 @@ const initialControl: FarmEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">
                 {{ 'farms.edit.form.submit' | translate }}
               </button>
-              <a routerLink="/farms" class="btn-secondary">{{ 'farms.show.back_to_list' | translate }}</a>
             </div>
           </form>
         }
@@ -111,6 +113,17 @@ const initialControl: FarmEditViewState = {
   styleUrls: ['./farm-edit.component.css']
 })
 export class FarmEditComponent implements FarmEditView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'farms.index.title', routerLink: ['/farms'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({ label: this.control.formData.name, routerLink: ['/farms', this.farmId] });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
+  }
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadFarmForEditUseCase);

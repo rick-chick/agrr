@@ -14,6 +14,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { CurrentUser } from '../../../services/api.service';
 import { detectBrowserRegion } from '../../../core/browser-region';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const DEFAULT_LAT = 35.6812;
 const DEFAULT_LNG = 139.7671;
@@ -39,10 +41,11 @@ const initialControl: FarmCreateViewState = {
 @Component({
   selector: 'app-farm-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, RegionSelectComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...FARM_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'farms.new.title' | translate }}</h2>
         <form (ngSubmit)="createFarm()" #farmForm="ngForm" class="form-card__form">
@@ -102,7 +105,6 @@ const initialControl: FarmCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">
               {{ 'farms.new.form.submit' | translate }}
             </button>
-            <a routerLink="/farms" class="btn-secondary">{{ 'farms.show.back_to_list' | translate }}</a>
           </div>
         </form>
       </section>
@@ -111,6 +113,13 @@ const initialControl: FarmCreateViewState = {
   styleUrls: ['./farm-create.component.css']
 })
 export class FarmCreateComponent implements FarmCreateView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'farms.index.title', routerLink: ['/farms'] },
+      { labelKey: 'farms.new.title' }
+    ];
+  }
+
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateFarmUseCase);
