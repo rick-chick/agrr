@@ -16,6 +16,8 @@ import {
   AGRICULTURAL_TASK_EDIT_PROVIDERS
 } from '../../../usecase/agricultural-tasks/agricultural-task-edit.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: AgriculturalTaskEditFormData = {
   name: '',
@@ -43,10 +45,11 @@ const initialControl: AgriculturalTaskEditViewState = {
 @Component({
   selector: 'app-agricultural-task-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...AGRICULTURAL_TASK_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
           {{
@@ -112,7 +115,6 @@ const initialControl: AgriculturalTaskEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="taskForm.invalid || control.saving">
                 {{ 'agricultural_tasks.form.submit_update' | translate }}
               </button>
-              <a [routerLink]="['/agricultural_tasks']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             </div>
           </form>
         }
@@ -122,6 +124,17 @@ const initialControl: AgriculturalTaskEditViewState = {
   styleUrls: ['./agricultural-task-edit.component.css']
 })
 export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'agricultural_tasks.index.title', routerLink: ['/agricultural_tasks'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({ label: this.control.formData.name, routerLink: ['/agricultural_tasks', this.agriculturalTaskId] });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
+  }
+
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

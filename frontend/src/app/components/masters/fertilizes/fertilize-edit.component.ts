@@ -12,6 +12,8 @@ import {
   FertilizeEditPresenter,
   FERTILIZE_EDIT_PROVIDERS
 } from '../../../usecase/fertilizes/fertilize-edit.providers';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: FertilizeEditFormData = {
   name: '',
@@ -38,10 +40,11 @@ const initialControl: FertilizeEditViewState = {
 @Component({
   selector: 'app-fertilize-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...FERTILIZE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
           {{ 'fertilizes.edit.title' | translate:{ name: control.formData.name } }}
@@ -84,7 +87,6 @@ const initialControl: FertilizeEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
                 {{ 'fertilizes.form.submit_update' | translate }}
               </button>
-              <a routerLink="/fertilizes" class="btn-secondary">{{ 'fertilizes.show.back_to_list' | translate }}</a>
             </div>
           </form>
         }
@@ -94,6 +96,17 @@ const initialControl: FertilizeEditViewState = {
   styleUrls: ['./fertilize-edit.component.css']
 })
 export class FertilizeEditComponent implements FertilizeEditView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'fertilizes.index.title', routerLink: ['/fertilizes'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({ label: this.control.formData.name, routerLink: ['/fertilizes', this.fertilizeId] });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
+  }
+
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

@@ -8,6 +8,8 @@ import { PestCreateView, PestCreateViewState, PestCreateFormData } from './pest-
 import { CreatePestUseCase } from '../../../usecase/pests/create-pest.usecase';
 import { PestCreatePresenter, PEST_CREATE_PROVIDERS } from '../../../usecase/pests/pest-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: PestCreateFormData = {
   name: '',
@@ -33,10 +35,11 @@ const initialControl: PestCreateViewState = {
 @Component({
   selector: 'app-pest-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...PEST_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'pests.new.title' | translate }}</h2>
         <form (ngSubmit)="createPest()" #pestForm="ngForm" class="form-card__form">
@@ -74,7 +77,6 @@ const initialControl: PestCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
               {{ control.saving ? ('common.creating' | translate) : ('pests.form.submit_create' | translate) }}
             </button>
-            <a [routerLink]="['/pests']" class="btn-secondary">{{ 'common.back' | translate }}</a>
           </div>
         </form>
       </section>
@@ -83,6 +85,13 @@ const initialControl: PestCreateViewState = {
   styleUrls: ['./pest-create.component.css']
 })
 export class PestCreateComponent implements PestCreateView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'pests.index.title', routerLink: ['/pests'] },
+      { labelKey: 'pests.new.title' }
+    ];
+  }
+
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreatePestUseCase);

@@ -11,6 +11,8 @@ import {
   InteractionRuleCreatePresenter,
   INTERACTION_RULE_CREATE_PROVIDERS
 } from '../../../usecase/interaction-rules/interaction-rule-create.providers';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: InteractionRuleCreateFormData = {
   rule_type: 'continuous_cultivation',
@@ -36,10 +38,11 @@ const initialControl: InteractionRuleCreateViewState = {
 @Component({
   selector: 'app-interaction-rule-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...INTERACTION_RULE_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'interaction_rules.new.title' | translate }}</h2>
         <form (ngSubmit)="createInteractionRule()" #interactionRuleForm="ngForm" class="form-card__form">
@@ -81,7 +84,6 @@ const initialControl: InteractionRuleCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
               {{ 'interaction_rules.form.submit_create' | translate }}
             </button>
-            <a [routerLink]="['/interaction_rules']" class="btn-secondary">{{ 'common.back' | translate }}</a>
           </div>
         </form>
       </section>
@@ -90,6 +92,13 @@ const initialControl: InteractionRuleCreateViewState = {
   styleUrls: ['./interaction-rule-create.component.css']
 })
 export class InteractionRuleCreateComponent implements InteractionRuleCreateView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] },
+      { labelKey: 'interaction_rules.new.title' }
+    ];
+  }
+
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);

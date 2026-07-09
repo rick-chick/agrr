@@ -9,6 +9,8 @@ import { LoadPestForEditUseCase } from '../../../usecase/pests/load-pest-for-edi
 import { UpdatePestUseCase } from '../../../usecase/pests/update-pest.usecase';
 import { PestEditPresenter, PEST_EDIT_PROVIDERS } from '../../../usecase/pests/pest-edit.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: PestEditFormData = {
   name: '',
@@ -35,10 +37,11 @@ const initialControl: PestEditViewState = {
 @Component({
   selector: 'app-pest-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...PEST_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
           {{ 'pests.edit.title' | translate:{ name: control.formData.name } }}
@@ -81,7 +84,6 @@ const initialControl: PestEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
                 {{ control.saving ? ('common.updating' | translate) : ('pests.form.submit_update' | translate) }}
               </button>
-              <a [routerLink]="['/pests']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             </div>
           </form>
         }
@@ -91,6 +93,17 @@ const initialControl: PestEditViewState = {
   styleUrls: ['./pest-edit.component.css']
 })
 export class PestEditComponent implements PestEditView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'pests.index.title', routerLink: ['/pests'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({ label: this.control.formData.name, routerLink: ['/pests', this.pestId] });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
+  }
+
   readonly auth = inject(AuthService);
   private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
@@ -111,6 +124,10 @@ export class PestEditComponent implements PestEditView, OnInit {
     });
     this._control = next;
     this.cdr.markForCheck();
+  }
+
+  private get pestId(): number {
+    return Number(this.route.snapshot.paramMap.get('id'));
   }
 
   ngOnInit(): void {

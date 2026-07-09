@@ -15,6 +15,8 @@ import {
   AGRICULTURAL_TASK_CREATE_PROVIDERS
 } from '../../../usecase/agricultural-tasks/agricultural-task-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: AgriculturalTaskCreateFormData = {
   name: '',
@@ -41,10 +43,11 @@ const initialControl: AgriculturalTaskCreateViewState = {
 @Component({
   selector: 'app-agricultural-task-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...AGRICULTURAL_TASK_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">
           {{ 'agricultural_tasks.new.title' | translate }}
@@ -104,7 +107,6 @@ const initialControl: AgriculturalTaskCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="taskForm.invalid || control.saving">
               {{ 'agricultural_tasks.form.submit_create' | translate }}
             </button>
-            <a [routerLink]="['/agricultural_tasks']" class="btn-secondary">{{ 'common.back' | translate }}</a>
           </div>
         </form>
       </section>
@@ -113,6 +115,13 @@ const initialControl: AgriculturalTaskCreateViewState = {
   styleUrls: ['./agricultural-task-create.component.css']
 })
 export class AgriculturalTaskCreateComponent implements AgriculturalTaskCreateView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'agricultural_tasks.index.title', routerLink: ['/agricultural_tasks'] },
+      { labelKey: 'agricultural_tasks.new.title' }
+    ];
+  }
+
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateAgriculturalTaskUseCase);

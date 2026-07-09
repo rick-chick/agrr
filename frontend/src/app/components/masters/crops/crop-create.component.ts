@@ -11,6 +11,8 @@ import {
   CropCreatePresenter,
   CROP_CREATE_PROVIDERS
 } from '../../../usecase/crops/crop-create.providers';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: CropCreateFormData = {
   name: '',
@@ -44,10 +46,11 @@ const initialControl: CropCreateViewState = {
 @Component({
   selector: 'app-crop-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...CROP_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'crops.new.title' | translate }}</h2>
         <form (ngSubmit)="createCrop()" #cropForm="ngForm" class="form-card__form">
@@ -88,7 +91,6 @@ const initialControl: CropCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="cropForm.invalid || control.saving">
               {{ 'crops.form.submit_create' | translate }}
             </button>
-            <a [routerLink]="['/crops']" class="btn-secondary">{{ 'common.back' | translate }}</a>
           </div>
         </form>
       </section>
@@ -97,6 +99,13 @@ const initialControl: CropCreateViewState = {
   styleUrls: ['./crop-create.component.css']
 })
 export class CropCreateComponent implements CropCreateView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'crops.index.title', routerLink: ['/crops'] },
+      { labelKey: 'crops.new.title' }
+    ];
+  }
+
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateCropUseCase);

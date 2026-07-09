@@ -12,6 +12,8 @@ import {
   InteractionRuleEditPresenter,
   INTERACTION_RULE_EDIT_PROVIDERS
 } from '../../../usecase/interaction-rules/interaction-rule-edit.providers';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: InteractionRuleEditFormData = {
   rule_type: '',
@@ -38,10 +40,11 @@ const initialControl: InteractionRuleEditViewState = {
 @Component({
   selector: 'app-interaction-rule-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...INTERACTION_RULE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'interaction_rules.edit.title' | translate }}</h2>
         @if (control.loading) {
@@ -86,7 +89,6 @@ const initialControl: InteractionRuleEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
                 {{ 'interaction_rules.form.submit_update' | translate }}
               </button>
-              <a [routerLink]="['/interaction_rules']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             </div>
           </form>
         }
@@ -96,6 +98,20 @@ const initialControl: InteractionRuleEditViewState = {
   styleUrls: ['./interaction-rule-edit.component.css']
 })
 export class InteractionRuleEditComponent implements InteractionRuleEditView, OnInit {
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] }
+    ];
+    if (!this.control.loading && this.control.formData.source_group && this.control.formData.target_group) {
+      crumbs.push({
+        label: `${this.control.formData.source_group} → ${this.control.formData.target_group}`,
+        routerLink: ['/interaction_rules', this.interactionRuleId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
+  }
+
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
