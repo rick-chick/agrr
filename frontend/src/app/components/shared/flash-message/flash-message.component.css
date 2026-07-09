@@ -1,19 +1,29 @@
 .flash-container {
+  position: fixed;
+  top: var(--space-6);
+  right: var(--space-6);
+  z-index: 1100;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  max-width: min(420px, calc(100vw - 2 * var(--space-6)));
+  pointer-events: none;
 }
 
 .flash-message {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px var(--space-3);
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-lg);
   background: var(--color-info-muted-bg);
   color: var(--color-text);
   border: 1px solid var(--color-info-muted-border);
+  box-shadow: var(--shadow-toast);
+  pointer-events: auto;
 }
 
 .flash-message.success {
@@ -32,8 +42,13 @@
 }
 
 .flash-message button {
+  flex-shrink: 0;
   border: none;
   background: transparent;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: inherit;
   cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
 }
