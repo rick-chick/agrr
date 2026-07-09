@@ -401,7 +401,7 @@ describe('FarmDetailComponent', () => {
     ).toHaveLength(0);
   });
 
-  it('keeps list breadcrumb link while loading and on error', () => {
+  it('keeps list breadcrumb link while loading', () => {
     translate.setTranslation('ja', {
       farms: { index: { title: '農場一覧' } }
     });
@@ -416,7 +416,12 @@ describe('FarmDetailComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('[aria-current="page"]')).toBeNull();
+  });
 
+  it('keeps list breadcrumb link on error', () => {
+    translate.setTranslation('ja', {
+      farms: { index: { title: '農場一覧' } }
+    });
     component.control = {
       loading: false,
       error: 'Not found',
