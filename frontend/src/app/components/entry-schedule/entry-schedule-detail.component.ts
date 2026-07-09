@@ -11,24 +11,23 @@ import {
   EntrySchedulePhaseSegment
 } from '../../domain/entry-schedule/entry-schedule';
 import { calendarYearJanDecBounds, MONTH_NUMBERS } from './entry-schedule-timeline.util';
+import { MasterContextHeaderComponent } from '../masters/master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 
 @Component({
   selector: 'app-entry-schedule-detail',
   standalone: true,
-  imports: [CommonModule, TranslateModule, RouterLink],
+  imports: [CommonModule, TranslateModule, RouterLink, MasterContextHeaderComponent],
   template: `
     <main class="page-main public-plans-wrapper">
       <div class="free-plans-container">
+        <app-master-context-header [crumbs]="contextCrumbs" />
         <div class="compact-header-card">
           <h1 class="compact-header-title">
             <span class="title-icon" aria-hidden="true">🌱</span>
             <span class="title-text">{{ 'entrySchedule.detailTitle' | translate }}</span>
           </h1>
         </div>
-
-        <p class="mt-4">
-          <a routerLink="/entry-schedule" class="link-inline">{{ 'entrySchedule.back' | translate }}</a>
-        </p>
 
         @if (loading()) {
           <p class="muted mt-4 master-loading">{{ 'entrySchedule.loading' | translate }}</p>
@@ -257,6 +256,14 @@ export class EntryScheduleDetailComponent implements OnInit {
   readonly data = signal<EntryScheduleCropShowResponse | null>(null);
   readonly loading = signal(true);
   readonly errorKey = signal<string | null>(null);
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const cropName = this.data()?.crop.name;
+    return [
+      { labelKey: 'entrySchedule.title', routerLink: ['/entry-schedule'] },
+      cropName ? { label: cropName } : { labelKey: 'entrySchedule.detailTitle' }
+    ];
+  }
 
   ngOnInit(): void {
     combineLatest([this.route.paramMap, this.route.queryParamMap])

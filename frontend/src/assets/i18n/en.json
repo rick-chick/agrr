@@ -891,6 +891,7 @@
       "field_added": "Field added."
     },
     "title": "Crop Planning",
+    "breadcrumb_root": "Free Crop Plans",
     "steps": {
       "region": "Region",
       "crop": "Crop",
@@ -935,6 +936,7 @@
     },
     "optimizing": {
       "title": "Crop Planning",
+      "breadcrumb": "Optimizing",
       "status_badge": "Optimizing",
       "crops_count": "{{count}} crop types",
       "hint": "",
@@ -959,6 +961,7 @@
       "status_badge_failed": "Failed"
     },
     "results": {
+      "breadcrumb": "Results",
       "create_new_plan": "← Create New Plan",
       "view_my_plans": "View My Plans",
       "chart_title": "Climate Data and Crop Growth Analysis",
@@ -1360,6 +1363,7 @@
       }
     },
     "new": {
+      "breadcrumb": "New plan",
       "title": "📅 Select Year and Farm",
       "subtitle": "Choose the year and farm for your cultivation plan",
       "plan_name_label": "Plan Name",
