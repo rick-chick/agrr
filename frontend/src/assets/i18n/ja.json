@@ -1716,6 +1716,7 @@
       "field_removed": "圃場を削除しました。"
     },
     "title": "計画",
+    "breadcrumb_root": "無料作付け計画",
     "steps": {
       "region": "地域",
       "crop": "作物",
@@ -1760,6 +1761,7 @@
     },
     "optimizing": {
       "title": "計画",
+      "breadcrumb": "最適化中",
       "status_badge": "最適化中",
       "crops_count": "{{count}}種類の作物",
       "error_message": "最適化状況の取得に失敗しました。\n\n以下のいずれかをお試しください：\n• ページをリロード（F5キー）\n• ブラウザのキャッシュをクリア\n• しばらく時間をおいてから再度アクセス\n\n問題が解決しない場合は、新しい計画を作成してください。",
@@ -1783,6 +1785,7 @@
       "status_badge_failed": "作成失敗"
     },
     "results": {
+      "breadcrumb": "結果",
       "create_new_plan": "← 新しい計画を作成",
       "view_my_plans": "マイプランを見る",
       "chart_title": "気象データと作物成長分析",
@@ -2041,6 +2044,7 @@
       }
     },
     "new": {
+      "breadcrumb": "新規作成",
       "title": "📅 農場を選択してください",
       "subtitle": "計画を作成する農場を選択してください",
       "plan_name_label": "計画名（将来的に複数計画を管理できます）",

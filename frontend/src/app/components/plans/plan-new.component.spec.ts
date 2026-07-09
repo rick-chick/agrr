@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { provideRouter } from '@angular/router';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanNewComponent } from './plan-new.component';
 import { LoadPrivatePlanFarmsUseCase } from '../../usecase/private-plan-create/load-private-plan-farms.usecase';
@@ -25,11 +25,11 @@ describe('PlanNewComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PlanNewComponent, TranslateModule.forRoot()],
       providers: [
+        provideRouter([]),
         { provide: LoadPrivatePlanFarmsUseCase, useValue: mockLoadUseCase },
         { provide: CreatePrivatePlanUseCase, useValue: mockCreateUseCase },
         { provide: PlanNewPresenter, useValue: mockFarmsPresenter },
-        { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter },
-        { provide: Router, useValue: { navigate: vi.fn() } }
+        { provide: CreatePrivatePlanPresenter, useValue: mockCreatePresenter }
       ]
     })
       .overrideComponent(PlanNewComponent, { set: { providers: [] } })
@@ -37,6 +37,18 @@ describe('PlanNewComponent', () => {
 
     fixture = TestBed.createComponent(PlanNewComponent);
     component = fixture.componentInstance;
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      'plans.index.title': 'Plans',
+      'plans.new.breadcrumb': 'New plan',
+      'plans.new.title': 'Select a farm',
+      'plans.new.subtitle': 'Choose a farm',
+      'common.loading': 'Loading...',
+      'common.cancel': 'Cancel'
+    });
+    translate.setDefaultLang('en');
+    translate.use('en');
   });
 
   it('should create', () => {
@@ -71,6 +83,47 @@ describe('PlanNewComponent', () => {
       farmId: 1,
       planName: 'My Plan'
     });
+  });
+
+  it('renders breadcrumb with plans list link and no bottom cancel button', () => {
+    component.control = {
+      loading: false,
+      submitting: false,
+      error: null,
+      farms: [{ id: 1, name: 'Farm', fieldCount: 1, totalArea: 50, hasValidFields: true }],
+      selectedFarmId: 1,
+      noFieldsWarning: false,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+    fixture.detectChanges();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink).toBeTruthy();
+    expect(backLink.getAttribute('href')).toBe('/plans');
+    expect(backLink.textContent?.trim()).toBe('Plans');
+
+    const current = fixture.nativeElement.querySelector('[aria-current="page"]');
+    expect(current?.textContent?.trim()).toBe('New plan');
+
+    const cancelLinks = Array.from(
+      fixture.nativeElement.querySelectorAll('a.btn-secondary')
+    ) as HTMLAnchorElement[];
+    expect(cancelLinks.some((a) => a.getAttribute('href') === '/plans')).toBe(false);
+  });
+
+  it('shows plans list breadcrumb while loading', () => {
+    component.control = { ...component.control, loading: true };
+    fixture.detectChanges();
+
+    const backLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__back'
+    ) as HTMLAnchorElement;
+    expect(backLink).toBeTruthy();
+    expect(backLink.getAttribute('href')).toBe('/plans');
   });
 
   it('should not submit when selected farm has no valid fields', () => {
