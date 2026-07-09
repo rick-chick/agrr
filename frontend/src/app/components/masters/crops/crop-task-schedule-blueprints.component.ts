@@ -103,7 +103,6 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
           </div>
         }
 
-        <app-master-context-header [crumbs]="contextCrumbs" />
         <header class="page-header crop-blueprints__page-header">
           <h1 class="page-title">{{ control.crop.name }}</h1>
           <p class="page-description">{{ 'crops.show.task_schedule_blueprints_title' | translate }}</p>

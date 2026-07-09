@@ -61,7 +61,6 @@ const initialControl: CropStagesViewState = {
           </div>
         }
 
-        <app-master-context-header [crumbs]="contextCrumbs" />
         <header class="page-header crop-stages__page-header">
           <h1 class="page-title">{{ control.formData.name }}</h1>
           <p class="page-description">{{ 'crops.edit.stages_title' | translate }}</p>
