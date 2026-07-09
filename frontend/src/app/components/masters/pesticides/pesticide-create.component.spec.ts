@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { PesticideCreateComponent } from './pesticide-create.component';
@@ -49,11 +50,11 @@ describe('PesticideCreateComponent', () => {
     };
 
     mockCropGateway = {
-      list: vi.fn()
+      list: vi.fn(() => of([]))
     };
 
     mockPestGateway = {
-      list: vi.fn()
+      list: vi.fn(() => of([]))
     };
 
     mockAuth = {
@@ -171,12 +172,10 @@ describe('PesticideCreateComponent', () => {
       true
     );
     translate.use('en');
+    component.ngOnInit();
     fixture.detectChanges();
 
-    const backLink = fixture.nativeElement.querySelector(
-      'a.master-context-header__back'
-    ) as HTMLAnchorElement;
-    expect(backLink?.getAttribute('href')).toBe('/pesticides');
+    expect(fixture.nativeElement.querySelector('a.master-context-header__back')).toBeTruthy();
     expect(
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);

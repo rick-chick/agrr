@@ -174,12 +174,9 @@ describe('AgriculturalTaskCreateComponent', () => {
       true
     );
     translate.use('en');
-    fixture.detectChanges();
 
-    const backLink = fixture.nativeElement.querySelector(
-      'a.master-context-header__back'
-    ) as HTMLAnchorElement;
-    expect(backLink?.getAttribute('href')).toBe('/agricultural_tasks');
+    expect(component.contextCrumbs[0].routerLink).toEqual(['/agricultural_tasks']);
+    expect(component.contextCrumbs[1].labelKey).toBe('agricultural_tasks.new.title');
     expect(
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);

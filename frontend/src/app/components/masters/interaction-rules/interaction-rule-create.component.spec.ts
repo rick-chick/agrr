@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -52,9 +52,7 @@ describe('InteractionRuleCreateComponent', () => {
     await TestBed.configureTestingModule({
       imports: [InteractionRuleCreateComponent, TranslateModule.forRoot(), RouterTestingModule],
       providers: [
-        provideRouter([]),
         { provide: AuthService, useValue: mockAuthService },
-        { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute }
       ]
     })
@@ -168,12 +166,9 @@ describe('InteractionRuleCreateComponent', () => {
       true
     );
     translate.use('en');
-    fixture.detectChanges();
 
-    const backLink = fixture.nativeElement.querySelector(
-      'a.master-context-header__back'
-    ) as HTMLAnchorElement;
-    expect(backLink?.getAttribute('href')).toBe('/interaction_rules');
+    expect(component.contextCrumbs[0].routerLink).toEqual(['/interaction_rules']);
+    expect(component.contextCrumbs[1].labelKey).toBe('interaction_rules.new.title');
     expect(
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);

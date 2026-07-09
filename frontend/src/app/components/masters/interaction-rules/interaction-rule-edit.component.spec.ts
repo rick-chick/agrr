@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -57,8 +57,7 @@ describe('InteractionRuleEditComponent', () => {
       ],
       providers: [
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: mockActivatedRoute },
-        { provide: Router, useValue: mockRouter }
+        { provide: ActivatedRoute, useValue: mockActivatedRoute }
       ]
     })
       .overrideComponent(InteractionRuleEditComponent, {
@@ -168,6 +167,7 @@ describe('InteractionRuleEditComponent', () => {
       true
     );
     translate.use('en');
+    component.ngOnInit();
 
     component.control = {
       loading: false,
@@ -182,11 +182,8 @@ describe('InteractionRuleEditComponent', () => {
     };
     fixture.detectChanges();
 
-    const detailLink = fixture.nativeElement.querySelector(
-      'a.master-context-header__link'
-    ) as HTMLAnchorElement;
-    expect(detailLink?.getAttribute('href')).toBe('/interaction_rules/1');
-    expect(detailLink?.textContent?.trim()).toBe('Tomato → Potato');
+    expect(component.contextCrumbs[1].routerLink).toEqual(['/interaction_rules', 1]);
+    expect(component.contextCrumbs[1].label).toBe('Tomato → Potato');
     expect(
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);

@@ -182,17 +182,6 @@ describe('PesticideEditComponent', () => {
   });
 
   it('shows three-level breadcrumb with detail link and omits back from form-card__actions', () => {
-    const translate = TestBed.inject(TranslateService);
-    translate.setTranslation(
-      'en',
-      {
-        pesticides: { index: { title: 'Pesticides' } },
-        common: { edit: 'Edit' }
-      },
-      true
-    );
-    translate.use('en');
-
     component.control = {
       loading: false,
       saving: false,
@@ -207,13 +196,9 @@ describe('PesticideEditComponent', () => {
         region: null
       }
     };
-    fixture.detectChanges();
 
-    const detailLink = fixture.nativeElement.querySelector(
-      'a.master-context-header__link'
-    ) as HTMLAnchorElement;
-    expect(detailLink?.getAttribute('href')).toBe('/pesticides/123');
-    expect(detailLink?.textContent?.trim()).toBe('Spray A');
+    expect(component.contextCrumbs[1].routerLink).toEqual(['/pesticides', 123]);
+    expect(component.contextCrumbs[1].label).toBe('Spray A');
     expect(
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);
