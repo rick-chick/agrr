@@ -108,4 +108,17 @@ describe('NavbarComponent', () => {
     expect(component.isPlanNavActive()).toBe(true);
     expect(component.isWorkLogNavActive()).toBe(false);
   });
+
+  it('closes mobile menu after route navigation', async () => {
+    fixture.detectChanges();
+    component.isMenuOpen = true;
+    component.openDropdownId = 'masters';
+    expect(component.isMenuOpen).toBe(true);
+
+    await router.navigateByUrl('/work');
+    fixture.detectChanges();
+
+    expect(component.isMenuOpen).toBe(false);
+    expect(component.openDropdownId).toBeNull();
+  });
 });
