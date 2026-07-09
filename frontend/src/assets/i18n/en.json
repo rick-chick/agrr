@@ -2124,7 +2124,6 @@
         "timing_hint": "Timing",
         "created_at": "Created",
         "updated_at": "Updated",
-        "back_to_list": "Back to List",
         "back_to_crop": "Back to Crop",
         "edit": "Edit"
       }

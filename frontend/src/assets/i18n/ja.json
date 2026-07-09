@@ -650,7 +650,6 @@
         "timing_hint": "タイミング",
         "created_at": "作成日",
         "updated_at": "更新日",
-        "back_to_list": "一覧に戻る",
         "back_to_crop": "作物に戻る",
         "edit": "編集"
       }

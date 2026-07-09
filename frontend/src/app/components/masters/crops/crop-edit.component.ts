@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -47,7 +47,7 @@ const initialControl: CropEditViewState = {
 @Component({
   selector: 'app-crop-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...CROP_EDIT_PROVIDERS],
   template: `
     <main class="page-main">

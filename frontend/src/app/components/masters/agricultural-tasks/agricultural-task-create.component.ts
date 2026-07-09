@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import {
@@ -43,7 +43,7 @@ const initialControl: AgriculturalTaskCreateViewState = {
 @Component({
   selector: 'app-agricultural-task-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...AGRICULTURAL_TASK_CREATE_PROVIDERS],
   template: `
     <main class="page-main">

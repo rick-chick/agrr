@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FarmCreateView, FarmCreateViewState, FarmCreateFormData } from './farm-create.view';
 import { CreateFarmUseCase } from '../../../usecase/farms/create-farm.usecase';
 import {
@@ -41,7 +41,7 @@ const initialControl: FarmCreateViewState = {
 @Component({
   selector: 'app-farm-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, FarmMapComponent, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, FarmMapComponent, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...FARM_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
