@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PestEditView, PestEditViewState, PestEditFormData } from './pest-edit.view';
@@ -9,8 +11,6 @@ import { LoadPestForEditUseCase } from '../../../usecase/pests/load-pest-for-edi
 import { UpdatePestUseCase } from '../../../usecase/pests/update-pest.usecase';
 import { PestEditPresenter, PEST_EDIT_PROVIDERS } from '../../../usecase/pests/pest-edit.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: PestEditFormData = {
   name: '',
@@ -93,17 +93,6 @@ const initialControl: PestEditViewState = {
   styleUrls: ['./pest-edit.component.css']
 })
 export class PestEditComponent implements PestEditView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    const crumbs: MasterContextCrumb[] = [
-      { labelKey: 'pests.index.title', routerLink: ['/pests'] }
-    ];
-    if (!this.control.loading && this.control.formData.name) {
-      crumbs.push({ label: this.control.formData.name, routerLink: ['/pests', this.pestId] });
-    }
-    crumbs.push({ labelKey: 'common.edit' });
-    return crumbs;
-  }
-
   readonly auth = inject(AuthService);
   private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
@@ -127,7 +116,21 @@ export class PestEditComponent implements PestEditView, OnInit {
   }
 
   private get pestId(): number {
-    return Number(this.route.snapshot.paramMap.get('id'));
+    return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'pests.index.title', routerLink: ['/pests'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/pests', this.pestId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   ngOnInit(): void {

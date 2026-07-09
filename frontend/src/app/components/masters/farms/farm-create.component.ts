@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { FarmCreateView, FarmCreateViewState, FarmCreateFormData } from './farm-create.view';
 import { CreateFarmUseCase } from '../../../usecase/farms/create-farm.usecase';
 import {
@@ -14,8 +16,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { CurrentUser } from '../../../services/api.service';
 import { detectBrowserRegion } from '../../../core/browser-region';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const DEFAULT_LAT = 35.6812;
 const DEFAULT_LNG = 139.7671;
@@ -113,13 +113,6 @@ const initialControl: FarmCreateViewState = {
   styleUrls: ['./farm-create.component.css']
 })
 export class FarmCreateComponent implements FarmCreateView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    return [
-      { labelKey: 'farms.index.title', routerLink: ['/farms'] },
-      { labelKey: 'farms.new.title' }
-    ];
-  }
-
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateFarmUseCase);
@@ -135,6 +128,13 @@ export class FarmCreateComponent implements FarmCreateView, OnInit {
   set control(value: FarmCreateViewState) {
     this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'farms.index.title', routerLink: ['/farms'] },
+      { labelKey: 'farms.new.title' }
+    ];
   }
 
   ngOnInit(): void {

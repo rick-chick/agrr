@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -12,8 +14,6 @@ import {
   InteractionRuleEditPresenter,
   INTERACTION_RULE_EDIT_PROVIDERS
 } from '../../../usecase/interaction-rules/interaction-rule-edit.providers';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: InteractionRuleEditFormData = {
   rule_type: '',
@@ -98,20 +98,6 @@ const initialControl: InteractionRuleEditViewState = {
   styleUrls: ['./interaction-rule-edit.component.css']
 })
 export class InteractionRuleEditComponent implements InteractionRuleEditView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    const crumbs: MasterContextCrumb[] = [
-      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] }
-    ];
-    if (!this.control.loading && this.control.formData.source_group && this.control.formData.target_group) {
-      crumbs.push({
-        label: `${this.control.formData.source_group} → ${this.control.formData.target_group}`,
-        routerLink: ['/interaction_rules', this.interactionRuleId]
-      });
-    }
-    crumbs.push({ labelKey: 'common.edit' });
-    return crumbs;
-  }
-
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -133,6 +119,21 @@ export class InteractionRuleEditComponent implements InteractionRuleEditView, On
 
   private get interactionRuleId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] }
+    ];
+    const { source_group, target_group } = this.control.formData;
+    if (!this.control.loading && source_group && target_group) {
+      crumbs.push({
+        label: `${source_group} → ${target_group}`,
+        routerLink: ['/interaction_rules', this.interactionRuleId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   ngOnInit(): void {

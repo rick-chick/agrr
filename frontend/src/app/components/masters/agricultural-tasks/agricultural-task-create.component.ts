@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import {
@@ -15,8 +17,6 @@ import {
   AGRICULTURAL_TASK_CREATE_PROVIDERS
 } from '../../../usecase/agricultural-tasks/agricultural-task-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: AgriculturalTaskCreateFormData = {
   name: '',
@@ -115,13 +115,6 @@ const initialControl: AgriculturalTaskCreateViewState = {
   styleUrls: ['./agricultural-task-create.component.css']
 })
 export class AgriculturalTaskCreateComponent implements AgriculturalTaskCreateView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    return [
-      { labelKey: 'agricultural_tasks.index.title', routerLink: ['/agricultural_tasks'] },
-      { labelKey: 'agricultural_tasks.new.title' }
-    ];
-  }
-
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateAgriculturalTaskUseCase);
@@ -139,6 +132,13 @@ export class AgriculturalTaskCreateComponent implements AgriculturalTaskCreateVi
     });
     this._control = next;
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'agricultural_tasks.index.title', routerLink: ['/agricultural_tasks'] },
+      { labelKey: 'agricultural_tasks.new.title' }
+    ];
   }
 
   ngOnInit(): void {

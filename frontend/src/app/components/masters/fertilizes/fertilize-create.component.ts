@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { FertilizeCreateView, FertilizeCreateViewState, FertilizeCreateFormData } from './fertilize-create.view';
@@ -11,8 +13,6 @@ import {
   FERTILIZE_CREATE_PROVIDERS
 } from '../../../usecase/fertilizes/fertilize-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: FertilizeCreateFormData = {
   name: '',
@@ -88,13 +88,6 @@ const initialControl: FertilizeCreateViewState = {
   styleUrls: ['./fertilize-create.component.css']
 })
 export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    return [
-      { labelKey: 'fertilizes.index.title', routerLink: ['/fertilizes'] },
-      { labelKey: 'fertilizes.new.title' }
-    ];
-  }
-
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateFertilizeUseCase);
@@ -109,6 +102,13 @@ export class FertilizeCreateComponent implements FertilizeCreateView, OnInit {
   set control(value: FertilizeCreateViewState) {
     this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'fertilizes.index.title', routerLink: ['/fertilizes'] },
+      { labelKey: 'fertilizes.new.title' }
+    ];
   }
 
   ngOnInit(): void {

@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { FarmEditView, FarmEditViewState, FarmEditFormData } from './farm-edit.view';
 import { LoadFarmForEditUseCase } from '../../../usecase/farms/load-farm-for-edit.usecase';
 import { UpdateFarmUseCase } from '../../../usecase/farms/update-farm.usecase';
@@ -13,8 +15,6 @@ import { FarmMapComponent } from './farm-map.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
 import { AuthService } from '../../../services/auth.service';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: FarmEditFormData = {
   name: '',
@@ -113,17 +113,6 @@ const initialControl: FarmEditViewState = {
   styleUrls: ['./farm-edit.component.css']
 })
 export class FarmEditComponent implements FarmEditView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    const crumbs: MasterContextCrumb[] = [
-      { labelKey: 'farms.index.title', routerLink: ['/farms'] }
-    ];
-    if (!this.control.loading && this.control.formData.name) {
-      crumbs.push({ label: this.control.formData.name, routerLink: ['/farms', this.farmId] });
-    }
-    crumbs.push({ labelKey: 'common.edit' });
-    return crumbs;
-  }
-
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly loadUseCase = inject(LoadFarmForEditUseCase);
@@ -148,6 +137,20 @@ export class FarmEditComponent implements FarmEditView, OnInit {
 
   private get farmId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'farms.index.title', routerLink: ['/farms'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/farms', this.farmId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   ngOnInit(): void {

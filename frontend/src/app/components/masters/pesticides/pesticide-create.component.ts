@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PesticideCreateView, PesticideCreateViewState, PesticideCreateFormData } from './pesticide-create.view';
@@ -15,8 +17,6 @@ import { Crop } from '../../../domain/crops/crop';
 import { Pest } from '../../../domain/pests/pest';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: PesticideCreateFormData = {
   name: '',
@@ -93,13 +93,6 @@ const initialControl: PesticideCreateViewState = {
   styleUrls: ['./pesticide-create.component.css']
 })
 export class PesticideCreateComponent implements PesticideCreateView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    return [
-      { labelKey: 'pesticides.index.title', routerLink: ['/pesticides'] },
-      { labelKey: 'pesticides.new.title' }
-    ];
-  }
-
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreatePesticideUseCase);
@@ -123,6 +116,13 @@ export class PesticideCreateComponent implements PesticideCreateView, OnInit {
 
   private get isAdmin(): boolean {
     return this.auth.user()?.admin ?? false;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'pesticides.index.title', routerLink: ['/pesticides'] },
+      { labelKey: 'pesticides.new.title' }
+    ];
   }
 
   private get currentUserRegion(): string | null {

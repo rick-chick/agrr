@@ -2,14 +2,14 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PestCreateView, PestCreateViewState, PestCreateFormData } from './pest-create.view';
 import { CreatePestUseCase } from '../../../usecase/pests/create-pest.usecase';
 import { PestCreatePresenter, PEST_CREATE_PROVIDERS } from '../../../usecase/pests/pest-create.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: PestCreateFormData = {
   name: '',
@@ -85,13 +85,6 @@ const initialControl: PestCreateViewState = {
   styleUrls: ['./pest-create.component.css']
 })
 export class PestCreateComponent implements PestCreateView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    return [
-      { labelKey: 'pests.index.title', routerLink: ['/pests'] },
-      { labelKey: 'pests.new.title' }
-    ];
-  }
-
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreatePestUseCase);
@@ -109,6 +102,13 @@ export class PestCreateComponent implements PestCreateView, OnInit {
     });
     this._control = next;
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'pests.index.title', routerLink: ['/pests'] },
+      { labelKey: 'pests.new.title' }
+    ];
   }
 
   ngOnInit(): void {

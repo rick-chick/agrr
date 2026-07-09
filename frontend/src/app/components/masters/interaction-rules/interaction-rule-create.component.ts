@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -11,8 +13,6 @@ import {
   InteractionRuleCreatePresenter,
   INTERACTION_RULE_CREATE_PROVIDERS
 } from '../../../usecase/interaction-rules/interaction-rule-create.providers';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: InteractionRuleCreateFormData = {
   rule_type: 'continuous_cultivation',
@@ -92,13 +92,6 @@ const initialControl: InteractionRuleCreateViewState = {
   styleUrls: ['./interaction-rule-create.component.css']
 })
 export class InteractionRuleCreateComponent implements InteractionRuleCreateView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    return [
-      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] },
-      { labelKey: 'interaction_rules.new.title' }
-    ];
-  }
-
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
@@ -114,6 +107,13 @@ export class InteractionRuleCreateComponent implements InteractionRuleCreateView
   set control(value: InteractionRuleCreateViewState) {
     this._control = applyPendingErrorFlashViewEffects(value, { flash: this.flashMessage });
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'interaction_rules.index.title', routerLink: ['/interaction_rules'] },
+      { labelKey: 'interaction_rules.new.title' }
+    ];
   }
 
   ngOnInit(): void {

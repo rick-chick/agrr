@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import {
@@ -16,8 +18,6 @@ import {
   AGRICULTURAL_TASK_EDIT_PROVIDERS
 } from '../../../usecase/agricultural-tasks/agricultural-task-edit.providers';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: AgriculturalTaskEditFormData = {
   name: '',
@@ -124,17 +124,6 @@ const initialControl: AgriculturalTaskEditViewState = {
   styleUrls: ['./agricultural-task-edit.component.css']
 })
 export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    const crumbs: MasterContextCrumb[] = [
-      { labelKey: 'agricultural_tasks.index.title', routerLink: ['/agricultural_tasks'] }
-    ];
-    if (!this.control.loading && this.control.formData.name) {
-      crumbs.push({ label: this.control.formData.name, routerLink: ['/agricultural_tasks', this.agriculturalTaskId] });
-    }
-    crumbs.push({ labelKey: 'common.edit' });
-    return crumbs;
-  }
-
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -159,6 +148,20 @@ export class AgriculturalTaskEditComponent implements AgriculturalTaskEditView, 
 
   private get agriculturalTaskId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'agricultural_tasks.index.title', routerLink: ['/agricultural_tasks'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/agricultural_tasks', this.agriculturalTaskId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   ngOnInit(): void {

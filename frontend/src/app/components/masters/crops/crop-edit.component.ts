@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -14,8 +16,6 @@ import {
 } from '../../../usecase/crops/crop-edit.providers';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: CropEditFormData = {
   name: '',
@@ -108,17 +108,6 @@ const initialControl: CropEditViewState = {
   styleUrls: ['./crop-edit.component.css']
 })
 export class CropEditComponent implements CropEditView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    const crumbs: MasterContextCrumb[] = [
-      { labelKey: 'crops.index.title', routerLink: ['/crops'] }
-    ];
-    if (!this.control.loading && this.control.formData.name) {
-      crumbs.push({ label: this.control.formData.name, routerLink: ['/crops', this.cropId] });
-    }
-    crumbs.push({ labelKey: 'common.edit' });
-    return crumbs;
-  }
-
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -140,6 +129,20 @@ export class CropEditComponent implements CropEditView, OnInit {
 
   get isAdmin(): boolean {
     return this.auth.user()?.admin ?? false;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'crops.index.title', routerLink: ['/crops'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/crops', this.cropId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   private get cropId(): number {

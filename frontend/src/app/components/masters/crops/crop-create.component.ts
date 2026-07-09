@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -11,8 +13,6 @@ import {
   CropCreatePresenter,
   CROP_CREATE_PROVIDERS
 } from '../../../usecase/crops/crop-create.providers';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: CropCreateFormData = {
   name: '',
@@ -99,13 +99,6 @@ const initialControl: CropCreateViewState = {
   styleUrls: ['./crop-create.component.css']
 })
 export class CropCreateComponent implements CropCreateView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    return [
-      { labelKey: 'crops.index.title', routerLink: ['/crops'] },
-      { labelKey: 'crops.new.title' }
-    ];
-  }
-
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly useCase = inject(CreateCropUseCase);
@@ -124,6 +117,13 @@ export class CropCreateComponent implements CropCreateView, OnInit {
 
   get isAdmin(): boolean {
     return this.auth.user()?.admin ?? false;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'crops.index.title', routerLink: ['/crops'] },
+      { labelKey: 'crops.new.title' }
+    ];
   }
 
   ngOnInit(): void {

@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -12,8 +14,6 @@ import {
   FertilizeEditPresenter,
   FERTILIZE_EDIT_PROVIDERS
 } from '../../../usecase/fertilizes/fertilize-edit.providers';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: FertilizeEditFormData = {
   name: '',
@@ -96,17 +96,6 @@ const initialControl: FertilizeEditViewState = {
   styleUrls: ['./fertilize-edit.component.css']
 })
 export class FertilizeEditComponent implements FertilizeEditView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    const crumbs: MasterContextCrumb[] = [
-      { labelKey: 'fertilizes.index.title', routerLink: ['/fertilizes'] }
-    ];
-    if (!this.control.loading && this.control.formData.name) {
-      crumbs.push({ label: this.control.formData.name, routerLink: ['/fertilizes', this.fertilizeId] });
-    }
-    crumbs.push({ labelKey: 'common.edit' });
-    return crumbs;
-  }
-
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -127,6 +116,20 @@ export class FertilizeEditComponent implements FertilizeEditView, OnInit {
 
   private get fertilizeId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'fertilizes.index.title', routerLink: ['/fertilizes'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/fertilizes', this.fertilizeId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   ngOnInit(): void {

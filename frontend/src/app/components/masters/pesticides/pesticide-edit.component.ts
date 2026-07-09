@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PesticideEditView, PesticideEditViewState, PesticideEditFormData } from './pesticide-edit.view';
@@ -16,8 +18,6 @@ import { Pest } from '../../../domain/pests/pest';
 import { CROP_GATEWAY } from '../../../usecase/crops/crop-gateway';
 import { PEST_GATEWAY } from '../../../usecase/pests/pest-gateway';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
-import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
-import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: PesticideEditFormData = {
   name: '',
@@ -96,17 +96,6 @@ const initialControl: PesticideEditViewState = {
   styleUrls: ['./pesticide-edit.component.css']
 })
 export class PesticideEditComponent implements PesticideEditView, OnInit {
-  get contextCrumbs(): MasterContextCrumb[] {
-    const crumbs: MasterContextCrumb[] = [
-      { labelKey: 'pesticides.index.title', routerLink: ['/pesticides'] }
-    ];
-    if (!this.control.loading && this.control.formData.name) {
-      crumbs.push({ label: this.control.formData.name, routerLink: ['/pesticides', this.pesticideId] });
-    }
-    crumbs.push({ labelKey: 'common.edit' });
-    return crumbs;
-  }
-
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -135,13 +124,27 @@ export class PesticideEditComponent implements PesticideEditView, OnInit {
     return this.auth.user()?.admin ?? false;
   }
 
+  private get currentUserRegion(): string | null {
+    const user = this.auth.user() as { region?: string | null } | null;
+    return user?.region ?? null;
+  }
+
   private get pesticideId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 
-  private get currentUserRegion(): string | null {
-    const user = this.auth.user() as { region?: string | null } | null;
-    return user?.region ?? null;
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'pesticides.index.title', routerLink: ['/pesticides'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/pesticides', this.pesticideId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   private applyUserRegionToForm(): void {

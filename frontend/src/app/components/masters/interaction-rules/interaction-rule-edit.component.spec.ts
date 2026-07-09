@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InteractionRuleEditComponent } from './interaction-rule-edit.component';
@@ -24,7 +23,6 @@ describe('InteractionRuleEditComponent', () => {
   let component: InteractionRuleEditComponent;
   let fixture: ComponentFixture<InteractionRuleEditComponent>;
   let mockActivatedRoute: any;
-  let mockRouter: any;
   let mockLoadUseCase: any;
   let mockUpdateUseCase: any;
   let mockPresenter: any;
@@ -38,12 +36,6 @@ describe('InteractionRuleEditComponent', () => {
         }
       }
     };
-    mockRouter = {
-      navigate: vi.fn(),
-      events: of(),
-      createUrlTree: vi.fn(() => ({})),
-      serializeUrl: vi.fn(() => '')
-    };
     mockLoadUseCase = { execute: vi.fn() };
     mockUpdateUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
@@ -56,10 +48,8 @@ describe('InteractionRuleEditComponent', () => {
         TranslateModule.forRoot({ fallbackLang: 'en' })
       ],
       providers: [
-        // Provide route and router at module level; component-level providers
-        // (defined in the component) will be overridden below.
-        { provide: ActivatedRoute, useValue: mockActivatedRoute },
-        { provide: Router, useValue: mockRouter }
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: mockActivatedRoute }
       ]
     })
       .overrideComponent(InteractionRuleEditComponent, {
@@ -157,5 +147,38 @@ describe('InteractionRuleEditComponent', () => {
 
     const regionSelect = fixture.nativeElement.querySelector('app-region-select');
     expect(regionSelect).toBeNull();
+  });
+
+  it('shows three-level breadcrumb with detail link and omits back from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        interaction_rules: { index: { title: 'Rotations' } },
+        common: { edit: 'Edit' }
+      },
+      true
+    );
+    translate.use('en');
+    component.ngOnInit();
+
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      formData: {
+        ...initialFormData,
+        source_group: 'Tomato',
+        target_group: 'Potato'
+      }
+    };
+    fixture.detectChanges();
+
+    expect(component.contextCrumbs[1].routerLink).toEqual(['/interaction_rules', 1]);
+    expect(component.contextCrumbs[1].label).toBe('Tomato → Potato');
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });

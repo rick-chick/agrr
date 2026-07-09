@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, ActivatedRoute } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { Router, ActivatedRoute, provideRouter } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -40,6 +40,7 @@ describe('AgriculturalTaskCreateComponent', () => {
       ],
       // Do not provide component-level presenters/usecases here; override the component providers below
       providers: [
+        provideRouter([]),
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: AuthService, useValue: mockAuthService }
@@ -158,5 +159,26 @@ describe('AgriculturalTaskCreateComponent', () => {
         region: 'jp'
       })
     );
+  });
+
+  it('shows master context header and omits back link from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        agricultural_tasks: {
+          index: { title: 'Tasks' },
+          new: { title: 'Add New Task' }
+        }
+      },
+      true
+    );
+    translate.use('en');
+
+    expect(component.contextCrumbs[0].routerLink).toEqual(['/agricultural_tasks']);
+    expect(component.contextCrumbs[1].labelKey).toBe('agricultural_tasks.new.title');
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });
