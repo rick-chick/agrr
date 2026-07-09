@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PestCreateView, PestCreateViewState, PestCreateFormData } from './pest-create.view';
@@ -33,10 +35,11 @@ const initialControl: PestCreateViewState = {
 @Component({
   selector: 'app-pest-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, RegionSelectComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
   providers: [...PEST_CREATE_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'pests.new.title' | translate }}</h2>
         <form (ngSubmit)="createPest()" #pestForm="ngForm" class="form-card__form">
@@ -74,7 +77,6 @@ const initialControl: PestCreateViewState = {
             <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
               {{ control.saving ? ('common.creating' | translate) : ('pests.form.submit_create' | translate) }}
             </button>
-            <a [routerLink]="['/pests']" class="btn-secondary">{{ 'common.back' | translate }}</a>
           </div>
         </form>
       </section>
@@ -100,6 +102,13 @@ export class PestCreateComponent implements PestCreateView, OnInit {
     });
     this._control = next;
     this.cdr.markForCheck();
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    return [
+      { labelKey: 'pests.index.title', routerLink: ['/pests'] },
+      { labelKey: 'pests.new.title' }
+    ];
   }
 
   ngOnInit(): void {
