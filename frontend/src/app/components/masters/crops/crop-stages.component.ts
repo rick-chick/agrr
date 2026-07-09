@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CropStagesView, CropStagesViewState, CropStagesFormData } from './crop-stages.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
@@ -40,7 +40,7 @@ const initialControl: CropStagesViewState = {
 @Component({
   selector: 'app-crop-stages',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, MasterContextHeaderComponent],
   providers: [...CROP_STAGES_PROVIDERS],
   template: `
     <main class="page-main">
