@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -35,6 +35,7 @@ describe('AgriculturalTaskEditComponent', () => {
       imports: [AgriculturalTaskEditComponent, RegionSelectComponent, TranslateModule.forRoot()],
       providers: [
         AgriculturalTaskEditPresenter,
+        provideRouter([]),
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: LoadAgriculturalTaskForEditUseCase, useValue: mockLoadUseCase },
         { provide: UpdateAgriculturalTaskUseCase, useValue: mockUpdateUseCase },
@@ -172,5 +173,45 @@ describe('AgriculturalTaskEditComponent', () => {
         region: 'us'
       })
     );
+  });
+
+  it('shows three-level breadcrumb with detail link and omits back from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        agricultural_tasks: { index: { title: 'Tasks' } },
+        common: { edit: 'Edit' }
+      },
+      true
+    );
+    translate.use('en');
+
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      formData: {
+        name: 'Weeding',
+        description: null,
+        time_per_sqm: null,
+        weather_dependency: null,
+        required_tools: [],
+        skill_level: null,
+        region: null,
+        task_type: null
+      }
+    };
+    fixture.detectChanges();
+
+    const detailLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__link'
+    ) as HTMLAnchorElement;
+    expect(detailLink?.getAttribute('href')).toBe('/agricultural_tasks/1');
+    expect(detailLink?.textContent?.trim()).toBe('Weeding');
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });

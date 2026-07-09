@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of } from 'rxjs';
 
@@ -15,22 +15,12 @@ import { AuthService } from '../../../services/auth.service';
 describe('InteractionRuleCreateComponent', () => {
   let component: InteractionRuleCreateComponent;
   let fixture: ComponentFixture<InteractionRuleCreateComponent>;
-  let mockRouter: any;
   let mockPresenter: any;
   let mockCreateUseCase: any;
   let mockAuthService: any;
   let currentUser: { admin: boolean; region?: string | null } | null;
 
   beforeEach(async () => {
-    mockRouter = {
-      navigate: vi.fn(),
-      events: { subscribe: vi.fn() },
-      routerState: {},
-      url: '',
-      createUrlTree: vi.fn(),
-      serializeUrl: vi.fn()
-    };
-
     mockPresenter = {
       setView: vi.fn()
     };
@@ -53,7 +43,6 @@ describe('InteractionRuleCreateComponent', () => {
       imports: [InteractionRuleCreateComponent, TranslateModule.forRoot(), RouterTestingModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
-        { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute }
       ]
     })
@@ -152,5 +141,26 @@ describe('InteractionRuleCreateComponent', () => {
         region: 'us'
       })
     );
+  });
+
+  it('shows master context header and omits back link from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        interaction_rules: {
+          index: { title: 'Rotations' },
+          new: { title: 'Create New Rule' }
+        }
+      },
+      true
+    );
+    translate.use('en');
+
+    expect(component.contextCrumbs[0].routerLink).toEqual(['/interaction_rules']);
+    expect(component.contextCrumbs[1].labelKey).toBe('interaction_rules.new.title');
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });

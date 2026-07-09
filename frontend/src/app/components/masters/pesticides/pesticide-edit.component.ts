@@ -1,7 +1,9 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PesticideEditView, PesticideEditViewState, PesticideEditFormData } from './pesticide-edit.view';
@@ -41,10 +43,11 @@ const initialControl: PesticideEditViewState = {
 @Component({
   selector: 'app-pesticide-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RegionSelectComponent, TranslateModule],
+  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
   providers: [...PESTICIDE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
+      <app-master-context-header [crumbs]="contextCrumbs" />
       <section class="form-card" aria-labelledby="form-heading">
         <h2 id="form-heading" class="form-card__title">{{ 'pesticides.edit.title' | translate:{ name: control.formData.name || ('pesticides.edit.title_default' | translate) } }}</h2>
         @if (control.loading) {
@@ -84,7 +87,6 @@ const initialControl: PesticideEditViewState = {
               <button type="submit" class="btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">
                 {{ control.saving ? ('common.updating' | translate) : ('pesticides.form.submit_update' | translate) }}
               </button>
-              <a [routerLink]="['/pesticides']" class="btn-secondary">{{ 'common.back' | translate }}</a>
             </div>
           </form>
         }
@@ -125,6 +127,24 @@ export class PesticideEditComponent implements PesticideEditView, OnInit {
   private get currentUserRegion(): string | null {
     const user = this.auth.user() as { region?: string | null } | null;
     return user?.region ?? null;
+  }
+
+  private get pesticideId(): number {
+    return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'pesticides.index.title', routerLink: ['/pesticides'] }
+    ];
+    if (!this.control.loading && this.control.formData.name) {
+      crumbs.push({
+        label: this.control.formData.name,
+        routerLink: ['/pesticides', this.pesticideId]
+      });
+    }
+    crumbs.push({ labelKey: 'common.edit' });
+    return crumbs;
   }
 
   private applyUserRegionToForm(): void {

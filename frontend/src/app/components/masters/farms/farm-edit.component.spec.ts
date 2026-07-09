@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 import { FarmEditComponent } from './farm-edit.component';
 import { LoadFarmForEditUseCase } from '../../../usecase/farms/load-farm-for-edit.usecase';
@@ -219,5 +219,44 @@ describe('FarmEditComponent', () => {
     });
 
     expect(Number.isNaN(component['farmId'])).toBe(true);
+  });
+
+  it('shows three-level breadcrumb with detail link and omits back from form-card__actions', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        farms: { index: { title: 'Farms' } },
+        common: { edit: 'Edit' }
+      },
+      true
+    );
+    translate.use('en');
+
+    component.control = {
+      loading: false,
+      saving: false,
+      error: null,
+      pendingErrorFlash: null,
+      formData: {
+        name: 'Test Farm',
+        region: 'jp',
+        latitude: 35.0,
+        longitude: 135.0
+      }
+    };
+    fixture.detectChanges();
+
+    const detailLink = fixture.nativeElement.querySelector(
+      'a.master-context-header__link'
+    ) as HTMLAnchorElement;
+    expect(detailLink?.getAttribute('href')).toBe('/farms/123');
+    expect(detailLink?.textContent?.trim()).toBe('Test Farm');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      'Edit'
+    );
+    expect(
+      fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
+    ).toHaveLength(0);
   });
 });
