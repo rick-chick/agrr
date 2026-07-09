@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
@@ -17,7 +17,7 @@ import { MasterContextCrumb } from '../masters/master-context-header/master-cont
 @Component({
   selector: 'app-entry-schedule-detail',
   standalone: true,
-  imports: [CommonModule, TranslateModule, RouterLink, MasterContextHeaderComponent],
+  imports: [CommonModule, TranslateModule, MasterContextHeaderComponent],
   template: `
     <main class="page-main public-plans-wrapper">
       <div class="free-plans-container">

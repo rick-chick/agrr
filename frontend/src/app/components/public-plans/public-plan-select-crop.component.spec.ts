@@ -262,29 +262,34 @@ describe('PublicPlanSelectCropComponent (template)', () => {
 
     await TestBed.configureTestingModule({
       imports: [PublicPlanSelectCropComponent, TranslateModule.forRoot()],
-      providers: [
-        provideRouter([]),
-        { provide: LoadPublicPlanCropsUseCase, useValue: { execute: vi.fn() } },
-        { provide: CreatePublicPlanUseCase, useValue: { execute: vi.fn() } },
-        { provide: ResetPublicPlanCreationStateUseCase, useValue: { execute: vi.fn() } },
-        { provide: PublicPlanSelectCropPresenter, useValue: { setView: vi.fn() } },
-        {
-          provide: PublicPlanStore,
-          useValue: {
-            state: {
-              farm: { id: 1, name: 'Test Farm', region: 'jp' },
-              selectedCrops: [],
-              planId: null,
-              pendingCropSlug: null
-            },
-            setSelectedCrops: vi.fn(),
-            setPlanId: vi.fn(),
-            setFarm: vi.fn(),
-            setPendingCropSlug: vi.fn()
-          }
+      providers: [provideRouter([])]
+    })
+      .overrideComponent(PublicPlanSelectCropComponent, {
+        set: {
+          providers: [
+            { provide: LoadPublicPlanCropsUseCase, useValue: { execute: vi.fn() } },
+            { provide: CreatePublicPlanUseCase, useValue: { execute: vi.fn() } },
+            { provide: ResetPublicPlanCreationStateUseCase, useValue: { execute: vi.fn() } },
+            { provide: PublicPlanSelectCropPresenter, useValue: { setView: vi.fn() } },
+            {
+              provide: PublicPlanStore,
+              useValue: {
+                state: {
+                  farm: { id: 1, name: 'Test Farm', region: 'jp' },
+                  selectedCrops: [],
+                  planId: null,
+                  pendingCropSlug: null
+                },
+                setSelectedCrops: vi.fn(),
+                setPlanId: vi.fn(),
+                setFarm: vi.fn(),
+                setPendingCropSlug: vi.fn()
+              }
+            }
+          ]
         }
-      ]
-    }).compileComponents();
+      })
+      .compileComponents();
 
     const fixture = TestBed.createComponent(PublicPlanSelectCropComponent);
     const instance = fixture.componentInstance;
@@ -306,7 +311,7 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     instance.control = {
       loading: false,
       error: null,
-      crops: [{ id: 1, name: 'Tomato' }],
+      crops: [{ id: 1, name: 'Tomato', is_reference: false, groups: [] }],
       saving: false
     };
     fixture.detectChanges();

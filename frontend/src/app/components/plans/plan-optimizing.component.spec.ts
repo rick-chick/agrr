@@ -127,6 +127,6 @@ describe('PlanOptimizingComponent', () => {
     expect(backLink).toBeTruthy();
     expect(backLink.getAttribute('href')).toBe('/plans');
     expect(backLink.textContent?.trim()).toBe('Back to plans');
-    expect(fixture.nativeElement.textContent).not.toContain('Back to plan');
+    expect(fixture.nativeElement.querySelectorAll('a').length).toBe(1);
   });
 });
