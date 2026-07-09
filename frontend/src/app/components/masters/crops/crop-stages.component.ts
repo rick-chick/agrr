@@ -26,6 +26,8 @@ import {
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import type { CropStage } from '../../../domain/crops/crop';
+import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
+import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 const initialFormData: CropStagesFormData = {
   name: '',
@@ -43,7 +45,7 @@ const initialControl: CropStagesViewState = {
 @Component({
   selector: 'app-crop-stages',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...CROP_STAGES_PROVIDERS],
   template: `
     <main class="page-main">
@@ -64,16 +66,12 @@ const initialControl: CropStagesViewState = {
         }
 
         <header class="page-header crop-stages__page-header">
-          <nav class="crop-stages__nav" aria-label="{{ 'crops.edit.stages_title' | translate }}">
-            <a [routerLink]="['/crops', cropId]" class="crop-stages__back-link">
-              {{ 'common.back' | translate }}
+          <app-master-context-header [crumbs]="contextCrumbs" />
+          @if (fromPlanId) {
+            <a [routerLink]="planReturnPath" class="btn-secondary crop-stages__return-to-plan">
+              {{ 'crops.show.return_to_plan' | translate }}
             </a>
-            @if (fromPlanId) {
-              <a [routerLink]="planReturnPath" class="btn-secondary">
-                {{ 'crops.show.return_to_plan' | translate }}
-              </a>
-            }
-          </nav>
+          }
           <h1 class="page-title">{{ control.formData.name }}</h1>
           <p class="page-description">{{ 'crops.edit.stages_title' | translate }}</p>
         </header>
@@ -264,6 +262,18 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   get planReturnPath(): (string | number)[] {
     return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
+  }
+
+  get contextCrumbs(): MasterContextCrumb[] {
+    const crumbs: MasterContextCrumb[] = [
+      { labelKey: 'crops.index.title', routerLink: ['/crops'] }
+    ];
+    const cropName = this.control.formData.name;
+    if (cropName) {
+      crumbs.push({ label: cropName, routerLink: ['/crops', this.cropId] });
+    }
+    crumbs.push({ labelKey: 'crops.edit.stages_title' });
+    return crumbs;
   }
 
   ngOnInit(): void {

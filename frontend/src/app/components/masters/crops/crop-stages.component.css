@@ -4,21 +4,9 @@
   margin-bottom: 1.5rem;
 }
 
-.crop-stages__nav {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.crop-stages__back-link {
-  color: var(--color-text-secondary);
-  text-decoration: none;
-}
-
-.crop-stages__back-link:hover {
-  color: var(--color-text-primary);
-  text-decoration: underline;
+.crop-stages__return-to-plan {
+  display: inline-flex;
+  margin-bottom: var(--space-3, 0.75rem);
 }
 
 .crop-stages-section__title {
