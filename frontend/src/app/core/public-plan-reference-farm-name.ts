@@ -10,13 +10,20 @@ export function localizePublicPlanReferenceFarmName(
   farm: { name: string; latitude?: number; longitude?: number; region?: string | null },
   instant: PublicPlanReferenceFarmNameTranslate
 ): string {
-  if (!Number.isFinite(farm.latitude) || !Number.isFinite(farm.longitude)) {
+  const latitude = farm.latitude;
+  const longitude = farm.longitude;
+  if (
+    typeof latitude !== 'number' ||
+    typeof longitude !== 'number' ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
     return farm.name;
   }
   const slug = resolveReferenceFarmSlug({
     name: farm.name,
-    latitude: farm.latitude,
-    longitude: farm.longitude,
+    latitude,
+    longitude,
     region: farm.region
   });
   if (!slug) {
