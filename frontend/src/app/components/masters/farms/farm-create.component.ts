@@ -102,7 +102,7 @@ const initialControl: FarmCreateViewState = {
             </div>
           </div>
           <div class="form-card__actions">
-            <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">
+            <button type="submit" class="btn btn-primary" [disabled]="farmForm.invalid || control.saving">
               {{ 'farms.new.form.submit' | translate }}
             </button>
           </div>

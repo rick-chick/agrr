@@ -43,7 +43,7 @@ const initialControl: AgriculturalTaskListViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a [routerLink]="['/agricultural_tasks', 'new']" class="btn-primary">
+            <a [routerLink]="['/agricultural_tasks', 'new']" class="btn btn-primary">
               {{ 'agricultural_tasks.index.new_agricultural_task' | translate }}
             </a>
           </div>
@@ -61,12 +61,12 @@ const initialControl: AgriculturalTaskListViewState = {
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/agricultural_tasks', task.id, 'edit']" class="btn-secondary">
+                    <a [routerLink]="['/agricultural_tasks', task.id, 'edit']" class="btn btn-secondary">
                       {{ 'common.edit' | translate }}
                     </a>
                     <button
                       type="button"
-                      class="btn-danger"
+                      class="btn btn-danger"
                       (click)="deleteTask(task.id)"
                       [attr.aria-label]="'common.delete' | translate"
                     >

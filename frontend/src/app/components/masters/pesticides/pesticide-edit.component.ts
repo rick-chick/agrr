@@ -92,7 +92,7 @@ const initialControl: PesticideEditViewState = {
               <app-region-select [region]="control.formData.region" (regionChange)="control.formData.region = $event"></app-region-select>
             }
             <div class="form-card__actions">
-              <button type="submit" class="btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">
+              <button type="submit" class="btn btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">
                 {{ control.saving ? ('common.updating' | translate) : ('pesticides.form.submit_update' | translate) }}
               </button>
             </div>

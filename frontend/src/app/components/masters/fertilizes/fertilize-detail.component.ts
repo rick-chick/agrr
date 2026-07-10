@@ -81,7 +81,7 @@ const initialControl: FertilizeDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
-            <a [routerLink]="['/fertilizes', control.fertilize.id, 'edit']" class="btn-primary">
+            <a [routerLink]="['/fertilizes', control.fertilize.id, 'edit']" class="btn btn-primary">
               {{ 'fertilizes.show.edit' | translate }}
             </a>
           </div>
