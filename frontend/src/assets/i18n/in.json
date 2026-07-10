@@ -1531,9 +1531,6 @@
       "nav_next_week": "अगला सप्ताह",
       "nav_today": "इस सप्ताह",
       "week_label": "{{start}} – {{end}}",
-      "general_label": "सामान्य कार्य",
-      "fertilizer_label": "उर्वरक",
-      "fertilizer_empty": "कोई उर्वरक कार्य निर्धारित नहीं",
       "unscheduled_title": "अनिर्धारित कार्य",
       "no_schedules": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
       "status": {
