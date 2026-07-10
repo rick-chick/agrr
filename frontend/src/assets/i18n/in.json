@@ -1733,6 +1733,13 @@
       "no_farms_hint": "कृपया पहले एक खेत बनाएं",
       "create_farm_link": "खेत बनाएं",
       "next_button": "अगला: फसल चुनें",
+      "create_button": "बनाएं",
+      "farm_option_with_fields": "{{name}} ({{count}} खेत क्षेत्र · {{area}} वर्ग मी)",
+      "farm_option_no_fields": "{{name}} (कोई खेत क्षेत्र नहीं)",
+      "no_fields_warning": "इस खेत पर कोई पंजीकृत खेत क्षेत्र नहीं है।",
+      "some_farms_no_fields_hint":
+        "बिना पंजीकृत खेत क्षेत्र वाले खेतों को योजना बनाने के लिए चुना नहीं जा सकता।",
+      "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
       "empty_message": "वर्तमान में कोई खेत उपलब्ध नहीं है।"
     },
     "select_crop": {
