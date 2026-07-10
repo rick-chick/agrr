@@ -26,12 +26,11 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                 <h3>{{ fieldHeading(field) }}</h3>
               }
 
-              <div class="schedule-columns">
-                <div class="column">
-                  <h4>{{ 'plans.task_schedules.general_label' | translate }}</h4>
-                  @if (sortedTasks(field.schedules.general).length) {
+              <div class="schedule-sections">
+                <div class="scheduled-section">
+                  @if (scheduledTasks(field).length) {
                     <ul class="list">
-                      @for (task of sortedTasks(field.schedules.general); track task.item_id) {
+                      @for (task of scheduledTasks(field); track task.item_id) {
                         <li>
                           <button
                             type="button"
@@ -58,46 +57,11 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                       }
                     </ul>
                   } @else {
-                    <p class="column-empty">{{ 'plans.task_schedules.field_no_tasks' | translate }}</p>
+                    <p class="section-empty">{{ 'plans.task_schedules.field_no_tasks' | translate }}</p>
                   }
                 </div>
 
-                <div class="column">
-                  <h4>{{ 'plans.task_schedules.fertilizer_label' | translate }}</h4>
-                  @if (sortedTasks(field.schedules.fertilizer).length) {
-                    <ul class="list">
-                      @for (task of sortedTasks(field.schedules.fertilizer); track task.item_id) {
-                        <li>
-                          <button
-                            type="button"
-                            class="btn btn-white item item--selectable"
-                            [class.item--selected]="isSelected(task)"
-                            (click)="selectTask(task)"
-                          >
-                            <span class="item__main">
-                              <span class="item__name">{{ task.name }}</span>
-                              @if (formatScheduledDate(task.scheduled_date); as dateLabel) {
-                                <span class="item__date">{{ dateLabel }}</span>
-                              }
-                            </span>
-                            <span class="item__badges">
-                              <span class="badge badge--status" [class]="task.badge.type">{{
-                                statusLabelKey(task.status) | translate
-                              }}</span>
-                              @if (task.completed) {
-                                <span class="badge badge--done">✓</span>
-                              }
-                            </span>
-                          </button>
-                        </li>
-                      }
-                    </ul>
-                  } @else {
-                    <p class="column-empty">{{ 'plans.task_schedules.fertilizer_empty' | translate }}</p>
-                  }
-                </div>
-
-                <div class="column">
+                <div class="unscheduled-section">
                   <h4>{{ 'plans.task_schedules.unscheduled_title' | translate }}</h4>
                   @if (sortedTasks(field.schedules.unscheduled).length) {
                     <ul class="list">
@@ -128,7 +92,7 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                       }
                     </ul>
                   } @else {
-                    <p class="column-empty">{{ 'plans.task_schedules.field_no_tasks' | translate }}</p>
+                    <p class="section-empty">{{ 'plans.task_schedules.field_no_tasks' | translate }}</p>
                   }
                 </div>
               </div>
@@ -181,6 +145,10 @@ export class TaskScheduleTimelineComponent {
       }
       return a.scheduled_date.localeCompare(b.scheduled_date);
     });
+  }
+
+  scheduledTasks(field: FieldSchedule): TaskScheduleItem[] {
+    return this.sortedTasks([...field.schedules.general, ...field.schedules.fertilizer]);
   }
 
   formatScheduledDate(iso: string | null): string | null {

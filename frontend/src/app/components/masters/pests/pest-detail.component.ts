@@ -77,10 +77,10 @@ const initialControl: PestDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
-            <a [routerLink]="['/pests', control.pest.id, 'edit']" class="btn-primary">
+            <a [routerLink]="['/pests', control.pest.id, 'edit']" class="btn btn-primary">
               {{ 'pests.show.edit' | translate }}
             </a>
-            <button type="button" class="btn-danger" (click)="deletePest()">
+            <button type="button" class="btn btn-danger" (click)="deletePest()">
               {{ 'pests.show.delete' | translate }}
             </button>
           </div>

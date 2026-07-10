@@ -40,7 +40,7 @@ const initialControl: PesticideListViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a [routerLink]="['/pesticides', 'new']" class="btn-primary">{{ 'pesticides.form.submit_create' | translate }}</a>
+            <a [routerLink]="['/pesticides', 'new']" class="btn btn-primary">{{ 'pesticides.form.submit_create' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
             @for (pesticide of control.pesticides; track pesticide.id) {
@@ -53,10 +53,10 @@ const initialControl: PesticideListViewState = {
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/pesticides', pesticide.id, 'edit']" class="btn-secondary">{{ 'pesticides.index.actions.edit' | translate }}</a>
+                    <a [routerLink]="['/pesticides', pesticide.id, 'edit']" class="btn btn-secondary">{{ 'pesticides.index.actions.edit' | translate }}</a>
                     <button
                       type="button"
-                      class="btn-danger"
+                      class="btn btn-danger"
                       (click)="deletePesticide(pesticide.id)"
                       [attr.aria-label]="'pesticides.index.actions.delete' | translate"
                     >

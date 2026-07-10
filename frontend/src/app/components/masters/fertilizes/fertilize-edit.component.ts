@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { RegionSelectComponent } from '../../shared/region-select/region-select.component';
@@ -40,7 +41,7 @@ const initialControl: FertilizeEditViewState = {
 @Component({
   selector: 'app-fertilize-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, TranslateModule, RegionSelectComponent, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...FERTILIZE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
@@ -51,6 +52,13 @@ const initialControl: FertilizeEditViewState = {
         </h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <app-master-load-error-panel
+            [errorKey]="control.error"
+            [listLink]="['/fertilizes']"
+            backLabelKey="fertilizes.index.title"
+            (retry)="reload()"
+          />
         } @else {
           <form (ngSubmit)="updateFertilize()" #fertilizeForm="ngForm" class="form-card__form">
             <label for="name" class="form-card__field">
@@ -84,7 +92,7 @@ const initialControl: FertilizeEditViewState = {
               <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
             </label>
             <div class="form-card__actions">
-              <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
+              <button type="submit" class="btn btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
                 {{ 'fertilizes.form.submit_update' | translate }}
               </button>
             </div>
@@ -135,9 +143,15 @@ export class FertilizeEditComponent implements FertilizeEditView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     if (!this.fertilizeId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid fertilize id.' };
+      this.control = { ...initialControl, loading: false, error: 'fertilizes.errors.invalid_id' };
       return;
     }
+    this.reload();
+  }
+
+  reload(): void {
+    if (!this.fertilizeId) return;
+    this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ fertilizeId: this.fertilizeId });
   }
 

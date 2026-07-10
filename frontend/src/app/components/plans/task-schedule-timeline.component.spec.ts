@@ -92,8 +92,6 @@ describe('TaskScheduleTimelineComponent', () => {
     translate.setDefaultLang('ja');
     translate.use('ja');
     translate.setTranslation('ja', {
-      'plans.task_schedules.general_label': '一般作業',
-      'plans.task_schedules.fertilizer_label': '施肥',
       'plans.task_schedules.no_schedules': '作業予定がまだ生成されていません。',
       'plans.task_schedules.status.planned': '予定',
       'plans.task_schedules.status.skipped': 'スキップ',
@@ -102,7 +100,6 @@ describe('TaskScheduleTimelineComponent', () => {
       'plans.task_schedules.field_number': '圃場 {{number}}',
       'plans.task_schedules.cultivation_period': '栽培期間 {{start}} 〜 {{end}}',
       'plans.task_schedules.field_no_tasks': 'この列に予定された作業はありません',
-      'plans.task_schedules.fertilizer_empty': '施肥予定はありません',
       'plans.task_schedules.unscheduled_title': '未確定の作業',
       'plans.task_schedules.detail.title': '作業詳細',
       'plans.task_schedules.detail.empty': 'タスクを選択すると詳細が表示されます',
@@ -225,25 +222,44 @@ describe('TaskScheduleTimelineComponent', () => {
     expect(names).toEqual(['Earlier', 'Later', 'Unscheduled']);
   });
 
-  it('shows empty column message when a field section has no tasks', async () => {
+  it('shows empty scheduled message when a field has no dated tasks', async () => {
     component.fields = [mockField([], [])];
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const emptyMessages = fixture.nativeElement.querySelectorAll('.column-empty');
-    expect(emptyMessages.length).toBe(3);
-    expect(emptyMessages[0]?.textContent).toContain('この列に予定された作業はありません');
+    const scheduledSection = fixture.nativeElement.querySelector('.scheduled-section');
+    expect(scheduledSection?.textContent).toContain('この列に予定された作業はありません');
+    expect(fixture.nativeElement.textContent).not.toContain('一般作業');
+    expect(fixture.nativeElement.textContent).not.toContain('施肥');
+    expect(fixture.nativeElement.textContent).not.toContain('施肥予定はありません');
   });
 
-  it('shows fertilizer_empty when fertilizer column has no tasks', async () => {
-    component.fields = [mockField([mockTask({ item_id: 1, name: 'Weeding' })], [])];
+  it('merges general and fertilizer tasks in scheduled_date ascending order', async () => {
+    component.fields = [
+      mockField(
+        [mockTask({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-12', category: 'general' })],
+        [mockTask({ item_id: 2, name: 'Top dressing', scheduled_date: '2026-06-08', category: 'fertilizer' })]
+      )
+    ];
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const columns = fixture.nativeElement.querySelectorAll('.column');
-    expect(columns.length).toBe(3);
-    expect(columns[1]?.textContent).toContain('施肥予定はありません');
-    expect(columns[1]?.textContent).not.toContain('この列に予定された作業はありません');
+    const scheduledNames = Array.from(
+      fixture.nativeElement.querySelectorAll('.scheduled-section .item__name')
+    ).map((el: Element) => el.textContent?.trim());
+    expect(scheduledNames).toEqual(['Top dressing', 'Weeding']);
+  });
+
+  it('shows fertilizer-only tasks in the unified scheduled list', async () => {
+    component.fields = [
+      mockField([], [mockTask({ item_id: 10, name: 'Basal', scheduled_date: '2026-06-05' })])
+    ];
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const scheduledSection = fixture.nativeElement.querySelector('.scheduled-section');
+    expect(scheduledSection?.textContent).toContain('Basal');
+    expect(fixture.nativeElement.textContent).not.toContain('施肥予定はありません');
   });
 
   it('renders unscheduled section with tasks', async () => {
@@ -257,10 +273,9 @@ describe('TaskScheduleTimelineComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const columns = fixture.nativeElement.querySelectorAll('.column');
-    expect(columns.length).toBe(3);
-    expect(columns[2]?.querySelector('h4')?.textContent).toContain('未確定の作業');
-    expect(columns[2]?.textContent).toContain('Pending task');
+    const unscheduledSection = fixture.nativeElement.querySelector('.unscheduled-section');
+    expect(unscheduledSection?.querySelector('h4')?.textContent).toContain('未確定の作業');
+    expect(unscheduledSection?.textContent).toContain('Pending task');
   });
 
   it('shows detail panel empty state before a task is selected', () => {

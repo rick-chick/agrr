@@ -5,7 +5,6 @@ import { LoadFertilizeForEditOutputPort } from '../../usecase/fertilizes/load-fe
 import { LoadFertilizeForEditDataDto } from '../../usecase/fertilizes/load-fertilize-for-edit.dtos';
 import { UpdateFertilizeOutputPort } from '../../usecase/fertilizes/update-fertilize.output-port';
 import { UpdateFertilizeSuccessDto } from '../../usecase/fertilizes/update-fertilize.dtos';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class FertilizeEditPresenter
@@ -44,8 +43,8 @@ export class FertilizeEditPresenter
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      error: dto.message,
+      pendingErrorFlash: null
     };
   }
 

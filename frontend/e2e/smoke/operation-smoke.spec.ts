@@ -51,7 +51,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
   test('home CTA opens public plan wizard', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('app-home')).toBeVisible();
-    await page.locator('app-home .primary-button').first().click();
+    await page.locator('app-home .btn-primary').first().click();
     await expect(page).toHaveURL(/\/public-plans\/new/);
     await expect(page.locator('app-public-plan-create')).toBeVisible();
     await assertHostHealthy(page, 'app-public-plan-create');
@@ -291,7 +291,7 @@ test.describe('logged-out operation smoke', () => {
   test('login page shows OAuth entry', async ({ page }) => {
     await page.goto('/login');
     await expect(page.locator('app-login')).toBeVisible();
-    await expect(page.locator('app-login .login-button')).toBeVisible();
+    await expect(page.locator('app-login .btn-primary')).toBeVisible();
   });
 
   test('unknown route shows not-found', async ({ page }) => {

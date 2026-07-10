@@ -1,3 +1,5 @@
+@import '../overlay-button-utilities.css';
+
 .undo-toast {
   position: fixed;
   bottom: var(--space-6);
@@ -15,13 +17,4 @@
 .undo-toast .actions {
   display: flex;
   gap: var(--space-2);
-}
-
-.undo-toast button {
-  background: var(--color-inverse-bg-soft);
-  border: none;
-  color: var(--color-text-on-primary);
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
 }

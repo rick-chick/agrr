@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadFertilizeForEditInputDto } from './load-fertilize-for-edit.dtos';
 import { LoadFertilizeForEditInputPort } from './load-fertilize-for-edit.input-port';
 import {
@@ -17,8 +18,8 @@ export class LoadFertilizeForEditUseCase implements LoadFertilizeForEditInputPor
   execute(dto: LoadFertilizeForEditInputDto): void {
     this.fertilizeGateway.show(dto.fertilizeId).subscribe({
       next: (fertilize) => this.outputPort.present({ fertilize }),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }

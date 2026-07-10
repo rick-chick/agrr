@@ -192,6 +192,11 @@
       "generic": "An error occurred"
     }
   },
+  "masters": {
+    "load_error": {
+      "retry": "Reload"
+    }
+  },
   "contact_form": {
     "name": "Name",
     "email": "Email",
@@ -1522,6 +1527,9 @@
     }
   },
   "pesticides": {
+    "errors": {
+      "invalid_id": "Invalid pesticide ID."
+    },
     "undo": {
       "toast": "{{name}} was deleted. You can undo this action."
     },
@@ -2274,6 +2282,9 @@
     }
   },
   "fertilizes": {
+    "errors": {
+      "invalid_id": "Invalid fertilizer ID."
+    },
     "undo": {
       "toast": "{{name}} was deleted. You can undo this action."
     },

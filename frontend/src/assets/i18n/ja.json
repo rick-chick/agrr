@@ -36,6 +36,9 @@
     "not_found": "元に戻す操作が見つかりませんでした。"
   },
   "pesticides": {
+    "errors": {
+      "invalid_id": "農薬IDが不正です。"
+    },
     "undo": {
       "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
@@ -796,6 +799,9 @@
     }
   },
   "fertilizes": {
+    "errors": {
+      "invalid_id": "肥料IDが不正です。"
+    },
     "undo": {
       "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
@@ -1350,6 +1356,11 @@
       "not_migrated": "この機能はまだ利用できません",
       "service_unavailable": "サーバーに接続できませんでした",
       "generic": "エラーが発生しました"
+    }
+  },
+  "masters": {
+    "load_error": {
+      "retry": "再読み込み"
     }
   },
   "contact_form": {

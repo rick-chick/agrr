@@ -63,7 +63,7 @@ const initialControl: WorkHubViewState = {
             <div class="work-hub-empty">
               <p>{{ 'work.hub.no_farms' | translate }}</p>
               <p class="work-hub-empty-hint">{{ 'work.hub.no_farms_hint' | translate }}</p>
-              <a routerLink="/farms/new" class="btn-primary">{{ 'work.hub.create_farm_link' | translate }}</a>
+              <a routerLink="/farms/new" class="btn btn-primary">{{ 'work.hub.create_farm_link' | translate }}</a>
             </div>
           } @else if (control.farms.length) {
             <h2 class="work-hub__section-title">{{ 'work.hub.select_farm' | translate }}</h2>

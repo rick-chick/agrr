@@ -45,4 +45,14 @@ describe('UndoToastComponent', () => {
     expect(buttons[0]?.textContent?.trim()).toBe('Undo');
     expect(buttons[1]?.textContent?.trim()).toBe('Close');
   });
+
+  it('uses design-system button classes on undo and close actions', () => {
+    const buttons = fixture.nativeElement.querySelectorAll('.undo-toast .actions button');
+    expect(buttons.length).toBe(2);
+    for (const button of buttons) {
+      expect(button.classList.contains('btn')).toBe(true);
+      expect(button.classList.contains('btn-white')).toBe(true);
+      expect(button.classList.contains('btn-sm')).toBe(true);
+    }
+  });
 });
