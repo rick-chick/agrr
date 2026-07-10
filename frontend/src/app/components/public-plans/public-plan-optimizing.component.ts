@@ -23,7 +23,8 @@ import { MasterContextCrumb } from '../masters/master-context-header/master-cont
 const initialControl: PublicPlanOptimizingViewState = {
   status: 'pending',
   progress: 0,
-  phaseMessage: ''
+  phaseMessage: '',
+  failureHint: undefined
 };
 
 @Component({
@@ -88,8 +89,9 @@ const initialControl: PublicPlanOptimizingViewState = {
             <div class="error-icon" aria-hidden="true">⚠️</div>
             <div class="error-content">
               <div class="error-title">{{ 'public_plans.optimizing.error.title' | translate }}</div>
-              @if (control.phaseMessage) {
-                <div class="error-detail">{{ control.phaseMessage }}</div>
+              <div class="error-detail">{{ control.phaseMessage }}</div>
+              @if (control.failureHint) {
+                <div class="error-hint">{{ control.failureHint }}</div>
               }
               <div class="error-actions">
                 <a [routerLink]="['/public-plans/select-crop']" class="btn btn-primary">

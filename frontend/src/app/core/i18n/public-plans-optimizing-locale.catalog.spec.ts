@@ -17,6 +17,7 @@ const PUBLIC_PLANS_OPTIMIZING_KEYS = [
   'public_plans.optimizing.status_badge',
   'public_plans.optimizing.status_badge_failed',
   'public_plans.optimizing.error.title',
+  'public_plans.optimizing.error.hints.default',
   'models.cultivation_plan.phases.completed',
   'models.cultivation_plan.phase_failed.default'
 ] as const;

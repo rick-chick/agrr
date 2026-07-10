@@ -1019,6 +1019,12 @@
   margin-bottom: var(--space-3);
 }
 
+.fixed-progress-bar .error-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+}
+
 .fixed-progress-bar .error-actions {
   display: flex;
   flex-wrap: wrap;
