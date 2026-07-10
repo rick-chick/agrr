@@ -11,8 +11,8 @@ import { UndoToastService } from '../../../services/undo-toast.service';
     <div class="undo-toast" *ngIf="toastService.state().visible">
       <span>{{ toastService.state().message }}</span>
       <div class="actions">
-        <button type="button" (click)="undo.emit()">{{ 'deletion_undo.undo_button' | translate }}</button>
-        <button type="button" (click)="toastService.hide()">{{ 'deletion_undo.close_button' | translate }}</button>
+        <button type="button" class="btn btn-white btn-sm" (click)="undo.emit()">{{ 'deletion_undo.undo_button' | translate }}</button>
+        <button type="button" class="btn btn-white btn-sm" (click)="toastService.hide()">{{ 'deletion_undo.close_button' | translate }}</button>
       </div>
     </div>
   `,
