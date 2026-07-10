@@ -47,7 +47,7 @@ const initialControl: PlanNewViewState = {
           <div class="plan-new-empty">
             <p>{{ 'plans.new.no_farms' | translate }}</p>
             <p class="plan-new-empty-hint">{{ 'plans.new.no_farms_hint' | translate }}</p>
-            <a routerLink="/farms/new" class="btn-primary">{{ 'plans.new.create_farm_link' | translate }}</a>
+            <a routerLink="/farms/new" class="btn btn-primary">{{ 'plans.new.create_farm_link' | translate }}</a>
           </div>
         } @else {
           <form class="form" (ngSubmit)="onSubmit($event)">
@@ -98,7 +98,7 @@ const initialControl: PlanNewViewState = {
             <div class="form-actions">
               <button
                 type="submit"
-                class="btn-primary"
+                class="btn btn-primary"
                 [disabled]="control.submitting || !canSubmit"
               >
                 {{ control.submitting ? ('common.loading' | translate) : ('plans.new.create_button' | translate) }}

@@ -101,7 +101,7 @@ const initialControl: FarmEditViewState = {
               </div>
             </section>
             <div class="form-card__actions">
-              <button type="submit" class="btn-primary" [disabled]="farmForm.invalid || control.saving">
+              <button type="submit" class="btn btn-primary" [disabled]="farmForm.invalid || control.saving">
                 {{ 'farms.edit.form.submit' | translate }}
               </button>
             </div>
