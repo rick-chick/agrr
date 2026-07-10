@@ -206,35 +206,7 @@ describe('TaskScheduleTimelineComponent', () => {
     expect(heading?.textContent).toContain('2026年10月31日');
   });
 
-  it('sorts tasks by scheduled_date ascending with nulls last', () => {
-    component.fields = [
-      mockField([
-        mockTask({ item_id: 1, name: 'Later', scheduled_date: '2026-06-20' }),
-        mockTask({ item_id: 2, name: 'Earlier', scheduled_date: '2026-06-10' }),
-        mockTask({ item_id: 3, name: 'Unscheduled', scheduled_date: null })
-      ])
-    ];
-    fixture.detectChanges();
-
-    const names = Array.from(fixture.nativeElement.querySelectorAll('.item__name')).map(
-      (el: Element) => el.textContent?.trim()
-    );
-    expect(names).toEqual(['Earlier', 'Later', 'Unscheduled']);
-  });
-
-  it('shows empty scheduled message when a field has no dated tasks', async () => {
-    component.fields = [mockField([], [])];
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    const scheduledSection = fixture.nativeElement.querySelector('.scheduled-section');
-    expect(scheduledSection?.textContent).toContain('この列に予定された作業はありません');
-    expect(fixture.nativeElement.textContent).not.toContain('一般作業');
-    expect(fixture.nativeElement.textContent).not.toContain('施肥');
-    expect(fixture.nativeElement.textContent).not.toContain('施肥予定はありません');
-  });
-
-  it('merges general and fertilizer tasks in scheduled_date ascending order', async () => {
+  it('merges general and fertilizer tasks in scheduled_date ascending order', () => {
     component.fields = [
       mockField(
         [mockTask({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-12', category: 'general' })],
@@ -242,30 +214,90 @@ describe('TaskScheduleTimelineComponent', () => {
       )
     ];
     fixture.detectChanges();
-    await fixture.whenStable();
 
-    const scheduledNames = Array.from(
-      fixture.nativeElement.querySelectorAll('.scheduled-section .item__name')
-    ).map((el: Element) => el.textContent?.trim());
-    expect(scheduledNames).toEqual(['Top dressing', 'Weeding']);
+    const scheduledSection = fixture.nativeElement.querySelector('.scheduled-section');
+    const names = Array.from(scheduledSection.querySelectorAll('.item__name')).map(
+      (el: Element) => el.textContent?.trim()
+    );
+    expect(names).toEqual(['Top dressing', 'Weeding']);
   });
 
-  it('shows fertilizer-only tasks in the unified scheduled list', async () => {
+  it('does not render general or fertilizer column headers', async () => {
     component.fields = [
-      mockField([], [mockTask({ item_id: 10, name: 'Basal', scheduled_date: '2026-06-05' })])
+      mockField(
+        [mockTask({ item_id: 1, name: 'Weeding' })],
+        [mockTask({ item_id: 2, name: 'Basal' })]
+      )
+    ];
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).not.toContain('一般作業');
+    expect(text).not.toContain('施肥');
+    expect(text).not.toContain('施肥予定はありません');
+  });
+
+  it('shows field_no_tasks when scheduled list is empty', async () => {
+    component.fields = [mockField([], [])];
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const scheduledSection = fixture.nativeElement.querySelector('.scheduled-section');
+    expect(scheduledSection?.textContent).toContain('この列に予定された作業はありません');
+    expect(fixture.nativeElement.textContent).not.toContain('施肥予定はありません');
+  });
+
+  it('shows only fertilizer tasks when general is empty', async () => {
+    component.fields = [
+      mockField([], [mockTask({ item_id: 10, name: 'Basal', scheduled_date: '2026-06-08' })])
     ];
     fixture.detectChanges();
     await fixture.whenStable();
 
     const scheduledSection = fixture.nativeElement.querySelector('.scheduled-section');
-    expect(scheduledSection?.textContent).toContain('Basal');
+    const names = Array.from(scheduledSection.querySelectorAll('.item__name')).map(
+      (el: Element) => el.textContent?.trim()
+    );
+    expect(names).toEqual(['Basal']);
     expect(fixture.nativeElement.textContent).not.toContain('施肥予定はありません');
   });
 
-  it('renders unscheduled section with tasks', async () => {
+  it('shows only general tasks when fertilizer is empty', async () => {
+    component.fields = [
+      mockField([mockTask({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-12' })], [])
+    ];
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const scheduledSection = fixture.nativeElement.querySelector('.scheduled-section');
+    const names = Array.from(scheduledSection.querySelectorAll('.item__name')).map(
+      (el: Element) => el.textContent?.trim()
+    );
+    expect(names).toEqual(['Weeding']);
+  });
+
+  it('sorts merged scheduled tasks by scheduled_date ascending with nulls last', () => {
+    component.fields = [
+      mockField([
+        mockTask({ item_id: 1, name: 'Later', scheduled_date: '2026-06-20' }),
+        mockTask({ item_id: 2, name: 'Earlier', scheduled_date: '2026-06-10' }),
+        mockTask({ item_id: 3, name: 'No date', scheduled_date: null })
+      ])
+    ];
+    fixture.detectChanges();
+
+    const scheduledSection = fixture.nativeElement.querySelector('.scheduled-section');
+    const names = Array.from(scheduledSection.querySelectorAll('.item__name')).map(
+      (el: Element) => el.textContent?.trim()
+    );
+    expect(names).toEqual(['Earlier', 'Later', 'No date']);
+  });
+
+  it('renders unscheduled section separately from scheduled tasks', async () => {
     component.fields = [
       mockField(
-        [],
+        [mockTask({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-12' })],
         [],
         [mockTask({ item_id: 20, name: 'Pending task', scheduled_date: null })]
       )
@@ -276,6 +308,7 @@ describe('TaskScheduleTimelineComponent', () => {
     const unscheduledSection = fixture.nativeElement.querySelector('.unscheduled-section');
     expect(unscheduledSection?.querySelector('h4')?.textContent).toContain('未確定の作業');
     expect(unscheduledSection?.textContent).toContain('Pending task');
+    expect(unscheduledSection?.textContent).not.toContain('Weeding');
   });
 
   it('shows detail panel empty state before a task is selected', () => {

@@ -302,12 +302,12 @@ describe('GanttChartComponent', () => {
         component.ngAfterViewInit();
         fixture.detectChanges();
 
-        const buttons = fixture.nativeElement.querySelectorAll('.range-button');
+        const buttons = fixture.nativeElement.querySelectorAll('.gantt-range-controls .btn');
         expect(buttons.length).toBe(2);
         expect(buttons[0].textContent?.trim()).toContain('前月');
         expect(buttons[1].textContent?.trim()).toContain('次月');
         expect(buttons[0].getAttribute('aria-label')).toBeNull();
-        expect(buttons[0].querySelector('.range-button__icon')).toBeNull();
+        expect(buttons[0].querySelector('.btn__icon')).toBeNull();
       });
 
       it('shows chevron icons with aria-label on mobile', () => {
@@ -315,13 +315,13 @@ describe('GanttChartComponent', () => {
         component.ngAfterViewInit();
         fixture.detectChanges();
 
-        const buttons = fixture.nativeElement.querySelectorAll('.range-button');
+        const buttons = fixture.nativeElement.querySelectorAll('.gantt-range-controls .btn');
         expect(buttons.length).toBe(2);
         expect(buttons[0].getAttribute('aria-label')).toBe('前月');
         expect(buttons[1].getAttribute('aria-label')).toBe('次月');
-        expect(buttons[0].classList.contains('range-button--icon')).toBe(true);
-        expect(buttons[0].querySelector('.range-button__icon')).toBeTruthy();
-        expect(buttons[1].querySelector('.range-button__icon')).toBeTruthy();
+        expect(buttons[0].classList.contains('btn--icon')).toBe(true);
+        expect(buttons[0].querySelector('.btn__icon')).toBeTruthy();
+        expect(buttons[1].querySelector('.btn__icon')).toBeTruthy();
         expect(buttons[0].textContent?.trim()).toBe('');
       });
     });
@@ -348,7 +348,7 @@ describe('GanttChartComponent', () => {
         expect(bar.querySelector('app-gantt-mobile-actions-menu')).toBeFalsy();
         expect(bar.querySelector('.gantt-action-bar__crop-primary')).toBeFalsy();
 
-        const actionButtons = bar.querySelectorAll('.action-button');
+        const actionButtons = bar.querySelectorAll(':scope > .btn.btn-secondary');
         expect(actionButtons.length).toBe(2);
         expect(actionButtons[0].textContent?.trim()).toBe('作物を追加');
         expect(actionButtons[1].textContent?.trim()).toBe('圃場追加');

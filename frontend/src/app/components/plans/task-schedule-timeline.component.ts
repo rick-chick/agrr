@@ -34,7 +34,7 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                         <li>
                           <button
                             type="button"
-                            class="item item--selectable"
+                            class="btn btn-white item item--selectable"
                             [class.item--selected]="isSelected(task)"
                             (click)="selectTask(task)"
                           >
@@ -69,7 +69,7 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                         <li>
                           <button
                             type="button"
-                            class="item item--selectable"
+                            class="btn btn-white item item--selectable"
                             [class.item--selected]="isSelected(task)"
                             (click)="selectTask(task)"
                           >
@@ -132,6 +132,10 @@ export class TaskScheduleTimelineComponent {
     return this.selectedTask?.item_id === task.item_id;
   }
 
+  scheduledTasks(field: FieldSchedule): TaskScheduleItem[] {
+    return this.sortedTasks([...field.schedules.general, ...field.schedules.fertilizer]);
+  }
+
   sortedTasks(tasks: TaskScheduleItem[]): TaskScheduleItem[] {
     return [...tasks].sort((a, b) => {
       if (!a.scheduled_date && !b.scheduled_date) {
@@ -145,10 +149,6 @@ export class TaskScheduleTimelineComponent {
       }
       return a.scheduled_date.localeCompare(b.scheduled_date);
     });
-  }
-
-  scheduledTasks(field: FieldSchedule): TaskScheduleItem[] {
-    return this.sortedTasks([...field.schedules.general, ...field.schedules.fertilizer]);
   }
 
   formatScheduledDate(iso: string | null): string | null {

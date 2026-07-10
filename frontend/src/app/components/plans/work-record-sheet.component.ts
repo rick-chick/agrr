@@ -116,9 +116,10 @@ const initialControl: WorkRecordSheetViewState = {
                 @for (chip of control.taskChips; track chip.id) {
                   <button
                     type="button"
-                    class="work-record-sheet__chip"
+                    class="btn btn-sm work-record-sheet__chip"
+                    [class.btn-white]="control.selectedTaskId !== chip.id"
+                    [class.btn-primary]="control.selectedTaskId === chip.id"
                     role="option"
-                    [class.work-record-sheet__chip--selected]="control.selectedTaskId === chip.id"
                     [attr.aria-selected]="control.selectedTaskId === chip.id"
                     (click)="selectTaskChip(chip)"
                   >
@@ -127,9 +128,10 @@ const initialControl: WorkRecordSheetViewState = {
                 }
                 <button
                   type="button"
-                  class="work-record-sheet__chip work-record-sheet__chip--other"
+                  class="btn btn-sm work-record-sheet__chip work-record-sheet__chip--other"
+                  [class.btn-white]="control.selectedTaskId !== 'other'"
+                  [class.btn-primary]="control.selectedTaskId === 'other'"
                   role="option"
-                  [class.work-record-sheet__chip--selected]="control.selectedTaskId === 'other'"
                   [attr.aria-selected]="control.selectedTaskId === 'other'"
                   (click)="selectOtherTask()"
                 >
@@ -203,7 +205,7 @@ const initialControl: WorkRecordSheetViewState = {
         @if (control.mode !== 'edit') {
           <button
             type="button"
-            class="work-record-sheet__details-toggle"
+            class="btn-link work-record-sheet__details-toggle"
             [attr.aria-expanded]="control.showDetails"
             (click)="toggleDetails()"
           >
