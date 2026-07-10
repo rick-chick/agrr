@@ -53,7 +53,7 @@ const initialControl: WorkHubViewState = {
           @if (control.error) {
             <div class="page-alert-error work-hub__error" role="alert">
               <p>{{ control.error | translate }}</p>
-              <button type="button" class="btn-secondary work-hub__retry" (click)="reload()">
+              <button type="button" class="btn btn-secondary work-hub__retry" (click)="reload()">
                 {{ 'work.hub.retry' | translate }}
               </button>
             </div>
@@ -73,7 +73,7 @@ const initialControl: WorkHubViewState = {
                   <article class="item-card">
                     <button
                       type="button"
-                      class="item-card__body work-hub__farm-btn"
+                      class="btn btn-white item-card__body work-hub__farm-btn"
                       [disabled]="!farm.hasValidFields || control.submitting"
                       (click)="selectFarm(farm)"
                     >
