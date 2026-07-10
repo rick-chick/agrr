@@ -105,4 +105,49 @@ describe('FertilizeDetailComponent', () => {
       fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
     ).toHaveLength(0);
   });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    translate.setTranslation('en', {
+      fertilizes: { index: { title: 'Fertilizers' } },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      pendingErrorFlash: null,
+      fertilize: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.textContent).toContain('Resource not found');
+    expect(alert?.textContent).not.toContain('Http failure');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/fertilizes');
+    expect(fixture.nativeElement.querySelector('.master-load-error__retry')?.textContent?.trim()).toBe(
+      'Reload'
+    );
+  });
+
+  it('reloads detail when retry is clicked after load error', () => {
+    const loadUseCase = TestBed.inject(LoadFertilizeDetailUseCase) as { execute: ReturnType<typeof vi.fn> };
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      pendingErrorFlash: null,
+      fertilize: null
+    };
+    fixture.detectChanges();
+
+    loadUseCase.execute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ fertilizeId: 1 });
+  });
 });

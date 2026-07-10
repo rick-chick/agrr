@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../services/auth.service';
 import { PesticideEditView, PesticideEditViewState, PesticideEditFormData } from './pesticide-edit.view';
@@ -43,7 +44,7 @@ const initialControl: PesticideEditViewState = {
 @Component({
   selector: 'app-pesticide-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, RegionSelectComponent, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...PESTICIDE_EDIT_PROVIDERS],
   template: `
     <main class="page-main">
@@ -52,6 +53,13 @@ const initialControl: PesticideEditViewState = {
         <h2 id="form-heading" class="form-card__title">{{ 'pesticides.edit.title' | translate:{ name: control.formData.name || ('pesticides.edit.title_default' | translate) } }}</h2>
         @if (control.loading) {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
+        } @else if (control.error) {
+          <app-master-load-error-panel
+            [errorKey]="control.error"
+            [listLink]="['/pesticides']"
+            backLabelKey="pesticides.index.title"
+            (retry)="reload()"
+          />
         } @else {
           <form (ngSubmit)="updatePesticide()" #pesticideForm="ngForm" class="form-card__form">
             <label for="name" class="form-card__field">
@@ -167,7 +175,7 @@ export class PesticideEditComponent implements PesticideEditView, OnInit {
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('pesticides.errors.invalid_id')
+        error: 'pesticides.errors.invalid_id'
       };
       return;
     }
@@ -180,8 +188,13 @@ export class PesticideEditComponent implements PesticideEditView, OnInit {
   }
 
   load(pesticideId: number): void {
-    this.control = { ...this.control, loading: true };
+    this.control = { ...this.control, loading: true, error: null };
     this.loadUseCase.execute({ pesticideId });
+  }
+
+  reload(): void {
+    const pesticideId = Number(this.route.snapshot.paramMap.get('id'));
+    if (pesticideId) this.load(pesticideId);
   }
 
   updatePesticide(): void {

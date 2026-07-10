@@ -70,4 +70,63 @@ describe('FertilizeEditComponent', () => {
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);
   });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      fertilizes: { index: { title: 'Fertilizers' } },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    component.control = {
+      loading: false,
+      saving: false,
+      error: 'common.api_error.not_found',
+      pendingErrorFlash: null,
+      formData: {
+        name: '',
+        n: null,
+        p: null,
+        k: null,
+        description: null,
+        package_size: null,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.master-load-error')?.textContent).toContain(
+      'Resource not found'
+    );
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/fertilizes');
+  });
+
+  it('reloads edit form when retry is clicked after load error', () => {
+    const loadUseCase = TestBed.inject(LoadFertilizeForEditUseCase) as { execute: ReturnType<typeof vi.fn> };
+    component.control = {
+      loading: false,
+      saving: false,
+      error: 'common.api_error.generic',
+      pendingErrorFlash: null,
+      formData: {
+        name: '',
+        n: null,
+        p: null,
+        k: null,
+        description: null,
+        package_size: null,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    loadUseCase.execute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ fertilizeId: 5 });
+  });
 });

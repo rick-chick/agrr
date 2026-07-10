@@ -58,13 +58,14 @@ describe('PesticideDetailPresenter', () => {
     expect(lastControl!.pesticide?.pest_name).toBe('Aphid');
   });
 
-  it('queues pending error flash on onError(dto)', () => {
+  it('sets inline error key on onError(dto)', () => {
     lastControl = { loading: true, error: null, pesticide: null, pendingUndoToast: null, pendingErrorFlash: null };
-    const dto: ErrorDto = { message: 'Not found' };
+    const dto: ErrorDto = { message: 'common.api_error.not_found' };
 
     presenter.onError(dto);
 
-    expect(lastControl!.pendingErrorFlash).toEqual({ type: 'error', text: 'Not found' });
+    expect(lastControl!.error).toBe('common.api_error.not_found');
+    expect(lastControl!.pendingErrorFlash).toBeNull();
     expect(lastControl!.loading).toBe(false);
   });
 

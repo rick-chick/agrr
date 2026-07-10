@@ -145,4 +145,48 @@ describe('PesticideDetailComponent', () => {
       fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
     ).toHaveLength(0);
   });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    translate.setTranslation('en', {
+      pesticides: { index: { title: 'Pesticides' } },
+      'common.api_error.generic': 'An error occurred',
+      'masters.load_error.retry': 'Reload'
+    });
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      pendingErrorFlash: null,
+      pesticide: null,
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.textContent).toContain('An error occurred');
+    expect(alert?.textContent).not.toContain('Http failure');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/pesticides');
+  });
+
+  it('reloads detail when retry is clicked after load error', () => {
+    const loadUseCase = TestBed.inject(LoadPesticideDetailUseCase) as { execute: ReturnType<typeof vi.fn> };
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      pendingErrorFlash: null,
+      pesticide: null,
+      pendingUndoToast: null
+    };
+    fixture.detectChanges();
+
+    loadUseCase.execute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ pesticideId: 1 });
+  });
 });

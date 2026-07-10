@@ -5,7 +5,6 @@ import { LoadPesticideForEditOutputPort } from '../../usecase/pesticides/load-pe
 import { LoadPesticideForEditDataDto } from '../../usecase/pesticides/load-pesticide-for-edit.dtos';
 import { UpdatePesticideOutputPort } from '../../usecase/pesticides/update-pesticide.output-port';
 import { UpdatePesticideSuccessDto } from '../../usecase/pesticides/update-pesticide.dtos';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class PesticideEditPresenter implements LoadPesticideForEditOutputPort, UpdatePesticideOutputPort {
@@ -41,8 +40,8 @@ export class PesticideEditPresenter implements LoadPesticideForEditOutputPort, U
       ...this.view.control,
       loading: false,
       saving: false,
-      error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      error: dto.message,
+      pendingErrorFlash: null
     };
   }
 

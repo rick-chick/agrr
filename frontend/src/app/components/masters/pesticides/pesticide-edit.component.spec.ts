@@ -203,4 +203,52 @@ describe('PesticideEditComponent', () => {
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);
   });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    component.control = {
+      loading: false,
+      saving: false,
+      error: 'common.api_error.not_found',
+      pendingErrorFlash: null,
+      formData: {
+        name: '',
+        active_ingredient: null,
+        description: null,
+        crop_id: 0,
+        pest_id: 0,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.master-load-error')).toBeTruthy();
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/pesticides');
+  });
+
+  it('reloads edit form when retry is clicked after load error', () => {
+    component.control = {
+      loading: false,
+      saving: false,
+      error: 'common.api_error.generic',
+      pendingErrorFlash: null,
+      formData: {
+        name: '',
+        active_ingredient: null,
+        description: null,
+        crop_id: 0,
+        pest_id: 0,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    mockLoadUseCase.execute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ pesticideId: 123 });
+  });
 });
