@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadPesticideDetailInputDto } from './load-pesticide-detail.dtos';
 import { LoadPesticideDetailInputPort } from './load-pesticide-detail.input-port';
 import {
@@ -17,10 +18,8 @@ export class LoadPesticideDetailUseCase implements LoadPesticideDetailInputPort 
   execute(dto: LoadPesticideDetailInputDto): void {
     this.pesticideGateway.show(dto.pesticideId).subscribe({
       next: (pesticide) => this.outputPort.present({ pesticide }),
-      error: (err: Error & { error?: { errors?: string[] } }) =>
-        this.outputPort.onError({
-          message: err.error?.errors?.join(', ') ?? err?.message ?? 'Unknown error'
-        })
+      error: (err: unknown) =>
+        this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }
