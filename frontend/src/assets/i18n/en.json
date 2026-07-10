@@ -1391,6 +1391,8 @@
       "farm_option_with_fields": "{{name}} ({{count}} fields · {{area}} m²)",
       "farm_option_no_fields": "{{name}} (no fields)",
       "no_fields_warning": "This farm has no registered fields.",
+      "some_farms_no_fields_hint":
+        "Farms without registered fields cannot be selected for planning.",
       "register_fields_link": "Register fields",
       "empty_message": "Currently, no farms are available."
     },

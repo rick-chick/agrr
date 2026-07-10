@@ -44,6 +44,16 @@ describe('PlanNewComponent', () => {
       'plans.new.breadcrumb': 'New plan',
       'plans.new.title': 'Select a farm',
       'plans.new.subtitle': 'Choose a farm',
+      'plans.new.farm_label': 'Farm',
+      'plans.new.farm_hint': 'Select a farm',
+      'plans.new.farm_option_no_fields': '{{name}} (no fields)',
+      'plans.new.no_fields_warning': 'This farm has no registered fields.',
+      'plans.new.register_fields_link': 'Register fields',
+      'plans.new.some_farms_no_fields_hint':
+        'Farms without registered fields cannot be selected for planning.',
+      'plans.new.plan_name_label': 'Plan name',
+      'plans.new.plan_name_placeholder': 'e.g. Main plan',
+      'plans.new.create_button': 'Create',
       'common.loading': 'Loading...',
       'common.cancel': 'Cancel'
     });
@@ -124,6 +134,58 @@ describe('PlanNewComponent', () => {
     ) as HTMLAnchorElement;
     expect(backLink).toBeTruthy();
     expect(backLink.getAttribute('href')).toBe('/plans');
+  });
+
+  it('shows no-fields warning and register link before selection when only farms without fields exist', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      submitting: false,
+      error: null,
+      farms: [{ id: 42, name: 'Empty Farm', fieldCount: 0, totalArea: 0, hasValidFields: false }],
+      selectedFarmId: null,
+      noFieldsWarning: false,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+    fixture.detectChanges();
+
+    const warning = fixture.nativeElement.querySelector('.plan-new-warning');
+    expect(warning).toBeTruthy();
+    expect(warning?.textContent).toContain('This farm has no registered fields.');
+
+    const registerLink = fixture.nativeElement.querySelector(
+      'a.plan-new-warning__link'
+    ) as HTMLAnchorElement;
+    expect(registerLink).toBeTruthy();
+    expect(registerLink.getAttribute('href')).toBe('/farms/42');
+    expect(registerLink.textContent?.trim()).toBe('Register fields');
+  });
+
+  it('shows summary hint when some farms lack fields but others are selectable', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      submitting: false,
+      error: null,
+      farms: [
+        { id: 1, name: 'Ready Farm', fieldCount: 2, totalArea: 100, hasValidFields: true },
+        { id: 2, name: 'Empty Farm', fieldCount: 0, totalArea: 0, hasValidFields: false }
+      ],
+      selectedFarmId: null,
+      noFieldsWarning: false,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      pendingNavigation: null
+    };
+    fixture.detectChanges();
+
+    const warning = fixture.nativeElement.querySelector('.plan-new-warning');
+    expect(warning?.textContent).toContain(
+      'Farms without registered fields cannot be selected for planning.'
+    );
+    expect(fixture.nativeElement.querySelector('a.plan-new-warning__link')).toBeNull();
   });
 
   it('should not submit when selected farm has no valid fields', () => {

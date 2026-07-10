@@ -72,3 +72,13 @@ select.form-control {
   gap: var(--space-3);
   align-items: center;
 }
+
+.plan-new-warning {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.plan-new-warning__link {
+  margin-left: var(--space-1);
+}

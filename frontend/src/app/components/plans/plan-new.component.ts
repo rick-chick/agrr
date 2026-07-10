@@ -53,6 +53,23 @@ const initialControl: PlanNewViewState = {
           <form class="form" (ngSubmit)="onSubmit($event)">
             <div class="form-group">
               <label for="farm-select" class="form-label">{{ 'plans.new.farm_label' | translate }}</label>
+              @if (farmsWithoutFields.length > 0) {
+                <p class="plan-new-warning" role="status">
+                  @if (onlyFarmsWithoutFields) {
+                    {{ 'plans.new.no_fields_warning' | translate }}
+                    @if (noFieldsRegisterLinkFarmId != null) {
+                      <a
+                        class="plan-new-warning__link"
+                        [routerLink]="['/farms', noFieldsRegisterLinkFarmId]"
+                      >
+                        {{ 'plans.new.register_fields_link' | translate }}
+                      </a>
+                    }
+                  } @else {
+                    {{ 'plans.new.some_farms_no_fields_hint' | translate }}
+                  }
+                </p>
+              }
               <select
                 id="farm-select"
                 name="farmId"
@@ -73,12 +90,6 @@ const initialControl: PlanNewViewState = {
                   </option>
                 }
               </select>
-              @if (control.noFieldsWarning) {
-                <p class="plan-new-warning" role="alert">
-                  {{ 'plans.new.no_fields_warning' | translate }}
-                  <a [routerLink]="['/farms', control.selectedFarmId]">{{ 'plans.new.register_fields_link' | translate }}</a>
-                </p>
-              }
             </div>
             <div class="form-group">
               <label for="plan-name" class="form-label">{{ 'plans.new.plan_name_label' | translate }}</label>
@@ -146,6 +157,22 @@ export class PlanNewComponent implements PlanNewView, OnInit {
     return farm?.name ?? null;
   }
 
+  get farmsWithoutFields() {
+    return this.control.farms.filter((farm) => !farm.hasValidFields);
+  }
+
+  get onlyFarmsWithoutFields(): boolean {
+    return this.control.farms.length > 0 && this.control.farms.every((farm) => !farm.hasValidFields);
+  }
+
+  get noFieldsRegisterLinkFarmId(): number | null {
+    const withoutFields = this.farmsWithoutFields;
+    if (withoutFields.length === 1) {
+      return withoutFields[0].id;
+    }
+    return null;
+  }
+
   get canSubmit(): boolean {
     const farm = this.control.farms.find((f) => f.id === this.control.selectedFarmId);
     return Boolean(farm?.hasValidFields);
@@ -163,11 +190,9 @@ export class PlanNewComponent implements PlanNewView, OnInit {
   }
 
   onFarmChange(farmId: number | null): void {
-    const farm = this.control.farms.find((f) => f.id === farmId);
     this.control = {
       ...this.control,
-      selectedFarmId: farmId,
-      noFieldsWarning: Boolean(farm && !farm.hasValidFields)
+      selectedFarmId: farmId
     };
   }
 
