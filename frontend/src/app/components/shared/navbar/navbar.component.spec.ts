@@ -121,4 +121,27 @@ describe('NavbarComponent', () => {
     expect(component.isMenuOpen).toBe(false);
     expect(component.openDropdownId).toBeNull();
   });
+
+  it('uses design-system classes on nav chrome buttons', () => {
+    component.user = {
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com',
+      avatar_url: null,
+      admin: false,
+    };
+    fixture.detectChanges();
+
+    const menuToggle = fixture.nativeElement.querySelector('button.menu-toggle') as HTMLButtonElement;
+    expect(menuToggle).toBeTruthy();
+    expect(menuToggle.classList.contains('btn')).toBe(true);
+    expect(menuToggle.classList.contains('btn-secondary')).toBe(true);
+    expect(menuToggle.classList.contains('btn-sm')).toBe(true);
+
+    const logoutButton = fixture.nativeElement.querySelector('button.logout-button') as HTMLButtonElement;
+    expect(logoutButton).toBeTruthy();
+    expect(logoutButton.classList.contains('btn')).toBe(true);
+    expect(logoutButton.classList.contains('btn-secondary')).toBe(true);
+    expect(logoutButton.classList.contains('btn-sm')).toBe(true);
+  });
 });

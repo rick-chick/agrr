@@ -27,7 +27,7 @@ const CLOSE_DELAY_MS = 200;
     >
       <button
         type="button"
-        class="nav-dropdown-trigger"
+        class="btn btn-secondary btn-sm nav-dropdown-trigger"
         [attr.aria-expanded]="isOpen"
         aria-haspopup="true"
         [attr.aria-controls]="panelId"

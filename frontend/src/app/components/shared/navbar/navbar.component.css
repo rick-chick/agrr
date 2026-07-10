@@ -1,3 +1,5 @@
+@import '../../masters/_master-layout.css';
+
 .app-nav {
   display: flex;
   align-items: center;
@@ -78,8 +80,7 @@
   font-weight: var(--font-weight-medium);
 }
 
-.login-link,
-.logout-button {
+.login-link {
   background: var(--color-primary);
   color: var(--color-text-on-primary);
   border: none;
@@ -90,41 +91,35 @@
   font-size: var(--font-size-sm);
 }
 
-.login-link:hover,
-.logout-button:hover {
+.login-link:hover {
   background: var(--color-primary-hover);
 }
 
-.login-link:focus-visible,
-.logout-button:focus-visible {
+.login-link:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
-}
-
-.logout-button {
-  background: var(--color-accent);
-}
-
-.logout-button:hover {
-  background: var(--color-text-secondary);
 }
 
 .status {
   color: var(--color-text-secondary);
 }
 
-/* ハンバーガーメニューボタン */
+/* アイコンボタン（ghost）: .btn-secondary の padding / border は modifier で上書き */
 .menu-toggle {
   display: none;
   flex-direction: column;
-  justify-content: space-around;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
   padding: 0;
-  z-index: 10;
+  background: transparent;
+  border-color: transparent;
+}
+
+.menu-toggle:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border);
 }
 
 .menu-toggle-icon {
@@ -167,11 +162,6 @@
 [data-menu-open='true'] .menu-toggle-icon::after {
   bottom: 0;
   transform: rotate(-45deg);
-}
-
-.menu-toggle:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: var(--focus-outline-offset);
 }
 
 /* モバイル向けスタイル（768px以下） */
@@ -243,8 +233,7 @@
     gap: var(--space-2);
   }
 
-  .login-link,
-  .logout-button {
+  .login-link {
     padding: var(--space-1) var(--space-2);
     font-size: var(--font-size-xs);
   }
