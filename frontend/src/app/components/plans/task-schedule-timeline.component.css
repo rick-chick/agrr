@@ -50,15 +50,16 @@
   text-decoration: underline;
 }
 
-.schedule-columns {
+.schedule-sections {
   display: flex;
+  flex-direction: column;
   gap: var(--space-6);
   margin-top: var(--space-3);
 }
 
-.column {
-  flex: 1;
-  min-width: 200px;
+.scheduled-section,
+.unscheduled-section {
+  width: 100%;
 }
 
 .list {
@@ -125,7 +126,7 @@
   flex-shrink: 0;
 }
 
-.column-empty {
+.section-empty {
   margin: var(--space-2) 0 0;
   padding: var(--space-3);
   font-size: var(--font-size-sm);

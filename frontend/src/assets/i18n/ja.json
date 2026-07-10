@@ -2174,9 +2174,6 @@
       "week_label": "{{start}} 〜 {{end}}",
       "view_mode_plan": "一覧",
       "view_mode_week": "週",
-      "general_label": "一般作業",
-      "fertilizer_label": "施肥",
-      "fertilizer_empty": "施肥予定はありません",
       "unscheduled_title": "未確定の作業",
       "no_schedules": "作業予定がまだ生成されていません。",
       "status": {
