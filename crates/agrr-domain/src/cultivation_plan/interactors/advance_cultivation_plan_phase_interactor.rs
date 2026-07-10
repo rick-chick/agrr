@@ -1,7 +1,7 @@
 //! Ruby: `Domain::CultivationPlan::Interactors::AdvanceCultivationPlanPhaseInteractor`
 
 use crate::cultivation_plan::calculators::cultivation_plan_optimization_progress_calculator;
-    use crate::cultivation_plan::dtos::AdvanceCultivationPlanPhaseInput;
+use crate::cultivation_plan::dtos::{AdvanceCultivationPlanPhaseInput, CultivationPlanPhaseName};
 use crate::cultivation_plan::entities::CultivationPlanEntity;
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
 use crate::cultivation_plan::mappers::to_port_payload;
@@ -44,9 +44,12 @@ where
         );
         let mut attrs = built.attrs.clone();
         if let Some(message_key) = built.message_key.as_deref() {
-            let message = self
-                .translator
-                .t(message_key, &TranslateOptions::default());
+            let message = if input.phase_name == CultivationPlanPhaseName::PhaseFailed {
+                message_key.to_string()
+            } else {
+                self.translator
+                    .t(message_key, &TranslateOptions::default())
+            };
             attrs.insert("optimization_phase_message".into(), message);
         }
 
