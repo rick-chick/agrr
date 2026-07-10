@@ -47,14 +47,15 @@ describe('FlashMessageComponent', () => {
   });
 
   it('renders common.close as the only action button', () => {
-    const buttons = fixture.nativeElement.querySelectorAll('.flash-message button');
-    expect(buttons.length).toBe(1);
-    expect(buttons[0]?.textContent?.trim()).toBe('Close');
-    expect(buttons[0]?.getAttribute('aria-label')).toBe('Close');
+    const button = fixture.nativeElement.querySelector('.flash-message .btn-link');
+    expect(button).toBeTruthy();
+    expect(button?.textContent?.trim()).toBe('Close');
+    expect(button?.getAttribute('aria-label')).toBe('Close');
+    expect(button?.classList.contains('btn-link')).toBe(true);
   });
 
   it('removes the message when close is clicked', () => {
-    const button = fixture.nativeElement.querySelector('.flash-message button');
+    const button = fixture.nativeElement.querySelector('.flash-message .btn-link');
     button?.click();
     expect(mockFlashService.remove).toHaveBeenCalledWith('1');
   });

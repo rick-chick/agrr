@@ -292,7 +292,24 @@ describe('PlanWorkComponent mobile UX', () => {
     const menuBtn = fixture.nativeElement.querySelector('.plan-work__menu-btn');
     expect(menuBtn).toBeTruthy();
     expect(menuBtn.textContent?.trim()).toBe('⋮');
-    expect(menuBtn.classList.contains('btn-sm')).toBe(false);
+    expect(menuBtn.classList.contains('btn')).toBe(true);
+    expect(menuBtn.classList.contains('btn-secondary')).toBe(true);
+    expect(menuBtn.classList.contains('btn-sm')).toBe(true);
+  });
+
+  it('applies design-system classes to overflow menu items', () => {
+    renderLoaded();
+    const menuBtn = fixture.nativeElement.querySelector('.plan-work__menu-btn') as HTMLButtonElement;
+    menuBtn.click();
+    fixture.detectChanges();
+
+    const menuItems = fixture.nativeElement.querySelectorAll('.plan-work__menu-item');
+    expect(menuItems.length).toBe(2);
+    for (const item of menuItems) {
+      expect(item.classList.contains('btn')).toBe(true);
+      expect(item.classList.contains('btn-secondary')).toBe(true);
+      expect(item.classList.contains('btn-sm')).toBe(true);
+    }
   });
 
   it('marks overdue rows with overdue modifier class', () => {

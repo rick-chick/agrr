@@ -136,22 +136,8 @@
   min-width: 2.75rem;
   min-height: 2.75rem;
   padding: 0;
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-md);
-  background: var(--color-gray-50);
-  color: var(--color-text-secondary);
   font-size: 1.25rem;
   line-height: 1;
-  cursor: pointer;
-}
-
-.plan-work__menu-btn:hover {
-  background: var(--color-gray-100);
-}
-
-.plan-work__menu-btn:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: var(--focus-outline-offset);
 }
 
 .plan-work__menu {
@@ -167,19 +153,21 @@
   flex-direction: column;
   min-width: 10rem;
   margin-top: var(--space-1);
+  overflow: hidden;
 }
 
-.plan-work__menu button {
+.plan-work__menu-item {
+  width: 100%;
+  justify-content: flex-start;
   text-align: left;
   min-height: 2.75rem;
-  padding: 0.5rem 0.75rem;
-  border: none;
-  background: transparent;
-  cursor: pointer;
+  border-radius: 0;
+  border-width: 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.plan-work__menu button:hover {
-  background: var(--color-surface-hover);
+.plan-work__menu-item:last-child {
+  border-bottom: none;
 }
 
 .plan-work__fab {

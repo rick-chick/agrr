@@ -41,14 +41,6 @@
   border-color: var(--color-error-border-soft);
 }
 
-.flash-message button {
+.flash-message__close {
   flex-shrink: 0;
-  border: none;
-  background: transparent;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: inherit;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
 }
