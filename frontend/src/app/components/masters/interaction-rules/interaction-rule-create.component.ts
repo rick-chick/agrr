@@ -81,7 +81,7 @@ const initialControl: InteractionRuleCreateViewState = {
             </app-region-select>
           }
           <div class="form-card__actions">
-            <button type="submit" class="btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
+            <button type="submit" class="btn btn-primary" [disabled]="interactionRuleForm.invalid || control.saving">
               {{ 'interaction_rules.form.submit_create' | translate }}
             </button>
           </div>

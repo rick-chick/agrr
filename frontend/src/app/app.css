@@ -68,6 +68,10 @@
 
 /* ============================================
    Buttons
+   規約: .btn ベース + variant（.btn-primary / .btn-secondary / .btn-danger）
+   - 主アクション → .btn.btn-primary
+   - 副アクション → .btn.btn-secondary
+   - 削除・破壊的操作 → .btn.btn-danger
    ============================================ */
 .btn {
   display: inline-flex;
