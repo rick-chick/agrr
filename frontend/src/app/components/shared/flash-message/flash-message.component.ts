@@ -18,6 +18,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
         <span>{{ message.text }}</span>
         <button
           type="button"
+          class="btn-link"
           [attr.aria-label]="'common.close' | translate"
           (click)="flashService.remove(message.id)"
         >
