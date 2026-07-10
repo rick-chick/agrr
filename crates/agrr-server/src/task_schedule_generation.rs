@@ -147,11 +147,20 @@ fn run_task_schedule_regen_if_current(
             if !regen_still_current(state, plan_id, generation) {
                 return Ok(());
             }
-            run_task_schedule_generation(state, plan_id)
+            run_task_schedule_generation_inner(state, plan_id)
         })
 }
 
-fn run_task_schedule_generation(state: &AppState, plan_id: i64) -> Result<(), String> {
+fn run_task_schedule_generation_with_plan_lock(
+    state: &AppState,
+    plan_id: i64,
+) -> Result<(), String> {
+    state
+        .plan_task_schedule_regen_locks
+        .with_plan_lock(plan_id, || run_task_schedule_generation_inner(state, plan_id))
+}
+
+fn run_task_schedule_generation_inner(state: &AppState, plan_id: i64) -> Result<(), String> {
     let pool = state.sqlite.clone();
     let sync = TaskScheduleSyncInteractorBundle::new(state, pool.clone());
 
@@ -211,7 +220,7 @@ pub fn run_task_schedule_generation_step(
         CultivationPlanPhaseName::PhaseTaskScheduleGenerating,
         None,
     );
-    run_task_schedule_generation(state, plan_id)
+    run_task_schedule_generation_with_plan_lock(state, plan_id)
 }
 
 pub fn enqueue_task_schedule_regen_immediate(state: &AppState, plan_id: i64) {
@@ -256,10 +265,11 @@ pub fn enqueue_task_schedule_regen_debounced(state: &AppState, plan_id: i64) {
 mod tests {
     use super::*;
     use crate::cable::CableHub;
-    use crate::test_support::{test_app_state, test_pool_with_sync_plan};
+    use crate::test_support::{test_app_state, test_pool_with_optimizing_plan, test_pool_with_sync_plan};
     use agrr_adapters_sqlite::{SqlitePool, TaskScheduleSyncStateSqliteGateway};
     use agrr_domain::agricultural_task::constants::task_schedule_sync_states as sync_state;
     use agrr_domain::agricultural_task::gateways::TaskScheduleSyncStateGateway;
+    use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
     use std::thread;
     use std::time::{Duration, Instant};
@@ -315,7 +325,7 @@ mod tests {
     fn run_generation_transitions_sync_state_without_agrr_daemon() {
         let db = test_pool_with_sync_plan(42);
         let state = test_app_state(db.pool.clone());
-        let _ = run_task_schedule_generation(&state, 42);
+        let _ = run_task_schedule_generation_inner(&state, 42);
         let final_state = sync_state(&db.pool, 42);
         assert!(
             final_state == sync_state::FAILED || final_state == sync_state::READY,
@@ -331,7 +341,7 @@ mod tests {
         let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
         let mut rx = rt.block_on(hub.subscribe_plan(42));
 
-        let _ = run_task_schedule_generation(&state, 42);
+        let _ = run_task_schedule_generation_inner(&state, 42);
 
         let mut saw_failed = false;
         let mut failed_payload: Option<String> = None;
@@ -399,6 +409,58 @@ mod tests {
             generation_after_immediate > generation_before_immediate,
             "immediate regen must invalidate pending debounce generation"
         );
+    }
+
+    #[test]
+    fn generation_step_waits_for_plan_lock() {
+        let db = test_pool_with_optimizing_plan(99);
+        let state = test_app_state(db.pool.clone());
+        let release = Arc::new(AtomicBool::new(false));
+        let lock_held = Arc::new(AtomicBool::new(false));
+        let step_done = Arc::new(AtomicBool::new(false));
+
+        let locks = state.plan_task_schedule_regen_locks.clone();
+        let release_in = release.clone();
+        let lock_held_in = lock_held.clone();
+        let blocker = thread::spawn(move || {
+            locks
+                .with_plan_lock(99, || {
+                    lock_held_in.store(true, Ordering::SeqCst);
+                    while !release_in.load(Ordering::SeqCst) {
+                        thread::sleep(Duration::from_millis(10));
+                    }
+                    Ok(())
+                })
+                .expect("hold lock");
+        });
+
+        assert!(
+            wait_until(Duration::from_secs(1), || lock_held.load(Ordering::SeqCst)),
+            "blocker should acquire plan lock"
+        );
+
+        let state2 = state.clone();
+        let step_done_in = step_done.clone();
+        let step_started = Instant::now();
+        let step = thread::spawn(move || {
+            let _ = run_task_schedule_generation_step(&state2, 99, "test");
+            step_done_in.store(true, Ordering::SeqCst);
+        });
+
+        assert!(
+            !wait_until(Duration::from_millis(120), || step_done.load(Ordering::SeqCst)),
+            "optimization chain generation should block while plan lock is held"
+        );
+
+        release.store(true, Ordering::SeqCst);
+        blocker.join().expect("blocker join");
+        step.join().expect("step join");
+
+        assert!(
+            step_started.elapsed() >= Duration::from_millis(80),
+            "generation step should wait for plan lock release"
+        );
+        assert!(step_done.load(Ordering::SeqCst));
     }
 
     #[test]
