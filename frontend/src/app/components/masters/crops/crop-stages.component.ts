@@ -69,7 +69,7 @@ const initialControl: CropStagesViewState = {
         <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
           <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_title' | translate }}</h2>
           <div class="crop-stages-section__actions">
-            <button type="button" class="btn-secondary" (click)="addCropStage()">
+            <button type="button" class="btn btn-secondary" (click)="addCropStage()">
               {{ 'crops.edit.add_stage' | translate }}
             </button>
           </div>
@@ -78,7 +78,7 @@ const initialControl: CropStagesViewState = {
               <div class="crop-stage-card">
                 <div class="crop-stage-card__header">
                   <h3 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate:{ order: stage.order } }}</h3>
-                  <button type="button" class="btn-danger" (click)="deleteCropStage(stage.id)">
+                  <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
                     {{ 'common.delete' | translate }}
                   </button>
                 </div>

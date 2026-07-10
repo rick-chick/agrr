@@ -96,7 +96,7 @@ const initialControl: CropEditViewState = {
               </label>
             }
             <div class="form-card__actions">
-              <button type="submit" class="btn-primary" [disabled]="cropForm.invalid || control.saving">
+              <button type="submit" class="btn btn-primary" [disabled]="cropForm.invalid || control.saving">
                 {{ 'crops.form.submit_update' | translate }}
               </button>
             </div>
