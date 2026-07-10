@@ -2707,6 +2707,7 @@
       "directional": "Directional (→)",
       "bidirectional": "Bidirectional (↔)",
       "description": "Description",
+      "region": "Region",
       "created_at": "Created",
       "updated_at": "Updated",
       "decrease": "{{percent}}% decrease",
