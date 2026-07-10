@@ -77,7 +77,7 @@ const initialControl: FertilizeCreateViewState = {
             <textarea id="description" name="description" [(ngModel)]="control.formData.description"></textarea>
           </label>
           <div class="form-card__actions">
-            <button type="submit" class="btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
+            <button type="submit" class="btn btn-primary" [disabled]="fertilizeForm.invalid || control.saving">
               {{ 'fertilizes.form.submit_create' | translate }}
             </button>
           </div>

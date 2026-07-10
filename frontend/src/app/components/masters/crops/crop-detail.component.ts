@@ -111,8 +111,8 @@ const initialControl: CropDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
-            <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn-primary">{{ 'common.edit' | translate }}</a>
-            <button type="button" class="btn-danger" (click)="deleteCrop()">{{ 'common.delete' | translate }}</button>
+            <a [routerLink]="['/crops', control.crop.id, 'edit']" class="btn btn-primary">{{ 'common.edit' | translate }}</a>
+            <button type="button" class="btn btn-danger" (click)="deleteCrop()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>
 
@@ -337,7 +337,7 @@ const initialControl: CropDetailViewState = {
           <div class="crop-detail__cultivation-actions">
             <a
               [routerLink]="['/crops', control.crop.id, 'stages']"
-              class="btn-secondary"
+              class="btn btn-secondary"
             >
               {{
                 (control.blueprintReadiness.stageRequirementsReady
@@ -348,7 +348,7 @@ const initialControl: CropDetailViewState = {
             </a>
             <a
               [routerLink]="['/crops', control.crop.id, 'task_schedule_blueprints']"
-              class="btn-secondary"
+              class="btn btn-secondary"
             >
               {{ 'crops.show.blueprint_summary.edit_action' | translate }}
             </a>

@@ -70,21 +70,21 @@ function adjacentWeekStart(
           <div class="task-schedule-week-nav__actions">
             <button
               type="button"
-              class="btn-secondary task-schedule-week-nav__prev"
+              class="btn btn-secondary task-schedule-week-nav__prev"
               (click)="goPrevWeek()"
             >
               {{ 'plans.task_schedules.nav_prev_week' | translate }}
             </button>
             <button
               type="button"
-              class="btn-secondary task-schedule-week-nav__today"
+              class="btn btn-secondary task-schedule-week-nav__today"
               (click)="goToday()"
             >
               {{ 'plans.task_schedules.nav_today' | translate }}
             </button>
             <button
               type="button"
-              class="btn-secondary task-schedule-week-nav__next"
+              class="btn btn-secondary task-schedule-week-nav__next"
               (click)="goNextWeek()"
             >
               {{ 'plans.task_schedules.nav_next_week' | translate }}
