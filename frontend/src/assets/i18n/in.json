@@ -975,6 +975,7 @@
       "directional": "दिशात्मक (→)",
       "bidirectional": "द्विदिशात्मक (↔)",
       "description": "विवरण",
+      "region": "क्षेत्र",
       "created_at": "निर्माण तिथि",
       "updated_at": "अद्यतन तिथि",
       "decrease": "{{percent}}% कमी",

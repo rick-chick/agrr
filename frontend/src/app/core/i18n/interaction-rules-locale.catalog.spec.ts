@@ -15,7 +15,8 @@ function getNested(obj: JsonRecord, path: string): unknown {
 
 const INTERACTION_RULES_CATALOG_KEYS = [
   'interaction_rules.form.rule_type_codes.continuous_cultivation',
-  'interaction_rules.show.direction'
+  'interaction_rules.show.direction',
+  'interaction_rules.show.region'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
@@ -40,4 +41,10 @@ describe('interaction rules i18n catalog', () => {
       }
     });
   }
+
+  it('uses localized region label in each locale', () => {
+    expect(getNested(ja as JsonRecord, 'interaction_rules.show.region')).toBe('地域');
+    expect(getNested(en as JsonRecord, 'interaction_rules.show.region')).toBe('Region');
+    expect(getNested(inLocale as JsonRecord, 'interaction_rules.show.region')).toBe('क्षेत्र');
+  });
 });
