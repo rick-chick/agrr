@@ -1,5 +1,6 @@
 use crate::cable::CableHub;
 use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
+use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -33,6 +34,8 @@ pub struct AppState {
     pub task_schedule_regen_dispatcher: Arc<JobChainDispatcher>,
     /// Per-plan generation counter for debounce (last enqueue wins).
     pub task_schedule_regen_tokens: Arc<Mutex<HashMap<i64, u64>>>,
+    /// Serializes task schedule regen jobs per `plan_id`.
+    pub plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks,
     /// Serializes optimization-chain `fetch_weather` per `farm_id` (concurrent plans, same farm).
     pub farm_weather_fetch_locks: FarmWeatherFetchLocks,
     pub cable_hub: Arc<CableHub>,
@@ -88,6 +91,7 @@ impl AppState {
             )),
             task_schedule_regen_dispatcher: Arc::new(JobChainDispatcher::new()),
             task_schedule_regen_tokens: Arc::new(Mutex::new(HashMap::new())),
+            plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks::new(),
             farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
             cable_hub: Arc::new(CableHub::default()),
         }

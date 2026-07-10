@@ -127,6 +127,30 @@ fn clear_regen_token_if_current(state: &AppState, plan_id: i64, generation: u64)
     }
 }
 
+fn regen_still_current(state: &AppState, plan_id: i64, generation: u64) -> bool {
+    state
+        .task_schedule_regen_tokens
+        .lock()
+        .ok()
+        .and_then(|tokens| tokens.get(&plan_id).copied())
+        == Some(generation)
+}
+
+fn run_task_schedule_regen_if_current(
+    state: &AppState,
+    plan_id: i64,
+    generation: u64,
+) -> Result<(), String> {
+    state
+        .plan_task_schedule_regen_locks
+        .with_plan_lock(plan_id, || {
+            if !regen_still_current(state, plan_id, generation) {
+                return Ok(());
+            }
+            run_task_schedule_generation(state, plan_id)
+        })
+}
+
 fn run_task_schedule_generation(state: &AppState, plan_id: i64) -> Result<(), String> {
     let pool = state.sqlite.clone();
     let sync = TaskScheduleSyncInteractorBundle::new(state, pool.clone());
@@ -199,7 +223,7 @@ pub fn enqueue_task_schedule_regen_immediate(state: &AppState, plan_id: i64) {
         run: Arc::new(move || {
             let state = state.clone();
             Box::pin(async move {
-                let _ = run_task_schedule_generation(&state, plan_id);
+                let _ = run_task_schedule_regen_if_current(&state, plan_id, generation);
                 clear_regen_token_if_current(&state, plan_id, generation);
                 true
             })
@@ -220,16 +244,7 @@ pub fn enqueue_task_schedule_regen_debounced(state: &AppState, plan_id: i64) {
             let state = state_clone.clone();
             Box::pin(async move {
                 tokio::time::sleep(Duration::from_secs(REGEN_DEBOUNCE_SECS)).await;
-                let current = state
-                    .task_schedule_regen_tokens
-                    .lock()
-                    .ok()
-                    .and_then(|m| m.get(&plan_id).copied())
-                    .unwrap_or(0);
-                if current != generation {
-                    return true;
-                }
-                let _ = run_task_schedule_generation(&state, plan_id);
+                let _ = run_task_schedule_regen_if_current(&state, plan_id, generation);
                 clear_regen_token_if_current(&state, plan_id, generation);
                 true
             })
