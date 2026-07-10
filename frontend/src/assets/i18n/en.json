@@ -193,6 +193,11 @@
     },
     "back": "Back"
   },
+  "masters": {
+    "load_error": {
+      "retry": "Reload"
+    }
+  },
   "contact_form": {
     "name": "Name",
     "email": "Email",
@@ -957,7 +962,14 @@
       "error": {
         "title": "Plan Creation Failed",
         "try_again": "Change crops and try again",
-        "start_over": "Start over"
+        "start_over": "Start over",
+        "hints": {
+          "fetching_weather": "Check your region and farm settings, then try again in a few minutes.",
+          "predicting_weather": "Weather data may still be preparing. Wait a moment and try again.",
+          "optimizing": "Review your selected crops and growing period, then try again.",
+          "task_schedule_generation": "Something went wrong while preparing task schedules. Please try again.",
+          "default": "Use the buttons below to change crops or start over from the beginning."
+        }
       },
       "status_badge_failed": "Failed"
     },
@@ -1523,6 +1535,9 @@
     }
   },
   "pesticides": {
+    "errors": {
+      "invalid_id": "Invalid pesticide ID."
+    },
     "undo": {
       "toast": "{{name}} was deleted. You can undo this action."
     },
@@ -2283,6 +2298,9 @@
     }
   },
   "fertilizes": {
+    "errors": {
+      "invalid_id": "Invalid fertilizer ID."
+    },
     "undo": {
       "toast": "{{name}} was deleted. You can undo this action."
     },

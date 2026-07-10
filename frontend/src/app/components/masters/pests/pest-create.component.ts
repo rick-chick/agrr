@@ -74,7 +74,7 @@ const initialControl: PestCreateViewState = {
             ></app-region-select>
           }
           <div class="form-card__actions">
-            <button type="submit" class="btn-primary" [disabled]="pestForm.invalid || control.saving">
+            <button type="submit" class="btn btn-primary" [disabled]="pestForm.invalid || control.saving">
               {{ control.saving ? ('common.creating' | translate) : ('pests.form.submit_create' | translate) }}
             </button>
           </div>

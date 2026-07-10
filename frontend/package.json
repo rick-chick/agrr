@@ -11,6 +11,8 @@
     "check:proxy-conf": "node scripts/proxy-conf-contract.mjs",
     "check-hardcoded-i18n": "node scripts/check-hardcoded-i18n.mjs",
     "check-hardcoded-i18n:enforce": "node scripts/check-hardcoded-i18n.mjs --enforce",
+    "check:btn-base-class": "node scripts/check-btn-base-class.mjs",
+    "check:btn-base-class:enforce": "node scripts/check-btn-base-class.mjs --enforce",
     "test:e2e": "playwright test",
     "test:route-manifest-coverage": "playwright test e2e/route-manifest-coverage.spec.ts --config=playwright.manifest.config.ts",
     "test:e2e:smoke": "E2E_CAPTURE_DEV_SESSION=1 E2E_STRANGLER=1 playwright test e2e/smoke/",

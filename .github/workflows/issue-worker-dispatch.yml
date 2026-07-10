@@ -50,6 +50,11 @@ jobs:
                 ;;
             esac
             if [ -z "$SKIP_REASON" ]; then
+              if echo "$ISSUE_LABELS" | grep -qE '(^|,)agent-ready(,|$)|(^|,)agent-close(,|$)'; then
+                SKIP_REASON="opened event already has agent-ready or agent-close; labeled event will dispatch"
+              fi
+            fi
+            if [ -z "$SKIP_REASON" ]; then
               if echo "$ISSUE_LABELS" | grep -qE '(^|,)agent-in-progress(,|$)|(^|,)agent-closed(,|$)|(^|,)wontfix(,|$)|(^|,)invalid(,|$)|(^|,)duplicate(,|$)'; then
                 SKIP_REASON="issue already has a terminal or in-progress label"
               fi

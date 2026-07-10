@@ -50,15 +50,17 @@
   text-decoration: underline;
 }
 
-.schedule-columns {
+.schedule-sections {
   display: flex;
+  flex-direction: column;
   gap: var(--space-6);
   margin-top: var(--space-3);
 }
 
-.column {
-  flex: 1;
-  min-width: 200px;
+.scheduled-section,
+.unscheduled-section {
+  width: 100%;
+  min-width: 0;
 }
 
 .list {
@@ -76,10 +78,7 @@
 
 .item {
   width: 100%;
-  background: var(--color-surface);
   padding: 10px var(--space-3);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -125,7 +124,7 @@
   flex-shrink: 0;
 }
 
-.column-empty {
+.section-empty {
   margin: var(--space-2) 0 0;
   padding: var(--space-3);
   font-size: var(--font-size-sm);

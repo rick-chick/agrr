@@ -36,6 +36,9 @@
     "not_found": "元に戻す操作が見つかりませんでした。"
   },
   "pesticides": {
+    "errors": {
+      "invalid_id": "農薬IDが不正です。"
+    },
     "undo": {
       "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
@@ -804,6 +807,9 @@
     }
   },
   "fertilizes": {
+    "errors": {
+      "invalid_id": "肥料IDが不正です。"
+    },
     "undo": {
       "toast": "{{name}} を削除しました。元に戻すことができます。"
     },
@@ -1383,6 +1389,11 @@
     },
     "back": "戻る"
   },
+  "masters": {
+    "load_error": {
+      "retry": "再読み込み"
+    }
+  },
   "contact_form": {
     "name": "お名前",
     "email": "メールアドレス",
@@ -1810,7 +1821,14 @@
       "error": {
         "title": "計画作成に失敗しました",
         "try_again": "作物を変更してもう一度試す",
-        "start_over": "最初からやり直す"
+        "start_over": "最初からやり直す",
+        "hints": {
+          "fetching_weather": "地域や農場の設定を確認し、しばらく時間をおいてから再度お試しください。",
+          "predicting_weather": "気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。",
+          "optimizing": "選択した作物や栽培期間を見直し、再度お試しください。",
+          "task_schedule_generation": "最適化結果の処理中に問題が発生しました。再度お試しください。",
+          "default": "下のボタンから作物を変更するか、最初からやり直してください。"
+        }
       },
       "status_badge_failed": "作成失敗"
     },

@@ -15,7 +15,15 @@ const translationMap = new Map<string, string>([
     '気象データの予測に失敗しました'
   ],
   ['models.cultivation_plan.phase_failed.default', '処理に失敗しました'],
-  ['public_plans.optimizing.error.title', '計画作成に失敗しました']
+  ['public_plans.optimizing.error.title', '計画作成に失敗しました'],
+  [
+    'public_plans.optimizing.error.hints.predicting_weather',
+    '気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。'
+  ],
+  [
+    'public_plans.optimizing.error.hints.default',
+    '下のボタンから作物を変更するか、最初からやり直してください。'
+  ]
 ]);
 
 describe('PublicPlanOptimizingPresenter', () => {
@@ -116,5 +124,32 @@ describe('PublicPlanOptimizingPresenter', () => {
 
     expect(lastControl.phaseMessage).toBe('処理に失敗しました');
     expect(lastControl.phaseMessage).not.toMatch(/^models\./);
+  });
+
+  it('prefers human-readable phase_message over generic default message_key', () => {
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.default',
+      phase_message: '気象データの予測に失敗しました'
+    });
+
+    expect(lastControl.phaseMessage).toBe('気象データの予測に失敗しました');
+    expect(lastControl.failureHint).toBe(
+      '下のボタンから作物を変更するか、最初からやり直してください。'
+    );
+  });
+
+  it('sets category-specific failure hint for known failure keys', () => {
+    presenter.present({
+      status: 'failed',
+      progress: 0,
+      message_key: 'models.cultivation_plan.phase_failed.predicting_weather'
+    });
+
+    expect(lastControl.phaseMessage).toBe('気象データの予測に失敗しました');
+    expect(lastControl.failureHint).toBe(
+      '気象データの準備に時間がかかっている可能性があります。しばらく待ってから再度お試しください。'
+    );
   });
 });

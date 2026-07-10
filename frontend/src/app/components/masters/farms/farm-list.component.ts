@@ -40,7 +40,7 @@ const initialControl: FarmListViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a routerLink="/farms/new" class="btn-primary">{{ 'farms.index.new_farm' | translate }}</a>
+            <a routerLink="/farms/new" class="btn btn-primary">{{ 'farms.index.new_farm' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
             @for (farm of control.farms; track farm.id) {
@@ -58,12 +58,12 @@ const initialControl: FarmListViewState = {
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/farms', farm.id, 'edit']" class="btn-secondary">
+                    <a [routerLink]="['/farms', farm.id, 'edit']" class="btn btn-secondary">
                       {{ 'common.edit' | translate }}
                     </a>
                     <button
                       type="button"
-                      class="btn-danger"
+                      class="btn btn-danger"
                       (click)="deleteFarm(farm.id)"
                       [attr.aria-label]="'common.delete' | translate"
                     >

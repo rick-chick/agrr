@@ -2,6 +2,7 @@
 
 use crate::cable::CableHub;
 use crate::farm_weather_fetch_locks::FarmWeatherFetchLocks;
+use crate::plan_task_schedule_regen_locks::PlanTaskScheduleRegenLocks;
 use crate::jobs::JobChainDispatcher;
 use crate::state::DEFAULT_OPTIMIZATION_MAX_CONCURRENT_CHAINS;
 use crate::locale_catalog::LocaleCatalog;
@@ -244,6 +245,7 @@ pub fn test_app_state(pool: SqlitePool) -> AppState {
         )),
         task_schedule_regen_dispatcher: Arc::new(JobChainDispatcher::new()),
         task_schedule_regen_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
+        plan_task_schedule_regen_locks: PlanTaskScheduleRegenLocks::new(),
         farm_weather_fetch_locks: FarmWeatherFetchLocks::new(),
         cable_hub: Arc::new(CableHub::default()),
         locale_catalog: Arc::new(LocaleCatalog::from_pairs(

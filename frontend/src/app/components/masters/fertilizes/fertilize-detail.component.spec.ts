@@ -10,8 +10,10 @@ import { FertilizeDetailPresenter } from '../../../usecase/fertilizes/fertilize-
 describe('FertilizeDetailComponent', () => {
   let fixture: ComponentFixture<FertilizeDetailComponent>;
   let translate: TranslateService;
+  let loadExecute: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    loadExecute = vi.fn();
     await TestBed.configureTestingModule({
       imports: [FertilizeDetailComponent, TranslateModule.forRoot()],
       providers: [
@@ -21,13 +23,13 @@ describe('FertilizeDetailComponent', () => {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: { get: () => '1' } } }
         },
-        { provide: LoadFertilizeDetailUseCase, useValue: { execute: vi.fn() } }
+        { provide: LoadFertilizeDetailUseCase, useValue: { execute: loadExecute } }
       ]
     })
       .overrideComponent(FertilizeDetailComponent, {
         set: {
           providers: [
-            { provide: LoadFertilizeDetailUseCase, useValue: { execute: vi.fn() } }
+            { provide: LoadFertilizeDetailUseCase, useValue: { execute: loadExecute } }
           ]
         }
       })
@@ -104,5 +106,49 @@ describe('FertilizeDetailComponent', () => {
     expect(
       fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
     ).toHaveLength(0);
+  });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    translate.setTranslation('en', {
+      fertilizes: { index: { title: 'Fertilizers' } },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.not_found',
+      pendingErrorFlash: null,
+      fertilize: null
+    };
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('.master-load-error');
+    expect(alert?.textContent).toContain('Resource not found');
+    expect(alert?.textContent).not.toContain('Http failure');
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/fertilizes');
+    expect(fixture.nativeElement.querySelector('.master-load-error__retry')?.textContent?.trim()).toBe(
+      'Reload'
+    );
+  });
+
+  it('reloads detail when retry is clicked after load error', () => {
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: 'common.api_error.generic',
+      pendingErrorFlash: null,
+      fertilize: null
+    };
+    fixture.detectChanges();
+
+    loadExecute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(loadExecute).toHaveBeenCalledWith({ fertilizeId: 1 });
   });
 });

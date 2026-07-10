@@ -53,7 +53,7 @@ const initialControl: WorkHubViewState = {
           @if (control.error) {
             <div class="page-alert-error work-hub__error" role="alert">
               <p>{{ control.error | translate }}</p>
-              <button type="button" class="btn-secondary work-hub__retry" (click)="reload()">
+              <button type="button" class="btn btn-secondary work-hub__retry" (click)="reload()">
                 {{ 'work.hub.retry' | translate }}
               </button>
             </div>
@@ -63,7 +63,7 @@ const initialControl: WorkHubViewState = {
             <div class="work-hub-empty">
               <p>{{ 'work.hub.no_farms' | translate }}</p>
               <p class="work-hub-empty-hint">{{ 'work.hub.no_farms_hint' | translate }}</p>
-              <a routerLink="/farms/new" class="btn-primary">{{ 'work.hub.create_farm_link' | translate }}</a>
+              <a routerLink="/farms/new" class="btn btn-primary">{{ 'work.hub.create_farm_link' | translate }}</a>
             </div>
           } @else if (control.farms.length) {
             <h2 class="work-hub__section-title">{{ 'work.hub.select_farm' | translate }}</h2>
@@ -73,7 +73,7 @@ const initialControl: WorkHubViewState = {
                   <article class="item-card">
                     <button
                       type="button"
-                      class="item-card__body work-hub__farm-btn"
+                      class="btn btn-white item-card__body work-hub__farm-btn"
                       [disabled]="!farm.hasValidFields || control.submitting"
                       (click)="selectFarm(farm)"
                     >

@@ -32,7 +32,7 @@ const initialControl: PlanListViewState = {
           <h1 id="page-title" class="page-title">{{ 'plans.index.title' | translate }}</h1>
           <p class="page-description">{{ 'plans.index.subtitle' | translate }}</p>
         </div>
-        <a routerLink="/plans/new" class="btn-primary">{{ 'plans.index.create_new' | translate }}</a>
+        <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.create_new' | translate }}</a>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
@@ -43,7 +43,7 @@ const initialControl: PlanListViewState = {
           <div class="plan-list-empty">
             <p>{{ 'plans.index.no_plans' | translate }}</p>
             <p class="plan-list-empty-hint">{{ 'plans.index.no_plans_hint' | translate }}</p>
-            <a routerLink="/plans/new" class="btn-primary">{{ 'plans.index.create_new' | translate }}</a>
+            <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.create_new' | translate }}</a>
             <p class="plan-list-empty-secondary">
               <a routerLink="/public-plans/new">{{ 'plans.index.try_public_plans' | translate }}</a>
             </p>
@@ -59,7 +59,7 @@ const initialControl: PlanListViewState = {
                   <div class="item-card__actions">
                     <button
                       type="button"
-                      class="btn-danger"
+                      class="btn btn-danger"
                       (click)="deletePlan(plan.id)"
                       [attr.aria-label]="'common.delete' | translate"
                     >
