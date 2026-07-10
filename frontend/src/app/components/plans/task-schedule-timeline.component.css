@@ -60,6 +60,7 @@
 .scheduled-section,
 .unscheduled-section {
   width: 100%;
+  min-width: 0;
 }
 
 .list {
