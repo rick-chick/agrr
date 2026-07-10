@@ -247,15 +247,15 @@ const initialControl: WorkRecordSheetViewState = {
           @if (control.mode === 'edit') {
             <button
               type="button"
-              class="btn-danger"
+              class="btn btn-danger"
               [disabled]="control.submitting"
               (click)="confirmDelete()"
             >{{ 'plans.work_records.sheet.delete' | translate }}</button>
           }
-          <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | translate }}</button>
+          <button type="button" class="btn btn-secondary" (click)="close()">{{ 'common.cancel' | translate }}</button>
           <button
             type="submit"
-            class="btn-primary"
+            class="btn btn-primary"
             [disabled]="control.submitting || !canSubmit(recordForm)"
           >
             @if (control.mode === 'edit') {

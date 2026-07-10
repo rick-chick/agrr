@@ -66,7 +66,7 @@ const initialControl: PlanWorkViewState = {
         } @else if (control.error) {
           <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
-            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
+            <button type="button" class="btn btn-secondary plan-work__retry" (click)="reload()">
               {{ 'plans.work.retry' | translate }}
             </button>
           </div>
@@ -135,7 +135,7 @@ const initialControl: PlanWorkViewState = {
                 >{{ 'plans.work.recent_adhoc_history_link' | translate }}</a>
                 <button
                   type="button"
-                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  class="btn btn-primary plan-work__empty-cta plan-work__cta--constrained"
                   (click)="openAdHoc()"
                 >
                   {{ 'plans.work.add_record' | translate }}
@@ -159,7 +159,7 @@ const initialControl: PlanWorkViewState = {
                 }
                 <button
                   type="button"
-                  class="btn-primary plan-work__empty-cta plan-work__cta--constrained"
+                  class="btn btn-primary plan-work__empty-cta plan-work__cta--constrained"
                   (click)="openAdHoc()"
                 >
                   {{ 'plans.work.add_record' | translate }}
@@ -183,7 +183,7 @@ const initialControl: PlanWorkViewState = {
             <footer class="plan-work__fab">
               <button
                 type="button"
-                class="btn-primary plan-work__fab-btn plan-work__cta--constrained"
+                class="btn btn-primary plan-work__fab-btn plan-work__cta--constrained"
                 (click)="openAdHoc()"
               >
                 {{ 'plans.work.add_record' | translate }}
@@ -216,7 +216,7 @@ const initialControl: PlanWorkViewState = {
           @if (!row.recordedToday && row.item.status !== 'skipped') {
             <button
               type="button"
-              class="btn-primary plan-work__complete-btn"
+              class="btn btn-primary plan-work__complete-btn"
               [disabled]="control.completingItemId === row.item.item_id"
               (click)="quickComplete(row)"
             >
@@ -229,7 +229,7 @@ const initialControl: PlanWorkViewState = {
           }
           <button
             type="button"
-            class="btn-secondary btn-sm plan-work__menu-btn"
+            class="btn btn-secondary btn-sm plan-work__menu-btn"
             [attr.aria-label]="'plans.work.menu' | translate"
             [attr.aria-expanded]="openMenuItemId === row.item.item_id"
             (click)="toggleMenu(row.item.item_id, $event)"
@@ -237,14 +237,14 @@ const initialControl: PlanWorkViewState = {
           @if (openMenuItemId === row.item.item_id) {
             <div class="plan-work__menu" role="menu">
               @if (row.item.status === 'skipped') {
-                <button type="button" role="menuitem" class="btn-secondary btn-sm plan-work__menu-item" (click)="unskip(row)">
+                <button type="button" role="menuitem" class="btn btn-secondary btn-sm plan-work__menu-item" (click)="unskip(row)">
                   {{ 'plans.work.unskip' | translate }}
                 </button>
               } @else {
-                <button type="button" role="menuitem" class="btn-secondary btn-sm plan-work__menu-item" (click)="openCompleteWithDetails(row)">
+                <button type="button" role="menuitem" class="btn btn-secondary btn-sm plan-work__menu-item" (click)="openCompleteWithDetails(row)">
                   {{ 'plans.work.record_with_details' | translate }}
                 </button>
-                <button type="button" role="menuitem" class="btn-secondary btn-sm plan-work__menu-item" (click)="skip(row)">
+                <button type="button" role="menuitem" class="btn btn-secondary btn-sm plan-work__menu-item" (click)="skip(row)">
                   {{ 'plans.work.skip' | translate }}
                 </button>
               }

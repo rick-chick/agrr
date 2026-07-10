@@ -76,8 +76,8 @@ const initialControl: FarmDetailViewState = {
             </div>
           </dl>
           <div class="detail-card__actions">
-            <a [routerLink]="['/farms', control.farm.id, 'edit']" class="btn-primary">{{ 'common.edit' | translate }}</a>
-            <button type="button" class="btn-danger" (click)="deleteFarm()">{{ 'common.delete' | translate }}</button>
+            <a [routerLink]="['/farms', control.farm.id, 'edit']" class="btn btn-primary">{{ 'common.edit' | translate }}</a>
+            <button type="button" class="btn btn-danger" (click)="deleteFarm()">{{ 'common.delete' | translate }}</button>
           </div>
         </section>
 
@@ -106,11 +106,11 @@ const initialControl: FarmDetailViewState = {
         <section class="section-card" aria-labelledby="fields-heading">
           <div class="section-card__header-actions">
             <h2 id="fields-heading" class="section-title">{{ 'farms.show.fields' | translate }}</h2>
-            <button type="button" class="btn-primary" (click)="openFieldForm()">{{ 'farms.show.add_field' | translate }}</button>
+            <button type="button" class="btn btn-primary" (click)="openFieldForm()">{{ 'farms.show.add_field' | translate }}</button>
           </div>
           @if (control.fields.length === 0) {
             <p class="fields-empty">{{ 'farms.show.no_fields' | translate }}</p>
-            <button type="button" class="btn-primary" (click)="openFieldForm()">{{ 'farms.show.add_first_field' | translate }}</button>
+            <button type="button" class="btn btn-primary" (click)="openFieldForm()">{{ 'farms.show.add_first_field' | translate }}</button>
           } @else {
             <ul class="card-list" role="list">
               @for (field of control.fields; track field.id) {
@@ -120,8 +120,8 @@ const initialControl: FarmDetailViewState = {
                       <span class="item-card__title">{{ 'farms.show.field_list_item' | translate: { name: field.name, area: field.area ?? '-' } }}</span>
                     </div>
                     <div class="item-card__actions">
-                      <button type="button" class="btn-secondary" (click)="openFieldForm(field)">{{ 'common.edit' | translate }}</button>
-                      <button type="button" class="btn-danger" (click)="deleteField(field)">{{ 'common.delete' | translate }}</button>
+                      <button type="button" class="btn btn-secondary" (click)="openFieldForm(field)">{{ 'common.edit' | translate }}</button>
+                      <button type="button" class="btn btn-danger" (click)="deleteField(field)">{{ 'common.delete' | translate }}</button>
                     </div>
                   </article>
                 </li>
@@ -155,8 +155,8 @@ const initialControl: FarmDetailViewState = {
           ></app-region-select>
         }
         <div class="form-card__actions">
-          <button type="button" class="btn-secondary" (click)="closeFieldForm()">{{ 'common.cancel' | translate }}</button>
-          <button type="submit" class="btn-primary" [disabled]="!fieldForm.valid">{{ (editingField ? 'farms.show.field_form.submit_update' : 'farms.show.field_form.submit_create') | translate }}</button>
+          <button type="button" class="btn btn-secondary" (click)="closeFieldForm()">{{ 'common.cancel' | translate }}</button>
+          <button type="submit" class="btn btn-primary" [disabled]="!fieldForm.valid">{{ (editingField ? 'farms.show.field_form.submit_update' : 'farms.show.field_form.submit_create') | translate }}</button>
         </div>
       </form>
     </dialog>

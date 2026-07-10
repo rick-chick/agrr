@@ -37,7 +37,7 @@ const initialControl: PestListViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a [routerLink]="['/pests', 'new']" class="btn-primary">{{ 'pests.index.new_pest' | translate }}</a>
+            <a [routerLink]="['/pests', 'new']" class="btn btn-primary">{{ 'pests.index.new_pest' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
             @for (pest of control.pests; track pest.id) {
@@ -50,12 +50,12 @@ const initialControl: PestListViewState = {
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/pests', pest.id, 'edit']" class="btn-secondary">
+                    <a [routerLink]="['/pests', pest.id, 'edit']" class="btn btn-secondary">
                       {{ 'pests.index.actions.edit' | translate }}
                     </a>
                     <button
                       type="button"
-                      class="btn-danger"
+                      class="btn btn-danger"
                       (click)="deletePest(pest.id)"
                       [attr.aria-label]="'pests.index.actions.delete' | translate"
                     >
