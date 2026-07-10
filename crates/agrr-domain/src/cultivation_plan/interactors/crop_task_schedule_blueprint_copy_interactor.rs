@@ -87,3 +87,12 @@ where
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod interactors_crop_task_schedule_blueprint_copy_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/cultivation_plan/interactors_crop_task_schedule_blueprint_copy_interactor_test.rs"
+    ));
+}
