@@ -76,9 +76,7 @@ describe('TaskScheduleWeekNavComponent', () => {
   it('highlights plan mode as active by default', () => {
     detect();
     expect(
-      fixture.nativeElement.querySelector('.task-schedule-week-nav__mode--plan')?.classList.contains(
-        'task-schedule-week-nav__mode--active'
-      )
+      fixture.nativeElement.querySelector('.task-schedule-week-nav__mode--plan')?.classList.contains('active')
     ).toBe(true);
   });
 
@@ -87,9 +85,7 @@ describe('TaskScheduleWeekNavComponent', () => {
     detect();
 
     expect(
-      fixture.nativeElement.querySelector('.task-schedule-week-nav__mode--week')?.classList.contains(
-        'task-schedule-week-nav__mode--active'
-      )
+      fixture.nativeElement.querySelector('.task-schedule-week-nav__mode--week')?.classList.contains('active')
     ).toBe(true);
   });
 
