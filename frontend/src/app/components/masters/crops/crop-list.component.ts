@@ -41,7 +41,7 @@ const initialControl: CropListViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a [routerLink]="['/crops', 'new']" class="btn-primary">{{ 'crops.index.new_crop' | translate }}</a>
+            <a [routerLink]="['/crops', 'new']" class="btn btn-primary">{{ 'crops.index.new_crop' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
             @for (crop of control.crops; track crop.id) {
@@ -57,8 +57,8 @@ const initialControl: CropListViewState = {
                     }
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/crops', crop.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
-                    <button type="button" class="btn-danger" (click)="deleteCrop(crop.id)" [attr.aria-label]="'common.delete' | translate">
+                    <a [routerLink]="['/crops', crop.id, 'edit']" class="btn btn-secondary">{{ 'common.edit' | translate }}</a>
+                    <button type="button" class="btn btn-danger" (click)="deleteCrop(crop.id)" [attr.aria-label]="'common.delete' | translate">
                       {{ 'common.delete' | translate }}
                     </button>
                   </div>

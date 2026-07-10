@@ -71,8 +71,8 @@ const initialControl: PesticideDetailViewState = {
             }
           </dl>
           <div class="detail-card__actions">
-            <a [routerLink]="['/pesticides', control.pesticide.id, 'edit']" class="btn-primary">{{ 'pesticides.show.edit' | translate }}</a>
-            <button type="button" class="btn-danger" (click)="deletePesticide()">{{ 'pesticides.show.delete' | translate }}</button>
+            <a [routerLink]="['/pesticides', control.pesticide.id, 'edit']" class="btn btn-primary">{{ 'pesticides.show.edit' | translate }}</a>
+            <button type="button" class="btn btn-danger" (click)="deletePesticide()">{{ 'pesticides.show.delete' | translate }}</button>
           </div>
         </section>
       }

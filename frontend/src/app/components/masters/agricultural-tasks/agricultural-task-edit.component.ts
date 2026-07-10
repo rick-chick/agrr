@@ -112,7 +112,7 @@ const initialControl: AgriculturalTaskEditViewState = {
               <input id="task_type" name="task_type" [(ngModel)]="control.formData.task_type" />
             </label>
             <div class="form-card__actions">
-              <button type="submit" class="btn-primary" [disabled]="taskForm.invalid || control.saving">
+              <button type="submit" class="btn btn-primary" [disabled]="taskForm.invalid || control.saving">
                 {{ 'agricultural_tasks.form.submit_update' | translate }}
               </button>
             </div>

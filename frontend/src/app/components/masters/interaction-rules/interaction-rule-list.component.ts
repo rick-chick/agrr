@@ -43,7 +43,7 @@ const initialControl: InteractionRuleListViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a [routerLink]="['/interaction_rules', 'new']" class="btn-primary">{{ 'interaction_rules.index.new_rule' | translate }}</a>
+            <a [routerLink]="['/interaction_rules', 'new']" class="btn btn-primary">{{ 'interaction_rules.index.new_rule' | translate }}</a>
           </div>
           <ul class="card-list" role="list">
             @for (rule of control.rules; track rule.id) {
@@ -54,8 +54,8 @@ const initialControl: InteractionRuleListViewState = {
                     <span class="item-card__meta">{{ ruleTypeLabel(rule.rule_type) }} ({{ rule.impact_ratio }})</span>
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/interaction_rules', rule.id, 'edit']" class="btn-secondary">{{ 'common.edit' | translate }}</a>
-                    <button type="button" class="btn-danger" (click)="deleteInteractionRule(rule.id)" [attr.aria-label]="'common.delete' | translate">
+                    <a [routerLink]="['/interaction_rules', rule.id, 'edit']" class="btn btn-secondary">{{ 'common.edit' | translate }}</a>
+                    <button type="button" class="btn btn-danger" (click)="deleteInteractionRule(rule.id)" [attr.aria-label]="'common.delete' | translate">
                       {{ 'common.delete' | translate }}
                     </button>
                   </div>
