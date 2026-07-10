@@ -3,7 +3,10 @@
 use time::Date;
 
 use crate::agricultural_task::constants::task_schedule_item_statuses::PLANNED;
-use crate::agricultural_task::dtos::{TaskScheduleGenerateInput, TaskScheduleReplaceItem};
+use crate::agricultural_task::dtos::{
+    TaskScheduleFieldMutation, TaskScheduleGenerateInput, TaskSchedulePlanMutations,
+    TaskScheduleReplaceItem,
+};
 use crate::agricultural_task::ports::TaskScheduleGenerateInputPort;
 use crate::agricultural_task::gateways::{
     CultivationPlanGateway, TaskScheduleBlueprint, TaskScheduleCrop,
@@ -72,13 +75,24 @@ where
         }
 
         let mut blueprint_cache = std::collections::HashMap::<i64, Vec<TaskScheduleBlueprint>>::new();
+        let mut mutations = Vec::new();
 
-        self.cultivation_plan_gateway.within_transaction(|| {
-            for field_cultivation in &plan.field_cultivations {
-                self.generate_for_field(&plan, field_cultivation, &mut blueprint_cache)?;
-            }
-            Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
-        })?;
+        for field_cultivation in &plan.field_cultivations {
+            self.generate_for_field(
+                &plan,
+                field_cultivation,
+                &mut blueprint_cache,
+                &mut mutations,
+            )?;
+        }
+
+        self.task_schedule_gateway.apply_plan_schedule_mutations(
+            &TaskSchedulePlanMutations {
+                cultivation_plan_id: plan.id,
+                generated_at: self.clock.now(),
+                mutations,
+            },
+        )?;
 
         Ok(())
     }
@@ -132,6 +146,7 @@ where
         plan: &TaskSchedulePlan,
         field_cultivation: &TaskScheduleFieldCultivation,
         blueprint_cache: &mut std::collections::HashMap<i64, Vec<TaskScheduleBlueprint>>,
+        mutations: &mut Vec<TaskScheduleFieldMutation>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let crop = match &field_cultivation.crop {
             Some(c) => c,
@@ -199,7 +214,7 @@ where
             )));
         }
 
-        self.create_schedule(plan, field_cultivation, "general", || {
+        self.create_schedule(plan, field_cultivation, "general", mutations, || {
             general_blueprints
                 .iter()
                 .map(|blueprint| {
@@ -214,7 +229,7 @@ where
         })?;
 
         if !fertilizer_blueprints.is_empty() {
-            self.create_schedule(plan, field_cultivation, "fertilizer", || {
+            self.create_schedule(plan, field_cultivation, "fertilizer", mutations, || {
                 fertilizer_blueprints
                     .iter()
                     .map(|blueprint| {
@@ -228,7 +243,7 @@ where
                     .collect::<Result<Vec<_>, _>>()
             })?;
         } else {
-            self.clear_schedule(plan, field_cultivation, "fertilizer")?;
+            self.clear_schedule(plan, field_cultivation, "fertilizer", mutations)?;
         }
 
         Ok(())
@@ -309,19 +324,18 @@ where
         plan: &TaskSchedulePlan,
         field_cultivation: &TaskScheduleFieldCultivation,
         category: &str,
+        mutations: &mut Vec<TaskScheduleFieldMutation>,
         items_fn: F,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
         F: FnOnce() -> Result<Vec<TaskScheduleReplaceItem>, Box<dyn std::error::Error + Send + Sync>>,
     {
         let items = items_fn()?;
-        self.task_schedule_gateway.replace_schedule_for_field_category(
-            plan.id,
-            field_cultivation.id,
-            category,
-            self.clock.now(),
+        mutations.push(TaskScheduleFieldMutation::Replace {
+            field_cultivation_id: field_cultivation.id,
+            category: category.to_string(),
             items,
-        )?;
+        });
         Ok(())
     }
 
@@ -330,12 +344,13 @@ where
         plan: &TaskSchedulePlan,
         field_cultivation: &TaskScheduleFieldCultivation,
         category: &str,
+        mutations: &mut Vec<TaskScheduleFieldMutation>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.task_schedule_gateway.delete_all_for_field_category(
-            plan.id,
-            field_cultivation.id,
-            category,
-        )?;
+        let _ = plan;
+        mutations.push(TaskScheduleFieldMutation::DeleteAll {
+            field_cultivation_id: field_cultivation.id,
+            category: category.to_string(),
+        });
         Ok(())
     }
 }

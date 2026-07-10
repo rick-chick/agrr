@@ -229,7 +229,7 @@ const initialControl: PlanWorkViewState = {
           }
           <button
             type="button"
-            class="plan-work__menu-btn"
+            class="btn-secondary btn-sm plan-work__menu-btn"
             [attr.aria-label]="'plans.work.menu' | translate"
             [attr.aria-expanded]="openMenuItemId === row.item.item_id"
             (click)="toggleMenu(row.item.item_id, $event)"
@@ -237,14 +237,14 @@ const initialControl: PlanWorkViewState = {
           @if (openMenuItemId === row.item.item_id) {
             <div class="plan-work__menu" role="menu">
               @if (row.item.status === 'skipped') {
-                <button type="button" role="menuitem" (click)="unskip(row)">
+                <button type="button" role="menuitem" class="btn-secondary btn-sm plan-work__menu-item" (click)="unskip(row)">
                   {{ 'plans.work.unskip' | translate }}
                 </button>
               } @else {
-                <button type="button" role="menuitem" (click)="openCompleteWithDetails(row)">
+                <button type="button" role="menuitem" class="btn-secondary btn-sm plan-work__menu-item" (click)="openCompleteWithDetails(row)">
                   {{ 'plans.work.record_with_details' | translate }}
                 </button>
-                <button type="button" role="menuitem" (click)="skip(row)">
+                <button type="button" role="menuitem" class="btn-secondary btn-sm plan-work__menu-item" (click)="skip(row)">
                   {{ 'plans.work.skip' | translate }}
                 </button>
               }

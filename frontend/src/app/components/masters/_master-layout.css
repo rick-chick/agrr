@@ -518,6 +518,11 @@ article.item-card:hover {
   background: var(--color-surface-hover);
 }
 
+.btn-secondary:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
 .btn-danger {
   background: var(--color-surface);
   color: var(--color-error);
