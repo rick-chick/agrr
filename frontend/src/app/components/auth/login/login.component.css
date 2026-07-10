@@ -22,16 +22,8 @@
   margin: 0;
 }
 
-.login-button {
-  display: inline-block;
-  background: var(--color-primary);
-  color: var(--color-text-on-primary);
-  padding: 10px var(--space-4);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  border: none;
-  font: inherit;
-  cursor: pointer;
+.google-oauth-form .btn-primary {
+  width: 100%;
 }
 
 .dev-login-section {
