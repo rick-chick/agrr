@@ -2176,6 +2176,7 @@
       "farm_option_with_fields": "{{name}}（圃場{{count}}・{{area}}㎡）",
       "farm_option_no_fields": "{{name}}（圃場未登録）",
       "no_fields_warning": "この農場には圃場が登録されていません。",
+      "some_farms_no_fields_hint": "圃場が未登録の農場は計画作成の対象に選べません。",
       "register_fields_link": "圃場を登録する",
       "empty_message": "現在、利用可能な農場がありません。"
     },
