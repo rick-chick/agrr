@@ -82,7 +82,7 @@ const initialControl: PesticideCreateViewState = {
             ></app-region-select>
           }
           <div class="form-card__actions">
-            <button type="submit" class="btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">
+            <button type="submit" class="btn btn-primary" [disabled]="pesticideForm.invalid || control.saving || control.formData.crop_id === 0 || control.formData.pest_id === 0">
               {{ control.saving ? ('common.creating' | translate) : ('pesticides.form.submit_create' | translate) }}
             </button>
           </div>

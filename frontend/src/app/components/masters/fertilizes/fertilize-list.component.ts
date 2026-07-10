@@ -39,7 +39,7 @@ const initialControl: FertilizeListViewState = {
           <p class="master-loading">{{ 'common.loading' | translate }}</p>
         } @else {
           <div class="section-card__header-actions">
-            <a routerLink="/fertilizes/new" class="btn-primary">{{ 'fertilizes.index.new_fertilize' | translate }}</a>
+            <a routerLink="/fertilizes/new" class="btn btn-primary">{{ 'fertilizes.index.new_fertilize' | translate }}</a>
           </div>
           @if (control.fertilizes.length === 0) {
             <div class="empty-state">
@@ -56,12 +56,12 @@ const initialControl: FertilizeListViewState = {
                     <span class="item-card__meta">{{ 'fertilizes.show.npk_summary' | translate }}: {{ formatNpk(item) }}</span>
                   </a>
                   <div class="item-card__actions">
-                    <a [routerLink]="['/fertilizes', item.id, 'edit']" class="btn-secondary">
+                    <a [routerLink]="['/fertilizes', item.id, 'edit']" class="btn btn-secondary">
                       {{ 'common.edit' | translate }}
                     </a>
                     <button
                       type="button"
-                      class="btn-danger"
+                      class="btn btn-danger"
                       (click)="deleteFertilize(item.id)"
                       [attr.aria-label]="'common.delete' | translate"
                     >
