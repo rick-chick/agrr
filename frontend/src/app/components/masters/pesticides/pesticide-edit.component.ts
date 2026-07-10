@@ -107,7 +107,6 @@ export class PesticideEditComponent implements PesticideEditView, OnInit {
   readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly translate = inject(TranslateService);
   private readonly loadUseCase = inject(LoadPesticideForEditUseCase);
   private readonly updateUseCase = inject(UpdatePesticideUseCase);
   private readonly presenter = inject(PesticideEditPresenter);
