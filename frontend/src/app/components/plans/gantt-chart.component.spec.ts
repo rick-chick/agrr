@@ -348,7 +348,7 @@ describe('GanttChartComponent', () => {
         expect(bar.querySelector('app-gantt-mobile-actions-menu')).toBeFalsy();
         expect(bar.querySelector('.gantt-action-bar__crop-primary')).toBeFalsy();
 
-        const actionButtons = bar.querySelectorAll('.gantt-action-bar .btn.btn-secondary');
+        const actionButtons = bar.querySelectorAll(':scope > .btn.btn-secondary');
         expect(actionButtons.length).toBe(2);
         expect(actionButtons[0].textContent?.trim()).toBe('作物を追加');
         expect(actionButtons[1].textContent?.trim()).toBe('圃場追加');
