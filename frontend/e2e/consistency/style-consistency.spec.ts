@@ -29,9 +29,9 @@ test.describe('style consistency (computed)', () => {
     expect(families.size, `font-family が食い違い`).toBe(1);
   });
 
-  test('home: 同じクラス集合の primary-button は見た目計算値が一致', async ({ page }) => {
+  test('home: 同じクラス集合の btn-primary は見た目計算値が一致', async ({ page }) => {
     await page.goto('/');
-    const buttons = page.locator('app-home button.primary-button');
+    const buttons = page.locator('app-home button.btn-primary');
     expect(await buttons.count()).toBeGreaterThan(0);
 
     await buttons.evaluateAll((els) => {
@@ -65,7 +65,7 @@ test.describe('style consistency (computed)', () => {
         const first = JSON.stringify(arr[0]);
         for (let i = 1; i < arr.length; i++) {
           if (JSON.stringify(arr[i]) !== first) {
-            throw new Error(`primary-button のクラス「${cls}」で計算済みスタイルが不一致`);
+            throw new Error(`btn-primary のクラス「${cls}」で計算済みスタイルが不一致`);
           }
         }
       }

@@ -37,7 +37,7 @@ import { SyncLandingDemoPlanUseCase } from '../../usecase/plans/sync-landing-dem
         <app-plan-gantt-climate-shell [data]="demoPlanData" planType="demo" />
       </div>
       <div class="home-demo-section__actions">
-        <button type="button" class="primary-button large" (click)="navigateToPlan()">
+        <button type="button" class="btn btn-primary btn-lg" (click)="navigateToPlan()">
           {{ demoUi.ctaCreate | translate }}
         </button>
       </div>
