@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PublicPlanSelectCropComponent } from './public-plan-select-crop.component';
 import { PublicPlanSelectCropViewState } from './public-plan-select-crop.view';
+import {
+  PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM,
+  PUBLIC_PLAN_WIZARD_STEP_REGION,
+} from '../../domain/public-plans/public-plan-wizard-navigation';
 
 describe('PublicPlanSelectCropComponent (class-level)', () => {
   let component: any;
@@ -121,7 +125,10 @@ describe('PublicPlanSelectCropComponent (class-level)', () => {
 
     PublicPlanSelectCropComponent.prototype.ngOnInit.call(component);
 
-    expect(router.navigate).toHaveBeenCalledWith(['/public-plans/new']);
+    expect(router.navigate).toHaveBeenCalledWith(['/public-plans/new'], {
+      queryParams: { [PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM]: PUBLIC_PLAN_WIZARD_STEP_REGION },
+      replaceUrl: true,
+    });
     expect(resetStateUseCase.execute).not.toHaveBeenCalled();
     expect(presenter.setView).not.toHaveBeenCalled();
     expect(loadCropsUseCase.execute).not.toHaveBeenCalled();

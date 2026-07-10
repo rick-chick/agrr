@@ -17,6 +17,12 @@ import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
 import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
+import { FlashMessageService } from '../../services/flash-message.service';
+import {
+  PUBLIC_PLAN_WIZARD_REDIRECT_MESSAGE_KEY,
+  PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM,
+  PUBLIC_PLAN_WIZARD_STEP_REGION,
+} from '../../domain/public-plans/public-plan-wizard-navigation';
 const initialControl: PublicPlanCreateViewState = {
   loading: true,
   error: null,
@@ -98,6 +104,7 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
   private readonly publicPlanStore = inject(PublicPlanStore);
   private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly flash = inject(FlashMessageService);
 
   selectedFarmId: number | null = null;
   selectedFarm: Farm | null = null;
@@ -119,10 +126,19 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
 
   ngOnInit(): void {
     const cropSlug = this.route.snapshot.queryParamMap.get('crop');
+    const wizardStep = this.route.snapshot.queryParamMap.get(PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM);
     // Reset state to ensure clean state for new plan creation
     this.resetStateUseCase.execute({});
     if (cropSlug) {
       this.publicPlanStore.setPendingCropSlug(cropSlug);
+    }
+    if (wizardStep === PUBLIC_PLAN_WIZARD_STEP_REGION) {
+      this.flash.show({ type: 'info', text: PUBLIC_PLAN_WIZARD_REDIRECT_MESSAGE_KEY });
+      void this.router.navigate([], {
+        queryParams: { [PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM]: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
     }
     this.presenter.setView(this);
     const state = this.publicPlanStore.state;
