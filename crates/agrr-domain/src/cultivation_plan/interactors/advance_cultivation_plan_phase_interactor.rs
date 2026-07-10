@@ -38,13 +38,14 @@ where
         &self,
         input: AdvanceCultivationPlanPhaseInput,
     ) -> Result<CultivationPlanEntity, Box<dyn std::error::Error + Send + Sync>> {
+        let is_phase_failed = input.phase_name == CultivationPlanPhaseName::PhaseFailed;
         let built = cultivation_plan_phase_policy::build(
             input.phase_name,
             input.failure_subphase.as_deref(),
         );
         let mut attrs = built.attrs.clone();
         if let Some(message_key) = built.message_key.as_deref() {
-            let message = if input.phase_name == CultivationPlanPhaseName::PhaseFailed {
+            let message = if is_phase_failed {
                 message_key.to_string()
             } else {
                 self.translator
