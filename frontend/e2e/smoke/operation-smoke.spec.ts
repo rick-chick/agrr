@@ -125,7 +125,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
     if ((await gantt.count()) === 0) {
       test.skip(true, 'plan has no gantt data');
     }
-    const toggle = gantt.locator('.gantt-action-bar .action-button').first();
+    const toggle = gantt.locator('.gantt-action-bar .btn').first();
     await toggle.click();
     await expect(gantt.locator('.crop-palette')).toBeVisible();
     await toggle.click();

@@ -125,6 +125,41 @@ a.btn:focus-visible {
   cursor: not-allowed;
 }
 
+.btn-sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  min-height: auto;
+}
+
+.btn--icon {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: var(--space-2);
+}
+
+.btn--icon .btn__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-white,
+.btn-danger {
+  box-sizing: border-box;
+}
+
+.btn-danger {
+  background: var(--color-surface);
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-error-bg);
+}
+
 .btn-lg {
   padding: var(--space-5) var(--space-10);
   font-size: var(--font-size-xl);
@@ -143,15 +178,33 @@ a.btn:focus-visible {
   text-decoration: underline;
   text-underline-offset: 0.2em;
   cursor: pointer;
+  min-height: auto;
 }
 
-.btn-link:hover {
+.btn-link:hover:not(:disabled) {
   color: var(--color-primary-hover);
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-link:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
+}
+
+.btn.btn-secondary.active {
+  background: var(--gradient-primary);
+  color: white;
+  border-color: transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn.btn-white.active,
+.btn.btn-white.selected {
+  border-color: var(--color-primary);
+  background: var(--color-home-secondary-hover-bg);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* ============================================

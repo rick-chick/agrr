@@ -34,7 +34,7 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                         <li>
                           <button
                             type="button"
-                            class="item item--selectable"
+                            class="btn btn-white item item--selectable"
                             [class.item--selected]="isSelected(task)"
                             (click)="selectTask(task)"
                           >
@@ -69,7 +69,7 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
                         <li>
                           <button
                             type="button"
-                            class="item item--selectable"
+                            class="btn btn-white item item--selectable"
                             [class.item--selected]="isSelected(task)"
                             (click)="selectTask(task)"
                           >

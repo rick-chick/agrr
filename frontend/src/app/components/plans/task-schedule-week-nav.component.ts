@@ -44,8 +44,8 @@ function adjacentWeekStart(
       <div class="task-schedule-week-nav__modes" role="tablist" aria-label="View mode">
         <button
           type="button"
-          class="task-schedule-week-nav__mode task-schedule-week-nav__mode--plan"
-          [class.task-schedule-week-nav__mode--active]="viewMode === 'plan'"
+          class="btn btn-secondary btn-sm task-schedule-week-nav__mode"
+          [class.active]="viewMode === 'plan'"
           role="tab"
           [attr.aria-selected]="viewMode === 'plan'"
           (click)="selectMode('plan')"
@@ -54,8 +54,8 @@ function adjacentWeekStart(
         </button>
         <button
           type="button"
-          class="task-schedule-week-nav__mode task-schedule-week-nav__mode--week"
-          [class.task-schedule-week-nav__mode--active]="viewMode === 'week'"
+          class="btn btn-secondary btn-sm task-schedule-week-nav__mode"
+          [class.active]="viewMode === 'week'"
           role="tab"
           [attr.aria-selected]="viewMode === 'week'"
           (click)="selectMode('week')"
@@ -70,21 +70,21 @@ function adjacentWeekStart(
           <div class="task-schedule-week-nav__actions">
             <button
               type="button"
-              class="btn btn-secondary task-schedule-week-nav__prev"
+              class="btn btn-secondary btn-sm task-schedule-week-nav__prev"
               (click)="goPrevWeek()"
             >
               {{ 'plans.task_schedules.nav_prev_week' | translate }}
             </button>
             <button
               type="button"
-              class="btn btn-secondary task-schedule-week-nav__today"
+              class="btn btn-secondary btn-sm task-schedule-week-nav__today"
               (click)="goToday()"
             >
               {{ 'plans.task_schedules.nav_today' | translate }}
             </button>
             <button
               type="button"
-              class="btn btn-secondary task-schedule-week-nav__next"
+              class="btn btn-secondary btn-sm task-schedule-week-nav__next"
               (click)="goNextWeek()"
             >
               {{ 'plans.task_schedules.nav_next_week' | translate }}
@@ -95,8 +95,8 @@ function adjacentWeekStart(
               @for (chip of minimapWeeks; track chip.start_date) {
                 <button
                   type="button"
-                  class="task-schedule-week-nav__chip"
-                  [class.task-schedule-week-nav__chip--active]="chip.start_date === week.start_date"
+                  class="btn btn-white btn-sm task-schedule-week-nav__chip"
+                  [class.active]="chip.start_date === week.start_date"
                   (click)="selectWeek(chip.start_date)"
                 >
                   {{ chip.label }}

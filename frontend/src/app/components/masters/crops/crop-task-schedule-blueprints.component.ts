@@ -337,7 +337,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                 </span>
                 <button
                   type="button"
-                  class="crop-blueprints__card-remove blueprint-card__remove"
+                  class="btn btn-danger btn-sm crop-blueprints__card-remove blueprint-card__remove"
                   (click)="deleteBlueprint(blueprint.id)"
                   [attr.aria-label]="'crops.show.delete_blueprint' | translate"
                 >

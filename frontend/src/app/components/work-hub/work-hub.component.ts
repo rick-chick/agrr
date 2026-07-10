@@ -73,7 +73,7 @@ const initialControl: WorkHubViewState = {
                   <article class="item-card">
                     <button
                       type="button"
-                      class="item-card__body work-hub__farm-btn"
+                      class="btn btn-white item-card__body work-hub__farm-btn"
                       [disabled]="!farm.hasValidFields || control.submitting"
                       (click)="selectFarm(farm)"
                     >

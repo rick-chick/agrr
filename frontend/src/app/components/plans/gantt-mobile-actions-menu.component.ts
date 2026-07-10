@@ -20,7 +20,7 @@ import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
   template: `
     <div class="gantt-mobile-actions-menu">
       <button
-        class="gantt-mobile-actions-menu__trigger action-button action-button--icon action-button--secondary"
+        class="btn btn-secondary btn-sm btn--icon gantt-mobile-actions-menu__trigger"
         type="button"
         (click)="toggleMenu()"
         [class.active]="menuOpen || fieldFormVisible || fieldLegendOpen"
@@ -28,7 +28,7 @@ import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
         [attr.aria-controls]="panelId"
         aria-haspopup="menu"
         [attr.aria-label]="ganttI18n.mobile.moreActions | translate">
-        <svg class="action-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true">
           <path
             fill="currentColor"
             d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
@@ -37,7 +37,7 @@ import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
       @if (menuOpen) {
         <div class="gantt-mobile-actions-menu__panel" [id]="panelId" role="menu">
           <button
-            class="gantt-mobile-actions-menu__item"
+            class="btn btn-secondary gantt-mobile-actions-menu__item"
             type="button"
             role="menuitem"
             (click)="onAddFieldClick()"
@@ -49,7 +49,7 @@ import { GANTT_I18N_KEYS } from '../../core/i18n/gantt-locale.keys';
             }
           </button>
           <button
-            class="gantt-mobile-actions-menu__item"
+            class="btn btn-secondary gantt-mobile-actions-menu__item"
             type="button"
             role="menuitem"
             (click)="onFieldLegendClick()"
