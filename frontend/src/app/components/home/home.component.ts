@@ -19,7 +19,7 @@ import { HomeDemoSectionComponent } from './home-demo-section.component';
       <h1>{{ hero.title | translate }}</h1>
       <p [innerHTML]="hero.subtitleHtml | translate"></p>
       <div class="hero-actions">
-        <a href="#home-demo" class="hero-scroll-button" (click)="scrollToDemo($event)">
+        <a href="#home-demo" class="btn btn-secondary" (click)="scrollToDemo($event)">
           {{ hero.ctaScrollDemo | translate }}
         </a>
       </div>
@@ -42,7 +42,7 @@ import { HomeDemoSectionComponent } from './home-demo-section.component';
     </section>
 
     <section class="cta-section cta-section--footer">
-      <button type="button" class="cta-footer-link" (click)="navigateToPlan()">
+      <button type="button" class="btn-link" (click)="navigateToPlan()">
         {{ hero.ctaFooterLink | translate }}
       </button>
     </section>

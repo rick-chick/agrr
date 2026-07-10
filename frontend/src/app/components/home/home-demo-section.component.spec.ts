@@ -103,7 +103,7 @@ describe('HomeDemoSectionComponent', () => {
     expect(root.querySelector('.home-demo-hints')).not.toBeNull();
     expect(root.querySelector('.home-demo-gantt')).not.toBeNull();
     expect(root.querySelector('app-plan-gantt-climate-shell')).not.toBeNull();
-    expect(root.querySelector('button.primary-button')?.textContent?.trim()).toBe(
+    expect(root.querySelector('button.btn-primary')?.textContent?.trim()).toBe(
       '地域と作物を選んで計画を作る'
     );
   });
@@ -111,7 +111,7 @@ describe('HomeDemoSectionComponent', () => {
   it('navigates to public plan creation', () => {
     fixture.detectChanges();
 
-    fixture.nativeElement.querySelector('button.primary-button')?.click();
+    fixture.nativeElement.querySelector('button.btn-primary')?.click();
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/public-plans/new'] as const);
   });
