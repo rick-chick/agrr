@@ -151,10 +151,6 @@ export class TaskScheduleTimelineComponent {
     });
   }
 
-  scheduledTasks(field: FieldSchedule): TaskScheduleItem[] {
-    return this.sortedTasks([...field.schedules.general, ...field.schedules.fertilizer]);
-  }
-
   formatScheduledDate(iso: string | null): string | null {
     if (!iso) {
       return null;
