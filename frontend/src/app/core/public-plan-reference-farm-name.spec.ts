@@ -42,6 +42,14 @@ describe('localizePublicPlanReferenceFarmName', () => {
     expect(name).toBe('Ludhiana, Punjab');
   });
 
+  it('falls back to API name when coordinates are missing', () => {
+    const name = localizePublicPlanReferenceFarmName(
+      { name: 'Test Farm', region: 'jp' },
+      catalogInstant('ja')
+    );
+    expect(name).toBe('Test Farm');
+  });
+
   it('falls back to API name when coordinates are unknown', () => {
     const name = localizePublicPlanReferenceFarmName(
       { name: 'Custom Farm', latitude: 0, longitude: 0, region: 'jp' },

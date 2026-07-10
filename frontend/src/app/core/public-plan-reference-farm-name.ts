@@ -7,10 +7,18 @@ export type PublicPlanReferenceFarmNameTranslate = (key: string) => string;
  * Falls back to the API name when no catalog entry exists.
  */
 export function localizePublicPlanReferenceFarmName(
-  farm: { name: string; latitude: number; longitude: number; region?: string | null },
+  farm: { name: string; latitude?: number; longitude?: number; region?: string | null },
   instant: PublicPlanReferenceFarmNameTranslate
 ): string {
-  const slug = resolveReferenceFarmSlug(farm);
+  if (!Number.isFinite(farm.latitude) || !Number.isFinite(farm.longitude)) {
+    return farm.name;
+  }
+  const slug = resolveReferenceFarmSlug({
+    name: farm.name,
+    latitude: farm.latitude,
+    longitude: farm.longitude,
+    region: farm.region
+  });
   if (!slug) {
     return farm.name;
   }
