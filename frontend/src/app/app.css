@@ -121,6 +121,35 @@ a.btn:focus-visible {
   cursor: not-allowed;
 }
 
+.btn-lg {
+  padding: var(--space-5) var(--space-10);
+  font-size: var(--font-size-xl);
+}
+
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  color: var(--color-primary-hover);
+}
+
+.btn-link:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
 /* ============================================
    Cards（styles.css トークンで統一）
    ============================================ */
