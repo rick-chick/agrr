@@ -192,6 +192,11 @@
       "generic": "An error occurred"
     }
   },
+  "masters": {
+    "load_error": {
+      "retry": "Reload"
+    }
+  },
   "contact_form": {
     "name": "Name",
     "email": "Email",
@@ -1192,6 +1197,9 @@
       "nav_next_week": "Next week",
       "nav_today": "This week",
       "week_label": "{{start}} – {{end}}",
+      "general_label": "General tasks",
+      "fertilizer_label": "Fertilizer",
+      "fertilizer_empty": "No fertilizer tasks scheduled",
       "unscheduled_title": "Unscheduled tasks",
       "no_schedules": "No task schedule has been generated yet.",
       "status": {
@@ -1519,6 +1527,9 @@
     }
   },
   "pesticides": {
+    "errors": {
+      "invalid_id": "Invalid pesticide ID."
+    },
     "undo": {
       "toast": "{{name}} was deleted. You can undo this action."
     },
@@ -2271,6 +2282,9 @@
     }
   },
   "fertilizes": {
+    "errors": {
+      "invalid_id": "Invalid fertilizer ID."
+    },
     "undo": {
       "toast": "{{name}} was deleted. You can undo this action."
     },

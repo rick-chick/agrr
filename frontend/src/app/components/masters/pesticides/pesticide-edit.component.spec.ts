@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
@@ -202,5 +202,69 @@ describe('PesticideEditComponent', () => {
     expect(
       fixture.nativeElement.querySelectorAll('.form-card__actions a.btn-secondary')
     ).toHaveLength(0);
+  });
+
+  it('shows i18n load error panel with back link and retry on API failure', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pesticides: { index: { title: 'Pesticides' } },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    translate.use('en');
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      saving: false,
+      error: 'common.api_error.not_found',
+      pendingErrorFlash: null,
+      formData: {
+        name: '',
+        active_ingredient: null,
+        description: null,
+        crop_id: 0,
+        pest_id: 0,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.master-load-error')).toBeTruthy();
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/pesticides');
+  });
+
+  it('reloads edit form when retry is clicked after load error', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pesticides: { index: { title: 'Pesticides' } },
+      'common.api_error.generic': 'An error occurred',
+      'masters.load_error.retry': 'Reload'
+    });
+    translate.use('en');
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      saving: false,
+      error: 'common.api_error.generic',
+      pendingErrorFlash: null,
+      formData: {
+        name: '',
+        active_ingredient: null,
+        description: null,
+        crop_id: 0,
+        pest_id: 0,
+        region: null
+      }
+    };
+    fixture.detectChanges();
+
+    mockLoadUseCase.execute.mockClear();
+    fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
+
+    expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ pesticideId: 123 });
   });
 });

@@ -13,6 +13,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 
 const initialControl: FertilizeDetailViewState = {
   loading: true,
@@ -24,13 +25,20 @@ const initialControl: FertilizeDetailViewState = {
 @Component({
   selector: 'app-fertilize-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...FERTILIZE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
+      } @else if (control.error) {
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/fertilizes']"
+          backLabelKey="fertilizes.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.fertilize) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.fertilize.name }}</h1>
@@ -114,14 +122,19 @@ export class FertilizeDetailComponent implements FertilizeDetailView, OnInit {
     this.presenter.setView(this);
     const fertilizeId = Number(this.route.snapshot.paramMap.get('id'));
     if (!fertilizeId) {
-      this.control = { ...initialControl, loading: false, error: 'Invalid fertilize id.' };
+      this.control = { ...initialControl, loading: false, error: 'fertilizes.errors.invalid_id' };
       return;
     }
     this.load(fertilizeId);
   }
 
+  reload(): void {
+    const fertilizeId = Number(this.route.snapshot.paramMap.get('id'));
+    if (fertilizeId) this.load(fertilizeId);
+  }
+
   load(fertilizeId: number): void {
-    this.control = { ...this.control, loading: true };
+    this.control = { ...this.control, loading: true, error: null };
     this.useCase.execute({ fertilizeId });
   }
 }

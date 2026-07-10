@@ -8,7 +8,6 @@ import { DeletePesticideSuccessDto } from '../../usecase/pesticides/delete-pesti
 import { ListRefreshBus } from '../../core/list-refresh/list-refresh-bus.service';
 import { LIST_REFRESH_CHANNEL } from '../../core/list-refresh/list-refresh-keys';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
-import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 
 @Injectable()
 export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, DeletePesticideOutputPort {
@@ -35,8 +34,8 @@ export class PesticideDetailPresenter implements LoadPesticideDetailOutputPort, 
     this.view.control = {
       ...this.view.control,
       loading: false,
-      error: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      error: dto.message,
+      pendingErrorFlash: null
     };
   }
 

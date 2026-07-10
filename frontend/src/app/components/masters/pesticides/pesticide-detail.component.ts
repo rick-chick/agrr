@@ -16,6 +16,7 @@ import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingErrorFlashViewEffects } from '../../../core/view-effects/pending-error-flash-view.effects';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 
 const initialControl: PesticideDetailViewState = {
   loading: true,
@@ -28,13 +29,20 @@ const initialControl: PesticideDetailViewState = {
 @Component({
   selector: 'app-pesticide-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent],
   providers: [...PESTICIDE_DETAIL_PROVIDERS],
   template: `
     <main class="page-main">
       <app-master-context-header [crumbs]="contextCrumbs" />
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
+      } @else if (control.error) {
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/pesticides']"
+          backLabelKey="pesticides.index.title"
+          (retry)="reload()"
+        />
       } @else if (control.pesticide) {
         <section class="detail-card" aria-labelledby="detail-heading">
           <h1 id="detail-heading" class="detail-card__title">{{ control.pesticide.name }}</h1>
@@ -121,7 +129,7 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('pesticides.errors.invalid_id')
+        error: 'pesticides.errors.invalid_id'
       };
       return;
     }
@@ -139,7 +147,7 @@ export class PesticideDetailComponent implements PesticideDetailView, OnInit {
   }
 
   load(pesticideId: number): void {
-    this.control = { ...this.control, loading: true };
+    this.control = { ...this.control, loading: true, error: null };
     this.useCase.execute({ pesticideId });
   }
 
