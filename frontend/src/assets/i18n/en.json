@@ -1733,6 +1733,7 @@
       "name": "Task Name",
       "description": "Description",
       "time_per_sqm": "Time per ㎡",
+      "hours_suffix": "hours/㎡",
       "weather_dependency": "Weather Dependency",
       "weather_dependency_low": "Low",
       "weather_dependency_medium": "Medium",

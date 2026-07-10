@@ -210,6 +210,7 @@
       "name": "कार्य का नाम",
       "description": "विवरण",
       "time_per_sqm": "प्रति वर्ग मीटर समय",
+      "hours_suffix": "घंटे/㎡",
       "weather_dependency": "मौसम निर्भरता",
       "weather_dependency_low": "कम",
       "weather_dependency_medium": "मध्यम",
