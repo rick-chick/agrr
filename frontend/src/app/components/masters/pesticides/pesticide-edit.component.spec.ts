@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
@@ -205,6 +205,14 @@ describe('PesticideEditComponent', () => {
   });
 
   it('shows i18n load error panel with back link and retry on API failure', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pesticides: { index: { title: 'Pesticides' } },
+      'common.api_error.not_found': 'Resource not found',
+      'masters.load_error.retry': 'Reload'
+    });
+    translate.use('en');
+    fixture.detectChanges();
     component.control = {
       loading: false,
       saving: false,
@@ -230,6 +238,14 @@ describe('PesticideEditComponent', () => {
   });
 
   it('reloads edit form when retry is clicked after load error', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      pesticides: { index: { title: 'Pesticides' } },
+      'common.api_error.generic': 'An error occurred',
+      'masters.load_error.retry': 'Reload'
+    });
+    translate.use('en');
+    fixture.detectChanges();
     component.control = {
       loading: false,
       saving: false,

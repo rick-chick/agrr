@@ -11,8 +11,10 @@ describe('PesticideDetailComponent', () => {
   let component: PesticideDetailComponent;
   let fixture: ComponentFixture<PesticideDetailComponent>;
   let translate: TranslateService;
+  let loadExecute: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    loadExecute = vi.fn();
     await TestBed.configureTestingModule({
       imports: [PesticideDetailComponent, TranslateModule.forRoot()],
       providers: [
@@ -22,14 +24,14 @@ describe('PesticideDetailComponent', () => {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: { get: () => '1' } } }
         },
-        { provide: LoadPesticideDetailUseCase, useValue: { execute: vi.fn() } },
+        { provide: LoadPesticideDetailUseCase, useValue: { execute: loadExecute } },
         { provide: DeletePesticideUseCase, useValue: { execute: vi.fn() } }
       ]
     })
       .overrideComponent(PesticideDetailComponent, {
         set: {
           providers: [
-            { provide: LoadPesticideDetailUseCase, useValue: { execute: vi.fn() } },
+            { provide: LoadPesticideDetailUseCase, useValue: { execute: loadExecute } },
             { provide: DeletePesticideUseCase, useValue: { execute: vi.fn() } }
           ]
         }
@@ -173,7 +175,6 @@ describe('PesticideDetailComponent', () => {
   });
 
   it('reloads detail when retry is clicked after load error', () => {
-    const loadUseCase = TestBed.inject(LoadPesticideDetailUseCase) as { execute: ReturnType<typeof vi.fn> };
     fixture.detectChanges();
     component.control = {
       loading: false,
@@ -184,9 +185,9 @@ describe('PesticideDetailComponent', () => {
     };
     fixture.detectChanges();
 
-    loadUseCase.execute.mockClear();
+    loadExecute.mockClear();
     fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
 
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ pesticideId: 1 });
+    expect(loadExecute).toHaveBeenCalledWith({ pesticideId: 1 });
   });
 });

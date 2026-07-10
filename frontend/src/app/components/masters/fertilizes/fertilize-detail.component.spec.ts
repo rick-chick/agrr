@@ -10,8 +10,10 @@ import { FertilizeDetailPresenter } from '../../../usecase/fertilizes/fertilize-
 describe('FertilizeDetailComponent', () => {
   let fixture: ComponentFixture<FertilizeDetailComponent>;
   let translate: TranslateService;
+  let loadExecute: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    loadExecute = vi.fn();
     await TestBed.configureTestingModule({
       imports: [FertilizeDetailComponent, TranslateModule.forRoot()],
       providers: [
@@ -21,13 +23,13 @@ describe('FertilizeDetailComponent', () => {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: { get: () => '1' } } }
         },
-        { provide: LoadFertilizeDetailUseCase, useValue: { execute: vi.fn() } }
+        { provide: LoadFertilizeDetailUseCase, useValue: { execute: loadExecute } }
       ]
     })
       .overrideComponent(FertilizeDetailComponent, {
         set: {
           providers: [
-            { provide: LoadFertilizeDetailUseCase, useValue: { execute: vi.fn() } }
+            { provide: LoadFertilizeDetailUseCase, useValue: { execute: loadExecute } }
           ]
         }
       })
@@ -135,7 +137,6 @@ describe('FertilizeDetailComponent', () => {
   });
 
   it('reloads detail when retry is clicked after load error', () => {
-    const loadUseCase = TestBed.inject(LoadFertilizeDetailUseCase) as { execute: ReturnType<typeof vi.fn> };
     fixture.detectChanges();
     fixture.componentInstance.control = {
       loading: false,
@@ -145,9 +146,9 @@ describe('FertilizeDetailComponent', () => {
     };
     fixture.detectChanges();
 
-    loadUseCase.execute.mockClear();
+    loadExecute.mockClear();
     fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
 
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ fertilizeId: 1 });
+    expect(loadExecute).toHaveBeenCalledWith({ fertilizeId: 1 });
   });
 });

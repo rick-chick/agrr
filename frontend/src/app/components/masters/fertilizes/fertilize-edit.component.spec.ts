@@ -13,19 +13,30 @@ import { AuthService } from '../../../services/auth.service';
 describe('FertilizeEditComponent', () => {
   let component: FertilizeEditComponent;
   let fixture: ComponentFixture<FertilizeEditComponent>;
+  let loadExecute: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    loadExecute = vi.fn();
     await TestBed.configureTestingModule({
       imports: [FertilizeEditComponent, RegionSelectComponent, TranslateModule.forRoot()],
       providers: [
         FertilizeEditPresenter,
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '5' } } } },
-        { provide: LoadFertilizeForEditUseCase, useValue: { execute: vi.fn() } },
+        { provide: LoadFertilizeForEditUseCase, useValue: { execute: loadExecute } },
         { provide: UpdateFertilizeUseCase, useValue: { execute: vi.fn() } },
         { provide: AuthService, useValue: { user: vi.fn(() => ({ admin: true })) } }
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(FertilizeEditComponent, {
+        set: {
+          providers: [
+            { provide: LoadFertilizeForEditUseCase, useValue: { execute: loadExecute } },
+            { provide: UpdateFertilizeUseCase, useValue: { execute: vi.fn() } }
+          ]
+        }
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(FertilizeEditComponent);
     component = fixture.componentInstance;
@@ -78,6 +89,7 @@ describe('FertilizeEditComponent', () => {
       'common.api_error.not_found': 'Resource not found',
       'masters.load_error.retry': 'Reload'
     });
+    translate.use('en');
     component.control = {
       loading: false,
       saving: false,
@@ -106,7 +118,14 @@ describe('FertilizeEditComponent', () => {
   });
 
   it('reloads edit form when retry is clicked after load error', () => {
-    const loadUseCase = TestBed.inject(LoadFertilizeForEditUseCase) as { execute: ReturnType<typeof vi.fn> };
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      fertilizes: { index: { title: 'Fertilizers' } },
+      'common.api_error.generic': 'An error occurred',
+      'masters.load_error.retry': 'Reload'
+    });
+    translate.use('en');
+    fixture.detectChanges();
     component.control = {
       loading: false,
       saving: false,
@@ -124,9 +143,9 @@ describe('FertilizeEditComponent', () => {
     };
     fixture.detectChanges();
 
-    loadUseCase.execute.mockClear();
+    loadExecute.mockClear();
     fixture.nativeElement.querySelector('.master-load-error__retry')?.click();
 
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ fertilizeId: 5 });
+    expect(loadExecute).toHaveBeenCalledWith({ fertilizeId: 5 });
   });
 });
