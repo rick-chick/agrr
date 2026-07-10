@@ -125,4 +125,36 @@ describe('FarmListComponent', () => {
     expect(normalizeText(farmTitles[0].textContent)).toBe('User Farm');
     expect(normalizeText(farmTitles[1].textContent)).toBe('Reference Farm (Reference)');
   });
+
+  it('action buttons use .btn base class with variant modifiers', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      farms: [
+        {
+          id: 1,
+          name: 'User Farm',
+          region: 'jp',
+          latitude: 35.6895,
+          longitude: 139.6917,
+          weather_data_status: 'completed' as const,
+          is_reference: false
+        }
+      ],
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const primary = fixture.nativeElement.querySelector('.section-card__header-actions .btn-primary') as HTMLElement;
+    const secondary = fixture.nativeElement.querySelector('.item-card__actions .btn-secondary') as HTMLElement;
+    const danger = fixture.nativeElement.querySelector('.item-card__actions .btn-danger') as HTMLElement;
+
+    expect(primary).toBeTruthy();
+    expect(secondary).toBeTruthy();
+    expect(danger).toBeTruthy();
+    for (const el of [primary, secondary, danger]) {
+      expect(el.classList.contains('btn')).toBe(true);
+    }
+  });
 });
