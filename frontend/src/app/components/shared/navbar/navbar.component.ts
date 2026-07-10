@@ -15,7 +15,7 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
     <nav class="app-nav" [attr.aria-label]="'nav.main' | translate" [attr.data-menu-open]="isMenuOpen">
       <a class="brand" routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">AGRR</a>
       <button
-        class="menu-toggle"
+        class="btn btn-secondary btn-sm menu-toggle"
         type="button"
         [attr.aria-expanded]="isMenuOpen"
         [attr.aria-label]="isMenuOpen ? ('nav.close_menu' | translate) : ('nav.open_menu' | translate)"
@@ -57,7 +57,7 @@ import { NavDropdownComponent } from '../nav-dropdown/nav-dropdown.component';
           <span class="status">{{ 'status.checking' | translate }}</span>
         } @else if (user) {
           <span class="user-name">{{ displayUserName(user) }}</span>
-          <button class="logout-button" type="button" (click)="logout.emit()">
+          <button class="btn btn-secondary btn-sm logout-button" type="button" (click)="logout.emit()">
             {{ 'nav.logout' | translate }}
           </button>
         } @else {
