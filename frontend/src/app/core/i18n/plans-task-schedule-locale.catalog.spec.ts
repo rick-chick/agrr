@@ -16,7 +16,6 @@ function getNested(obj: JsonRecord, path: string): unknown {
 /** Keys referenced by plan-task-schedule and task-schedule-timeline components. */
 const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.page_title',
-  'plans.task_schedules.page_intro',
   'plans.show.back_to_list',
   'plans.show.open_work',
   'plans.show.nav.aria_label',

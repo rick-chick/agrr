@@ -1,11 +1,13 @@
 .task-schedule-week-nav {
-  margin-bottom: var(--space-4);
+  flex: 1 1 18rem;
+  min-width: min(100%, 18rem);
+  margin-bottom: 0;
 }
 
 .task-schedule-week-nav__modes {
   display: flex;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-3);
+  gap: var(--space-1);
+  margin: 0;
   padding: 0;
   overflow-x: auto;
 }
