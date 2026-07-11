@@ -76,7 +76,9 @@ describe('TaskScheduleWeekNavComponent', () => {
   it('highlights plan mode as active by default', () => {
     detect();
     expect(
-      fixture.nativeElement.querySelector('.task-schedule-week-nav__mode')?.classList.contains('active')
+      fixture.nativeElement.querySelector('.task-schedule-week-nav__mode--plan')?.classList.contains(
+        'task-schedule-week-nav__mode--active'
+      )
     ).toBe(true);
   });
 
@@ -84,8 +86,11 @@ describe('TaskScheduleWeekNavComponent', () => {
     component.viewMode = 'week';
     detect();
 
-    const weekMode = fixture.nativeElement.querySelectorAll('.task-schedule-week-nav__mode')[1];
-    expect(weekMode?.classList.contains('active')).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('.task-schedule-week-nav__mode--week')?.classList.contains(
+        'task-schedule-week-nav__mode--active'
+      )
+    ).toBe(true);
   });
 
   it('hides week navigation controls in plan mode', () => {
@@ -112,7 +117,7 @@ describe('TaskScheduleWeekNavComponent', () => {
     component.viewModeChange.subscribe(spy);
 
     (
-      fixture.nativeElement.querySelectorAll('.task-schedule-week-nav__mode')[1] as HTMLButtonElement
+      fixture.nativeElement.querySelector('.task-schedule-week-nav__mode--week') as HTMLButtonElement
     ).click();
     detect();
 

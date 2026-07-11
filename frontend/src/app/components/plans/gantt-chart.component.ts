@@ -86,7 +86,7 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
         @if (isMobileLayout) {
           <div class="gantt-action-bar__primary-actions">
             <button
-              class="btn btn-secondary btn-sm btn--icon gantt-action-bar__crop-primary"
+              class="action-button action-button--icon gantt-action-bar__crop-primary"
               type="button"
               (click)="mobileActionsMenu.closeMenu(); toggleCropPalette()"
               [class.active]="isCropPaletteOpen"
@@ -94,11 +94,11 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
                 (isCropPaletteOpen ? 'js.gantt.crop_palette_cancel' : 'js.gantt.add_crop_button') | translate
               ">
               @if (!isCropPaletteOpen) {
-                <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="action-button__icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
                 </svg>
               } @else {
-                <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="action-button__icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     fill="currentColor"
                     d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -115,7 +115,7 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
           </div>
         } @else {
           <button
-            class="btn btn-secondary btn-sm"
+            class="action-button"
             type="button"
             (click)="toggleCropPalette()"
             [class.active]="isCropPaletteOpen">
@@ -126,7 +126,7 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
             }
           </button>
           <button
-            class="btn btn-secondary btn-sm"
+            class="action-button"
             type="button"
             (click)="toggleFieldForm()"
             [class.active]="fieldFormVisible">
@@ -139,13 +139,13 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
         }
         <div class="gantt-range-controls">
           <button
-            class="btn btn-secondary btn-sm"
-            [class.btn--icon]="isMobileLayout"
+            class="range-button"
+            [class.range-button--icon]="isMobileLayout"
             type="button"
             (click)="shiftVisibleRange(-1)"
             [attr.aria-label]="isMobileLayout ? ('plans.gantt.range.prev_month' | translate) : null">
             @if (isMobileLayout) {
-              <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="range-button__icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   fill="currentColor"
                   d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
@@ -158,13 +158,13 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
             <strong class="gantt-range-label__value">{{ visibleRangeLabel || '—' }}</strong>
           </div>
           <button
-            class="btn btn-secondary btn-sm"
-            [class.btn--icon]="isMobileLayout"
+            class="range-button"
+            [class.range-button--icon]="isMobileLayout"
             type="button"
             (click)="shiftVisibleRange(1)"
             [attr.aria-label]="isMobileLayout ? ('plans.gantt.range.next_month' | translate) : null">
             @if (isMobileLayout) {
-              <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="range-button__icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   fill="currentColor"
                   d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
@@ -183,7 +183,7 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
             <div class="crop-list">
               @for (crop of data!.data.available_crops!; track crop.id) {
                 <button
-                  class="btn btn-white btn-sm crop-card"
+                  class="crop-card"
                   type="button"
                   [class.selected]="selectedCrop?.id === crop.id"
                   (click)="selectCrop(crop)">
@@ -221,7 +221,7 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
               [placeholder]="'js.gantt.field_form_area_placeholder' | translate" />
           </div>
           <button
-            class="btn btn-primary btn-sm"
+            class="action-button"
             type="button"
             (click)="confirmAddField()"
             [disabled]="isFieldFormLoading || !newFieldName || !newFieldArea">
@@ -245,7 +245,7 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
                 </span>
                 @if (group.cultivations.length === 0) {
                   <button
-                    class="btn btn-danger btn-sm gantt-field-legend__delete"
+                    class="gantt-field-legend__delete"
                     type="button"
                     (click)="confirmRemoveField(group)">
                     {{ 'plans.gantt.mobile.field_legend_delete' | translate }}

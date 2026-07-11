@@ -4,16 +4,49 @@
 
 .task-schedule-week-nav__modes {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-4);
   margin: 0 0 var(--space-3);
   padding: 0;
+  border-bottom: 1px solid var(--color-divider);
   overflow-x: auto;
 }
 
 .task-schedule-week-nav__mode {
   flex: 0 1 auto;
   min-width: max-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-1);
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.task-schedule-week-nav__mode:hover {
+  color: var(--color-text);
+}
+
+.task-schedule-week-nav__mode--active {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold, 600);
+  border-bottom-color: var(--color-primary);
+}
+
+.task-schedule-week-nav__mode:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 1px;
 }
 
 .task-schedule-week-nav__week-controls {
@@ -47,7 +80,19 @@
 }
 
 .task-schedule-week-nav__chip {
-  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.task-schedule-week-nav__chip--active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
 }
 
 .task-schedule-week-nav__chip:focus-visible,

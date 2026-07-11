@@ -22,7 +22,7 @@ test.describe('waitForPageStable spin probe', () => {
       <app-farm-list>
         <main class="page-main">
           <section class="section-card">
-            <div class="section-card__header-actions"><a class="btn btn-primary">New</a></div>
+            <div class="section-card__header-actions"><a class="btn-primary">New</a></div>
             <ul class="card-list">
               <li class="card-list__item"><article class="item-card">Farm</article></li>
             </ul>

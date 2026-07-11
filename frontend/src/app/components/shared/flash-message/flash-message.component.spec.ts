@@ -53,11 +53,6 @@ describe('FlashMessageComponent', () => {
     expect(buttons[0]?.getAttribute('aria-label')).toBe('Close');
   });
 
-  it('uses btn-link on the close action', () => {
-    const button = fixture.nativeElement.querySelector('.flash-message button');
-    expect(button?.classList.contains('btn-link')).toBe(true);
-  });
-
   it('removes the message when close is clicked', () => {
     const button = fixture.nativeElement.querySelector('.flash-message button');
     button?.click();

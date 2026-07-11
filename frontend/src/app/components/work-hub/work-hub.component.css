@@ -31,6 +31,9 @@
 .work-hub__farm-btn {
   width: 100%;
   text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 
 .work-hub__farm-btn:disabled {

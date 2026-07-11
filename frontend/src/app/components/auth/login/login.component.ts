@@ -35,7 +35,7 @@ const DEV_MOCK_LOGIN_CSS: Record<DevMockLoginUser, string> = {
       <h1>{{ 'auth.login.title' | translate }}</h1>
       <p>{{ 'auth.login.subtitle' | translate }}</p>
       <form class="google-oauth-form" method="post" [action]="googleOAuthStartUrl">
-        <button type="submit" class="btn btn-primary">
+        <button type="submit" class="login-button">
           {{ 'auth.login.google_button' | translate }}
         </button>
       </form>
