@@ -65,7 +65,7 @@ export class PublicPlanResultsPresenter implements LoadPublicPlanResultsOutputPo
       error: dto.message,
       data: null,
       pendingSuccessFlash: null,
-      pendingErrorFlash
+      pendingErrorFlash: null
     };
   }
 }

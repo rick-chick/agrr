@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { LoadPublicPlanResultsInputDto } from './load-public-plan-results.dtos';
 import { LoadPublicPlanResultsInputPort } from './load-public-plan-results.input-port';
 import {
@@ -18,8 +19,7 @@ export class LoadPublicPlanResultsUseCase implements LoadPublicPlanResultsInputP
   execute(dto: LoadPublicPlanResultsInputDto): void {
     this.planGateway.getPublicPlanData(dto.planId).subscribe({
       next: (data) => this.outputPort.present(data),
-      error: (err: Error) =>
-        this.outputPort.onError({ message: err?.message ?? 'Unknown error' })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }

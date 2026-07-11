@@ -53,7 +53,7 @@ const initialControl: PublicPlanResultsViewState = {
             <p>{{ 'public_plans.results.loading_data' | translate }}</p>
           </div>
         } @else if (control.error) {
-          <p class="error-message">{{ control.error }}</p>
+          <p class="error-message">{{ control.error | translate }}</p>
         } @else if (control.data) {
           <!-- 計画完成サマリー（.gantt-results-header）は意図的に非表示。ngx-translate は %{count} 非対応のため生表示になっていた。 -->
 

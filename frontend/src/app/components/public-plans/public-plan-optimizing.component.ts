@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { PublicPlanOptimizingView, PublicPlanOptimizingViewState } from './public-plan-optimizing.view';
 import { SubscribePublicPlanOptimizationUseCase } from '../../usecase/public-plans/subscribe-public-plan-optimization.usecase';
@@ -17,6 +17,7 @@ import {
   PUBLIC_PLAN_OPTIMIZING_PROVIDERS
 } from '../../usecase/public-plans/public-plan-optimizing.providers';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
+import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 
@@ -48,7 +49,7 @@ const initialControl: PublicPlanOptimizingViewState = {
             }
           </div>
           <div class="compact-subtitle">
-            {{ farm?.name }} · {{ 'public_plans.optimizing.crops_count' | translate: { count: selectedCropsCount } }}
+            {{ displayFarmName(farm) }} · {{ 'public_plans.optimizing.crops_count' | translate: { count: selectedCropsCount } }}
           </div>
         </div>
 
@@ -115,6 +116,7 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   private readonly useCase = inject(SubscribePublicPlanOptimizationUseCase);
   private readonly presenter = inject(PublicPlanOptimizingPresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
+  private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
 
@@ -132,6 +134,16 @@ export class PublicPlanOptimizingComponent implements PublicPlanOptimizingView, 
   get farm() {
     return this.publicPlanStore.state.farm;
   }
+
+  displayFarmName(
+    farm: { name: string; latitude: number; longitude: number; region?: string | null } | null | undefined
+  ): string {
+    if (!farm) {
+      return '';
+    }
+    return localizePublicPlanReferenceFarmName(farm, (key) => this.translate.instant(key));
+  }
+
   get selectedCropsCount() {
     return this.publicPlanStore.state.selectedCrops.length;
   }

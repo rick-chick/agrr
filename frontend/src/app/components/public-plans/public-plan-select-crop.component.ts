@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PublicPlanSelectCropView, PublicPlanSelectCropViewState } from './public-plan-select-crop.view';
 import { LoadPublicPlanCropsUseCase } from '../../usecase/public-plans/load-public-plan-crops.usecase';
 import { CreatePublicPlanUseCase } from '../../usecase/public-plans/create-public-plan.usecase';
@@ -14,6 +14,7 @@ import { PublicPlanStore } from '../../services/public-plans/public-plan-store.s
 import { Crop } from '../../domain/crops/crop';
 import { DEFAULT_PUBLIC_PLAN_FARM_SIZE } from '../../domain/public-plans/default-public-plan-farm-size';
 import { findCropByResearchSlug } from '../../domain/public-plans/research-crop-slug';
+import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 
@@ -59,7 +60,7 @@ const initialControl: PublicPlanSelectCropViewState = {
               <div class="enhanced-summary-icon">🌍</div>
               <div class="enhanced-summary-content">
                 <div class="enhanced-summary-label">{{ 'public_plans.select_crop.summary.region' | translate }}</div>
-                <div class="enhanced-summary-value">{{ farm.name }}</div>
+                <div class="enhanced-summary-value">{{ displayFarmName(farm) }}</div>
               </div>
             </div>
           </div>
@@ -140,6 +141,7 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   private readonly resetStateUseCase = inject(ResetPublicPlanCreationStateUseCase);
   private readonly presenter = inject(PublicPlanSelectCropPresenter);
   private readonly publicPlanStore = inject(PublicPlanStore);
+  private readonly translate = inject(TranslateService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   selectedCropIds = new Set<number>();
@@ -159,6 +161,11 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
     }
     return null;
   }
+
+  displayFarmName(farm: { name: string; latitude: number; longitude: number; region?: string | null }): string {
+    return localizePublicPlanReferenceFarmName(farm, (key) => this.translate.instant(key));
+  }
+
   private _control: PublicPlanSelectCropViewState = initialControl;
   get control(): PublicPlanSelectCropViewState {
     return this._control;

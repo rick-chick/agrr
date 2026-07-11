@@ -14,6 +14,7 @@ import { PublicPlanStore } from '../../services/public-plans/public-plan-store.s
 import { Farm } from '../../domain/farms/farm';
 import { resolveReferenceFarmRegion } from '../../core/browser-region';
 import { applyAppLang, mapFarmRegionToAppLang } from '../../core/app-locale';
+import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
 const initialControl: PublicPlanCreateViewState = {
@@ -74,7 +75,7 @@ const initialControl: PublicPlanCreateViewState = {
                     role="button"
                   >
                     <div class="enhanced-card-icon">🌏</div>
-                    <div class="enhanced-card-title">{{ farm.name }}</div>
+                    <div class="enhanced-card-title">{{ displayFarmName(farm) }}</div>
                     <!-- region subtitle intentionally removed: region is auto-detected and not shown to user -->
                   </div>
                 }
@@ -149,6 +150,10 @@ export class PublicPlanCreateComponent implements PublicPlanCreateView, OnInit {
     this.selectedFarm = farm;
     this.publicPlanStore.setFarm(farm);
     this.router.navigate(['/public-plans/select-crop']);
+  }
+
+  displayFarmName(farm: Farm): string {
+    return localizePublicPlanReferenceFarmName(farm, (key) => this.translate.instant(key));
   }
 
   private loadFarms(region: string): void {
