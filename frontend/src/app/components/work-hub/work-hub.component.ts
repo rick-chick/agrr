@@ -11,11 +11,12 @@ import { WORK_HUB_PROVIDERS } from '../../usecase/work-hub/work-hub.providers';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPendingSuccessFlashViewEffects } from '../../core/view-effects/pending-success-flash-view.effects';
 import { applyPendingNavigationViewEffects } from '../../core/view-effects/pending-navigation-view.effects';
-import { formatIsoDateForDisplay } from '../../core/format-display-date';
+import { formatIsoDayForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
 import {
   buildCrossFarmScheduleFilterOptions,
   filterCrossFarmScheduleRows
 } from '../../domain/work-schedule/filter-cross-farm-schedule';
+import { groupCrossFarmScheduleRowsByMonth } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
 import type { CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
 import { WorkHubView, WorkHubViewState } from './work-hub.view';
 
@@ -97,34 +98,44 @@ const initialControl: WorkHubViewState = {
           @if (!filteredScheduleRows.length) {
             <p class="work-hub__schedule-empty">{{ 'work.hub.schedule_empty' | translate }}</p>
           } @else {
-            <ul class="work-hub__schedule-list" role="list">
-              @for (row of filteredScheduleRows; track row.item.item_id) {
-                <li class="work-hub__schedule-item">
-                  <a
-                    class="work-hub__schedule-link"
-                    [routerLink]="['/plans', row.planId, 'task_schedule']"
-                    [queryParams]="{ field_cultivation_id: row.fieldCultivationId }"
-                  >
-                    <span class="work-hub__schedule-date">{{
-                      formatDate(row.item.scheduled_date!)
-                    }}</span>
-                    <span class="work-hub__schedule-name">{{ row.item.name }}</span>
-                    <span class="work-hub__schedule-meta">{{
-                      'work.hub.schedule_row_meta'
-                        | translate
-                          : {
-                              farm: row.farmName,
-                              field: row.fieldName,
-                              crop: row.cropName
-                            }
-                    }}</span>
-                    <span class="work-hub__schedule-status">{{
-                      statusLabelKey(row) | translate
-                    }}</span>
-                  </a>
-                </li>
-              }
-            </ul>
+            @for (group of scheduleMonthGroups; track group.monthKey) {
+              <section
+                class="work-hub__month-group"
+                [attr.aria-labelledby]="'work-hub-month-' + group.monthKey"
+              >
+                <h3 [id]="'work-hub-month-' + group.monthKey" class="work-hub__month-heading">
+                  {{ formatMonth(group.monthKey) }}
+                </h3>
+                <ul class="work-hub__schedule-grid" role="list">
+                  @for (row of group.rows; track row.item.item_id) {
+                    <li class="work-hub__schedule-item">
+                      <a
+                        class="work-hub__schedule-link"
+                        [routerLink]="['/plans', row.planId, 'task_schedule']"
+                        [queryParams]="{ field_cultivation_id: row.fieldCultivationId }"
+                      >
+                        <span class="work-hub__schedule-date">{{
+                          formatDay(row.item.scheduled_date!)
+                        }}</span>
+                        <span class="work-hub__schedule-name">{{ row.item.name }}</span>
+                        <span class="work-hub__schedule-meta">{{
+                          'work.hub.schedule_row_meta'
+                            | translate
+                              : {
+                                  farm: row.farmName,
+                                  field: row.fieldName,
+                                  crop: row.cropName
+                                }
+                        }}</span>
+                        <span class="work-hub__schedule-status">{{
+                          statusLabelKey(row) | translate
+                        }}</span>
+                      </a>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
           }
         }
       </section>
@@ -238,6 +249,10 @@ export class WorkHubComponent implements WorkHubView, OnInit {
     return filterCrossFarmScheduleRows(this.control.scheduleRows, this.control.scheduleFilter);
   }
 
+  get scheduleMonthGroups() {
+    return groupCrossFarmScheduleRowsByMonth(this.filteredScheduleRows);
+  }
+
   private _control: WorkHubViewState = initialControl;
   get control(): WorkHubViewState {
     return this._control;
@@ -289,8 +304,12 @@ export class WorkHubComponent implements WorkHubView, OnInit {
     };
   }
 
-  formatDate(iso: string): string {
-    return formatIsoDateForDisplay(iso, this.translate.currentLang);
+  formatMonth(isoYm: string): string {
+    return formatIsoMonthForDisplay(isoYm, this.translate.currentLang);
+  }
+
+  formatDay(iso: string): string {
+    return formatIsoDayForDisplay(iso, this.translate.currentLang);
   }
 
   statusLabelKey(row: CrossFarmScheduleRow): string {

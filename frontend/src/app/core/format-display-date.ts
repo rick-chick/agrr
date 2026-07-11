@@ -76,6 +76,24 @@ export function formatIsoDateTimeForDisplay(value: string, lang: string): string
   }).format(date);
 }
 
+/** Formats the day-of-month from YYYY-MM-DD for display in the user's app language. */
+export function formatIsoDayForDisplay(iso: string, lang: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) {
+    return iso;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+  return new Intl.DateTimeFormat(appLangToBcp47(lang), {
+    day: 'numeric'
+  }).format(date);
+}
+
 /** Formats YYYY-MM for display in the user's app language. */
 export function formatIsoMonthForDisplay(isoYm: string, lang: string): string {
   const match = /^(\d{4})-(\d{2})$/.exec(isoYm);

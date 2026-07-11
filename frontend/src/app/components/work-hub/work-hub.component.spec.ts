@@ -191,6 +191,74 @@ describe('WorkHubComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('追肥');
   });
 
+  it('groups schedule cards by month with day-only labels inside cards', async () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      scheduleRows: [
+        {
+          item: {
+            item_id: 1,
+            name: '除草',
+            scheduled_date: '2026-06-10',
+            status: 'planned'
+          } as WorkHubViewState['scheduleRows'][number]['item'],
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          planName: 'Plan A',
+          fieldName: '圃場1',
+          fieldCultivationId: 101,
+          cropName: 'トマト'
+        },
+        {
+          item: {
+            item_id: 2,
+            name: '追肥',
+            scheduled_date: '2026-06-12',
+            status: 'planned'
+          } as WorkHubViewState['scheduleRows'][number]['item'],
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          planName: 'Plan A',
+          fieldName: '圃場1',
+          fieldCultivationId: 101,
+          cropName: 'トマト'
+        },
+        {
+          item: {
+            item_id: 3,
+            name: '収穫',
+            scheduled_date: '2026-07-05',
+            status: 'planned'
+          } as WorkHubViewState['scheduleRows'][number]['item'],
+          farmId: 2,
+          farmName: 'Farm B',
+          planId: 10,
+          planName: 'Plan B',
+          fieldName: '圃場2',
+          fieldCultivationId: 201,
+          cropName: 'ニンジン'
+        }
+      ]
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const monthGroups = fixture.nativeElement.querySelectorAll('.work-hub__month-group');
+    expect(monthGroups).toHaveLength(2);
+    expect(monthGroups[0].querySelector('.work-hub__month-heading')?.textContent).toContain('2026年6月');
+    expect(monthGroups[1].querySelector('.work-hub__month-heading')?.textContent).toContain('2026年7月');
+    expect(monthGroups[0].querySelectorAll('.work-hub__schedule-item')).toHaveLength(2);
+    expect(monthGroups[1].querySelectorAll('.work-hub__schedule-item')).toHaveLength(1);
+
+    const dateLabels = [...fixture.nativeElement.querySelectorAll('.work-hub__schedule-date')].map(
+      (el: Element) => el.textContent?.trim()
+    );
+    expect(dateLabels).toEqual(['10日', '12日', '5日']);
+    expect(fixture.nativeElement.textContent).not.toMatch(/2026年6月10日/);
+  });
+
   it('ensures plan when a farm is selected', () => {
     fixture.detectChanges();
     component.selectFarm({

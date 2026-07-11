@@ -100,9 +100,24 @@
   border-radius: var(--radius-lg);
 }
 
-.work-hub__schedule-list {
-  display: flex;
-  flex-direction: column;
+.work-hub__month-group {
+  margin-bottom: var(--space-4);
+}
+
+.work-hub__month-group:last-child {
+  margin-bottom: 0;
+}
+
+.work-hub__month-heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-secondary);
+}
+
+.work-hub__schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
   gap: var(--space-2);
   margin: 0;
   padding: 0;
@@ -111,14 +126,16 @@
 
 .work-hub__schedule-link {
   display: grid;
-  grid-template-columns: minmax(5.5rem, auto) 1fr;
-  gap: var(--space-1) var(--space-3);
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-2);
   padding: var(--space-3);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: inherit;
   text-decoration: none;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .work-hub__schedule-link:hover {
@@ -127,8 +144,12 @@
 
 .work-hub__schedule-date {
   grid-row: span 2;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  align-self: start;
+  min-width: 2rem;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+  line-height: 1.2;
 }
 
 .work-hub__schedule-name {
