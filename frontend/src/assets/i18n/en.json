@@ -1299,7 +1299,6 @@
     },
     "task_schedules": {
       "page_title": "Task schedule — {{name}}",
-      "page_intro": "Tasks and dates are calculated from your planting plan cultivation periods. Check today's work under Work Records.",
       "empty_hint": "Add crops to your plan to generate task schedules. Use the Cropping plan tab above to review your plan.",
       "empty_ready_no_fields": "Task schedules are ready, but there are no fields to display. Check fields and crops on the Cropping plan tab.",
       "timeline_generated_at": "Generated: {{datetime}}",
