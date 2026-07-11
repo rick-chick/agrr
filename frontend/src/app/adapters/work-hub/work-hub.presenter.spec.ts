@@ -3,6 +3,22 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { WorkHubPresenter } from './work-hub.presenter';
 import { WorkHubViewState } from '../../components/work-hub/work-hub.view';
 
+function baseControl(overrides: Partial<WorkHubViewState> = {}): WorkHubViewState {
+  return {
+    loading: true,
+    submitting: false,
+    error: null,
+    farms: [],
+    scheduleLoading: true,
+    scheduleError: null,
+    scheduleRows: [],
+    scheduleFilter: { farmId: null, fieldCultivationId: null },
+    pendingSuccessFlash: null,
+    pendingNavigation: null,
+    ...overrides
+  };
+}
+
 describe('WorkHubPresenter', () => {
   let presenter: WorkHubPresenter;
   let lastControl: WorkHubViewState;
@@ -13,14 +29,7 @@ describe('WorkHubPresenter', () => {
     });
 
     presenter = TestBed.inject(WorkHubPresenter);
-    lastControl = {
-      loading: true,
-      submitting: false,
-      error: null,
-      farms: [],
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+    lastControl = baseControl();
     presenter.setView({
       get control() {
         return lastControl;
@@ -45,34 +54,25 @@ describe('WorkHubPresenter', () => {
       ]
     });
 
-    expect(lastControl).toEqual({
-      loading: false,
-      submitting: false,
-      error: null,
-      farms: [
-        {
-          farmId: 1,
-          farmName: 'Farm A',
-          fieldCount: 2,
-          totalArea: 100,
-          hasValidFields: true,
-          planId: 9
-        }
-      ],
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    });
+    expect(lastControl).toEqual(
+      baseControl({
+        loading: false,
+        farms: [
+          {
+            farmId: 1,
+            farmName: 'Farm A',
+            fieldCount: 2,
+            totalArea: 100,
+            hasValidFields: true,
+            planId: 9
+          }
+        ]
+      })
+    );
   });
 
   it('sets submitting when ensure begins', () => {
-    lastControl = {
-      loading: false,
-      submitting: false,
-      error: 'old',
-      farms: [],
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+    lastControl = baseControl({ loading: false, error: 'old' });
 
     presenter.beginEnsure();
 
@@ -82,14 +82,7 @@ describe('WorkHubPresenter', () => {
   });
 
   it('queues navigation to work screen on ensure success without pending success flash when plan existed', () => {
-    lastControl = {
-      loading: false,
-      submitting: true,
-      error: null,
-      farms: [],
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+    lastControl = baseControl({ loading: false, submitting: true });
 
     presenter.onSuccess({ planId: 42, created: false });
 
@@ -100,14 +93,7 @@ describe('WorkHubPresenter', () => {
   });
 
   it('queues pending success flash and navigation when a new plan was created', () => {
-    lastControl = {
-      loading: false,
-      submitting: true,
-      error: null,
-      farms: [],
-      pendingSuccessFlash: null,
-      pendingNavigation: null
-    };
+    lastControl = baseControl({ loading: false, submitting: true });
 
     presenter.onSuccess({ planId: 99, created: true });
 
@@ -118,5 +104,43 @@ describe('WorkHubPresenter', () => {
     expect(lastControl.pendingNavigation).toEqual({
       commands: ['/plans', 99, 'work']
     });
+  });
+
+  it('maps cross-farm schedule rows to view control', () => {
+    lastControl = baseControl({ loading: false, scheduleLoading: true });
+
+    presenter.presentSchedule({
+      rows: [
+        {
+          item: {
+            item_id: 1,
+            name: 'Weeding',
+            scheduled_date: '2026-06-10',
+            status: 'planned'
+          } as WorkHubViewState['scheduleRows'][number]['item'],
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          planName: 'Plan A',
+          fieldName: 'Field 1',
+          fieldCultivationId: 101,
+          cropName: 'Tomato'
+        }
+      ]
+    });
+
+    expect(lastControl.scheduleLoading).toBe(false);
+    expect(lastControl.scheduleRows).toHaveLength(1);
+    expect(lastControl.scheduleError).toBeNull();
+  });
+
+  it('maps schedule load errors to view control', () => {
+    lastControl = baseControl({ loading: false, scheduleLoading: true });
+
+    presenter.onScheduleError({ message: 'common.api_error.generic' });
+
+    expect(lastControl.scheduleLoading).toBe(false);
+    expect(lastControl.scheduleError).toBe('common.api_error.generic');
+    expect(lastControl.scheduleRows).toEqual([]);
   });
 });

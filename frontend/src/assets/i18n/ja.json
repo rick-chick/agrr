@@ -2454,7 +2454,15 @@
       "start_recording": "記録を始める",
       "no_fields_warning": "有効な圃場がありません。",
       "register_fields_link": "圃場を登録する",
-      "retry": "再読み込み"
+      "retry": "再読み込み",
+      "schedule_review_title": "作業予定確認",
+      "schedule_review_lead": "すべての農場の作業予定を一列で表示します。農場・圃場で絞り込めます。",
+      "filter_farm": "農場",
+      "filter_field": "圃場",
+      "filter_all_farms": "全農場",
+      "filter_all_fields": "全圃場",
+      "schedule_empty": "表示できる作業予定がありません。",
+      "schedule_row_meta": "{{farm}} · {{field}}（{{crop}}）"
     }
   },
   "status": {
