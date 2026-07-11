@@ -28,6 +28,7 @@ type AgriculturalTasksBundle = {
     required_tools_hint?: string;
   };
   show?: {
+    hours_suffix?: string;
     weather_dependency_low?: string;
     weather_dependency_medium?: string;
     weather_dependency_high?: string;
@@ -72,6 +73,19 @@ describe('agricultural_tasks index and new i18n', () => {
     }
   });
 
+  it('defines show.hours_suffix in ja, en, and in', () => {
+    for (const [name, bundle] of [
+      ['ja', ja],
+      ['en', en],
+      ['in', inLocale]
+    ] as const) {
+      const suffix = tasks(bundle).show?.hours_suffix;
+      expect(suffix, `${name}:show.hours_suffix`).toBeTruthy();
+      expect(typeof suffix, `${name}:show.hours_suffix must be a string`).toBe('string');
+      expect(suffix!.trim().length).toBeGreaterThan(0);
+    }
+  });
+
   it('uses English (not Japanese) for en locale list and create UI strings', () => {
     const t = tasks(en);
     const enStrings = [
@@ -87,6 +101,7 @@ describe('agricultural_tasks index and new i18n', () => {
       t.form?.skill_level_label,
       t.form?.task_type_label,
       t.form?.submit_create,
+      t.show?.hours_suffix,
       t.show?.weather_dependency_low,
       t.show?.skill_level_beginner
     ];
@@ -111,6 +126,7 @@ describe('agricultural_tasks index and new i18n', () => {
       t.form?.submit_create,
       t.form?.region_label,
       t.form?.required_tools_hint,
+      t.show?.hours_suffix,
       t.show?.weather_dependency_low,
       t.show?.skill_level_beginner
     ];

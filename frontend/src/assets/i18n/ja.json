@@ -235,6 +235,7 @@
       "name": "作業名",
       "description": "説明",
       "time_per_sqm": "作業時間",
+      "hours_suffix": "時間/㎡",
       "weather_dependency": "天候依存度",
       "weather_dependency_low": "低",
       "weather_dependency_medium": "中",
