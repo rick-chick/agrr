@@ -5,11 +5,10 @@ import { waitForPageStable } from '../page-stable';
 import {
   assertPageValidity,
   type RouteRow,
-  PUBLIC_PLAN_REDIRECT_TO_NEW,
   expectedPathnameFromResolvedGoto,
 } from '../route-validity';
 import { applyResolvedUrl, type ResolvedCaptureIds } from '../resolve-capture-urls';
-import { loadResolvedCaptureIdsWithBaseline } from '../smoke/smoke-helpers';
+import { loadResolvedCaptureIdsWithBaseline, preparePublicPlanRoute } from '../smoke/smoke-helpers';
 import {
   CAPTURE_LOCALES,
   agentPngFilename,
@@ -75,11 +74,16 @@ captureDescribe('capture-for-agent (Rails + dev session)', () => {
       if (SKIP_CAPTURE_WITH_DEV_SESSION.has(r.pattern)) {
         test.skip(true, 'login routes need logged-out session; keep existing agent-review PNG');
       }
+      if (r.pattern === 'public-plans/select-crop' && resolvedCaptureIds?.entryScheduleFarm == null) {
+        test.skip(true, 'no entry schedule farm resolved');
+      }
       const url =
         resolvedCaptureIds != null ? applyResolvedUrl(r.pattern, r.url, resolvedCaptureIds) : r.url;
-      const pathnameExpect = PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern)
-        ? undefined
-        : expectedPathnameFromResolvedGoto(url);
+      const pathnameExpect = expectedPathnameFromResolvedGoto(url);
+      const seeded = await preparePublicPlanRoute(page, r.pattern, resolvedCaptureIds);
+      if (!seeded) {
+        test.skip(true, 'public plan session seed unavailable');
+      }
 
       for (const locale of CAPTURE_LOCALES) {
         await installCaptureLocale(page, locale);

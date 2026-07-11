@@ -17,6 +17,10 @@ import { findCropByResearchSlug } from '../../domain/public-plans/research-crop-
 import { localizePublicPlanReferenceFarmName } from '../../core/public-plan-reference-farm-name';
 import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { MasterContextCrumb } from '../masters/master-context-header/master-context-crumb';
+import {
+  PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM,
+  PUBLIC_PLAN_WIZARD_STEP_REGION,
+} from '../../domain/public-plans/public-plan-wizard-navigation';
 
 const initialControl: PublicPlanSelectCropViewState = {
   loading: true,
@@ -183,7 +187,10 @@ export class PublicPlanSelectCropComponent implements PublicPlanSelectCropView, 
   ngOnInit(): void {
     const farm = this.farm;
     if (!farm) {
-      this.router.navigate(['/public-plans/new']);
+      void this.router.navigate(['/public-plans/new'], {
+        queryParams: { [PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM]: PUBLIC_PLAN_WIZARD_STEP_REGION },
+        replaceUrl: true,
+      });
       return;
     }
     const pendingCropSlug = this.publicPlanStore.state.pendingCropSlug;

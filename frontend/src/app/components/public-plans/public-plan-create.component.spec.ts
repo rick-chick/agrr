@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PublicPlanCreateComponent } from './public-plan-create.component';
 import { PublicPlanCreateViewState } from './public-plan-create.view';
+import {
+  PUBLIC_PLAN_WIZARD_REDIRECT_MESSAGE_KEY,
+  PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM,
+  PUBLIC_PLAN_WIZARD_STEP_REGION,
+} from '../../domain/public-plans/public-plan-wizard-navigation';
 
 describe('PublicPlanCreateComponent (class-level)', () => {
   let component: any;
@@ -15,6 +20,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
   let route: { snapshot: { queryParamMap: { get: ReturnType<typeof vi.fn> } } };
   let cdr: { detectChanges: ReturnType<typeof vi.fn> };
   let translate: { currentLang: string; defaultLang: string };
+  let flash: { show: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     useCase = { execute: vi.fn() };
@@ -24,6 +30,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     route = { snapshot: { queryParamMap: { get: vi.fn().mockReturnValue(null) } } };
     cdr = { detectChanges: vi.fn() };
     translate = { currentLang: 'ja', defaultLang: 'ja' };
+    flash = { show: vi.fn() };
 
     // Create a plain instance and inject dependencies manually to avoid Angular TestBed complexities.
     component = Object.create(PublicPlanCreateComponent.prototype);
@@ -35,6 +42,7 @@ describe('PublicPlanCreateComponent (class-level)', () => {
     component.route = route;
     component.translate = translate;
     component.cdr = cdr;
+    component.flash = flash;
     component._control = {
       loading: true,
       error: null,
@@ -67,12 +75,32 @@ describe('PublicPlanCreateComponent (class-level)', () => {
   });
 
   it('stores crop query param as pending slug after reset', () => {
-    route.snapshot.queryParamMap.get.mockReturnValue('tomato');
+    route.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+      key === 'crop' ? 'tomato' : null
+    );
 
     PublicPlanCreateComponent.prototype.ngOnInit.call(component);
 
     expect(resetStateUseCase.execute).toHaveBeenCalled();
     expect(publicPlanStore.setPendingCropSlug).toHaveBeenCalledWith('tomato');
+  });
+
+  it('shows flash and clears wizardStep when redirected from select-crop without farm', () => {
+    route.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+      key === PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM ? PUBLIC_PLAN_WIZARD_STEP_REGION : null
+    );
+
+    PublicPlanCreateComponent.prototype.ngOnInit.call(component);
+
+    expect(flash.show).toHaveBeenCalledWith({
+      type: 'info',
+      text: PUBLIC_PLAN_WIZARD_REDIRECT_MESSAGE_KEY,
+    });
+    expect(component.router.navigate).toHaveBeenCalledWith([], {
+      queryParams: { [PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM]: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   });
 
   it('ngOnInit resets state, sets view on presenter and restores selected farm', () => {

@@ -1,5 +1,5 @@
 import type { APIRequestContext } from '@playwright/test';
-import { firstRecordId, pickEntryScheduleCropId } from './shared/entry-schedule-ids-lib.mjs';
+import { pickEntryScheduleCropId } from './shared/entry-schedule-ids-lib.mjs';
 import {
   MASTER_SEGMENTS,
   parseMasterList,
@@ -18,6 +18,14 @@ export type ResolvedCaptureIds = {
   publicPlanId: number | null;
   /** GET /api/v1/public_plans/entry_schedule/farms の参照農場 id（masters/farms とは別） */
   farmId: number | null;
+  /** select-crop 直着地用: entry_schedule 参照農場の実レコード */
+  entryScheduleFarm: {
+    id: number;
+    name: string;
+    region: string;
+    latitude: number;
+    longitude: number;
+  } | null;
   cropId: number | null;
 };
 
@@ -25,16 +33,26 @@ function stripOrigin(base: string): string {
   return base.replace(/\/$/, '');
 }
 
-async function fetchEntryScheduleFarmId(
+async function fetchEntryScheduleFarm(
   api: APIRequestContext,
   base: string,
-): Promise<number | null> {
+): Promise<ResolvedCaptureIds['entryScheduleFarm']> {
   const res = await api.get(`${base}/api/v1/public_plans/entry_schedule/farms`, {
     failOnStatusCode: false,
   });
   if (!res.ok()) return null;
   try {
-    return firstRecordId(await res.json());
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    const found = rows.find((r) => r != null && typeof r === 'object' && r.id != null);
+    if (found == null) return null;
+    return {
+      id: Number(found.id),
+      name: String(found.name ?? ''),
+      region: String(found.region ?? 'jp'),
+      latitude: Number(found.latitude ?? 0),
+      longitude: Number(found.longitude ?? 0),
+    };
   } catch {
     return null;
   }
@@ -93,7 +111,8 @@ export async function buildResolvedCaptureIds(
     /* ignore */
   }
 
-  const farmId = await fetchEntryScheduleFarmId(api, base);
+  const entryScheduleFarm = await fetchEntryScheduleFarm(api, base);
+  const farmId = entryScheduleFarm?.id ?? null;
   let cropId: number | null = null;
   if (farmId != null) {
     cropId = await fetchEntryScheduleCropIdForFarm(api, base, farmId);
@@ -101,7 +120,7 @@ export async function buildResolvedCaptureIds(
 
   const publicPlanId = await probePublicPlanId(api, base);
 
-  return { masters, privatePlanId, publicPlanId, farmId, cropId };
+  return { masters, privatePlanId, publicPlanId, farmId, entryScheduleFarm, cropId };
 }
 
 /** 認証不要の public data が取れる cultivation_plan id を少数試行で探す */

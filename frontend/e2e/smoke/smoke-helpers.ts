@@ -9,6 +9,7 @@ import {
   type ResolvedCaptureIds,
 } from '../resolve-capture-urls';
 import type { RouteRow } from '../route-validity';
+import { seedPublicPlanFarmSession } from '../seed-public-plan-session';
 
 export type Manifest = { routes: RouteRow[] };
 
@@ -94,3 +95,19 @@ export async function getUserOwnedFarmCount(): Promise<number | null> {
 }
 
 export { USER_FARM_LIMIT };
+
+/** select-crop 直着地前に sessionStorage へ farm を投入する */
+export async function preparePublicPlanRoute(
+  page: Page,
+  pattern: string,
+  ids: ResolvedCaptureIds | null,
+): Promise<boolean> {
+  if (pattern !== 'public-plans/select-crop') {
+    return true;
+  }
+  if (ids?.entryScheduleFarm == null) {
+    return false;
+  }
+  await seedPublicPlanFarmSession(page, ids.entryScheduleFarm);
+  return true;
+}
