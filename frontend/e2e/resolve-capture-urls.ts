@@ -1,4 +1,9 @@
 import type { APIRequestContext } from '@playwright/test';
+import {
+  ENTRY_SCHEDULE_FARM_REGIONS,
+  parseFirstPublicPlanFarm,
+  parseMastersFarmForSeed,
+} from './resolve-entry-schedule-farm.mjs';
 import { pickEntryScheduleCropId } from './shared/entry-schedule-ids-lib.mjs';
 import {
   MASTER_SEGMENTS,
@@ -33,29 +38,61 @@ function stripOrigin(base: string): string {
   return base.replace(/\/$/, '');
 }
 
-async function fetchEntryScheduleFarm(
+async function fetchPublicPlanFarmsForRegion(
   api: APIRequestContext,
   base: string,
+  path: '/api/v1/public_plans/entry_schedule/farms' | '/api/v1/public_plans/farms',
+  region?: string,
 ): Promise<ResolvedCaptureIds['entryScheduleFarm']> {
-  const res = await api.get(`${base}/api/v1/public_plans/entry_schedule/farms`, {
-    failOnStatusCode: false,
-  });
+  const url =
+    region != null && region.length > 0
+      ? `${base}${path}?region=${encodeURIComponent(region)}`
+      : `${base}${path}`;
+  const res = await api.get(url, { failOnStatusCode: false });
   if (!res.ok()) return null;
   try {
-    const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) return null;
-    const found = rows.find((r) => r != null && typeof r === 'object' && r.id != null);
-    if (found == null) return null;
-    return {
-      id: Number(found.id),
-      name: String(found.name ?? ''),
-      region: String(found.region ?? 'jp'),
-      latitude: Number(found.latitude ?? 0),
-      longitude: Number(found.longitude ?? 0),
-    };
+    return parseFirstPublicPlanFarm(await res.json());
   } catch {
     return null;
   }
+}
+
+async function fetchMastersFarmForSeed(
+  api: APIRequestContext,
+  base: string,
+  masters: Record<string, number>,
+): Promise<ResolvedCaptureIds['entryScheduleFarm']> {
+  const res = await api.get(`${base}/api/v1/masters/farms`, { failOnStatusCode: false });
+  if (!res.ok()) return null;
+  try {
+    return parseMastersFarmForSeed(parseMasterList(await res.json()), masters.farms ?? null);
+  } catch {
+    return null;
+  }
+}
+
+/** select-crop 直着地シード用: 参照農場 API → リージョン試行 → masters 農場の順で解決 */
+async function resolveEntryScheduleFarmForCapture(
+  api: APIRequestContext,
+  base: string,
+  masters: Record<string, number>,
+): Promise<ResolvedCaptureIds['entryScheduleFarm']> {
+  const paths = [
+    '/api/v1/public_plans/entry_schedule/farms',
+    '/api/v1/public_plans/farms',
+  ] as const;
+
+  for (const path of paths) {
+    const defaultFarm = await fetchPublicPlanFarmsForRegion(api, base, path);
+    if (defaultFarm != null) return defaultFarm;
+
+    for (const region of ENTRY_SCHEDULE_FARM_REGIONS) {
+      const regionalFarm = await fetchPublicPlanFarmsForRegion(api, base, path, region);
+      if (regionalFarm != null) return regionalFarm;
+    }
+  }
+
+  return fetchMastersFarmForSeed(api, base, masters);
 }
 
 /** farm_id 単位でエントリ目安 API に載る作物 id（マスタ先頭 crop とは一致しないことがある） */
@@ -111,7 +148,7 @@ export async function buildResolvedCaptureIds(
     /* ignore */
   }
 
-  const entryScheduleFarm = await fetchEntryScheduleFarm(api, base);
+  const entryScheduleFarm = await resolveEntryScheduleFarmForCapture(api, base, masters);
   const farmId = entryScheduleFarm?.id ?? null;
   let cropId: number | null = null;
   if (farmId != null) {
