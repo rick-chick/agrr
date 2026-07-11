@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { HOST_SELECTOR_BY_PATTERN, PUBLIC_PLAN_REDIRECT_TO_NEW, type RouteRow } from './route-validity';
+import { HOST_SELECTOR_BY_PATTERN, type RouteRow } from './route-validity';
 
 /** `.master-loading` が DOM に無いまま `toBeHidden` すると即成功しうる。スピナー出現を短時間待ってから消滅待ちする。 */
 const MASTER_LOADING_SPIN_PROBE_EXCLUDE = new Set<string>(['plans/:id/optimizing']);
@@ -35,9 +35,9 @@ function needsMasterLoadingSpinProbe(pattern: string): boolean {
  * 非同期取得中の UI を安定させてからアサートする（PNG キャプチャ・スモーク共通）。
  */
 export async function waitForPageStable(page: Page, r: RouteRow): Promise<void> {
-  if (PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern)) {
+  if (r.pattern === 'public-plans/select-crop') {
     await page
-      .locator('app-public-plan-create .loading-state')
+      .locator('app-public-plan-select-crop .loading-state')
       .waitFor({ state: 'hidden', timeout: 60_000 });
     return;
   }

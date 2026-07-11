@@ -4,7 +4,6 @@ import {
   assertPageValidity,
   expectedPathnameFromResolvedGoto,
   HOST_SELECTOR_BY_PATTERN,
-  PUBLIC_PLAN_REDIRECT_TO_NEW,
 } from '../route-validity';
 import {
   installCaptureLocale,
@@ -17,6 +16,7 @@ import {
   assertHostHealthy,
   disableCookieBanner,
   loadResolvedCaptureIdsWithBaseline,
+  preparePublicPlanRoute,
   resolveGotoUrl,
   SKIP_ROUTES_WITH_DEV_SESSION,
   smokeDescribe,
@@ -62,15 +62,22 @@ smokeDescribe('locale i18n smoke (manifest × ja/en/in)', () => {
         if (r.pattern === 'public-plans/results' && resolvedCaptureIds?.publicPlanId == null) {
           test.skip(true, 'no publicPlanId resolved');
         }
+        if (r.pattern === 'public-plans/select-crop') {
+          if (resolvedCaptureIds?.entryScheduleFarm == null) {
+            test.skip(true, 'no entry schedule farm resolved');
+          }
+        }
 
         await installCaptureLocale(page, locale as CaptureLocale);
 
         const url = resolveGotoUrl(r, resolvedCaptureIds);
+        const seeded = await preparePublicPlanRoute(page, r.pattern, resolvedCaptureIds);
+        if (!seeded) {
+          test.skip(true, 'public plan session seed unavailable');
+        }
         await page.goto(url);
 
-        const pathnameExpect = PUBLIC_PLAN_REDIRECT_TO_NEW.has(r.pattern)
-          ? undefined
-          : expectedPathnameFromResolvedGoto(url);
+        const pathnameExpect = expectedPathnameFromResolvedGoto(url);
 
         await assertPageValidity(page, r, pathnameExpect);
         await waitForCaptureLocaleReady(page, locale as CaptureLocale);
