@@ -3,8 +3,23 @@ import {
   appLangToBcp47,
   formatIsoDateForDisplay,
   formatIsoDateTimeForDisplay,
+  formatIsoDayForDisplay,
   formatIsoMonthForDisplay
 } from './format-display-date';
+
+describe('formatIsoDayForDisplay', () => {
+  it('formats ISO day for Japanese locale', () => {
+    expect(formatIsoDayForDisplay('2026-06-25', 'ja')).toBe('25日');
+  });
+
+  it('formats ISO day for English locale', () => {
+    expect(formatIsoDayForDisplay('2026-06-25', 'en')).toBe('25');
+  });
+
+  it('returns original string when not ISO date', () => {
+    expect(formatIsoDayForDisplay('invalid', 'ja')).toBe('invalid');
+  });
+});
 
 describe('formatIsoDateForDisplay', () => {
   it('formats ISO dates for Japanese locale', () => {

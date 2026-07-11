@@ -100,9 +100,20 @@
   border-radius: var(--radius-lg);
 }
 
+.work-hub__schedule-month + .work-hub__schedule-month {
+  margin-top: var(--space-4);
+}
+
+.work-hub__schedule-month-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-secondary);
+}
+
 .work-hub__schedule-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
   gap: var(--space-2);
   margin: 0;
   padding: 0;
@@ -127,8 +138,9 @@
 
 .work-hub__schedule-date {
   grid-row: span 2;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, inherit);
 }
 
 .work-hub__schedule-name {

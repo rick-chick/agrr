@@ -87,7 +87,7 @@ describe('WorkHubComponent', () => {
       'work.hub.error_subtitle': '農場一覧を読み込めませんでした',
       'work.hub.retry': '再読み込み',
       'work.hub.schedule_review_title': '作業予定確認',
-      'work.hub.schedule_review_lead': 'すべての農場の作業予定を一列で表示します。',
+      'work.hub.schedule_review_lead': 'すべての農場の作業予定を月ごとにまとめて表示します。農場・圃場で絞り込めます。',
       'work.hub.filter_farm': '農場',
       'work.hub.filter_field': '圃場',
       'work.hub.filter_all_farms': '全農場',
@@ -189,6 +189,73 @@ describe('WorkHubComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.work-hub__schedule-item')).toHaveLength(1);
     expect(fixture.nativeElement.textContent).toContain('除草');
     expect(fixture.nativeElement.textContent).not.toContain('追肥');
+  });
+
+  it('groups schedule cards by month with day-only dates inside cards', async () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      scheduleRows: [
+        {
+          item: {
+            item_id: 1,
+            name: '除草',
+            scheduled_date: '2026-06-10',
+            status: 'planned'
+          } as WorkHubViewState['scheduleRows'][number]['item'],
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          planName: 'Plan A',
+          fieldName: '圃場1',
+          fieldCultivationId: 101,
+          cropName: 'トマト'
+        },
+        {
+          item: {
+            item_id: 2,
+            name: '追肥',
+            scheduled_date: '2026-06-12',
+            status: 'planned'
+          } as WorkHubViewState['scheduleRows'][number]['item'],
+          farmId: 2,
+          farmName: 'Farm B',
+          planId: 10,
+          planName: 'Plan B',
+          fieldName: '圃場2',
+          fieldCultivationId: 201,
+          cropName: 'ニンジン'
+        },
+        {
+          item: {
+            item_id: 3,
+            name: '収穫',
+            scheduled_date: '2026-07-01',
+            status: 'planned'
+          } as WorkHubViewState['scheduleRows'][number]['item'],
+          farmId: 1,
+          farmName: 'Farm A',
+          planId: 9,
+          planName: 'Plan A',
+          fieldName: '圃場1',
+          fieldCultivationId: 101,
+          cropName: 'トマト'
+        }
+      ]
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const monthSections = fixture.nativeElement.querySelectorAll('.work-hub__schedule-month');
+    expect(monthSections).toHaveLength(2);
+
+    const monthTitles = fixture.nativeElement.querySelectorAll('.work-hub__schedule-month-title');
+    expect(monthTitles[0].textContent?.trim()).toBe('2026年6月');
+    expect(monthTitles[1].textContent?.trim()).toBe('2026年7月');
+
+    const dayLabels = [...fixture.nativeElement.querySelectorAll('.work-hub__schedule-date')].map(
+      (el: Element) => el.textContent?.trim()
+    );
+    expect(dayLabels).toEqual(['10日', '12日', '1日']);
   });
 
   it('ensures plan when a farm is selected', () => {

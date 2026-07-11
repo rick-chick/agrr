@@ -238,7 +238,7 @@
       "register_fields_link": "Register fields",
       "retry": "Reload",
       "schedule_review_title": "Task schedule review",
-      "schedule_review_lead": "All farms in one list. Filter by farm or field.",
+      "schedule_review_lead": "Schedules grouped by month across all farms. Filter by farm or field.",
       "filter_farm": "Farm",
       "filter_field": "Field",
       "filter_all_farms": "All farms",
