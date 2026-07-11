@@ -31,6 +31,14 @@ const WORK_HUB_I18N_KEYS = [
   'work.hub.no_fields_warning',
   'work.hub.register_fields_link',
   'work.hub.retry',
+  'work.hub.schedule_review_title',
+  'work.hub.schedule_review_lead',
+  'work.hub.filter_farm',
+  'work.hub.filter_field',
+  'work.hub.filter_all_farms',
+  'work.hub.filter_all_fields',
+  'work.hub.schedule_empty',
+  'work.hub.schedule_row_meta',
   'plans.work.back_to_hub'
 ] as const;
 

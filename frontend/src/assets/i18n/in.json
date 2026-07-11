@@ -2119,7 +2119,15 @@
       "start_recording": "दर्ज करना शुरू करें",
       "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",
       "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
-      "retry": "पुनः लोड करें"
+      "retry": "पुनः लोड करें",
+      "schedule_review_title": "कार्य अनुसूची समीक्षा",
+      "schedule_review_lead": "सभी खेतों की अनुसूची एक सूची में। खेत या खेत क्षेत्र से फ़िल्टर करें।",
+      "filter_farm": "खेत",
+      "filter_field": "खेत क्षेत्र",
+      "filter_all_farms": "सभी खेत",
+      "filter_all_fields": "सभी खेत क्षेत्र",
+      "schedule_empty": "दिखाने के लिए कोई निर्धारित कार्य नहीं।",
+      "schedule_row_meta": "{{farm}} · {{field}} ({{crop}})"
     }
   },
   "status": {
