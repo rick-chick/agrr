@@ -92,11 +92,12 @@ describe('PublicPlanResultsPresenter', () => {
     });
 
     it('replaces view with error state on load error when data is absent', () => {
-      presenter.onError({ message: 'Failed to load plan' });
+      presenter.onError({ message: 'common.api_error.not_found' });
 
       expect(lastControl!.loading).toBe(false);
-      expect(lastControl!.error).toBe('Failed to load plan');
+      expect(lastControl!.error).toBe('common.api_error.not_found');
       expect(lastControl!.data).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toBeNull();
     });
   });
 });

@@ -151,4 +151,47 @@ describe('InteractionRuleDetailComponent', () => {
       fixture.nativeElement.querySelectorAll('.detail-card__actions a.btn-secondary')
     ).toHaveLength(0);
   });
+
+  it('renders translated region label when rule has region', () => {
+    translate.setTranslation('en', {
+      common: { true: 'Yes', false: 'No' },
+      interaction_rules: {
+        show: {
+          rule_type: 'Rule type',
+          source_group: 'Source',
+          target_group: 'Target',
+          impact_ratio: 'Impact',
+          direction: 'Direction',
+          region: 'Region'
+        },
+        form: {
+          rule_type_codes: {
+            continuous_cultivation: 'Continuous cultivation inhibition'
+          }
+        }
+      }
+    });
+    fixture.detectChanges();
+    fixture.componentInstance.control = {
+      loading: false,
+      error: null,
+      rule: {
+        id: 1,
+        rule_type: 'continuous_cultivation',
+        source_group: 'A',
+        target_group: 'B',
+        impact_ratio: 1,
+        is_directional: true,
+        is_reference: false,
+        region: 'jp'
+      },
+      pendingUndoToast: null,
+      pendingErrorFlash: null
+    };
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Region');
+    expect(el.textContent).not.toContain('interaction_rules.show.region');
+  });
 });
