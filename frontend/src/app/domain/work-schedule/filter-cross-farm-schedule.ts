@@ -41,6 +41,16 @@ export function filterCrossFarmScheduleRows(
   });
 }
 
+export function filterCrossFarmScheduleRowsFromDate(
+  rows: ReadonlyArray<CrossFarmScheduleRow>,
+  fromDate: string
+): CrossFarmScheduleRow[] {
+  return rows.filter((row) => {
+    const scheduledDate = row.item.scheduled_date;
+    return scheduledDate != null && scheduledDate !== '' && scheduledDate >= fromDate;
+  });
+}
+
 export function buildCrossFarmScheduleFilterOptions(
   rows: ReadonlyArray<CrossFarmScheduleRow>,
   selectedFarmId: number | null

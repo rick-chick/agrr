@@ -1,13 +1,10 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
-import { TaskScheduleTimelineComponent } from './task-schedule-timeline.component';
-import {
-  TaskScheduleWeekNavComponent,
-  type TaskScheduleViewMode
-} from './task-schedule-week-nav.component';
+import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
 import { PlanTaskScheduleView, PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import { LoadPlanTaskScheduleUseCase } from '../../usecase/plans/load-plan-task-schedule.usecase';
 import { PlanTaskSchedulePresenter, PLAN_TASK_SCHEDULE_PROVIDERS } from '../../usecase/plans/plan-task-schedule.providers';
@@ -19,6 +16,12 @@ import { FlashMessageService } from '../../services/flash-message.service';
 import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
 import { mergeCropBannerContext } from '../../adapters/plans/task-schedule-sync-presenter.helpers';
 import { formatIsoDateForDisplay } from '../../core/format-display-date';
+import { localTodayIso } from '../../core/local-today';
+import { buildPlanTaskScheduleMonthGroups } from '../../domain/work-schedule/build-plan-task-schedule-month-groups';
+import { flattenPlanTaskSchedule } from '../../domain/work-schedule/flatten-plan-task-schedule';
+import {
+  buildCrossFarmScheduleFilterOptions
+} from '../../domain/work-schedule/filter-cross-farm-schedule';
 
 const initialControl: PlanTaskScheduleViewState = {
   loading: true,
@@ -30,13 +33,15 @@ const initialControl: PlanTaskScheduleViewState = {
   syncReloadNonce: 0
 };
 
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 @Component({
   selector: 'app-plan-task-schedule',
   standalone: true,
   imports: [
     CommonModule,
-    TaskScheduleTimelineComponent,
-    TaskScheduleWeekNavComponent,
+    FormsModule,
+    TaskScheduleMonthListComponent,
     TranslateModule,
     RouterLink,
     PlanPlanContextHeaderComponent,
@@ -121,14 +126,6 @@ const initialControl: PlanTaskScheduleViewState = {
               (retry)="regenerateTaskSchedule()"
             />
             <div class="plan-task-schedule__toolbar">
-              <app-task-schedule-week-nav
-                [viewMode]="viewMode"
-                [week]="control.schedule.week"
-                [minimap]="control.schedule.minimap"
-                (viewModeChange)="onViewModeChange($event)"
-                (weekChange)="onWeekChange($event)"
-                (weekToday)="onWeekToday()"
-              />
               <div class="plan-task-schedule__meta">
                 <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
                 <p class="plan-task-schedule__summary">{{
@@ -161,10 +158,38 @@ const initialControl: PlanTaskScheduleViewState = {
                 </div>
               </details>
             }
-            <app-task-schedule-timeline
-              [fields]="control.schedule.fields"
-              [planId]="planId"
-            />
+            <div class="plan-task-schedule__filters">
+              <label class="plan-task-schedule__filter">
+                <span class="plan-task-schedule__filter-label">{{
+                  'plans.task_schedules.filter_field' | translate
+                }}</span>
+                <select
+                  class="plan-task-schedule__filter-select"
+                  [ngModel]="fieldCultivationFilterId"
+                  (ngModelChange)="onFieldFilterChange($event)"
+                  [disabled]="!fieldFilterOptions.length"
+                >
+                  <option [ngValue]="null">{{
+                    'plans.task_schedules.filter_all_fields' | translate
+                  }}</option>
+                  @for (field of fieldFilterOptions; track field.value) {
+                    <option [ngValue]="field.value">{{ field.label }}</option>
+                  }
+                </select>
+              </label>
+              <label class="plan-task-schedule__filter">
+                <span class="plan-task-schedule__filter-label">{{
+                  'plans.task_schedules.filter_from_date' | translate
+                }}</span>
+                <input
+                  type="date"
+                  class="plan-task-schedule__filter-select"
+                  [ngModel]="fromDate"
+                  (ngModelChange)="onFromDateChange($event)"
+                />
+              </label>
+            </div>
+            <app-task-schedule-month-list [monthGroups]="scheduleMonthGroups" />
           }
         }
       </section>
@@ -174,6 +199,7 @@ const initialControl: PlanTaskScheduleViewState = {
 })
 export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
   private readonly regenerateUseCase = inject(RegenerateTaskScheduleUseCase);
   private readonly subscribeSyncUseCase = inject(SubscribeTaskScheduleSyncUseCase);
@@ -184,9 +210,6 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   private syncChannel: Channel | null = null;
-
-  viewMode: TaskScheduleViewMode = 'plan';
-  currentWeekStart: string | null = null;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -199,6 +222,14 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     }
     const parsed = Number(raw);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  get fromDate(): string {
+    const raw = this.route.snapshot.queryParamMap.get('from_date');
+    if (raw && ISO_DATE_PATTERN.test(raw)) {
+      return raw;
+    }
+    return localTodayIso();
   }
 
   get scheduleIsEmpty(): boolean {
@@ -262,24 +293,37 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return this.cropBannerContext.cropNames;
   }
 
+  get scheduleMonthGroups() {
+    const schedule = this.control.schedule;
+    if (!schedule) {
+      return [];
+    }
+    return buildPlanTaskScheduleMonthGroups(
+      schedule.plan,
+      schedule.fields,
+      this.fieldCultivationFilterId,
+      this.fromDate
+    );
+  }
+
+  get fieldFilterOptions() {
+    const schedule = this.control.schedule;
+    if (!schedule) {
+      return [];
+    }
+    const rows = flattenPlanTaskSchedule(schedule.plan, schedule.fields);
+    return buildCrossFarmScheduleFilterOptions(rows, null).fields;
+  }
+
   private _control: PlanTaskScheduleViewState = initialControl;
   get control(): PlanTaskScheduleViewState {
     return this._control;
   }
   set control(value: PlanTaskScheduleViewState) {
-    const wasLoading = this._control.loading;
     this._control = applyTaskScheduleSyncViewEffects(this._control, value, {
       flash: this.flashMessage,
       onReload: () => this.reload({ silent: true })
     });
-    if (
-      wasLoading &&
-      !this._control.loading &&
-      this.viewMode === 'week' &&
-      this._control.schedule?.week?.start_date
-    ) {
-      this.currentWeekStart = this._control.schedule.week.start_date;
-    }
     this.cdr.markForCheck();
   }
 
@@ -313,42 +357,36 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     }
     this.useCase.execute({
       planId,
-      scope: this.viewMode,
-      ...(this.viewMode === 'week' && this.currentWeekStart
-        ? { weekStart: this.currentWeekStart }
-        : {}),
-      ...(this.fieldCultivationFilterId != null
-        ? { fieldCultivationId: this.fieldCultivationFilterId }
-        : {})
+      scope: 'plan'
     });
   }
 
-  onViewModeChange(mode: TaskScheduleViewMode): void {
-    if (this.viewMode === mode) {
+  onFieldFilterChange(fieldCultivationId: number | null): void {
+    if (this.fieldCultivationFilterId === fieldCultivationId) {
       return;
     }
-    this.viewMode = mode;
-    if (mode === 'plan') {
-      this.currentWeekStart = null;
-    } else if (!this.currentWeekStart && this.control.schedule?.week?.start_date) {
-      this.currentWeekStart = this.control.schedule.week.start_date;
-    }
-    this.reload();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        field_cultivation_id: fieldCultivationId
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+    this.cdr.markForCheck();
   }
 
-  onWeekChange(weekStart: string): void {
-    if (this.currentWeekStart === weekStart) {
+  onFromDateChange(fromDate: string): void {
+    if (!fromDate || this.fromDate === fromDate) {
       return;
     }
-    this.currentWeekStart = weekStart;
-    this.viewMode = 'week';
-    this.reload();
-  }
-
-  onWeekToday(): void {
-    this.viewMode = 'week';
-    this.currentWeekStart = null;
-    this.reload();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { from_date: fromDate },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+    this.cdr.markForCheck();
   }
 
   regenerateTaskSchedule(): void {

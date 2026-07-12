@@ -1,0 +1,67 @@
+.plan-task-schedule-month-list__empty {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
+}
+
+.plan-task-schedule-month-list__month + .plan-task-schedule-month-list__month {
+  margin-top: var(--space-4);
+}
+
+.plan-task-schedule-month-list__month-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-secondary);
+}
+
+.plan-task-schedule-month-list__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-task-schedule-month-list__row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, auto) 1fr;
+  gap: var(--space-1) var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan-task-schedule-month-list__row:hover,
+.plan-task-schedule-month-list__row--selected {
+  border-color: var(--color-accent);
+}
+
+.plan-task-schedule-month-list__date {
+  grid-row: span 2;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, inherit);
+}
+
+.plan-task-schedule-month-list__name {
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.plan-task-schedule-month-list__meta,
+.plan-task-schedule-month-list__status {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.plan-task-schedule-month-list__status {
+  justify-self: start;
+}
