@@ -41,6 +41,17 @@ test('isEligibleAgentPr accepts Merge-Strategy: agent for any author', () => {
   );
 });
 
+test('isEligibleAgentPr accepts cursor/* from non-cursor author on same repo', () => {
+  assert.equal(
+    isEligibleAgentPr({
+      ...BASE_META,
+      authorLogin: 'rick-chick',
+      headRefName: 'cursor/task-schedule-list-from-work-hub',
+    }),
+    true,
+  );
+});
+
 test('isEligibleAgentPr rejects non-opt-in cursor PR', () => {
   assert.equal(
     isEligibleAgentPr({ ...BASE_META, headRefName: 'feature/not-agent' }),

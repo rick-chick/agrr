@@ -17,26 +17,32 @@ node_eval() {
   node --input-type=module -e "$1"
 }
 
+repo_owner() {
+  gh repo view --json owner -q .owner.login
+}
+
 fetch_pr_json() {
   local pr_number="$1"
   gh pr view "$pr_number" --json \
-    number,isDraft,author,baseRefName,headRefName,body,labels,headRepositoryOwner,baseRepositoryOwner
+    number,isDraft,author,baseRefName,headRefName,body,labels,headRepository
 }
 
 pr_is_eligible() {
   local pr_json="$1"
-  PR_JSON="$pr_json" node_eval "
+  local base_owner="$2"
+  PR_JSON="$pr_json" BASE_OWNER="$base_owner" node_eval "
     import { isEligibleAgentPr } from '$LIB';
     const pr = JSON.parse(process.env.PR_JSON);
     const labels = (pr.labels ?? []).map((l) => l.name);
+    const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
     const eligible = isEligibleAgentPr({
       authorLogin: pr.author.login,
       baseRefName: pr.baseRefName,
       headRefName: pr.headRefName,
       body: pr.body,
       labels,
-      headOwner: pr.headRepositoryOwner.login,
-      baseOwner: pr.baseRepositoryOwner.login,
+      headOwner,
+      baseOwner: process.env.BASE_OWNER,
     });
     process.stdout.write(eligible ? 'true' : 'false');
   "
@@ -102,10 +108,11 @@ maybe_mark_ready() {
 
 prep_pr() {
   local pr_number="$1"
-  local pr_json eligible
+  local pr_json eligible base_owner
 
+  base_owner="$(repo_owner)"
   pr_json="$(fetch_pr_json "$pr_number")"
-  eligible="$(pr_is_eligible "$pr_json")"
+  eligible="$(pr_is_eligible "$pr_json" "$base_owner")"
   if [ "$eligible" != "true" ]; then
     echo "PR #$pr_number is not eligible for agent prep; skipping"
     return 0
@@ -116,19 +123,21 @@ prep_pr() {
 }
 
 advance_queue() {
-  local open_ready drafts_json target
+  local open_ready drafts_json target base_owner
 
+  base_owner="$(repo_owner)"
   open_ready="$(count_open_ready_agent_merge)"
   if [ "$open_ready" -gt 0 ]; then
     echo "Merge queue blocked by $open_ready ready agent-merge PR(s); skipping advance"
     return 0
   fi
 
-  drafts_json="$(gh pr list --state open --label agent-merge --json number,isDraft,author,baseRefName,headRefName,body,labels,headRepositoryOwner,baseRepositoryOwner)"
-  target="$(DRAFTS_JSON="$drafts_json" OPEN_READY="$open_ready" node_eval "
+  drafts_json="$(gh pr list --state open --label agent-merge --json number,isDraft,author,baseRefName,headRefName,body,labels,headRepository)"
+  target="$(DRAFTS_JSON="$drafts_json" OPEN_READY="$open_ready" BASE_OWNER="$base_owner" node_eval "
     import { isEligibleAgentPr, selectDraftPrNumberToReady } from '$LIB';
     const drafts = JSON.parse(process.env.DRAFTS_JSON).map((pr) => {
       const labels = (pr.labels ?? []).map((l) => l.name);
+      const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
       return {
         number: pr.number,
         isDraft: pr.isDraft,
@@ -138,8 +147,8 @@ advance_queue() {
           headRefName: pr.headRefName,
           body: pr.body,
           labels,
-          headOwner: pr.headRepositoryOwner.login,
-          baseOwner: pr.baseRepositoryOwner.login,
+          headOwner,
+          baseOwner: process.env.BASE_OWNER,
         }),
       };
     });

@@ -68,9 +68,6 @@ export function isEligibleAgentPr(meta) {
   if (hasMergeStrategyAgent(meta.body)) {
     return true;
   }
-  if (!isCursorAuthor(meta.authorLogin)) {
-    return false;
-  }
   return isOptInHeadRef(meta.headRefName);
 }
 
