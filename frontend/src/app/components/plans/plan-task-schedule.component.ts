@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
@@ -43,7 +43,6 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
     FormsModule,
     TaskScheduleMonthListComponent,
     TranslateModule,
-    RouterLink,
     PlanPlanContextHeaderComponent,
     TaskScheduleSyncBannerComponent
   ],
@@ -67,19 +66,6 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
             </button>
           </div>
         } @else if (control.schedule) {
-          @if (fieldCultivationFilterId) {
-            <nav class="plan-task-schedule__filter-nav" aria-label="Field filter navigation">
-              <a
-                class="plan-task-schedule__filter-link"
-                [routerLink]="['/plans', planId, 'task_schedule']"
-              >
-                {{ 'plans.task_schedules.view_all_fields' | translate }}
-              </a>
-              <a class="plan-task-schedule__filter-link" [routerLink]="['/plans', planId]">
-                {{ 'plans.task_schedules.back_to_planting_plan' | translate }}
-              </a>
-            </nav>
-          }
           @if (scheduleIsEmpty) {
             @if (
               syncState === 'generating' ||

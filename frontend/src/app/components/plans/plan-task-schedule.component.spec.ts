@@ -1015,7 +1015,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(filteredFixture.nativeElement.textContent).not.toContain('South task');
   });
 
-  it('shows filter navigation when field_cultivation_id query param is set', async () => {
+  it('does not show redundant filter navigation when field_cultivation_id query param is set', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
@@ -1084,14 +1084,9 @@ describe('PlanTaskScheduleComponent', () => {
     filteredFixture.detectChanges();
     await filteredFixture.whenStable();
 
-    const nav = filteredFixture.nativeElement.querySelector('.plan-task-schedule__filter-nav');
-    expect(nav).toBeTruthy();
-    const links = nav.querySelectorAll('.plan-task-schedule__filter-link');
-    expect(links.length).toBe(2);
-    expect(links[0]?.getAttribute('href')).toContain('/plans/7/task_schedule');
-    expect(links[0]?.textContent).toContain('View all fields');
-    expect(links[1]?.getAttribute('href')).toContain('/plans/7');
-    expect(links[1]?.textContent).toContain('Back to cropping plan');
+    expect(
+      filteredFixture.nativeElement.querySelector('.plan-task-schedule__filter-nav')
+    ).toBeNull();
   });
 });
 
