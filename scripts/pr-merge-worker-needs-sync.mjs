@@ -65,9 +65,7 @@ export function selectSyncCandidates(prs) {
     if (prMergeWorkerHasBlockingLabel(labels)) return false;
     if (prMergeWorkerShouldSkipInProgress(labels)) return false;
 
-    const headOwner = pr.headRepository?.owner?.login;
-    const baseOwner = pr.baseRepository?.owner?.login;
-    if (headOwner && baseOwner && headOwner !== baseOwner) return false;
+    if (pr.isCrossRepository === true) return false;
 
     if (pr.reviewDecision === 'CHANGES_REQUESTED') return false;
     if (/\[(WIP|DRAFT)\]/i.test(title)) return false;

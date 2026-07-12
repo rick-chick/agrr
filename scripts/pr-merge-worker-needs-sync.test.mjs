@@ -69,8 +69,7 @@ test('selectSyncCandidates returns eligible behind PR', () => {
       mergeStateStatus: 'BEHIND',
       additions: 10,
       deletions: 5,
-      headRepository: { owner: { login: 'rick-chick' } },
-      baseRepository: { owner: { login: 'rick-chick' } },
+      isCrossRepository: false,
     },
   ]);
   assert.equal(candidates.length, 1);
@@ -90,8 +89,7 @@ test('selectSyncCandidates skips clean ineligible PR', () => {
       mergeStateStatus: 'CLEAN',
       additions: 10,
       deletions: 5,
-      headRepository: { owner: { login: 'rick-chick' } },
-      baseRepository: { owner: { login: 'rick-chick' } },
+      isCrossRepository: false,
     },
   ]);
   assert.equal(candidates.length, 0);
@@ -121,8 +119,7 @@ test('selectSyncCandidates skips draft PR even when behind', () => {
       mergeStateStatus: 'BEHIND',
       additions: 10,
       deletions: 5,
-      headRepository: { owner: { login: 'rick-chick' } },
-      baseRepository: { owner: { login: 'rick-chick' } },
+      isCrossRepository: false,
     },
   ]);
   assert.equal(candidates.length, 0);
@@ -141,8 +138,7 @@ test('selectSyncCandidates skips blocking labels', () => {
       mergeStateStatus: 'BEHIND',
       additions: 10,
       deletions: 5,
-      headRepository: { owner: { login: 'rick-chick' } },
-      baseRepository: { owner: { login: 'rick-chick' } },
+      isCrossRepository: false,
     },
   ]);
   assert.equal(candidates.length, 0);
@@ -161,8 +157,7 @@ test('selectSyncCandidates skips fork PR from another owner', () => {
       mergeStateStatus: 'BEHIND',
       additions: 10,
       deletions: 5,
-      headRepository: { owner: { login: 'fork-user' } },
-      baseRepository: { owner: { login: 'rick-chick' } },
+      isCrossRepository: true,
     },
   ]);
   assert.equal(candidates.length, 0);
@@ -182,8 +177,7 @@ test('selectSyncCandidates skips PR with changes requested', () => {
       reviewDecision: 'CHANGES_REQUESTED',
       additions: 10,
       deletions: 5,
-      headRepository: { owner: { login: 'rick-chick' } },
-      baseRepository: { owner: { login: 'rick-chick' } },
+      isCrossRepository: false,
     },
   ]);
   assert.equal(candidates.length, 0);
@@ -202,8 +196,7 @@ test('selectSyncCandidates skips large PR without agent-merge label', () => {
       mergeStateStatus: 'BEHIND',
       additions: 700,
       deletions: 200,
-      headRepository: { owner: { login: 'rick-chick' } },
-      baseRepository: { owner: { login: 'rick-chick' } },
+      isCrossRepository: false,
     },
   ]);
   assert.equal(candidates.length, 0);
@@ -222,8 +215,7 @@ test('selectSyncCandidates allows large behind PR with agent-merge label', () =>
       mergeStateStatus: 'BEHIND',
       additions: 700,
       deletions: 200,
-      headRepository: { owner: { login: 'rick-chick' } },
-      baseRepository: { owner: { login: 'rick-chick' } },
+      isCrossRepository: false,
     },
   ]);
   assert.equal(candidates.length, 1);

@@ -31,6 +31,9 @@ jobs:
       github.event_name == 'pull_request' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request')
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Resolve pull request context
         id: pr
         env:
@@ -92,6 +95,7 @@ jobs:
       - name: Trigger Cursor PR Merge Worker
         if: steps.pr.outputs.skip != 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
           WEBHOOK_URL: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_URL }}
           WEBHOOK_KEY: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_KEY }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
