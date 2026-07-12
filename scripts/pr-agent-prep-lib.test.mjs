@@ -5,6 +5,7 @@ import {
   areRequiredChecksGreen,
   canMarkReady,
   isEligibleAgentPr,
+  isNonFatalMarkReadyError,
   selectDraftPrNumberToReady,
 } from './pr-agent-prep-lib.mjs';
 
@@ -121,6 +122,16 @@ test('selectDraftPrNumberToReady returns null when queue is blocked', () => {
     ),
     null,
   );
+});
+
+test('isNonFatalMarkReadyError matches GITHUB_TOKEN integration permission errors', () => {
+  assert.equal(
+    isNonFatalMarkReadyError(
+      'GraphQL: Resource not accessible by integration (markPullRequestReadyForReview)',
+    ),
+    true,
+  );
+  assert.equal(isNonFatalMarkReadyError('unexpected gh failure'), false);
 });
 
 test('areRequiredChecksGreen requires ruleset contexts', () => {
