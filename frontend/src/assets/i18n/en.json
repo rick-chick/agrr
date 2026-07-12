@@ -2568,6 +2568,7 @@
       "delete_confirm": "Are you sure you want to delete this farm?",
       "back": "Back",
       "back_to_list": "Farm list",
+      "location": "Region",
       "fields": "Fields",
       "add_field": "Add Field",
       "weather": "Weather Information",
