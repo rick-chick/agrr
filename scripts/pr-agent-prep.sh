@@ -103,7 +103,23 @@ maybe_mark_ready() {
   fi
 
   echo "Marking PR #$pr_number ready for review"
-  gh pr ready "$pr_number"
+  local ready_output ready_status=0
+  ready_output="$(gh pr ready "$pr_number" 2>&1)" || ready_status=$?
+  if [ "$ready_status" -ne 0 ]; then
+    if [ -n "$ready_output" ]; then
+      echo "$ready_output" >&2
+    fi
+    local non_fatal
+    non_fatal="$(READY_ERR="$ready_output" node_eval "
+      import { isNonFatalMarkReadyError } from '$LIB';
+      process.stdout.write(isNonFatalMarkReadyError(process.env.READY_ERR) ? 'true' : 'false');
+    ")"
+    if [ "$non_fatal" = "true" ]; then
+      echo "WARN: GITHUB_TOKEN cannot mark PR #$pr_number ready; will retry on next prep trigger"
+      return 0
+    fi
+    return "$ready_status"
+  fi
 }
 
 prep_pr() {

@@ -108,6 +108,17 @@ export function selectDraftPrNumberToReady(drafts, openReadyAgentMergeCount) {
 }
 
 /**
+ * GITHUB_TOKEN cannot always call markPullRequestReadyForReview on App-created PRs.
+ *
+ * @param {string} message
+ */
+export function isNonFatalMarkReadyError(message) {
+  return /Resource not accessible by integration|markPullRequestReadyForReview/i.test(
+    message ?? '',
+  );
+}
+
+/**
  * @param {Array<{ name: string; state: string }>} checks
  */
 export function areRequiredChecksGreen(checks) {
