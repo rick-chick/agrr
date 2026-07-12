@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanTaskScheduleItem } from './plan-schedule-snapshot';
+import { emptyPlanTaskScheduleItemDetails } from './plan-schedule-snapshot';
 import { flattenCrossFarmSchedules } from './flatten-cross-farm-schedule';
 import type { CrossFarmScheduleSource } from './cross-farm-schedule-row';
 
@@ -10,6 +11,7 @@ function mockTask(
     name: 'Task',
     scheduled_date: '2026-06-10',
     status: 'planned',
+    details: emptyPlanTaskScheduleItemDetails,
     ...overrides
   };
 }

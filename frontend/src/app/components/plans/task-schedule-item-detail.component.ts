@@ -2,7 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDateForDisplay } from '../../core/format-display-date';
-import { TaskScheduleItem } from '../../models/plans/task-schedule';
+import type { PlanTaskScheduleItem } from '../../domain/work-schedule/plan-schedule-snapshot';
 
 @Component({
   selector: 'app-task-schedule-item-detail',
@@ -58,7 +58,7 @@ import { TaskScheduleItem } from '../../models/plans/task-schedule';
 export class TaskScheduleItemDetailComponent {
   private readonly translate = inject(TranslateService);
 
-  @Input() task: TaskScheduleItem | null = null;
+  @Input() task: PlanTaskScheduleItem | null = null;
 
   get notApplicable(): string {
     return this.translate.instant('plans.task_schedules.detail.not_applicable');
@@ -72,7 +72,7 @@ export class TaskScheduleItemDetailComponent {
   }
 
   get stageLabel(): string {
-    const stageName = this.task?.details.stage.name?.trim();
+    const stageName = this.task?.details.stageName;
     if (!stageName) {
       return this.notApplicable;
     }
@@ -80,8 +80,8 @@ export class TaskScheduleItemDetailComponent {
   }
 
   get gddLabel(): string {
-    const trigger = this.task?.details.gdd.trigger;
-    const tolerance = this.task?.details.gdd.tolerance;
+    const trigger = this.task?.details.gddTrigger;
+    const tolerance = this.task?.details.gddTolerance;
     if (!trigger && !tolerance) {
       return this.notApplicable;
     }
@@ -92,21 +92,19 @@ export class TaskScheduleItemDetailComponent {
   }
 
   get amountLabel(): string {
-    const amount = this.task?.details.amount?.trim();
+    const amount = this.task?.details.amount;
     if (!amount) {
       return this.notApplicable;
     }
-    const unit = this.task?.details.amount_unit?.trim();
+    const unit = this.task?.details.amountUnit;
     return unit ? `${amount} ${unit}` : amount;
   }
 
   get masterNameLabel(): string {
-    const name = this.task?.details.master?.name?.trim();
-    return name || this.notApplicable;
+    return this.task?.details.masterName || this.notApplicable;
   }
 
   get masterDescriptionLabel(): string {
-    const description = this.task?.details.master?.description?.trim();
-    return description || this.notApplicable;
+    return this.task?.details.masterDescription || this.notApplicable;
   }
 }

@@ -1,14 +1,8 @@
-import type { CrossFarmScheduleFilterOption, CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
-import { TaskScheduleItem, TaskScheduleResponse } from '../../models/plans/task-schedule';
+import type { CrossFarmScheduleFilterOption } from '../../domain/work-schedule/cross-farm-schedule-row';
+import type { CrossFarmScheduleMonthGroup } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
+import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 
-export type PlanTaskScheduleMonthRow = Omit<CrossFarmScheduleRow, 'item'> & {
-  item: TaskScheduleItem;
-};
-
-export type PlanTaskScheduleMonthGroupView = {
-  monthKey: string;
-  rows: PlanTaskScheduleMonthRow[];
-};
+export type PlanTaskScheduleMonthGroupView = CrossFarmScheduleMonthGroup;
 
 export type PlanTaskScheduleViewState = {
   loading: boolean;

@@ -14,7 +14,6 @@ import { buildPlanTaskScheduleFieldFilterOptions } from '../../domain/work-sched
 import { localTodayIso } from '../../core/local-today';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { mapTaskScheduleResponseToDomain } from './map-task-schedule-response-to-domain';
-import { hydratePlanTaskScheduleMonthGroups } from './hydrate-plan-task-schedule-month-groups';
 import {
   applySyncFieldsToPlan,
   mergeCropBannerContext,
@@ -164,14 +163,11 @@ export class PlanTaskSchedulePresenter
     const rows = flattenPlanTaskSchedule(snapshot.plan, snapshot.fields);
 
     return {
-      monthGroups: hydratePlanTaskScheduleMonthGroups(
-        buildPlanTaskScheduleMonthGroups(
-          snapshot.plan,
-          snapshot.fields,
-          fieldCultivationFilterId,
-          fromDate
-        ),
-        schedule.fields
+      monthGroups: buildPlanTaskScheduleMonthGroups(
+        snapshot.plan,
+        snapshot.fields,
+        fieldCultivationFilterId,
+        fromDate
       ),
       fieldFilterOptions: buildPlanTaskScheduleFieldFilterOptions(rows),
       cropIdsForBanner: banner.cropIds,

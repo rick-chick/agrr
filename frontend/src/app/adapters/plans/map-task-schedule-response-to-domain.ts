@@ -1,20 +1,35 @@
 import type {
   PlanFieldSchedule,
   PlanScheduleSnapshot,
-  PlanTaskScheduleItem
+  PlanTaskScheduleItem,
+  PlanTaskScheduleItemDetails
 } from '../../domain/work-schedule/plan-schedule-snapshot';
 import type {
   FieldSchedule,
+  TaskDetails,
   TaskScheduleItem,
   TaskScheduleResponse
 } from '../../models/plans/task-schedule';
+
+function mapTaskScheduleItemDetails(details: TaskDetails): PlanTaskScheduleItemDetails {
+  return {
+    stageName: details.stage.name?.trim() || null,
+    gddTrigger: details.gdd.trigger || null,
+    gddTolerance: details.gdd.tolerance || null,
+    amount: details.amount?.trim() || null,
+    amountUnit: details.amount_unit?.trim() || null,
+    masterName: details.master?.name?.trim() || null,
+    masterDescription: details.master?.description?.trim() || null
+  };
+}
 
 function mapTaskScheduleItem(item: TaskScheduleItem): PlanTaskScheduleItem {
   return {
     item_id: item.item_id,
     name: item.name,
     scheduled_date: item.scheduled_date,
-    status: item.status
+    status: item.status,
+    details: mapTaskScheduleItemDetails(item.details)
   };
 }
 

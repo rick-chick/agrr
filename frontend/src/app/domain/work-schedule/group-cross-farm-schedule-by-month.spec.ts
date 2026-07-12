@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanTaskScheduleItem } from './plan-schedule-snapshot';
+import { emptyPlanTaskScheduleItemDetails } from './plan-schedule-snapshot';
 import type { CrossFarmScheduleRow } from './cross-farm-schedule-row';
 import { groupCrossFarmScheduleByMonth } from './group-cross-farm-schedule-by-month';
 
@@ -24,6 +25,7 @@ function item(
   return {
     scheduled_date: null,
     status: 'planned',
+    details: emptyPlanTaskScheduleItemDetails,
     ...partial
   };
 }
