@@ -3,12 +3,16 @@ import { EnsurePlanForFarmOutputPort } from '../../usecase/work-hub/ensure-plan-
 import { EnsurePlanForFarmSuccessDto } from '../../usecase/work-hub/ensure-plan-for-farm.dtos';
 import { WorkHubInitOutputPort } from '../../usecase/work-hub/work-hub-init.output-port';
 import { WorkHubInitPresentDto } from '../../usecase/work-hub/work-hub-init.dtos';
+import { LoadCrossFarmScheduleOutputPort } from '../../usecase/work-hub/load-cross-farm-schedule.output-port';
+import { LoadCrossFarmSchedulePresentDto } from '../../usecase/work-hub/load-cross-farm-schedule.dtos';
 import { WorkHubView } from '../../components/work-hub/work-hub.view';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 import { pendingNavigationTo } from '../../core/view-effects/pending-navigation-presenter.helpers';
 
 @Injectable()
-export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFarmOutputPort {
+export class WorkHubPresenter
+  implements WorkHubInitOutputPort, EnsurePlanForFarmOutputPort, LoadCrossFarmScheduleOutputPort
+{
   private view: WorkHubView | null = null;
 
   setView(view: WorkHubView): void {
@@ -59,6 +63,35 @@ export class WorkHubPresenter implements WorkHubInitOutputPort, EnsurePlanForFar
         ? pendingSuccessFlashFromText('plans.messages.plan_created')
         : null,
       pendingNavigation: pendingNavigationTo(['/plans', dto.planId, 'work'])
+    };
+  }
+
+  beginScheduleLoad(): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      scheduleLoading: true,
+      scheduleError: null
+    };
+  }
+
+  presentSchedule(dto: LoadCrossFarmSchedulePresentDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      scheduleLoading: false,
+      scheduleError: null,
+      scheduleRows: dto.rows
+    };
+  }
+
+  onScheduleError(dto: { message: string }): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = {
+      ...this.view.control,
+      scheduleLoading: false,
+      scheduleError: dto.message,
+      scheduleRows: []
     };
   }
 }

@@ -57,3 +57,105 @@
   margin: 0.5rem 0 0;
   font-size: 0.875rem;
 }
+
+.work-hub__schedule {
+  margin-bottom: var(--space-4);
+}
+
+.work-hub__schedule-lead {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.work-hub__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.work-hub__filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: min(100%, 12rem);
+}
+
+.work-hub__filter-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.work-hub__filter-select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.work-hub__schedule-empty {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
+}
+
+.work-hub__schedule-month + .work-hub__schedule-month {
+  margin-top: var(--space-4);
+}
+
+.work-hub__schedule-month-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-secondary);
+}
+
+.work-hub__schedule-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.work-hub__schedule-link {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, auto) 1fr;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.work-hub__schedule-link:hover {
+  border-color: var(--color-accent);
+}
+
+.work-hub__schedule-date {
+  grid-row: span 2;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, inherit);
+}
+
+.work-hub__schedule-name {
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.work-hub__schedule-meta,
+.work-hub__schedule-status {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.work-hub__schedule-status {
+  justify-self: start;
+}

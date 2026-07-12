@@ -150,21 +150,72 @@ describe('PlanTaskScheduleComponent', () => {
     expect(workbenchTab?.getAttribute('href')).toContain('/plans/7');
   });
 
-  it('renders page intro when schedule is loaded', async () => {
+  it('does not render page intro when schedule is loaded', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
     translate.use('en');
 
     fixture.detectChanges();
-    component.control = loadedState;
+    component.control = {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: { general: [], fertilizer: [], unscheduled: [] }
+          }
+        ]
+      }
+    };
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const intro = fixture.nativeElement.querySelector('.plan-task-schedule__page-intro');
-    expect(intro).toBeTruthy();
-    expect(intro?.textContent).toContain('Tasks and dates are calculated from your planting plan cultivation periods');
-    expect(intro?.textContent).not.toContain('plans.task_schedules.page_intro');
+    expect(fixture.nativeElement.querySelector('.plan-task-schedule__page-intro')).toBeNull();
+  });
+
+  it('renders schedule toolbar with week nav and inline meta before timeline', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: { general: [], fertilizer: [], unscheduled: [] }
+          }
+        ]
+      }
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const toolbar = fixture.nativeElement.querySelector('.plan-task-schedule__toolbar');
+    expect(toolbar).toBeTruthy();
+    expect(toolbar?.querySelector('app-task-schedule-week-nav')).toBeTruthy();
+    expect(toolbar?.querySelector('.plan-task-schedule__meta')).toBeTruthy();
+    expect(toolbar?.querySelector('.plan-task-schedule__generated-at')?.textContent).toContain('Generated');
+    expect(toolbar?.querySelector('.plan-task-schedule__summary')?.textContent).toContain('field');
+    expect(fixture.nativeElement.querySelector('app-task-schedule-timeline')).toBeTruthy();
   });
 
   it('shows empty_ready_no_fields hint when sync is ready and fields are empty', async () => {

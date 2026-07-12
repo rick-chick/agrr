@@ -2282,7 +2282,6 @@
     },
     "task_schedules": {
       "page_title": "{{name}}の作業予定表",
-      "page_intro": "作付け計画の栽培期間をもとに、作業と実施日を自動計算しています。今日やる作業は「作業記録」から確認できます。",
       "empty_hint": "作物を追加すると作業予定が生成されます。上の「作付け計画」タブで計画の内容を確認してください。",
       "empty_ready_no_fields": "作業予定の生成は完了していますが、表示する圃場がありません。「作付け計画」タブで圃場と作物を確認してください。",
       "timeline_generated_at": "生成日時: {{datetime}}",
@@ -2454,7 +2453,15 @@
       "start_recording": "記録を始める",
       "no_fields_warning": "有効な圃場がありません。",
       "register_fields_link": "圃場を登録する",
-      "retry": "再読み込み"
+      "retry": "再読み込み",
+      "schedule_review_title": "作業予定確認",
+      "schedule_review_lead": "すべての農場の作業予定を月ごとにまとめて表示します。農場・圃場で絞り込めます。",
+      "filter_farm": "農場",
+      "filter_field": "圃場",
+      "filter_all_farms": "全農場",
+      "filter_all_fields": "全圃場",
+      "schedule_empty": "表示できる作業予定がありません。",
+      "schedule_row_meta": "{{farm}} · {{field}}（{{crop}}）"
     }
   },
   "status": {

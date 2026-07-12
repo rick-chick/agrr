@@ -1,5 +1,10 @@
 import type { APIRequestContext } from '@playwright/test';
-import { firstRecordId, pickEntryScheduleCropId } from './shared/entry-schedule-ids-lib.mjs';
+import {
+  ENTRY_SCHEDULE_FARM_REGIONS,
+  parseFirstPublicPlanFarm,
+  parseMastersFarmForSeed,
+} from './resolve-entry-schedule-farm.mjs';
+import { pickEntryScheduleCropId } from './shared/entry-schedule-ids-lib.mjs';
 import {
   MASTER_SEGMENTS,
   parseMasterList,
@@ -18,6 +23,14 @@ export type ResolvedCaptureIds = {
   publicPlanId: number | null;
   /** GET /api/v1/public_plans/entry_schedule/farms の参照農場 id（masters/farms とは別） */
   farmId: number | null;
+  /** select-crop 直着地用: entry_schedule 参照農場の実レコード */
+  entryScheduleFarm: {
+    id: number;
+    name: string;
+    region: string;
+    latitude: number;
+    longitude: number;
+  } | null;
   cropId: number | null;
 };
 
@@ -25,19 +38,61 @@ function stripOrigin(base: string): string {
   return base.replace(/\/$/, '');
 }
 
-async function fetchEntryScheduleFarmId(
+async function fetchPublicPlanFarmsForRegion(
   api: APIRequestContext,
   base: string,
-): Promise<number | null> {
-  const res = await api.get(`${base}/api/v1/public_plans/entry_schedule/farms`, {
-    failOnStatusCode: false,
-  });
+  path: '/api/v1/public_plans/entry_schedule/farms' | '/api/v1/public_plans/farms',
+  region?: string,
+): Promise<ResolvedCaptureIds['entryScheduleFarm']> {
+  const url =
+    region != null && region.length > 0
+      ? `${base}${path}?region=${encodeURIComponent(region)}`
+      : `${base}${path}`;
+  const res = await api.get(url, { failOnStatusCode: false });
   if (!res.ok()) return null;
   try {
-    return firstRecordId(await res.json());
+    return parseFirstPublicPlanFarm(await res.json());
   } catch {
     return null;
   }
+}
+
+async function fetchMastersFarmForSeed(
+  api: APIRequestContext,
+  base: string,
+  masters: Record<string, number>,
+): Promise<ResolvedCaptureIds['entryScheduleFarm']> {
+  const res = await api.get(`${base}/api/v1/masters/farms`, { failOnStatusCode: false });
+  if (!res.ok()) return null;
+  try {
+    return parseMastersFarmForSeed(parseMasterList(await res.json()), masters.farms ?? null);
+  } catch {
+    return null;
+  }
+}
+
+/** select-crop 直着地シード用: 参照農場 API → リージョン試行 → masters 農場の順で解決 */
+async function resolveEntryScheduleFarmForCapture(
+  api: APIRequestContext,
+  base: string,
+  masters: Record<string, number>,
+): Promise<ResolvedCaptureIds['entryScheduleFarm']> {
+  const paths = [
+    '/api/v1/public_plans/entry_schedule/farms',
+    '/api/v1/public_plans/farms',
+  ] as const;
+
+  for (const path of paths) {
+    const defaultFarm = await fetchPublicPlanFarmsForRegion(api, base, path);
+    if (defaultFarm != null) return defaultFarm;
+
+    for (const region of ENTRY_SCHEDULE_FARM_REGIONS) {
+      const regionalFarm = await fetchPublicPlanFarmsForRegion(api, base, path, region);
+      if (regionalFarm != null) return regionalFarm;
+    }
+  }
+
+  return fetchMastersFarmForSeed(api, base, masters);
 }
 
 /** farm_id 単位でエントリ目安 API に載る作物 id（マスタ先頭 crop とは一致しないことがある） */
@@ -93,7 +148,8 @@ export async function buildResolvedCaptureIds(
     /* ignore */
   }
 
-  const farmId = await fetchEntryScheduleFarmId(api, base);
+  const entryScheduleFarm = await resolveEntryScheduleFarmForCapture(api, base, masters);
+  const farmId = entryScheduleFarm?.id ?? null;
   let cropId: number | null = null;
   if (farmId != null) {
     cropId = await fetchEntryScheduleCropIdForFarm(api, base, farmId);
@@ -101,7 +157,7 @@ export async function buildResolvedCaptureIds(
 
   const publicPlanId = await probePublicPlanId(api, base);
 
-  return { masters, privatePlanId, publicPlanId, farmId, cropId };
+  return { masters, privatePlanId, publicPlanId, farmId, entryScheduleFarm, cropId };
 }
 
 /** 認証不要の public data が取れる cultivation_plan id を少数試行で探す */

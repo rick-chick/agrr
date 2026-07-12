@@ -75,9 +75,6 @@ const initialControl: PlanTaskScheduleViewState = {
               </a>
             </nav>
           }
-          <p class="plan-task-schedule__page-intro">{{
-            'plans.task_schedules.page_intro' | translate
-          }}</p>
           @if (scheduleIsEmpty) {
             @if (
               syncState === 'generating' ||
@@ -123,20 +120,22 @@ const initialControl: PlanTaskScheduleViewState = {
               [regenerateError]="control.regenerateError"
               (retry)="regenerateTaskSchedule()"
             />
-            <app-task-schedule-week-nav
-              [viewMode]="viewMode"
-              [week]="control.schedule.week"
-              [minimap]="control.schedule.minimap"
-              (viewModeChange)="onViewModeChange($event)"
-              (weekChange)="onWeekChange($event)"
-              (weekToday)="onWeekToday()"
-            />
-            <div class="plan-task-schedule__intro">
-              <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
-              <p class="plan-task-schedule__summary">{{
-                'plans.task_schedules.summary'
-                  | translate: { fields: fieldCount, tasks: taskCount }
-              }}</p>
+            <div class="plan-task-schedule__toolbar">
+              <app-task-schedule-week-nav
+                [viewMode]="viewMode"
+                [week]="control.schedule.week"
+                [minimap]="control.schedule.minimap"
+                (viewModeChange)="onViewModeChange($event)"
+                (weekChange)="onWeekChange($event)"
+                (weekToday)="onWeekToday()"
+              />
+              <div class="plan-task-schedule__meta">
+                <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
+                <p class="plan-task-schedule__summary">{{
+                  'plans.task_schedules.summary'
+                    | translate: { fields: fieldCount, tasks: taskCount }
+                }}</p>
+              </div>
             </div>
             @if (syncState === 'ready') {
               <details class="plan-task-schedule__regenerate-details">
