@@ -1,4 +1,14 @@
-import { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import type { CrossFarmScheduleFilterOption, CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
+import { TaskScheduleItem, TaskScheduleResponse } from '../../models/plans/task-schedule';
+
+export type PlanTaskScheduleMonthRow = Omit<CrossFarmScheduleRow, 'item'> & {
+  item: TaskScheduleItem;
+};
+
+export type PlanTaskScheduleMonthGroupView = {
+  monthKey: string;
+  rows: PlanTaskScheduleMonthRow[];
+};
 
 export type PlanTaskScheduleViewState = {
   loading: boolean;
@@ -8,6 +18,12 @@ export type PlanTaskScheduleViewState = {
   regenerateError: string | null;
   pendingSyncToastKey: string | null;
   syncReloadNonce: number;
+  fromDate: string;
+  fieldCultivationFilterId: number | null;
+  monthGroups: PlanTaskScheduleMonthGroupView[];
+  fieldFilterOptions: CrossFarmScheduleFilterOption[];
+  cropIdsForBanner: number[];
+  cropNamesForBanner: Record<number, string>;
 };
 
 export interface PlanTaskScheduleView {

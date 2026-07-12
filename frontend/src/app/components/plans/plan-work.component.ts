@@ -20,7 +20,6 @@ import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-ta
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyPlanWorkViewEffects } from './plan-work-view.effects';
-import { mergeCropBannerContext } from '../../adapters/plans/task-schedule-sync-presenter.helpers';
 
 const initialControl: PlanWorkViewState = {
   loading: true,
@@ -41,7 +40,9 @@ const initialControl: PlanWorkViewState = {
   pendingRecordSavedToastKey: null,
   pendingRecordSavedEvent: null,
   pendingQuickCompleteValidation: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
 
 @Component({
@@ -285,16 +286,12 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
   }
 
-  private get cropBannerContext(): ReturnType<typeof mergeCropBannerContext> {
-    return mergeCropBannerContext(this.control.fields, this.control.plan?.remediation_crops);
-  }
-
   get cropIdsForBanner(): number[] {
-    return this.cropBannerContext.cropIds;
+    return this.control.cropIdsForBanner;
   }
 
   get cropNamesForBanner(): Record<number, string> {
-    return this.cropBannerContext.cropNames;
+    return this.control.cropNamesForBanner;
   }
 
   get todayLabel(): string {

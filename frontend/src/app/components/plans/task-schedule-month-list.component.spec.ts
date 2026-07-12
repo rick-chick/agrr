@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import en from '../../../assets/i18n/en.json';
-import type { CrossFarmScheduleMonthGroup } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
+import type { PlanTaskScheduleMonthGroupView } from './plan-task-schedule.view';
 import type { TaskScheduleItem } from '../../models/plans/task-schedule';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
 
@@ -43,7 +43,7 @@ function task(
   };
 }
 
-const monthGroups: CrossFarmScheduleMonthGroup[] = [
+const monthGroups: PlanTaskScheduleMonthGroupView[] = [
   {
     monthKey: '2026-06',
     rows: [
@@ -97,15 +97,6 @@ describe('TaskScheduleMonthListComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Field A');
     expect(fixture.nativeElement.textContent).toContain('Tomato');
     expect(fixture.nativeElement.textContent).toContain('Planned');
-  });
-
-  it('emits taskSelect when a row is clicked', () => {
-    const handler = vi.fn();
-    component.taskSelect.subscribe(handler);
-
-    fixture.nativeElement.querySelector('.plan-task-schedule-month-list__row')?.click();
-
-    expect(handler).toHaveBeenCalledWith(monthGroups[0]?.rows[0]?.item);
   });
 
   it('shows empty message when no month groups are provided', async () => {

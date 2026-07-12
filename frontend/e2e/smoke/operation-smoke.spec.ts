@@ -251,27 +251,6 @@ smokeDescribe('operation smoke (key user flows)', () => {
     });
   }
 
-  test('task schedule timeline supports drag-and-drop reorder', async ({ page }) => {
-    const r = findRoute('plans/:id/task_schedule');
-    await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
-    await waitForPageStable(page, r);
-    await assertHostHealthy(page, 'app-plan-task-schedule');
-
-    const item = page.locator('app-task-schedule-timeline .item').first();
-    if ((await item.count()) === 0) {
-      test.skip(true, 'no task schedule items');
-    }
-    const box = await item.boundingBox();
-    if (!box) {
-      test.skip(true, 'task item not visible');
-    }
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height + 40);
-    await page.mouse.up();
-    await expect(item).toBeVisible();
-  });
-
   test('footer legal links render', async ({ page }) => {
     await page.goto('/');
     await page.locator('app-footer a[href="/privacy"]').click();

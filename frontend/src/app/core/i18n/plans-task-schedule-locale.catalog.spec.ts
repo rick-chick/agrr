@@ -13,7 +13,7 @@ function getNested(obj: JsonRecord, path: string): unknown {
   }, obj);
 }
 
-/** Keys referenced by plan-task-schedule and task-schedule-timeline components. */
+/** Keys referenced by plan-task-schedule and task-schedule-month-list components. */
 const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.page_title',
   'plans.show.back_to_list',
@@ -24,23 +24,16 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.work.retry',
   'plans.task_schedules.empty_hint',
   'plans.task_schedules.empty_ready_no_fields',
-  'plans.task_schedules.unscheduled_title',
   'plans.task_schedules.no_schedules',
   'plans.task_schedules.status.planned',
   'plans.task_schedules.status.skipped',
   'plans.task_schedules.status.completed',
-  'plans.task_schedules.field_section',
-  'plans.task_schedules.field_number',
-  'plans.task_schedules.cultivation_period',
   'plans.task_schedules.summary',
-  'plans.task_schedules.view_all_fields',
   'plans.task_schedules.filter_field',
   'plans.task_schedules.filter_all_fields',
   'plans.task_schedules.filter_from_date',
   'plans.task_schedules.list_empty',
   'plans.task_schedules.list_row_meta',
-  'plans.task_schedules.back_to_planting_plan',
-  'plans.task_schedules.field_no_tasks',
   'plans.task_schedules.timeline_generated_at',
   'plans.task_schedules.timeline_generated_unknown',
   'plans.task_schedules.sync_never',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { TaskScheduleItem } from '../../models/plans/task-schedule';
+import type { PlanTaskScheduleItem } from './plan-schedule-snapshot';
 import type { CrossFarmScheduleRow } from './cross-farm-schedule-row';
 import { groupCrossFarmScheduleByMonth } from './group-cross-farm-schedule-by-month';
 
@@ -18,8 +18,14 @@ function row(
   };
 }
 
-function item(partial: Partial<TaskScheduleItem> & Pick<TaskScheduleItem, 'item_id' | 'name'>): TaskScheduleItem {
-  return partial as TaskScheduleItem;
+function item(
+  partial: Partial<PlanTaskScheduleItem> & Pick<PlanTaskScheduleItem, 'item_id' | 'name'>
+): PlanTaskScheduleItem {
+  return {
+    scheduled_date: null,
+    status: 'planned',
+    ...partial
+  };
 }
 
 describe('groupCrossFarmScheduleByMonth', () => {

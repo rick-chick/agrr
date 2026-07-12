@@ -35,7 +35,9 @@ const initialControl: PlanWorkViewState = {
   pendingRecordSavedToastKey: null,
   pendingRecordSavedEvent: null,
   pendingQuickCompleteValidation: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
 
 function mockRow(overrides: Partial<TaskScheduleItem> = {}): WorkDayListRowDto {
@@ -101,7 +103,9 @@ const loadedState: PlanWorkViewState = {
   pendingRecordSavedToastKey: null,
   pendingRecordSavedEvent: null,
   pendingQuickCompleteValidation: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
 
 describe('PlanWorkComponent mobile UX', () => {
@@ -591,6 +595,18 @@ describe('PlanWorkComponent mobile UX', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-task-schedule-sync-banner')).toBeTruthy();
+  });
+
+  it('reads crop banner context from control without adapter helpers', () => {
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      cropIdsForBanner: [20, 30],
+      cropNamesForBanner: { 20: 'Tomato', 30: 'Carrot' }
+    };
+
+    expect(component.cropIdsForBanner).toEqual([20, 30]);
+    expect(component.cropNamesForBanner).toEqual({ 20: 'Tomato', 30: 'Carrot' });
   });
 
   it('subscribes to task schedule sync cable on init', () => {
