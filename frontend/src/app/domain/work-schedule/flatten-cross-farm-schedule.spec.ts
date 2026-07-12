@@ -1,33 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import type { TaskScheduleItem } from '../../models/plans/task-schedule';
+import type { PlanTaskScheduleItem } from './plan-schedule-snapshot';
+import { emptyPlanTaskScheduleItemDetails } from './plan-schedule-snapshot';
 import { flattenCrossFarmSchedules } from './flatten-cross-farm-schedule';
 import type { CrossFarmScheduleSource } from './cross-farm-schedule-row';
 
 function mockTask(
-  overrides: Partial<TaskScheduleItem> & Pick<TaskScheduleItem, 'item_id'>
-): TaskScheduleItem {
+  overrides: Partial<PlanTaskScheduleItem> & Pick<PlanTaskScheduleItem, 'item_id'>
+): PlanTaskScheduleItem {
   return {
     name: 'Task',
-    task_type: 'field_work',
-    category: 'general',
     scheduled_date: '2026-06-10',
-    stage_name: '',
-    stage_order: 0,
-    gdd_trigger: '',
-    gdd_tolerance: '',
-    priority: 1,
-    source: 'agrr',
-    weather_dependency: 'none',
-    time_per_sqm: '',
-    amount: '',
-    amount_unit: '',
     status: 'planned',
-    agricultural_task_id: 1,
-    field_cultivation_id: 1,
-    completed: false,
-    work_records: [],
-    details: {} as TaskScheduleItem['details'],
-    badge: { type: 'default', priority_level: '', status: 'planned', category: 'general' },
+    details: emptyPlanTaskScheduleItemDetails,
     ...overrides
   };
 }
@@ -77,8 +61,7 @@ describe('flattenCrossFarmSchedules', () => {
                 mockTask({
                   item_id: 3,
                   name: 'Feed',
-                  scheduled_date: '2026-06-12',
-                  category: 'fertilizer'
+                  scheduled_date: '2026-06-12'
                 })
               ]
             }

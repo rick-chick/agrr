@@ -1,7 +1,7 @@
-import type { TaskScheduleItem } from '../../models/plans/task-schedule';
+import type { PlanTaskScheduleItem } from './plan-schedule-snapshot';
 
 export interface CrossFarmScheduleRow {
-  item: TaskScheduleItem;
+  item: PlanTaskScheduleItem;
   farmId: number;
   farmName: string;
   planId: number;
@@ -21,15 +21,10 @@ export interface CrossFarmScheduleSource {
     crop_name: string;
     field_cultivation_id: number;
     schedules: {
-      general: ReadonlyArray<TaskScheduleItem>;
-      fertilizer: ReadonlyArray<TaskScheduleItem>;
+      general: ReadonlyArray<PlanTaskScheduleItem>;
+      fertilizer: ReadonlyArray<PlanTaskScheduleItem>;
     };
   }>;
-}
-
-export interface CrossFarmScheduleFilter {
-  farmId: number | null;
-  fieldCultivationId: number | null;
 }
 
 export interface CrossFarmScheduleFilterOption {

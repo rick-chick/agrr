@@ -21,6 +21,7 @@ const FARMS_SHOW_KEYS = [
   'farms.show.location',
   'farms.form.region_blank',
   'farms.form.region_jp',
+  'farms.show.back_to_list',
   'farms.show.weather_status',
   'farms.show.weather_progress',
   'farms.show.map.title',

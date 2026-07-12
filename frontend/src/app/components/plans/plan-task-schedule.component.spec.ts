@@ -1,6 +1,6 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { TranslateModule, TranslateService, type TranslationObject } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,6 +14,16 @@ import { PlanTaskSchedulePresenter } from '../../usecase/plans/plan-task-schedul
 import { PlanTaskScheduleComponent } from './plan-task-schedule.component';
 import type { PlanTaskScheduleViewState } from './plan-task-schedule.view';
 import type { TaskScheduleResponse } from '../../models/plans/task-schedule';
+import { localTodayIso } from '../../core/local-today';
+
+function shiftIsoDate(isoDate: string, dayDelta: number): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const shifted = new Date(year, month - 1, day + dayDelta);
+  const y = shifted.getFullYear();
+  const m = String(shifted.getMonth() + 1).padStart(2, '0');
+  const d = String(shifted.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 const loadedSchedule: TaskScheduleResponse = {
   plan: {
@@ -53,8 +63,29 @@ const loadedState: PlanTaskScheduleViewState = {
   regenerating: false,
   regenerateError: null,
   pendingSyncToastKey: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  fromDate: localTodayIso(),
+  fieldCultivationFilterId: null,
+  monthGroups: [],
+  fieldFilterOptions: [],
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
+
+function setScheduleControl(
+  component: PlanTaskScheduleComponent,
+  presenter: PlanTaskSchedulePresenter,
+  control: PlanTaskScheduleViewState,
+  filters?: { fromDate?: string; fieldCultivationFilterId?: number | null }
+): void {
+  component.control = control;
+  if (control.schedule) {
+    presenter.applyClientFilters(
+      filters?.fromDate ?? control.fromDate,
+      filters?.fieldCultivationFilterId ?? control.fieldCultivationFilterId
+    );
+  }
+}
 
 describe('PlanTaskScheduleComponent', () => {
   let component: PlanTaskScheduleComponent;
@@ -62,9 +93,7 @@ describe('PlanTaskScheduleComponent', () => {
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: {
-    setView: ReturnType<typeof vi.fn>;
-  };
+  let presenter: PlanTaskSchedulePresenter;
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
   let mockActivatedRoute: {
     snapshot: {
@@ -77,7 +106,6 @@ describe('PlanTaskScheduleComponent', () => {
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
     mockActivatedRoute = {
       snapshot: {
@@ -93,7 +121,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           { provide: ActivatedRoute, useValue: mockActivatedRoute }
         ]
@@ -107,10 +135,11 @@ describe('PlanTaskScheduleComponent', () => {
 
     fixture = TestBed.createComponent(PlanTaskScheduleComponent);
     component = fixture.componentInstance;
+    presenter = fixture.debugElement.injector.get(PlanTaskSchedulePresenter);
   });
 
   afterEach(() => {
-    fixture.destroy();
+    fixture?.destroy();
     vi.restoreAllMocks();
   });
 
@@ -122,8 +151,13 @@ describe('PlanTaskScheduleComponent', () => {
       regenerating: false,
       regenerateError: null,
       pendingSyncToastKey: null,
-      syncReloadNonce: 0
-    
+      syncReloadNonce: 0,
+      fromDate: localTodayIso(),
+      fieldCultivationFilterId: null,
+      monthGroups: [],
+      fieldFilterOptions: [],
+      cropIdsForBanner: [],
+      cropNamesForBanner: {}
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -181,11 +215,335 @@ describe('PlanTaskScheduleComponent', () => {
     expect(fixture.nativeElement.querySelector('.plan-task-schedule__page-intro')).toBeNull();
   });
 
-  it('renders schedule toolbar with week nav and inline meta before timeline', async () => {
+  it('renders schedule toolbar with month list only', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', en as TranslationObject, true);
     translate.setDefaultLang('en');
     translate.use('en');
+    const today = localTodayIso();
+
+    fixture.detectChanges();
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: {
+              general: [
+                {
+                  item_id: 1,
+                  name: 'Weeding',
+                  task_type: 'general',
+                  category: 'general',
+                  scheduled_date: today,
+                  priority: 1,
+                  source: 'blueprint',
+                  weather_dependency: 'low',
+                  time_per_sqm: '0',
+                  amount: '',
+                  amount_unit: '',
+                  status: 'planned',
+                  agricultural_task_id: 1,
+                  field_cultivation_id: 10,
+                  completed: false,
+                  work_records: [],
+                  details: {
+                    stage: { name: 'Stage', order: 1 },
+                    gdd: { trigger: '100', tolerance: '10' },
+                    priority: 1,
+                    weather_dependency: 'low',
+                    time_per_sqm: '0',
+                    amount: '',
+                    amount_unit: '',
+                    source: 'blueprint',
+                    master: null,
+                    history: { rescheduled_at: null, cancelled_at: null }
+                  },
+                  badge: { type: 'planned' }
+                }
+              ],
+              fertilizer: [],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    }, { fromDate: today });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const toolbar = fixture.nativeElement.querySelector('.plan-task-schedule__toolbar');
+    expect(toolbar).toBeTruthy();
+    expect(toolbar?.querySelector('app-task-schedule-week-nav')).toBeNull();
+    expect(toolbar?.querySelector('.plan-task-schedule__meta')).toBeTruthy();
+    expect(toolbar?.querySelector('.plan-task-schedule__generated-at')?.textContent).toContain('Generated');
+    expect(toolbar?.querySelector('.plan-task-schedule__summary')?.textContent).toContain('field');
+    expect(fixture.nativeElement.querySelector('app-task-schedule-month-list')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('app-task-schedule-timeline')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Weeding');
+  });
+
+  it('defaults fromDate filter to local today when query param is absent', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    const today = localTodayIso();
+    const pastDate = shiftIsoDate(today, -5);
+
+    fixture.detectChanges();
+    expect(component.fromDate).toBe(today);
+    setScheduleControl(component, presenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: {
+              general: [
+                {
+                  item_id: 1,
+                  name: 'Past task',
+                  task_type: 'general',
+                  category: 'general',
+                  scheduled_date: pastDate,
+                  priority: 1,
+                  source: 'blueprint',
+                  weather_dependency: 'low',
+                  time_per_sqm: '0',
+                  amount: '',
+                  amount_unit: '',
+                  status: 'planned',
+                  agricultural_task_id: 1,
+                  field_cultivation_id: 10,
+                  completed: false,
+                  work_records: [],
+                  details: {
+                    stage: { name: 'Stage', order: 1 },
+                    gdd: { trigger: '100', tolerance: '10' },
+                    priority: 1,
+                    weather_dependency: 'low',
+                    time_per_sqm: '0',
+                    amount: '',
+                    amount_unit: '',
+                    source: 'blueprint',
+                    master: null,
+                    history: { rescheduled_at: null, cancelled_at: null }
+                  },
+                  badge: { type: 'planned' }
+                },
+                {
+                  item_id: 2,
+                  name: 'Today task',
+                  task_type: 'general',
+                  category: 'general',
+                  scheduled_date: today,
+                  priority: 1,
+                  source: 'blueprint',
+                  weather_dependency: 'low',
+                  time_per_sqm: '0',
+                  amount: '',
+                  amount_unit: '',
+                  status: 'planned',
+                  agricultural_task_id: 1,
+                  field_cultivation_id: 10,
+                  completed: false,
+                  work_records: [],
+                  details: {
+                    stage: { name: 'Stage', order: 1 },
+                    gdd: { trigger: '100', tolerance: '10' },
+                    priority: 1,
+                    weather_dependency: 'low',
+                    time_per_sqm: '0',
+                    amount: '',
+                    amount_unit: '',
+                    source: 'blueprint',
+                    master: null,
+                    history: { rescheduled_at: null, cancelled_at: null }
+                  },
+                  badge: { type: 'planned' }
+                }
+              ],
+              fertilizer: [],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    }, { fromDate: today });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const dateInput = fixture.nativeElement.querySelector(
+      '.plan-task-schedule__filters input[type="date"]'
+    ) as HTMLInputElement;
+    expect(dateInput?.value).toBe(today);
+    expect(fixture.nativeElement.textContent).toContain('Today task');
+    expect(fixture.nativeElement.textContent).not.toContain('Past task');
+  });
+
+  it('uses from_date query param for the date filter', async () => {
+    TestBed.resetTestingModule();
+    loadUseCase = { execute: vi.fn() };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
+    cdr = { markForCheck: vi.fn() };
+
+    TestBed.overrideComponent(PlanTaskScheduleComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          PlanTaskSchedulePresenter,
+          { provide: ChangeDetectorRef, useValue: cdr },
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              snapshot: {
+                paramMap: { get: vi.fn(() => '7') },
+                queryParamMap: {
+                  get: vi.fn((key: string) => (key === 'from_date' ? '2026-06-01' : null))
+                }
+              }
+            }
+          }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const fromDateFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const fromDatePresenter = fromDateFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
+    fromDateFixture.detectChanges();
+    setScheduleControl(fromDateFixture.componentInstance, fromDatePresenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 10,
+            crop_id: 20,
+            task_options: [],
+            schedules: {
+              general: [
+                {
+                  item_id: 1,
+                  name: 'Past task',
+                  task_type: 'general',
+                  category: 'general',
+                  scheduled_date: '2026-06-01',
+                  priority: 1,
+                  source: 'blueprint',
+                  weather_dependency: 'low',
+                  time_per_sqm: '0',
+                  amount: '',
+                  amount_unit: '',
+                  status: 'planned',
+                  agricultural_task_id: 1,
+                  field_cultivation_id: 10,
+                  completed: false,
+                  work_records: [],
+                  details: {
+                    stage: { name: 'Stage', order: 1 },
+                    gdd: { trigger: '100', tolerance: '10' },
+                    priority: 1,
+                    weather_dependency: 'low',
+                    time_per_sqm: '0',
+                    amount: '',
+                    amount_unit: '',
+                    source: 'blueprint',
+                    master: null,
+                    history: { rescheduled_at: null, cancelled_at: null }
+                  },
+                  badge: { type: 'planned' }
+                },
+                {
+                  item_id: 2,
+                  name: 'Later task',
+                  task_type: 'general',
+                  category: 'general',
+                  scheduled_date: '2026-06-15',
+                  priority: 1,
+                  source: 'blueprint',
+                  weather_dependency: 'low',
+                  time_per_sqm: '0',
+                  amount: '',
+                  amount_unit: '',
+                  status: 'planned',
+                  agricultural_task_id: 1,
+                  field_cultivation_id: 10,
+                  completed: false,
+                  work_records: [],
+                  details: {
+                    stage: { name: 'Stage', order: 1 },
+                    gdd: { trigger: '100', tolerance: '10' },
+                    priority: 1,
+                    weather_dependency: 'low',
+                    time_per_sqm: '0',
+                    amount: '',
+                    amount_unit: '',
+                    source: 'blueprint',
+                    master: null,
+                    history: { rescheduled_at: null, cancelled_at: null }
+                  },
+                  badge: { type: 'planned' }
+                }
+              ],
+              fertilizer: [],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    }, { fromDate: '2026-06-01' });
+    fromDateFixture.detectChanges();
+    await fromDateFixture.whenStable();
+
+    const dateInput = fromDateFixture.nativeElement.querySelector(
+      '.plan-task-schedule__filters input[type="date"]'
+    ) as HTMLInputElement;
+    expect(dateInput?.value).toBe('2026-06-01');
+    expect(fromDateFixture.nativeElement.textContent).toContain('Past task');
+    expect(fromDateFixture.nativeElement.textContent).toContain('Later task');
+  });
+
+  it('updates from_date query param when the date filter changes', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     fixture.detectChanges();
     component.control = {
@@ -209,13 +567,16 @@ describe('PlanTaskScheduleComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const toolbar = fixture.nativeElement.querySelector('.plan-task-schedule__toolbar');
-    expect(toolbar).toBeTruthy();
-    expect(toolbar?.querySelector('app-task-schedule-week-nav')).toBeTruthy();
-    expect(toolbar?.querySelector('.plan-task-schedule__meta')).toBeTruthy();
-    expect(toolbar?.querySelector('.plan-task-schedule__generated-at')?.textContent).toContain('Generated');
-    expect(toolbar?.querySelector('.plan-task-schedule__summary')?.textContent).toContain('field');
-    expect(fixture.nativeElement.querySelector('app-task-schedule-timeline')).toBeTruthy();
+    component.onFromDateChange('2026-07-01');
+
+    expect(navigateSpy).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { from_date: '2026-07-01' },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      })
+    );
   });
 
   it('shows empty_ready_no_fields hint when sync is ready and fields are empty', async () => {
@@ -371,14 +732,10 @@ describe('PlanTaskScheduleComponent', () => {
 
     fixture.detectChanges();
     component.control = {
+      ...loadedState,
       loading: false,
       error: 'common.api_error.generic',
-      schedule: null,
-      regenerating: false,
-      regenerateError: null,
-      pendingSyncToastKey: null,
-      syncReloadNonce: 0
-    
+      schedule: null
     };
     fixture.detectChanges();
     await fixture.whenStable();
@@ -403,14 +760,10 @@ describe('PlanTaskScheduleComponent', () => {
 
     fixture.detectChanges();
     component.control = {
+      ...loadedState,
       loading: false,
       error: 'common.api_error.generic',
-      schedule: null,
-      regenerating: false,
-      regenerateError: null,
-      pendingSyncToastKey: null,
-      syncReloadNonce: 0
-    
+      schedule: null
     };
     fixture.detectChanges();
     await fixture.whenStable();
@@ -421,18 +774,20 @@ describe('PlanTaskScheduleComponent', () => {
 
     loadUseCase.execute.mockClear();
     retryBtn.click();
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7, scope: 'plan' });
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 
   it('subscribes to task schedule sync cable on init', () => {
+    const setViewSpy = vi.spyOn(presenter, 'setView');
+
     component.ngOnInit();
 
-    expect(mockPresenter.setView).toHaveBeenCalledWith(component);
+    expect(setViewSpy).toHaveBeenCalledWith(component);
     expect(subscribeSyncUseCase.execute).toHaveBeenCalledWith({
       planId: 7,
       onSubscribed: expect.any(Function)
     });
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7, scope: 'plan' });
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 
   it('shows ready regenerate details when sync is ready and schedule has fields', async () => {
@@ -473,151 +828,11 @@ describe('PlanTaskScheduleComponent', () => {
     expect(regenerateUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 
-  it('renders week nav when schedule has fields', async () => {
-    const translate = TestBed.inject(TranslateService);
-    translate.setTranslation(
-      'en',
-      {
-        ...(en as TranslationObject),
-        'plans.task_schedules.view_mode_plan': 'List',
-        'plans.task_schedules.view_mode_week': 'Week'
-      },
-      true
-    );
-    translate.setDefaultLang('en');
-    translate.use('en');
-
-    fixture.detectChanges();
-    component.control = {
-      ...loadedState,
-      schedule: {
-        ...loadedSchedule,
-        fields: [
-          {
-            id: 1,
-            name: 'Field A',
-            crop_name: 'Tomato',
-            area_sqm: 100,
-            field_cultivation_id: 10,
-            crop_id: 20,
-            task_options: [],
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
-          }
-        ]
-      }
-    };
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.querySelector('app-task-schedule-week-nav')).toBeTruthy();
-  });
-
-  it('reloads with week scope when switching to week mode', () => {
-    fixture.detectChanges();
-    component.control = {
-      ...loadedState,
-      schedule: {
-        ...loadedSchedule,
-        fields: [
-          {
-            id: 1,
-            name: 'Field A',
-            crop_name: 'Tomato',
-            area_sqm: 100,
-            field_cultivation_id: 10,
-            crop_id: 20,
-            task_options: [],
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
-          }
-        ]
-      }
-    };
-    fixture.detectChanges();
-
-    loadUseCase.execute.mockClear();
-    component.onViewModeChange('week');
-
-    expect(component.viewMode).toBe('week');
-    expect(loadUseCase.execute).toHaveBeenCalledWith({
-      planId: 7,
-      scope: 'week',
-      weekStart: '2026-06-01'
-    });
-  });
-
-  it('reloads with week_start when week navigation changes', () => {
-    fixture.detectChanges();
-    component.viewMode = 'week';
-    component.currentWeekStart = '2026-06-01';
-    component.control = {
-      ...loadedState,
-      schedule: {
-        ...loadedSchedule,
-        fields: [
-          {
-            id: 1,
-            name: 'Field A',
-            crop_name: 'Tomato',
-            area_sqm: 100,
-            field_cultivation_id: 10,
-            crop_id: 20,
-            task_options: [],
-            schedules: { general: [], fertilizer: [], unscheduled: [] }
-          }
-        ]
-      }
-    };
-    fixture.detectChanges();
-
-    loadUseCase.execute.mockClear();
-    component.onWeekChange('2026-06-08');
-
-    expect(component.currentWeekStart).toBe('2026-06-08');
-    expect(loadUseCase.execute).toHaveBeenCalledWith({
-      planId: 7,
-      scope: 'week',
-      weekStart: '2026-06-08'
-    });
-  });
-
-  it('reloads current week without weekStart when today is requested', () => {
-    fixture.detectChanges();
-    component.viewMode = 'week';
-    component.currentWeekStart = '2026-05-25';
-    fixture.detectChanges();
-
-    loadUseCase.execute.mockClear();
-    component.onWeekToday();
-
-    expect(component.currentWeekStart).toBeNull();
-    expect(loadUseCase.execute).toHaveBeenCalledWith({
-      planId: 7,
-      scope: 'week'
-    });
-  });
-
-  it('preserves week scope on silent reload', () => {
-    fixture.detectChanges();
-    component.viewMode = 'week';
-    component.currentWeekStart = '2026-06-01';
-    fixture.detectChanges();
-
-    loadUseCase.execute.mockClear();
-    component.reload({ silent: true });
-
-    expect(loadUseCase.execute).toHaveBeenCalledWith({
-      planId: 7,
-      scope: 'week',
-      weekStart: '2026-06-01'
-    });
-  });
-
-  it('passes fieldCultivationId to use case when query param is set', async () => {
+  it('filters month list rows by field cultivation id from query param', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
@@ -627,7 +842,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
@@ -635,54 +850,11 @@ describe('PlanTaskScheduleComponent', () => {
               snapshot: {
                 paramMap: { get: vi.fn(() => '7') },
                 queryParamMap: {
-                  get: vi.fn((key: string) => (key === 'field_cultivation_id' ? '42' : null))
-                }
-              }
-            }
-          }
-        ]
-      }
-    });
-
-    await TestBed.configureTestingModule({
-      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
-    }).compileComponents();
-
-    const filteredFixture = TestBed.createComponent(PlanTaskScheduleComponent);
-    filteredFixture.componentInstance.ngOnInit();
-
-    expect(loadUseCase.execute).toHaveBeenCalledWith({
-      planId: 7,
-      scope: 'plan',
-      fieldCultivationId: 42
-    });
-  });
-
-  it('shows filter navigation when field_cultivation_id query param is set', async () => {
-    TestBed.resetTestingModule();
-    loadUseCase = { execute: vi.fn() };
-    regenerateUseCase = { execute: vi.fn() };
-    subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
-    cdr = { markForCheck: vi.fn() };
-
-    TestBed.overrideComponent(PlanTaskScheduleComponent, {
-      set: {
-        styleUrls: [],
-        providers: [
-          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
-          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
-          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
-          { provide: ChangeDetectorRef, useValue: cdr },
-          {
-            provide: ActivatedRoute,
-            useValue: {
-              snapshot: {
-                paramMap: { get: vi.fn(() => '7') },
-                queryParamMap: {
-                  get: vi.fn((key: string) => (key === 'field_cultivation_id' ? '42' : null))
+                  get: vi.fn((key: string) => {
+                    if (key === 'field_cultivation_id') return '42';
+                    if (key === 'from_date') return '2026-01-01';
+                    return null;
+                  })
                 }
               }
             }
@@ -702,8 +874,164 @@ describe('PlanTaskScheduleComponent', () => {
     translate.use('en');
 
     const filteredFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const filteredPresenter = filteredFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
     filteredFixture.detectChanges();
-    filteredFixture.componentInstance.control = {
+    setScheduleControl(filteredFixture.componentInstance, filteredPresenter, {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        fields: [
+          {
+            id: 1,
+            name: 'Field A',
+            crop_name: 'Tomato',
+            area_sqm: 100,
+            field_cultivation_id: 42,
+            crop_id: 1,
+            task_options: [],
+            schedules: {
+              general: [
+                {
+                  item_id: 1,
+                  name: 'North task',
+                  task_type: 'general',
+                  category: 'general',
+                  scheduled_date: '2026-06-10',
+                  priority: 1,
+                  source: 'blueprint',
+                  weather_dependency: 'low',
+                  time_per_sqm: '0',
+                  amount: '',
+                  amount_unit: '',
+                  status: 'planned',
+                  agricultural_task_id: 1,
+                  field_cultivation_id: 42,
+                  completed: false,
+                  work_records: [],
+                  details: {
+                    stage: { name: 'Stage', order: 1 },
+                    gdd: { trigger: '100', tolerance: '10' },
+                    priority: 1,
+                    weather_dependency: 'low',
+                    time_per_sqm: '0',
+                    amount: '',
+                    amount_unit: '',
+                    source: 'blueprint',
+                    master: null,
+                    history: { rescheduled_at: null, cancelled_at: null }
+                  },
+                  badge: { type: 'planned' }
+                }
+              ],
+              fertilizer: [],
+              unscheduled: []
+            }
+          },
+          {
+            id: 2,
+            name: 'Field B',
+            crop_name: 'Carrot',
+            area_sqm: 80,
+            field_cultivation_id: 99,
+            crop_id: 2,
+            task_options: [],
+            schedules: {
+              general: [
+                {
+                  item_id: 2,
+                  name: 'South task',
+                  task_type: 'general',
+                  category: 'general',
+                  scheduled_date: '2026-06-12',
+                  priority: 1,
+                  source: 'blueprint',
+                  weather_dependency: 'low',
+                  time_per_sqm: '0',
+                  amount: '',
+                  amount_unit: '',
+                  status: 'planned',
+                  agricultural_task_id: 1,
+                  field_cultivation_id: 99,
+                  completed: false,
+                  work_records: [],
+                  details: {
+                    stage: { name: 'Stage', order: 1 },
+                    gdd: { trigger: '100', tolerance: '10' },
+                    priority: 1,
+                    weather_dependency: 'low',
+                    time_per_sqm: '0',
+                    amount: '',
+                    amount_unit: '',
+                    source: 'blueprint',
+                    master: null,
+                    history: { rescheduled_at: null, cancelled_at: null }
+                  },
+                  badge: { type: 'planned' }
+                }
+              ],
+              fertilizer: [],
+              unscheduled: []
+            }
+          }
+        ]
+      }
+    }, { fromDate: '2026-01-01', fieldCultivationFilterId: 42 });
+    filteredFixture.detectChanges();
+    await filteredFixture.whenStable();
+
+    expect(filteredFixture.nativeElement.textContent).toContain('North task');
+    expect(filteredFixture.nativeElement.textContent).not.toContain('South task');
+  });
+
+  it('does not show redundant filter navigation when field_cultivation_id query param is set', async () => {
+    TestBed.resetTestingModule();
+    loadUseCase = { execute: vi.fn() };
+    regenerateUseCase = { execute: vi.fn() };
+    subscribeSyncUseCase = { execute: vi.fn() };
+    cdr = { markForCheck: vi.fn() };
+
+    TestBed.overrideComponent(PlanTaskScheduleComponent, {
+      set: {
+        styleUrls: [],
+        providers: [
+          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
+          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
+          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
+          PlanTaskSchedulePresenter,
+          { provide: ChangeDetectorRef, useValue: cdr },
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              snapshot: {
+                paramMap: { get: vi.fn(() => '7') },
+                queryParamMap: {
+                  get: vi.fn((key: string) => {
+                    if (key === 'field_cultivation_id') return '42';
+                    if (key === 'from_date') return '2026-01-01';
+                    return null;
+                  })
+                }
+              }
+            }
+          }
+        ]
+      }
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    }).compileComponents();
+
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    const filteredFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const filteredPresenter = filteredFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
+    filteredFixture.detectChanges();
+    setScheduleControl(filteredFixture.componentInstance, filteredPresenter, {
       ...loadedState,
       schedule: {
         ...loadedSchedule,
@@ -720,18 +1048,13 @@ describe('PlanTaskScheduleComponent', () => {
           }
         ]
       }
-    };
+    }, { fromDate: '2026-01-01', fieldCultivationFilterId: 42 });
     filteredFixture.detectChanges();
     await filteredFixture.whenStable();
 
-    const nav = filteredFixture.nativeElement.querySelector('.plan-task-schedule__filter-nav');
-    expect(nav).toBeTruthy();
-    const links = nav.querySelectorAll('.plan-task-schedule__filter-link');
-    expect(links.length).toBe(2);
-    expect(links[0]?.getAttribute('href')).toContain('/plans/7/task_schedule');
-    expect(links[0]?.textContent).toContain('View all fields');
-    expect(links[1]?.getAttribute('href')).toContain('/plans/7');
-    expect(links[1]?.textContent).toContain('Back to cropping plan');
+    expect(
+      filteredFixture.nativeElement.querySelector('.plan-task-schedule__filter-nav')
+    ).toBeNull();
   });
 });
 
@@ -742,7 +1065,6 @@ describe('PlanTaskScheduleComponent locale labels', () => {
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
     TestBed.resetTestingModule();
@@ -753,7 +1075,7 @@ describe('PlanTaskScheduleComponent locale labels', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
@@ -790,9 +1112,6 @@ describe('PlanTaskScheduleComponent locale labels', () => {
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: {
-    setView: ReturnType<typeof vi.fn>;
-  };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   afterEach(() => {

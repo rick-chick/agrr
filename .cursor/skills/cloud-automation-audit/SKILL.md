@@ -89,6 +89,9 @@ test -f .github/workflows/issue-worker-dispatch.yml
 
 # PR Merge Worker dispatch
 test -f .github/workflows/pr-merge-worker-dispatch.yml
+test -f .github/workflows/pr-agent-prep.yml
+test -f scripts/pr-agent-prep.sh
+node --test scripts/pr-agent-prep-lib.test.mjs
 gh api repos/rick-chick/agrr/rulesets --jq 'map(select(.name=="master CI required" and .enforcement=="active")) | length' | grep -q '^1$'
 ```
 

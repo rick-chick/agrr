@@ -88,7 +88,7 @@ type StageTemperatureBand = {
         </div>
         <button
           type="button"
-          class="btn btn-secondary btn-sm btn--icon plan-field-climate__close"
+          class="plan-field-climate__close"
           [attr.aria-label]="'plans.field_climate.close' | translate"
           (click)="close.emit()"
         >
@@ -102,7 +102,7 @@ type StageTemperatureBand = {
 
       <div *ngIf="control.error" class="plan-field-climate__error">
         <p>{{ control.error | translate }}</p>
-        <button type="button" class="btn btn-secondary plan-field-climate__retry" (click)="retry()">
+        <button type="button" class="plan-field-climate__retry" (click)="retry()">
           {{ 'plans.field_climate.retry' | translate }}
         </button>
       </div>
@@ -145,8 +145,8 @@ type StageTemperatureBand = {
             <button
               type="button"
               role="tab"
-              class="btn btn-secondary btn-sm plan-field-climate__chart-tab"
-              [class.active]="activeChartTab === 'temperature'"
+              class="plan-field-climate__chart-tab"
+              [class.plan-field-climate__chart-tab--active]="activeChartTab === 'temperature'"
               [attr.aria-selected]="activeChartTab === 'temperature'"
               (click)="selectChartTab('temperature')"
             >
@@ -155,8 +155,8 @@ type StageTemperatureBand = {
             <button
               type="button"
               role="tab"
-              class="btn btn-secondary btn-sm plan-field-climate__chart-tab"
-              [class.active]="activeChartTab === 'gdd'"
+              class="plan-field-climate__chart-tab"
+              [class.plan-field-climate__chart-tab--active]="activeChartTab === 'gdd'"
               [attr.aria-selected]="activeChartTab === 'gdd'"
               (click)="selectChartTab('gdd')"
             >

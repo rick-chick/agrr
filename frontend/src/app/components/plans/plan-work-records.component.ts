@@ -39,7 +39,7 @@ const initialControl: PlanWorkRecordsViewState = {
         } @else if (control.error) {
           <div class="page-alert-error plan-work__error" role="alert">
             <p>{{ control.error | translate }}</p>
-            <button type="button" class="btn btn-secondary plan-work__retry" (click)="reload()">
+            <button type="button" class="btn-secondary plan-work__retry" (click)="reload()">
               {{ 'plans.work.retry' | translate }}
             </button>
           </div>
@@ -61,7 +61,7 @@ const initialControl: PlanWorkRecordsViewState = {
               <ul class="plan-work-records__list">
                 @for (record of group.records; track record.id) {
                   <li>
-                    <button type="button" class="btn btn-white plan-work-records__row" (click)="openEdit(record)">
+                    <button type="button" class="plan-work-records__row" (click)="openEdit(record)">
                       <span class="plan-work-records__date">{{ displayDate(record.actual_date) }}</span>
                       <span class="plan-work-records__name">{{ record.name }}</span>
                       @if (record.task_schedule_item_id) {

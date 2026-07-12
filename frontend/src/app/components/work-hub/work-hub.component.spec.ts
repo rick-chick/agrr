@@ -5,7 +5,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkHubComponent } from './work-hub.component';
 import { WorkHubInitUseCase } from '../../usecase/work-hub/work-hub-init.usecase';
-import { LoadCrossFarmScheduleUseCase } from '../../usecase/work-hub/load-cross-farm-schedule.usecase';
 import { EnsurePlanForFarmUseCase } from '../../usecase/work-hub/ensure-plan-for-farm.usecase';
 import { WorkHubPresenter } from '../../adapters/work-hub/work-hub.presenter';
 import type { WorkHubViewState } from './work-hub.view';
@@ -18,10 +17,6 @@ function baseControl(
     submitting: false,
     error: null,
     farms: [],
-    scheduleLoading: false,
-    scheduleError: null,
-    scheduleRows: [],
-    scheduleFilter: { farmId: null, fieldCultivationId: null },
     pendingSuccessFlash: null,
     pendingNavigation: null,
     ...overrides
@@ -32,7 +27,6 @@ describe('WorkHubComponent', () => {
   let fixture: ComponentFixture<WorkHubComponent>;
   let component: WorkHubComponent;
   let initExecute: ReturnType<typeof vi.fn>;
-  let scheduleExecute: ReturnType<typeof vi.fn>;
   let ensureExecute: ReturnType<typeof vi.fn>;
   let mockPresenter: WorkHubPresenter & {
     setView: ReturnType<typeof vi.fn>;
@@ -41,7 +35,6 @@ describe('WorkHubComponent', () => {
 
   beforeEach(async () => {
     initExecute = vi.fn();
-    scheduleExecute = vi.fn();
     ensureExecute = vi.fn();
     mockPresenter = {
       setView: vi.fn(),
@@ -58,7 +51,6 @@ describe('WorkHubComponent', () => {
         styleUrls: [],
         providers: [
           { provide: WorkHubInitUseCase, useValue: { execute: initExecute } },
-          { provide: LoadCrossFarmScheduleUseCase, useValue: { execute: scheduleExecute } },
           { provide: EnsurePlanForFarmUseCase, useValue: { execute: ensureExecute } },
           { provide: WorkHubPresenter, useValue: mockPresenter },
           { provide: ChangeDetectorRef, useValue: cdr }
@@ -86,24 +78,35 @@ describe('WorkHubComponent', () => {
       'work.hub.subtitle': '農場を選んで今日の作業を記録します',
       'work.hub.error_subtitle': '農場一覧を読み込めませんでした',
       'work.hub.retry': '再読み込み',
-      'work.hub.schedule_review_title': '作業予定確認',
-      'work.hub.schedule_review_lead': 'すべての農場の作業予定を一列で表示します。',
-      'work.hub.filter_farm': '農場',
-      'work.hub.filter_field': '圃場',
-      'work.hub.filter_all_farms': '全農場',
-      'work.hub.filter_all_fields': '全圃場',
-      'work.hub.schedule_empty': '表示できる作業予定がありません。',
-      'work.hub.schedule_row_meta': '{{farm}} · {{field}}（{{crop}}）',
-      'plans.task_schedules.status.planned': '予定',
       'common.api_error.generic': 'エラーが発生しました'
     });
   });
 
-  it('loads hub data and schedules on init', () => {
+  it('loads hub data on init', () => {
     fixture.detectChanges();
     expect(initExecute).toHaveBeenCalled();
-    expect(scheduleExecute).toHaveBeenCalled();
     expect(mockPresenter.setView).toHaveBeenCalledWith(component);
+  });
+
+  it('does not render schedule review section', () => {
+    fixture.detectChanges();
+    component.control = baseControl({
+      farms: [
+        {
+          farmId: 1,
+          farmName: 'Farm A',
+          fieldCount: 2,
+          totalArea: 100,
+          hasValidFields: true,
+          planId: 9
+        }
+      ]
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.work-hub__schedule')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('作業予定確認');
+    expect(fixture.nativeElement.querySelectorAll('.work-hub__filter-select')).toHaveLength(0);
   });
 
   it('shows empty state when no farms are returned', () => {
@@ -139,56 +142,6 @@ describe('WorkHubComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelectorAll('.work-hub__farm-btn')).toHaveLength(2);
-  });
-
-  it('renders unified schedule list with farm and field filters', async () => {
-    fixture.detectChanges();
-    component.control = baseControl({
-      scheduleRows: [
-        {
-          item: {
-            item_id: 1,
-            name: '除草',
-            scheduled_date: '2026-06-10',
-            status: 'planned'
-          } as WorkHubViewState['scheduleRows'][number]['item'],
-          farmId: 1,
-          farmName: 'Farm A',
-          planId: 9,
-          planName: 'Plan A',
-          fieldName: '圃場1',
-          fieldCultivationId: 101,
-          cropName: 'トマト'
-        },
-        {
-          item: {
-            item_id: 2,
-            name: '追肥',
-            scheduled_date: '2026-06-12',
-            status: 'planned'
-          } as WorkHubViewState['scheduleRows'][number]['item'],
-          farmId: 2,
-          farmName: 'Farm B',
-          planId: 10,
-          planName: 'Plan B',
-          fieldName: '圃場2',
-          fieldCultivationId: 201,
-          cropName: 'ニンジン'
-        }
-      ]
-    });
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    expect(fixture.nativeElement.textContent).toContain('作業予定確認');
-    expect(fixture.nativeElement.querySelectorAll('.work-hub__schedule-item')).toHaveLength(2);
-    expect(fixture.nativeElement.querySelectorAll('.work-hub__filter-select')).toHaveLength(2);
-
-    component.onFarmFilterChange(1);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.work-hub__schedule-item')).toHaveLength(1);
-    expect(fixture.nativeElement.textContent).toContain('除草');
-    expect(fixture.nativeElement.textContent).not.toContain('追肥');
   });
 
   it('ensures plan when a farm is selected', () => {
@@ -307,8 +260,8 @@ describe('WorkHubComponent', () => {
     fixture.detectChanges();
 
     initExecute.mockClear();
-    const retryButtons = fixture.nativeElement.querySelectorAll('.work-hub__retry');
-    retryButtons[retryButtons.length - 1]?.click();
+    const retryButton = fixture.nativeElement.querySelector('.work-hub__retry');
+    retryButton?.click();
 
     expect(initExecute).toHaveBeenCalled();
   });

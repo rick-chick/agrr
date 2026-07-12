@@ -10,6 +10,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.agrr-server
+    develop:
+      watch:
+        # Rust ソースは bind mount されない。変更時はイメージ再ビルドが必要。
+        - path: ./crates
+          action: rebuild
+        - path: ./Cargo.toml
+          action: rebuild
+        - path: ./Cargo.lock
+          action: rebuild
     ports:
       - "8080:8080"
     volumes:

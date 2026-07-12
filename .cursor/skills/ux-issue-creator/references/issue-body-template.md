@@ -51,6 +51,6 @@
 | `enhancement` | UX/UI 改善の既定 |
 | `bug` | 再現可能な誤表示・壊れた導線 |
 | `documentation` | キャプチャ・レビュー更新のみ（実装なし） |
-| `agent-ready` | Issue Worker に即実装させたいとき（人間が草案を確認後） |
+| `agent-ready` | 実装対象 issue の既定（方針未確定・議論中・`documentation` のみを除く） |
 
 **禁止**: 根拠のない大量起票、同一 pattern の重複 issue、完了条件のない issue。

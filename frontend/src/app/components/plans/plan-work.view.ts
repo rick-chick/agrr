@@ -25,6 +25,8 @@ export interface PlanWorkViewState {
     fieldErrors: Record<string, string[]>;
   } | null;
   syncReloadNonce: number;
+  cropIdsForBanner: number[];
+  cropNamesForBanner: Record<number, string>;
 }
 
 export interface PlanWorkView {

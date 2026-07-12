@@ -35,7 +35,9 @@ const initialControl: PlanWorkViewState = {
   pendingRecordSavedToastKey: null,
   pendingRecordSavedEvent: null,
   pendingQuickCompleteValidation: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
 
 function mockRow(overrides: Partial<TaskScheduleItem> = {}): WorkDayListRowDto {
@@ -101,7 +103,9 @@ const loadedState: PlanWorkViewState = {
   pendingRecordSavedToastKey: null,
   pendingRecordSavedEvent: null,
   pendingQuickCompleteValidation: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
 
 describe('PlanWorkComponent mobile UX', () => {
@@ -292,22 +296,7 @@ describe('PlanWorkComponent mobile UX', () => {
     const menuBtn = fixture.nativeElement.querySelector('.plan-work__menu-btn');
     expect(menuBtn).toBeTruthy();
     expect(menuBtn.textContent?.trim()).toBe('⋮');
-    expect(menuBtn.classList.contains('btn-secondary')).toBe(true);
-    expect(menuBtn.classList.contains('btn-sm')).toBe(true);
-  });
-
-  it('uses design-system classes on overflow menu items', () => {
-    renderLoaded();
-    const menuBtn = fixture.nativeElement.querySelector('.plan-work__menu-btn') as HTMLButtonElement;
-    menuBtn.click();
-    fixture.detectChanges();
-
-    const menuItems = fixture.nativeElement.querySelectorAll('.plan-work__menu .plan-work__menu-item');
-    expect(menuItems.length).toBeGreaterThan(0);
-    for (const item of menuItems) {
-      expect(item.classList.contains('btn-secondary')).toBe(true);
-      expect(item.classList.contains('btn-sm')).toBe(true);
-    }
+    expect(menuBtn.classList.contains('btn-sm')).toBe(false);
   });
 
   it('marks overdue rows with overdue modifier class', () => {
@@ -606,6 +595,18 @@ describe('PlanWorkComponent mobile UX', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-task-schedule-sync-banner')).toBeTruthy();
+  });
+
+  it('reads crop banner context from control without adapter helpers', () => {
+    renderLoaded();
+    component.control = {
+      ...loadedState,
+      cropIdsForBanner: [20, 30],
+      cropNamesForBanner: { 20: 'Tomato', 30: 'Carrot' }
+    };
+
+    expect(component.cropIdsForBanner).toEqual([20, 30]);
+    expect(component.cropNamesForBanner).toEqual({ 20: 'Tomato', 30: 'Carrot' });
   });
 
   it('subscribes to task schedule sync cable on init', () => {
