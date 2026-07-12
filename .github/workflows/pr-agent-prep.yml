@@ -30,6 +30,10 @@ concurrency:
   group: pr-agent-prep-${{ github.event.pull_request.number || github.event.workflow_run.id || 'schedule' }}
   cancel-in-progress: false
 
+permissions:
+  pull-requests: write
+  contents: read
+
 jobs:
   prep:
     runs-on: ubuntu-latest
