@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 const REQUIRED_WORKFLOW_SNIPPETS = [
   'name: PR Merge Worker Dispatch',
-  'types: [opened, labeled]',
+  'types: [opened, labeled, synchronize]',
   'push:',
   'branches: [master]',
   'CURSOR_PR_MERGE_WEBHOOK_URL',
@@ -16,7 +16,9 @@ const REQUIRED_WORKFLOW_SNIPPETS = [
 const CONFLICT_DISPATCH_SNIPPETS = [
   'dispatch-after-master-push',
   'pr-merge-worker-dispatch-after-master-push.mjs',
-  'ACTION is not ci_completed',
+  'MERGEABLE_STATE" = "CONFLICTING"',
+  'ACTION="conflict"',
+  'skipping CI gate for conflict resolution',
 ];
 
 const DISPATCH_SCRIPT_SNIPPETS = ["action: 'conflict'"];
@@ -75,6 +77,38 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
 
   if (!needsSyncText.includes('export function prMergeWorkerNeedsSync')) {
     errors.push('needs-sync helper missing prMergeWorkerNeedsSync export');
+  }
+
+  const skillPath = join(repoRoot, '.cursor/skills/github-pr-merge-worker/SKILL.md');
+  let skillText;
+  try {
+    skillText = await readFile(skillPath, 'utf8');
+  } catch {
+    errors.push(`missing skill: ${skillPath}`);
+    skillText = '';
+  }
+
+  const requiredSkillSnippets = [
+    'resolve-pr-merge-conflicts.sh',
+    'action: conflict',
+    'synchronize',
+    'mergeStateStatus',
+  ];
+
+  for (const snippet of requiredSkillSnippets) {
+    if (!skillText.includes(snippet)) {
+      errors.push(`skill missing required snippet: ${snippet}`);
+    }
+  }
+
+  const scriptPath = join(
+    repoRoot,
+    '.cursor/skills/github-pr-merge-worker/scripts/resolve-pr-merge-conflicts.sh',
+  );
+  try {
+    await readFile(scriptPath, 'utf8');
+  } catch {
+    errors.push(`missing conflict resolution script: ${scriptPath}`);
   }
 
   return { ok: errors.length === 0, errors };
