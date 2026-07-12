@@ -27,23 +27,6 @@
   line-height: 1.4;
 }
 
-.plan-task-schedule__filter-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-
-.plan-task-schedule__filter-link {
-  font-size: var(--font-size-sm);
-  color: var(--color-accent);
-  text-decoration: none;
-}
-
-.plan-task-schedule__filter-link:hover {
-  text-decoration: underline;
-}
-
 .plan-task-schedule__regenerate-details {
   margin-bottom: var(--space-4);
   font-size: var(--font-size-sm);

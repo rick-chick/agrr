@@ -1,10 +1,10 @@
-import type { FieldSchedule, PlanInfo } from '../../models/plans/task-schedule';
+import type { PlanFieldSchedule, PlanSchedulePlanInfo } from './plan-schedule-snapshot';
 import type { CrossFarmScheduleRow } from './cross-farm-schedule-row';
 import { flattenCrossFarmSchedules } from './flatten-cross-farm-schedule';
 
 export function flattenPlanTaskSchedule(
-  plan: PlanInfo,
-  fields: ReadonlyArray<FieldSchedule>
+  plan: PlanSchedulePlanInfo,
+  fields: ReadonlyArray<PlanFieldSchedule>
 ): CrossFarmScheduleRow[] {
   if (fields.length === 0) {
     return [];

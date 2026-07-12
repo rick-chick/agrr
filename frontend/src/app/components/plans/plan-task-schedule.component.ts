@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
@@ -14,14 +14,10 @@ import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-ta
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
-import { mergeCropBannerContext } from '../../adapters/plans/task-schedule-sync-presenter.helpers';
 import { formatIsoDateForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
-import { buildPlanTaskScheduleMonthGroups } from '../../domain/work-schedule/build-plan-task-schedule-month-groups';
-import { flattenPlanTaskSchedule } from '../../domain/work-schedule/flatten-plan-task-schedule';
-import {
-  buildCrossFarmScheduleFilterOptions
-} from '../../domain/work-schedule/filter-cross-farm-schedule';
+
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 const initialControl: PlanTaskScheduleViewState = {
   loading: true,
@@ -30,10 +26,14 @@ const initialControl: PlanTaskScheduleViewState = {
   regenerating: false,
   regenerateError: null,
   pendingSyncToastKey: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  fromDate: localTodayIso(),
+  fieldCultivationFilterId: null,
+  monthGroups: [],
+  fieldFilterOptions: [],
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
-
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 @Component({
   selector: 'app-plan-task-schedule',
@@ -43,7 +43,6 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
     FormsModule,
     TaskScheduleMonthListComponent,
     TranslateModule,
-    RouterLink,
     PlanPlanContextHeaderComponent,
     TaskScheduleSyncBannerComponent
   ],
@@ -67,19 +66,6 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
             </button>
           </div>
         } @else if (control.schedule) {
-          @if (fieldCultivationFilterId) {
-            <nav class="plan-task-schedule__filter-nav" aria-label="Field filter navigation">
-              <a
-                class="plan-task-schedule__filter-link"
-                [routerLink]="['/plans', planId, 'task_schedule']"
-              >
-                {{ 'plans.task_schedules.view_all_fields' | translate }}
-              </a>
-              <a class="plan-task-schedule__filter-link" [routerLink]="['/plans', planId]">
-                {{ 'plans.task_schedules.back_to_planting_plan' | translate }}
-              </a>
-            </nav>
-          }
           @if (scheduleIsEmpty) {
             @if (
               syncState === 'generating' ||
@@ -216,20 +202,11 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   }
 
   get fieldCultivationFilterId(): number | null {
-    const raw = this.route.snapshot.queryParamMap.get('field_cultivation_id');
-    if (!raw) {
-      return null;
-    }
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    return this.control.fieldCultivationFilterId;
   }
 
   get fromDate(): string {
-    const raw = this.route.snapshot.queryParamMap.get('from_date');
-    if (raw && ISO_DATE_PATTERN.test(raw)) {
-      return raw;
-    }
-    return localTodayIso();
+    return this.control.fromDate;
   }
 
   get scheduleIsEmpty(): boolean {
@@ -278,41 +255,20 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return 'plans.task_schedules.empty_hint';
   }
 
-  private get cropBannerContext(): ReturnType<typeof mergeCropBannerContext> {
-    return mergeCropBannerContext(
-      this.control.schedule?.fields ?? [],
-      this.control.schedule?.plan?.remediation_crops
-    );
-  }
-
   get cropIdsForBanner(): number[] {
-    return this.cropBannerContext.cropIds;
+    return this.control.cropIdsForBanner;
   }
 
   get cropNamesForBanner(): Record<number, string> {
-    return this.cropBannerContext.cropNames;
+    return this.control.cropNamesForBanner;
   }
 
   get scheduleMonthGroups() {
-    const schedule = this.control.schedule;
-    if (!schedule) {
-      return [];
-    }
-    return buildPlanTaskScheduleMonthGroups(
-      schedule.plan,
-      schedule.fields,
-      this.fieldCultivationFilterId,
-      this.fromDate
-    );
+    return this.control.monthGroups;
   }
 
   get fieldFilterOptions() {
-    const schedule = this.control.schedule;
-    if (!schedule) {
-      return [];
-    }
-    const rows = flattenPlanTaskSchedule(schedule.plan, schedule.fields);
-    return buildCrossFarmScheduleFilterOptions(rows, null).fields;
+    return this.control.fieldFilterOptions;
   }
 
   private _control: PlanTaskScheduleViewState = initialControl;
@@ -337,6 +293,10 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
+    this.presenter.applyClientFilters(
+      this.resolveFromDateFromRoute(),
+      this.resolveFieldCultivationFilterFromRoute()
+    );
     this.subscribeSyncUseCase.execute({
       planId,
       onSubscribed: (channel) => {
@@ -356,8 +316,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       this.control = { ...this.control, loading: true, error: null, regenerateError: null };
     }
     this.useCase.execute({
-      planId,
-      scope: 'plan'
+      planId
     });
   }
 
@@ -373,6 +332,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
+    this.presenter.applyClientFilters(this.fromDate, fieldCultivationId);
     this.cdr.markForCheck();
   }
 
@@ -386,7 +346,25 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
+    this.presenter.applyClientFilters(fromDate, this.fieldCultivationFilterId);
     this.cdr.markForCheck();
+  }
+
+  private resolveFieldCultivationFilterFromRoute(): number | null {
+    const raw = this.route.snapshot.queryParamMap.get('field_cultivation_id');
+    if (!raw) {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  private resolveFromDateFromRoute(): string {
+    const raw = this.route.snapshot.queryParamMap.get('from_date');
+    if (raw && ISO_DATE_PATTERN.test(raw)) {
+      return raw;
+    }
+    return localTodayIso();
   }
 
   regenerateTaskSchedule(): void {

@@ -72,7 +72,7 @@ Missing from all locale files: `src/assets/i18n/ja.json`, `src/assets/i18n/en.js
 Component references are present in:
 
 - `src/app/components/plans/plan-task-schedule.component.ts`
-- `src/app/components/plans/task-schedule-timeline.component.ts`
+- `src/app/components/plans/task-schedule-month-list.component.ts`
 
 Missing only from `src/assets/i18n/in.json`.
 

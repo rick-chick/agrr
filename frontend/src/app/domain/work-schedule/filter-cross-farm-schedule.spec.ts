@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { CrossFarmScheduleRow } from './cross-farm-schedule-row';
 import {
-  buildCrossFarmScheduleFilterOptions,
-  filterCrossFarmScheduleRows,
+  buildPlanTaskScheduleFieldFilterOptions,
+  filterPlanTaskScheduleRows,
   filterCrossFarmScheduleRowsFromDate
 } from './filter-cross-farm-schedule';
 
@@ -24,28 +24,19 @@ function mockRow(
   };
 }
 
-describe('filterCrossFarmScheduleRows', () => {
+describe('filterPlanTaskScheduleRows', () => {
   const rows = [
     mockRow({ farmId: 1, fieldCultivationId: 101, farmName: 'Farm A', fieldName: 'Field 1' }),
     mockRow({ farmId: 1, fieldCultivationId: 102, farmName: 'Farm A', fieldName: 'Field 2' }),
     mockRow({ farmId: 2, fieldCultivationId: 201, farmName: 'Farm B', fieldName: 'Field 3' })
   ];
 
-  it('returns all rows when filters are empty', () => {
-    expect(filterCrossFarmScheduleRows(rows, { farmId: null, fieldCultivationId: null })).toHaveLength(3);
+  it('returns all rows when field filter is null', () => {
+    expect(filterPlanTaskScheduleRows(rows, null)).toHaveLength(3);
   });
 
-  it('filters by farm', () => {
-    const filtered = filterCrossFarmScheduleRows(rows, { farmId: 2, fieldCultivationId: null });
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0].farmName).toBe('Farm B');
-  });
-
-  it('filters by field within farm context', () => {
-    const filtered = filterCrossFarmScheduleRows(rows, {
-      farmId: 1,
-      fieldCultivationId: 102
-    });
+  it('filters by field cultivation id', () => {
+    const filtered = filterPlanTaskScheduleRows(rows, 102);
     expect(filtered).toHaveLength(1);
     expect(filtered[0].fieldName).toBe('Field 2');
   });
@@ -90,19 +81,16 @@ describe('filterCrossFarmScheduleRowsFromDate', () => {
   });
 });
 
-describe('buildCrossFarmScheduleFilterOptions', () => {
+describe('buildPlanTaskScheduleFieldFilterOptions', () => {
   const rows = [
     mockRow({ farmId: 1, fieldCultivationId: 101, farmName: 'Farm A', fieldName: 'Field 1' }),
+    mockRow({ farmId: 1, fieldCultivationId: 102, farmName: 'Farm A', fieldName: 'Field 2' }),
     mockRow({ farmId: 2, fieldCultivationId: 201, farmName: 'Farm B', fieldName: 'Field 3' })
   ];
 
-  it('builds unique farm options', () => {
-    const options = buildCrossFarmScheduleFilterOptions(rows, null);
-    expect(options.farms.map((farm) => farm.label)).toEqual(['Farm A', 'Farm B']);
-  });
-
-  it('builds field options for selected farm only', () => {
-    const options = buildCrossFarmScheduleFilterOptions(rows, 1);
-    expect(options.fields.map((field) => field.label)).toEqual(['Field 1']);
+  it('builds unique field options sorted by label', () => {
+    const options = buildPlanTaskScheduleFieldFilterOptions(rows);
+    expect(options.map((field) => field.label)).toEqual(['Field 1', 'Field 2', 'Field 3']);
+    expect(options.map((field) => field.value)).toEqual([101, 102, 201]);
   });
 });

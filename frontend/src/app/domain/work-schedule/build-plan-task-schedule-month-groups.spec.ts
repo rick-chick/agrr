@@ -1,67 +1,36 @@
 import { describe, expect, it } from 'vitest';
-import type { FieldSchedule, PlanInfo, TaskScheduleItem } from '../../models/plans/task-schedule';
+import type {
+  PlanFieldSchedule,
+  PlanSchedulePlanInfo,
+  PlanTaskScheduleItem
+} from './plan-schedule-snapshot';
 import { buildPlanTaskScheduleMonthGroups } from './build-plan-task-schedule-month-groups';
 
 function task(
-  overrides: Partial<TaskScheduleItem> & Pick<TaskScheduleItem, 'item_id' | 'name' | 'scheduled_date'>
-): TaskScheduleItem {
+  overrides: Partial<PlanTaskScheduleItem> & Pick<PlanTaskScheduleItem, 'item_id' | 'name' | 'scheduled_date'>
+): PlanTaskScheduleItem {
   return {
     item_id: overrides.item_id,
     name: overrides.name,
     scheduled_date: overrides.scheduled_date,
-    task_type: 'general',
-    category: 'general',
-    priority: 1,
-    source: 'blueprint',
-    weather_dependency: 'low',
-    time_per_sqm: '0',
-    amount: '',
-    amount_unit: '',
-    status: 'planned',
-    agricultural_task_id: 1,
-    field_cultivation_id: overrides.field_cultivation_id ?? 10,
-    completed: false,
-    work_records: [],
-    details: {
-      stage: { name: 'Stage', order: 1 },
-      gdd: { trigger: '100', tolerance: '10' },
-      priority: 1,
-      weather_dependency: 'low',
-      time_per_sqm: '0',
-      amount: '',
-      amount_unit: '',
-      source: 'blueprint',
-      master: null,
-      history: { rescheduled_at: null, cancelled_at: null }
-    },
-    badge: { type: 'planned' }
+    status: overrides.status ?? 'planned'
   };
 }
 
-function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cultivation_id'>): FieldSchedule {
+function field(
+  overrides: Partial<PlanFieldSchedule> & Pick<PlanFieldSchedule, 'field_cultivation_id'>
+): PlanFieldSchedule {
   return {
-    id: overrides.id ?? 1,
     name: overrides.name ?? 'Field A',
     crop_name: overrides.crop_name ?? 'Tomato',
-    area_sqm: 100,
     field_cultivation_id: overrides.field_cultivation_id,
-    crop_id: 20,
-    task_options: [],
-    schedules: overrides.schedules ?? { general: [], fertilizer: [], unscheduled: [] }
+    schedules: overrides.schedules ?? { general: [], fertilizer: [] }
   };
 }
 
-const plan: PlanInfo = {
+const plan: PlanSchedulePlanInfo = {
   id: 7,
-  name: 'Main Plan',
-  status: 'completed',
-  planning_start_date: '2026-01-01',
-  planning_end_date: '2026-12-31',
-  timeline_generated_at: '2026-06-01T00:00:00Z',
-  timeline_generated_at_display: '2026-06-01',
-  task_schedule_sync_state: 'ready',
-  task_schedule_sync_error: null,
-  task_schedule_sync_error_crop_id: null
+  name: 'Main Plan'
 };
 
 describe('buildPlanTaskScheduleMonthGroups', () => {
@@ -70,19 +39,17 @@ describe('buildPlanTaskScheduleMonthGroups', () => {
       field_cultivation_id: 10,
       name: 'North',
       schedules: {
-        general: [task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10', field_cultivation_id: 10 })],
-        fertilizer: [],
-        unscheduled: []
+        general: [task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' })],
+        fertilizer: []
       }
     }),
     field({
-      id: 2,
       field_cultivation_id: 20,
       name: 'South',
+      crop_name: 'Carrot',
       schedules: {
-        general: [task({ item_id: 2, name: 'Harvest', scheduled_date: '2026-07-05', field_cultivation_id: 20 })],
-        fertilizer: [],
-        unscheduled: []
+        general: [task({ item_id: 2, name: 'Harvest', scheduled_date: '2026-07-05' })],
+        fertilizer: []
       }
     })
   ];

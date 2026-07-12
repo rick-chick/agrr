@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDayForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
-import type { CrossFarmScheduleMonthGroup } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
+import type { PlanTaskScheduleMonthGroupView } from './plan-task-schedule.view';
 import type { CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
-import type { TaskScheduleItem } from '../../models/plans/task-schedule';
+import type { PlanTaskScheduleItem } from '../../domain/work-schedule/plan-schedule-snapshot';
 import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.component';
 
 @Component({
@@ -51,7 +51,7 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
           </section>
         }
       </div>
-      <app-task-schedule-item-detail [task]="selectedTask" />
+      <app-task-schedule-item-detail [task]="$any(selectedTask)" />
     }
   `,
   styleUrls: ['./task-schedule-month-list.component.css']
@@ -59,11 +59,9 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
 export class TaskScheduleMonthListComponent {
   private readonly translate = inject(TranslateService);
 
-  @Input({ required: true }) monthGroups: CrossFarmScheduleMonthGroup[] = [];
+  @Input({ required: true }) monthGroups: PlanTaskScheduleMonthGroupView[] = [];
 
-  @Output() readonly taskSelect = new EventEmitter<TaskScheduleItem>();
-
-  selectedTask: TaskScheduleItem | null = null;
+  selectedTask: PlanTaskScheduleItem | null = null;
 
   formatDay(iso: string): string {
     return formatIsoDayForDisplay(iso, this.translate.currentLang);
@@ -77,17 +75,15 @@ export class TaskScheduleMonthListComponent {
     return `plans.task_schedules.status.${row.item.status.toLowerCase()}`;
   }
 
-  selectTask(task: TaskScheduleItem): void {
+  selectTask(task: PlanTaskScheduleItem): void {
     if (this.selectedTask?.item_id === task.item_id) {
       this.selectedTask = null;
-      this.taskSelect.emit(task);
       return;
     }
     this.selectedTask = task;
-    this.taskSelect.emit(task);
   }
 
-  isSelected(task: TaskScheduleItem): boolean {
+  isSelected(task: PlanTaskScheduleItem): boolean {
     return this.selectedTask?.item_id === task.item_id;
   }
 }

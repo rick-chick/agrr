@@ -1,13 +1,7 @@
 import type {
-  CrossFarmScheduleFilter,
   CrossFarmScheduleFilterOption,
   CrossFarmScheduleRow
 } from './cross-farm-schedule-row';
-
-export interface CrossFarmScheduleFilterOptions {
-  farms: CrossFarmScheduleFilterOption[];
-  fields: CrossFarmScheduleFilterOption[];
-}
 
 function uniqueOptions(
   rows: ReadonlyArray<CrossFarmScheduleRow>,
@@ -26,19 +20,14 @@ function uniqueOptions(
     .sort((left, right) => left.label.localeCompare(right.label, 'ja'));
 }
 
-export function filterCrossFarmScheduleRows(
+export function filterPlanTaskScheduleRows(
   rows: ReadonlyArray<CrossFarmScheduleRow>,
-  filter: CrossFarmScheduleFilter
+  fieldCultivationId: number | null
 ): CrossFarmScheduleRow[] {
-  return rows.filter((row) => {
-    if (filter.farmId != null && row.farmId !== filter.farmId) {
-      return false;
-    }
-    if (filter.fieldCultivationId != null && row.fieldCultivationId !== filter.fieldCultivationId) {
-      return false;
-    }
-    return true;
-  });
+  if (fieldCultivationId == null) {
+    return [...rows];
+  }
+  return rows.filter((row) => row.fieldCultivationId === fieldCultivationId);
 }
 
 export function filterCrossFarmScheduleRowsFromDate(
@@ -51,21 +40,12 @@ export function filterCrossFarmScheduleRowsFromDate(
   });
 }
 
-export function buildCrossFarmScheduleFilterOptions(
-  rows: ReadonlyArray<CrossFarmScheduleRow>,
-  selectedFarmId: number | null
-): CrossFarmScheduleFilterOptions {
-  const farms = uniqueOptions(
+export function buildPlanTaskScheduleFieldFilterOptions(
+  rows: ReadonlyArray<CrossFarmScheduleRow>
+): CrossFarmScheduleFilterOption[] {
+  return uniqueOptions(
     rows,
-    (row) => row.farmId,
-    (row) => row.farmName
-  );
-  const fieldSource =
-    selectedFarmId == null ? rows : rows.filter((row) => row.farmId === selectedFarmId);
-  const fields = uniqueOptions(
-    fieldSource,
     (row) => row.fieldCultivationId,
     (row) => row.fieldName
   );
-  return { farms, fields };
 }

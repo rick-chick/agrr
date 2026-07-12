@@ -63,8 +63,29 @@ const loadedState: PlanTaskScheduleViewState = {
   regenerating: false,
   regenerateError: null,
   pendingSyncToastKey: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  fromDate: localTodayIso(),
+  fieldCultivationFilterId: null,
+  monthGroups: [],
+  fieldFilterOptions: [],
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
+
+function setScheduleControl(
+  component: PlanTaskScheduleComponent,
+  presenter: PlanTaskSchedulePresenter,
+  control: PlanTaskScheduleViewState,
+  filters?: { fromDate?: string; fieldCultivationFilterId?: number | null }
+): void {
+  component.control = control;
+  if (control.schedule) {
+    presenter.applyClientFilters(
+      filters?.fromDate ?? control.fromDate,
+      filters?.fieldCultivationFilterId ?? control.fieldCultivationFilterId
+    );
+  }
+}
 
 describe('PlanTaskScheduleComponent', () => {
   let component: PlanTaskScheduleComponent;
@@ -72,9 +93,7 @@ describe('PlanTaskScheduleComponent', () => {
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: {
-    setView: ReturnType<typeof vi.fn>;
-  };
+  let presenter: PlanTaskSchedulePresenter;
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
   let mockActivatedRoute: {
     snapshot: {
@@ -87,7 +106,6 @@ describe('PlanTaskScheduleComponent', () => {
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
     mockActivatedRoute = {
       snapshot: {
@@ -103,7 +121,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           { provide: ActivatedRoute, useValue: mockActivatedRoute }
         ]
@@ -117,10 +135,11 @@ describe('PlanTaskScheduleComponent', () => {
 
     fixture = TestBed.createComponent(PlanTaskScheduleComponent);
     component = fixture.componentInstance;
+    presenter = fixture.debugElement.injector.get(PlanTaskSchedulePresenter);
   });
 
   afterEach(() => {
-    fixture.destroy();
+    fixture?.destroy();
     vi.restoreAllMocks();
   });
 
@@ -132,8 +151,13 @@ describe('PlanTaskScheduleComponent', () => {
       regenerating: false,
       regenerateError: null,
       pendingSyncToastKey: null,
-      syncReloadNonce: 0
-    
+      syncReloadNonce: 0,
+      fromDate: localTodayIso(),
+      fieldCultivationFilterId: null,
+      monthGroups: [],
+      fieldFilterOptions: [],
+      cropIdsForBanner: [],
+      cropNamesForBanner: {}
     };
     component.control = state;
     expect(component.control).toEqual(state);
@@ -199,7 +223,7 @@ describe('PlanTaskScheduleComponent', () => {
     const today = localTodayIso();
 
     fixture.detectChanges();
-    component.control = {
+    setScheduleControl(component, presenter, {
       ...loadedState,
       schedule: {
         ...loadedSchedule,
@@ -252,7 +276,7 @@ describe('PlanTaskScheduleComponent', () => {
           }
         ]
       }
-    };
+    }, { fromDate: today });
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -277,7 +301,7 @@ describe('PlanTaskScheduleComponent', () => {
 
     fixture.detectChanges();
     expect(component.fromDate).toBe(today);
-    component.control = {
+    setScheduleControl(component, presenter, {
       ...loadedState,
       schedule: {
         ...loadedSchedule,
@@ -361,7 +385,7 @@ describe('PlanTaskScheduleComponent', () => {
           }
         ]
       }
-    };
+    }, { fromDate: today });
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -378,7 +402,6 @@ describe('PlanTaskScheduleComponent', () => {
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
@@ -388,7 +411,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
@@ -416,8 +439,9 @@ describe('PlanTaskScheduleComponent', () => {
     translate.use('en');
 
     const fromDateFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const fromDatePresenter = fromDateFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
     fromDateFixture.detectChanges();
-    fromDateFixture.componentInstance.control = {
+    setScheduleControl(fromDateFixture.componentInstance, fromDatePresenter, {
       ...loadedState,
       schedule: {
         ...loadedSchedule,
@@ -501,7 +525,7 @@ describe('PlanTaskScheduleComponent', () => {
           }
         ]
       }
-    };
+    }, { fromDate: '2026-06-01' });
     fromDateFixture.detectChanges();
     await fromDateFixture.whenStable();
 
@@ -708,14 +732,10 @@ describe('PlanTaskScheduleComponent', () => {
 
     fixture.detectChanges();
     component.control = {
+      ...loadedState,
       loading: false,
       error: 'common.api_error.generic',
-      schedule: null,
-      regenerating: false,
-      regenerateError: null,
-      pendingSyncToastKey: null,
-      syncReloadNonce: 0
-    
+      schedule: null
     };
     fixture.detectChanges();
     await fixture.whenStable();
@@ -740,14 +760,10 @@ describe('PlanTaskScheduleComponent', () => {
 
     fixture.detectChanges();
     component.control = {
+      ...loadedState,
       loading: false,
       error: 'common.api_error.generic',
-      schedule: null,
-      regenerating: false,
-      regenerateError: null,
-      pendingSyncToastKey: null,
-      syncReloadNonce: 0
-    
+      schedule: null
     };
     fixture.detectChanges();
     await fixture.whenStable();
@@ -758,18 +774,20 @@ describe('PlanTaskScheduleComponent', () => {
 
     loadUseCase.execute.mockClear();
     retryBtn.click();
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7, scope: 'plan' });
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 
   it('subscribes to task schedule sync cable on init', () => {
+    const setViewSpy = vi.spyOn(presenter, 'setView');
+
     component.ngOnInit();
 
-    expect(mockPresenter.setView).toHaveBeenCalledWith(component);
+    expect(setViewSpy).toHaveBeenCalledWith(component);
     expect(subscribeSyncUseCase.execute).toHaveBeenCalledWith({
       planId: 7,
       onSubscribed: expect.any(Function)
     });
-    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7, scope: 'plan' });
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 
   it('shows ready regenerate details when sync is ready and schedule has fields', async () => {
@@ -815,7 +833,6 @@ describe('PlanTaskScheduleComponent', () => {
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
@@ -825,57 +842,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
-          { provide: ChangeDetectorRef, useValue: cdr },
-          {
-            provide: ActivatedRoute,
-            useValue: {
-              snapshot: {
-                paramMap: { get: vi.fn(() => '7') },
-                queryParamMap: {
-                  get: vi.fn((key: string) => {
-                    if (key === 'field_cultivation_id') return '42';
-                    if (key === 'from_date') return '2026-01-01';
-                    return null;
-                  })
-                }
-              }
-            }
-          }
-        ]
-      }
-    });
-
-    await TestBed.configureTestingModule({
-      imports: [PlanTaskScheduleComponent, TranslateModule.forRoot()],
-      providers: [provideRouter([])]
-    }).compileComponents();
-
-    const filteredFixture = TestBed.createComponent(PlanTaskScheduleComponent);
-    filteredFixture.componentInstance.ngOnInit();
-
-    expect(loadUseCase.execute).toHaveBeenCalledWith({
-      planId: 7,
-      scope: 'plan'
-    });
-  });
-
-  it('filters month list rows by field cultivation id from query param', async () => {
-    TestBed.resetTestingModule();
-    loadUseCase = { execute: vi.fn() };
-    regenerateUseCase = { execute: vi.fn() };
-    subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
-    cdr = { markForCheck: vi.fn() };
-
-    TestBed.overrideComponent(PlanTaskScheduleComponent, {
-      set: {
-        styleUrls: [],
-        providers: [
-          { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
-          { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
-          { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
@@ -907,8 +874,9 @@ describe('PlanTaskScheduleComponent', () => {
     translate.use('en');
 
     const filteredFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const filteredPresenter = filteredFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
     filteredFixture.detectChanges();
-    filteredFixture.componentInstance.control = {
+    setScheduleControl(filteredFixture.componentInstance, filteredPresenter, {
       ...loadedState,
       schedule: {
         ...loadedSchedule,
@@ -1007,7 +975,7 @@ describe('PlanTaskScheduleComponent', () => {
           }
         ]
       }
-    };
+    }, { fromDate: '2026-01-01', fieldCultivationFilterId: 42 });
     filteredFixture.detectChanges();
     await filteredFixture.whenStable();
 
@@ -1015,12 +983,11 @@ describe('PlanTaskScheduleComponent', () => {
     expect(filteredFixture.nativeElement.textContent).not.toContain('South task');
   });
 
-  it('shows filter navigation when field_cultivation_id query param is set', async () => {
+  it('does not show redundant filter navigation when field_cultivation_id query param is set', async () => {
     TestBed.resetTestingModule();
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
     TestBed.overrideComponent(PlanTaskScheduleComponent, {
@@ -1030,7 +997,7 @@ describe('PlanTaskScheduleComponent', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
@@ -1062,8 +1029,9 @@ describe('PlanTaskScheduleComponent', () => {
     translate.use('en');
 
     const filteredFixture = TestBed.createComponent(PlanTaskScheduleComponent);
+    const filteredPresenter = filteredFixture.debugElement.injector.get(PlanTaskSchedulePresenter);
     filteredFixture.detectChanges();
-    filteredFixture.componentInstance.control = {
+    setScheduleControl(filteredFixture.componentInstance, filteredPresenter, {
       ...loadedState,
       schedule: {
         ...loadedSchedule,
@@ -1080,18 +1048,13 @@ describe('PlanTaskScheduleComponent', () => {
           }
         ]
       }
-    };
+    }, { fromDate: '2026-01-01', fieldCultivationFilterId: 42 });
     filteredFixture.detectChanges();
     await filteredFixture.whenStable();
 
-    const nav = filteredFixture.nativeElement.querySelector('.plan-task-schedule__filter-nav');
-    expect(nav).toBeTruthy();
-    const links = nav.querySelectorAll('.plan-task-schedule__filter-link');
-    expect(links.length).toBe(2);
-    expect(links[0]?.getAttribute('href')).toContain('/plans/7/task_schedule');
-    expect(links[0]?.textContent).toContain('View all fields');
-    expect(links[1]?.getAttribute('href')).toContain('/plans/7');
-    expect(links[1]?.textContent).toContain('Back to cropping plan');
+    expect(
+      filteredFixture.nativeElement.querySelector('.plan-task-schedule__filter-nav')
+    ).toBeNull();
   });
 });
 
@@ -1102,7 +1065,6 @@ describe('PlanTaskScheduleComponent locale labels', () => {
     loadUseCase = { execute: vi.fn() };
     regenerateUseCase = { execute: vi.fn() };
     subscribeSyncUseCase = { execute: vi.fn() };
-    mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
 
     TestBed.resetTestingModule();
@@ -1113,7 +1075,7 @@ describe('PlanTaskScheduleComponent locale labels', () => {
           { provide: LoadPlanTaskScheduleUseCase, useValue: loadUseCase },
           { provide: RegenerateTaskScheduleUseCase, useValue: regenerateUseCase },
           { provide: SubscribeTaskScheduleSyncUseCase, useValue: subscribeSyncUseCase },
-          { provide: PlanTaskSchedulePresenter, useValue: mockPresenter },
+          PlanTaskSchedulePresenter,
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
@@ -1150,9 +1112,6 @@ describe('PlanTaskScheduleComponent locale labels', () => {
   let loadUseCase: { execute: ReturnType<typeof vi.fn> };
   let regenerateUseCase: { execute: ReturnType<typeof vi.fn> };
   let subscribeSyncUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockPresenter: {
-    setView: ReturnType<typeof vi.fn>;
-  };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   afterEach(() => {
