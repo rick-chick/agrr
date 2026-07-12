@@ -54,7 +54,20 @@ description: >-
 | Cursor Automation（webhook） | `.github/workflows/pr-merge-worker-dispatch.yml`（**Backend test 完了時** + PR opened / `agent-merge` label） |
 | 手動 | 「PR #N をマージワーカー」「#123 をマージ可能にして」 |
 
-Webhook payload フィールド: `repository`, `pr_number`, `pr_title`, `pr_url`, `action`（`opened` | `labeled` | `ci_completed`）, `head_ref`, `head_sha`, `author`.
+Webhook payload フィールド: `repository`, `pr_number`, `pr_title`, `pr_url`, `action`（`opened` | `labeled` | `ready_for_review` | `ci_completed`）, `head_ref`, `head_sha`, `author`.
+
+### 上流: PR Agent Prep（Draft ブロッカー解消）
+
+Cursor Automation が作成する **Draft PR** は [`.github/workflows/pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml) が機械処理する（AI 不要）。
+
+| 処理 | 担当 |
+|------|------|
+| `agent-merge` 付与 | `pr-agent-prep`（`cursor/*`・`issue/*`・`Merge-Strategy: agent`） |
+| 直列キュー（同時 ready は 1 件） | `pr-agent-prep` |
+| `gh pr ready`（CI green 後） | `pr-agent-prep` |
+| マージ判定・squash | **本 Worker** |
+
+本 Worker は **ready 済み**かつオプトイン対象の PR のみ着手する（Draft は prep 待ち）。
 
 ## 0) 着手前（重複 run 抑止）
 

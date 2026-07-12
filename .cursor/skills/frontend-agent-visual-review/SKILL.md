@@ -76,4 +76,5 @@ description: >-
 
 - キャプチャ・マニフェスト: **`frontend-css-route-audit`**（CSS とキャプチャ）、本スキルは **レビュー成果物の型**に特化。
 - 機械監査: `cd frontend && npm run audit:css-tokens`
-- **Issue 起票パイプライン**: 本ファイル更新後 → **`ux-issue-pipeline`**（フェーズ 4–5: `collect-ux-findings.mjs` → **`ux-issue-creator`**）
+- **Issue 起票パイプライン**: 本ファイル更新後 → **`ux-issue-pipeline`**（フェーズ 2b 認知導線 → 4–5: `collect-ux-findings.mjs` → **`ux-issue-creator`**）
+- **認知・導線レビュー**: **`ux-cognitive-guidance-review`**（わからないときの救済。レイアウト/i18n の重複指摘は避ける）

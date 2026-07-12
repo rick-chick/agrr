@@ -13,6 +13,7 @@ description: >-
 ```
 e2e:capture-for-agent
   → frontend-agent-visual-review（visual-review-results.md）
+  → ux-cognitive-guidance-review（cognitive-guidance-review.md）
   → audit:css-tokens
   → collect-ux-findings.mjs
   → ux-issue-creator（重複確認・起票）
@@ -31,6 +32,7 @@ e2e:capture-for-agent
 |---|----------|-------------------|--------|
 | 1 | キャプチャ | `frontend-css-route-audit` | `out/*.{ja,en,in}.png`（verify 通過） |
 | 2 | ビジュアルレビュー | `frontend-agent-visual-review` | `visual-review-results.md` |
+| 2b | 認知・導線レビュー | `ux-cognitive-guidance-review` | `cognitive-guidance-review.md` |
 | 3 | CSS 監査 | `cd frontend && npm run audit:css-tokens` | コンソールレポート |
 | 4 | 指摘収集 | `collect-ux-findings.mjs` | `ux-findings-draft.json`, `ux-issue-drafts.md` |
 | 5 | Issue 起票 | `ux-issue-creator` | GitHub issues |
@@ -62,6 +64,15 @@ cd frontend && npm run e2e:capture-for-agent
 - 「指摘の詳細」に P0/P1/P2 を整理（`ux-issue-creator` が参照）
 
 全件一括レビューをユーザーが明示した場合は `#1–N` まとめて可。
+
+## フェーズ 2b — 認知・導線レビュー
+
+**スキル**: `ux-cognitive-guidance-review`
+
+- ジョブシナリオ J1–J8（[references/job-scenarios.md](../ux-cognitive-guidance-review/references/job-scenarios.md)）を軸に、「わからない」種類（A–G）と導線層（L0–L4）を評価
+- 出力: `frontend/e2e/agent-review/cognitive-guidance-review.md`
+- サマリ表: ジョブ表 + `| # | pattern | 状態 | 迷い | 導線 | Q失敗 | 結果 | 指摘 |`
+- パイロットは J1–J6 関連 pattern のみでも可。全 # 走査は 2 回目以降
 
 ## フェーズ 3 — CSS 監査
 

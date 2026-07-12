@@ -265,6 +265,8 @@ while tasks:           # shell — gate exit 0 まで同一ターン継続
 
 ## 6) PR
 
+Cursor Automation の **Pull request creation** は Draft 固定のため、ラベル付与と `gh pr ready` は GitHub Actions **[`pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml)**（`scripts/pr-agent-prep.sh`）が担う。Agent は PR 作成まででよい（手動 / `gh pr create` 経路では下記を実行してもよい）。
+
 ```bash
 gh pr create --title "fix: <issue タイトルから要約> (#<N>)" --body "$(cat <<'EOF'
 ## Summary
@@ -286,13 +288,14 @@ Closes #<N>
 - [ ] ...
 EOF
 )"
+# 手動 / gh pr create 経路のみ（Automation 経路は pr-agent-prep が実施）:
 gh pr edit --add-label agent-merge
 gh pr ready
 ```
 
 - PR 本文に issue の完了条件チェックリストを写す
 - `Closes #N` を含めマージ時に自動クローズ
-- `agent-merge` で [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) がマージ候補に入る（**Draft のままでは dispatch しない** — `gh pr ready` 必須）
+- `agent-merge` で [`github-pr-merge-worker`](../github-pr-merge-worker/SKILL.md) がマージ候補に入る（**Draft のままでは dispatch しない** — [`pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml) または `gh pr ready` 必須）
 
 ## 7) 終了
 

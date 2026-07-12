@@ -2,7 +2,7 @@
 #
 # CI dispatch: Backend test workflow_run only (once per push; avoids check_suite / per-job duplicates).
 #   On ci_completed, dispatch only after ruleset required checks are all SUCCESS.
-# PR dispatch: opened (opt-in branches) or labeled agent-merge.
+# PR dispatch: opened / ready_for_review (opt-in branches) or labeled agent-merge.
 #
 # Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
 
@@ -10,7 +10,7 @@ name: PR Merge Worker Dispatch
 
 on:
   pull_request:
-    types: [opened, labeled]
+    types: [opened, labeled, ready_for_review]
     branches: [master]
   workflow_run:
     workflows:
