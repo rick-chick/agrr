@@ -80,6 +80,10 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-e2e-capture-ci-workflow.test.mjs
 
+      - name: verify-pr-merge-worker-dispatch-workflow unit tests
+        working-directory: ${{ github.workspace }}
+        run: node --test scripts/verify-pr-merge-worker-dispatch-workflow.test.mjs
+
       - name: ensure-e2e-baseline bodies unit tests
         working-directory: frontend
         run: node --test e2e/fixtures/ensure-e2e-baseline-bodies.test.mjs

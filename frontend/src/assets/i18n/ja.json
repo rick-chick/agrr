@@ -2455,7 +2455,7 @@
       "register_fields_link": "圃場を登録する",
       "retry": "再読み込み",
       "schedule_review_title": "作業予定確認",
-      "schedule_review_lead": "すべての農場の作業予定を月ごとに表示します。農場・圃場で絞り込めます。",
+      "schedule_review_lead": "すべての農場の作業予定を月ごとにまとめて表示します。農場・圃場で絞り込めます。",
       "filter_farm": "農場",
       "filter_field": "圃場",
       "filter_all_farms": "全農場",

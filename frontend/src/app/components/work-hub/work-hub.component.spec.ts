@@ -87,7 +87,7 @@ describe('WorkHubComponent', () => {
       'work.hub.error_subtitle': '農場一覧を読み込めませんでした',
       'work.hub.retry': '再読み込み',
       'work.hub.schedule_review_title': '作業予定確認',
-      'work.hub.schedule_review_lead': 'すべての農場の作業予定を一列で表示します。',
+      'work.hub.schedule_review_lead': 'すべての農場の作業予定を月ごとにまとめて表示します。農場・圃場で絞り込めます。',
       'work.hub.filter_farm': '農場',
       'work.hub.filter_field': '圃場',
       'work.hub.filter_all_farms': '全農場',

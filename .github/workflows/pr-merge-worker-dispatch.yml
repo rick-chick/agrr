@@ -2,7 +2,8 @@
 #
 # CI dispatch: Backend test workflow_run only (once per push; avoids check_suite / per-job duplicates).
 #   On ci_completed, dispatch only after ruleset required checks are all SUCCESS.
-# PR dispatch: opened (opt-in branches) or labeled agent-merge.
+# PR dispatch: opened (opt-in branches), labeled agent-merge, or synchronize when conflicting.
+# Conflict dispatch: push to master — eligible PRs that are BEHIND/DIRTY/CONFLICTING.
 #
 # Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
 
@@ -10,15 +11,17 @@ name: PR Merge Worker Dispatch
 
 on:
   pull_request:
-    types: [opened, labeled]
+    types: [opened, labeled, synchronize]
     branches: [master]
   workflow_run:
     workflows:
       - Backend test
     types: [completed]
+  push:
+    branches: [master]
 
 concurrency:
-  group: pr-merge-dispatch-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || 'none' }}
+  group: pr-merge-dispatch-${{ github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || format('master-{0}', github.sha) }}
   cancel-in-progress: true
 
 jobs:
@@ -136,7 +139,7 @@ jobs:
             exit 0
           fi
 
-          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepositoryOwner,baseRepositoryOwner,additions,deletions,title)
+          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepositoryOwner,baseRepositoryOwner,additions,deletions,title,mergeable,mergeStateStatus)
           IS_DRAFT=$(echo "$PR_META" | jq -r '.isDraft')
           REVIEW_DECISION=$(echo "$PR_META" | jq -r '.reviewDecision // ""')
           BASE_REF=$(echo "$PR_META" | jq -r '.baseRefName')
@@ -146,6 +149,17 @@ jobs:
           ADDITIONS=$(echo "$PR_META" | jq -r '.additions')
           DELETIONS=$(echo "$PR_META" | jq -r '.deletions')
           TITLE=$(echo "$PR_META" | jq -r '.title')
+          MERGEABLE_STATE=$(echo "$PR_META" | jq -r '.mergeable // ""')
+          MERGE_STATE_STATUS=$(echo "$PR_META" | jq -r '.mergeStateStatus // ""')
+
+          if [ "$MERGEABLE_STATE" = "UNKNOWN" ]; then
+            for _ in 1 2 3 4 5; do
+              sleep 2
+              MERGEABLE_STATE=$(gh pr view "$PR_NUMBER" --json mergeable -q .mergeable)
+              [ "$MERGEABLE_STATE" != "UNKNOWN" ] && break
+            done
+            MERGE_STATE_STATUS=$(gh pr view "$PR_NUMBER" --json mergeStateStatus -q .mergeStateStatus)
+          fi
 
           if [ "$IS_DRAFT" = "true" ]; then
             echo "Draft PR; skipping."
@@ -172,8 +186,16 @@ jobs:
             echo "PR exceeds 800 changed lines without agent-merge label; skipping."
             exit 0
           fi
-          if [ "$HEAD_OID" != "$HEAD_SHA" ]; then
+          if [ "$ACTION" != "conflict" ] && [ "$HEAD_OID" != "$HEAD_SHA" ]; then
             echo "Resolved head SHA ($HEAD_SHA) != current PR head ($HEAD_OID); skipping stale dispatch."
+            exit 0
+          fi
+
+          if [ "$MERGEABLE_STATE" = "CONFLICTING" ] || [ "$MERGE_STATE_STATUS" = "DIRTY" ]; then
+            ACTION="conflict"
+            echo "PR has merge conflicts (mergeable=$MERGEABLE_STATE mergeStateStatus=$MERGE_STATE_STATUS); dispatching conflict resolution."
+          elif [ "$ACTION" = "synchronize" ]; then
+            echo "synchronize event without merge conflicts; skipping (CI completed will dispatch)."
             exit 0
           fi
 
@@ -188,6 +210,10 @@ jobs:
             done
           fi
 
+          if [ "$ACTION" = "conflict" ]; then
+            echo "skipping CI gate for conflict resolution"
+          fi
+
           payload=$(jq -n \
             --arg repo "${{ github.repository }}" \
             --argjson number "$PR_NUMBER" \
@@ -197,8 +223,25 @@ jobs:
             --arg head_ref "$HEAD_REF" \
             --arg head_sha "$HEAD_SHA" \
             --arg author "$AUTHOR" \
-            '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, action: $action, head_ref: $head_ref, head_sha: $head_sha, author: $author}')
+            --arg mergeable_state "$MERGEABLE_STATE" \
+            --arg merge_state_status "$MERGE_STATE_STATUS" \
+            '{repository: $repo, pr_number: $number, pr_title: $title, pr_url: $url, action: $action, head_ref: $head_ref, head_sha: $head_sha, author: $author, mergeable_state: $mergeable_state, merge_state_status: $merge_state_status}')
           curl -fsS -X POST "$WEBHOOK_URL" \
             -H "Authorization: Bearer $WEBHOOK_KEY" \
             -H "Content-Type: application/json" \
             -d "$payload"
+
+  dispatch-after-master-push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dispatch conflict/sync for eligible PRs after master push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WEBHOOK_URL: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/pr-merge-worker-dispatch-after-master-push.mjs
