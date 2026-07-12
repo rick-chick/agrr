@@ -51,7 +51,7 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
           </section>
         }
       </div>
-      <app-task-schedule-item-detail [task]="$any(selectedTask)" />
+      <app-task-schedule-item-detail [task]="selectedTask" />
     }
   `,
   styleUrls: ['./task-schedule-month-list.component.css']

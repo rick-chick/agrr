@@ -2,51 +2,23 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.component';
-import type { TaskScheduleItem } from '../../models/plans/task-schedule';
+import type { PlanTaskScheduleItem } from '../../domain/work-schedule/plan-schedule-snapshot';
 
-function mockTask(overrides: Partial<TaskScheduleItem> = {}): TaskScheduleItem {
+function mockTask(overrides: Partial<PlanTaskScheduleItem> = {}): PlanTaskScheduleItem {
   return {
     item_id: 1,
     name: 'Weeding',
-    task_type: 'field_work',
-    category: 'general',
     scheduled_date: '2026-06-17',
-    stage_name: 'Growth',
-    stage_order: 2,
-    gdd_trigger: '120',
-    gdd_tolerance: '10',
-    priority: 1,
-    source: 'agrr',
-    weather_dependency: 'none',
-    time_per_sqm: '',
-    amount: '10',
-    amount_unit: 'g/m2',
     status: 'planned',
-    agricultural_task_id: 1,
-    field_cultivation_id: 1,
-    completed: false,
-    work_records: [],
     details: {
-      stage: { name: 'Growth', order: 2 },
-      gdd: { trigger: '120', tolerance: '10' },
-      priority: 1,
-      weather_dependency: 'none',
-      time_per_sqm: '',
+      stageName: 'Growth',
+      gddTrigger: '120',
+      gddTolerance: '10',
       amount: '10',
-      amount_unit: 'g/m2',
-      source: 'agrr',
-      master: {
-        name: 'Weeding master',
-        description: 'Remove weeds',
-        time_per_sqm: '',
-        weather_dependency: 'none',
-        required_tools: [],
-        skill_level: 'beginner',
-        task_type: 'field_work'
-      },
-      history: { rescheduled_at: null, cancelled_at: null }
+      amountUnit: 'g/m2',
+      masterName: 'Weeding master',
+      masterDescription: 'Remove weeds'
     },
-    badge: { type: 'default', priority_level: '', status: 'planned', category: 'general' },
     ...overrides
   };
 }

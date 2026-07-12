@@ -39,7 +39,8 @@ function task(
       master: null,
       history: { rescheduled_at: null, cancelled_at: null }
     },
-    badge: { type: 'planned' }
+    badge: { type: 'planned' },
+    ...overrides
   };
 }
 
@@ -162,6 +163,63 @@ describe('PlanTaskSchedulePresenter load', () => {
     expect(view.control.cropIdsForBanner).toEqual(expect.arrayContaining([20, 30]));
     expect(view.control.cropNamesForBanner[20]).toBe('Tomato');
     expect(view.control.cropNamesForBanner[30]).toBe('Carrot');
+  });
+
+  it('includes item details in month groups without hydrate', () => {
+    const schedule: TaskScheduleResponse = {
+      ...scheduleWithFields,
+      fields: [
+        field({
+          field_cultivation_id: 10,
+          name: 'North',
+          schedules: {
+            general: [
+              task({
+                item_id: 1,
+                name: 'Weeding',
+                scheduled_date: '2026-06-10',
+                field_cultivation_id: 10,
+                details: {
+                  stage: { name: 'Vegetative', order: 2 },
+                  gdd: { trigger: '150', tolerance: '5' },
+                  priority: 1,
+                  weather_dependency: 'low',
+                  time_per_sqm: '0',
+                  amount: '20',
+                  amount_unit: 'kg',
+                  source: 'blueprint',
+                  master: {
+                    name: 'Weed master',
+                    description: 'Pull weeds carefully',
+                    time_per_sqm: '0',
+                    weather_dependency: 'low',
+                    required_tools: [],
+                    skill_level: 'beginner',
+                    task_type: 'field_work'
+                  },
+                  history: { rescheduled_at: null, cancelled_at: null }
+                }
+              })
+            ],
+            fertilizer: [],
+            unscheduled: []
+          }
+        })
+      ]
+    };
+
+    presenter.present({ schedule });
+
+    const details = view.control.monthGroups[0]?.rows[0]?.item.details;
+    expect(details).toEqual({
+      stageName: 'Vegetative',
+      gddTrigger: '150',
+      gddTolerance: '5',
+      amount: '20',
+      amountUnit: 'kg',
+      masterName: 'Weed master',
+      masterDescription: 'Pull weeds carefully'
+    });
   });
 
   it('sets error state on onError', () => {
