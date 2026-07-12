@@ -1,0 +1,117 @@
+# Prepares agent-opt-in PRs for PR Merge Worker after Cursor Automation creates Draft PRs.
+#
+# - Adds agent-merge label when eligible (cursor/*, issue/*, or Merge-Strategy: agent)
+# - Serial queue: only one non-draft agent-merge PR at a time
+# - gh pr ready when CI is green and queue is clear
+#
+# Downstream: pr-merge-worker-dispatch.yml (ready_for_review + ci_completed)
+# Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
+
+name: PR Agent Prep
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, closed]
+    branches: [master]
+  workflow_run:
+    workflows:
+      - Backend test
+    types: [completed]
+  schedule:
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Optional PR number to prep (default advances queue only)
+        required: false
+        type: number
+
+concurrency:
+  group: pr-agent-prep-${{ github.event.pull_request.number || github.event.workflow_run.id || 'schedule' }}
+  cancel-in-progress: false
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.action != 'closed' ||
+      github.event.pull_request.merged == true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve target PR number
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR: ${{ github.event.inputs.pr_number }}
+        run: |
+          set -euo pipefail
+          MODE="prep"
+          PR_NUMBER=""
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -n "${INPUT_PR:-}" ]; then
+              PR_NUMBER="$INPUT_PR"
+            else
+              MODE="advance-queue"
+            fi
+          elif [ "$EVENT_NAME" = "schedule" ]; then
+            MODE="safety-net"
+          elif [ "$EVENT_NAME" = "pull_request" ]; then
+            if [ "${{ github.event.action }}" = "closed" ]; then
+              MODE="advance-queue"
+            else
+              PR_NUMBER="${{ github.event.pull_request.number }}"
+            fi
+          elif [ "$EVENT_NAME" = "workflow_run" ]; then
+            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+              echo "Backend test did not succeed; skipping prep."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+            OPEN_PRS=$(gh api "repos/${{ github.repository }}/commits/$HEAD_SHA/pulls" \
+              --jq '[.[] | select(.state == "open")]')
+            OPEN_COUNT=$(echo "$OPEN_PRS" | jq 'length')
+            if [ "$OPEN_COUNT" -ne 1 ]; then
+              echo "Expected exactly one open PR for commit $HEAD_SHA (found $OPEN_COUNT); skipping."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            PR_NUMBER=$(echo "$OPEN_PRS" | jq -r '.[0].number')
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Prep pull request
+        if: steps.target.outputs.skip != 'true' && steps.target.outputs.mode == 'prep'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/pr-agent-prep.sh prep "${{ steps.target.outputs.pr_number }}"
+
+      - name: Advance merge queue
+        if: steps.target.outputs.skip != 'true' && steps.target.outputs.mode == 'advance-queue'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/pr-agent-prep.sh advance-queue
+
+      - name: Safety net (stuck drafts)
+        if: steps.target.outputs.skip != 'true' && steps.target.outputs.mode == 'safety-net'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mapfile -t DRAFT_PRS < <(gh pr list --state open --json number,author,isDraft \
+            --jq '.[] | select(.isDraft == true) | select(.author.login == "cursor[bot]" or .author.login == "app/cursor") | .number')
+          for pr_number in "${DRAFT_PRS[@]}"; do
+            bash scripts/pr-agent-prep.sh prep "$pr_number" || true
+          done
+          bash scripts/pr-agent-prep.sh advance-queue

@@ -177,7 +177,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                 <p>
                   <button
                     type="button"
-                    class="btn btn-secondary"
+                    class="btn-secondary"
                     [disabled]="control.blueprintsRegenerating"
                     (click)="regenerateBlueprints()"
                   >
@@ -337,7 +337,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                 </span>
                 <button
                   type="button"
-                  class="btn btn-danger btn-sm crop-blueprints__card-remove blueprint-card__remove"
+                  class="crop-blueprints__card-remove blueprint-card__remove"
                   (click)="deleteBlueprint(blueprint.id)"
                   [attr.aria-label]="'crops.show.delete_blueprint' | translate"
                 >
@@ -416,7 +416,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                 <p class="crop-blueprints__template-add-empty-message">
                   {{ 'crops.show.manual_blueprint_add.no_unassociated_tasks' | translate }}
                 </p>
-                <a routerLink="/agricultural_tasks/new" class="btn btn-secondary crop-blueprints__template-add-cta">
+                <a routerLink="/agricultural_tasks/new" class="btn-secondary crop-blueprints__template-add-cta">
                   {{ 'crops.show.manual_blueprint_add.go_to_create' | translate }}
                 </a>
               </div>
@@ -517,7 +517,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
                 <div class="crop-blueprints__template-add-actions">
                   <button
                     type="button"
-                    class="btn btn-primary"
+                    class="btn-primary"
                     [disabled]="!control.canCreateBlueprint"
                     (click)="createBlueprint()"
                   >
@@ -534,7 +534,7 @@ const initialControl: CropTaskScheduleBlueprintsViewState = {
             <div class="crop-blueprints__blueprint-ai-import">
               <button
                 type="button"
-                class="btn btn-secondary"
+                class="btn-secondary"
                 [disabled]="!control.canRegenerateBlueprints"
                 [attr.title]="'crops.show.manual_blueprint_add.ai_hint' | translate"
                 (click)="regenerateBlueprints()"

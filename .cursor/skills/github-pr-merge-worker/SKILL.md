@@ -66,6 +66,19 @@ Webhook payload フィールド: `repository`, `pr_number`, `pr_title`, `pr_url`
 | **CI** | **マージ前ゲートはスキップ**（コンフリクト解消が先）。push 後は Backend test 完了で `ci_completed` が再 dispatch |
 | **マージ** | コンフリクト解消 push のあと **次回 run** で §2〜§4（本 run ではマージしない） |
 
+### 上流: PR Agent Prep（Draft ブロッカー解消）
+
+Cursor Automation が作成する **Draft PR** は [`.github/workflows/pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml) が機械処理する（AI 不要）。
+
+| 処理 | 担当 |
+|------|------|
+| `agent-merge` 付与 | `pr-agent-prep`（`cursor/*`・`issue/*`・`Merge-Strategy: agent`） |
+| 直列キュー（同時 ready は 1 件） | `pr-agent-prep` |
+| `gh pr ready`（CI green 後） | `pr-agent-prep` |
+| マージ判定・squash | **本 Worker** |
+
+本 Worker は **ready 済み**かつオプトイン対象の PR のみ着手する（Draft は prep 待ち）。
+
 ## 0) 着手前（重複 run 抑止）
 
 ```bash

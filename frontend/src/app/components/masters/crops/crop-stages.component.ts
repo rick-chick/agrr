@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CropStagesView, CropStagesViewState, CropStagesFormData } from './crop-stages.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
@@ -19,6 +19,11 @@ import {
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
+import {
+  parsePlanWizardReturnTab,
+  planWizardReturnPath,
+  type PlanWizardReturnTab
+} from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import type { CropStage } from '../../../domain/crops/crop';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
@@ -40,7 +45,7 @@ const initialControl: CropStagesViewState = {
 @Component({
   selector: 'app-crop-stages',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
   providers: [...CROP_STAGES_PROVIDERS],
   template: `
     <main class="page-main">
@@ -58,6 +63,9 @@ const initialControl: CropStagesViewState = {
             <p class="crop-blueprints__plan-wizard-banner-lead">
               {{ 'crops.show.from_plan_stages_wizard_lead' | translate }}
             </p>
+            <a [routerLink]="planReturnPath" class="btn-secondary crop-stages__return-to-plan">
+              {{ 'crops.show.return_to_plan' | translate }}
+            </a>
           </div>
         }
 
@@ -248,6 +256,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   fromPlanId: number | null = null;
+  returnTab: PlanWizardReturnTab = 'task_schedule';
+
+  get planReturnPath(): (string | number)[] {
+    return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
+  }
 
   get contextCrumbs(): MasterContextCrumb[] {
     const crumbs: MasterContextCrumb[] = [
@@ -264,6 +277,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   ngOnInit(): void {
     this.presenter.setView(this);
     this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
+    this.returnTab = parsePlanWizardReturnTab(this.route.snapshot.queryParamMap.get('returnTo'));
     if (!this.cropId) {
       this.control = {
         ...initialControl,

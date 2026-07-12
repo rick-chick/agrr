@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { CrossFarmScheduleRow } from './cross-farm-schedule-row';
 import {
   buildCrossFarmScheduleFilterOptions,
-  filterCrossFarmScheduleRows
+  filterCrossFarmScheduleRows,
+  filterCrossFarmScheduleRowsFromDate
 } from './filter-cross-farm-schedule';
 
 function mockRow(
@@ -47,6 +48,45 @@ describe('filterCrossFarmScheduleRows', () => {
     });
     expect(filtered).toHaveLength(1);
     expect(filtered[0].fieldName).toBe('Field 2');
+  });
+});
+
+describe('filterCrossFarmScheduleRowsFromDate', () => {
+  const rows = [
+    mockRow({
+      farmId: 1,
+      fieldCultivationId: 101,
+      item: { item_id: 1, name: 'Early', scheduled_date: '2026-06-01' } as CrossFarmScheduleRow['item']
+    }),
+    mockRow({
+      farmId: 1,
+      fieldCultivationId: 102,
+      item: { item_id: 2, name: 'On boundary', scheduled_date: '2026-06-10' } as CrossFarmScheduleRow['item']
+    }),
+    mockRow({
+      farmId: 2,
+      fieldCultivationId: 201,
+      item: { item_id: 3, name: 'Later', scheduled_date: '2026-06-15' } as CrossFarmScheduleRow['item']
+    })
+  ];
+
+  it('keeps rows with scheduled_date on or after fromDate', () => {
+    const filtered = filterCrossFarmScheduleRowsFromDate(rows, '2026-06-10');
+
+    expect(filtered.map((row) => row.item.name)).toEqual(['On boundary', 'Later']);
+  });
+
+  it('excludes rows without scheduled_date', () => {
+    const withUnscheduled = [
+      ...rows,
+      mockRow({
+        farmId: 1,
+        fieldCultivationId: 103,
+        item: { item_id: 4, name: 'Unscheduled', scheduled_date: '' } as CrossFarmScheduleRow['item']
+      })
+    ];
+
+    expect(filterCrossFarmScheduleRowsFromDate(withUnscheduled, '2026-01-01')).toHaveLength(3);
   });
 });
 

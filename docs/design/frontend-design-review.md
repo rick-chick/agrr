@@ -47,6 +47,18 @@ Angular Material デザインスキル（`.cursor/skills/design-angular-material
 - [ ] アイコンのみのボタンに `aria-label` を付与している
 - [ ] ドロップダウン・メニューに `aria-expanded` / `aria-haspopup` / `aria-controls` を適切に設定している
 
+### ボタン（アクション種別）
+
+マスタ共通クラスは `frontend/src/app/components/masters/_master-layout.css` を正とする。
+
+| 種別 | クラス | 見た目 |
+|------|--------|--------|
+| 主アクション | `.btn-primary` | filled primary |
+| 副アクション | `.btn-secondary` | outline neutral |
+| 削除・破壊的操作 | `.btn-danger` | **outline destructive**（`surface` 背景 + `error` 文字 + border。filled 赤背景は使わない） |
+
+- [ ] 削除ボタンは `.btn-danger` を使い、画面固有の削除スタイルを新規定義していない
+
 ### 参照
 
 - トークン一覧・スケール: `.cursor/skills/design-angular-material/references/DESIGN_TOKENS.md`

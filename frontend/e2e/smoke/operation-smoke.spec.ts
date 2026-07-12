@@ -51,7 +51,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
   test('home CTA opens public plan wizard', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('app-home')).toBeVisible();
-    await page.locator('app-home .btn-primary').first().click();
+    await page.locator('app-home .primary-button').first().click();
     await expect(page).toHaveURL(/\/public-plans\/new/);
     await expect(page.locator('app-public-plan-create')).toBeVisible();
     await assertHostHealthy(page, 'app-public-plan-create');
@@ -125,7 +125,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
     if ((await gantt.count()) === 0) {
       test.skip(true, 'plan has no gantt data');
     }
-    const toggle = gantt.locator('.gantt-action-bar .btn').first();
+    const toggle = gantt.locator('.gantt-action-bar .action-button').first();
     await toggle.click();
     await expect(gantt.locator('.crop-palette')).toBeVisible();
     await toggle.click();
@@ -291,7 +291,7 @@ test.describe('logged-out operation smoke', () => {
   test('login page shows OAuth entry', async ({ page }) => {
     await page.goto('/login');
     await expect(page.locator('app-login')).toBeVisible();
-    await expect(page.locator('app-login .btn-primary')).toBeVisible();
+    await expect(page.locator('app-login .login-button')).toBeVisible();
   });
 
   test('unknown route shows not-found', async ({ page }) => {

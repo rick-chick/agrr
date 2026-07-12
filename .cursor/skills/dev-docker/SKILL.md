@@ -27,6 +27,10 @@ disable-model-invocation: false
 | 本スキル `scripts/` で操作 | `scripts/docker-entrypoint-dev*.sh` 等を `scripts/` に復活させる |
 | 初回 DB: `load-reference-data.sh`（Docker）または `load-reference-data-host.sh`（cargo） | `bundle exec rails db:prepare` |
 | API 開発: `up.sh` | 無 profile の `docker compose up web` |
+| **`crates/` の Rust API 変更後**: `rebuild-restart.sh`（Docker 利用時は**必須**） | 再ビルドなしで「ブラウザをリロード」とだけ案内する |
+| ローカル検証前に API が新フィールドを返すか確認する | 古いバイナリのまま UI 差分だけを見る |
+
+**なぜ再ビルドが要るか**: `agrr-server` はイメージ内の release バイナリ。`docker-compose.yml` は `lib/core` 等のみ bind mount し、`crates/` はマウントしない。API レスポンス（例: `remediation_crops`）を変えたら再ビルドしないと古い JSON のまま。
 
 **Compose**: [`docker-compose.yml`](../../../docker-compose.yml)
 
@@ -49,11 +53,15 @@ scripts/ensure-reference-fixtures.sh
 ```bash
 .cursor/skills/dev-docker/scripts/build.sh    # イメージ変更後
 .cursor/skills/dev-docker/scripts/up.sh
+.cursor/skills/dev-docker/scripts/up.sh --watch   # crates 変更で自動再ビルド（推奨: API 開発中）
+.cursor/skills/dev-docker/scripts/rebuild-restart.sh   # 1 回だけ再ビルド＋再起動（エージェントは API 変更後に実行）
 .cursor/skills/dev-docker/scripts/down.sh
 .cursor/skills/dev-docker/scripts/logs.sh
 ```
 
 Angular: `cd frontend && ng serve --host 127.0.0.1` → `http://127.0.0.1:3000`
+
+**Docker + API 変更後の確認**: `rebuild-restart.sh` 完了後、ブラウザで対象ページをリロードする（フロントは HMR、API は再ビルドが必要）。
 
 ### ホスト cargo（Docker なし）
 
@@ -76,6 +84,7 @@ Angular: `cd frontend && ng serve --host 127.0.0.1` → `http://127.0.0.1:3000`
 | ファイル | 用途 |
 |----------|------|
 | `up.sh` / `down.sh` / `build.sh` / `logs.sh` | Compose 操作 |
+| `rebuild-restart.sh` | agrr-server 再ビルド＋再作成＋ヘルス待ち |
 | `load-reference-data.sh` | コンテナ経由で参照データ投入 |
 | `load-reference-data-host.sh` | ホスト `cargo run -p agrr-migrate` |
 | `host-rust-stack.sh` | ホスト agrr-server + nginx :3000 |

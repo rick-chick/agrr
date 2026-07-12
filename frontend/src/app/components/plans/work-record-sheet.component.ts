@@ -116,10 +116,9 @@ const initialControl: WorkRecordSheetViewState = {
                 @for (chip of control.taskChips; track chip.id) {
                   <button
                     type="button"
-                    class="btn btn-sm work-record-sheet__chip"
-                    [class.btn-white]="control.selectedTaskId !== chip.id"
-                    [class.btn-primary]="control.selectedTaskId === chip.id"
+                    class="work-record-sheet__chip"
                     role="option"
+                    [class.work-record-sheet__chip--selected]="control.selectedTaskId === chip.id"
                     [attr.aria-selected]="control.selectedTaskId === chip.id"
                     (click)="selectTaskChip(chip)"
                   >
@@ -128,10 +127,9 @@ const initialControl: WorkRecordSheetViewState = {
                 }
                 <button
                   type="button"
-                  class="btn btn-sm work-record-sheet__chip work-record-sheet__chip--other"
-                  [class.btn-white]="control.selectedTaskId !== 'other'"
-                  [class.btn-primary]="control.selectedTaskId === 'other'"
+                  class="work-record-sheet__chip work-record-sheet__chip--other"
                   role="option"
+                  [class.work-record-sheet__chip--selected]="control.selectedTaskId === 'other'"
                   [attr.aria-selected]="control.selectedTaskId === 'other'"
                   (click)="selectOtherTask()"
                 >
@@ -205,7 +203,7 @@ const initialControl: WorkRecordSheetViewState = {
         @if (control.mode !== 'edit') {
           <button
             type="button"
-            class="btn-link work-record-sheet__details-toggle"
+            class="work-record-sheet__details-toggle"
             [attr.aria-expanded]="control.showDetails"
             (click)="toggleDetails()"
           >
@@ -249,15 +247,15 @@ const initialControl: WorkRecordSheetViewState = {
           @if (control.mode === 'edit') {
             <button
               type="button"
-              class="btn btn-danger"
+              class="btn-danger"
               [disabled]="control.submitting"
               (click)="confirmDelete()"
             >{{ 'plans.work_records.sheet.delete' | translate }}</button>
           }
-          <button type="button" class="btn btn-secondary" (click)="close()">{{ 'common.cancel' | translate }}</button>
+          <button type="button" class="btn-secondary" (click)="close()">{{ 'common.cancel' | translate }}</button>
           <button
             type="submit"
-            class="btn btn-primary"
+            class="btn-primary"
             [disabled]="control.submitting || !canSubmit(recordForm)"
           >
             @if (control.mode === 'edit') {

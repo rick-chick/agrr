@@ -428,6 +428,7 @@
       },
       "from_plan_wizard_title": "इस योजना की कार्य अनुसूची के लिए पंजीकरण",
       "from_plan_wizard_lead": "नीचे के फॉर्म से कार्य योजना पंजीकृत करें। समाप्त होने पर ब्रेडक्रंब से योजना पर वापस जाएँ।",
+      "return_to_plan": "योजना पर वापस जाएँ",
       "from_plan_stages_wizard_lead": "प्रत्येक वृद्धि चरण के लिए आधार तापमान और आवश्यक GDD सेट करें। समाप्त होने पर योजना पर लौटकर कार्य अनुसूची पुनः बनाएँ।"
     }
   },
@@ -731,6 +732,7 @@
       "delete": "हटाएं",
       "delete_confirm": "क्या आप वाकई इस खेत को हटाना चाहते हैं?",
       "back": "वापस",
+      "back_to_list": "खेत सूची",
       "location": "क्षेत्र",
       "fields": "खेत क्षेत्र",
       "add_field": "खेत क्षेत्र जोड़ें",
@@ -1663,6 +1665,11 @@
       "cultivation_period": "खेती अवधि {{start}} – {{end}}",
       "summary": "{{fields}} खेत · {{tasks}} कार्य",
       "view_all_fields": "सभी खेत देखें",
+      "filter_field": "खेत",
+      "filter_all_fields": "सभी खेत",
+      "filter_from_date": "प्रारंभ तिथि",
+      "list_empty": "वर्तमान फ़िल्टर से मेल खाने वाला कोई कार्य नहीं है।",
+      "list_row_meta": "{{field}} · {{crop}}",
       "back_to_planting_plan": "फसल योजना पर वापस जाएं",
       "field_no_tasks": "इस स्तंभ में कोई निर्धारित कार्य नहीं",
       "sync_never": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
@@ -2118,15 +2125,7 @@
       "start_recording": "दर्ज करना शुरू करें",
       "no_fields_warning": "इस खेत पर कोई मान्य खेत क्षेत्र नहीं है।",
       "register_fields_link": "खेत क्षेत्र पंजीकृत करें",
-      "retry": "पुनः लोड करें",
-      "schedule_review_title": "कार्य अनुसूची समीक्षा",
-      "schedule_review_lead": "सभी खेतों की अनुसूची महीने के अनुसार समूहित। खेत या खेत क्षेत्र से फ़िल्टर करें।",
-      "filter_farm": "खेत",
-      "filter_field": "खेत क्षेत्र",
-      "filter_all_farms": "सभी खेत",
-      "filter_all_fields": "सभी खेत क्षेत्र",
-      "schedule_empty": "दिखाने के लिए कोई निर्धारित कार्य नहीं।",
-      "schedule_row_meta": "{{farm}} · {{field}} ({{crop}})"
+      "retry": "पुनः लोड करें"
     }
   },
   "status": {

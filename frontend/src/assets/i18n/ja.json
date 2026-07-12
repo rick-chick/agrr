@@ -558,6 +558,7 @@
       },
       "from_plan_wizard_title": "計画の作業予定を作るための登録",
       "from_plan_wizard_lead": "下のフォームから作業予定を登録してください。完了したらパンくずから計画へ戻れます。",
+      "return_to_plan": "計画へ戻る",
       "from_plan_stages_wizard_lead": "生育ステージの基準温度と必要積算温度を設定してください。完了したら計画へ戻って作業予定を再生成してください。",
       "confirm_delete": "この作物を削除しますか？",
       "form": {
@@ -991,6 +992,7 @@
       "delete": "削除",
       "delete_confirm": "本当に削除しますか？",
       "back": "戻る",
+      "back_to_list": "農場一覧へ",
       "location": "地域",
       "fields": "圃場",
       "add_field": "圃場を追加",
@@ -2307,6 +2309,11 @@
       "cultivation_period": "栽培期間 {{start}} 〜 {{end}}",
       "summary": "{{fields}} 圃場 · {{tasks}} 件の作業",
       "view_all_fields": "すべての圃場を表示",
+      "filter_field": "圃場",
+      "filter_all_fields": "すべての圃場",
+      "filter_from_date": "開始日",
+      "list_empty": "条件に一致する作業予定がありません。",
+      "list_row_meta": "{{field}} · {{crop}}",
       "back_to_planting_plan": "作付け計画に戻る",
       "field_no_tasks": "この列に予定された作業はありません",
       "sync_never": "作業予定がまだ生成されていません。",
@@ -2453,15 +2460,7 @@
       "start_recording": "記録を始める",
       "no_fields_warning": "有効な圃場がありません。",
       "register_fields_link": "圃場を登録する",
-      "retry": "再読み込み",
-      "schedule_review_title": "作業予定確認",
-      "schedule_review_lead": "すべての農場の作業予定を月ごとにまとめて表示します。農場・圃場で絞り込めます。",
-      "filter_farm": "農場",
-      "filter_field": "圃場",
-      "filter_all_farms": "全農場",
-      "filter_all_fields": "全圃場",
-      "schedule_empty": "表示できる作業予定がありません。",
-      "schedule_row_meta": "{{farm}} · {{field}}（{{crop}}）"
+      "retry": "再読み込み"
     }
   },
   "status": {

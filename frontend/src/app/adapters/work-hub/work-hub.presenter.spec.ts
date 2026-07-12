@@ -9,10 +9,6 @@ function baseControl(overrides: Partial<WorkHubViewState> = {}): WorkHubViewStat
     submitting: false,
     error: null,
     farms: [],
-    scheduleLoading: true,
-    scheduleError: null,
-    scheduleRows: [],
-    scheduleFilter: { farmId: null, fieldCultivationId: null },
     pendingSuccessFlash: null,
     pendingNavigation: null,
     ...overrides
@@ -104,43 +100,5 @@ describe('WorkHubPresenter', () => {
     expect(lastControl.pendingNavigation).toEqual({
       commands: ['/plans', 99, 'work']
     });
-  });
-
-  it('maps cross-farm schedule rows to view control', () => {
-    lastControl = baseControl({ loading: false, scheduleLoading: true });
-
-    presenter.presentSchedule({
-      rows: [
-        {
-          item: {
-            item_id: 1,
-            name: 'Weeding',
-            scheduled_date: '2026-06-10',
-            status: 'planned'
-          } as WorkHubViewState['scheduleRows'][number]['item'],
-          farmId: 1,
-          farmName: 'Farm A',
-          planId: 9,
-          planName: 'Plan A',
-          fieldName: 'Field 1',
-          fieldCultivationId: 101,
-          cropName: 'Tomato'
-        }
-      ]
-    });
-
-    expect(lastControl.scheduleLoading).toBe(false);
-    expect(lastControl.scheduleRows).toHaveLength(1);
-    expect(lastControl.scheduleError).toBeNull();
-  });
-
-  it('maps schedule load errors to view control', () => {
-    lastControl = baseControl({ loading: false, scheduleLoading: true });
-
-    presenter.onScheduleError({ message: 'common.api_error.generic' });
-
-    expect(lastControl.scheduleLoading).toBe(false);
-    expect(lastControl.scheduleError).toBe('common.api_error.generic');
-    expect(lastControl.scheduleRows).toEqual([]);
   });
 });

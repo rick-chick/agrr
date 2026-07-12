@@ -8,14 +8,15 @@ Cloud Agent がリポジトリを clone してスキルに従う。**ローカ�
 
 | Automation | スキル | cron（5 フィールド） | TZ | PR |
 |------------|--------|----------------------|-----|-----|
-| **Issue Worker** | `github-issue-worker` | `0 9 * * 1-5` | Asia/Tokyo | ✅ 実装時 |
+| **Issue Worker** | `github-issue-worker` | —（webhook + `issue-worker-dispatch.yml`） | — | ✅ 実装時 |
 | **PR Merge Worker** | `github-pr-merge-worker` | —（イベント駆動） | — | ❌（マージのみ） |
+| **PR Agent Prep** | GitHub Actions（`pr-agent-prep.yml`） | `0 */12 * * *` + PR / CI イベント | — | ❌（label + ready のみ） |
 | **UX Campaign Loop** | `ux-campaign-loop` | —（PR マージ後 webhook） | — | ❌（残件起票のみ・完了時に自身を無効化） |
 | **UX Issue Audit** | `ux-issue-pipeline` § Automation | `0 9 * * 1` | Asia/Tokyo | ❌（起票は条件付き） |
 | **Frontend E2E capture** | GitHub Actions（非 Automation） | `0 15 * * 0`（月曜 0:00 JST） | UTC | ❌（PNG artifact のみ） |
 | **Automation Audit** | `cloud-automation-audit` | `0 10 * * 5` | Asia/Tokyo | ✅ クリティカル修正時のみ |
 
-**Automation Audit** は金曜 10:00 JST。平日 Issue Worker と月曜 UX Audit の**直近 1 週間**を監査する。
+**Automation Audit** は金曜 10:00 JST。Issue Worker（webhook）と月曜 UX Audit の**直近 1 週間**を監査する。
 
 ## 共通手順
 
@@ -36,7 +37,7 @@ Cloud Agent がリポジトリを clone してスキルに従う。**ローカ�
 
 Prefill で **Trigger が Invalid** になる場合は UI から手動で cron を入れ直す。
 
-- **Issue Worker（平日 9:00）**: [prefill を開く](https://cursor.com/automations/new?prefill=eyJuYW1lIjoiQUdSUiBJc3N1ZSBXb3JrZXIgKOW5s-aXpSA5OjAwIEpTVCkiLCJkZXNjcmlwdGlvbiI6InJpY2stY2hpY2svYWdyciDjga7jgqrjg7zjg5fjg7MgaXNzdWUg44KSIDEg5Lu26YG444GzIFRERCDlrp_oo4Ug4oaSIFBSIiwid29ya2Zsb3ciOnsidHJpZ2dlcnMiOlt7ImNyb24iOnsiY3JvbiI6IjAgOSAqICogMS01IiwidGltZXpvbmUiOiJBc2lhL1Rva3lvIn19XSwicHJvbXB0cyI6W3sicHJvbXB0IjoiWW91IGFyZSB0aGUgQUdSUiBHaXRIdWIgSXNzdWUgV29ya2VyIGZvciByZXBvc2l0b3J5IHJpY2stY2hpY2svYWdyci5cblxuUmVhZCBhbmQgZm9sbG93IGAuY3Vyc29yL3NraWxscy9naXRodWItaXNzdWUtd29ya2VyL1NLSUxMLm1kYCBleGFjdGx5LlxuQWZ0ZXIgVEREIEdSRUVOLCBhbHdheXMgcnVuIGAuY3Vyc29yL3NraWxscy9zZXF1ZW50aWFsLWNsZWFudXAtcmV2aWV3LXdvcmtmbG93L1NLSUxMLm1kYCAowqc0KSBiZWZvcmUgb3BlbmluZyBhIFBSLlxuXG5Db25zdHJhaW50czpcbi0gT25lIGlzc3VlIHBlciBydW4gbWF4aW11bS5cbi0gVXNlIHRlc3QtY29tbW9uIG9ubHkgKG5ldmVyIG5wbSB0ZXN0IC8gcmFpbHMgdGVzdCBkaXJlY3RseSkuXG4tIERvIG5vdCBnaXQgY2hlY2tvdXQvc3dpdGNoL3Jlc2V0L3Jlc3RvcmUuXG4tIElmIG5vIGVsaWdpYmxlIGlzc3VlLCBleGl0IHdpdGhvdXQgUFIuIn1dLCJnaXRDb25maWciOnsicmVwbyI6Imh0dHBzOi8vZ2l0aHViLmNvbS9yaWNrLWNoaWNrL2FncnIiLCJyZXBvcyI6WyJodHRwczovL2dpdGh1Yi5jb20vcmljay1jaGljay9hZ3JyIl0sImJyYW5jaCI6Im1hc3RlciJ9LCJtZW1vcnlFbmFibGVkIjp0cnVlLCJhZ2VudE9wdGlvbnMiOnsib3BlblB1bGxSZXN0Ijp0cnVlfX19)
+- **Issue Worker（Webhook・即時）**: [prefill を開く](https://cursor.com/automations/new?prefill=eyJuYW1lIjoiQUdSUiBJc3N1ZSBXb3JrZXIgKFdlYmhvb2spIiwiZGVzY3JpcHRpb24iOiJyaWNrLWNoaWNrL2FncnIg44GuIGlzc3VlIOOCkiB3ZWJob29rIOi1t-eCueOBpyAxIOS7tiBUREQg5a6f6KOFIOKGkiBQUiIsIndvcmtmbG93Ijp7InRyaWdnZXJzIjpbeyJ3ZWJob29rIjp7fX1dLCJwcm9tcHRzIjpbeyJwcm9tcHQiOiJZb3UgYXJlIHRoZSBBR1JSIEdpdEh1YiBJc3N1ZSBXb3JrZXIgZm9yIHJlcG9zaXRvcnkgcmljay1jaGljay9hZ3JyLlxuUmVhZCBhbmQgZm9sbG93IGAuY3Vyc29yL3NraWxscy9naXRodWItaXNzdWUtd29ya2VyL1NLSUxMLm1kYCBleGFjdGx5LlxuXG5XZWJob29rIHBheWxvYWQgZmllbGRzOiBpc3N1ZV9udW1iZXIsIGFjdGlvbiAodHJpYWdlIHwgaW1wbGVtZW50IHwgY2xvc2Vfd2l0aF9yZWFzb24pLCBpc3N1ZV9ib2R5LCBsYWJlbHMuXG5cbi0gYWN0aW9uIHRyaWFnZTogbmV3IGlzc3VlIG9wZW5lZCDigJQgcnVuIMKnMSB0cmlhZ2UgKGltcGxlbWVudCAvIMKnMmIgc2tpcCAvIMKnMmEgY2xvc2UgLyDCpzcgYmxvY2spLlxuLSBhY3Rpb24gaW1wbGVtZW50OiBhZ2VudC1yZWFkeSBsYWJlbCDigJQgaW1wbGVtZW50YXRpb24gcGF0aCBhZnRlciB0cmlhZ2UuXG4tIGFjdGlvbiBjbG9zZV93aXRoX3JlYXNvbjogYWdlbnQtY2xvc2UgbGFiZWwg4oCUIMKnMmEgb25seS5cblxuQWZ0ZXIgVEREIEdSRUVOLCBydW4gwqc0IHNlcXVlbnRpYWwgY2xlYW51cDogc3RhcnQgd2l0aFxuYC5jdXJzb3Ivc2tpbGxzL3NlcXVlbnRpYWwtY2xlYW51cC1yZXZpZXctd29ya2Zsb3cvc2NyaXB0cy9jbGVhbnVwLXdvcmtmbG93LXRpY2suc2ggLS1wYXJlbnQtc2x1ZyBpc3N1ZS08Tj4tPHNob3J0LXNsdWc-YFxuKHNsdWcgZnJvbSBicmFuY2gpLiBEbyBub3QgbGVnaW4gQTEgd2l0aG91dCB0aWNrLiBEbyBub3Qgb3BlbiBhIFBSIHVudGlsIGdhdGUgZXhpdCAwLlxuRm9sbG93IGAuY3Vyc29yL3NraWxscy9zZXF1ZW50aWFsLWNsZWFudXAtcmV2aWV3LXdvcmtmbG93L1NLSUxMLm1kYCBhbmQgwqc0IHJlZmVyZW5jZXMuXG5cbkNvbnN0cmFpbnRzOlxuLSBPbmUgaXNzdWUgcGVyIHJ1biBtYXhpbXVtLlxuLSBVc2UgdGVzdC1jb21tb24gb25seSAobmV2ZXIgbnBtIHRlc3QgLyByYWlscyB0ZXN0IGRpcmVjdGx5KS5cbi0gRG8gbm90IGdpdCBjaGVja291dC9zd2l0Y2gvcmVzZXQvcmVzdG9yZS5cbi0gSWYgbm8gZWxpZ2libGUgaXNzdWUsIGV4aXQgd2l0aG91dCBQUi4ifV0sImdpdENvbmZpZyI6eyJyZXBvIjoiaHR0cHM6Ly9naXRodWIuY29tL3JpY2stY2hpY2svYWdyciIsInJlcG9zIjpbImh0dHBzOi8vZ2l0aHViLmNvbS9yaWNrLWNoaWNrL2FncnIiXSwiYnJhbmNoIjoibWFzdGVyIn0sIm1lbW9yeUVuYWJsZWQiOnRydWUsImFnZW50T3B0aW9ucyI6eyJvcGVuUHVsbFJlcXVlc3QiOnRydWV9fX0)
 - **UX Issue Audit（月曜 9:00）**: [prefill を開く](https://cursor.com/automations/new?prefill=eyJuYW1lIjoiQUdSUiBVWCBJc3N1ZSBBdWRpdCAo5pyI5pucIDk6MDAgSlNUKSIsImRlc2NyaXB0aW9uIjoidmlzdWFsLXJldmlldyArIENTUyDnm6Pmn7sg4oaSIGNvbGxlY3Qg4oaSIOODieODqeOCpOODqeODs--8iOmHjeikh-aZguOBr-i1t-elqOOBl-OBquOBhO-8iSIsIndvcmtmbG93Ijp7InRyaWdnZXJzIjpbeyJjcm9uIjp7ImNyb24iOiIwIDkgKiAqIDEiLCJ0aW1lem9uZSI6IkFzaWEvVG9reW8ifX1dLCJwcm9tcHRzIjpbeyJwcm9tcHQiOiJZb3UgYXJlIHRoZSBBR1JSIFVYIElzc3VlIEF1ZGl0IGF1dG9tYXRpb24gZm9yIHJpY2stY2hpY2svYWdyci5cblxuUmVhZCBgLmN1cnNvci9za2lsbHMvdXgtaXNzdWUtcGlwZWxpbmUvU0tJTEwubWRgIHNlY3Rpb24gKipBdXRvbWF0aW9u77yI44K544Kx44K444Ol44O844Or77yJKiogYW5kIGZvbGxvdyBpdCBleGFjdGx5LlxuXG5TdW1tYXJ5OlxuLSBSdW4gcGhhc2VzIDMtNCBvbmx5IChOTyBlMmUgY2FwdHVyZTsgY2xvdWQgaGFzIG5vIGxvY2FsIFJhaWxzL25nKS5cbi0gUnVuIGNvbGxlY3QtdXgtZmluZGluZ3MubWpzIGFuZCB1eC1pc3N1ZS1jcmVhdG9yIGRyeS1ydW4uXG4tIERvIE5PVCBnaCBpc3N1ZSBjcmVhdGUgd2hlbiBleGlzdGluZ0lzc3VlQ2FuZGlkYXRlcyBoYXMgT1BFTiB3aXRoIHNjb3JlID49IDUuXG4tIFdyaXRlIHN1bW1hcnkgdG8gYXV0b21hdGlvbiBtZW1vcnk7IG9wZW4gUFIgb25seSBpZiB2aXN1YWwtcmV2aWV3LXJlc3VsdHMubWQgd2FzIGxlZ2l0aW1hdGVseSB1cGRhdGVkIGluLXJlcG8uXG4tIE5ldmVyIG9wZW4gUFIgZm9yIGltcGxlbWVudGF0aW9uICh0aGF0IGlzIGdpdGh1Yi1pc3N1ZS13b3JrZXIpLiJ9XSwiZ2l0Q29uZmlnIjp7InJlcG8iOiJodHRwczovL2dpdGh1Yi5jb20vcmljay1jaGljay9hZ3JyIiwicmVwb3MiOlsiaHR0cHM6Ly9naXRodWIuY29tL3JpY2stY2hpY2svYWdyciJdLCJicmFuY2giOiJtYXN0ZXIifSwibWVtb3J5RW5hYmxlZCI6dHJ1ZSwiYWdlbnRPcHRpb25zIjp7Im9wZW5QdWxsUmVxdWVzdCI6ZmFsc2V9fX0)
 - **Automation Audit（金曜 10:00）**: [prefill を開く](https://cursor.com/automations/new?prefill=eyJuYW1lIjoiQUdSUiBBdXRvbWF0aW9uIEF1ZGl0ICjph5Hmm5wgMTA6MDAgSlNUKSIsImRlc2NyaXB0aW9uIjoiSXNzdWUgV29ya2VyIC8gVVggQXVkaXQg44Gu5a6f6KGM57WQ5p6c55uj5p-744CC44Kv44Oq44OG44Kj44Kr44Or44GqIHJlcG8g5LiN5YW35ZCI44Gu44G_IFBSIiwid29ya2Zsb3ciOnsidHJpZ2dlcnMiOlt7ImNyb24iOnsiY3JvbiI6IjAgMTAgKiAqIDUiLCJ0aW1lem9uZSI6IkFzaWEvVG9reW8ifX1dLCJwcm9tcHRzIjpbeyJwcm9tcHQiOiJZb3UgYXJlIHRoZSBBR1JSIENsb3VkIEF1dG9tYXRpb24gQXVkaXQgZm9yIHJlcG9zaXRvcnkgcmljay1jaGljay9hZ3JyLlxuXG5SZWFkIGFuZCBmb2xsb3cgYC5jdXJzb3Ivc2tpbGxzL2Nsb3VkLWF1dG9tYXRpb24tYXVkaXQvU0tJTEwubWRgIGV4YWN0bHkuXG5cbkF1ZGl0IHRoZSBsYXN0IDcgZGF5cyBvZiBJc3N1ZSBXb3JrZXIgYW5kIFVYIElzc3VlIEF1ZGl0IHJ1bnMuIEZpeCBPTkxZIGNyaXRpY2FsIGJyZWFrYWdlcyBpbiB0aGUgcmVwb3NpdG9yeSAoYnJva2VuIHNraWxsIHBhdGhzLCBib290c3RyYXAvYXV0aCBzY3JpcHRzLCBmYWlsaW5nIGF1dG9tYXRpb24gc2NyaXB0cywgYnJva2VuIGlzc3VlLXdvcmtlci1kaXNwYXRjaCB3b3JrZmxvdykuIERvIE5PVCBtYWtlIHByb2FjdGl2ZSBpbXByb3ZlbWVudHMsIHByb21wdCB0d2Vha3MsIG9yIHNjaGVkdWxlIGNoYW5nZXMuXG5cbk9wZW4gYSBQUiBvbmx5IHdoZW4gYSBjcml0aWNhbCByZXBvLXNpZGUgZml4IGlzIHJlcXVpcmVkLiBJZiBhbGwgYXV0b21hdGlvbnMgYXJlIGhlYWx0aHkgb3IgaXNzdWVzIGFyZSBEYXNoYm9hcmQtb25seSwgd3JpdGUgdGhlIGF1ZGl0IHJlcG9ydCB0byBhdXRvbWF0aW9uIG1lbW9yeSBhbmQgZXhpdCB3aXRob3V0IGEgUFIuIn1dLCJnaXRDb25maWciOnsicmVwbyI6Imh0dHBzOi8vZ2l0aHViLmNvbS9yaWNrLWNoaWNrL2FncnIiLCJyZXBvcyI6WyJodHRwczovL2dpdGh1Yi5jb20vcmljay1jaGljay9hZ3JyIl0sImJyYW5jaCI6Im1hc3RlciJ9LCJtZW1vcnlFbmFibGVkIjp0cnVlLCJhZ2VudE9wdGlvbnMiOnsib3BlblB1bGxSZXF1ZXN0Ijp0cnVlfX19)
 - **PR Merge Worker（PR / CI）**: [prefill を開く](https://cursor.com/automations/new?prefill=eyJuYW1lIjoiQUdSUiBQUiBNZXJnZSBXb3JrZXIiLCJkZXNjcmlwdGlvbiI6InJpY2stY2hpY2svYWdyciDjga7lr77osaEgUFIg44KSIENJIOmAmumBjuW-jOOBq-ODrOODk-ODpeODvOODu-S_ruato-OBl-OBpiBzcXVhc2gg44Oe44O844K4Iiwid29ya2Zsb3ciOnsidHJpZ2dlcnMiOlt7ImdpdCI6eyJldmVudCI6ImNpQ29tcGxldGVkIiwicmVwb3MiOlsiaHR0cHM6Ly9naXRodWIuY29tL3JpY2stY2hpY2svYWdyciJdfX0seyJnaXQiOnsiZXZlbnQiOiJwdWxsUmVxdWVzdE9wZW5lZCIsInJlcG9zIjpbImh0dHBzOi8vZ2l0aHViLmNvbS9yaWNrLWNoaWNrL2FncnIiXX19XSwicHJvbXB0cyI6W3sicHJvbXB0IjoiWW91IGFyZSB0aGUgQUdSUiBHaXRIdWIgUFIgTWVyZ2UgV29ya2VyIGZvciByZXBvc2l0b3J5IHJpY2stY2hpY2svYWdyci5cblxuUmVhZCBhbmQgZm9sbG93IGAuY3Vyc29yL3NraWxscy9naXRodWItcHItbWVyZ2Utd29ya2VyL1NLSUxMLm1kYCBleGFjdGx5LlxuXG5PbmUgUFIgcGVyIHJ1bi4gTmV2ZXIgbWVyZ2UgYmVmb3JlIHJlcXVpcmVkIENJIGNoZWNrcyBwYXNzLiBGb3IgYnVnZml4ZXMsIHZlcmlmeSB0ZXN0IGNvdmVyYWdlIGFuZCBydW4gaW1wYWN0IGFuYWx5c2lzIGJlZm9yZSBtZXJnaW5nLiJ9XSwiZ2l0Q29uZ2ZpZyI6eyJyZXBvIjoiaHR0cHM6Ly9naXRodWIuY29tL3JpY2stY2hpY2svYWdyciIsInJlcG9zIjpbImh0dHBzOi8vZ2l0aHViLmNvbS9yaWNrLWNoaWNrL2FncnIiXSwiYnJhbmNoIjoibWFzdGVyIn0sIm1lbW9yeUVuYWJsZWQiOnRydWUsImFnZW50T3B0aW9ucyI6eyJvcGVuUHVsbFJlcXVlc3QiOmZhbHNlfX19)
@@ -55,6 +56,8 @@ Prefill で **Trigger が Invalid** になる場合は UI から手動で cron �
 | `CURSOR_ISSUE_WORKER_WEBHOOK_KEY` | Webhook API key |
 
 ラベル `agent-ready` / `agent-close` で起動。
+
+**作成済み Automation**: [6ad06db2-9fea-4a66-a56b-2cf7145f102d](https://cursor.com/automations/6ad06db2-9fea-4a66-a56b-2cf7145f102d) — Webhook のみ（cron 廃止）。URL/key は UI の Webhook トリガーから secrets へ登録
 
 ## PR Merge Worker（マージ）
 
@@ -101,7 +104,21 @@ Read and follow `.cursor/skills/github-pr-merge-worker/SKILL.md` exactly.
 One PR per run. Never merge before required CI checks pass. For bugfixes, verify test coverage and run impact analysis before merging.
 ```
 
-Issue Worker が開いた PR には `agent-merge` ラベルが付く（[github-issue-worker/SKILL.md](../../github-issue-worker/SKILL.md) §6）。
+Issue Worker が開いた PR には `agent-merge` ラベルが付く（[github-issue-worker/SKILL.md](../../github-issue-worker/SKILL.md) §6）。Cursor Automation の Draft PR では **[`pr-agent-prep.yml`](../../../.github/workflows/pr-agent-prep.yml)** がラベル付与と `gh pr ready` を行う。
+
+## PR Agent Prep（Draft → ready）
+
+**目的**: Cursor Automation の Draft PR を Merge Worker が処理できる状態にする（`agent-merge` + 直列 `gh pr ready`）。
+
+**Trigger（GitHub Actions）**
+
+1. **pull_request** — `opened` / `synchronize` / `labeled`（対象 PR を prep）
+2. **pull_request closed（merged）** — 次の Draft を `advance-queue`
+3. **workflow_run** — Backend test 成功後（CI green で ready 判断）
+4. **schedule** — `0 */12 * * *`（スタック救出）
+5. **workflow_dispatch** — 手動 prep / queue advance
+
+**下流**: [`pr-merge-worker-dispatch.yml`](../../../.github/workflows/pr-merge-worker-dispatch.yml)（`ready_for_review` + `ci_completed`）
 
 ## UX Campaign Loop（マージ後・残件起票）
 

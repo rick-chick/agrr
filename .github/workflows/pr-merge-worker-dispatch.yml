@@ -132,6 +132,7 @@ jobs:
 
           eligible=false
           if echo "$LABELS" | grep -qE '(^|,)agent-merge(,|$)'; then eligible=true; fi
+          if echo "$HEAD_REF" | grep -qE '^cursor/'; then eligible=true; fi
           if echo "$HEAD_REF" | grep -qE '^issue/[0-9]+-'; then eligible=true; fi
           if echo "$PR_BODY" | grep -q 'Merge-Strategy: agent'; then eligible=true; fi
           if [ "$eligible" != "true" ]; then
@@ -139,13 +140,13 @@ jobs:
             exit 0
           fi
 
-          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepositoryOwner,baseRepositoryOwner,additions,deletions,title,mergeable,mergeStateStatus)
+          PR_META=$(gh pr view "$PR_NUMBER" --json isDraft,reviewDecision,baseRefName,headRefOid,headRepository,additions,deletions,title,mergeable,mergeStateStatus)
           IS_DRAFT=$(echo "$PR_META" | jq -r '.isDraft')
           REVIEW_DECISION=$(echo "$PR_META" | jq -r '.reviewDecision // ""')
           BASE_REF=$(echo "$PR_META" | jq -r '.baseRefName')
           HEAD_OID=$(echo "$PR_META" | jq -r '.headRefOid')
-          HEAD_OWNER=$(echo "$PR_META" | jq -r '.headRepositoryOwner.login')
-          BASE_OWNER=$(echo "$PR_META" | jq -r '.baseRepositoryOwner.login')
+          HEAD_OWNER=$(echo "$PR_META" | jq -r '.headRepository.nameWithOwner' | cut -d/ -f1)
+          BASE_OWNER=$(gh repo view --json owner -q .owner.login)
           ADDITIONS=$(echo "$PR_META" | jq -r '.additions')
           DELETIONS=$(echo "$PR_META" | jq -r '.deletions')
           TITLE=$(echo "$PR_META" | jq -r '.title')

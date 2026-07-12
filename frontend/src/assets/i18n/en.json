@@ -236,15 +236,7 @@
       "start_recording": "Start recording",
       "no_fields_warning": "No valid fields on this farm.",
       "register_fields_link": "Register fields",
-      "retry": "Reload",
-      "schedule_review_title": "Task schedule review",
-      "schedule_review_lead": "Schedules grouped by month across all farms. Filter by farm or field.",
-      "filter_farm": "Farm",
-      "filter_field": "Field",
-      "filter_all_farms": "All farms",
-      "filter_all_fields": "All fields",
-      "schedule_empty": "No scheduled tasks to show.",
-      "schedule_row_meta": "{{farm}} · {{field}} ({{crop}})"
+      "retry": "Reload"
     }
   },
   "status": {
@@ -1324,6 +1316,11 @@
       "cultivation_period": "Cultivation {{start}} – {{end}}",
       "summary": "{{fields}} fields · {{tasks}} tasks",
       "view_all_fields": "View all fields",
+      "filter_field": "Field",
+      "filter_all_fields": "All fields",
+      "filter_from_date": "From date",
+      "list_empty": "No tasks match the current filters.",
+      "list_row_meta": "{{field}} · {{crop}}",
       "back_to_planting_plan": "Back to cropping plan",
       "field_no_tasks": "No tasks scheduled in this column",
       "sync_never": "Task schedules have not been generated yet.",
@@ -2154,6 +2151,7 @@
       },
       "from_plan_wizard_title": "Registration for this plan's task schedules",
       "from_plan_wizard_lead": "Register task plans using the form below. When finished, use the breadcrumb to return to the plan.",
+      "return_to_plan": "Return to plan",
       "from_plan_stages_wizard_lead": "Set base temperature and required GDD for each growth stage. When finished, return to the plan and regenerate task schedules.",
       "confirm_delete": "Are you sure you want to delete this crop?",
       "form": {
@@ -2569,6 +2567,7 @@
       "delete": "Delete",
       "delete_confirm": "Are you sure you want to delete this farm?",
       "back": "Back",
+      "back_to_list": "Farm list",
       "location": "Region",
       "fields": "Fields",
       "add_field": "Add Field",

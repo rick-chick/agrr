@@ -279,7 +279,7 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeNull();
   });
 
-  it('omits return-to-plan link when fromPlan query param is set', () => {
+  it('shows return-to-plan link when fromPlan query param is set', () => {
     mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
       key === 'fromPlan' ? '7' : null
     );
@@ -297,8 +297,8 @@ describe('CropStagesComponent', () => {
 
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('a[href*="/plans/7"]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href*="/plans/7"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });

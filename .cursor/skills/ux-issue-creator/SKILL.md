@@ -114,6 +114,7 @@ Issue 本文の型は [references/issue-body-template.md](references/issue-body-
 gh issue create --repo rick-chick/agrr \
   --title "[P1][UX] plans/:id/optimizing: 進捗100%時の文言と遷移" \
   --label enhancement \
+  --label agent-ready \
   --body-file /tmp/ux-issue-body.md
 ```
 
@@ -121,15 +122,23 @@ gh issue create --repo rick-chick/agrr \
 - バッチ起票時は **1 finding = 1 issue**（統合した場合は 1 統合 issue）
 - 起票後、一覧を issue コメントまたは Memory に記録
 
-### agent-ready（任意）
+### agent-ready
 
-人間が内容を確認し、Issue Worker に即実装させたい場合のみ:
+**実装対象の issue には起票時に `agent-ready` を付与する**（`github-issue-worker` へ渡す既定）。
+
+`agent-ready` を**付けない**のは次のみ:
+
+| 条件 | 理由 |
+|------|------|
+| ユーザーと方針・優先度・設計が**議論中・未確定** | 確定前に Worker が着手しない |
+| `documentation` のみ（実装なし） | Worker 対象外 |
+| ユーザーが **`agent-ready` 不要**と明示 | バックログとして残す |
+
+起票後に `agent-ready` を外す必要があるとき:
 
 ```bash
-gh issue edit <N> --add-label agent-ready
+gh issue edit <N> --remove-label agent-ready
 ```
-
-`agent-ready` 無しの issue はバックログとして残す。
 
 ## 6) 終了条件
 
@@ -137,13 +146,14 @@ gh issue edit <N> --add-label agent-ready
 - [ ] 重複確認済み（スキップ理由を記録）
 - [ ] ドライラン提示済み
 - [ ] 起票した issue 番号一覧を報告
+- [ ] 実装対象 issue に `agent-ready` 付与済み（除外理由を記録）
 
 ## 禁止
 
 - `visual-review-results.md` 未更新のまま起票
 - 重複確認なしの大量 `gh issue create`
 - 完了条件・参照なしの issue
-- `agent-ready` を無確認で全件付与
+- 方針未確定・議論中の issue に `agent-ready` を付与
 - 実装（PR）まで踏み込む（それは `github-issue-worker`）
 
 ## 関連

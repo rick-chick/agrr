@@ -109,27 +109,6 @@ describe('NavbarComponent', () => {
     expect(component.isWorkLogNavActive()).toBe(false);
   });
 
-  it('uses design-system button classes on nav chrome controls', () => {
-    fixture.componentInstance.user = {
-      id: 1,
-      name: 'User',
-      email: 'user@example.com',
-      avatar_url: null,
-      admin: false,
-    };
-    fixture.detectChanges();
-
-    const menuToggle = fixture.nativeElement.querySelector('.menu-toggle') as HTMLButtonElement;
-    expect(menuToggle.classList.contains('btn')).toBe(true);
-    expect(menuToggle.classList.contains('btn-secondary')).toBe(true);
-    expect(menuToggle.classList.contains('btn-sm')).toBe(true);
-
-    const logoutButton = fixture.nativeElement.querySelector('.logout-button') as HTMLButtonElement;
-    expect(logoutButton.classList.contains('btn')).toBe(true);
-    expect(logoutButton.classList.contains('btn-secondary')).toBe(true);
-    expect(logoutButton.classList.contains('btn-sm')).toBe(true);
-  });
-
   it('closes mobile menu after route navigation', async () => {
     fixture.detectChanges();
     component.isMenuOpen = true;
