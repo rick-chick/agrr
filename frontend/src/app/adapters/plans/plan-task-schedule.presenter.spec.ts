@@ -39,7 +39,8 @@ function task(
       master: null,
       history: { rescheduled_at: null, cancelled_at: null }
     },
-    badge: { type: 'planned' }
+    badge: { type: 'planned' },
+    ...overrides
   };
 }
 
