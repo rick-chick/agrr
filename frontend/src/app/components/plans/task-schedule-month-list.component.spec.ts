@@ -4,42 +4,26 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import en from '../../../assets/i18n/en.json';
 import type { PlanTaskScheduleMonthGroupView } from './plan-task-schedule.view';
-import type { TaskScheduleItem } from '../../models/plans/task-schedule';
+import type { PlanTaskScheduleItem } from '../../domain/work-schedule/plan-schedule-snapshot';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
 
-function task(
-  overrides: Partial<TaskScheduleItem> & Pick<TaskScheduleItem, 'item_id' | 'name' | 'scheduled_date'>
-): TaskScheduleItem {
+function domainTask(
+  overrides: Partial<PlanTaskScheduleItem> & Pick<PlanTaskScheduleItem, 'item_id' | 'name' | 'scheduled_date'>
+): PlanTaskScheduleItem {
   return {
     item_id: overrides.item_id,
     name: overrides.name,
     scheduled_date: overrides.scheduled_date,
-    task_type: 'general',
-    category: 'general',
-    priority: 1,
-    source: 'blueprint',
-    weather_dependency: 'low',
-    time_per_sqm: '0',
-    amount: '',
-    amount_unit: '',
     status: overrides.status ?? 'planned',
-    agricultural_task_id: 1,
-    field_cultivation_id: 10,
-    completed: false,
-    work_records: [],
-    details: {
-      stage: { name: 'Stage', order: 1 },
-      gdd: { trigger: '100', tolerance: '10' },
-      priority: 1,
-      weather_dependency: 'low',
-      time_per_sqm: '0',
-      amount: '',
-      amount_unit: '',
-      source: 'blueprint',
-      master: null,
-      history: { rescheduled_at: null, cancelled_at: null }
-    },
-    badge: { type: 'planned' }
+    details: overrides.details ?? {
+      stageName: 'Vegetative',
+      gddTrigger: '150',
+      gddTolerance: '5',
+      amount: '20',
+      amountUnit: 'kg',
+      masterName: 'Weed master',
+      masterDescription: 'Pull weeds carefully'
+    }
   };
 }
 
@@ -48,7 +32,7 @@ const monthGroups: PlanTaskScheduleMonthGroupView[] = [
     monthKey: '2026-06',
     rows: [
       {
-        item: task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' }),
+        item: domainTask({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' }),
         farmId: 0,
         farmName: '',
         planId: 7,
@@ -77,7 +61,10 @@ describe('TaskScheduleMonthListComponent', () => {
         ...(en as TranslationObject),
         'plans.task_schedules.list_empty': 'No tasks match the current filters.',
         'plans.task_schedules.list_row_meta': '{{field}} · {{crop}}',
-        'plans.task_schedules.status.planned': 'Planned'
+        'plans.task_schedules.status.planned': 'Planned',
+        'plans.task_schedules.detail.title': 'Task details',
+        'plans.task_schedules.detail.stage': 'Stage',
+        'plans.task_schedules.detail.not_applicable': 'N/A'
       },
       true
     );
@@ -97,6 +84,16 @@ describe('TaskScheduleMonthListComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Field A');
     expect(fixture.nativeElement.textContent).toContain('Tomato');
     expect(fixture.nativeElement.textContent).toContain('Planned');
+  });
+
+  it('shows task detail panel with stage name after row click', async () => {
+    const rowButton = fixture.nativeElement.querySelector('.plan-task-schedule-month-list__row') as HTMLButtonElement;
+    rowButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Vegetative');
+    expect(fixture.nativeElement.textContent).toContain('Weed master');
   });
 
   it('shows empty message when no month groups are provided', async () => {

@@ -4,6 +4,7 @@ import type {
   PlanSchedulePlanInfo,
   PlanTaskScheduleItem
 } from './plan-schedule-snapshot';
+import { emptyPlanTaskScheduleItemDetails } from './plan-schedule-snapshot';
 import { buildPlanTaskScheduleMonthGroups } from './build-plan-task-schedule-month-groups';
 
 function task(
@@ -13,7 +14,8 @@ function task(
     item_id: overrides.item_id,
     name: overrides.name,
     scheduled_date: overrides.scheduled_date,
-    status: overrides.status ?? 'planned'
+    status: overrides.status ?? 'planned',
+    details: overrides.details ?? emptyPlanTaskScheduleItemDetails
   };
 }
 
