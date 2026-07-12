@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PlanWorkView } from '../../components/plans/plan-work.view';
+import type { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { PlanWorkPresenter } from './plan-work.presenter';
 
@@ -41,8 +42,23 @@ const baseControl = {
   pendingRecordSavedToastKey: null,
   pendingRecordSavedEvent: null,
   pendingQuickCompleteValidation: null,
-  syncReloadNonce: 0
+  syncReloadNonce: 0,
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
 };
+
+function field(overrides: Partial<FieldSchedule> & Pick<FieldSchedule, 'field_cultivation_id'>): FieldSchedule {
+  return {
+    id: overrides.id ?? 1,
+    name: overrides.name ?? 'Field A',
+    crop_name: overrides.crop_name ?? 'Tomato',
+    area_sqm: 100,
+    field_cultivation_id: overrides.field_cultivation_id,
+    crop_id: overrides.crop_id ?? 20,
+    task_options: [],
+    schedules: overrides.schedules ?? { general: [], fertilizer: [], unscheduled: [] }
+  };
+}
 
 describe('PlanWorkPresenter quick complete', () => {
   let presenter: PlanWorkPresenter;
@@ -257,5 +273,81 @@ describe('PlanWorkPresenter task schedule sync', () => {
       name: '規格選別',
       actualDate: '2026-06-12'
     });
+  });
+
+  it('recomputes crop banner context on task schedule sync', () => {
+    view.control = {
+      ...view.control,
+      fields: [
+        field({ field_cultivation_id: 10, crop_id: 20, crop_name: 'Tomato' }),
+        field({ id: 2, field_cultivation_id: 20, crop_id: 30, crop_name: 'Carrot' })
+      ]
+    };
+
+    presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null, syncErrorCropId: null });
+
+    expect(view.control.cropIdsForBanner).toEqual(expect.arrayContaining([20, 30]));
+    expect(view.control.cropNamesForBanner[20]).toBe('Tomato');
+    expect(view.control.cropNamesForBanner[30]).toBe('Carrot');
+  });
+});
+
+describe('PlanWorkPresenter crop banner context', () => {
+  let presenter: PlanWorkPresenter;
+  let view: PlanWorkView;
+
+  const plan = {
+    id: 7,
+    name: 'テスト計画',
+    status: 'completed' as const,
+    planning_start_date: '2026-01-01',
+    planning_end_date: '2026-12-31',
+    timeline_generated_at: '2026-06-01T00:00:00Z',
+    timeline_generated_at_display: '2026-06-01',
+    task_schedule_sync_state: 'ready' as const,
+    task_schedule_sync_error: null,
+    task_schedule_sync_error_crop_id: null
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [PlanWorkPresenter]
+    });
+
+    presenter = TestBed.inject(PlanWorkPresenter);
+    view = { control: { ...baseControl } };
+    presenter.setView(view);
+  });
+
+  it('presents crop banner context from loaded fields', () => {
+    presenter.present({
+      plan,
+      fields: [
+        field({ field_cultivation_id: 10, crop_id: 20, crop_name: 'Tomato' }),
+        field({ id: 2, field_cultivation_id: 20, crop_id: 30, crop_name: 'Carrot' })
+      ],
+      overdue: [],
+      today: [],
+      upcoming: [],
+      recentAdHocRecord: null,
+      nextScheduled: null
+    });
+
+    expect(view.control.cropIdsForBanner).toEqual(expect.arrayContaining([20, 30]));
+    expect(view.control.cropNamesForBanner[20]).toBe('Tomato');
+    expect(view.control.cropNamesForBanner[30]).toBe('Carrot');
+  });
+
+  it('clears crop banner context on load error', () => {
+    view.control = {
+      ...view.control,
+      cropIdsForBanner: [20],
+      cropNamesForBanner: { 20: 'Tomato' }
+    };
+
+    presenter.onError({ message: 'common.api_error.generic' });
+
+    expect(view.control.cropIdsForBanner).toEqual([]);
+    expect(view.control.cropNamesForBanner).toEqual({});
   });
 });

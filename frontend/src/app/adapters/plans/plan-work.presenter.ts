@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { PlanWorkView } from '../../components/plans/plan-work.view';
+import { PlanWorkView, PlanWorkViewState } from '../../components/plans/plan-work.view';
 import { ErrorDto } from '../../domain/shared/error.dto';
+import { FieldSchedule, PlanInfo } from '../../models/plans/task-schedule';
 import {
   CreateWorkRecordSuccessDto,
   CreateWorkRecordValidationErrorDto
@@ -16,8 +17,14 @@ import {
 import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
 import {
   applySyncFieldsToPlan,
+  mergeCropBannerContext,
   taskScheduleSyncViewPatch
 } from './task-schedule-sync-presenter.helpers';
+
+const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
+  cropIdsForBanner: [],
+  cropNamesForBanner: {}
+};
 
 @Injectable()
 export class PlanWorkPresenter
@@ -73,6 +80,7 @@ export class PlanWorkPresenter
     const nextPlan = applySyncFieldsToPlan(plan, message);
     const patch = taskScheduleSyncViewPatch(message.syncState);
     const current = this.view.control;
+    const cropBanner = this.computeCropBannerFields(current.fields, nextPlan);
     this.view.control = {
       ...current,
       plan: nextPlan,
@@ -80,7 +88,8 @@ export class PlanWorkPresenter
       pendingSyncToastKey: patch.toastI18nKey,
       syncReloadNonce: patch.requestReload
         ? current.syncReloadNonce + 1
-        : current.syncReloadNonce
+        : current.syncReloadNonce,
+      ...cropBanner
     };
   }
 
@@ -95,6 +104,7 @@ export class PlanWorkPresenter
 
   present(dto: LoadWorkDayListDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const cropBanner = this.computeCropBannerFields(dto.fields, dto.plan);
     this.view.control = {
       ...this.view.control,
       loading: false,
@@ -112,7 +122,8 @@ export class PlanWorkPresenter
       pendingRecordSavedToastKey: null,
       pendingRecordSavedEvent: null,
       pendingQuickCompleteValidation: null,
-      syncReloadNonce: 0
+      syncReloadNonce: 0,
+      ...cropBanner
     };
   }
 
@@ -148,7 +159,19 @@ export class PlanWorkPresenter
       upcoming: [],
       nextScheduled: null,
       regenerating: false,
-      regenerateError: null
+      regenerateError: null,
+      ...emptyCropBannerFields
+    };
+  }
+
+  private computeCropBannerFields(
+    fields: FieldSchedule[],
+    plan: PlanInfo | null
+  ): Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> {
+    const banner = mergeCropBannerContext(fields, plan?.remediation_crops);
+    return {
+      cropIdsForBanner: banner.cropIds,
+      cropNamesForBanner: banner.cropNames
     };
   }
 

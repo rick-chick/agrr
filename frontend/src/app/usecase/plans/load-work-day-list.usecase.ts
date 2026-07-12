@@ -150,7 +150,7 @@ export class LoadWorkDayListUseCase implements LoadWorkDayListInputPort {
 
   execute(dto: LoadWorkDayListInputDto): void {
     forkJoin({
-      schedule: this.planGateway.getTaskSchedule(dto.planId, { scope: 'plan' }),
+      schedule: this.planGateway.getTaskSchedule(dto.planId),
       records: this.workRecordGateway.listWorkRecords(dto.planId)
     }).subscribe({
       next: ({ schedule, records }) => {

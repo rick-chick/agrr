@@ -238,37 +238,7 @@ describe('PlanApiGateway', () => {
 
       const result = await firstValueFrom(gateway.getTaskSchedule(7));
       expect(result).toEqual(taskSchedule);
-      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule', {
-        params: { scope: 'plan' }
-      });
-    });
-
-    it('passes scope=plan when options specify plan scope', async () => {
-      vi.mocked(apiClient.get).mockReturnValue(of({} as TaskScheduleResponse));
-
-      await firstValueFrom(gateway.getTaskSchedule(7, { scope: 'plan' }));
-      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule', {
-        params: { scope: 'plan' }
-      });
-    });
-
-    it('passes week scope and optional query params', async () => {
-      vi.mocked(apiClient.get).mockReturnValue(of({} as TaskScheduleResponse));
-
-      await firstValueFrom(
-        gateway.getTaskSchedule(7, {
-          scope: 'week',
-          weekStart: '2026-06-01',
-          fieldCultivationId: 42
-        })
-      );
-      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule', {
-        params: {
-          scope: 'week',
-          week_start: '2026-06-01',
-          field_cultivation_id: '42'
-        }
-      });
+      expect(apiClient.get).toHaveBeenCalledWith('/api/v1/plans/7/task_schedule');
     });
 
     it('forwards error when api fails', async () => {
