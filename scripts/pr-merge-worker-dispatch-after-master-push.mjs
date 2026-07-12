@@ -25,7 +25,7 @@ function ghJson(command) {
 }
 
 const prs = ghJson(
-  'gh pr list --state open --base master --json number,title,url,headRefName,headRefOid,labels,body,isDraft,mergeable,mergeStateStatus,reviewDecision,additions,deletions,headRepository,baseRepository,author',
+  'gh pr list --state open --base master --json number,title,url,headRefName,headRefOid,labels,body,isDraft,mergeable,mergeStateStatus,reviewDecision,additions,deletions,isCrossRepository,author',
 );
 
 const candidates = selectSyncCandidates(prs);
