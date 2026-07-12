@@ -193,3 +193,91 @@
 
         assert!(*called.lock().unwrap());
     }
+
+    struct DistinctTranslator;
+    impl TranslatorPort for DistinctTranslator {
+        fn translate(&self, key: &str, _: &TranslateOptions) -> String {
+            format!("TRANSLATED:{key}")
+        }
+        fn localize(&self, _: time::Date, _: Option<&str>, _: &TranslateOptions) -> String {
+            String::new()
+        }
+    }
+
+    #[test]
+    fn call_phase_failed_stores_raw_i18n_key_for_frontend_reconnect() {
+        let updates = Arc::new(Mutex::new(Vec::new()));
+        let gateway = StubGateway {
+            plan: plan_entity(),
+            field_cultivations: vec![],
+            updates: Arc::clone(&updates),
+        };
+        let broadcast = SpyBroadcast {
+            called: Arc::new(Mutex::new(false)),
+        };
+        let interactor = AdvanceCultivationPlanPhaseInteractor::new(
+            &gateway,
+            &DistinctTranslator,
+            &broadcast,
+        );
+
+        interactor
+            .call(AdvanceCultivationPlanPhaseInput {
+                plan_id: 1,
+                phase_name: CultivationPlanPhaseName::PhaseFailed,
+                channel_class: None,
+                failure_subphase: Some("predicting_weather".into()),
+            })
+            .unwrap();
+
+        let recorded = updates.lock().unwrap();
+        let i18n_key = "models.cultivation_plan.phase_failed.predicting_weather";
+        assert!(
+            recorded
+                .iter()
+                .any(|a| a.get("optimization_phase_message") == Some(&i18n_key.to_string())),
+            "PhaseFailed must persist raw i18n key, not translated text"
+        );
+        assert!(
+            !recorded.iter().any(|attrs| attrs
+                .get("optimization_phase_message")
+                .is_some_and(|m| m.starts_with("TRANSLATED:"))),
+            "PhaseFailed must not run message through translator"
+        );
+    }
+
+    #[test]
+    fn call_non_failed_phase_translates_message_key() {
+        let updates = Arc::new(Mutex::new(Vec::new()));
+        let gateway = StubGateway {
+            plan: plan_entity(),
+            field_cultivations: vec![],
+            updates: Arc::clone(&updates),
+        };
+        let broadcast = SpyBroadcast {
+            called: Arc::new(Mutex::new(false)),
+        };
+        let interactor = AdvanceCultivationPlanPhaseInteractor::new(
+            &gateway,
+            &DistinctTranslator,
+            &broadcast,
+        );
+
+        interactor
+            .call(AdvanceCultivationPlanPhaseInput {
+                plan_id: 1,
+                phase_name: CultivationPlanPhaseName::PhaseFetchingWeather,
+                channel_class: None,
+                failure_subphase: None,
+            })
+            .unwrap();
+
+        let recorded = updates.lock().unwrap();
+        assert!(
+            recorded.iter().any(|a| {
+                a.get("optimization_phase_message")
+                    == Some(&"TRANSLATED:models.cultivation_plan.phases.fetching_weather".to_string())
+            }),
+            "non-failed phases should store translated message"
+        );
+    }
