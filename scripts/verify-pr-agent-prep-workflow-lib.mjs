@@ -7,6 +7,7 @@ const REQUIRED_PREP_WORKFLOW_SNIPPETS = [
   'advance-queue',
   'Backend test',
   '0 */12 * * *',
+  'contents: write',
 ];
 
 const REQUIRED_PREP_SCRIPT_SNIPPETS = [
