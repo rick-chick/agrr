@@ -74,6 +74,26 @@ impl TaskScheduleSqliteGateway {
         generated_at_str: &str,
         items: &[TaskScheduleReplaceItem],
     ) -> rusqlite::Result<()> {
+        Self::merge_replace_schedule_for_field_category_on_conn(
+            conn,
+            cultivation_plan_id,
+            field_cultivation_id,
+            category,
+            generated_at_str,
+            &[],
+            items,
+        )
+    }
+
+    fn merge_replace_schedule_for_field_category_on_conn(
+        conn: &Connection,
+        cultivation_plan_id: i64,
+        field_cultivation_id: i64,
+        category: &str,
+        generated_at_str: &str,
+        preserved_item_ids: &[i64],
+        items: &[TaskScheduleReplaceItem],
+    ) -> rusqlite::Result<()> {
         let schedule_id = match Self::find_schedule_id(
             conn,
             cultivation_plan_id,
@@ -81,10 +101,30 @@ impl TaskScheduleSqliteGateway {
             category,
         )? {
             Some(id) => {
-                conn.execute(
-                    "DELETE FROM task_schedule_items WHERE task_schedule_id = ?1",
-                    params![id],
-                )?;
+                if preserved_item_ids.is_empty() {
+                    conn.execute(
+                        "DELETE FROM task_schedule_items WHERE task_schedule_id = ?1",
+                        params![id],
+                    )?;
+                } else {
+                    let placeholders = preserved_item_ids
+                        .iter()
+                        .map(|_| "?")
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    let sql = format!(
+                        "DELETE FROM task_schedule_items \
+                         WHERE task_schedule_id = ?1 AND id NOT IN ({placeholders})"
+                    );
+                    let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> =
+                        vec![Box::new(id)];
+                    for preserved_id in preserved_item_ids {
+                        params_vec.push(Box::new(*preserved_id));
+                    }
+                    let param_refs: Vec<&dyn rusqlite::ToSql> =
+                        params_vec.iter().map(|p| p.as_ref()).collect();
+                    conn.execute(&sql, param_refs.as_slice())?;
+                }
                 conn.execute(
                     "UPDATE task_schedules SET generated_at = ?1, updated_at = datetime('now') \
                      WHERE id = ?2",
@@ -212,6 +252,20 @@ impl TaskScheduleGateway for TaskScheduleSqliteGateway {
                         &generated_at_str,
                         items,
                     )?,
+                    TaskScheduleFieldMutation::MergeReplace {
+                        field_cultivation_id,
+                        category,
+                        preserved_item_ids,
+                        items_to_insert,
+                    } => Self::merge_replace_schedule_for_field_category_on_conn(
+                        conn,
+                        cultivation_plan_id,
+                        *field_cultivation_id,
+                        category,
+                        &generated_at_str,
+                        preserved_item_ids,
+                        items_to_insert,
+                    )?,
                 }
             }
             Ok(())
@@ -261,6 +315,22 @@ CREATE TABLE task_schedule_items (
   amount_unit TEXT,
   status TEXT NOT NULL,
   agricultural_task_id INTEGER,
+  created_at TEXT,
+  updated_at TEXT
+);
+CREATE TABLE work_records (
+  id INTEGER PRIMARY KEY,
+  cultivation_plan_id INTEGER NOT NULL,
+  field_cultivation_id INTEGER,
+  task_schedule_item_id INTEGER,
+  agricultural_task_id INTEGER,
+  name TEXT NOT NULL,
+  task_type TEXT,
+  actual_date TEXT NOT NULL,
+  amount REAL,
+  amount_unit TEXT,
+  time_spent_minutes INTEGER,
+  notes TEXT,
   created_at TEXT,
   updated_at TEXT
 );
@@ -369,6 +439,37 @@ CREATE TABLE task_schedule_items (
         assert!(result.is_err(), "unknown field_cultivation_id should fail the batch");
         assert_eq!(item_name(&pool, 1), "old item");
         assert_eq!(item_name(&pool, 2), "field2 old");
+    }
+
+    #[test]
+    fn merge_replace_preserves_items_and_inserts_new_rows() {
+        let pool = test_pool("merge_replace");
+        let gateway = TaskScheduleSqliteGateway::new(pool.clone());
+        let generated_at = OffsetDateTime::now_utc();
+
+        gateway
+            .apply_plan_schedule_mutations(&TaskSchedulePlanMutations {
+                cultivation_plan_id: 10,
+                generated_at,
+                mutations: vec![TaskScheduleFieldMutation::MergeReplace {
+                    field_cultivation_id: 100,
+                    category: "general".to_string(),
+                    preserved_item_ids: vec![1],
+                    items_to_insert: vec![sample_item("new agrr item")],
+                }],
+            })
+            .expect("merge replace");
+
+        let names: Vec<String> = pool
+            .with_read(|conn| {
+                let mut stmt = conn.prepare(
+                    "SELECT name FROM task_schedule_items WHERE task_schedule_id = 1 ORDER BY id",
+                )?;
+                let rows = stmt.query_map([], |row| row.get(0))?;
+                rows.collect::<Result<Vec<_>, _>>()
+            })
+            .unwrap();
+        assert_eq!(vec!["old item".to_string(), "new agrr item".to_string()], names);
     }
 
     #[test]

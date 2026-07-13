@@ -5,6 +5,7 @@ pub mod dtos;
 pub mod entities;
 pub mod gateways;
 pub mod mappers;
+pub mod policies;
 pub mod interactors;
 pub mod ports;
 pub mod task_schedule_sync_error;

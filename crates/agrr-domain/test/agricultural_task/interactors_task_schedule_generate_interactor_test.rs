@@ -43,6 +43,7 @@
 
     struct FakeTaskScheduleReadGateway {
         ctx: TaskSchedulePlanContext,
+        protectable_items: Vec<crate::agricultural_task::gateways::ProtectableScheduleItemRow>,
     }
 
     impl TaskScheduleGenerationReadGateway for FakeTaskScheduleReadGateway {
@@ -147,10 +148,31 @@
         ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
             Ok(serde_json::json!({ "crop": { "name": "stub" } }))
         }
+
+        fn list_protectable_schedule_items(
+            &self,
+            _: i64,
+        ) -> Result<
+            Vec<crate::agricultural_task::gateways::ProtectableScheduleItemRow>,
+            Box<dyn std::error::Error + Send + Sync>,
+        > {
+            Ok(self.protectable_items.clone())
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    struct MergeReplaceCall {
+        _cultivation_plan_id: i64,
+        _field_cultivation_id: i64,
+        _category: String,
+        _generated_at: OffsetDateTime,
+        preserved_item_ids: Vec<i64>,
+        items: Vec<TaskScheduleReplaceItem>,
     }
 
     struct CapturingTaskScheduleGateway {
         replaced: Mutex<Vec<ReplaceCall>>,
+        merge_replaced: Mutex<Vec<MergeReplaceCall>>,
         cleared: Mutex<Vec<ClearCall>>,
     }
 
@@ -174,6 +196,7 @@
         fn new() -> Self {
             Self {
                 replaced: Mutex::new(vec![]),
+                merge_replaced: Mutex::new(vec![]),
                 cleared: Mutex::new(vec![]),
             }
         }
@@ -237,6 +260,21 @@
                         plan_mutations.generated_at,
                         items.clone(),
                     )?,
+                    crate::agricultural_task::dtos::TaskScheduleFieldMutation::MergeReplace {
+                        field_cultivation_id,
+                        category,
+                        preserved_item_ids,
+                        items_to_insert,
+                    } => {
+                        self.merge_replaced.lock().unwrap().push(MergeReplaceCall {
+                            _cultivation_plan_id: plan_mutations.cultivation_plan_id,
+                            _field_cultivation_id: *field_cultivation_id,
+                            _category: category.clone(),
+                            _generated_at: plan_mutations.generated_at,
+                            preserved_item_ids: preserved_item_ids.clone(),
+                            items: items_to_insert.clone(),
+                        });
+                    }
                 }
             }
             Ok(())
@@ -405,7 +443,10 @@
     fn generate_produces_general_and_fertilizer_schedules() {
         let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
         let cultivation_plan_gateway = FakeCultivationPlanGateway;
-        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items: vec![],
+        };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -419,7 +460,7 @@
         );
         interactor.call(TaskScheduleGenerateInput::new(99)).expect("call");
 
-        let replaced = task_schedule_gateway.replaced.lock().unwrap();
+        let replaced = task_schedule_gateway.merge_replaced.lock().unwrap();
         assert_eq!(replaced.len(), 2);
         let general = replaced.iter().find(|r| r._category == "general").unwrap();
         let fertilizer = replaced.iter().find(|r| r._category == "fertilizer").unwrap();
@@ -441,7 +482,10 @@
             }
         }
         let cultivation_plan_gateway = FakeCultivationPlanGateway;
-        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items: vec![],
+        };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -475,7 +519,10 @@
             }
         }
         let cultivation_plan_gateway = FakeCultivationPlanGateway;
-        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items: vec![],
+        };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -499,7 +546,10 @@
     fn generate_raises_progress_missing_when_no_records() {
         let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
         let cultivation_plan_gateway = FakeCultivationPlanGateway;
-        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items: vec![],
+        };
         let progress_gateway = StubProgressGateway {
             response: serde_json::json!({ "progress_records": [] }),
             received: Mutex::new(vec![]),
@@ -527,7 +577,10 @@
     fn progress_gateway_receives_filtered_weather() {
         let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
         let cultivation_plan_gateway = FakeCultivationPlanGateway;
-        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items: vec![],
+        };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -564,7 +617,10 @@
             }
         }
         let cultivation_plan_gateway = FakeCultivationPlanGateway;
-        let task_schedule_read_gateway = FakeTaskScheduleReadGateway { ctx };
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items: vec![],
+        };
         let progress_gateway = StubProgressGateway {
             response: progress_response(),
             received: Mutex::new(vec![]),
@@ -584,5 +640,56 @@
         assert_eq!(
             crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
             Some(1)
+        );
+    }
+
+    #[test]
+    fn generate_preserves_manual_and_work_record_items_in_merge_replace() {
+        let (ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        let field_cultivation_id = ctx.plan.field_cultivations[0].id;
+        let protectable_items = vec![
+            crate::agricultural_task::gateways::ProtectableScheduleItemRow {
+                id: 501,
+                field_cultivation_id,
+                category: "general".into(),
+                source: Some("manual_entry".into()),
+                agricultural_task_id: None,
+                stage_order: None,
+                has_work_record: false,
+            },
+            crate::agricultural_task::gateways::ProtectableScheduleItemRow {
+                id: 502,
+                field_cultivation_id,
+                category: "general".into(),
+                source: Some("agrr_schedule".into()),
+                agricultural_task_id: Some(11),
+                stage_order: Some(1),
+                has_work_record: true,
+            },
+        ];
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items,
+        };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        interactor.call(TaskScheduleGenerateInput::new(99)).expect("call");
+
+        let merged = task_schedule_gateway.merge_replaced.lock().unwrap();
+        let general = merged.iter().find(|r| r._category == "general").unwrap();
+        assert_eq!(vec![501, 502], general.preserved_item_ids);
+        assert!(
+            general.items.is_empty(),
+            "matching agrr item must be suppressed when preserved item shares match key"
         );
     }

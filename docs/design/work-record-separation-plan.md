@@ -131,7 +131,17 @@ CREATE INDEX "index_work_records_on_task_schedule_item_id" ON "work_records" ("t
 
 ### 3.3 予定の再生成との整合
 
-`task_schedule_generate_interactor` の全置換IFは**変更しない**。SQLite 実装（本計画のスコープ外、生成機能の実装時）が delete + insert しても、work_records は `ON DELETE SET NULL` で生き残る。これが本分離の主目的であり、**実績保全のために置換ロジックへ条件分岐を足してはいけない**。
+**方針転換（issue #206）**: ユーザー優先は「予定表に完了した作業が残り続けること」。再生成は未完了の agrr 生成予定のみ置換し、次を温存する:
+
+| 温存対象 | 条件 |
+|---|---|
+| 実績付き予定 | `work_records.task_schedule_item_id` が紐づく item（timeline の `completed: true` 維持） |
+| 手動追加予定 | `source` が `manual_entry` または `agricultural_task_entry`（実績なしでも温存） |
+
+- 保護判定・重複抑制マッチングは **domain**（`task_schedule_item_preservation_policy` + `task_schedule_protected_merge_mapper`）。gateway は `preserved_item_ids` + `items_to_insert` の永続化のみ。
+- 温存 item の `scheduled_date` は更新しない（完了作業の可視性 > GDD 追随）。
+- 同一 `field_cultivation_id` + `category` で両方に `agricultural_task_id` がある場合、`(agricultural_task_id, stage_order)` が一致する新 item は INSERT しない（重複抑制）。
+- `work_records` は引き続き `ON DELETE SET NULL`。温存は **ID 温存**でリンク維持（自動再リンクは §7 非スコープ）。
 
 ## 4. API 契約
 
@@ -300,8 +310,8 @@ ports/（各 interactor の output port。on_success / on_not_found / on_record_
 
 ## 7. 非スコープ（v1 でやらない。やりたくなったら実装を止めてユーザーに確認）
 
-- 再生成後の work_record 自動再リンク（`agricultural_task_id` + `stage_order` でのマッチング）— 予定外実績への降格で十分
+- 再生成後の work_record 自動再リンク（`agricultural_task_id` + `stage_order` でのマッチング）— ID 温存でリンク維持。予定外実績への降格は温存対象外 item 削除時のみ
 - work_record の deletion_undo 統合
 - `task_schedule_item_id` の付け替え（実績の予定への後付けリンク）
-- 予定生成（`task_schedule_generate_interactor` の SQLite 実装・サーバ配線）— 別計画。本計画は生成IFを**変更しない**ことだけ保証する
+- 予定生成の保護付き部分置換（`TaskScheduleFieldMutation::MergeReplace`）— issue #206 で実装済み
 - 写真添付・作業者複数名・天候スナップショット等のリッチ化

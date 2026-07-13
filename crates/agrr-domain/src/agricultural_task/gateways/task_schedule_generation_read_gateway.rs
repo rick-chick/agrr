@@ -26,6 +26,17 @@ pub struct TaskScheduleCropRow {
     pub name: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProtectableScheduleItemRow {
+    pub id: i64,
+    pub field_cultivation_id: i64,
+    pub category: String,
+    pub source: Option<String>,
+    pub agricultural_task_id: Option<i64>,
+    pub stage_order: Option<i32>,
+    pub has_work_record: bool,
+}
+
 #[derive(Debug, Clone)]
 pub struct TaskScheduleBlueprintRow {
     pub id: i64,
@@ -69,4 +80,9 @@ pub trait TaskScheduleGenerationReadGateway: Send + Sync {
         &self,
         crop_id: i64,
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn list_protectable_schedule_items(
+        &self,
+        plan_id: i64,
+    ) -> Result<Vec<ProtectableScheduleItemRow>, Box<dyn std::error::Error + Send + Sync>>;
 }

@@ -4,10 +4,12 @@ mod support;
 
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    assert_crop_task_template_api_removed, clear_plan_task_schedules, developer_session_id,
-    empty_headers, seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_work_record_plan,
-    set_plan_task_schedule_sync_failed, set_plan_task_schedule_sync_failed_raw_error, status_and_body,
-    user_id_for_session,
+    agrr_regeneration_contract_available, assert_crop_task_template_api_removed,
+    clear_plan_task_schedules, developer_session_id, empty_headers, find_schedule_item,
+    poll_task_schedule_sync_ready, schedule_item_ids_from_response, seed_masters_crop,
+    seed_masters_crop_with_manual_blueprint, seed_task_schedule_regeneration_plan,
+    seed_work_record_plan, set_plan_task_schedule_sync_failed,
+    set_plan_task_schedule_sync_failed_raw_error, status_and_body, user_id_for_session,
 };
 
 #[test]
@@ -494,6 +496,66 @@ fn post_task_schedule_regenerate_returns_generating() {
     let json: serde_json::Value = serde_json::from_str(&body).expect("regenerate JSON");
     assert_eq!(true, json["success"].as_bool().unwrap());
     assert_eq!("generating", json["task_schedule_sync_state"].as_str().unwrap());
+}
+
+#[test]
+fn post_task_schedule_regenerate_preserves_completed_and_manual_items() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable for regeneration contract test");
+        return;
+    }
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_task_schedule_regeneration_plan(user_id);
+
+    let json = poll_task_schedule_sync_ready(&client, &session_id, seed.plan_id);
+    let item_ids = schedule_item_ids_from_response(&json);
+
+    assert!(
+        item_ids.contains(&seed.manual_item_id),
+        "manual item must survive regeneration: {json}"
+    );
+    assert!(
+        item_ids.contains(&seed.completed_item_id),
+        "completed item must survive regeneration: {json}"
+    );
+    assert!(
+        !item_ids.contains(&seed.agrr_item_id),
+        "uncompleted agrr item must be replaced: {json}"
+    );
+
+    let completed = find_schedule_item(&json, seed.completed_item_id);
+    assert_eq!(true, completed["completed"].as_bool().unwrap());
+}
+
+#[test]
+fn post_task_schedule_regenerate_avoids_duplicate_for_preserved_match_key() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable for regeneration contract test");
+        return;
+    }
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_task_schedule_regeneration_plan(user_id);
+
+    let json = poll_task_schedule_sync_ready(&client, &session_id, seed.plan_id);
+    let general_items = json["fields"][0]["schedules"]["general"]
+        .as_array()
+        .expect("general schedules");
+    let matching: Vec<_> = general_items
+        .iter()
+        .filter(|item| {
+            item["agricultural_task_id"].as_i64() == Some(seed.agricultural_task_id)
+                && item["stage_order"].as_i64() == Some(1)
+        })
+        .collect();
+    assert_eq!(
+        1,
+        matching.len(),
+        "preserved + regenerated items must not duplicate match key: {json}"
+    );
 }
 
 #[test]

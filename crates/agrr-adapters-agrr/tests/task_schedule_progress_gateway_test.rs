@@ -65,6 +65,16 @@ impl TaskScheduleGenerationReadGateway for StubReadGateway {
             "stage_requirements": []
         }))
     }
+
+    fn list_protectable_schedule_items(
+        &self,
+        _: i64,
+    ) -> Result<
+        Vec<agrr_domain::agricultural_task::gateways::ProtectableScheduleItemRow>,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
+        Ok(vec![])
+    }
 }
 
 #[test]
