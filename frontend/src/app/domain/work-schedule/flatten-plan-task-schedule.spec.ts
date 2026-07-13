@@ -15,6 +15,7 @@ function task(
     name: overrides.name,
     scheduled_date: overrides.scheduled_date ?? null,
     status: overrides.status ?? 'planned',
+    completed: overrides.completed ?? false,
     details: overrides.details ?? emptyPlanTaskScheduleItemDetails
   };
 }
@@ -23,6 +24,7 @@ function field(
   overrides: Partial<PlanFieldSchedule> & Pick<PlanFieldSchedule, 'field_cultivation_id'>
 ): PlanFieldSchedule {
   return {
+    id: overrides.id ?? overrides.field_cultivation_id,
     name: overrides.name ?? 'Field A',
     crop_name: overrides.crop_name ?? 'Tomato',
     field_cultivation_id: overrides.field_cultivation_id,
@@ -51,6 +53,7 @@ describe('flattenPlanTaskSchedule', () => {
     expect(rows[0]?.item.name).toBe('Weeding');
     expect(rows[0]?.planId).toBe(7);
     expect(rows[0]?.fieldCultivationId).toBe(10);
+    expect(rows[0]?.fieldId).toBe(10);
     expect(rows[0]?.fieldName).toBe('Field A');
     expect(rows[0]?.cropName).toBe('Tomato');
     expect(rows.map((row) => row.item.name)).toEqual(['Weeding', 'Top dress']);

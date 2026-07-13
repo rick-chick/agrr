@@ -18,6 +18,7 @@ function mockRow(
     farmName: 'Farm A',
     planId: 10,
     planName: 'Plan A',
+    fieldId: overrides.fieldId ?? overrides.fieldCultivationId,
     fieldName: 'Field 1',
     cropName: 'Tomato',
     ...overrides
@@ -26,17 +27,17 @@ function mockRow(
 
 describe('filterPlanTaskScheduleRows', () => {
   const rows = [
-    mockRow({ farmId: 1, fieldCultivationId: 101, farmName: 'Farm A', fieldName: 'Field 1' }),
-    mockRow({ farmId: 1, fieldCultivationId: 102, farmName: 'Farm A', fieldName: 'Field 2' }),
-    mockRow({ farmId: 2, fieldCultivationId: 201, farmName: 'Farm B', fieldName: 'Field 3' })
+    mockRow({ farmId: 1, fieldId: 1, fieldCultivationId: 101, farmName: 'Farm A', fieldName: 'Field 1' }),
+    mockRow({ farmId: 1, fieldId: 2, fieldCultivationId: 102, farmName: 'Farm A', fieldName: 'Field 2' }),
+    mockRow({ farmId: 2, fieldId: 3, fieldCultivationId: 201, farmName: 'Farm B', fieldName: 'Field 3' })
   ];
 
   it('returns all rows when field filter is null', () => {
-    expect(filterPlanTaskScheduleRows(rows, null)).toHaveLength(3);
+    expect(filterPlanTaskScheduleRows(rows, null, null)).toHaveLength(3);
   });
 
   it('filters by field cultivation id', () => {
-    const filtered = filterPlanTaskScheduleRows(rows, 102);
+    const filtered = filterPlanTaskScheduleRows(rows, null, 102);
     expect(filtered).toHaveLength(1);
     expect(filtered[0].fieldName).toBe('Field 2');
   });
@@ -83,14 +84,52 @@ describe('filterCrossFarmScheduleRowsFromDate', () => {
 
 describe('buildPlanTaskScheduleFieldFilterOptions', () => {
   const rows = [
-    mockRow({ farmId: 1, fieldCultivationId: 101, farmName: 'Farm A', fieldName: 'Field 1' }),
-    mockRow({ farmId: 1, fieldCultivationId: 102, farmName: 'Farm A', fieldName: 'Field 2' }),
-    mockRow({ farmId: 2, fieldCultivationId: 201, farmName: 'Farm B', fieldName: 'Field 3' })
+    mockRow({ farmId: 1, fieldId: 1, fieldCultivationId: 101, farmName: 'Farm A', fieldName: 'Field 1' }),
+    mockRow({ farmId: 1, fieldId: 2, fieldCultivationId: 102, farmName: 'Farm A', fieldName: 'Field 2' }),
+    mockRow({ farmId: 2, fieldId: 3, fieldCultivationId: 201, farmName: 'Farm B', fieldName: 'Field 3' })
   ];
 
   it('builds unique field options sorted by label', () => {
     const options = buildPlanTaskScheduleFieldFilterOptions(rows);
     expect(options.map((field) => field.label)).toEqual(['Field 1', 'Field 2', 'Field 3']);
-    expect(options.map((field) => field.value)).toEqual([101, 102, 201]);
+    expect(options.map((field) => field.value)).toEqual([1, 2, 3]);
+  });
+
+  it('deduplicates multiple cultivations on the same plan field', () => {
+    const duplicatedRows = [
+      mockRow({ farmId: 1, fieldId: 1, fieldCultivationId: 101, fieldName: '1' }),
+      mockRow({ farmId: 1, fieldId: 1, fieldCultivationId: 102, fieldName: '1' }),
+      mockRow({ farmId: 1, fieldId: 1, fieldCultivationId: 103, fieldName: '1' }),
+      mockRow({ farmId: 1, fieldId: 2, fieldCultivationId: 201, fieldName: '2' }),
+      mockRow({ farmId: 1, fieldId: 2, fieldCultivationId: 202, fieldName: '2' }),
+      mockRow({ farmId: 1, fieldId: 2, fieldCultivationId: 203, fieldName: '2' })
+    ];
+
+    const options = buildPlanTaskScheduleFieldFilterOptions(duplicatedRows);
+
+    expect(options).toEqual([
+      { value: 1, label: '1' },
+      { value: 2, label: '2' }
+    ]);
+  });
+});
+
+describe('filterPlanTaskScheduleRows by plan field', () => {
+  const rows = [
+    mockRow({ farmId: 1, fieldId: 1, fieldCultivationId: 101, fieldName: '1' }),
+    mockRow({ farmId: 1, fieldId: 1, fieldCultivationId: 102, fieldName: '1' }),
+    mockRow({ farmId: 1, fieldId: 2, fieldCultivationId: 201, fieldName: '2' })
+  ];
+
+  it('filters all cultivations on the selected plan field', () => {
+    const filtered = filterPlanTaskScheduleRows(rows, 1, null);
+    expect(filtered).toHaveLength(2);
+    expect(filtered.every((row) => row.fieldId === 1)).toBe(true);
+  });
+
+  it('filters by field cultivation id when deep-linked', () => {
+    const filtered = filterPlanTaskScheduleRows(rows, null, 201);
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].fieldCultivationId).toBe(201);
   });
 });

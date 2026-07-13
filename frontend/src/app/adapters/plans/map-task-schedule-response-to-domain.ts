@@ -14,11 +14,8 @@ import type {
 function mapTaskScheduleItemDetails(details: TaskDetails): PlanTaskScheduleItemDetails {
   return {
     stageName: details.stage.name?.trim() || null,
-    gddTrigger: details.gdd.trigger || null,
-    gddTolerance: details.gdd.tolerance || null,
     amount: details.amount?.trim() || null,
     amountUnit: details.amount_unit?.trim() || null,
-    masterName: details.master?.name?.trim() || null,
     masterDescription: details.master?.description?.trim() || null
   };
 }
@@ -29,12 +26,14 @@ function mapTaskScheduleItem(item: TaskScheduleItem): PlanTaskScheduleItem {
     name: item.name,
     scheduled_date: item.scheduled_date,
     status: item.status,
+    completed: item.completed,
     details: mapTaskScheduleItemDetails(item.details)
   };
 }
 
 function mapFieldSchedule(field: FieldSchedule): PlanFieldSchedule {
   return {
+    id: field.id,
     name: field.name,
     crop_name: field.crop_name,
     field_cultivation_id: field.field_cultivation_id,

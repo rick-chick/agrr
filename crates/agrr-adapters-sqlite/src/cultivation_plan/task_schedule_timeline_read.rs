@@ -139,7 +139,7 @@ fn load_field_contexts(
     plan_id: i64,
 ) -> rusqlite::Result<Vec<FieldContext>> {
     let mut stmt = conn.prepare(
-        "SELECT DISTINCT fc.id, COALESCE(cpf.name, ''), \
+        "SELECT fc.id, cpf.id, COALESCE(cpf.name, ''), \
          COALESCE(cpc.name, cr.name, ''), COALESCE(fc.area, 0), COALESCE(cpc.crop_id, 0), \
          fc.start_date, fc.completion_date \
          FROM field_cultivations fc \
@@ -151,13 +151,13 @@ fn load_field_contexts(
     let rows = stmt.query_map(params![plan_id], |row| {
         Ok(FieldContext {
             field_cultivation_id: row.get(0)?,
-            id: row.get(0)?,
-            name: row.get(1)?,
-            crop_name: row.get(2)?,
-            area_sqm: row.get(3)?,
-            crop_id: row.get::<_, i64>(4)?,
-            start_date: parse_date_opt(row.get::<_, Option<String>>(5)?.as_deref()),
-            completion_date: parse_date_opt(row.get::<_, Option<String>>(6)?.as_deref()),
+            id: row.get(1)?,
+            name: row.get(2)?,
+            crop_name: row.get(3)?,
+            area_sqm: row.get(4)?,
+            crop_id: row.get::<_, i64>(5)?,
+            start_date: parse_date_opt(row.get::<_, Option<String>>(6)?.as_deref()),
+            completion_date: parse_date_opt(row.get::<_, Option<String>>(7)?.as_deref()),
         })
     })?;
     rows.collect()
@@ -516,6 +516,7 @@ CREATE TABLE work_records (
         assert_eq!(snapshot.scheduled_dates.len(), 1);
 
         let field = snapshot.fields.first().expect("field");
+        assert_eq!(field.id, 10);
         assert_eq!(field.field_cultivation_id, 100);
         assert_eq!(field.crop_id, 42);
         assert_eq!(

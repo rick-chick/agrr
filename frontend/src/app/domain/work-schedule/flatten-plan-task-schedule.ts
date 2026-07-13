@@ -17,6 +17,7 @@ export function flattenPlanTaskSchedule(
       planId: plan.id,
       planName: plan.name,
       fields: fields.map((field) => ({
+        id: field.id,
         name: field.name,
         crop_name: field.crop_name,
         field_cultivation_id: field.field_cultivation_id,

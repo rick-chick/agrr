@@ -1,21 +1,15 @@
 /** Detail fields for the task schedule item detail panel. */
 export interface PlanTaskScheduleItemDetails {
   stageName: string | null;
-  gddTrigger: string | null;
-  gddTolerance: string | null;
   amount: string | null;
   amountUnit: string | null;
-  masterName: string | null;
   masterDescription: string | null;
 }
 
 export const emptyPlanTaskScheduleItemDetails: PlanTaskScheduleItemDetails = {
   stageName: null,
-  gddTrigger: null,
-  gddTolerance: null,
   amount: null,
   amountUnit: null,
-  masterName: null,
   masterDescription: null
 };
 
@@ -25,10 +19,13 @@ export interface PlanTaskScheduleItem {
   name: string;
   scheduled_date: string | null;
   status: string;
+  /** Derived from linked work_records in timeline API; not from legacy status column. */
+  completed: boolean;
   details: PlanTaskScheduleItemDetails;
 }
 
 export interface PlanFieldSchedule {
+  id: number;
   name: string;
   crop_name: string;
   field_cultivation_id: number;

@@ -6,6 +6,7 @@ export interface CrossFarmScheduleRow {
   farmName: string;
   planId: number;
   planName: string;
+  fieldId: number;
   fieldName: string;
   fieldCultivationId: number;
   cropName: string;
@@ -17,6 +18,7 @@ export interface CrossFarmScheduleSource {
   planId: number;
   planName: string;
   fields: ReadonlyArray<{
+    id: number;
     name: string;
     crop_name: string;
     field_cultivation_id: number;

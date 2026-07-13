@@ -1,22 +1,14 @@
 @import '../masters/_master-layout.css';
 @import './plan-work-shared.css';
 
-.plan-task-schedule__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-4);
-  margin-bottom: var(--space-2);
-}
-
-.plan-task-schedule__meta {
+.plan-task-schedule__footer {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-1) var(--space-3);
-  margin: 0;
-  padding: 0;
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
 }
 
 .plan-task-schedule__generated-at,
@@ -27,29 +19,58 @@
   line-height: 1.4;
 }
 
-.plan-task-schedule__regenerate-details {
-  margin-bottom: var(--space-4);
-  font-size: var(--font-size-sm);
-}
-
-.plan-task-schedule__regenerate-details summary {
-  cursor: pointer;
+.plan-task-schedule__regenerate-link {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--font-size-xs, 0.75rem);
   color: var(--color-accent);
-  font-weight: var(--font-weight-medium, 500);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+  line-height: 1.4;
 }
 
-.plan-task-schedule__regenerate-body {
-  margin-top: var(--space-2);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  align-items: flex-start;
+.plan-task-schedule__regenerate-link:hover:not(:disabled) {
+  color: var(--color-accent-hover, var(--color-accent));
+}
+
+.plan-task-schedule__regenerate-link:disabled {
+  color: var(--color-text-secondary);
+  cursor: default;
+  text-decoration: none;
 }
 
 .plan-task-schedule__regenerate-error {
+  flex-basis: 100%;
   margin: 0;
+  font-size: var(--font-size-xs, 0.75rem);
   color: var(--color-danger, #b42318);
-  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.confirm-dialog {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  max-width: 400px;
+}
+
+.confirm-dialog::backdrop {
+  background: var(--color-dialog-backdrop);
+}
+
+.confirm-dialog__message {
+  margin: 0 0 var(--space-4) 0;
+  color: var(--color-text);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 
 .plan-task-schedule__filters {

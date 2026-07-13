@@ -1,4 +1,5 @@
 import type { PlanFieldSchedule, PlanSchedulePlanInfo } from './plan-schedule-snapshot';
+import type { CrossFarmScheduleRow } from './cross-farm-schedule-row';
 import {
   filterPlanTaskScheduleRows,
   filterCrossFarmScheduleRowsFromDate
@@ -9,14 +10,29 @@ import {
   type CrossFarmScheduleMonthGroup
 } from './group-cross-farm-schedule-by-month';
 
+export function buildPlanTaskScheduleMonthGroupsFromRows(
+  rows: ReadonlyArray<CrossFarmScheduleRow>,
+  fieldFilterId: number | null,
+  fieldCultivationFilterId: number | null,
+  fromDate: string
+): CrossFarmScheduleMonthGroup[] {
+  const filtered = filterPlanTaskScheduleRows(rows, fieldFilterId, fieldCultivationFilterId);
+  const fromDateFiltered = filterCrossFarmScheduleRowsFromDate(filtered, fromDate);
+  return groupCrossFarmScheduleByMonth(fromDateFiltered);
+}
+
 export function buildPlanTaskScheduleMonthGroups(
   plan: PlanSchedulePlanInfo,
   fields: ReadonlyArray<PlanFieldSchedule>,
-  fieldCultivationId: number | null,
+  fieldFilterId: number | null,
+  fieldCultivationFilterId: number | null,
   fromDate: string
 ): CrossFarmScheduleMonthGroup[] {
   const rows = flattenPlanTaskSchedule(plan, fields);
-  const filtered = filterPlanTaskScheduleRows(rows, fieldCultivationId);
-  const fromDateFiltered = filterCrossFarmScheduleRowsFromDate(filtered, fromDate);
-  return groupCrossFarmScheduleByMonth(fromDateFiltered);
+  return buildPlanTaskScheduleMonthGroupsFromRows(
+    rows,
+    fieldFilterId,
+    fieldCultivationFilterId,
+    fromDate
+  );
 }

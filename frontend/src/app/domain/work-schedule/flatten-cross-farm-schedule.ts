@@ -34,6 +34,7 @@ export function flattenCrossFarmSchedules(
           farmName: source.farmName,
           planId: source.planId,
           planName: source.planName,
+          fieldId: field.id,
           fieldName: field.name,
           fieldCultivationId: field.field_cultivation_id,
           cropName: field.crop_name

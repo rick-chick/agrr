@@ -82,6 +82,7 @@ describe('mapTaskScheduleResponseToDomain', () => {
       plan: { id: 7, name: 'Main Plan' },
       fields: [
         {
+          id: 1,
           name: 'North',
           crop_name: 'Tomato',
           field_cultivation_id: 10,
@@ -92,13 +93,11 @@ describe('mapTaskScheduleResponseToDomain', () => {
                 name: 'Weeding',
                 scheduled_date: '2026-06-10',
                 status: 'planned',
+                completed: false,
                 details: {
                   stageName: 'Stage',
-                  gddTrigger: '100',
-                  gddTolerance: '10',
                   amount: null,
                   amountUnit: null,
-                  masterName: null,
                   masterDescription: null
                 }
               }
@@ -176,12 +175,59 @@ describe('mapTaskScheduleResponseToDomain', () => {
 
     expect(item?.details).toEqual({
       stageName: 'Vegetative',
-      gddTrigger: '150',
-      gddTolerance: '5',
       amount: '20',
       amountUnit: 'kg',
-      masterName: 'Fertilizer master',
       masterDescription: 'Apply fertilizer evenly'
     });
+  });
+
+  it('maps completed from work record linkage, not legacy status', () => {
+    const response: TaskScheduleResponse = {
+      plan: {
+        id: 7,
+        name: 'Main Plan',
+        status: 'completed',
+        planning_start_date: '2026-01-01',
+        planning_end_date: '2026-12-31',
+        timeline_generated_at: '2026-06-01T00:00:00Z',
+        timeline_generated_at_display: '2026-06-01',
+        task_schedule_sync_state: 'ready',
+        task_schedule_sync_error: null,
+        task_schedule_sync_error_crop_id: null
+      },
+      week: { start_date: '2026-06-01', end_date: '2026-06-07', label: '2026-06-01' },
+      milestones: [],
+      fields: [
+        {
+          id: 1,
+          name: 'North',
+          crop_name: 'Tomato',
+          area_sqm: 100,
+          field_cultivation_id: 10,
+          crop_id: 20,
+          schedules: {
+            general: [
+              task({
+                item_id: 1,
+                name: 'Weeding',
+                scheduled_date: '2026-06-10',
+                status: 'planned',
+                completed: true,
+                work_records: [{ id: 9, actual_date: '2026-06-10', notes: null }]
+              })
+            ],
+            fertilizer: [],
+            unscheduled: []
+          }
+        }
+      ],
+      labels: {},
+      minimap: { start_date: '', end_date: '', weeks: [] }
+    };
+
+    const item = mapTaskScheduleResponseToDomain(response).fields[0]?.schedules.general[0];
+
+    expect(item?.status).toBe('planned');
+    expect(item?.completed).toBe(true);
   });
 });

@@ -11,6 +11,7 @@ function mockTask(
     name: 'Task',
     scheduled_date: '2026-06-10',
     status: 'planned',
+    completed: false,
     details: emptyPlanTaskScheduleItemDetails,
     ...overrides
   };
@@ -35,6 +36,7 @@ describe('flattenCrossFarmSchedules', () => {
         planId: 10,
         fields: [
           {
+            id: 1,
             name: 'Field 1',
             crop_name: 'Tomato',
             field_cultivation_id: 101,
@@ -52,6 +54,7 @@ describe('flattenCrossFarmSchedules', () => {
         planName: 'Plan B',
         fields: [
           {
+            id: 2,
             name: 'Field 2',
             crop_name: 'Carrot',
             field_cultivation_id: 201,
@@ -87,6 +90,7 @@ describe('flattenCrossFarmSchedules', () => {
         planId: 10,
         fields: [
           {
+            id: 1,
             name: 'Field 1',
             crop_name: 'Tomato',
             field_cultivation_id: 101,

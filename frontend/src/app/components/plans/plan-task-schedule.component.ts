@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, ViewChild, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -14,7 +14,7 @@ import { RegenerateTaskScheduleUseCase } from '../../usecase/plans/regenerate-ta
 import { SubscribeTaskScheduleSyncUseCase } from '../../usecase/plans/subscribe-task-schedule-sync.usecase';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyTaskScheduleSyncViewEffects } from './task-schedule-sync-view.effects';
-import { formatIsoDateForDisplay } from '../../core/format-display-date';
+import { formatIsoDateTimeForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -28,11 +28,15 @@ const initialControl: PlanTaskScheduleViewState = {
   pendingSyncToastKey: null,
   syncReloadNonce: 0,
   fromDate: localTodayIso(),
+  fieldFilterId: null,
   fieldCultivationFilterId: null,
   monthGroups: [],
   fieldFilterOptions: [],
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  filteredFieldCount: 0,
+  filteredTaskCount: 0,
+  regenerateRequiresConfirm: false
 };
 
 @Component({
@@ -111,39 +115,6 @@ const initialControl: PlanTaskScheduleViewState = {
               [regenerateError]="control.regenerateError"
               (retry)="regenerateTaskSchedule()"
             />
-            <div class="plan-task-schedule__toolbar">
-              <div class="plan-task-schedule__meta">
-                <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
-                <p class="plan-task-schedule__summary">{{
-                  'plans.task_schedules.summary'
-                    | translate: { fields: fieldCount, tasks: taskCount }
-                }}</p>
-              </div>
-            </div>
-            @if (syncState === 'ready') {
-              <details class="plan-task-schedule__regenerate-details">
-                <summary>{{ 'plans.task_schedules.sync_retry' | translate }}</summary>
-                <div class="plan-task-schedule__regenerate-body">
-                  @if (control.regenerateError) {
-                    <p class="plan-task-schedule__regenerate-error" role="alert">
-                      {{ control.regenerateError | translate }}
-                    </p>
-                  }
-                  <button
-                    type="button"
-                    class="btn-secondary plan-task-schedule__regenerate-button"
-                    [disabled]="control.regenerating"
-                    (click)="regenerateTaskSchedule()"
-                  >
-                    {{
-                      (control.regenerating
-                        ? 'common.loading'
-                        : 'plans.task_schedules.sync_retry') | translate
-                    }}
-                  </button>
-                </div>
-              </details>
-            }
             <div class="plan-task-schedule__filters">
               <label class="plan-task-schedule__filter">
                 <span class="plan-task-schedule__filter-label">{{
@@ -151,7 +122,7 @@ const initialControl: PlanTaskScheduleViewState = {
                 }}</span>
                 <select
                   class="plan-task-schedule__filter-select"
-                  [ngModel]="fieldCultivationFilterId"
+                  [ngModel]="fieldFilterId"
                   (ngModelChange)="onFieldFilterChange($event)"
                   [disabled]="!fieldFilterOptions.length"
                 >
@@ -176,14 +147,61 @@ const initialControl: PlanTaskScheduleViewState = {
               </label>
             </div>
             <app-task-schedule-month-list [monthGroups]="scheduleMonthGroups" />
+            <footer class="plan-task-schedule__footer">
+              <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
+              <p class="plan-task-schedule__summary">{{
+                'plans.task_schedules.summary'
+                  | translate: { fields: control.filteredFieldCount, tasks: control.filteredTaskCount }
+              }}</p>
+              @if (syncState === 'ready') {
+                <button
+                  type="button"
+                  class="plan-task-schedule__regenerate-link"
+                  [disabled]="control.regenerating"
+                  (click)="requestRegenerateTaskSchedule()"
+                >
+                  {{
+                    (control.regenerating
+                      ? 'common.loading'
+                      : 'plans.task_schedules.sync_retry') | translate
+                  }}
+                </button>
+                @if (control.regenerateError) {
+                  <p class="plan-task-schedule__regenerate-error" role="alert">
+                    {{ control.regenerateError | translate }}
+                  </p>
+                }
+              }
+            </footer>
           }
         }
       </section>
     </main>
+
+    <dialog
+      #regenerateConfirmDialog
+      class="confirm-dialog plan-task-schedule__regenerate-confirm"
+      (cancel)="cancelRegenerateConfirmDialog($event)"
+      (click)="onRegenerateConfirmDialogBackdropClick($event)"
+    >
+      <p class="confirm-dialog__message">{{
+        'plans.task_schedules.regenerate_confirm' | translate
+      }}</p>
+      <div class="confirm-dialog__actions">
+        <button type="button" class="btn-secondary" (click)="cancelRegenerateConfirmDialog()">
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button type="button" class="btn-primary" (click)="confirmRegenerateTaskSchedule()">
+          {{ 'plans.task_schedules.sync_retry' | translate }}
+        </button>
+      </div>
+    </dialog>
   `,
   styleUrls: ['./plan-task-schedule.component.css']
 })
 export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
+  @ViewChild('regenerateConfirmDialog') regenerateConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly useCase = inject(LoadPlanTaskScheduleUseCase);
@@ -213,16 +231,8 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     return (this.control.schedule?.fields.length ?? 0) === 0;
   }
 
-  get fieldCount(): number {
-    return this.control.schedule?.fields.length ?? 0;
-  }
-
-  get taskCount(): number {
-    return (this.control.schedule?.fields ?? []).reduce(
-      (sum, field) =>
-        sum + field.schedules.general.length + field.schedules.fertilizer.length,
-      0
-    );
+  get fieldFilterId(): number | null {
+    return this.control.fieldFilterId;
   }
 
   get timelineGeneratedAtLabel(): string {
@@ -233,7 +243,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     const datetime =
       plan.timeline_generated_at_display ||
       (plan.timeline_generated_at
-        ? formatIsoDateForDisplay(plan.timeline_generated_at, this.translate.currentLang)
+        ? formatIsoDateTimeForDisplay(plan.timeline_generated_at, this.translate.currentLang)
         : null);
     if (!datetime) {
       return this.translate.instant('plans.task_schedules.timeline_generated_unknown');
@@ -295,6 +305,7 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     }
     this.presenter.applyClientFilters(
       this.resolveFromDateFromRoute(),
+      this.resolveFieldFilterFromRoute(),
       this.resolveFieldCultivationFilterFromRoute()
     );
     this.subscribeSyncUseCase.execute({
@@ -320,19 +331,20 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
     });
   }
 
-  onFieldFilterChange(fieldCultivationId: number | null): void {
-    if (this.fieldCultivationFilterId === fieldCultivationId) {
+  onFieldFilterChange(fieldFilterId: number | null): void {
+    if (this.fieldFilterId === fieldFilterId && this.fieldCultivationFilterId == null) {
       return;
     }
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
-        field_cultivation_id: fieldCultivationId
+        field_id: fieldFilterId,
+        field_cultivation_id: null
       },
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
-    this.presenter.applyClientFilters(this.fromDate, fieldCultivationId);
+    this.presenter.applyClientFilters(this.fromDate, fieldFilterId, null);
     this.cdr.markForCheck();
   }
 
@@ -346,8 +358,17 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
-    this.presenter.applyClientFilters(fromDate, this.fieldCultivationFilterId);
+    this.presenter.applyClientFilters(fromDate, this.fieldFilterId, this.fieldCultivationFilterId);
     this.cdr.markForCheck();
+  }
+
+  private resolveFieldFilterFromRoute(): number | null {
+    const raw = this.route.snapshot.queryParamMap.get('field_id');
+    if (!raw) {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
   private resolveFieldCultivationFilterFromRoute(): number | null {
@@ -368,6 +389,37 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
   }
 
   regenerateTaskSchedule(): void {
+    this.requestRegenerateTaskSchedule();
+  }
+
+  requestRegenerateTaskSchedule(): void {
+    if (this.control.regenerating) {
+      return;
+    }
+    if (this.control.regenerateRequiresConfirm) {
+      this.regenerateConfirmDialogRef?.nativeElement?.showModal();
+      return;
+    }
+    this.executeRegenerateTaskSchedule();
+  }
+
+  confirmRegenerateTaskSchedule(): void {
+    this.regenerateConfirmDialogRef?.nativeElement?.close();
+    this.executeRegenerateTaskSchedule();
+  }
+
+  cancelRegenerateConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.regenerateConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onRegenerateConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.regenerateConfirmDialogRef?.nativeElement) {
+      this.cancelRegenerateConfirmDialog();
+    }
+  }
+
+  private executeRegenerateTaskSchedule(): void {
     this.regenerateUseCase.execute({ planId: this.planId });
   }
 }

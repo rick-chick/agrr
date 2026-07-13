@@ -1,23 +1,21 @@
-import { Component, Input, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ElementRef, Input, ViewChild, inject } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { formatIsoDayForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
-import type { PlanTaskScheduleMonthGroupView } from './plan-task-schedule.view';
-import type { CrossFarmScheduleRow } from '../../domain/work-schedule/cross-farm-schedule-row';
+import { formatIsoDateForDisplay, formatIsoDayForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
+import type { PlanTaskScheduleMonthGroupView, PlanTaskScheduleRowView } from './plan-task-schedule.view';
 import type { PlanTaskScheduleItem } from '../../domain/work-schedule/plan-schedule-snapshot';
 import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.component';
 
 @Component({
   selector: 'app-task-schedule-month-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, TaskScheduleItemDetailComponent],
+  imports: [TranslateModule, TaskScheduleItemDetailComponent],
   template: `
     @if (!monthGroups.length) {
       <p class="plan-task-schedule-month-list__empty">{{
         'plans.task_schedules.list_empty' | translate
       }}</p>
     } @else {
-      <div class="plan-task-schedule-month-list">
+      <div>
         @for (group of monthGroups; track group.monthKey) {
           <section
             class="plan-task-schedule-month-list__month"
@@ -26,22 +24,28 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
             <h3 class="plan-task-schedule-month-list__month-title">{{ formatMonth(group.monthKey) }}</h3>
             <ul class="plan-task-schedule-month-list__list" role="list">
               @for (row of group.rows; track row.item.item_id) {
-                <li class="plan-task-schedule-month-list__item">
+                <li>
                   <button
                     type="button"
                     class="plan-task-schedule-month-list__row"
-                    [class.plan-task-schedule-month-list__row--selected]="isSelected(row.item)"
-                    (click)="selectTask(row.item)"
+                    [class.plan-task-schedule-month-list__row--selected]="isSelected(row)"
+                    (click)="selectRow(row)"
                   >
-                    <span class="plan-task-schedule-month-list__date">{{
-                      formatDay(row.item.scheduled_date!)
-                    }}</span>
-                    <span class="plan-task-schedule-month-list__name">{{ row.item.name }}</span>
-                    <span class="plan-task-schedule-month-list__meta">{{
-                      'plans.task_schedules.list_row_meta'
-                        | translate: { field: row.fieldName, crop: row.cropName }
-                    }}</span>
-                    <span class="plan-task-schedule-month-list__status">{{
+                    <span class="plan-task-schedule-month-list__main">
+                      <span class="plan-task-schedule-month-list__name">{{ row.item.name }}</span>
+                      <span class="plan-task-schedule-month-list__sub">
+                        <time
+                          class="plan-task-schedule-month-list__date"
+                          [attr.datetime]="row.item.scheduled_date"
+                          >{{ formatDay(row.item.scheduled_date!) }}</time
+                        >
+                        <span class="plan-task-schedule-month-list__meta">{{
+                          'plans.task_schedules.list_row_meta'
+                            | translate: { field: row.fieldName, crop: row.cropName }
+                        }}</span>
+                      </span>
+                    </span>
+                    <span [class]="statusModifierClass(row)">{{
                       statusLabelKey(row) | translate
                     }}</span>
                   </button>
@@ -51,7 +55,37 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
           </section>
         }
       </div>
-      <app-task-schedule-item-detail [task]="selectedTask" />
+      <dialog
+        #detailDialog
+        class="form-dialog task-schedule-detail-dialog"
+        [attr.aria-labelledby]="selectedRow ? 'task-schedule-detail-title' : null"
+        (cancel)="closeDetail()"
+        (close)="onDetailDialogClose()"
+        (click)="onDetailDialogBackdropClick($event)"
+      >
+        @if (selectedRow) {
+          <header class="task-schedule-detail-dialog__hero">
+            <time class="task-schedule-detail-dialog__date">{{
+              formatScheduledDate(selectedRow.item.scheduled_date!)
+            }}</time>
+            <h3 id="task-schedule-detail-title" class="task-schedule-detail-dialog__title">
+              {{
+                'plans.task_schedules.detail.dialog_title'
+                  | translate: { task: selectedRow.item.name, crop: selectedRow.cropName }
+              }}
+            </h3>
+            <p class="task-schedule-detail-dialog__field">{{ selectedRow.fieldName }}</p>
+          </header>
+        }
+        <div class="task-schedule-detail-dialog__body">
+          <app-task-schedule-item-detail [task]="selectedTask" />
+        </div>
+        <div class="form-card__actions task-schedule-detail-dialog__actions">
+          <button type="button" class="btn btn-secondary" (click)="closeDetail()">
+            {{ 'common.close' | translate }}
+          </button>
+        </div>
+      </dialog>
     }
   `,
   styleUrls: ['./task-schedule-month-list.component.css']
@@ -59,31 +93,56 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
 export class TaskScheduleMonthListComponent {
   private readonly translate = inject(TranslateService);
 
+  @ViewChild('detailDialog') private detailDialogRef?: ElementRef<HTMLDialogElement>;
+
   @Input({ required: true }) monthGroups: PlanTaskScheduleMonthGroupView[] = [];
 
-  selectedTask: PlanTaskScheduleItem | null = null;
+  selectedRow: PlanTaskScheduleRowView | null = null;
+
+  get selectedTask(): PlanTaskScheduleItem | null {
+    return this.selectedRow?.item ?? null;
+  }
 
   formatDay(iso: string): string {
     return formatIsoDayForDisplay(iso, this.translate.currentLang);
+  }
+
+  formatScheduledDate(iso: string): string {
+    return formatIsoDateForDisplay(iso, this.translate.currentLang);
   }
 
   formatMonth(monthKey: string): string {
     return formatIsoMonthForDisplay(monthKey, this.translate.currentLang);
   }
 
-  statusLabelKey(row: CrossFarmScheduleRow): string {
-    return `plans.task_schedules.status.${row.item.status.toLowerCase()}`;
+  statusLabelKey(row: PlanTaskScheduleRowView): string {
+    return `plans.task_schedules.status.${row.displayStatus}`;
   }
 
-  selectTask(task: PlanTaskScheduleItem): void {
-    if (this.selectedTask?.item_id === task.item_id) {
-      this.selectedTask = null;
-      return;
+  statusModifierClass(row: PlanTaskScheduleRowView): string {
+    return `plan-task-schedule-month-list__status plan-task-schedule-month-list__status--${row.displayStatus}`;
+  }
+
+  selectRow(row: PlanTaskScheduleRowView): void {
+    this.selectedRow = row;
+    this.detailDialogRef?.nativeElement?.showModal();
+  }
+
+  closeDetail(): void {
+    this.detailDialogRef?.nativeElement?.close();
+  }
+
+  onDetailDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.detailDialogRef?.nativeElement) {
+      this.closeDetail();
     }
-    this.selectedTask = task;
   }
 
-  isSelected(task: PlanTaskScheduleItem): boolean {
-    return this.selectedTask?.item_id === task.item_id;
+  onDetailDialogClose(): void {
+    this.selectedRow = null;
+  }
+
+  isSelected(row: PlanTaskScheduleRowView): boolean {
+    return this.selectedRow?.item.item_id === row.item.item_id;
   }
 }

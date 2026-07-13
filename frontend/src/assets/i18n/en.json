@@ -1313,6 +1313,7 @@
       "sync_stale": "Task schedules are out of date with the latest plan.",
       "sync_updated": "Task schedules have been updated.",
       "sync_retry": "Regenerate task schedules",
+      "regenerate_confirm": "Regenerating will replace the current task schedule. Continue?",
       "sync_wizard_cta_hint": "Open registration wizard",
       "sync_errors": {
         "missing_weather": "Task schedules could not be generated because weather forecast data is missing.",
@@ -1350,12 +1351,10 @@
         "generic_plan_link": "Open plan fields and crops"
       },
       "detail": {
-        "title": "Task details",
+        "dialog_title": "{{task}} · {{crop}}",
         "empty": "Select a task to view details",
-        "scheduled_date": "Scheduled date",
         "stage": "Stage",
         "amount": "Fertilizer amount",
-        "master_name": "Task master",
         "master_description": "Description",
         "not_applicable": "N/A"
       }
