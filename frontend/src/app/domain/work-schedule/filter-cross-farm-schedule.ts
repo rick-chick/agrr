@@ -22,12 +22,16 @@ function uniqueOptions(
 
 export function filterPlanTaskScheduleRows(
   rows: ReadonlyArray<CrossFarmScheduleRow>,
-  fieldCultivationId: number | null
+  fieldFilterId: number | null,
+  fieldCultivationFilterId: number | null = null
 ): CrossFarmScheduleRow[] {
-  if (fieldCultivationId == null) {
-    return [...rows];
+  if (fieldCultivationFilterId != null) {
+    return rows.filter((row) => row.fieldCultivationId === fieldCultivationFilterId);
   }
-  return rows.filter((row) => row.fieldCultivationId === fieldCultivationId);
+  if (fieldFilterId != null) {
+    return rows.filter((row) => row.fieldId === fieldFilterId);
+  }
+  return [...rows];
 }
 
 export function filterCrossFarmScheduleRowsFromDate(
@@ -45,7 +49,7 @@ export function buildPlanTaskScheduleFieldFilterOptions(
 ): CrossFarmScheduleFilterOption[] {
   return uniqueOptions(
     rows,
-    (row) => row.fieldCultivationId,
+    (row) => row.fieldId,
     (row) => row.fieldName
   );
 }

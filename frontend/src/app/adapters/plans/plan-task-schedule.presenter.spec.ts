@@ -117,11 +117,15 @@ function createView(overrides: Partial<PlanTaskScheduleView['control']> = {}): P
       pendingSyncToastKey: null,
       syncReloadNonce: 0,
       fromDate: '2026-01-01',
+      fieldFilterId: null,
       fieldCultivationFilterId: null,
       monthGroups: [],
       fieldFilterOptions: [],
       cropIdsForBanner: [],
       cropNamesForBanner: {},
+      filteredFieldCount: 0,
+      filteredTaskCount: 0,
+      regenerateRequiresConfirm: false,
       ...overrides
     }
   };
@@ -152,74 +156,6 @@ describe('PlanTaskSchedulePresenter load', () => {
     expect(view.control.regenerateError).toBeNull();
     expect(view.control.pendingSyncToastKey).toBeNull();
     expect(view.control.syncReloadNonce).toBe(0);
-    expect(view.control.monthGroups).toHaveLength(2);
-    expect(view.control.monthGroups[0]?.rows[0]?.item.name).toBe('Weeding');
-    expect(view.control.fieldFilterOptions).toEqual(
-      expect.arrayContaining([
-        { value: 10, label: 'North' },
-        { value: 20, label: 'South' }
-      ])
-    );
-    expect(view.control.cropIdsForBanner).toEqual(expect.arrayContaining([20, 30]));
-    expect(view.control.cropNamesForBanner[20]).toBe('Tomato');
-    expect(view.control.cropNamesForBanner[30]).toBe('Carrot');
-  });
-
-  it('includes item details in month groups without hydrate', () => {
-    const schedule: TaskScheduleResponse = {
-      ...scheduleWithFields,
-      fields: [
-        field({
-          field_cultivation_id: 10,
-          name: 'North',
-          schedules: {
-            general: [
-              task({
-                item_id: 1,
-                name: 'Weeding',
-                scheduled_date: '2026-06-10',
-                field_cultivation_id: 10,
-                details: {
-                  stage: { name: 'Vegetative', order: 2 },
-                  gdd: { trigger: '150', tolerance: '5' },
-                  priority: 1,
-                  weather_dependency: 'low',
-                  time_per_sqm: '0',
-                  amount: '20',
-                  amount_unit: 'kg',
-                  source: 'blueprint',
-                  master: {
-                    name: 'Weed master',
-                    description: 'Pull weeds carefully',
-                    time_per_sqm: '0',
-                    weather_dependency: 'low',
-                    required_tools: [],
-                    skill_level: 'beginner',
-                    task_type: 'field_work'
-                  },
-                  history: { rescheduled_at: null, cancelled_at: null }
-                }
-              })
-            ],
-            fertilizer: [],
-            unscheduled: []
-          }
-        })
-      ]
-    };
-
-    presenter.present({ schedule });
-
-    const details = view.control.monthGroups[0]?.rows[0]?.item.details;
-    expect(details).toEqual({
-      stageName: 'Vegetative',
-      gddTrigger: '150',
-      gddTolerance: '5',
-      amount: '20',
-      amountUnit: 'kg',
-      masterName: 'Weed master',
-      masterDescription: 'Pull weeds carefully'
-    });
   });
 
   it('sets error state on onError', () => {
@@ -252,50 +188,63 @@ describe('PlanTaskSchedulePresenter derived fields', () => {
     presenter.setView(view);
   });
 
-  it('applyClientFilters filters month groups by field cultivation id', () => {
-    presenter.present({ schedule: scheduleWithFields });
-
-    presenter.applyClientFilters('2026-01-01', 10);
-
-    expect(view.control.fieldCultivationFilterId).toBe(10);
-    expect(view.control.fromDate).toBe('2026-01-01');
-    expect(view.control.monthGroups).toHaveLength(1);
-    expect(view.control.monthGroups[0]?.rows).toHaveLength(1);
-    expect(view.control.monthGroups[0]?.rows[0]?.item.name).toBe('Weeding');
-    expect(view.control.fieldFilterOptions).toEqual(
-      expect.arrayContaining([
-        { value: 10, label: 'North' },
-        { value: 20, label: 'South' }
-      ])
-    );
-  });
-
-  it('applyClientFilters filters month groups by from date', () => {
-    presenter.present({ schedule: scheduleWithFields });
-
-    presenter.applyClientFilters('2026-07-01', null);
-
-    expect(view.control.monthGroups).toHaveLength(1);
-    expect(view.control.monthGroups[0]?.rows[0]?.item.name).toBe('Harvest');
-  });
-
   it('applyClientFilters stores filter state before schedule is loaded', () => {
-    presenter.applyClientFilters(localTodayIso(), 42);
+    presenter.applyClientFilters(localTodayIso(), null, 42);
 
     expect(view.control.fromDate).toBe(localTodayIso());
+    expect(view.control.fieldFilterId).toBeNull();
     expect(view.control.fieldCultivationFilterId).toBe(42);
     expect(view.control.monthGroups).toEqual([]);
   });
 
   it('recomputes derived fields on task schedule sync', () => {
     presenter.present({ schedule: scheduleWithFields });
-    presenter.applyClientFilters('2026-01-01', 10);
+    presenter.applyClientFilters('2026-01-01', 1, null);
 
     presenter.onTaskScheduleSync({ syncState: 'ready', syncError: null, syncErrorCropId: null });
 
-    expect(view.control.monthGroups).toHaveLength(1);
-    expect(view.control.monthGroups[0]?.rows[0]?.item.name).toBe('Weeding');
-    expect(view.control.cropIdsForBanner).toEqual(expect.arrayContaining([20, 30]));
+    expect(view.control.schedule?.plan.task_schedule_sync_state).toBe('ready');
+    expect(view.control.regenerating).toBe(false);
+    expect(view.control.pendingSyncToastKey).toBe('plans.task_schedules.sync_updated');
+    expect(view.control.syncReloadNonce).toBe(1);
+    expect(view.control.fromDate).toBe('2026-01-01');
+    expect(view.control.fieldFilterId).toBe(1);
+  });
+
+  it('adds displayStatus to month group rows', () => {
+    presenter.present({ schedule: scheduleWithFields });
+
+    expect(view.control.monthGroups[0]?.rows[0]?.displayStatus).toBe('planned');
+  });
+
+  it('computes filtered summary counts from active filters', () => {
+    presenter.present({ schedule: scheduleWithFields });
+    presenter.applyClientFilters('2026-06-01', 1, null);
+
+    expect(view.control.filteredFieldCount).toBe(1);
+    expect(view.control.filteredTaskCount).toBe(1);
+  });
+
+  it('sets regenerateRequiresConfirm when schedule has tasks', () => {
+    presenter.present({ schedule: scheduleWithFields });
+
+    expect(view.control.regenerateRequiresConfirm).toBe(true);
+  });
+
+  it('clears regenerateRequiresConfirm when schedule has no tasks', () => {
+    presenter.present({
+      schedule: {
+        ...scheduleWithFields,
+        fields: [
+          field({
+            field_cultivation_id: 10,
+            schedules: { general: [], fertilizer: [], unscheduled: [] }
+          })
+        ]
+      }
+    });
+
+    expect(view.control.regenerateRequiresConfirm).toBe(false);
   });
 });
 

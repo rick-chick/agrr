@@ -1,3 +1,5 @@
+@import '../masters/_master-layout.css';
+
 .plan-task-schedule-month-list__empty {
   margin: 0;
   padding: var(--space-4);
@@ -7,19 +9,21 @@
 }
 
 .plan-task-schedule-month-list__month + .plan-task-schedule-month-list__month {
-  margin-top: var(--space-4);
+  margin-top: var(--space-5);
 }
 
 .plan-task-schedule-month-list__month-title {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-sm);
+  margin: 0 0 var(--space-3);
+  padding-bottom: var(--space-2);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-secondary);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .plan-task-schedule-month-list__list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
   margin: 0;
   padding: 0;
@@ -27,12 +31,14 @@
 }
 
 .plan-task-schedule-month-list__row {
-  display: grid;
-  grid-template-columns: minmax(5.5rem, auto) 1fr;
-  gap: var(--space-1) var(--space-3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
   width: 100%;
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) + 2px);
   border: 1px solid var(--color-divider);
+  border-left: 3px solid var(--color-accent);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: inherit;
@@ -43,25 +49,150 @@
 .plan-task-schedule-month-list__row:hover,
 .plan-task-schedule-month-list__row--selected {
   border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 6%));
 }
 
-.plan-task-schedule-month-list__date {
-  grid-row: span 2;
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-primary, inherit);
+.plan-task-schedule-month-list__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .plan-task-schedule-month-list__name {
-  font-weight: var(--font-weight-medium, 500);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: var(--line-height-tight, 1.25);
+  color: var(--color-text);
 }
 
-.plan-task-schedule-month-list__meta,
-.plan-task-schedule-month-list__status {
+.plan-task-schedule-month-list__sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.plan-task-schedule-month-list__date {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1.2;
+  color: var(--color-text);
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+}
+
+.plan-task-schedule-month-list__meta {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
 .plan-task-schedule-month-list__status {
-  justify-self: start;
+  flex-shrink: 0;
+  align-self: flex-start;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1.2;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.plan-task-schedule-month-list__status--planned {
+  color: var(--color-text-secondary);
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-divider);
+}
+
+.plan-task-schedule-month-list__status--completed {
+  color: var(--color-success-dark);
+  background: var(--color-success-muted-bg);
+  border: 1px solid var(--color-success-muted-border);
+}
+
+.plan-task-schedule-month-list__status--skipped {
+  color: var(--color-text-secondary);
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-300);
+}
+
+dialog.task-schedule-detail-dialog {
+  padding: 0;
+  overflow: hidden;
+}
+
+.task-schedule-detail-dialog__hero {
+  padding: var(--space-5) var(--space-4) var(--space-4);
+  background: linear-gradient(
+    160deg,
+    var(--color-success-muted-bg) 0%,
+    var(--color-surface) 100%
+  );
+  border-bottom: 1px solid var(--color-success-muted-border);
+}
+
+.task-schedule-detail-dialog__date {
+  display: block;
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-success-dark);
+}
+
+.task-schedule-detail-dialog__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+}
+
+.task-schedule-detail-dialog__field {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.task-schedule-detail-dialog__body {
+  padding: var(--space-4);
+}
+
+dialog.task-schedule-detail-dialog .task-schedule-detail-dialog__actions {
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+dialog.task-schedule-detail-dialog .task-schedule-detail-dialog__actions .btn-secondary {
+  min-width: 7rem;
+}
+
+@media (max-width: 768px) {
+  dialog.task-schedule-detail-dialog:modal {
+    padding: 0;
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  .task-schedule-detail-dialog__hero {
+    padding: var(--space-4) var(--space-4) var(--space-3);
+  }
+
+  .task-schedule-detail-dialog__body {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  dialog.task-schedule-detail-dialog .task-schedule-detail-dialog__actions {
+    padding: var(--space-3) var(--space-4) max(var(--space-4), env(safe-area-inset-bottom));
+  }
+
+  dialog.task-schedule-detail-dialog .task-schedule-detail-dialog__actions .btn-secondary {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
 }

@@ -8,9 +8,15 @@ import {
   SubscribeTaskScheduleSyncOutputPort
 } from '../../usecase/plans/subscribe-task-schedule-sync.output-port';
 import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
-import { buildPlanTaskScheduleMonthGroups } from '../../domain/work-schedule/build-plan-task-schedule-month-groups';
+import { buildPlanTaskScheduleMonthGroupsFromRows } from '../../domain/work-schedule/build-plan-task-schedule-month-groups';
 import { flattenPlanTaskSchedule } from '../../domain/work-schedule/flatten-plan-task-schedule';
 import { buildPlanTaskScheduleFieldFilterOptions } from '../../domain/work-schedule/filter-cross-farm-schedule';
+import { resolvePlanTaskScheduleDisplayStatus } from '../../domain/work-schedule/resolve-plan-task-schedule-display-status';
+import type {
+  PlanTaskScheduleMonthGroupView,
+  PlanTaskScheduleRowView
+} from '../../components/plans/plan-task-schedule.view';
+import type { CrossFarmScheduleMonthGroup } from '../../domain/work-schedule/group-cross-farm-schedule-by-month';
 import { localTodayIso } from '../../core/local-today';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { mapTaskScheduleResponseToDomain } from './map-task-schedule-response-to-domain';
@@ -22,14 +28,23 @@ import {
 
 type DerivedViewFields = Pick<
   PlanTaskScheduleViewState,
-  'monthGroups' | 'fieldFilterOptions' | 'cropIdsForBanner' | 'cropNamesForBanner'
+  | 'monthGroups'
+  | 'fieldFilterOptions'
+  | 'cropIdsForBanner'
+  | 'cropNamesForBanner'
+  | 'filteredFieldCount'
+  | 'filteredTaskCount'
+  | 'regenerateRequiresConfirm'
 >;
 
 const emptyDerivedFields: DerivedViewFields = {
   monthGroups: [],
   fieldFilterOptions: [],
   cropIdsForBanner: [],
-  cropNamesForBanner: {}
+  cropNamesForBanner: {},
+  filteredFieldCount: 0,
+  filteredTaskCount: 0,
+  regenerateRequiresConfirm: false
 };
 
 @Injectable()
@@ -45,17 +60,23 @@ export class PlanTaskSchedulePresenter
     this.view = view;
   }
 
-  applyClientFilters(fromDate: string, fieldCultivationFilterId: number | null): void {
+  applyClientFilters(
+    fromDate: string,
+    fieldFilterId: number | null,
+    fieldCultivationFilterId: number | null = null
+  ): void {
     if (!this.view) throw new Error('Presenter: view not set');
     const current = this.view.control;
     const derived = this.computeDerivedFields(
       current.schedule,
       fromDate,
+      fieldFilterId,
       fieldCultivationFilterId
     );
     this.view.control = {
       ...current,
       fromDate,
+      fieldFilterId,
       fieldCultivationFilterId,
       ...derived
     };
@@ -74,8 +95,14 @@ export class PlanTaskSchedulePresenter
     if (!this.view) throw new Error('Presenter: view not set');
     const current = this.view.control;
     const fromDate = current.fromDate || localTodayIso();
+    const fieldFilterId = current.fieldFilterId ?? null;
     const fieldCultivationFilterId = current.fieldCultivationFilterId ?? null;
-    const derived = this.computeDerivedFields(dto.schedule, fromDate, fieldCultivationFilterId);
+    const derived = this.computeDerivedFields(
+      dto.schedule,
+      fromDate,
+      fieldFilterId,
+      fieldCultivationFilterId
+    );
     this.view.control = {
       ...current,
       loading: false,
@@ -86,6 +113,7 @@ export class PlanTaskSchedulePresenter
       pendingSyncToastKey: null,
       syncReloadNonce: 0,
       fromDate,
+      fieldFilterId,
       fieldCultivationFilterId,
       ...derived
     };
@@ -135,6 +163,7 @@ export class PlanTaskSchedulePresenter
     const derived = this.computeDerivedFields(
       nextSchedule,
       current.fromDate,
+      current.fieldFilterId,
       current.fieldCultivationFilterId
     );
     this.view.control = {
@@ -152,6 +181,7 @@ export class PlanTaskSchedulePresenter
   private computeDerivedFields(
     schedule: TaskScheduleResponse | null,
     fromDate: string,
+    fieldFilterId: number | null,
     fieldCultivationFilterId: number | null
   ): DerivedViewFields {
     if (!schedule) {
@@ -161,17 +191,65 @@ export class PlanTaskSchedulePresenter
     const banner = mergeCropBannerContext(schedule.fields, schedule.plan.remediation_crops);
     const snapshot = mapTaskScheduleResponseToDomain(schedule);
     const rows = flattenPlanTaskSchedule(snapshot.plan, snapshot.fields);
-
-    return {
-      monthGroups: buildPlanTaskScheduleMonthGroups(
-        snapshot.plan,
-        snapshot.fields,
+    const monthGroups = enrichPlanTaskScheduleMonthGroups(
+      buildPlanTaskScheduleMonthGroupsFromRows(
+        rows,
+        fieldFilterId,
         fieldCultivationFilterId,
         fromDate
-      ),
+      )
+    );
+    const { filteredFieldCount, filteredTaskCount } = countFilteredScheduleRows(monthGroups);
+
+    return {
+      monthGroups,
       fieldFilterOptions: buildPlanTaskScheduleFieldFilterOptions(rows),
       cropIdsForBanner: banner.cropIds,
-      cropNamesForBanner: banner.cropNames
+      cropNamesForBanner: banner.cropNames,
+      filteredFieldCount,
+      filteredTaskCount,
+      regenerateRequiresConfirm: countScheduleTasks(schedule) > 0
     };
   }
+}
+
+function enrichPlanTaskScheduleMonthGroups(
+  monthGroups: ReadonlyArray<CrossFarmScheduleMonthGroup>
+): PlanTaskScheduleMonthGroupView[] {
+  return monthGroups.map((group) => ({
+    monthKey: group.monthKey,
+    rows: group.rows.map(
+      (row): PlanTaskScheduleRowView => ({
+        ...row,
+        displayStatus: resolvePlanTaskScheduleDisplayStatus(row.item)
+      })
+    )
+  }));
+}
+
+function countFilteredScheduleRows(monthGroups: ReadonlyArray<PlanTaskScheduleMonthGroupView>): {
+  filteredFieldCount: number;
+  filteredTaskCount: number;
+} {
+  const fieldIds = new Set<number>();
+  let filteredTaskCount = 0;
+
+  for (const group of monthGroups) {
+    for (const row of group.rows) {
+      fieldIds.add(row.fieldId);
+      filteredTaskCount += 1;
+    }
+  }
+
+  return {
+    filteredFieldCount: fieldIds.size,
+    filteredTaskCount
+  };
+}
+
+function countScheduleTasks(schedule: TaskScheduleResponse): number {
+  return schedule.fields.reduce(
+    (sum, field) => sum + field.schedules.general.length + field.schedules.fertilizer.length,
+    0
+  );
 }

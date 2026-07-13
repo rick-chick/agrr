@@ -13,6 +13,7 @@ function row(
     planId: 9,
     planName: 'Plan A',
     fieldName: '圃場1',
+    fieldId: 1,
     fieldCultivationId: 101,
     cropName: 'トマト',
     ...overrides
@@ -25,6 +26,7 @@ function item(
   return {
     scheduled_date: null,
     status: 'planned',
+    completed: false,
     details: emptyPlanTaskScheduleItemDetails,
     ...partial
   };

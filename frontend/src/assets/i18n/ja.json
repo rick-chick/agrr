@@ -2306,6 +2306,7 @@
       "sync_stale": "計画の変更により作業予定が古くなっています。",
       "sync_updated": "作業予定を更新しました。",
       "sync_retry": "作業予定を再生成",
+      "regenerate_confirm": "作業予定を再生成すると、現在の予定が置き換えられます。よろしいですか？",
       "sync_wizard_cta_hint": "登録ウィザードを開く",
       "sync_errors": {
         "missing_weather": "気象予測データがないため作業予定を生成できません。計画の気象データを確認してください。",
@@ -2343,12 +2344,10 @@
         "generic_plan_link": "計画のほ場・作物を確認する"
       },
       "detail": {
-        "title": "作業詳細",
+        "dialog_title": "{{task}} · {{crop}}",
         "empty": "タスクを選択すると詳細が表示されます",
-        "scheduled_date": "予定日",
         "stage": "ステージ",
         "amount": "施肥量",
-        "master_name": "作業マスタ",
         "master_description": "作業説明",
         "not_applicable": "該当なし"
       }
