@@ -6,8 +6,9 @@ use crate::crop::agrr_requirement::build_crop_agrr_requirement;
 use crate::cultivation_plan::planning_horizon::derive_planning_horizon;
 use crate::pool::SqlitePool;
 use agrr_domain::agricultural_task::gateways::{
-    TaskScheduleBlueprintRow, TaskScheduleCropRow, TaskScheduleFieldCultivationRow,
-    TaskScheduleGenerationReadGateway, TaskSchedulePlanRow, TaskScheduleRelatedTask,
+    ProtectableScheduleItemRow, TaskScheduleBlueprintRow, TaskScheduleCropRow,
+    TaskScheduleFieldCultivationRow, TaskScheduleGenerationReadGateway, TaskSchedulePlanRow,
+    TaskScheduleRelatedTask,
 };
 use agrr_domain::weather_data::dtos::PredictedWeatherScope;
 use agrr_domain::weather_data::gateways::PredictedWeatherStoreGateway;
@@ -212,5 +213,35 @@ impl TaskScheduleGenerationReadGateway for TaskScheduleGenerationReadSqliteGatew
     ) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
         build_crop_agrr_requirement(&self.pool, crop_id)?
             .ok_or_else(|| format!("crop #{crop_id} has no agrr requirement").into())
+    }
+
+    fn list_protectable_schedule_items(
+        &self,
+        plan_id: i64,
+    ) -> Result<Vec<ProtectableScheduleItemRow>, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_read_box(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT tsi.id, ts.field_cultivation_id, ts.category, tsi.source, \
+                 tsi.agricultural_task_id, tsi.stage_order, \
+                 EXISTS(SELECT 1 FROM work_records wr WHERE wr.task_schedule_item_id = tsi.id) \
+                 FROM task_schedule_items tsi \
+                 INNER JOIN task_schedules ts ON ts.id = tsi.task_schedule_id \
+                 WHERE ts.cultivation_plan_id = ?1 \
+                 ORDER BY tsi.id",
+            )?;
+            let rows = stmt.query_map(params![plan_id], |row| {
+                let has_work_record: i64 = row.get(6)?;
+                Ok(ProtectableScheduleItemRow {
+                    id: row.get(0)?,
+                    field_cultivation_id: row.get(1)?,
+                    category: row.get(2)?,
+                    source: row.get(3)?,
+                    agricultural_task_id: row.get(4)?,
+                    stage_order: row.get(5)?,
+                    has_work_record: has_work_record != 0,
+                })
+            })?;
+            rows.collect::<Result<Vec<_>, _>>().map_err(Into::into)
+        })
     }
 }

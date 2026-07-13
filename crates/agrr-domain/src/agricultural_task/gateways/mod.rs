@@ -16,8 +16,8 @@ pub use cultivation_plan_gateway::{
     TaskScheduleRelatedTask,
 };
 pub use task_schedule_generation_read_gateway::{
-    TaskScheduleBlueprintRow, TaskScheduleCropRow, TaskScheduleFieldCultivationRow,
-    TaskScheduleGenerationReadGateway, TaskSchedulePlanRow,
+    ProtectableScheduleItemRow, TaskScheduleBlueprintRow, TaskScheduleCropRow,
+    TaskScheduleFieldCultivationRow, TaskScheduleGenerationReadGateway, TaskSchedulePlanRow,
 };
 pub use progress_gateway::ProgressGateway;
 pub use task_schedule_sync_state_gateway::TaskScheduleSyncStateGateway;

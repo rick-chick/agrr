@@ -9,12 +9,13 @@ use crate::agricultural_task::dtos::{
 };
 use crate::agricultural_task::ports::TaskScheduleGenerateInputPort;
 use crate::agricultural_task::gateways::{
-    CultivationPlanGateway, TaskScheduleBlueprint, TaskScheduleCrop,
+    CultivationPlanGateway, ProtectableScheduleItemRow, TaskScheduleBlueprint, TaskScheduleCrop,
     TaskScheduleFieldCultivation, TaskScheduleGenerationReadGateway, TaskSchedulePlan,
 };
 use crate::agricultural_task::gateways::{ProgressGateway, TaskScheduleGateway};
 use crate::agricultural_task::mappers::{
     task_schedule_generation_context_mapper, task_schedule_item_name_mapper,
+    task_schedule_protected_merge_mapper,
 };
 use crate::agricultural_task::mappers::task_schedule_blueprint_partition_mapper::partition_blueprints;
 use crate::agricultural_task::mappers::task_schedule_progress_mapper::{
@@ -63,6 +64,9 @@ where
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let ctx = self.build_generation_context(input.cultivation_plan_id)?;
         let plan = ctx.plan;
+        let protectable_items = self
+            .task_schedule_read_gateway
+            .list_protectable_schedule_items(plan.id)?;
 
         if !weather_data_present(&plan.predicted_weather_data) {
             return Err(Box::new(TaskScheduleSyncError::new(
@@ -81,6 +85,7 @@ where
             self.generate_for_field(
                 &plan,
                 field_cultivation,
+                &protectable_items,
                 &mut blueprint_cache,
                 &mut mutations,
             )?;
@@ -145,6 +150,7 @@ where
         &self,
         plan: &TaskSchedulePlan,
         field_cultivation: &TaskScheduleFieldCultivation,
+        protectable_items: &[ProtectableScheduleItemRow],
         blueprint_cache: &mut std::collections::HashMap<i64, Vec<TaskScheduleBlueprint>>,
         mutations: &mut Vec<TaskScheduleFieldMutation>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -214,23 +220,14 @@ where
             )));
         }
 
-        self.create_schedule(plan, field_cultivation, "general", mutations, || {
-            general_blueprints
-                .iter()
-                .map(|blueprint| {
-                    self.item_attributes_for_blueprint(
-                        blueprint,
-                        &progress_records,
-                        field_cultivation.start_date,
-                        crop.id,
-                    )
-                })
-                .collect::<Result<Vec<_>, _>>()
-        })?;
-
-        if !fertilizer_blueprints.is_empty() {
-            self.create_schedule(plan, field_cultivation, "fertilizer", mutations, || {
-                fertilizer_blueprints
+        self.create_schedule(
+            plan,
+            field_cultivation,
+            protectable_items,
+            "general",
+            mutations,
+            || {
+                general_blueprints
                     .iter()
                     .map(|blueprint| {
                         self.item_attributes_for_blueprint(
@@ -241,9 +238,38 @@ where
                         )
                     })
                     .collect::<Result<Vec<_>, _>>()
-            })?;
+            },
+        )?;
+
+        if !fertilizer_blueprints.is_empty() {
+            self.create_schedule(
+                plan,
+                field_cultivation,
+                protectable_items,
+                "fertilizer",
+                mutations,
+                || {
+                    fertilizer_blueprints
+                        .iter()
+                        .map(|blueprint| {
+                            self.item_attributes_for_blueprint(
+                                blueprint,
+                                &progress_records,
+                                field_cultivation.start_date,
+                                crop.id,
+                            )
+                        })
+                        .collect::<Result<Vec<_>, _>>()
+                },
+            )?;
         } else {
-            self.clear_schedule(plan, field_cultivation, "fertilizer", mutations)?;
+            self.clear_schedule(
+                plan,
+                field_cultivation,
+                protectable_items,
+                "fertilizer",
+                mutations,
+            )?;
         }
 
         Ok(())
@@ -323,6 +349,7 @@ where
         &self,
         plan: &TaskSchedulePlan,
         field_cultivation: &TaskScheduleFieldCultivation,
+        protectable_items: &[ProtectableScheduleItemRow],
         category: &str,
         mutations: &mut Vec<TaskScheduleFieldMutation>,
         items_fn: F,
@@ -330,11 +357,19 @@ where
     where
         F: FnOnce() -> Result<Vec<TaskScheduleReplaceItem>, Box<dyn std::error::Error + Send + Sync>>,
     {
+        let _ = plan;
         let items = items_fn()?;
-        mutations.push(TaskScheduleFieldMutation::Replace {
+        let merge_result = task_schedule_protected_merge_mapper::merge_protected_items(
+            protectable_items,
+            field_cultivation.id,
+            category,
+            items,
+        );
+        mutations.push(TaskScheduleFieldMutation::MergeReplace {
             field_cultivation_id: field_cultivation.id,
             category: category.to_string(),
-            items,
+            preserved_item_ids: merge_result.preserved_item_ids,
+            items_to_insert: merge_result.items_to_insert,
         });
         Ok(())
     }
@@ -343,14 +378,30 @@ where
         &self,
         plan: &TaskSchedulePlan,
         field_cultivation: &TaskScheduleFieldCultivation,
+        protectable_items: &[ProtectableScheduleItemRow],
         category: &str,
         mutations: &mut Vec<TaskScheduleFieldMutation>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let _ = plan;
-        mutations.push(TaskScheduleFieldMutation::DeleteAll {
-            field_cultivation_id: field_cultivation.id,
-            category: category.to_string(),
-        });
+        let merge_result = task_schedule_protected_merge_mapper::merge_protected_items(
+            protectable_items,
+            field_cultivation.id,
+            category,
+            Vec::new(),
+        );
+        if merge_result.preserved_item_ids.is_empty() {
+            mutations.push(TaskScheduleFieldMutation::DeleteAll {
+                field_cultivation_id: field_cultivation.id,
+                category: category.to_string(),
+            });
+        } else {
+            mutations.push(TaskScheduleFieldMutation::MergeReplace {
+                field_cultivation_id: field_cultivation.id,
+                category: category.to_string(),
+                preserved_item_ids: merge_result.preserved_item_ids,
+                items_to_insert: merge_result.items_to_insert,
+            });
+        }
         Ok(())
     }
 }
