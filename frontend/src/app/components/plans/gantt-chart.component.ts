@@ -83,10 +83,12 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
     }
     <div class="gantt-page" [class.gantt-page--touch-drag]="isMobileLayout && draggedCultivation">
       <div class="gantt-action-bar">
-        @if (isMobileLayout) {
+        <div class="gantt-action-bar__leading">
+          <ng-content select="[ganttActionPrefix]" />
+          @if (isMobileLayout) {
           <div class="gantt-action-bar__primary-actions">
             <button
-              class="action-button action-button--icon gantt-action-bar__crop-primary"
+              class="action-button action-button--icon action-button--secondary gantt-action-bar__crop-primary"
               type="button"
               (click)="mobileActionsMenu.closeMenu(); toggleCropPalette()"
               [class.active]="isCropPaletteOpen"
@@ -113,9 +115,9 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
               (fieldLegendToggle)="toggleFieldLegend()"
             />
           </div>
-        } @else {
+          } @else {
           <button
-            class="action-button"
+            class="action-button action-button--secondary"
             type="button"
             (click)="toggleCropPalette()"
             [class.active]="isCropPaletteOpen">
@@ -126,7 +128,7 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
             }
           </button>
           <button
-            class="action-button"
+            class="action-button action-button--secondary"
             type="button"
             (click)="toggleFieldForm()"
             [class.active]="fieldFormVisible">
@@ -136,7 +138,8 @@ import { RunGanttPlanMutationUseCase } from '../../usecase/plans/run-gantt-plan-
               <span>{{ 'js.gantt.crop_palette_cancel' | translate }}</span>
             }
           </button>
-        }
+          }
+        </div>
         <div class="gantt-range-controls">
           <button
             class="range-button"
