@@ -2,7 +2,7 @@
 #
 # - Adds agent-merge label when eligible (cursor/*, issue/*, or Merge-Strategy: agent)
 # - Serial queue: only one non-draft agent-merge PR at a time
-# - gh pr ready when CI is green and queue is clear
+# - gh pr ready when CI is green and queue is clear (requires contents: write on GITHUB_TOKEN)
 #
 # Downstream: pr-merge-worker-dispatch.yml (ready_for_review + ci_completed)
 # Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
@@ -32,7 +32,7 @@ concurrency:
 
 permissions:
   pull-requests: write
-  contents: read
+  contents: write
 
 jobs:
   prep:
