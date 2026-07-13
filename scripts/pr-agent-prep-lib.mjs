@@ -99,12 +99,42 @@ export function canMarkReady(input) {
  * @returns {number | null}
  */
 export function selectDraftPrNumberToReady(drafts, openReadyAgentMergeCount) {
+  const candidates = sortedEligibleDraftNumbers(drafts, openReadyAgentMergeCount);
+  return candidates[0] ?? null;
+}
+
+/**
+ * @param {Array<{ number: number; isDraft: boolean; eligible: boolean }>} drafts
+ * @param {number} openReadyAgentMergeCount
+ * @returns {number[]}
+ */
+export function sortedEligibleDraftNumbers(drafts, openReadyAgentMergeCount) {
   if (openReadyAgentMergeCount > 0) {
-    return null;
+    return [];
   }
-  const sorted = [...drafts].sort((a, b) => a.number - b.number);
-  const candidate = sorted.find((draft) => draft.isDraft && draft.eligible);
-  return candidate?.number ?? null;
+  return [...drafts]
+    .filter((draft) => draft.isDraft && draft.eligible)
+    .sort((a, b) => a.number - b.number)
+    .map((draft) => draft.number);
+}
+
+/**
+ * Prefer a user PAT for gh operations on Cursor-created PRs in GitHub Actions.
+ *
+ * @param {{ agrrGhPat?: string | null; ghToken?: string | null; githubToken?: string | null }} input
+ * @returns {string}
+ */
+export function resolveGhToken({ agrrGhPat, ghToken, githubToken }) {
+  if (agrrGhPat) {
+    return agrrGhPat;
+  }
+  if (ghToken) {
+    return ghToken;
+  }
+  if (githubToken) {
+    return githubToken;
+  }
+  return '';
 }
 
 /**
