@@ -3,7 +3,8 @@ import { join } from 'node:path';
 
 const REQUIRED_WORKFLOW_SNIPPETS = [
   'name: PR Merge Worker Dispatch',
-  'types: [opened, labeled, synchronize]',
+  'ready_for_review',
+  'types: [opened, labeled, synchronize, ready_for_review]',
   'push:',
   'branches: [master]',
   'CURSOR_PR_MERGE_WEBHOOK_URL',

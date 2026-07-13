@@ -6,7 +6,9 @@ import {
   canMarkReady,
   isEligibleAgentPr,
   isNonFatalMarkReadyError,
+  resolveGhToken,
   selectDraftPrNumberToReady,
+  sortedEligibleDraftNumbers,
 } from './pr-agent-prep-lib.mjs';
 
 const BASE_META = {
@@ -98,6 +100,31 @@ test('canMarkReady requires draft, empty queue, and green CI', () => {
       requiredChecksGreen: true,
     }),
     false,
+  );
+});
+
+test('sortedEligibleDraftNumbers returns all eligible drafts in ascending order', () => {
+  assert.deepEqual(
+    sortedEligibleDraftNumbers(
+      [
+        { number: 210, isDraft: true, eligible: true },
+        { number: 208, isDraft: true, eligible: true },
+        { number: 209, isDraft: false, eligible: true },
+      ],
+      0,
+    ),
+    [208, 210],
+  );
+});
+
+test('resolveGhToken prefers AGRR_GH_PAT over GITHUB_TOKEN', () => {
+  assert.equal(
+    resolveGhToken({
+      agrrGhPat: 'github_pat_example',
+      ghToken: 'ghs_actions',
+      githubToken: 'ghs_fallback',
+    }),
+    'github_pat_example',
   );
 });
 

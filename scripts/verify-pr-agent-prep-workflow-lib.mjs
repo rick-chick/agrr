@@ -8,6 +8,7 @@ const REQUIRED_PREP_WORKFLOW_SNIPPETS = [
   'Backend test',
   '0 */12 * * *',
   'contents: write',
+  'secrets.AGRR_GH_PAT',
 ];
 
 const REQUIRED_PREP_SCRIPT_SNIPPETS = [
@@ -16,6 +17,8 @@ const REQUIRED_PREP_SCRIPT_SNIPPETS = [
   'gh pr ready',
   'advance-queue',
   'count_open_ready_agent_merge',
+  'configure_gh_auth',
+  'resolveGhToken',
 ];
 
 const REQUIRED_MERGE_DISPATCH_SNIPPETS = [

@@ -2,7 +2,7 @@
 #
 # - Adds agent-merge label when eligible (cursor/*, issue/*, or Merge-Strategy: agent)
 # - Serial queue: only one non-draft agent-merge PR at a time
-# - gh pr ready when CI is green and queue is clear (requires contents: write on GITHUB_TOKEN)
+# - gh pr ready when CI is green and queue is clear (needs contents: write; optional secrets.AGRR_GH_PAT)
 #
 # Downstream: pr-merge-worker-dispatch.yml (ready_for_review + ci_completed)
 # Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
@@ -94,19 +94,22 @@ jobs:
       - name: Prep pull request
         if: steps.target.outputs.skip != 'true' && steps.target.outputs.mode == 'prep'
         env:
-          GH_TOKEN: ${{ github.token }}
+          AGRR_GH_PAT: ${{ secrets.AGRR_GH_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: bash scripts/pr-agent-prep.sh prep "${{ steps.target.outputs.pr_number }}"
 
       - name: Advance merge queue
         if: steps.target.outputs.skip != 'true' && steps.target.outputs.mode == 'advance-queue'
         env:
-          GH_TOKEN: ${{ github.token }}
+          AGRR_GH_PAT: ${{ secrets.AGRR_GH_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: bash scripts/pr-agent-prep.sh advance-queue
 
       - name: Safety net (stuck drafts)
         if: steps.target.outputs.skip != 'true' && steps.target.outputs.mode == 'safety-net'
         env:
-          GH_TOKEN: ${{ github.token }}
+          AGRR_GH_PAT: ${{ secrets.AGRR_GH_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mapfile -t DRAFT_PRS < <(gh pr list --state open --json number,author,isDraft \
