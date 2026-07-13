@@ -6,6 +6,7 @@
 # 2. Add repository secret CURSOR_ISSUE_WORKER_WEBHOOK_URL (webhook URL).
 # 3. Add repository secret CURSOR_ISSUE_WORKER_WEBHOOK_KEY (webhook API key).
 # 4. Create labels: agent-ready, agent-close, agent-in-progress, agent-blocked, agent-closed, agent-skipped
+# 5. Cancelled dispatches are retried by issue-worker-retry-dispatch.yml
 
 name: Issue Worker Dispatch
 
@@ -21,6 +22,8 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Resolve issue context
         id: issue
         env:
@@ -31,50 +34,26 @@ jobs:
           ISSUE_BODY_INPUT: ${{ github.event.issue.body }}
         run: |
           set -euo pipefail
-          ACTION=""
-          SKIP_REASON=""
-
-          if [ "$EVENT_ACTION" = "labeled" ]; then
-            if [ "$LABEL_NAME" = "agent-close" ]; then
-              ACTION="close_with_reason"
-            elif [ "$LABEL_NAME" = "agent-ready" ]; then
-              ACTION="implement"
-            else
-              SKIP_REASON="labeled event is not agent-ready or agent-close"
-            fi
-          elif [ "$EVENT_ACTION" = "opened" ]; then
-            ACTION="triage"
-            case "$ISSUE_AUTHOR" in
-              dependabot[bot]|renovate[bot]|github-actions[bot])
-                SKIP_REASON="bot-authored issue"
-                ;;
-            esac
-            if [ -z "$SKIP_REASON" ]; then
-              if echo "$ISSUE_LABELS" | grep -qE '(^|,)agent-ready(,|$)|(^|,)agent-close(,|$)'; then
-                SKIP_REASON="opened event already has agent-ready or agent-close; labeled event will dispatch"
-              fi
-            fi
-            if [ -z "$SKIP_REASON" ]; then
-              if echo "$ISSUE_LABELS" | grep -qE '(^|,)agent-in-progress(,|$)|(^|,)agent-closed(,|$)|(^|,)wontfix(,|$)|(^|,)invalid(,|$)|(^|,)duplicate(,|$)'; then
-                SKIP_REASON="issue already has a terminal or in-progress label"
-              fi
-            fi
+          RESULT=$(node --input-type=module -e "
+            import { resolveDispatchAction } from './scripts/issue-worker-dispatch-lib.mjs';
+            const result = resolveDispatchAction({
+              eventAction: process.env.EVENT_ACTION,
+              labelName: process.env.LABEL_NAME ?? '',
+              issueAuthor: process.env.ISSUE_AUTHOR,
+              issueLabels: process.env.ISSUE_LABELS ?? '',
+            });
+            process.stdout.write(JSON.stringify(result));
+          ")
+          SKIP=$(echo "$RESULT" | jq -r '.skip')
+          echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
+          if [ "$SKIP" = "true" ]; then
+            echo "skip_reason=$(echo "$RESULT" | jq -r '.skipReason')" >> "$GITHUB_OUTPUT"
           else
-            SKIP_REASON="unsupported issue event action: $EVENT_ACTION"
+            echo "action=$(echo "$RESULT" | jq -r '.action')" >> "$GITHUB_OUTPUT"
+            BODY_B64=$(printf '%s' "$ISSUE_BODY_INPUT" | base64 -w0)
+            echo "body_b64=$BODY_B64" >> "$GITHUB_OUTPUT"
+            echo "labels=$ISSUE_LABELS" >> "$GITHUB_OUTPUT"
           fi
-
-          if [ -n "$SKIP_REASON" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "skip_reason=$SKIP_REASON" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          BODY_B64=$(printf '%s' "$ISSUE_BODY_INPUT" | base64 -w0)
-
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
-          echo "body_b64=$BODY_B64" >> "$GITHUB_OUTPUT"
-          echo "labels=$ISSUE_LABELS" >> "$GITHUB_OUTPUT"
 
       - name: Trigger Cursor Issue Worker
         if: steps.issue.outputs.skip != 'true'
