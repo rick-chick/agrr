@@ -84,6 +84,15 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node --test scripts/verify-pr-merge-worker-dispatch-workflow.test.mjs
 
+      - name: automation script unit tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          node --test scripts/pr-agent-prep-lib.test.mjs
+          node --test scripts/issue-worker-dispatch-lib.test.mjs
+          node --test scripts/pr-merge-worker-needs-sync.test.mjs
+          node --test scripts/verify-pr-agent-prep-workflow.test.mjs
+          node --test scripts/verify-issue-worker-dispatch-workflow.test.mjs
+
       - name: ensure-e2e-baseline bodies unit tests
         working-directory: frontend
         run: node --test e2e/fixtures/ensure-e2e-baseline-bodies.test.mjs

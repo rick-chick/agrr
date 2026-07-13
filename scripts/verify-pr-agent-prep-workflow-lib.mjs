@@ -81,5 +81,59 @@ export async function verifyPrAgentPrepWorkflow(repoRoot) {
     errors.push(`missing library: ${libPath}`);
   }
 
+  try {
+    const prepScriptText = await readFile(prepScriptPath, 'utf8');
+    const prepPrBody = extractFunctionBody(prepScriptText, 'prep_pr');
+    const advanceQueueBody = extractFunctionBody(prepScriptText, 'advance_queue');
+    if (prepPrBody) {
+      assertSnippetBefore(
+        prepPrBody,
+        'maybe_sync_with_master',
+        'maybe_mark_ready',
+        errors,
+        'prep_pr must sync with master before marking ready',
+      );
+    }
+    if (advanceQueueBody) {
+      assertSnippetBefore(
+        advanceQueueBody,
+        'maybe_sync_with_master',
+        'maybe_mark_ready',
+        errors,
+        'advance_queue must sync with master before marking ready',
+      );
+    }
+  } catch {
+    // prepScriptPath missing already recorded above
+  }
+
   return { ok: errors.length === 0, errors };
+}
+
+/**
+ * @param {string} text
+ * @param {string} functionName
+ * @returns {string}
+ */
+function extractFunctionBody(text, functionName) {
+  const start = text.indexOf(`${functionName}()`);
+  if (start < 0) {
+    return '';
+  }
+  return text.slice(start);
+}
+
+/**
+ * @param {string} text
+ * @param {string} before
+ * @param {string} after
+ * @param {string[]} errors
+ * @param {string} message
+ */
+function assertSnippetBefore(text, before, after, errors, message) {
+  const beforeIdx = text.indexOf(before);
+  const afterIdx = text.indexOf(after);
+  if (beforeIdx < 0 || afterIdx < 0 || beforeIdx >= afterIdx) {
+    errors.push(message);
+  }
 }

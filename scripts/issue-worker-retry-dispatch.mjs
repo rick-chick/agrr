@@ -13,43 +13,14 @@ import { execFileSync } from 'node:child_process';
 
 import {
   buildWebhookPayload,
+  defaultRetryReasonForMode,
   isRetryCandidate,
+  parseRetryDispatchArgs,
+  selectOpenIssueByTitle,
   selectRetryCandidate,
 } from './issue-worker-dispatch-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
-
-/**
- * @param {string[]} argv
- * @returns {Record<string, string>}
- */
-function parseArgs(argv) {
-  const parsed = { mode: argv[2] ?? '' };
-  for (let i = 3; i < argv.length; i += 1) {
-    const token = argv[i];
-    if (token === '--repo') {
-      parsed.repo = argv[i + 1] ?? DEFAULT_REPO;
-      i += 1;
-      continue;
-    }
-    if (token === '--title') {
-      parsed.title = argv[i + 1] ?? '';
-      i += 1;
-      continue;
-    }
-    if (token === '--number') {
-      parsed.number = argv[i + 1] ?? '';
-      i += 1;
-      continue;
-    }
-    if (token === '--retry-reason') {
-      parsed.retryReason = argv[i + 1] ?? '';
-      i += 1;
-    }
-  }
-  parsed.repo = parsed.repo ?? DEFAULT_REPO;
-  return parsed;
-}
 
 /**
  * @param {string} repo
@@ -137,11 +108,12 @@ function fetchIssue(repo, issueNumber) {
  * @returns {{ number: number; title: string; url: string; body: string; labels: string[] } | null}
  */
 function findOpenIssueByTitle(repo, title) {
-  const issues = listAgentReadyIssues(repo).filter((issue) => issue.title === title);
-  if (issues.length === 0) {
+  const issues = listAgentReadyIssues(repo);
+  const issue = selectOpenIssueByTitle(issues, title);
+  if (!issue) {
     return null;
   }
-  return issues.sort((a, b) => a.number - b.number)[0];
+  return issues.find((entry) => entry.number === issue.number) ?? null;
 }
 
 /**
@@ -219,7 +191,7 @@ function dispatchIfEligible({ repo, issue, retryReason }) {
 }
 
 function main() {
-  const args = parseArgs(process.argv);
+  const args = parseRetryDispatchArgs(process.argv);
   const repo = args.repo ?? DEFAULT_REPO;
 
   if (args.mode === 'reconcile') {
@@ -237,7 +209,7 @@ function main() {
     dispatchIfEligible({
       repo,
       issue,
-      retryReason: args.retryReason ?? 'scheduled_reconcile',
+      retryReason: args.retryReason ?? defaultRetryReasonForMode('reconcile'),
     });
     return;
   }
@@ -254,7 +226,7 @@ function main() {
     dispatchIfEligible({
       repo,
       issue,
-      retryReason: args.retryReason ?? 'dispatch_run_cancelled',
+      retryReason: args.retryReason ?? defaultRetryReasonForMode('from-title'),
     });
     return;
   }
@@ -268,7 +240,7 @@ function main() {
     dispatchIfEligible({
       repo,
       issue,
-      retryReason: args.retryReason ?? 'manual_retry',
+      retryReason: args.retryReason ?? defaultRetryReasonForMode('issue'),
     });
     return;
   }
