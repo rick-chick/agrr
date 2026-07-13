@@ -10,6 +10,12 @@ pub enum TaskScheduleFieldMutation {
         category: String,
         items: Vec<TaskScheduleReplaceItem>,
     },
+    MergeReplace {
+        field_cultivation_id: i64,
+        category: String,
+        preserved_item_ids: Vec<i64>,
+        items_to_insert: Vec<TaskScheduleReplaceItem>,
+    },
     DeleteAll {
         field_cultivation_id: i64,
         category: String,
