@@ -11,7 +11,7 @@ name: PR Merge Worker Dispatch
 
 on:
   pull_request:
-    types: [opened, labeled, synchronize]
+    types: [opened, labeled, synchronize, ready_for_review]
     branches: [master]
   workflow_run:
     workflows:
