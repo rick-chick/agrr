@@ -1,0 +1,83 @@
+# Retries Issue Worker dispatch when the primary workflow run is cancelled or reconciliation finds
+# a stuck agent-ready issue without agent-in-progress / open fix PR.
+#
+# Triggers:
+# - workflow_run: Issue Worker Dispatch completed with conclusion cancelled (delayed retry)
+# - schedule: every 15 minutes (reconcile stuck agent-ready issues)
+# - workflow_dispatch: manual retry for one issue or reconcile
+
+name: Issue Worker Retry Dispatch
+
+on:
+  workflow_run:
+    workflows:
+      - Issue Worker Dispatch
+    types: [completed]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Optional issue number to retry (default reconciles one eligible issue)
+        required: false
+        type: number
+
+concurrency:
+  group: issue-worker-retry-dispatch
+  cancel-in-progress: false
+
+jobs:
+  retry:
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for concurrent dispatches to settle
+        if: github.event_name == 'workflow_run'
+        run: sleep 90
+
+      - name: Retry from cancelled dispatch run
+        if: github.event_name == 'workflow_run'
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          DISPLAY_TITLE: ${{ github.event.workflow_run.display_title }}
+        run: |
+          set -euo pipefail
+          node scripts/issue-worker-retry-dispatch.mjs from-title \
+            --title "$DISPLAY_TITLE" \
+            --retry-reason dispatch_run_cancelled
+
+      - name: Reconcile stuck agent-ready issues
+        if: github.event_name == 'schedule'
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node scripts/issue-worker-retry-dispatch.mjs reconcile \
+            --retry-reason scheduled_reconcile
+
+      - name: Manual retry
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          WEBHOOK_URL: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_URL }}
+          WEBHOOK_KEY: ${{ secrets.CURSOR_ISSUE_WORKER_WEBHOOK_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
+        run: |
+          set -euo pipefail
+          if [ -n "${ISSUE_NUMBER:-}" ]; then
+            node scripts/issue-worker-retry-dispatch.mjs issue \
+              --number "$ISSUE_NUMBER" \
+              --retry-reason manual_retry
+          else
+            node scripts/issue-worker-retry-dispatch.mjs reconcile \
+              --retry-reason manual_reconcile
+          fi
