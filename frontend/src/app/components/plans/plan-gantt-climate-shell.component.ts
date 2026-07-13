@@ -28,7 +28,9 @@ export type CultivationSelectionEvent = {
           [planType]="planType"
           (cultivationSelected)="handleCultivationSelection($event)"
           (visibleRangeChange)="handleVisibleRangeUpdate($event)"
-        />
+        >
+          <ng-content select="[ganttActionPrefix]" />
+        </app-gantt-chart>
       </div>
 
       <div
