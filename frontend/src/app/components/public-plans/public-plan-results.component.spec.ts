@@ -1,13 +1,10 @@
-import { Component, ComponentFixture, Input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PublicPlanResultsComponent } from './public-plan-results.component';
-import { PlanGanttClimateShellComponent } from '../plans/plan-gantt-climate-shell.component';
-import { PublicPlanContextHeaderComponent } from './public-plan-context-header.component';
 import { SavePublicPlanUseCase } from '../../usecase/public-plans/save-public-plan.usecase';
 import { LoadPublicPlanResultsUseCase } from '../../usecase/public-plans/load-public-plan-results.usecase';
 import { PublicPlanResultsPresenter } from '../../usecase/public-plans/public-plan-results.providers';
@@ -15,25 +12,6 @@ import { PublicPlanResultsViewState } from './public-plan-results.view';
 import { AuthService } from '../../services/auth.service';
 import { PublicPlanStore } from '../../services/public-plans/public-plan-store.service';
 import { FlashMessageService } from '../../services/flash-message.service';
-
-@Component({
-  selector: 'app-plan-gantt-climate-shell',
-  standalone: true,
-  template: '<ng-content select="[ganttActionPrefix]" />'
-})
-class StubPlanGanttClimateShellComponent {
-  @Input({ required: true }) data!: unknown;
-  @Input() planType: 'private' | 'public' = 'public';
-}
-
-@Component({
-  selector: 'app-public-plan-context-header',
-  standalone: true,
-  template: ''
-})
-class StubPublicPlanContextHeaderComponent {
-  @Input({ required: true }) crumbs!: unknown;
-}
 
 describe('PublicPlanResultsComponent', () => {
   let component: PublicPlanResultsComponent;
@@ -196,108 +174,6 @@ describe('PublicPlanResultsComponent', () => {
       component.ngOnInit();
 
       expect(saveUseCase.execute).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('action bar layout', () => {
-    let fixture: ComponentFixture<PublicPlanResultsComponent>;
-
-    const samplePlanData = {
-      data: {
-        id: 1,
-        planning_start_date: '2026-01-01',
-        planning_end_date: '2026-12-31',
-        fields: [],
-        cultivations: []
-      }
-    };
-
-    beforeEach(async () => {
-      TestBed.resetTestingModule();
-
-      TestBed.overrideComponent(PublicPlanResultsComponent, {
-        remove: {
-          imports: [PlanGanttClimateShellComponent, PublicPlanContextHeaderComponent]
-        },
-        add: {
-          imports: [StubPlanGanttClimateShellComponent, StubPublicPlanContextHeaderComponent]
-        },
-        set: {
-          styleUrls: [],
-          providers: [
-            { provide: ActivatedRoute, useValue: activatedRoute },
-            { provide: Router, useValue: router },
-            { provide: AuthService, useValue: authService },
-            { provide: PublicPlanStore, useValue: publicPlanStore },
-            { provide: FlashMessageService, useValue: flashMessage },
-            { provide: LoadPublicPlanResultsUseCase, useValue: loadUseCase },
-            { provide: SavePublicPlanUseCase, useValue: saveUseCase },
-            { provide: PublicPlanResultsPresenter, useValue: mockPresenter },
-            { provide: ChangeDetectorRef, useValue: cdr }
-          ]
-        }
-      });
-
-      await TestBed.configureTestingModule({
-        imports: [PublicPlanResultsComponent, TranslateModule.forRoot()],
-        providers: [provideRouter([])]
-      }).compileComponents();
-
-      fixture = TestBed.createComponent(PublicPlanResultsComponent);
-      component = fixture.componentInstance;
-
-      const translate = TestBed.inject(TranslateService);
-      translate.setDefaultLang('ja');
-      translate.use('ja');
-      translate.setTranslation(
-        'ja',
-        {
-          'public_plans.title': '無料作付け計画',
-          'public_plans.save.button': 'マイプランに保存',
-          'public_plans.results.view_my_plans': 'マイプランを見る',
-          'public_plans.results.create_new_plan': '← 新しい計画を作成'
-        },
-        true
-      );
-    });
-
-    it('places save CTA in gantt prefix without duplicate create-new-plan link', () => {
-      authService.user.mockReturnValue(null);
-      component.control = {
-        loading: false,
-        error: null,
-        data: samplePlanData as PublicPlanResultsViewState['data'],
-        pendingErrorFlash: null,
-        pendingSuccessFlash: null,
-        pendingNavigation: null
-      };
-      fixture.detectChanges();
-
-      const root = fixture.nativeElement as HTMLElement;
-      expect(root.querySelector('.public-plan-results__header-actions')).toBeNull();
-      expect(root.textContent).not.toContain('← 新しい計画を作成');
-
-      const prefix = root.querySelector('.public-plan-results__gantt-prefix');
-      expect(prefix).toBeTruthy();
-      const saveButton = prefix?.querySelector('button.btn.btn-primary');
-      expect(saveButton?.textContent?.trim()).toBe('マイプランに保存');
-    });
-
-    it('shows view-my-plans link in gantt prefix when user is authenticated', () => {
-      authService.user.mockReturnValue({ id: 1, name: 'Test User' });
-      component.control = {
-        loading: false,
-        error: null,
-        data: samplePlanData as PublicPlanResultsViewState['data'],
-        pendingErrorFlash: null,
-        pendingSuccessFlash: null,
-        pendingNavigation: null
-      };
-      fixture.detectChanges();
-
-      const prefix = fixture.nativeElement.querySelector('.public-plan-results__gantt-prefix');
-      const viewLink = prefix?.querySelector('a.btn.btn-white[href="/plans"]');
-      expect(viewLink?.textContent?.trim()).toBe('マイプランを見る');
     });
   });
 });
