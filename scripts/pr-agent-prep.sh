@@ -17,6 +17,23 @@ node_eval() {
   node --input-type=module -e "$1"
 }
 
+configure_gh_auth() {
+  local resolved
+  resolved="$(AGRR_GH_PAT="${AGRR_GH_PAT:-}" GH_TOKEN="${GH_TOKEN:-}" GITHUB_TOKEN="${GITHUB_TOKEN:-}" node_eval "
+    import { resolveGhToken } from '$LIB';
+    process.stdout.write(resolveGhToken({
+      agrrGhPat: process.env.AGRR_GH_PAT || null,
+      ghToken: process.env.GH_TOKEN || null,
+      githubToken: process.env.GITHUB_TOKEN || null,
+    }));
+  ")"
+  if [ -n "$resolved" ]; then
+    export GH_TOKEN="$resolved"
+  fi
+}
+
+configure_gh_auth
+
 repo_owner() {
   gh repo view --json owner -q .owner.login
 }
@@ -139,7 +156,7 @@ prep_pr() {
 }
 
 advance_queue() {
-  local open_ready drafts_json target base_owner
+  local open_ready drafts_json candidates_json base_owner pr_number is_draft
 
   base_owner="$(repo_owner)"
   open_ready="$(count_open_ready_agent_merge)"
@@ -149,8 +166,8 @@ advance_queue() {
   fi
 
   drafts_json="$(gh pr list --state open --label agent-merge --json number,isDraft,author,baseRefName,headRefName,body,labels,headRepository)"
-  target="$(DRAFTS_JSON="$drafts_json" OPEN_READY="$open_ready" BASE_OWNER="$base_owner" node_eval "
-    import { isEligibleAgentPr, selectDraftPrNumberToReady } from '$LIB';
+  candidates_json="$(DRAFTS_JSON="$drafts_json" OPEN_READY="$open_ready" BASE_OWNER="$base_owner" node_eval "
+    import { isEligibleAgentPr, sortedEligibleDraftNumbers } from '$LIB';
     const drafts = JSON.parse(process.env.DRAFTS_JSON).map((pr) => {
       const labels = (pr.labels ?? []).map((l) => l.name);
       const headOwner = (pr.headRepository?.nameWithOwner ?? '').split('/')[0] ?? '';
@@ -168,17 +185,26 @@ advance_queue() {
         }),
       };
     });
-    const selected = selectDraftPrNumberToReady(drafts, Number(process.env.OPEN_READY));
-    process.stdout.write(selected == null ? '' : String(selected));
+    process.stdout.write(JSON.stringify(sortedEligibleDraftNumbers(drafts, Number(process.env.OPEN_READY))));
   ")"
 
-  if [ -z "$target" ]; then
+  if [ "$candidates_json" = "[]" ]; then
     echo "No eligible draft PR in agent-merge queue"
     return 0
   fi
 
-  echo "Advancing merge queue to PR #$target"
-  maybe_mark_ready "$target"
+  mapfile -t CANDIDATES < <(echo "$candidates_json" | jq -r '.[]')
+  for pr_number in "${CANDIDATES[@]}"; do
+    echo "Trying merge queue candidate PR #$pr_number"
+    maybe_mark_ready "$pr_number"
+    is_draft="$(gh pr view "$pr_number" --json isDraft -q .isDraft)"
+    if [ "$is_draft" = "false" ]; then
+      echo "Queue advanced to PR #$pr_number"
+      return 0
+    fi
+  done
+
+  echo "No eligible draft PR in agent-merge queue could be marked ready"
 }
 
 main() {
