@@ -531,11 +531,18 @@ pub fn seed_task_schedule_regeneration_plan(user_id: i64) -> TaskScheduleRegener
     }
 }
 
+pub fn agrr_regeneration_contract_available() -> bool {
+    let agrr_bin =
+        std::env::var("AGRR_BIN_PATH").unwrap_or_else(|_| "/app/lib/core/agrr".to_string());
+    std::path::Path::new(&agrr_bin).exists()
+}
+
 pub fn ensure_agrr_daemon_for_contract() {
-    let agrr_bin = std::env::var("AGRR_BIN_PATH").unwrap_or_else(|_| "/app/lib/core/agrr".to_string());
-    if !std::path::Path::new(&agrr_bin).exists() {
+    if !agrr_regeneration_contract_available() {
         return;
     }
+    let agrr_bin =
+        std::env::var("AGRR_BIN_PATH").unwrap_or_else(|_| "/app/lib/core/agrr".to_string());
     let _ = std::process::Command::new(&agrr_bin)
         .args(["daemon", "start"])
         .status();

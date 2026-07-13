@@ -673,7 +673,7 @@ describe('PlanTaskScheduleComponent', () => {
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('.plan-task-schedule__regenerate-confirm')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain(
-      'Regenerating will replace the current task schedule. Continue?'
+      'Regenerating replaces unfinished auto-generated items. Items with work records and manual entries are kept. Continue?'
     );
   });
 

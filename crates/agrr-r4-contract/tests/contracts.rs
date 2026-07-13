@@ -4,9 +4,10 @@ mod support;
 
 use agrr_r4_contract::http::ContractClient;
 use support::{
-    assert_crop_task_template_api_removed, clear_plan_task_schedules, developer_session_id,
-    empty_headers, find_schedule_item, poll_task_schedule_sync_ready, schedule_item_ids_from_response,
-    seed_masters_crop, seed_masters_crop_with_manual_blueprint, seed_task_schedule_regeneration_plan,
+    agrr_regeneration_contract_available, assert_crop_task_template_api_removed,
+    clear_plan_task_schedules, developer_session_id, empty_headers, find_schedule_item,
+    poll_task_schedule_sync_ready, schedule_item_ids_from_response, seed_masters_crop,
+    seed_masters_crop_with_manual_blueprint, seed_task_schedule_regeneration_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
     set_plan_task_schedule_sync_failed_raw_error, status_and_body, user_id_for_session,
 };
@@ -499,6 +500,10 @@ fn post_task_schedule_regenerate_returns_generating() {
 
 #[test]
 fn post_task_schedule_regenerate_preserves_completed_and_manual_items() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable for regeneration contract test");
+        return;
+    }
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
@@ -526,6 +531,10 @@ fn post_task_schedule_regenerate_preserves_completed_and_manual_items() {
 
 #[test]
 fn post_task_schedule_regenerate_avoids_duplicate_for_preserved_match_key() {
+    if !agrr_regeneration_contract_available() {
+        eprintln!("skip: agrr binary unavailable for regeneration contract test");
+        return;
+    }
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
