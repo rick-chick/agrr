@@ -19,6 +19,8 @@ const REQUIRED_PREP_SCRIPT_SNIPPETS = [
   'count_open_ready_agent_merge',
   'configure_gh_auth',
   'resolveGhToken',
+  'maybe_sync_with_master',
+  'update-branch',
 ];
 
 const REQUIRED_MERGE_DISPATCH_SNIPPETS = [
