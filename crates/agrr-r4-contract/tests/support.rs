@@ -289,7 +289,7 @@ pub fn clear_plan_task_schedules(plan_id: i64) {
 
 pub struct TaskScheduleRegenerationSeed {
     pub plan_id: i64,
-    pub field_cultivation_id: i64,
+    pub _field_cultivation_id: i64,
     pub agrr_item_id: i64,
     pub manual_item_id: i64,
     pub completed_item_id: i64,
@@ -523,7 +523,7 @@ pub fn seed_task_schedule_regeneration_plan(user_id: i64) -> TaskScheduleRegener
 
     TaskScheduleRegenerationSeed {
         plan_id,
-        field_cultivation_id,
+        _field_cultivation_id: field_cultivation_id,
         agrr_item_id,
         manual_item_id,
         completed_item_id,
