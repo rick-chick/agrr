@@ -87,6 +87,9 @@ fi
 # Issue Worker dispatch
 test -f .github/workflows/issue-worker-dispatch.yml
 
+# Automation skill dependency closure (scripts + references, not SKILL.md stubs only)
+bash .cursor/skills/cloud-automation-audit/scripts/verify-skill-references.sh
+
 # PR Merge Worker dispatch
 test -f .github/workflows/pr-merge-worker-dispatch.yml
 test -f .github/workflows/pr-agent-prep.yml

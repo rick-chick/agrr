@@ -1,0 +1,26 @@
+---
+description: 新規・変更実装は近傍・同一筋の既存コードと命名・構造・テストの統一感を揃える（規約より下位だが「別スタイルの新規」は避ける）
+alwaysApply: false
+---
+
+# 既存実装との統一感
+
+## 優先順位
+
+**`ARCHITECTURE.md` とレイヤ規約**が最上位。統一感は **規約に適合する範囲**での話であり、既存の逸脱を写す・増やす根拠にはならない（[`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc)）。
+
+## 実装前
+
+- **触るディレクトリ・同一ユースケース筋**の近傍ファイルを読み、命名・引数の渡し方・エラー/結果の表現・テストの置き方を合わせる。
+- 複数スタイルが混在するときは、**いま変更している経路で既に使われている方**を優先し、会話でスコープが許すなら局所的な寄せを検討する（[`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc)）。
+
+## 避けること
+
+- 同じ層・同じ責務なのにだけ、別命名規則・別 DTO 形・別テスト構造を新設する（理由がレイヤ規約ならよい）。
+- 「他ファイルを読まずに」一般的な記事・別言語の慣習だけでスタイルを決める。
+- **ドキュメントやコメントに一言足すだけ**で、近傍との統一や規約適合の**実作業を省略しない**（免罪符にしない。詳細は [`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc)）。
+
+## 参照
+
+- レイヤ別の最小チェック: [`rails-clean-architecture.mdc`](rails-clean-architecture.mdc)
+- 用語・ワークフロー・実装後チェックの所在: [`agent-conventions.mdc`](agent-conventions.mdc)

@@ -1,0 +1,36 @@
+---
+description: 単発のコード変更はサブエージェントへ委譲（自分は書かない）。要件からのフル機能は feature-orchestrator。
+alwaysApply: false
+---
+
+# コーディングはサブエージェントに任せる
+
+ソースコードやテストの追加・修正が必要なとき、**自分でコーディングしない。** 該当するサブエージェントに委譲する。
+
+## 例外: サブエージェント側
+
+自分がサブエージェントとして起動され、具体的な実装・テストの依頼を受けている場合は、自ら実行する。委譲の連鎖を防ぐため、さらに委譲しない。
+
+## 委譲の手順
+
+1. **対象の特定**: 何を直す・追加するか（役割: usecase-server / gateway-frontend / controller-server など）を整理する。修正対象に応じたスキル一覧は [.cursor/references/CODE_MODIFICATION_SKILLS.md](.cursor/references/CODE_MODIFICATION_SKILLS.md) を参照する。
+2. **並列起動**: 依存関係のないタスクは必ず並列実行する。すべてのサブエージェントを1回の実行の中で起動すること。
+3. **モデル**: Task 起動時は **`model: "composer-2.5"`** を毎回指定（省略すると Composer 2.5 Fast になりやすい）。`composer-2.5-fast` は使わない。
+4. **ゴールの明示**: 層をまたぐ場合は、各サブエージェントにゴール記述（または振る舞いの要点）と feature 名を渡す。
+
+## プロンプトの例
+
+- 「ゴール記述（crop API、ARCHITECTURE.md 準拠）に従い presenter-server を実装・テストして。presenter-server サブエージェントに従うこと。」
+- 「fertilize の delete 機能の gateway-frontend で、エラーハンドリングが不足しているので修正して。gateway-frontend サブエージェントに従うこと。」
+
+**プロンプトのポイント**:
+- 層をまたぐ場合はゴール記述（または振る舞いの要点）と feature 名を明記する
+- バグの場合は内容を具体的に説明する（例: 「null チェックが不足」「ステータスコードが間違い」）
+- 役割とサブエージェント名を必ず含める
+- **TDD**: [`tdd-on-edit` スキル](../skills/tdd-on-edit/SKILL.md) に従い、**RED を `test-common` で確認してから実装**すること（バグは `error-investigation` → `error-fix-red-green`）
+
+要件からの機能一式は **[`.cursor/skills/feature-orchestrator/SKILL.md`](../skills/feature-orchestrator/SKILL.md)**。単発修正・追加のみ本ルール。
+
+## 同一ターンで次の作業を続ける
+
+サブタスクや並列バッチが一区切りしても、**同一ユーザー依頼に続きがある限り同じターン内で次の調査・委譲・検証を起動**する（要約だけでユーザー返しにして終わらない）。例外はプラットフォーム上限・ユーザー打ち切り・継続不能なブロッカーのみ。**ユーザー発話待ちでの停止**禁止の運用詳細は [ワークフロー SKILL](../skills/clean-architecture-violation-fix-workflow/SKILL.md) のセクション6。

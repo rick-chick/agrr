@@ -151,7 +151,26 @@ db/cache_schema.rb.tmp
 /target/
 
 tmp/
-.cursor/
+
+# Cursor: track agent skills / rules / scripts; ignore local IDE state
+.cursor/*
+!.cursor/environment.json
+!.cursor/references/
+!.cursor/references/**
+!.cursor/scripts/
+!.cursor/scripts/**
+!.cursor/skills/
+!.cursor/skills/**
+!.cursor/rules/
+!.cursor/rules/**
+
+.cursor/TODO.md
+.cursor/agents/
+.cursor/plans/
+.cursor/puppeteer-*.js
+.cursor/worktrees.json
+.cursor/skills_link
+
 .dockerignore
 lib/core/agrr
 lib/core/_internal

@@ -1,0 +1,51 @@
+---
+description: >-
+  Rails / Angular CA boundary in this repo; ARCHITECTURE.md wins; parent runs
+  full workflow (section 0–6) per violation-fix SKILL for new and existing work.
+alwaysApply: true
+---
+
+# Clean Architecture（バックエンド）
+
+## 規約の優先順位（必ず従う）
+
+**`ARCHITECTURE.md` が最上位。** 次はその要約（詳細・禁止番号は常に原文を見る）。
+
+| 優先 | 根拠として使ってよいか |
+|------|------------------------|
+| 1. **`ARCHITECTURE.md`**（`## What we require`、`## Prohibited practices` 1–30、境界の説明） | ✅ |
+| 2. **該当テスト**（観測可能な振る舞いを表明） | ✅（1 と矛盾させない範囲） |
+| 3. 業界記事・慣習・Pragmatism 単体 | ❌ |
+| 4. 「既存もそう」 | ❌ |
+| 5. 「テストが通った」だけ | ❌ |
+
+`lib/domain`・gateway・`CompositionRoot`・Interactor / Presenter 配線に触れる変更では、触れる層に関わる `What we require` / `Prohibited practices` を読み、違反を増やさない。ブログ的な書き方と規約が食い違ったら **規約側**。
+
+総則は **`no-convenience-tech-debt.mdc`**。下記は**最小チェック**（禁止の網羅は `ARCHITECTURE.md`）。
+
+## 求めること（肯定形）
+
+- **内向き依存**: フレームワーク・ORM・HTTP・時刻は**端**で注入。`lib/domain` の Interactor は **DTO/エンティティと狭いポート**だけを受け取る。
+- **判断は一箇所**: ビジネス結果は **policy / interactor**。Presenter・テンプレは**出力の形**だけ。同じルールをモデル・サービス・ビューに複製しない。
+- **配線は明示**: コンストラクタが契約。`*Port.default` / `*Gateway.default` / `CompositionRoot.*` を **presenter や interactor 内部**から呼ばない。
+- **挙動の規約**: **`ARCHITECTURE.md`・ポート/DTO・そのテスト**。「既存 Rails と同じ」だけを根拠にしない。
+
+## してはいけない（代表的なもの）
+
+| 領域 | ❌ |
+|------|----|
+| `lib/domain` | `Rails.*`、`Date.current` / `Time.current`（注入 clock または引数でない）、AR の `.where` / `includes`、具象 `Adapters::` の `new` |
+| Interactor | `params` 生形、`render` / `redirect_to`、表示順だけのロジック、`CompositionRoot` 呼び出し |
+| `lib/presenters` | `CompositionRoot` / `Gateway.default` / `find_model` でのデータ取得、認可・本質的バリデーション |
+| `app/views`（ERB 等テンプレート） | ActiveRecord の取得・クエリ・関連トラバース（表示用データは Interactor → Presenter 経由の DTO / 値のみ） |
+| リファクタ | domain から追い出して**太い controller / app/services**に寄せるだけ（DTO・ポート・注入なし） |
+
+## アンチパターン（言い訳）
+
+レイヤ外へ責務を逃がす・God Gateway・配線のすり替えを、「ドメインに書いてない」「インターフェースがある」「テストが通った」だけで正当化しない（該当は `ARCHITECTURE.md` の 17・18・20・22・26 など）。違反の記述は **番号と層**で行い、形容詞や「後で直す」での棚上げは `no-convenience-tech-debt.mdc` に反する。
+
+`rescue ActiveRecord::RecordInvalid` の残置・二重取得・Input Port の歪み・安易な `else` 振り分けなど、**新規差分で増やした／残した**ものは **Application edge 項 3 / Interactors 項 / Rationalizations** を原文で照合する。
+
+## 実装後
+
+`lib/domain`・gateway 境界・`CompositionRoot` に触れる変更（**Rails / Angular とも**）では、**実装後の Clean Architecture チェック**を実施する（**新規・単発も**省略不可）。範囲・手順は [`agent-conventions.mdc`](agent-conventions.mdc) 用語表に従う。コミットメッセージで禁止番号を明示するとよい。

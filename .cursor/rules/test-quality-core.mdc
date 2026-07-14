@@ -1,0 +1,83 @@
+---
+description: テストが表明する観測可能な振る舞い。何をassertするか、失敗の細粒度、モック/Fake/Spyの使い分け、命名。
+alwaysApply: false
+---
+
+# テストの質 — コア原則
+
+このファイルが扱うのは、テストが何を表明し何を表明しないかの規範のみ。実行経路・順序・遅延検知は [`rails-testing-workflow.mdc`](rails-testing-workflow.mdc)、レイヤ境界・禁止事項は [`ARCHITECTURE.md`](../../ARCHITECTURE.md)、便宜で逸脱しない総則は [`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc) を参照する。
+
+## セクション1: 原則
+
+- **観測可能な振る舞いを表明する** — 入力に対して、永続化された状態・返却値・公開可能な副作用（送信ペイロード・流れたイベント・更新されたビュー状態）を assert する。コラボレータが「呼ばれたか」「何回呼ばれたか」を**主アサーション**にしない。
+- **置換するのは外側の I/O だけ** — DB／HTTP／時刻／乱数／メッセージング／外部プロセスは注入で差し替える。同一プロセス内の協調者（隣接ポート・ヘルパー）は**本物または Fake**（観測可能な状態を持つ手書き実装）を通す。
+- **失敗は意味で分ける** — `StandardError` / `Exception` / `ActiveRecord::*` の汎用型でくくらず、ドメイン例外・`ErrorDto` の種類（validation / not found / conflict / auth / unavailable など）でテストを分ける。広い例外型を主スイッチにすることは [`ARCHITECTURE.md`](../../ARCHITECTURE.md) の **Application edge / Interactors** 違反になる。
+- **判断・分岐の網羅は判断層で1回** — ビジネスルール・境界値・不変条件・冪等性・副作用順序・並行性は **Interactor／UseCase／Entity** で網羅する。アダプター層（Gateway／Presenter／Controller）の網羅は契約と E2E／統合に限る（[CA 違反修正ワークフロー](../skills/clean-architecture-violation-fix-workflow/SKILL.md) セクション2「アダプター層テストでのユースケース網羅（禁止）」）。
+- **内部実装名にテストを結合させない** — メソッド名のリネーム・引数の正規化・ポート分割など**振る舞いを変えないリファクタ**でテストが壊れないこと。Fake／Spy には観測のための最小公開面のみ持たせる。
+
+## セクション2: 何を assertするか（共通）
+
+| 対象 | assert する観測対象 | assert しない（避ける） |
+|---|---|---|
+| Entity / 純粋関数 | 戻り値、不変条件、境界値、冪等性 | 内部メソッドの呼び出し順序 |
+| Interactor / UseCase | Output Port／Presenter Spy に届いた **結果 DTO の値**、永続化された Fake の最終状態 | Gateway モックの呼び出し回数・引数厳密一致 |
+| Gateway / Repository | 実 DB／Fake バックエンドに対する **入出力の往復**、戻り値の型と内容、ドメイン例外への変換 | Interactor 相当の業務分岐網羅 |
+| Presenter | 注入した View（Spy／Fake）に届いた **状態・JSON 形・ステータス** | View インターフェースの内部メソッド名そのもの |
+| Controller / Component | HTTP レスポンス・画面状態の **観測可能な遷移**、認証・認可の効果 | ビジネス分岐の網羅、Output Port シグネチャの再証明 |
+
+## セクション3: 失敗の細粒度
+
+**禁止**: `assert_raises(StandardError)`、`expect(error).toBeInstanceOf(Error)` など**広い親型での捕捉のみ**を表明するテスト。
+
+**推奨**: ドメイン例外型（`Domain::Shared::Exceptions::RecordInvalid` など）または `ErrorDto` の種別属性で分ける。
+
+```ruby
+assert_raises(Domain::Shared::Exceptions::RecordInvalid) { gateway.create(invalid_dto) }
+```
+
+```typescript
+expect(receivedError?.kind).toBe('validation');
+expect(receivedError?.message).toContain('email');
+```
+
+## セクション4: モック・Fake の使い分け
+
+| 種類 | 用途 | 主な assert |
+|---|---|---|
+| **Fake**（手書きの軽量実装） | Output Port、Gateway、View、Clock、I/O アダプター | Fake が保持する**最終状態** |
+| **Spy**（呼び出しを記録するだけのオブジェクト） | 通知の送信先など、副作用の方向のみ問うとき | 受信した DTO の**値**（呼び出し回数は副次） |
+| **Mock**（呼び出しの厳密一致） | 最後の手段。プロトコル境界の契約を1箇所で固定するとき | 呼び出し1〜2点に限る |
+
+`Minitest::Mock#expect` の引数厳密一致や `vi.fn().toHaveBeenCalledWith(...)` を**毎テスト**で書いている場合、ほぼ Fake に置換できる。
+
+### Fake の最小例（Output Port）
+
+```ruby
+class OutputPortSpy
+  attr_reader :success, :failure
+  def on_success(dto) = @success = dto
+  def on_failure(dto) = @failure = dto
+end
+```
+
+```typescript
+class OutputPortSpy<S, F> {
+  success: S | null = null;
+  failure: F | null = null;
+  present = (dto: S) => { this.success = dto; };
+  onError  = (dto: F) => { this.failure = dto; };
+}
+```
+
+assert は `spy.success.id == 1` のように**届いた DTO の値**で行う。
+
+## セクション5: 1 テスト 1 振る舞い
+
+- 成功・失敗・境界値はそれぞれ別のテストに分ける。
+- 1 テストに「成功も失敗も assert」「複数の失敗種別をまとめて assert」を入れない。
+- セットアップが共通なら `setup` / `beforeEach` で共有する。共通化はテストの**読みやすさ**を上げる範囲まで。
+
+## セクション6: 命名
+
+- 「条件 → 観測される結果」で書く。例: `creates record and returns entity when name is unique` / `presents validation error when email is duplicated`。
+- 実装メソッド名（`call`、`execute`、`on_success`）をテスト名の主語にしない。

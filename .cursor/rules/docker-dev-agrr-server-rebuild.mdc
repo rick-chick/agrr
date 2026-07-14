@@ -1,0 +1,27 @@
+---
+description: Docker 開発時、agrr-server の Rust API 変更後は再ビルド・再起動をエージェントが実行する
+alwaysApply: true
+---
+
+# Docker 開発 — agrr-server 再ビルド
+
+`agrr-server` の API バイナリは Docker イメージに焼き込まれる。`crates/` は bind mount されない。
+
+## エージェントが必ず行うこと
+
+次を変更したタスクの**実装・テスト完了後**、ローカル Docker で API / UI を検証する前に:
+
+```bash
+.cursor/skills/dev-docker/scripts/rebuild-restart.sh
+```
+
+対象例: `crates/agrr-server/**`, `crates/agrr-domain/**`, `crates/agrr-adapters-*/**`, API レスポンス形に影響する migration。
+
+## やってはいけないこと
+
+- 再ビルドなしで「ページをリロードしてください」だけ案内する
+- `docker compose restart agrr-server` だけで済ませる（古いバイナリのまま）
+
+## 開発者向け（自動 watch）
+
+API を継続開発するときは `up.sh --watch` で `crates/` 変更時の再ビルドを Compose に任せる。手順は [`dev-docker` スキル](../skills/dev-docker/SKILL.md)。
