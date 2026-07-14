@@ -4,16 +4,6 @@ import { ErrorDto } from '../../domain/shared/error.dto';
 import { pendingUndoToastFromDeletion } from '../../core/view-effects/pending-undo-toast-presenter.helpers';
 import { AgriculturalTaskListDataDto } from '../../usecase/agricultural-tasks/load-agricultural-task-list.dtos';
 import { LoadAgriculturalTaskListOutputPort } from '../../usecase/agricultural-tasks/load-agricultural-task-list.output-port';
-import { CreateWorkRecordOutputPort } from '../../usecase/plans/create-work-record.output-port';
-import {
-  CreateWorkRecordSuccessDto,
-  CreateWorkRecordValidationErrorDto
-} from '../../usecase/plans/create-work-record.dtos';
-import { UpdateWorkRecordOutputPort } from '../../usecase/plans/update-work-record.output-port';
-import {
-  UpdateWorkRecordSuccessDto,
-  UpdateWorkRecordValidationErrorDto
-} from '../../usecase/plans/update-work-record.dtos';
 import { DeleteWorkRecordOutputPort } from '../../usecase/plans/delete-work-record.output-port';
 import { DeleteWorkRecordSuccessDto } from '../../usecase/plans/delete-work-record.dtos';
 import {
@@ -25,8 +15,6 @@ import { SaveWorkRecordSheetOutputPort } from '../../usecase/plans/save-work-rec
 @Injectable()
 export class WorkRecordSheetPresenter
   implements
-    CreateWorkRecordOutputPort,
-    UpdateWorkRecordOutputPort,
     DeleteWorkRecordOutputPort,
     LoadAgriculturalTaskListOutputPort,
     SaveWorkRecordSheetOutputPort
@@ -52,9 +40,9 @@ export class WorkRecordSheetPresenter
     };
   }
 
-  onSuccess(dto: CreateWorkRecordSuccessDto | UpdateWorkRecordSuccessDto | SaveWorkRecordSheetSuccessDto): void {
+  onSuccess(dto: SaveWorkRecordSheetSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    const mode = 'mode' in dto ? dto.mode : this.view.control.mode;
+    const mode = dto.mode;
     this.view.control = {
       ...this.view.control,
       submitting: false,
@@ -67,9 +55,7 @@ export class WorkRecordSheetPresenter
     this.onSavedCallback?.({ workRecord: dto.workRecord, mode });
   }
 
-  onValidationError(
-    dto: CreateWorkRecordValidationErrorDto | UpdateWorkRecordValidationErrorDto | SaveWorkRecordSheetValidationErrorDto
-  ): void {
+  onValidationError(dto: SaveWorkRecordSheetValidationErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
     this.view.control = {
       ...this.view.control,
