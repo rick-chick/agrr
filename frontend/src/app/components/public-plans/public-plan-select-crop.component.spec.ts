@@ -330,4 +330,78 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     expect(backLink.getAttribute('href')).toBe('/public-plans/new');
     expect(fixture.nativeElement.querySelector('a.back-button')).toBeNull();
   });
+
+  it('renders submit button with btn-gradient class', async () => {
+    const { TestBed } = await import('@angular/core/testing');
+    const { provideRouter } = await import('@angular/router');
+    const { TranslateModule, TranslateService } = await import('@ngx-translate/core');
+    const { PublicPlanSelectCropComponent } = await import('./public-plan-select-crop.component');
+    const { LoadPublicPlanCropsUseCase } = await import(
+      '../../usecase/public-plans/load-public-plan-crops.usecase'
+    );
+    const { CreatePublicPlanUseCase } = await import(
+      '../../usecase/public-plans/create-public-plan.usecase'
+    );
+    const { ResetPublicPlanCreationStateUseCase } = await import(
+      '../../usecase/public-plans/reset-public-plan-creation-state.usecase'
+    );
+    const { PublicPlanSelectCropPresenter } = await import(
+      '../../usecase/public-plans/public-plan-select-crop.providers'
+    );
+    const { PublicPlanStore } = await import('../../services/public-plans/public-plan-store.service');
+
+    await TestBed.configureTestingModule({
+      imports: [PublicPlanSelectCropComponent, TranslateModule.forRoot()],
+      providers: [provideRouter([])]
+    })
+      .overrideComponent(PublicPlanSelectCropComponent, {
+        set: {
+          providers: [
+            { provide: LoadPublicPlanCropsUseCase, useValue: { execute: vi.fn() } },
+            { provide: CreatePublicPlanUseCase, useValue: { execute: vi.fn() } },
+            { provide: ResetPublicPlanCreationStateUseCase, useValue: { execute: vi.fn() } },
+            { provide: PublicPlanSelectCropPresenter, useValue: { setView: vi.fn() } },
+            {
+              provide: PublicPlanStore,
+              useValue: {
+                state: {
+                  farm: { id: 1, name: 'Test Farm', region: 'jp' },
+                  selectedCrops: [],
+                  planId: null,
+                  pendingCropSlug: null
+                },
+                setSelectedCrops: vi.fn(),
+                setPlanId: vi.fn(),
+                setFarm: vi.fn(),
+                setPendingCropSlug: vi.fn()
+              }
+            }
+          ]
+        }
+      })
+      .compileComponents();
+
+    const fixture = TestBed.createComponent(PublicPlanSelectCropComponent);
+    const instance = fixture.componentInstance;
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation('en', {
+      'public_plans.select_crop.bottom_bar.submit_button': 'Submit'
+    });
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    instance.control = {
+      loading: false,
+      error: null,
+      crops: [{ id: 1, name: 'Tomato', is_reference: false, groups: [] }],
+      saving: false
+    };
+    instance.selectedCropIds = new Set([1]);
+    fixture.detectChanges();
+
+    const submit = fixture.nativeElement.querySelector(
+      '.submit-button.btn-gradient'
+    ) as HTMLButtonElement;
+    expect(submit).toBeTruthy();
+  });
 });
