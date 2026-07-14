@@ -12,6 +12,8 @@ pub struct WorkRecordPhotoStalePendingCleanupInteractor<'a, G, S: ?Sized, C> {
     photo_gateway: &'a G,
     object_store: &'a S,
     clock: &'a C,
+    plan_id: i64,
+    work_record_id: i64,
 }
 
 impl<'a, G, S, C> WorkRecordPhotoStalePendingCleanupInteractor<'a, G, S, C>
@@ -20,11 +22,19 @@ where
     S: WorkRecordPhotoObjectStoreGateway + ?Sized,
     C: ClockPort,
 {
-    pub fn new(photo_gateway: &'a G, object_store: &'a S, clock: &'a C) -> Self {
+    pub fn new(
+        photo_gateway: &'a G,
+        object_store: &'a S,
+        clock: &'a C,
+        plan_id: i64,
+        work_record_id: i64,
+    ) -> Self {
         Self {
             photo_gateway,
             object_store,
             clock,
+            plan_id,
+            work_record_id,
         }
     }
 
@@ -33,7 +43,9 @@ where
     ) -> Result<Vec<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
         let cutoff = self.clock.now()
             - Duration::seconds(PENDING_UPLOAD_CLEANUP_TTL_SECS);
-        let deleted = self.photo_gateway.delete_stale_pending_older_than(cutoff)?;
+        let deleted = self
+            .photo_gateway
+            .delete_stale_pending_older_than(self.plan_id, self.work_record_id, cutoff)?;
         for row in &deleted {
             let _ = self.object_store.delete_object(&row.storage_key);
         }

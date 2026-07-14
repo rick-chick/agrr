@@ -151,7 +151,30 @@ impl WorkRecordPhotoGateway for StubPhotoGateway {
         content_type: &str,
         now: OffsetDateTime,
     ) -> Result<WorkRecordPhotoRow, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(WorkRecordPhotoRow {
+        self.insert_pending_under_limit(
+            plan_id,
+            work_record_id,
+            storage_key,
+            content_type,
+            i32::MAX,
+            now,
+        )?
+        .ok_or_else(|| RecordNotFoundError.into())
+    }
+
+    fn insert_pending_under_limit(
+        &self,
+        plan_id: i64,
+        work_record_id: i64,
+        storage_key: &str,
+        content_type: &str,
+        max_photos: i32,
+        now: OffsetDateTime,
+    ) -> Result<Option<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
+        if self.photo_count >= max_photos {
+            return Ok(None);
+        }
+        Ok(Some(WorkRecordPhotoRow {
             id: self.next_id,
             work_record_id,
             cultivation_plan_id: plan_id,
@@ -162,7 +185,7 @@ impl WorkRecordPhotoGateway for StubPhotoGateway {
             status: WorkRecordPhotoStatus::Pending,
             created_at: now,
             updated_at: now,
-        })
+        }))
     }
 
     fn find_for_record(
@@ -183,6 +206,28 @@ impl WorkRecordPhotoGateway for StubPhotoGateway {
         _: i32,
         _: OffsetDateTime,
     ) -> Result<WorkRecordPhotoRow, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn mark_ready_under_limit(
+        &self,
+        _: i64,
+        _: i64,
+        _: i64,
+        _: i64,
+        _: i32,
+        _: OffsetDateTime,
+    ) -> Result<Option<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn touch_pending_updated_at(
+        &self,
+        _: i64,
+        _: i64,
+        _: i64,
+        _: OffsetDateTime,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
 
@@ -213,6 +258,8 @@ impl WorkRecordPhotoGateway for StubPhotoGateway {
 
     fn delete_stale_pending_older_than(
         &self,
+        _: i64,
+        _: i64,
         _: OffsetDateTime,
     ) -> Result<Vec<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(Vec::new())

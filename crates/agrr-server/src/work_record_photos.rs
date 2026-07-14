@@ -8,6 +8,7 @@ use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
 use agrr_adapters_gcs::WorkRecordPhotoGcsStore;
 use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, WorkRecordPhotoSqliteGateway};
+use agrr_domain::shared::ports::ClockPort;
 use agrr_domain::work_record::dtos::WorkRecordPhotoRead;
 use agrr_domain::work_record::gateways::{photo_row_to_read, WorkRecordPhotoGateway, WorkRecordPhotoObjectStoreGateway};
 use agrr_domain::work_record::interactors::{
@@ -216,10 +217,17 @@ pub fn work_record_photo_store(
 fn cleanup_stale_pending_photos(
     photo_gateway: &WorkRecordPhotoSqliteGateway,
     object_store: &dyn WorkRecordPhotoObjectStoreGateway,
+    plan_id: i64,
+    work_record_id: i64,
 ) {
     let clock = SystemClock;
-    let interactor =
-        WorkRecordPhotoStalePendingCleanupInteractor::new(photo_gateway, object_store, &clock);
+    let interactor = WorkRecordPhotoStalePendingCleanupInteractor::new(
+        photo_gateway,
+        object_store,
+        &clock,
+        plan_id,
+        work_record_id,
+    );
     let _ = interactor.call();
 }
 
@@ -261,7 +269,7 @@ async fn upload_init(
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
     if let Ok(store) = photo_store() {
-        cleanup_stale_pending_photos(&photo_gateway, store.as_ref());
+        cleanup_stale_pending_photos(&photo_gateway, store.as_ref(), plan_id, record_id);
     }
     let clock = SystemClock;
     let mut presenter = InitPresenter { body: None };
@@ -338,6 +346,11 @@ async fn upload_content(
     store
         .write_object(&row.storage_key, content_type, &body)
         .map_err(|_| internal_error())?;
+
+    let clock = SystemClock;
+    photo_gateway
+        .touch_pending_updated_at(plan_id, record_id, photo_id, clock.now())
+        .map_err(|_| not_found())?;
 
     Ok(StatusCode::NO_CONTENT)
 }
