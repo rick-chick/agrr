@@ -1,7 +1,5 @@
 //! Ruby: `Domain::WorkRecord::Interactors::WorkRecordPhotoUploadInitInteractor`
 
-use std::collections::BTreeMap;
-
 use time::Duration;
 
 use crate::cultivation_plan::gateways::CultivationPlanGateway;
@@ -139,4 +137,13 @@ where
             Err(err) => Err(err),
         }
     }
+}
+
+#[cfg(test)]
+mod interactors_work_record_photo_upload_init_interactor_test_inline {
+    use super::*;
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test/work_record/interactors_work_record_photo_upload_init_interactor_test.rs"
+    ));
 }

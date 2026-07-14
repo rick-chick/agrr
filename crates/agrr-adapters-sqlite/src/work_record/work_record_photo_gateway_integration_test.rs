@@ -1,0 +1,64 @@
+//! Integration: work record photo metadata gateway roundtrip.
+
+use super::work_record_gateway::WorkRecordSqliteGateway;
+use super::work_record_integration_fixture::{seed_work_record_crud, work_record_integration_pool};
+use super::work_record_photo_gateway::WorkRecordPhotoSqliteGateway;
+use agrr_domain::work_record::gateways::{
+    WorkRecordCreatePersistAttrs, WorkRecordGateway, WorkRecordPhotoGateway, WorkRecordPhotoStatus,
+};
+use rust_decimal::Decimal;
+use std::str::FromStr;
+use time::{Date, OffsetDateTime};
+
+#[test]
+fn work_record_photo_gateway_pending_to_ready_roundtrip() {
+    let pool = work_record_integration_pool();
+    let seed = seed_work_record_crud(&pool);
+    let record_gateway = WorkRecordSqliteGateway::new(pool.clone());
+    let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
+    let now = OffsetDateTime::now_utc();
+
+    let created = record_gateway
+        .create(
+            seed.plan_id,
+            WorkRecordCreatePersistAttrs {
+                field_cultivation_id: Some(seed.field_cultivation_id),
+                task_schedule_item_id: Some(seed.task_schedule_item_id),
+                agricultural_task_id: Some(seed.agricultural_task_id),
+                name: "写真付き作業".into(),
+                task_type: Some("field_work".into()),
+                actual_date: Date::from_calendar_date(2026, time::Month::June, 12).unwrap(),
+                amount: Decimal::from_str("1.0").ok(),
+                amount_unit: Some("ha".into()),
+                time_spent_minutes: Some(30),
+                notes: None,
+                created_at: now,
+                updated_at: now,
+            },
+        )
+        .expect("create work record");
+
+    let pending = photo_gateway
+        .insert_pending(
+            seed.plan_id,
+            created.id,
+            "work_record_photos/1/2/test.jpg",
+            "image/jpeg",
+            now,
+        )
+        .expect("insert pending");
+    assert_eq!(WorkRecordPhotoStatus::Pending, pending.status);
+
+    let ready = photo_gateway
+        .mark_ready(seed.plan_id, created.id, pending.id, 128, 0, now)
+        .expect("mark ready");
+    assert_eq!(WorkRecordPhotoStatus::Ready, ready.status);
+    assert_eq!(Some(0), ready.position);
+    assert_eq!(Some(128), ready.byte_size);
+
+    let listed = photo_gateway
+        .list_ready_for_plan(seed.plan_id, &[created.id])
+        .expect("list");
+    assert_eq!(1, listed.len());
+    assert_eq!(pending.id, listed[0].id);
+}

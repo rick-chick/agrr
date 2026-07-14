@@ -4,6 +4,8 @@ mod task_schedule_item_lookup_gateway;
 mod work_hub_read_gateway;
 mod work_record_gateway;
 mod work_record_photo_gateway;
+#[cfg(test)]
+mod work_record_photo_gateway_integration_test;
 
 #[cfg(test)]
 pub(crate) mod work_record_integration_fixture;
