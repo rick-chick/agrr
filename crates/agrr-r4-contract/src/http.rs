@@ -63,6 +63,43 @@ impl ContractClient {
         self.request(reqwest::Method::PUT, path, session_id, headers, body)
     }
 
+    pub fn put_bytes(
+        &self,
+        path: &str,
+        session_id: Option<&str>,
+        headers: &HashMap<String, String>,
+        content_type: &str,
+        body: &[u8],
+    ) -> Response {
+        let url = format!("{}{}", self.base_url, path);
+        let mut header_map = HeaderMap::new();
+        header_map.insert(ACCEPT, HeaderValue::from_static("application/json"));
+        header_map.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_str(content_type).expect("content type"),
+        );
+        if let Some(sid) = session_id {
+            let cookie = format!("session_id={sid}");
+            header_map.insert(COOKIE, HeaderValue::from_str(&cookie).expect("cookie"));
+        }
+        for (key, value) in headers {
+            header_map.insert(
+                reqwest::header::HeaderName::from_bytes(key.as_bytes()).unwrap_or_else(|_| {
+                    panic!("invalid header name: {key}");
+                }),
+                HeaderValue::from_str(value).unwrap_or_else(|_| {
+                    panic!("invalid header value for {key}");
+                }),
+            );
+        }
+        self.client
+            .put(url)
+            .headers(header_map)
+            .body(body.to_vec())
+            .send()
+            .expect("contract HTTP put_bytes")
+    }
+
     pub fn delete(
         &self,
         path: &str,

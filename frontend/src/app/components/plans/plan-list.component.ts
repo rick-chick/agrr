@@ -27,12 +27,9 @@ const initialControl: PlanListViewState = {
   providers: [...PLAN_LIST_PROVIDERS],
   template: `
     <main class="page-main">
-      <header class="page-header page-header--with-action">
-        <div>
-          <h1 id="page-title" class="page-title">{{ 'plans.index.title' | translate }}</h1>
-          <p class="page-description">{{ 'plans.index.subtitle' | translate }}</p>
-        </div>
-        <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.create_new' | translate }}</a>
+      <header class="page-header">
+        <h1 id="page-title" class="page-title">{{ 'plans.index.title' | translate }}</h1>
+        <p class="page-description">{{ 'plans.index.description' | translate }}</p>
       </header>
       <section class="section-card" aria-labelledby="page-title">
         @if (control.loading) {
@@ -43,12 +40,15 @@ const initialControl: PlanListViewState = {
           <div class="plan-list-empty">
             <p>{{ 'plans.index.no_plans' | translate }}</p>
             <p class="plan-list-empty-hint">{{ 'plans.index.no_plans_hint' | translate }}</p>
-            <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.create_new' | translate }}</a>
+            <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.new_plan' | translate }}</a>
             <p class="plan-list-empty-secondary">
               <a routerLink="/public-plans/new">{{ 'plans.index.try_public_plans' | translate }}</a>
             </p>
           </div>
         } @else {
+          <div class="section-card__header-actions">
+            <a routerLink="/plans/new" class="btn btn-primary">{{ 'plans.index.new_plan' | translate }}</a>
+          </div>
           <ul class="card-list" role="list">
             @for (plan of control.plans; track plan.id) {
               <li class="card-list__item">
@@ -57,6 +57,9 @@ const initialControl: PlanListViewState = {
                     <span class="item-card__title">{{ plan.name | planDisplayName }}</span>
                   </a>
                   <div class="item-card__actions">
+                    <a [routerLink]="['/plans', plan.id]" class="btn btn-secondary">
+                      {{ 'common.show' | translate }}
+                    </a>
                     <button
                       type="button"
                       class="btn btn-danger"

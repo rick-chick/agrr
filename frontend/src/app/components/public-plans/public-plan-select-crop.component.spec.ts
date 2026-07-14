@@ -1,5 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PublicPlanSelectCropComponent } from './public-plan-select-crop.component';
+
+const publicPlanComponentCss = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), 'public-plan.component.css'),
+  'utf8'
+);
 import { PublicPlanSelectCropViewState } from './public-plan-select-crop.view';
 import {
   PUBLIC_PLAN_WIZARD_STEP_QUERY_PARAM,
@@ -331,7 +339,7 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     expect(fixture.nativeElement.querySelector('a.back-button')).toBeNull();
   });
 
-  it('renders submit button with btn-gradient class', async () => {
+  it('applies btn-gradient brand styles to the fixed footer submit button', async () => {
     const { TestBed } = await import('@angular/core/testing');
     const { provideRouter } = await import('@angular/router');
     const { TranslateModule, TranslateService } = await import('@ngx-translate/core');
@@ -349,6 +357,7 @@ describe('PublicPlanSelectCropComponent (template)', () => {
       '../../usecase/public-plans/public-plan-select-crop.providers'
     );
     const { PublicPlanStore } = await import('../../services/public-plans/public-plan-store.service');
+    const publicPlanCss = publicPlanComponentCss;
 
     await TestBed.configureTestingModule({
       imports: [PublicPlanSelectCropComponent, TranslateModule.forRoot()],
@@ -356,6 +365,7 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     })
       .overrideComponent(PublicPlanSelectCropComponent, {
         set: {
+          styles: [publicPlanCss],
           providers: [
             { provide: LoadPublicPlanCropsUseCase, useValue: { execute: vi.fn() } },
             { provide: CreatePublicPlanUseCase, useValue: { execute: vi.fn() } },
@@ -366,7 +376,7 @@ describe('PublicPlanSelectCropComponent (template)', () => {
               useValue: {
                 state: {
                   farm: { id: 1, name: 'Test Farm', region: 'jp' },
-                  selectedCrops: [],
+                  selectedCrops: [{ id: 1, name: 'Tomato' }],
                   planId: null,
                   pendingCropSlug: null
                 },
@@ -385,7 +395,15 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     const instance = fixture.componentInstance;
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('en', {
-      'public_plans.select_crop.bottom_bar.submit_button': 'Submit'
+      'public_plans.breadcrumb_root': 'Free crop plan',
+      'public_plans.steps.crop': 'Crop',
+      'public_plans.title': 'Crop Planning',
+      'public_plans.steps.region': 'Region',
+      'public_plans.select_crop.bottom_bar.back_button': 'Back',
+      'public_plans.select_crop.bottom_bar.selected_label': 'Selected',
+      'public_plans.select_crop.bottom_bar.selected_unit': 'crops',
+      'public_plans.select_crop.bottom_bar.submit_button': 'Submit',
+      'public_plans.select_crop.bottom_bar.hint': 'Select crops'
     });
     translate.setDefaultLang('en');
     translate.use('en');
@@ -399,9 +417,29 @@ describe('PublicPlanSelectCropComponent (template)', () => {
     instance.selectedCropIds = new Set([1]);
     fixture.detectChanges();
 
-    const submit = fixture.nativeElement.querySelector(
-      '.submit-button.btn-gradient'
+    const submitButton = fixture.nativeElement.querySelector(
+      '.fixed-bottom-bar .submit-button.btn-gradient'
     ) as HTMLButtonElement;
-    expect(submit).toBeTruthy();
+    expect(submitButton).toBeTruthy();
+
+    const styles = getComputedStyle(submitButton);
+    expect(styles.background).toBe('var(--color-success)');
+    expect(styles.borderRadius).toBe('var(--radius-lg)');
+    expect(styles.boxShadow).toBe('var(--shadow-success)');
+    expect(styles.fontWeight).toBe('var(--font-weight-bold)');
+  });
+});
+
+describe('public-plan.component.css (select-crop submit button)', () => {
+  it('defines btn-gradient brand styles in the component stylesheet scope', () => {
+    expect(publicPlanComponentCss).toMatch(
+      /\.btn-gradient\s*\{[\s\S]*background:\s*var\(--color-success\)/
+    );
+    expect(publicPlanComponentCss).toMatch(
+      /\.btn-gradient\s*\{[\s\S]*border-radius:\s*var\(--radius-lg\)/
+    );
+    expect(publicPlanComponentCss).toMatch(
+      /\.btn-gradient\s*\{[\s\S]*box-shadow:\s*var\(--shadow-success\)/
+    );
   });
 });

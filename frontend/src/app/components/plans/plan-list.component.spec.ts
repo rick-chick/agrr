@@ -130,19 +130,45 @@ describe('PlanListComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
 
-  it('shows create plan link in header', async () => {
+  it('uses standard page-header without inline create CTA', async () => {
     const loadSpy = vi.spyOn(component, 'load').mockImplementation(() => {});
     try {
-      component.control = { loading: false, error: null, plans: [], pendingUndoToast: null,
-        pendingErrorFlash: null };
+      component.control = {
+        loading: false,
+        error: null,
+        plans: [{ id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }],
+        pendingUndoToast: null,
+        pendingErrorFlash: null
+      };
       fixture.detectChanges();
       await fixture.whenStable();
-      const link = fixture.nativeElement.querySelector('.page-header--with-action .btn-primary');
-      expect(link).toBeTruthy();
-      expect(link.getAttribute('href')).toContain('/plans/new');
+      const header = fixture.nativeElement.querySelector('.page-header');
+      expect(header).toBeTruthy();
+      expect(header.classList.contains('page-header--with-action')).toBe(false);
+      expect(header.querySelector('.btn-primary')).toBeNull();
     } finally {
       loadSpy.mockRestore();
     }
+  });
+
+  it('shows create plan link in section-card header actions when plans exist', async () => {
+    const nativeElement = await renderPlans([
+      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
+    ]);
+    const link = nativeElement.querySelector('.section-card__header-actions .btn-primary');
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toContain('/plans/new');
+  });
+
+  it('shows detail and delete actions on plan cards', async () => {
+    const nativeElement = await renderPlans([
+      { id: 1, name: 'Plan A', status: 'pending', farm_id: 1 }
+    ]);
+    const secondary = nativeElement.querySelector('.item-card__actions .btn-secondary');
+    const danger = nativeElement.querySelector('.item-card__actions .btn-danger');
+    expect(secondary).toBeTruthy();
+    expect(secondary.getAttribute('href')).toContain('/plans/1');
+    expect(danger).toBeTruthy();
   });
 
   it('shows empty state with create CTA when no plans', async () => {

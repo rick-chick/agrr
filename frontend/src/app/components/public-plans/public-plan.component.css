@@ -477,7 +477,6 @@
   white-space: nowrap;
 }
 
-/* app.css の .btn-gradient は AppComponent スコープのため子コンポーネントに届かない */
 .btn-gradient {
   background: var(--color-success);
   color: var(--color-text-on-primary);
@@ -487,23 +486,6 @@
   padding: var(--space-4) var(--space-6);
   box-shadow: var(--shadow-success);
   min-height: var(--touch-target-min);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.btn-gradient:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-gradient:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-gradient:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: var(--focus-outline-offset);
 }
 
 .fixed-bottom-bar .submit-button {

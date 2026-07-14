@@ -93,4 +93,7 @@ pub use weather_data::{
     PredictedWeatherMetadataSqliteGateway, WeatherDataFarmSqliteGateway,
     WeatherDataGatewayBundle, WeatherDataSqliteGateway,
 };
-pub use work_record::{TaskScheduleItemLookupSqliteGateway, WorkHubReadSqliteGateway, WorkRecordSqliteGateway};
+pub use work_record::{
+    TaskScheduleItemLookupSqliteGateway, WorkHubReadSqliteGateway, WorkRecordPhotoSqliteGateway,
+    WorkRecordSqliteGateway,
+};

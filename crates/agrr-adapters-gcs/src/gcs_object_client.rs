@@ -76,6 +76,15 @@ impl GcsObjectClient {
     }
 
     pub fn write_object(&self, key: &str, bytes: &[u8]) -> Result<(), WeatherDataGcsError> {
+        self.write_object_with_content_type(key, "application/json", bytes)
+    }
+
+    pub fn write_object_with_content_type(
+        &self,
+        key: &str,
+        content_type: &str,
+        bytes: &[u8],
+    ) -> Result<(), WeatherDataGcsError> {
         record_write();
         if let Some(root) = &self.config.local_root {
             let path = root.join(key);
@@ -98,10 +107,35 @@ impl GcsObjectClient {
         self.http
             .post(upload_url)
             .bearer_auth(&token)
-            .header("Content-Type", "application/json")
+            .header("Content-Type", content_type)
             .body(bytes.to_vec())
             .send()?
             .error_for_status()?;
+        Ok(())
+    }
+
+    pub fn delete_object(&self, key: &str) -> Result<(), WeatherDataGcsError> {
+        if let Some(root) = &self.config.local_root {
+            let path = root.join(key);
+            if path.exists() {
+                fs::remove_file(path)?;
+            }
+            return Ok(());
+        }
+        if !self.uses_remote_gcs() {
+            return Ok(());
+        }
+        let token = gcp_access_token(&self.http)?;
+        let url = format!(
+            "https://storage.googleapis.com/storage/v1/b/{}/o/{}",
+            self.config.bucket,
+            urlencoding_key(key)
+        );
+        let resp = self.http.delete(url).bearer_auth(&token).send()?;
+        if resp.status() == StatusCode::NOT_FOUND {
+            return Ok(());
+        }
+        resp.error_for_status()?;
         Ok(())
     }
 
