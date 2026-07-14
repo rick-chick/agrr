@@ -21,14 +21,21 @@
   width: 100%;
   text-align: left;
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.25rem 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
   padding: 0.75rem;
   border: 1px solid var(--color-border, #eee);
   border-radius: 0.5rem;
   margin-bottom: 0.5rem;
   background: var(--color-surface);
   cursor: pointer;
+}
+
+.plan-work-records__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  min-width: 0;
 }
 
 .plan-work-records__row:hover {
@@ -70,15 +77,15 @@
 }
 
 .plan-work-records__photos {
-  grid-column: 1 / -1;
+  align-self: start;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-1);
+  max-width: 9.5rem;
 }
 
 .plan-work-records__photo-thumb {
-  width: 3rem;
+  width: 4.5rem;
   height: 3rem;
   padding: 0;
   border: 1px solid var(--color-border);
@@ -155,4 +162,15 @@
   max-width: 100%;
   max-height: calc(100dvh - 8rem);
   object-fit: contain;
+}
+
+@media (max-width: 480px) {
+  .plan-work-records__row {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-work-records__photos {
+    max-width: none;
+    justify-content: flex-start;
+  }
 }

@@ -67,21 +67,23 @@ const initialControl: PlanWorkRecordsViewState = {
                 @for (record of group.records; track record.id) {
                   <li>
                     <button type="button" class="plan-work-records__row" (click)="openEdit(record)">
-                      <span class="plan-work-records__date">{{ displayDate(record.actual_date) }}</span>
-                      <span class="plan-work-records__name">{{ record.name }}</span>
-                      @if (record.task_schedule_item_id) {
-                        <span class="plan-work-records__badge plan-work-records__badge--scheduled">
-                          {{ 'plans.work_records.badge.from_schedule' | translate }}
-                        </span>
-                      } @else {
-                        <span class="plan-work-records__badge">{{ 'plans.work_records.badge.adhoc' | translate }}</span>
-                      }
-                      @if (record.amount) {
-                        <span class="plan-work-records__amount">{{ record.amount }} {{ record.amount_unit }}</span>
-                      }
-                      @if (record.notes) {
-                        <span class="plan-work-records__notes">{{ record.notes }}</span>
-                      }
+                      <div class="plan-work-records__meta">
+                        <span class="plan-work-records__date">{{ displayDate(record.actual_date) }}</span>
+                        <span class="plan-work-records__name">{{ record.name }}</span>
+                        @if (record.task_schedule_item_id) {
+                          <span class="plan-work-records__badge plan-work-records__badge--scheduled">
+                            {{ 'plans.work_records.badge.from_schedule' | translate }}
+                          </span>
+                        } @else {
+                          <span class="plan-work-records__badge">{{ 'plans.work_records.badge.adhoc' | translate }}</span>
+                        }
+                        @if (record.amount) {
+                          <span class="plan-work-records__amount">{{ record.amount }} {{ record.amount_unit }}</span>
+                        }
+                        @if (record.notes) {
+                          <span class="plan-work-records__notes">{{ record.notes }}</span>
+                        }
+                      </div>
                       @if (record.photos?.length) {
                         <div
                           class="plan-work-records__photos"
