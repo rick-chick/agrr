@@ -72,24 +72,6 @@ export function isEligibleAgentPr(meta) {
 }
 
 /**
- * Draft PRs stuck behind master need a mechanical sync before CI / ready checks.
- *
- * @param {string | null | undefined} mergeStateStatus
- */
-export function shouldSyncWithMaster(mergeStateStatus) {
-  return mergeStateStatus === 'BEHIND' || mergeStateStatus === 'DIRTY';
-}
-
-/**
- * @param {string} message
- */
-export function isNonFatalUpdateBranchError(message) {
-  return /Resource not accessible by integration|updatePullRequestBranch/i.test(
-    message ?? '',
-  );
-}
-
-/**
  * @param {{
  *   isDraft: boolean;
  *   openReadyAgentMergeCount: number;

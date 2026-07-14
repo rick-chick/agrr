@@ -18,6 +18,7 @@ const CONFLICT_DISPATCH_SNIPPETS = [
   'dispatch-after-master-push',
   'pr-merge-worker-dispatch-after-master-push.mjs',
   'MERGEABLE_STATE" = "CONFLICTING"',
+  'MERGE_STATE_STATUS" = "BEHIND"',
   'ACTION="conflict"',
   'skipping CI gate for conflict resolution',
 ];
