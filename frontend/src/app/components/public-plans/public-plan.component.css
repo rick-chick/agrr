@@ -843,17 +843,21 @@
   }
 }
 
-.public-plan-results__header-actions {
+.public-plan-results__gantt-prefix {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4);
-  justify-content: flex-end;
-  margin-bottom: var(--space-6);
+  align-items: center;
+  gap: var(--space-2);
 }
 
 @media (max-width: 768px) {
-  .public-plan-results__header-actions {
-    justify-content: flex-start;
+  .public-plan-results__gantt-prefix {
+    width: 100%;
+  }
+
+  .public-plan-results__gantt-prefix .btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 
