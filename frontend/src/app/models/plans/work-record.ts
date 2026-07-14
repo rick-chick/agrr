@@ -25,6 +25,8 @@ export interface WorkRecord {
   amount_unit: string | null;
   time_spent_minutes: number | null;
   notes: string | null;
+  field_name?: string | null;
+  crop_name?: string | null;
   created_at: string;
   updated_at: string;
   task_schedule_item: WorkRecordTaskScheduleItemRef | null;

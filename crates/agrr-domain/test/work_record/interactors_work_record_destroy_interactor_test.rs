@@ -204,6 +204,8 @@ fn sample_record() -> WorkRecordRead {
         notes: None,
         created_at: OffsetDateTime::now_utc(),
         updated_at: OffsetDateTime::now_utc(),
+        field_name: None,
+        crop_name: None,
         task_schedule_item: None,
     }
 }

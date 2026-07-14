@@ -227,6 +227,8 @@ fn work_record_to_json(record: WorkRecordRead, photos: Vec<Value>) -> Value {
         "amount_unit": record.amount_unit,
         "time_spent_minutes": record.time_spent_minutes,
         "notes": record.notes,
+        "field_name": record.field_name,
+        "crop_name": record.crop_name,
         "created_at": format_datetime(record.created_at),
         "updated_at": format_datetime(record.updated_at),
         "task_schedule_item": record.task_schedule_item.map(|item| json!({

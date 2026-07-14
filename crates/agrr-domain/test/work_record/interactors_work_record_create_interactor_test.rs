@@ -231,6 +231,8 @@ fn sample_read() -> WorkRecordRead {
         notes: Some("雨上がり".into()),
         created_at: datetime!(2026-06-12 10:00 UTC),
         updated_at: datetime!(2026-06-12 10:00 UTC),
+        field_name: Some("F1".into()),
+        crop_name: Some("トマト".into()),
         task_schedule_item: Some(WorkRecordTaskScheduleItemSummary {
             id: 123,
             name: "除草".into(),
