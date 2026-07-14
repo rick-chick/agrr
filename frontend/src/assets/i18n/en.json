@@ -1407,7 +1407,17 @@
         "task_picker": "Choose a task",
         "task_other": "Other",
         "show_details": "Add details",
-        "hide_details": "Hide details"
+        "hide_details": "Hide details",
+        "photos": {
+          "label": "Photos (optional)",
+          "add": "Add photo",
+          "remove": "Remove photo",
+          "errors": {
+            "limit_reached": "You can attach up to 3 photos per work record",
+            "invalid_type": "Choose a JPEG, PNG, or WebP image",
+            "upload_failed": "Photo upload failed"
+          }
+        }
       },
       "errors": {
         "name_required": "Task name is required"
@@ -1431,6 +1441,13 @@
       },
       "toast": {
         "record_updated": "Record saved"
+      },
+      "photos": {
+        "errors": {
+          "invalid_content_type": "Unsupported image type",
+          "invalid_byte_size": "Image exceeds the 5 MB limit",
+          "already_completed": "This photo was already uploaded"
+        }
       }
     },
     "index": {

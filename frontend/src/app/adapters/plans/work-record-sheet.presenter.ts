@@ -16,6 +16,11 @@ import {
 } from '../../usecase/plans/update-work-record.dtos';
 import { DeleteWorkRecordOutputPort } from '../../usecase/plans/delete-work-record.output-port';
 import { DeleteWorkRecordSuccessDto } from '../../usecase/plans/delete-work-record.dtos';
+import {
+  SaveWorkRecordSheetSuccessDto,
+  SaveWorkRecordSheetValidationErrorDto
+} from '../../usecase/plans/save-work-record-sheet.dtos';
+import { SaveWorkRecordSheetOutputPort } from '../../usecase/plans/save-work-record-sheet.output-port';
 
 @Injectable()
 export class WorkRecordSheetPresenter
@@ -23,7 +28,8 @@ export class WorkRecordSheetPresenter
     CreateWorkRecordOutputPort,
     UpdateWorkRecordOutputPort,
     DeleteWorkRecordOutputPort,
-    LoadAgriculturalTaskListOutputPort
+    LoadAgriculturalTaskListOutputPort,
+    SaveWorkRecordSheetOutputPort
 {
   private view: WorkRecordSheetView | null = null;
   onSavedCallback: ((event: WorkRecordSheetSavedEvent) => void) | null = null;
@@ -46,21 +52,24 @@ export class WorkRecordSheetPresenter
     };
   }
 
-  onSuccess(dto: CreateWorkRecordSuccessDto | UpdateWorkRecordSuccessDto): void {
+  onSuccess(dto: CreateWorkRecordSuccessDto | UpdateWorkRecordSuccessDto | SaveWorkRecordSheetSuccessDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    const mode = this.view.control.mode;
+    const mode = 'mode' in dto ? dto.mode : this.view.control.mode;
     this.view.control = {
       ...this.view.control,
       submitting: false,
       fieldErrors: {},
       error: null,
+      photoError: null,
       pendingToastKey: savedToastKey(mode)
     };
     this.view.close();
     this.onSavedCallback?.({ workRecord: dto.workRecord, mode });
   }
 
-  onValidationError(dto: CreateWorkRecordValidationErrorDto | UpdateWorkRecordValidationErrorDto): void {
+  onValidationError(
+    dto: CreateWorkRecordValidationErrorDto | UpdateWorkRecordValidationErrorDto | SaveWorkRecordSheetValidationErrorDto
+  ): void {
     if (!this.view) throw new Error('Presenter: view not set');
     this.view.control = {
       ...this.view.control,

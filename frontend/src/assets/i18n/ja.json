@@ -2400,7 +2400,17 @@
         "task_picker": "作業を選ぶ",
         "task_other": "その他",
         "show_details": "詳細を追加",
-        "hide_details": "詳細を閉じる"
+        "hide_details": "詳細を閉じる",
+        "photos": {
+          "label": "写真（任意）",
+          "add": "写真を追加",
+          "remove": "写真を削除",
+          "errors": {
+            "limit_reached": "写真は1件の作業記録につき最大3枚までです",
+            "invalid_type": "JPEG、PNG、WebP形式の画像を選択してください",
+            "upload_failed": "写真のアップロードに失敗しました"
+          }
+        }
       },
       "errors": {
         "name_required": "作業名を入力してください"
@@ -2424,6 +2434,13 @@
       },
       "toast": {
         "record_updated": "実績を保存しました"
+      },
+      "photos": {
+        "errors": {
+          "invalid_content_type": "対応していない画像形式です",
+          "invalid_byte_size": "画像サイズが上限（5MB）を超えています",
+          "already_completed": "この写真はすでにアップロード済みです"
+        }
       }
     }
   },

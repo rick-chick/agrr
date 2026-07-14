@@ -13,6 +13,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { localTodayIso } from '../../core/local-today';
+import { getApiBaseUrl } from '../../core/api-base-url';
+import {
+  MAX_WORK_RECORD_PHOTOS,
+  WORK_RECORD_PHOTO_ACCEPT
+} from '../../domain/plans/work-record-photo.constants';
 import { FieldSchedule } from '../../models/plans/task-schedule';
 import { WorkRecord } from '../../models/plans/work-record';
 import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet.presenter';
@@ -20,9 +25,8 @@ import { UndoToastService } from '../../services/undo-toast.service';
 import { FlashMessageService } from '../../services/flash-message.service';
 import { applyWorkRecordSheetViewEffects } from './work-record-sheet-view.effects';
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
-import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
+import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
-import { UpdateWorkRecordUseCase } from '../../usecase/plans/update-work-record.usecase';
 import { WORK_RECORD_SHEET_PROVIDERS } from '../../usecase/plans/work-record-sheet.providers';
 import {
   mapFormToCreateRequest,
@@ -30,7 +34,9 @@ import {
 } from '../../usecase/plans/work-record-form.mapper';
 import { WorkDayListRowDto } from '../../usecase/plans/load-work-day-list.dtos';
 import {
+  WorkRecordSheetExistingPhoto,
   WorkRecordSheetFormState,
+  WorkRecordSheetPendingPhoto,
   WorkRecordSheetSavedEvent,
   WorkRecordSheetTaskChip,
   WorkRecordSheetView,
@@ -66,7 +72,10 @@ const initialControl: WorkRecordSheetViewState = {
   loadingTaskChips: false,
   selectedTaskId: null,
   pendingToastKey: null,
-  pendingUndoToast: null
+  pendingUndoToast: null,
+  existingPhotos: [],
+  pendingPhotos: [],
+  photoError: null
 };
 
 @Component({
@@ -243,6 +252,56 @@ const initialControl: WorkRecordSheetViewState = {
           </div>
         }
 
+        <div class="form-card__field work-record-sheet__photos">
+          <span class="form-card__label" id="wr-photos-label">{{
+            'plans.work.sheet.photos.label' | translate
+          }}</span>
+          @if (hasVisiblePhotos()) {
+            <div class="work-record-sheet__photo-grid" role="list" aria-labelledby="wr-photos-label">
+              @for (photo of visibleExistingPhotos(); track photo.id) {
+                <div class="work-record-sheet__photo-thumb" role="listitem">
+                  <img [src]="photo.url" alt="" loading="lazy" />
+                  <button
+                    type="button"
+                    class="work-record-sheet__photo-remove"
+                    [attr.aria-label]="'plans.work.sheet.photos.remove' | translate"
+                    (click)="removeExistingPhoto(photo.id)"
+                  >
+                    ×
+                  </button>
+                </div>
+              }
+              @for (pending of control.pendingPhotos; track pending.clientId) {
+                <div class="work-record-sheet__photo-thumb" role="listitem">
+                  <img [src]="pending.previewUrl" alt="" />
+                  <button
+                    type="button"
+                    class="work-record-sheet__photo-remove"
+                    [attr.aria-label]="'plans.work.sheet.photos.remove' | translate"
+                    (click)="removePendingPhoto(pending.clientId)"
+                  >
+                    ×
+                  </button>
+                </div>
+              }
+            </div>
+          }
+          @if (canAddPhotos()) {
+            <label class="work-record-sheet__photo-add">
+              <input
+                type="file"
+                [accept]="photoAccept"
+                capture="environment"
+                (change)="onPhotosSelected($event)"
+              />
+              {{ 'plans.work.sheet.photos.add' | translate }}
+            </label>
+          }
+          @if (control.photoError) {
+            <p class="form-card__error">{{ control.photoError | translate }}</p>
+          }
+        </div>
+
         <div class="form-card__actions">
           @if (control.mode === 'edit') {
             <button
@@ -277,11 +336,13 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
 
   @ViewChild('sheetDialog') sheetDialogRef!: ElementRef<HTMLDialogElement>;
 
-  private readonly createUseCase = inject(CreateWorkRecordUseCase);
-  private readonly updateUseCase = inject(UpdateWorkRecordUseCase);
+  private readonly saveUseCase = inject(SaveWorkRecordSheetUseCase);
   private readonly deleteUseCase = inject(DeleteWorkRecordUseCase);
   private readonly loadTaskListUseCase = inject(LoadAgriculturalTaskListUseCase);
   private readonly presenter = inject(WorkRecordSheetPresenter);
+  readonly photoAccept = WORK_RECORD_PHOTO_ACCEPT;
+
+  private readonly apiBaseUrl = getApiBaseUrl();
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly undoToast = inject(UndoToastService);
@@ -347,6 +408,11 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       ...initialControl,
       mode: 'edit',
       showDetails: true,
+      existingPhotos: (record.photos ?? []).map((photo) => ({
+        id: photo.id,
+        url: this.photoUrl(photo.url),
+        markedForDelete: false
+      })),
       form: {
         name: record.name,
         actual_date: record.actual_date,
@@ -415,10 +481,107 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
   }
 
   onDialogClose(): void {
+    this.revokePendingPhotoUrls(this.control.pendingPhotos);
     this.control = {
       ...initialControl,
       form: emptyForm()
     };
+  }
+
+  visibleExistingPhotos(): WorkRecordSheetExistingPhoto[] {
+    return this.control.existingPhotos.filter((photo) => !photo.markedForDelete);
+  }
+
+  hasVisiblePhotos(): boolean {
+    return this.visibleExistingPhotos().length > 0 || this.control.pendingPhotos.length > 0;
+  }
+
+  canAddPhotos(): boolean {
+    return this.photoSlotCount() < MAX_WORK_RECORD_PHOTOS;
+  }
+
+  onPhotosSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    input.value = '';
+    if (files.length === 0) {
+      return;
+    }
+
+    const slotsLeft = MAX_WORK_RECORD_PHOTOS - this.photoSlotCount();
+    if (slotsLeft <= 0) {
+      this.control = {
+        ...this.control,
+        photoError: 'plans.work.sheet.photos.errors.limit_reached'
+      };
+      return;
+    }
+
+    const accepted = files.slice(0, slotsLeft).filter((file) => this.isAllowedPhoto(file));
+    if (accepted.length === 0) {
+      this.control = {
+        ...this.control,
+        photoError: 'plans.work.sheet.photos.errors.invalid_type'
+      };
+      return;
+    }
+
+    const pendingPhotos = [
+      ...this.control.pendingPhotos,
+      ...accepted.map((file) => ({
+        clientId: crypto.randomUUID(),
+        previewUrl: URL.createObjectURL(file),
+        file
+      }))
+    ];
+    this.control = {
+      ...this.control,
+      pendingPhotos,
+      photoError: null
+    };
+  }
+
+  removePendingPhoto(clientId: string): void {
+    const target = this.control.pendingPhotos.find((photo) => photo.clientId === clientId);
+    if (target) {
+      URL.revokeObjectURL(target.previewUrl);
+    }
+    this.control = {
+      ...this.control,
+      pendingPhotos: this.control.pendingPhotos.filter((photo) => photo.clientId !== clientId),
+      photoError: null
+    };
+  }
+
+  removeExistingPhoto(photoId: number): void {
+    this.control = {
+      ...this.control,
+      existingPhotos: this.control.existingPhotos.map((photo) =>
+        photo.id === photoId ? { ...photo, markedForDelete: true } : photo
+      ),
+      photoError: null
+    };
+  }
+
+  private photoSlotCount(): number {
+    return this.visibleExistingPhotos().length + this.control.pendingPhotos.length;
+  }
+
+  private isAllowedPhoto(file: File): boolean {
+    return WORK_RECORD_PHOTO_ACCEPT.split(',').includes(file.type);
+  }
+
+  private photoUrl(path: string): string {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    return `${this.apiBaseUrl}${path}`;
+  }
+
+  private revokePendingPhotoUrls(photos: WorkRecordSheetPendingPhoto[]): void {
+    for (const photo of photos) {
+      URL.revokeObjectURL(photo.previewUrl);
+    }
   }
 
   fieldError(field: string): string | null {
@@ -428,7 +591,7 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
 
   submit(): void {
     const { form, mode } = this.control;
-    this.control = { ...this.control, submitting: true, fieldErrors: {}, error: null };
+    this.control = { ...this.control, submitting: true, fieldErrors: {}, error: null, photoError: null };
 
     const formInput = {
       task_schedule_item_id: form.task_schedule_item_id,
@@ -442,18 +605,29 @@ export class WorkRecordSheetComponent implements WorkRecordSheetView, OnInit {
       agricultural_task_id: form.agricultural_task_id
     };
 
+    const photoIdsToDelete = this.control.existingPhotos
+      .filter((photo) => photo.markedForDelete)
+      .map((photo) => photo.id);
+    const pendingPhotoFiles = this.control.pendingPhotos.map((photo) => photo.file);
+
     if (mode === 'edit' && form.work_record_id != null) {
-      this.updateUseCase.execute({
+      this.saveUseCase.execute({
         planId: this.planId,
+        mode,
         workRecordId: form.work_record_id,
-        body: mapFormToUpdateRequest(formInput)
+        updateBody: mapFormToUpdateRequest(formInput),
+        pendingPhotoFiles,
+        photoIdsToDelete
       });
       return;
     }
 
-    this.createUseCase.execute({
+    this.saveUseCase.execute({
       planId: this.planId,
-      body: mapFormToCreateRequest(formInput)
+      mode,
+      createBody: mapFormToCreateRequest(formInput),
+      pendingPhotoFiles,
+      photoIdsToDelete
     });
   }
 

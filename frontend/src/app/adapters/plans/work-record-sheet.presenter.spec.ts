@@ -71,7 +71,10 @@ describe('WorkRecordSheetPresenter', () => {
         loadingTaskChips: false,
         selectedTaskId: null,
         pendingToastKey: null,
-        pendingUndoToast: null
+        pendingUndoToast: null,
+        existingPhotos: [],
+        pendingPhotos: [],
+        photoError: null
       },
       close: vi.fn()
     };
