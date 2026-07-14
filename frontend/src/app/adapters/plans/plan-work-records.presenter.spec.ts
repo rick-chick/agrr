@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { PlanWorkRecordsView, PlanWorkRecordsViewState } from '../../components/plans/plan-work-records.view';
 import { WorkRecord } from '../../models/plans/work-record';
 import { LoadWorkRecordsDataDto } from '../../usecase/plans/load-work-records.dtos';
@@ -53,10 +53,6 @@ describe('PlanWorkRecordsPresenter', () => {
       }
     };
     presenter.setView(view);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it('passes records without photos through to the view', () => {
