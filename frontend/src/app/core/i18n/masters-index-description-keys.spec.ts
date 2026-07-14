@@ -10,7 +10,8 @@ const MASTER_INDEX_DESCRIPTION_KEYS = [
   'pests',
   'pesticides',
   'agricultural_tasks',
-  'interaction_rules'
+  'interaction_rules',
+  'plans'
 ] as const;
 
 type IndexBundle = Record<

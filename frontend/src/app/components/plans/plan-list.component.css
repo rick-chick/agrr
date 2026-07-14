@@ -6,17 +6,6 @@
   box-sizing: border-box;
 }
 
-/* 計画一覧: グリッドセル内でカードが重ならないよう幅を拘束 */
-.page-main > .section-card .card-list {
-  width: 100%;
-  min-width: 0;
-}
-
-.card-list__item article.item-card {
-  position: static;
-  transform: none;
-}
-
 .plan-list-error {
   color: var(--color-error);
 }

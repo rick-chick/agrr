@@ -1435,8 +1435,8 @@
     },
     "index": {
       "title": "Cultivation Plans",
-      "subtitle": "Manage your yearly cultivation plans",
-      "create_new": "+ Create New Plan",
+      "description": "Manage your yearly cultivation plans",
+      "new_plan": "Add New Plan",
       "try_public_plans": "Try Free Plans",
       "no_plans": "No plans yet",
       "no_plans_hint": "Create a new plan to optimize your cultivation schedule.",
