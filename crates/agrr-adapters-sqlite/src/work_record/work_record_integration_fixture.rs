@@ -145,6 +145,26 @@ CREATE INDEX index_work_records_on_plan_and_date
   ON work_records (cultivation_plan_id, actual_date);
 CREATE INDEX index_work_records_on_task_schedule_item_id
   ON work_records (task_schedule_item_id);
+CREATE TABLE work_record_photos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  work_record_id INTEGER NOT NULL,
+  cultivation_plan_id INTEGER NOT NULL,
+  storage_key TEXT NOT NULL,
+  content_type TEXT,
+  byte_size INTEGER,
+  position INTEGER,
+  status TEXT NOT NULL DEFAULT 'pending',
+  original_filename TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (work_record_id) REFERENCES work_records (id) ON DELETE CASCADE,
+  FOREIGN KEY (cultivation_plan_id) REFERENCES cultivation_plans (id)
+);
+CREATE INDEX index_work_record_photos_on_work_record_id
+  ON work_record_photos (work_record_id);
+CREATE UNIQUE INDEX index_work_record_photos_on_record_and_position
+  ON work_record_photos (work_record_id, position)
+  WHERE position IS NOT NULL;
 CREATE TABLE deletion_undo_events (
   id TEXT PRIMARY KEY,
   resource_type TEXT NOT NULL,

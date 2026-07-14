@@ -298,11 +298,7 @@ async fn upload_content(
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
-    if !agrr_domain::work_record::interactors::private_plan_access::access_allowed(
-        &plan_gateway,
-        plan_id,
-        user_id,
-    ) {
+    if !agrr_domain::work_record::plan_access_allowed(&plan_gateway, plan_id, user_id) {
         return Err(not_found());
     }
 
@@ -346,6 +342,7 @@ async fn upload_complete(
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
     let clock = SystemClock;
+    let store = photo_store()?;
     let mut presenter = CompletePresenter { body: None };
     let read_url_builder =
         |plan: i64, record: i64, photo: i64| photo_content_path(plan, record, photo);
@@ -354,6 +351,7 @@ async fn upload_complete(
         &mut presenter,
         &plan_gateway,
         &photo_gateway,
+        store.as_ref(),
         &clock,
         &read_url_builder,
     );
@@ -379,11 +377,7 @@ async fn download_content(
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
-    if !agrr_domain::work_record::interactors::private_plan_access::access_allowed(
-        &plan_gateway,
-        plan_id,
-        user_id,
-    ) {
+    if !agrr_domain::work_record::plan_access_allowed(&plan_gateway, plan_id, user_id) {
         return Err(not_found());
     }
 

@@ -6,32 +6,35 @@ use crate::shared::ports::ClockPort;
 use crate::shared::validation::{from_errors, ErrorsInput};
 use crate::work_record::dtos::work_record_create_input::record_invalid_field;
 use crate::work_record::gateways::{
-    photo_row_to_read, WorkRecordPhotoGateway, WorkRecordPhotoStatus,
+    photo_row_to_read, WorkRecordPhotoGateway, WorkRecordPhotoObjectStoreGateway,
+    WorkRecordPhotoStatus,
 };
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::policies::work_record_photo_policy::byte_size_allowed;
 use crate::work_record::ports::WorkRecordPhotoUploadCompleteOutputPort;
-use std::collections::BTreeMap;
 
-pub struct WorkRecordPhotoUploadCompleteInteractor<'a, O, P, G, C> {
+pub struct WorkRecordPhotoUploadCompleteInteractor<'a, O, P, G, S: ?Sized, C> {
     output_port: &'a mut O,
     plan_gateway: &'a P,
     photo_gateway: &'a G,
+    object_store: &'a S,
     clock: &'a C,
     read_url_builder: &'a dyn Fn(i64, i64, i64) -> String,
 }
 
-impl<'a, O, P, G, C> WorkRecordPhotoUploadCompleteInteractor<'a, O, P, G, C>
+impl<'a, O, P, G, S, C> WorkRecordPhotoUploadCompleteInteractor<'a, O, P, G, S, C>
 where
     O: WorkRecordPhotoUploadCompleteOutputPort,
     P: CultivationPlanGateway,
     G: WorkRecordPhotoGateway,
+    S: WorkRecordPhotoObjectStoreGateway + ?Sized,
     C: ClockPort,
 {
     pub fn new(
         output_port: &'a mut O,
         plan_gateway: &'a P,
         photo_gateway: &'a G,
+        object_store: &'a S,
         clock: &'a C,
         read_url_builder: &'a dyn Fn(i64, i64, i64) -> String,
     ) -> Self {
@@ -39,6 +42,7 @@ where
             output_port,
             plan_gateway,
             photo_gateway,
+            object_store,
             clock,
             read_url_builder,
         }
@@ -80,6 +84,23 @@ where
             return Err(record_invalid_field(
                 "status",
                 "plans.work_records.photos.errors.already_completed",
+            )
+            .into());
+        }
+
+        let stored = self.object_store.read_object(&row.storage_key)?;
+        let actual_size = stored.as_ref().map(|bytes| bytes.len() as i64).unwrap_or(0);
+        if stored.is_none() {
+            return Err(record_invalid_field(
+                "photo",
+                "plans.work_records.photos.errors.content_missing",
+            )
+            .into());
+        }
+        if actual_size != byte_size {
+            return Err(record_invalid_field(
+                "byte_size",
+                "plans.work_records.photos.errors.byte_size_mismatch",
             )
             .into());
         }

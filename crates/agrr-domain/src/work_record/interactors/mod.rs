@@ -1,4 +1,4 @@
-pub mod private_plan_access;
+pub(crate) mod private_plan_access;
 pub(crate) mod work_hub_list_interactor;
 pub(crate) mod work_record_create_interactor;
 pub(crate) mod work_record_destroy_interactor;
