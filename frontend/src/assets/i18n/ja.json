@@ -2436,6 +2436,10 @@
         "record_updated": "実績を保存しました"
       },
       "photos": {
+        "close": "閉じる",
+        "prev": "前の写真",
+        "next": "次の写真",
+        "view": "写真を拡大表示",
         "errors": {
           "invalid_content_type": "対応していない画像形式です",
           "invalid_byte_size": "画像サイズが上限（5MB）を超えています",

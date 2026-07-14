@@ -31,7 +31,11 @@ const PLANS_WORK_RECORDS_KEYS = [
   'plans.work_records.sheet.save',
   'plans.work_records.sheet.delete',
   'plans.work_records.undo.toast',
-  'plans.work_records.toast.record_updated'
+  'plans.work_records.toast.record_updated',
+  'plans.work_records.photos.close',
+  'plans.work_records.photos.prev',
+  'plans.work_records.photos.next',
+  'plans.work_records.photos.view'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

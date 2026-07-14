@@ -1443,6 +1443,10 @@
         "record_updated": "Record saved"
       },
       "photos": {
+        "close": "Close",
+        "prev": "Previous photo",
+        "next": "Next photo",
+        "view": "View photo",
         "errors": {
           "invalid_content_type": "Unsupported image type",
           "invalid_byte_size": "Image exceeds the 5 MB limit",
