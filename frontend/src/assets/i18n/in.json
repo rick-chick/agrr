@@ -1792,6 +1792,10 @@
         "record_updated": "कार्य सहेजा गया"
       },
       "photos": {
+        "close": "बंद करें",
+        "prev": "पिछली फ़ोटो",
+        "next": "अगली फ़ोटो",
+        "view": "फ़ोटो बड़ा करके देखें",
         "errors": {
           "invalid_content_type": "असमर्थित छवि प्रकार",
           "invalid_byte_size": "छवि 5 MB सीमा से अधिक है",
