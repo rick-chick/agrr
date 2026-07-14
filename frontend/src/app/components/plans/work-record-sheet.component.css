@@ -100,7 +100,7 @@
 .work-record-sheet__photo-thumb {
   position: relative;
   width: 4.5rem;
-  height: 4.5rem;
+  aspect-ratio: 4 / 3;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
