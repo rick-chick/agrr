@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Merge origin/master into a conflicting PR head branch using a temporary worktree.
-# Does not use git checkout/switch on the caller's working tree.
+# Merge origin/master into a PR head when BEHIND, CONFLICTING, or DIRTY.
+# Uses a temporary worktree; does not use git checkout/switch on the caller's tree.
 #
 # Usage: resolve-pr-merge-conflicts.sh <pr_number>
 #
@@ -8,7 +8,7 @@
 #   0 — merge completed and pushed (no remaining conflict markers)
 #   1 — usage / git / gh error
 #   2 — merge attempted but conflict markers remain (agent must resolve manually)
-#   3 — PR is not in CONFLICTING state (no-op)
+#   3 — PR does not need master sync (no-op)
 set -euo pipefail
 
 PR_NUMBER="${1:-}"
@@ -16,6 +16,9 @@ if [ -z "$PR_NUMBER" ]; then
   echo "usage: resolve-pr-merge-conflicts.sh <pr_number>" >&2
   exit 1
 fi
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+NEEDS_SYNC_LIB="$REPO_ROOT/scripts/pr-merge-worker-needs-sync.mjs"
 
 PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefName,mergeable,mergeStateStatus,headRepositoryOwner,baseRepositoryOwner)
 HEAD_REF=$(echo "$PR_JSON" | jq -r '.headRefName')
@@ -29,8 +32,17 @@ if [ "$HEAD_OWNER" != "$BASE_OWNER" ]; then
   exit 1
 fi
 
-if [ "$MERGEABLE" != "CONFLICTING" ] && [ "$MERGE_STATE" != "DIRTY" ]; then
-  echo "PR #$PR_NUMBER is not conflicting (mergeable=$MERGEABLE mergeStateStatus=$MERGE_STATE)"
+needs_sync="$(MERGEABLE="$MERGEABLE" MERGE_STATE="$MERGE_STATE" node --input-type=module -e "
+  import { prMergeWorkerNeedsSync } from '$NEEDS_SYNC_LIB';
+  const ok = prMergeWorkerNeedsSync({
+    mergeable: process.env.MERGEABLE,
+    mergeStateStatus: process.env.MERGE_STATE,
+  });
+  process.stdout.write(ok ? 'true' : 'false');
+")"
+
+if [ "$needs_sync" != "true" ]; then
+  echo "PR #$PR_NUMBER does not need master sync (mergeable=$MERGEABLE mergeStateStatus=$MERGE_STATE)"
   exit 3
 fi
 
@@ -62,4 +74,4 @@ if [ "$MERGE_EXIT" -ne 0 ]; then
 fi
 
 git push origin "HEAD:$HEAD_REF"
-echo "Merged origin/master into $HEAD_REF for PR #$PR_NUMBER"
+echo "Merged origin/master into $HEAD_REF for PR #$PR_NUMBER (mergeStateStatus=$MERGE_STATE)"

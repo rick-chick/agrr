@@ -91,6 +91,7 @@ jobs:
           node --test scripts/issue-worker-dispatch-lib.test.mjs
           node --test scripts/pr-merge-worker-needs-sync.test.mjs
           node --test scripts/verify-pr-agent-prep-workflow.test.mjs
+          node --test scripts/verify-resolve-pr-merge-conflicts-script.test.mjs
           node --test scripts/verify-issue-worker-dispatch-workflow.test.mjs
 
       - name: ensure-e2e-baseline bodies unit tests
