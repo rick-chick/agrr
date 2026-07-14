@@ -53,6 +53,8 @@ fn work_record_gateway_crud_roundtrip() {
     assert_eq!(seed.plan_id, created.cultivation_plan_id);
     assert_eq!(Some(seed.task_schedule_item_id), created.task_schedule_item_id);
     assert_eq!("除草作業", created.name);
+    assert_eq!(Some("F1".into()), created.field_name);
+    assert_eq!(Some("Test Crop".into()), created.crop_name);
     assert!(created.task_schedule_item.is_some());
 
     let found = gateway

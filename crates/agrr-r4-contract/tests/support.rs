@@ -55,6 +55,7 @@ pub struct WorkRecordPlanSeed {
     pub plan_id: i64,
     pub farm_id: i64,
     pub crop_id: i64,
+    pub crop_name: String,
     pub task_schedule_item_id: i64,
 }
 
@@ -239,6 +240,7 @@ pub fn seed_work_record_plan(user_id: i64) -> WorkRecordPlanSeed {
         plan_id,
         farm_id,
         crop_id,
+        crop_name,
         task_schedule_item_id,
     }
 }

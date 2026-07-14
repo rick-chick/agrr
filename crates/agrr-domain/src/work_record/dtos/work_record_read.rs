@@ -28,5 +28,7 @@ pub struct WorkRecordRead {
     pub notes: Option<String>,
     pub created_at: OffsetDateTime,
     pub updated_at: OffsetDateTime,
+    pub field_name: Option<String>,
+    pub crop_name: Option<String>,
     pub task_schedule_item: Option<WorkRecordTaskScheduleItemSummary>,
 }

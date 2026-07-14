@@ -21,8 +21,8 @@
   width: 100%;
   text-align: left;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
   padding: 0.75rem;
   border: 1px solid var(--color-border, #eee);
   border-radius: 0.5rem;
@@ -64,7 +64,8 @@
 }
 
 .plan-work-records__amount,
-.plan-work-records__notes {
+.plan-work-records__notes,
+.plan-work-records__field {
   grid-column: 1 / -1;
   font-size: 0.875rem;
   color: var(--color-text-secondary, #666);
@@ -77,11 +78,9 @@
 }
 
 .plan-work-records__photos {
-  align-self: start;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  max-width: 9.5rem;
 }
 
 .plan-work-records__photo-thumb {
@@ -165,12 +164,7 @@
 }
 
 @media (max-width: 480px) {
-  .plan-work-records__row {
-    grid-template-columns: 1fr;
-  }
-
   .plan-work-records__photos {
-    max-width: none;
     justify-content: flex-start;
   }
 }

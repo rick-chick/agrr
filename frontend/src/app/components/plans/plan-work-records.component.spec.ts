@@ -250,7 +250,7 @@ describe('PlanWorkRecordsComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 
-  it('places photo thumbnails in right column beside record meta', () => {
+  it('places photo thumbnails below record meta in a single column', () => {
     fixture.detectChanges();
     component.control = {
       loading: false,
@@ -307,6 +307,46 @@ describe('PlanWorkRecordsComponent', () => {
     expect(photos?.parentElement).toBe(row);
     expect(meta?.parentElement).toBe(row);
     expect(meta?.nextElementSibling).toBe(photos);
+  });
+
+  it('renders field and crop name when present on the record', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              field_name: 'North bed',
+              crop_name: 'Tomato',
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const field = fixture.nativeElement.querySelector('.plan-work-records__field');
+    expect(field?.textContent).toContain('North bed');
+    expect(field?.textContent).toContain('Tomato');
   });
 
   it('renders up to three photo thumbnails for records with photos', () => {

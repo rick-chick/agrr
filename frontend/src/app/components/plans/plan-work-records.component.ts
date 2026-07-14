@@ -77,6 +77,11 @@ const initialControl: PlanWorkRecordsViewState = {
                         } @else {
                           <span class="plan-work-records__badge">{{ 'plans.work_records.badge.adhoc' | translate }}</span>
                         }
+                        @if (record.field_name || record.crop_name) {
+                          <span class="plan-work-records__field">
+                            {{ record.field_name }} {{ record.crop_name }}
+                          </span>
+                        }
                         @if (record.amount) {
                           <span class="plan-work-records__amount">{{ record.amount }} {{ record.amount_unit }}</span>
                         }
