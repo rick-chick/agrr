@@ -10,7 +10,9 @@ use crate::work_record::gateways::{
     WorkRecordPhotoStatus,
 };
 use crate::work_record::interactors::private_plan_access;
-use crate::work_record::policies::work_record_photo_policy::byte_size_allowed;
+use crate::work_record::policies::work_record_photo_policy::{
+    byte_size_allowed, MAX_PHOTOS_PER_RECORD,
+};
 use crate::work_record::ports::WorkRecordPhotoUploadCompleteOutputPort;
 
 pub struct WorkRecordPhotoUploadCompleteInteractor<'a, O, P, G, S: ?Sized, C> {
@@ -105,19 +107,24 @@ where
             .into());
         }
 
-        let position = self
-            .photo_gateway
-            .count_ready_for_record(plan_id, work_record_id)?;
-
         let now = self.clock.now();
-        let ready = self.photo_gateway.mark_ready(
+        let ready = match self.photo_gateway.mark_ready_under_limit(
             plan_id,
             work_record_id,
             photo_id,
             byte_size,
-            position,
+            MAX_PHOTOS_PER_RECORD,
             now,
-        )?;
+        )? {
+            Some(row) => row,
+            None => {
+                return Err(record_invalid_field(
+                    "photos",
+                    "plans.work_records.photos.errors.limit_exceeded",
+                )
+                .into());
+            }
+        };
         let url = (self.read_url_builder)(plan_id, work_record_id, photo_id);
         let read = photo_row_to_read(ready, url).ok_or_else(|| {
             record_invalid_field("photo", "plans.work_records.photos.errors.invalid_state")
