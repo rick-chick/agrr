@@ -23,7 +23,12 @@ const CONFLICT_DISPATCH_SNIPPETS = [
   'skipping CI gate for conflict resolution',
 ];
 
-const DISPATCH_SCRIPT_SNIPPETS = ["action: 'conflict'"];
+const DISPATCH_SCRIPT_SNIPPETS = [
+  'buildConflictDispatchPayload',
+  './pr-merge-worker-dispatch-payload-lib.mjs',
+];
+
+const PAYLOAD_LIB_SNIPPETS = ["action: 'conflict'"];
 
 /**
  * @param {string} repoRoot
@@ -37,6 +42,7 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     repoRoot,
     'scripts/pr-merge-worker-dispatch-after-master-push.mjs',
   );
+  const payloadLibPath = join(repoRoot, 'scripts/pr-merge-worker-dispatch-payload-lib.mjs');
 
   let workflowText = '';
   try {
@@ -59,6 +65,13 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     errors.push(`missing dispatch script: ${dispatchScriptPath}`);
   }
 
+  let payloadLibText = '';
+  try {
+    payloadLibText = await readFile(payloadLibPath, 'utf8');
+  } catch {
+    errors.push(`missing payload lib: ${payloadLibPath}`);
+  }
+
   for (const snippet of REQUIRED_WORKFLOW_SNIPPETS) {
     if (!workflowText.includes(snippet)) {
       errors.push(`workflow missing required snippet: ${snippet}`);
@@ -74,6 +87,12 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   for (const snippet of DISPATCH_SCRIPT_SNIPPETS) {
     if (!dispatchScriptText.includes(snippet)) {
       errors.push(`dispatch script missing required snippet: ${snippet}`);
+    }
+  }
+
+  for (const snippet of PAYLOAD_LIB_SNIPPETS) {
+    if (!payloadLibText.includes(snippet)) {
+      errors.push(`payload lib missing required snippet: ${snippet}`);
     }
   }
 
