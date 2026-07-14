@@ -5,7 +5,7 @@ import { WorkRecordPhotoApiGateway } from './work-record-photo-api.gateway';
 
 describe('WorkRecordPhotoApiGateway', () => {
   it('calls upload_init, content PUT, and upload_complete in order', () => {
-    const post = vi.fn((path: string, body: unknown) => {
+    const post = vi.fn((path: string, _body: unknown) => {
       if (path.endsWith('/upload_init')) {
         return of({
           photo: {

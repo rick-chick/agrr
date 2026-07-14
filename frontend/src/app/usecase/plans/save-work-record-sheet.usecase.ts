@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
-import { concatMap, forkJoin, from, of } from 'rxjs';
+import { concatMap, forkJoin, from, Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { WORK_RECORD_PHOTO_RESIZER } from '../../domain/plans/work-record-photo-resizer.token';
@@ -65,30 +65,29 @@ export class SaveWorkRecordSheetUseCase implements SaveWorkRecordSheetInputPort 
       });
   }
 
-  private syncPhotos(dto: SaveWorkRecordSheetInputDto, workRecord: WorkRecord) {
+  private syncPhotos(dto: SaveWorkRecordSheetInputDto, workRecord: WorkRecord): Observable<void> {
     const delete$ =
       dto.photoIdsToDelete.length === 0
-        ? of(null)
+        ? of(undefined)
         : forkJoin(
             dto.photoIdsToDelete.map((photoId) =>
               this.photoGateway.deletePhoto(dto.planId, workRecord.id, photoId)
             )
+          ).pipe(map(() => undefined));
+
+    const upload$ =
+      dto.pendingPhotoFiles.length === 0
+        ? of(undefined)
+        : from(dto.pendingPhotoFiles).pipe(
+            concatMap((file) =>
+              from(this.resizePhoto(file)).pipe(
+                switchMap((blob) => this.uploadBlob(dto.planId, workRecord.id, blob))
+              )
+            ),
+            map(() => undefined)
           );
 
-    return delete$.pipe(
-      switchMap(() => {
-        if (dto.pendingPhotoFiles.length === 0) {
-          return of(null);
-        }
-        return from(dto.pendingPhotoFiles).pipe(
-          concatMap((file) =>
-            from(this.resizePhoto(file)).pipe(
-              switchMap((blob) => this.uploadBlob(dto.planId, workRecord.id, blob))
-            )
-          )
-        );
-      })
-    );
+    return delete$.pipe(switchMap(() => upload$));
   }
 
   private uploadBlob(planId: number, workRecordId: number, blob: Blob) {
