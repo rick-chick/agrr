@@ -250,6 +250,65 @@ describe('PlanWorkRecordsComponent', () => {
     expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
   });
 
+  it('places photo thumbnails in right column beside record meta', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: '10',
+              amount_unit: 'kg',
+              time_spent_minutes: null,
+              notes: 'Done in the morning',
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null,
+              photos: [
+                {
+                  id: 1,
+                  work_record_id: 1,
+                  position: 0,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/1.jpg',
+                  created_at: '2026-06-12'
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const row = fixture.nativeElement.querySelector('.plan-work-records__row');
+    const meta = row?.querySelector('.plan-work-records__meta');
+    const photos = row?.querySelector('.plan-work-records__photos');
+
+    expect(meta).toBeTruthy();
+    expect(meta?.querySelector('.plan-work-records__date')).toBeTruthy();
+    expect(meta?.querySelector('.plan-work-records__name')?.textContent).toContain('Weeding');
+    expect(meta?.querySelector('.plan-work-records__amount')?.textContent).toContain('10 kg');
+    expect(meta?.querySelector('.plan-work-records__notes')?.textContent).toContain('Done in the morning');
+    expect(photos).toBeTruthy();
+    expect(photos?.parentElement).toBe(row);
+    expect(meta?.parentElement).toBe(row);
+    expect(meta?.nextElementSibling).toBe(photos);
+  });
+
   it('renders up to three photo thumbnails for records with photos', () => {
     fixture.detectChanges();
     component.control = {
