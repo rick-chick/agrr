@@ -114,6 +114,8 @@ fn post_work_records_from_schedule_item_returns_201() {
     );
     assert_eq!("除草作業", record["name"].as_str().unwrap());
     assert_eq!("2026-06-12", record["actual_date"].as_str().unwrap());
+    assert_eq!("F1", record["field_name"].as_str().unwrap());
+    assert_eq!(seed.crop_name, record["crop_name"].as_str().unwrap());
     assert!(record["task_schedule_item"].is_object());
 }
 

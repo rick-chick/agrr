@@ -26,7 +26,17 @@ impl WorkRecordSqliteGateway {
     const SELECT_COLUMNS: &'static str = "wr.id, wr.cultivation_plan_id, wr.field_cultivation_id, \
          wr.task_schedule_item_id, wr.agricultural_task_id, wr.name, wr.task_type, wr.actual_date, \
          CAST(wr.amount AS TEXT), wr.amount_unit, wr.time_spent_minutes, wr.notes, \
-         wr.created_at, wr.updated_at, tsi.id, tsi.name, tsi.scheduled_date";
+         wr.created_at, wr.updated_at, \
+         NULLIF(TRIM(COALESCE(cpf.name, '')), ''), \
+         NULLIF(TRIM(COALESCE(cpc.name, cr.name, '')), ''), \
+         tsi.id, tsi.name, tsi.scheduled_date";
+
+    const FROM_JOIN: &'static str = " FROM work_records wr \
+         LEFT JOIN field_cultivations fc ON fc.id = wr.field_cultivation_id \
+         LEFT JOIN cultivation_plan_fields cpf ON cpf.id = fc.cultivation_plan_field_id \
+         LEFT JOIN cultivation_plan_crops cpc ON cpc.id = fc.cultivation_plan_crop_id \
+         LEFT JOIN crops cr ON cr.id = cpc.crop_id \
+         LEFT JOIN task_schedule_items tsi ON tsi.id = wr.task_schedule_item_id";
 
     fn parse_datetime(s: &str) -> OffsetDateTime {
         OffsetDateTime::parse(s, &Iso8601::DEFAULT).unwrap_or_else(|_| OffsetDateTime::now_utc())
@@ -47,12 +57,14 @@ impl WorkRecordSqliteGateway {
         })?;
         let created_at = Self::parse_datetime(&row.get::<_, String>(12)?);
         let updated_at = Self::parse_datetime(&row.get::<_, String>(13)?);
-        let item_id: Option<i64> = row.get(14)?;
+        let field_name: Option<String> = row.get(14)?;
+        let crop_name: Option<String> = row.get(15)?;
+        let item_id: Option<i64> = row.get(16)?;
         let task_schedule_item = item_id.map(|id| {
-            let scheduled_date_raw: Option<String> = row.get(16).unwrap_or(None);
+            let scheduled_date_raw: Option<String> = row.get(18).unwrap_or(None);
             WorkRecordTaskScheduleItemSummary {
                 id,
-                name: row.get(15).unwrap_or_default(),
+                name: row.get(17).unwrap_or_default(),
                 scheduled_date: scheduled_date_raw.as_deref().and_then(parse_iso_date),
             }
         });
@@ -71,6 +83,8 @@ impl WorkRecordSqliteGateway {
             notes: row.get(11)?,
             created_at,
             updated_at,
+            field_name,
+            crop_name,
             task_schedule_item,
         })
     }
@@ -82,11 +96,11 @@ impl WorkRecordSqliteGateway {
     ) -> rusqlite::Result<WorkRecordRead> {
         let sql = format!(
             "SELECT {} \
-             FROM work_records wr \
-             LEFT JOIN task_schedule_items tsi ON tsi.id = wr.task_schedule_item_id \
+             {} \
              WHERE wr.cultivation_plan_id = ?1 AND wr.id = ?2 \
              LIMIT 1",
-            Self::SELECT_COLUMNS
+            Self::SELECT_COLUMNS,
+            Self::FROM_JOIN
         );
         conn.query_row(&sql, params![plan_id, record_id], Self::row_to_read)
     }
@@ -143,10 +157,10 @@ impl WorkRecordGateway for WorkRecordSqliteGateway {
     ) -> Result<Vec<WorkRecordRead>, Box<dyn std::error::Error + Send + Sync>> {
         let mut sql = format!(
             "SELECT {} \
-             FROM work_records wr \
-             LEFT JOIN task_schedule_items tsi ON tsi.id = wr.task_schedule_item_id \
+             {} \
              WHERE wr.cultivation_plan_id = ?1",
-            Self::SELECT_COLUMNS
+            Self::SELECT_COLUMNS,
+            Self::FROM_JOIN
         );
         let mut values: Vec<Value> = vec![Value::from(plan_id)];
 
