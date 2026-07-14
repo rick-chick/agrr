@@ -11,7 +11,7 @@ use crate::work_record::dtos::WorkRecordPhotoUploadInitOutput;
 use crate::work_record::gateways::WorkRecordPhotoGateway;
 use crate::work_record::interactors::private_plan_access;
 use crate::work_record::policies::work_record_photo_policy::{
-    content_type_allowed, extension_for_content_type, photo_limit_exceeded, UPLOAD_URL_TTL_SECS,
+    content_type_allowed, extension_for_content_type, MAX_PHOTOS_PER_RECORD, UPLOAD_URL_TTL_SECS,
 };
 use crate::work_record::ports::WorkRecordPhotoUploadInitOutputPort;
 
@@ -73,30 +73,30 @@ where
             return Err(RecordNotFoundError.into());
         }
 
-        let count = self
-            .photo_gateway
-            .count_for_record(plan_id, work_record_id)?;
-        if photo_limit_exceeded(count) {
-            return Err(record_invalid_field(
-                "photos",
-                "plans.work_records.photos.errors.limit_exceeded",
-            )
-            .into());
-        }
-
         let now = self.clock.now();
         let ext = extension_for_content_type(content_type);
         let storage_key = format!(
             "work_record_photos/{plan_id}/{work_record_id}/{}.{ext}",
             now.unix_timestamp_nanos()
         );
-        let row = self.photo_gateway.insert_pending(
+
+        let row = match self.photo_gateway.insert_pending_under_limit(
             plan_id,
             work_record_id,
             &storage_key,
             content_type,
+            MAX_PHOTOS_PER_RECORD,
             now,
-        )?;
+        )? {
+            Some(row) => row,
+            None => {
+                return Err(record_invalid_field(
+                    "photos",
+                    "plans.work_records.photos.errors.limit_exceeded",
+                )
+                .into());
+            }
+        };
 
         let upload_expires_at = now + Duration::seconds(UPLOAD_URL_TTL_SECS);
         let upload_url = (self.upload_url_builder)(plan_id, work_record_id, row.id);

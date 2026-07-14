@@ -63,6 +63,17 @@ pub trait WorkRecordPhotoGateway: Send + Sync {
         now: OffsetDateTime,
     ) -> Result<WorkRecordPhotoRow, Box<dyn std::error::Error + Send + Sync>>;
 
+    /// Atomically insert a pending row only when total photos for the record are below `max_photos`.
+    fn insert_pending_under_limit(
+        &self,
+        plan_id: i64,
+        work_record_id: i64,
+        storage_key: &str,
+        content_type: &str,
+        max_photos: i32,
+        now: OffsetDateTime,
+    ) -> Result<Option<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>>;
+
     fn find_for_record(
         &self,
         plan_id: i64,
@@ -79,6 +90,25 @@ pub trait WorkRecordPhotoGateway: Send + Sync {
         position: i32,
         now: OffsetDateTime,
     ) -> Result<WorkRecordPhotoRow, Box<dyn std::error::Error + Send + Sync>>;
+
+    /// Atomically mark a pending photo ready with the next position when ready count is below `max_ready`.
+    fn mark_ready_under_limit(
+        &self,
+        plan_id: i64,
+        work_record_id: i64,
+        photo_id: i64,
+        byte_size: i64,
+        max_ready: i32,
+        now: OffsetDateTime,
+    ) -> Result<Option<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn touch_pending_updated_at(
+        &self,
+        plan_id: i64,
+        work_record_id: i64,
+        photo_id: i64,
+        now: OffsetDateTime,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     fn delete(
         &self,
@@ -101,6 +131,8 @@ pub trait WorkRecordPhotoGateway: Send + Sync {
 
     fn delete_stale_pending_older_than(
         &self,
+        plan_id: i64,
+        work_record_id: i64,
         cutoff: OffsetDateTime,
     ) -> Result<Vec<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>>;
 }

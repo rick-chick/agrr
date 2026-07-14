@@ -55,6 +55,18 @@ impl WorkRecordPhotoGateway for StubPhotoGateway {
         unimplemented!()
     }
 
+    fn insert_pending_under_limit(
+        &self,
+        _: i64,
+        _: i64,
+        _: &str,
+        _: &str,
+        _: i32,
+        _: OffsetDateTime,
+    ) -> Result<Option<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
     fn find_for_record(
         &self,
         _: i64,
@@ -73,6 +85,28 @@ impl WorkRecordPhotoGateway for StubPhotoGateway {
         _: i32,
         _: OffsetDateTime,
     ) -> Result<WorkRecordPhotoRow, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn mark_ready_under_limit(
+        &self,
+        _: i64,
+        _: i64,
+        _: i64,
+        _: i64,
+        _: i32,
+        _: OffsetDateTime,
+    ) -> Result<Option<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
+        unimplemented!()
+    }
+
+    fn touch_pending_updated_at(
+        &self,
+        _: i64,
+        _: i64,
+        _: i64,
+        _: OffsetDateTime,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         unimplemented!()
     }
 
@@ -103,6 +137,8 @@ impl WorkRecordPhotoGateway for StubPhotoGateway {
 
     fn delete_stale_pending_older_than(
         &self,
+        _: i64,
+        _: i64,
         _: OffsetDateTime,
     ) -> Result<Vec<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
         Ok(self.deleted.lock().unwrap().clone())
@@ -162,8 +198,13 @@ fn stale_pending_cleanup_deletes_metadata_and_attempts_object_delete() {
     };
     let clock = FixedClock(now);
 
-    let interactor =
-        WorkRecordPhotoStalePendingCleanupInteractor::new(&photo_gateway, &object_store, &clock);
+    let interactor = WorkRecordPhotoStalePendingCleanupInteractor::new(
+        &photo_gateway,
+        &object_store,
+        &clock,
+        1,
+        2,
+    );
     let removed = interactor.call().expect("cleanup");
     assert_eq!(removed.len(), 1);
     assert_eq!(removed[0].id, 7);
