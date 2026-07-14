@@ -258,6 +258,67 @@ describe('CropDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-detail__stage-task-badge')).toBeTruthy();
   });
 
+  it('links blueprint readiness checklist actions when setup is incomplete', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        crops: {
+          show: {
+            cultivation_template_title: 'Cultivation template',
+            task_schedule_blueprints_lead: 'Lead',
+            blueprint_readiness: {
+              detail_title: 'Configuration status',
+              stages_missing: 'Growth stages are missing base temperature or required GDD',
+              stages_action: 'Configure growth stages',
+              blueprints_missing: 'No task plans registered yet',
+              blueprints_action: 'Register task plans'
+            },
+            blueprint_summary: {
+              count: '{{count}} task plan(s)',
+              setup_required: 'Growth stages or task plans are not fully configured yet.',
+              edit_action: 'Edit task plans',
+              empty_on_detail: 'No task plans in this stage yet.'
+            },
+            stage_required_gdd_label: 'Required GDD for this stage',
+            gdd_unit: '°C·day',
+            blueprint_stage_lane: {
+              gdd_range: '{{start}}–{{end}} °C·day',
+              board_label: 'Task plans by stage'
+            }
+          }
+        }
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = withCropDetailSummaryState(
+      {
+        ...loadedState,
+        blueprintCount: 0,
+        blueprintReadiness: defaultBlueprintReadiness()
+      },
+      []
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const stagesLink = fixture.nativeElement.querySelector(
+      '.blueprint-readiness a[href="/crops/3/stages"]'
+    ) as HTMLAnchorElement | null;
+    const blueprintsLink = fixture.nativeElement.querySelector(
+      '.blueprint-readiness a[href="/crops/3/task_schedule_blueprints"]'
+    ) as HTMLAnchorElement | null;
+
+    expect(stagesLink).toBeTruthy();
+    expect(stagesLink?.textContent).toContain('Configure growth stages');
+    expect(blueprintsLink).toBeTruthy();
+    expect(blueprintsLink?.textContent).toContain('Register task plans');
+  });
+
   it('renders cultivation template action buttons with equal secondary styling', async () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation(
