@@ -2,6 +2,8 @@
 
 use crate::adapters::SystemClock;
 use crate::state::AppState;
+use crate::work_record_photos::work_record_photo_store;
+use agrr_adapters_sqlite::deletion_undo::photo_finalize::finalize_deferred_photo_objects;
 use agrr_adapters_sqlite::DeletionUndoSqliteGateway;
 use agrr_domain::deletion_undo::dtos::{DeletionUndoRestoreInput, DeletionUndoRestoreOutput};
 use agrr_domain::deletion_undo::interactors::DeletionUndoRestoreInteractor;
@@ -73,9 +75,17 @@ async fn restore(
         status: StatusCode::INTERNAL_SERVER_ERROR,
         body: json!({"status": "error", "error": "no response"}),
     };
+    let undo_token = body.undo_token.clone();
     let input = DeletionUndoRestoreInput::new(body.undo_token);
     let mut interactor =
         DeletionUndoRestoreInteractor::new(&mut presenter, &gateway, &clock);
     interactor.call(input);
+
+    if presenter.status == StatusCode::UNPROCESSABLE_ENTITY {
+        if let Ok(store) = work_record_photo_store() {
+            let _ = finalize_deferred_photo_objects(&gateway, &undo_token, store.as_ref());
+        }
+    }
+
     (presenter.status, Json(presenter.body))
 }

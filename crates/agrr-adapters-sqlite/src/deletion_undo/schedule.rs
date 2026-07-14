@@ -27,6 +27,7 @@ pub fn schedule_destroy(
 ) -> Result<ScheduledUndo, Box<dyn std::error::Error + Send + Sync>> {
     pool.with_write_box(|conn| {
         let snapshot = build_snapshot(conn, resource_type, resource_id)?;
+        let deferred_photo_keys = collect_deferred_photo_storage_keys(conn, resource_type, resource_id)?;
         let undo_token = new_uuid_v4();
         let expires_at = OffsetDateTime::now_utc() + time::Duration::seconds(default_ttl_secs());
         let expires_at_str = expires_at
@@ -48,6 +49,12 @@ pub fn schedule_destroy(
             "resource_dom_id".into(),
             json!(resource_dom_id(resource_type, resource_id)),
         );
+        if !deferred_photo_keys.is_empty() {
+            metadata.insert(
+                "deferred_photo_storage_keys".into(),
+                json!(deferred_photo_keys),
+            );
+        }
         for (k, v) in extra_metadata {
             metadata.insert(k, v);
         }
@@ -203,7 +210,7 @@ fn build_snapshot(
         "InteractionRule" => {
             single_table_snapshot(conn, "InteractionRule", "interaction_rules", resource_id)
         }
-        "WorkRecord" => single_table_snapshot(conn, "WorkRecord", "work_records", resource_id),
+        "WorkRecord" => work_record_snapshot(conn, resource_id),
         _ => Err(rusqlite::Error::InvalidParameterName(
             resource_type.into(),
         )),
@@ -299,10 +306,17 @@ fn cultivation_plan_snapshot(conn: &Connection, plan_id: i64) -> rusqlite::Resul
     let mut stmt = conn.prepare("SELECT * FROM work_records WHERE cultivation_plan_id = ?1")?;
     let mut rows = stmt.query(params![plan_id])?;
     while let Some(row) = rows.next()? {
+        let attrs = row_map(row)?;
+        let work_record_id = attrs
+            .get("id")
+            .and_then(|v| v.as_i64())
+            .ok_or_else(|| rusqlite::Error::InvalidParameterName("work_record.id".into()))?;
         work_records.push(json!({
             "model": "WorkRecord",
-            "attributes": row_map(row)?,
-            "associations": {}
+            "attributes": attrs,
+            "associations": {
+                "work_record_photos": work_record_photo_nodes(conn, work_record_id)?
+            }
         }));
     }
     Ok(json!({
@@ -370,6 +384,60 @@ fn farm_snapshot(conn: &Connection, farm_id: i64) -> rusqlite::Result<Value> {
         "attributes": farm_attrs,
         "associations": { "fields": field_nodes }
     }))
+}
+
+fn work_record_snapshot(conn: &Connection, work_record_id: i64) -> rusqlite::Result<Value> {
+    let attrs = read_row_map(
+        conn,
+        "SELECT * FROM work_records WHERE id = ?1",
+        params![work_record_id],
+    )?;
+    Ok(json!({
+        "model": "WorkRecord",
+        "attributes": attrs,
+        "associations": {
+            "work_record_photos": work_record_photo_nodes(conn, work_record_id)?
+        }
+    }))
+}
+
+fn work_record_photo_nodes(conn: &Connection, work_record_id: i64) -> rusqlite::Result<Vec<Value>> {
+    let mut photos = Vec::new();
+    let mut stmt = conn.prepare("SELECT * FROM work_record_photos WHERE work_record_id = ?1")?;
+    let mut rows = stmt.query(params![work_record_id])?;
+    while let Some(row) = rows.next()? {
+        photos.push(json!({
+            "model": "WorkRecordPhoto",
+            "attributes": row_map(row)?,
+            "associations": {}
+        }));
+    }
+    Ok(photos)
+}
+
+fn collect_deferred_photo_storage_keys(
+    conn: &Connection,
+    resource_type: &str,
+    resource_id: i64,
+) -> rusqlite::Result<Vec<String>> {
+    let sql = match resource_type {
+        "WorkRecord" => {
+            "SELECT storage_key FROM work_record_photos \
+             WHERE work_record_id = ?1 AND status = 'ready'"
+        }
+        "CultivationPlan" => {
+            "SELECT storage_key FROM work_record_photos \
+             WHERE cultivation_plan_id = ?1 AND status = 'ready'"
+        }
+        _ => return Ok(Vec::new()),
+    };
+    let mut stmt = conn.prepare(sql)?;
+    let mut rows = stmt.query(params![resource_id])?;
+    let mut keys = Vec::new();
+    while let Some(row) = rows.next()? {
+        keys.push(row.get(0)?);
+    }
+    Ok(keys)
 }
 
 fn single_table_snapshot(

@@ -11,8 +11,8 @@ use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, WorkRecordPhotoSqliteGa
 use agrr_domain::work_record::dtos::WorkRecordPhotoRead;
 use agrr_domain::work_record::gateways::{photo_row_to_read, WorkRecordPhotoGateway, WorkRecordPhotoObjectStoreGateway};
 use agrr_domain::work_record::interactors::{
-    WorkRecordPhotoDestroyInteractor, WorkRecordPhotoUploadCompleteInteractor,
-    WorkRecordPhotoUploadInitInteractor,
+    WorkRecordPhotoDestroyInteractor, WorkRecordPhotoStalePendingCleanupInteractor,
+    WorkRecordPhotoUploadCompleteInteractor, WorkRecordPhotoUploadInitInteractor,
 };
 use agrr_domain::work_record::policies::work_record_photo_policy::MAX_BYTE_SIZE;
 use agrr_domain::work_record::ports::{
@@ -208,6 +208,21 @@ fn internal_error() -> (StatusCode, Json<Value>) {
     )
 }
 
+pub fn work_record_photo_store(
+) -> Result<Arc<dyn WorkRecordPhotoObjectStoreGateway>, (StatusCode, Json<Value>)> {
+    photo_store()
+}
+
+fn cleanup_stale_pending_photos(
+    photo_gateway: &WorkRecordPhotoSqliteGateway,
+    object_store: &dyn WorkRecordPhotoObjectStoreGateway,
+) {
+    let clock = SystemClock;
+    let interactor =
+        WorkRecordPhotoStalePendingCleanupInteractor::new(photo_gateway, object_store, &clock);
+    let _ = interactor.call();
+}
+
 fn photo_store() -> Result<Arc<dyn WorkRecordPhotoObjectStoreGateway>, (StatusCode, Json<Value>)> {
     WorkRecordPhotoGcsStore::from_env()
         .map(|store| Arc::new(store) as Arc<dyn WorkRecordPhotoObjectStoreGateway>)
@@ -245,6 +260,9 @@ async fn upload_init(
     let pool = state.sqlite.clone();
     let plan_gateway = CultivationPlanSqliteGateway::new(pool.clone());
     let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
+    if let Ok(store) = photo_store() {
+        cleanup_stale_pending_photos(&photo_gateway, store.as_ref());
+    }
     let clock = SystemClock;
     let mut presenter = InitPresenter { body: None };
     let upload_url_builder = |plan: i64, record: i64, photo: i64| {

@@ -210,6 +210,13 @@ impl WorkRecordPhotoGateway for StubPhotoGateway {
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         Ok(self.record_exists)
     }
+
+    fn delete_stale_pending_older_than(
+        &self,
+        _: OffsetDateTime,
+    ) -> Result<Vec<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(Vec::new())
+    }
 }
 
 fn owned_plan(user_id: i64) -> CultivationPlanEntity {
