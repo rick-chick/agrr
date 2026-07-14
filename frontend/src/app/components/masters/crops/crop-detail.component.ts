@@ -135,6 +135,12 @@ const initialControl: CropDetailViewState = {
                     <span>{{ 'crops.show.blueprint_readiness.stages_ready' | translate }}</span>
                   } @else {
                     <span>{{ 'crops.show.blueprint_readiness.stages_missing' | translate }}</span>
+                    <a
+                      [routerLink]="['/crops', control.crop.id, 'stages']"
+                      class="blueprint-readiness__link"
+                    >
+                      {{ 'crops.show.blueprint_readiness.stages_action' | translate }}
+                    </a>
                   }
                 </li>
                 <li [class.blueprint-readiness__item--ok]="control.blueprintReadiness.blueprintsReady">
@@ -142,6 +148,12 @@ const initialControl: CropDetailViewState = {
                     <span>{{ 'crops.show.blueprint_readiness.blueprints_ready' | translate }}</span>
                   } @else {
                     <span>{{ 'crops.show.blueprint_readiness.blueprints_missing' | translate }}</span>
+                    <a
+                      [routerLink]="['/crops', control.crop.id, 'task_schedule_blueprints']"
+                      class="blueprint-readiness__link"
+                    >
+                      {{ 'crops.show.blueprint_readiness.blueprints_action' | translate }}
+                    </a>
                   }
                 </li>
               </ul>
