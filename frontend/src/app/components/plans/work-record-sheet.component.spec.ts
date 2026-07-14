@@ -8,6 +8,10 @@ import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
 import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
+import {
+  WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO,
+  WORK_RECORD_PHOTO_THUMB_WIDTH_SHEET
+} from '../../domain/plans/work-record-photo.constants';
 
 describe('WorkRecordSheetComponent', () => {
   let fixture: ComponentFixture<WorkRecordSheetComponent>;
@@ -135,7 +139,7 @@ describe('WorkRecordSheetComponent', () => {
       '.work-record-sheet__photo-thumb'
     ) as HTMLElement;
     expect(thumb).toBeTruthy();
-    expect(getComputedStyle(thumb).aspectRatio).toBe('4 / 3');
-    expect(getComputedStyle(thumb).width).toBe('4.5rem');
+    expect(getComputedStyle(thumb).aspectRatio).toBe(WORK_RECORD_PHOTO_THUMB_ASPECT_RATIO);
+    expect(getComputedStyle(thumb).width).toBe(WORK_RECORD_PHOTO_THUMB_WIDTH_SHEET);
   });
 });
