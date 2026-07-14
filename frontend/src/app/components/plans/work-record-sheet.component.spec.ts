@@ -136,6 +136,6 @@ describe('WorkRecordSheetComponent', () => {
     ) as HTMLElement;
     expect(thumb).toBeTruthy();
     expect(getComputedStyle(thumb).aspectRatio).toBe('4 / 3');
-    expect(getComputedStyle(thumb).width).toBe('72px');
+    expect(getComputedStyle(thumb).width).toBe('4.5rem');
   });
 });
