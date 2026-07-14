@@ -1,9 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { formatIsoDateForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
+import {
+  previewWorkRecordPhotos,
+  sortedWorkRecordPhotos
+} from '../../domain/plans/work-record-photo-preview';
 import { WorkRecord } from '../../models/plans/work-record';
+import { WorkRecordPhoto } from '../../models/plans/work-record-photo';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import { PLAN_WORK_RECORDS_PROVIDERS } from '../../usecase/plans/plan-work-records.providers';
@@ -77,6 +82,28 @@ const initialControl: PlanWorkRecordsViewState = {
                       @if (record.notes) {
                         <span class="plan-work-records__notes">{{ record.notes }}</span>
                       }
+                      @if (record.photos?.length) {
+                        <div
+                          class="plan-work-records__photos"
+                          (click)="$event.stopPropagation()"
+                        >
+                          @for (photo of previewPhotos(record); track photo.id; let i = $index) {
+                            <button
+                              type="button"
+                              class="plan-work-records__photo-thumb"
+                              [attr.aria-label]="'plans.work_records.photos.view' | translate"
+                              (click)="openLightbox(record, i); $event.stopPropagation()"
+                            >
+                              <img
+                                [src]="photo.url"
+                                alt=""
+                                loading="lazy"
+                                (error)="onPhotoUrlError()"
+                              />
+                            </button>
+                          }
+                        </div>
+                      }
                     </button>
                   </li>
                 }
@@ -92,17 +119,59 @@ const initialControl: PlanWorkRecordsViewState = {
       (saved)="reload({ silent: true })"
       (deleted)="reload({ silent: true })"
     />
+
+    <dialog #photoLightbox class="plan-work-records__lightbox" (cancel)="closeLightbox()">
+      @if (lightboxPhotos.length) {
+        <div class="plan-work-records__lightbox-shell">
+          <button
+            type="button"
+            class="plan-work-records__lightbox-close btn btn-secondary btn-sm"
+            (click)="closeLightbox()"
+          >
+            {{ 'plans.work_records.photos.close' | translate }}
+          </button>
+          @if (lightboxPhotos.length > 1) {
+            <button
+              type="button"
+              class="plan-work-records__lightbox-prev"
+              [attr.aria-label]="'plans.work_records.photos.prev' | translate"
+              (click)="showPreviousPhoto()"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              class="plan-work-records__lightbox-next"
+              [attr.aria-label]="'plans.work_records.photos.next' | translate"
+              (click)="showNextPhoto()"
+            >
+              ›
+            </button>
+          }
+          <img
+            class="plan-work-records__lightbox-image"
+            [src]="lightboxPhotos[lightboxIndex].url"
+            alt=""
+            (error)="onPhotoUrlError()"
+          />
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./plan-work-records.component.css']
 })
 export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
   @ViewChild(WorkRecordSheetComponent) sheet!: WorkRecordSheetComponent;
+  @ViewChild('photoLightbox') photoLightbox?: ElementRef<HTMLDialogElement>;
 
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadWorkRecordsUseCase);
   private readonly presenter = inject(PlanWorkRecordsPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
+
+  lightboxPhotos: WorkRecordPhoto[] = [];
+  lightboxIndex = 0;
 
   get planId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -135,6 +204,43 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   openEdit(record: WorkRecord): void {
     this.sheet.openEdit(record);
+  }
+
+  previewPhotos(record: WorkRecord): WorkRecordPhoto[] {
+    return previewWorkRecordPhotos(record.photos);
+  }
+
+  openLightbox(record: WorkRecord, index: number): void {
+    this.lightboxPhotos = sortedWorkRecordPhotos(record.photos);
+    this.lightboxIndex = index;
+    this.photoLightbox?.nativeElement.showModal();
+    this.cdr.markForCheck();
+  }
+
+  closeLightbox(): void {
+    if (this.lightboxPhotos.length) {
+      this.photoLightbox?.nativeElement.close();
+    }
+    this.lightboxPhotos = [];
+    this.lightboxIndex = 0;
+    this.cdr.markForCheck();
+  }
+
+  showPreviousPhoto(): void {
+    if (!this.lightboxPhotos.length) return;
+    this.lightboxIndex =
+      (this.lightboxIndex - 1 + this.lightboxPhotos.length) % this.lightboxPhotos.length;
+    this.cdr.markForCheck();
+  }
+
+  showNextPhoto(): void {
+    if (!this.lightboxPhotos.length) return;
+    this.lightboxIndex = (this.lightboxIndex + 1) % this.lightboxPhotos.length;
+    this.cdr.markForCheck();
+  }
+
+  onPhotoUrlError(): void {
+    this.reload({ silent: true });
   }
 
   displayDate(iso: string): string {

@@ -19,6 +19,8 @@ describe('PlanWorkRecordsComponent', () => {
     loadUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
 
     TestBed.overrideComponent(PlanWorkRecordsComponent, {
       set: {
@@ -246,5 +248,307 @@ describe('PlanWorkRecordsComponent', () => {
     component.ngOnInit();
     expect(mockPresenter.setView).toHaveBeenCalledWith(component);
     expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
+  });
+
+  it('renders up to three photo thumbnails for records with photos', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null,
+              photos: [
+                {
+                  id: 1,
+                  work_record_id: 1,
+                  position: 0,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/1.jpg',
+                  created_at: '2026-06-12'
+                },
+                {
+                  id: 2,
+                  work_record_id: 1,
+                  position: 1,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/2.jpg',
+                  created_at: '2026-06-12'
+                },
+                {
+                  id: 3,
+                  work_record_id: 1,
+                  position: 2,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/3.jpg',
+                  created_at: '2026-06-12'
+                },
+                {
+                  id: 4,
+                  work_record_id: 1,
+                  position: 3,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/4.jpg',
+                  created_at: '2026-06-12'
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const thumbs = fixture.nativeElement.querySelectorAll('.plan-work-records__photo-thumb');
+    expect(thumbs.length).toBe(3);
+    expect(thumbs[0].querySelector('img')?.getAttribute('src')).toBe('/photos/1.jpg');
+  });
+
+  it('does not render photo thumbnails when record has no photos', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-work-records__photos')).toBeNull();
+  });
+
+  it('opens lightbox on thumbnail click without opening edit sheet', () => {
+    const openEditSpy = vi.spyOn(component, 'openEdit');
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null,
+              photos: [
+                {
+                  id: 1,
+                  work_record_id: 1,
+                  position: 0,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/1.jpg',
+                  created_at: '2026-06-12'
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    const thumbBtn = fixture.nativeElement.querySelector('.plan-work-records__photo-thumb');
+    thumbBtn?.click();
+    fixture.detectChanges();
+
+    expect(openEditSpy).not.toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(component.lightboxPhotos).toHaveLength(1);
+  });
+
+  it('closes lightbox when close button is clicked', () => {
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null,
+              photos: [
+                {
+                  id: 1,
+                  work_record_id: 1,
+                  position: 0,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/1.jpg',
+                  created_at: '2026-06-12'
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.plan-work-records__photo-thumb')?.click();
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.plan-work-records__lightbox-close')?.click();
+    fixture.detectChanges();
+
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+    expect(component.lightboxPhotos).toEqual([]);
+  });
+
+  it('navigates between photos in lightbox when multiple exist', () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        'plans.work_records.photos.close': 'Close',
+        'plans.work_records.photos.prev': 'Previous photo',
+        'plans.work_records.photos.next': 'Next photo',
+        'plans.work_records.photos.view': 'View photo'
+      },
+      true
+    );
+
+    fixture.detectChanges();
+    component.control = {
+      loading: false,
+      error: null,
+      plan: { id: 7, name: 'Field plan' },
+      groups: [
+        {
+          monthLabel: '2026-06',
+          records: [
+            {
+              id: 1,
+              cultivation_plan_id: 7,
+              field_cultivation_id: 10,
+              task_schedule_item_id: null,
+              agricultural_task_id: null,
+              name: 'Weeding',
+              task_type: null,
+              actual_date: '2026-06-12',
+              amount: null,
+              amount_unit: null,
+              time_spent_minutes: null,
+              notes: null,
+              created_at: '2026-06-12',
+              updated_at: '2026-06-12',
+              task_schedule_item: null,
+              photos: [
+                {
+                  id: 1,
+                  work_record_id: 1,
+                  position: 0,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/1.jpg',
+                  created_at: '2026-06-12'
+                },
+                {
+                  id: 2,
+                  work_record_id: 1,
+                  position: 1,
+                  content_type: 'image/jpeg',
+                  byte_size: 100,
+                  url: '/photos/2.jpg',
+                  created_at: '2026-06-12'
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.plan-work-records__photo-thumb')?.click();
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector(
+      '.plan-work-records__lightbox-image'
+    ) as HTMLImageElement;
+    expect(image?.src).toContain('/photos/1.jpg');
+
+    fixture.nativeElement.querySelector('.plan-work-records__lightbox-next')?.click();
+    fixture.detectChanges();
+    expect(image?.src).toContain('/photos/2.jpg');
+
+    fixture.nativeElement.querySelector('.plan-work-records__lightbox-prev')?.click();
+    fixture.detectChanges();
+    expect(image?.src).toContain('/photos/1.jpg');
   });
 });
