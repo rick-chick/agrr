@@ -5,6 +5,7 @@
  */
 import { execSync } from 'node:child_process';
 
+import { buildConflictDispatchPayload } from './pr-merge-worker-dispatch-payload-lib.mjs';
 import { selectSyncCandidates } from './pr-merge-worker-needs-sync.mjs';
 
 const webhookUrl = process.env.WEBHOOK_URL ?? '';
@@ -35,18 +36,7 @@ if (candidates.length === 0) {
 }
 
 for (const pr of candidates) {
-  const payload = {
-    repository,
-    pr_number: pr.number,
-    pr_title: pr.title,
-    pr_url: pr.url,
-    action: 'conflict',
-    head_ref: pr.headRefName,
-    head_sha: pr.headRefOid,
-    author: pr.author?.login ?? '',
-    mergeable_state: pr.mergeable ?? '',
-    merge_state_status: pr.mergeStateStatus ?? '',
-  };
+  const payload = buildConflictDispatchPayload({ repository, pr });
 
   execSync(
     `curl -fsS -X POST "${webhookUrl}" -H "Authorization: Bearer ${webhookKey}" -H "Content-Type: application/json" -d @-`,

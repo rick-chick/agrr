@@ -6,10 +6,17 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'pr-merge-worker-needs-sync.mjs',
   'git merge origin/master',
   'mergeStateStatus=$MERGE_STATE',
+  'does not need master sync',
+  'exit 3',
+  'fork PR is not supported',
+  'git worktree add',
+  'git worktree remove',
 ];
 
 const FORBIDDEN_SCRIPT_SNIPPETS = [
   'update-branch',
+  'git checkout',
+  'git switch',
 ];
 
 /**
