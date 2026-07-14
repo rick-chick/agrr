@@ -18,6 +18,10 @@ impl DeletionUndoSqliteGateway {
     pub fn new(pool: SqlitePool) -> Self {
         Self { pool }
     }
+
+    pub(crate) fn pool(&self) -> &SqlitePool {
+        &self.pool
+    }
 }
 
 fn domain_sqlite_err<E: std::error::Error + Send + Sync + 'static>(err: E) -> rusqlite::Error {

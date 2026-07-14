@@ -4,6 +4,8 @@ pub const MAX_PHOTOS_PER_RECORD: i32 = 3;
 pub const MAX_BYTE_SIZE: i64 = 5 * 1024 * 1024;
 pub const UPLOAD_URL_TTL_SECS: i64 = 600;
 pub const READ_URL_TTL_SECS: i64 = 900;
+/// Pending uploads older than this are removed from metadata (and best-effort object delete).
+pub const PENDING_UPLOAD_CLEANUP_TTL_SECS: i64 = UPLOAD_URL_TTL_SECS * 2;
 
 const ALLOWED_CONTENT_TYPES: &[&str] = &["image/jpeg", "image/png", "image/webp"];
 

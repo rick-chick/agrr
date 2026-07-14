@@ -15,7 +15,7 @@ fn work_record_photo_gateway_pending_to_ready_roundtrip() {
     let pool = work_record_integration_pool();
     let seed = seed_work_record_crud(&pool);
     let record_gateway = WorkRecordSqliteGateway::new(pool.clone());
-    let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool);
+    let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool.clone());
     let now = OffsetDateTime::now_utc();
 
     let created = record_gateway
@@ -61,4 +61,57 @@ fn work_record_photo_gateway_pending_to_ready_roundtrip() {
         .expect("list");
     assert_eq!(1, listed.len());
     assert_eq!(pending.id, listed[0].id);
+}
+
+#[test]
+fn work_record_photo_gateway_deletes_stale_pending_rows() {
+    let pool = work_record_integration_pool();
+    let seed = seed_work_record_crud(&pool);
+    let record_gateway = WorkRecordSqliteGateway::new(pool.clone());
+    let photo_gateway = WorkRecordPhotoSqliteGateway::new(pool.clone());
+    let now = OffsetDateTime::now_utc();
+
+    let created = record_gateway
+        .create(
+            seed.plan_id,
+            WorkRecordCreatePersistAttrs {
+                field_cultivation_id: Some(seed.field_cultivation_id),
+                task_schedule_item_id: Some(seed.task_schedule_item_id),
+                agricultural_task_id: Some(seed.agricultural_task_id),
+                name: "古い pending".into(),
+                task_type: Some("field_work".into()),
+                actual_date: Date::from_calendar_date(2026, time::Month::June, 12).unwrap(),
+                amount: None,
+                amount_unit: None,
+                time_spent_minutes: None,
+                notes: None,
+                created_at: now,
+                updated_at: now,
+            },
+        )
+        .expect("create work record");
+
+    let pending = photo_gateway
+        .insert_pending(
+            seed.plan_id,
+            created.id,
+            "work_record_photos/10/1/stale.jpg",
+            "image/jpeg",
+            now,
+        )
+        .expect("insert pending");
+
+    pool.with_write(|conn| {
+        conn.execute(
+            "UPDATE work_record_photos SET created_at = datetime('now', '-2 hours') WHERE id = ?1",
+            rusqlite::params![pending.id],
+        )
+    })
+    .expect("age pending row");
+
+    let removed = photo_gateway
+        .delete_stale_pending_older_than(now - time::Duration::minutes(30))
+        .expect("delete stale pending");
+    assert_eq!(removed.len(), 1);
+    assert_eq!(removed[0].id, pending.id);
 }

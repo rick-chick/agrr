@@ -249,4 +249,30 @@ impl WorkRecordPhotoGateway for WorkRecordPhotoSqliteGateway {
             Ok(count > 0)
         })
     }
+
+    fn delete_stale_pending_older_than(
+        &self,
+        cutoff: OffsetDateTime,
+    ) -> Result<Vec<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_write_box(|conn| {
+            let cutoff_str = Self::format_datetime(cutoff);
+            let mut stmt = conn.prepare(&format!(
+                "SELECT {} FROM work_record_photos \
+                 WHERE status = 'pending' AND created_at < ?1",
+                Self::SELECT_COLS
+            ))?;
+            let rows = stmt
+                .query_map(params![cutoff_str], Self::row_from_query)?
+                .collect::<Result<Vec<_>, _>>()?;
+            if rows.is_empty() {
+                return Ok(Vec::new());
+            }
+            conn.execute(
+                "DELETE FROM work_record_photos \
+                 WHERE status = 'pending' AND created_at < ?1",
+                params![cutoff_str],
+            )?;
+            Ok(rows)
+        })
+    }
 }

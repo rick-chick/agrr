@@ -98,6 +98,11 @@ pub trait WorkRecordPhotoGateway: Send + Sync {
         plan_id: i64,
         work_record_id: i64,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>>;
+
+    fn delete_stale_pending_older_than(
+        &self,
+        cutoff: OffsetDateTime,
+    ) -> Result<Vec<WorkRecordPhotoRow>, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 pub trait WorkRecordPhotoObjectStoreGateway: Send + Sync {
