@@ -56,6 +56,8 @@ describe('WorkRecordSheetComponent', () => {
       'plans.work.sheet.show_details': '詳細を追加',
       'plans.work.sheet.hide_details': '詳細を閉じる',
       'plans.work.sheet.submit': '記録する',
+      'plans.work.sheet.photos.label': '写真',
+      'plans.work.sheet.photos.remove': '削除',
       'common.cancel': 'キャンセル',
       'common.loading': '読み込み中…'
     });
@@ -119,5 +121,21 @@ describe('WorkRecordSheetComponent', () => {
     ) as HTMLButtonElement;
     expect(submit.disabled).toBe(false);
     expect(component.control.form.name).toBe('除草');
+  });
+
+  it('renders photo thumbnails with landscape 4:3 aspect ratio', () => {
+    component.openAdHoc([]);
+    component.control = {
+      ...component.control,
+      existingPhotos: [{ id: 1, url: '/photos/1.jpg', markedForDelete: false }]
+    };
+    fixture.detectChanges();
+
+    const thumb = fixture.nativeElement.querySelector(
+      '.work-record-sheet__photo-thumb'
+    ) as HTMLElement;
+    expect(thumb).toBeTruthy();
+    expect(getComputedStyle(thumb).aspectRatio).toBe('4 / 3');
+    expect(getComputedStyle(thumb).width).toBe('72px');
   });
 });

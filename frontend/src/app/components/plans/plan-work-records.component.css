@@ -78,8 +78,8 @@
 }
 
 .plan-work-records__photo-thumb {
-  width: 3rem;
-  height: 3rem;
+  width: 4rem;
+  aspect-ratio: 4 / 3;
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
