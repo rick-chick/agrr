@@ -350,6 +350,8 @@ describe('GanttChartComponent', () => {
 
         const actionButtons = bar.querySelectorAll('.action-button');
         expect(actionButtons.length).toBe(2);
+        expect(actionButtons[0].classList.contains('action-button--secondary')).toBe(true);
+        expect(actionButtons[1].classList.contains('action-button--secondary')).toBe(true);
         expect(actionButtons[0].textContent?.trim()).toBe('作物を追加');
         expect(actionButtons[1].textContent?.trim()).toBe('圃場追加');
       });

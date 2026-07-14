@@ -57,24 +57,20 @@ const initialControl: PublicPlanResultsViewState = {
         } @else if (control.data) {
           <!-- 計画完成サマリー（.gantt-results-header）は意図的に非表示。ngx-translate は %{count} 非対応のため生表示になっていた。 -->
 
-          <div class="public-plan-results__header-actions">
-            <button type="button" class="btn btn-primary" (click)="savePlan()">
-              {{ 'public_plans.save.button' | translate }}
-            </button>
-
-            @if (auth.user()) {
-              <a [routerLink]="['/plans']" class="btn btn-white">
-                {{ 'public_plans.results.view_my_plans' | translate }}
-              </a>
-            }
-
-            <a [routerLink]="['/public-plans/new']" class="btn btn-white">
-              {{ 'public_plans.results.create_new_plan' | translate }}
-            </a>
-          </div>
-
           <div class="public-plan-results__body plan-detail-surface">
-            <app-plan-gantt-climate-shell [data]="control.data" [planType]="planType" />
+            <app-plan-gantt-climate-shell [data]="control.data" [planType]="planType">
+              <div ganttActionPrefix class="public-plan-results__gantt-prefix">
+                <button type="button" class="btn btn-primary" (click)="savePlan()">
+                  {{ 'public_plans.save.button' | translate }}
+                </button>
+
+                @if (auth.user()) {
+                  <a [routerLink]="['/plans']" class="btn btn-white">
+                    {{ 'public_plans.results.view_my_plans' | translate }}
+                  </a>
+                }
+              </div>
+            </app-plan-gantt-climate-shell>
           </div>
         }
       </div>
