@@ -6,10 +6,8 @@ import {
   canMarkReady,
   isEligibleAgentPr,
   isNonFatalMarkReadyError,
-  isNonFatalUpdateBranchError,
   resolveGhToken,
   selectDraftPrNumberToReady,
-  shouldSyncWithMaster,
   sortedEligibleDraftNumbers,
 } from './pr-agent-prep-lib.mjs';
 
@@ -76,23 +74,6 @@ test('isEligibleAgentPr rejects blocking labels', () => {
     isEligibleAgentPr({ ...BASE_META, labels: ['agent-no-merge'] }),
     false,
   );
-});
-
-test('shouldSyncWithMaster detects behind and dirty merge states', () => {
-  assert.equal(shouldSyncWithMaster('BEHIND'), true);
-  assert.equal(shouldSyncWithMaster('DIRTY'), true);
-  assert.equal(shouldSyncWithMaster('CLEAN'), false);
-  assert.equal(shouldSyncWithMaster('UNKNOWN'), false);
-});
-
-test('isNonFatalUpdateBranchError matches GITHUB_TOKEN integration permission errors', () => {
-  assert.equal(
-    isNonFatalUpdateBranchError(
-      'GraphQL: Resource not accessible by integration (updatePullRequestBranch)',
-    ),
-    true,
-  );
-  assert.equal(isNonFatalUpdateBranchError('merge conflict'), false);
 });
 
 test('canMarkReady requires draft, empty queue, and green CI', () => {

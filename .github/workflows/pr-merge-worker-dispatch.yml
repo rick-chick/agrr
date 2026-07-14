@@ -196,9 +196,9 @@ jobs:
             exit 0
           fi
 
-          if [ "$MERGEABLE_STATE" = "CONFLICTING" ] || [ "$MERGE_STATE_STATUS" = "DIRTY" ]; then
+          if [ "$MERGEABLE_STATE" = "CONFLICTING" ] || [ "$MERGE_STATE_STATUS" = "DIRTY" ] || [ "$MERGE_STATE_STATUS" = "BEHIND" ]; then
             ACTION="conflict"
-            echo "PR has merge conflicts (mergeable=$MERGEABLE_STATE mergeStateStatus=$MERGE_STATE_STATUS); dispatching conflict resolution."
+            echo "PR needs master sync (mergeable=$MERGEABLE_STATE mergeStateStatus=$MERGE_STATE_STATUS); dispatching conflict resolution."
           elif [ "$ACTION" = "synchronize" ]; then
             echo "synchronize event without merge conflicts; skipping (CI completed will dispatch)."
             exit 0

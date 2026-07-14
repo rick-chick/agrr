@@ -41,7 +41,7 @@ repo_owner() {
 fetch_pr_json() {
   local pr_number="$1"
   gh pr view "$pr_number" --json \
-    number,isDraft,author,baseRefName,headRefName,body,labels,headRepository,mergeStateStatus
+    number,isDraft,author,baseRefName,headRefName,body,labels,headRepository
 }
 
 pr_is_eligible() {
@@ -88,42 +88,6 @@ ensure_agent_merge_label() {
   if ! echo "$labels" | grep -qE '(^|,)agent-merge(,|$)'; then
     echo "Adding agent-merge label to PR #$pr_number"
     gh pr edit "$pr_number" --add-label agent-merge
-  fi
-}
-
-maybe_sync_with_master() {
-  local pr_number="$1"
-  local merge_state should_sync sync_output sync_status=0
-
-  merge_state="$(gh pr view "$pr_number" --json mergeStateStatus -q .mergeStateStatus)"
-  should_sync="$(MERGE_STATE="$merge_state" node_eval "
-    import { shouldSyncWithMaster } from '$LIB';
-    process.stdout.write(shouldSyncWithMaster(process.env.MERGE_STATE) ? 'true' : 'false');
-  ")"
-  if [ "$should_sync" != "true" ]; then
-    return 0
-  fi
-
-  echo "Syncing PR #$pr_number with master (mergeStateStatus=$merge_state)"
-  sync_output="$(gh api -X PUT "repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/pulls/$pr_number/update-branch" 2>&1)" || sync_status=$?
-  if [ "$sync_status" -ne 0 ]; then
-    if [ -n "$sync_output" ]; then
-      echo "$sync_output" >&2
-    fi
-    local non_fatal
-    non_fatal="$(SYNC_ERR="$sync_output" node_eval "
-      import { isNonFatalUpdateBranchError } from '$LIB';
-      process.stdout.write(isNonFatalUpdateBranchError(process.env.SYNC_ERR) ? 'true' : 'false');
-    ")"
-    if [ "$non_fatal" = "true" ]; then
-      echo "WARN: GITHUB_TOKEN cannot update branch for PR #$pr_number; Merge Worker must sync manually"
-      return 0
-    fi
-    return "$sync_status"
-  fi
-
-  if [ -n "$sync_output" ]; then
-    echo "$sync_output"
   fi
 }
 
@@ -188,7 +152,6 @@ prep_pr() {
   fi
 
   ensure_agent_merge_label "$pr_number"
-  maybe_sync_with_master "$pr_number"
   maybe_mark_ready "$pr_number"
 }
 
@@ -233,7 +196,6 @@ advance_queue() {
   mapfile -t CANDIDATES < <(echo "$candidates_json" | jq -r '.[]')
   for pr_number in "${CANDIDATES[@]}"; do
     echo "Trying merge queue candidate PR #$pr_number"
-    maybe_sync_with_master "$pr_number"
     maybe_mark_ready "$pr_number"
     is_draft="$(gh pr view "$pr_number" --json isDraft -q .isDraft)"
     if [ "$is_draft" = "false" ]; then
