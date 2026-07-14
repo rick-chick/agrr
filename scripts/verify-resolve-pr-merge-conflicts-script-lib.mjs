@@ -44,8 +44,13 @@ export async function verifyResolvePrMergeConflictsScript(repoRoot) {
     }
   }
 
+  const nonCommentLines = scriptText
+    .split('\n')
+    .filter((line) => !line.trimStart().startsWith('#'))
+    .join('\n');
+
   for (const snippet of FORBIDDEN_SCRIPT_SNIPPETS) {
-    if (scriptText.includes(snippet)) {
+    if (nonCommentLines.includes(snippet)) {
       errors.push(`resolve-pr-merge-conflicts.sh must not use: ${snippet}`);
     }
   }
