@@ -1,3 +1,5 @@
+import { WorkRecordPhoto } from './work-record-photo';
+
 export interface WorkRecordSummary {
   id: number;
   actual_date: string;
@@ -26,6 +28,7 @@ export interface WorkRecord {
   created_at: string;
   updated_at: string;
   task_schedule_item: WorkRecordTaskScheduleItemRef | null;
+  photos?: WorkRecordPhoto[];
 }
 
 export interface WorkRecordCreateRequest {

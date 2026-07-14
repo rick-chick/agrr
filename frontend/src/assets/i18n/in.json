@@ -1756,7 +1756,17 @@
         "task_picker": "कार्य चुनें",
         "task_other": "अन्य",
         "show_details": "विवरण जोड़ें",
-        "hide_details": "विवरण छुपाएं"
+        "hide_details": "विवरण छुपाएं",
+        "photos": {
+          "label": "फ़ोटो (वैकल्पिक)",
+          "add": "फ़ोटो जोड़ें",
+          "remove": "फ़ोटो हटाएं",
+          "errors": {
+            "limit_reached": "प्रति कार्य अधिकतम 3 फ़ोटो जोड़ सकते हैं",
+            "invalid_type": "JPEG, PNG या WebP छवि चुनें",
+            "upload_failed": "फ़ोटो अपलोड विफल"
+          }
+        }
       },
       "errors": {
         "name_required": "कार्य का नाम आवश्यक है"
@@ -1780,6 +1790,13 @@
       },
       "toast": {
         "record_updated": "कार्य सहेजा गया"
+      },
+      "photos": {
+        "errors": {
+          "invalid_content_type": "असमर्थित छवि प्रकार",
+          "invalid_byte_size": "छवि 5 MB सीमा से अधिक है",
+          "already_completed": "यह फ़ोटो पहले ही अपलोड हो चुकी है"
+        }
       }
     },
     "index": {

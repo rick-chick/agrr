@@ -56,6 +56,12 @@ const PLANS_WORK_KEYS = [
   'plans.work.sheet.task_other',
   'plans.work.sheet.show_details',
   'plans.work.sheet.hide_details',
+  'plans.work.sheet.photos.label',
+  'plans.work.sheet.photos.add',
+  'plans.work.sheet.photos.remove',
+  'plans.work.sheet.photos.errors.limit_reached',
+  'plans.work.sheet.photos.errors.invalid_type',
+  'plans.work.sheet.photos.errors.upload_failed',
   'plans.work.errors.name_required',
   'plans.errors.invalid_id'
 ] as const;

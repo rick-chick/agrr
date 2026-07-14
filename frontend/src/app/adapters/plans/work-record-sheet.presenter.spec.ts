@@ -71,7 +71,10 @@ describe('WorkRecordSheetPresenter', () => {
         loadingTaskChips: false,
         selectedTaskId: null,
         pendingToastKey: null,
-        pendingUndoToast: null
+        pendingUndoToast: null,
+        existingPhotos: [],
+        pendingPhotos: [],
+        photoError: null
       },
       close: vi.fn()
     };
@@ -81,7 +84,7 @@ describe('WorkRecordSheetPresenter', () => {
   });
 
   it('queues ad-hoc toast and emits saved payload on create success', () => {
-    presenter.onSuccess({ workRecord });
+    presenter.onSuccess({ workRecord, mode: 'create-adhoc' });
 
     expect(view.control.pendingToastKey).toBe('plans.work.toast.record_saved_adhoc');
     expect(view.close).toHaveBeenCalled();
@@ -95,7 +98,8 @@ describe('WorkRecordSheetPresenter', () => {
     view.control = { ...view.control, mode: 'create-from-item' };
 
     presenter.onSuccess({
-      workRecord: { ...workRecord, task_schedule_item_id: 5 }
+      workRecord: { ...workRecord, task_schedule_item_id: 5 },
+      mode: 'create-from-item'
     });
 
     expect(view.control.pendingToastKey).toBe('plans.work.toast.record_saved');
@@ -107,7 +111,7 @@ describe('WorkRecordSheetPresenter', () => {
   it('queues updated toast on edit success', () => {
     view.control = { ...view.control, mode: 'edit' };
 
-    presenter.onSuccess({ workRecord });
+    presenter.onSuccess({ workRecord, mode: 'edit' });
 
     expect(view.control.pendingToastKey).toBe('plans.work_records.toast.record_updated');
   });

@@ -6,8 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkRecordSheetComponent } from './work-record-sheet.component';
 import { WorkRecordSheetPresenter } from '../../adapters/plans/work-record-sheet.presenter';
 import { LoadAgriculturalTaskListUseCase } from '../../usecase/agricultural-tasks/load-agricultural-task-list.usecase';
-import { CreateWorkRecordUseCase } from '../../usecase/plans/create-work-record.usecase';
-import { UpdateWorkRecordUseCase } from '../../usecase/plans/update-work-record.usecase';
+import { SaveWorkRecordSheetUseCase } from '../../usecase/plans/save-work-record-sheet.usecase';
 import { DeleteWorkRecordUseCase } from '../../usecase/plans/delete-work-record.usecase';
 
 describe('WorkRecordSheetComponent', () => {
@@ -26,8 +25,7 @@ describe('WorkRecordSheetComponent', () => {
       set: {
         providers: [
           { provide: WorkRecordSheetPresenter, useValue: mockPresenter },
-          { provide: CreateWorkRecordUseCase, useValue: { execute: vi.fn() } },
-          { provide: UpdateWorkRecordUseCase, useValue: { execute: vi.fn() } },
+          { provide: SaveWorkRecordSheetUseCase, useValue: { execute: vi.fn() } },
           { provide: DeleteWorkRecordUseCase, useValue: { execute: vi.fn() } },
           { provide: LoadAgriculturalTaskListUseCase, useValue: loadTaskListUseCase },
           { provide: ChangeDetectorRef, useValue: { markForCheck: vi.fn() } }

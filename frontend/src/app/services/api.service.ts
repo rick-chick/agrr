@@ -77,6 +77,16 @@ export class ApiService {
     });
   }
 
+  putBytes(path: string, body: Blob, contentType: string): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}${path}`, body, {
+      headers: new HttpHeaders({
+        'Content-Type': contentType
+      }),
+      withCredentials: true,
+      responseType: 'text' as 'json'
+    });
+  }
+
   delete<T>(path: string, options: RequestOptions = {}): Observable<T> {
     let headers =
       options.headers instanceof HttpHeaders ? options.headers : new HttpHeaders(options.headers);

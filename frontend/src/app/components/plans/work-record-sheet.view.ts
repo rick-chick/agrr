@@ -15,6 +15,18 @@ export interface WorkRecordSheetSavedEvent {
   mode: WorkRecordSheetMode;
 }
 
+export interface WorkRecordSheetExistingPhoto {
+  id: number;
+  url: string;
+  markedForDelete: boolean;
+}
+
+export interface WorkRecordSheetPendingPhoto {
+  clientId: string;
+  previewUrl: string;
+  file: File;
+}
+
 export interface WorkRecordSheetFormState {
   name: string;
   actual_date: string;
@@ -43,6 +55,9 @@ export interface WorkRecordSheetViewState {
   selectedTaskId: number | 'other' | null;
   pendingToastKey: string | null;
   pendingUndoToast: PendingUndoToastRequest | null;
+  existingPhotos: WorkRecordSheetExistingPhoto[];
+  pendingPhotos: WorkRecordSheetPendingPhoto[];
+  photoError: string | null;
 }
 
 export interface WorkRecordSheetView {
