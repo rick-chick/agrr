@@ -212,6 +212,103 @@ fn delete_work_record_returns_deletion_undo_payload() {
 }
 
 #[test]
+fn work_record_photo_upload_init_complete_and_list() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (create_status, create_body) = status_and_body(client.post(
+        &format!("/api/v1/plans/{}/work_records", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "contract photo"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"]
+        .as_i64()
+        .expect("work_record id");
+
+    let init_path = format!(
+        "/api/v1/plans/{}/work_records/{}/photos/upload_init",
+        seed.plan_id, record_id
+    );
+    let (init_status, init_body) = status_and_body(client.post(
+        &init_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "photo": { "content_type": "image/jpeg" }
+        })),
+    ));
+    assert_eq!(201, init_status, "{init_body}");
+    let init_json: serde_json::Value =
+        serde_json::from_str(&init_body).expect("upload_init JSON");
+    let photo_id = init_json["photo"]["id"].as_i64().expect("photo id");
+    let upload_url = init_json["photo"]["upload_url"]
+        .as_str()
+        .expect("upload_url");
+
+    let jpeg_bytes: Vec<u8> = vec![0xFF, 0xD8, 0xFF, 0xD9];
+    let (upload_status, upload_body) = status_and_body(client.put_bytes(
+        upload_url,
+        Some(&session_id),
+        &empty_headers(),
+        "image/jpeg",
+        &jpeg_bytes,
+    ));
+    assert_eq!(204, upload_status, "{upload_body}");
+
+    let complete_path = format!(
+        "/api/v1/plans/{}/work_records/{}/photos/{}/upload_complete",
+        seed.plan_id, record_id, photo_id
+    );
+    let (complete_status, complete_body) = status_and_body(client.post(
+        &complete_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "photo": { "byte_size": jpeg_bytes.len() }
+        })),
+    ));
+    assert_eq!(200, complete_status, "{complete_body}");
+    let complete_json: serde_json::Value =
+        serde_json::from_str(&complete_body).expect("upload_complete JSON");
+    assert_eq!(photo_id, complete_json["photo"]["id"].as_i64().unwrap());
+    assert_eq!(0, complete_json["photo"]["position"].as_i64().unwrap());
+
+    let list_path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (list_status, list_body) = status_and_body(
+        client.get(&list_path, Some(&session_id), &empty_headers()),
+    );
+    assert_eq!(200, list_status, "{list_body}");
+    let list_json: serde_json::Value =
+        serde_json::from_str(&list_body).expect("work_records list JSON");
+    let records = list_json["work_records"].as_array().expect("work_records");
+    let record = records
+        .iter()
+        .find(|r| r["id"].as_i64() == Some(record_id))
+        .expect("record in list");
+    let photos = record["photos"].as_array().expect("photos array");
+    assert_eq!(1, photos.len());
+    assert_eq!(photo_id, photos[0]["id"].as_i64().unwrap());
+
+    let content_url = photos[0]["url"].as_str().expect("photo url");
+    let (content_status, _) = status_and_body(
+        client.get(content_url, Some(&session_id), &empty_headers()),
+    );
+    assert_eq!(200, content_status);
+}
+
+#[test]
 fn patch_task_schedule_item_skip_and_unskip_returns_item_payload() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);

@@ -5,9 +5,8 @@ use std::collections::BTreeMap;
 use crate::adapters::SystemClock;
 use crate::session_auth::user_id_from_session;
 use crate::state::AppState;
-use agrr_adapters_sqlite::{
-    CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway, WorkRecordSqliteGateway,
-};
+use crate::work_record_photos::load_photos_json_for_records;
+use agrr_adapters_sqlite::{CultivationPlanSqliteGateway, TaskScheduleItemLookupSqliteGateway, WorkRecordPhotoSqliteGateway, WorkRecordSqliteGateway};
 use agrr_domain::work_record::dtos::{WorkRecordDestroyOutput, WorkRecordRead};
 use agrr_domain::work_record::interactors::{
     WorkRecordCreateInteractor, WorkRecordDestroyInteractor, WorkRecordListInteractor,
@@ -214,7 +213,7 @@ fn format_decimal(amount: Option<Decimal>) -> Option<String> {
     amount.map(|d| d.to_string())
 }
 
-fn work_record_to_json(record: WorkRecordRead) -> Value {
+fn work_record_to_json(record: WorkRecordRead, photos: Vec<Value>) -> Value {
     json!({
         "id": record.id,
         "cultivation_plan_id": record.cultivation_plan_id,
@@ -235,6 +234,7 @@ fn work_record_to_json(record: WorkRecordRead) -> Value {
             "name": item.name,
             "scheduled_date": item.scheduled_date.map(format_date),
         })),
+        "photos": photos,
     })
 }
 
@@ -277,7 +277,10 @@ async fn create_work_record(
         .call_rescuing(user_id, plan_id, &body.work_record)
         .map_err(|_| internal_error())?;
 
-    map_mutation_outcome(presenter.body, |record| json!({"work_record": work_record_to_json(record)}), StatusCode::CREATED)
+    map_mutation_outcome(presenter.body, |record| {
+        let photos = vec![];
+        json!({"work_record": work_record_to_json(record, photos)})
+    }, StatusCode::CREATED)
 }
 
 async fn list_work_records(
@@ -301,7 +304,20 @@ async fn list_work_records(
 
     match presenter.body {
         Some(ListOutcome::Success(records)) => {
-            let items: Vec<Value> = records.into_iter().map(work_record_to_json).collect();
+            let record_ids: Vec<i64> = records.iter().map(|r| r.id).collect();
+            let photo_gateway = WorkRecordPhotoSqliteGateway::new(state.sqlite.clone());
+            let photos_by_record = load_photos_json_for_records(&photo_gateway, plan_id, &record_ids)
+                .map_err(|_| internal_error())?;
+            let items: Vec<Value> = records
+                .into_iter()
+                .map(|record| {
+                    let photos = photos_by_record
+                        .get(&record.id)
+                        .cloned()
+                        .unwrap_or_default();
+                    work_record_to_json(record, photos)
+                })
+                .collect();
             Ok(Json(json!({"work_records": items})))
         }
         Some(ListOutcome::NotFound) => Err(not_found()),
@@ -336,7 +352,14 @@ async fn update_work_record(
 
     map_mutation_outcome(
         presenter.body,
-        |record| json!({"work_record": work_record_to_json(record)}),
+        |record| {
+            let photo_gateway = WorkRecordPhotoSqliteGateway::new(state.sqlite.clone());
+            let photos = load_photos_json_for_records(&photo_gateway, plan_id, &[record.id])
+                .ok()
+                .and_then(|map| map.get(&record.id).cloned())
+                .unwrap_or_default();
+            json!({"work_record": work_record_to_json(record, photos)})
+        },
         StatusCode::OK,
     )
     .map(|(_, json)| json)
