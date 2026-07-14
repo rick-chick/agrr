@@ -1,0 +1,35 @@
+---
+description: git checkout / switch / reset / restore を含む作業ツリー・HEAD 破壊的操作の禁止（常時適用）
+alwaysApply: true
+---
+# Git 操作制約（常時）
+
+**`git checkout`・`git switch`・`git reset`・`git restore`（および同等の状態巻き戻し）は、ユーザーの明示的な許可がない限り実行しない。** エージェント・サブエージェントとも。
+
+## 禁止（明示許可なし）
+
+| コマンド | 理由 |
+|----------|------|
+| `git checkout` / `git switch` | ブランチ・作業ツリーの付け替え |
+| `git reset`（`--hard` / `--mixed` / `--soft` 含む） | HEAD・インデックス・作業ツリーの巻き戻し |
+| `git restore`（`--staged` / `--worktree` / パス指定含む） | **未コミット変更の破棄**（PR 整理・allowlist 整理の名目でも不可） |
+| `git clean` | 未追跡ファイルの削除 |
+| `git push --force` / `-f` | リモート履歴の書き換え（別途ユーザー明示時のみ） |
+
+「計画どおり」「PR を絞る」「allowlist 外を戻す」等の理由だけでは **restore / reset / checkout を実行しない**。必要ならユーザーに手順を提示し、**ユーザー自身が実行**するか、**明示許可**を得てから行う。
+
+## 許可（参照・記録・コミット）
+
+- `git status` / `git diff` / `git log` / `git show` / `git branch`（一覧・参照のみ）
+- `git add` / `git commit`（ユーザーがコミットを依頼した場合。`--amend` はユーザー明示時のみ）
+- `git stash` / `git stash pop` — **ユーザー明示時のみ**（退避も状態変更のため）
+
+## 代替手順
+
+作業ツリーを戻したいとき:
+
+1. 変更内容を `git diff` で示す
+2. 戻すコマンド案を文章で提示する
+3. ユーザーが実行するか、「このコマンドを実行してよい」と明示するまで待つ
+
+未コミットの i18n 等を捨てない。捨てる必要がある場合は **stash** をユーザーに提案し、エージェントが勝手に `restore` しない。

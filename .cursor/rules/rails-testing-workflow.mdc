@@ -1,0 +1,30 @@
+---
+description: テストは test-common のみ。完了後は必ず実行・個別後は全体・終了後は遅延検知。
+alwaysApply: false
+---
+
+# Rails / Frontend テスト運用
+
+このファイルが扱うのはテスト実行経路・順序・遅延検知のみ。他ルール／SKILL は本ファイルへリンクし、同じ要件を再列挙しない（用語は [`agent-conventions.mdc`](agent-conventions.mdc)）。テストが何を表明するか・モック/Fake の使い分け・失敗の細粒度は [`test-quality-core.mdc`](test-quality-core.mdc)、アンチパターンは [`test-quality-checklist.mdc`](test-quality-checklist.mdc) を参照。
+
+## 実行経路
+
+- テストは常に **`test-common` スキル**経由で実行する。`rails test` や `npm test` を直接実行しない。
+- **`lib/domain` の純粋ロジックのみ**を変えたときは、Rails を立ち上げずに `.cursor/skills/test-common/scripts/run-test-domain-lib.sh` で足りる場合がある。DB／SimpleCov／フルスタックが不要なときの高速経路。
+- **`test/domain/**` を新規・編集したら** `run-test-domain-lib.sh` で実行する（`run-test-rails.sh` の全件一覧には `test/domain` が入らない）。CI の `./bin/test` は domain-lib も続けて走る。
+
+## `test/domain/` の require（厳守）
+
+- **必須**: `require "domain_lib_test_helper"`
+- **禁止**: `require "test_helper"` および `test_helper` への `require_relative`
+- 他ディレクトリのテンプレをそのままコピーしない。違反は `bin/domain-lib-test`（起動前走査）で落ちる（詳細は [test-common/SKILL.md](../skills/test-common/SKILL.md)）。
+
+- 実装・テストコードの追加・修正が完了したら、要求の有無によらず**必ず**テストを実行する。
+
+## 順序（個別 → 全体）
+
+個別ファイル指定の `test-common` で GREEN が出たら、続けて**ファイル指定なし**の `test-common` を実行する。個別が通っても他ファイルへの影響があるため。
+
+## 遅いテスト
+
+テスト実行が完了したら、実行時間が **0.5 秒**を超えるテストがないか確認する。対応手順は **`.cursor/skills/test-slow-detection/SKILL.md`** を参照する。

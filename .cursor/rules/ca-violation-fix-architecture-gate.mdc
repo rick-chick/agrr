@@ -1,0 +1,32 @@
+---
+description: >-
+  Mandatory ARCHITECTURE.md gate: re-read What we require and Prohibited 1–39,
+  map git diff to prohibitions before behavior checks. Used for the architecture
+  gate (1st pass and 2nd pass) per violation-fix workflow section 4.
+alwaysApply: false
+---
+
+# ARCHITECTURE.md ゲート
+
+[`clean-architecture-violation-fix-workflow/SKILL.md`](../skills/clean-architecture-violation-fix-workflow/SKILL.md) **セクション4** で参照する手順・記録形式を定める。
+
+## 適用範囲
+
+`clean-architecture-violation-fix-workflow` の **アーキテクチャゲート 1 回目** および **2 回目**（振る舞いチェックの直前）で実施する。Rails の `lib/` / `app/` 等の差分も `frontend/` のみの差分も同一の手順・記録フォーマットを適用する。フロントのみのときも口頭や箇条書き要約だけでゲートを終わらせない。
+
+## 手順
+
+1. [`ARCHITECTURE.md`](../../ARCHITECTURE.md) の `## What we require` と `## Prohibited practices`（1〜39）を欠かさず読み直す（途中省略しない）。
+2. この時点の `git diff`（併せて `git status --short`）で変更ファイルを確定する。
+3. その差分を禁止 1〜39 に照合する（新規・残存）。レイヤー文脈で判断し、記号列の機械的一致だけを「該当」の根拠にしない。
+4. **Presenter 層（リグレッション軽量チェック）**: `lib/presenters/**/*.rb` が差分に含まれるとき、[`ARCHITECTURE.md`](../../ARCHITECTURE.md) **Prohibited practices → `lib/presenters/`**（サービスロケーション・取得の禁止）に沿い、`CompositionRoot`、`find_model`、`*Gateway.default` の有無を **該当ファイルを読む**ことで確認する。`rg` の一致／不一致だけを根拠にしない（[`agent-conventions.mdc`](agent-conventions.mdc)）。
+
+## 記録（1 回目・2 回目それぞれ応答に残す）
+
+- 変更ファイル一覧（パス）。
+- 禁止 1〜39 の表: 各番号について **該当 / 非該当 / 非該当（当該禁止条項がこの差分に無関係である理由一行）**。該当には根拠（パスと要点）。
+- 2 回目は 1 回目の表を転記・再利用しない。最新 diff を前提に表を頭から埋め直す。
+
+## 失敗時
+
+違反があれば修正し 1 回目からやり直す。振る舞いチェックへ進むのは 1 回目・2 回目とも記録済みで該当がないときだけ。

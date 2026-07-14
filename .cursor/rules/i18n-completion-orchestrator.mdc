@@ -1,0 +1,62 @@
+---
+description: Angular i18n対応を漏れなく完遂するための実行ルール
+alwaysApply: false
+---
+# i18n 完遂ルール
+
+ユーザーが i18n/翻訳/ハードコーディング文言の対応を依頼したら、必ず `.cursor/skills/i18n-completion-workflow/SKILL.md` を読み、手順どおりに実施する。
+
+## 適用トリガー
+
+- 「i18n 対応」「翻訳漏れ」「ハードコーディング文言」「多言語対応」「translate キー追加」
+- 「漏れている箇所の洗い出し」「対応」「テスト」
+
+## 必須実行
+
+1. `frontend/src` で未翻訳文言を検索（`| translate` 未使用のリテラル、`titleKey` / `labelKey` 参照キーの有無）
+2. 修正（意味ベースキーを `assets/i18n/{ja,en,in}.json` に追加・更新）
+3. `frontend/src/app/core/i18n/*.spec.ts` などカタログ系 spec があれば実行・不足キーを足す
+4. テスト実行・遅延検知は [`rails-testing-workflow.mdc`](rails-testing-workflow.mdc) に従う
+5. 対応レポートを提示
+
+**自動一括スクリプトで `assets/i18n/*.json` を生成・上書き・削除しない**（過去の `sync_i18n` / `extract-i18n` / `check-*` 系はリポジトリから除去済み）。
+
+## 完了条件
+
+- 変更箇所の翻訳キーが `ja/en/in` で整合
+- 関連 spec・`test-common` フロントテストが GREEN
+- `assets/i18n` の diff に意図しない大量削除がない
+
+## 翻訳キーの正（source of truth）
+
+| 対象 | 役割 |
+|------|------|
+| `frontend/src/assets/i18n/{ja,en,in}.json` | **実行時の唯一のカタログ**。追加・更新・削除判断はここと `frontend/src` の参照のみ |
+
+**意味ベースキー**（例: `crops.index.title`, `entrySchedule.title`, `nav.farms`）は意図的な命名。補助レポートや `auto.*` 候補リストに無いことは**未使用ではない**。
+
+## 禁止（キー削除・破壊の誤判断）
+
+次は **i18n 作業中いかなる理由でも禁止**:
+
+1. 補助ファイル・`auto.*` だけに合わせて `assets/i18n/*.json` のキーを削除する
+2. **コード参照を検索せず**「重複」「古そう」でキーを一括削除する
+3. フロントの `assets/i18n/*.json` で **`%{...}`（Rails 形式）に戻す**。プレースホルダは **ngx-translate の `{{param}}`**
+4. `config/locales` や他ツールから **JSON を全上書き**する（フロント専用キーが消える）
+
+## キーを `assets/i18n` から削除してよい条件
+
+削除は **ユーザーが未使用キー整理を明示依頼したタスク**に限る。実施前にすべて満たす:
+
+1. `frontend/src` で当該キー文字列を検索し、参照ゼロを確認する
+2. `ja` / `en` / `in` の**3 ファイルから同じパス**を削除する
+3. 削除件数と根拠（参照なしの検索結果）をレポートに残す
+
+## i18n 差分のレビュー（必須）
+
+`assets/i18n/*.json` を編集したコミット／PR では次を確認する:
+
+- [ ] キー総数が**意図なく大量減**していない
+- [ ] 削除したキーそれぞれについて、コード参照検索済み
+- [ ] プレースホルダが `{{...}}` のまま
+- [ ] 追加キーは `ja` / `en` / `in` に揃っている

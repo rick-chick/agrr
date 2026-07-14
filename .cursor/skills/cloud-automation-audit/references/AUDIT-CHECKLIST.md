@@ -17,6 +17,7 @@
 |---|------|------------------|
 | 1 | SKILL.md が存在し Automation プロンプトのパスと一致 | ファイル欠落・パス typo |
 | 2 | sequential-cleanup-review-workflow SKILL が存在 | 同上 |
+| 2b | `verify-skill-references.sh` が exit 0 | tick / references / 参照スキル欠落（P0） |
 | 3 | 直近 7 日に `cursor` 由来 PR または blocked コメントの異常パターン | 毎週例外終了の間接証拠 |
 | 4 | `gh issue list` が Cloud Agent で成功 | 今週 fail → P1 注意。2 週連続 fail → P1 |
 | 5 | `agent-in-progress` が 7 日以上滞留 | 同一 issue で run が例外終了し続けている根拠あり |

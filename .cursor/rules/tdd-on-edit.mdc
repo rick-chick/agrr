@@ -1,0 +1,30 @@
+---
+description: 改修・新規実装は TDD（RED→GREEN→REFACTOR）。手順は tdd-on-edit スキル、実行は test-common。
+alwaysApply: true
+---
+
+# 改修は TDD
+
+**ソースコード・テストの追加・変更**（バグ修正・リファクタ・新機能の各層実装を含む）では、実装より先に**失敗するテスト（RED）**を書き、`test-common` で RED を確認してから本実装（GREEN）に進む。
+
+## 必須スキル
+
+着手前に **[`tdd-on-edit` スキル](../skills/tdd-on-edit/SKILL.md)** を読み、同スキルのワークフローに従う。テスト実行は **[`test-common`](../skills/test-common/SKILL.md)** のみ（[`rails-testing-workflow.mdc`](rails-testing-workflow.mdc) の順序・遅延検知も従う）。
+
+## 経路の切り分け（再列挙しない）
+
+| 状況 | TDD の RED フェーズ | GREEN フェーズ |
+|------|---------------------|----------------|
+| バグ・エラー | [`error-investigation`](../skills/error-investigation/SKILL.md) | [`error-fix-red-green`](../skills/error-fix-red-green/SKILL.md) |
+| 上記以外の改修・新規 | [`tdd-on-edit`](../skills/tdd-on-edit/SKILL.md) の RED | 同スキルの GREEN（対象層の実装スキルは [CODE_MODIFICATION_SKILLS.md](../references/CODE_MODIFICATION_SKILLS.md)） |
+
+## 委譲時
+
+[`use-skills-on-edit.mdc`](use-skills-on-edit.mdc) でサブエージェントに渡すプロンプトに **「RED を `test-common` で確認してから実装」** を必ず含める。
+
+## 例外
+
+- **振る舞い不変のリファクタ**で、既存テストが変更範囲を十分に覆うとき — 新規 RED は不要。変更後は `test-common` で GREEN を確認する。
+- **ドキュメント・設定のみ**で実行コード・テストに触れないとき。
+
+「先に実装してからテスト」は**技術負債**（[`no-convenience-tech-debt.mdc`](no-convenience-tech-debt.mdc)）。根拠ゲート（[`evidence-before-design-and-implementation.mdc`](evidence-before-design-and-implementation.mdc)）と両立させる — 何をテストするか分からない段階では調査を続け、推測だけで RED を書かない。
