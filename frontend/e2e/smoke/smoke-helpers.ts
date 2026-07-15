@@ -96,6 +96,39 @@ export async function getUserOwnedFarmCount(): Promise<number | null> {
 
 export { USER_FARM_LIMIT };
 
+/**
+ * 生育ステージが minStages 件以上ある作物 id を API から探す。
+ * `masters.crops` のベースライン作物はステージ 0 件のことがあるため、並べ替え smoke 専用。
+ */
+export async function findCropIdWithMinStages(minStages: number): Promise<number | null> {
+  const storagePath = join(process.cwd(), 'e2e', '.auth', 'dev-session.json');
+  if (!existsSync(storagePath)) {
+    return null;
+  }
+  const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
+  const api = await request.newContext({ storageState: storagePath });
+  try {
+    const cropsRes = await api.get(`${apiOrigin}/api/v1/masters/crops`);
+    if (!cropsRes.ok()) return null;
+    const crops = parseMasterList(await cropsRes.json());
+    for (const crop of crops) {
+      const cropId = crop['id'];
+      if (cropId == null) continue;
+      const stagesRes = await api.get(
+        `${apiOrigin}/api/v1/masters/crops/${cropId}/crop_stages`,
+      );
+      if (!stagesRes.ok()) continue;
+      const stages = parseMasterList(await stagesRes.json());
+      if (stages.length >= minStages) {
+        return Number(cropId);
+      }
+    }
+    return null;
+  } finally {
+    await api.dispose();
+  }
+}
+
 /** select-crop 直着地前に sessionStorage へ farm を投入する */
 export async function preparePublicPlanRoute(
   page: Page,

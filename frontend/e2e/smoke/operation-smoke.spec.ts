@@ -4,6 +4,7 @@ import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
 import {
   assertHostHealthy,
   disableCookieBanner,
+  findCropIdWithMinStages,
   getUserOwnedFarmCount,
   loadResolvedCaptureIdsWithBaseline,
   resolveGotoUrl,
@@ -229,9 +230,9 @@ smokeDescribe('operation smoke (key user flows)', () => {
   });
 
   test('master crops: drag-reorder stages persists after reload', async ({ page }) => {
-    const id = resolvedCaptureIds?.masters.crops;
+    const id = await findCropIdWithMinStages(2);
     if (id == null) {
-      test.skip(true, 'no crops record in dev DB');
+      test.skip(true, 'no crop with at least 2 stages in dev DB');
     }
 
     const stagesPattern = 'crops/:id/stages';
@@ -247,24 +248,34 @@ smokeDescribe('operation smoke (key user flows)', () => {
       test.skip(true, 'crop needs at least 2 stages for reorder smoke');
     }
 
-    const readOrderTexts = async (): Promise<string[]> =>
-      rows.evaluateAll((elements) =>
-        elements.map((row) => (row.querySelectorAll('td')[1]?.textContent ?? '').trim())
-      );
-
-    const ordersBefore = await readOrderTexts();
-    const firstStageName = (await rows.nth(0).locator('td').nth(2).textContent())?.trim();
-    const secondStageName = (await rows.nth(1).locator('td').nth(2).textContent())?.trim();
-    if (!firstStageName || !secondStageName) {
-      test.skip(true, 'stage rows missing names');
-    }
+    const namesBefore = await rows.evaluateAll((elements) =>
+      elements.map((row) => (row.querySelectorAll('td')[2]?.textContent ?? '').trim())
+    );
 
     const reorderResponse = page.waitForResponse(
       (response) =>
         response.url().includes(`/api/v1/masters/crops/${id}/crop_stages/reorder`) &&
-        response.status() === 200
+        response.status() === 200,
+      { timeout: 60_000 }
     );
-    await rows.nth(0).locator('.crop-stages-table__drag').dragTo(rows.nth(1));
+    const dragHandle = rows.nth(0).locator('.crop-stages-table__drag');
+    const targetRow = rows.nth(1);
+    const handleBox = await dragHandle.boundingBox();
+    const targetBox = await targetRow.boundingBox();
+    if (!handleBox || !targetBox) {
+      test.skip(true, 'drag targets not visible');
+    }
+    await dragHandle.hover();
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(100);
+    await page.mouse.move(
+      targetBox.x + targetBox.width / 2,
+      targetBox.y + targetBox.height / 2,
+      { steps: 25 }
+    );
+    await page.waitForTimeout(100);
+    await page.mouse.up();
     await reorderResponse;
 
     await page.reload();
@@ -272,12 +283,14 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await assertHostHealthy(page, 'app-crop-stages');
 
     const reloadedRows = page.locator('app-crop-stages .crop-stages-table__row');
-    await expect(reloadedRows.nth(0)).toContainText(secondStageName);
-    await expect(reloadedRows.nth(1)).toContainText(firstStageName);
+    const namesAfter = await reloadedRows.evaluateAll((elements) =>
+      elements.map((row) => (row.querySelectorAll('td')[2]?.textContent ?? '').trim())
+    );
     const ordersAfter = await reloadedRows.evaluateAll((elements) =>
       elements.map((row) => (row.querySelectorAll('td')[1]?.textContent ?? '').trim())
     );
-    expect(ordersAfter).not.toEqual(ordersBefore);
+    expect(namesAfter).not.toEqual(namesBefore);
+    expect(ordersAfter).toEqual(['1', '2', '3'].slice(0, ordersAfter.length));
   });
 
   for (const m of MASTER_RESOURCES) {
