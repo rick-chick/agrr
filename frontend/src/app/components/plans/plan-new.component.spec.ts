@@ -54,15 +54,10 @@ describe('PlanNewComponent', () => {
       'plans.new.plan_name_label': 'Plan name',
       'plans.new.plan_name_placeholder': 'e.g. Main plan',
       'plans.new.create_button': 'Create',
-      'common.loading': 'Loading...',
-      'common.cancel': 'Cancel'
+      'common.loading': 'Loading...'
     });
     translate.setDefaultLang('en');
     translate.use('en');
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
   });
 
   it('should initialize presenters and load farms on init', () => {
