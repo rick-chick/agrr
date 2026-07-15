@@ -184,11 +184,7 @@ describe('CropStagesComponent', () => {
     translateService.use('en');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         name: 'Tomato',
         crop_stages: [
@@ -244,10 +240,7 @@ describe('CropStagesComponent', () => {
     translateService.use('en');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
+      ...loadedControlBase,
       taskScheduleBlueprints: [
         {
           id: 10,
@@ -316,11 +309,7 @@ describe('CropStagesComponent', () => {
     translateService.use('en');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         name: 'Tomato',
         crop_stages: [
@@ -350,11 +339,7 @@ describe('CropStagesComponent', () => {
 
   it('does not call deleteCropStageUseCase when delete confirm is cancelled', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         name: 'Tomato',
         crop_stages: [
@@ -1235,11 +1220,7 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
