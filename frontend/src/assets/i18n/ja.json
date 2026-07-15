@@ -360,6 +360,13 @@
       "blueprint_deleted": "作業予定カードを削除しました。",
       "blueprint_created": "作業予定を追加しました。",
       "blueprint_delete_failed": "作業予定カードの削除に失敗しました。",
+      "stage_created": "生育ステージを追加しました。",
+      "stage_updated": "生育ステージを更新しました。",
+      "stage_deleted": "生育ステージを削除しました。",
+      "temperature_requirement_updated": "温度要件を更新しました。",
+      "thermal_requirement_updated": "積算温度要件を更新しました。",
+      "sunshine_requirement_updated": "日照要件を更新しました。",
+      "nutrient_requirement_updated": "栄養素要件を更新しました。",
       "cannot_delete_in_use": {
         "plan": "この作物は作付け計画で使用されているため削除できません。まず作付け計画から削除してください。",
         "field": "この作物は圃場栽培で使用されているため削除できません。まず圃場栽培から削除してください。",
