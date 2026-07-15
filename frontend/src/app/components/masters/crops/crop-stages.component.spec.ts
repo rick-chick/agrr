@@ -312,6 +312,55 @@ describe('CropStagesComponent', () => {
     });
   });
 
+  it('syncs stageEditDraft from updated crop_stages after panel save succeeds', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Updated Name';
+    component.stageEditDraft.base_temperature = 12;
+    component.stageEditDraft.optimal_min = 15;
+    component.stageEditDraft.optimal_max = 25;
+    component.stageEditDraft.max_temperature = 35;
+    component.stageEditDraft.required_gdd = 150;
+
+    component.saveStagePanel();
+
+    const updatedStage: CropStage = {
+      ...stageFixture,
+      name: 'Updated Name',
+      temperature_requirement: {
+        ...stageFixture.temperature_requirement!,
+        base_temperature: 12,
+        optimal_min: 15,
+        optimal_max: 25,
+        max_temperature: 35
+      },
+      thermal_requirement: {
+        ...stageFixture.thermal_requirement!,
+        required_gdd: 150
+      }
+    } as CropStage;
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        name: 'Tomato',
+        crop_stages: [updatedStage]
+      }
+    };
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+    fixture.detectChanges();
+
+    expect(component.isPanelDirty()).toBe(false);
+    expect(component.stageEditDraft).toEqual({
+      name: 'Updated Name',
+      base_temperature: 12,
+      optimal_min: 15,
+      optimal_max: 25,
+      max_temperature: 35,
+      required_gdd: 150
+    });
+  });
+
   it('opens unsaved confirm when switching stages with dirty panel', async () => {
     await loadStages([
       stageFixture,
