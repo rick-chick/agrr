@@ -26,7 +26,7 @@ where
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if input.orders.is_empty() {
             self.output_port.on_failure(CropStageReorderFailure::Error(Error::new(
-                "orders cannot be empty".into(),
+                "orders cannot be empty",
             )));
             return Ok(());
         }
@@ -36,19 +36,19 @@ where
         for entry in &input.orders {
             if !seen_ids.insert(entry.stage_id) {
                 self.output_port.on_failure(CropStageReorderFailure::Error(Error::new(
-                    "duplicate stage id".into(),
+                    "duplicate stage id",
                 )));
                 return Ok(());
             }
             if entry.order < 1 {
                 self.output_port.on_failure(CropStageReorderFailure::Error(Error::new(
-                    "order must be positive".into(),
+                    "order must be positive",
                 )));
                 return Ok(());
             }
             if !seen_orders.insert(entry.order) {
                 self.output_port.on_failure(CropStageReorderFailure::Error(Error::new(
-                    "duplicate order".into(),
+                    "duplicate order",
                 )));
                 return Ok(());
             }

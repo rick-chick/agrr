@@ -1,7 +1,10 @@
 // Tests for `interactors/crop_stage_reorder_interactor.rs`
 
+use crate::crop::dtos::{CropStageListOutput, CropStageOrderEntry, CropStageReorderInput};
 use crate::crop::entities::CropStageEntity;
 use crate::crop::gateways::CropStageReorderGateway;
+use crate::crop::interactors::crop_stage_reorder_interactor::CropStageReorderInteractor;
+use crate::crop::ports::{CropStageReorderFailure, CropStageReorderOutputPort};
 use crate::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
 
 struct SpyOutput {
@@ -60,8 +63,12 @@ fn calls_on_success_with_reordered_stages() {
             crop_id: 10,
             name: "B".into(),
             order: 1,
-            created_at: "t".into(),
-            updated_at: "t".into(),
+            temperature_requirement: None,
+            thermal_requirement: None,
+            sunshine_requirement: None,
+            nutrient_requirement: None,
+            created_at: Some("t".into()),
+            updated_at: Some("t".into()),
         }]),
         invalid: false,
         not_found: false,

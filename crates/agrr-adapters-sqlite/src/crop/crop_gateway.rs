@@ -430,7 +430,17 @@ impl CropGateway for CropSqliteGateway {
                 conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
                 load_crop_stage_by_id(conn, crop_stage_id)
             })
-            .map_err(map_crop_stage_write_error)
+            .map_err(|err| {
+                if let Some(rusqlite::Error::SqliteFailure(code, _)) = err.downcast_ref::<rusqlite::Error>() {
+                    if code.code == rusqlite::ErrorCode::ConstraintViolation {
+                        return Box::new(RecordInvalidError::new(
+                            Some("order has already been taken".into()),
+                            None,
+                        )) as Box<dyn std::error::Error + Send + Sync>;
+                    }
+                }
+                err
+            })
     }
 
     fn delete_crop_stage(
