@@ -211,7 +211,9 @@ describe('CropStagesComponent', () => {
         { provide: SaveCropStageAdvancedDetailsUseCase, useValue: mockSaveCropStageAdvancedDetailsUseCase },
         { provide: FlashMessageService, useValue: mockFlashMessage }
       ]
-    }).compileComponents();
+    })
+      .overrideComponent(CropStagesComponent, { set: { providers: [] } })
+      .compileComponents();
 
     TestBed.overrideProvider(LoadCropForEditUseCase, { useValue: mockLoadUseCase });
     TestBed.overrideProvider(CreateCropStageUseCase, { useValue: mockCreateCropStageUseCase });
