@@ -8,14 +8,10 @@ import { CropStage } from '../../../domain/crops/crop';
 import { CropStagesPresenter } from '../../../usecase/crops/crop-stages.providers';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
-import { UpdateCropStageUseCase } from '../../../usecase/crops/update-crop-stage.usecase';
 import { ReorderCropStagesUseCase } from '../../../usecase/crops/reorder-crop-stages.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
-import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
-import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
-import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
 import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
 import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
@@ -132,14 +128,10 @@ describe('CropStagesComponent', () => {
   };
   let mockLoadUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockCreateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockUpdateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockReorderCropStagesUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockDeleteCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockLoadBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateTemperatureRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockUpdateThermalRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockUpdateSunshineRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
-  let mockUpdateNutrientRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockSaveCropStagePanelUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockSaveCropStageAdvancedDetailsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockFlashMessage: { show: ReturnType<typeof vi.fn> };
@@ -175,14 +167,10 @@ describe('CropStagesComponent', () => {
 
     mockLoadUseCase = { execute: vi.fn() };
     mockCreateCropStageUseCase = { execute: vi.fn() };
-    mockUpdateCropStageUseCase = { execute: vi.fn() };
     mockReorderCropStagesUseCase = { execute: vi.fn() };
     mockDeleteCropStageUseCase = { execute: vi.fn() };
     mockLoadBlueprintsUseCase = { execute: vi.fn() };
     mockUpdateTemperatureRequirementUseCase = { execute: vi.fn() };
-    mockUpdateThermalRequirementUseCase = { execute: vi.fn() };
-    mockUpdateSunshineRequirementUseCase = { execute: vi.fn() };
-    mockUpdateNutrientRequirementUseCase = { execute: vi.fn() };
     mockSaveCropStagePanelUseCase = { execute: vi.fn() };
     mockSaveCropStageAdvancedDetailsUseCase = { execute: vi.fn() };
     mockFlashMessage = { show: vi.fn() };
@@ -199,14 +187,10 @@ describe('CropStagesComponent', () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: LoadCropForEditUseCase, useValue: mockLoadUseCase },
         { provide: CreateCropStageUseCase, useValue: mockCreateCropStageUseCase },
-        { provide: UpdateCropStageUseCase, useValue: mockUpdateCropStageUseCase },
         { provide: ReorderCropStagesUseCase, useValue: mockReorderCropStagesUseCase },
         { provide: DeleteCropStageUseCase, useValue: mockDeleteCropStageUseCase },
         { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: mockLoadBlueprintsUseCase },
         { provide: UpdateTemperatureRequirementUseCase, useValue: mockUpdateTemperatureRequirementUseCase },
-        { provide: UpdateThermalRequirementUseCase, useValue: mockUpdateThermalRequirementUseCase },
-        { provide: UpdateSunshineRequirementUseCase, useValue: mockUpdateSunshineRequirementUseCase },
-        { provide: UpdateNutrientRequirementUseCase, useValue: mockUpdateNutrientRequirementUseCase },
         { provide: SaveCropStagePanelUseCase, useValue: mockSaveCropStagePanelUseCase },
         { provide: SaveCropStageAdvancedDetailsUseCase, useValue: mockSaveCropStageAdvancedDetailsUseCase },
         { provide: FlashMessageService, useValue: mockFlashMessage }
@@ -217,14 +201,10 @@ describe('CropStagesComponent', () => {
 
     TestBed.overrideProvider(LoadCropForEditUseCase, { useValue: mockLoadUseCase });
     TestBed.overrideProvider(CreateCropStageUseCase, { useValue: mockCreateCropStageUseCase });
-    TestBed.overrideProvider(UpdateCropStageUseCase, { useValue: mockUpdateCropStageUseCase });
     TestBed.overrideProvider(ReorderCropStagesUseCase, { useValue: mockReorderCropStagesUseCase });
     TestBed.overrideProvider(DeleteCropStageUseCase, { useValue: mockDeleteCropStageUseCase });
     TestBed.overrideProvider(LoadCropTaskScheduleBlueprintsUseCase, { useValue: mockLoadBlueprintsUseCase });
     TestBed.overrideProvider(UpdateTemperatureRequirementUseCase, { useValue: mockUpdateTemperatureRequirementUseCase });
-    TestBed.overrideProvider(UpdateThermalRequirementUseCase, { useValue: mockUpdateThermalRequirementUseCase });
-    TestBed.overrideProvider(UpdateSunshineRequirementUseCase, { useValue: mockUpdateSunshineRequirementUseCase });
-    TestBed.overrideProvider(UpdateNutrientRequirementUseCase, { useValue: mockUpdateNutrientRequirementUseCase });
 
     fixture = TestBed.createComponent(CropStagesComponent);
     component = fixture.componentInstance;
@@ -310,9 +290,7 @@ describe('CropStagesComponent', () => {
       },
       thermalPatch: { required_gdd: 150 }
     });
-    expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
     expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
-    expect(mockUpdateThermalRequirementUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('opens unsaved confirm when switching stages with dirty panel', async () => {
@@ -432,8 +410,6 @@ describe('CropStagesComponent', () => {
       },
       temperaturePatch: { sterility_risk_threshold: 32 }
     });
-    expect(mockUpdateSunshineRequirementUseCase.execute).not.toHaveBeenCalled();
-    expect(mockUpdateNutrientRequirementUseCase.execute).not.toHaveBeenCalled();
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
@@ -604,7 +580,6 @@ describe('CropStagesComponent', () => {
         { id: 3, order: 2 }
       ]
     });
-    expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('shows duplicate order warning', async () => {

@@ -7,14 +7,10 @@ import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { CropStagesView, CropStagesViewState, CropStagesFormData } from './crop-stages.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
-import { UpdateCropStageUseCase } from '../../../usecase/crops/update-crop-stage.usecase';
 import { ReorderCropStagesUseCase } from '../../../usecase/crops/reorder-crop-stages.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
-import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
-import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
-import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
 import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
 import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import {
@@ -406,13 +402,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
   private readonly loadBlueprintsUseCase = inject(LoadCropTaskScheduleBlueprintsUseCase);
   private readonly createCropStageUseCase = inject(CreateCropStageUseCase);
-  private readonly updateCropStageUseCase = inject(UpdateCropStageUseCase);
   private readonly reorderCropStagesUseCase = inject(ReorderCropStagesUseCase);
   private readonly deleteCropStageUseCase = inject(DeleteCropStageUseCase);
   private readonly updateTemperatureRequirementUseCase = inject(UpdateTemperatureRequirementUseCase);
-  private readonly updateThermalRequirementUseCase = inject(UpdateThermalRequirementUseCase);
-  private readonly updateSunshineRequirementUseCase = inject(UpdateSunshineRequirementUseCase);
-  private readonly updateNutrientRequirementUseCase = inject(UpdateNutrientRequirementUseCase);
   private readonly saveCropStagePanelUseCase = inject(SaveCropStagePanelUseCase);
   private readonly saveCropStageAdvancedDetailsUseCase = inject(SaveCropStageAdvancedDetailsUseCase);
   private readonly presenter = inject(CropStagesPresenter);
@@ -713,14 +705,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
   }
 
-  updateCropStage(stageId: number, payload: { name?: string; order?: number }): void {
-    this.updateCropStageUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
-  }
-
   deleteCropStage(stageId: number): void {
     const stage = this.control.formData.crop_stages.find((item) => item.id === stageId);
     if (!stage) {
@@ -757,30 +741,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   updateTemperatureRequirement(stageId: number, payload: Record<string, unknown>): void {
     this.updateTemperatureRequirementUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
-  }
-
-  updateThermalRequirement(stageId: number, payload: Record<string, unknown>): void {
-    this.updateThermalRequirementUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
-  }
-
-  updateSunshineRequirement(stageId: number, payload: Record<string, unknown>): void {
-    this.updateSunshineRequirementUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
-  }
-
-  updateNutrientRequirement(stageId: number, payload: Record<string, unknown>): void {
-    this.updateNutrientRequirementUseCase.execute({
       cropId: this.cropId,
       stageId,
       payload
