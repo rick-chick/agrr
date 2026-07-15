@@ -2059,7 +2059,11 @@
       "table_base_temperature": "Base temperature",
       "table_required_gdd": "Required GDD",
       "table_cumulative_gdd": "Cumulative GDD",
-      "value_missing": "—"
+      "value_missing": "—",
+      "temperature_section": "Temperature conditions",
+      "gdd_section": "Accumulated temperature",
+      "detail_section": "Advanced settings",
+      "optimal_range": "Optimal range"
     },
     "show": {
       "reference_crop": "Reference Crop",
