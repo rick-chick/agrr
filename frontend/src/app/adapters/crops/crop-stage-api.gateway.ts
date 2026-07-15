@@ -24,6 +24,12 @@ export class CropStageApiGateway implements CropStageGateway {
     return this.client.patch<CropStage>(`/crops/${cropId}/crop_stages/${stageId}`, { crop_stage: payload });
   }
 
+  reorderCropStages(cropId: number, entries: Array<{ id: number; order: number }>): Observable<CropStage[]> {
+    return this.client.put<CropStage[]>(`/crops/${cropId}/crop_stages/reorder`, {
+      crop_stages: entries
+    });
+  }
+
   deleteCropStage(cropId: number, stageId: number): Observable<void> {
     return this.client.delete<void>(`/crops/${cropId}/crop_stages/${stageId}`);
   }

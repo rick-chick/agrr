@@ -6,26 +6,28 @@ use crate::state::AppState;
 use agrr_adapters_sqlite::{CropSqliteGateway, CropStageSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::crop::dtos::{
     CropStageCreateInput, CropStageDeleteInput, CropStageDetailInput, CropStageListInput,
-    CropStageUpdateInput,
+    CropStageReorderEntry, CropStageReorderInput, CropStageUpdateInput,
 };
 use agrr_domain::crop::interactors::crop_detail_interactor::CropDetailInteractor;
 use agrr_domain::crop::interactors::crop_stage_create_interactor::CropStageCreateInteractor;
 use agrr_domain::crop::interactors::crop_stage_delete_interactor::CropStageDeleteInteractor;
 use agrr_domain::crop::interactors::crop_stage_detail_interactor::CropStageDetailInteractor;
 use agrr_domain::crop::interactors::crop_stage_list_interactor::CropStageListInteractor;
+use agrr_domain::crop::interactors::crop_stage_reorder_interactor::CropStageReorderInteractor;
 use agrr_domain::crop::interactors::crop_stage_update_interactor::CropStageUpdateInteractor;
 use agrr_domain::crop::ports::{
-    CropDetailOutputPort, CropStageCreateOutputPort, CropStageDeleteOutputPort,
-    CropStageDetailOutputPort, CropStageListOutputPort, CropStageUpdateOutputPort, DetailFailure,
+    CropDetailOutputPort,     CropStageCreateOutputPort, CropStageDeleteOutputPort,
+    CropStageDetailOutputPort, CropStageListOutputPort, CropStageReorderOutputPort,
+    CropStageUpdateOutputPort, DetailFailure,
 };
 use agrr_domain::crop::ports::{
     CropStageCreateFailure, CropStageDeleteFailure, CropStageDetailFailure,
-    CropStageUpdateFailure,
+    CropStageReorderFailure, CropStageUpdateFailure,
 };
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    routing::get,
+    routing::{get, put},
     Json, Router,
 };
 use serde::Deserialize;
@@ -33,6 +35,10 @@ use serde_json::{json, Value};
 
 pub fn routes() -> Router<AppState> {
     Router::new()
+        .route(
+            "/api/v1/masters/crops/{crop_id}/crop_stages/reorder",
+            put(reorder),
+        )
         .route(
             "/api/v1/masters/crops/{crop_id}/crop_stages",
             get(index).post(create),
@@ -235,6 +241,76 @@ async fn create(
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(json!({"error": "internal"})),
     )))
+}
+
+async fn reorder(
+    State(state): State<AppState>,
+    auth: MastersUserId,
+    Path(crop_id): Path<i64>,
+    Json(body): Json<ReorderRequest>,
+) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
+    let user_id = auth.0;
+    ensure_crop_visible(&state, user_id, crop_id).await?;
+    let entries = reorder_entries_from_body(&body)?;
+    let pool = state.sqlite.clone();
+    let gateway = CropSqliteGateway::new(pool);
+    struct P {
+        body: Option<Vec<Value>>,
+    }
+    impl CropStageReorderOutputPort for P {
+        fn on_success(&mut self, output: agrr_domain::crop::dtos::CropStageListOutput) {
+            self.body = Some(
+                output
+                    .stages
+                    .iter()
+                    .map(crop_stage_to_json)
+                    .collect(),
+            );
+        }
+        fn on_failure(&mut self, _: CropStageReorderFailure) {}
+    }
+    let mut p = P { body: None };
+    let mut interactor = CropStageReorderInteractor::new(&mut p, &gateway);
+    interactor
+        .call(CropStageReorderInput { crop_id, entries })
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+    match p.body {
+        Some(v) => Ok(Json(json!(v))),
+        None => Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({"errors": ["invalid"]})),
+        )),
+    }
+}
+
+#[derive(Deserialize)]
+struct ReorderRequest {
+    crop_stages: Vec<ReorderEntry>,
+}
+
+#[derive(Deserialize)]
+struct ReorderEntry {
+    id: i64,
+    order: i64,
+}
+
+fn reorder_entries_from_body(
+    body: &ReorderRequest,
+) -> Result<Vec<CropStageReorderEntry>, (StatusCode, Json<Value>)> {
+    if body.crop_stages.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": "Invalid parameters"})),
+        ));
+    }
+    Ok(body
+        .crop_stages
+        .iter()
+        .map(|entry| CropStageReorderEntry {
+            crop_stage_id: entry.id,
+            order: entry.order,
+        })
+        .collect())
 }
 
 async fn update(

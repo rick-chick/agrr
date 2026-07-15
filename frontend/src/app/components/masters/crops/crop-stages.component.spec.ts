@@ -9,6 +9,7 @@ import { CropStagesPresenter } from '../../../usecase/crops/crop-stages.provider
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
 import { UpdateCropStageUseCase } from '../../../usecase/crops/update-crop-stage.usecase';
+import { ReorderCropStagesUseCase } from '../../../usecase/crops/reorder-crop-stages.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
@@ -130,6 +131,7 @@ describe('CropStagesComponent', () => {
   let mockLoadUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockCreateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockReorderCropStagesUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockDeleteCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockLoadBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateTemperatureRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -170,6 +172,7 @@ describe('CropStagesComponent', () => {
     mockLoadUseCase = { execute: vi.fn() };
     mockCreateCropStageUseCase = { execute: vi.fn() };
     mockUpdateCropStageUseCase = { execute: vi.fn() };
+    mockReorderCropStagesUseCase = { execute: vi.fn() };
     mockDeleteCropStageUseCase = { execute: vi.fn() };
     mockLoadBlueprintsUseCase = { execute: vi.fn() };
     mockUpdateTemperatureRequirementUseCase = { execute: vi.fn() };
@@ -191,6 +194,7 @@ describe('CropStagesComponent', () => {
         { provide: LoadCropForEditUseCase, useValue: mockLoadUseCase },
         { provide: CreateCropStageUseCase, useValue: mockCreateCropStageUseCase },
         { provide: UpdateCropStageUseCase, useValue: mockUpdateCropStageUseCase },
+        { provide: ReorderCropStagesUseCase, useValue: mockReorderCropStagesUseCase },
         { provide: DeleteCropStageUseCase, useValue: mockDeleteCropStageUseCase },
         { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: mockLoadBlueprintsUseCase },
         { provide: UpdateTemperatureRequirementUseCase, useValue: mockUpdateTemperatureRequirementUseCase },
@@ -204,6 +208,7 @@ describe('CropStagesComponent', () => {
     TestBed.overrideProvider(LoadCropForEditUseCase, { useValue: mockLoadUseCase });
     TestBed.overrideProvider(CreateCropStageUseCase, { useValue: mockCreateCropStageUseCase });
     TestBed.overrideProvider(UpdateCropStageUseCase, { useValue: mockUpdateCropStageUseCase });
+    TestBed.overrideProvider(ReorderCropStagesUseCase, { useValue: mockReorderCropStagesUseCase });
     TestBed.overrideProvider(DeleteCropStageUseCase, { useValue: mockDeleteCropStageUseCase });
     TestBed.overrideProvider(LoadCropTaskScheduleBlueprintsUseCase, { useValue: mockLoadBlueprintsUseCase });
     TestBed.overrideProvider(UpdateTemperatureRequirementUseCase, { useValue: mockUpdateTemperatureRequirementUseCase });
@@ -585,11 +590,15 @@ describe('CropStagesComponent', () => {
     } as CdkDragDrop<CropStage[]>);
 
     expect(component.control.formData.crop_stages.map((stage) => stage.order)).toEqual([1, 2, 3]);
-    expect(mockUpdateCropStageUseCase.execute).toHaveBeenCalledWith({
+    expect(mockReorderCropStagesUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
-      stageId: 1,
-      payload: { order: 3 }
+      entries: [
+        { id: 1, order: 3 },
+        { id: 2, order: 1 },
+        { id: 3, order: 2 }
+      ]
     });
+    expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('shows duplicate order warning', async () => {

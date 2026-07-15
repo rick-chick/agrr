@@ -1,4 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, request, test } from '@playwright/test';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { waitForPageStable } from '../page-stable';
 import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
 import {
@@ -226,6 +228,69 @@ smokeDescribe('operation smoke (key user flows)', () => {
       'app-crop-stages .crop-stages-table, app-crop-stages .crop-stages-empty',
     );
     await expect(content.first()).toBeVisible();
+  });
+
+  test('master crops: drag reorder persists stage order after reload', async ({ page }) => {
+    const cropId = resolvedCaptureIds?.masters.crops;
+    if (cropId == null) {
+      test.skip(true, 'no crops record in dev DB');
+    }
+
+    const storagePath = join(process.cwd(), 'e2e', '.auth', 'dev-session.json');
+    if (!existsSync(storagePath)) {
+      test.skip(true, 'dev session missing');
+    }
+    const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
+    const api = await request.newContext({ storageState: storagePath });
+    try {
+      const cropRes = await api.get(`${apiOrigin}/api/v1/masters/crops/${cropId}`);
+      if (!cropRes.ok()) {
+        test.skip(true, 'crop not accessible in dev DB');
+      }
+      const crop = (await cropRes.json()) as { crop_stages?: Array<{ id: number; name: string; order: number }> };
+      let stages = [...(crop.crop_stages ?? [])].sort((a, b) => a.order - b.order);
+
+      while (stages.length < 2) {
+        const order = stages.length + 1;
+        const createRes = await api.post(`${apiOrigin}/api/v1/masters/crops/${cropId}/crop_stages`, {
+          data: { crop_stage: { name: `E2E Stage ${order}`, order } },
+        });
+        expect(createRes.ok(), await createRes.text()).toBeTruthy();
+        const created = (await createRes.json()) as { id: number; name: string; order: number };
+        stages.push(created);
+      }
+
+      const stagesPattern = 'crops/:id/stages';
+      const stagesRoute = findRoute(stagesPattern);
+      await page.goto(`/crops/${cropId}/stages`);
+      await waitForPageStable(page, stagesRoute);
+      await assertHostHealthy(page, 'app-crop-stages');
+
+      const rows = page.locator('app-crop-stages .crop-stages-table__row');
+      await expect(rows).toHaveCount(stages.length);
+
+      const firstName = await rows.nth(0).locator('td').nth(2).innerText();
+      const dragHandle = rows.nth(0).locator('.crop-stages-table__drag');
+      const targetRow = rows.nth(1);
+      await dragHandle.dragTo(targetRow);
+
+      await expect(page.locator('app-flash-message .flash-message.error')).toHaveCount(0, {
+        timeout: 15_000,
+      });
+
+      const afterReloadCrop = await api.get(`${apiOrigin}/api/v1/masters/crops/${cropId}`);
+      expect(afterReloadCrop.ok()).toBeTruthy();
+      const afterReload = (await afterReloadCrop.json()) as {
+        crop_stages?: Array<{ id: number; name: string; order: number }>;
+      };
+      const reloadedStages = [...(afterReload.crop_stages ?? [])].sort((a, b) => a.order - b.order);
+      expect(reloadedStages[0]?.name).not.toBe(firstName);
+      expect(reloadedStages.map((stage) => stage.order)).toEqual(
+        stages.map((_, index) => index + 1),
+      );
+    } finally {
+      await api.dispose();
+    }
   });
 
   for (const m of MASTER_RESOURCES) {
