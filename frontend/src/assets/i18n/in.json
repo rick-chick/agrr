@@ -2141,9 +2141,6 @@
         "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
         "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
         "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
-        "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (g/m²/day)",
-        "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (g/m²/day)",
-        "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (g/m²/day)",
         "region": "क्षेत्र"
       }
     },

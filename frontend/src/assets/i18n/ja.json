@@ -501,9 +501,6 @@
       "gdd_unit": "°C·日",
       "minimum_sunshine_hours": "最低日照時間",
       "target_sunshine_hours": "目標日照時間",
-      "daily_uptake_n": "窒素 (N) 吸収量",
-      "daily_uptake_p": "リン (P) 吸収量",
-      "daily_uptake_k": "カリウム (K) 吸収量",
       "task_schedule_blueprints_title": "作業予定テンプレート",
       "cultivation_template_title": "栽培テンプレート",
       "blueprint_summary": {
@@ -1724,9 +1721,6 @@
         "required_gdd": "必要積算温度 (°C·day)",
         "minimum_sunshine_hours": "最低日照時間 (時間/日)",
         "target_sunshine_hours": "目標日照時間 (時間/日)",
-        "daily_uptake_n": "日間窒素吸収量 (g/m²/day)",
-        "daily_uptake_p": "日間リン吸収量 (g/m²/day)",
-        "daily_uptake_k": "日間カリウム吸収量 (g/m²/day)",
         "region": "地域"
       }
     },
