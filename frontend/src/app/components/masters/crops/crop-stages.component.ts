@@ -22,9 +22,14 @@ import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
 import {
   parsePlanWizardReturnTab,
   planWizardReturnPath,
+  cropPlanWizardQueryParams,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
+import {
+  blueprintGenerationReadiness,
+  type BlueprintGenerationReadiness
+} from '../../../domain/crops/blueprint-generation-readiness';
 import type { CropStage } from '../../../domain/crops/crop';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -73,6 +78,47 @@ const initialControl: CropStagesViewState = {
           <h1 class="page-title">{{ control.formData.name }}</h1>
           <p class="page-description">{{ 'crops.edit.stages_title' | translate }}</p>
         </header>
+
+        <div class="blueprint-readiness" role="status">
+          <p class="blueprint-readiness__title">
+            {{ 'crops.show.blueprint_readiness.title' | translate }}
+          </p>
+          <ul class="blueprint-readiness__list">
+            <li [class.blueprint-readiness__item--ok]="blueprintReadiness.stageRequirementsReady">
+              @if (blueprintReadiness.stageRequirementsReady) {
+                <span>{{ 'crops.show.blueprint_readiness.stages_ready' | translate }}</span>
+              } @else {
+                <span>{{ 'crops.show.blueprint_readiness.stages_missing' | translate }}</span>
+              }
+            </li>
+            <li [class.blueprint-readiness__item--ok]="blueprintReadiness.blueprintsReady">
+              @if (blueprintReadiness.blueprintsReady) {
+                <span>{{ 'crops.show.blueprint_readiness.blueprints_ready' | translate }}</span>
+              } @else {
+                <span>{{ 'crops.show.blueprint_readiness.blueprints_missing' | translate }}</span>
+                <a
+                  [routerLink]="['/crops', cropId, 'task_schedule_blueprints']"
+                  [queryParams]="wizardQueryParams"
+                  class="blueprint-readiness__link"
+                >
+                  {{ 'crops.show.blueprint_readiness.blueprints_action' | translate }}
+                </a>
+              }
+            </li>
+          </ul>
+        </div>
+
+        @if (blueprintReadiness.stageRequirementsReady) {
+          <div class="crop-stages__next-step">
+            <a
+              [routerLink]="['/crops', cropId, 'task_schedule_blueprints']"
+              [queryParams]="wizardQueryParams"
+              class="btn btn-secondary"
+            >
+              {{ 'crops.show.blueprint_summary.edit_action' | translate }}
+            </a>
+          </div>
+        }
 
         <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
           <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_title' | translate }}</h2>
@@ -260,6 +306,25 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   get planReturnPath(): (string | number)[] {
     return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
+  }
+
+  get blueprintReadiness(): BlueprintGenerationReadiness {
+    return blueprintGenerationReadiness(
+      {
+        id: this.cropId,
+        name: this.control.formData.name,
+        is_reference: false,
+        groups: [],
+        crop_stages: this.control.formData.crop_stages
+      },
+      []
+    );
+  }
+
+  get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {
+    return this.fromPlanId != null
+      ? cropPlanWizardQueryParams(this.fromPlanId, this.returnTab)
+      : null;
   }
 
   get contextCrumbs(): MasterContextCrumb[] {

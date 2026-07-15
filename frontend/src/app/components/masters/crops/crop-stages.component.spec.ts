@@ -363,4 +363,153 @@ describe('CropStagesComponent', () => {
     expect(cumulativeGdd).toBeTruthy();
     expect(cumulativeGdd.textContent).toContain('0〜200');
   });
+
+  describe('blueprint readiness checklist and next-step CTA', () => {
+    const blueprintReadinessTranslations = {
+      crops: {
+        show: {
+          blueprint_readiness: {
+            title: 'Required before AI generation',
+            stages_ready: 'Stages ready',
+            stages_missing: 'Growth stages are missing base temperature or required GDD',
+            blueprints_ready: 'Task plans ready',
+            blueprints_missing: 'No task plans registered yet',
+            blueprints_action: 'Register task plans'
+          },
+          blueprint_summary: {
+            edit_action: 'Edit task plans'
+          }
+        }
+      }
+    };
+
+    const completeStage: CropStage = {
+      id: 1,
+      name: 'Stage 1',
+      order: 1,
+      temperature_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        base_temperature: 10,
+        optimal_min: null,
+        optimal_max: null,
+        low_stress_threshold: null,
+        high_stress_threshold: null,
+        frost_threshold: null,
+        sterility_risk_threshold: null,
+        max_temperature: null
+      },
+      thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
+      sunshine_requirement: null,
+      nutrient_requirement: null
+    } as CropStage;
+
+    const incompleteStage: CropStage = {
+      id: 1,
+      name: 'Stage 1',
+      order: 1,
+      temperature_requirement: null,
+      thermal_requirement: null,
+      sunshine_requirement: null,
+      nutrient_requirement: null
+    } as CropStage;
+
+    beforeEach(() => {
+      translateService.setTranslation('en', blueprintReadinessTranslations, true);
+      translateService.use('en');
+    });
+
+    it('shows checklist with stages_missing when requirements are incomplete', () => {
+      component.control = {
+        loading: false,
+        error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
+        formData: {
+          name: 'Tomato',
+          crop_stages: [incompleteStage]
+        }
+      };
+
+      fixture.detectChanges();
+
+      const checklist = fixture.nativeElement.querySelector('.blueprint-readiness');
+      expect(checklist).toBeTruthy();
+      expect(checklist.textContent).toContain('Growth stages are missing base temperature or required GDD');
+      expect(checklist.querySelector('.blueprint-readiness__item--ok')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    });
+
+    it('shows checklist with stages_ready when requirements are complete', () => {
+      component.control = {
+        loading: false,
+        error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
+        formData: {
+          name: 'Tomato',
+          crop_stages: [completeStage]
+        }
+      };
+
+      fixture.detectChanges();
+
+      const checklist = fixture.nativeElement.querySelector('.blueprint-readiness');
+      expect(checklist).toBeTruthy();
+      expect(checklist.textContent).toContain('Stages ready');
+      expect(checklist.querySelector('.blueprint-readiness__item--ok')).toBeTruthy();
+    });
+
+    it('shows next-step CTA to task schedule blueprints when requirements are complete', () => {
+      component.control = {
+        loading: false,
+        error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
+        formData: {
+          name: 'Tomato',
+          crop_stages: [completeStage]
+        }
+      };
+
+      fixture.detectChanges();
+
+      const nextStep = fixture.nativeElement.querySelector('.crop-stages__next-step');
+      expect(nextStep).toBeTruthy();
+      const link = nextStep.querySelector(
+        'a[href="/crops/1/task_schedule_blueprints"]'
+      ) as HTMLAnchorElement;
+      expect(link).toBeTruthy();
+      expect(link.textContent).toContain('Edit task plans');
+    });
+
+    it('passes wizard query params on next-step CTA when fromPlan is set', () => {
+      mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) => {
+        if (key === 'fromPlan') return '7';
+        if (key === 'returnTo') return 'work';
+        return null;
+      });
+      component.fromPlanId = 7;
+      component.returnTab = 'work';
+      component.control = {
+        loading: false,
+        error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
+        formData: {
+          name: 'Tomato',
+          crop_stages: [completeStage]
+        }
+      };
+
+      fixture.detectChanges();
+
+      const link = fixture.nativeElement.querySelector(
+        'a[href*="/crops/1/task_schedule_blueprints"]'
+      ) as HTMLAnchorElement;
+      expect(link).toBeTruthy();
+      expect(link.getAttribute('href')).toContain('fromPlan=7');
+      expect(link.getAttribute('href')).toContain('returnTo=work');
+    });
+  });
 });
