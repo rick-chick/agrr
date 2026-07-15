@@ -24,6 +24,12 @@ import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-suc
 import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { LoadCropTaskScheduleBlueprintsOutputPort } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 
+type RequirementOutputDto =
+  | UpdateTemperatureRequirementOutputDto
+  | UpdateThermalRequirementOutputDto
+  | UpdateSunshineRequirementOutputDto
+  | UpdateNutrientRequirementOutputDto;
+
 @Injectable()
 export class CropStagesPresenter implements
   LoadCropForEditOutputPort,
@@ -87,7 +93,7 @@ export class CropStagesPresenter implements
     } else if ('success' in dto && 'stageId' in dto) {
       this.presentDeleteCropStage(dto as DeleteCropStageOutputDto);
     } else if ('requirement' in dto) {
-      const req = dto.requirement as any;
+      const { requirement: req } = dto as RequirementOutputDto;
       if ('base_temperature' in req || 'optimal_min' in req || 'optimal_max' in req) {
         this.presentUpdateTemperatureRequirement(dto as UpdateTemperatureRequirementOutputDto);
       } else if ('required_gdd' in req) {
