@@ -246,7 +246,14 @@
       "blueprint_not_found": "निर्दिष्ट कार्य योजना नहीं मिली।",
       "blueprint_deleted": "कार्य योजना हटाई गई।",
       "blueprint_created": "कार्य योजना जोड़ी गई।",
-      "blueprint_delete_failed": "कार्य योजना हटाने में विफल।"
+      "blueprint_delete_failed": "कार्य योजना हटाने में विफल।",
+      "stage_created": "वृद्धि चरण जोड़ा गया।",
+      "stage_updated": "वृद्धि चरण अपडेट किया गया।",
+      "stage_deleted": "वृद्धि चरण हटाया गया।",
+      "temperature_requirement_updated": "तापमान आवश्यकता अपडेट की गई।",
+      "thermal_requirement_updated": "संचयी ताप आवश्यकता अपडेट की गई।",
+      "sunshine_requirement_updated": "धूप आवश्यकता अपडेट की गई।",
+      "nutrient_requirement_updated": "पोषक तत्व आवश्यकता अपडेट की गई।"
     },
     "form": {
       "name_label": "नाम",
@@ -275,6 +282,9 @@
     },
     "stage": {
       "default_name": "चरण {{order}}",
+      "temperature": {
+        "base_temperature_label": "आधार तापमान (°C)"
+      },
       "delete_confirm_message": "क्या आप \"{{stageName}}\" को हटाना चाहते हैं?\n\nइस चरण से जुड़ी आवश्यकताएँ (तापमान, GDD आदि) भी हट जाएँगी। इससे कार्य अनुसूची टेम्पलेट और खेती योजनाओं की उत्पन्न अनुसूचियाँ प्रभावित हो सकती हैं। यह क्रिया पूर्ववत नहीं की जा सकती।",
       "delete_confirm_blueprint_warning": "इस चरण से {{count}} कार्य अनुसूची टेम्पलेट जुड़े हैं। हटाने से टेम्पलेट स्थान बिगड़ सकता है।"
     },
@@ -307,10 +317,14 @@
     "edit": {
       "title": "{{name}} संपादित करें",
       "stages_title": "वृद्धि चरण",
+      "stages_lead": "खेती योजना में अवधि का अनुमान और कार्य अनुसूची बनाने के लिए उपयोग किए जाने वाले वृद्धि चरण और प्रत्येक चरण की पर्यावरणीय आवश्यकताएँ यहाँ सेट करें।",
+      "stages_list_heading": "चरण सूची",
+      "stages_empty_lead": "खेती टेम्पलेट और कार्य अनुसूची सेट करने के लिए वृद्धि चरण आवश्यक हैं।",
       "add_stage": "चरण जोड़ें",
       "stage_title": "चरण {{order}}",
       "stage_name": "चरण का नाम",
       "stage_order": "क्रम",
+      "stage_order_duplicate": "डुप्लिकेट क्रम मान: {{orders}}। कृपया अद्वितीय क्रम संख्या निर्दिष्ट करें।",
       "requirements_title": "आवश्यकताएँ",
       "temperature_requirement": "तापमान आवश्यकताएँ",
       "thermal_requirement": "थर्मल आवश्यकताएँ",
@@ -430,7 +444,8 @@
       "from_plan_wizard_title": "इस योजना की कार्य अनुसूची के लिए पंजीकरण",
       "from_plan_wizard_lead": "नीचे के फॉर्म से कार्य योजना पंजीकृत करें। समाप्त होने पर ब्रेडक्रंब से योजना पर वापस जाएँ।",
       "return_to_plan": "योजना पर वापस जाएँ",
-      "from_plan_stages_wizard_lead": "प्रत्येक वृद्धि चरण के लिए आधार तापमान और आवश्यक GDD सेट करें। समाप्त होने पर योजना पर लौटकर कार्य अनुसूची पुनः बनाएँ।"
+      "from_plan_stages_wizard_lead": "प्रत्येक वृद्धि चरण के लिए आधार तापमान और आवश्यक GDD सेट करें। समाप्त होने पर योजना पर लौटकर कार्य अनुसूची पुनः बनाएँ।",
+      "base_temperature": "आधार तापमान"
     }
   },
   "pests": {

@@ -16,6 +16,8 @@ function getNested(obj: JsonRecord, path: string): unknown {
 const CROP_EDIT_CATALOG_KEYS = [
   'crops.edit.title',
   'crops.edit.stages_title',
+  'crops.edit.stages_lead',
+  'crops.edit.stages_list_heading',
   'crops.edit.add_stage',
   'crops.edit.stage_title',
   'crops.edit.stage_name',
