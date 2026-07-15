@@ -61,7 +61,7 @@ export function selectSyncCandidates(prs) {
     const title = String(pr.title ?? '');
 
     if (!prMergeWorkerIsEligible(labels, headRef, body)) return false;
-    if (pr.isDraft === true) return false;
+    // Draft PRs are included here (conflict/sync only). Merge Worker still merges non-draft only.
     if (prMergeWorkerHasBlockingLabel(labels)) return false;
     if (prMergeWorkerShouldSkipInProgress(labels)) return false;
 

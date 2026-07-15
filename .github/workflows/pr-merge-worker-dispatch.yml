@@ -166,8 +166,18 @@ jobs:
             MERGE_STATE_STATUS=$(gh pr view "$PR_NUMBER" --json mergeStateStatus -q .mergeStateStatus)
           fi
 
-          if [ "$IS_DRAFT" = "true" ]; then
-            echo "Draft PR; skipping."
+          NEEDS_SYNC=false
+          if [ "$MERGEABLE_STATE" = "CONFLICTING" ] || [ "$MERGE_STATE_STATUS" = "DIRTY" ] || [ "$MERGE_STATE_STATUS" = "BEHIND" ]; then
+            NEEDS_SYNC=true
+            ACTION="conflict"
+            echo "PR needs master sync (mergeable=$MERGEABLE_STATE mergeStateStatus=$MERGE_STATE_STATUS); dispatching conflict resolution."
+          elif [ "$ACTION" = "synchronize" ]; then
+            echo "synchronize event without merge conflicts; skipping (CI completed will dispatch)."
+            exit 0
+          fi
+
+          if [ "$IS_DRAFT" = "true" ] && [ "$NEEDS_SYNC" != "true" ]; then
+            echo "Draft PR without conflict/sync need; skipping."
             exit 0
           fi
           if [ "$HEAD_OWNER" != "$BASE_OWNER" ]; then
@@ -193,14 +203,6 @@ jobs:
           fi
           if [ "$ACTION" != "conflict" ] && [ "$HEAD_OID" != "$HEAD_SHA" ]; then
             echo "Resolved head SHA ($HEAD_SHA) != current PR head ($HEAD_OID); skipping stale dispatch."
-            exit 0
-          fi
-
-          if [ "$MERGEABLE_STATE" = "CONFLICTING" ] || [ "$MERGE_STATE_STATUS" = "DIRTY" ] || [ "$MERGE_STATE_STATUS" = "BEHIND" ]; then
-            ACTION="conflict"
-            echo "PR needs master sync (mergeable=$MERGEABLE_STATE mergeStateStatus=$MERGE_STATE_STATUS); dispatching conflict resolution."
-          elif [ "$ACTION" = "synchronize" ]; then
-            echo "synchronize event without merge conflicts; skipping (CI completed will dispatch)."
             exit 0
           fi
 
