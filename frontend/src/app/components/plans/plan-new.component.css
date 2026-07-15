@@ -82,3 +82,7 @@ select.form-control {
 .plan-new-warning__link {
   margin-left: var(--space-1);
 }
+
+.plan-new-warning--farm {
+  margin-top: var(--space-1);
+}

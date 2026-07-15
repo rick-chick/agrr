@@ -163,7 +163,7 @@ describe('PlanNewComponent', () => {
     expect(registerLink.textContent?.trim()).toBe('Register fields');
   });
 
-  it('shows summary hint when some farms lack fields but others are selectable', () => {
+  it('shows summary hint and per-farm register links when some farms lack fields but others are selectable', () => {
     fixture.detectChanges();
     component.control = {
       loading: false,
@@ -171,7 +171,8 @@ describe('PlanNewComponent', () => {
       error: null,
       farms: [
         { id: 1, name: 'Ready Farm', fieldCount: 2, totalArea: 100, hasValidFields: true },
-        { id: 2, name: 'Empty Farm', fieldCount: 0, totalArea: 0, hasValidFields: false }
+        { id: 2, name: 'Empty Farm', fieldCount: 0, totalArea: 0, hasValidFields: false },
+        { id: 3, name: 'Another Empty', fieldCount: 0, totalArea: 0, hasValidFields: false }
       ],
       selectedFarmId: null,
       noFieldsWarning: false,
@@ -181,11 +182,23 @@ describe('PlanNewComponent', () => {
     };
     fixture.detectChanges();
 
-    const warning = fixture.nativeElement.querySelector('.plan-new-warning');
-    expect(warning?.textContent).toContain(
+    const warnings = fixture.nativeElement.querySelectorAll('.plan-new-warning');
+    expect(warnings.length).toBeGreaterThanOrEqual(1);
+    expect(warnings[0]?.textContent).toContain(
       'Farms without registered fields cannot be selected for planning.'
     );
-    expect(fixture.nativeElement.querySelector('a.plan-new-warning__link')).toBeNull();
+
+    const registerLinks = Array.from(
+      fixture.nativeElement.querySelectorAll('a.plan-new-warning__link')
+    ) as HTMLAnchorElement[];
+    expect(registerLinks).toHaveLength(2);
+    expect(registerLinks.map((link) => link.getAttribute('href'))).toEqual(['/farms/2', '/farms/3']);
+    expect(registerLinks.every((link) => link.textContent?.trim() === 'Register fields')).toBe(true);
+
+    const farmRows = fixture.nativeElement.querySelectorAll('.plan-new-warning--farm');
+    expect(farmRows).toHaveLength(2);
+    expect(farmRows[0]?.textContent).toContain('Empty Farm');
+    expect(farmRows[1]?.textContent).toContain('Another Empty');
   });
 
   it('should not submit when selected farm has no valid fields', () => {
