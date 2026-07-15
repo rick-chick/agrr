@@ -377,7 +377,9 @@
       "temperature_requirement_updated": "温度要件を更新しました。",
       "thermal_requirement_updated": "積算温度要件を更新しました。",
       "sunshine_requirement_updated": "日照要件を更新しました。",
-      "nutrient_requirement_updated": "栄養素要件を更新しました。"
+      "nutrient_requirement_updated": "栄養素要件を更新しました。",
+      "stage_panel_partial_save_failed": "一部の項目を保存できませんでした。サーバー上の最新データに戻しました。",
+      "stage_advanced_partial_save_failed": "一部の詳細項目を保存できませんでした。サーバー上の最新データに戻しました。"
     },
     "index": {
       "title": "作物一覧",

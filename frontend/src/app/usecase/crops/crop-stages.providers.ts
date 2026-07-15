@@ -26,6 +26,10 @@ import { UpdateTemperatureRequirementUseCase } from './update-temperature-requir
 import { UPDATE_TEMPERATURE_REQUIREMENT_OUTPUT_PORT } from './update-temperature-requirement.output-port';
 import { UpdateThermalRequirementUseCase } from './update-thermal-requirement.usecase';
 import { UPDATE_THERMAL_REQUIREMENT_OUTPUT_PORT } from './update-thermal-requirement.output-port';
+import { SaveCropStagePanelUseCase } from './save-crop-stage-panel.usecase';
+import { SAVE_CROP_STAGE_PANEL_OUTPUT_PORT } from './save-crop-stage-panel.output-port';
+import { SaveCropStageAdvancedDetailsUseCase } from './save-crop-stage-advanced-details.usecase';
+import { SAVE_CROP_STAGE_ADVANCED_DETAILS_OUTPUT_PORT } from './save-crop-stage-advanced-details.output-port';
 
 export const CROP_STAGES_PROVIDERS: readonly Provider[] = [
   CropStagesPresenter,
@@ -39,6 +43,8 @@ export const CROP_STAGES_PROVIDERS: readonly Provider[] = [
   UpdateThermalRequirementUseCase,
   UpdateSunshineRequirementUseCase,
   UpdateNutrientRequirementUseCase,
+  SaveCropStagePanelUseCase,
+  SaveCropStageAdvancedDetailsUseCase,
   { provide: LOAD_CROP_FOR_EDIT_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: LOAD_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: CREATE_CROP_STAGE_OUTPUT_PORT, useExisting: CropStagesPresenter },
@@ -49,6 +55,8 @@ export const CROP_STAGES_PROVIDERS: readonly Provider[] = [
   { provide: UPDATE_THERMAL_REQUIREMENT_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: UPDATE_SUNSHINE_REQUIREMENT_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: UPDATE_NUTRIENT_REQUIREMENT_OUTPUT_PORT, useExisting: CropStagesPresenter },
+  { provide: SAVE_CROP_STAGE_PANEL_OUTPUT_PORT, useExisting: CropStagesPresenter },
+  { provide: SAVE_CROP_STAGE_ADVANCED_DETAILS_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: CROP_GATEWAY, useClass: CropApiGateway },
   { provide: CROP_STAGE_GATEWAY, useClass: CropStageApiGateway },
   { provide: CROP_TASK_SCHEDULE_BLUEPRINT_GATEWAY, useClass: CropTaskScheduleBlueprintApiGateway }

@@ -16,6 +16,8 @@ import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/upda
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
 import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
+import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
+import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -138,6 +140,8 @@ describe('CropStagesComponent', () => {
   let mockUpdateThermalRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateSunshineRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateNutrientRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockSaveCropStagePanelUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockSaveCropStageAdvancedDetailsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockFlashMessage: { show: ReturnType<typeof vi.fn> };
   let translateService: TranslateService;
 
@@ -179,6 +183,8 @@ describe('CropStagesComponent', () => {
     mockUpdateThermalRequirementUseCase = { execute: vi.fn() };
     mockUpdateSunshineRequirementUseCase = { execute: vi.fn() };
     mockUpdateNutrientRequirementUseCase = { execute: vi.fn() };
+    mockSaveCropStagePanelUseCase = { execute: vi.fn() };
+    mockSaveCropStageAdvancedDetailsUseCase = { execute: vi.fn() };
     mockFlashMessage = { show: vi.fn() };
 
     await TestBed.configureTestingModule({
@@ -201,6 +207,8 @@ describe('CropStagesComponent', () => {
         { provide: UpdateThermalRequirementUseCase, useValue: mockUpdateThermalRequirementUseCase },
         { provide: UpdateSunshineRequirementUseCase, useValue: mockUpdateSunshineRequirementUseCase },
         { provide: UpdateNutrientRequirementUseCase, useValue: mockUpdateNutrientRequirementUseCase },
+        { provide: SaveCropStagePanelUseCase, useValue: mockSaveCropStagePanelUseCase },
+        { provide: SaveCropStageAdvancedDetailsUseCase, useValue: mockSaveCropStageAdvancedDetailsUseCase },
         { provide: FlashMessageService, useValue: mockFlashMessage }
       ]
     }).compileComponents();
@@ -275,7 +283,7 @@ describe('CropStagesComponent', () => {
     expect(row.textContent).toContain('0–100');
   });
 
-  it('saves panel fields only when save button is clicked', async () => {
+  it('saves panel fields through SaveCropStagePanelUseCase when save button is clicked', async () => {
     await loadStages([stageFixture]);
 
     component.stageEditDraft.name = 'Updated Name';
@@ -284,32 +292,25 @@ describe('CropStagesComponent', () => {
     component.stageEditDraft.optimal_max = 25;
     component.stageEditDraft.max_temperature = 35;
     component.stageEditDraft.required_gdd = 150;
-    expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
-    expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
-    expect(mockUpdateThermalRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockSaveCropStagePanelUseCase.execute).not.toHaveBeenCalled();
 
     component.saveStagePanel();
 
-    expect(mockUpdateCropStageUseCase.execute).toHaveBeenCalledWith({
+    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
       stageId: 1,
-      payload: { name: 'Updated Name' }
-    });
-    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: {
+      stagePatch: { name: 'Updated Name' },
+      temperaturePatch: {
         base_temperature: 12,
         optimal_min: 15,
         optimal_max: 25,
         max_temperature: 35
-      }
+      },
+      thermalPatch: { required_gdd: 150 }
     });
-    expect(mockUpdateThermalRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { required_gdd: 150 }
-    });
+    expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateThermalRequirementUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('opens unsaved confirm when switching stages with dirty panel', async () => {
@@ -402,7 +403,7 @@ describe('CropStagesComponent', () => {
     expect(component.isPanelDirty()).toBe(true);
   });
 
-  it('opens advanced dialog and saves sunshine, nutrient, and sterility fields', async () => {
+  it('opens advanced dialog and saves sunshine, nutrient, and sterility fields through SaveCropStageAdvancedDetailsUseCase', async () => {
     await loadStages([stageFixture]);
 
     component.openAdvancedDialog();
@@ -417,26 +418,21 @@ describe('CropStagesComponent', () => {
     };
     component.saveAdvancedDialog();
 
-    expect(mockUpdateSunshineRequirementUseCase.execute).toHaveBeenCalledWith({
+    expect(mockSaveCropStageAdvancedDetailsUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
       stageId: 1,
-      payload: { minimum_sunshine_hours: 4, target_sunshine_hours: 8 }
-    });
-    expect(mockUpdateNutrientRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: {
+      sunshinePatch: { minimum_sunshine_hours: 4, target_sunshine_hours: 8 },
+      nutrientPatch: {
         daily_uptake_n: 0.5,
         daily_uptake_p: 0.2,
         daily_uptake_k: 0.3,
         region: 'jp'
-      }
+      },
+      temperaturePatch: { sterility_risk_threshold: 32 }
     });
-    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { sterility_risk_threshold: 32 }
-    });
+    expect(mockUpdateSunshineRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateNutrientRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
   it('opens delete confirm dialog from edit panel instead of window.confirm', async () => {

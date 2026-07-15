@@ -24,6 +24,16 @@ import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-suc
 import { withCropStagesDisplayState } from './crop-stages-display-state';
 import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { LoadCropTaskScheduleBlueprintsOutputPort } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
+import { SaveCropStagePanelOutputPort } from '../../usecase/crops/save-crop-stage-panel.output-port';
+import {
+  SaveCropStagePanelPartialFailureDto,
+  SaveCropStagePanelSuccessDto
+} from '../../usecase/crops/save-crop-stage-panel.dtos';
+import { SaveCropStageAdvancedDetailsOutputPort } from '../../usecase/crops/save-crop-stage-advanced-details.output-port';
+import {
+  SaveCropStageAdvancedDetailsPartialFailureDto,
+  SaveCropStageAdvancedDetailsSuccessDto
+} from '../../usecase/crops/save-crop-stage-advanced-details.dtos';
 
 @Injectable()
 export class CropStagesPresenter implements
@@ -36,7 +46,9 @@ export class CropStagesPresenter implements
   UpdateTemperatureRequirementOutputPort,
   UpdateThermalRequirementOutputPort,
   UpdateSunshineRequirementOutputPort,
-  UpdateNutrientRequirementOutputPort {
+  UpdateNutrientRequirementOutputPort,
+  SaveCropStagePanelOutputPort,
+  SaveCropStageAdvancedDetailsOutputPort {
   private view: CropStagesView | null = null;
   private cropId = 0;
 
@@ -240,6 +252,47 @@ export class CropStagesPresenter implements
       formData: { ...this.view.control.formData, crop_stages: updatedStages },
       pendingErrorFlash: null,
       pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.nutrient_requirement_updated')
+    });
+  }
+
+  onSuccess(dto: SaveCropStagePanelSuccessDto | SaveCropStageAdvancedDetailsSuccessDto): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const updatedStages = this.view.control.formData.crop_stages.map((stage) =>
+      stage.id === dto.stage.id ? dto.stage : stage
+    );
+    this.view.control = this.applyDisplayState({
+      ...this.view.control,
+      formData: {
+        ...this.view.control.formData,
+        crop_stages: updatedStages
+      },
+      pendingErrorFlash: null,
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_updated')
+    });
+  }
+
+  onPanelPartialFailure(dto: SaveCropStagePanelPartialFailureDto): void {
+    this.presentPartialSaveFailure(dto, 'crops.flash.stage_panel_partial_save_failed');
+  }
+
+  onAdvancedPartialFailure(dto: SaveCropStageAdvancedDetailsPartialFailureDto): void {
+    this.presentPartialSaveFailure(dto, 'crops.flash.stage_advanced_partial_save_failed');
+  }
+
+  private presentPartialSaveFailure(
+    dto: SaveCropStagePanelPartialFailureDto | SaveCropStageAdvancedDetailsPartialFailureDto,
+    flashKey: string
+  ): void {
+    if (!this.view) throw new Error('Presenter: view not set');
+    this.view.control = this.applyDisplayState({
+      ...this.view.control,
+      formData: {
+        ...this.view.control.formData,
+        name: dto.crop.name,
+        crop_stages: dto.crop.crop_stages ?? []
+      },
+      pendingSuccessFlash: null,
+      pendingErrorFlash: pendingErrorFlashFromError({ message: flashKey })
     });
   }
 }

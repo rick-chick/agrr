@@ -342,4 +342,94 @@ describe('CropStagesPresenter', () => {
       });
     });
   });
+
+  describe('SaveCropStagePanelOutputPort', () => {
+    it('shows partial save error flash and reloads crop stages on onPanelPartialFailure', () => {
+      lastControl = baseControlState({
+        name: 'Old Crop',
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: 'Dirty draft',
+            order: 1
+          }
+        ]
+      });
+
+      presenter.onPanelPartialFailure({
+        stageId: 1,
+        crop: {
+          id: 1,
+          name: 'Server Crop',
+          crop_stages: [
+            {
+              id: 1,
+              crop_id: 1,
+              name: 'Server stage',
+              order: 1
+            }
+          ]
+        } as never
+      });
+
+      expect(lastControl!.formData.name).toBe('Server Crop');
+      expect(lastControl!.formData.crop_stages[0].name).toBe('Server stage');
+      expect(lastControl!.pendingSuccessFlash).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toEqual({
+        type: 'error',
+        text: 'crops.flash.stage_panel_partial_save_failed'
+      });
+    });
+  });
+
+  describe('SaveCropStageAdvancedDetailsOutputPort', () => {
+    it('shows partial save error flash and reloads crop stages on onAdvancedPartialFailure', () => {
+      lastControl = baseControlState({
+        name: 'Old Crop',
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: 'Stage 1',
+            order: 1
+          }
+        ]
+      });
+
+      presenter.onAdvancedPartialFailure({
+        stageId: 1,
+        crop: {
+          id: 1,
+          name: 'Server Crop',
+          crop_stages: [
+            {
+              id: 1,
+              crop_id: 1,
+              name: 'Stage 1',
+              order: 1,
+              sunshine_requirement: {
+                id: 1,
+                crop_stage_id: 1,
+                minimum_sunshine_hours: 4,
+                target_sunshine_hours: 8
+              }
+            }
+          ]
+        } as never
+      });
+
+      expect(lastControl!.formData.crop_stages[0].sunshine_requirement).toEqual({
+        id: 1,
+        crop_stage_id: 1,
+        minimum_sunshine_hours: 4,
+        target_sunshine_hours: 8
+      });
+      expect(lastControl!.pendingSuccessFlash).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toEqual({
+        type: 'error',
+        text: 'crops.flash.stage_advanced_partial_save_failed'
+      });
+    });
+  });
 });

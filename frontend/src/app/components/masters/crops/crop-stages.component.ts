@@ -15,6 +15,8 @@ import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/upda
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
 import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
+import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
+import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import {
   CropStagesPresenter,
   CROP_STAGES_PROVIDERS
@@ -411,6 +413,8 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   private readonly updateThermalRequirementUseCase = inject(UpdateThermalRequirementUseCase);
   private readonly updateSunshineRequirementUseCase = inject(UpdateSunshineRequirementUseCase);
   private readonly updateNutrientRequirementUseCase = inject(UpdateNutrientRequirementUseCase);
+  private readonly saveCropStagePanelUseCase = inject(SaveCropStagePanelUseCase);
+  private readonly saveCropStageAdvancedDetailsUseCase = inject(SaveCropStageAdvancedDetailsUseCase);
   private readonly presenter = inject(CropStagesPresenter);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -571,9 +575,8 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       return;
     }
 
-    if (this.stageEditDraft.name !== stage.name) {
-      this.updateCropStage(stage.id, { name: this.stageEditDraft.name });
-    }
+    const stagePatch =
+      this.stageEditDraft.name !== stage.name ? { name: this.stageEditDraft.name } : undefined;
 
     const temp = stage.temperature_requirement;
     const temperaturePatch: Record<string, number | null> = {};
@@ -589,16 +592,20 @@ export class CropStagesComponent implements CropStagesView, OnInit {
         temperaturePatch[field] = draftValue;
       }
     }
-    if (Object.keys(temperaturePatch).length > 0) {
-      this.updateTemperatureRequirement(stage.id, temperaturePatch);
-    }
 
     const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
-    if (this.stageEditDraft.required_gdd !== currentRequiredGdd) {
-      this.updateThermalRequirement(stage.id, { required_gdd: this.stageEditDraft.required_gdd });
-    }
+    const thermalPatch =
+      this.stageEditDraft.required_gdd !== currentRequiredGdd
+        ? { required_gdd: this.stageEditDraft.required_gdd ?? undefined }
+        : undefined;
 
-    this.syncDraftFromStage(stage);
+    this.saveCropStagePanelUseCase.execute({
+      cropId: this.cropId,
+      stageId: stage.id,
+      stagePatch,
+      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined,
+      thermalPatch
+    });
   }
 
   openTemperatureDialog(): void {
@@ -672,17 +679,23 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       sterility_risk_threshold
     } = this.advancedDetailDraft;
 
-    this.updateSunshineRequirement(stage.id, {
-      minimum_sunshine_hours,
-      target_sunshine_hours
+    this.saveCropStageAdvancedDetailsUseCase.execute({
+      cropId: this.cropId,
+      stageId: stage.id,
+      sunshinePatch: {
+        minimum_sunshine_hours: minimum_sunshine_hours ?? undefined,
+        target_sunshine_hours: target_sunshine_hours ?? undefined
+      },
+      nutrientPatch: {
+        daily_uptake_n: daily_uptake_n ?? undefined,
+        daily_uptake_p: daily_uptake_p ?? undefined,
+        daily_uptake_k: daily_uptake_k ?? undefined,
+        region: region ?? undefined
+      },
+      temperaturePatch: {
+        sterility_risk_threshold: sterility_risk_threshold ?? undefined
+      }
     });
-    this.updateNutrientRequirement(stage.id, {
-      daily_uptake_n,
-      daily_uptake_p,
-      daily_uptake_k,
-      region
-    });
-    this.updateTemperatureRequirement(stage.id, { sterility_risk_threshold });
 
     this.advancedDetailDraft = null;
     this.advancedDialogRef?.nativeElement?.close();
