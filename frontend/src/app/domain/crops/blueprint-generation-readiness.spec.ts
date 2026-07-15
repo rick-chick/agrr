@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   blueprintGenerationReadiness,
+  stageMissingBaseTemperature,
+  stageMissingRequiredGdd,
   stageRequirementsComplete
 } from './blueprint-generation-readiness';
 import type { Crop } from './crop';
@@ -73,6 +75,17 @@ describe('stageRequirementsComplete', () => {
         thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
       })
     ).toBe(true);
+  });
+
+  it('detects missing base temperature and required GDD individually', () => {
+    const incompleteStage = {
+      id: 1,
+      crop_id: 1,
+      name: 'Vegetative',
+      order: 1
+    };
+    expect(stageMissingBaseTemperature(incompleteStage)).toBe(true);
+    expect(stageMissingRequiredGdd(incompleteStage)).toBe(true);
   });
 });
 

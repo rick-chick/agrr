@@ -457,6 +457,33 @@ describe('CropStagesComponent', () => {
         'details.crop-stage-requirements'
       ) as HTMLDetailsElement;
       expect(details?.open).toBe(false);
+      expect(fixture.nativeElement.querySelectorAll('.form-card__field-required-marker').length).toBe(
+        0
+      );
+    });
+
+    it('opens requirements details when only one required field is missing', () => {
+      setupStageView([
+        {
+          id: 1,
+          name: 'Stage 1',
+          order: 1,
+          temperature_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            base_temperature: 10
+          },
+          thermal_requirement: null,
+          sunshine_requirement: null,
+          nutrient_requirement: null
+        } as CropStage
+      ]);
+
+      const details = fixture.nativeElement.querySelector(
+        'details.crop-stage-requirements'
+      ) as HTMLDetailsElement;
+      expect(details?.open).toBe(true);
+      expect(fixture.nativeElement.querySelectorAll('.form-card__field-required-marker').length).toBe(1);
     });
 
     it('opens requirements details when fromPlan query param is set', () => {

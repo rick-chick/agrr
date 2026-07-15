@@ -38,6 +38,14 @@ export function stageRequirementsComplete(stage: CropStage): boolean {
   return baseTemperature != null && requiredGdd != null;
 }
 
+export function stageMissingBaseTemperature(stage: CropStage): boolean {
+  return stage.temperature_requirement?.base_temperature == null;
+}
+
+export function stageMissingRequiredGdd(stage: CropStage): boolean {
+  return stage.thermal_requirement?.required_gdd == null;
+}
+
 function hasCompleteStageRequirements(crop: Crop | null | undefined): boolean {
   const stages = crop?.crop_stages ?? [];
   return stages.some(stageRequirementsComplete);

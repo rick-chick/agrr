@@ -25,7 +25,11 @@ import {
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
-import { stageRequirementsComplete } from '../../../domain/crops/blueprint-generation-readiness';
+import {
+  stageMissingBaseTemperature,
+  stageMissingRequiredGdd,
+  stageRequirementsComplete
+} from '../../../domain/crops/blueprint-generation-readiness';
 import type { CropStage } from '../../../domain/crops/crop';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -408,11 +412,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   isBaseTemperatureMissing(stage: CropStage): boolean {
-    return stage.temperature_requirement?.base_temperature == null;
+    return stageMissingBaseTemperature(stage);
   }
 
   isRequiredGddMissing(stage: CropStage): boolean {
-    return stage.thermal_requirement?.required_gdd == null;
+    return stageMissingRequiredGdd(stage);
   }
 
   onSunshineFieldChange(stageId: number, field: string, value: number | null): void {
