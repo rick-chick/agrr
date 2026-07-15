@@ -223,7 +223,7 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await assertHostHealthy(page, 'app-crop-stages');
 
     const content = page.locator(
-      'app-crop-stages .crop-stage-card, app-crop-stages .crop-stages-empty',
+      'app-crop-stages .crop-stages-table, app-crop-stages .crop-stages-empty',
     );
     await expect(content.first()).toBeVisible();
   });
