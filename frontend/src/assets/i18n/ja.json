@@ -369,7 +369,14 @@
       "reference_only_admin": "参照作物は管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
-      "not_found": "指定された作物が見つかりません。"
+      "not_found": "指定された作物が見つかりません。",
+      "stage_created": "生育ステージを追加しました。",
+      "stage_updated": "生育ステージを更新しました。",
+      "stage_deleted": "生育ステージを削除しました。",
+      "temperature_requirement_updated": "温度要件を更新しました。",
+      "thermal_requirement_updated": "積算温度要件を更新しました。",
+      "sunshine_requirement_updated": "日照要件を更新しました。",
+      "nutrient_requirement_updated": "栄養素要件を更新しました。"
     },
     "index": {
       "title": "作物一覧",
