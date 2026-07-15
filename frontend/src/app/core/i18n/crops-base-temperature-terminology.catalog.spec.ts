@@ -21,7 +21,7 @@ const CROP_BASE_TEMPERATURE_LABEL_KEYS = [
   'plans.field_climate.base_temperature'
 ] as const;
 
-/** Readiness / wizard copy that refers to crop-stage base_temperature (ja must not use 基準温度 or 最低限界温度). */
+/** Readiness / wizard copy that refers to crop-stage base_temperature (ja must use 最低限界温度, not 基底温度 or 基準温度). */
 const CROP_BASE_TEMPERATURE_MESSAGE_KEYS = [
   'crops.show.blueprint_readiness.stages_ready',
   'crops.show.blueprint_readiness.stages_missing',
@@ -53,27 +53,27 @@ describe('crops base_temperature terminology catalog', () => {
     });
   }
 
-  it('uses 基底温度 consistently for crop base_temperature labels in ja', () => {
+  it('uses 最低限界温度 consistently for crop base_temperature labels in ja', () => {
     const cores = CROP_BASE_TEMPERATURE_LABEL_KEYS.map((key) =>
       stripUnitSuffix(getNested(ja as JsonRecord, key) as string)
     );
-    expect(cores.every((core) => core === '基底温度'), cores.join(' | ')).toBe(true);
+    expect(cores.every((core) => core === '最低限界温度'), cores.join(' | ')).toBe(true);
   });
 
-  it('does not use 最低限界温度 or 基準温度 in crop base_temperature labels (ja)', () => {
+  it('does not use 基底温度 or 基準温度 in crop base_temperature labels (ja)', () => {
     for (const key of CROP_BASE_TEMPERATURE_LABEL_KEYS) {
       const value = getNested(ja as JsonRecord, key) as string;
-      expect(value, key).not.toContain('最低限界温度');
+      expect(value, key).not.toContain('基底温度');
       expect(value, key).not.toContain('基準温度');
     }
   });
 
-  it('uses base temperature wording consistently in crop readiness messages (ja)', () => {
+  it('uses 最低限界温度 wording consistently in crop readiness messages (ja)', () => {
     for (const key of CROP_BASE_TEMPERATURE_MESSAGE_KEYS) {
       const value = getNested(ja as JsonRecord, key) as string;
-      expect(value, key).toContain('基底温度');
+      expect(value, key).toContain('最低限界温度');
       expect(value, key).not.toContain('基準温度');
-      expect(value, key).not.toContain('最低限界温度');
+      expect(value, key).not.toContain('基底温度');
     }
   });
 
@@ -84,10 +84,10 @@ describe('crops base_temperature terminology catalog', () => {
     }
   });
 
-  it('uses आधार तापमान consistently for crop base_temperature labels in in', () => {
+  it('uses न्यूनतम सीमा तापमान consistently for crop base_temperature labels in in', () => {
     for (const key of CROP_BASE_TEMPERATURE_LABEL_KEYS) {
       const value = getNested(inLocale as JsonRecord, key) as string;
-      expect(value, key).toContain('आधार तापमान');
+      expect(value, key).toContain('न्यूनतम सीमा तापमान');
     }
   });
 });
