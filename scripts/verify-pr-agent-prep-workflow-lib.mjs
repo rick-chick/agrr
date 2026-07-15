@@ -29,7 +29,7 @@ const FORBIDDEN_PREP_SCRIPT_SNIPPETS = [
 
 const REQUIRED_MERGE_DISPATCH_SNIPPETS = [
   'ready_for_review',
-  'Draft PR; skipping',
+  'Draft PR without conflict/sync need',
 ];
 
 /**
