@@ -10,6 +10,8 @@ import { DeleteCropStageUseCase } from './delete-crop-stage.usecase';
 import { DELETE_CROP_STAGE_OUTPUT_PORT } from './delete-crop-stage.output-port';
 import { LoadCropForEditUseCase } from './load-crop-for-edit.usecase';
 import { LOAD_CROP_FOR_EDIT_OUTPUT_PORT } from './load-crop-for-edit.output-port';
+import { LoadCropTaskScheduleBlueprintsUseCase } from './load-crop-task-schedule-blueprints.usecase';
+import { LOAD_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT } from './crop-task-schedule-blueprint.ports';
 import { UpdateCropStageUseCase } from './update-crop-stage.usecase';
 import { UPDATE_CROP_STAGE_OUTPUT_PORT } from './update-crop-stage.output-port';
 import { UpdateNutrientRequirementUseCase } from './update-nutrient-requirement.usecase';
@@ -24,6 +26,7 @@ import { UPDATE_THERMAL_REQUIREMENT_OUTPUT_PORT } from './update-thermal-require
 export const CROP_STAGES_PROVIDERS: readonly Provider[] = [
   CropStagesPresenter,
   LoadCropForEditUseCase,
+  LoadCropTaskScheduleBlueprintsUseCase,
   CreateCropStageUseCase,
   UpdateCropStageUseCase,
   DeleteCropStageUseCase,
@@ -32,6 +35,7 @@ export const CROP_STAGES_PROVIDERS: readonly Provider[] = [
   UpdateSunshineRequirementUseCase,
   UpdateNutrientRequirementUseCase,
   { provide: LOAD_CROP_FOR_EDIT_OUTPUT_PORT, useExisting: CropStagesPresenter },
+  { provide: LOAD_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: CREATE_CROP_STAGE_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: UPDATE_CROP_STAGE_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: DELETE_CROP_STAGE_OUTPUT_PORT, useExisting: CropStagesPresenter },

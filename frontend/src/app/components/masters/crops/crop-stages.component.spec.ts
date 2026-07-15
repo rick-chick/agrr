@@ -10,6 +10,7 @@ import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edi
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
 import { UpdateCropStageUseCase } from '../../../usecase/crops/update-crop-stage.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
+import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
@@ -33,6 +34,7 @@ describe('CropStagesComponent', () => {
   let mockCreateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockDeleteCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockLoadBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateTemperatureRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateThermalRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateSunshineRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -40,6 +42,9 @@ describe('CropStagesComponent', () => {
   let translateService: TranslateService;
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     mockActivatedRoute = {
       snapshot: {
         paramMap: {
@@ -55,6 +60,7 @@ describe('CropStagesComponent', () => {
     mockCreateCropStageUseCase = { execute: vi.fn() };
     mockUpdateCropStageUseCase = { execute: vi.fn() };
     mockDeleteCropStageUseCase = { execute: vi.fn() };
+    mockLoadBlueprintsUseCase = { execute: vi.fn() };
     mockUpdateTemperatureRequirementUseCase = { execute: vi.fn() };
     mockUpdateThermalRequirementUseCase = { execute: vi.fn() };
     mockUpdateSunshineRequirementUseCase = { execute: vi.fn() };
@@ -74,6 +80,7 @@ describe('CropStagesComponent', () => {
         { provide: CreateCropStageUseCase, useValue: mockCreateCropStageUseCase },
         { provide: UpdateCropStageUseCase, useValue: mockUpdateCropStageUseCase },
         { provide: DeleteCropStageUseCase, useValue: mockDeleteCropStageUseCase },
+        { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: mockLoadBlueprintsUseCase },
         { provide: UpdateTemperatureRequirementUseCase, useValue: mockUpdateTemperatureRequirementUseCase },
         { provide: UpdateThermalRequirementUseCase, useValue: mockUpdateThermalRequirementUseCase },
         { provide: UpdateSunshineRequirementUseCase, useValue: mockUpdateSunshineRequirementUseCase },
@@ -85,6 +92,7 @@ describe('CropStagesComponent', () => {
     TestBed.overrideProvider(CreateCropStageUseCase, { useValue: mockCreateCropStageUseCase });
     TestBed.overrideProvider(UpdateCropStageUseCase, { useValue: mockUpdateCropStageUseCase });
     TestBed.overrideProvider(DeleteCropStageUseCase, { useValue: mockDeleteCropStageUseCase });
+    TestBed.overrideProvider(LoadCropTaskScheduleBlueprintsUseCase, { useValue: mockLoadBlueprintsUseCase });
     TestBed.overrideProvider(UpdateTemperatureRequirementUseCase, { useValue: mockUpdateTemperatureRequirementUseCase });
     TestBed.overrideProvider(UpdateThermalRequirementUseCase, { useValue: mockUpdateThermalRequirementUseCase });
     TestBed.overrideProvider(UpdateSunshineRequirementUseCase, { useValue: mockUpdateSunshineRequirementUseCase });
@@ -107,10 +115,11 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
   });
 
-  it('should load crop on init', () => {
+  it('should load crop and task schedule blueprints on init', () => {
     expect(component.cropId).toBe(1);
     fixture.detectChanges();
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
+    expect(mockLoadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
   });
 
   it('should call createCropStageUseCase when addCropStage is called', () => {
@@ -133,19 +142,224 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('should call deleteCropStageUseCase when deleteCropStage is called with confirmation', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('opens delete confirm dialog with impact message instead of window.confirm', () => {
+    translateService.setTranslation(
+      'en',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage {{order}}',
+            delete_confirm_message:
+              'Delete "{{stageName}}"? Requirements and linked task templates may be affected.',
+            delete_confirm_blueprint_warning:
+              'This stage has {{count}} linked task schedule template(s).'
+          },
+          edit: {
+            stage_title: 'Stage {{order}}'
+          }
+        },
+        common: {
+          delete: 'Delete',
+          cancel: 'Cancel'
+        }
+      },
+      true
+    );
+    translateService.use('en');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
+      formData: {
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Germination',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    const deleteButton = fixture.nativeElement.querySelector('.crop-stage-card__header .btn-danger');
+    deleteButton.click();
+
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.crop-stages__delete-confirm')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Delete "Germination"? Requirements and linked task templates may be affected.'
+    );
+    expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('shows blueprint warning when deleting a stage with linked templates', () => {
+    translateService.setTranslation(
+      'en',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage {{order}}',
+            delete_confirm_message: 'Delete "{{stageName}}"?',
+            delete_confirm_blueprint_warning:
+              'This stage has {{count}} linked task schedule template(s).'
+          },
+          edit: {
+            stage_title: 'Stage {{order}}'
+          }
+        },
+        common: {
+          delete: 'Delete',
+          cancel: 'Cancel'
+        }
+      },
+      true
+    );
+    translateService.use('en');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [
+        {
+          id: 10,
+          crop_id: 1,
+          agricultural_task_id: 1,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Germination',
+          gdd_trigger: 0,
+          gdd_tolerance: null,
+          task_type: 'general',
+          source: 'manual',
+          priority: 1,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null
+        }
+      ],
+      formData: {
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Germination',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.crop-stage-card__header .btn-danger').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'This stage has 1 linked task schedule template(s).'
+    );
+  });
+
+  it('calls deleteCropStageUseCase when delete is confirmed in the dialog', () => {
+    translateService.setTranslation(
+      'en',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage {{order}}',
+            delete_confirm_message: 'Delete "{{stageName}}"?'
+          },
+          edit: {
+            stage_title: 'Stage {{order}}'
+          }
+        },
+        common: {
+          delete: 'Delete',
+          cancel: 'Cancel'
+        }
+      },
+      true
+    );
+    translateService.use('en');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
+      formData: {
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Germination',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
     component.deleteCropStage(1);
+    component.confirmDeleteCropStage();
+
     expect(mockDeleteCropStageUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
       stageId: 1
     });
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
-  it('should not call deleteCropStageUseCase when deleteCropStage is cancelled', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('does not call deleteCropStageUseCase when delete confirm is cancelled', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
+      formData: {
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Germination',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
     component.deleteCropStage(1);
+    component.cancelDeleteConfirmDialog();
+
     expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
   it('should call updateTemperatureRequirementUseCase when updateTemperatureRequirement is called', () => {
@@ -190,6 +404,7 @@ describe('CropStagesComponent', () => {
       error: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -218,6 +433,7 @@ describe('CropStagesComponent', () => {
       error: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -248,6 +464,7 @@ describe('CropStagesComponent', () => {
       error: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
       formData: {
         ...initialFormData,
         name: 'Tomato'
@@ -289,6 +506,7 @@ describe('CropStagesComponent', () => {
       error: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
       formData: {
         ...initialFormData,
         name: 'Tomato'
@@ -340,6 +558,7 @@ describe('CropStagesComponent', () => {
       error: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
       formData: {
         ...initialFormData,
         name: 'Tomato',
