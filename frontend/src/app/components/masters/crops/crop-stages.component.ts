@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { CropStagesView, CropStagesViewState, CropStagesFormData } from './crop-stages.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
@@ -25,6 +26,11 @@ import {
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
+import {
+  findDuplicateStageOrders,
+  reorderStagesByIndex,
+  sortStagesByOrder
+} from '../../../domain/crops/crop-stage-order';
 import type { CropStage } from '../../../domain/crops/crop';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -45,7 +51,7 @@ const initialControl: CropStagesViewState = {
 @Component({
   selector: 'app-crop-stages',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent, DragDropModule],
   providers: [...CROP_STAGES_PROVIDERS],
   template: `
     <main class="page-main">
@@ -71,19 +77,43 @@ const initialControl: CropStagesViewState = {
 
         <header class="page-header crop-stages__page-header">
           <h1 class="page-title">{{ control.formData.name }}</h1>
-          <p class="page-description">{{ 'crops.edit.stages_title' | translate }}</p>
+          <p class="page-description">{{ 'crops.edit.stages_lead' | translate }}</p>
         </header>
 
         <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
-          <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_title' | translate }}</h2>
-          <div class="crop-stages-section__actions">
-            <button type="button" class="btn btn-secondary" (click)="addCropStage()">
-              {{ 'crops.edit.add_stage' | translate }}
-            </button>
-          </div>
-          <div class="crop-stages-list">
-            @for (stage of control.formData.crop_stages; track stage.id) {
-              <div class="crop-stage-card">
+          <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
+          @if (control.formData.crop_stages.length > 0) {
+            <div class="crop-stages-section__actions">
+              <button type="button" class="btn btn-secondary" (click)="addCropStage()">
+                {{ 'crops.edit.add_stage' | translate }}
+              </button>
+            </div>
+          }
+          @if (duplicateStageOrders.length > 0) {
+            <p class="crop-stages-order-warning" role="alert">
+              {{
+                'crops.edit.stage_order_duplicate'
+                  | translate: { orders: duplicateStageOrders.join(', ') }
+              }}
+            </p>
+          }
+          <div
+            class="crop-stages-list"
+            cdkDropList
+            [cdkDropListData]="sortedStages"
+            (cdkDropListDropped)="onStageDropped($event)"
+          >
+            @if (control.formData.crop_stages.length === 0) {
+              <div class="crop-stages-empty">
+                <p class="crop-stages-empty__lead">{{ 'crops.edit.stages_empty_lead' | translate }}</p>
+                <p class="crop-stages-empty__description">{{ 'crops.show.no_stages_description' | translate }}</p>
+                <button type="button" class="btn btn-primary crop-stages-empty__cta" (click)="addCropStage()">
+                  {{ 'crops.edit.add_stage' | translate }}
+                </button>
+              </div>
+            } @else {
+            @for (stage of sortedStages; track stage.id) {
+              <div class="crop-stage-card" cdkDrag [cdkDragData]="stage">
                 <div class="crop-stage-card__header">
                   <h3 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate:{ order: stage.order } }}</h3>
                   <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
@@ -97,14 +127,14 @@ const initialControl: CropStagesViewState = {
                   </label>
                   <label class="form-card__field">
                     <span class="form-card__field-label">{{ 'crops.edit.stage_order' | translate }}</span>
-                    <input type="number" name="stage_order_{{ stage.id }}" [(ngModel)]="stage.order" (blur)="updateCropStage(stage.id, { order: stage.order })" />
+                    <input type="number" name="stage_order_{{ stage.id }}" [(ngModel)]="stage.order" (blur)="onStageOrderBlur(stage)" />
                   </label>
 
                   <details class="crop-stage-requirements">
                     <summary class="crop-stage-requirements__summary">{{ 'crops.edit.requirements_title' | translate }}</summary>
 
                     <div class="requirement-section">
-                      <h4 class="requirement-section__title">{{ 'crops.edit.temperature_requirement' | translate }}</h4>
+                      <h3 class="requirement-section__title">{{ 'crops.edit.temperature_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.base_temperature' | translate }}</span>
@@ -158,7 +188,7 @@ const initialControl: CropStagesViewState = {
                     </div>
 
                     <div class="requirement-section">
-                      <h4 class="requirement-section__title">{{ 'crops.edit.thermal_requirement' | translate }}</h4>
+                      <h3 class="requirement-section__title">{{ 'crops.edit.thermal_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.required_gdd' | translate }}</span>
@@ -185,7 +215,7 @@ const initialControl: CropStagesViewState = {
                     </div>
 
                     <div class="requirement-section">
-                      <h4 class="requirement-section__title">{{ 'crops.edit.sunshine_requirement' | translate }}</h4>
+                      <h3 class="requirement-section__title">{{ 'crops.edit.sunshine_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.minimum_sunshine_hours' | translate }}</span>
@@ -203,7 +233,7 @@ const initialControl: CropStagesViewState = {
                     </div>
 
                     <div class="requirement-section">
-                      <h4 class="requirement-section__title">{{ 'crops.edit.nutrient_requirement' | translate }}</h4>
+                      <h3 class="requirement-section__title">{{ 'crops.edit.nutrient_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_n' | translate }}</span>
@@ -234,6 +264,7 @@ const initialControl: CropStagesViewState = {
                   </details>
                 </div>
               </div>
+            }
             }
           </div>
         </section>
@@ -415,6 +446,55 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
     const value = (stage.thermal_requirement as any)[field];
     this.updateThermalRequirement(stageId, { [field]: value });
+  }
+
+  get sortedStages(): CropStage[] {
+    return sortStagesByOrder(this.control.formData.crop_stages);
+  }
+
+  get duplicateStageOrders(): number[] {
+    return findDuplicateStageOrders(this.control.formData.crop_stages);
+  }
+
+  onStageDropped(event: CdkDragDrop<CropStage[]>): void {
+    const { stages, updates } = reorderStagesByIndex(
+      this.control.formData.crop_stages,
+      event.previousIndex,
+      event.currentIndex
+    );
+    if (updates.length === 0) {
+      return;
+    }
+
+    this.control = {
+      ...this.control,
+      formData: {
+        ...this.control.formData,
+        crop_stages: stages
+      }
+    };
+
+    for (const { id, order } of updates) {
+      this.updateCropStageUseCase.execute({
+        cropId: this.cropId,
+        stageId: id,
+        payload: { order }
+      });
+    }
+  }
+
+  onStageOrderBlur(stage: CropStage): void {
+    if (this.duplicateStageOrders.length > 0) {
+      this.flashMessage.show({
+        type: 'error',
+        text: this.translate.instant('crops.edit.stage_order_duplicate', {
+          orders: this.duplicateStageOrders.join(', ')
+        })
+      });
+      return;
+    }
+
+    this.updateCropStage(stage.id, { order: stage.order });
   }
 
   stageCumulativeGddRangeFor(stage: CropStage) {
