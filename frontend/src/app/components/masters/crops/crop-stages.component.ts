@@ -24,18 +24,12 @@ import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
 import {
   parsePlanWizardReturnTab,
   planWizardReturnPath,
-  cropPlanWizardQueryParams,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
-import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import {
-  defaultBlueprintReadiness,
-  type BlueprintGenerationReadiness,
-  stageMissingBaseTemperature,
-  stageMissingRequiredGdd,
-  stageRequirementsComplete
+  defaultBlueprintReadiness
 } from '../../../domain/crops/blueprint-generation-readiness';
-import { withCropStagesDisplayState } from '../../../adapters/crops/crop-stages-display-state';
+import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import {
   findDuplicateStageOrders,
   reorderStagesByIndex,
@@ -60,6 +54,31 @@ const initialControl: CropStagesViewState = {
   pendingErrorFlash: null,
   pendingSuccessFlash: null
 };
+
+export interface StageEditDraft {
+  name: string;
+  base_temperature: number | null;
+  required_gdd: number | null;
+}
+
+interface TemperatureDetailDraft {
+  optimal_min: number | null;
+  optimal_max: number | null;
+  low_stress_threshold: number | null;
+  high_stress_threshold: number | null;
+  frost_threshold: number | null;
+  max_temperature: number | null;
+}
+
+interface AdvancedDetailDraft {
+  minimum_sunshine_hours: number | null;
+  target_sunshine_hours: number | null;
+  daily_uptake_n: number | null;
+  daily_uptake_p: number | null;
+  daily_uptake_k: number | null;
+  region: string | null;
+  sterility_risk_threshold: number | null;
+}
 
 @Component({
   selector: 'app-crop-stages',
@@ -93,56 +112,9 @@ const initialControl: CropStagesViewState = {
           <p class="page-description">{{ 'crops.edit.stages_lead' | translate }}</p>
         </header>
 
-        <div class="blueprint-readiness" role="status">
-          <p class="blueprint-readiness__title">
-            {{ 'crops.show.blueprint_readiness.title' | translate }}
-          </p>
-          <ul class="blueprint-readiness__list">
-            <li [class.blueprint-readiness__item--ok]="blueprintReadiness.stageRequirementsReady">
-              @if (blueprintReadiness.stageRequirementsReady) {
-                <span>{{ 'crops.show.blueprint_readiness.stages_ready' | translate }}</span>
-              } @else {
-                <span>{{ 'crops.show.blueprint_readiness.stages_missing' | translate }}</span>
-              }
-            </li>
-            <li [class.blueprint-readiness__item--ok]="blueprintReadiness.blueprintsReady">
-              @if (blueprintReadiness.blueprintsReady) {
-                <span>{{ 'crops.show.blueprint_readiness.blueprints_ready' | translate }}</span>
-              } @else {
-                <span>{{ 'crops.show.blueprint_readiness.blueprints_missing' | translate }}</span>
-                <a
-                  [routerLink]="['/crops', cropId, 'task_schedule_blueprints']"
-                  [queryParams]="wizardQueryParams"
-                  class="blueprint-readiness__link"
-                >
-                  {{ 'crops.show.blueprint_readiness.blueprints_action' | translate }}
-                </a>
-              }
-            </li>
-          </ul>
-        </div>
-
-        @if (blueprintReadiness.stageRequirementsReady) {
-          <div class="crop-stages__next-step">
-            <a
-              [routerLink]="['/crops', cropId, 'task_schedule_blueprints']"
-              [queryParams]="wizardQueryParams"
-              class="btn btn-secondary"
-            >
-              {{ 'crops.show.blueprint_summary.edit_action' | translate }}
-            </a>
-          </div>
-        }
-
         <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
           <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
-          @if (control.formData.crop_stages.length > 0) {
-            <div class="crop-stages-section__actions">
-              <button type="button" class="btn btn-secondary" (click)="addCropStage()">
-                {{ 'crops.edit.add_stage' | translate }}
-              </button>
-            </div>
-          }
+
           @if (duplicateStageOrders.length > 0) {
             <p class="crop-stages-order-warning" role="alert">
               {{
@@ -151,196 +123,116 @@ const initialControl: CropStagesViewState = {
               }}
             </p>
           }
-          <div
-            class="crop-stages-list"
-            cdkDropList
-            [cdkDropListData]="sortedStages"
-            (cdkDropListDropped)="onStageDropped($event)"
-          >
-            @if (control.formData.crop_stages.length === 0) {
-              <div class="crop-stages-empty">
-                <p class="crop-stages-empty__lead">{{ 'crops.edit.stages_empty_lead' | translate }}</p>
-                <p class="crop-stages-empty__description">{{ 'crops.show.no_stages_description' | translate }}</p>
-                <button type="button" class="btn btn-primary crop-stages-empty__cta" (click)="addCropStage()">
-                  {{ 'crops.edit.add_stage' | translate }}
-                </button>
-              </div>
-            } @else {
-            @for (stage of sortedStages; track stage.id) {
-              <div class="crop-stage-card" cdkDrag [cdkDragData]="stage">
-                <div class="crop-stage-card__header">
-                  <h3 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate:{ order: stage.order } }}</h3>
+
+          @if (control.formData.crop_stages.length === 0) {
+            <div class="crop-stages-empty">
+              <p class="crop-stages-empty__lead">{{ 'crops.edit.stages_empty_lead' | translate }}</p>
+              <p class="crop-stages-empty__description">{{ 'crops.show.no_stages_description' | translate }}</p>
+              <button type="button" class="btn btn-primary crop-stages-empty__cta" (click)="addCropStage()">
+                {{ 'crops.edit.add_stage' | translate }}
+              </button>
+            </div>
+          } @else {
+            <table class="crop-stages-table">
+              <thead>
+                <tr>
+                  <th class="crop-stages-table__col-drag" scope="col" aria-hidden="true"></th>
+                  <th scope="col">{{ 'crops.edit.table_order' | translate }}</th>
+                  <th scope="col">{{ 'crops.edit.table_stage_name' | translate }}</th>
+                  <th scope="col">{{ 'crops.edit.table_base_temperature' | translate }}</th>
+                  <th scope="col">{{ 'crops.edit.table_required_gdd' | translate }}</th>
+                  <th scope="col">{{ 'crops.edit.table_cumulative_gdd' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody
+                cdkDropList
+                [cdkDropListData]="sortedStages"
+                (cdkDropListDropped)="onStageDropped($event)"
+              >
+                @for (stage of sortedStages; track stage.id) {
+                  <tr
+                    class="crop-stages-table__row"
+                    cdkDrag
+                    [cdkDragData]="stage"
+                    [class.crop-stages-table__row--selected]="selectedStageId === stage.id"
+                    (click)="selectStage(stage.id)"
+                  >
+                    <td class="crop-stages-table__drag" cdkDragHandle (click)="$event.stopPropagation()">
+                      <span class="crop-stages-table__drag-icon" aria-hidden="true">≡</span>
+                    </td>
+                    <td>{{ stage.order }}</td>
+                    <td>{{ stage.name }}</td>
+                    <td>{{ formatOptionalNumber(stage.temperature_requirement?.base_temperature) }}</td>
+                    <td>{{ formatOptionalNumber(stage.thermal_requirement?.required_gdd) }}</td>
+                    <td>{{ formatCumulativeGdd(stage) }}</td>
+                  </tr>
+                }
+                <tr class="crop-stages-table__add-row">
+                  <td colspan="6">
+                    <button type="button" class="crop-stages-table__add-button" (click)="addCropStage()">
+                      {{ 'crops.edit.add_stage' | translate }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            @if (selectedStage; as stage) {
+              <div class="crop-stages-edit-panel">
+                <h3 class="crop-stages-edit-panel__title">
+                  {{ 'crops.edit.stage_title' | translate:{ order: stage.order } }}
+                </h3>
+                <div class="crop-stages-edit-panel__fields">
+                  <label class="form-card__field">
+                    <span class="form-card__field-label">{{ 'crops.edit.stage_name' | translate }}</span>
+                    <input
+                      type="text"
+                      name="panel_stage_name"
+                      [(ngModel)]="stageEditDraft.name"
+                    />
+                  </label>
+                  <label class="form-card__field form-card__field--small">
+                    <span class="form-card__field-label">{{ 'crops.edit.base_temperature' | translate }}</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="panel_base_temperature"
+                      [placeholder]="'crops.edit.base_temperature_placeholder' | translate"
+                      [(ngModel)]="stageEditDraft.base_temperature"
+                    />
+                    <p class="form-hint">{{ 'crops.edit.base_temperature_help' | translate }}</p>
+                  </label>
+                  <label class="form-card__field form-card__field--small">
+                    <span class="form-card__field-label">{{ 'crops.edit.required_gdd' | translate }}</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="panel_required_gdd"
+                      [placeholder]="'crops.edit.required_gdd_placeholder' | translate"
+                      [(ngModel)]="stageEditDraft.required_gdd"
+                    />
+                    <p class="form-hint">{{ 'crops.edit.required_gdd_help' | translate }}</p>
+                  </label>
+                </div>
+                <div class="crop-stages-edit-panel__links">
+                  <button type="button" class="crop-stages-edit-panel__link" (click)="openTemperatureDialog()">
+                    {{ 'crops.edit.edit_temperature_details' | translate }}
+                  </button>
+                  <button type="button" class="crop-stages-edit-panel__link" (click)="openAdvancedDialog()">
+                    {{ 'crops.edit.edit_sunshine_nutrient' | translate }}
+                  </button>
+                </div>
+                <div class="crop-stages-edit-panel__actions">
+                  <button type="button" class="btn btn-primary" (click)="saveStagePanel()">
+                    {{ 'crops.edit.save_stage' | translate }}
+                  </button>
                   <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
                     {{ 'common.delete' | translate }}
                   </button>
                 </div>
-                <div class="crop-stage-card__content">
-                  <label class="form-card__field">
-                    <span class="form-card__field-label">{{ 'crops.edit.stage_name' | translate }}</span>
-                    <input type="text" name="stage_name_{{ stage.id }}" [(ngModel)]="stage.name" (blur)="updateCropStage(stage.id, { name: stage.name })" />
-                  </label>
-                  <label class="form-card__field">
-                    <span class="form-card__field-label">{{ 'crops.edit.stage_order' | translate }}</span>
-                    <input type="number" name="stage_order_{{ stage.id }}" [(ngModel)]="stage.order" (blur)="onStageOrderBlur(stage)" />
-                  </label>
-
-                  <details class="crop-stage-requirements" [open]="shouldOpenRequirements(stage)">
-                    <summary class="crop-stage-requirements__summary">{{ 'crops.edit.requirements_title' | translate }}</summary>
-
-                    <div class="requirement-section">
-                      <h3 class="requirement-section__title">{{ 'crops.edit.temperature_requirement' | translate }}</h3>
-                      <div class="requirement-fields">
-                        <div class="form-card__field form-card__field--small">
-                          <label>
-                            <span class="form-card__field-label">
-                              {{ 'crops.edit.base_temperature' | translate }}
-                              @if (isBaseTemperatureMissing(stage)) {
-                                <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
-                              }
-                            </span>
-                            <input type="number" step="0.1" name="temp_base_{{ stage.id }}"
-                                   [placeholder]="'crops.edit.base_temperature_placeholder' | translate"
-                                   [ngModel]="stage.temperature_requirement?.base_temperature ?? null"
-                                   (ngModelChange)="onTemperatureFieldDraft(stage.id, 'base_temperature', $event)"
-                                   (blur)="saveTemperatureField(stage.id, 'base_temperature')" />
-                          </label>
-                          <p class="form-hint">{{ 'crops.edit.base_temperature_help' | translate }}</p>
-                        </div>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
-                          <input type="number" step="0.1" name="temp_opt_min_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.optimal_min ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'optimal_min', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'optimal_min')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.optimal_max' | translate }}</span>
-                          <input type="number" step="0.1" name="temp_opt_max_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.optimal_max ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'optimal_max', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'optimal_max')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.low_stress_threshold' | translate }}</span>
-                          <input type="number" step="0.1" name="temp_low_stress_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.low_stress_threshold ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'low_stress_threshold', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'low_stress_threshold')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.high_stress_threshold' | translate }}</span>
-                          <input type="number" step="0.1" name="temp_high_stress_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.high_stress_threshold ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'high_stress_threshold', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'high_stress_threshold')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.frost_threshold' | translate }}</span>
-                          <input type="number" step="0.1" name="temp_frost_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.frost_threshold ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'frost_threshold', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'frost_threshold')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.sterility_risk_threshold' | translate }}</span>
-                          <input type="number" step="0.1" name="temp_sterility_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.sterility_risk_threshold ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'sterility_risk_threshold', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'sterility_risk_threshold')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.max_temperature' | translate }}</span>
-                          <input type="number" step="0.1" name="temp_max_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.max_temperature ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'max_temperature', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'max_temperature')" />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div class="requirement-section">
-                      <h3 class="requirement-section__title">{{ 'crops.edit.thermal_requirement' | translate }}</h3>
-                      <div class="requirement-fields">
-                        <div class="form-card__field form-card__field--small">
-                          <label>
-                            <span class="form-card__field-label">
-                              {{ 'crops.edit.required_gdd' | translate }}
-                              @if (isRequiredGddMissing(stage)) {
-                                <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
-                              }
-                            </span>
-                            <input type="number" step="0.1" name="thermal_gdd_{{ stage.id }}"
-                                   [placeholder]="'crops.edit.required_gdd_placeholder' | translate"
-                                   [ngModel]="stage.thermal_requirement?.required_gdd ?? null"
-                                   (ngModelChange)="onThermalFieldDraft(stage.id, 'required_gdd', $event)"
-                                   (blur)="saveThermalField(stage.id, 'required_gdd')" />
-                          </label>
-                          <p class="form-hint">{{ 'crops.edit.required_gdd_help' | translate }}</p>
-                        </div>
-                        <p class="crop-stage-cumulative-gdd" role="status">
-                          @if (stageCumulativeGddRangeFor(stage); as range) {
-                            @if (range.gddRangeMissing) {
-                              {{ 'crops.edit.stage_cumulative_gdd_missing' | translate }}
-                            } @else {
-                              {{
-                                'crops.edit.stage_cumulative_gdd_range'
-                                  | translate: {
-                                      start: range.cumulativeGddStart,
-                                      end: range.cumulativeGddEnd
-                                    }
-                              }}
-                            }
-                          }
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="requirement-section">
-                      <h3 class="requirement-section__title">{{ 'crops.edit.sunshine_requirement' | translate }}</h3>
-                      <div class="requirement-fields">
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.minimum_sunshine_hours' | translate }}</span>
-                          <input type="number" step="0.1" name="sunshine_min_{{ stage.id }}" [ngModel]="stage.sunshine_requirement?.minimum_sunshine_hours ?? null"
-                                 (ngModelChange)="onSunshineFieldDraft(stage.id, 'minimum_sunshine_hours', $event)"
-                                 (blur)="saveSunshineField(stage.id, 'minimum_sunshine_hours')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.target_sunshine_hours' | translate }}</span>
-                          <input type="number" step="0.1" name="sunshine_target_{{ stage.id }}" [ngModel]="stage.sunshine_requirement?.target_sunshine_hours ?? null"
-                                 (ngModelChange)="onSunshineFieldDraft(stage.id, 'target_sunshine_hours', $event)"
-                                 (blur)="saveSunshineField(stage.id, 'target_sunshine_hours')" />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div class="requirement-section">
-                      <h3 class="requirement-section__title">{{ 'crops.edit.nutrient_requirement' | translate }}</h3>
-                      <div class="requirement-fields">
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_n' | translate }}</span>
-                          <input type="number" step="0.01" name="nutrient_n_{{ stage.id }}" [ngModel]="stage.nutrient_requirement?.daily_uptake_n ?? null"
-                                 (ngModelChange)="onNutrientFieldDraft(stage.id, 'daily_uptake_n', $event)"
-                                 (blur)="saveNutrientField(stage.id, 'daily_uptake_n')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_p' | translate }}</span>
-                          <input type="number" step="0.01" name="nutrient_p_{{ stage.id }}" [ngModel]="stage.nutrient_requirement?.daily_uptake_p ?? null"
-                                 (ngModelChange)="onNutrientFieldDraft(stage.id, 'daily_uptake_p', $event)"
-                                 (blur)="saveNutrientField(stage.id, 'daily_uptake_p')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_k' | translate }}</span>
-                          <input type="number" step="0.01" name="nutrient_k_{{ stage.id }}" [ngModel]="stage.nutrient_requirement?.daily_uptake_k ?? null"
-                                 (ngModelChange)="onNutrientFieldDraft(stage.id, 'daily_uptake_k', $event)"
-                                 (blur)="saveNutrientField(stage.id, 'daily_uptake_k')" />
-                        </label>
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.region' | translate }}</span>
-                          <input type="text" name="nutrient_region_{{ stage.id }}" [ngModel]="stage.nutrient_requirement?.region ?? null"
-                                 (ngModelChange)="onNutrientFieldDraft(stage.id, 'region', $event)"
-                                 (blur)="saveNutrientField(stage.id, 'region')" />
-                        </label>
-                      </div>
-                    </div>
-                  </details>
-                </div>
               </div>
             }
-            }
-          </div>
+          }
         </section>
       }
     </main>
@@ -370,11 +262,127 @@ const initialControl: CropStagesViewState = {
         </div>
       }
     </dialog>
+
+    <dialog
+      #unsavedConfirmDialog
+      class="confirm-dialog crop-stages__unsaved-confirm"
+      (cancel)="cancelUnsavedConfirmDialog($event)"
+      (click)="onUnsavedConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingStageSwitchId != null) {
+        <p class="confirm-dialog__message">{{ 'crops.edit.unsaved_confirm_message' | translate }}</p>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn-secondary" (click)="cancelUnsavedConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn-primary" (click)="confirmDiscardAndSwitchStage()">
+            {{ 'common.confirm' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
+
+    <dialog
+      #temperatureDialog
+      class="confirm-dialog crop-stages__temperature-dialog"
+      (cancel)="cancelTemperatureDialog($event)"
+      (click)="onTemperatureDialogBackdropClick($event)"
+    >
+      @if (temperatureDetailDraft) {
+        <h2 class="crop-stages-dialog__title">{{ 'crops.edit.temperature_details_title' | translate }}</h2>
+        <div class="crop-stages-dialog__fields">
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
+            <input type="number" step="0.1" name="temp_opt_min" [(ngModel)]="temperatureDetailDraft.optimal_min" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.optimal_max' | translate }}</span>
+            <input type="number" step="0.1" name="temp_opt_max" [(ngModel)]="temperatureDetailDraft.optimal_max" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.low_stress_threshold' | translate }}</span>
+            <input type="number" step="0.1" name="temp_low_stress" [(ngModel)]="temperatureDetailDraft.low_stress_threshold" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.high_stress_threshold' | translate }}</span>
+            <input type="number" step="0.1" name="temp_high_stress" [(ngModel)]="temperatureDetailDraft.high_stress_threshold" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.frost_threshold' | translate }}</span>
+            <input type="number" step="0.1" name="temp_frost" [(ngModel)]="temperatureDetailDraft.frost_threshold" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.max_temperature' | translate }}</span>
+            <input type="number" step="0.1" name="temp_max" [(ngModel)]="temperatureDetailDraft.max_temperature" />
+          </label>
+        </div>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn-secondary" (click)="cancelTemperatureDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn-primary" (click)="saveTemperatureDialog()">
+            {{ 'crops.edit.save_stage' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
+
+    <dialog
+      #advancedDialog
+      class="confirm-dialog crop-stages__advanced-dialog"
+      (cancel)="cancelAdvancedDialog($event)"
+      (click)="onAdvancedDialogBackdropClick($event)"
+    >
+      @if (advancedDetailDraft) {
+        <h2 class="crop-stages-dialog__title">{{ 'crops.edit.advanced_details_title' | translate }}</h2>
+        <div class="crop-stages-dialog__fields">
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.minimum_sunshine_hours' | translate }}</span>
+            <input type="number" step="0.1" name="sunshine_min" [(ngModel)]="advancedDetailDraft.minimum_sunshine_hours" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.target_sunshine_hours' | translate }}</span>
+            <input type="number" step="0.1" name="sunshine_target" [(ngModel)]="advancedDetailDraft.target_sunshine_hours" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_n' | translate }}</span>
+            <input type="number" step="0.01" name="nutrient_n" [(ngModel)]="advancedDetailDraft.daily_uptake_n" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_p' | translate }}</span>
+            <input type="number" step="0.01" name="nutrient_p" [(ngModel)]="advancedDetailDraft.daily_uptake_p" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_k' | translate }}</span>
+            <input type="number" step="0.01" name="nutrient_k" [(ngModel)]="advancedDetailDraft.daily_uptake_k" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.region' | translate }}</span>
+            <input type="text" name="nutrient_region" [(ngModel)]="advancedDetailDraft.region" />
+          </label>
+          <label class="form-card__field form-card__field--small">
+            <span class="form-card__field-label">{{ 'crops.edit.sterility_risk_threshold' | translate }}</span>
+            <input type="number" step="0.1" name="temp_sterility" [(ngModel)]="advancedDetailDraft.sterility_risk_threshold" />
+          </label>
+        </div>
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn-secondary" (click)="cancelAdvancedDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn-primary" (click)="saveAdvancedDialog()">
+            {{ 'crops.edit.save_stage' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./crop-stages.component.css']
 })
 export class CropStagesComponent implements CropStagesView, OnInit {
   @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('unsavedConfirmDialog') unsavedConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('temperatureDialog') temperatureDialogRef?: ElementRef<HTMLDialogElement>;
+  @ViewChild('advancedDialog') advancedDialogRef?: ElementRef<HTMLDialogElement>;
 
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
@@ -392,13 +400,28 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   private readonly translate = inject(TranslateService);
 
   private _control: CropStagesViewState = initialControl;
+  private knownStageIds = new Set<number>();
+
   get control(): CropStagesViewState {
     return this._control;
   }
   set control(value: CropStagesViewState) {
+    const previousStages = this._control.formData.crop_stages;
     this._control = applyPendingFlashViewEffects(value, { flash: this.flashMessage });
-    this.cdr.markForCheck();
+    const stagesChanged = previousStages !== value.formData.crop_stages;
+    if (stagesChanged) {
+      queueMicrotask(() => {
+        this.ensureSelectedStage();
+        this.cdr.markForCheck();
+      });
+    }
   }
+
+  selectedStageId: number | null = null;
+  stageEditDraft: StageEditDraft = { name: '', base_temperature: null, required_gdd: null };
+  temperatureDetailDraft: TemperatureDetailDraft | null = null;
+  advancedDetailDraft: AdvancedDetailDraft | null = null;
+  pendingStageSwitchId: number | null = null;
 
   get cropId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -422,16 +445,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
   }
 
-  get blueprintReadiness(): BlueprintGenerationReadiness {
-    return withCropStagesDisplayState(this.control, this.cropId).blueprintReadiness;
-  }
-
-  get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {
-    return this.fromPlanId != null
-      ? cropPlanWizardQueryParams(this.fromPlanId, this.returnTab)
-      : null;
-  }
-
   get contextCrumbs(): MasterContextCrumb[] {
     const crumbs: MasterContextCrumb[] = [
       { labelKey: 'crops.index.title', routerLink: ['/crops'] }
@@ -442,6 +455,21 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
     crumbs.push({ labelKey: 'crops.edit.stages_title' });
     return crumbs;
+  }
+
+  get sortedStages(): CropStage[] {
+    return sortStagesByOrder(this.control.formData.crop_stages);
+  }
+
+  get duplicateStageOrders(): number[] {
+    return findDuplicateStageOrders(this.control.formData.crop_stages);
+  }
+
+  get selectedStage(): CropStage | null {
+    if (this.selectedStageId == null) {
+      return null;
+    }
+    return this.control.formData.crop_stages.find((stage) => stage.id === this.selectedStageId) ?? null;
   }
 
   ngOnInit(): void {
@@ -461,7 +489,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   addCropStage(): void {
-    const nextOrder = Math.max(0, ...this.control.formData.crop_stages.map(s => s.order)) + 1;
+    const nextOrder = Math.max(0, ...this.control.formData.crop_stages.map((s) => s.order)) + 1;
     const defaultStageName = this.translate.instant('crops.stage.default_name', { order: nextOrder });
     this.createCropStageUseCase.execute({
       cropId: this.cropId,
@@ -470,6 +498,172 @@ export class CropStagesComponent implements CropStagesView, OnInit {
         order: nextOrder
       }
     });
+  }
+
+  selectStage(stageId: number): void {
+    if (this.selectedStageId === stageId) {
+      return;
+    }
+    if (this.isPanelDirty()) {
+      this.pendingStageSwitchId = stageId;
+      this.unsavedConfirmDialogRef?.nativeElement?.showModal();
+      return;
+    }
+    this.selectStageImmediate(stageId);
+  }
+
+  selectStageImmediate(stageId: number): void {
+    this.selectedStageId = stageId;
+    const stage = this.selectedStage;
+    if (stage) {
+      this.syncDraftFromStage(stage);
+    }
+  }
+
+  confirmDiscardAndSwitchStage(): void {
+    const targetId = this.pendingStageSwitchId;
+    this.pendingStageSwitchId = null;
+    this.unsavedConfirmDialogRef?.nativeElement?.close();
+    if (targetId != null) {
+      this.selectStageImmediate(targetId);
+    }
+  }
+
+  cancelUnsavedConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.pendingStageSwitchId = null;
+    this.unsavedConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onUnsavedConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.unsavedConfirmDialogRef?.nativeElement) {
+      this.cancelUnsavedConfirmDialog();
+    }
+  }
+
+  saveStagePanel(): void {
+    const stage = this.selectedStage;
+    if (!stage) {
+      return;
+    }
+
+    if (this.stageEditDraft.name !== stage.name) {
+      this.updateCropStage(stage.id, { name: this.stageEditDraft.name });
+    }
+
+    const currentBaseTemp = stage.temperature_requirement?.base_temperature ?? null;
+    if (this.stageEditDraft.base_temperature !== currentBaseTemp) {
+      this.updateTemperatureRequirement(stage.id, { base_temperature: this.stageEditDraft.base_temperature });
+    }
+
+    const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
+    if (this.stageEditDraft.required_gdd !== currentRequiredGdd) {
+      this.updateThermalRequirement(stage.id, { required_gdd: this.stageEditDraft.required_gdd });
+    }
+
+    this.syncDraftFromStage(stage);
+  }
+
+  openTemperatureDialog(): void {
+    const stage = this.selectedStage;
+    if (!stage) {
+      return;
+    }
+    const temp = stage.temperature_requirement;
+    this.temperatureDetailDraft = {
+      optimal_min: temp?.optimal_min ?? null,
+      optimal_max: temp?.optimal_max ?? null,
+      low_stress_threshold: temp?.low_stress_threshold ?? null,
+      high_stress_threshold: temp?.high_stress_threshold ?? null,
+      frost_threshold: temp?.frost_threshold ?? null,
+      max_temperature: temp?.max_temperature ?? null
+    };
+    this.temperatureDialogRef?.nativeElement?.showModal();
+  }
+
+  saveTemperatureDialog(): void {
+    const stage = this.selectedStage;
+    if (!stage || !this.temperatureDetailDraft) {
+      return;
+    }
+    this.updateTemperatureRequirement(stage.id, { ...this.temperatureDetailDraft });
+    this.temperatureDetailDraft = null;
+    this.temperatureDialogRef?.nativeElement?.close();
+  }
+
+  cancelTemperatureDialog(event?: Event): void {
+    event?.preventDefault();
+    this.temperatureDetailDraft = null;
+    this.temperatureDialogRef?.nativeElement?.close();
+  }
+
+  onTemperatureDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.temperatureDialogRef?.nativeElement) {
+      this.cancelTemperatureDialog();
+    }
+  }
+
+  openAdvancedDialog(): void {
+    const stage = this.selectedStage;
+    if (!stage) {
+      return;
+    }
+    const sunshine = stage.sunshine_requirement;
+    const nutrient = stage.nutrient_requirement;
+    const temp = stage.temperature_requirement;
+    this.advancedDetailDraft = {
+      minimum_sunshine_hours: sunshine?.minimum_sunshine_hours ?? null,
+      target_sunshine_hours: sunshine?.target_sunshine_hours ?? null,
+      daily_uptake_n: nutrient?.daily_uptake_n ?? null,
+      daily_uptake_p: nutrient?.daily_uptake_p ?? null,
+      daily_uptake_k: nutrient?.daily_uptake_k ?? null,
+      region: nutrient?.region ?? null,
+      sterility_risk_threshold: temp?.sterility_risk_threshold ?? null
+    };
+    this.advancedDialogRef?.nativeElement?.showModal();
+  }
+
+  saveAdvancedDialog(): void {
+    const stage = this.selectedStage;
+    if (!stage || !this.advancedDetailDraft) {
+      return;
+    }
+    const {
+      minimum_sunshine_hours,
+      target_sunshine_hours,
+      daily_uptake_n,
+      daily_uptake_p,
+      daily_uptake_k,
+      region,
+      sterility_risk_threshold
+    } = this.advancedDetailDraft;
+
+    this.updateSunshineRequirement(stage.id, {
+      minimum_sunshine_hours,
+      target_sunshine_hours
+    });
+    this.updateNutrientRequirement(stage.id, {
+      daily_uptake_n,
+      daily_uptake_p,
+      daily_uptake_k,
+      region
+    });
+    this.updateTemperatureRequirement(stage.id, { sterility_risk_threshold });
+
+    this.advancedDetailDraft = null;
+    this.advancedDialogRef?.nativeElement?.close();
+  }
+
+  cancelAdvancedDialog(event?: Event): void {
+    event?.preventDefault();
+    this.advancedDetailDraft = null;
+    this.advancedDialogRef?.nativeElement?.close();
+  }
+
+  onAdvancedDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.advancedDialogRef?.nativeElement) {
+      this.cancelAdvancedDialog();
+    }
   }
 
   updateCropStage(stageId: number, payload: { name?: string; order?: number }): void {
@@ -514,7 +708,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
   }
 
-  updateTemperatureRequirement(stageId: number, payload: any): void {
+  updateTemperatureRequirement(stageId: number, payload: Record<string, unknown>): void {
     this.updateTemperatureRequirementUseCase.execute({
       cropId: this.cropId,
       stageId,
@@ -522,7 +716,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     });
   }
 
-  updateThermalRequirement(stageId: number, payload: any): void {
+  updateThermalRequirement(stageId: number, payload: Record<string, unknown>): void {
     this.updateThermalRequirementUseCase.execute({
       cropId: this.cropId,
       stageId,
@@ -530,7 +724,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     });
   }
 
-  updateSunshineRequirement(stageId: number, payload: any): void {
+  updateSunshineRequirement(stageId: number, payload: Record<string, unknown>): void {
     this.updateSunshineRequirementUseCase.execute({
       cropId: this.cropId,
       stageId,
@@ -538,72 +732,12 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     });
   }
 
-  updateNutrientRequirement(stageId: number, payload: any): void {
+  updateNutrientRequirement(stageId: number, payload: Record<string, unknown>): void {
     this.updateNutrientRequirementUseCase.execute({
       cropId: this.cropId,
       stageId,
       payload
     });
-  }
-
-  onTemperatureFieldDraft(stageId: number, field: string, value: number | null): void {
-    const stage = this.control.formData.crop_stages.find(s => s.id === stageId);
-    if (!stage) return;
-
-    if (!stage.temperature_requirement) {
-      stage.temperature_requirement = {
-        id: 0,
-        crop_stage_id: stageId,
-        base_temperature: null,
-        optimal_min: null,
-        optimal_max: null,
-        low_stress_threshold: null,
-        high_stress_threshold: null,
-        frost_threshold: null,
-        sterility_risk_threshold: null,
-        max_temperature: null
-      };
-    }
-    (stage.temperature_requirement as any)[field] = value;
-  }
-
-  saveTemperatureField(stageId: number, field: string): void {
-    const stage = this.control.formData.crop_stages.find(s => s.id === stageId);
-    if (!stage?.temperature_requirement) return;
-
-    const value = (stage.temperature_requirement as any)[field];
-    this.updateTemperatureRequirement(stageId, { [field]: value });
-  }
-
-  onThermalFieldDraft(stageId: number, field: string, value: number | null): void {
-    const stage = this.control.formData.crop_stages.find(s => s.id === stageId);
-    if (!stage) return;
-
-    if (!stage.thermal_requirement) {
-      stage.thermal_requirement = {
-        id: 0,
-        crop_stage_id: stageId,
-        required_gdd: null
-      };
-    }
-    (stage.thermal_requirement as any)[field] = value;
-    this.cdr.markForCheck();
-  }
-
-  saveThermalField(stageId: number, field: string): void {
-    const stage = this.control.formData.crop_stages.find(s => s.id === stageId);
-    if (!stage?.thermal_requirement) return;
-
-    const value = (stage.thermal_requirement as any)[field];
-    this.updateThermalRequirement(stageId, { [field]: value });
-  }
-
-  get sortedStages(): CropStage[] {
-    return sortStagesByOrder(this.control.formData.crop_stages);
-  }
-
-  get duplicateStageOrders(): number[] {
-    return findDuplicateStageOrders(this.control.formData.crop_stages);
   }
 
   onStageDropped(event: CdkDragDrop<CropStage[]>): void {
@@ -633,81 +767,74 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
   }
 
-  onStageOrderBlur(stage: CropStage): void {
-    if (this.duplicateStageOrders.length > 0) {
-      this.flashMessage.show({
-        type: 'error',
-        text: this.translate.instant('crops.edit.stage_order_duplicate', {
-          orders: this.duplicateStageOrders.join(', ')
-        })
-      });
+  formatOptionalNumber(value: number | null | undefined): string {
+    if (value == null || !Number.isFinite(value)) {
+      return this.translate.instant('crops.edit.value_missing');
+    }
+    return String(value);
+  }
+
+  formatCumulativeGdd(stage: CropStage): string {
+    const range = stageCumulativeGddRange(this.control.formData.crop_stages, stage.order);
+    if (range.gddRangeMissing) {
+      return this.translate.instant('crops.edit.value_missing');
+    }
+    return this.translate.instant('crops.edit.stage_cumulative_gdd_range', {
+      start: range.cumulativeGddStart,
+      end: range.cumulativeGddEnd
+    });
+  }
+
+  isPanelDirty(): boolean {
+    const stage = this.selectedStage;
+    if (!stage) {
+      return false;
+    }
+    const currentBaseTemp = stage.temperature_requirement?.base_temperature ?? null;
+    const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
+    return (
+      this.stageEditDraft.name !== stage.name ||
+      this.stageEditDraft.base_temperature !== currentBaseTemp ||
+      this.stageEditDraft.required_gdd !== currentRequiredGdd
+    );
+  }
+
+  syncDraftFromStage(stage: CropStage): void {
+    this.stageEditDraft = {
+      name: stage.name,
+      base_temperature: stage.temperature_requirement?.base_temperature ?? null,
+      required_gdd: stage.thermal_requirement?.required_gdd ?? null
+    };
+  }
+
+  private ensureSelectedStage(): void {
+    const stages = this.control.formData.crop_stages;
+    const currentIds = new Set(stages.map((stage) => stage.id));
+    const newStageIds = stages
+      .filter((stage) => !this.knownStageIds.has(stage.id))
+      .map((stage) => stage.id);
+    this.knownStageIds = currentIds;
+
+    if (stages.length === 0) {
+      this.selectedStageId = null;
+      this.stageEditDraft = { name: '', base_temperature: null, required_gdd: null };
       return;
     }
 
-    this.updateCropStage(stage.id, { order: stage.order });
-  }
-
-  stageCumulativeGddRangeFor(stage: CropStage) {
-    return stageCumulativeGddRange(this.control.formData.crop_stages, stage.order);
-  }
-
-  shouldOpenRequirements(stage: CropStage): boolean {
-    return this.fromPlanId != null || !stageRequirementsComplete(stage);
-  }
-
-  isBaseTemperatureMissing(stage: CropStage): boolean {
-    return stageMissingBaseTemperature(stage);
-  }
-
-  isRequiredGddMissing(stage: CropStage): boolean {
-    return stageMissingRequiredGdd(stage);
-  }
-
-  onSunshineFieldDraft(stageId: number, field: string, value: number | null): void {
-    const stage = this.control.formData.crop_stages.find(s => s.id === stageId);
-    if (!stage) return;
-
-    if (!stage.sunshine_requirement) {
-      stage.sunshine_requirement = {
-        id: 0,
-        crop_stage_id: stageId,
-        minimum_sunshine_hours: null,
-        target_sunshine_hours: null
-      };
+    if (newStageIds.length === 1) {
+      this.selectStageImmediate(newStageIds[0]);
+      return;
     }
-    (stage.sunshine_requirement as any)[field] = value;
-  }
 
-  saveSunshineField(stageId: number, field: string): void {
-    const stage = this.control.formData.crop_stages.find(s => s.id === stageId);
-    if (!stage?.sunshine_requirement) return;
-
-    const value = (stage.sunshine_requirement as any)[field];
-    this.updateSunshineRequirement(stageId, { [field]: value });
-  }
-
-  onNutrientFieldDraft(stageId: number, field: string, value: number | string | null): void {
-    const stage = this.control.formData.crop_stages.find(s => s.id === stageId);
-    if (!stage) return;
-
-    if (!stage.nutrient_requirement) {
-      stage.nutrient_requirement = {
-        id: 0,
-        crop_stage_id: stageId,
-        daily_uptake_n: null,
-        daily_uptake_p: null,
-        daily_uptake_k: null,
-        region: null
-      };
+    if (this.selectedStageId == null || !currentIds.has(this.selectedStageId)) {
+      const first = sortStagesByOrder(stages)[0];
+      this.selectStageImmediate(first.id);
+      return;
     }
-    (stage.nutrient_requirement as any)[field] = value;
-  }
 
-  saveNutrientField(stageId: number, field: string): void {
-    const stage = this.control.formData.crop_stages.find(s => s.id === stageId);
-    if (!stage?.nutrient_requirement) return;
-
-    const value = (stage.nutrient_requirement as any)[field];
-    this.updateNutrientRequirement(stageId, { [field]: value });
+    const stage = stages.find((item) => item.id === this.selectedStageId);
+    if (stage && !this.isPanelDirty()) {
+      this.syncDraftFromStage(stage);
+    }
   }
 }

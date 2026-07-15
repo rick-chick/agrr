@@ -24,7 +24,19 @@ const CROPS_EDIT_KEYS = [
   'crops.edit.base_temperature_help',
   'crops.edit.required_gdd_placeholder',
   'crops.edit.required_gdd_help',
-  'crops.edit.stage_order_duplicate'
+  'crops.edit.stage_order_duplicate',
+  'crops.edit.save_stage',
+  'crops.edit.edit_temperature_details',
+  'crops.edit.edit_sunshine_nutrient',
+  'crops.edit.temperature_details_title',
+  'crops.edit.advanced_details_title',
+  'crops.edit.unsaved_confirm_message',
+  'crops.edit.table_order',
+  'crops.edit.table_stage_name',
+  'crops.edit.table_base_temperature',
+  'crops.edit.table_required_gdd',
+  'crops.edit.table_cumulative_gdd',
+  'crops.edit.value_missing'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

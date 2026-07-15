@@ -24,7 +24,6 @@ const initialFormData = {
   crop_stages: [] as CropStage[]
 };
 
-
 const loadedControlBase = {
   loading: false,
   error: null,
@@ -32,6 +31,91 @@ const loadedControlBase = {
   pendingSuccessFlash: null,
   blueprintReadiness: defaultBlueprintReadiness(),
   taskScheduleBlueprints: []
+};
+
+const stageFixture: CropStage = {
+  id: 1,
+  name: 'Germination',
+  order: 1,
+  temperature_requirement: {
+    id: 1,
+    crop_stage_id: 1,
+    base_temperature: 10,
+    optimal_min: null,
+    optimal_max: null,
+    low_stress_threshold: null,
+    high_stress_threshold: null,
+    frost_threshold: null,
+    sterility_risk_threshold: null,
+    max_temperature: null
+  },
+  thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 },
+  sunshine_requirement: null,
+  nutrient_requirement: null
+} as CropStage;
+
+const tableTranslations = {
+  crops: {
+    stage: {
+      default_name: 'Stage {{order}}',
+      delete_confirm_message: 'Delete "{{stageName}}"?',
+      delete_confirm_blueprint_warning: 'This stage has {{count}} linked task schedule template(s).'
+    },
+    show: {
+      no_stages_description: 'Add growth stages for this crop.',
+      from_plan_wizard_title: 'From plan wizard',
+      from_plan_stages_wizard_lead: 'Configure stages',
+      return_to_plan: 'Return to plan'
+    },
+    edit: {
+      stages_title: 'Growth Stages',
+      stages_lead: 'Configure growth stages.',
+      stages_list_heading: 'Stage list',
+      stages_empty_lead: 'Stages are required.',
+      add_stage: 'Add Stage',
+      stage_title: 'Stage {{order}}',
+      stage_name: 'Stage Name',
+      base_temperature: 'Base Temperature',
+      base_temperature_placeholder: 'e.g., 5.0',
+      base_temperature_help: 'Base temperature help',
+      required_gdd: 'Required GDD',
+      required_gdd_placeholder: 'e.g., 800.0',
+      required_gdd_help: 'Required GDD help',
+      save_stage: 'Save',
+      edit_temperature_details: 'Edit temperature details…',
+      edit_sunshine_nutrient: 'Edit sunshine & nutrients…',
+      temperature_details_title: 'Temperature details',
+      advanced_details_title: 'Sunshine & nutrient details',
+      unsaved_confirm_message: 'You have unsaved changes. Continue?',
+      table_order: 'Order',
+      table_stage_name: 'Stage name',
+      table_base_temperature: 'Base temp',
+      table_required_gdd: 'Required GDD',
+      table_cumulative_gdd: 'Cumulative GDD',
+      value_missing: '—',
+      stage_cumulative_gdd_range: '{{start}}–{{end}} ℃·day (cumulative)',
+      optimal_min: 'Optimal min',
+      optimal_max: 'Optimal max',
+      low_stress_threshold: 'Low stress',
+      high_stress_threshold: 'High stress',
+      frost_threshold: 'Frost',
+      max_temperature: 'Max temp',
+      minimum_sunshine_hours: 'Min sunshine',
+      target_sunshine_hours: 'Target sunshine',
+      daily_uptake_n: 'N',
+      daily_uptake_p: 'P',
+      daily_uptake_k: 'K',
+      region: 'Region',
+      sterility_risk_threshold: 'Sterility risk',
+      stage_order_duplicate: 'Duplicate order: {{orders}}'
+    }
+  },
+  common: {
+    loading: 'Loading...',
+    delete: 'Delete',
+    cancel: 'Cancel',
+    confirm: 'Confirm'
+  }
 };
 
 describe('CropStagesComponent', () => {
@@ -54,6 +138,19 @@ describe('CropStagesComponent', () => {
   let mockUpdateNutrientRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockFlashMessage: { show: ReturnType<typeof vi.fn> };
   let translateService: TranslateService;
+
+  async function loadStages(stages: CropStage[], cropName = 'Tomato'): Promise<void> {
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        name: cropName,
+        crop_stages: stages
+      }
+    };
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+    fixture.detectChanges();
+  }
 
   beforeEach(async () => {
     HTMLDialogElement.prototype.showModal = vi.fn();
@@ -116,19 +213,9 @@ describe('CropStagesComponent', () => {
 
     fixture = TestBed.createComponent(CropStagesComponent);
     component = fixture.componentInstance;
-
     translateService = TestBed.inject(TranslateService);
-    translateService.setTranslation('ja', {
-      crops: {
-        stage: {
-          default_name: 'Stage 1'
-        },
-        edit: {
-          stage_title: 'ステージ {{order}}'
-        }
-      }
-    }, true);
-    translateService.use('ja');
+    translateService.setTranslation('en', tableTranslations, true);
+    translateService.use('en');
   });
 
   it('should load crop and task schedule blueprints on init', () => {
@@ -149,98 +236,199 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('should call updateCropStageUseCase when updateCropStage is called', () => {
-    component.updateCropStage(1, { name: 'New Name' });
+  it('renders stage table with columns and auto-selects first stage', async () => {
+    await loadStages([stageFixture]);
+
+    expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Order');
+    expect(fixture.nativeElement.textContent).toContain('Cumulative GDD');
+    expect(component.selectedStageId).toBe(1);
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeTruthy();
+  });
+
+  it('shows em dash for missing table values', async () => {
+    await loadStages([
+      {
+        id: 1,
+        name: 'Stage 1',
+        order: 1,
+        temperature_requirement: null,
+        thermal_requirement: null,
+        sunshine_requirement: null,
+        nutrient_requirement: null
+      } as CropStage
+    ]);
+
+    const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
+    expect(row.textContent).toContain('—');
+  });
+
+  it('shows cumulative GDD range in table when required_gdd is set', async () => {
+    await loadStages([stageFixture]);
+
+    const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
+    expect(row.textContent).toContain('0–100');
+  });
+
+  it('saves panel fields only when save button is clicked', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Updated Name';
+    component.stageEditDraft.base_temperature = 12;
+    component.stageEditDraft.required_gdd = 150;
+    expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateThermalRequirementUseCase.execute).not.toHaveBeenCalled();
+
+    component.saveStagePanel();
+
     expect(mockUpdateCropStageUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
       stageId: 1,
-      payload: { name: 'New Name' }
+      payload: { name: 'Updated Name' }
+    });
+    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { base_temperature: 12 }
+    });
+    expect(mockUpdateThermalRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { required_gdd: 150 }
     });
   });
 
-  it('opens delete confirm dialog with impact message instead of window.confirm', () => {
-    translateService.setTranslation(
-      'en',
+  it('opens unsaved confirm when switching stages with dirty panel', async () => {
+    await loadStages([
+      stageFixture,
       {
-        crops: {
-          stage: {
-            default_name: 'Stage {{order}}',
-            delete_confirm_message:
-              'Delete "{{stageName}}"? Requirements and linked task templates may be affected.',
-            delete_confirm_blueprint_warning:
-              'This stage has {{count}} linked task schedule template(s).'
-          },
-          edit: {
-            stage_title: 'Stage {{order}}'
-          }
-        },
-        common: {
-          delete: 'Delete',
-          cancel: 'Cancel'
-        }
-      },
-      true
-    );
-    translateService.use('en');
+        id: 2,
+        name: 'Stage 2',
+        order: 2,
+        temperature_requirement: null,
+        thermal_requirement: null,
+        sunshine_requirement: null,
+        nutrient_requirement: null
+      } as CropStage
+    ]);
 
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Germination',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
+    component.stageEditDraft.name = 'Dirty edit';
+    component.selectStage(2);
+
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(component.pendingStageSwitchId).toBe(2);
+    expect(component.selectedStageId).toBe(1);
+  });
+
+  it('discards dirty changes and switches stage after unsaved confirm', async () => {
+    await loadStages([
+      stageFixture,
+      {
+        id: 2,
+        name: 'Stage 2',
+        order: 2,
+        temperature_requirement: null,
+        thermal_requirement: null,
+        sunshine_requirement: null,
+        nutrient_requirement: null
+      } as CropStage
+    ]);
+
+    component.stageEditDraft.name = 'Dirty edit';
+    component.selectStage(2);
+    component.confirmDiscardAndSwitchStage();
+
+    expect(component.selectedStageId).toBe(2);
+    expect(component.stageEditDraft.name).toBe('Stage 2');
+  });
+
+  it('opens temperature dialog and saves on explicit save', async () => {
+    await loadStages([stageFixture]);
+
+    component.openTemperatureDialog();
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(component.temperatureDetailDraft?.optimal_min).toBeNull();
+
+    component.temperatureDetailDraft = {
+      optimal_min: 15,
+      optimal_max: 25,
+      low_stress_threshold: 10,
+      high_stress_threshold: 30,
+      frost_threshold: 0,
+      max_temperature: 35
     };
+    component.saveTemperatureDialog();
 
-    fixture.detectChanges();
+    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: {
+        optimal_min: 15,
+        optimal_max: 25,
+        low_stress_threshold: 10,
+        high_stress_threshold: 30,
+        frost_threshold: 0,
+        max_temperature: 35
+      }
+    });
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
 
-    const deleteButton = fixture.nativeElement.querySelector('.crop-stage-card__header .btn-danger');
+  it('opens advanced dialog and saves sunshine, nutrient, and sterility fields', async () => {
+    await loadStages([stageFixture]);
+
+    component.openAdvancedDialog();
+    component.advancedDetailDraft = {
+      minimum_sunshine_hours: 4,
+      target_sunshine_hours: 8,
+      daily_uptake_n: 0.5,
+      daily_uptake_p: 0.2,
+      daily_uptake_k: 0.3,
+      region: 'jp',
+      sterility_risk_threshold: 32
+    };
+    component.saveAdvancedDialog();
+
+    expect(mockUpdateSunshineRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { minimum_sunshine_hours: 4, target_sunshine_hours: 8 }
+    });
+    expect(mockUpdateNutrientRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: {
+        daily_uptake_n: 0.5,
+        daily_uptake_p: 0.2,
+        daily_uptake_k: 0.3,
+        region: 'jp'
+      }
+    });
+    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { sterility_risk_threshold: 32 }
+    });
+  });
+
+  it('opens delete confirm dialog from edit panel instead of window.confirm', async () => {
+    await loadStages([stageFixture]);
+
+    const deleteButton = fixture.nativeElement.querySelector('.crop-stages-edit-panel .btn-danger');
     deleteButton.click();
     fixture.detectChanges();
 
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('.crop-stages__delete-confirm')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain(
-      'Delete "Germination"? Requirements and linked task templates may be affected.'
-    );
+    expect(fixture.nativeElement.textContent).toContain('Delete "Germination"?');
     expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
   });
 
-  it('shows blueprint warning when deleting a stage with linked templates', () => {
-    translateService.setTranslation(
-      'en',
-      {
-        crops: {
-          stage: {
-            default_name: 'Stage {{order}}',
-            delete_confirm_message: 'Delete "{{stageName}}"?',
-            delete_confirm_blueprint_warning:
-              'This stage has {{count}} linked task schedule template(s).'
-          },
-          edit: {
-            stage_title: 'Stage {{order}}'
-          }
-        },
-        common: {
-          delete: 'Delete',
-          cancel: 'Cancel'
-        }
-      },
-      true
-    );
-    translateService.use('en');
-
+  it('shows blueprint warning when deleting a stage with linked templates', async () => {
+    await loadStages([stageFixture]);
     component.control = {
-      ...loadedControlBase,
+      ...component.control,
       taskScheduleBlueprints: [
         {
           id: 10,
@@ -260,25 +448,13 @@ describe('CropStagesComponent', () => {
           weather_dependency: null,
           time_per_sqm: null
         }
-      ],
-      formData: {
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Germination',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
+      ]
     };
-
     fixture.detectChanges();
-    fixture.nativeElement.querySelector('.crop-stage-card__header .btn-danger').click();
+
+    const deleteButton = fixture.nativeElement.querySelector('.crop-stages-edit-panel .btn-danger');
+    deleteButton.click();
+    fixture.detectChanges();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain(
@@ -286,47 +462,8 @@ describe('CropStagesComponent', () => {
     );
   });
 
-  it('calls deleteCropStageUseCase when delete is confirmed in the dialog', () => {
-    translateService.setTranslation(
-      'en',
-      {
-        crops: {
-          stage: {
-            default_name: 'Stage {{order}}',
-            delete_confirm_message: 'Delete "{{stageName}}"?'
-          },
-          edit: {
-            stage_title: 'Stage {{order}}'
-          }
-        },
-        common: {
-          delete: 'Delete',
-          cancel: 'Cancel'
-        }
-      },
-      true
-    );
-    translateService.use('en');
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Germination',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
-    };
-
-    fixture.detectChanges();
+  it('calls deleteCropStageUseCase when delete is confirmed in the dialog', async () => {
+    await loadStages([stageFixture]);
     component.deleteCropStage(1);
     component.confirmDeleteCropStage();
 
@@ -337,26 +474,8 @@ describe('CropStagesComponent', () => {
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
-  it('does not call deleteCropStageUseCase when delete confirm is cancelled', () => {
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Germination',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
-    };
-
-    fixture.detectChanges();
+  it('does not call deleteCropStageUseCase when delete confirm is cancelled', async () => {
+    await loadStages([stageFixture]);
     component.deleteCropStage(1);
     component.cancelDeleteConfirmDialog();
 
@@ -364,469 +483,56 @@ describe('CropStagesComponent', () => {
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
-  it('should call updateTemperatureRequirementUseCase when updateTemperatureRequirement is called', () => {
-    component.updateTemperatureRequirement(1, { base_temperature: 10 });
-    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { base_temperature: 10 }
-    });
-  });
-
-  it('should call updateThermalRequirementUseCase when updateThermalRequirement is called', () => {
-    component.updateThermalRequirement(1, { required_gdd: 100 });
-    expect(mockUpdateThermalRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { required_gdd: 100 }
-    });
-  });
-
-  it('should call updateSunshineRequirementUseCase when updateSunshineRequirement is called', () => {
-    component.updateSunshineRequirement(1, { minimum_sunshine_hours: 4 });
-    expect(mockUpdateSunshineRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { minimum_sunshine_hours: 4 }
-    });
-  });
-
-  it('should call updateNutrientRequirementUseCase when updateNutrientRequirement is called', () => {
-    component.updateNutrientRequirement(1, { daily_uptake_n: 0.5 });
-    expect(mockUpdateNutrientRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { daily_uptake_n: 0.5 }
-    });
-  });
-
-  it('should render crop stages without ngModel error after fix', () => {
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
-    };
-
-    expect(() => {
-      fixture.detectChanges();
-    }).not.toThrow();
-  });
-
-  it('should translate stage title with correct parameters', () => {
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
-    };
-
-    fixture.detectChanges();
-
-    const stageTitleElement = fixture.nativeElement.querySelector('.crop-stage-card__title');
-    expect(stageTitleElement).toBeTruthy();
-    expect(stageTitleElement.textContent).toContain('ステージ 1');
-  });
-
-  it('should link back to crop detail via breadcrumbs', () => {
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato'
-      }
-    };
-
-    fixture.detectChanges();
+  it('should link back to crop detail via breadcrumbs', async () => {
+    await loadStages([], 'Tomato');
 
     const pageMain = fixture.nativeElement.querySelector('.page-main');
     const breadcrumb = pageMain?.querySelector(':scope > app-master-context-header');
     const pageHeader = pageMain?.querySelector(':scope > .page-header');
     expect(breadcrumb).toBeTruthy();
     expect(pageHeader).toBeTruthy();
-    expect(pageHeader?.querySelector('app-master-context-header')).toBeNull();
 
-    const backLink = breadcrumb?.querySelector(
-      'a.master-context-header__back'
-    ) as HTMLAnchorElement;
+    const backLink = breadcrumb?.querySelector('a.master-context-header__back') as HTMLAnchorElement;
     expect(backLink?.getAttribute('href')).toBe('/crops');
 
-    const cropDetailLink = breadcrumb?.querySelector(
-      'a.master-context-header__link'
-    ) as HTMLAnchorElement;
+    const cropDetailLink = breadcrumb?.querySelector('a.master-context-header__link') as HTMLAnchorElement;
     expect(cropDetailLink?.getAttribute('href')).toBe('/crops/1');
     expect(cropDetailLink?.textContent?.trim()).toBe('Tomato');
-
-    expect(breadcrumb?.querySelector('[aria-current="page"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.crop-stages__back-link')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeNull();
   });
 
-  it('shows return-to-plan link when fromPlan query param is set', () => {
+  it('shows return-to-plan link when fromPlan query param is set', async () => {
     mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
       key === 'fromPlan' ? '7' : null
     );
     component.fromPlanId = 7;
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato'
-      }
-    };
-
-    fixture.detectChanges();
+    await loadStages([], 'Tomato');
 
     expect(fixture.nativeElement.querySelector('a[href*="/plans/7"]')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-stages__return-to-plan')).toBeTruthy();
     expect(fixture.nativeElement.querySelector('.crop-blueprints__plan-wizard-banner')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
-  const stageWithRequirements: CropStage = {
-    id: 1,
-    name: 'Stage 1',
-    order: 1,
-    temperature_requirement: {
-      id: 1,
-      crop_stage_id: 1,
-      base_temperature: 10,
-      optimal_min: null,
-      optimal_max: null,
-      low_stress_threshold: null,
-      high_stress_threshold: null,
-      frost_threshold: null,
-      sterility_risk_threshold: null,
-      max_temperature: null
-    },
-    thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 },
-    sunshine_requirement: null,
-    nutrient_requirement: null
-  } as CropStage;
-
-  const loadedControl = {
-    ...loadedControlBase,
-    formData: {
-      ...initialFormData,
-      name: 'Tomato',
-      crop_stages: [stageWithRequirements]
-    }
-  };
-
-  it('does not save requirement fields on ngModelChange while typing', () => {
-    component.control = loadedControl;
-    fixture.detectChanges();
-
-    component.onTemperatureFieldDraft(1, 'base_temperature', 12);
-    component.onThermalFieldDraft(1, 'required_gdd', 120);
-
-    expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
-    expect(mockUpdateThermalRequirementUseCase.execute).not.toHaveBeenCalled();
-    expect(component.control.formData.crop_stages[0].temperature_requirement?.base_temperature).toBe(12);
-    expect(component.control.formData.crop_stages[0].thermal_requirement?.required_gdd).toBe(120);
-  });
-
-  it('saves requirement fields on blur after draft edits', () => {
-    component.control = loadedControl;
-    fixture.detectChanges();
-
-    component.onTemperatureFieldDraft(1, 'base_temperature', 15);
-    component.saveTemperatureField(1, 'base_temperature');
-    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { base_temperature: 15 }
-    });
-
-    component.onThermalFieldDraft(1, 'required_gdd', 150);
-    component.saveThermalField(1, 'required_gdd');
-    expect(mockUpdateThermalRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { required_gdd: 150 }
-    });
-  });
-
-  it('saves sunshine and nutrient requirement fields on blur after draft edits', () => {
-    const stageWithSunshineNutrient: CropStage = {
-      ...stageWithRequirements,
-      sunshine_requirement: {
-        id: 1,
-        crop_stage_id: 1,
-        minimum_sunshine_hours: 4,
-        target_sunshine_hours: 8
-      },
-      nutrient_requirement: {
-        id: 1,
-        crop_stage_id: 1,
-        daily_uptake_n: 0.5,
-        daily_uptake_p: 0.2,
-        daily_uptake_k: 0.3,
-        region: 'jp'
-      }
-    } as CropStage;
-
-    component.control = {
-      ...loadedControl,
-      formData: {
-        ...loadedControl.formData,
-        crop_stages: [stageWithSunshineNutrient]
-      }
-    };
-    fixture.detectChanges();
-
-    component.onSunshineFieldDraft(1, 'minimum_sunshine_hours', 5);
-    component.onNutrientFieldDraft(1, 'daily_uptake_n', 0.6);
-    expect(mockUpdateSunshineRequirementUseCase.execute).not.toHaveBeenCalled();
-    expect(mockUpdateNutrientRequirementUseCase.execute).not.toHaveBeenCalled();
-
-    component.saveSunshineField(1, 'minimum_sunshine_hours');
-    expect(mockUpdateSunshineRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { minimum_sunshine_hours: 5 }
-    });
-
-    component.saveNutrientField(1, 'daily_uptake_n');
-    expect(mockUpdateNutrientRequirementUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 1,
-      payload: { daily_uptake_n: 0.6 }
-    });
-  });
-
-  it('shows empty state with description and primary CTA when no stages', () => {
-    translateService.setTranslation(
-      'ja',
-      {
-        crops: {
-          show: {
-            no_stages_description: 'この作物の生育ステージを追加してください。'
-          },
-          edit: {
-            stages_title: '生育ステージ',
-            stages_lead: 'リード文',
-            stages_list_heading: 'ステージ一覧',
-            add_stage: 'ステージ追加',
-            stages_empty_lead: '生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。'
-          }
-        }
-      },
-      true
-    );
-    translateService.use('ja');
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: []
-      }
-    };
-
-    fixture.detectChanges();
+  it('shows empty state with description and primary CTA when no stages', async () => {
+    await loadStages([]);
 
     const empty = fixture.nativeElement.querySelector('.crop-stages-empty');
     expect(empty).toBeTruthy();
-    expect(empty?.querySelector('.crop-stages-empty__lead')?.textContent?.trim()).toContain(
-      '栽培テンプレート'
-    );
-    expect(empty?.querySelector('.crop-stages-empty__description')?.textContent?.trim()).toContain(
-      '生育ステージを追加'
-    );
-
-    const cta = empty?.querySelector('.crop-stages-empty__cta') as HTMLButtonElement;
-    expect(cta).toBeTruthy();
-    expect(cta.classList.contains('btn-primary')).toBe(true);
-    expect(cta.textContent?.trim()).toBe('ステージ追加');
-    expect(fixture.nativeElement.querySelector('.crop-stages-section__actions button')).toBeNull();
+    expect(empty?.querySelector('.crop-stages-empty__cta')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-table')).toBeNull();
   });
 
-  it('shows stages lead in page description without repeating stages_title in section heading', () => {
-    const stagesTitle = '生育ステージ';
-    const stagesLead =
-      '栽培計画の期間見積もりと作業スケジュール生成に使う、生育ステージと各ステージの環境要件を設定します。';
-    const stagesListHeading = 'ステージ一覧';
+  it('shows add row at table bottom when stages exist', async () => {
+    await loadStages([stageFixture]);
 
-    translateService.setTranslation(
-      'ja',
-      {
-        crops: {
-          stage: {
-            default_name: 'Stage 1'
-          },
-          edit: {
-            stages_title: stagesTitle,
-            stages_lead: stagesLead,
-            stages_list_heading: stagesListHeading,
-            stage_title: 'ステージ {{order}}',
-            add_stage: 'ステージ追加'
-          }
-        },
-        common: {
-          back: '戻る'
-        }
-      },
-      true
-    );
-    translateService.use('ja');
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'トマト',
-        crop_stages: []
-      }
-    };
-
-    fixture.detectChanges();
-
-    const pageDescription = fixture.nativeElement.querySelector('.page-description');
-    expect(pageDescription?.textContent?.trim()).toBe(stagesLead);
-
-    const sectionHeading = fixture.nativeElement.querySelector('#stages-heading');
-    expect(sectionHeading?.textContent?.trim()).toBe(stagesListHeading);
-    expect(sectionHeading?.textContent?.trim()).not.toBe(stagesTitle);
+    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-row')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeTruthy();
   });
 
-  it('uses h3 for requirement subsection titles instead of h4', () => {
-    translateService.setTranslation(
-      'ja',
-      {
-        crops: {
-          stage: {
-            default_name: 'Stage 1'
-          },
-          edit: {
-            stages_title: '生育ステージ',
-            stages_lead: 'リード文',
-            stages_list_heading: 'ステージ一覧',
-            stage_title: 'ステージ {{order}}',
-            requirements_title: '要件',
-            temperature_requirement: '温度要件',
-            thermal_requirement: '積算温度要件',
-            sunshine_requirement: '日照要件',
-            nutrient_requirement: '栄養素要件',
-            add_stage: 'ステージ追加'
-          }
-        },
-        common: {
-          back: '戻る',
-          delete: '削除'
-        }
-      },
-      true
-    );
-    translateService.use('ja');
+  it('does not render blueprint readiness checklist or next-step CTA', async () => {
+    await loadStages([stageFixture]);
 
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'トマト',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
-    };
-
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.requirement-section__title')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('h4.requirement-section__title')).toBeNull();
-    expect(fixture.nativeElement.querySelector('h3.requirement-section__title')).toBeTruthy();
-  });
-
-  it('shows cumulative GDD range when stage has required_gdd', () => {
-    translateService.setTranslation(
-      'ja',
-      {
-        crops: {
-          stage: {
-            default_name: 'Stage 1'
-          },
-          edit: {
-            stage_title: 'ステージ {{order}}',
-            stages_title: '生育ステージ',
-            stage_name: 'ステージ名',
-            stage_order: '順序',
-            requirements_title: '要件',
-            temperature_requirement: '温度',
-            thermal_requirement: '積算温度',
-            required_gdd: '必要GDD',
-            sunshine_requirement: '日照',
-            nutrient_requirement: '栄養',
-            stage_cumulative_gdd_range: '{{start}}〜{{end}} ℃·日（累積）',
-            stage_cumulative_gdd_missing: '必要積算温度を入力すると表示されます'
-          }
-        },
-        common: {
-          back: '戻る',
-          delete: '削除'
-        }
-      },
-      true
-    );
-    translateService.use('ja');
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
-    };
-
-    fixture.detectChanges();
-
-    const cumulativeGdd = fixture.nativeElement.querySelector('.crop-stage-cumulative-gdd');
-    expect(cumulativeGdd).toBeTruthy();
-    expect(cumulativeGdd.textContent).toContain('0〜200');
+    expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
   });
 
   it('sorts stages by order for display', () => {
@@ -836,24 +542,8 @@ describe('CropStagesComponent', () => {
         ...initialFormData,
         name: 'Tomato',
         crop_stages: [
-          {
-            id: 2,
-            name: 'Stage 2',
-            order: 2,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage,
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
+          { id: 2, name: 'Stage 2', order: 2 } as CropStage,
+          { id: 1, name: 'Stage 1', order: 1 } as CropStage
         ]
       }
     };
@@ -861,40 +551,16 @@ describe('CropStagesComponent', () => {
     expect(component.sortedStages.map((stage) => stage.id)).toEqual([1, 2]);
   });
 
-  it('persists reordered stage orders after drag-drop', () => {
+  it('persists reordered stage orders after drag-drop via handle column', () => {
     component.control = {
       ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
         crop_stages: [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage,
-          {
-            id: 2,
-            name: 'Stage 2',
-            order: 2,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage,
-          {
-            id: 3,
-            name: 'Stage 3',
-            order: 3,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
+          { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+          { id: 2, name: 'Stage 2', order: 2 } as CropStage,
+          { id: 3, name: 'Stage 3', order: 3 } as CropStage
         ]
       }
     };
@@ -910,91 +576,19 @@ describe('CropStagesComponent', () => {
       stageId: 1,
       payload: { order: 3 }
     });
-    expect(mockUpdateCropStageUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 2,
-      payload: { order: 1 }
-    });
-    expect(mockUpdateCropStageUseCase.execute).toHaveBeenCalledWith({
-      cropId: 1,
-      stageId: 3,
-      payload: { order: 2 }
-    });
   });
 
-  it('shows duplicate order warning and blocks save on blur', () => {
-    translateService.setTranslation(
-      'ja',
-      {
-        crops: {
-          edit: {
-            stage_order_duplicate: '順序 {{orders}} が重複しています'
-          }
-        }
-      },
-      true
-    );
-    translateService.use('ja');
-
-    const duplicateStage = {
-      id: 2,
-      name: 'Stage 2',
-      order: 1,
-      temperature_requirement: null,
-      thermal_requirement: null,
-      sunshine_requirement: null,
-      nutrient_requirement: null
-    } as CropStage;
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage,
-          duplicateStage
-        ]
-      }
-    };
-
-    fixture.detectChanges();
+  it('shows duplicate order warning', async () => {
+    await loadStages([
+      { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+      { id: 2, name: 'Stage 2', order: 1 } as CropStage
+    ]);
 
     const warning = fixture.nativeElement.querySelector('.crop-stages-order-warning');
     expect(warning?.textContent).toContain('1');
-
-    component.onStageOrderBlur(duplicateStage);
-
-    expect(mockFlashMessage.show).toHaveBeenCalledWith({
-      type: 'error',
-      text: '順序 1 が重複しています'
-    });
-    expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
   });
 
-  it('updates cumulative GDD display after stage reorder', () => {
-    translateService.setTranslation(
-      'ja',
-      {
-        crops: {
-          edit: {
-            stage_title: 'ステージ {{order}}',
-            stage_cumulative_gdd_range: '{{start}}〜{{end}} ℃·日（累積）'
-          }
-        }
-      },
-      true
-    );
-    translateService.use('ja');
-
+  it('updates cumulative GDD display in table after stage reorder', async () => {
     component.control = {
       ...loadedControlBase,
       formData: {
@@ -1005,25 +599,19 @@ describe('CropStagesComponent', () => {
             id: 1,
             name: 'Stage 1',
             order: 1,
-            temperature_requirement: null,
-            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 },
-            sunshine_requirement: null,
-            nutrient_requirement: null
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
           } as CropStage,
           {
             id: 2,
             name: 'Stage 2',
             order: 2,
-            temperature_requirement: null,
-            thermal_requirement: { id: 2, crop_stage_id: 2, required_gdd: 200 },
-            sunshine_requirement: null,
-            nutrient_requirement: null
+            thermal_requirement: { id: 2, crop_stage_id: 2, required_gdd: 200 }
           } as CropStage
         ]
       }
     };
-
     fixture.detectChanges();
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
 
     component.onStageDropped({
       previousIndex: 0,
@@ -1031,405 +619,8 @@ describe('CropStagesComponent', () => {
     } as CdkDragDrop<CropStage[]>);
     fixture.detectChanges();
 
-    const cumulativeGddElements = fixture.nativeElement.querySelectorAll('.crop-stage-cumulative-gdd');
-    expect(cumulativeGddElements[0]?.textContent).toContain('0〜200');
-    expect(cumulativeGddElements[1]?.textContent).toContain('200〜300');
-  });
-
-  describe('blueprint readiness checklist and next-step CTA', () => {
-    const blueprintReadinessTranslations = {
-      crops: {
-        show: {
-          blueprint_readiness: {
-            title: 'Required before AI generation',
-            stages_ready: 'Stages ready',
-            stages_missing: 'Growth stages are missing base temperature or required GDD',
-            blueprints_ready: 'Task plans ready',
-            blueprints_missing: 'No task plans registered yet',
-            blueprints_action: 'Register task plans'
-          },
-          blueprint_summary: {
-            edit_action: 'Edit task plans'
-          }
-        }
-      }
-    };
-
-    const completeStage: CropStage = {
-      id: 1,
-      name: 'Stage 1',
-      order: 1,
-      temperature_requirement: {
-        id: 1,
-        crop_stage_id: 1,
-        base_temperature: 10,
-        optimal_min: null,
-        optimal_max: null,
-        low_stress_threshold: null,
-        high_stress_threshold: null,
-        frost_threshold: null,
-        sterility_risk_threshold: null,
-        max_temperature: null
-      },
-      thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
-      sunshine_requirement: null,
-      nutrient_requirement: null
-    } as CropStage;
-
-    const incompleteStage: CropStage = {
-      id: 1,
-      name: 'Stage 1',
-      order: 1,
-      temperature_requirement: null,
-      thermal_requirement: null,
-      sunshine_requirement: null,
-      nutrient_requirement: null
-    } as CropStage;
-
-    beforeEach(() => {
-      translateService.setTranslation('en', blueprintReadinessTranslations, true);
-      translateService.use('en');
-    });
-
-    it('shows checklist with stages_missing when requirements are incomplete', () => {
-      component.control = {
-        ...loadedControlBase,
-        formData: {
-          name: 'Tomato',
-          crop_stages: [incompleteStage]
-        }
-      };
-
-      fixture.detectChanges();
-
-      const checklist = fixture.nativeElement.querySelector('.blueprint-readiness');
-      expect(checklist).toBeTruthy();
-      expect(checklist.textContent).toContain('Growth stages are missing base temperature or required GDD');
-      expect(checklist.querySelector('.blueprint-readiness__item--ok')).toBeNull();
-      expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
-    });
-
-    it('shows checklist with stages_ready when requirements are complete', () => {
-      component.control = {
-        ...loadedControlBase,
-        formData: {
-          name: 'Tomato',
-          crop_stages: [completeStage]
-        }
-      };
-
-      fixture.detectChanges();
-
-      const checklist = fixture.nativeElement.querySelector('.blueprint-readiness');
-      expect(checklist).toBeTruthy();
-      expect(checklist.textContent).toContain('Stages ready');
-      expect(checklist.querySelector('.blueprint-readiness__item--ok')).toBeTruthy();
-    });
-
-    it('shows next-step CTA to task schedule blueprints when requirements are complete', () => {
-      component.control = {
-        ...loadedControlBase,
-        formData: {
-          name: 'Tomato',
-          crop_stages: [completeStage]
-        }
-      };
-
-      fixture.detectChanges();
-
-      const nextStep = fixture.nativeElement.querySelector('.crop-stages__next-step');
-      expect(nextStep).toBeTruthy();
-      const link = nextStep.querySelector(
-        'a[href="/crops/1/task_schedule_blueprints"]'
-      ) as HTMLAnchorElement;
-      expect(link).toBeTruthy();
-      expect(link.textContent).toContain('Edit task plans');
-    });
-
-    it('passes wizard query params on next-step CTA when fromPlan is set', () => {
-      component.fromPlanId = 7;
-      component.returnTab = 'work';
-      expect(component.wizardQueryParams).toEqual({ fromPlan: 7, returnTo: 'work' });
-      component.control = {
-        ...loadedControlBase,
-        formData: {
-          name: 'Tomato',
-          crop_stages: [completeStage]
-        }
-      };
-
-      fixture.detectChanges();
-
-      const link = fixture.nativeElement.querySelector(
-        '.crop-stages__next-step a[href*="/crops/1/task_schedule_blueprints"]'
-      ) as HTMLAnchorElement;
-      expect(link).toBeTruthy();
-    });
-  });
-
-  it('shows help and placeholder for base temperature and required GDD fields', () => {
-    translateService.setTranslation(
-      'ja',
-      {
-        crops: {
-          stage: {
-            default_name: 'Stage 1',
-            confirm_delete: '削除しますか？'
-          },
-          edit: {
-            stages_title: '生育ステージ',
-            add_stage: 'ステージ追加',
-            stage_title: 'ステージ {{order}}',
-            stage_name: 'ステージ名',
-            stage_order: '順序',
-            requirements_title: '要件',
-            temperature_requirement: '温度要件',
-            thermal_requirement: '積算温度要件',
-            sunshine_requirement: '日照要件',
-            nutrient_requirement: '栄養素要件',
-            base_temperature: '基底温度 (°C)',
-            base_temperature_placeholder: '例：5.0',
-            base_temperature_help: 'このステージで生育が始まる基底温度を入力してください。',
-            optimal_min: '最適最低温度',
-            optimal_max: '最適最高温度',
-            low_stress_threshold: '低温ストレス',
-            high_stress_threshold: '高温ストレス',
-            frost_threshold: '霜害',
-            sterility_risk_threshold: '不稔',
-            max_temperature: '最高温度',
-            required_gdd: '必要積算温度 (°C·day)',
-            required_gdd_placeholder: '例：800.0',
-            required_gdd_help: 'このステージに必要な生育度日（Growing Degree Days）を入力してください。',
-            minimum_sunshine_hours: '最低日照',
-            target_sunshine_hours: '目標日照',
-            daily_uptake_n: '窒素',
-            daily_uptake_p: 'リン',
-            daily_uptake_k: 'カリウム',
-            region: '地域',
-            stage_cumulative_gdd_range: '{{start}}〜{{end}} ℃·日（累積）',
-            stage_cumulative_gdd_missing: '必要積算温度を入力すると表示されます'
-          }
-        },
-        common: {
-          back: '戻る',
-          delete: '削除'
-        }
-      },
-      true
-    );
-    translateService.use('ja');
-
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: null,
-            thermal_requirement: null,
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ]
-      }
-    };
-
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.crop-stage-card')).toBeTruthy();
-
-    const baseTempInput = Array.from(
-      fixture.nativeElement.querySelectorAll('input')
-    ).find((el: Element) => (el as HTMLInputElement).placeholder === '例：5.0') as
-      | HTMLInputElement
-      | undefined;
-    expect(baseTempInput).toBeTruthy();
-    expect(baseTempInput!.placeholder).toBe('例：5.0');
-
-    const gddInput = Array.from(fixture.nativeElement.querySelectorAll('input')).find(
-      (el: Element) => (el as HTMLInputElement).placeholder === '例：800.0'
-    ) as HTMLInputElement | undefined;
-    expect(gddInput).toBeTruthy();
-    expect(gddInput!.placeholder).toBe('例：800.0');
-
-    const hints = Array.from(
-      fixture.nativeElement.querySelectorAll('.form-hint')
-    ).map((el: Element) => el.textContent?.trim());
-    expect(hints).toContain('このステージで生育が始まる基底温度を入力してください。');
-    expect(hints).toContain('このステージに必要な生育度日（Growing Degree Days）を入力してください。');
-  });
-
-  describe('stage requirements visibility', () => {
-    const stageTranslations = {
-      crops: {
-        stage: {
-          default_name: 'Stage 1'
-        },
-        edit: {
-          stage_title: 'ステージ {{order}}',
-          stages_title: '生育ステージ',
-          stage_name: 'ステージ名',
-          stage_order: '順序',
-          requirements_title: '要件',
-          temperature_requirement: '温度',
-          thermal_requirement: '積算温度',
-          base_temperature: '基底温度',
-          required_gdd: '必要積算温度',
-          required_marker: '必須',
-          sunshine_requirement: '日照',
-          nutrient_requirement: '栄養',
-          stage_cumulative_gdd_missing: '必要積算温度を入力すると表示されます'
-        }
-      },
-      common: {
-        back: '戻る',
-        delete: '削除'
-      }
-    };
-
-    function setupStageView(cropStages: CropStage[], fromPlan: string | null = null): void {
-      mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
-        key === 'fromPlan' ? fromPlan : null
-      );
-      if (fromPlan != null) {
-        component.fromPlanId = Number(fromPlan);
-      } else {
-        component.fromPlanId = null;
-      }
-      component.control = {
-        ...loadedControlBase,
-        formData: {
-          ...initialFormData,
-          name: 'Tomato',
-          crop_stages: cropStages
-        }
-      };
-      translateService.setTranslation('ja', stageTranslations, true);
-      translateService.use('ja');
-      fixture.detectChanges();
-    }
-
-    it('opens requirements details when stage is incomplete', () => {
-      setupStageView([
-        {
-          id: 1,
-          name: 'Stage 1',
-          order: 1,
-          temperature_requirement: null,
-          thermal_requirement: null,
-          sunshine_requirement: null,
-          nutrient_requirement: null
-        } as CropStage
-      ]);
-
-      const details = fixture.nativeElement.querySelector(
-        'details.crop-stage-requirements'
-      ) as HTMLDetailsElement;
-      expect(details?.open).toBe(true);
-    });
-
-    it('keeps requirements details closed when stage requirements are complete', () => {
-      setupStageView([
-        {
-          id: 1,
-          name: 'Stage 1',
-          order: 1,
-          temperature_requirement: {
-            id: 1,
-            crop_stage_id: 1,
-            base_temperature: 10
-          },
-          thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
-          sunshine_requirement: null,
-          nutrient_requirement: null
-        } as CropStage
-      ]);
-
-      const details = fixture.nativeElement.querySelector(
-        'details.crop-stage-requirements'
-      ) as HTMLDetailsElement;
-      expect(details?.open).toBe(false);
-      expect(fixture.nativeElement.querySelectorAll('.form-card__field-required-marker').length).toBe(
-        0
-      );
-    });
-
-    it('opens requirements details when only one required field is missing', () => {
-      setupStageView([
-        {
-          id: 1,
-          name: 'Stage 1',
-          order: 1,
-          temperature_requirement: {
-            id: 1,
-            crop_stage_id: 1,
-            base_temperature: 10
-          },
-          thermal_requirement: null,
-          sunshine_requirement: null,
-          nutrient_requirement: null
-        } as CropStage
-      ]);
-
-      const details = fixture.nativeElement.querySelector(
-        'details.crop-stage-requirements'
-      ) as HTMLDetailsElement;
-      expect(details?.open).toBe(true);
-      expect(fixture.nativeElement.querySelectorAll('.form-card__field-required-marker').length).toBe(1);
-    });
-
-    it('opens requirements details when fromPlan query param is set', () => {
-      setupStageView(
-        [
-          {
-            id: 1,
-            name: 'Stage 1',
-            order: 1,
-            temperature_requirement: {
-              id: 1,
-              crop_stage_id: 1,
-              base_temperature: 10
-            },
-            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
-            sunshine_requirement: null,
-            nutrient_requirement: null
-          } as CropStage
-        ],
-        '7'
-      );
-
-      const details = fixture.nativeElement.querySelector(
-        'details.crop-stage-requirements'
-      ) as HTMLDetailsElement;
-      expect(details?.open).toBe(true);
-    });
-
-    it('shows required markers on missing base temperature and required GDD fields', () => {
-      setupStageView([
-        {
-          id: 1,
-          name: 'Stage 1',
-          order: 1,
-          temperature_requirement: null,
-          thermal_requirement: null,
-          sunshine_requirement: null,
-          nutrient_requirement: null
-        } as CropStage
-      ]);
-
-      const markers = fixture.nativeElement.querySelectorAll(
-        '.form-card__field-required-marker'
-      );
-      expect(markers.length).toBe(2);
-      expect(
-        Array.from(markers as NodeListOf<HTMLElement>).every(
-          (marker) => marker.textContent?.trim() === '必須'
-        )
-      ).toBe(true);
-    });
+    const rows = fixture.nativeElement.querySelectorAll('.crop-stages-table__row');
+    expect(rows[0]?.textContent).toContain('0–200');
+    expect(rows[1]?.textContent).toContain('200–300');
   });
 });

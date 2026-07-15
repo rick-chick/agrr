@@ -168,7 +168,7 @@ export class CropStagesPresenter implements
       ...this.view.control,
       formData: { ...this.view.control.formData, crop_stages: updatedStages },
       pendingErrorFlash: null,
-      pendingSuccessFlash: null
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.temperature_requirement_updated')
     });
   }
 
@@ -184,7 +184,7 @@ export class CropStagesPresenter implements
       ...this.view.control,
       formData: { ...this.view.control.formData, crop_stages: updatedStages },
       pendingErrorFlash: null,
-      pendingSuccessFlash: null
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.thermal_requirement_updated')
     });
   }
 
@@ -200,7 +200,7 @@ export class CropStagesPresenter implements
       ...this.view.control,
       formData: { ...this.view.control.formData, crop_stages: updatedStages },
       pendingErrorFlash: null,
-      pendingSuccessFlash: null
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.sunshine_requirement_updated')
     });
   }
 
@@ -216,7 +216,7 @@ export class CropStagesPresenter implements
       ...this.view.control,
       formData: { ...this.view.control.formData, crop_stages: updatedStages },
       pendingErrorFlash: null,
-      pendingSuccessFlash: null
+      pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.nutrient_requirement_updated')
     });
   }
 }

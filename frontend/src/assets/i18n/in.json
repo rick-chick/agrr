@@ -358,7 +358,19 @@
       "base_temperature_placeholder": "उदा., 5.0",
       "base_temperature_help": "इस चरण में वृद्धि शुरू होने वाला न्यूनतम आधार तापमान दर्ज करें।",
       "required_gdd_placeholder": "उदा., 800.0",
-      "required_gdd_help": "इस चरण के लिए आवश्यक बढ़ते डिग्री दिन (Growing Degree Days) दर्ज करें।"
+      "required_gdd_help": "इस चरण के लिए आवश्यक बढ़ते डिग्री दिन (Growing Degree Days) दर्ज करें।",
+      "save_stage": "सहेजें",
+      "edit_temperature_details": "तापमान विवरण संपादित करें…",
+      "edit_sunshine_nutrient": "धूप और पोषक तत्व संपादित करें…",
+      "temperature_details_title": "तापमान विवरण",
+      "advanced_details_title": "धूप और पोषक तत्व विवरण",
+      "unsaved_confirm_message": "आपके पास बिना सहेजे परिवर्तन हैं। चरण बदलने पर वे हट जाएंगे। जारी रखें?",
+      "table_order": "क्रम",
+      "table_stage_name": "चरण का नाम",
+      "table_base_temperature": "आधार तापमान",
+      "table_required_gdd": "आवश्यक GDD",
+      "table_cumulative_gdd": "संचयी GDD",
+      "value_missing": "—"
     },
     "show": {
       "name": "नाम",
