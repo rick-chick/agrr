@@ -45,6 +45,7 @@ describe('PlanWorkContextNavComponent', () => {
 
     const nav = fixture.nativeElement.querySelector('.plan-context-nav');
     expect(nav?.getAttribute('role')).toBe('navigation');
+    expect(nav?.getAttribute('aria-label')).toBe('作業記録ナビゲーション');
 
     const links = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
     expect(links.length).toBe(4);
