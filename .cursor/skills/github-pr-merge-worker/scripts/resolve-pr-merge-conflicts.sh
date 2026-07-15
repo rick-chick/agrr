@@ -20,14 +20,15 @@ fi
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 NEEDS_SYNC_LIB="$REPO_ROOT/scripts/pr-merge-worker-needs-sync.mjs"
 
-PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefName,mergeable,mergeStateStatus,headRepositoryOwner,baseRepositoryOwner)
+PR_JSON=$(gh pr view "$PR_NUMBER" --json headRefName,mergeable,mergeStateStatus,isCrossRepository,headRepositoryOwner)
 HEAD_REF=$(echo "$PR_JSON" | jq -r '.headRefName')
 MERGEABLE=$(echo "$PR_JSON" | jq -r '.mergeable')
 MERGE_STATE=$(echo "$PR_JSON" | jq -r '.mergeStateStatus')
+IS_CROSS_REPO=$(echo "$PR_JSON" | jq -r '.isCrossRepository')
 HEAD_OWNER=$(echo "$PR_JSON" | jq -r '.headRepositoryOwner.login')
-BASE_OWNER=$(echo "$PR_JSON" | jq -r '.baseRepositoryOwner.login')
+BASE_OWNER=$(gh repo view --json owner -q .owner.login)
 
-if [ "$HEAD_OWNER" != "$BASE_OWNER" ]; then
+if [ "$IS_CROSS_REPO" = "true" ] || [ "$HEAD_OWNER" != "$BASE_OWNER" ]; then
   echo "fork PR is not supported" >&2
   exit 1
 fi

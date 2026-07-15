@@ -15,11 +15,14 @@ import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-t
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
 import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
+import { FlashMessageService } from '../../../services/flash-message.service';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 const initialFormData = {
   name: '',
   crop_stages: [] as CropStage[]
 };
+
 
 const loadedControlBase = {
   loading: false,
@@ -46,6 +49,7 @@ describe('CropStagesComponent', () => {
   let mockUpdateThermalRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateSunshineRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateNutrientRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockFlashMessage: { show: ReturnType<typeof vi.fn> };
   let translateService: TranslateService;
 
   beforeEach(async () => {
@@ -68,6 +72,7 @@ describe('CropStagesComponent', () => {
     mockUpdateThermalRequirementUseCase = { execute: vi.fn() };
     mockUpdateSunshineRequirementUseCase = { execute: vi.fn() };
     mockUpdateNutrientRequirementUseCase = { execute: vi.fn() };
+    mockFlashMessage = { show: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [
@@ -86,7 +91,8 @@ describe('CropStagesComponent', () => {
         { provide: UpdateTemperatureRequirementUseCase, useValue: mockUpdateTemperatureRequirementUseCase },
         { provide: UpdateThermalRequirementUseCase, useValue: mockUpdateThermalRequirementUseCase },
         { provide: UpdateSunshineRequirementUseCase, useValue: mockUpdateSunshineRequirementUseCase },
-        { provide: UpdateNutrientRequirementUseCase, useValue: mockUpdateNutrientRequirementUseCase }
+        { provide: UpdateNutrientRequirementUseCase, useValue: mockUpdateNutrientRequirementUseCase },
+        { provide: FlashMessageService, useValue: mockFlashMessage }
       ]
     }).compileComponents();
 
@@ -300,6 +306,270 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
+  const stageWithRequirements: CropStage = {
+    id: 1,
+    name: 'Stage 1',
+    order: 1,
+    temperature_requirement: {
+      id: 1,
+      crop_stage_id: 1,
+      base_temperature: 10,
+      optimal_min: null,
+      optimal_max: null,
+      low_stress_threshold: null,
+      high_stress_threshold: null,
+      frost_threshold: null,
+      sterility_risk_threshold: null,
+      max_temperature: null
+    },
+    thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 },
+    sunshine_requirement: null,
+    nutrient_requirement: null
+  } as CropStage;
+
+  const loadedControl = {
+    ...loadedControlBase,
+    formData: {
+      ...initialFormData,
+      name: 'Tomato',
+      crop_stages: [stageWithRequirements]
+    }
+  };
+
+  it('does not save requirement fields on ngModelChange while typing', () => {
+    component.control = loadedControl;
+    fixture.detectChanges();
+
+    component.onTemperatureFieldDraft(1, 'base_temperature', 12);
+    component.onThermalFieldDraft(1, 'required_gdd', 120);
+
+    expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateThermalRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(component.control.formData.crop_stages[0].temperature_requirement?.base_temperature).toBe(12);
+    expect(component.control.formData.crop_stages[0].thermal_requirement?.required_gdd).toBe(120);
+  });
+
+  it('saves requirement fields on blur after draft edits', () => {
+    component.control = loadedControl;
+    fixture.detectChanges();
+
+    component.onTemperatureFieldDraft(1, 'base_temperature', 15);
+    component.saveTemperatureField(1, 'base_temperature');
+    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { base_temperature: 15 }
+    });
+
+    component.onThermalFieldDraft(1, 'required_gdd', 150);
+    component.saveThermalField(1, 'required_gdd');
+    expect(mockUpdateThermalRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { required_gdd: 150 }
+    });
+  });
+
+  it('saves sunshine and nutrient requirement fields on blur after draft edits', () => {
+    const stageWithSunshineNutrient: CropStage = {
+      ...stageWithRequirements,
+      sunshine_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        minimum_sunshine_hours: 4,
+        target_sunshine_hours: 8
+      },
+      nutrient_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        daily_uptake_n: 0.5,
+        daily_uptake_p: 0.2,
+        daily_uptake_k: 0.3,
+        region: 'jp'
+      }
+    } as CropStage;
+
+    component.control = {
+      ...loadedControl,
+      formData: {
+        ...loadedControl.formData,
+        crop_stages: [stageWithSunshineNutrient]
+      }
+    };
+    fixture.detectChanges();
+
+    component.onSunshineFieldDraft(1, 'minimum_sunshine_hours', 5);
+    component.onNutrientFieldDraft(1, 'daily_uptake_n', 0.6);
+    expect(mockUpdateSunshineRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateNutrientRequirementUseCase.execute).not.toHaveBeenCalled();
+
+    component.saveSunshineField(1, 'minimum_sunshine_hours');
+    expect(mockUpdateSunshineRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { minimum_sunshine_hours: 5 }
+    });
+
+    component.saveNutrientField(1, 'daily_uptake_n');
+    expect(mockUpdateNutrientRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { daily_uptake_n: 0.6 }
+    });
+  });
+
+  it('shows empty state with description and primary CTA when no stages', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          show: {
+            no_stages_description: 'この作物の生育ステージを追加してください。'
+          },
+          edit: {
+            stages_title: '生育ステージ',
+            stages_lead: 'リード文',
+            stages_list_heading: 'ステージ一覧',
+            add_stage: 'ステージ追加',
+            stages_empty_lead: '生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。'
+          }
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: []
+      }
+    };
+
+    fixture.detectChanges();
+
+    const empty = fixture.nativeElement.querySelector('.crop-stages-empty');
+    expect(empty).toBeTruthy();
+    expect(empty?.querySelector('.crop-stages-empty__lead')?.textContent?.trim()).toContain(
+      '栽培テンプレート'
+    );
+    expect(empty?.querySelector('.crop-stages-empty__description')?.textContent?.trim()).toContain(
+      '生育ステージを追加'
+    );
+
+    const cta = empty?.querySelector('.crop-stages-empty__cta') as HTMLButtonElement;
+    expect(cta).toBeTruthy();
+    expect(cta.classList.contains('btn-primary')).toBe(true);
+    expect(cta.textContent?.trim()).toBe('ステージ追加');
+    expect(fixture.nativeElement.querySelector('.crop-stages-section__actions button')).toBeNull();
+  });
+
+  it('shows stages lead in page description without repeating stages_title in section heading', () => {
+    const stagesTitle = '生育ステージ';
+    const stagesLead =
+      '栽培計画の期間見積もりと作業スケジュール生成に使う、生育ステージと各ステージの環境要件を設定します。';
+    const stagesListHeading = 'ステージ一覧';
+
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage 1'
+          },
+          edit: {
+            stages_title: stagesTitle,
+            stages_lead: stagesLead,
+            stages_list_heading: stagesListHeading,
+            stage_title: 'ステージ {{order}}',
+            add_stage: 'ステージ追加'
+          }
+        },
+        common: {
+          back: '戻る'
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        ...initialFormData,
+        name: 'トマト',
+        crop_stages: []
+      }
+    };
+
+    fixture.detectChanges();
+
+    const pageDescription = fixture.nativeElement.querySelector('.page-description');
+    expect(pageDescription?.textContent?.trim()).toBe(stagesLead);
+
+    const sectionHeading = fixture.nativeElement.querySelector('#stages-heading');
+    expect(sectionHeading?.textContent?.trim()).toBe(stagesListHeading);
+    expect(sectionHeading?.textContent?.trim()).not.toBe(stagesTitle);
+  });
+
+  it('uses h3 for requirement subsection titles instead of h4', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage 1'
+          },
+          edit: {
+            stages_title: '生育ステージ',
+            stages_lead: 'リード文',
+            stages_list_heading: 'ステージ一覧',
+            stage_title: 'ステージ {{order}}',
+            requirements_title: '要件',
+            temperature_requirement: '温度要件',
+            thermal_requirement: '積算温度要件',
+            sunshine_requirement: '日照要件',
+            nutrient_requirement: '栄養素要件',
+            add_stage: 'ステージ追加'
+          }
+        },
+        common: {
+          back: '戻る',
+          delete: '削除'
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        ...initialFormData,
+        name: 'トマト',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.requirement-section__title')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('h4.requirement-section__title')).toBeNull();
+    expect(fixture.nativeElement.querySelector('h3.requirement-section__title')).toBeTruthy();
+  });
+
   it('shows cumulative GDD range when stage has required_gdd', () => {
     translateService.setTranslation(
       'ja',
@@ -358,6 +628,212 @@ describe('CropStagesComponent', () => {
     expect(cumulativeGdd.textContent).toContain('0〜200');
   });
 
+  it('sorts stages by order for display', () => {
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 2,
+            name: 'Stage 2',
+            order: 2,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage,
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    expect(component.sortedStages.map((stage) => stage.id)).toEqual([1, 2]);
+  });
+
+  it('persists reordered stage orders after drag-drop', () => {
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage,
+          {
+            id: 2,
+            name: 'Stage 2',
+            order: 2,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage,
+          {
+            id: 3,
+            name: 'Stage 3',
+            order: 3,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    component.onStageDropped({
+      previousIndex: 0,
+      currentIndex: 2
+    } as CdkDragDrop<CropStage[]>);
+
+    expect(component.control.formData.crop_stages.map((stage) => stage.order)).toEqual([1, 2, 3]);
+    expect(mockUpdateCropStageUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { order: 3 }
+    });
+    expect(mockUpdateCropStageUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 2,
+      payload: { order: 1 }
+    });
+    expect(mockUpdateCropStageUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 3,
+      payload: { order: 2 }
+    });
+  });
+
+  it('shows duplicate order warning and blocks save on blur', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          edit: {
+            stage_order_duplicate: '順序 {{orders}} が重複しています'
+          }
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    const duplicateStage = {
+      id: 2,
+      name: 'Stage 2',
+      order: 1,
+      temperature_requirement: null,
+      thermal_requirement: null,
+      sunshine_requirement: null,
+      nutrient_requirement: null
+    } as CropStage;
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage,
+          duplicateStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    const warning = fixture.nativeElement.querySelector('.crop-stages-order-warning');
+    expect(warning?.textContent).toContain('1');
+
+    component.onStageOrderBlur(duplicateStage);
+
+    expect(mockFlashMessage.show).toHaveBeenCalledWith({
+      type: 'error',
+      text: '順序 1 が重複しています'
+    });
+    expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('updates cumulative GDD display after stage reorder', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          edit: {
+            stage_title: 'ステージ {{order}}',
+            stage_cumulative_gdd_range: '{{start}}〜{{end}} ℃·日（累積）'
+          }
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 },
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage,
+          {
+            id: 2,
+            name: 'Stage 2',
+            order: 2,
+            temperature_requirement: null,
+            thermal_requirement: { id: 2, crop_stage_id: 2, required_gdd: 200 },
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    component.onStageDropped({
+      previousIndex: 0,
+      currentIndex: 1
+    } as CdkDragDrop<CropStage[]>);
+    fixture.detectChanges();
+
+    const cumulativeGddElements = fixture.nativeElement.querySelectorAll('.crop-stage-cumulative-gdd');
+    expect(cumulativeGddElements[0]?.textContent).toContain('0〜200');
+    expect(cumulativeGddElements[1]?.textContent).toContain('200〜300');
+  });
   describe('blueprint readiness checklist and next-step CTA', () => {
     const blueprintReadinessTranslations = {
       crops: {

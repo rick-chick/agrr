@@ -78,7 +78,7 @@ Cursor Automation が作成する **Draft PR** は [`.github/workflows/pr-agent-
 | master 同期（`BEHIND` / `DIRTY` / `CONFLICTING`） | **本 Worker**（`resolve-pr-merge-conflicts.sh`） |
 | マージ判定・squash | **本 Worker** |
 
-本 Worker は **ready 済み**かつオプトイン対象の PR のみ着手する（Draft は prep 待ち）。
+本 Worker は **ready 済み**かつオプトイン対象の PR のみ **マージ** する。**例外**: `action: conflict` / master sync（`BEHIND` / `DIRTY` / `CONFLICTING`）では **Draft でも着手**（コンフリクト解消のみ。マージはしない）。
 
 ## 0) 着手前（重複 run 抑止）
 
@@ -104,9 +104,9 @@ gh pr view <N> --json labels,state,headRefOid
 | head ブランチが `issue/<number>-*`（正規表現 `^issue/[0-9]+-`） | Issue Worker 標準ブランチ |
 | 本文に `Merge-Strategy: agent` | 明示オプトイン（1 行で可。§3a feature の「`agent-merge` 明示」と同義） |
 
-### 除外（着手しない）
+### 除外（着手しない — `action: conflict` / master sync を除く）
 
-- **Draft**
+- **Draft**（`mergeable` / `mergeStateStatus` が `CONFLICTING` / `DIRTY` / `BEHIND` のときは **除外しない** — §5.1 で解消のみ）
 - **Fork 由来**（Cursor は fork PR を実行できない — スキップして Memory に記録）
 - ラベル `agent-no-merge` / `do-not-merge` / `wip` / `agent-merge-blocked`
 - `changes requested` の未解消レビューがある
@@ -289,7 +289,7 @@ git merge origin/master
 1. **両方の意図が必要**（例: 片方が i18n キー追加、片方が別キー追加）→ **両方残す**（重複キーは統合）
 2. **PR 側が本修正・master が後追い** → PR の変更を軸に master の追加分を取り込む
 3. **master が正（参照削除・リネーム済み）** → master 側を採用し、PR の差分を新構造に当て直す
-4. **判断不能**（同一行の排他変更・仕様衝突）→ **ブロック**（人間判断）
+4. **判断不能**（同一行の排他変更・仕様衝突）→ Agent がルール 1–3 で解消する。**真に両立不能**（ARCHITECTURE P0 衝突など）のみ `agent-merge-blocked`（人間が Web UI でマーカーを手直しする前提にしない）
 
 **解消後**:
 
@@ -376,8 +376,20 @@ gh pr edit <N> --remove-label agent-merge-in-progress
 **Trigger（推奨）**
 
 1. **CI completed** — `rick-chick/agrr`
-2. **Webhook** — GitHub Actions（Backend test 完了 + PR opened / `agent-merge`）
+2. **Webhook** — GitHub Actions（Backend test 完了 + PR opened / `agent-merge` + **`action: conflict` / master sync** — Draft でもコンフリクト解消可）
 3. **Pull request opened** — 任意（CI 待ちの早期着手用。**Webhook と併用時は §0 で重複抑止**）
+
+**Automation プロンプト例**:
+
+```
+You are the AGRR GitHub PR Merge Worker for repository rick-chick/agrr.
+
+Read and follow `.cursor/skills/github-pr-merge-worker/SKILL.md` exactly.
+
+One PR per run. Never merge before required CI checks pass. For bugfixes, verify test coverage and run impact analysis before merging.
+
+When webhook action is `conflict` (master sync / BEHIND / DIRTY / CONFLICTING), resolve conflicts on the PR branch even if the PR is still Draft — do not merge in that run. Merge only non-draft PRs after CI is green.
+```
 
 **Tools**: Comment on PR（Approvals ON）、PR creation OFF、Memories ON
 

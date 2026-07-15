@@ -9,6 +9,7 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'does not need master sync',
   'exit 3',
   'fork PR is not supported',
+  'isCrossRepository',
   'git worktree add',
   'git worktree remove',
 ];

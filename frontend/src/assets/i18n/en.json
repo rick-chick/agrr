@@ -1967,7 +1967,14 @@
       "reference_only_admin": "Only administrators can create reference crops.",
       "reference_flag_admin_only": "Only administrators can change the reference flag.",
       "no_permission": "Permission denied.",
-      "not_found": "Crop not found."
+      "not_found": "Crop not found.",
+      "stage_created": "Growth stage was added.",
+      "stage_updated": "Growth stage was updated.",
+      "stage_deleted": "Growth stage was deleted.",
+      "temperature_requirement_updated": "Temperature requirement was updated.",
+      "thermal_requirement_updated": "Thermal requirement was updated.",
+      "sunshine_requirement_updated": "Sunshine requirement was updated.",
+      "nutrient_requirement_updated": "Nutrient requirement was updated."
     },
     "index": {
       "title": "Crops",
@@ -2005,10 +2012,14 @@
         "title": "{{count}} error(s):"
       },
       "stages_title": "Growth Stages",
+      "stages_lead": "Configure growth stages and environmental requirements used to estimate cultivation periods and generate work schedules in plans.",
+      "stages_list_heading": "Stage list",
+      "stages_empty_lead": "Growth stages are required to configure cultivation templates and task schedules.",
       "add_stage": "Add Stage",
       "stage_title": "Stage {{order}}",
       "stage_name": "Stage Name",
       "stage_order": "Order",
+      "stage_order_duplicate": "Duplicate order values: {{orders}}. Please assign unique order numbers.",
       "requirements_title": "Requirements",
       "temperature_requirement": "Temperature Requirements",
       "thermal_requirement": "Thermal Requirements",
