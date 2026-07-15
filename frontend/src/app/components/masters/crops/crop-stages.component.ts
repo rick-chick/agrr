@@ -576,21 +576,21 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
 
     const temp = stage.temperature_requirement;
-    const tempPayload: Record<string, unknown> = {};
-    if (this.stageEditDraft.base_temperature !== (temp?.base_temperature ?? null)) {
-      tempPayload['base_temperature'] = this.stageEditDraft.base_temperature;
+    const temperaturePatch: Record<string, number | null> = {};
+    const panelTemperatureFields = [
+      ['base_temperature', this.stageEditDraft.base_temperature],
+      ['optimal_min', this.stageEditDraft.optimal_min],
+      ['optimal_max', this.stageEditDraft.optimal_max],
+      ['max_temperature', this.stageEditDraft.max_temperature]
+    ] as const;
+    for (const [field, draftValue] of panelTemperatureFields) {
+      const currentValue = temp?.[field] ?? null;
+      if (draftValue !== currentValue) {
+        temperaturePatch[field] = draftValue;
+      }
     }
-    if (this.stageEditDraft.optimal_min !== (temp?.optimal_min ?? null)) {
-      tempPayload['optimal_min'] = this.stageEditDraft.optimal_min;
-    }
-    if (this.stageEditDraft.optimal_max !== (temp?.optimal_max ?? null)) {
-      tempPayload['optimal_max'] = this.stageEditDraft.optimal_max;
-    }
-    if (this.stageEditDraft.max_temperature !== (temp?.max_temperature ?? null)) {
-      tempPayload['max_temperature'] = this.stageEditDraft.max_temperature;
-    }
-    if (Object.keys(tempPayload).length > 0) {
-      this.updateTemperatureRequirement(stage.id, tempPayload);
+    if (Object.keys(temperaturePatch).length > 0) {
+      this.updateTemperatureRequirement(stage.id, temperaturePatch);
     }
 
     const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
@@ -822,11 +822,10 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       return false;
     }
     const temp = stage.temperature_requirement;
-    const currentBaseTemp = temp?.base_temperature ?? null;
     const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
     return (
       this.stageEditDraft.name !== stage.name ||
-      this.stageEditDraft.base_temperature !== currentBaseTemp ||
+      this.stageEditDraft.base_temperature !== (temp?.base_temperature ?? null) ||
       this.stageEditDraft.optimal_min !== (temp?.optimal_min ?? null) ||
       this.stageEditDraft.optimal_max !== (temp?.optimal_max ?? null) ||
       this.stageEditDraft.max_temperature !== (temp?.max_temperature ?? null) ||

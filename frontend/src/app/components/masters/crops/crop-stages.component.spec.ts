@@ -356,7 +356,7 @@ describe('CropStagesComponent', () => {
     expect(component.stageEditDraft.name).toBe('Stage 2');
   });
 
-  it('opens temperature dialog with stress thresholds only and saves on explicit save', async () => {
+  it('opens stress threshold dialog and saves only stress fields on explicit save', async () => {
     await loadStages([stageFixture]);
 
     component.openTemperatureDialog();
@@ -392,6 +392,14 @@ describe('CropStagesComponent', () => {
     expect(panel?.querySelector('input[name="panel_optimal_max"]')).toBeTruthy();
     expect(panel?.querySelector('input[name="panel_max_temperature"]')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Edit stress thresholds');
+  });
+
+  it('marks panel dirty when inline temperature fields change', async () => {
+    await loadStages([stageFixture]);
+
+    expect(component.isPanelDirty()).toBe(false);
+    component.stageEditDraft.optimal_min = 12;
+    expect(component.isPanelDirty()).toBe(true);
   });
 
   it('opens advanced dialog and saves sunshine, nutrient, and sterility fields', async () => {
