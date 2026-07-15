@@ -407,6 +407,7 @@
         "title": "{{count}}件のエラーがあります："
       },
       "stages_title": "生育ステージ",
+      "stages_empty_lead": "生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。",
       "add_stage": "ステージ追加",
       "stage_title": "ステージ {{order}}",
       "stage_name": "ステージ名",

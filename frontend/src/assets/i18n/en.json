@@ -2005,6 +2005,7 @@
         "title": "{{count}} error(s):"
       },
       "stages_title": "Growth Stages",
+      "stages_empty_lead": "Growth stages are required to configure cultivation templates and task schedules.",
       "add_stage": "Add Stage",
       "stage_title": "Stage {{order}}",
       "stage_name": "Stage Name",
