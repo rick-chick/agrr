@@ -370,6 +370,54 @@ describe('CropStagesComponent', () => {
     });
   });
 
+  it('saves sunshine and nutrient requirement fields on blur after draft edits', () => {
+    const stageWithSunshineNutrient: CropStage = {
+      ...stageWithRequirements,
+      sunshine_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        minimum_sunshine_hours: 4,
+        target_sunshine_hours: 8
+      },
+      nutrient_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        daily_uptake_n: 0.5,
+        daily_uptake_p: 0.2,
+        daily_uptake_k: 0.3,
+        region: 'jp'
+      }
+    } as CropStage;
+
+    component.control = {
+      ...loadedControl,
+      formData: {
+        ...loadedControl.formData,
+        crop_stages: [stageWithSunshineNutrient]
+      }
+    };
+    fixture.detectChanges();
+
+    component.onSunshineFieldDraft(1, 'minimum_sunshine_hours', 5);
+    component.onNutrientFieldDraft(1, 'daily_uptake_n', 0.6);
+    expect(mockUpdateSunshineRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateNutrientRequirementUseCase.execute).not.toHaveBeenCalled();
+
+    component.saveSunshineField(1, 'minimum_sunshine_hours');
+    expect(mockUpdateSunshineRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { minimum_sunshine_hours: 5 }
+    });
+
+    component.saveNutrientField(1, 'daily_uptake_n');
+    expect(mockUpdateNutrientRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { daily_uptake_n: 0.6 }
+    });
+  });
+
   it('shows cumulative GDD range when stage has required_gdd', () => {
     translateService.setTranslation(
       'ja',
