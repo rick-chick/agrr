@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -9,6 +9,7 @@ import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edi
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
 import { UpdateCropStageUseCase } from '../../../usecase/crops/update-crop-stage.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
+import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
@@ -41,6 +42,7 @@ import {
   sortStagesByOrder
 } from '../../../domain/crops/crop-stage-order';
 import type { CropStage } from '../../../domain/crops/crop';
+import { countLinkedTaskScheduleBlueprints } from '../../../domain/crops/stage-linked-blueprint-count';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
@@ -54,6 +56,7 @@ const initialControl: CropStagesViewState = {
   error: null,
   formData: initialFormData,
   blueprintReadiness: defaultBlueprintReadiness(),
+  taskScheduleBlueprints: [],
   pendingErrorFlash: null,
   pendingSuccessFlash: null
 };
@@ -187,17 +190,22 @@ const initialControl: CropStagesViewState = {
                     <div class="requirement-section">
                       <h3 class="requirement-section__title">{{ 'crops.edit.temperature_requirement' | translate }}</h3>
                       <div class="requirement-fields">
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">
-                            {{ 'crops.edit.base_temperature' | translate }}
-                            @if (isBaseTemperatureMissing(stage)) {
-                              <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
-                            }
-                          </span>
-                          <input type="number" step="0.1" name="temp_base_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.base_temperature ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'base_temperature', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'base_temperature')" />
-                        </label>
+                        <div class="form-card__field form-card__field--small">
+                          <label>
+                            <span class="form-card__field-label">
+                              {{ 'crops.edit.base_temperature' | translate }}
+                              @if (isBaseTemperatureMissing(stage)) {
+                                <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
+                              }
+                            </span>
+                            <input type="number" step="0.1" name="temp_base_{{ stage.id }}"
+                                   [placeholder]="'crops.edit.base_temperature_placeholder' | translate"
+                                   [ngModel]="stage.temperature_requirement?.base_temperature ?? null"
+                                   (ngModelChange)="onTemperatureFieldDraft(stage.id, 'base_temperature', $event)"
+                                   (blur)="saveTemperatureField(stage.id, 'base_temperature')" />
+                          </label>
+                          <p class="form-hint">{{ 'crops.edit.base_temperature_help' | translate }}</p>
+                        </div>
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
                           <input type="number" step="0.1" name="temp_opt_min_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.optimal_min ?? null"
@@ -246,17 +254,22 @@ const initialControl: CropStagesViewState = {
                     <div class="requirement-section">
                       <h3 class="requirement-section__title">{{ 'crops.edit.thermal_requirement' | translate }}</h3>
                       <div class="requirement-fields">
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">
-                            {{ 'crops.edit.required_gdd' | translate }}
-                            @if (isRequiredGddMissing(stage)) {
-                              <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
-                            }
-                          </span>
-                          <input type="number" step="0.1" name="thermal_gdd_{{ stage.id }}" [ngModel]="stage.thermal_requirement?.required_gdd ?? null"
-                                 (ngModelChange)="onThermalFieldDraft(stage.id, 'required_gdd', $event)"
-                                 (blur)="saveThermalField(stage.id, 'required_gdd')" />
-                        </label>
+                        <div class="form-card__field form-card__field--small">
+                          <label>
+                            <span class="form-card__field-label">
+                              {{ 'crops.edit.required_gdd' | translate }}
+                              @if (isRequiredGddMissing(stage)) {
+                                <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
+                              }
+                            </span>
+                            <input type="number" step="0.1" name="thermal_gdd_{{ stage.id }}"
+                                   [placeholder]="'crops.edit.required_gdd_placeholder' | translate"
+                                   [ngModel]="stage.thermal_requirement?.required_gdd ?? null"
+                                   (ngModelChange)="onThermalFieldDraft(stage.id, 'required_gdd', $event)"
+                                   (blur)="saveThermalField(stage.id, 'required_gdd')" />
+                          </label>
+                          <p class="form-hint">{{ 'crops.edit.required_gdd_help' | translate }}</p>
+                        </div>
                         <p class="crop-stage-cumulative-gdd" role="status">
                           @if (stageCumulativeGddRangeFor(stage); as range) {
                             @if (range.gddRangeMissing) {
@@ -331,12 +344,41 @@ const initialControl: CropStagesViewState = {
         </section>
       }
     </main>
+
+    <dialog
+      #deleteConfirmDialog
+      class="confirm-dialog crop-stages__delete-confirm"
+      (cancel)="cancelDeleteConfirmDialog($event)"
+      (click)="onDeleteConfirmDialogBackdropClick($event)"
+    >
+      @if (pendingDeleteStage) {
+        <p class="confirm-dialog__message">{{
+          'crops.stage.delete_confirm_message' | translate:{ stageName: pendingDeleteStage.name }
+        }}</p>
+        @if (pendingDeleteBlueprintCount > 0) {
+          <p class="confirm-dialog__warning" role="alert">{{
+            'crops.stage.delete_confirm_blueprint_warning' | translate:{ count: pendingDeleteBlueprintCount }
+          }}</p>
+        }
+        <div class="confirm-dialog__actions">
+          <button type="button" class="btn-secondary" (click)="cancelDeleteConfirmDialog()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button type="button" class="btn-danger" (click)="confirmDeleteCropStage()">
+            {{ 'common.delete' | translate }}
+          </button>
+        </div>
+      }
+    </dialog>
   `,
   styleUrls: ['./crop-stages.component.css']
 })
 export class CropStagesComponent implements CropStagesView, OnInit {
+  @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
+
   private readonly route = inject(ActivatedRoute);
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
+  private readonly loadBlueprintsUseCase = inject(LoadCropTaskScheduleBlueprintsUseCase);
   private readonly createCropStageUseCase = inject(CreateCropStageUseCase);
   private readonly updateCropStageUseCase = inject(UpdateCropStageUseCase);
   private readonly deleteCropStageUseCase = inject(DeleteCropStageUseCase);
@@ -364,6 +406,17 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   fromPlanId: number | null = null;
   returnTab: PlanWizardReturnTab = 'task_schedule';
+  pendingDeleteStage: CropStage | null = null;
+
+  get pendingDeleteBlueprintCount(): number {
+    if (!this.pendingDeleteStage) {
+      return 0;
+    }
+    return countLinkedTaskScheduleBlueprints(
+      this.pendingDeleteStage.order,
+      this.control.taskScheduleBlueprints
+    );
+  }
 
   get planReturnPath(): (string | number)[] {
     return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
@@ -404,6 +457,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       return;
     }
     this.loadUseCase.execute({ cropId: this.cropId });
+    this.loadBlueprintsUseCase.execute({ cropId: this.cropId });
   }
 
   addCropStage(): void {
@@ -427,11 +481,36 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   deleteCropStage(stageId: number): void {
-    if (confirm(this.translate.instant('crops.stage.confirm_delete'))) {
-      this.deleteCropStageUseCase.execute({
-        cropId: this.cropId,
-        stageId
-      });
+    const stage = this.control.formData.crop_stages.find((item) => item.id === stageId);
+    if (!stage) {
+      return;
+    }
+    this.pendingDeleteStage = stage;
+    this.deleteConfirmDialogRef?.nativeElement?.showModal();
+  }
+
+  confirmDeleteCropStage(): void {
+    if (!this.pendingDeleteStage) {
+      return;
+    }
+    const stageId = this.pendingDeleteStage.id;
+    this.pendingDeleteStage = null;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+    this.deleteCropStageUseCase.execute({
+      cropId: this.cropId,
+      stageId
+    });
+  }
+
+  cancelDeleteConfirmDialog(event?: Event): void {
+    event?.preventDefault();
+    this.pendingDeleteStage = null;
+    this.deleteConfirmDialogRef?.nativeElement?.close();
+  }
+
+  onDeleteConfirmDialogBackdropClick(event: MouseEvent): void {
+    if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
+      this.cancelDeleteConfirmDialog();
     }
   }
 

@@ -44,7 +44,8 @@ const CROP_EDIT_CATALOG_KEYS = [
   'crops.edit.region',
   'crops.errors.invalid_id',
   'crops.stage.default_name',
-  'crops.stage.confirm_delete'
+  'crops.stage.delete_confirm_message',
+  'crops.stage.delete_confirm_blueprint_warning'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [

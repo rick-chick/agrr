@@ -23,9 +23,9 @@ export function withCropStagesDisplayState(
         name: control.formData.name,
         is_reference: false,
         groups: [],
-        crop_stages: control.formData.crop_stages
+        crop_stages:       control.formData.crop_stages
       },
-      []
+      control.taskScheduleBlueprints
     )
   };
 }

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { CropStagesPresenter } from './crop-stages.presenter';
 import { CropStagesView, CropStagesViewState } from '../../components/masters/crops/crop-stages.view';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
+import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { CreateCropStageOutputDto } from '../../usecase/crops/create-crop-stage.dtos';
 import { UpdateCropStageOutputDto } from '../../usecase/crops/update-crop-stage.dtos';
 import { DeleteCropStageOutputDto } from '../../usecase/crops/delete-crop-stage.dtos';
@@ -30,6 +31,7 @@ describe('CropStagesPresenter', () => {
     pendingErrorFlash: null,
     pendingSuccessFlash: null,
     blueprintReadiness: defaultBlueprintReadiness(),
+    taskScheduleBlueprints: [],
     formData
   });
 
@@ -47,6 +49,7 @@ describe('CropStagesPresenter', () => {
           pendingErrorFlash: null,
           pendingSuccessFlash: null,
           blueprintReadiness: defaultBlueprintReadiness(),
+          taskScheduleBlueprints: [],
           formData: emptyFormData
         };
       },
@@ -91,6 +94,38 @@ describe('CropStagesPresenter', () => {
       expect(lastControl!.loading).toBe(false);
       expect(lastControl!.formData.name).toBe('Test Crop');
       expect(lastControl!.formData.crop_stages).toEqual(dto.crop.crop_stages);
+    });
+  });
+
+  describe('LoadCropTaskScheduleBlueprintsOutputPort', () => {
+    it('updates view.control.taskScheduleBlueprints on present(dto)', () => {
+      const dto: LoadCropTaskScheduleBlueprintsDataDto = {
+        blueprints: [
+          {
+            id: 1,
+            crop_id: 1,
+            agricultural_task_id: 1,
+            source_agricultural_task_id: null,
+            stage_order: 1,
+            stage_name: 'Stage 1',
+            gdd_trigger: 0,
+            gdd_tolerance: null,
+            task_type: 'general',
+            source: 'manual',
+            priority: 1,
+            amount: null,
+            amount_unit: null,
+            description: null,
+            weather_dependency: null,
+            time_per_sqm: null
+          }
+        ]
+      };
+
+      presenter.present(dto);
+
+      expect(lastControl).not.toBeNull();
+      expect(lastControl!.taskScheduleBlueprints).toEqual(dto.blueprints);
     });
   });
 

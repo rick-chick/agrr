@@ -1950,7 +1950,8 @@
         "daily_uptake_k_help": "Enter daily potassium (element) uptake for this stage."
       },
       "default_name": "Stage {{order}}",
-      "confirm_delete": "Delete this growth stage?"
+      "delete_confirm_message": "Delete \"{{stageName}}\"?\n\nRequirements linked to this stage (temperature, GDD, etc.) will also be removed. This may affect task schedule templates and generated schedules in cultivation plans. This action cannot be undone.",
+      "delete_confirm_blueprint_warning": "This stage has {{count}} linked task schedule template(s). Deleting it may break template placement."
     },
     "flash": {
       "created": "Crop was successfully created.",
@@ -2042,7 +2043,11 @@
       "daily_uptake_p": "Daily Phosphorus Uptake (kg/ha/day)",
       "daily_uptake_k": "Daily Potassium Uptake (kg/ha/day)",
       "region": "Region",
-      "required_marker": "Required"
+      "required_marker": "Required",
+      "base_temperature_placeholder": "e.g., 5.0",
+      "base_temperature_help": "Enter the base temperature at which growth begins for this stage.",
+      "required_gdd_placeholder": "e.g., 800.0",
+      "required_gdd_help": "Enter the Growing Degree Days required for this stage."
     },
     "show": {
       "reference_crop": "Reference Crop",

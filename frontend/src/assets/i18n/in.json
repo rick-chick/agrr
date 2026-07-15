@@ -282,10 +282,11 @@
     },
     "stage": {
       "default_name": "चरण {{order}}",
-      "confirm_delete": "क्या आप इस वृद्धि चरण को हटाना चाहते हैं?",
       "temperature": {
         "base_temperature_label": "आधार तापमान (°C)"
-      }
+      },
+      "delete_confirm_message": "क्या आप \"{{stageName}}\" को हटाना चाहते हैं?\n\nइस चरण से जुड़ी आवश्यकताएँ (तापमान, GDD आदि) भी हट जाएँगी। इससे कार्य अनुसूची टेम्पलेट और खेती योजनाओं की उत्पन्न अनुसूचियाँ प्रभावित हो सकती हैं। यह क्रिया पूर्ववत नहीं की जा सकती।",
+      "delete_confirm_blueprint_warning": "इस चरण से {{count}} कार्य अनुसूची टेम्पलेट जुड़े हैं। हटाने से टेम्पलेट स्थान बिगड़ सकता है।"
     },
     "errors": {
       "invalid_id": "अमान्य फसल ID।"
@@ -353,7 +354,11 @@
       "errors": {
         "title": "{{count}} त्रुटियाँ:"
       },
-      "required_marker": "आवश्यक"
+      "required_marker": "आवश्यक",
+      "base_temperature_placeholder": "उदा., 5.0",
+      "base_temperature_help": "इस चरण में वृद्धि शुरू होने वाला न्यूनतम आधार तापमान दर्ज करें।",
+      "required_gdd_placeholder": "उदा., 800.0",
+      "required_gdd_help": "इस चरण के लिए आवश्यक बढ़ते डिग्री दिन (Growing Degree Days) दर्ज करें।"
     },
     "show": {
       "name": "नाम",

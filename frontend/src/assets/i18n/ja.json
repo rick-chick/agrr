@@ -345,7 +345,8 @@
         "daily_uptake_k_help": "このステージでのカリウム（元素）の日当たり吸収量を入力してください。"
       },
       "default_name": "ステージ {{order}}",
-      "confirm_delete": "このステージを削除しますか？"
+      "delete_confirm_message": "「{{stageName}}」を削除します。\n\nこのステージに紐づく温度・積算温度などの要件も削除されます。作業予定テンプレや栽培計画の作業予定生成に影響する場合があります。この操作は取り消せません。",
+      "delete_confirm_blueprint_warning": "このステージには作業予定テンプレが {{count}} 件紐づいています。削除するとテンプレの配置が崩れる可能性があります。"
     },
     "flash": {
       "created": "作物が正常に作成されました。",
@@ -444,7 +445,11 @@
       "daily_uptake_p": "日間リン吸収量 (kg/ha/day)",
       "daily_uptake_k": "日間カリウム吸収量 (kg/ha/day)",
       "region": "地域",
-      "required_marker": "必須"
+      "required_marker": "必須",
+      "base_temperature_placeholder": "例：5.0",
+      "base_temperature_help": "このステージで生育が始まる基底温度を入力してください。",
+      "required_gdd_placeholder": "例：800.0",
+      "required_gdd_help": "このステージに必要な生育度日（Growing Degree Days）を入力してください。"
     },
     "show": {
       "reference_crop": "参照作物",

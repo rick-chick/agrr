@@ -10,6 +10,7 @@ import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edi
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
 import { UpdateCropStageUseCase } from '../../../usecase/crops/update-crop-stage.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
+import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
@@ -29,7 +30,8 @@ const loadedControlBase = {
   error: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  blueprintReadiness: defaultBlueprintReadiness()
+  blueprintReadiness: defaultBlueprintReadiness(),
+  taskScheduleBlueprints: []
 };
 
 describe('CropStagesComponent', () => {
@@ -45,6 +47,7 @@ describe('CropStagesComponent', () => {
   let mockCreateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockDeleteCropStageUseCase: { execute: ReturnType<typeof vi.fn> };
+  let mockLoadBlueprintsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateTemperatureRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateThermalRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockUpdateSunshineRequirementUseCase: { execute: ReturnType<typeof vi.fn> };
@@ -53,6 +56,9 @@ describe('CropStagesComponent', () => {
   let translateService: TranslateService;
 
   beforeEach(async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+
     mockActivatedRoute = {
       snapshot: {
         paramMap: {
@@ -68,6 +74,7 @@ describe('CropStagesComponent', () => {
     mockCreateCropStageUseCase = { execute: vi.fn() };
     mockUpdateCropStageUseCase = { execute: vi.fn() };
     mockDeleteCropStageUseCase = { execute: vi.fn() };
+    mockLoadBlueprintsUseCase = { execute: vi.fn() };
     mockUpdateTemperatureRequirementUseCase = { execute: vi.fn() };
     mockUpdateThermalRequirementUseCase = { execute: vi.fn() };
     mockUpdateSunshineRequirementUseCase = { execute: vi.fn() };
@@ -88,6 +95,7 @@ describe('CropStagesComponent', () => {
         { provide: CreateCropStageUseCase, useValue: mockCreateCropStageUseCase },
         { provide: UpdateCropStageUseCase, useValue: mockUpdateCropStageUseCase },
         { provide: DeleteCropStageUseCase, useValue: mockDeleteCropStageUseCase },
+        { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: mockLoadBlueprintsUseCase },
         { provide: UpdateTemperatureRequirementUseCase, useValue: mockUpdateTemperatureRequirementUseCase },
         { provide: UpdateThermalRequirementUseCase, useValue: mockUpdateThermalRequirementUseCase },
         { provide: UpdateSunshineRequirementUseCase, useValue: mockUpdateSunshineRequirementUseCase },
@@ -100,6 +108,7 @@ describe('CropStagesComponent', () => {
     TestBed.overrideProvider(CreateCropStageUseCase, { useValue: mockCreateCropStageUseCase });
     TestBed.overrideProvider(UpdateCropStageUseCase, { useValue: mockUpdateCropStageUseCase });
     TestBed.overrideProvider(DeleteCropStageUseCase, { useValue: mockDeleteCropStageUseCase });
+    TestBed.overrideProvider(LoadCropTaskScheduleBlueprintsUseCase, { useValue: mockLoadBlueprintsUseCase });
     TestBed.overrideProvider(UpdateTemperatureRequirementUseCase, { useValue: mockUpdateTemperatureRequirementUseCase });
     TestBed.overrideProvider(UpdateThermalRequirementUseCase, { useValue: mockUpdateThermalRequirementUseCase });
     TestBed.overrideProvider(UpdateSunshineRequirementUseCase, { useValue: mockUpdateSunshineRequirementUseCase });
@@ -122,10 +131,11 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
   });
 
-  it('should load crop on init', () => {
+  it('should load crop and task schedule blueprints on init', () => {
     expect(component.cropId).toBe(1);
     fixture.detectChanges();
     expect(mockLoadUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
+    expect(mockLoadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
   });
 
   it('should call createCropStageUseCase when addCropStage is called', () => {
@@ -148,19 +158,225 @@ describe('CropStagesComponent', () => {
     });
   });
 
-  it('should call deleteCropStageUseCase when deleteCropStage is called with confirmation', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('opens delete confirm dialog with impact message instead of window.confirm', () => {
+    translateService.setTranslation(
+      'en',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage {{order}}',
+            delete_confirm_message:
+              'Delete "{{stageName}}"? Requirements and linked task templates may be affected.',
+            delete_confirm_blueprint_warning:
+              'This stage has {{count}} linked task schedule template(s).'
+          },
+          edit: {
+            stage_title: 'Stage {{order}}'
+          }
+        },
+        common: {
+          delete: 'Delete',
+          cancel: 'Cancel'
+        }
+      },
+      true
+    );
+    translateService.use('en');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
+      formData: {
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Germination',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    const deleteButton = fixture.nativeElement.querySelector('.crop-stage-card__header .btn-danger');
+    deleteButton.click();
+    fixture.detectChanges();
+
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.crop-stages__delete-confirm')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Delete "Germination"? Requirements and linked task templates may be affected.'
+    );
+    expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('shows blueprint warning when deleting a stage with linked templates', () => {
+    translateService.setTranslation(
+      'en',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage {{order}}',
+            delete_confirm_message: 'Delete "{{stageName}}"?',
+            delete_confirm_blueprint_warning:
+              'This stage has {{count}} linked task schedule template(s).'
+          },
+          edit: {
+            stage_title: 'Stage {{order}}'
+          }
+        },
+        common: {
+          delete: 'Delete',
+          cancel: 'Cancel'
+        }
+      },
+      true
+    );
+    translateService.use('en');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [
+        {
+          id: 10,
+          crop_id: 1,
+          agricultural_task_id: 1,
+          source_agricultural_task_id: null,
+          stage_order: 1,
+          stage_name: 'Germination',
+          gdd_trigger: 0,
+          gdd_tolerance: null,
+          task_type: 'general',
+          source: 'manual',
+          priority: 1,
+          amount: null,
+          amount_unit: null,
+          description: null,
+          weather_dependency: null,
+          time_per_sqm: null
+        }
+      ],
+      formData: {
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Germination',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.crop-stage-card__header .btn-danger').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'This stage has 1 linked task schedule template(s).'
+    );
+  });
+
+  it('calls deleteCropStageUseCase when delete is confirmed in the dialog', () => {
+    translateService.setTranslation(
+      'en',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage {{order}}',
+            delete_confirm_message: 'Delete "{{stageName}}"?'
+          },
+          edit: {
+            stage_title: 'Stage {{order}}'
+          }
+        },
+        common: {
+          delete: 'Delete',
+          cancel: 'Cancel'
+        }
+      },
+      true
+    );
+    translateService.use('en');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
+      formData: {
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Germination',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
     component.deleteCropStage(1);
+    component.confirmDeleteCropStage();
+
     expect(mockDeleteCropStageUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
       stageId: 1
     });
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
-  it('should not call deleteCropStageUseCase when deleteCropStage is cancelled', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('does not call deleteCropStageUseCase when delete confirm is cancelled', () => {
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
+      formData: {
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Germination',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
     component.deleteCropStage(1);
+    component.cancelDeleteConfirmDialog();
+
     expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
+    expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
   it('should call updateTemperatureRequirementUseCase when updateTemperatureRequirement is called', () => {
@@ -964,6 +1180,106 @@ describe('CropStagesComponent', () => {
       ) as HTMLAnchorElement;
       expect(link).toBeTruthy();
     });
+  });
+
+  it('shows help and placeholder for base temperature and required GDD fields', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage 1',
+            confirm_delete: '削除しますか？'
+          },
+          edit: {
+            stages_title: '生育ステージ',
+            add_stage: 'ステージ追加',
+            stage_title: 'ステージ {{order}}',
+            stage_name: 'ステージ名',
+            stage_order: '順序',
+            requirements_title: '要件',
+            temperature_requirement: '温度要件',
+            thermal_requirement: '積算温度要件',
+            sunshine_requirement: '日照要件',
+            nutrient_requirement: '栄養素要件',
+            base_temperature: '基底温度 (°C)',
+            base_temperature_placeholder: '例：5.0',
+            base_temperature_help: 'このステージで生育が始まる基底温度を入力してください。',
+            optimal_min: '最適最低温度',
+            optimal_max: '最適最高温度',
+            low_stress_threshold: '低温ストレス',
+            high_stress_threshold: '高温ストレス',
+            frost_threshold: '霜害',
+            sterility_risk_threshold: '不稔',
+            max_temperature: '最高温度',
+            required_gdd: '必要積算温度 (°C·day)',
+            required_gdd_placeholder: '例：800.0',
+            required_gdd_help: 'このステージに必要な生育度日（Growing Degree Days）を入力してください。',
+            minimum_sunshine_hours: '最低日照',
+            target_sunshine_hours: '目標日照',
+            daily_uptake_n: '窒素',
+            daily_uptake_p: 'リン',
+            daily_uptake_k: 'カリウム',
+            region: '地域',
+            stage_cumulative_gdd_range: '{{start}}〜{{end}} ℃·日（累積）',
+            stage_cumulative_gdd_missing: '必要積算温度を入力すると表示されます'
+          }
+        },
+        common: {
+          back: '戻る',
+          delete: '削除'
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      taskScheduleBlueprints: [],
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.crop-stage-card')).toBeTruthy();
+
+    const baseTempInput = Array.from(
+      fixture.nativeElement.querySelectorAll('input')
+    ).find((el: Element) => (el as HTMLInputElement).placeholder === '例：5.0') as
+      | HTMLInputElement
+      | undefined;
+    expect(baseTempInput).toBeTruthy();
+    expect(baseTempInput!.placeholder).toBe('例：5.0');
+
+    const gddInput = Array.from(fixture.nativeElement.querySelectorAll('input')).find(
+      (el: Element) => (el as HTMLInputElement).placeholder === '例：800.0'
+    ) as HTMLInputElement | undefined;
+    expect(gddInput).toBeTruthy();
+    expect(gddInput!.placeholder).toBe('例：800.0');
+
+    const hints = Array.from(
+      fixture.nativeElement.querySelectorAll('.form-hint')
+    ).map((el: Element) => el.textContent?.trim());
+    expect(hints).toContain('このステージで生育が始まる基底温度を入力してください。');
+    expect(hints).toContain('このステージに必要な生育度日（Growing Degree Days）を入力してください。');
   });
 
   describe('stage requirements visibility', () => {
