@@ -297,7 +297,7 @@ interface AdvancedDetailDraft {
       (cancel)="cancelUnsavedConfirmDialog($event)"
       (click)="onUnsavedConfirmDialogBackdropClick($event)"
     >
-      @if (pendingStageSwitchId != null) {
+      @if (pendingStageSwitchId != null || pendingAddStage) {
         <p class="confirm-dialog__message">{{ 'crops.edit.unsaved_confirm_message' | translate }}</p>
         <div class="confirm-dialog__actions">
           <button type="button" class="btn-secondary" (click)="cancelUnsavedConfirmDialog()">
@@ -446,6 +446,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   temperatureDetailDraft: TemperatureDetailDraft | null = null;
   advancedDetailDraft: AdvancedDetailDraft | null = null;
   pendingStageSwitchId: number | null = null;
+  pendingAddStage = false;
 
   get cropId(): number {
     return Number(this.route.snapshot.paramMap.get('id')) ?? 0;
@@ -513,6 +514,16 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   addCropStage(): void {
+    if (this.isPanelDirty()) {
+      this.pendingStageSwitchId = null;
+      this.pendingAddStage = true;
+      this.unsavedConfirmDialogRef?.nativeElement?.showModal();
+      return;
+    }
+    this.executeAddCropStage();
+  }
+
+  private executeAddCropStage(): void {
     const nextOrder = Math.max(0, ...this.control.formData.crop_stages.map((s) => s.order)) + 1;
     const defaultStageName = this.translate.instant('crops.stage.default_name', { order: nextOrder });
     this.createCropStageUseCase.execute({
@@ -529,6 +540,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       return;
     }
     if (this.isPanelDirty()) {
+      this.pendingAddStage = false;
       this.pendingStageSwitchId = stageId;
       this.unsavedConfirmDialogRef?.nativeElement?.showModal();
       return;
@@ -546,8 +558,14 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   confirmDiscardAndSwitchStage(): void {
     const targetId = this.pendingStageSwitchId;
+    const shouldAddStage = this.pendingAddStage;
     this.pendingStageSwitchId = null;
+    this.pendingAddStage = false;
     this.unsavedConfirmDialogRef?.nativeElement?.close();
+    if (shouldAddStage) {
+      this.executeAddCropStage();
+      return;
+    }
     if (targetId != null) {
       this.selectStageImmediate(targetId);
     }
@@ -556,6 +574,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   cancelUnsavedConfirmDialog(event?: Event): void {
     event?.preventDefault();
     this.pendingStageSwitchId = null;
+    this.pendingAddStage = false;
     this.unsavedConfirmDialogRef?.nativeElement?.close();
   }
 

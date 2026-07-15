@@ -312,6 +312,48 @@ describe('CropStagesComponent', () => {
     });
   });
 
+  it('opens unsaved confirm when addCropStage is called with dirty panel', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Dirty edit';
+    component.addCropStage();
+
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(component.pendingAddStage).toBe(true);
+    expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
+    expect(component.stageEditDraft.name).toBe('Dirty edit');
+  });
+
+  it('cancels add stage and keeps dirty edits when unsaved confirm is dismissed', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Dirty edit';
+    component.addCropStage();
+    component.cancelUnsavedConfirmDialog();
+
+    expect(component.pendingAddStage).toBe(false);
+    expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
+    expect(component.stageEditDraft.name).toBe('Dirty edit');
+    expect(component.selectedStageId).toBe(1);
+  });
+
+  it('discards dirty changes and adds stage after unsaved confirm', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Dirty edit';
+    component.addCropStage();
+    component.confirmDiscardAndSwitchStage();
+
+    expect(component.pendingAddStage).toBe(false);
+    expect(mockCreateCropStageUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      payload: {
+        name: 'Stage 2',
+        order: 2
+      }
+    });
+  });
+
   it('opens unsaved confirm when switching stages with dirty panel', async () => {
     await loadStages([
       stageFixture,
