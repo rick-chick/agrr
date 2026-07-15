@@ -308,6 +308,121 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
+  const stageWithRequirements: CropStage = {
+    id: 1,
+    name: 'Stage 1',
+    order: 1,
+    temperature_requirement: {
+      id: 1,
+      crop_stage_id: 1,
+      base_temperature: 10,
+      optimal_min: null,
+      optimal_max: null,
+      low_stress_threshold: null,
+      high_stress_threshold: null,
+      frost_threshold: null,
+      sterility_risk_threshold: null,
+      max_temperature: null
+    },
+    thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 },
+    sunshine_requirement: null,
+    nutrient_requirement: null
+  } as CropStage;
+
+  const loadedControl = {
+    loading: false,
+    error: null,
+    pendingErrorFlash: null,
+    pendingSuccessFlash: null,
+    formData: {
+      ...initialFormData,
+      name: 'Tomato',
+      crop_stages: [stageWithRequirements]
+    }
+  };
+
+  it('does not save requirement fields on ngModelChange while typing', () => {
+    component.control = loadedControl;
+    fixture.detectChanges();
+
+    component.onTemperatureFieldDraft(1, 'base_temperature', 12);
+    component.onThermalFieldDraft(1, 'required_gdd', 120);
+
+    expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateThermalRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(component.control.formData.crop_stages[0].temperature_requirement?.base_temperature).toBe(12);
+    expect(component.control.formData.crop_stages[0].thermal_requirement?.required_gdd).toBe(120);
+  });
+
+  it('saves requirement fields on blur after draft edits', () => {
+    component.control = loadedControl;
+    fixture.detectChanges();
+
+    component.onTemperatureFieldDraft(1, 'base_temperature', 15);
+    component.saveTemperatureField(1, 'base_temperature');
+    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { base_temperature: 15 }
+    });
+
+    component.onThermalFieldDraft(1, 'required_gdd', 150);
+    component.saveThermalField(1, 'required_gdd');
+    expect(mockUpdateThermalRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { required_gdd: 150 }
+    });
+  });
+
+  it('saves sunshine and nutrient requirement fields on blur after draft edits', () => {
+    const stageWithSunshineNutrient: CropStage = {
+      ...stageWithRequirements,
+      sunshine_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        minimum_sunshine_hours: 4,
+        target_sunshine_hours: 8
+      },
+      nutrient_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        daily_uptake_n: 0.5,
+        daily_uptake_p: 0.2,
+        daily_uptake_k: 0.3,
+        region: 'jp'
+      }
+    } as CropStage;
+
+    component.control = {
+      ...loadedControl,
+      formData: {
+        ...loadedControl.formData,
+        crop_stages: [stageWithSunshineNutrient]
+      }
+    };
+    fixture.detectChanges();
+
+    component.onSunshineFieldDraft(1, 'minimum_sunshine_hours', 5);
+    component.onNutrientFieldDraft(1, 'daily_uptake_n', 0.6);
+    expect(mockUpdateSunshineRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateNutrientRequirementUseCase.execute).not.toHaveBeenCalled();
+
+    component.saveSunshineField(1, 'minimum_sunshine_hours');
+    expect(mockUpdateSunshineRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { minimum_sunshine_hours: 5 }
+    });
+
+    component.saveNutrientField(1, 'daily_uptake_n');
+    expect(mockUpdateNutrientRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { daily_uptake_n: 0.6 }
+    });
+  });
+
   it('shows empty state with description and primary CTA when no stages', () => {
     translateService.setTranslation(
       'ja',
