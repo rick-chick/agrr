@@ -1,5 +1,6 @@
 // Tests for `interactors/crop_stage_reorder_interactor.rs`
 
+    use crate::crop::dtos::CropStageReorderEntry;
     use crate::crop::entities::CropStageEntity;
     use crate::shared::exceptions::RecordInvalidError;
 
@@ -246,14 +247,7 @@
     }
 
     fn stage(id: i64, crop_id: i64, order: i64) -> CropStageEntity {
-        CropStageEntity {
-            id,
-            crop_id,
-            name: format!("Stage {id}"),
-            order,
-            created_at: "2026-01-01".into(),
-            updated_at: "2026-01-01".into(),
-        }
+        CropStageEntity::new(id, crop_id, format!("Stage {id}"), order as i32).unwrap()
     }
 
     #[test]
