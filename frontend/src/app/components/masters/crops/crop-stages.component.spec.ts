@@ -384,6 +384,16 @@ describe('CropStagesComponent', () => {
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
+  it('renders inline temperature fields in edit panel', async () => {
+    await loadStages([stageFixture]);
+
+    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
+    expect(panel?.querySelector('input[name="panel_optimal_min"]')).toBeTruthy();
+    expect(panel?.querySelector('input[name="panel_optimal_max"]')).toBeTruthy();
+    expect(panel?.querySelector('input[name="panel_max_temperature"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Edit stress thresholds');
+  });
+
   it('marks panel dirty when inline temperature fields change', async () => {
     await loadStages([stageFixture]);
 

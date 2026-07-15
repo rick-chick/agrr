@@ -72,8 +72,8 @@ describe('crops base_temperature terminology catalog', () => {
     for (const key of CROP_BASE_TEMPERATURE_MESSAGE_KEYS) {
       const value = getNested(ja as JsonRecord, key) as string;
       expect(value, key).toContain('最低限界温度');
-      expect(value, key).not.toContain('基準温度');
       expect(value, key).not.toContain('基底温度');
+      expect(value, key).not.toContain('基準温度');
     }
   });
 
