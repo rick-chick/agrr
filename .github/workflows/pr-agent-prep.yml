@@ -3,7 +3,7 @@
 # - Adds agent-merge label when eligible (cursor/*, issue/*, or Merge-Strategy: agent)
 # - Serial queue: only one non-draft agent-merge PR at a time
 # - gh pr ready when CI is green and queue is clear (needs contents: write; optional secrets.AGRR_GH_PAT)
-# - master sync (BEHIND / DIRTY / CONFLICTING) is handled by PR Merge Worker, not prep
+# - master sync (BEHIND / DIRTY / CONFLICTING) is handled by PR Merge Worker (including Draft PRs), not prep
 #
 # Downstream: pr-merge-worker-dispatch.yml (ready_for_review + ci_completed)
 # Setup: see .cursor/skills/github-pr-merge-worker/SKILL.md §8
