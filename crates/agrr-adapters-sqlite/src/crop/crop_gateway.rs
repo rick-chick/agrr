@@ -58,20 +58,6 @@ fn parse_groups(raw: Option<String>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-fn map_crop_stage_write_error(
-    err: rusqlite::Error,
-) -> Box<dyn std::error::Error + Send + Sync> {
-    if let rusqlite::Error::SqliteFailure(code, _) = &err {
-        if code.code == rusqlite::ErrorCode::ConstraintViolation {
-            return Box::new(RecordInvalidError::new(
-                Some("order has already been taken".into()),
-                None,
-            ));
-        }
-    }
-    Box::new(err)
-}
-
 impl CropGateway for CropSqliteGateway {
     fn list_index_for_filter(
         &self,
