@@ -81,6 +81,16 @@ interface AdvancedDetailDraft {
   sterility_risk_threshold: number | null;
 }
 
+interface TemperatureScaleMarker {
+  key: 'base' | 'optimal_min' | 'optimal_max' | 'max';
+  position: number;
+}
+
+interface TemperatureScaleBand {
+  left: number;
+  width: number;
+}
+
 @Component({
   selector: 'app-crop-stages',
   standalone: true,
@@ -180,11 +190,9 @@ interface AdvancedDetailDraft {
 
             @if (selectedStage; as stage) {
               <div class="crop-stages-edit-panel">
-                <h3 class="crop-stages-edit-panel__title">
-                  {{ 'crops.edit.stage_title' | translate:{ order: stage.order } }}
-                </h3>
-                <div class="crop-stages-edit-panel__fields">
-                  <label class="form-card__field">
+                <div class="crop-stages-edit-panel__header">
+                  <span class="crop-stages-edit-panel__stage-badge">{{ stage.order }}</span>
+                  <label class="form-card__field crop-stages-edit-panel__name-field">
                     <span class="form-card__field-label">{{ 'crops.edit.stage_name' | translate }}</span>
                     <input
                       type="text"
@@ -192,65 +200,127 @@ interface AdvancedDetailDraft {
                       [(ngModel)]="stageEditDraft.name"
                     />
                   </label>
-                  <label class="form-card__field form-card__field--small">
-                    <span class="form-card__field-label">{{ 'crops.edit.base_temperature' | translate }}</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="panel_base_temperature"
-                      [placeholder]="'crops.edit.base_temperature_placeholder' | translate"
-                      [(ngModel)]="stageEditDraft.base_temperature"
-                    />
-                    <p class="form-hint">{{ 'crops.edit.base_temperature_help' | translate }}</p>
-                  </label>
-                  <label class="form-card__field form-card__field--small">
-                    <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="panel_optimal_min"
-                      [(ngModel)]="stageEditDraft.optimal_min"
-                    />
-                  </label>
-                  <label class="form-card__field form-card__field--small">
-                    <span class="form-card__field-label">{{ 'crops.edit.optimal_max' | translate }}</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="panel_optimal_max"
-                      [(ngModel)]="stageEditDraft.optimal_max"
-                    />
-                  </label>
-                  <label class="form-card__field form-card__field--small">
-                    <span class="form-card__field-label">{{ 'crops.edit.max_temperature' | translate }}</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="panel_max_temperature"
-                      [(ngModel)]="stageEditDraft.max_temperature"
-                    />
-                  </label>
-                  <label class="form-card__field form-card__field--small">
-                    <span class="form-card__field-label">{{ 'crops.edit.required_gdd' | translate }}</span>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="panel_required_gdd"
-                      [placeholder]="'crops.edit.required_gdd_placeholder' | translate"
-                      [(ngModel)]="stageEditDraft.required_gdd"
-                    />
-                    <p class="form-hint">{{ 'crops.edit.required_gdd_help' | translate }}</p>
-                  </label>
                 </div>
-                <div class="crop-stages-edit-panel__links">
-                  <button type="button" class="crop-stages-edit-panel__link" (click)="openTemperatureDialog()">
-                    {{ 'crops.edit.edit_temperature_details' | translate }}
-                  </button>
-                  <button type="button" class="crop-stages-edit-panel__link" (click)="openAdvancedDialog()">
-                    {{ 'crops.edit.edit_sunshine_nutrient' | translate }}
-                  </button>
-                </div>
-                <div class="crop-stages-edit-panel__actions">
+
+                <section class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--temperature">
+                  <h4 class="crop-stages-edit-panel__subsection-title">
+                    {{ 'crops.edit.temperature_section' | translate }}
+                  </h4>
+                  @if (hasTemperatureScale()) {
+                    <div class="crop-stages-edit-panel__temperature-scale" aria-hidden="true">
+                      <div class="crop-stages-edit-panel__temperature-scale-track">
+                        @if (temperatureScaleBand(); as band) {
+                          <div
+                            class="crop-stages-edit-panel__temperature-scale-band"
+                            [style.left.%]="band.left"
+                            [style.width.%]="band.width"
+                          ></div>
+                        }
+                        @for (marker of temperatureScaleMarkers(); track marker.key) {
+                          <span
+                            [class]="
+                              'crop-stages-edit-panel__temperature-scale-marker crop-stages-edit-panel__temperature-scale-marker--' +
+                              marker.key
+                            "
+                            [style.left.%]="marker.position"
+                          ></span>
+                        }
+                      </div>
+                    </div>
+                  }
+                  <div class="crop-stages-edit-panel__temperature-fields">
+                    <label class="form-card__field form-card__field--small">
+                      <span class="form-card__field-label">{{ 'crops.edit.base_temperature' | translate }}</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        name="panel_base_temperature"
+                        [placeholder]="'crops.edit.base_temperature_placeholder' | translate"
+                        [(ngModel)]="stageEditDraft.base_temperature"
+                      />
+                      <p class="form-hint">{{ 'crops.edit.base_temperature_help' | translate }}</p>
+                    </label>
+                    <div class="crop-stages-edit-panel__optimal-group">
+                      <span class="crop-stages-edit-panel__optimal-group-label">{{
+                        'crops.edit.optimal_range' | translate
+                      }}</span>
+                      <div class="crop-stages-edit-panel__optimal-group-fields">
+                        <label class="form-card__field form-card__field--small">
+                          <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
+                          <input
+                            type="number"
+                            step="0.1"
+                            name="panel_optimal_min"
+                            [(ngModel)]="stageEditDraft.optimal_min"
+                          />
+                        </label>
+                        <label class="form-card__field form-card__field--small">
+                          <span class="form-card__field-label">{{ 'crops.edit.optimal_max' | translate }}</span>
+                          <input
+                            type="number"
+                            step="0.1"
+                            name="panel_optimal_max"
+                            [(ngModel)]="stageEditDraft.optimal_max"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <label class="form-card__field form-card__field--small">
+                      <span class="form-card__field-label">{{ 'crops.edit.max_temperature' | translate }}</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        name="panel_max_temperature"
+                        [(ngModel)]="stageEditDraft.max_temperature"
+                      />
+                    </label>
+                  </div>
+                </section>
+
+                <section class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--gdd">
+                  <h4 class="crop-stages-edit-panel__subsection-title">
+                    {{ 'crops.edit.gdd_section' | translate }}
+                  </h4>
+                  <div class="crop-stages-edit-panel__gdd-block">
+                    <label class="form-card__field form-card__field--small">
+                      <span class="form-card__field-label">{{ 'crops.edit.required_gdd' | translate }}</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        name="panel_required_gdd"
+                        [placeholder]="'crops.edit.required_gdd_placeholder' | translate"
+                        [(ngModel)]="stageEditDraft.required_gdd"
+                      />
+                      <p class="form-hint">{{ 'crops.edit.required_gdd_help' | translate }}</p>
+                    </label>
+                  </div>
+                </section>
+
+                <section class="crop-stages-edit-panel__subsection crop-stages-edit-panel__subsection--details">
+                  <h4 class="crop-stages-edit-panel__subsection-title">
+                    {{ 'crops.edit.details_section' | translate }}
+                  </h4>
+                  <div class="crop-stages-edit-panel__detail-chips">
+                    <button
+                      type="button"
+                      class="crop-stages-edit-panel__detail-chip"
+                      (click)="openTemperatureDialog()"
+                    >
+                      {{ 'crops.edit.edit_temperature_details' | translate }}
+                      <span class="crop-stages-edit-panel__detail-chip-chevron" aria-hidden="true">›</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="crop-stages-edit-panel__detail-chip"
+                      (click)="openAdvancedDialog()"
+                    >
+                      {{ 'crops.edit.edit_sunshine_nutrient' | translate }}
+                      <span class="crop-stages-edit-panel__detail-chip-chevron" aria-hidden="true">›</span>
+                    </button>
+                  </div>
+                </section>
+
+                <div class="crop-stages-edit-panel__footer">
                   <button type="button" class="btn btn-primary" (click)="saveStagePanel()">
                     {{ 'crops.edit.save_stage' | translate }}
                   </button>
@@ -814,6 +884,71 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       start: range.cumulativeGddStart,
       end: range.cumulativeGddEnd
     });
+  }
+
+  hasTemperatureScale(): boolean {
+    return this.getTemperatureScaleRange() != null;
+  }
+
+  temperatureScaleMarkers(): TemperatureScaleMarker[] {
+    const range = this.getTemperatureScaleRange();
+    if (!range) {
+      return [];
+    }
+    const toPosition = (value: number | null): number | null => {
+      if (value == null || !Number.isFinite(value)) {
+        return null;
+      }
+      return ((value - range.min) / (range.max - range.min)) * 100;
+    };
+    const markers: TemperatureScaleMarker[] = [];
+    const addMarker = (key: TemperatureScaleMarker['key'], value: number | null) => {
+      const position = toPosition(value);
+      if (position != null) {
+        markers.push({ key, position });
+      }
+    };
+    addMarker('base', this.stageEditDraft.base_temperature);
+    addMarker('optimal_min', this.stageEditDraft.optimal_min);
+    addMarker('optimal_max', this.stageEditDraft.optimal_max);
+    addMarker('max', this.stageEditDraft.max_temperature);
+    return markers;
+  }
+
+  temperatureScaleBand(): TemperatureScaleBand | null {
+    const range = this.getTemperatureScaleRange();
+    if (!range) {
+      return null;
+    }
+    const { optimal_min, optimal_max } = this.stageEditDraft;
+    if (
+      optimal_min == null ||
+      optimal_max == null ||
+      !Number.isFinite(optimal_min) ||
+      !Number.isFinite(optimal_max)
+    ) {
+      return null;
+    }
+    const span = range.max - range.min;
+    const left = ((Math.min(optimal_min, optimal_max) - range.min) / span) * 100;
+    const right = ((Math.max(optimal_min, optimal_max) - range.min) / span) * 100;
+    return { left, width: right - left };
+  }
+
+  private getTemperatureScaleRange(): { min: number; max: number } | null {
+    const { base_temperature, optimal_min, optimal_max, max_temperature } = this.stageEditDraft;
+    const values = [base_temperature, optimal_min, optimal_max, max_temperature].filter(
+      (value): value is number => value != null && Number.isFinite(value)
+    );
+    if (values.length < 2) {
+      return null;
+    }
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    if (max <= min) {
+      return null;
+    }
+    return { min, max };
   }
 
   isPanelDirty(): boolean {
