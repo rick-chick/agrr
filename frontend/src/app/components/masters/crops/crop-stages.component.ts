@@ -56,7 +56,7 @@ const initialControl: CropStagesViewState = {
   pendingSuccessFlash: null
 };
 
-export interface StageEditDraft {
+interface StageEditDraft {
   name: string;
   base_temperature: number | null;
   optimal_min: number | null;
