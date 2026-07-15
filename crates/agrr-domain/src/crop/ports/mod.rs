@@ -19,6 +19,7 @@ pub(crate) mod crop_stage_create_output_port;
 pub(crate) mod crop_stage_delete_output_port;
 pub(crate) mod crop_stage_detail_output_port;
 pub(crate) mod crop_stage_list_output_port;
+pub(crate) mod crop_stage_reorder_output_port;
 pub(crate) mod crop_stage_update_output_port;
 pub(crate) mod crop_update_output_port;
 pub(crate) mod masters_nutrient_requirement_output_port;
@@ -47,6 +48,7 @@ pub use crop_stage_create_output_port::{CropStageCreateFailure, CropStageCreateO
 pub use crop_stage_delete_output_port::{CropStageDeleteFailure, CropStageDeleteOutputPort};
 pub use crop_stage_detail_output_port::{CropStageDetailFailure, CropStageDetailOutputPort};
 pub use crop_stage_list_output_port::{CropStageListFailure, CropStageListOutputPort};
+pub use crop_stage_reorder_output_port::{CropStageReorderFailure, CropStageReorderOutputPort};
 pub use crop_stage_update_output_port::{CropStageUpdateFailure, CropStageUpdateOutputPort};
 pub use crop_update_output_port::{CropUpdateOutputPort, UpdateFailure};
 pub use masters_nutrient_requirement_output_port::MastersNutrientRequirementOutputPort;

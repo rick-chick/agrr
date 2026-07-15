@@ -55,6 +55,14 @@ export class MastersClientService {
     });
   }
 
+  put<T>(path: string, body: unknown): Observable<T> {
+    return defer(() => {
+      const headers = this.getHeaders();
+      const options = headers.keys().length > 0 ? { headers } : {};
+      return this.apiClient.put<T>(`/api/v1/masters${path}`, body, options);
+    });
+  }
+
   delete<T>(path: string): Observable<T> {
     return defer(() => {
       const headers = this.getHeaders();

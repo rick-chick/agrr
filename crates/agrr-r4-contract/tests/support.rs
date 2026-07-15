@@ -63,6 +63,11 @@ pub struct MastersCropSeed {
     pub crop_id: i64,
 }
 
+pub struct MastersCropStagesSeed {
+    pub crop_id: i64,
+    pub stage_ids: Vec<i64>,
+}
+
 pub struct MastersCropBlueprintCreateSeed {
     pub crop_id: i64,
     pub agricultural_task_id: i64,
@@ -84,6 +89,33 @@ pub fn seed_masters_crop(user_id: i64) -> MastersCropSeed {
     MastersCropSeed {
         crop_id: conn.last_insert_rowid(),
     }
+}
+
+/// Seeds a user-owned crop with multiple stages for crop stage reorder API tests.
+pub fn seed_masters_crop_with_stages(user_id: i64, stage_count: i64) -> MastersCropStagesSeed {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let crop_name = format!("Contract Stage Reorder Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (user_id, name, variety, is_reference, created_at, updated_at)
+         VALUES (?1, ?2, 'V1', 0, datetime('now'), datetime('now'))",
+        params![user_id, crop_name],
+    )
+    .expect("insert crop");
+    let crop_id = conn.last_insert_rowid();
+    let mut stage_ids = Vec::new();
+    for order in 1..=stage_count {
+        conn.execute(
+            "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+             VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+            params![crop_id, format!("Stage {order}"), order],
+        )
+        .expect("insert crop stage");
+        stage_ids.push(conn.last_insert_rowid());
+    }
+    MastersCropStagesSeed { crop_id, stage_ids }
 }
 
 /// Seeds crop + pending manual blueprint for blueprint create tests.
