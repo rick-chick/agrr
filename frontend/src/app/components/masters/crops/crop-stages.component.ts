@@ -77,11 +77,11 @@ const initialControl: CropStagesViewState = {
 
         <header class="page-header crop-stages__page-header">
           <h1 class="page-title">{{ control.formData.name }}</h1>
-          <p class="page-description">{{ 'crops.edit.stages_title' | translate }}</p>
+          <p class="page-description">{{ 'crops.edit.stages_lead' | translate }}</p>
         </header>
 
         <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
-          <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_title' | translate }}</h2>
+          <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
           @if (control.formData.crop_stages.length > 0) {
             <div class="crop-stages-section__actions">
               <button type="button" class="btn btn-secondary" (click)="addCropStage()">
@@ -134,7 +134,7 @@ const initialControl: CropStagesViewState = {
                     <summary class="crop-stage-requirements__summary">{{ 'crops.edit.requirements_title' | translate }}</summary>
 
                     <div class="requirement-section">
-                      <h4 class="requirement-section__title">{{ 'crops.edit.temperature_requirement' | translate }}</h4>
+                      <h3 class="requirement-section__title">{{ 'crops.edit.temperature_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.base_temperature' | translate }}</span>
@@ -180,7 +180,7 @@ const initialControl: CropStagesViewState = {
                     </div>
 
                     <div class="requirement-section">
-                      <h4 class="requirement-section__title">{{ 'crops.edit.thermal_requirement' | translate }}</h4>
+                      <h3 class="requirement-section__title">{{ 'crops.edit.thermal_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.required_gdd' | translate }}</span>
@@ -206,7 +206,7 @@ const initialControl: CropStagesViewState = {
                     </div>
 
                     <div class="requirement-section">
-                      <h4 class="requirement-section__title">{{ 'crops.edit.sunshine_requirement' | translate }}</h4>
+                      <h3 class="requirement-section__title">{{ 'crops.edit.sunshine_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.minimum_sunshine_hours' | translate }}</span>
@@ -222,7 +222,7 @@ const initialControl: CropStagesViewState = {
                     </div>
 
                     <div class="requirement-section">
-                      <h4 class="requirement-section__title">{{ 'crops.edit.nutrient_requirement' | translate }}</h4>
+                      <h3 class="requirement-section__title">{{ 'crops.edit.nutrient_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.daily_uptake_n' | translate }}</span>
