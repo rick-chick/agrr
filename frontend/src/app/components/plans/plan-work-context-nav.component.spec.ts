@@ -13,6 +13,8 @@ describe('PlanWorkContextNavComponent', () => {
       imports: [PlanWorkContextNavComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([
+          { path: 'plans/:id', component: PlanWorkContextNavComponent },
+          { path: 'plans/:id/task_schedule', component: PlanWorkContextNavComponent },
           { path: 'plans/:id/work', component: PlanWorkContextNavComponent },
           { path: 'plans/:id/work_records', component: PlanWorkContextNavComponent }
         ])
@@ -25,7 +27,9 @@ describe('PlanWorkContextNavComponent', () => {
     translate.setTranslation('ja', {
       'plans.work.nav.aria_label': '作業記録ナビゲーション',
       'plans.work.nav.work': '今日の作業',
-      'plans.work.nav.history': '実績履歴'
+      'plans.work.nav.history': '実績履歴',
+      'plans.show.nav.workbench': '作付け計画',
+      'plans.show.nav.task_schedule': '作業予定表'
     });
 
     router = TestBed.inject(Router);
@@ -33,7 +37,7 @@ describe('PlanWorkContextNavComponent', () => {
     fixture.componentInstance.planId = 1;
   });
 
-  it('renders two work-log context links with navigation role', async () => {
+  it('renders plan and work context links with navigation role', async () => {
     await router.navigateByUrl('/plans/1/work');
     fixture.detectChanges();
     await fixture.whenStable();
@@ -43,11 +47,35 @@ describe('PlanWorkContextNavComponent', () => {
     expect(nav?.getAttribute('role')).toBe('navigation');
 
     const links = fixture.nativeElement.querySelectorAll('.plan-context-nav__link');
-    expect(links.length).toBe(2);
-    expect(links[0].textContent?.trim()).toBe('今日の作業');
-    expect(links[1].textContent?.trim()).toBe('実績履歴');
+    expect(links.length).toBe(4);
+    expect(links[0].textContent?.trim()).toBe('作付け計画');
+    expect(links[1].textContent?.trim()).toBe('作業予定表');
+    expect(links[2].textContent?.trim()).toBe('今日の作業');
+    expect(links[3].textContent?.trim()).toBe('実績履歴');
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
       '今日の作業'
+    );
+  });
+
+  it('marks workbench link active on plan detail route', async () => {
+    await router.navigateByUrl('/plans/1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
+      '作付け計画'
+    );
+  });
+
+  it('marks task schedule link active on task schedule route', async () => {
+    await router.navigateByUrl('/plans/1/task_schedule');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
+      '作業予定表'
     );
   });
 });
