@@ -311,6 +311,7 @@
       "stage_title": "चरण {{order}}",
       "stage_name": "चरण का नाम",
       "stage_order": "क्रम",
+      "stage_order_duplicate": "डुप्लिकेट क्रम मान: {{orders}}। कृपया अद्वितीय क्रम संख्या निर्दिष्ट करें।",
       "requirements_title": "आवश्यकताएँ",
       "temperature_requirement": "तापमान आवश्यकताएँ",
       "thermal_requirement": "थर्मल आवश्यकताएँ",

@@ -2010,6 +2010,7 @@
       "stage_title": "Stage {{order}}",
       "stage_name": "Stage Name",
       "stage_order": "Order",
+      "stage_order_duplicate": "Duplicate order values: {{orders}}. Please assign unique order numbers.",
       "requirements_title": "Requirements",
       "temperature_requirement": "Temperature Requirements",
       "thermal_requirement": "Thermal Requirements",

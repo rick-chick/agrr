@@ -34,6 +34,15 @@
   line-height: 1.5;
 }
 
+.crop-stages-order-warning {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-warning-border, #f0ad4e);
+  border-radius: var(--radius-md, 0.375rem);
+  background: var(--color-warning-surface, #fff8e6);
+  color: var(--color-text-primary);
+}
+
 .crop-stages-list {
   display: flex;
   flex-direction: column;
@@ -45,6 +54,23 @@
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
+  cursor: grab;
+}
+
+.crop-stages-list.cdk-drop-list-dragging .crop-stage-card:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.crop-stages-list .crop-stage-card.cdk-drag-preview {
+  box-shadow: var(--shadow-elevated, 0 8px 24px rgba(0, 0, 0, 0.15));
+}
+
+.crop-stages-list .crop-stage-card.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.crop-stages-list .crop-stage-card.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .crop-stage-card__header {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { CropStagesView, CropStagesViewState, CropStagesFormData } from './crop-stages.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
@@ -25,6 +26,11 @@ import {
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
+import {
+  findDuplicateStageOrders,
+  reorderStagesByIndex,
+  sortStagesByOrder
+} from '../../../domain/crops/crop-stage-order';
 import type { CropStage } from '../../../domain/crops/crop';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -45,7 +51,7 @@ const initialControl: CropStagesViewState = {
 @Component({
   selector: 'app-crop-stages',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent, DragDropModule],
   providers: [...CROP_STAGES_PROVIDERS],
   template: `
     <main class="page-main">
@@ -83,7 +89,20 @@ const initialControl: CropStagesViewState = {
               </button>
             </div>
           }
-          <div class="crop-stages-list">
+          @if (duplicateStageOrders.length > 0) {
+            <p class="crop-stages-order-warning" role="alert">
+              {{
+                'crops.edit.stage_order_duplicate'
+                  | translate: { orders: duplicateStageOrders.join(', ') }
+              }}
+            </p>
+          }
+          <div
+            class="crop-stages-list"
+            cdkDropList
+            [cdkDropListData]="sortedStages"
+            (cdkDropListDropped)="onStageDropped($event)"
+          >
             @if (control.formData.crop_stages.length === 0) {
               <div class="crop-stages-empty">
                 <p class="crop-stages-empty__lead">{{ 'crops.edit.stages_empty_lead' | translate }}</p>
@@ -93,8 +112,8 @@ const initialControl: CropStagesViewState = {
                 </button>
               </div>
             } @else {
-            @for (stage of control.formData.crop_stages; track stage.id) {
-              <div class="crop-stage-card">
+            @for (stage of sortedStages; track stage.id) {
+              <div class="crop-stage-card" cdkDrag [cdkDragData]="stage">
                 <div class="crop-stage-card__header">
                   <h3 class="crop-stage-card__title">{{ 'crops.edit.stage_title' | translate:{ order: stage.order } }}</h3>
                   <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
@@ -108,7 +127,7 @@ const initialControl: CropStagesViewState = {
                   </label>
                   <label class="form-card__field">
                     <span class="form-card__field-label">{{ 'crops.edit.stage_order' | translate }}</span>
-                    <input type="number" name="stage_order_{{ stage.id }}" [(ngModel)]="stage.order" (blur)="updateCropStage(stage.id, { order: stage.order })" />
+                    <input type="number" name="stage_order_{{ stage.id }}" [(ngModel)]="stage.order" (blur)="onStageOrderBlur(stage)" />
                   </label>
 
                   <details class="crop-stage-requirements">
@@ -398,6 +417,55 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     (stage.thermal_requirement as any)[field] = value;
     this.updateThermalRequirement(stageId, { [field]: value });
     this.cdr.markForCheck();
+  }
+
+  get sortedStages(): CropStage[] {
+    return sortStagesByOrder(this.control.formData.crop_stages);
+  }
+
+  get duplicateStageOrders(): number[] {
+    return findDuplicateStageOrders(this.control.formData.crop_stages);
+  }
+
+  onStageDropped(event: CdkDragDrop<CropStage[]>): void {
+    const { stages, updates } = reorderStagesByIndex(
+      this.control.formData.crop_stages,
+      event.previousIndex,
+      event.currentIndex
+    );
+    if (updates.length === 0) {
+      return;
+    }
+
+    this.control = {
+      ...this.control,
+      formData: {
+        ...this.control.formData,
+        crop_stages: stages
+      }
+    };
+
+    for (const { id, order } of updates) {
+      this.updateCropStageUseCase.execute({
+        cropId: this.cropId,
+        stageId: id,
+        payload: { order }
+      });
+    }
+  }
+
+  onStageOrderBlur(stage: CropStage): void {
+    if (this.duplicateStageOrders.length > 0) {
+      this.flashMessage.show({
+        type: 'error',
+        text: this.translate.instant('crops.edit.stage_order_duplicate', {
+          orders: this.duplicateStageOrders.join(', ')
+        })
+      });
+      return;
+    }
+
+    this.updateCropStage(stage.id, { order: stage.order });
   }
 
   stageCumulativeGddRangeFor(stage: CropStage) {
