@@ -68,14 +68,14 @@ describe('PlanWorkContextNavComponent', () => {
     );
   });
 
-  it('marks task schedule link active on task schedule route', async () => {
-    await router.navigateByUrl('/plans/1/task_schedule');
+  it('marks history link active on work records route', async () => {
+    await router.navigateByUrl('/plans/1/work_records');
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.plan-context-nav__link--active')?.textContent).toContain(
-      '作業予定表'
+      '実績履歴'
     );
   });
 });
