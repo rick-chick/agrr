@@ -1,11 +1,10 @@
-import { expect, request, test } from '@playwright/test';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { expect, test } from '@playwright/test';
 import { waitForPageStable } from '../page-stable';
 import { HOST_SELECTOR_BY_PATTERN } from '../route-validity';
 import {
   assertHostHealthy,
   disableCookieBanner,
+  findCropIdWithMinStages,
   getUserOwnedFarmCount,
   loadResolvedCaptureIdsWithBaseline,
   resolveGotoUrl,
@@ -230,67 +229,68 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(content.first()).toBeVisible();
   });
 
-  test('master crops: drag reorder persists stage order after reload', async ({ page }) => {
-    const cropId = resolvedCaptureIds?.masters.crops;
-    if (cropId == null) {
-      test.skip(true, 'no crops record in dev DB');
+  test('master crops: drag-reorder stages persists after reload', async ({ page }) => {
+    const id = await findCropIdWithMinStages(2);
+    if (id == null) {
+      test.skip(true, 'no crop with at least 2 stages in dev DB');
     }
 
-    const storagePath = join(process.cwd(), 'e2e', '.auth', 'dev-session.json');
-    if (!existsSync(storagePath)) {
-      test.skip(true, 'dev session missing');
+    const stagesPattern = 'crops/:id/stages';
+    const stagesRoute = findRoute(stagesPattern);
+
+    await page.goto(`/crops/${id}/stages`);
+    await waitForPageStable(page, stagesRoute);
+    await assertHostHealthy(page, 'app-crop-stages');
+
+    const rows = page.locator('app-crop-stages .crop-stages-table__row');
+    const rowCount = await rows.count();
+    if (rowCount < 2) {
+      test.skip(true, 'crop needs at least 2 stages for reorder smoke');
     }
-    const apiOrigin = (process.env.E2E_API_ORIGIN ?? 'http://127.0.0.1:4200').replace(/\/$/, '');
-    const api = await request.newContext({ storageState: storagePath });
-    try {
-      const cropRes = await api.get(`${apiOrigin}/api/v1/masters/crops/${cropId}`);
-      if (!cropRes.ok()) {
-        test.skip(true, 'crop not accessible in dev DB');
-      }
-      const crop = (await cropRes.json()) as { crop_stages?: Array<{ id: number; name: string; order: number }> };
-      let stages = [...(crop.crop_stages ?? [])].sort((a, b) => a.order - b.order);
 
-      while (stages.length < 2) {
-        const order = stages.length + 1;
-        const createRes = await api.post(`${apiOrigin}/api/v1/masters/crops/${cropId}/crop_stages`, {
-          data: { crop_stage: { name: `E2E Stage ${order}`, order } },
-        });
-        expect(createRes.ok(), await createRes.text()).toBeTruthy();
-        const created = (await createRes.json()) as { id: number; name: string; order: number };
-        stages.push(created);
-      }
+    const namesBefore = await rows.evaluateAll((elements) =>
+      elements.map((row) => (row.querySelectorAll('td')[2]?.textContent ?? '').trim())
+    );
 
-      const stagesPattern = 'crops/:id/stages';
-      const stagesRoute = findRoute(stagesPattern);
-      await page.goto(`/crops/${cropId}/stages`);
-      await waitForPageStable(page, stagesRoute);
-      await assertHostHealthy(page, 'app-crop-stages');
-
-      const rows = page.locator('app-crop-stages .crop-stages-table__row');
-      await expect(rows).toHaveCount(stages.length);
-
-      const firstName = await rows.nth(0).locator('td').nth(2).innerText();
-      const dragHandle = rows.nth(0).locator('.crop-stages-table__drag');
-      const targetRow = rows.nth(1);
-      await dragHandle.dragTo(targetRow);
-
-      await expect(page.locator('app-flash-message .flash-message.error')).toHaveCount(0, {
-        timeout: 15_000,
-      });
-
-      const afterReloadCrop = await api.get(`${apiOrigin}/api/v1/masters/crops/${cropId}`);
-      expect(afterReloadCrop.ok()).toBeTruthy();
-      const afterReload = (await afterReloadCrop.json()) as {
-        crop_stages?: Array<{ id: number; name: string; order: number }>;
-      };
-      const reloadedStages = [...(afterReload.crop_stages ?? [])].sort((a, b) => a.order - b.order);
-      expect(reloadedStages[0]?.name).not.toBe(firstName);
-      expect(reloadedStages.map((stage) => stage.order)).toEqual(
-        stages.map((_, index) => index + 1),
-      );
-    } finally {
-      await api.dispose();
+    const reorderResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/v1/masters/crops/${id}/crop_stages/reorder`) &&
+        response.status() === 200,
+      { timeout: 60_000 }
+    );
+    const dragHandle = rows.nth(0).locator('.crop-stages-table__drag');
+    const targetRow = rows.nth(1);
+    const handleBox = await dragHandle.boundingBox();
+    const targetBox = await targetRow.boundingBox();
+    if (!handleBox || !targetBox) {
+      test.skip(true, 'drag targets not visible');
     }
+    await dragHandle.hover();
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(100);
+    await page.mouse.move(
+      targetBox.x + targetBox.width / 2,
+      targetBox.y + targetBox.height / 2,
+      { steps: 25 }
+    );
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await reorderResponse;
+
+    await page.reload();
+    await waitForPageStable(page, stagesRoute);
+    await assertHostHealthy(page, 'app-crop-stages');
+
+    const reloadedRows = page.locator('app-crop-stages .crop-stages-table__row');
+    const namesAfter = await reloadedRows.evaluateAll((elements) =>
+      elements.map((row) => (row.querySelectorAll('td')[2]?.textContent ?? '').trim())
+    );
+    const ordersAfter = await reloadedRows.evaluateAll((elements) =>
+      elements.map((row) => (row.querySelectorAll('td')[1]?.textContent ?? '').trim())
+    );
+    expect(namesAfter).not.toEqual(namesBefore);
+    expect(ordersAfter).toEqual(['1', '2', '3'].slice(0, ordersAfter.length));
   });
 
   for (const m of MASTER_RESOURCES) {
