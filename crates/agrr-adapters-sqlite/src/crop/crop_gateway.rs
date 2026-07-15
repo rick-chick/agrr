@@ -35,6 +35,23 @@ impl CropSqliteGateway {
     }
 }
 
+fn map_crop_stage_sqlite_boxed_err(
+    err: Box<dyn std::error::Error + Send + Sync>,
+) -> Box<dyn std::error::Error + Send + Sync> {
+    if let Some(sqlite_err) = err.downcast_ref::<rusqlite::Error>() {
+        if let rusqlite::Error::SqliteFailure(code, msg) = sqlite_err {
+            if code.code == rusqlite::ErrorCode::ConstraintViolation {
+                let message = msg
+                    .as_deref()
+                    .unwrap_or("order has already been taken")
+                    .to_string();
+                return Box::new(RecordInvalidError::new(Some(message), None));
+            }
+        }
+    }
+    err
+}
+
 fn map_crop_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CropEntity> {
     let is_reference: i64 = row.get(4)?;
     let groups_text: Option<String> = row.get(8)?;
@@ -411,9 +428,43 @@ impl CropGateway for CropSqliteGateway {
         sets.push("updated_at = datetime('now')".into());
         let sql = format!("UPDATE crop_stages SET {} WHERE id = ?", sets.join(", "));
         values.push(rusqlite::types::Value::Integer(crop_stage_id));
-        self.pool.with_write_box(|conn| {
-            conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
-            load_crop_stage_by_id(conn, crop_stage_id)
+        self.pool
+            .with_write_box(|conn| {
+                conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
+                load_crop_stage_by_id(conn, crop_stage_id)
+            })
+            .map_err(map_crop_stage_sqlite_boxed_err)
+    }
+
+    fn reorder_crop_stages(
+        &self,
+        crop_id: i64,
+        stage_orders: Vec<(i64, i64)>,
+    ) -> Result<Vec<CropStageEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        self.pool.with_write_transaction_box(|conn| {
+            for (stage_id, _) in &stage_orders {
+                let updated = conn.execute(
+                    "UPDATE crop_stages SET \"order\" = ?1, updated_at = datetime('now') \
+                     WHERE id = ?2 AND crop_id = ?3",
+                    params![-stage_id, stage_id, crop_id],
+                )?;
+                if updated == 0 {
+                    return Err(rusqlite::Error::QueryReturnedNoRows);
+                }
+            }
+
+            for (stage_id, order) in &stage_orders {
+                let updated = conn.execute(
+                    "UPDATE crop_stages SET \"order\" = ?1, updated_at = datetime('now') \
+                     WHERE id = ?2 AND crop_id = ?3",
+                    params![order, stage_id, crop_id],
+                )?;
+                if updated == 0 {
+                    return Err(rusqlite::Error::QueryReturnedNoRows);
+                }
+            }
+
+            load_crop_stages(conn, crop_id)
         })
     }
 
