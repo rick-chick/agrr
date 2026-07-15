@@ -19,10 +19,13 @@ import { UpdateNutrientRequirementOutputPort } from '../../usecase/crops/update-
 import { UpdateNutrientRequirementOutputDto } from '../../usecase/crops/update-nutrient-requirement.dtos';
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
+import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
+import { LoadCropTaskScheduleBlueprintsOutputPort } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 
 @Injectable()
 export class CropStagesPresenter implements
   LoadCropForEditOutputPort,
+  LoadCropTaskScheduleBlueprintsOutputPort,
   CreateCropStageOutputPort,
   UpdateCropStageOutputPort,
   DeleteCropStageOutputPort,
@@ -37,9 +40,18 @@ export class CropStagesPresenter implements
   }
 
   present(dto: LoadCropForEditDataDto): void;
+  present(dto: LoadCropTaskScheduleBlueprintsDataDto): void;
   present(dto: CreateCropStageOutputDto | UpdateCropStageOutputDto | DeleteCropStageOutputDto | UpdateTemperatureRequirementOutputDto | UpdateThermalRequirementOutputDto | UpdateSunshineRequirementOutputDto | UpdateNutrientRequirementOutputDto): void;
-  present(dto: LoadCropForEditDataDto | CreateCropStageOutputDto | UpdateCropStageOutputDto | DeleteCropStageOutputDto | UpdateTemperatureRequirementOutputDto | UpdateThermalRequirementOutputDto | UpdateSunshineRequirementOutputDto | UpdateNutrientRequirementOutputDto): void {
+  present(dto: LoadCropForEditDataDto | LoadCropTaskScheduleBlueprintsDataDto | CreateCropStageOutputDto | UpdateCropStageOutputDto | DeleteCropStageOutputDto | UpdateTemperatureRequirementOutputDto | UpdateThermalRequirementOutputDto | UpdateSunshineRequirementOutputDto | UpdateNutrientRequirementOutputDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+
+    if ('blueprints' in dto) {
+      this.view.control = {
+        ...this.view.control,
+        taskScheduleBlueprints: dto.blueprints
+      };
+      return;
+    }
 
     if ('crop' in dto) {
       const crop = (dto as LoadCropForEditDataDto).crop;
