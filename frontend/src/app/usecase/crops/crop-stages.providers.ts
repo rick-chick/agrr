@@ -2,10 +2,12 @@ import { Provider } from '@angular/core';
 import { CropApiGateway } from '../../adapters/crops/crop-api.gateway';
 import { CropStagesPresenter } from '../../adapters/crops/crop-stages.presenter';
 import { CropStageApiGateway } from '../../adapters/crops/crop-stage-api.gateway';
+import { CropTaskScheduleBlueprintApiGateway } from '../../adapters/crops/crop-task-schedule-blueprint-api.gateway';
 import { CreateCropStageUseCase } from './create-crop-stage.usecase';
 import { CREATE_CROP_STAGE_OUTPUT_PORT } from './create-crop-stage.output-port';
 import { CROP_GATEWAY } from './crop-gateway';
 import { CROP_STAGE_GATEWAY } from './crop-stage-gateway';
+import { CROP_TASK_SCHEDULE_BLUEPRINT_GATEWAY } from './crop-task-schedule-blueprint-gateway';
 import { DeleteCropStageUseCase } from './delete-crop-stage.usecase';
 import { DELETE_CROP_STAGE_OUTPUT_PORT } from './delete-crop-stage.output-port';
 import { LoadCropForEditUseCase } from './load-crop-for-edit.usecase';
@@ -44,7 +46,8 @@ export const CROP_STAGES_PROVIDERS: readonly Provider[] = [
   { provide: UPDATE_SUNSHINE_REQUIREMENT_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: UPDATE_NUTRIENT_REQUIREMENT_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: CROP_GATEWAY, useClass: CropApiGateway },
-  { provide: CROP_STAGE_GATEWAY, useClass: CropStageApiGateway }
+  { provide: CROP_STAGE_GATEWAY, useClass: CropStageApiGateway },
+  { provide: CROP_TASK_SCHEDULE_BLUEPRINT_GATEWAY, useClass: CropTaskScheduleBlueprintApiGateway }
 ];
 
 export { CropStagesPresenter } from '../../adapters/crops/crop-stages.presenter';
