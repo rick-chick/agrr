@@ -1,4 +1,10 @@
+import { CropStage } from '../../domain/crops/crop';
+
 export interface ReorderCropStagesInputDto {
   cropId: number;
-  orders: Array<{ id: number; order: number }>;
+  entries: Array<{ id: number; order: number }>;
+}
+
+export interface ReorderCropStagesOutputDto {
+  stages: CropStage[];
 }

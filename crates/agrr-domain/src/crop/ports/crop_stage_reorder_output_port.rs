@@ -3,7 +3,6 @@ use crate::shared::dtos::Error;
 
 pub enum CropStageReorderFailure {
     Error(Error),
-    NotFound,
 }
 
 pub trait CropStageReorderOutputPort {

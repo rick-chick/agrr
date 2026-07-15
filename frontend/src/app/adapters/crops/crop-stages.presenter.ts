@@ -7,10 +7,10 @@ import { CreateCropStageOutputPort } from '../../usecase/crops/create-crop-stage
 import { CreateCropStageOutputDto } from '../../usecase/crops/create-crop-stage.dtos';
 import { UpdateCropStageOutputPort } from '../../usecase/crops/update-crop-stage.output-port';
 import { UpdateCropStageOutputDto } from '../../usecase/crops/update-crop-stage.dtos';
+import { ReorderCropStagesOutputPort } from '../../usecase/crops/reorder-crop-stages.output-port';
+import { ReorderCropStagesOutputDto } from '../../usecase/crops/reorder-crop-stages.dtos';
 import { DeleteCropStageOutputPort } from '../../usecase/crops/delete-crop-stage.output-port';
 import { DeleteCropStageOutputDto } from '../../usecase/crops/delete-crop-stage.dtos';
-import { ReorderCropStagesOutputPort } from '../../usecase/crops/reorder-crop-stages.output-port';
-import { ReorderCropStagesOutputDto } from '../../usecase/crops/reorder-crop-stages.output-port';
 import { UpdateTemperatureRequirementOutputPort } from '../../usecase/crops/update-temperature-requirement.output-port';
 import { UpdateTemperatureRequirementOutputDto } from '../../usecase/crops/update-temperature-requirement.dtos';
 import { UpdateThermalRequirementOutputPort } from '../../usecase/crops/update-thermal-requirement.output-port';
@@ -79,7 +79,7 @@ export class CropStagesPresenter implements
       return;
     }
 
-    if ('stages' in dto) {
+    if ('stages' in dto && Array.isArray((dto as ReorderCropStagesOutputDto).stages)) {
       this.presentReorderCropStages(dto as ReorderCropStagesOutputDto);
       return;
     }
@@ -132,12 +132,10 @@ export class CropStagesPresenter implements
     });
   }
 
-  presentUpdateCropStage(dto: UpdateCropStageOutputDto): void {
+  presentReorderCropStages(dto: ReorderCropStagesOutputDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    const currentStages = this.view.control.formData.crop_stages;
-    const updatedStages = currentStages.map(stage =>
-      stage.id === dto.stage.id ? dto.stage : stage
-    );
+    const byId = new Map(dto.stages.map((stage) => [stage.id, stage]));
+    const updatedStages = this.view.control.formData.crop_stages.map((stage) => byId.get(stage.id) ?? stage);
     this.view.control = this.applyDisplayState({
       ...this.view.control,
       formData: {
@@ -149,13 +147,17 @@ export class CropStagesPresenter implements
     });
   }
 
-  presentReorderCropStages(dto: ReorderCropStagesOutputDto): void {
+  presentUpdateCropStage(dto: UpdateCropStageOutputDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const currentStages = this.view.control.formData.crop_stages;
+    const updatedStages = currentStages.map(stage =>
+      stage.id === dto.stage.id ? dto.stage : stage
+    );
     this.view.control = this.applyDisplayState({
       ...this.view.control,
       formData: {
         ...this.view.control.formData,
-        crop_stages: dto.stages
+        crop_stages: updatedStages
       },
       pendingErrorFlash: null,
       pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_updated')

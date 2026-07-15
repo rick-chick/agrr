@@ -578,7 +578,7 @@ describe('CropStagesComponent', () => {
     expect(component.control.formData.crop_stages.map((stage) => stage.order)).toEqual([1, 2, 3]);
     expect(mockReorderCropStagesUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
-      orders: [
+      entries: [
         { id: 1, order: 3 },
         { id: 2, order: 1 },
         { id: 3, order: 2 }

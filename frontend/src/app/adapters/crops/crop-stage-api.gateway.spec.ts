@@ -81,21 +81,28 @@ describe('CropStageApiGateway', () => {
 
   describe('reorderCropStages', () => {
     it('returns Observable<CropStage[]>', async () => {
-      const orders = [
+      const entries = [
         { id: 1, order: 2 },
         { id: 2, order: 1 }
       ];
-      const stages: CropStage[] = [
-        { id: 2, crop_id: 1, name: 'B', order: 1 },
-        { id: 1, crop_id: 1, name: 'A', order: 2 }
+      const cropStages: CropStage[] = [
+        { id: 2, crop_id: 1, name: 'Stage B', order: 1 },
+        { id: 1, crop_id: 1, name: 'Stage A', order: 2 }
       ];
-      vi.mocked(client.put).mockReturnValue(of(stages));
+      vi.mocked(client.put).mockReturnValue(of(cropStages));
 
-      const result = await firstValueFrom(gateway.reorderCropStages(1, orders));
-      expect(result).toEqual(stages);
+      const result = await firstValueFrom(gateway.reorderCropStages(1, entries));
+      expect(result).toEqual(cropStages);
       expect(client.put).toHaveBeenCalledWith('/crops/1/crop_stages/reorder', {
-        crop_stage_orders: orders
+        crop_stages: entries
       });
+    });
+
+    it('forwards error when api fails', async () => {
+      const entries = [{ id: 1, order: 2 }];
+      vi.mocked(client.put).mockReturnValue(throwError(() => new Error('network error')));
+
+      await expect(firstValueFrom(gateway.reorderCropStages(1, entries))).rejects.toThrow('network error');
     });
   });
 

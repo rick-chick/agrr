@@ -1,6 +1,5 @@
-import { InjectionToken } from '@angular/core';
-import { ReorderCropStagesInputPort } from './reorder-crop-stages.output-port';
+import { ReorderCropStagesInputDto } from './reorder-crop-stages.dtos';
 
-export const REORDER_CROP_STAGES_INPUT_PORT = new InjectionToken<ReorderCropStagesInputPort>(
-  'REORDER_CROP_STAGES_INPUT_PORT'
-);
+export interface ReorderCropStagesInputPort {
+  execute(dto: ReorderCropStagesInputDto): void;
+}

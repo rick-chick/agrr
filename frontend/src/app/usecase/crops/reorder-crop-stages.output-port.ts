@@ -1,17 +1,12 @@
-import { ReorderCropStagesInputDto } from './reorder-crop-stages.dtos';
-import { CropStage } from '../../domain/crops/crop';
-
-export interface ReorderCropStagesInputPort {
-  execute(dto: ReorderCropStagesInputDto): void;
-}
-
-export interface ReorderCropStagesOutputDto {
-  stages: CropStage[];
-}
+import { InjectionToken } from '@angular/core';
+import { ReorderCropStagesOutputDto } from './reorder-crop-stages.dtos';
+import { ErrorDto } from '../../domain/shared/error.dto';
 
 export interface ReorderCropStagesOutputPort {
   present(dto: ReorderCropStagesOutputDto): void;
-  onError(error: { message: string }): void;
+  onError(dto: ErrorDto): void;
 }
 
-export const REORDER_CROP_STAGES_OUTPUT_PORT = 'REORDER_CROP_STAGES_OUTPUT_PORT';
+export const REORDER_CROP_STAGES_OUTPUT_PORT = new InjectionToken<ReorderCropStagesOutputPort>(
+  'REORDER_CROP_STAGES_OUTPUT_PORT'
+);

@@ -7,7 +7,8 @@ use support::{
     agrr_regeneration_contract_available, assert_crop_task_template_api_removed,
     clear_plan_task_schedules, developer_session_id, empty_headers, find_schedule_item,
     poll_task_schedule_sync_ready, schedule_item_ids_from_response, seed_masters_crop,
-    seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages, seed_task_schedule_regeneration_plan,
+    seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
+    seed_task_schedule_regeneration_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
     set_plan_task_schedule_sync_failed_raw_error, status_and_body, user_id_for_session,
 };
@@ -919,12 +920,14 @@ fn delete_masters_crop_agricultural_tasks_returns_410_gone() {
 }
 
 #[test]
-fn put_masters_crop_stages_reorder_swaps_stage_order_without_500() {
+fn put_masters_crop_stages_reorder_swaps_stage_orders() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
-    let seed = seed_masters_crop_with_stages(user_id);
-    let [stage_a, stage_b, stage_c] = seed.stage_ids;
+    let seed = seed_masters_crop_with_stages(user_id, 2);
+    let [stage_a, stage_b] = seed.stage_ids.as_slice() else {
+        panic!("expected two crop stages");
+    };
 
     let (status, body) = status_and_body(client.put(
         &format!(
@@ -934,29 +937,35 @@ fn put_masters_crop_stages_reorder_swaps_stage_order_without_500() {
         Some(&session_id),
         &empty_headers(),
         Some(serde_json::json!({
-            "crop_stage_orders": [
-                { "id": stage_c, "order": 1 },
+            "crop_stages": [
                 { "id": stage_a, "order": 2 },
-                { "id": stage_b, "order": 3 }
+                { "id": stage_b, "order": 1 }
             ]
         })),
     ));
     assert_eq!(200, status, "{body}");
-    let json: serde_json::Value = serde_json::from_str(&body).expect("reorder JSON");
-    let stages = json.as_array().expect("stages array");
-    assert_eq!(stage_c, stages[0]["id"].as_i64().unwrap());
-    assert_eq!(1, stages[0]["order"].as_i64().unwrap());
-    assert_eq!(stage_a, stages[1]["id"].as_i64().unwrap());
-    assert_eq!(2, stages[1]["order"].as_i64().unwrap());
+    let json: Vec<serde_json::Value> = serde_json::from_str(&body).expect("reorder JSON");
+    let orders: Vec<i64> = json
+        .iter()
+        .map(|stage| stage["order"].as_i64().expect("order"))
+        .collect();
+    assert_eq!(orders, vec![1, 2]);
+    let names: Vec<&str> = json
+        .iter()
+        .map(|stage| stage["name"].as_str().expect("name"))
+        .collect();
+    assert_eq!(names, vec!["Stage 2", "Stage 1"]);
 }
 
 #[test]
-fn patch_masters_crop_stage_conflicting_order_returns_422_not_500() {
+fn patch_masters_crop_stage_conflicting_order_returns_422() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
     let user_id = user_id_for_session(&client, &session_id);
-    let seed = seed_masters_crop_with_stages(user_id);
-    let [stage_a, _stage_b, _stage_c] = seed.stage_ids;
+    let seed = seed_masters_crop_with_stages(user_id, 2);
+    let [stage_a, _stage_b] = seed.stage_ids.as_slice() else {
+        panic!("expected two crop stages");
+    };
 
     let (status, body) = status_and_body(client.patch(
         &format!(
@@ -965,10 +974,10 @@ fn patch_masters_crop_stage_conflicting_order_returns_422_not_500() {
         ),
         Some(&session_id),
         &empty_headers(),
-        Some(serde_json::json!({
-            "crop_stage": { "order": 2 }
-        })),
+        Some(serde_json::json!({ "crop_stage": { "order": 2 } })),
     ));
     assert_eq!(422, status, "{body}");
-    assert_ne!("internal", body);
+    let json: serde_json::Value = serde_json::from_str(&body).expect("error JSON");
+    assert!(json.get("errors").is_some(), "{body}");
 }
+

@@ -29,6 +29,14 @@ pub trait CropGateway: Send + Sync {
     fn list_by_crop_id(&self, crop_id: i64) -> Result<Vec<CropStageEntity>, Box<dyn std::error::Error + Send + Sync>>;
     fn create_crop_stage(&self, input: CropStageCreateInput) -> Result<CropStageEntity, Box<dyn std::error::Error + Send + Sync>>;
     fn update_crop_stage(&self, crop_stage_id: i64, input: CropStageUpdateInput) -> Result<CropStageEntity, Box<dyn std::error::Error + Send + Sync>>;
+    fn reorder_crop_stages(
+        &self,
+        crop_id: i64,
+        stage_orders: Vec<(i64, i64)>,
+    ) -> Result<Vec<CropStageEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        let _ = (crop_id, stage_orders);
+        Err("reorder_crop_stages not implemented".into())
+    }
     fn delete_crop_stage(&self, crop_stage_id: i64) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
     fn create_thermal_requirement(&self, crop_stage_id: i64, input: ThermalRequirementUpdateInput) -> Result<ThermalRequirementEntity, Box<dyn std::error::Error + Send + Sync>>;

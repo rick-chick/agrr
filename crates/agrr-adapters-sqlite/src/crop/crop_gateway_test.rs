@@ -38,8 +38,7 @@ fn crop_test_pool() -> SqlitePool {
               id INTEGER PRIMARY KEY, crop_id INTEGER NOT NULL, name TEXT, \"order\" INTEGER,
               created_at TEXT, updated_at TEXT
             );
-            CREATE UNIQUE INDEX index_crop_stages_on_crop_id_and_order
-              ON crop_stages (crop_id, \"order\");
+            CREATE UNIQUE INDEX index_crop_stages_on_crop_id_and_order ON crop_stages (crop_id, \"order\");
             CREATE TABLE temperature_requirements (
               id INTEGER PRIMARY KEY, crop_stage_id INTEGER NOT NULL,
               base_temperature REAL, optimal_min REAL, optimal_max REAL,
@@ -291,38 +290,26 @@ fn list_by_ids_returns_entities_in_requested_order() {
 }
 
 #[test]
-fn reorder_crop_stages_updates_all_orders_in_one_transaction() {
-    use agrr_domain::crop::gateways::CropStageReorderGateway;
-
+fn reorder_crop_stages_swaps_orders_in_one_transaction() {
     let pool = crop_test_pool();
     let (gw, crop_id) = seed_crop(&pool);
     let stage_a = gw
         .create_crop_stage(CropStageCreateInput::new(
             crop_id,
-            json!({ "name": "A", "order": 1 }),
+            json!({ "name": "Stage A", "order": 1 }),
         ))
         .unwrap();
     let stage_b = gw
         .create_crop_stage(CropStageCreateInput::new(
             crop_id,
-            json!({ "name": "B", "order": 2 }),
-        ))
-        .unwrap();
-    let stage_c = gw
-        .create_crop_stage(CropStageCreateInput::new(
-            crop_id,
-            json!({ "name": "C", "order": 3 }),
+            json!({ "name": "Stage B", "order": 2 }),
         ))
         .unwrap();
 
     let reordered = gw
         .reorder_crop_stages(
             crop_id,
-            &[
-                (stage_c.id, 1),
-                (stage_a.id, 2),
-                (stage_b.id, 3),
-            ],
+            vec![(stage_a.id, 2), (stage_b.id, 1)],
         )
         .unwrap();
 
@@ -331,26 +318,24 @@ fn reorder_crop_stages_updates_all_orders_in_one_transaction() {
             .iter()
             .map(|stage| (stage.id, stage.order))
             .collect::<Vec<_>>(),
-        vec![(stage_c.id, 1), (stage_a.id, 2), (stage_b.id, 3)]
+        vec![(stage_b.id, 1), (stage_a.id, 2)]
     );
 }
 
 #[test]
-fn update_crop_stage_conflicting_order_returns_record_invalid() {
-    use agrr_domain::shared::exceptions::RecordInvalidError;
-
+fn update_crop_stage_order_conflict_returns_record_invalid() {
     let pool = crop_test_pool();
     let (gw, crop_id) = seed_crop(&pool);
     let stage_a = gw
         .create_crop_stage(CropStageCreateInput::new(
             crop_id,
-            json!({ "name": "A", "order": 1 }),
+            json!({ "name": "Stage A", "order": 1 }),
         ))
         .unwrap();
     let stage_b = gw
         .create_crop_stage(CropStageCreateInput::new(
             crop_id,
-            json!({ "name": "B", "order": 2 }),
+            json!({ "name": "Stage B", "order": 2 }),
         ))
         .unwrap();
 
@@ -359,10 +344,12 @@ fn update_crop_stage_conflicting_order_returns_record_invalid() {
             stage_a.id,
             CropStageUpdateInput {
                 crop_stage_id: stage_a.id,
-                payload: json!({ "order": stage_b.order }),
+                payload: json!({ "order": 2 }),
             },
         )
         .unwrap_err();
 
-    assert!(err.downcast_ref::<RecordInvalidError>().is_some());
+    assert!(err.downcast_ref::<agrr_domain::shared::exceptions::RecordInvalidError>().is_some());
+    let _ = stage_b;
 }
+

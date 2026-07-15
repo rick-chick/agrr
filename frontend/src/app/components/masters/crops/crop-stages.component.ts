@@ -762,7 +762,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
     this.reorderCropStagesUseCase.execute({
       cropId: this.cropId,
-      orders: updates.map((update) => ({ id: update.id, order: update.order }))
+      entries: updates
     });
   }
 
