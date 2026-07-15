@@ -15,12 +15,23 @@ import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/upda
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
 import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
+import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 const initialFormData = {
   name: '',
   crop_stages: [] as CropStage[]
+};
+
+
+const loadedControlBase = {
+  loading: false,
+  error: null,
+  pendingErrorFlash: null,
+  pendingSuccessFlash: null,
+  blueprintReadiness: defaultBlueprintReadiness(),
+  taskScheduleBlueprints: []
 };
 
 describe('CropStagesComponent', () => {
@@ -173,11 +184,7 @@ describe('CropStagesComponent', () => {
     translateService.use('en');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         name: 'Tomato',
         crop_stages: [
@@ -233,10 +240,7 @@ describe('CropStagesComponent', () => {
     translateService.use('en');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
+      ...loadedControlBase,
       taskScheduleBlueprints: [
         {
           id: 10,
@@ -305,11 +309,7 @@ describe('CropStagesComponent', () => {
     translateService.use('en');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         name: 'Tomato',
         crop_stages: [
@@ -339,11 +339,7 @@ describe('CropStagesComponent', () => {
 
   it('does not call deleteCropStageUseCase when delete confirm is cancelled', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         name: 'Tomato',
         crop_stages: [
@@ -406,11 +402,7 @@ describe('CropStagesComponent', () => {
 
   it('should render crop stages without ngModel error after fix', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -435,11 +427,7 @@ describe('CropStagesComponent', () => {
 
   it('should translate stage title with correct parameters', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -466,11 +454,7 @@ describe('CropStagesComponent', () => {
 
   it('should link back to crop detail via breadcrumbs', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato'
@@ -508,11 +492,7 @@ describe('CropStagesComponent', () => {
     );
     component.fromPlanId = 7;
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato'
@@ -549,11 +529,7 @@ describe('CropStagesComponent', () => {
   } as CropStage;
 
   const loadedControl = {
-    loading: false,
-    error: null,
-    pendingErrorFlash: null,
-    pendingSuccessFlash: null,
-    taskScheduleBlueprints: [],
+    ...loadedControlBase,
     formData: {
       ...initialFormData,
       name: 'Tomato',
@@ -665,11 +641,7 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -725,11 +697,7 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'トマト',
@@ -778,11 +746,7 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'トマト',
@@ -840,11 +804,7 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -871,11 +831,7 @@ describe('CropStagesComponent', () => {
 
   it('sorts stages by order for display', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -907,11 +863,7 @@ describe('CropStagesComponent', () => {
 
   it('persists reordered stage orders after drag-drop', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -995,11 +947,7 @@ describe('CropStagesComponent', () => {
     } as CropStage;
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -1048,11 +996,7 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -1090,6 +1034,137 @@ describe('CropStagesComponent', () => {
     const cumulativeGddElements = fixture.nativeElement.querySelectorAll('.crop-stage-cumulative-gdd');
     expect(cumulativeGddElements[0]?.textContent).toContain('0〜200');
     expect(cumulativeGddElements[1]?.textContent).toContain('200〜300');
+  });
+
+  describe('blueprint readiness checklist and next-step CTA', () => {
+    const blueprintReadinessTranslations = {
+      crops: {
+        show: {
+          blueprint_readiness: {
+            title: 'Required before AI generation',
+            stages_ready: 'Stages ready',
+            stages_missing: 'Growth stages are missing base temperature or required GDD',
+            blueprints_ready: 'Task plans ready',
+            blueprints_missing: 'No task plans registered yet',
+            blueprints_action: 'Register task plans'
+          },
+          blueprint_summary: {
+            edit_action: 'Edit task plans'
+          }
+        }
+      }
+    };
+
+    const completeStage: CropStage = {
+      id: 1,
+      name: 'Stage 1',
+      order: 1,
+      temperature_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        base_temperature: 10,
+        optimal_min: null,
+        optimal_max: null,
+        low_stress_threshold: null,
+        high_stress_threshold: null,
+        frost_threshold: null,
+        sterility_risk_threshold: null,
+        max_temperature: null
+      },
+      thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
+      sunshine_requirement: null,
+      nutrient_requirement: null
+    } as CropStage;
+
+    const incompleteStage: CropStage = {
+      id: 1,
+      name: 'Stage 1',
+      order: 1,
+      temperature_requirement: null,
+      thermal_requirement: null,
+      sunshine_requirement: null,
+      nutrient_requirement: null
+    } as CropStage;
+
+    beforeEach(() => {
+      translateService.setTranslation('en', blueprintReadinessTranslations, true);
+      translateService.use('en');
+    });
+
+    it('shows checklist with stages_missing when requirements are incomplete', () => {
+      component.control = {
+        ...loadedControlBase,
+        formData: {
+          name: 'Tomato',
+          crop_stages: [incompleteStage]
+        }
+      };
+
+      fixture.detectChanges();
+
+      const checklist = fixture.nativeElement.querySelector('.blueprint-readiness');
+      expect(checklist).toBeTruthy();
+      expect(checklist.textContent).toContain('Growth stages are missing base temperature or required GDD');
+      expect(checklist.querySelector('.blueprint-readiness__item--ok')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    });
+
+    it('shows checklist with stages_ready when requirements are complete', () => {
+      component.control = {
+        ...loadedControlBase,
+        formData: {
+          name: 'Tomato',
+          crop_stages: [completeStage]
+        }
+      };
+
+      fixture.detectChanges();
+
+      const checklist = fixture.nativeElement.querySelector('.blueprint-readiness');
+      expect(checklist).toBeTruthy();
+      expect(checklist.textContent).toContain('Stages ready');
+      expect(checklist.querySelector('.blueprint-readiness__item--ok')).toBeTruthy();
+    });
+
+    it('shows next-step CTA to task schedule blueprints when requirements are complete', () => {
+      component.control = {
+        ...loadedControlBase,
+        formData: {
+          name: 'Tomato',
+          crop_stages: [completeStage]
+        }
+      };
+
+      fixture.detectChanges();
+
+      const nextStep = fixture.nativeElement.querySelector('.crop-stages__next-step');
+      expect(nextStep).toBeTruthy();
+      const link = nextStep.querySelector(
+        'a[href="/crops/1/task_schedule_blueprints"]'
+      ) as HTMLAnchorElement;
+      expect(link).toBeTruthy();
+      expect(link.textContent).toContain('Edit task plans');
+    });
+
+    it('passes wizard query params on next-step CTA when fromPlan is set', () => {
+      component.fromPlanId = 7;
+      component.returnTab = 'work';
+      expect(component.wizardQueryParams).toEqual({ fromPlan: 7, returnTo: 'work' });
+      component.control = {
+        ...loadedControlBase,
+        formData: {
+          name: 'Tomato',
+          crop_stages: [completeStage]
+        }
+      };
+
+      fixture.detectChanges();
+
+      const link = fixture.nativeElement.querySelector(
+        '.crop-stages__next-step a[href*="/crops/1/task_schedule_blueprints"]'
+      ) as HTMLAnchorElement;
+      expect(link).toBeTruthy();
+    });
   });
 
   it('shows help and placeholder for base temperature and required GDD fields', () => {
@@ -1145,11 +1220,7 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
-      taskScheduleBlueprints: [],
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -1230,11 +1301,7 @@ describe('CropStagesComponent', () => {
         component.fromPlanId = null;
       }
       component.control = {
-        loading: false,
-        error: null,
-        pendingErrorFlash: null,
-        pendingSuccessFlash: null,
-        taskScheduleBlueprints: [],
+        ...loadedControlBase,
         formData: {
           ...initialFormData,
           name: 'Tomato',
@@ -1365,5 +1432,4 @@ describe('CropStagesComponent', () => {
       ).toBe(true);
     });
   });
-
 });
