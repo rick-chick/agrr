@@ -58,16 +58,16 @@ const initialControl: CropStagesViewState = {
 export interface StageEditDraft {
   name: string;
   base_temperature: number | null;
+  optimal_min: number | null;
+  optimal_max: number | null;
+  max_temperature: number | null;
   required_gdd: number | null;
 }
 
 interface TemperatureDetailDraft {
-  optimal_min: number | null;
-  optimal_max: number | null;
   low_stress_threshold: number | null;
   high_stress_threshold: number | null;
   frost_threshold: number | null;
-  max_temperature: number | null;
 }
 
 interface AdvancedDetailDraft {
@@ -203,6 +203,33 @@ interface AdvancedDetailDraft {
                     <p class="form-hint">{{ 'crops.edit.base_temperature_help' | translate }}</p>
                   </label>
                   <label class="form-card__field form-card__field--small">
+                    <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="panel_optimal_min"
+                      [(ngModel)]="stageEditDraft.optimal_min"
+                    />
+                  </label>
+                  <label class="form-card__field form-card__field--small">
+                    <span class="form-card__field-label">{{ 'crops.edit.optimal_max' | translate }}</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="panel_optimal_max"
+                      [(ngModel)]="stageEditDraft.optimal_max"
+                    />
+                  </label>
+                  <label class="form-card__field form-card__field--small">
+                    <span class="form-card__field-label">{{ 'crops.edit.max_temperature' | translate }}</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="panel_max_temperature"
+                      [(ngModel)]="stageEditDraft.max_temperature"
+                    />
+                  </label>
+                  <label class="form-card__field form-card__field--small">
                     <span class="form-card__field-label">{{ 'crops.edit.required_gdd' | translate }}</span>
                     <input
                       type="number"
@@ -292,14 +319,6 @@ interface AdvancedDetailDraft {
         <h2 class="crop-stages-dialog__title">{{ 'crops.edit.temperature_details_title' | translate }}</h2>
         <div class="crop-stages-dialog__fields">
           <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
-            <input type="number" step="0.1" name="temp_opt_min" [(ngModel)]="temperatureDetailDraft.optimal_min" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.optimal_max' | translate }}</span>
-            <input type="number" step="0.1" name="temp_opt_max" [(ngModel)]="temperatureDetailDraft.optimal_max" />
-          </label>
-          <label class="form-card__field form-card__field--small">
             <span class="form-card__field-label">{{ 'crops.edit.low_stress_threshold' | translate }}</span>
             <input type="number" step="0.1" name="temp_low_stress" [(ngModel)]="temperatureDetailDraft.low_stress_threshold" />
           </label>
@@ -310,10 +329,6 @@ interface AdvancedDetailDraft {
           <label class="form-card__field form-card__field--small">
             <span class="form-card__field-label">{{ 'crops.edit.frost_threshold' | translate }}</span>
             <input type="number" step="0.1" name="temp_frost" [(ngModel)]="temperatureDetailDraft.frost_threshold" />
-          </label>
-          <label class="form-card__field form-card__field--small">
-            <span class="form-card__field-label">{{ 'crops.edit.max_temperature' | translate }}</span>
-            <input type="number" step="0.1" name="temp_max" [(ngModel)]="temperatureDetailDraft.max_temperature" />
           </label>
         </div>
         <div class="confirm-dialog__actions">
@@ -418,7 +433,14 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   selectedStageId: number | null = null;
-  stageEditDraft: StageEditDraft = { name: '', base_temperature: null, required_gdd: null };
+  stageEditDraft: StageEditDraft = {
+    name: '',
+    base_temperature: null,
+    optimal_min: null,
+    optimal_max: null,
+    max_temperature: null,
+    required_gdd: null
+  };
   temperatureDetailDraft: TemperatureDetailDraft | null = null;
   advancedDetailDraft: AdvancedDetailDraft | null = null;
   pendingStageSwitchId: number | null = null;
@@ -551,9 +573,22 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       this.updateCropStage(stage.id, { name: this.stageEditDraft.name });
     }
 
-    const currentBaseTemp = stage.temperature_requirement?.base_temperature ?? null;
-    if (this.stageEditDraft.base_temperature !== currentBaseTemp) {
-      this.updateTemperatureRequirement(stage.id, { base_temperature: this.stageEditDraft.base_temperature });
+    const temp = stage.temperature_requirement;
+    const tempPayload: Record<string, unknown> = {};
+    if (this.stageEditDraft.base_temperature !== (temp?.base_temperature ?? null)) {
+      tempPayload['base_temperature'] = this.stageEditDraft.base_temperature;
+    }
+    if (this.stageEditDraft.optimal_min !== (temp?.optimal_min ?? null)) {
+      tempPayload['optimal_min'] = this.stageEditDraft.optimal_min;
+    }
+    if (this.stageEditDraft.optimal_max !== (temp?.optimal_max ?? null)) {
+      tempPayload['optimal_max'] = this.stageEditDraft.optimal_max;
+    }
+    if (this.stageEditDraft.max_temperature !== (temp?.max_temperature ?? null)) {
+      tempPayload['max_temperature'] = this.stageEditDraft.max_temperature;
+    }
+    if (Object.keys(tempPayload).length > 0) {
+      this.updateTemperatureRequirement(stage.id, tempPayload);
     }
 
     const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
@@ -571,12 +606,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
     const temp = stage.temperature_requirement;
     this.temperatureDetailDraft = {
-      optimal_min: temp?.optimal_min ?? null,
-      optimal_max: temp?.optimal_max ?? null,
       low_stress_threshold: temp?.low_stress_threshold ?? null,
       high_stress_threshold: temp?.high_stress_threshold ?? null,
-      frost_threshold: temp?.frost_threshold ?? null,
-      max_temperature: temp?.max_temperature ?? null
+      frost_threshold: temp?.frost_threshold ?? null
     };
     this.temperatureDialogRef?.nativeElement?.showModal();
   }
@@ -790,11 +822,15 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (!stage) {
       return false;
     }
-    const currentBaseTemp = stage.temperature_requirement?.base_temperature ?? null;
+    const temp = stage.temperature_requirement;
+    const currentBaseTemp = temp?.base_temperature ?? null;
     const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
     return (
       this.stageEditDraft.name !== stage.name ||
       this.stageEditDraft.base_temperature !== currentBaseTemp ||
+      this.stageEditDraft.optimal_min !== (temp?.optimal_min ?? null) ||
+      this.stageEditDraft.optimal_max !== (temp?.optimal_max ?? null) ||
+      this.stageEditDraft.max_temperature !== (temp?.max_temperature ?? null) ||
       this.stageEditDraft.required_gdd !== currentRequiredGdd
     );
   }
@@ -803,6 +839,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     this.stageEditDraft = {
       name: stage.name,
       base_temperature: stage.temperature_requirement?.base_temperature ?? null,
+      optimal_min: stage.temperature_requirement?.optimal_min ?? null,
+      optimal_max: stage.temperature_requirement?.optimal_max ?? null,
+      max_temperature: stage.temperature_requirement?.max_temperature ?? null,
       required_gdd: stage.thermal_requirement?.required_gdd ?? null
     };
   }
@@ -817,7 +856,14 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
     if (stages.length === 0) {
       this.selectedStageId = null;
-      this.stageEditDraft = { name: '', base_temperature: null, required_gdd: null };
+      this.stageEditDraft = {
+        name: '',
+        base_temperature: null,
+        optimal_min: null,
+        optimal_max: null,
+        max_temperature: null,
+        required_gdd: null
+      };
       return;
     }
 

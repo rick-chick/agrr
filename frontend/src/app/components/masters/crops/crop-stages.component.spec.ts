@@ -82,9 +82,9 @@ const tableTranslations = {
       required_gdd_placeholder: 'e.g., 800.0',
       required_gdd_help: 'Required GDD help',
       save_stage: 'Save',
-      edit_temperature_details: 'Edit temperature details…',
+      edit_temperature_details: 'Edit stress thresholds…',
       edit_sunshine_nutrient: 'Edit sunshine & nutrients…',
-      temperature_details_title: 'Temperature details',
+      temperature_details_title: 'Stress thresholds',
       advanced_details_title: 'Sunshine & nutrient details',
       unsaved_confirm_message: 'You have unsaved changes. Continue?',
       table_order: 'Order',
@@ -275,6 +275,9 @@ describe('CropStagesComponent', () => {
 
     component.stageEditDraft.name = 'Updated Name';
     component.stageEditDraft.base_temperature = 12;
+    component.stageEditDraft.optimal_min = 15;
+    component.stageEditDraft.optimal_max = 25;
+    component.stageEditDraft.max_temperature = 35;
     component.stageEditDraft.required_gdd = 150;
     expect(mockUpdateCropStageUseCase.execute).not.toHaveBeenCalled();
     expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
@@ -290,7 +293,12 @@ describe('CropStagesComponent', () => {
     expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
       stageId: 1,
-      payload: { base_temperature: 12 }
+      payload: {
+        base_temperature: 12,
+        optimal_min: 15,
+        optimal_max: 25,
+        max_temperature: 35
+      }
     });
     expect(mockUpdateThermalRequirementUseCase.execute).toHaveBeenCalledWith({
       cropId: 1,
@@ -343,20 +351,19 @@ describe('CropStagesComponent', () => {
     expect(component.stageEditDraft.name).toBe('Stage 2');
   });
 
-  it('opens temperature dialog and saves on explicit save', async () => {
+  it('opens temperature dialog with stress thresholds only and saves on explicit save', async () => {
     await loadStages([stageFixture]);
 
     component.openTemperatureDialog();
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-    expect(component.temperatureDetailDraft?.optimal_min).toBeNull();
+    expect(component.temperatureDetailDraft?.low_stress_threshold).toBeNull();
+    expect(component.temperatureDetailDraft).not.toHaveProperty('optimal_min');
+    expect(component.temperatureDetailDraft).not.toHaveProperty('max_temperature');
 
     component.temperatureDetailDraft = {
-      optimal_min: 15,
-      optimal_max: 25,
       low_stress_threshold: 10,
       high_stress_threshold: 30,
-      frost_threshold: 0,
-      max_temperature: 35
+      frost_threshold: 0
     };
     component.saveTemperatureDialog();
 
@@ -364,15 +371,22 @@ describe('CropStagesComponent', () => {
       cropId: 1,
       stageId: 1,
       payload: {
-        optimal_min: 15,
-        optimal_max: 25,
         low_stress_threshold: 10,
         high_stress_threshold: 30,
-        frost_threshold: 0,
-        max_temperature: 35
+        frost_threshold: 0
       }
     });
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
+
+  it('renders inline temperature fields in edit panel', async () => {
+    await loadStages([stageFixture]);
+
+    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
+    expect(panel?.querySelector('input[name="panel_optimal_min"]')).toBeTruthy();
+    expect(panel?.querySelector('input[name="panel_optimal_max"]')).toBeTruthy();
+    expect(panel?.querySelector('input[name="panel_max_temperature"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Edit stress thresholds');
   });
 
   it('opens advanced dialog and saves sunshine, nutrient, and sterility fields', async () => {
