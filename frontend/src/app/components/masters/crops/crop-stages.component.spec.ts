@@ -74,7 +74,6 @@ const tableTranslations = {
       stages_list_heading: 'Stage list',
       stages_empty_lead: 'Stages are required.',
       add_stage: 'Add Stage',
-      stage_title: 'Stage {{order}}',
       stage_name: 'Stage Name',
       base_temperature: 'Base Temperature',
       base_temperature_placeholder: 'e.g., 5.0',
@@ -388,17 +387,7 @@ describe('CropStagesComponent', () => {
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
-  it('renders inline temperature fields in edit panel', async () => {
-    await loadStages([stageFixture]);
-
-    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
-    expect(panel?.querySelector('input[name="panel_optimal_min"]')).toBeTruthy();
-    expect(panel?.querySelector('input[name="panel_optimal_max"]')).toBeTruthy();
-    expect(panel?.querySelector('input[name="panel_max_temperature"]')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Edit stress thresholds');
-  });
-
-  it('renders edit panel sections for temperature, thermal, and details', async () => {
+  it('renders edit panel layout structure with sections, fields, and optimal range group', async () => {
     await loadStages([stageFixture]);
 
     const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
@@ -408,10 +397,10 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Temperature conditions');
     expect(fixture.nativeElement.textContent).toContain('Growing degree days');
     expect(fixture.nativeElement.textContent).toContain('Advanced settings');
-  });
-
-  it('groups optimal min and max fields in an optimal range block', async () => {
-    await loadStages([stageFixture]);
+    expect(panel?.querySelector('input[name="panel_optimal_min"]')).toBeTruthy();
+    expect(panel?.querySelector('input[name="panel_optimal_max"]')).toBeTruthy();
+    expect(panel?.querySelector('input[name="panel_max_temperature"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Edit stress thresholds');
 
     const optimalGroup = fixture.nativeElement.querySelector(
       '.crop-stages-edit-panel__optimal-group'
