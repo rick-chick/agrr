@@ -82,11 +82,13 @@ const initialControl: CropStagesViewState = {
 
         <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
           <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_title' | translate }}</h2>
-          <div class="crop-stages-section__actions">
-            <button type="button" class="btn btn-secondary" (click)="addCropStage()">
-              {{ 'crops.edit.add_stage' | translate }}
-            </button>
-          </div>
+          @if (control.formData.crop_stages.length > 0) {
+            <div class="crop-stages-section__actions">
+              <button type="button" class="btn btn-secondary" (click)="addCropStage()">
+                {{ 'crops.edit.add_stage' | translate }}
+              </button>
+            </div>
+          }
           @if (duplicateStageOrders.length > 0) {
             <p class="crop-stages-order-warning" role="alert">
               {{
@@ -101,6 +103,15 @@ const initialControl: CropStagesViewState = {
             [cdkDropListData]="sortedStages"
             (cdkDropListDropped)="onStageDropped($event)"
           >
+            @if (control.formData.crop_stages.length === 0) {
+              <div class="crop-stages-empty">
+                <p class="crop-stages-empty__lead">{{ 'crops.edit.stages_empty_lead' | translate }}</p>
+                <p class="crop-stages-empty__description">{{ 'crops.show.no_stages_description' | translate }}</p>
+                <button type="button" class="btn btn-primary crop-stages-empty__cta" (click)="addCropStage()">
+                  {{ 'crops.edit.add_stage' | translate }}
+                </button>
+              </div>
+            } @else {
             @for (stage of sortedStages; track stage.id) {
               <div class="crop-stage-card" cdkDrag [cdkDragData]="stage">
                 <div class="crop-stage-card__header">
@@ -238,6 +249,7 @@ const initialControl: CropStagesViewState = {
                   </details>
                 </div>
               </div>
+            }
             }
           </div>
         </section>

@@ -308,6 +308,55 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
+  it('shows empty state with description and primary CTA when no stages', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          show: {
+            no_stages_description: 'この作物の生育ステージを追加してください。'
+          },
+          edit: {
+            stages_title: '生育ステージ',
+            add_stage: 'ステージ追加',
+            stages_empty_lead: '生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。'
+          }
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: []
+      }
+    };
+
+    fixture.detectChanges();
+
+    const empty = fixture.nativeElement.querySelector('.crop-stages-empty');
+    expect(empty).toBeTruthy();
+    expect(empty?.querySelector('.crop-stages-empty__lead')?.textContent?.trim()).toContain(
+      '栽培テンプレート'
+    );
+    expect(empty?.querySelector('.crop-stages-empty__description')?.textContent?.trim()).toContain(
+      '生育ステージを追加'
+    );
+
+    const cta = empty?.querySelector('.crop-stages-empty__cta') as HTMLButtonElement;
+    expect(cta).toBeTruthy();
+    expect(cta.classList.contains('btn-primary')).toBe(true);
+    expect(cta.textContent?.trim()).toBe('ステージ追加');
+    expect(fixture.nativeElement.querySelector('.crop-stages-section__actions button')).toBeNull();
+  });
+
   it('shows cumulative GDD range when stage has required_gdd', () => {
     translateService.setTranslation(
       'ja',
