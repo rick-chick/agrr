@@ -1,0 +1,238 @@
+#!/usr/bin/env node
+/**
+ * Retry / reconcile PR Merge Worker webhook dispatch for stuck ready PRs.
+ *
+ * Usage:
+ *   node scripts/pr-merge-worker-retry-dispatch.mjs reconcile [--repo OWNER/REPO]
+ *   node scripts/pr-merge-worker-retry-dispatch.mjs from-title --title "..." [--repo OWNER/REPO]
+ *   node scripts/pr-merge-worker-retry-dispatch.mjs pr --number N [--repo OWNER/REPO]
+ *
+ * Env: WEBHOOK_URL, WEBHOOK_KEY, GH_TOKEN (optional; gh uses default auth)
+ */
+import { execFileSync } from 'node:child_process';
+
+import { parseRetryDispatchArgs } from './issue-worker-dispatch-lib.mjs';
+import {
+  buildRetryDispatchPayload,
+  isStuckRetryCandidate,
+  selectStuckRetryCandidate,
+} from './pr-merge-worker-retry-dispatch-lib.mjs';
+
+const DEFAULT_REPO = 'rick-chick/agrr';
+
+/**
+ * @param {string} repo
+ * @param {string[]} ghArgs
+ * @returns {string}
+ */
+function gh(repo, ghArgs) {
+  return execFileSync('gh', ['--repo', repo, ...ghArgs], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
+}
+
+/**
+ * @param {string} repo
+ * @returns {string}
+ */
+function repoOwner(repo) {
+  return gh(repo, ['repo', 'view', '--json', 'owner', '-q', '.owner.login']);
+}
+
+/**
+ * @param {string} repo
+ * @returns {Array<Record<string, unknown>>}
+ */
+function listOpenAgentMergePrs(repo) {
+  const raw = gh(repo, [
+    'pr',
+    'list',
+    '--state',
+    'open',
+    '--label',
+    'agent-merge',
+    '--json',
+    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt',
+  ]);
+  return JSON.parse(raw);
+}
+
+/**
+ * @param {string} repo
+ * @param {number} prNumber
+ * @returns {Array<{ name: string; state: string }>}
+ */
+function fetchChecks(repo, prNumber) {
+  try {
+    const raw = gh(repo, ['pr', 'checks', String(prNumber), '--json', 'name,state']);
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * @param {string} repo
+ * @param {number} prNumber
+ */
+function fetchPr(repo, prNumber) {
+  const raw = gh(repo, [
+    'pr',
+    'view',
+    String(prNumber),
+    '--json',
+    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt',
+  ]);
+  return JSON.parse(raw);
+}
+
+/**
+ * @param {string} repo
+ * @param {string} title
+ * @returns {Record<string, unknown> | null}
+ */
+function findOpenPrByTitle(repo, title) {
+  const prs = listOpenAgentMergePrs(repo);
+  const matches = prs.filter((pr) => pr.title === title);
+  if (matches.length === 0) {
+    return null;
+  }
+  return [...matches].sort((a, b) => a.number - b.number)[0];
+}
+
+/**
+ * @param {string} repo
+ * @param {Record<string, unknown>} payload
+ */
+function postWebhook(repo, payload) {
+  const webhookUrl = process.env.WEBHOOK_URL ?? '';
+  const webhookKey = process.env.WEBHOOK_KEY ?? '';
+  if (!webhookUrl || !webhookKey) {
+    console.log('WEBHOOK_URL or WEBHOOK_KEY is not set; skipping retry dispatch.');
+    process.exit(0);
+  }
+
+  execFileSync(
+    'curl',
+    [
+      '-fsS',
+      '-X',
+      'POST',
+      webhookUrl,
+      '-H',
+      `Authorization: Bearer ${webhookKey}`,
+      '-H',
+      'Content-Type: application/json',
+      '-d',
+      JSON.stringify(payload),
+    ],
+    { stdio: ['ignore', 'inherit', 'inherit'] },
+  );
+
+  console.log(
+    `Dispatched PR Merge Worker retry for #${payload.pr_number} (${payload.action})`,
+  );
+}
+
+/**
+ * @param {{
+ *   repo: string;
+ *   pr: Record<string, unknown>;
+ *   retryReason?: string;
+ *   removeStaleInProgressLabel?: boolean;
+ * }} input
+ * @returns {boolean}
+ */
+function dispatchIfEligible({
+  repo,
+  pr,
+  retryReason,
+  removeStaleInProgressLabel = false,
+}) {
+  const baseOwner = repoOwner(repo);
+  const checks = fetchChecks(repo, pr.number);
+  const result = isStuckRetryCandidate({
+    pr,
+    checks,
+    baseOwner,
+    nowMs: Date.now(),
+  });
+  if (!result.eligible) {
+    console.log(`Skip retry for PR #${pr.number}: ${result.reason}`);
+    return false;
+  }
+
+  if (removeStaleInProgressLabel || result.removeStaleInProgressLabel) {
+    console.log(`Removing stale agent-merge-in-progress from PR #${pr.number}`);
+    gh(repo, ['pr', 'edit', String(pr.number), '--remove-label', 'agent-merge-in-progress']);
+  }
+
+  const payload = buildRetryDispatchPayload({
+    repository: repo,
+    pr,
+    retryReason,
+  });
+  postWebhook(repo, payload);
+  return true;
+}
+
+function main() {
+  const args = parseRetryDispatchArgs(process.argv);
+  const repo = args.repo ?? DEFAULT_REPO;
+
+  if (args.mode === 'reconcile') {
+    const prs = listOpenAgentMergePrs(repo);
+    const checksByPrNumber = Object.fromEntries(
+      prs.map((pr) => [pr.number, fetchChecks(repo, pr.number)]),
+    );
+    const selected = selectStuckRetryCandidate(prs, checksByPrNumber, repoOwner(repo));
+    if (!selected) {
+      console.log('No eligible stuck agent-merge PRs for retry reconciliation.');
+      return;
+    }
+    dispatchIfEligible({
+      repo,
+      pr: selected.pr,
+      retryReason: args.retryReason ?? 'scheduled_reconcile',
+      removeStaleInProgressLabel: selected.removeStaleInProgressLabel,
+    });
+    return;
+  }
+
+  if (args.mode === 'from-title') {
+    if (!args.title) {
+      throw new Error('--title is required for from-title mode');
+    }
+    const pr = findOpenPrByTitle(repo, args.title);
+    if (!pr) {
+      console.log(`No open agent-merge PR matched title: ${args.title}`);
+      return;
+    }
+    dispatchIfEligible({
+      repo,
+      pr,
+      retryReason: args.retryReason ?? 'dispatch_run_cancelled',
+    });
+    return;
+  }
+
+  if (args.mode === 'pr') {
+    const prNumber = Number(args.number);
+    if (!Number.isInteger(prNumber) || prNumber <= 0) {
+      throw new Error('--number must be a positive integer for pr mode');
+    }
+    dispatchIfEligible({
+      repo,
+      pr: fetchPr(repo, prNumber),
+      retryReason: args.retryReason ?? 'manual_retry',
+    });
+    return;
+  }
+
+  throw new Error(
+    `Unknown mode: ${args.mode}. Expected reconcile, from-title, or pr.`,
+  );
+}
+
+main();

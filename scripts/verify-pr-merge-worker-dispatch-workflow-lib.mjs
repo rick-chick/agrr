@@ -24,6 +24,14 @@ const CONFLICT_DISPATCH_SNIPPETS = [
   'Draft PR without conflict/sync need',
 ];
 
+const RETRY_DISPATCH_SNIPPETS = [
+  'name: PR Merge Worker Retry Dispatch',
+  'PR Merge Worker Dispatch',
+  'dispatch_run_cancelled',
+  'scheduled_reconcile',
+  'pr-merge-worker-retry-dispatch.mjs',
+];
+
 const DISPATCH_SCRIPT_SNIPPETS = [
   'buildConflictDispatchPayload',
   './pr-merge-worker-dispatch-payload-lib.mjs',
@@ -38,6 +46,10 @@ const PAYLOAD_LIB_SNIPPETS = ["action: 'conflict'"];
 export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   const errors = [];
   const workflowPath = join(repoRoot, '.github/workflows/pr-merge-worker-dispatch.yml');
+  const retryWorkflowPath = join(
+    repoRoot,
+    '.github/workflows/pr-merge-worker-retry-dispatch.yml',
+  );
   const needsSyncPath = join(repoRoot, 'scripts/pr-merge-worker-needs-sync.mjs');
   const dispatchScriptPath = join(
     repoRoot,
@@ -46,17 +58,25 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   const payloadLibPath = join(repoRoot, 'scripts/pr-merge-worker-dispatch-payload-lib.mjs');
 
   let workflowText = '';
+  let retryWorkflowText = '';
+  let needsSyncText = '';
   try {
     workflowText = await readFile(workflowPath, 'utf8');
   } catch {
     errors.push(`missing workflow: ${workflowPath}`);
   }
 
-  let needsSyncText = '';
+  try {
+    retryWorkflowText = await readFile(retryWorkflowPath, 'utf8');
+  } catch {
+    errors.push(`missing retry workflow: ${retryWorkflowPath}`);
+  }
+
   try {
     needsSyncText = await readFile(needsSyncPath, 'utf8');
   } catch {
     errors.push(`missing needs-sync helper: ${needsSyncPath}`);
+    needsSyncText = '';
   }
 
   let dispatchScriptText = '';
@@ -82,6 +102,12 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   for (const snippet of CONFLICT_DISPATCH_SNIPPETS) {
     if (!workflowText.includes(snippet)) {
       errors.push(`workflow missing conflict dispatch snippet: ${snippet}`);
+    }
+  }
+
+  for (const snippet of RETRY_DISPATCH_SNIPPETS) {
+    if (!retryWorkflowText.includes(snippet)) {
+      errors.push(`retry workflow missing required snippet: ${snippet}`);
     }
   }
 
@@ -113,6 +139,7 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
   const requiredSkillSnippets = [
     'resolve-pr-merge-conflicts.sh',
     'action: conflict',
+    'action: stuck_retry',
     'synchronize',
     'mergeStateStatus',
   ];
