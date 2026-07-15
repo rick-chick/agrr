@@ -303,6 +303,73 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('app-master-context-header')).toBeTruthy();
   });
 
+  const stageWithRequirements: CropStage = {
+    id: 1,
+    name: 'Stage 1',
+    order: 1,
+    temperature_requirement: {
+      id: 1,
+      crop_stage_id: 1,
+      base_temperature: 10,
+      optimal_min: null,
+      optimal_max: null,
+      low_stress_threshold: null,
+      high_stress_threshold: null,
+      frost_threshold: null,
+      sterility_risk_threshold: null,
+      max_temperature: null
+    },
+    thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 },
+    sunshine_requirement: null,
+    nutrient_requirement: null
+  } as CropStage;
+
+  const loadedControl = {
+    loading: false,
+    error: null,
+    pendingErrorFlash: null,
+    pendingSuccessFlash: null,
+    formData: {
+      ...initialFormData,
+      name: 'Tomato',
+      crop_stages: [stageWithRequirements]
+    }
+  };
+
+  it('does not save requirement fields on ngModelChange while typing', () => {
+    component.control = loadedControl;
+    fixture.detectChanges();
+
+    component.onTemperatureFieldDraft(1, 'base_temperature', 12);
+    component.onThermalFieldDraft(1, 'required_gdd', 120);
+
+    expect(mockUpdateTemperatureRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(mockUpdateThermalRequirementUseCase.execute).not.toHaveBeenCalled();
+    expect(component.control.formData.crop_stages[0].temperature_requirement?.base_temperature).toBe(12);
+    expect(component.control.formData.crop_stages[0].thermal_requirement?.required_gdd).toBe(120);
+  });
+
+  it('saves requirement fields on blur after draft edits', () => {
+    component.control = loadedControl;
+    fixture.detectChanges();
+
+    component.onTemperatureFieldDraft(1, 'base_temperature', 15);
+    component.saveTemperatureField(1, 'base_temperature');
+    expect(mockUpdateTemperatureRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { base_temperature: 15 }
+    });
+
+    component.onThermalFieldDraft(1, 'required_gdd', 150);
+    component.saveThermalField(1, 'required_gdd');
+    expect(mockUpdateThermalRequirementUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      payload: { required_gdd: 150 }
+    });
+  });
+
   it('shows cumulative GDD range when stage has required_gdd', () => {
     translateService.setTranslation(
       'ja',

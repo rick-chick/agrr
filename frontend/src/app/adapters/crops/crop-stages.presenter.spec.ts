@@ -197,10 +197,7 @@ describe('CropStagesPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.formData.crop_stages[0].temperature_requirement).toEqual(dto.requirement);
-      expect(lastControl!.pendingSuccessFlash).toEqual({
-        type: 'success',
-        text: 'crops.flash.temperature_requirement_updated'
-      });
+      expect(lastControl!.pendingSuccessFlash).toBeNull();
     });
   });
 
@@ -240,10 +237,7 @@ describe('CropStagesPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.formData.crop_stages[0].thermal_requirement).toEqual(dto.requirement);
-      expect(lastControl!.pendingSuccessFlash).toEqual({
-        type: 'success',
-        text: 'crops.flash.thermal_requirement_updated'
-      });
+      expect(lastControl!.pendingSuccessFlash).toBeNull();
     });
   });
 
@@ -284,10 +278,7 @@ describe('CropStagesPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.formData.crop_stages[0].sunshine_requirement).toEqual(dto.requirement);
-      expect(lastControl!.pendingSuccessFlash).toEqual({
-        type: 'success',
-        text: 'crops.flash.sunshine_requirement_updated'
-      });
+      expect(lastControl!.pendingSuccessFlash).toBeNull();
     });
   });
 
@@ -330,10 +321,7 @@ describe('CropStagesPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.formData.crop_stages[0].nutrient_requirement).toEqual(dto.requirement);
-      expect(lastControl!.pendingSuccessFlash).toEqual({
-        type: 'success',
-        text: 'crops.flash.nutrient_requirement_updated'
-      });
+      expect(lastControl!.pendingSuccessFlash).toBeNull();
     });
   });
 });
