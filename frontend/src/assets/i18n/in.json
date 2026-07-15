@@ -285,6 +285,17 @@
       "temperature": {
         "base_temperature_label": "न्यूनतम सीमा तापमान (°C)"
       },
+      "nutrient": {
+        "daily_uptake_n_label": "नाइट्रोजन (N) अवशोषण (g/m²/day)",
+        "daily_uptake_n_placeholder": "उदाहरण: 0.5",
+        "daily_uptake_n_help": "इस चरण के लिए दैनिक नाइट्रोजन अवशोषण दर्ज करें।",
+        "daily_uptake_p_label": "फॉस्फोरस (P) अवशोषण (g/m²/day)",
+        "daily_uptake_p_placeholder": "उदाहरण: 0.2",
+        "daily_uptake_p_help": "इस चरण के लिए दैनिक फॉस्फोरस (तत्व) अवशोषण दर्ज करें।",
+        "daily_uptake_k_label": "पोटैशियम (K) अवशोषण (g/m²/day)",
+        "daily_uptake_k_placeholder": "उदाहरण: 0.8",
+        "daily_uptake_k_help": "इस चरण के लिए दैनिक पोटैशियम (तत्व) अवशोषण दर्ज करें।"
+      },
       "delete_confirm_message": "क्या आप \"{{stageName}}\" को हटाना चाहते हैं?\n\nइस चरण से जुड़ी आवश्यकताएँ (तापमान, GDD आदि) भी हट जाएँगी। इससे कार्य अनुसूची टेम्पलेट और खेती योजनाओं की उत्पन्न अनुसूचियाँ प्रभावित हो सकती हैं। यह क्रिया पूर्ववत नहीं की जा सकती।",
       "delete_confirm_blueprint_warning": "इस चरण से {{count}} कार्य अनुसूची टेम्पलेट जुड़े हैं। हटाने से टेम्पलेट स्थान बिगड़ सकता है।"
     },
@@ -343,9 +354,9 @@
       "stage_cumulative_gdd_missing": "सीमा दिखाने के लिए आवश्यक GDD दर्ज करें",
       "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
       "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
-      "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",
-      "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (kg/ha/day)",
-      "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (kg/ha/day)",
+      "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (g/m²/day)",
+      "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (g/m²/day)",
+      "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (g/m²/day)",
       "region": "क्षेत्र",
       "form": {
         "submit": "फसल अपडेट करें",
@@ -2130,9 +2141,9 @@
         "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
         "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
         "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
-        "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",
-        "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (kg/ha/day)",
-        "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (kg/ha/day)",
+        "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (g/m²/day)",
+        "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (g/m²/day)",
+        "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (g/m²/day)",
         "region": "क्षेत्र"
       }
     },
