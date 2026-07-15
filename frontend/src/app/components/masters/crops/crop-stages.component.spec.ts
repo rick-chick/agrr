@@ -193,6 +193,7 @@ describe('CropStagesComponent', () => {
 
     const deleteButton = fixture.nativeElement.querySelector('.crop-stage-card__header .btn-danger');
     deleteButton.click();
+    fixture.detectChanges();
 
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('.crop-stages__delete-confirm')).toBeTruthy();
