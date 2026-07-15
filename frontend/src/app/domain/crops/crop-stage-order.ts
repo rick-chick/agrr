@@ -1,11 +1,11 @@
 import type { CropStage } from './crop';
 
-export interface StageOrderUpdate {
+interface StageOrderUpdate {
   id: number;
   order: number;
 }
 
-export interface StageReorderResult {
+interface StageReorderResult {
   stages: CropStage[];
   updates: StageOrderUpdate[];
 }
