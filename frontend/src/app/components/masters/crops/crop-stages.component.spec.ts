@@ -108,7 +108,11 @@ const tableTranslations = {
       daily_uptake_k: 'K',
       region: 'Region',
       sterility_risk_threshold: 'Sterility risk',
-      stage_order_duplicate: 'Duplicate order: {{orders}}'
+      stage_order_duplicate: 'Duplicate order: {{orders}}',
+      temperature_section: 'Temperature conditions',
+      thermal_section: 'Growing degree days',
+      details_section: 'Advanced settings',
+      optimal_range: 'Optimal range'
     }
   },
   common: {
@@ -392,6 +396,75 @@ describe('CropStagesComponent', () => {
     expect(panel?.querySelector('input[name="panel_optimal_max"]')).toBeTruthy();
     expect(panel?.querySelector('input[name="panel_max_temperature"]')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Edit stress thresholds');
+  });
+
+  it('renders edit panel sections for temperature, thermal, and details', async () => {
+    await loadStages([stageFixture]);
+
+    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
+    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--temperature')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--thermal')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--details')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Temperature conditions');
+    expect(fixture.nativeElement.textContent).toContain('Growing degree days');
+    expect(fixture.nativeElement.textContent).toContain('Advanced settings');
+  });
+
+  it('groups optimal min and max fields in an optimal range block', async () => {
+    await loadStages([stageFixture]);
+
+    const optimalGroup = fixture.nativeElement.querySelector(
+      '.crop-stages-edit-panel__optimal-group'
+    );
+    expect(optimalGroup).toBeTruthy();
+    expect(optimalGroup?.textContent).toContain('Optimal range');
+    expect(optimalGroup?.querySelector('input[name="panel_optimal_min"]')).toBeTruthy();
+    expect(optimalGroup?.querySelector('input[name="panel_optimal_max"]')).toBeTruthy();
+  });
+
+  it('renders detail settings as chip buttons', async () => {
+    await loadStages([stageFixture]);
+
+    const chips = fixture.nativeElement.querySelectorAll('.crop-stages-edit-panel__detail-chip');
+    expect(chips.length).toBe(2);
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__link')).toBeNull();
+  });
+
+  it('places save and delete actions in the panel footer', async () => {
+    await loadStages([stageFixture]);
+
+    const footer = fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer');
+    expect(footer).toBeTruthy();
+    expect(footer?.querySelector('.btn-primary')).toBeTruthy();
+    expect(footer?.querySelector('.btn-danger')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__actions')).toBeNull();
+  });
+
+  it('renders stage order badge in panel header', async () => {
+    await loadStages([stageFixture]);
+
+    const badge = fixture.nativeElement.querySelector('.crop-stages-edit-panel__badge');
+    expect(badge).toBeTruthy();
+    expect(badge?.textContent?.trim()).toBe('1');
+  });
+
+  it('renders temperature scale bar when temperature values are set', async () => {
+    await loadStages([
+      {
+        ...stageFixture,
+        temperature_requirement: {
+          ...stageFixture.temperature_requirement!,
+          base_temperature: 5,
+          optimal_min: 15,
+          optimal_max: 25,
+          max_temperature: 35
+        }
+      } as CropStage
+    ]);
+
+    const scale = fixture.nativeElement.querySelector('.crop-stages-edit-panel__temp-scale');
+    expect(scale).toBeTruthy();
+    expect(scale?.querySelectorAll('.crop-stages-edit-panel__temp-scale-marker').length).toBe(4);
   });
 
   it('marks panel dirty when inline temperature fields change', async () => {
