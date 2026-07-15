@@ -226,6 +226,25 @@ smokeDescribe('operation smoke (key user flows)', () => {
     });
   });
 
+  test('master crops: stages page shows stage list or empty state', async ({ page }) => {
+    const id = resolvedCaptureIds?.masters.crops;
+    if (id == null) {
+      test.skip(true, 'no crops record in dev DB');
+    }
+
+    const stagesPattern = 'crops/:id/stages';
+    const stagesRoute = findRoute(stagesPattern);
+
+    await page.goto(`/crops/${id}/stages`);
+    await waitForPageStable(page, stagesRoute);
+    await assertHostHealthy(page, 'app-crop-stages');
+
+    const content = page.locator(
+      'app-crop-stages .crop-stage-card, app-crop-stages .crop-stages-empty',
+    );
+    await expect(content.first()).toBeVisible();
+  });
+
   for (const m of MASTER_RESOURCES) {
     test(`master ${m.segment}: list and new form`, async ({ page }) => {
       const listRoute = findRoute(m.segment);
