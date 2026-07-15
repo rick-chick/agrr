@@ -1311,6 +1311,7 @@
       "sync_failed": "Task schedule generation failed.",
       "sync_generating": "Generating task schedules...",
       "sync_stale": "Task schedules are out of date with the latest plan.",
+      "sync_plan_link": "Review cultivation plan",
       "sync_updated": "Task schedules have been updated.",
       "sync_retry": "Regenerate task schedules",
       "regenerate_confirm": "Regenerating replaces unfinished auto-generated items. Items with work records and manual entries are kept. Continue?",

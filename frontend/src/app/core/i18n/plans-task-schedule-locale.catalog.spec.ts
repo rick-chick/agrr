@@ -40,6 +40,7 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.task_schedules.sync_failed',
   'plans.task_schedules.sync_generating',
   'plans.task_schedules.sync_stale',
+  'plans.task_schedules.sync_plan_link',
   'plans.task_schedules.sync_updated',
   'plans.task_schedules.sync_retry',
   'plans.task_schedules.regenerate_confirm',
