@@ -2042,7 +2042,8 @@
       "daily_uptake_n": "Daily Nitrogen Uptake (kg/ha/day)",
       "daily_uptake_p": "Daily Phosphorus Uptake (kg/ha/day)",
       "daily_uptake_k": "Daily Potassium Uptake (kg/ha/day)",
-      "region": "Region"
+      "region": "Region",
+      "required_marker": "Required"
     },
     "show": {
       "reference_crop": "Reference Crop",
