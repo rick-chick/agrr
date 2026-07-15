@@ -363,4 +363,103 @@ describe('CropStagesComponent', () => {
     expect(cumulativeGdd).toBeTruthy();
     expect(cumulativeGdd.textContent).toContain('0〜200');
   });
+
+  it('shows help and placeholder for base temperature and required GDD fields', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage 1',
+            confirm_delete: '削除しますか？'
+          },
+          edit: {
+            stages_title: '生育ステージ',
+            add_stage: 'ステージ追加',
+            stage_title: 'ステージ {{order}}',
+            stage_name: 'ステージ名',
+            stage_order: '順序',
+            requirements_title: '要件',
+            temperature_requirement: '温度要件',
+            thermal_requirement: '積算温度要件',
+            sunshine_requirement: '日照要件',
+            nutrient_requirement: '栄養素要件',
+            base_temperature: '基底温度 (°C)',
+            base_temperature_placeholder: '例：5.0',
+            base_temperature_help: 'このステージで生育が始まる最低限界温度を入力してください。',
+            optimal_min: '最適最低温度',
+            optimal_max: '最適最高温度',
+            low_stress_threshold: '低温ストレス',
+            high_stress_threshold: '高温ストレス',
+            frost_threshold: '霜害',
+            sterility_risk_threshold: '不稔',
+            max_temperature: '最高温度',
+            required_gdd: '必要積算温度 (°C·day)',
+            required_gdd_placeholder: '例：800.0',
+            required_gdd_help: 'このステージに必要な生育度日（Growing Degree Days）を入力してください。',
+            minimum_sunshine_hours: '最低日照',
+            target_sunshine_hours: '目標日照',
+            daily_uptake_n: '窒素',
+            daily_uptake_p: 'リン',
+            daily_uptake_k: 'カリウム',
+            region: '地域',
+            stage_cumulative_gdd_range: '{{start}}〜{{end}} ℃·日（累積）',
+            stage_cumulative_gdd_missing: '必要積算温度を入力すると表示されます'
+          }
+        },
+        common: {
+          back: '戻る',
+          delete: '削除'
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: {
+        ...initialFormData,
+        name: 'Tomato',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.crop-stage-card')).toBeTruthy();
+
+    const baseTempInput = Array.from(
+      fixture.nativeElement.querySelectorAll('input')
+    ).find((el: Element) => (el as HTMLInputElement).placeholder === '例：5.0') as
+      | HTMLInputElement
+      | undefined;
+    expect(baseTempInput).toBeTruthy();
+    expect(baseTempInput!.placeholder).toBe('例：5.0');
+
+    const gddInput = Array.from(fixture.nativeElement.querySelectorAll('input')).find(
+      (el: Element) => (el as HTMLInputElement).placeholder === '例：800.0'
+    ) as HTMLInputElement | undefined;
+    expect(gddInput).toBeTruthy();
+    expect(gddInput!.placeholder).toBe('例：800.0');
+
+    const hints = Array.from(
+      fixture.nativeElement.querySelectorAll('.form-hint')
+    ).map((el: Element) => el.textContent?.trim());
+    expect(hints).toContain('このステージで生育が始まる最低限界温度を入力してください。');
+    expect(hints).toContain('このステージに必要な生育度日（Growing Degree Days）を入力してください。');
+  });
 });
