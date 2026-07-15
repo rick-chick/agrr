@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Retry / reconcile PR Merge Worker webhook dispatch for stuck ready PRs.
+ * Reconcile / retry PR Merge Worker webhook dispatch for stuck ready PRs.
  *
  * Usage:
  *   node scripts/pr-merge-worker-retry-dispatch.mjs reconcile [--repo OWNER/REPO]
@@ -12,10 +12,11 @@
 import { execFileSync } from 'node:child_process';
 
 import { parseRetryDispatchArgs } from './issue-worker-dispatch-lib.mjs';
+import { buildConflictDispatchPayload } from './pr-merge-worker-dispatch-payload-lib.mjs';
 import {
   buildRetryDispatchPayload,
-  isStuckRetryCandidate,
-  selectStuckRetryCandidate,
+  classifyReconcileCandidate,
+  selectReconcileCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
 
 const DEFAULT_REPO = 'rick-chick/agrr';
@@ -53,7 +54,7 @@ function listOpenAgentMergePrs(repo) {
     '--label',
     'agent-merge',
     '--json',
-    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt',
+    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author',
   ]);
   return JSON.parse(raw);
 }
@@ -82,7 +83,7 @@ function fetchPr(repo, prNumber) {
     'view',
     String(prNumber),
     '--json',
-    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt',
+    'number,title,url,headRefName,headRefOid,labels,body,isDraft,baseRefName,headRepository,mergeable,mergeStateStatus,reviewDecision,updatedAt,author',
   ]);
   return JSON.parse(raw);
 }
@@ -109,7 +110,7 @@ function postWebhook(repo, payload) {
   const webhookUrl = process.env.WEBHOOK_URL ?? '';
   const webhookKey = process.env.WEBHOOK_KEY ?? '';
   if (!webhookUrl || !webhookKey) {
-    console.log('WEBHOOK_URL or WEBHOOK_KEY is not set; skipping retry dispatch.');
+    console.log('WEBHOOK_URL or WEBHOOK_KEY is not set; skipping reconcile dispatch.');
     process.exit(0);
   }
 
@@ -131,8 +132,25 @@ function postWebhook(repo, payload) {
   );
 
   console.log(
-    `Dispatched PR Merge Worker retry for #${payload.pr_number} (${payload.action})`,
+    `Dispatched PR Merge Worker reconcile for #${payload.pr_number} (${payload.action})`,
   );
+}
+
+/**
+ * @param {'conflict' | 'stuck_retry'} action
+ * @param {string} repo
+ * @param {Record<string, unknown>} pr
+ * @param {string} [retryReason]
+ */
+function buildReconcilePayload(action, repo, pr, retryReason) {
+  if (action === 'conflict') {
+    return buildConflictDispatchPayload({ repository: repo, pr });
+  }
+  return buildRetryDispatchPayload({
+    repository: repo,
+    pr,
+    retryReason,
+  });
 }
 
 /**
@@ -152,14 +170,14 @@ function dispatchIfEligible({
 }) {
   const baseOwner = repoOwner(repo);
   const checks = fetchChecks(repo, pr.number);
-  const result = isStuckRetryCandidate({
+  const result = classifyReconcileCandidate({
     pr,
     checks,
     baseOwner,
     nowMs: Date.now(),
   });
   if (!result.eligible) {
-    console.log(`Skip retry for PR #${pr.number}: ${result.reason}`);
+    console.log(`Skip reconcile for PR #${pr.number}: ${result.reason}`);
     return false;
   }
 
@@ -168,11 +186,12 @@ function dispatchIfEligible({
     gh(repo, ['pr', 'edit', String(pr.number), '--remove-label', 'agent-merge-in-progress']);
   }
 
-  const payload = buildRetryDispatchPayload({
-    repository: repo,
+  const payload = buildReconcilePayload(
+    result.action,
+    repo,
     pr,
     retryReason,
-  });
+  );
   postWebhook(repo, payload);
   return true;
 }
@@ -186,9 +205,9 @@ function main() {
     const checksByPrNumber = Object.fromEntries(
       prs.map((pr) => [pr.number, fetchChecks(repo, pr.number)]),
     );
-    const selected = selectStuckRetryCandidate(prs, checksByPrNumber, repoOwner(repo));
+    const selected = selectReconcileCandidate(prs, checksByPrNumber, repoOwner(repo));
     if (!selected) {
-      console.log('No eligible stuck agent-merge PRs for retry reconciliation.');
+      console.log('No eligible stuck agent-merge PRs for reconcile.');
       return;
     }
     dispatchIfEligible({

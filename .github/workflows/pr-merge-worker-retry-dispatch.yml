@@ -1,10 +1,10 @@
-# Retries PR Merge Worker dispatch when a ready agent-merge PR is stuck without merge
-# (e.g. Cloud Agent ERROR after CI green) or when the primary dispatch run is cancelled.
+# Reconcile PR Merge Worker dispatch when agent-merge PRs are stuck
+# (ERROR after CI green, BEHIND after master sync, or primary dispatch cancelled).
 #
 # Triggers:
-# - schedule: every 15 minutes (reconcile one stuck ready PR)
+# - schedule: every 15 minutes (reconcile one eligible PR: conflict or stuck_retry)
 # - workflow_run: PR Merge Worker Dispatch completed with conclusion cancelled (delayed retry)
-# - workflow_dispatch: manual retry for one PR or reconcile
+# - workflow_dispatch: manual reconcile for one PR
 
 name: PR Merge Worker Retry Dispatch
 
@@ -53,7 +53,7 @@ jobs:
             --title "$DISPLAY_TITLE" \
             --retry-reason dispatch_run_cancelled
 
-      - name: Reconcile stuck ready agent-merge PRs
+      - name: Reconcile stuck agent-merge PRs (conflict or stuck_retry)
         if: github.event_name == 'schedule'
         env:
           WEBHOOK_URL: ${{ secrets.CURSOR_PR_MERGE_WEBHOOK_URL }}
