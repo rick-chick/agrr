@@ -318,6 +318,8 @@ describe('CropStagesComponent', () => {
           },
           edit: {
             stages_title: '生育ステージ',
+            stages_lead: 'リード文',
+            stages_list_heading: 'ステージ一覧',
             add_stage: 'ステージ追加',
             stages_empty_lead: '生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。'
           }
@@ -355,6 +357,116 @@ describe('CropStagesComponent', () => {
     expect(cta.classList.contains('btn-primary')).toBe(true);
     expect(cta.textContent?.trim()).toBe('ステージ追加');
     expect(fixture.nativeElement.querySelector('.crop-stages-section__actions button')).toBeNull();
+  });
+
+  it('shows stages lead in page description without repeating stages_title in section heading', () => {
+    const stagesTitle = '生育ステージ';
+    const stagesLead =
+      '栽培計画の期間見積もりと作業スケジュール生成に使う、生育ステージと各ステージの環境要件を設定します。';
+    const stagesListHeading = 'ステージ一覧';
+
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage 1'
+          },
+          edit: {
+            stages_title: stagesTitle,
+            stages_lead: stagesLead,
+            stages_list_heading: stagesListHeading,
+            stage_title: 'ステージ {{order}}',
+            add_stage: 'ステージ追加'
+          }
+        },
+        common: {
+          back: '戻る'
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: {
+        ...initialFormData,
+        name: 'トマト',
+        crop_stages: []
+      }
+    };
+
+    fixture.detectChanges();
+
+    const pageDescription = fixture.nativeElement.querySelector('.page-description');
+    expect(pageDescription?.textContent?.trim()).toBe(stagesLead);
+
+    const sectionHeading = fixture.nativeElement.querySelector('#stages-heading');
+    expect(sectionHeading?.textContent?.trim()).toBe(stagesListHeading);
+    expect(sectionHeading?.textContent?.trim()).not.toBe(stagesTitle);
+  });
+
+  it('uses h3 for requirement subsection titles instead of h4', () => {
+    translateService.setTranslation(
+      'ja',
+      {
+        crops: {
+          stage: {
+            default_name: 'Stage 1'
+          },
+          edit: {
+            stages_title: '生育ステージ',
+            stages_lead: 'リード文',
+            stages_list_heading: 'ステージ一覧',
+            stage_title: 'ステージ {{order}}',
+            requirements_title: '要件',
+            temperature_requirement: '温度要件',
+            thermal_requirement: '積算温度要件',
+            sunshine_requirement: '日照要件',
+            nutrient_requirement: '栄養素要件',
+            add_stage: 'ステージ追加'
+          }
+        },
+        common: {
+          back: '戻る',
+          delete: '削除'
+        }
+      },
+      true
+    );
+    translateService.use('ja');
+
+    component.control = {
+      loading: false,
+      error: null,
+      pendingErrorFlash: null,
+      pendingSuccessFlash: null,
+      formData: {
+        ...initialFormData,
+        name: 'トマト',
+        crop_stages: [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: null,
+            thermal_requirement: null,
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ]
+      }
+    };
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.requirement-section__title')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('h4.requirement-section__title')).toBeNull();
+    expect(fixture.nativeElement.querySelector('h3.requirement-section__title')).toBeTruthy();
   });
 
   it('shows cumulative GDD range when stage has required_gdd', () => {

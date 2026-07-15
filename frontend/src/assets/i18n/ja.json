@@ -407,6 +407,8 @@
         "title": "{{count}}件のエラーがあります："
       },
       "stages_title": "生育ステージ",
+      "stages_lead": "栽培計画の期間見積もりと作業スケジュール生成に使う、生育ステージと各ステージの環境要件を設定します。",
+      "stages_list_heading": "ステージ一覧",
       "stages_empty_lead": "生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。",
       "add_stage": "ステージ追加",
       "stage_title": "ステージ {{order}}",
