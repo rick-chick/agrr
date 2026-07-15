@@ -9,7 +9,7 @@ const TEMPERATURE_REQUIREMENT_MARKERS = [
   'sterility_risk_threshold'
 ] as const;
 
-export type CropStageRequirementKind = 'temperature' | 'thermal' | 'sunshine' | 'nutrient';
+type CropStageRequirementKind = 'temperature' | 'thermal' | 'sunshine' | 'nutrient';
 
 export function cropStageRequirementKind(req: unknown): CropStageRequirementKind | null {
   if (!req || typeof req !== 'object') {

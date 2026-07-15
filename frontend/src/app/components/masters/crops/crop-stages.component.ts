@@ -42,7 +42,7 @@ import { countLinkedTaskScheduleBlueprints } from '../../../domain/crops/stage-l
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
-export type PendingUnsavedAction =
+type PendingUnsavedAction =
   | { kind: 'switch-stage'; stageId: number }
   | { kind: 'delete-stage'; stageId: number };
 
@@ -61,7 +61,7 @@ const initialControl: CropStagesViewState = {
   pendingSuccessFlash: null
 };
 
-export interface StageEditDraft {
+interface StageEditDraft {
   name: string;
   base_temperature: number | null;
   optimal_min: number | null;
