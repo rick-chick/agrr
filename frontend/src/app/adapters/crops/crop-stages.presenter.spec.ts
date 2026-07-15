@@ -5,7 +5,6 @@ import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.d
 import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { CreateCropStageOutputDto } from '../../usecase/crops/create-crop-stage.dtos';
 import { DeleteCropStageOutputDto } from '../../usecase/crops/delete-crop-stage.dtos';
-import { UpdateTemperatureRequirementOutputDto } from '../../usecase/crops/update-temperature-requirement.dtos';
 import { CropStage } from '../../domain/crops/crop';
 import { defaultBlueprintReadiness } from '../../domain/crops/blueprint-generation-readiness';
 
@@ -160,44 +159,6 @@ describe('CropStagesPresenter', () => {
       presenter.present(dto);
 
       expect(lastControl!.pendingSuccessFlash).toEqual({ type: 'success', text: 'crops.flash.stage_deleted' });
-    });
-  });
-
-  describe('UpdateTemperatureRequirementOutputPort', () => {
-    it('updates temperature_requirement of the corresponding stage on present(dto)', () => {
-      lastControl = baseControlState({
-          name: 'Test Crop',
-          crop_stages: [
-            {
-              id: 1,
-              crop_id: 1,
-              name: 'Stage 1',
-              order: 1,
-              temperature_requirement: {
-                id: 1,
-                crop_stage_id: 1,
-                base_temperature: 10.0
-              }
-            }
-          ]
-      });
-
-      const dto: UpdateTemperatureRequirementOutputDto = {
-        requirement: {
-          id: 1,
-          crop_stage_id: 1,
-          base_temperature: 15.0,
-          optimal_min: 20.0
-        }
-      };
-
-      presenter.present(dto);
-
-      expect(lastControl!.formData.crop_stages[0].temperature_requirement).toEqual(dto.requirement);
-      expect(lastControl!.pendingSuccessFlash).toEqual({
-        type: 'success',
-        text: 'crops.flash.temperature_requirement_updated'
-      });
     });
   });
 

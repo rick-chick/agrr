@@ -10,7 +10,6 @@ import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage
 import { ReorderCropStagesUseCase } from '../../../usecase/crops/reorder-crop-stages.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
-import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
 import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
 import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import {
@@ -404,7 +403,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   private readonly createCropStageUseCase = inject(CreateCropStageUseCase);
   private readonly reorderCropStagesUseCase = inject(ReorderCropStagesUseCase);
   private readonly deleteCropStageUseCase = inject(DeleteCropStageUseCase);
-  private readonly updateTemperatureRequirementUseCase = inject(UpdateTemperatureRequirementUseCase);
   private readonly saveCropStagePanelUseCase = inject(SaveCropStagePanelUseCase);
   private readonly saveCropStageAdvancedDetailsUseCase = inject(SaveCropStageAdvancedDetailsUseCase);
   private readonly presenter = inject(CropStagesPresenter);
@@ -619,7 +617,28 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (!stage || !this.temperatureDetailDraft) {
       return;
     }
-    this.updateTemperatureRequirement(stage.id, { ...this.temperatureDetailDraft });
+    const temp = stage.temperature_requirement;
+    const draft = this.temperatureDetailDraft;
+    const temperaturePatch: {
+      low_stress_threshold?: number;
+      high_stress_threshold?: number;
+      frost_threshold?: number;
+    } = {};
+    if (draft.low_stress_threshold !== (temp?.low_stress_threshold ?? null)) {
+      temperaturePatch.low_stress_threshold = draft.low_stress_threshold ?? undefined;
+    }
+    if (draft.high_stress_threshold !== (temp?.high_stress_threshold ?? null)) {
+      temperaturePatch.high_stress_threshold = draft.high_stress_threshold ?? undefined;
+    }
+    if (draft.frost_threshold !== (temp?.frost_threshold ?? null)) {
+      temperaturePatch.frost_threshold = draft.frost_threshold ?? undefined;
+    }
+
+    this.saveCropStagePanelUseCase.execute({
+      cropId: this.cropId,
+      stageId: stage.id,
+      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined
+    });
     this.temperatureDetailDraft = null;
     this.temperatureDialogRef?.nativeElement?.close();
   }
@@ -759,14 +778,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
       this.cancelDeleteConfirmDialog();
     }
-  }
-
-  updateTemperatureRequirement(stageId: number, payload: Record<string, unknown>): void {
-    this.updateTemperatureRequirementUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
   }
 
   onStageDropped(event: CdkDragDrop<CropStage[]>): void {
