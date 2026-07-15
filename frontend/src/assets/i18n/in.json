@@ -352,7 +352,8 @@
       },
       "errors": {
         "title": "{{count}} त्रुटियाँ:"
-      }
+      },
+      "required_marker": "आवश्यक"
     },
     "show": {
       "name": "नाम",

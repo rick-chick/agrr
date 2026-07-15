@@ -863,4 +863,178 @@ describe('CropStagesComponent', () => {
     expect(cumulativeGddElements[0]?.textContent).toContain('0〜200');
     expect(cumulativeGddElements[1]?.textContent).toContain('200〜300');
   });
+
+  describe('stage requirements visibility', () => {
+    const stageTranslations = {
+      crops: {
+        stage: {
+          default_name: 'Stage 1'
+        },
+        edit: {
+          stage_title: 'ステージ {{order}}',
+          stages_title: '生育ステージ',
+          stage_name: 'ステージ名',
+          stage_order: '順序',
+          requirements_title: '要件',
+          temperature_requirement: '温度',
+          thermal_requirement: '積算温度',
+          base_temperature: '基底温度',
+          required_gdd: '必要積算温度',
+          required_marker: '必須',
+          sunshine_requirement: '日照',
+          nutrient_requirement: '栄養',
+          stage_cumulative_gdd_missing: '必要積算温度を入力すると表示されます'
+        }
+      },
+      common: {
+        back: '戻る',
+        delete: '削除'
+      }
+    };
+
+    function setupStageView(cropStages: CropStage[], fromPlan: string | null = null): void {
+      mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+        key === 'fromPlan' ? fromPlan : null
+      );
+      if (fromPlan != null) {
+        component.fromPlanId = Number(fromPlan);
+      } else {
+        component.fromPlanId = null;
+      }
+      component.control = {
+        loading: false,
+        error: null,
+        pendingErrorFlash: null,
+        pendingSuccessFlash: null,
+        formData: {
+          ...initialFormData,
+          name: 'Tomato',
+          crop_stages: cropStages
+        }
+      };
+      translateService.setTranslation('ja', stageTranslations, true);
+      translateService.use('ja');
+      fixture.detectChanges();
+    }
+
+    it('opens requirements details when stage is incomplete', () => {
+      setupStageView([
+        {
+          id: 1,
+          name: 'Stage 1',
+          order: 1,
+          temperature_requirement: null,
+          thermal_requirement: null,
+          sunshine_requirement: null,
+          nutrient_requirement: null
+        } as CropStage
+      ]);
+
+      const details = fixture.nativeElement.querySelector(
+        'details.crop-stage-requirements'
+      ) as HTMLDetailsElement;
+      expect(details?.open).toBe(true);
+    });
+
+    it('keeps requirements details closed when stage requirements are complete', () => {
+      setupStageView([
+        {
+          id: 1,
+          name: 'Stage 1',
+          order: 1,
+          temperature_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            base_temperature: 10
+          },
+          thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
+          sunshine_requirement: null,
+          nutrient_requirement: null
+        } as CropStage
+      ]);
+
+      const details = fixture.nativeElement.querySelector(
+        'details.crop-stage-requirements'
+      ) as HTMLDetailsElement;
+      expect(details?.open).toBe(false);
+      expect(fixture.nativeElement.querySelectorAll('.form-card__field-required-marker').length).toBe(
+        0
+      );
+    });
+
+    it('opens requirements details when only one required field is missing', () => {
+      setupStageView([
+        {
+          id: 1,
+          name: 'Stage 1',
+          order: 1,
+          temperature_requirement: {
+            id: 1,
+            crop_stage_id: 1,
+            base_temperature: 10
+          },
+          thermal_requirement: null,
+          sunshine_requirement: null,
+          nutrient_requirement: null
+        } as CropStage
+      ]);
+
+      const details = fixture.nativeElement.querySelector(
+        'details.crop-stage-requirements'
+      ) as HTMLDetailsElement;
+      expect(details?.open).toBe(true);
+      expect(fixture.nativeElement.querySelectorAll('.form-card__field-required-marker').length).toBe(1);
+    });
+
+    it('opens requirements details when fromPlan query param is set', () => {
+      setupStageView(
+        [
+          {
+            id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10
+            },
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 200 },
+            sunshine_requirement: null,
+            nutrient_requirement: null
+          } as CropStage
+        ],
+        '7'
+      );
+
+      const details = fixture.nativeElement.querySelector(
+        'details.crop-stage-requirements'
+      ) as HTMLDetailsElement;
+      expect(details?.open).toBe(true);
+    });
+
+    it('shows required markers on missing base temperature and required GDD fields', () => {
+      setupStageView([
+        {
+          id: 1,
+          name: 'Stage 1',
+          order: 1,
+          temperature_requirement: null,
+          thermal_requirement: null,
+          sunshine_requirement: null,
+          nutrient_requirement: null
+        } as CropStage
+      ]);
+
+      const markers = fixture.nativeElement.querySelectorAll(
+        '.form-card__field-required-marker'
+      );
+      expect(markers.length).toBe(2);
+      expect(
+        Array.from(markers as NodeListOf<HTMLElement>).every(
+          (marker) => marker.textContent?.trim() === '必須'
+        )
+      ).toBe(true);
+    });
+  });
+
 });

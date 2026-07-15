@@ -27,6 +27,11 @@ import {
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import {
+  stageMissingBaseTemperature,
+  stageMissingRequiredGdd,
+  stageRequirementsComplete
+} from '../../../domain/crops/blueprint-generation-readiness';
+import {
   findDuplicateStageOrders,
   reorderStagesByIndex,
   sortStagesByOrder
@@ -130,14 +135,19 @@ const initialControl: CropStagesViewState = {
                     <input type="number" name="stage_order_{{ stage.id }}" [(ngModel)]="stage.order" (blur)="onStageOrderBlur(stage)" />
                   </label>
 
-                  <details class="crop-stage-requirements">
+                  <details class="crop-stage-requirements" [open]="shouldOpenRequirements(stage)">
                     <summary class="crop-stage-requirements__summary">{{ 'crops.edit.requirements_title' | translate }}</summary>
 
                     <div class="requirement-section">
                       <h3 class="requirement-section__title">{{ 'crops.edit.temperature_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.base_temperature' | translate }}</span>
+                          <span class="form-card__field-label">
+                            {{ 'crops.edit.base_temperature' | translate }}
+                            @if (isBaseTemperatureMissing(stage)) {
+                              <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
+                            }
+                          </span>
                           <input type="number" step="0.1" name="temp_base_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.base_temperature ?? null"
                                  (ngModelChange)="onTemperatureFieldDraft(stage.id, 'base_temperature', $event)"
                                  (blur)="saveTemperatureField(stage.id, 'base_temperature')" />
@@ -191,7 +201,12 @@ const initialControl: CropStagesViewState = {
                       <h3 class="requirement-section__title">{{ 'crops.edit.thermal_requirement' | translate }}</h3>
                       <div class="requirement-fields">
                         <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">{{ 'crops.edit.required_gdd' | translate }}</span>
+                          <span class="form-card__field-label">
+                            {{ 'crops.edit.required_gdd' | translate }}
+                            @if (isRequiredGddMissing(stage)) {
+                              <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
+                            }
+                          </span>
                           <input type="number" step="0.1" name="thermal_gdd_{{ stage.id }}" [ngModel]="stage.thermal_requirement?.required_gdd ?? null"
                                  (ngModelChange)="onThermalFieldDraft(stage.id, 'required_gdd', $event)"
                                  (blur)="saveThermalField(stage.id, 'required_gdd')" />
@@ -499,6 +514,18 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   stageCumulativeGddRangeFor(stage: CropStage) {
     return stageCumulativeGddRange(this.control.formData.crop_stages, stage.order);
+  }
+
+  shouldOpenRequirements(stage: CropStage): boolean {
+    return this.fromPlanId != null || !stageRequirementsComplete(stage);
+  }
+
+  isBaseTemperatureMissing(stage: CropStage): boolean {
+    return stageMissingBaseTemperature(stage);
+  }
+
+  isRequiredGddMissing(stage: CropStage): boolean {
+    return stageMissingRequiredGdd(stage);
   }
 
   onSunshineFieldDraft(stageId: number, field: string, value: number | null): void {
