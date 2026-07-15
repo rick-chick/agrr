@@ -106,7 +106,7 @@ test('prMergeWorkerShouldSkipInProgress detects agent-merge-in-progress', () => 
   assert.equal(prMergeWorkerShouldSkipInProgress('agent-merge'), false);
 });
 
-test('selectSyncCandidates skips draft PR even when behind', () => {
+test('selectSyncCandidates includes draft PR when behind', () => {
   const candidates = selectSyncCandidates([
     {
       number: 3,
@@ -122,7 +122,28 @@ test('selectSyncCandidates skips draft PR even when behind', () => {
       isCrossRepository: false,
     },
   ]);
-  assert.equal(candidates.length, 0);
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].number, 3);
+});
+
+test('selectSyncCandidates includes draft PR when conflicting', () => {
+  const candidates = selectSyncCandidates([
+    {
+      number: 9,
+      title: 'fix: example',
+      headRefName: 'issue/258-draft-pr-conflict-automation',
+      labels: [],
+      body: '',
+      isDraft: true,
+      mergeable: 'CONFLICTING',
+      mergeStateStatus: 'DIRTY',
+      additions: 10,
+      deletions: 5,
+      isCrossRepository: false,
+    },
+  ]);
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].number, 9);
 });
 
 test('selectSyncCandidates skips blocking labels', () => {

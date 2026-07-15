@@ -1898,6 +1898,57 @@
       }
     },
     "stage": {
+      "title": "Growth Stage",
+      "name_label": "Stage Name",
+      "name_placeholder": "e.g., Germination, Vegetative growth",
+      "order_label": "Order",
+      "order_placeholder": "0",
+      "remove_button": "Remove",
+      "temperature_section": "🌡️ Temperature Requirements",
+      "thermal_section": "🌡️ Thermal Requirements (GDD)",
+      "sunshine_section": "☀️ Sunshine Requirements",
+      "nutrient_section": "🌱 Nutrient Requirements",
+      "temperature": {
+        "base_temperature_label": "Base Temperature (°C)",
+        "base_temperature_placeholder": "e.g., 5.0",
+        "optimal_min_label": "Optimal Min (°C)",
+        "optimal_min_placeholder": "e.g., 15.0",
+        "optimal_max_label": "Optimal Max (°C)",
+        "optimal_max_placeholder": "e.g., 25.0",
+        "low_stress_label": "Low Stress Threshold (°C)",
+        "low_stress_placeholder": "e.g., 10.0",
+        "high_stress_label": "High Stress Threshold (°C)",
+        "high_stress_placeholder": "e.g., 30.0",
+        "frost_label": "Frost Threshold (°C)",
+        "frost_placeholder": "e.g., 0.0",
+        "sterility_label": "Sterility Risk Threshold (°C)",
+        "sterility_placeholder": "e.g., 35.0",
+        "max_temperature_label": "Max Temperature (°C)",
+        "max_temperature_placeholder": "e.g., 42.0",
+        "max_temperature_help": "Temperature at which growth stops"
+      },
+      "thermal": {
+        "required_gdd_label": "Required GDD (°C·day)",
+        "required_gdd_placeholder": "e.g., 800.0",
+        "required_gdd_help": "Enter the Growing Degree Days required for this stage."
+      },
+      "sunshine": {
+        "minimum_hours_label": "Minimum Sunshine Hours (hrs)",
+        "minimum_hours_placeholder": "e.g., 4.0",
+        "target_hours_label": "Target Sunshine Hours (hrs)",
+        "target_hours_placeholder": "e.g., 8.0"
+      },
+      "nutrient": {
+        "daily_uptake_n_label": "Nitrogen (N) Uptake (g/m²/day)",
+        "daily_uptake_n_placeholder": "e.g., 0.5",
+        "daily_uptake_n_help": "Enter daily nitrogen uptake for this stage.",
+        "daily_uptake_p_label": "Phosphorus (P) Uptake (g/m²/day)",
+        "daily_uptake_p_placeholder": "e.g., 0.2",
+        "daily_uptake_p_help": "Enter daily phosphorus (element) uptake for this stage.",
+        "daily_uptake_k_label": "Potassium (K) Uptake (g/m²/day)",
+        "daily_uptake_k_placeholder": "e.g., 0.8",
+        "daily_uptake_k_help": "Enter daily potassium (element) uptake for this stage."
+      },
       "default_name": "Stage {{order}}",
       "confirm_delete": "Delete this growth stage?"
     },
@@ -1916,7 +1967,14 @@
       "reference_only_admin": "Only administrators can create reference crops.",
       "reference_flag_admin_only": "Only administrators can change the reference flag.",
       "no_permission": "Permission denied.",
-      "not_found": "Crop not found."
+      "not_found": "Crop not found.",
+      "stage_created": "Growth stage was added.",
+      "stage_updated": "Growth stage was updated.",
+      "stage_deleted": "Growth stage was deleted.",
+      "temperature_requirement_updated": "Temperature requirement was updated.",
+      "thermal_requirement_updated": "Thermal requirement was updated.",
+      "sunshine_requirement_updated": "Sunshine requirement was updated.",
+      "nutrient_requirement_updated": "Nutrient requirement was updated."
     },
     "index": {
       "title": "Crops",
@@ -1954,18 +2012,20 @@
         "title": "{{count}} error(s):"
       },
       "stages_title": "Growth Stages",
+      "stages_lead": "Configure growth stages and environmental requirements used to estimate cultivation periods and generate work schedules in plans.",
+      "stages_list_heading": "Stage list",
+      "stages_empty_lead": "Growth stages are required to configure cultivation templates and task schedules.",
       "add_stage": "Add Stage",
       "stage_title": "Stage {{order}}",
       "stage_name": "Stage Name",
       "stage_order": "Order",
+      "stage_order_duplicate": "Duplicate order values: {{orders}}. Please assign unique order numbers.",
       "requirements_title": "Requirements",
       "temperature_requirement": "Temperature Requirements",
       "thermal_requirement": "Thermal Requirements",
       "sunshine_requirement": "Sunshine Requirements",
       "nutrient_requirement": "Nutrient Requirements",
       "base_temperature": "Base Temperature (°C)",
-      "base_temperature_placeholder": "e.g., 5.0",
-      "base_temperature_help": "Enter the base temperature at which growth begins for this stage.",
       "optimal_min": "Optimal Min Temperature (°C)",
       "optimal_max": "Optimal Max Temperature (°C)",
       "low_stress_threshold": "Low Stress Threshold (°C)",
@@ -1974,8 +2034,6 @@
       "sterility_risk_threshold": "Sterility Risk Threshold (°C)",
       "max_temperature": "Max Temperature (°C)",
       "required_gdd": "Required Growing Degree Days (°C·day)",
-      "required_gdd_placeholder": "e.g., 800.0",
-      "required_gdd_help": "Enter the Growing Degree Days required for this stage.",
       "stage_cumulative_gdd_range": "{{start}}–{{end}} ℃·day (cumulative)",
       "stage_cumulative_gdd_missing": "Enter required GDD to display the range",
       "minimum_sunshine_hours": "Minimum Sunshine Hours (hours/day)",
@@ -1983,7 +2041,11 @@
       "daily_uptake_n": "Daily Nitrogen Uptake (kg/ha/day)",
       "daily_uptake_p": "Daily Phosphorus Uptake (kg/ha/day)",
       "daily_uptake_k": "Daily Potassium Uptake (kg/ha/day)",
-      "region": "Region"
+      "region": "Region",
+      "base_temperature_placeholder": "e.g., 5.0",
+      "base_temperature_help": "Enter the base temperature at which growth begins for this stage.",
+      "required_gdd_placeholder": "e.g., 800.0",
+      "required_gdd_help": "Enter the Growing Degree Days required for this stage."
     },
     "show": {
       "reference_crop": "Reference Crop",
