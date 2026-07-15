@@ -19,7 +19,8 @@ function getNested(obj: JsonRecord, path: string): unknown {
 /** Keys referenced by crop-stages.component.ts cumulative GDD display. */
 const CROPS_EDIT_KEYS = [
   'crops.edit.stage_cumulative_gdd_range',
-  'crops.edit.stage_cumulative_gdd_missing'
+  'crops.edit.stage_cumulative_gdd_missing',
+  'crops.edit.stage_order_duplicate'
 ] as const;
 
 const locales: { name: string; catalog: JsonRecord }[] = [
