@@ -472,6 +472,40 @@
         assert_eq!(fertilizer.items.last().unwrap().scheduled_date, Date::from_calendar_date(2025, time::Month::April, 6).unwrap());
     }
 
+    #[test]
+    fn generate_raises_missing_field_crop_when_field_has_no_crop() {
+        let (mut ctx, task_schedule_gateway, clock) = build_test_fixtures();
+        if let Some(fc) = ctx.plan.field_cultivations.first_mut() {
+            fc.crop = None;
+        }
+        let cultivation_plan_gateway = FakeCultivationPlanGateway;
+        let task_schedule_read_gateway = FakeTaskScheduleReadGateway {
+            ctx,
+            protectable_items: vec![],
+        };
+        let progress_gateway = StubProgressGateway {
+            response: progress_response(),
+            received: Mutex::new(vec![]),
+        };
+        let interactor = TaskScheduleGenerateInteractor::new(
+            &progress_gateway,
+            &task_schedule_gateway,
+            &clock,
+            &cultivation_plan_gateway,
+            &task_schedule_read_gateway,
+        );
+        let err = interactor.call(TaskScheduleGenerateInput::new(99)).unwrap_err();
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_i18n_key(err.as_ref()),
+            crate::agricultural_task::task_schedule_sync_error_keys::MISSING_FIELD_CROP.to_string()
+        );
+        assert_eq!(
+            crate::agricultural_task::task_schedule_sync_error_crop_id(err.as_ref()),
+            None
+        );
+        assert!(task_schedule_gateway.merge_replaced.lock().unwrap().is_empty());
+    }
+
     // Ruby: test "generate! raises when crop has no blueprints"
     #[test]
     fn generate_raises_blueprint_missing_when_no_blueprints() {

@@ -114,6 +114,16 @@ where
             .task_schedule_read_gateway
             .list_field_cultivation_rows(cultivation_plan_id)?;
 
+        if field_rows.iter().any(|row| row.crop_id.is_none()) {
+            return Err(Box::new(TaskScheduleSyncError::new(
+                sync_errors::MISSING_FIELD_CROP,
+                format!(
+                    "CultivationPlan#{} has a field without a crop assigned",
+                    cultivation_plan_id
+                ),
+            )));
+        }
+
         let mut crop_ids = Vec::new();
         for row in &field_rows {
             if let Some(crop_id) = row.crop_id {

@@ -2362,6 +2362,7 @@
         "gdd_date_not_found_link": "作物一覧から作業予定を確認する",
         "gdd_date_not_found_wizard_link": "「{{cropName}}」の作業予定を確認する",
         "missing_start_date": "栽培開始日が未設定のため作業予定を生成できません。",
+        "missing_field_crop": "作付計画のほ場に作物が未設定のため、作業予定を生成できません。",
         "agrr_unavailable": "AGRR処理サービスに接続できません。しばらくしてから再試行してください。",
         "generic": "作業予定を作れませんでした。",
         "generic_single": "「{{cropName}}」の設定を確認してください。問題がなければ再試行してください。",

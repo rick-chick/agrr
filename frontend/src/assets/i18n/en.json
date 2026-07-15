@@ -1340,6 +1340,7 @@
         "gdd_date_not_found_link": "Review task schedule blueprints from the crop list",
         "gdd_date_not_found_wizard_link": "Review task schedule blueprints for {{cropName}}",
         "missing_start_date": "Task schedules could not be generated because the cultivation start date is missing.",
+        "missing_field_crop": "Task schedules could not be generated because a field in this plan has no crop assigned.",
         "agrr_unavailable": "Could not reach the AGRR processing service. Please try again later.",
         "generic": "Task schedules could not be created.",
         "generic_single": "Check settings for \"{{cropName}}\", or retry if setup is already complete.",

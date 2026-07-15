@@ -12,5 +12,6 @@ pub const EMPTY_GDD_PROGRESS: &str = "plans.task_schedules.sync_errors.empty_gdd
 pub const MISSING_GDD_TRIGGER: &str = "plans.task_schedules.sync_errors.missing_gdd_trigger";
 pub const GDD_DATE_NOT_FOUND: &str = "plans.task_schedules.sync_errors.gdd_date_not_found";
 pub const MISSING_START_DATE: &str = "plans.task_schedules.sync_errors.missing_start_date";
+pub const MISSING_FIELD_CROP: &str = "plans.task_schedules.sync_errors.missing_field_crop";
 pub const AGRR_UNAVAILABLE: &str = "plans.task_schedules.sync_errors.agrr_unavailable";
 pub const GENERIC: &str = "plans.task_schedules.sync_errors.generic";

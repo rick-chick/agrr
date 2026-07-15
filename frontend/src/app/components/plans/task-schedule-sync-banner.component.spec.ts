@@ -26,6 +26,9 @@ describe('TaskScheduleSyncBannerComponent', () => {
         'plans.task_schedules.sync_retry': 'Regenerate',
         'plans.task_schedules.sync_errors.agrr_unavailable':
           'Could not reach the AGRR processing service.',
+        'plans.task_schedules.sync_errors.missing_field_crop':
+          'A field in this plan has no crop assigned.',
+        'plans.task_schedules.sync_errors.plan_context_link': 'Review plan fields and crops',
         'common.loading': 'Loading...'
       },
       true
@@ -76,6 +79,21 @@ describe('TaskScheduleSyncBannerComponent', () => {
     const first = component.vm;
     const second = component.vm;
     expect(second).toBe(first);
+  });
+
+  it('shows remediation link to plan when field crop is missing', () => {
+    component.syncState = 'failed';
+    component.syncError = 'plans.task_schedules.sync_errors.missing_field_crop';
+    component.planId = 42;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      'a.task-schedule-sync-banner__link--primary'
+    ) as HTMLAnchorElement | null;
+    expect(link).toBeTruthy();
+    expect(link?.textContent?.trim()).toContain('Review plan fields and crops');
+    expect(link?.getAttribute('href')).toContain('/plans/42');
+    expect(fixture.nativeElement.textContent).toContain('A field in this plan has no crop assigned.');
   });
 
   it('rebuilds view model when inputs change', () => {

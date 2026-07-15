@@ -12,7 +12,8 @@ import {
   TASK_SCHEDULE_SYNC_ERROR_MISSING_GDD_TRIGGER,
   TASK_SCHEDULE_SYNC_GDD_DATE_NOT_FOUND_WIZARD_LINK_KEY,
   TASK_SCHEDULE_SYNC_MISSING_GDD_TRIGGER_WIZARD_LINK_KEY,
-  TASK_SCHEDULE_SYNC_PLAN_CONTEXT_LINK_KEY
+  TASK_SCHEDULE_SYNC_PLAN_CONTEXT_LINK_KEY,
+  TASK_SCHEDULE_SYNC_ERROR_MISSING_FIELD_CROP
 } from '../../domain/plans/task-schedule-sync-error-keys';
 
 describe('syncErrorWizardLinkKey', () => {
@@ -59,6 +60,23 @@ describe('syncErrorRemediationRoute', () => {
         TASK_SCHEDULE_SYNC_ERROR_EMPTY_GDD_PROGRESS,
         7,
         'work',
+        null,
+        null,
+        false
+      )
+    ).toEqual({
+      linkKey: TASK_SCHEDULE_SYNC_PLAN_CONTEXT_LINK_KEY,
+      routerLink: ['/plans', 7],
+      queryParams: null
+    });
+  });
+
+  it('routes missing field crop to plan context for remediation', () => {
+    expect(
+      syncErrorRemediationRoute(
+        TASK_SCHEDULE_SYNC_ERROR_MISSING_FIELD_CROP,
+        7,
+        'task_schedule',
         null,
         null,
         false
