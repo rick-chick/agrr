@@ -27,9 +27,10 @@ import {
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
 import {
-  blueprintGenerationReadiness,
+  defaultBlueprintReadiness,
   type BlueprintGenerationReadiness
 } from '../../../domain/crops/blueprint-generation-readiness';
+import { withCropStagesDisplayState } from '../../../adapters/crops/crop-stages-display-state';
 import type { CropStage } from '../../../domain/crops/crop';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
@@ -43,6 +44,7 @@ const initialControl: CropStagesViewState = {
   loading: true,
   error: null,
   formData: initialFormData,
+  blueprintReadiness: defaultBlueprintReadiness(),
   pendingErrorFlash: null,
   pendingSuccessFlash: null
 };
@@ -309,16 +311,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   get blueprintReadiness(): BlueprintGenerationReadiness {
-    return blueprintGenerationReadiness(
-      {
-        id: this.cropId,
-        name: this.control.formData.name,
-        is_reference: false,
-        groups: [],
-        crop_stages: this.control.formData.crop_stages
-      },
-      []
-    );
+    return withCropStagesDisplayState(this.control, this.cropId).blueprintReadiness;
   }
 
   get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {

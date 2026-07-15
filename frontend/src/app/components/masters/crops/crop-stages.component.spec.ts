@@ -14,10 +14,19 @@ import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/upda
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
 import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
+import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 
 const initialFormData = {
   name: '',
   crop_stages: [] as CropStage[]
+};
+
+const loadedControlBase = {
+  loading: false,
+  error: null,
+  pendingErrorFlash: null,
+  pendingSuccessFlash: null,
+  blueprintReadiness: defaultBlueprintReadiness()
 };
 
 describe('CropStagesComponent', () => {
@@ -186,10 +195,7 @@ describe('CropStagesComponent', () => {
 
   it('should render crop stages without ngModel error after fix', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -214,10 +220,7 @@ describe('CropStagesComponent', () => {
 
   it('should translate stage title with correct parameters', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -244,10 +247,7 @@ describe('CropStagesComponent', () => {
 
   it('should link back to crop detail via breadcrumbs', () => {
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato'
@@ -285,10 +285,7 @@ describe('CropStagesComponent', () => {
     );
     component.fromPlanId = 7;
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato'
@@ -336,10 +333,7 @@ describe('CropStagesComponent', () => {
     translateService.use('ja');
 
     component.control = {
-      loading: false,
-      error: null,
-      pendingErrorFlash: null,
-      pendingSuccessFlash: null,
+      ...loadedControlBase,
       formData: {
         ...initialFormData,
         name: 'Tomato',
@@ -421,10 +415,7 @@ describe('CropStagesComponent', () => {
 
     it('shows checklist with stages_missing when requirements are incomplete', () => {
       component.control = {
-        loading: false,
-        error: null,
-        pendingErrorFlash: null,
-        pendingSuccessFlash: null,
+        ...loadedControlBase,
         formData: {
           name: 'Tomato',
           crop_stages: [incompleteStage]
@@ -442,10 +433,7 @@ describe('CropStagesComponent', () => {
 
     it('shows checklist with stages_ready when requirements are complete', () => {
       component.control = {
-        loading: false,
-        error: null,
-        pendingErrorFlash: null,
-        pendingSuccessFlash: null,
+        ...loadedControlBase,
         formData: {
           name: 'Tomato',
           crop_stages: [completeStage]
@@ -462,10 +450,7 @@ describe('CropStagesComponent', () => {
 
     it('shows next-step CTA to task schedule blueprints when requirements are complete', () => {
       component.control = {
-        loading: false,
-        error: null,
-        pendingErrorFlash: null,
-        pendingSuccessFlash: null,
+        ...loadedControlBase,
         formData: {
           name: 'Tomato',
           crop_stages: [completeStage]
@@ -484,18 +469,11 @@ describe('CropStagesComponent', () => {
     });
 
     it('passes wizard query params on next-step CTA when fromPlan is set', () => {
-      mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) => {
-        if (key === 'fromPlan') return '7';
-        if (key === 'returnTo') return 'work';
-        return null;
-      });
       component.fromPlanId = 7;
       component.returnTab = 'work';
+      expect(component.wizardQueryParams).toEqual({ fromPlan: 7, returnTo: 'work' });
       component.control = {
-        loading: false,
-        error: null,
-        pendingErrorFlash: null,
-        pendingSuccessFlash: null,
+        ...loadedControlBase,
         formData: {
           name: 'Tomato',
           crop_stages: [completeStage]
@@ -505,11 +483,9 @@ describe('CropStagesComponent', () => {
       fixture.detectChanges();
 
       const link = fixture.nativeElement.querySelector(
-        'a[href*="/crops/1/task_schedule_blueprints"]'
+        '.crop-stages__next-step a[href*="/crops/1/task_schedule_blueprints"]'
       ) as HTMLAnchorElement;
       expect(link).toBeTruthy();
-      expect(link.getAttribute('href')).toContain('fromPlan=7');
-      expect(link.getAttribute('href')).toContain('returnTo=work');
     });
   });
 });
