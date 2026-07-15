@@ -144,17 +144,22 @@ const initialControl: CropStagesViewState = {
                     <div class="requirement-section">
                       <h3 class="requirement-section__title">{{ 'crops.edit.temperature_requirement' | translate }}</h3>
                       <div class="requirement-fields">
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">
-                            {{ 'crops.edit.base_temperature' | translate }}
-                            @if (isBaseTemperatureMissing(stage)) {
-                              <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
-                            }
-                          </span>
-                          <input type="number" step="0.1" name="temp_base_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.base_temperature ?? null"
-                                 (ngModelChange)="onTemperatureFieldDraft(stage.id, 'base_temperature', $event)"
-                                 (blur)="saveTemperatureField(stage.id, 'base_temperature')" />
-                        </label>
+                        <div class="form-card__field form-card__field--small">
+                          <label>
+                            <span class="form-card__field-label">
+                              {{ 'crops.edit.base_temperature' | translate }}
+                              @if (isBaseTemperatureMissing(stage)) {
+                                <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
+                              }
+                            </span>
+                            <input type="number" step="0.1" name="temp_base_{{ stage.id }}"
+                                   [placeholder]="'crops.edit.base_temperature_placeholder' | translate"
+                                   [ngModel]="stage.temperature_requirement?.base_temperature ?? null"
+                                   (ngModelChange)="onTemperatureFieldDraft(stage.id, 'base_temperature', $event)"
+                                   (blur)="saveTemperatureField(stage.id, 'base_temperature')" />
+                          </label>
+                          <p class="form-hint">{{ 'crops.edit.base_temperature_help' | translate }}</p>
+                        </div>
                         <label class="form-card__field form-card__field--small">
                           <span class="form-card__field-label">{{ 'crops.edit.optimal_min' | translate }}</span>
                           <input type="number" step="0.1" name="temp_opt_min_{{ stage.id }}" [ngModel]="stage.temperature_requirement?.optimal_min ?? null"
@@ -203,17 +208,22 @@ const initialControl: CropStagesViewState = {
                     <div class="requirement-section">
                       <h3 class="requirement-section__title">{{ 'crops.edit.thermal_requirement' | translate }}</h3>
                       <div class="requirement-fields">
-                        <label class="form-card__field form-card__field--small">
-                          <span class="form-card__field-label">
-                            {{ 'crops.edit.required_gdd' | translate }}
-                            @if (isRequiredGddMissing(stage)) {
-                              <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
-                            }
-                          </span>
-                          <input type="number" step="0.1" name="thermal_gdd_{{ stage.id }}" [ngModel]="stage.thermal_requirement?.required_gdd ?? null"
-                                 (ngModelChange)="onThermalFieldDraft(stage.id, 'required_gdd', $event)"
-                                 (blur)="saveThermalField(stage.id, 'required_gdd')" />
-                        </label>
+                        <div class="form-card__field form-card__field--small">
+                          <label>
+                            <span class="form-card__field-label">
+                              {{ 'crops.edit.required_gdd' | translate }}
+                              @if (isRequiredGddMissing(stage)) {
+                                <span class="form-card__field-required-marker">{{ 'crops.edit.required_marker' | translate }}</span>
+                              }
+                            </span>
+                            <input type="number" step="0.1" name="thermal_gdd_{{ stage.id }}"
+                                   [placeholder]="'crops.edit.required_gdd_placeholder' | translate"
+                                   [ngModel]="stage.thermal_requirement?.required_gdd ?? null"
+                                   (ngModelChange)="onThermalFieldDraft(stage.id, 'required_gdd', $event)"
+                                   (blur)="saveThermalField(stage.id, 'required_gdd')" />
+                          </label>
+                          <p class="form-hint">{{ 'crops.edit.required_gdd_help' | translate }}</p>
+                        </div>
                         <p class="crop-stage-cumulative-gdd" role="status">
                           @if (stageCumulativeGddRangeFor(stage); as range) {
                             @if (range.gddRangeMissing) {

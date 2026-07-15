@@ -354,7 +354,11 @@
       "errors": {
         "title": "{{count}} त्रुटियाँ:"
       },
-      "required_marker": "आवश्यक"
+      "required_marker": "आवश्यक",
+      "base_temperature_placeholder": "उदा., 5.0",
+      "base_temperature_help": "इस चरण में वृद्धि शुरू होने वाला न्यूनतम आधार तापमान दर्ज करें।",
+      "required_gdd_placeholder": "उदा., 800.0",
+      "required_gdd_help": "इस चरण के लिए आवश्यक बढ़ते डिग्री दिन (Growing Degree Days) दर्ज करें।"
     },
     "show": {
       "name": "नाम",
