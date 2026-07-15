@@ -30,6 +30,7 @@ describe('CropStagesPresenter', () => {
     error: null,
     pendingErrorFlash: null,
     pendingSuccessFlash: null,
+    pendingReorderCropStagesSnapshot: null,
     blueprintReadiness: defaultBlueprintReadiness(),
     taskScheduleBlueprints: [],
     formData
@@ -48,6 +49,7 @@ describe('CropStagesPresenter', () => {
           error: null,
           pendingErrorFlash: null,
           pendingSuccessFlash: null,
+          pendingReorderCropStagesSnapshot: null,
           blueprintReadiness: defaultBlueprintReadiness(),
           taskScheduleBlueprints: [],
           formData: emptyFormData
@@ -299,6 +301,36 @@ describe('CropStagesPresenter', () => {
       expect(lastControl!.pendingSuccessFlash).toEqual({
         type: 'success',
         text: 'crops.flash.sunshine_requirement_updated'
+      });
+    });
+  });
+
+  describe('ReorderCropStagesOutputPort', () => {
+    it('restores crop stage order on onError when reorder snapshot exists', () => {
+      const originalStages: CropStage[] = [
+        { id: 1, crop_id: 1, name: 'Stage 1', order: 1 },
+        { id: 2, crop_id: 1, name: 'Stage 2', order: 2 }
+      ];
+      const reorderedStages: CropStage[] = [
+        { id: 2, crop_id: 1, name: 'Stage 2', order: 1 },
+        { id: 1, crop_id: 1, name: 'Stage 1', order: 2 }
+      ];
+      lastControl = baseControlState({
+        name: 'Test Crop',
+        crop_stages: reorderedStages
+      });
+      lastControl = {
+        ...lastControl!,
+        pendingReorderCropStagesSnapshot: originalStages
+      };
+
+      presenter.onError({ message: 'network error' });
+
+      expect(lastControl!.formData.crop_stages).toEqual(originalStages);
+      expect(lastControl!.pendingReorderCropStagesSnapshot).toBeNull();
+      expect(lastControl!.pendingErrorFlash).toEqual({
+        type: 'error',
+        text: 'network error'
       });
     });
   });

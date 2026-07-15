@@ -12,6 +12,7 @@ const baseControl: CropStagesViewState = {
   },
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
+  pendingReorderCropStagesSnapshot: null,
   blueprintReadiness: defaultBlueprintReadiness(),
   taskScheduleBlueprints: []
 };
