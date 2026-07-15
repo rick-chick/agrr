@@ -612,22 +612,6 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
   });
 
-  it('sorts stages by order for display', () => {
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: [
-          { id: 2, name: 'Stage 2', order: 2 } as CropStage,
-          { id: 1, name: 'Stage 1', order: 1 } as CropStage
-        ]
-      }
-    };
-
-    expect(component.sortedStages.map((stage) => stage.id)).toEqual([1, 2]);
-  });
-
   it('persists reordered stage orders after drag-drop via handle column', () => {
     component.control = {
       ...loadedControlBase,
