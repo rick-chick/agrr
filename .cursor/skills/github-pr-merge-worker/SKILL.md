@@ -52,7 +52,7 @@ description: >-
 | Cursor Automation（`Pull request opened`） | 対象 PR を選定 → CI 待ち → レビュー |
 | Cursor Automation（`CI completed`） | **推奨**。対象 PR で CI 更新後に再評価 |
 | Cursor Automation（webhook） | `.github/workflows/pr-merge-worker-dispatch.yml`（**Backend test 完了時** + PR opened / `agent-merge` label / PR `synchronize` でコンフリクト検知 + **master push 後のコンフリクト / BEHIND 検知**） |
-| **Retry dispatch** | `.github/workflows/pr-merge-worker-retry-dispatch.yml`（15 分ごと + dispatch キャンセル時。ready + CI green のスタック PR を `action: stuck_retry` で再 dispatch） |
+| **Retry dispatch** | `.github/workflows/pr-merge-worker-retry-dispatch.yml`（15 分ごと + dispatch キャンセル時。**統合 reconcile** — `BEHIND` / `DIRTY` / `CONFLICTING` は `action: conflict`、ERROR 後スタックは `action: stuck_retry`。`classifyReconcileCandidate` / `selectReconcileCandidate` で 1 件 dispatch） |
 | 手動 | 「PR #N をマージワーカー」「#123 をマージ可能にして」 |
 
 Webhook payload フィールド: `repository`, `pr_number`, `pr_title`, `pr_url`, `action`（`opened` | `labeled` | `synchronize` | `ci_completed` | **`conflict`** | **`stuck_retry`**）, `head_ref`, `head_sha`, `author`, `mergeable_state`, `merge_state_status`（`conflict` 時）, `retry_reason`（`stuck_retry` 時）。

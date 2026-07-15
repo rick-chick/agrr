@@ -5,10 +5,13 @@ import {
   IN_PROGRESS_STALE_MS,
   READY_QUIET_MS,
   buildRetryDispatchPayload,
+  classifyReconcileCandidate,
   isInProgressStale,
   isStuckRetryCandidate,
+  selectReconcileCandidate,
   selectStuckRetryCandidate,
 } from './pr-merge-worker-retry-dispatch-lib.mjs';
+import { buildConflictDispatchPayload } from './pr-merge-worker-dispatch-payload-lib.mjs';
 
 const NOW = Date.parse('2026-07-15T12:00:00.000Z');
 
@@ -157,6 +160,111 @@ test('selectStuckRetryCandidate picks lowest eligible PR number', () => {
   );
   assert.equal(selected?.pr.number, 277);
   assert.equal(selected?.removeStaleInProgressLabel, false);
+});
+
+test('classifyReconcileCandidate accepts BEHIND ready PR as conflict', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'BEHIND',
+    },
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, {
+    eligible: true,
+    action: 'conflict',
+    removeStaleInProgressLabel: false,
+  });
+});
+
+test('classifyReconcileCandidate does not classify BEHIND as stuck_retry', () => {
+  const result = classifyReconcileCandidate({
+    pr: {
+      ...BASE_PR,
+      mergeStateStatus: 'BEHIND',
+    },
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.notEqual(result.action, 'stuck_retry');
+});
+
+test('isStuckRetryCandidate rejects BEHIND with needs master sync reason', () => {
+  const result = isStuckRetryCandidate({
+    pr: {
+      ...BASE_PR,
+      mergeStateStatus: 'BEHIND',
+    },
+    checks: GREEN_CHECKS,
+    baseOwner: 'rick-chick',
+    nowMs: NOW,
+  });
+  assert.equal(result.eligible, false);
+  assert.match(result.reason, /master sync/i);
+});
+
+test('selectReconcileCandidate picks lowest eligible PR number', () => {
+  const selected = selectReconcileCandidate(
+    [
+      { ...BASE_PR, number: 280, mergeStateStatus: 'CLEAN' },
+      {
+        ...BASE_PR,
+        number: 277,
+        mergeStateStatus: 'BEHIND',
+      },
+    ],
+    {
+      277: GREEN_CHECKS,
+      280: GREEN_CHECKS,
+    },
+    'rick-chick',
+    NOW,
+  );
+  assert.equal(selected?.pr.number, 277);
+  assert.equal(selected?.action, 'conflict');
+  assert.equal(selected?.removeStaleInProgressLabel, false);
+});
+
+test('selectReconcileCandidate prefers lower conflict PR over higher stuck_retry', () => {
+  const selected = selectReconcileCandidate(
+    [
+      {
+        ...BASE_PR,
+        number: 280,
+        mergeStateStatus: 'CLEAN',
+        updatedAt: '2026-07-15T09:00:00.000Z',
+      },
+      {
+        ...BASE_PR,
+        number: 277,
+        mergeStateStatus: 'BEHIND',
+      },
+    ],
+    {
+      277: GREEN_CHECKS,
+      280: GREEN_CHECKS,
+    },
+    'rick-chick',
+    NOW,
+  );
+  assert.equal(selected?.pr.number, 277);
+  assert.equal(selected?.action, 'conflict');
+});
+
+test('buildConflictDispatchPayload maps BEHIND PR for reconcile conflict dispatch', () => {
+  const payload = buildConflictDispatchPayload({
+    repository: 'rick-chick/agrr',
+    pr: {
+      ...BASE_PR,
+      mergeStateStatus: 'BEHIND',
+    },
+  });
+  assert.equal(payload.action, 'conflict');
+  assert.equal(payload.merge_state_status, 'BEHIND');
 });
 
 test('buildRetryDispatchPayload maps stuck retry fields', () => {
