@@ -661,32 +661,54 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (!stage || !this.advancedDetailDraft) {
       return;
     }
-    const {
-      minimum_sunshine_hours,
-      target_sunshine_hours,
-      daily_uptake_n,
-      daily_uptake_p,
-      daily_uptake_k,
-      region,
-      sterility_risk_threshold
-    } = this.advancedDetailDraft;
+    const draft = this.advancedDetailDraft;
+    const sunshine = stage.sunshine_requirement;
+    const nutrient = stage.nutrient_requirement;
+    const temperature = stage.temperature_requirement;
+
+    const sunshinePatch: {
+      minimum_sunshine_hours?: number;
+      target_sunshine_hours?: number;
+    } = {};
+    if (draft.minimum_sunshine_hours !== (sunshine?.minimum_sunshine_hours ?? null)) {
+      sunshinePatch.minimum_sunshine_hours = draft.minimum_sunshine_hours ?? undefined;
+    }
+    if (draft.target_sunshine_hours !== (sunshine?.target_sunshine_hours ?? null)) {
+      sunshinePatch.target_sunshine_hours = draft.target_sunshine_hours ?? undefined;
+    }
+
+    const nutrientPatch: {
+      daily_uptake_n?: number;
+      daily_uptake_p?: number;
+      daily_uptake_k?: number;
+      region?: string;
+    } = {};
+    if (draft.daily_uptake_n !== (nutrient?.daily_uptake_n ?? null)) {
+      nutrientPatch.daily_uptake_n = draft.daily_uptake_n ?? undefined;
+    }
+    if (draft.daily_uptake_p !== (nutrient?.daily_uptake_p ?? null)) {
+      nutrientPatch.daily_uptake_p = draft.daily_uptake_p ?? undefined;
+    }
+    if (draft.daily_uptake_k !== (nutrient?.daily_uptake_k ?? null)) {
+      nutrientPatch.daily_uptake_k = draft.daily_uptake_k ?? undefined;
+    }
+    if (draft.region !== (nutrient?.region ?? null)) {
+      nutrientPatch.region = draft.region ?? undefined;
+    }
+
+    const temperaturePatch: {
+      sterility_risk_threshold?: number;
+    } = {};
+    if (draft.sterility_risk_threshold !== (temperature?.sterility_risk_threshold ?? null)) {
+      temperaturePatch.sterility_risk_threshold = draft.sterility_risk_threshold ?? undefined;
+    }
 
     this.saveCropStageAdvancedDetailsUseCase.execute({
       cropId: this.cropId,
       stageId: stage.id,
-      sunshinePatch: {
-        minimum_sunshine_hours: minimum_sunshine_hours ?? undefined,
-        target_sunshine_hours: target_sunshine_hours ?? undefined
-      },
-      nutrientPatch: {
-        daily_uptake_n: daily_uptake_n ?? undefined,
-        daily_uptake_p: daily_uptake_p ?? undefined,
-        daily_uptake_k: daily_uptake_k ?? undefined,
-        region: region ?? undefined
-      },
-      temperaturePatch: {
-        sterility_risk_threshold: sterility_risk_threshold ?? undefined
-      }
+      sunshinePatch: Object.keys(sunshinePatch).length > 0 ? sunshinePatch : undefined,
+      nutrientPatch: Object.keys(nutrientPatch).length > 0 ? nutrientPatch : undefined,
+      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined
     });
 
     this.advancedDetailDraft = null;

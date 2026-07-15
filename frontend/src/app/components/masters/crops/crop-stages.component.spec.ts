@@ -413,6 +413,48 @@ describe('CropStagesComponent', () => {
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
   });
 
+  it('saves only changed advanced dialog fields through SaveCropStageAdvancedDetailsUseCase', async () => {
+    await loadStages([
+      {
+        ...stageFixture,
+        sunshine_requirement: {
+          id: 1,
+          crop_stage_id: 1,
+          minimum_sunshine_hours: 4,
+          target_sunshine_hours: 8
+        },
+        nutrient_requirement: {
+          id: 1,
+          crop_stage_id: 1,
+          daily_uptake_n: 0.5,
+          daily_uptake_p: 0.2,
+          daily_uptake_k: 0.3,
+          region: 'jp'
+        }
+      } as CropStage
+    ]);
+
+    component.openAdvancedDialog();
+    component.advancedDetailDraft = {
+      minimum_sunshine_hours: 4,
+      target_sunshine_hours: 8,
+      daily_uptake_n: 0.5,
+      daily_uptake_p: 0.2,
+      daily_uptake_k: 0.3,
+      region: 'jp',
+      sterility_risk_threshold: 32
+    };
+    component.saveAdvancedDialog();
+
+    expect(mockSaveCropStageAdvancedDetailsUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      sunshinePatch: undefined,
+      nutrientPatch: undefined,
+      temperaturePatch: { sterility_risk_threshold: 32 }
+    });
+  });
+
   it('opens delete confirm dialog from edit panel instead of window.confirm', async () => {
     await loadStages([stageFixture]);
 
