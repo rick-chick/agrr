@@ -2005,6 +2005,8 @@
         "title": "{{count}} error(s):"
       },
       "stages_title": "Growth Stages",
+      "stages_lead": "Configure growth stages and environmental requirements used to estimate cultivation periods and generate work schedules in plans.",
+      "stages_list_heading": "Stage list",
       "add_stage": "Add Stage",
       "stage_title": "Stage {{order}}",
       "stage_name": "Stage Name",
