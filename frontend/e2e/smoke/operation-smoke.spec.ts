@@ -132,7 +132,6 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(gantt.locator('.crop-palette')).toBeHidden();
   });
 
-
   test('entry-schedule: list opens crop detail', async ({ page }) => {
     const r = findRoute('entry-schedule');
     await page.goto(resolveGotoUrl(r, resolvedCaptureIds));
