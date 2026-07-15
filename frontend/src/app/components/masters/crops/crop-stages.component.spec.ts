@@ -316,9 +316,6 @@ describe('CropStagesComponent', () => {
             add_stage: 'ステージ追加',
             stages_empty_lead: '生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。'
           }
-        },
-        common: {
-          back: '戻る'
         }
       },
       true
