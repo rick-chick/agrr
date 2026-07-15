@@ -8,6 +8,7 @@ import { CropStagesView, CropStagesViewState, CropStagesFormData } from './crop-
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
 import { UpdateCropStageUseCase } from '../../../usecase/crops/update-crop-stage.usecase';
+import { ReorderCropStagesUseCase } from '../../../usecase/crops/reorder-crop-stages.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
@@ -389,6 +390,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   private readonly loadBlueprintsUseCase = inject(LoadCropTaskScheduleBlueprintsUseCase);
   private readonly createCropStageUseCase = inject(CreateCropStageUseCase);
   private readonly updateCropStageUseCase = inject(UpdateCropStageUseCase);
+  private readonly reorderCropStagesUseCase = inject(ReorderCropStagesUseCase);
   private readonly deleteCropStageUseCase = inject(DeleteCropStageUseCase);
   private readonly updateTemperatureRequirementUseCase = inject(UpdateTemperatureRequirementUseCase);
   private readonly updateThermalRequirementUseCase = inject(UpdateThermalRequirementUseCase);
@@ -758,13 +760,10 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       }
     };
 
-    for (const { id, order } of updates) {
-      this.updateCropStageUseCase.execute({
-        cropId: this.cropId,
-        stageId: id,
-        payload: { order }
-      });
-    }
+    this.reorderCropStagesUseCase.execute({
+      cropId: this.cropId,
+      entries: updates
+    });
   }
 
   formatOptionalNumber(value: number | null | undefined): string {

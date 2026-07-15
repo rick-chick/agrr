@@ -13,6 +13,7 @@ pub mod crop_find_public_plan_add_crop_record_interactor;
 pub mod crop_find_private_plan_add_crop_record_interactor;
 pub mod add_crop_backfill_user_crop_stages_interactor;
 pub mod crop_stage_create_interactor;
+pub mod crop_stage_reorder_interactor;
 pub mod crop_stage_update_interactor;
 pub mod crop_stage_delete_interactor;
 pub mod crop_stage_detail_interactor;
