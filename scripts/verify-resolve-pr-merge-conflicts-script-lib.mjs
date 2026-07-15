@@ -6,10 +6,17 @@ const REQUIRED_SCRIPT_SNIPPETS = [
   'pr-merge-worker-needs-sync.mjs',
   'git merge origin/master',
   'mergeStateStatus=$MERGE_STATE',
+  'does not need master sync',
+  'exit 3',
+  'fork PR is not supported',
+  'git worktree add',
+  'git worktree remove',
 ];
 
 const FORBIDDEN_SCRIPT_SNIPPETS = [
   'update-branch',
+  'git checkout',
+  'git switch',
 ];
 
 /**
@@ -37,8 +44,13 @@ export async function verifyResolvePrMergeConflictsScript(repoRoot) {
     }
   }
 
+  const nonCommentLines = scriptText
+    .split('\n')
+    .filter((line) => !line.trimStart().startsWith('#'))
+    .join('\n');
+
   for (const snippet of FORBIDDEN_SCRIPT_SNIPPETS) {
-    if (scriptText.includes(snippet)) {
+    if (nonCommentLines.includes(snippet)) {
       errors.push(`resolve-pr-merge-conflicts.sh must not use: ${snippet}`);
     }
   }

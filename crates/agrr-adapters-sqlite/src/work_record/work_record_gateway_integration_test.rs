@@ -107,3 +107,50 @@ fn work_record_gateway_crud_roundtrip() {
         .expect_err("deleted record should not be found");
     assert!(err.downcast_ref::<RecordNotFoundError>().is_some());
 }
+
+#[test]
+fn work_record_gateway_list_omits_field_and_crop_name_without_field_cultivation() {
+    let pool = work_record_integration_pool();
+    let seed = seed_work_record_crud(&pool);
+    let gateway = WorkRecordSqliteGateway::new(pool.clone());
+
+    let now = OffsetDateTime::now_utc();
+    let created = gateway
+        .create(
+            seed.plan_id,
+            WorkRecordCreatePersistAttrs {
+                field_cultivation_id: None,
+                task_schedule_item_id: None,
+                agricultural_task_id: Some(seed.agricultural_task_id),
+                name: "手入力作業".into(),
+                task_type: Some("field_work".into()),
+                actual_date: Date::from_calendar_date(2026, time::Month::June, 15).unwrap(),
+                amount: None,
+                amount_unit: None,
+                time_spent_minutes: None,
+                notes: None,
+                created_at: now,
+                updated_at: now,
+            },
+        )
+        .expect("create ad-hoc work record");
+    assert!(created.field_name.is_none());
+    assert!(created.crop_name.is_none());
+
+    let listed = gateway
+        .list_for_plan(
+            seed.plan_id,
+            &WorkRecordListInput {
+                from: None,
+                to: None,
+                field_cultivation_id: None,
+            },
+        )
+        .expect("list");
+    let record = listed
+        .iter()
+        .find(|r| r.id == created.id)
+        .expect("ad-hoc record in list");
+    assert!(record.field_name.is_none());
+    assert!(record.crop_name.is_none());
+}

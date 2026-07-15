@@ -120,6 +120,47 @@ fn post_work_records_from_schedule_item_returns_201() {
 }
 
 #[test]
+fn get_work_records_list_includes_field_and_crop_name() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let create_path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (create_status, create_body) = status_and_body(client.post(
+        &create_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "list contract test"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"].as_i64().expect("record id");
+
+    let list_path = format!("/api/v1/plans/{}/work_records", seed.plan_id);
+    let (list_status, list_body) = status_and_body(
+        client.get(&list_path, Some(&session_id), &empty_headers()),
+    );
+    assert_eq!(200, list_status, "{list_body}");
+    let list_json: serde_json::Value =
+        serde_json::from_str(&list_body).expect("work_records list JSON");
+    let records = list_json["work_records"].as_array().expect("work_records");
+    let record = records
+        .iter()
+        .find(|r| r["id"].as_i64() == Some(record_id))
+        .expect("created record in list");
+    assert_eq!("F1", record["field_name"].as_str().unwrap());
+    assert_eq!(seed.crop_name, record["crop_name"].as_str().unwrap());
+}
+
+#[test]
 fn post_work_records_ad_hoc_without_name_returns_422() {
     let client = ContractClient::from_env();
     let session_id = developer_session_id(&client);
