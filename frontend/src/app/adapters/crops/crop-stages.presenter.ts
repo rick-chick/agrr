@@ -22,6 +22,7 @@ import { UpdateNutrientRequirementOutputDto } from '../../usecase/crops/update-n
 import { pendingErrorFlashFromError } from '../../core/view-effects/pending-error-flash-presenter.helpers';
 import { pendingSuccessFlashFromText } from '../../core/view-effects/pending-success-flash-presenter.helpers';
 import { withCropStagesDisplayState } from './crop-stages-display-state';
+import { cropStageRequirementKind } from '../../domain/crops/crop-stage-requirement-kind';
 import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { LoadCropTaskScheduleBlueprintsOutputPort } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 
@@ -94,14 +95,14 @@ export class CropStagesPresenter implements
     } else if ('success' in dto && 'stageId' in dto) {
       this.presentDeleteCropStage(dto as DeleteCropStageOutputDto);
     } else if ('requirement' in dto) {
-      const req = dto.requirement as any;
-      if ('base_temperature' in req || 'optimal_min' in req || 'optimal_max' in req) {
+      const kind = cropStageRequirementKind(dto.requirement);
+      if (kind === 'temperature') {
         this.presentUpdateTemperatureRequirement(dto as UpdateTemperatureRequirementOutputDto);
-      } else if ('required_gdd' in req) {
+      } else if (kind === 'thermal') {
         this.presentUpdateThermalRequirement(dto as UpdateThermalRequirementOutputDto);
-      } else if ('minimum_sunshine_hours' in req || 'target_sunshine_hours' in req) {
+      } else if (kind === 'sunshine') {
         this.presentUpdateSunshineRequirement(dto as UpdateSunshineRequirementOutputDto);
-      } else if ('daily_uptake_n' in req || 'daily_uptake_p' in req || 'daily_uptake_k' in req) {
+      } else if (kind === 'nutrient') {
         this.presentUpdateNutrientRequirement(dto as UpdateNutrientRequirementOutputDto);
       }
     }
