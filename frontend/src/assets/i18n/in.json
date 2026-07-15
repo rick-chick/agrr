@@ -324,6 +324,7 @@
       "sterility_risk_threshold": "बाँझपन जोखिम सीमा (°C)",
       "max_temperature": "अधिकतम तापमान (°C)",
       "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
+      "required_marker": "आवश्यक",
       "stage_cumulative_gdd_range": "{{start}}–{{end}} ℃·दिन (संचयी)",
       "stage_cumulative_gdd_missing": "सीमा दिखाने के लिए आवश्यक GDD दर्ज करें",
       "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",

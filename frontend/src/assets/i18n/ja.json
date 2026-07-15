@@ -425,6 +425,7 @@
       "sterility_risk_threshold": "不稔リスク閾値 (°C)",
       "max_temperature": "最高温度 (°C)",
       "required_gdd": "必要積算温度 (°C·day)",
+      "required_marker": "必須",
       "stage_cumulative_gdd_range": "{{start}}〜{{end}} ℃·日（累積）",
       "stage_cumulative_gdd_missing": "必要積算温度を入力すると表示されます",
       "minimum_sunshine_hours": "最低日照時間 (時間/日)",

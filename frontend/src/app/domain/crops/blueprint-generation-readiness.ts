@@ -1,4 +1,4 @@
-import type { Crop } from './crop';
+import type { Crop, CropStage } from './crop';
 import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
 
 const FIELD_WORK_TASK_TYPE = 'field_work';
@@ -32,11 +32,13 @@ export function blueprintGenerationReadiness(
   };
 }
 
+export function stageRequirementsComplete(stage: CropStage): boolean {
+  const baseTemperature = stage.temperature_requirement?.base_temperature;
+  const requiredGdd = stage.thermal_requirement?.required_gdd;
+  return baseTemperature != null && requiredGdd != null;
+}
+
 function hasCompleteStageRequirements(crop: Crop | null | undefined): boolean {
   const stages = crop?.crop_stages ?? [];
-  return stages.some((stage) => {
-    const baseTemperature = stage.temperature_requirement?.base_temperature;
-    const requiredGdd = stage.thermal_requirement?.required_gdd;
-    return baseTemperature != null && requiredGdd != null;
-  });
+  return stages.some(stageRequirementsComplete);
 }

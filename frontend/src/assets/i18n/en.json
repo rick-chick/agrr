@@ -2023,6 +2023,7 @@
       "sterility_risk_threshold": "Sterility Risk Threshold (°C)",
       "max_temperature": "Max Temperature (°C)",
       "required_gdd": "Required Growing Degree Days (°C·day)",
+      "required_marker": "Required",
       "stage_cumulative_gdd_range": "{{start}}–{{end}} ℃·day (cumulative)",
       "stage_cumulative_gdd_missing": "Enter required GDD to display the range",
       "minimum_sunshine_hours": "Minimum Sunshine Hours (hours/day)",
