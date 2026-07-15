@@ -15,7 +15,7 @@ const webhookKey = process.env.WEBHOOK_KEY ?? '';
 const repository = process.env.GITHUB_REPOSITORY ?? '';
 
 /** Delay before re-scan when GitHub merge state may still be settling. */
-export const DELAYED_RESCAN_MS = 7 * 60 * 1000;
+const DELAYED_RESCAN_MS = 7 * 60 * 1000;
 
 if (!webhookUrl || !webhookKey) {
   console.log('CURSOR_PR_MERGE_WEBHOOK_URL or CURSOR_PR_MERGE_WEBHOOK_KEY is not set.');
