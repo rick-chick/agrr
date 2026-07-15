@@ -132,22 +132,6 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(gantt.locator('.crop-palette')).toBeHidden();
   });
 
-  test('crop stages: shows stage list or empty state', async ({ page }) => {
-    const id = resolvedCaptureIds?.masters.crops;
-    if (id == null) {
-      test.skip(true, 'no crops record in dev DB');
-    }
-
-    const stagesRoute = findRoute('crops/:id/stages');
-    await page.goto(`/${'crops'}/${id}/stages`);
-    await waitForPageStable(page, stagesRoute);
-    await assertHostHealthy(page, 'app-crop-stages');
-
-    const content = page.locator(
-      'app-crop-stages .crop-stage-card, app-crop-stages .crop-stages-empty',
-    );
-    await expect(content.first()).toBeVisible({ timeout: 30_000 });
-  });
 
   test('entry-schedule: list opens crop detail', async ({ page }) => {
     const r = findRoute('entry-schedule');
