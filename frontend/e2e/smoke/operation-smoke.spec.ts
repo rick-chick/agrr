@@ -228,6 +228,58 @@ smokeDescribe('operation smoke (key user flows)', () => {
     await expect(content.first()).toBeVisible();
   });
 
+  test('master crops: drag-reorder stages persists after reload', async ({ page }) => {
+    const id = resolvedCaptureIds?.masters.crops;
+    if (id == null) {
+      test.skip(true, 'no crops record in dev DB');
+    }
+
+    const stagesPattern = 'crops/:id/stages';
+    const stagesRoute = findRoute(stagesPattern);
+
+    await page.goto(`/crops/${id}/stages`);
+    await waitForPageStable(page, stagesRoute);
+    await assertHostHealthy(page, 'app-crop-stages');
+
+    const rows = page.locator('app-crop-stages .crop-stages-table__row');
+    const rowCount = await rows.count();
+    if (rowCount < 2) {
+      test.skip(true, 'crop needs at least 2 stages for reorder smoke');
+    }
+
+    const readOrderTexts = async (): Promise<string[]> =>
+      rows.evaluateAll((elements) =>
+        elements.map((row) => (row.querySelectorAll('td')[1]?.textContent ?? '').trim())
+      );
+
+    const ordersBefore = await readOrderTexts();
+    const firstStageName = (await rows.nth(0).locator('td').nth(2).textContent())?.trim();
+    const secondStageName = (await rows.nth(1).locator('td').nth(2).textContent())?.trim();
+    if (!firstStageName || !secondStageName) {
+      test.skip(true, 'stage rows missing names');
+    }
+
+    const reorderResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/v1/masters/crops/${id}/crop_stages/reorder`) &&
+        response.status() === 200
+    );
+    await rows.nth(0).locator('.crop-stages-table__drag').dragTo(rows.nth(1));
+    await reorderResponse;
+
+    await page.reload();
+    await waitForPageStable(page, stagesRoute);
+    await assertHostHealthy(page, 'app-crop-stages');
+
+    const reloadedRows = page.locator('app-crop-stages .crop-stages-table__row');
+    await expect(reloadedRows.nth(0)).toContainText(secondStageName);
+    await expect(reloadedRows.nth(1)).toContainText(firstStageName);
+    const ordersAfter = await reloadedRows.evaluateAll((elements) =>
+      elements.map((row) => (row.querySelectorAll('td')[1]?.textContent ?? '').trim())
+    );
+    expect(ordersAfter).not.toEqual(ordersBefore);
+  });
+
   for (const m of MASTER_RESOURCES) {
     test(`master ${m.segment}: list and new form`, async ({ page }) => {
       const listRoute = findRoute(m.segment);

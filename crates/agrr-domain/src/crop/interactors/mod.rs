@@ -17,6 +17,7 @@ pub mod crop_stage_update_interactor;
 pub mod crop_stage_delete_interactor;
 pub mod crop_stage_detail_interactor;
 pub mod crop_stage_list_interactor;
+pub mod crop_stage_reorder_interactor;
 pub mod crop_stage_copy_interactor;
 pub mod crop_load_authorized_crop_stage_interactor;
 pub mod crop_load_masters_authorized_crop_stage_interactor;

@@ -15,6 +15,7 @@ describe('CropStageApiGateway', () => {
     get: ReturnType<typeof vi.fn>;
     post: ReturnType<typeof vi.fn>;
     patch: ReturnType<typeof vi.fn>;
+    put: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
   let gateway: CropStageApiGateway;
@@ -24,6 +25,7 @@ describe('CropStageApiGateway', () => {
       get: vi.fn(),
       post: vi.fn(),
       patch: vi.fn(),
+      put: vi.fn(),
       delete: vi.fn()
     };
     gateway = new CropStageApiGateway(client as unknown as MastersClientService);
@@ -74,6 +76,26 @@ describe('CropStageApiGateway', () => {
       vi.mocked(client.patch).mockReturnValue(throwError(() => new Error('network error')));
 
       await expect(firstValueFrom(gateway.updateCropStage(1, 1, payload))).rejects.toThrow('network error');
+    });
+  });
+
+  describe('reorderCropStages', () => {
+    it('returns Observable<CropStage[]>', async () => {
+      const orders = [
+        { id: 1, order: 2 },
+        { id: 2, order: 1 }
+      ];
+      const stages: CropStage[] = [
+        { id: 2, crop_id: 1, name: 'B', order: 1 },
+        { id: 1, crop_id: 1, name: 'A', order: 2 }
+      ];
+      vi.mocked(client.put).mockReturnValue(of(stages));
+
+      const result = await firstValueFrom(gateway.reorderCropStages(1, orders));
+      expect(result).toEqual(stages);
+      expect(client.put).toHaveBeenCalledWith('/crops/1/crop_stages/reorder', {
+        crop_stage_orders: orders
+      });
     });
   });
 

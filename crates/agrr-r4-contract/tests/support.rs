@@ -63,6 +63,11 @@ pub struct MastersCropSeed {
     pub crop_id: i64,
 }
 
+pub struct MastersCropStagesSeed {
+    pub crop_id: i64,
+    pub stage_ids: [i64; 3],
+}
+
 pub struct MastersCropBlueprintCreateSeed {
     pub crop_id: i64,
     pub agricultural_task_id: i64,
@@ -83,6 +88,26 @@ pub fn seed_masters_crop(user_id: i64) -> MastersCropSeed {
     .expect("insert crop");
     MastersCropSeed {
         crop_id: conn.last_insert_rowid(),
+    }
+}
+
+/// Seeds a user-owned crop with three ordered stages for reorder API tests.
+pub fn seed_masters_crop_with_stages(user_id: i64) -> MastersCropStagesSeed {
+    let crop = seed_masters_crop(user_id);
+    let conn = contract_sqlite_conn();
+    let mut stage_ids = [0_i64; 3];
+    for (index, stage_id) in stage_ids.iter_mut().enumerate() {
+        conn.execute(
+            "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+             VALUES (?1, ?2, ?3, datetime('now'), datetime('now'))",
+            params![crop.crop_id, format!("Stage {}", index + 1), (index + 1) as i64],
+        )
+        .expect("insert crop stage");
+        *stage_id = conn.last_insert_rowid();
+    }
+    MastersCropStagesSeed {
+        crop_id: crop.crop_id,
+        stage_ids,
     }
 }
 

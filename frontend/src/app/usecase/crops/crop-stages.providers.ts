@@ -16,6 +16,8 @@ import { LoadCropTaskScheduleBlueprintsUseCase } from './load-crop-task-schedule
 import { LOAD_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT } from './crop-task-schedule-blueprint.ports';
 import { UpdateCropStageUseCase } from './update-crop-stage.usecase';
 import { UPDATE_CROP_STAGE_OUTPUT_PORT } from './update-crop-stage.output-port';
+import { ReorderCropStagesUseCase } from './reorder-crop-stages.usecase';
+import { REORDER_CROP_STAGES_OUTPUT_PORT } from './reorder-crop-stages.output-port';
 import { UpdateNutrientRequirementUseCase } from './update-nutrient-requirement.usecase';
 import { UPDATE_NUTRIENT_REQUIREMENT_OUTPUT_PORT } from './update-nutrient-requirement.output-port';
 import { UpdateSunshineRequirementUseCase } from './update-sunshine-requirement.usecase';
@@ -31,6 +33,7 @@ export const CROP_STAGES_PROVIDERS: readonly Provider[] = [
   LoadCropTaskScheduleBlueprintsUseCase,
   CreateCropStageUseCase,
   UpdateCropStageUseCase,
+  ReorderCropStagesUseCase,
   DeleteCropStageUseCase,
   UpdateTemperatureRequirementUseCase,
   UpdateThermalRequirementUseCase,
@@ -40,6 +43,7 @@ export const CROP_STAGES_PROVIDERS: readonly Provider[] = [
   { provide: LOAD_CROP_TASK_SCHEDULE_BLUEPRINTS_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: CREATE_CROP_STAGE_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: UPDATE_CROP_STAGE_OUTPUT_PORT, useExisting: CropStagesPresenter },
+  { provide: REORDER_CROP_STAGES_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: DELETE_CROP_STAGE_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: UPDATE_TEMPERATURE_REQUIREMENT_OUTPUT_PORT, useExisting: CropStagesPresenter },
   { provide: UPDATE_THERMAL_REQUIREMENT_OUTPUT_PORT, useExisting: CropStagesPresenter },

@@ -13,7 +13,7 @@ use agrr_domain::crop::entities::{
     CropEntity, CropStageEntity, NutrientRequirementEntity, SunshineRequirementEntity,
     TemperatureRequirementEntity, ThermalRequirementEntity,
 };
-use agrr_domain::crop::gateways::{CropGateway, SoftDeleteWithUndoOutcome};
+use agrr_domain::crop::gateways::{CropGateway, CropStageReorderGateway, SoftDeleteWithUndoOutcome};
 use agrr_domain::shared::attr::{AttrMap, AttrValue};
 use agrr_domain::shared::dtos::Error;
 use agrr_domain::shared::exceptions::{RecordInvalidError, RecordNotFoundError};
@@ -56,6 +56,20 @@ fn map_crop_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CropEntity> {
 fn parse_groups(raw: Option<String>) -> Vec<String> {
     raw.and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok())
         .unwrap_or_default()
+}
+
+fn map_crop_stage_write_error(
+    err: rusqlite::Error,
+) -> Box<dyn std::error::Error + Send + Sync> {
+    if let rusqlite::Error::SqliteFailure(code, _) = &err {
+        if code.code == rusqlite::ErrorCode::ConstraintViolation {
+            return Box::new(RecordInvalidError::new(
+                Some("order has already been taken".into()),
+                None,
+            ));
+        }
+    }
+    Box::new(err)
 }
 
 impl CropGateway for CropSqliteGateway {
@@ -411,10 +425,12 @@ impl CropGateway for CropSqliteGateway {
         sets.push("updated_at = datetime('now')".into());
         let sql = format!("UPDATE crop_stages SET {} WHERE id = ?", sets.join(", "));
         values.push(rusqlite::types::Value::Integer(crop_stage_id));
-        self.pool.with_write_box(|conn| {
-            conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
-            load_crop_stage_by_id(conn, crop_stage_id)
-        })
+        self.pool
+            .with_write_box(|conn| {
+                conn.execute(&sql, rusqlite::params_from_iter(values.iter()))?;
+                load_crop_stage_by_id(conn, crop_stage_id)
+            })
+            .map_err(map_crop_stage_write_error)
     }
 
     fn delete_crop_stage(
@@ -919,4 +935,48 @@ pub(crate) fn load_crop_stages(
         out.push(hydrate_crop_stage_requirements(conn, row?)?);
     }
     Ok(out)
+}
+
+impl CropStageReorderGateway for CropSqliteGateway {
+    fn reorder_crop_stages(
+        &self,
+        crop_id: i64,
+        orders: &[(i64, i64)],
+    ) -> Result<Vec<CropStageEntity>, Box<dyn std::error::Error + Send + Sync>> {
+        if orders.is_empty() {
+            return Err(Box::new(RecordInvalidError::new(
+                Some("orders cannot be empty".into()),
+                None,
+            )));
+        }
+
+        self.pool.with_write_transaction_box(|conn| {
+            for (stage_id, _) in orders {
+                let count: i64 = conn.query_row(
+                    "SELECT COUNT(*) FROM crop_stages WHERE id = ?1 AND crop_id = ?2",
+                    params![stage_id, crop_id],
+                    |row| row.get(0),
+                )?;
+                if count == 0 {
+                    return Err(rusqlite::Error::QueryReturnedNoRows);
+                }
+            }
+
+            for (stage_id, _) in orders {
+                conn.execute(
+                    "UPDATE crop_stages SET \"order\" = -?1 WHERE id = ?1 AND crop_id = ?2",
+                    params![stage_id, crop_id],
+                )?;
+            }
+
+            for (stage_id, order) in orders {
+                conn.execute(
+                    "UPDATE crop_stages SET \"order\" = ?1, updated_at = datetime('now') WHERE id = ?2 AND crop_id = ?3",
+                    params![order, stage_id, crop_id],
+                )?;
+            }
+
+            load_crop_stages(conn, crop_id)
+        })
+    }
 }

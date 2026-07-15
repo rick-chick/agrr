@@ -38,6 +38,8 @@ fn crop_test_pool() -> SqlitePool {
               id INTEGER PRIMARY KEY, crop_id INTEGER NOT NULL, name TEXT, \"order\" INTEGER,
               created_at TEXT, updated_at TEXT
             );
+            CREATE UNIQUE INDEX index_crop_stages_on_crop_id_and_order
+              ON crop_stages (crop_id, \"order\");
             CREATE TABLE temperature_requirements (
               id INTEGER PRIMARY KEY, crop_stage_id INTEGER NOT NULL,
               base_temperature REAL, optimal_min REAL, optimal_max REAL,
@@ -286,4 +288,81 @@ fn list_by_ids_returns_entities_in_requested_order() {
         .map(|e| e.id)
         .collect::<Vec<_>>();
     assert_eq!(ref_only, vec![ref_crop]);
+}
+
+#[test]
+fn reorder_crop_stages_updates_all_orders_in_one_transaction() {
+    use agrr_domain::crop::gateways::CropStageReorderGateway;
+
+    let pool = crop_test_pool();
+    let (gw, crop_id) = seed_crop(&pool);
+    let stage_a = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "A", "order": 1 }),
+        ))
+        .unwrap();
+    let stage_b = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "B", "order": 2 }),
+        ))
+        .unwrap();
+    let stage_c = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "C", "order": 3 }),
+        ))
+        .unwrap();
+
+    let reordered = gw
+        .reorder_crop_stages(
+            crop_id,
+            &[
+                (stage_c.id, 1),
+                (stage_a.id, 2),
+                (stage_b.id, 3),
+            ],
+        )
+        .unwrap();
+
+    assert_eq!(
+        reordered
+            .iter()
+            .map(|stage| (stage.id, stage.order))
+            .collect::<Vec<_>>(),
+        vec![(stage_c.id, 1), (stage_a.id, 2), (stage_b.id, 3)]
+    );
+}
+
+#[test]
+fn update_crop_stage_conflicting_order_returns_record_invalid() {
+    use agrr_domain::shared::exceptions::RecordInvalidError;
+
+    let pool = crop_test_pool();
+    let (gw, crop_id) = seed_crop(&pool);
+    let stage_a = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "A", "order": 1 }),
+        ))
+        .unwrap();
+    let stage_b = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "B", "order": 2 }),
+        ))
+        .unwrap();
+
+    let err = gw
+        .update_crop_stage(
+            stage_a.id,
+            CropStageUpdateInput {
+                crop_stage_id: stage_a.id,
+                payload: json!({ "order": stage_b.order }),
+            },
+        )
+        .unwrap_err();
+
+    assert!(err.downcast_ref::<RecordInvalidError>().is_some());
 }

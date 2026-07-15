@@ -70,6 +70,7 @@ export interface CropStageGateway {
   // CropStage CRUD
   createCropStage(cropId: number, payload: CreateCropStagePayload): Observable<CropStage>;
   updateCropStage(cropId: number, stageId: number, payload: UpdateCropStagePayload): Observable<CropStage>;
+  reorderCropStages(cropId: number, orders: Array<{ id: number; order: number }>): Observable<CropStage[]>;
   deleteCropStage(cropId: number, stageId: number): Observable<void>;
 
   // Temperature Requirement
