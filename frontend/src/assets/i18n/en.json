@@ -2042,7 +2042,11 @@
       "daily_uptake_p": "Daily Phosphorus Uptake (kg/ha/day)",
       "daily_uptake_k": "Daily Potassium Uptake (kg/ha/day)",
       "region": "Region",
-      "required_marker": "Required"
+      "required_marker": "Required",
+      "base_temperature_placeholder": "e.g., 5.0",
+      "base_temperature_help": "Enter the base temperature at which growth begins for this stage.",
+      "required_gdd_placeholder": "e.g., 800.0",
+      "required_gdd_help": "Enter the Growing Degree Days required for this stage."
     },
     "show": {
       "reference_crop": "Reference Crop",

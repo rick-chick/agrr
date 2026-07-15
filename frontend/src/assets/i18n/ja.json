@@ -444,7 +444,11 @@
       "daily_uptake_p": "日間リン吸収量 (kg/ha/day)",
       "daily_uptake_k": "日間カリウム吸収量 (kg/ha/day)",
       "region": "地域",
-      "required_marker": "必須"
+      "required_marker": "必須",
+      "base_temperature_placeholder": "例：5.0",
+      "base_temperature_help": "このステージで生育が始まる基底温度を入力してください。",
+      "required_gdd_placeholder": "例：800.0",
+      "required_gdd_help": "このステージに必要な生育度日（Growing Degree Days）を入力してください。"
     },
     "show": {
       "reference_crop": "参照作物",
