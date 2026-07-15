@@ -369,7 +369,14 @@
       "reference_only_admin": "参照作物は管理者のみ作成できます。",
       "reference_flag_admin_only": "参照フラグは管理者のみ変更できます。",
       "no_permission": "権限がありません。",
-      "not_found": "指定された作物が見つかりません。"
+      "not_found": "指定された作物が見つかりません。",
+      "stage_created": "生育ステージを追加しました。",
+      "stage_updated": "生育ステージを更新しました。",
+      "stage_deleted": "生育ステージを削除しました。",
+      "temperature_requirement_updated": "温度要件を更新しました。",
+      "thermal_requirement_updated": "積算温度要件を更新しました。",
+      "sunshine_requirement_updated": "日照要件を更新しました。",
+      "nutrient_requirement_updated": "栄養素要件を更新しました。"
     },
     "index": {
       "title": "作物一覧",
@@ -407,10 +414,14 @@
         "title": "{{count}}件のエラーがあります："
       },
       "stages_title": "生育ステージ",
+      "stages_lead": "栽培計画の期間見積もりと作業スケジュール生成に使う、生育ステージと各ステージの環境要件を設定します。",
+      "stages_list_heading": "ステージ一覧",
+      "stages_empty_lead": "生育ステージは栽培テンプレートや作業スケジュールの設定に必要です。",
       "add_stage": "ステージ追加",
       "stage_title": "ステージ {{order}}",
       "stage_name": "ステージ名",
       "stage_order": "順序",
+      "stage_order_duplicate": "順序 {{orders}} が重複しています。一意の値に修正してください。",
       "requirements_title": "要件",
       "temperature_requirement": "温度要件",
       "thermal_requirement": "積算温度要件",
@@ -425,7 +436,6 @@
       "sterility_risk_threshold": "不稔リスク閾値 (°C)",
       "max_temperature": "最高温度 (°C)",
       "required_gdd": "必要積算温度 (°C·day)",
-      "required_marker": "必須",
       "stage_cumulative_gdd_range": "{{start}}〜{{end}} ℃·日（累積）",
       "stage_cumulative_gdd_missing": "必要積算温度を入力すると表示されます",
       "minimum_sunshine_hours": "最低日照時間 (時間/日)",
@@ -433,7 +443,8 @@
       "daily_uptake_n": "日間窒素吸収量 (kg/ha/day)",
       "daily_uptake_p": "日間リン吸収量 (kg/ha/day)",
       "daily_uptake_k": "日間カリウム吸収量 (kg/ha/day)",
-      "region": "地域"
+      "region": "地域",
+      "required_marker": "必須"
     },
     "show": {
       "reference_crop": "参照作物",
