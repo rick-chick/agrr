@@ -542,7 +542,7 @@
       },
       "blueprint_errors": {
         "missing_blueprints": "作業予定が未登録のため、AIによる提案を取り込めません。",
-        "missing_agrr_requirement": "生育ステージの基準温度または必要積算温度が不足しているため、作業予定を生成できません。",
+        "missing_agrr_requirement": "生育ステージの基底温度または必要積算温度が不足しているため、作業予定を生成できません。",
         "blueprint_generation_failed": "AGRRの応答から作業予定を生成できませんでした。下の「再試行」を押すか、しばらくしてからもう一度お試しください。",
         "ai_unavailable": "AGRR処理サービスに接続できません。しばらくしてから下の「再試行」をお試しください。",
         "ai_execution_failed": "AGRRによる作業予定の生成に失敗しました。下の「再試行」を押すか、しばらくしてからもう一度お試しください。",
