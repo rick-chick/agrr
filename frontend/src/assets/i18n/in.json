@@ -340,7 +340,6 @@
       "max_temperature": "अधिकतम सीमा तापमान (°C)",
       "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
       "stage_cumulative_gdd_range": "{{start}}–{{end}} ℃·दिन (संचयी)",
-      "stage_cumulative_gdd_missing": "सीमा दिखाने के लिए आवश्यक GDD दर्ज करें",
       "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
       "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
       "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",

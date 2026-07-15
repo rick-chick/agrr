@@ -438,7 +438,6 @@
       "max_temperature": "最大限界温度 (°C)",
       "required_gdd": "必要積算温度 (°C·day)",
       "stage_cumulative_gdd_range": "{{start}}〜{{end}} ℃·日（累積）",
-      "stage_cumulative_gdd_missing": "必要積算温度を入力すると表示されます",
       "minimum_sunshine_hours": "最低日照時間 (時間/日)",
       "target_sunshine_hours": "目標日照時間 (時間/日)",
       "daily_uptake_n": "日間窒素吸収量 (kg/ha/day)",
