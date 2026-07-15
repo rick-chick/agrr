@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { blueprintGenerationReadiness } from './blueprint-generation-readiness';
+import {
+  blueprintGenerationReadiness,
+  stageMissingBaseTemperature,
+  stageMissingRequiredGdd,
+  stageRequirementsComplete
+} from './blueprint-generation-readiness';
 import type { Crop } from './crop';
 import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
 
@@ -30,6 +35,59 @@ const blueprint: CropTaskScheduleBlueprint = {
   name: 'Weeding',
   agricultural_task: { id: 5, name: 'Weeding' }
 };
+
+describe('stageRequirementsComplete', () => {
+  it('is false when base temperature and required GDD are missing', () => {
+    expect(
+      stageRequirementsComplete({
+        id: 1,
+        crop_id: 1,
+        name: 'Vegetative',
+        order: 1
+      })
+    ).toBe(false);
+  });
+
+  it('is false when only required GDD is present', () => {
+    expect(
+      stageRequirementsComplete({
+        id: 1,
+        crop_id: 1,
+        name: 'Vegetative',
+        order: 1,
+        thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
+      })
+    ).toBe(false);
+  });
+
+  it('is true when base temperature and required GDD are present', () => {
+    expect(
+      stageRequirementsComplete({
+        id: 1,
+        crop_id: 1,
+        name: 'Vegetative',
+        order: 1,
+        temperature_requirement: {
+          id: 1,
+          crop_stage_id: 1,
+          base_temperature: 10
+        },
+        thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
+      })
+    ).toBe(true);
+  });
+
+  it('detects missing base temperature and required GDD individually', () => {
+    const incompleteStage = {
+      id: 1,
+      crop_id: 1,
+      name: 'Vegetative',
+      order: 1
+    };
+    expect(stageMissingBaseTemperature(incompleteStage)).toBe(true);
+    expect(stageMissingRequiredGdd(incompleteStage)).toBe(true);
+  });
+});
 
 describe('blueprintGenerationReadiness', () => {
   it('is not ready when blueprints are missing', () => {

@@ -443,7 +443,8 @@
       "daily_uptake_n": "日間窒素吸収量 (kg/ha/day)",
       "daily_uptake_p": "日間リン吸収量 (kg/ha/day)",
       "daily_uptake_k": "日間カリウム吸収量 (kg/ha/day)",
-      "region": "地域"
+      "region": "地域",
+      "required_marker": "必須"
     },
     "show": {
       "reference_crop": "参照作物",
