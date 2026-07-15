@@ -386,7 +386,7 @@ describe('CropStagesComponent', () => {
             nutrient_requirement: '栄養素要件',
             base_temperature: '基底温度 (°C)',
             base_temperature_placeholder: '例：5.0',
-            base_temperature_help: 'このステージで生育が始まる最低限界温度を入力してください。',
+            base_temperature_help: 'このステージで生育が始まる基底温度を入力してください。',
             optimal_min: '最適最低温度',
             optimal_max: '最適最高温度',
             low_stress_threshold: '低温ストレス',
@@ -459,7 +459,7 @@ describe('CropStagesComponent', () => {
     const hints = Array.from(
       fixture.nativeElement.querySelectorAll('.form-hint')
     ).map((el: Element) => el.textContent?.trim());
-    expect(hints).toContain('このステージで生育が始まる最低限界温度を入力してください。');
+    expect(hints).toContain('このステージで生育が始まる基底温度を入力してください。');
     expect(hints).toContain('このステージに必要な生育度日（Growing Degree Days）を入力してください。');
   });
 });
