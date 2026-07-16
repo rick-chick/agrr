@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CropStagesPresenter } from './crop-stages.presenter';
 import { CropStagesView, CropStagesViewState } from '../../components/masters/crops/crop-stages.view';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
@@ -11,7 +12,7 @@ describe('CropStagesPresenter', () => {
   let presenter: CropStagesPresenter;
   let view: CropStagesView;
   let lastControl: CropStagesViewState | null;
-  let reloadTaskScheduleBlueprintsSpy: jasmine.Spy;
+  let reloadTaskScheduleBlueprintsSpy: ReturnType<typeof vi.fn>;
 
   const emptyFormData: CropStagesViewState['formData'] = {
     name: '',
@@ -36,7 +37,7 @@ describe('CropStagesPresenter', () => {
     });
     presenter = TestBed.inject(CropStagesPresenter);
     lastControl = null;
-    reloadTaskScheduleBlueprintsSpy = jasmine.createSpy('reloadTaskScheduleBlueprints');
+    reloadTaskScheduleBlueprintsSpy = vi.fn();
     view = {
       get control(): CropStagesViewState {
         return lastControl ?? {
@@ -52,7 +53,7 @@ describe('CropStagesPresenter', () => {
       set control(value: CropStagesViewState) {
         lastControl = value;
       },
-      reloadTaskScheduleBlueprints: reloadTaskScheduleBlueprintsSpy
+      reloadTaskScheduleBlueprints: reloadTaskScheduleBlueprintsSpy as () => void
     };
     presenter.setView(view);
   });
