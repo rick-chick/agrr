@@ -21,6 +21,7 @@ export type CropStagesViewState = {
   pendingErrorFlash: PendingErrorFlashRequest | null;
   pendingSuccessFlash: PendingSuccessFlashRequest | null;
   pendingReorderCropStagesSnapshot: CropStage[] | null;
+  pendingResyncPanelDraft: boolean;
   blueprintReadiness: BlueprintGenerationReadiness;
   stageRequirementGaps: StageRequirementGap[];
   showBlueprintReadinessChecklist: boolean;
