@@ -5,6 +5,7 @@ import { CultivationPlanData } from '../../domain/plans/cultivation-plan-data';
 import { PlanSummary } from '../../domain/plans/plan-summary';
 import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { PlanGateway, TaskScheduleQueryParams } from '../../usecase/plans/plan-gateway';
+import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
 @Injectable()
@@ -43,8 +44,11 @@ export class PlanApiGateway implements PlanGateway {
     return this.apiClient.get<TaskScheduleResponse>(path);
   }
 
-  regenerateTaskSchedule(planId: number): Observable<void> {
-    return this.apiClient.post<void>(`/api/v1/plans/${planId}/task_schedule/regenerate`, {});
+  regenerateTaskSchedule(planId: number): Observable<RegenerateTaskScheduleResponseDto> {
+    return this.apiClient.post<RegenerateTaskScheduleResponseDto>(
+      `/api/v1/plans/${planId}/task_schedule/regenerate`,
+      {}
+    );
   }
 
   deletePlan(planId: number): Observable<DeletionUndoResponse> {

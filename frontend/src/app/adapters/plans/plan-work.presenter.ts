@@ -16,10 +16,18 @@ import {
 } from '../../usecase/plans/subscribe-task-schedule-sync.output-port';
 import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
 import {
-  applySyncFieldsToPlan,
-  mergeCropBannerContext,
-  taskScheduleSyncViewPatch
+  mergeCropBannerContext
 } from './task-schedule-sync-presenter.helpers';
+import {
+  applyTaskScheduleSyncMessage,
+  finishTaskScheduleLoad,
+  initialTaskScheduleSyncLifecycleState,
+  markRegeneratePostInFlight,
+  mergePlanWithSyncMessage,
+  taskScheduleSyncMessageFromRegenerateResponse,
+  type TaskScheduleSyncLifecycleState
+} from '../../usecase/plans/task-schedule-sync-lifecycle';
+import { RegenerateTaskScheduleResponseDto } from '../../usecase/plans/regenerate-task-schedule-response.dtos';
 
 const emptyCropBannerFields: Pick<PlanWorkViewState, 'cropIdsForBanner' | 'cropNamesForBanner'> = {
   cropIdsForBanner: [],
@@ -36,6 +44,7 @@ export class PlanWorkPresenter
     SubscribeTaskScheduleSyncOutputPort
 {
   private view: PlanWorkView | null = null;
+  private syncLifecycle: TaskScheduleSyncLifecycleState = initialTaskScheduleSyncLifecycleState();
 
   setView(view: PlanWorkView): void {
     this.view = view;
@@ -55,6 +64,7 @@ export class PlanWorkPresenter
 
   onRegenerateStarted(): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    this.syncLifecycle = markRegeneratePostInFlight(this.syncLifecycle);
     this.view.control = {
       ...this.view.control,
       regenerating: true,
@@ -62,34 +72,23 @@ export class PlanWorkPresenter
     };
   }
 
-  onRegenerateSuccess(): void {
+  onRegenerateSuccess(dto: RegenerateTaskScheduleResponseDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const message = taskScheduleSyncMessageFromRegenerateResponse(dto);
+    const applied = this.applyTaskScheduleSync(message);
     this.view.control = {
       ...this.view.control,
-      regenerateError: null
+      regenerateError: null,
+      ...applied
     };
   }
 
   onTaskScheduleSync(message: TaskScheduleSyncMessageDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    const plan = this.view.control.plan;
-    if (!plan) {
-      return;
-    }
-
-    const nextPlan = applySyncFieldsToPlan(plan, message);
-    const patch = taskScheduleSyncViewPatch(message.syncState);
-    const current = this.view.control;
-    const cropBanner = this.computeCropBannerFields(current.fields, nextPlan);
+    const applied = this.applyTaskScheduleSync(message);
     this.view.control = {
-      ...current,
-      plan: nextPlan,
-      regenerating: patch.regenerating,
-      pendingSyncToastKey: patch.toastI18nKey,
-      syncReloadNonce: patch.requestReload
-        ? current.syncReloadNonce + 1
-        : current.syncReloadNonce,
-      ...cropBanner
+      ...this.view.control,
+      ...applied
     };
   }
 
@@ -104,25 +103,36 @@ export class PlanWorkPresenter
 
   present(dto: LoadWorkDayListDataDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
-    const cropBanner = this.computeCropBannerFields(dto.fields, dto.plan);
+    const loadResult = finishTaskScheduleLoad(
+      this.syncLifecycle,
+      dto.plan.task_schedule_sync_state
+    );
+    this.syncLifecycle = loadResult.lifecycle;
+    let plan = dto.plan;
+    if (loadResult.pendingMerge) {
+      plan = mergePlanWithSyncMessage(plan, loadResult.pendingMerge);
+    }
+    const cropBanner = this.computeCropBannerFields(dto.fields, plan);
     this.view.control = {
       ...this.view.control,
       loading: false,
       error: null,
-      plan: dto.plan,
+      plan,
       fields: dto.fields,
       overdue: dto.overdue,
       today: dto.today,
       upcoming: dto.upcoming,
       recentAdHocRecord: dto.recentAdHocRecord,
       nextScheduled: dto.nextScheduled,
-      regenerating: false,
+      regenerating: loadResult.regenerating,
       regenerateError: null,
-      pendingSyncToastKey: null,
+      pendingSyncToastKey: loadResult.toastI18nKey,
       pendingRecordSavedToastKey: null,
       pendingRecordSavedEvent: null,
       pendingQuickCompleteValidation: null,
-      syncReloadNonce: 0,
+      syncReloadNonce: loadResult.requestReload
+        ? this.view.control.syncReloadNonce + 1
+        : this.view.control.syncReloadNonce,
       ...cropBanner
     };
   }
@@ -172,6 +182,36 @@ export class PlanWorkPresenter
     return {
       cropIdsForBanner: banner.cropIds,
       cropNamesForBanner: banner.cropNames
+    };
+  }
+
+  private applyTaskScheduleSync(message: TaskScheduleSyncMessageDto): Partial<PlanWorkViewState> {
+    if (!this.view) throw new Error('Presenter: view not set');
+    const current = this.view.control;
+    const result = applyTaskScheduleSyncMessage({
+      lifecycle: this.syncLifecycle,
+      message,
+      entityLoaded: current.plan != null,
+      currentSyncReloadNonce: current.syncReloadNonce
+    });
+    this.syncLifecycle = result.lifecycle;
+
+    if (!result.appliedToEntity || !current.plan) {
+      return {
+        regenerating: result.regenerating,
+        pendingSyncToastKey: result.pendingSyncToastKey,
+        syncReloadNonce: result.syncReloadNonce
+      };
+    }
+
+    const nextPlan = mergePlanWithSyncMessage(current.plan, result.message);
+    const cropBanner = this.computeCropBannerFields(current.fields, nextPlan);
+    return {
+      plan: nextPlan,
+      regenerating: result.regenerating,
+      pendingSyncToastKey: result.pendingSyncToastKey,
+      syncReloadNonce: result.syncReloadNonce,
+      ...cropBanner
     };
   }
 

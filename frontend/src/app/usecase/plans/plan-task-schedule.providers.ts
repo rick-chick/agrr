@@ -9,12 +9,14 @@ import { PLAN_OPTIMIZATION_GATEWAY } from './plan-optimization-gateway';
 import { REGENERATE_TASK_SCHEDULE_OUTPUT_PORT } from './regenerate-task-schedule.output-port';
 import { RegenerateTaskScheduleUseCase } from './regenerate-task-schedule.usecase';
 import { SUBSCRIBE_TASK_SCHEDULE_SYNC_OUTPUT_PORT } from './subscribe-task-schedule-sync.output-port';
+import { PollTaskScheduleSyncUseCase } from './poll-task-schedule-sync.usecase';
 import { SubscribeTaskScheduleSyncUseCase } from './subscribe-task-schedule-sync.usecase';
 
 export const PLAN_TASK_SCHEDULE_PROVIDERS: readonly Provider[] = [
   PlanTaskSchedulePresenter,
   LoadPlanTaskScheduleUseCase,
   RegenerateTaskScheduleUseCase,
+  PollTaskScheduleSyncUseCase,
   SubscribeTaskScheduleSyncUseCase,
   { provide: LOAD_PLAN_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanTaskSchedulePresenter },
   { provide: REGENERATE_TASK_SCHEDULE_OUTPUT_PORT, useExisting: PlanTaskSchedulePresenter },
