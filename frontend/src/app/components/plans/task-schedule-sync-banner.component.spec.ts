@@ -23,6 +23,8 @@ describe('TaskScheduleSyncBannerComponent', () => {
         'plans.task_schedules.sync_failed': 'Generation failed.',
         'plans.task_schedules.sync_generating': 'Generating...',
         'plans.task_schedules.sync_stale': 'Schedules are stale.',
+        'plans.task_schedules.sync_never': 'Schedules not generated yet.',
+        'plans.task_schedules.sync_plan_link': 'Review cultivation plan',
         'plans.task_schedules.sync_retry': 'Regenerate',
         'plans.task_schedules.sync_errors.agrr_unavailable':
           'Could not reach the AGRR processing service.',
@@ -71,6 +73,36 @@ describe('TaskScheduleSyncBannerComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.task-schedule-sync-banner__retry')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Schedules are stale.');
+  });
+
+  it('shows plan review link and retry for never state', () => {
+    component.syncState = 'never';
+    component.planId = 7;
+    component.cropIds = [42];
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      '.task-schedule-sync-banner__wizard-cta'
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toBe('/plans/7');
+    expect(fixture.nativeElement.textContent).toContain('Review cultivation plan');
+    expect(fixture.nativeElement.querySelector('.task-schedule-sync-banner__retry')).toBeTruthy();
+  });
+
+  it('shows plan review link and retry for stale state', () => {
+    component.syncState = 'stale';
+    component.planId = 12;
+    component.cropIds = [42, 99];
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector(
+      '.task-schedule-sync-banner__wizard-cta'
+    ) as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toBe('/plans/12');
+    expect(fixture.nativeElement.textContent).toContain('Review cultivation plan');
+    expect(fixture.nativeElement.querySelector('.task-schedule-sync-banner__retry')).toBeTruthy();
   });
 
   it('reuses cached view model when inputs are unchanged', () => {

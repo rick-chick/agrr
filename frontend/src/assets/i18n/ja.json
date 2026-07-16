@@ -2371,7 +2371,8 @@
         "master_description": "作業説明",
         "not_applicable": "該当なし"
       },
-      "empty_cta": "作付け計画を確認"
+      "empty_cta": "作付け計画を確認",
+      "sync_plan_link": "作付け計画を確認する"
     },
     "work": {
       "page_title": "{{name}}の作業記録",

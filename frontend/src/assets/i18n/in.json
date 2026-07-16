@@ -1748,7 +1748,8 @@
         "master_description": "विवरण",
         "not_applicable": "लागू नहीं"
       },
-      "empty_cta": "खेती योजना खोलें"
+      "empty_cta": "खेती योजना खोलें",
+      "sync_plan_link": "खेती योजना की समीक्षा करें"
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",

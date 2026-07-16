@@ -1356,7 +1356,8 @@
         "master_description": "Description",
         "not_applicable": "N/A"
       },
-      "empty_cta": "Open cropping plan"
+      "empty_cta": "Open cropping plan",
+      "sync_plan_link": "Review cultivation plan"
     },
     "work": {
       "page_title": "Work log — {{name}}",
