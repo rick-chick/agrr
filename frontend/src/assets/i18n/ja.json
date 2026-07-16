@@ -455,6 +455,8 @@
       "temperature_details_title": "ストレス閾値",
       "advanced_details_title": "日照・栄養素の詳細",
       "unsaved_confirm_message": "未保存の変更があります。切り替えると変更は破棄されます。続行しますか？",
+      "reference_stages_readonly": "参照作物は読み取り専用です。生育ステージの編集は管理者のみ可能です。",
+      "stage_name_required": "ステージ名を入力してください。",
       "table_order": "順序",
       "table_stage_name": "ステージ名",
       "table_base_temperature": "最低限界温度",
@@ -2342,7 +2344,6 @@
       "filter_from_date": "開始日",
       "list_empty": "条件に一致する作業予定がありません。",
       "list_row_meta": "{{field}} · {{crop}}",
-      "unscheduled_title": "未確定の作業",
       "sync_never": "作業予定がまだ生成されていません。",
       "sync_failed": "作業予定の生成に失敗しました。",
       "sync_generating": "作業予定を生成しています...",
@@ -2396,7 +2397,8 @@
         "not_applicable": "該当なし"
       },
       "empty_cta": "作付け計画を確認",
-      "sync_plan_link": "作付け計画を確認する"
+      "sync_plan_link": "作付け計画を確認する",
+      "unscheduled_title": "未確定の作業"
     },
     "work": {
       "page_title": "{{name}}の作業記録",

@@ -376,6 +376,8 @@
       "temperature_details_title": "तनाव सीमा",
       "advanced_details_title": "धूप और पोषक तत्व विवरण",
       "unsaved_confirm_message": "आपके पास बिना सहेजे परिवर्तन हैं। चरण बदलने पर वे हट जाएंगे। जारी रखें?",
+      "reference_stages_readonly": "संदर्भ फसलें केवल पढ़ने योग्य हैं। केवल व्यवस्थापक विकास चरण संपादित कर सकते हैं।",
+      "stage_name_required": "कृपया चरण का नाम दर्ज करें।",
       "table_order": "क्रम",
       "table_stage_name": "चरण का नाम",
       "table_base_temperature": "न्यूनतम सीमा तापमान",
@@ -1713,7 +1715,6 @@
       "filter_from_date": "प्रारंभ तिथि",
       "list_empty": "वर्तमान फ़िल्टर से मेल खाने वाला कोई कार्य नहीं है।",
       "list_row_meta": "{{field}} · {{crop}}",
-      "unscheduled_title": "अनिश्चित कार्य",
       "sync_never": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
       "sync_failed": "कार्य अनुसूची बनाने में विफल।",
       "sync_generating": "कार्य अनुसूची तैयार की जा रही है...",
@@ -1767,7 +1768,8 @@
         "not_applicable": "लागू नहीं"
       },
       "empty_cta": "खेती योजना खोलें",
-      "sync_plan_link": "खेती योजना की समीक्षा करें"
+      "sync_plan_link": "खेती योजना की समीक्षा करें",
+      "unscheduled_title": "अनिश्चित कार्य"
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",

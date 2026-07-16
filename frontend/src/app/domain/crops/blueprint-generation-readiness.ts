@@ -35,7 +35,7 @@ export function blueprintGenerationReadiness(
 export function stageRequirementsComplete(stage: CropStage): boolean {
   const baseTemperature = stage.temperature_requirement?.base_temperature;
   const requiredGdd = stage.thermal_requirement?.required_gdd;
-  return baseTemperature != null && requiredGdd != null;
+  return baseTemperature != null && requiredGdd != null && requiredGdd > 0;
 }
 
 export function stageMissingBaseTemperature(stage: CropStage): boolean {
@@ -43,7 +43,8 @@ export function stageMissingBaseTemperature(stage: CropStage): boolean {
 }
 
 export function stageMissingRequiredGdd(stage: CropStage): boolean {
-  return stage.thermal_requirement?.required_gdd == null;
+  const requiredGdd = stage.thermal_requirement?.required_gdd;
+  return requiredGdd == null || requiredGdd <= 0;
 }
 
 export interface StageRequirementGap {

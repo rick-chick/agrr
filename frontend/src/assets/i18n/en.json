@@ -1307,7 +1307,6 @@
       "filter_from_date": "From date",
       "list_empty": "No tasks match the current filters.",
       "list_row_meta": "{{field}} · {{crop}}",
-      "unscheduled_title": "Unconfirmed tasks",
       "sync_never": "Task schedules have not been generated yet.",
       "sync_failed": "Task schedule generation failed.",
       "sync_generating": "Generating task schedules...",
@@ -1361,7 +1360,8 @@
         "not_applicable": "N/A"
       },
       "empty_cta": "Open cropping plan",
-      "sync_plan_link": "Review cultivation plan"
+      "sync_plan_link": "Review cultivation plan",
+      "unscheduled_title": "Unconfirmed tasks"
     },
     "work": {
       "page_title": "Work log — {{name}}",
@@ -2059,6 +2059,8 @@
       "temperature_details_title": "Stress thresholds",
       "advanced_details_title": "Sunshine & nutrient details",
       "unsaved_confirm_message": "You have unsaved changes. Switching stages will discard them. Continue?",
+      "reference_stages_readonly": "Reference crops are read-only. Only administrators can edit growth stages.",
+      "stage_name_required": "Please enter a stage name.",
       "table_order": "Order",
       "table_stage_name": "Stage name",
       "table_base_temperature": "Base temperature",
