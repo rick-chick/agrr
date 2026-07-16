@@ -140,8 +140,8 @@ tbody .crop-stages-table__row.cdk-drag-animating {
 }
 
 .crop-stages-edit-panel {
-  margin-top: var(--space-6);
-  padding: var(--space-5);
+  margin-top: 1.5rem;
+  padding: 1.25rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -151,22 +151,22 @@ tbody .crop-stages-table__row.cdk-drag-animating {
   display: flex;
   align-items: flex-end;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
 }
 
-.crop-stages-edit-panel__badge {
-  flex-shrink: 0;
+.crop-stages-edit-panel__stage-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
+  flex-shrink: 0;
+  min-width: 2.25rem;
+  height: 2.25rem;
   padding: 0 var(--space-2);
   border-radius: var(--radius-full);
-  background: var(--color-info-muted-bg);
+  background: var(--color-primary-muted-bg, var(--color-background-secondary));
   color: var(--color-primary);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
 }
 
 .crop-stages-edit-panel__name-field {
@@ -176,7 +176,7 @@ tbody .crop-stages-table__row.cdk-drag-animating {
 }
 
 .crop-stages-edit-panel__subsection {
-  margin-top: var(--space-2);
+  margin-top: var(--space-4);
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-divider);
 }
@@ -188,41 +188,48 @@ tbody .crop-stages-table__row.cdk-drag-animating {
   color: var(--color-text);
 }
 
-.crop-stages-edit-panel__temp-scale {
+.crop-stages-edit-panel__temperature-scale {
   margin-bottom: var(--space-3);
 }
 
-.crop-stages-edit-panel__temp-scale-track {
+.crop-stages-edit-panel__temperature-scale-track {
   position: relative;
   height: 0.5rem;
   border-radius: var(--radius-full);
   background: var(--color-background-secondary);
 }
 
-.crop-stages-edit-panel__temp-scale-marker {
+.crop-stages-edit-panel__temperature-scale-optimal {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-info-muted-bg);
+  border: 1px solid var(--color-info-muted-border);
+}
+
+.crop-stages-edit-panel__temperature-scale-marker {
   position: absolute;
   top: 50%;
   width: 0.625rem;
   height: 0.625rem;
-  border: 2px solid var(--color-surface);
+  margin-left: -0.3125rem;
   border-radius: var(--radius-full);
-  transform: translate(-50%, -50%);
-}
-
-.crop-stages-edit-panel__temp-scale-marker--base {
+  transform: translateY(-50%);
   background: var(--color-text-secondary);
 }
 
-.crop-stages-edit-panel__temp-scale-marker--optimal_min,
-.crop-stages-edit-panel__temp-scale-marker--optimal_max {
+.crop-stages-edit-panel__temperature-scale-marker--base,
+.crop-stages-edit-panel__temperature-scale-marker--max {
+  background: var(--color-text);
+}
+
+.crop-stages-edit-panel__temperature-scale-marker--optimal_min,
+.crop-stages-edit-panel__temperature-scale-marker--optimal_max {
   background: var(--color-primary);
 }
 
-.crop-stages-edit-panel__temp-scale-marker--max {
-  background: var(--color-error);
-}
-
-.crop-stages-edit-panel__temp-fields {
+.crop-stages-edit-panel__temperature-fields {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
@@ -236,18 +243,18 @@ tbody .crop-stages-table__row.cdk-drag-animating {
   padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface-hover);
+  background: var(--color-surface-hover, var(--color-background-secondary));
 }
 
 .crop-stages-edit-panel__optimal-group-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
 }
 
-.crop-stages-edit-panel__optimal-fields {
+.crop-stages-edit-panel__optimal-group-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
 }
 
@@ -255,6 +262,7 @@ tbody .crop-stages-table__row.cdk-drag-animating {
   padding: var(--space-3);
   border-radius: var(--radius-md);
   background: var(--color-info-muted-bg);
+  border: 1px solid var(--color-info-muted-border);
 }
 
 .crop-stages-edit-panel__gdd-block .form-card__field {
@@ -271,6 +279,7 @@ tbody .crop-stages-table__row.cdk-drag-animating {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  min-height: 2.5rem;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
@@ -279,17 +288,15 @@ tbody .crop-stages-table__row.cdk-drag-animating {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .crop-stages-edit-panel__detail-chip:hover {
-  background: var(--color-surface-hover);
   border-color: var(--color-primary);
+  background: var(--color-primary-muted-bg, var(--color-background-secondary));
   color: var(--color-primary);
 }
 
-.crop-stages-edit-panel__detail-chip::after {
-  content: '›';
+.crop-stages-edit-panel__detail-chip-chevron {
   font-size: var(--font-size-md);
   line-height: 1;
 }
@@ -372,8 +379,8 @@ tbody .crop-stages-table__row.cdk-drag-animating {
 }
 
 @media (max-width: 768px) {
-  .crop-stages-edit-panel__temp-fields,
-  .crop-stages-edit-panel__optimal-fields,
+  .crop-stages-edit-panel__temperature-fields,
+  .crop-stages-edit-panel__optimal-group-fields,
   .crop-stages-dialog__fields {
     grid-template-columns: 1fr;
   }
