@@ -360,6 +360,10 @@
       "required_gdd_placeholder": "उदा., 800.0",
       "required_gdd_help": "इस चरण के लिए आवश्यक बढ़ते डिग्री दिन (Growing Degree Days) दर्ज करें।",
       "save_stage": "सहेजें",
+      "temperature_section": "तापमान शर्तें",
+      "thermal_section": "संचित तापमान",
+      "details_section": "उन्नत सेटिंग",
+      "optimal_range": "इष्टतम सीमा",
       "edit_temperature_details": "तनाव सीमा संपादित करें…",
       "edit_sunshine_nutrient": "धूप और पोषक तत्व संपादित करें…",
       "temperature_details_title": "तनाव सीमा",
@@ -1675,7 +1679,6 @@
       "page_title": "कार्य अनुसूची — {{name}}",
       "empty_hint": "कार्य अनुसूची बनाने के लिए योजना में फसलें जोड़ें। ऊपर के \"खेती योजना\" टैब से योजना की समीक्षा करें।",
       "empty_ready_no_fields": "कार्य अनुसूची तैयार है, लेकिन प्रदर्शित करने के लिए कोई खेत नहीं है। \"खेती योजना\" टैब में खेत और फसलें जाँचें।",
-      "empty_cta": "खेती योजना खोलें",
       "timeline_generated_at": "निर्माण समय: {{datetime}}",
       "timeline_generated_unknown": "निर्माण समय: अनुपलब्ध",
       "no_schedules": "अभी तक कोई कार्य अनुसूची नहीं बनाई गई है।",
@@ -1740,7 +1743,8 @@
         "amount": "उर्वरक मात्रा",
         "master_description": "विवरण",
         "not_applicable": "लागू नहीं"
-      }
+      },
+      "empty_cta": "खेती योजना खोलें"
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",
@@ -1761,8 +1765,6 @@
       "add_record": "+ कार्य दर्ज करें",
       "empty_today": "आज के लिए कोई कार्य निर्धारित नहीं",
       "empty_today_hint": "अनियोजित कार्य यहाँ से दर्ज करें",
-      "empty_plan_cta": "खेती योजना देखें",
-      "empty_task_schedule_cta": "कार्य अनुसूची खोलें",
       "next_scheduled": "अगला निर्धारित: {{date}} — {{name}} ({{field}})",
       "recorded_today": "आज दर्ज किया गया",
       "skipped_badge": "छोड़ा गया",
@@ -1806,7 +1808,9 @@
       },
       "errors": {
         "name_required": "कार्य का नाम आवश्यक है"
-      }
+      },
+      "empty_plan_cta": "खेती योजना देखें",
+      "empty_task_schedule_cta": "कार्य अनुसूची खोलें"
     },
     "work_records": {
       "empty": "अभी तक कोई कार्य दर्ज नहीं",

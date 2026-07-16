@@ -1293,7 +1293,6 @@
       "page_title": "Task schedule — {{name}}",
       "empty_hint": "Add crops to your plan to generate task schedules. Use the Cropping plan tab above to review your plan.",
       "empty_ready_no_fields": "Task schedules are ready, but there are no fields to display. Check fields and crops on the Cropping plan tab.",
-      "empty_cta": "Open cropping plan",
       "timeline_generated_at": "Generated: {{datetime}}",
       "timeline_generated_unknown": "Generated: unavailable",
       "no_schedules": "No task schedule has been generated yet.",
@@ -1358,7 +1357,8 @@
         "amount": "Fertilizer amount",
         "master_description": "Description",
         "not_applicable": "N/A"
-      }
+      },
+      "empty_cta": "Open cropping plan"
     },
     "work": {
       "page_title": "Work log — {{name}}",
@@ -1379,8 +1379,6 @@
       "add_record": "+ Record work",
       "empty_today": "No tasks scheduled for today",
       "empty_today_hint": "Record unscheduled work here",
-      "empty_plan_cta": "Review cropping plan",
-      "empty_task_schedule_cta": "Open task schedule",
       "next_scheduled": "Next scheduled: {{date}} — {{name}} ({{field}})",
       "recorded_today": "Recorded today",
       "skipped_badge": "Skipped",
@@ -1424,7 +1422,9 @@
       },
       "errors": {
         "name_required": "Task name is required"
-      }
+      },
+      "empty_plan_cta": "Review cropping plan",
+      "empty_task_schedule_cta": "Open task schedule"
     },
     "work_records": {
       "empty": "No work records yet",
@@ -2052,6 +2052,10 @@
       "required_gdd_placeholder": "e.g., 800.0",
       "required_gdd_help": "Enter the Growing Degree Days required for this stage.",
       "save_stage": "Save",
+      "temperature_section": "Temperature conditions",
+      "thermal_section": "Accumulated temperature",
+      "details_section": "Advanced settings",
+      "optimal_range": "Optimal range",
       "edit_temperature_details": "Edit stress thresholds…",
       "edit_sunshine_nutrient": "Edit sunshine & nutrients…",
       "temperature_details_title": "Stress thresholds",

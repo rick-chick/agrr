@@ -451,6 +451,10 @@
       "required_gdd_placeholder": "例：800.0",
       "required_gdd_help": "このステージに必要な生育度日（Growing Degree Days）を入力してください。",
       "save_stage": "保存",
+      "temperature_section": "温度条件",
+      "thermal_section": "積算温度",
+      "details_section": "詳細設定",
+      "optimal_range": "最適範囲",
       "edit_temperature_details": "ストレス閾値を編集…",
       "edit_sunshine_nutrient": "日照・栄養素を編集…",
       "temperature_details_title": "ストレス閾値",
@@ -2315,7 +2319,6 @@
       "page_title": "{{name}}の作業予定表",
       "empty_hint": "作物を追加すると作業予定が生成されます。上の「作付け計画」タブで計画の内容を確認してください。",
       "empty_ready_no_fields": "作業予定の生成は完了していますが、表示する圃場がありません。「作付け計画」タブで圃場と作物を確認してください。",
-      "empty_cta": "作付け計画を確認",
       "timeline_generated_at": "生成日時: {{datetime}}",
       "timeline_generated_unknown": "生成日時: 未取得",
       "no_schedules": "作業予定がまだ生成されていません。",
@@ -2380,7 +2383,8 @@
         "amount": "施肥量",
         "master_description": "作業説明",
         "not_applicable": "該当なし"
-      }
+      },
+      "empty_cta": "作付け計画を確認"
     },
     "work": {
       "page_title": "{{name}}の作業記録",
@@ -2401,8 +2405,6 @@
       "add_record": "+ 作業を記録",
       "empty_today": "今日の予定はありません",
       "empty_today_hint": "予定外の作業はここから記録できます",
-      "empty_plan_cta": "作付け計画を確認",
-      "empty_task_schedule_cta": "作業予定表を確認",
       "next_scheduled": "次の予定: {{date}} — {{name}}（{{field}}）",
       "recorded_today": "実績登録済",
       "skipped_badge": "スキップ",
@@ -2446,7 +2448,9 @@
       },
       "errors": {
         "name_required": "作業名を入力してください"
-      }
+      },
+      "empty_plan_cta": "作付け計画を確認",
+      "empty_task_schedule_cta": "作業予定表を確認"
     },
     "work_records": {
       "empty": "実績がまだありません",
