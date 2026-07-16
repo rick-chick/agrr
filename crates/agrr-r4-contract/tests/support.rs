@@ -654,3 +654,53 @@ pub fn find_schedule_item<'a>(
 pub fn schedule_item_ids_from_response(json: &serde_json::Value) -> Vec<i64> {
     schedule_item_ids(json)
 }
+
+/// Runs upload_init → content PUT → upload_complete for one JPEG photo.
+pub fn upload_ready_work_record_photo(
+    client: &ContractClient,
+    session_id: &str,
+    plan_id: i64,
+    record_id: i64,
+) {
+    let init_path = format!(
+        "/api/v1/plans/{plan_id}/work_records/{record_id}/photos/upload_init"
+    );
+    let (init_status, init_body) = status_and_body(client.post(
+        &init_path,
+        Some(session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "photo": { "content_type": "image/jpeg" }
+        })),
+    ));
+    assert_eq!(201, init_status, "{init_body}");
+    let init_json: serde_json::Value =
+        serde_json::from_str(&init_body).expect("upload_init JSON");
+    let photo_id = init_json["photo"]["id"].as_i64().expect("photo id");
+    let upload_url = init_json["photo"]["upload_url"]
+        .as_str()
+        .expect("upload_url");
+
+    let jpeg_bytes: Vec<u8> = vec![0xFF, 0xD8, 0xFF, 0xD9];
+    let (upload_status, upload_body) = status_and_body(client.put_bytes(
+        upload_url,
+        Some(session_id),
+        &empty_headers(),
+        "image/jpeg",
+        &jpeg_bytes,
+    ));
+    assert_eq!(204, upload_status, "{upload_body}");
+
+    let complete_path = format!(
+        "/api/v1/plans/{plan_id}/work_records/{record_id}/photos/{photo_id}/upload_complete"
+    );
+    let (complete_status, complete_body) = status_and_body(client.post(
+        &complete_path,
+        Some(session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "photo": { "byte_size": jpeg_bytes.len() }
+        })),
+    ));
+    assert_eq!(200, complete_status, "{complete_body}");
+}
