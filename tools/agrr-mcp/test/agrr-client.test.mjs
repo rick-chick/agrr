@@ -79,15 +79,17 @@ test('proposeCropSetup posts dry_run mode', async () => {
       );
       assert.equal(init.method, 'POST');
       assert.deepEqual(JSON.parse(init.body), proposal);
+      assert.equal(proposal.agricultural_tasks[0].region, 'jp');
       return {
         status: 200,
-        body: { mode: 'dry_run', valid: true, normalized: proposal },
+        body: { mode: 'dry_run', valid: true, normalized: proposal, errors: [] },
       };
     }),
   });
 
   const result = await client.proposeCropSetup(7, proposal);
   assert.equal(result.valid, true);
+  assert.equal(result.errors?.length ?? 0, 0);
 });
 
 test('applyCropSetup posts apply mode', async () => {
