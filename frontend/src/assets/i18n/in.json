@@ -1747,6 +1747,7 @@
         "master_description": "विवरण",
         "not_applicable": "लागू नहीं"
       },
+      "empty_cta": "खेती योजना खोलें",
       "sync_plan_link": "खेती योजना की समीक्षा करें"
     },
     "work": {
@@ -1811,7 +1812,9 @@
       },
       "errors": {
         "name_required": "कार्य का नाम आवश्यक है"
-      }
+      },
+      "empty_plan_cta": "खेती योजना देखें",
+      "empty_task_schedule_cta": "कार्य अनुसूची खोलें"
     },
     "work_records": {
       "empty": "अभी तक कोई कार्य दर्ज नहीं",

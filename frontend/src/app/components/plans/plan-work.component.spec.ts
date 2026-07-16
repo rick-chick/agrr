@@ -384,6 +384,68 @@ describe('PlanWorkComponent mobile UX', () => {
     expect(fixture.nativeElement.querySelector('.plan-work__fab')).toBeNull();
   });
 
+  it('renders plan and task schedule links in empty today state without next scheduled', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.empty_today': '今日の予定はありません',
+        'plans.work.empty_today_hint': '予定外の作業はここから記録できます',
+        'plans.work.empty_plan_cta': '作付け計画を確認',
+        'plans.work.empty_task_schedule_cta': '作業予定表を確認',
+        'plans.work.add_record': '+ 作業を記録'
+      },
+      true
+    );
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [],
+      upcoming: [],
+      nextScheduled: null
+    };
+    fixture.detectChanges();
+
+    const links = fixture.nativeElement.querySelectorAll('.plan-work__empty-cta-link');
+    expect(links.length).toBe(2);
+    expect(links[0]?.textContent?.trim()).toBe('作付け計画を確認');
+    expect(links[0]?.getAttribute('href')).toContain('/plans/7');
+    expect(links[0]?.getAttribute('href')).not.toContain('task_schedule');
+    expect(links[1]?.textContent?.trim()).toBe('作業予定表を確認');
+    expect(links[1]?.getAttribute('href')).toContain('/plans/7/task_schedule');
+  });
+
+  it('renders task schedule link when next scheduled is shown in empty today state', () => {
+    translate.setTranslation(
+      'ja',
+      {
+        'plans.work.next_scheduled': '次の予定: {{date}} — {{name}}（{{field}}）',
+        'plans.work.empty_today': '今日の予定はありません',
+        'plans.work.empty_task_schedule_cta': '作業予定表を確認',
+        'plans.work.add_record': '+ 作業を記録'
+      },
+      true
+    );
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      overdue: [],
+      today: [],
+      upcoming: [],
+      nextScheduled: mockRow({
+        item_id: 20,
+        name: '追肥',
+        scheduled_date: '2026-07-01'
+      })
+    };
+    fixture.detectChanges();
+
+    const links = fixture.nativeElement.querySelectorAll('.plan-work__empty-cta-link');
+    expect(links.length).toBe(1);
+    expect(links[0]?.textContent?.trim()).toBe('作業予定表を確認');
+    expect(links[0]?.getAttribute('href')).toContain('/plans/7/task_schedule');
+  });
+
   it('places show-skipped toggle in the today section header row', () => {
     renderLoaded();
     const header = fixture.nativeElement.querySelector('.plan-work__section-header');

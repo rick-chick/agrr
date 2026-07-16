@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, OnInit, ViewChild, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Channel } from 'actioncable';
 import { TaskScheduleMonthListComponent } from './task-schedule-month-list.component';
@@ -45,6 +45,7 @@ const initialControl: PlanTaskScheduleViewState = {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     TaskScheduleMonthListComponent,
     TranslateModule,
     PlanPlanContextHeaderComponent,
@@ -100,6 +101,10 @@ const initialControl: PlanTaskScheduleViewState = {
               </p>
               @if (syncState !== 'generating' && emptyHintKey) {
                 <p class="plan-work__empty-hint">{{ emptyHintKey | translate }}</p>
+                <a
+                  class="plan-work__empty-cta-link plan-work__cta--constrained"
+                  [routerLink]="['/plans', planId]"
+                >{{ 'plans.task_schedules.empty_cta' | translate }}</a>
               }
             </div>
           } @else {

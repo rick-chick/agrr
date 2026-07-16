@@ -1355,6 +1355,7 @@
         "master_description": "Description",
         "not_applicable": "N/A"
       },
+      "empty_cta": "Open cropping plan",
       "sync_plan_link": "Review cultivation plan"
     },
     "work": {
@@ -1419,7 +1420,9 @@
       },
       "errors": {
         "name_required": "Task name is required"
-      }
+      },
+      "empty_plan_cta": "Review cropping plan",
+      "empty_task_schedule_cta": "Open task schedule"
     },
     "work_records": {
       "empty": "No work records yet",

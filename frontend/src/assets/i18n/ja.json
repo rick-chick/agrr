@@ -2370,6 +2370,7 @@
         "master_description": "作業説明",
         "not_applicable": "該当なし"
       },
+      "empty_cta": "作付け計画を確認",
       "sync_plan_link": "作付け計画を確認する"
     },
     "work": {
@@ -2434,7 +2435,9 @@
       },
       "errors": {
         "name_required": "作業名を入力してください"
-      }
+      },
+      "empty_plan_cta": "作付け計画を確認",
+      "empty_task_schedule_cta": "作業予定表を確認"
     },
     "work_records": {
       "empty": "実績がまだありません",

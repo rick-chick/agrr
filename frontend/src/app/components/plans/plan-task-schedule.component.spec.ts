@@ -526,9 +526,16 @@ describe('PlanTaskScheduleComponent', () => {
     expect(fixture.nativeElement.querySelector('.plan-context-header__identity')).toBeTruthy();
   });
 
-  it('does not show empty-state CTA duplicating the workbench tab', async () => {
+  it('renders empty-state link to cropping plan when sync is ready and fields are empty', async () => {
     const translate = TestBed.inject(TranslateService);
-    translate.setTranslation('en', en as TranslationObject, true);
+    translate.setTranslation(
+      'en',
+      {
+        ...(en as TranslationObject),
+        'plans.task_schedules.empty_cta': 'Open cropping plan'
+      },
+      true
+    );
     translate.setDefaultLang('en');
     translate.use('en');
 
@@ -537,7 +544,43 @@ describe('PlanTaskScheduleComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(fixture.nativeElement.querySelector('.plan-work__empty-cta-link')).toBeNull();
+    const cta = fixture.nativeElement.querySelector('.plan-work__empty-cta-link');
+    expect(cta?.textContent?.trim()).toBe('Open cropping plan');
+    expect(cta?.getAttribute('href')).toContain('/plans/7');
+    expect(cta?.getAttribute('href')).not.toContain('task_schedule');
+  });
+
+  it('renders empty-state link to cropping plan when sync is never and fields are empty', async () => {
+    const translate = TestBed.inject(TranslateService);
+    translate.setTranslation(
+      'en',
+      {
+        ...(en as TranslationObject),
+        'plans.task_schedules.empty_cta': 'Open cropping plan'
+      },
+      true
+    );
+    translate.setDefaultLang('en');
+    translate.use('en');
+
+    fixture.detectChanges();
+    component.control = {
+      ...loadedState,
+      schedule: {
+        ...loadedSchedule,
+        plan: {
+          ...loadedSchedule.plan,
+          task_schedule_sync_state: 'never',
+          task_schedule_sync_error: null,
+          task_schedule_sync_error_crop_id: null
+        }
+      }
+    };
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cta = fixture.nativeElement.querySelector('.plan-work__empty-cta-link');
+    expect(cta?.getAttribute('href')).toContain('/plans/7');
   });
 
   it('renders translated API error instead of raw i18n key', async () => {
