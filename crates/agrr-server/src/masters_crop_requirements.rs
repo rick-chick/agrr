@@ -102,7 +102,7 @@ fn thermal_json(e: &ThermalRequirementEntity) -> Value {
     json!({
         "id": e.id,
         "crop_stage_id": e.crop_stage_id,
-        "required_gdd": e.required_gdd.to_string(),
+        "required_gdd": e.required_gdd.as_ref().map(|d| d.to_string()),
     })
 }
 

@@ -901,7 +901,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
     const thermalPatch =
       this.stageEditDraft.required_gdd !== currentRequiredGdd
-        ? { required_gdd: this.stageEditDraft.required_gdd ?? undefined }
+        ? { required_gdd: this.stageEditDraft.required_gdd }
         : undefined;
 
     this.saveCropStagePanelUseCase.execute({
@@ -938,18 +938,18 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     const temp = stage.temperature_requirement;
     const draft = this.temperatureDetailDraft;
     const temperaturePatch: {
-      low_stress_threshold?: number;
-      high_stress_threshold?: number;
-      frost_threshold?: number;
+      low_stress_threshold?: number | null;
+      high_stress_threshold?: number | null;
+      frost_threshold?: number | null;
     } = {};
     if (draft.low_stress_threshold !== (temp?.low_stress_threshold ?? null)) {
-      temperaturePatch.low_stress_threshold = draft.low_stress_threshold ?? undefined;
+      temperaturePatch.low_stress_threshold = draft.low_stress_threshold;
     }
     if (draft.high_stress_threshold !== (temp?.high_stress_threshold ?? null)) {
-      temperaturePatch.high_stress_threshold = draft.high_stress_threshold ?? undefined;
+      temperaturePatch.high_stress_threshold = draft.high_stress_threshold;
     }
     if (draft.frost_threshold !== (temp?.frost_threshold ?? null)) {
-      temperaturePatch.frost_threshold = draft.frost_threshold ?? undefined;
+      temperaturePatch.frost_threshold = draft.frost_threshold;
     }
 
     if (Object.keys(temperaturePatch).length === 0) {
@@ -1013,40 +1013,40 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     const temperature = stage.temperature_requirement;
 
     const sunshinePatch: {
-      minimum_sunshine_hours?: number;
-      target_sunshine_hours?: number;
+      minimum_sunshine_hours?: number | null;
+      target_sunshine_hours?: number | null;
     } = {};
     if (draft.minimum_sunshine_hours !== (sunshine?.minimum_sunshine_hours ?? null)) {
-      sunshinePatch.minimum_sunshine_hours = draft.minimum_sunshine_hours ?? undefined;
+      sunshinePatch.minimum_sunshine_hours = draft.minimum_sunshine_hours;
     }
     if (draft.target_sunshine_hours !== (sunshine?.target_sunshine_hours ?? null)) {
-      sunshinePatch.target_sunshine_hours = draft.target_sunshine_hours ?? undefined;
+      sunshinePatch.target_sunshine_hours = draft.target_sunshine_hours;
     }
 
     const nutrientPatch: {
-      daily_uptake_n?: number;
-      daily_uptake_p?: number;
-      daily_uptake_k?: number;
-      region?: string;
+      daily_uptake_n?: number | null;
+      daily_uptake_p?: number | null;
+      daily_uptake_k?: number | null;
+      region?: string | null;
     } = {};
     if (draft.daily_uptake_n !== (nutrient?.daily_uptake_n ?? null)) {
-      nutrientPatch.daily_uptake_n = draft.daily_uptake_n ?? undefined;
+      nutrientPatch.daily_uptake_n = draft.daily_uptake_n;
     }
     if (draft.daily_uptake_p !== (nutrient?.daily_uptake_p ?? null)) {
-      nutrientPatch.daily_uptake_p = draft.daily_uptake_p ?? undefined;
+      nutrientPatch.daily_uptake_p = draft.daily_uptake_p;
     }
     if (draft.daily_uptake_k !== (nutrient?.daily_uptake_k ?? null)) {
-      nutrientPatch.daily_uptake_k = draft.daily_uptake_k ?? undefined;
+      nutrientPatch.daily_uptake_k = draft.daily_uptake_k;
     }
     if (draft.region !== (nutrient?.region ?? null)) {
-      nutrientPatch.region = draft.region ?? undefined;
+      nutrientPatch.region = draft.region;
     }
 
     const temperaturePatch: {
-      sterility_risk_threshold?: number;
+      sterility_risk_threshold?: number | null;
     } = {};
     if (draft.sterility_risk_threshold !== (temperature?.sterility_risk_threshold ?? null)) {
-      temperaturePatch.sterility_risk_threshold = draft.sterility_risk_threshold ?? undefined;
+      temperaturePatch.sterility_risk_threshold = draft.sterility_risk_threshold;
     }
 
     if (
