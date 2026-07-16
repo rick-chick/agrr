@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+  areRequiredChecksComplete,
   areRequiredChecksGreen,
   canMarkReady,
   isEligibleAgentPr,
@@ -177,5 +178,24 @@ test('areRequiredChecksGreen requires ruleset contexts', () => {
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
     ]),
     false,
+  );
+});
+
+test('areRequiredChecksComplete is false while any required check is pending', () => {
+  assert.equal(
+    areRequiredChecksComplete([
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'PENDING' },
+      { name: 'lint / frontend-lint', state: 'SUCCESS' },
+    ]),
+    false,
+  );
+  assert.equal(
+    areRequiredChecksComplete([
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'FAILURE' },
+      { name: 'lint / frontend-lint', state: 'SUCCESS' },
+    ]),
+    true,
   );
 });

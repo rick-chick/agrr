@@ -22,6 +22,8 @@ const CONFLICT_DISPATCH_SNIPPETS = [
   'ACTION="conflict"',
   'skipping CI gate for conflict resolution',
   'Draft PR without conflict/sync need',
+  'dispatching ci_fix',
+  'ACTION="ci_fix"',
 ];
 
 const RETRY_DISPATCH_SNIPPETS = [
@@ -38,6 +40,7 @@ const RECONCILE_LIB_SNIPPETS = [
   'prMergeWorkerNeedsSync',
   "action: 'conflict'",
   "action: 'stuck_retry'",
+  "action: 'ci_fix'",
 ];
 
 const DELAYED_RESCAN_SNIPPETS = [
@@ -51,7 +54,7 @@ const DISPATCH_SCRIPT_SNIPPETS = [
   './pr-merge-worker-dispatch-payload-lib.mjs',
 ];
 
-const PAYLOAD_LIB_SNIPPETS = ["action: 'conflict'"];
+const PAYLOAD_LIB_SNIPPETS = ["action: 'conflict'", "action: 'ci_fix'"];
 
 /**
  * @param {string} repoRoot
@@ -181,6 +184,7 @@ export async function verifyPrMergeWorkerDispatchWorkflow(repoRoot) {
     'resolve-pr-merge-conflicts.sh',
     'action: conflict',
     'action: stuck_retry',
+    'action: ci_fix',
     'classifyReconcileCandidate',
     'selectReconcileCandidate',
     'synchronize',

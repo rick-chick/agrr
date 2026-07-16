@@ -157,3 +157,17 @@ export function areRequiredChecksGreen(checks) {
     return match?.state === 'SUCCESS';
   });
 }
+
+const INCOMPLETE_CHECK_STATES = new Set(['PENDING', 'IN_PROGRESS', 'QUEUED', 'WAITING']);
+
+/**
+ * True when every ruleset context has a finished (non-pending) result.
+ *
+ * @param {Array<{ name: string; state: string }>} checks
+ */
+export function areRequiredChecksComplete(checks) {
+  return REQUIRED_CI_CONTEXTS.every((context) => {
+    const match = checks.find((check) => check.name === context);
+    return match != null && !INCOMPLETE_CHECK_STATES.has(match.state);
+  });
+}

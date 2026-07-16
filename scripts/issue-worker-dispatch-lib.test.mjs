@@ -307,6 +307,18 @@ test('resolveImplementDispatchGate skips implement when open fix pr exists', () 
   );
 });
 
+test('resolveImplementDispatchGate keeps open PR gate for draft CI failure void state recovery via merge worker', () => {
+  // Draft PR + CI failure gap (#354): Issue Worker must not re-dispatch implement;
+  // PR Merge Worker ci_fix / retry reconcile owns recovery on the existing PR branch.
+  assert.deepEqual(
+    resolveImplementDispatchGate({ action: 'implement', hasOpenFixPr: true }),
+    {
+      skip: true,
+      skipReason: 'open fix/closes pr already exists for this issue',
+    },
+  );
+});
+
 test('parseDependencyIssueNumbers extracts issue numbers from ## 依存 section', () => {
   const body = [
     '## 背景',
