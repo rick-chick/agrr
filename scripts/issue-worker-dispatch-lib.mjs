@@ -1,4 +1,4 @@
-export const DEFAULT_RETRY_DISPATCH_REPO = 'rick-chick/agrr';
+const DEFAULT_RETRY_DISPATCH_REPO = 'rick-chick/agrr';
 
 /**
  * GitHub search query for open PRs that close/fix an issue.
@@ -41,7 +41,7 @@ export function hasLabel(labelsCsv, name) {
  * @param {string} issueBody
  * @returns {string | null}
  */
-export function extractDependencySection(issueBody) {
+function extractDependencySection(issueBody) {
   const lines = issueBody.split(/\r?\n/);
   const startIndex = lines.findIndex((line) => /^## 依存[ \t]*$/.test(line));
   if (startIndex === -1) {
@@ -179,6 +179,65 @@ export function resolveEpicImplementGate({ action, issueTitle, issueLabels }) {
 }
 
 /**
+ * Combined implement-path gates (epic + dependency) for primary and retry dispatch.
+ *
+ * @param {{
+ *   issueNumber: number;
+ *   issueTitle: string;
+ *   issueBody: string;
+ *   issueLabels: string;
+ *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
+ *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
+ * }} input
+ * @returns {Promise<
+ *   { skip: false }
+ *   | { skip: true; skipReason: string; openDependencies?: number[]; circular?: boolean }
+ * >}
+ */
+export async function resolveImplementPreDispatchGates({
+  issueNumber,
+  issueTitle,
+  issueBody,
+  issueLabels,
+  fetchIssueState,
+  fetchIssueBody,
+}) {
+  const epicGate = resolveEpicImplementGate({
+    action: 'implement',
+    issueTitle,
+    issueLabels,
+  });
+  if (epicGate.skip) {
+    return epicGate;
+  }
+
+  try {
+    const dependencyGate = await resolveDependencyGate({
+      issueNumber,
+      issueBody,
+      fetchIssueState,
+      fetchIssueBody,
+    });
+    if (dependencyGate.skip) {
+      return dependencyGate;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/circular dependency/i.test(message)) {
+      return {
+        skip: true,
+        skipReason: message,
+        openDependencies: [],
+        circular: true,
+      };
+    }
+    throw error;
+  }
+
+  return { skip: false };
+}
+
+/**
  * @param {{
  *   eventAction: string;
  *   labelName: string;
@@ -296,19 +355,6 @@ export function selectRetryCandidate(issues, hasOpenFixPrFor) {
 }
 
 /**
- * @param {{
- *   repository: string;
- *   issueNumber: number;
- *   issueTitle: string;
- *   issueUrl: string;
- *   action: string;
- *   labels: string;
- *   issueBody: string;
- *   retryReason?: string;
- * }} input
- * @returns {Record<string, unknown>}
- */
-/**
  * @param {string[]} argv process.argv
  * @param {string} [defaultRepo]
  * @returns {{
@@ -379,6 +425,19 @@ export function defaultRetryReasonForMode(mode) {
   return 'manual_retry';
 }
 
+/**
+ * @param {{
+ *   repository: string;
+ *   issueNumber: number;
+ *   issueTitle: string;
+ *   issueUrl: string;
+ *   action: string;
+ *   labels: string;
+ *   issueBody: string;
+ *   retryReason?: string;
+ * }} input
+ * @returns {Record<string, unknown>}
+ */
 export function buildWebhookPayload({
   repository,
   issueNumber,

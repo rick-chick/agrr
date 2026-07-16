@@ -13,6 +13,7 @@ import {
   resolveDispatchAction,
   resolveEpicImplementGate,
   resolveImplementDispatchGate,
+  resolveImplementPreDispatchGates,
   selectOpenIssueByTitle,
   selectRetryCandidate,
   formatDependencyGateComment,
@@ -430,4 +431,32 @@ test('formatDependencyGateComment includes open dependency numbers', () => {
   assert.match(comment, /#317/);
   assert.match(comment, /#320/);
   assert.match(comment, /dispatch 保留/);
+});
+
+test('resolveImplementPreDispatchGates blocks epic before dependency check', async () => {
+  const result = await resolveImplementPreDispatchGates({
+    issueNumber: 316,
+    issueTitle: '[epic] Parent',
+    issueBody: '## 依存\n\n- #317',
+    issueLabels: 'agent-ready,epic',
+    fetchIssueState: async () => 'OPEN',
+    fetchIssueBody: async () => '',
+  });
+  assert.deepEqual(result, {
+    skip: true,
+    skipReason: 'epic issues cannot be dispatched for implement',
+  });
+});
+
+test('resolveImplementPreDispatchGates blocks open dependencies', async () => {
+  const result = await resolveImplementPreDispatchGates({
+    issueNumber: 318,
+    issueTitle: 'Child',
+    issueBody: '## 依存\n\n- #317',
+    issueLabels: 'agent-ready',
+    fetchIssueState: async (number) => (number === 317 ? 'OPEN' : 'CLOSED'),
+    fetchIssueBody: async () => '',
+  });
+  assert.equal(result.skip, true);
+  assert.match(result.skipReason, /dependency #317 is open/);
 });

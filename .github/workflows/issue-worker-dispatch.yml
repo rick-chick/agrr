@@ -125,10 +125,7 @@ jobs:
           set -euo pipefail
           RESULT=$(node --input-type=module -e "
             import { execFileSync } from 'node:child_process';
-            import {
-              formatDependencyGateComment,
-              resolveDependencyGate,
-            } from './scripts/issue-worker-dispatch-lib.mjs';
+            import { resolveDependencyGate } from './scripts/issue-worker-dispatch-lib.mjs';
 
             const repo = '${{ github.repository }}';
             const issueNumber = Number(process.env.ISSUE_NUMBER);
@@ -152,9 +149,13 @@ jobs:
               });
               process.stdout.write(JSON.stringify(gate));
             } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              if (!/circular dependency/i.test(message)) {
+                throw error;
+              }
               process.stdout.write(JSON.stringify({
                 skip: true,
-                skipReason: error instanceof Error ? error.message : String(error),
+                skipReason: message,
                 openDependencies: [],
                 circular: true,
               }));
