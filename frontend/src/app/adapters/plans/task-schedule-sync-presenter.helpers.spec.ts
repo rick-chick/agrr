@@ -17,7 +17,8 @@ import {
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_BLUEPRINTS,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_CROP_TEMPLATES,
   TASK_SCHEDULE_SYNC_ERROR_MISSING_GENERAL_BLUEPRINTS,
-  TASK_SCHEDULE_SYNC_PLAN_CONTEXT_LINK_KEY
+  TASK_SCHEDULE_SYNC_PLAN_CONTEXT_LINK_KEY,
+  TASK_SCHEDULE_SYNC_PLAN_REVIEW_LINK_KEY
 } from '../../domain/plans/task-schedule-sync-error-keys';
 
 describe('taskScheduleSyncViewPatch', () => {
@@ -404,6 +405,53 @@ describe('buildTaskScheduleSyncBannerViewModel', () => {
       regenerateError: null
     });
     expect(vm.showRetry).toBe(true);
+  });
+
+  it('offers plan review link for never schedules with a plan id', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'never',
+      syncError: null,
+      cropIds: [42],
+      cropNames: { 42: 'Tomato' },
+      planId: 7,
+      syncErrorCropId: null,
+      regenerateError: null
+    });
+    expect(vm.showRetry).toBe(true);
+    expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_PLAN_REVIEW_LINK_KEY);
+    expect(vm.cropsRouterLink).toEqual(['/plans', 7]);
+    expect(vm.showCropWizardLinks).toBe(false);
+  });
+
+  it('offers plan review link for stale schedules with a plan id', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'stale',
+      syncError: null,
+      cropIds: [42, 99],
+      cropNames: { 42: 'Tomato', 99: 'Lettuce' },
+      planId: 12,
+      syncErrorCropId: null,
+      regenerateError: null
+    });
+    expect(vm.showRetry).toBe(true);
+    expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_PLAN_REVIEW_LINK_KEY);
+    expect(vm.cropsRouterLink).toEqual(['/plans', 12]);
+    expect(vm.showCropWizardLinks).toBe(false);
+  });
+
+  it('offers crops list link for never schedules when plan has no crops', () => {
+    const vm = buildTaskScheduleSyncBannerViewModel({
+      syncState: 'never',
+      syncError: null,
+      cropIds: [],
+      cropNames: {},
+      planId: 7,
+      syncErrorCropId: null,
+      regenerateError: null
+    });
+    expect(vm.showRetry).toBe(true);
+    expect(vm.remediationLinkKey).toBe(TASK_SCHEDULE_SYNC_PLAN_REVIEW_LINK_KEY);
+    expect(vm.cropsRouterLink).toEqual(['/plans', 7]);
   });
 
   it('passes work return tab into wizard query params', () => {
