@@ -325,13 +325,7 @@
       "add_stage": "चरण जोड़ें",
       "stage_title": "चरण {{order}}",
       "stage_name": "चरण का नाम",
-      "stage_order": "क्रम",
       "stage_order_duplicate": "डुप्लिकेट क्रम मान: {{orders}}। कृपया अद्वितीय क्रम संख्या निर्दिष्ट करें।",
-      "requirements_title": "आवश्यकताएँ",
-      "temperature_requirement": "तापमान आवश्यकताएँ",
-      "thermal_requirement": "थर्मल आवश्यकताएँ",
-      "sunshine_requirement": "सूरज की रोशनी आवश्यकताएँ",
-      "nutrient_requirement": "पोषक तत्व आवश्यकताएँ",
       "base_temperature": "न्यूनतम सीमा तापमान (°C)",
       "optimal_min": "इष्टतम तापमान (न्यूनतम) (°C)",
       "optimal_max": "इष्टतम तापमान (अधिकतम) (°C)",
@@ -342,7 +336,6 @@
       "max_temperature": "अधिकतम सीमा तापमान (°C)",
       "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
       "stage_cumulative_gdd_range": "{{start}}–{{end}} ℃·दिन (संचयी)",
-      "stage_cumulative_gdd_missing": "सीमा दिखाने के लिए आवश्यक GDD दर्ज करें",
       "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
       "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
       "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",
@@ -356,7 +349,6 @@
       "errors": {
         "title": "{{count}} त्रुटियाँ:"
       },
-      "required_marker": "आवश्यक",
       "base_temperature_placeholder": "उदा., 5.0",
       "base_temperature_help": "इस चरण में वृद्धि शुरू होने वाला न्यूनतम सीमा तापमान दर्ज करें।",
       "required_gdd_placeholder": "उदा., 800.0",
@@ -376,7 +368,15 @@
       "table_base_temperature": "न्यूनतम सीमा तापमान",
       "table_required_gdd": "आवश्यक GDD",
       "table_cumulative_gdd": "संचयी GDD",
-      "value_missing": "—"
+      "value_missing": "—",
+      "nutrient_requirement": "पोषक तत्व आवश्यकताएँ",
+      "required_marker": "आवश्यक",
+      "requirements_title": "आवश्यकताएँ",
+      "stage_cumulative_gdd_missing": "सीमा दिखाने के लिए आवश्यक GDD दर्ज करें",
+      "stage_order": "क्रम",
+      "sunshine_requirement": "सूरज की रोशनी आवश्यकताएँ",
+      "temperature_requirement": "तापमान आवश्यकताएँ",
+      "thermal_requirement": "थर्मल आवश्यकताएँ"
     },
     "show": {
       "name": "नाम",

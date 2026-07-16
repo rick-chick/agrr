@@ -13,7 +13,6 @@ import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
 import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
 import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
-import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
@@ -27,7 +26,6 @@ const loadedControlBase = {
   error: null,
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  blueprintReadiness: defaultBlueprintReadiness(),
   taskScheduleBlueprints: []
 };
 

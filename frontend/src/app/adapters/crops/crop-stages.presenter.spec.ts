@@ -6,7 +6,6 @@ import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-
 import { CreateCropStageOutputDto } from '../../usecase/crops/create-crop-stage.dtos';
 import { DeleteCropStageOutputDto } from '../../usecase/crops/delete-crop-stage.dtos';
 import { CropStage } from '../../domain/crops/crop';
-import { defaultBlueprintReadiness } from '../../domain/crops/blueprint-generation-readiness';
 
 describe('CropStagesPresenter', () => {
   let presenter: CropStagesPresenter;
@@ -25,7 +24,6 @@ describe('CropStagesPresenter', () => {
     error: null,
     pendingErrorFlash: null,
     pendingSuccessFlash: null,
-    blueprintReadiness: defaultBlueprintReadiness(),
     taskScheduleBlueprints: [],
     formData
   });
@@ -43,7 +41,6 @@ describe('CropStagesPresenter', () => {
           error: null,
           pendingErrorFlash: null,
           pendingSuccessFlash: null,
-          blueprintReadiness: defaultBlueprintReadiness(),
           taskScheduleBlueprints: [],
           formData: emptyFormData
         };
