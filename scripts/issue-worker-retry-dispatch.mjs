@@ -21,6 +21,7 @@ import {
   selectDepsUnblockCandidate,
   selectOpenIssueByTitle,
   selectRetryCandidate,
+  parseDependencyIssueNumbers,
 } from './issue-worker-dispatch-lib.mjs';
 import { gh } from './gh-repo-lib.mjs';
 
@@ -221,19 +222,17 @@ async function selectDepsUnblockIssue(repo, fetchIssueState) {
 /**
  * @param {{
  *   repo: string;
- *   issue: { number: number; title: string; url: string; body: string; labels: string[] };
+ *   issue: { number: number };
  *   retryReason?: string;
  * }} input
- * @returns {Promise<boolean>}
+ * @returns {boolean}
  */
-async function dispatchDepsUnblockedIssue({ repo, issue, retryReason }) {
+function dispatchDepsUnblockedIssue({ repo, issue, retryReason }) {
   unblockAgentSkippedIssue(repo, issue.number);
-  const refreshed = fetchIssue(repo, issue.number);
-  return dispatchIfEligible({
-    repo,
-    issue: refreshed,
-    retryReason,
-  });
+  console.log(
+    `Unblocked #${issue.number} for primary labeled dispatch (retry_reason=${retryReason ?? 'deps_unblocked'})`,
+  );
+  return true;
 }
 
 /**
@@ -318,7 +317,7 @@ async function main() {
       throw new Error('--number must be a positive integer for on-closed mode');
     }
     const skippedIssues = listAgentSkippedIssues(repo).filter((issue) =>
-      (issue.body ?? '').includes(`#${closedNumber}`),
+      parseDependencyIssueNumbers(issue.body ?? '').includes(closedNumber),
     );
     const selected = await selectDepsUnblockCandidate(
       skippedIssues,
