@@ -189,6 +189,7 @@ export class CropStagesPresenter implements
         crop_stages: dto.crop.crop_stages ?? []
       },
       pendingSuccessFlash: null,
+      pendingResyncPanelDraft: true,
       pendingErrorFlash: pendingErrorFlashFromError({ message: flashKey })
     });
   }
