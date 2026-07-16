@@ -1,5 +1,15 @@
 export const DEFAULT_RETRY_DISPATCH_REPO = 'rick-chick/agrr';
 
+/**
+ * GitHub search query for open PRs that close/fix an issue.
+ *
+ * @param {number} issueNumber
+ * @returns {string}
+ */
+export function openFixPrSearchQuery(issueNumber) {
+  return `is:pr is:open (fixes #${issueNumber} OR closes #${issueNumber})`;
+}
+
 const BOT_AUTHORS = new Set(['dependabot[bot]', 'renovate[bot]', 'github-actions[bot]']);
 
 const OPENED_TERMINAL_LABELS = [
@@ -76,10 +86,20 @@ export function resolveDispatchAction({ eventAction, labelName, issueAuthor, iss
 }
 
 /**
- * @param {{
- *   issueLabels: string;
- *   hasOpenFixPr: boolean;
- * }} input
+ * @param {{ action: string; hasOpenFixPr: boolean }} input
+ * @returns {{ skip: true; skipReason: string } | { skip: false }}
+ */
+export function resolveImplementDispatchGate({ action, hasOpenFixPr }) {
+  if (action === 'implement' && hasOpenFixPr) {
+    return {
+      skip: true,
+      skipReason: 'open fix/closes pr already exists for this issue',
+    };
+  }
+  return { skip: false };
+}
+
+/**
  * @returns {{ eligible: true; action: string } | { eligible: false; reason: string }}
  */
 export function isRetryCandidate({ issueLabels, hasOpenFixPr }) {
