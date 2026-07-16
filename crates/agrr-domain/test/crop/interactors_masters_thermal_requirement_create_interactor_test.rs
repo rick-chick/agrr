@@ -15,7 +15,7 @@
         {
             assert_eq!(stage_id, 2);
             Ok(if self.exists {
-                Some(ThermalRequirementEntity::new(1, 2, rust_decimal::Decimal::from(200)).unwrap())
+                Some(ThermalRequirementEntity::new(1, 2, Some(rust_decimal::Decimal::from(200))).unwrap())
             } else {
                 None
             })
@@ -40,7 +40,7 @@
                     Some(errors),
                 )));
             }
-            Ok(ThermalRequirementEntity::new(1, 2, rust_decimal::Decimal::from(200)).unwrap())
+            Ok(ThermalRequirementEntity::new(1, 2, Some(rust_decimal::Decimal::from(200))).unwrap())
         }
         fn list_index_for_filter(&self, _: &crate::shared::value_objects::reference_index_list_filter::ReferenceIndexListFilter) -> Result<Vec<crate::crop::entities::CropEntity>, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
         fn list_by_is_reference(&self, _: bool, _: Option<&str>) -> Result<Vec<crate::crop::entities::CropEntity>, Box<dyn std::error::Error + Send + Sync>> { unimplemented!() }
