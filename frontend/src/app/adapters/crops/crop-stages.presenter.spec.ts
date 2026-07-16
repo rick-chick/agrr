@@ -28,6 +28,7 @@ describe('CropStagesPresenter', () => {
     pendingErrorFlash: null,
     pendingSuccessFlash: null,
     pendingReorderCropStagesSnapshot: null,
+    pendingResyncPanelDraft: false,
     taskScheduleBlueprints: [],
     blueprintReadiness: defaultBlueprintReadiness(),
     stageRequirementGaps: [],
@@ -51,6 +52,7 @@ describe('CropStagesPresenter', () => {
           pendingErrorFlash: null,
           pendingSuccessFlash: null,
           pendingReorderCropStagesSnapshot: null,
+          pendingResyncPanelDraft: false,
           taskScheduleBlueprints: [],
           blueprintReadiness: defaultBlueprintReadiness(),
           stageRequirementGaps: [],
@@ -256,6 +258,7 @@ describe('CropStagesPresenter', () => {
 
       expect(lastControl!.formData.name).toBe('Server Crop');
       expect(lastControl!.formData.crop_stages[0].name).toBe('Server stage');
+      expect(lastControl!.pendingResyncPanelDraft).toBe(true);
       expect(lastControl!.pendingSuccessFlash).toBeNull();
       expect(lastControl!.pendingErrorFlash).toEqual({
         type: 'error',
@@ -306,6 +309,7 @@ describe('CropStagesPresenter', () => {
         minimum_sunshine_hours: 4,
         target_sunshine_hours: 8
       });
+      expect(lastControl!.pendingResyncPanelDraft).toBe(true);
       expect(lastControl!.pendingSuccessFlash).toBeNull();
       expect(lastControl!.pendingErrorFlash).toEqual({
         type: 'error',
