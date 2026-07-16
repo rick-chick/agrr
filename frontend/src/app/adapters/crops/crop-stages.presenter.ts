@@ -25,6 +25,12 @@ import { cropStageRequirementKind } from '../../domain/crops/crop-stage-requirem
 import { LoadCropTaskScheduleBlueprintsDataDto } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 import { LoadCropTaskScheduleBlueprintsOutputPort } from '../../usecase/crops/crop-task-schedule-blueprint.ports';
 
+type RequirementOutputDto =
+  | UpdateTemperatureRequirementOutputDto
+  | UpdateThermalRequirementOutputDto
+  | UpdateSunshineRequirementOutputDto
+  | UpdateNutrientRequirementOutputDto;
+
 @Injectable()
 export class CropStagesPresenter implements
   LoadCropForEditOutputPort,
@@ -89,7 +95,8 @@ export class CropStagesPresenter implements
     } else if ('success' in dto && 'stageId' in dto) {
       this.presentDeleteCropStage(dto as DeleteCropStageOutputDto);
     } else if ('requirement' in dto) {
-      const kind = cropStageRequirementKind(dto.requirement);
+      const { requirement } = dto as RequirementOutputDto;
+      const kind = cropStageRequirementKind(requirement);
       if (kind === 'temperature') {
         this.presentUpdateTemperatureRequirement(dto as UpdateTemperatureRequirementOutputDto);
       } else if (kind === 'thermal') {
