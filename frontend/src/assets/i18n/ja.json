@@ -468,7 +468,9 @@
       "stage_order": "順序",
       "sunshine_requirement": "日照要件",
       "temperature_requirement": "温度要件",
-      "thermal_requirement": "積算温度要件"
+      "thermal_requirement": "積算温度要件",
+      "stage_order_duplicate_hint": "行をドラッグして並べ替えるか、下のボタンで順序を自動採番してください。",
+      "stage_order_renumber": "順序を再採番"
     },
     "show": {
       "reference_crop": "参照作物",
@@ -698,7 +700,8 @@
       }
     },
     "errors": {
-      "invalid_id": "作物IDが不正です。"
+      "invalid_id": "作物IDが不正です。",
+      "stage_order_conflict": "他のステージと順序が重複しているため保存できません。再採番またはドラッグで重複を解消してください。"
     }
   },
   "pests": {

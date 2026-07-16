@@ -29,6 +29,7 @@ import { parseOptionalNumber } from '../../../domain/crops/parse-optional-number
 import {
   findDuplicateStageOrders,
   reorderStagesByIndex,
+  renumberStagesSequentially,
   sortStagesByOrder
 } from '../../../domain/crops/crop-stage-order';
 import type { CropStage } from '../../../domain/crops/crop';
@@ -194,12 +195,24 @@ interface TemperatureScaleModel {
           <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
 
           @if (duplicateStageOrders.length > 0) {
-            <p class="crop-stages-order-warning" role="alert">
-              {{
-                'crops.edit.stage_order_duplicate'
-                  | translate: { orders: duplicateStageOrders.join(', ') }
-              }}
-            </p>
+            <div class="crop-stages-order-warning" role="alert">
+              <p class="crop-stages-order-warning__message">
+                {{
+                  'crops.edit.stage_order_duplicate'
+                    | translate: { orders: duplicateStageOrders.join(', ') }
+                }}
+              </p>
+              <p class="crop-stages-order-warning__hint">
+                {{ 'crops.edit.stage_order_duplicate_hint' | translate }}
+              </p>
+              <button
+                type="button"
+                class="btn btn-secondary crop-stages-order-warning__renumber"
+                (click)="renumberDuplicateStageOrders()"
+              >
+                {{ 'crops.edit.stage_order_renumber' | translate }}
+              </button>
+            </div>
           }
 
           @if (control.formData.crop_stages.length === 0) {
@@ -999,6 +1012,18 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       event.previousIndex,
       event.currentIndex
     );
+    this.persistStageReorder(stages, updates);
+  }
+
+  renumberDuplicateStageOrders(): void {
+    const { stages, updates } = renumberStagesSequentially(this.control.formData.crop_stages);
+    this.persistStageReorder(stages, updates);
+  }
+
+  private persistStageReorder(
+    stages: CropStage[],
+    updates: Array<{ id: number; order: number }>
+  ): void {
     if (updates.length === 0) {
       return;
     }

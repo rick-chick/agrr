@@ -2071,7 +2071,9 @@
       "stage_order": "Order",
       "sunshine_requirement": "Sunshine Requirements",
       "temperature_requirement": "Temperature Requirements",
-      "thermal_requirement": "Thermal Requirements"
+      "thermal_requirement": "Thermal Requirements",
+      "stage_order_duplicate_hint": "Drag rows to reorder, or use the button below to renumber orders automatically.",
+      "stage_order_renumber": "Renumber orders"
     },
     "show": {
       "reference_crop": "Reference Crop",
@@ -2300,7 +2302,8 @@
       }
     },
     "errors": {
-      "invalid_id": "Invalid crop ID."
+      "invalid_id": "Invalid crop ID.",
+      "stage_order_conflict": "Could not save stage order because another stage already uses that order. Use renumber or drag to fix duplicates."
     }
   },
   "pests": {
