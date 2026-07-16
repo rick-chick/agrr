@@ -17,6 +17,7 @@ import {
   CROP_STAGES_PROVIDERS
 } from '../../../usecase/crops/crop-stages.providers';
 import { FlashMessageService } from '../../../services/flash-message.service';
+import { AuthService } from '../../../services/auth.service';
 import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending-success-flash-view.effects';
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
 import { parsePlanWizardReturnTab,
@@ -47,6 +48,7 @@ type PendingUnsavedAction =
 
 const initialFormData: CropStagesFormData = {
   name: '',
+  is_reference: false,
   crop_stages: []
 };
 
@@ -160,6 +162,12 @@ interface TemperatureScaleModel {
           <p class="page-description">{{ 'crops.edit.stages_lead' | translate }}</p>
         </header>
 
+        @if (!canMutateStages) {
+          <div class="crop-stages__readonly-notice" role="status">
+            <p>{{ 'crops.edit.reference_stages_readonly' | translate }}</p>
+          </div>
+        }
+
         @if (control.showBlueprintReadinessChecklist) {
           <div class="blueprint-readiness" role="status">
             <p class="blueprint-readiness__title">
@@ -215,6 +223,7 @@ interface TemperatureScaleModel {
               <button
                 type="button"
                 class="btn btn-secondary crop-stages-order-warning__renumber"
+                [disabled]="!canMutateStages"
                 (click)="renumberDuplicateStageOrders()"
               >
                 {{ 'crops.edit.stage_order_renumber' | translate }}
@@ -226,9 +235,11 @@ interface TemperatureScaleModel {
             <div class="crop-stages-empty">
               <p class="crop-stages-empty__lead">{{ 'crops.edit.stages_empty_lead' | translate }}</p>
               <p class="crop-stages-empty__description">{{ 'crops.show.no_stages_description' | translate }}</p>
-              <button type="button" class="btn btn-primary crop-stages-empty__cta" (click)="addCropStage()">
-                {{ 'crops.edit.add_stage' | translate }}
-              </button>
+              @if (canMutateStages) {
+                <button type="button" class="btn btn-primary crop-stages-empty__cta" (click)="addCropStage()">
+                  {{ 'crops.edit.add_stage' | translate }}
+                </button>
+              }
             </div>
           } @else {
             <table class="crop-stages-table">
@@ -251,12 +262,15 @@ interface TemperatureScaleModel {
                   <tr
                     class="crop-stages-table__row"
                     cdkDrag
+                    [cdkDragDisabled]="!canMutateStages"
                     [cdkDragData]="stage"
                     [class.crop-stages-table__row--selected]="selectedStageId === stage.id"
                     (click)="selectStage(stage.id)"
                   >
                     <td class="crop-stages-table__drag" cdkDragHandle (click)="$event.stopPropagation()">
-                      <span class="crop-stages-table__drag-icon" aria-hidden="true">≡</span>
+                      @if (canMutateStages) {
+                        <span class="crop-stages-table__drag-icon" aria-hidden="true">≡</span>
+                      }
                     </td>
                     <td>{{ stage.order }}</td>
                     <td>{{ stage.name }}</td>
@@ -267,9 +281,11 @@ interface TemperatureScaleModel {
                 }
                 <tr class="crop-stages-table__add-row">
                   <td colspan="6">
-                    <button type="button" class="crop-stages-table__add-button" (click)="addCropStage()">
-                      {{ 'crops.edit.add_stage' | translate }}
-                    </button>
+                    @if (canMutateStages) {
+                      <button type="button" class="crop-stages-table__add-button" (click)="addCropStage()">
+                        {{ 'crops.edit.add_stage' | translate }}
+                      </button>
+                    }
                   </td>
                 </tr>
               </tbody>
@@ -286,8 +302,14 @@ interface TemperatureScaleModel {
                     <input
                       type="text"
                       name="panel_stage_name"
+                      [readonly]="!canMutateStages"
                       [(ngModel)]="stageEditDraft.name"
                     />
+                    @if (showStageNameError()) {
+                      <p class="form-error crop-stages-edit-panel__name-error" role="alert">
+                        {{ 'crops.edit.stage_name_required' | translate }}
+                      </p>
+                    }
                   </label>
                 </div>
 
@@ -326,6 +348,7 @@ interface TemperatureScaleModel {
                         type="number"
                         step="0.1"
                         name="panel_base_temperature"
+                        [readonly]="!canMutateStages"
                         [placeholder]="'crops.edit.base_temperature_placeholder' | translate"
                         [(ngModel)]="stageEditDraft.base_temperature"
                       />
@@ -342,6 +365,7 @@ interface TemperatureScaleModel {
                             type="number"
                             step="0.1"
                             name="panel_optimal_min"
+                            [readonly]="!canMutateStages"
                             [(ngModel)]="stageEditDraft.optimal_min"
                           />
                         </label>
@@ -351,6 +375,7 @@ interface TemperatureScaleModel {
                             type="number"
                             step="0.1"
                             name="panel_optimal_max"
+                            [readonly]="!canMutateStages"
                             [(ngModel)]="stageEditDraft.optimal_max"
                           />
                         </label>
@@ -362,6 +387,7 @@ interface TemperatureScaleModel {
                         type="number"
                         step="0.1"
                         name="panel_max_temperature"
+                        [readonly]="!canMutateStages"
                         [(ngModel)]="stageEditDraft.max_temperature"
                       />
                     </label>
@@ -379,6 +405,7 @@ interface TemperatureScaleModel {
                         type="number"
                         step="0.1"
                         name="panel_required_gdd"
+                        [readonly]="!canMutateStages"
                         [placeholder]="'crops.edit.required_gdd_placeholder' | translate"
                         [(ngModel)]="stageEditDraft.required_gdd"
                       />
@@ -395,6 +422,7 @@ interface TemperatureScaleModel {
                     <button
                       type="button"
                       class="crop-stages-edit-panel__detail-chip"
+                      [disabled]="!canMutateStages"
                       (click)="openTemperatureDialog()"
                     >
                       {{ 'crops.edit.edit_temperature_details' | translate }}
@@ -403,6 +431,7 @@ interface TemperatureScaleModel {
                     <button
                       type="button"
                       class="crop-stages-edit-panel__detail-chip"
+                      [disabled]="!canMutateStages"
                       (click)="openAdvancedDialog()"
                     >
                       {{ 'crops.edit.edit_sunshine_nutrient' | translate }}
@@ -412,17 +441,19 @@ interface TemperatureScaleModel {
                 </div>
 
                 <div class="crop-stages-edit-panel__footer">
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    [disabled]="!isPanelDirty()"
-                    (click)="saveStagePanel()"
-                  >
-                    {{ 'crops.edit.save_stage' | translate }}
-                  </button>
-                  <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
-                    {{ 'common.delete' | translate }}
-                  </button>
+                  @if (canMutateStages) {
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      [disabled]="!canSaveStagePanel()"
+                      (click)="saveStagePanel()"
+                    >
+                      {{ 'crops.edit.save_stage' | translate }}
+                    </button>
+                    <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
+                      {{ 'common.delete' | translate }}
+                    </button>
+                  }
                 </div>
               </div>
             }
@@ -576,6 +607,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   private readonly saveCropStageAdvancedDetailsUseCase = inject(SaveCropStageAdvancedDetailsUseCase);
   private readonly presenter = inject(CropStagesPresenter);
   private readonly flashMessage = inject(FlashMessageService);
+  private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
 
@@ -705,6 +737,25 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     return this.control.formData.crop_stages.find((stage) => stage.id === this.selectedStageId) ?? null;
   }
 
+  get canMutateStages(): boolean {
+    if (this.control.formData.is_reference) {
+      return this.auth.user()?.admin ?? false;
+    }
+    return true;
+  }
+
+  isStageNameValid(): boolean {
+    return this.stageEditDraft.name.trim().length > 0;
+  }
+
+  showStageNameError(): boolean {
+    return this.isPanelDirty() && !this.isStageNameValid();
+  }
+
+  canSaveStagePanel(): boolean {
+    return this.canMutateStages && this.isPanelDirty() && this.isStageNameValid();
+  }
+
   ngOnInit(): void {
     this.presenter.setView(this);
     this.fromPlanId = parseFromPlanId(this.route.snapshot.queryParamMap.get('fromPlan'));
@@ -738,6 +789,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   addCropStage(): void {
+    if (!this.canMutateStages) {
+      return;
+    }
     if (this.isPanelDirty()) {
       this.pendingUnsavedAction = { kind: 'add-stage' };
       this.unsavedConfirmDialogRef?.nativeElement?.showModal();
@@ -813,7 +867,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   saveStagePanel(): void {
     const stage = this.selectedStage;
-    if (!stage) {
+    if (!stage || !this.canMutateStages) {
+      return;
+    }
+
+    if (!this.isStageNameValid()) {
       return;
     }
 
@@ -856,6 +914,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   openTemperatureDialog(): void {
+    if (!this.canMutateStages) {
+      return;
+    }
     const stage = this.selectedStage;
     if (!stage) {
       return;
@@ -919,6 +980,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   openAdvancedDialog(): void {
+    if (!this.canMutateStages) {
+      return;
+    }
     const stage = this.selectedStage;
     if (!stage) {
       return;
@@ -1019,6 +1083,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   deleteCropStage(stageId: number): void {
+    if (!this.canMutateStages) {
+      return;
+    }
     const stage = this.control.formData.crop_stages.find((item) => item.id === stageId);
     if (!stage) {
       return;
@@ -1062,6 +1129,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   onStageDropped(event: CdkDragDrop<CropStage[]>): void {
+    if (!this.canMutateStages) {
+      return;
+    }
     const { stages, updates } = reorderStagesByIndex(
       this.control.formData.crop_stages,
       event.previousIndex,
@@ -1071,6 +1141,9 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   renumberDuplicateStageOrders(): void {
+    if (!this.canMutateStages) {
+      return;
+    }
     const { stages, updates } = renumberStagesSequentially(this.control.formData.crop_stages);
     this.persistStageReorder(stages, updates);
   }

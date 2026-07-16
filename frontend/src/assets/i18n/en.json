@@ -2058,6 +2058,8 @@
       "temperature_details_title": "Stress thresholds",
       "advanced_details_title": "Sunshine & nutrient details",
       "unsaved_confirm_message": "You have unsaved changes. Switching stages will discard them. Continue?",
+      "reference_stages_readonly": "Reference crops are read-only. Only administrators can edit growth stages.",
+      "stage_name_required": "Please enter a stage name.",
       "table_order": "Order",
       "table_stage_name": "Stage name",
       "table_base_temperature": "Base temperature",
