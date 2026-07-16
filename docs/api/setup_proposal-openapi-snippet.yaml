@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: AGRR Masters API — setup_proposal (draft)
+  version: 0.1.0
+paths:
+  /api/v1/masters/crops/{crop_id}/setup_proposal:
+    post:
+      summary: Validate or apply an external skill crop setup proposal
+      security:
+        - bearerApiKey: []
+        - sessionCookie: []
+      parameters:
+        - name: crop_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: mode
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [dry_run, apply]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropSetupProposal'
+      responses:
+        '200':
+          description: dry_run result (valid or validation errors)
+        '201':
+          description: apply succeeded
+        '401':
+          description: unauthorized
+        '404':
+          description: crop not found
+components:
+  securitySchemes:
+    bearerApiKey:
+      type: http
+      scheme: bearer
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session_id
+  schemas:
+    CropSetupProposal:
+      type: object
+      required: [stages, agricultural_tasks, task_schedule_blueprints]
+      properties:
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/CropSetupProposalStage'
+        agricultural_tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CropSetupProposalAgriculturalTask'
+        task_schedule_blueprints:
+          type: array
+          items:
+            $ref: '#/components/schemas/CropSetupProposalBlueprint'
+    CropSetupProposalStage:
+      type: object
+      required: [name, order, thermal_requirement]
+      properties:
+        name:
+          type: string
+        order:
+          type: integer
+        temperature_requirement:
+          type: object
+        thermal_requirement:
+          type: object
+          required: [required_gdd]
+          properties:
+            required_gdd:
+              type: string
+        sunshine_requirement:
+          type: object
+        nutrient_requirement:
+          type: object
+    CropSetupProposalAgriculturalTask:
+      type: object
+      required: [ref, name, task_type, region]
+      properties:
+        ref:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        time_per_sqm:
+          type: number
+        skill_level:
+          type: string
+        region:
+          type: string
+          enum: [jp, us, in]
+        task_type:
+          type: string
+          enum: [field_work, basal_fertilization, topdress_fertilization]
+    CropSetupProposalBlueprint:
+      type: object
+      required: [agricultural_task_ref, stage_order, gdd_trigger, task_type]
+      properties:
+        agricultural_task_ref:
+          type: string
+        stage_order:
+          type: integer
+        stage_name:
+          type: string
+        gdd_trigger:
+          type: number
+        task_type:
+          type: string
+        priority:
+          type: integer
