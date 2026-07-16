@@ -286,7 +286,18 @@
         "base_temperature_label": "न्यूनतम सीमा तापमान (°C)"
       },
       "delete_confirm_message": "क्या आप \"{{stageName}}\" को हटाना चाहते हैं?\n\nइस चरण से जुड़ी आवश्यकताएँ (तापमान, GDD आदि) भी हट जाएँगी। इससे कार्य अनुसूची टेम्पलेट और खेती योजनाओं की उत्पन्न अनुसूचियाँ प्रभावित हो सकती हैं। यह क्रिया पूर्ववत नहीं की जा सकती।",
-      "delete_confirm_blueprint_warning": "इस चरण से {{count}} कार्य अनुसूची टेम्पलेट जुड़े हैं। हटाने से टेम्पलेट स्थान बिगड़ सकता है।"
+      "delete_confirm_blueprint_warning": "इस चरण से {{count}} कार्य अनुसूची टेम्पलेट जुड़े हैं। हटाने से टेम्पलेट स्थान बिगड़ सकता है।",
+      "nutrient": {
+        "daily_uptake_n_label": "नाइट्रोजन (N) अवशोषण (g/m²/day)",
+        "daily_uptake_n_placeholder": "उदाहरण: 0.5",
+        "daily_uptake_n_help": "इस चरण के लिए दैनिक नाइट्रोजन अवशोषण दर्ज करें।",
+        "daily_uptake_p_label": "फॉस्फोरस (P) अवशोषण (g/m²/day)",
+        "daily_uptake_p_placeholder": "उदाहरण: 0.2",
+        "daily_uptake_p_help": "इस चरण के लिए दैनिक फॉस्फोरस (तत्व) अवशोषण दर्ज करें।",
+        "daily_uptake_k_label": "पोटैशियम (K) अवशोषण (g/m²/day)",
+        "daily_uptake_k_placeholder": "उदाहरण: 0.8",
+        "daily_uptake_k_help": "इस चरण के लिए दैनिक पोटैशियम (तत्व) अवशोषण दर्ज करें।"
+      }
     },
     "errors": {
       "invalid_id": "अमान्य फसल ID।"
@@ -323,13 +334,7 @@
       "add_stage": "चरण जोड़ें",
       "stage_title": "चरण {{order}}",
       "stage_name": "चरण का नाम",
-      "stage_order": "क्रम",
       "stage_order_duplicate": "डुप्लिकेट क्रम मान: {{orders}}। कृपया अद्वितीय क्रम संख्या निर्दिष्ट करें।",
-      "requirements_title": "आवश्यकताएँ",
-      "temperature_requirement": "तापमान आवश्यकताएँ",
-      "thermal_requirement": "थर्मल आवश्यकताएँ",
-      "sunshine_requirement": "सूरज की रोशनी आवश्यकताएँ",
-      "nutrient_requirement": "पोषक तत्व आवश्यकताएँ",
       "base_temperature": "न्यूनतम सीमा तापमान (°C)",
       "optimal_min": "इष्टतम तापमान (न्यूनतम) (°C)",
       "optimal_max": "इष्टतम तापमान (अधिकतम) (°C)",
@@ -340,12 +345,11 @@
       "max_temperature": "अधिकतम सीमा तापमान (°C)",
       "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
       "stage_cumulative_gdd_range": "{{start}}–{{end}} ℃·दिन (संचयी)",
-      "stage_cumulative_gdd_missing": "सीमा दिखाने के लिए आवश्यक GDD दर्ज करें",
       "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
       "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
-      "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",
-      "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (kg/ha/day)",
-      "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (kg/ha/day)",
+      "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (g/m²/day)",
+      "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (g/m²/day)",
+      "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (g/m²/day)",
       "region": "क्षेत्र",
       "form": {
         "submit": "फसल अपडेट करें",
@@ -354,7 +358,6 @@
       "errors": {
         "title": "{{count}} त्रुटियाँ:"
       },
-      "required_marker": "आवश्यक",
       "base_temperature_placeholder": "उदा., 5.0",
       "base_temperature_help": "इस चरण में वृद्धि शुरू होने वाला न्यूनतम सीमा तापमान दर्ज करें।",
       "required_gdd_placeholder": "उदा., 800.0",
@@ -1726,7 +1729,6 @@
         "gdd_date_not_found_link": "फसल सूची से कार्य योजना की समीक्षा करें",
         "gdd_date_not_found_wizard_link": "{{cropName}} की कार्य योजना की समीक्षा करें",
         "missing_start_date": "खेती प्रारंभ तिथि न होने के कारण कार्य अनुसूची नहीं बनाई जा सकी।",
-        "missing_field_crop": "योजना के एक खेत में फसल निर्धारित नहीं है, इसलिए कार्य अनुसूची नहीं बनाई जा सकी।",
         "agrr_unavailable": "AGRR प्रसंस्करण सेवा से कनेक्ट नहीं हो सका। बाद में पुनः प्रयास करें।",
         "generic": "कार्य अनुसूची नहीं बनाई जा सकी।",
         "generic_single": "«{{cropName}}» की सेटिंग जाँचें, या सेटअप पूरा होने पर पुनः प्रयास करें।",
@@ -1735,7 +1737,8 @@
         "crop_wizard_link": "«{{cropName}}» का पंजीकरण विज़ार्ड खोलें",
         "plan_context_link": "योजना के खेत और मौसम की जाँच करें",
         "crop_stages_link": "«{{cropName}}» के वृद्धि चरण देखें",
-        "generic_plan_link": "योजना के खेत और फसल देखें"
+        "generic_plan_link": "योजना के खेत और फसल देखें",
+        "missing_field_crop": "योजना के एक खेत में फसल निर्धारित नहीं है, इसलिए कार्य अनुसूची नहीं बनाई जा सकी।"
       },
       "detail": {
         "dialog_title": "{{task}} · {{crop}}",
@@ -2135,9 +2138,6 @@
         "required_gdd": "आवश्यक बढ़ती डिग्री दिन (°C·day)",
         "minimum_sunshine_hours": "न्यूनतम सूरज की रोशनी घंटे (घंटे/दिन)",
         "target_sunshine_hours": "लक्ष्य सूरज की रोशनी घंटे (घंटे/दिन)",
-        "daily_uptake_n": "दैनिक नाइट्रोजन अवशोषण (kg/ha/day)",
-        "daily_uptake_p": "दैनिक फास्फोरस अवशोषण (kg/ha/day)",
-        "daily_uptake_k": "दैनिक पोटैशियम अवशोषण (kg/ha/day)",
         "region": "क्षेत्र"
       }
     },
