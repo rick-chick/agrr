@@ -65,7 +65,7 @@ gh issue list --repo rick-chick/agrr --state open --limit 50 --json number,title
 
 1. タイトル先頭の `[P0]` > `[P1]` > `[P2]` > その他
 2. 同優先度は **番号昇順**
-3. 本文の「依存」節に未完了 issue 番号がある場合は **依存が閉じるまでスキップ**
+3. 本文の「依存」節に未完了 issue 番号がある場合は **dispatch 層の依存ゲート**が webhook を保留する（`agent-ready` は維持・`agent-skipped` は付けない）
 
 ラベル `agent-ready` がある issue は、同優先度内で **最優先**。
 
@@ -107,8 +107,9 @@ gh issue edit <N> --add-label agent-in-progress
 |------|------|--------|
 | **out_of_scope** | Issue Worker のスコープ外（運用・インフラのみ・ドキュメントのみ等） | `agent-skipped` |
 | **needs_human** | 仕様未確定だが close までは不要（質問・方針待ち） | `agent-skipped`（§7 ブロックと迷う場合はブロック優先） |
-| **deps_unmet** | 依存 issue が未完了 | `agent-skipped` |
 | **automation_only** | UX 起票専用・調査のみ・実装指示なし | `agent-skipped` |
+
+**dispatch 層で処理（§2b ではない）**: 本文 `## 依存` に open の `#N` がある issue への `implement` dispatch は [`issue-worker-dispatch.yml`](../../../.github/workflows/issue-worker-dispatch.yml) が webhook 送信前に保留する（issue コメントのみ・`agent-skipped` なし）。`[epic]` / `epic` ラベルの `implement` dispatch も同 workflow が拒否する。
 
 **禁止**: 根拠のないスキップ、duplicate / already_fixed をスキップで逃げる（該当時は §2a で close）。
 
@@ -117,7 +118,7 @@ gh issue edit <N> --add-label agent-in-progress
 ```markdown
 ## 🤖 Issue Worker: 対応スキップ
 
-**区分**: out_of_scope | needs_human | deps_unmet | automation_only
+**区分**: out_of_scope | needs_human | automation_only
 **理由**（1〜3 文）: …
 **根拠**:
 - …

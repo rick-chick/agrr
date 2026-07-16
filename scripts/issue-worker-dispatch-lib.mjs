@@ -36,6 +36,149 @@ export function hasLabel(labelsCsv, name) {
 }
 
 /**
+ * Extract the body of the `## 依存` section (until the next `##` heading).
+ *
+ * @param {string} issueBody
+ * @returns {string | null}
+ */
+export function extractDependencySection(issueBody) {
+  const lines = issueBody.split(/\r?\n/);
+  const startIndex = lines.findIndex((line) => /^## 依存[ \t]*$/.test(line));
+  if (startIndex === -1) {
+    return null;
+  }
+  const sectionLines = [];
+  for (let i = startIndex + 1; i < lines.length; i += 1) {
+    if (/^## /.test(lines[i])) {
+      break;
+    }
+    sectionLines.push(lines[i]);
+  }
+  return sectionLines.join('\n').trimEnd();
+}
+
+/**
+ * Parse issue numbers referenced in the `## 依存` section.
+ *
+ * @param {string} issueBody
+ * @returns {number[]}
+ */
+export function parseDependencyIssueNumbers(issueBody) {
+  const section = extractDependencySection(issueBody);
+  if (!section) {
+    return [];
+  }
+  const numbers = [...section.matchAll(/#(\d+)/g)].map((match) => Number(match[1]));
+  if (numbers.length === 0) {
+    return [];
+  }
+  return [...new Set(numbers)];
+}
+
+/**
+ * @param {number[]} openDependencies
+ * @returns {string}
+ */
+export function formatDependencyGateComment(openDependencies) {
+  const refs = openDependencies.map((number) => `#${number}`).join(', ');
+  return [
+    '## 🤖 Issue Worker: dispatch 保留（依存未充足）',
+    '',
+    `次の依存 issue が open のため Cloud Agent を起動しません: ${refs}`,
+    '',
+    '依存 issue が CLOSED になったら `agent-ready` ラベルで再 dispatch されます（キュー待ちのまま、`agent-skipped` ラベルは付けません）。',
+  ].join('\n');
+}
+
+/**
+ * @param {{
+ *   issueNumber: number;
+ *   issueBody: string;
+ *   fetchIssueState: (issueNumber: number) => Promise<string> | string;
+ *   fetchIssueBody?: (issueNumber: number) => Promise<string> | string;
+ * }} input
+ * @returns {Promise<
+ *   { skip: false }
+ *   | { skip: true; skipReason: string; openDependencies: number[] }
+ * >}
+ */
+export async function resolveDependencyGate({
+  issueNumber,
+  issueBody,
+  fetchIssueState,
+  fetchIssueBody,
+}) {
+  const directDependencies = parseDependencyIssueNumbers(issueBody);
+  if (directDependencies.length === 0) {
+    return { skip: false };
+  }
+
+  const visiting = new Set([issueNumber]);
+  const openDependencies = new Set();
+
+  /**
+   * @param {number} currentNumber
+   * @param {string} currentBody
+   */
+  async function walk(currentNumber, currentBody) {
+    const dependencies = parseDependencyIssueNumbers(currentBody);
+    for (const dependencyNumber of dependencies) {
+      if (visiting.has(dependencyNumber)) {
+        throw new Error(
+          `circular dependency detected involving #${dependencyNumber}`,
+        );
+      }
+      visiting.add(dependencyNumber);
+      const state = await fetchIssueState(dependencyNumber);
+      if (state !== 'CLOSED') {
+        openDependencies.add(dependencyNumber);
+      }
+      if (fetchIssueBody) {
+        const dependencyBody = await fetchIssueBody(dependencyNumber);
+        await walk(dependencyNumber, dependencyBody);
+      }
+      visiting.delete(dependencyNumber);
+    }
+  }
+
+  await walk(issueNumber, issueBody);
+
+  if (openDependencies.size === 0) {
+    return { skip: false };
+  }
+
+  const sorted = [...openDependencies].sort((a, b) => a - b);
+  const first = sorted[0];
+  return {
+    skip: true,
+    skipReason: `dependency #${first} is open`,
+    openDependencies: sorted,
+  };
+}
+
+/**
+ * @param {{
+ *   action: string;
+ *   issueTitle: string;
+ *   issueLabels: string;
+ * }} input
+ * @returns {{ skip: true; skipReason: string } | { skip: false }}
+ */
+export function resolveEpicImplementGate({ action, issueTitle, issueLabels }) {
+  if (action !== 'implement') {
+    return { skip: false };
+  }
+  const isEpicTitle = /\[epic\]/i.test(issueTitle);
+  if (isEpicTitle || hasLabel(issueLabels, 'epic')) {
+    return {
+      skip: true,
+      skipReason: 'epic issues cannot be dispatched for implement',
+    };
+  }
+  return { skip: false };
+}
+
+/**
  * @param {{
  *   eventAction: string;
  *   labelName: string;
@@ -50,6 +193,12 @@ export function resolveDispatchAction({ eventAction, labelName, issueAuthor, iss
       return { skip: false, action: 'close_with_reason' };
     }
     if (labelName === 'agent-ready') {
+      if (hasLabel(issueLabels, 'agent-skipped')) {
+        return {
+          skip: true,
+          skipReason: 'agent-ready with agent-skipped requires removing agent-skipped first',
+        };
+      }
       return { skip: false, action: 'implement' };
     }
     return {
@@ -66,6 +215,12 @@ export function resolveDispatchAction({ eventAction, labelName, issueAuthor, iss
       return { skip: false, action: 'close_with_reason' };
     }
     if (hasLabel(issueLabels, 'agent-ready')) {
+      if (hasLabel(issueLabels, 'agent-skipped')) {
+        return {
+          skip: true,
+          skipReason: 'agent-ready with agent-skipped requires removing agent-skipped first',
+        };
+      }
       return { skip: false, action: 'implement' };
     }
     for (const label of OPENED_TERMINAL_LABELS) {

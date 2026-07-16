@@ -111,7 +111,7 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 |------|------|
 | ユーザーが「バックログのみ」「agent-ready は付けない」と指定 | 人間確認待ち |
 | §2 の未解決項目が残っている | 仕様・方針未確定 |
-| 依存 issue が未完了で実装不可 | worker が `deps_unmet` でスキップするだけなので、先に依存を閉じる |
+| 依存 issue が未完了で実装不可 | dispatch 依存ゲートが webhook を保留するため、先に依存を閉じるか `agent-ready` を付けない |
 | 調査のみ・再現不能・再現手順なし | 完了条件を満たせない |
 | 実装スコープ外（運用・インフラ判断のみ等） | `out_of_scope` 想定 |
 | 重複の可能性が残っている | 人間の最終確認待ち |
@@ -132,7 +132,7 @@ gh issue edit <N> --repo rick-chick/agrr --add-label agent-ready
 1. **1 issue = 1 修正単位** — Issue Worker は 1 実行 1 issue・1 PR
 2. **観測可能な完了条件** — 「改善する」ではなく「〇〇のテストが GREEN」「△△画面で□□と表示」
 3. **TDD を明示** — 完了条件に `test-common` を入れる
-4. **依存の明示** — 未完了の #N がある場合は本文「依存」節に書く（worker がスキップする）
+4. **依存の明示** — 未完了の `#N` を本文 `## 依存` 節に**必須明記**（曖昧な「ADR Issue」等は不可。dispatch ゲートが `#\\d+` を参照する）
 5. **参照 path** — 調査済みファイルを `参照` に列挙（worker の着手前 triage 用）
 6. **優先度はタイトル先頭** — `[P0]` > `[P1]` > `[P2]` で worker が選定しやすい
 7. **実装はしない** — 起票・ラベル付与まで。コード変更は `github-issue-worker`
