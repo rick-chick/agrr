@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService, TranslationObject } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BehaviorSubject } from 'rxjs';
 import inLocale from '../../../assets/i18n/in.json';
 import ja from '../../../assets/i18n/ja.json';
 import { PlanWorkComponent } from './plan-work.component';
@@ -39,6 +40,33 @@ const initialControl: PlanWorkViewState = {
   cropIdsForBanner: [],
   cropNamesForBanner: {}
 };
+
+function createPlanRouteMock(planId: string) {
+  let currentPlanId = planId;
+  const paramMapSubject = new BehaviorSubject({
+    get: (key: string) => (key === 'id' ? currentPlanId : null)
+  });
+  const queryParamMapSubject = new BehaviorSubject({
+    get: () => null
+  });
+
+  return {
+    snapshot: {
+      get paramMap() {
+        return paramMapSubject.value;
+      },
+      queryParamMap: { get: () => null }
+    },
+    paramMap: paramMapSubject.asObservable(),
+    queryParamMap: queryParamMapSubject.asObservable(),
+    setPlanId(id: string) {
+      currentPlanId = id;
+      paramMapSubject.next({
+        get: (key: string) => (key === 'id' ? currentPlanId : null)
+      });
+    }
+  };
+}
 
 function mockRow(overrides: Partial<TaskScheduleItem> = {}): WorkDayListRowDto {
   return {
@@ -120,6 +148,7 @@ describe('PlanWorkComponent mobile UX', () => {
   let mockPresenter: {
     setView: ReturnType<typeof vi.fn>;
   };
+  let mockActivatedRoute: ReturnType<typeof createPlanRouteMock>;
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
@@ -132,6 +161,7 @@ describe('PlanWorkComponent mobile UX', () => {
       setView: vi.fn()
     };
     cdr = { markForCheck: vi.fn() };
+    mockActivatedRoute = createPlanRouteMock('7');
 
     TestBed.overrideComponent(PlanWorkComponent, {
       set: {
@@ -154,9 +184,7 @@ describe('PlanWorkComponent mobile UX', () => {
         provideRouter([]),
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: { paramMap: { get: vi.fn(() => '7') } }
-          }
+          useValue: mockActivatedRoute
         }
       ]
     }).compileComponents();
@@ -240,9 +268,7 @@ describe('PlanWorkComponent mobile UX', () => {
         provideRouter([]),
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: { paramMap: { get: vi.fn(() => '7') } }
-          }
+          useValue: mockActivatedRoute
         }
       ]
     }).compileComponents();
@@ -681,6 +707,28 @@ describe('PlanWorkComponent mobile UX', () => {
     });
     expect(loadUseCase.execute).toHaveBeenCalled();
   });
+
+  it('reloads and resubscribes when route plan id changes', () => {
+    const oldChannel = { unsubscribe: vi.fn() };
+    subscribeSyncUseCase.execute.mockImplementation(({ onSubscribed }) => {
+      onSubscribed(oldChannel);
+    });
+
+    fixture.detectChanges();
+    loadUseCase.execute.mockClear();
+    subscribeSyncUseCase.execute.mockClear();
+
+    mockActivatedRoute.setPlanId('8');
+
+    expect(oldChannel.unsubscribe).toHaveBeenCalled();
+    expect(subscribeSyncUseCase.execute).toHaveBeenCalledWith({
+      planId: 8,
+      onSubscribed: expect.any(Function)
+    });
+    expect(loadUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 8 })
+    );
+  });
 });
 
 describe('PlanWorkComponent in locale labels', () => {
@@ -698,6 +746,7 @@ describe('PlanWorkComponent in locale labels', () => {
       setView: vi.fn()
     };
     const cdr = { markForCheck: vi.fn() };
+    const localeRouteMock = createPlanRouteMock('7');
 
     TestBed.overrideComponent(PlanWorkComponent, {
       set: {
@@ -720,9 +769,7 @@ describe('PlanWorkComponent in locale labels', () => {
         provideRouter([]),
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: { paramMap: { get: vi.fn(() => '7') } }
-          }
+          useValue: localeRouteMock
         }
       ]
     }).compileComponents();

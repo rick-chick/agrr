@@ -1,7 +1,9 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { combineLatest } from 'rxjs';
 import { formatIsoDateForDisplay, formatIsoMonthForDisplay } from '../../core/format-display-date';
 import {
   previewWorkRecordPhotos,
@@ -176,6 +178,7 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
   private readonly presenter = inject(PlanWorkRecordsPresenter);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   lightboxPhotos: WorkRecordPhoto[] = [];
   lightboxIndex = 0;
@@ -195,6 +198,12 @@ export class PlanWorkRecordsComponent implements PlanWorkRecordsView, OnInit {
 
   ngOnInit(): void {
     this.presenter.setView(this);
+    combineLatest([this.route.paramMap, this.route.queryParamMap])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.handleRouteChange());
+  }
+
+  private handleRouteChange(): void {
     if (!this.planId) {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
