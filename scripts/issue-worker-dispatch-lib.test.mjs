@@ -6,8 +6,10 @@ import {
   defaultRetryReasonForMode,
   hasLabel,
   isRetryCandidate,
+  openFixPrSearchQuery,
   parseRetryDispatchArgs,
   resolveDispatchAction,
+  resolveImplementDispatchGate,
   selectOpenIssueByTitle,
   selectRetryCandidate,
 } from './issue-worker-dispatch-lib.mjs';
@@ -273,4 +275,29 @@ test('resolveDispatchAction skips unsupported webhook actions', () => {
     skip: true,
     skipReason: 'unsupported issue event action: closed',
   });
+});
+
+test('openFixPrSearchQuery matches fixes and closes wording', () => {
+  assert.equal(
+    openFixPrSearchQuery(276),
+    'is:pr is:open (fixes #276 OR closes #276)',
+  );
+});
+
+test('resolveImplementDispatchGate skips implement when open fix pr exists', () => {
+  assert.deepEqual(
+    resolveImplementDispatchGate({ action: 'implement', hasOpenFixPr: true }),
+    {
+      skip: true,
+      skipReason: 'open fix/closes pr already exists for this issue',
+    },
+  );
+  assert.deepEqual(
+    resolveImplementDispatchGate({ action: 'implement', hasOpenFixPr: false }),
+    { skip: false },
+  );
+  assert.deepEqual(
+    resolveImplementDispatchGate({ action: 'triage', hasOpenFixPr: true }),
+    { skip: false },
+  );
 });
