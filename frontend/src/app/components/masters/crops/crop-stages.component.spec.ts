@@ -67,6 +67,9 @@ const tableTranslations = {
       from_plan_stages_wizard_lead: 'Configure stages',
       return_to_plan: 'Return to plan'
     },
+    errors: {
+      invalid_id: 'Invalid crop ID.'
+    },
     edit: {
       stages_title: 'Growth Stages',
       stages_lead: 'Configure growth stages.',
@@ -232,6 +235,18 @@ describe('CropStagesComponent', () => {
     expect(mockLoadBlueprintsUseCase.execute).toHaveBeenCalledWith({ cropId: 1 });
   });
 
+  it('shows invalid crop id error and skips API calls for non-numeric route id', () => {
+    mockActivatedRoute.snapshot.paramMap.get.mockImplementation((key: string) =>
+      key === 'id' ? 'abc' : null
+    );
+
+    fixture.detectChanges();
+
+    expect(component.control.error).toBe(translateService.instant('crops.errors.invalid_id'));
+    expect(mockLoadUseCase.execute).not.toHaveBeenCalled();
+    expect(mockLoadBlueprintsUseCase.execute).not.toHaveBeenCalled();
+  });
+
   it('should call createCropStageUseCase when addCropStage is called', () => {
     component.addCropStage();
     expect(mockCreateCropStageUseCase.execute).toHaveBeenCalledWith({
@@ -381,7 +396,7 @@ describe('CropStagesComponent', () => {
     component.selectStage(2);
 
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
-    expect(component.pendingStageSwitchId).toBe(2);
+    expect(component.pendingUnsavedAction).toEqual({ kind: 'switch-stage', stageId: 2 });
     expect(component.selectedStageId).toBe(1);
   });
 
@@ -401,10 +416,34 @@ describe('CropStagesComponent', () => {
 
     component.stageEditDraft.name = 'Dirty edit';
     component.selectStage(2);
-    component.confirmDiscardAndSwitchStage();
+    component.confirmDiscardUnsavedAction();
 
     expect(component.selectedStageId).toBe(2);
     expect(component.stageEditDraft.name).toBe('Stage 2');
+  });
+
+  it('opens unsaved confirm when deleting stage with dirty panel', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Dirty edit';
+    component.deleteCropStage(1);
+
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalled();
+    expect(component.pendingUnsavedAction).toEqual({ kind: 'delete-stage', stageId: 1 });
+    expect(component.pendingDeleteStage).toBeNull();
+    expect(mockDeleteCropStageUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('opens delete confirm after discarding dirty panel changes', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Dirty edit';
+    component.deleteCropStage(1);
+    component.confirmDiscardUnsavedAction();
+    fixture.detectChanges();
+
+    expect(component.pendingDeleteStage?.id).toBe(1);
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledTimes(2);
   });
 
   it('opens stress threshold dialog and saves only stress fields on explicit save', async () => {
@@ -451,6 +490,24 @@ describe('CropStagesComponent', () => {
     expect(component.isPanelDirty()).toBe(false);
     component.stageEditDraft.optimal_min = 12;
     expect(component.isPanelDirty()).toBe(true);
+  });
+
+  it('does not mark panel dirty when stage numeric fields are string equivalents', async () => {
+    await loadStages([
+      {
+        ...stageFixture,
+        temperature_requirement: {
+          ...stageFixture.temperature_requirement!,
+          optimal_min: '12' as unknown as number
+        },
+        thermal_requirement: {
+          ...stageFixture.thermal_requirement!,
+          required_gdd: '100' as unknown as number
+        }
+      }
+    ]);
+
+    expect(component.isPanelDirty()).toBe(false);
   });
 
   it('opens advanced dialog and saves sunshine, nutrient, and sterility fields', async () => {
