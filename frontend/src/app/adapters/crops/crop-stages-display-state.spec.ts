@@ -15,6 +15,7 @@ const baseControl = (
   taskScheduleBlueprints: [],
   formData: {
     name: 'Tomato',
+    is_reference: false,
     crop_stages: []
   },
   blueprintReadiness: defaultBlueprintReadiness(),
@@ -39,6 +40,7 @@ describe('withCropStagesDisplayState', () => {
       baseControl({
         formData: {
           name: 'Tomato',
+          is_reference: false,
           crop_stages: [{ id: 1, name: 'Germination', order: 1 } as CropStagesViewState['formData']['crop_stages'][0]]
         }
       })
@@ -49,11 +51,41 @@ describe('withCropStagesDisplayState', () => {
     expect(next.stageRequirementGaps).toHaveLength(1);
   });
 
+  it('shows checklist when required_gdd is 0 even with base temperature set', () => {
+    const next = withCropStagesDisplayState(
+      baseControl({
+        formData: {
+          name: 'Tomato',
+          is_reference: false,
+          crop_stages: [
+            {
+              id: 1,
+              crop_id: 1,
+              name: 'Germination',
+              order: 1,
+              temperature_requirement: {
+                id: 1,
+                crop_stage_id: 1,
+                base_temperature: 10
+              },
+              thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 0 }
+            }
+          ]
+        }
+      })
+    );
+
+    expect(next.showBlueprintReadinessChecklist).toBe(true);
+    expect(next.showNextStepCta).toBe(false);
+    expect(next.stageRequirementGaps[0]?.missingRequiredGdd).toBe(true);
+  });
+
   it('shows next-step CTA when stage requirements are complete', () => {
     const next = withCropStagesDisplayState(
       baseControl({
         formData: {
           name: 'Tomato',
+          is_reference: false,
           crop_stages: [
             {
               id: 1,
