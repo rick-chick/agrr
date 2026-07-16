@@ -21,6 +21,7 @@ import { applyPendingFlashViewEffects } from '../../../core/view-effects/pending
 import { parseFromPlanId } from '../../../domain/crops/parse-from-plan-id';
 import { parsePlanWizardReturnTab,
   planWizardReturnPath,
+  cropPlanWizardQueryParams,
   type PlanWizardReturnTab
 } from '../../../domain/crops/plan-wizard-context';
 import { stageCumulativeGddRange } from '../../../domain/crops/stage-cumulative-gdd';
@@ -28,13 +29,16 @@ import { parseOptionalNumber } from '../../../domain/crops/parse-optional-number
 import {
   findDuplicateStageOrders,
   reorderStagesByIndex,
+  renumberStagesSequentially,
   sortStagesByOrder
 } from '../../../domain/crops/crop-stage-order';
 import type { CropStage } from '../../../domain/crops/crop';
-import { countLinkedTaskScheduleBlueprints } from '../../../domain/crops/stage-linked-blueprint-count';
+import { countLinkedTaskScheduleBlueprintsForStage } from '../../../domain/crops/stage-linked-blueprint-count';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
+import { withCropStagesDisplayState } from '../../../adapters/crops/crop-stages-display-state';
+import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 
 type PendingUnsavedAction =
   | { kind: 'add-stage' }
@@ -53,7 +57,12 @@ const initialControl: CropStagesViewState = {
   taskScheduleBlueprints: [],
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
-  pendingReorderCropStagesSnapshot: null
+  pendingReorderCropStagesSnapshot: null,
+  pendingResyncPanelDraft: false,
+  blueprintReadiness: defaultBlueprintReadiness(),
+  stageRequirementGaps: [],
+  showBlueprintReadinessChecklist: false,
+  showNextStepCta: false
 };
 
 interface StageEditDraft {
@@ -120,6 +129,26 @@ interface TemperatureScaleModel {
             <p class="crop-blueprints__plan-wizard-banner-lead">
               {{ 'crops.show.from_plan_stages_wizard_lead' | translate }}
             </p>
+            @if (control.stageRequirementGaps.length > 0) {
+              <ul class="crop-stages__plan-wizard-gaps" role="list">
+                @for (gap of control.stageRequirementGaps; track gap.stageId) {
+                  <li>
+                    @if (gap.missingBaseTemperature) {
+                      <span>{{
+                        'crops.show.blueprint_readiness.stages_page_gap_base_temperature'
+                          | translate: { stageName: gap.stageName }
+                      }}</span>
+                    }
+                    @if (gap.missingRequiredGdd) {
+                      <span>{{
+                        'crops.show.blueprint_readiness.stages_page_gap_required_gdd'
+                          | translate: { stageName: gap.stageName }
+                      }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
             <a [routerLink]="planReturnPath" class="btn-secondary crop-stages__return-to-plan">
               {{ 'crops.show.return_to_plan' | translate }}
             </a>
@@ -131,16 +160,66 @@ interface TemperatureScaleModel {
           <p class="page-description">{{ 'crops.edit.stages_lead' | translate }}</p>
         </header>
 
+        @if (control.showBlueprintReadinessChecklist) {
+          <div class="blueprint-readiness" role="status">
+            <p class="blueprint-readiness__title">
+              {{ 'crops.show.blueprint_readiness.detail_title' | translate }}
+            </p>
+            <ul class="blueprint-readiness__list">
+              @for (gap of control.stageRequirementGaps; track gap.stageId) {
+                <li>
+                  @if (gap.missingBaseTemperature) {
+                    <span>{{
+                      'crops.show.blueprint_readiness.stages_page_gap_base_temperature'
+                        | translate: { stageName: gap.stageName }
+                    }}</span>
+                  }
+                  @if (gap.missingRequiredGdd) {
+                    <span>{{
+                      'crops.show.blueprint_readiness.stages_page_gap_required_gdd'
+                        | translate: { stageName: gap.stageName }
+                    }}</span>
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (control.showNextStepCta) {
+          <div class="crop-stages__next-step">
+            <a
+              [routerLink]="['/crops', cropId, 'task_schedule_blueprints']"
+              [queryParams]="wizardQueryParams"
+              class="btn btn-secondary"
+            >
+              {{ 'crops.show.blueprint_readiness.stages_next_step_action' | translate }}
+            </a>
+          </div>
+        }
+
         <section class="form-card crop-stages-section" aria-labelledby="stages-heading">
           <h2 id="stages-heading" class="crop-stages-section__title">{{ 'crops.edit.stages_list_heading' | translate }}</h2>
 
           @if (duplicateStageOrders.length > 0) {
-            <p class="crop-stages-order-warning" role="alert">
-              {{
-                'crops.edit.stage_order_duplicate'
-                  | translate: { orders: duplicateStageOrders.join(', ') }
-              }}
-            </p>
+            <div class="crop-stages-order-warning" role="alert">
+              <p class="crop-stages-order-warning__message">
+                {{
+                  'crops.edit.stage_order_duplicate'
+                    | translate: { orders: duplicateStageOrders.join(', ') }
+                }}
+              </p>
+              <p class="crop-stages-order-warning__hint">
+                {{ 'crops.edit.stage_order_duplicate_hint' | translate }}
+              </p>
+              <button
+                type="button"
+                class="btn btn-secondary crop-stages-order-warning__renumber"
+                (click)="renumberDuplicateStageOrders()"
+              >
+                {{ 'crops.edit.stage_order_renumber' | translate }}
+              </button>
+            </div>
           }
 
           @if (control.formData.crop_stages.length === 0) {
@@ -333,7 +412,12 @@ interface TemperatureScaleModel {
                 </div>
 
                 <div class="crop-stages-edit-panel__footer">
-                  <button type="button" class="btn btn-primary" (click)="saveStagePanel()">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    [disabled]="!isPanelDirty()"
+                    (click)="saveStagePanel()"
+                  >
                     {{ 'crops.edit.save_stage' | translate }}
                   </button>
                   <button type="button" class="btn btn-danger" (click)="deleteCropStage(stage.id)">
@@ -474,7 +558,7 @@ interface TemperatureScaleModel {
       }
     </dialog>
   `,
-  styleUrls: ['./crop-stages.component.css']
+  styleUrls: ['./crop-stages.component.css', './_crop-blueprint-shared.css']
 })
 export class CropStagesComponent implements CropStagesView, OnInit {
   @ViewChild('deleteConfirmDialog') deleteConfirmDialogRef?: ElementRef<HTMLDialogElement>;
@@ -503,11 +587,17 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
   set control(value: CropStagesViewState) {
     const previousStages = this._control.formData.crop_stages;
-    this._control = applyPendingFlashViewEffects(value, { flash: this.flashMessage });
+    const forceResyncPanelDraft = value.pendingResyncPanelDraft;
+    this._control = withCropStagesDisplayState(
+      applyPendingFlashViewEffects(
+        { ...value, pendingResyncPanelDraft: false },
+        { flash: this.flashMessage }
+      )
+    );
     const stagesChanged = previousStages !== value.formData.crop_stages;
-    if (stagesChanged) {
+    if (stagesChanged || forceResyncPanelDraft) {
       queueMicrotask(() => {
-        this.ensureSelectedStage();
+        this.ensureSelectedStage({ forceResyncPanelDraft });
         this.cdr.markForCheck();
       });
     }
@@ -547,14 +637,21 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (!this.pendingDeleteStage) {
       return 0;
     }
-    return countLinkedTaskScheduleBlueprints(
-      this.pendingDeleteStage.order,
+    return countLinkedTaskScheduleBlueprintsForStage(
+      this.pendingDeleteStage.id,
+      this.control.formData.crop_stages,
       this.control.taskScheduleBlueprints
     );
   }
 
   get planReturnPath(): (string | number)[] {
     return this.fromPlanId != null ? planWizardReturnPath(this.fromPlanId, this.returnTab) : [];
+  }
+
+  get wizardQueryParams(): ReturnType<typeof cropPlanWizardQueryParams> | null {
+    return this.fromPlanId != null
+      ? cropPlanWizardQueryParams(this.fromPlanId, this.returnTab)
+      : null;
   }
 
   get contextCrumbs(): MasterContextCrumb[] {
@@ -606,6 +703,13 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
   private loadCrop(): void {
     this.loadUseCase.execute({ cropId: this.cropId });
+    this.loadBlueprintsUseCase.execute({ cropId: this.cropId });
+  }
+
+  reloadTaskScheduleBlueprints(): void {
+    if (this.resolvedCropId == null) {
+      return;
+    }
     this.loadBlueprintsUseCase.execute({ cropId: this.cropId });
   }
 
@@ -686,6 +790,11 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   saveStagePanel(): void {
     const stage = this.selectedStage;
     if (!stage) {
+      return;
+    }
+
+    if (!this.isPanelDirty()) {
+      this.flashMessage.show({ type: 'info', text: 'crops.flash.stage_panel_no_changes' });
       return;
     }
 
@@ -919,6 +1028,18 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       event.previousIndex,
       event.currentIndex
     );
+    this.persistStageReorder(stages, updates);
+  }
+
+  renumberDuplicateStageOrders(): void {
+    const { stages, updates } = renumberStagesSequentially(this.control.formData.crop_stages);
+    this.persistStageReorder(stages, updates);
+  }
+
+  private persistStageReorder(
+    stages: CropStage[],
+    updates: Array<{ id: number; order: number }>
+  ): void {
     if (updates.length === 0) {
       return;
     }
@@ -948,7 +1069,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   formatCumulativeGdd(stage: CropStage): string {
     const range = stageCumulativeGddRange(this.control.formData.crop_stages, stage.order);
     if (range.gddRangeMissing) {
-      return this.translate.instant('crops.edit.value_missing');
+      return this.translate.instant('crops.edit.stage_cumulative_gdd_missing');
     }
     return this.translate.instant('crops.edit.stage_cumulative_gdd_range', {
       start: range.cumulativeGddStart,
@@ -1023,7 +1144,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     };
   }
 
-  private ensureSelectedStage(): void {
+  private ensureSelectedStage(options?: { forceResyncPanelDraft?: boolean }): void {
     const stages = this.control.formData.crop_stages;
     const currentIds = new Set(stages.map((stage) => stage.id));
     const newStageIds = stages
@@ -1056,7 +1177,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     }
 
     const stage = stages.find((item) => item.id === this.selectedStageId);
-    if (stage && !this.isPanelDirty()) {
+    if (stage && (!this.isPanelDirty() || options?.forceResyncPanelDraft)) {
       this.syncDraftFromStage(stage);
     }
   }

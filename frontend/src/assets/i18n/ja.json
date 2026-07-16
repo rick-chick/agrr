@@ -379,7 +379,8 @@
       "sunshine_requirement_updated": "日照要件を更新しました。",
       "nutrient_requirement_updated": "栄養素要件を更新しました。",
       "stage_advanced_partial_save_failed": "一部の詳細項目を保存できませんでした。サーバー上の最新データに戻しました。",
-      "stage_panel_partial_save_failed": "一部の項目を保存できませんでした。サーバー上の最新データに戻しました。"
+      "stage_panel_partial_save_failed": "一部の項目を保存できませんでした。サーバー上の最新データに戻しました。",
+      "stage_panel_no_changes": "変更はありません。"
     },
     "index": {
       "title": "作物一覧",
@@ -467,7 +468,9 @@
       "stage_order": "順序",
       "sunshine_requirement": "日照要件",
       "temperature_requirement": "温度要件",
-      "thermal_requirement": "積算温度要件"
+      "thermal_requirement": "積算温度要件",
+      "stage_order_duplicate_hint": "行をドラッグして並べ替えるか、下のボタンで順序を自動採番してください。",
+      "stage_order_renumber": "順序を再採番"
     },
     "show": {
       "reference_crop": "参照作物",
@@ -566,7 +569,10 @@
         "stages_ready": "生育ステージの最低限界温度と必要積算温度が設定されています",
         "stages_missing": "生育ステージの最低限界温度または必要積算温度が未設定です",
         "stages_action": "生育ステージを設定する",
-        "stages_edit_action": "生育ステージを編集"
+        "stages_edit_action": "生育ステージを編集",
+        "stages_page_gap_base_temperature": "{{stageName}}: 最低限界温度が未設定",
+        "stages_page_gap_required_gdd": "{{stageName}}: 必要積算温度が未設定",
+        "stages_next_step_action": "作業予定テンプレートへ"
       },
       "blueprint_errors": {
         "missing_blueprints": "作業予定が未登録のため、AIによる提案を取り込めません。",
@@ -694,7 +700,8 @@
       }
     },
     "errors": {
-      "invalid_id": "作物IDが不正です。"
+      "invalid_id": "作物IDが不正です。",
+      "stage_order_conflict": "他のステージと順序が重複しているため保存できません。再採番またはドラッグで重複を解消してください。"
     }
   },
   "pests": {

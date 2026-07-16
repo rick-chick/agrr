@@ -255,7 +255,8 @@
       "sunshine_requirement_updated": "धूप आवश्यकता अपडेट की गई।",
       "nutrient_requirement_updated": "पोषक तत्व आवश्यकता अपडेट की गई।",
       "stage_advanced_partial_save_failed": "कुछ उन्नत फ़ील्ड सहेजे नहीं जा सके। फ़ॉर्म सर्वर से रीफ़्रेश किया गया।",
-      "stage_panel_partial_save_failed": "कुछ पैनल फ़ील्ड सहेजे नहीं जा सके। फ़ॉर्म सर्वर से रीफ़्रेश किया गया।"
+      "stage_panel_partial_save_failed": "कुछ पैनल फ़ील्ड सहेजे नहीं जा सके। फ़ॉर्म सर्वर से रीफ़्रेश किया गया।",
+      "stage_panel_no_changes": "सहेजने के लिए कोई बदलाव नहीं है।"
     },
     "form": {
       "name_label": "नाम",
@@ -302,7 +303,8 @@
       }
     },
     "errors": {
-      "invalid_id": "अमान्य फसल ID।"
+      "invalid_id": "अमान्य फसल ID।",
+      "stage_order_conflict": "किसी अन्य चरण में यह क्रम पहले से है, इसलिए सहेजा नहीं जा सका। डुप्लिकेट ठीक करने के लिए पुनः नंबर करें या खींचकर क्रम बदलें।"
     },
     "index": {
       "title": "फसल सूची",
@@ -387,7 +389,9 @@
       "stage_order": "क्रम",
       "sunshine_requirement": "सूरज की रोशनी आवश्यकताएँ",
       "temperature_requirement": "तापमान आवश्यकताएँ",
-      "thermal_requirement": "थर्मल आवश्यकताएँ"
+      "thermal_requirement": "थर्मल आवश्यकताएँ",
+      "stage_order_duplicate_hint": "पंक्तियों को खींचकर क्रम बदलें, या नीचे दिए बटन से क्रम स्वतः पुनः नंबर करें।",
+      "stage_order_renumber": "क्रम पुनः नंबर करें"
     },
     "show": {
       "name": "नाम",
@@ -453,7 +457,10 @@
         "stages_ready": "वृद्धि चरणों में न्यूनतम सीमा तापमान और आवश्यक GDD सेट है",
         "stages_missing": "वृद्धि चरणों में न्यूनतम सीमा तापमान या आवश्यक GDD अनुपलब्ध",
         "stages_action": "वृद्धि चरण सेट करें",
-        "stages_edit_action": "वृद्धि चरण संपादित करें"
+        "stages_edit_action": "वृद्धि चरण संपादित करें",
+        "stages_page_gap_base_temperature": "{{stageName}}: आधार तापमान सेट नहीं है",
+        "stages_page_gap_required_gdd": "{{stageName}}: आवश्यक GDD सेट नहीं है",
+        "stages_next_step_action": "कार्य अनुसूची टेम्पलेट पर जाएँ"
       },
       "blueprint_errors": {
         "missing_blueprints": "कार्य योजना पंजीकृत न होने के कारण AI सुझाव आयात नहीं किए जा सकते।",

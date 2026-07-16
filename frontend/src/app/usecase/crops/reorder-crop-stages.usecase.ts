@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { cropStageReorderErrorI18nKey } from '../../core/crop-stage-reorder-error-i18n';
 import { ReorderCropStagesInputPort } from './reorder-crop-stages.input-port';
 import {
   ReorderCropStagesOutputPort,
@@ -17,7 +18,7 @@ export class ReorderCropStagesUseCase implements ReorderCropStagesInputPort {
   execute(dto: ReorderCropStagesInputDto): void {
     this.cropStageGateway.reorderCropStages(dto.cropId, dto.entries).subscribe({
       next: (stages) => this.outputPort.present({ stages }),
-      error: (err) => this.outputPort.onError({ message: err.message })
+      error: (err: unknown) => this.outputPort.onError({ message: cropStageReorderErrorI18nKey(err) })
     });
   }
 }

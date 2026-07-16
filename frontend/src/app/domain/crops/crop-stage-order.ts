@@ -11,7 +11,7 @@ interface StageReorderResult {
 }
 
 export function sortStagesByOrder(stages: CropStage[]): CropStage[] {
-  return [...stages].sort((a, b) => a.order - b.order);
+  return [...stages].sort((a, b) => a.order - b.order || a.id - b.id);
 }
 
 export function findDuplicateStageOrders(stages: CropStage[]): number[] {
@@ -48,6 +48,10 @@ export function applyStageListReorder(
     stages: sortStagesByOrder(nextStages),
     updates: [...updates].sort((a, b) => a.id - b.id)
   };
+}
+
+export function renumberStagesSequentially(stages: CropStage[]): StageReorderResult {
+  return applyStageListReorder(stages, sortStagesByOrder(stages));
 }
 
 export function reorderStagesByIndex(

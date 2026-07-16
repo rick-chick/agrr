@@ -15,6 +15,7 @@ import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stag
 import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 
 const initialFormData = {
   name: '',
@@ -27,7 +28,12 @@ const loadedControlBase = {
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingReorderCropStagesSnapshot: null,
-  taskScheduleBlueprints: []
+  pendingResyncPanelDraft: false,
+  taskScheduleBlueprints: [],
+  blueprintReadiness: defaultBlueprintReadiness(),
+  stageRequirementGaps: [],
+  showBlueprintReadinessChecklist: false,
+  showNextStepCta: false
 };
 
 const stageFixture: CropStage = {
@@ -62,7 +68,13 @@ const tableTranslations = {
       no_stages_description: 'Add growth stages for this crop.',
       from_plan_wizard_title: 'From plan wizard',
       from_plan_stages_wizard_lead: 'Configure stages',
-      return_to_plan: 'Return to plan'
+      return_to_plan: 'Return to plan',
+      blueprint_readiness: {
+        detail_title: 'Configuration status',
+        stages_page_gap_base_temperature: '{{stageName}}: base temperature not set',
+        stages_page_gap_required_gdd: '{{stageName}}: required GDD not set',
+        stages_next_step_action: 'Go to task schedule templates'
+      }
     },
     errors: {
       invalid_id: 'Invalid crop ID.'
@@ -93,6 +105,7 @@ const tableTranslations = {
       table_cumulative_gdd: 'Cumulative GDD',
       value_missing: '—',
       stage_cumulative_gdd_range: '{{start}}–{{end}} ℃·day (cumulative)',
+      stage_cumulative_gdd_missing: 'Enter required GDD to display the range',
       optimal_min: 'Optimal min',
       optimal_max: 'Optimal max',
       low_stress_threshold: 'Low stress',
@@ -107,6 +120,8 @@ const tableTranslations = {
       region: 'Region',
       sterility_risk_threshold: 'Sterility risk',
       stage_order_duplicate: 'Duplicate order: {{orders}}',
+      stage_order_duplicate_hint: 'Drag rows to reorder or use the button below to renumber.',
+      stage_order_renumber: 'Renumber orders',
       temperature_section: 'Temperature conditions',
       thermal_section: 'Accumulated temperature',
       details_section: 'Advanced settings',
@@ -296,7 +311,7 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel')).toBeTruthy();
   });
 
-  it('shows em dash for missing table values', async () => {
+  it('shows em dash for missing base temperature and required GDD in table', async () => {
     await loadStages([
       {
         id: 1,
@@ -311,6 +326,7 @@ describe('CropStagesComponent', () => {
 
     const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
     expect(row.textContent).toContain('—');
+    expect(row.textContent).toContain('Enter required GDD to display the range');
   });
 
   it('shows cumulative GDD range in table when required_gdd is set', async () => {
@@ -318,6 +334,41 @@ describe('CropStagesComponent', () => {
 
     const row = fixture.nativeElement.querySelector('.crop-stages-table__row');
     expect(row.textContent).toContain('0–100');
+  });
+
+  it('shows info flash and skips save when panel has no changes', async () => {
+    await loadStages([stageFixture]);
+
+    component.saveStagePanel();
+
+    expect(mockSaveCropStagePanelUseCase.execute).not.toHaveBeenCalled();
+    expect(mockFlashMessage.show).toHaveBeenCalledWith({
+      type: 'info',
+      text: 'crops.flash.stage_panel_no_changes'
+    });
+  });
+
+  it('disables save button when panel has no unsaved changes', async () => {
+    await loadStages([stageFixture]);
+
+    const saveButton = fixture.nativeElement.querySelector(
+      '.crop-stages-edit-panel__footer .btn-primary'
+    ) as HTMLButtonElement;
+
+    expect(saveButton.disabled).toBe(true);
+  });
+
+  it('enables save button when panel is dirty', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Updated Name';
+    fixture.detectChanges();
+
+    const saveButton = fixture.nativeElement.querySelector(
+      '.crop-stages-edit-panel__footer .btn-primary'
+    ) as HTMLButtonElement;
+
+    expect(saveButton.disabled).toBe(false);
   });
 
   it('saves panel fields through SaveCropStagePanelUseCase when save button is clicked', async () => {
@@ -387,6 +438,81 @@ describe('CropStagesComponent', () => {
         order: 2
       }
     });
+  });
+
+  it('resyncs panel draft from server after partial panel save failure', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = 'Dirty Name';
+    component.stageEditDraft.base_temperature = 99;
+    expect(component.isPanelDirty()).toBe(true);
+
+    const serverStage: CropStage = {
+      ...stageFixture,
+      name: 'Server Name',
+      temperature_requirement: {
+        ...stageFixture.temperature_requirement!,
+        base_temperature: 10
+      }
+    };
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        name: 'Tomato',
+        crop_stages: [serverStage]
+      },
+      pendingResyncPanelDraft: true,
+      pendingErrorFlash: { type: 'error', text: 'crops.flash.stage_panel_partial_save_failed' }
+    };
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+    fixture.detectChanges();
+
+    expect(component.isPanelDirty()).toBe(false);
+    expect(component.stageEditDraft).toEqual({
+      name: 'Server Name',
+      base_temperature: 10,
+      optimal_min: null,
+      optimal_max: null,
+      max_temperature: null,
+      required_gdd: 100
+    });
+  });
+
+  it('resyncs panel draft from server after partial advanced details save failure', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.required_gdd = 999;
+    expect(component.isPanelDirty()).toBe(true);
+
+    const serverStage: CropStage = {
+      ...stageFixture,
+      thermal_requirement: {
+        ...stageFixture.thermal_requirement!,
+        required_gdd: 100
+      },
+      sunshine_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        minimum_sunshine_hours: 4,
+        target_sunshine_hours: 8
+      }
+    };
+
+    component.control = {
+      ...loadedControlBase,
+      formData: {
+        name: 'Tomato',
+        crop_stages: [serverStage]
+      },
+      pendingResyncPanelDraft: true,
+      pendingErrorFlash: { type: 'error', text: 'crops.flash.stage_advanced_partial_save_failed' }
+    };
+    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+    fixture.detectChanges();
+
+    expect(component.isPanelDirty()).toBe(false);
+    expect(component.stageEditDraft.required_gdd).toBe(100);
   });
 
   it('syncs stageEditDraft from updated crop_stages after panel save succeeds', async () => {
@@ -758,27 +884,45 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeTruthy();
   });
 
-  it('does not render blueprint readiness checklist or next-step CTA', async () => {
+  it('shows readiness checklist when stage requirements are incomplete', async () => {
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+    await loadStages([incompleteStage]);
+
+    expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Vegetative');
+    expect(fixture.nativeElement.textContent).toContain('base temperature not set');
+  });
+
+  it('shows next-step CTA when all stage requirements are complete', async () => {
     await loadStages([stageFixture]);
 
     expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    const nextStep = fixture.nativeElement.querySelector('.crop-stages__next-step a') as HTMLAnchorElement;
+    expect(nextStep).toBeTruthy();
+    expect(nextStep.getAttribute('href')).toBe('/crops/1/task_schedule_blueprints');
   });
 
-  it('sorts stages by order for display', () => {
-    component.control = {
-      ...loadedControlBase,
-      formData: {
-        ...initialFormData,
-        name: 'Tomato',
-        crop_stages: [
-          { id: 2, name: 'Stage 2', order: 2 } as CropStage,
-          { id: 1, name: 'Stage 1', order: 1 } as CropStage
-        ]
-      }
-    };
+  it('lists missing requirements in fromPlan banner before returning to plan', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+      key === 'fromPlan' ? '7' : null
+    );
+    component.fromPlanId = 7;
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+    await loadStages([incompleteStage]);
 
-    expect(component.sortedStages.map((stage) => stage.id)).toEqual([1, 2]);
+    const gaps = fixture.nativeElement.querySelector('.crop-stages__plan-wizard-gaps');
+    expect(gaps).toBeTruthy();
+    expect(gaps?.textContent).toContain('Vegetative');
+    expect(gaps?.textContent).toContain('base temperature not set');
   });
 
   it('persists reordered stage orders after drag-drop via handle column', () => {
@@ -852,6 +996,54 @@ describe('CropStagesComponent', () => {
 
     const warning = fixture.nativeElement.querySelector('.crop-stages-order-warning');
     expect(warning?.textContent).toContain('1');
+  });
+
+  it('shows renumber button and hint when duplicate orders exist', async () => {
+    await loadStages([
+      { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+      { id: 2, name: 'Stage 2', order: 1 } as CropStage
+    ]);
+
+    const warning = fixture.nativeElement.querySelector('.crop-stages-order-warning');
+    expect(warning?.textContent).toContain('Drag rows to reorder');
+    const button = warning?.querySelector('.crop-stages-order-warning__renumber');
+    expect(button?.textContent).toContain('Renumber orders');
+  });
+
+  it('renumbers duplicate stage orders via button and persists via reorder use case', async () => {
+    await loadStages([
+      { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+      { id: 2, name: 'Stage 2', order: 1 } as CropStage,
+      { id: 3, name: 'Stage 3', order: 3 } as CropStage
+    ]);
+
+    component.renumberDuplicateStageOrders();
+
+    expect(component.duplicateStageOrders).toEqual([]);
+    expect(component.control.formData.crop_stages.map((stage) => stage.order)).toEqual([1, 2, 3]);
+    expect(mockReorderCropStagesUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      entries: [{ id: 2, order: 2 }]
+    });
+  });
+
+  it('hides duplicate order warning after successful renumber', async () => {
+    await loadStages([
+      { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+      { id: 2, name: 'Stage 2', order: 1 } as CropStage
+    ]);
+
+    component.renumberDuplicateStageOrders();
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    presenter.presentReorderCropStages({
+      stages: [
+        { id: 1, name: 'Stage 1', order: 1 } as CropStage,
+        { id: 2, name: 'Stage 2', order: 2 } as CropStage
+      ]
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.crop-stages-order-warning')).toBeNull();
   });
 
   it('renders edit panel with section headings and grouped temperature fields', async () => {

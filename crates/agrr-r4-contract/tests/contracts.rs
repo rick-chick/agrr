@@ -8,9 +8,11 @@ use support::{
     clear_plan_task_schedules, developer_session_id, empty_headers, find_schedule_item,
     poll_task_schedule_sync_ready, schedule_item_ids_from_response, seed_masters_crop,
     seed_masters_crop_with_manual_blueprint, seed_masters_crop_with_stages,
+    seed_masters_crop_with_stages_and_blueprints,
     seed_task_schedule_regeneration_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
-    set_plan_task_schedule_sync_failed_raw_error, status_and_body, user_id_for_session,
+    set_plan_task_schedule_sync_failed_raw_error, status_and_body,
+    upload_ready_work_record_photo, user_id_for_session,
 };
 
 #[test]
@@ -350,6 +352,65 @@ fn work_record_photo_upload_init_complete_and_list() {
         client.get(content_url, Some(&session_id), &empty_headers()),
     );
     assert_eq!(200, content_status);
+}
+
+#[test]
+fn work_record_photo_upload_init_rejects_when_at_limit() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (create_status, create_body) = status_and_body(client.post(
+        &format!("/api/v1/plans/{}/work_records", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "photo limit contract"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"]
+        .as_i64()
+        .expect("work_record id");
+
+    for _ in 0..3 {
+        upload_ready_work_record_photo(&client, &session_id, seed.plan_id, record_id);
+    }
+
+    let init_path = format!(
+        "/api/v1/plans/{}/work_records/{}/photos/upload_init",
+        seed.plan_id, record_id
+    );
+    let (init_status, init_body) = status_and_body(client.post(
+        &init_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "photo": { "content_type": "image/jpeg" }
+        })),
+    ));
+    assert_eq!(422, init_status, "{init_body}");
+    let init_json: serde_json::Value =
+        serde_json::from_str(&init_body).expect("upload_init rejection JSON");
+    let photos_errors = init_json["errors"]["photos"]
+        .as_array()
+        .expect("photos errors array");
+    assert!(
+        photos_errors
+            .iter()
+            .any(|msg| {
+                msg.as_str()
+                    == Some("plans.work_records.photos.errors.limit_exceeded")
+            }),
+        "{init_body}"
+    );
 }
 
 #[test]
@@ -979,5 +1040,245 @@ fn patch_masters_crop_stage_conflicting_order_returns_422() {
     assert_eq!(422, status, "{body}");
     let json: serde_json::Value = serde_json::from_str(&body).expect("error JSON");
     assert!(json.get("errors").is_some(), "{body}");
+}
+
+#[test]
+fn put_masters_crop_stages_reorder_remaps_blueprint_stage_orders() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop_with_stages_and_blueprints(user_id);
+    let [stage_a, stage_b] = seed.stage_ids.as_slice() else {
+        panic!("expected two crop stages");
+    };
+    let [blueprint_a, blueprint_b] = seed.blueprint_ids.as_slice() else {
+        panic!("expected two blueprints");
+    };
+
+    let (status, body) = status_and_body(client.put(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/reorder",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "crop_stages": [
+                { "id": stage_a, "order": 2 },
+                { "id": stage_b, "order": 1 }
+            ]
+        })),
+    ));
+    assert_eq!(200, status, "{body}");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: Vec<serde_json::Value> = serde_json::from_str(&body).expect("blueprints JSON");
+    let stage_order_for = |blueprint_id: i64| {
+        json.iter()
+            .find(|item| item["id"].as_i64() == Some(blueprint_id))
+            .and_then(|item| item["stage_order"].as_i64())
+    };
+    assert_eq!(stage_order_for(*blueprint_a), Some(2));
+    assert_eq!(stage_order_for(*blueprint_b), Some(1));
+}
+
+#[test]
+fn delete_masters_crop_stage_unassigns_linked_blueprints() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop_with_stages_and_blueprints(user_id);
+    let [stage_a, _stage_b] = seed.stage_ids.as_slice() else {
+        panic!("expected two crop stages");
+    };
+    let [blueprint_a, _blueprint_b] = seed.blueprint_ids.as_slice() else {
+        panic!("expected two blueprints");
+    };
+
+    let (status, body) = status_and_body(client.delete(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/{}",
+            seed.crop_id, stage_a
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(204, status, "{body}");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: Vec<serde_json::Value> = serde_json::from_str(&body).expect("blueprints JSON");
+    let deleted_stage_blueprint = json
+        .iter()
+        .find(|item| item["id"].as_i64() == Some(*blueprint_a))
+        .expect("blueprint for deleted stage");
+    assert!(deleted_stage_blueprint["stage_order"].is_null());
+    assert!(deleted_stage_blueprint["stage_name"].is_null());
+}
+
+fn valid_setup_proposal_body() -> serde_json::Value {
+    serde_json::json!({
+        "stages": [{
+            "name": "育苗",
+            "order": 1,
+            "thermal_requirement": { "required_gdd": "120" }
+        }],
+        "agricultural_tasks": [{
+            "ref": "task-weeding",
+            "name": "除草",
+            "task_type": "field_work",
+            "region": "jp"
+        }],
+        "task_schedule_blueprints": [{
+            "agricultural_task_ref": "task-weeding",
+            "stage_order": 1,
+            "stage_name": "育苗",
+            "gdd_trigger": 0,
+            "task_type": "field_work",
+            "priority": 1
+        }]
+    })
+}
+
+#[test]
+fn post_masters_crop_setup_proposal_dry_run_invalid_returns_errors() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+    let mut body = valid_setup_proposal_body();
+    body["stages"][0]["thermal_requirement"] = serde_json::json!({});
+
+    let (status, response_body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/setup_proposal?mode=dry_run",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(body),
+    ));
+    assert_eq!(200, status, "{response_body}");
+    let json: serde_json::Value = serde_json::from_str(&response_body).expect("dry_run JSON");
+    assert_eq!(false, json["valid"].as_bool().unwrap());
+    assert!(json["errors"].as_array().unwrap().len() > 0, "{response_body}");
+}
+
+#[test]
+fn post_masters_crop_setup_proposal_dry_run_valid_returns_normalized() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, response_body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/setup_proposal?mode=dry_run",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(valid_setup_proposal_body()),
+    ));
+    assert_eq!(200, status, "{response_body}");
+    let json: serde_json::Value = serde_json::from_str(&response_body).expect("dry_run JSON");
+    assert_eq!(true, json["valid"].as_bool().unwrap());
+    assert_eq!("育苗", json["normalized"]["stages"][0]["name"].as_str().unwrap());
+}
+
+#[test]
+fn post_masters_crop_setup_proposal_apply_persists_stages_and_blueprints() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (status, response_body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/setup_proposal?mode=apply",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(valid_setup_proposal_body()),
+    ));
+    assert_eq!(201, status, "{response_body}");
+    let json: serde_json::Value = serde_json::from_str(&response_body).expect("apply JSON");
+    assert_eq!(true, json["valid"].as_bool().unwrap());
+    assert_eq!(1, json["result"]["stage_ids"].as_array().unwrap().len());
+    assert_eq!(1, json["result"]["blueprint_ids"].as_array().unwrap().len());
+
+    let (stage_status, stage_body) = status_and_body(client.get(
+        &format!("/api/v1/masters/crops/{}/crop_stages", seed.crop_id),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, stage_status, "{stage_body}");
+    let stages: serde_json::Value = serde_json::from_str(&stage_body).expect("stages JSON");
+    assert_eq!(1, stages.as_array().unwrap().len(), "{stage_body}");
+
+    let (blueprint_status, blueprint_body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/task_schedule_blueprints",
+            seed.crop_id
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, blueprint_status, "{blueprint_body}");
+    let blueprints: serde_json::Value = serde_json::from_str(&blueprint_body).expect("blueprints JSON");
+    assert_eq!(1, blueprints.as_array().unwrap().len(), "{blueprint_body}");
+}
+
+#[test]
+fn post_masters_crop_setup_proposal_with_api_key_authenticates() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_masters_crop(user_id);
+
+    let (generate_status, generate_body) = status_and_body(client.post(
+        "/api/v1/api_keys/generate",
+        Some(&session_id),
+        &empty_headers(),
+        None,
+    ));
+    assert_eq!(200, generate_status, "{generate_body}");
+    let api_key = serde_json::from_str::<serde_json::Value>(&generate_body)
+        .expect("api key JSON")["api_key"]
+        .as_str()
+        .expect("api_key")
+        .to_string();
+
+    let mut headers = empty_headers();
+    headers.insert("Authorization".into(), format!("Bearer {api_key}"));
+
+    let (status, response_body) = status_and_body(client.post(
+        &format!(
+            "/api/v1/masters/crops/{}/setup_proposal?mode=dry_run",
+            seed.crop_id
+        ),
+        None,
+        &headers,
+        Some(valid_setup_proposal_body()),
+    ));
+    assert_eq!(200, status, "{response_body}");
+    let json: serde_json::Value = serde_json::from_str(&response_body).expect("dry_run JSON");
+    assert_eq!(true, json["valid"].as_bool().unwrap());
 }
 
