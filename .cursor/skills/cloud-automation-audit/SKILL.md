@@ -29,6 +29,7 @@ description: >-
 | **PR Merge Worker** | `github-pr-merge-worker` | イベント（PR / CI） | squash マージ / 同一ブランチ修正 / skip / blocked |
 | **UX Issue Audit** | `ux-issue-pipeline` § Automation | `0 9 * * 1` | 条件付き issue 起票 or スキップ記録 |
 | **Automation Audit** | `cloud-automation-audit`（本スキル） | `0 10 * * 5` | 監査レポート。クリティカル時のみ PR |
+| **Pipeline Watchdog** | `automation-pipeline-watchdog` | `0 * * * *` | 異常調査・issue 起票（最大 3/回） |
 
 **1 回の実行 = 監査レポート 1 件**。複数 Automation を横断して 1 レポートにまとめる。
 
