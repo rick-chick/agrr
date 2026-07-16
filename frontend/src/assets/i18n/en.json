@@ -2048,6 +2048,10 @@
       "required_gdd_placeholder": "e.g., 800.0",
       "required_gdd_help": "Enter the Growing Degree Days required for this stage.",
       "save_stage": "Save",
+      "temperature_section": "Temperature conditions",
+      "thermal_section": "Accumulated temperature",
+      "details_section": "Advanced settings",
+      "optimal_range": "Optimal range",
       "edit_temperature_details": "Edit stress thresholds…",
       "edit_sunshine_nutrient": "Edit sunshine & nutrients…",
       "temperature_details_title": "Stress thresholds",
@@ -2058,11 +2062,7 @@
       "table_base_temperature": "Base temperature",
       "table_required_gdd": "Required GDD",
       "table_cumulative_gdd": "Cumulative GDD",
-      "value_missing": "—",
-      "temperature_section": "Temperature conditions",
-      "gdd_section": "Accumulated temperature",
-      "detail_section": "Advanced settings",
-      "optimal_range": "Optimal range"
+      "value_missing": "—"
     },
     "show": {
       "reference_crop": "Reference Crop",

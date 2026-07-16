@@ -450,6 +450,10 @@
       "required_gdd_placeholder": "例：800.0",
       "required_gdd_help": "このステージに必要な生育度日（Growing Degree Days）を入力してください。",
       "save_stage": "保存",
+      "temperature_section": "温度条件",
+      "thermal_section": "積算温度",
+      "details_section": "詳細設定",
+      "optimal_range": "最適範囲",
       "edit_temperature_details": "ストレス閾値を編集…",
       "edit_sunshine_nutrient": "日照・栄養素を編集…",
       "temperature_details_title": "ストレス閾値",
@@ -460,11 +464,7 @@
       "table_base_temperature": "最低限界温度",
       "table_required_gdd": "必要積算温度",
       "table_cumulative_gdd": "累積積算温度",
-      "value_missing": "—",
-      "temperature_section": "温度条件",
-      "gdd_section": "積算温度",
-      "detail_section": "詳細設定",
-      "optimal_range": "最適範囲"
+      "value_missing": "—"
     },
     "show": {
       "reference_crop": "参照作物",
