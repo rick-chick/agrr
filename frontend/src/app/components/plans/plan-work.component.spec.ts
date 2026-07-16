@@ -190,7 +190,7 @@ describe('PlanWorkComponent mobile UX', () => {
         'plans.work.skip': 'スキップ',
         'plans.work.unskip': 'スキップ解除',
         'plans.work.nav.aria_label': '作業記録ナビゲーション',
-        'plans.work.nav.work': '作業',
+        'plans.work.nav.work': '今日の作業',
         'plans.work.nav.history': '実績履歴'
       },
       true
