@@ -2027,8 +2027,6 @@
       "stage_title": "Stage {{order}}",
       "stage_name": "Stage Name",
       "stage_order_duplicate": "Duplicate order values: {{orders}}. Please assign unique order numbers.",
-      "stage_order_duplicate_hint": "Drag rows to reorder, or use the button below to renumber orders automatically.",
-      "stage_order_renumber": "Renumber orders",
       "base_temperature": "Base Temperature (°C)",
       "optimal_min": "Optimal Min Temperature (°C)",
       "optimal_max": "Optimal Max Temperature (°C)",
@@ -2072,7 +2070,9 @@
       "stage_order": "Order",
       "sunshine_requirement": "Sunshine Requirements",
       "temperature_requirement": "Temperature Requirements",
-      "thermal_requirement": "Thermal Requirements"
+      "thermal_requirement": "Thermal Requirements",
+      "stage_order_duplicate_hint": "Drag rows to reorder, or use the button below to renumber orders automatically.",
+      "stage_order_renumber": "Renumber orders"
     },
     "show": {
       "reference_crop": "Reference Crop",
@@ -2170,7 +2170,10 @@
         "stages_ready": "Growth stages have base temperature and required GDD",
         "stages_missing": "Growth stages are missing base temperature or required GDD",
         "stages_action": "Configure growth stages",
-        "stages_edit_action": "Edit growth stages"
+        "stages_edit_action": "Edit growth stages",
+        "stages_page_gap_base_temperature": "{{stageName}}: base temperature not set",
+        "stages_page_gap_required_gdd": "{{stageName}}: required GDD not set",
+        "stages_next_step_action": "Go to task schedule templates"
       },
       "blueprint_errors": {
         "missing_blueprints": "AI suggestions cannot be imported because no task plans are registered yet.",
