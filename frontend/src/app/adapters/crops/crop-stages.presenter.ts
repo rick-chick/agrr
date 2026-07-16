@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ErrorDto } from '../../domain/shared/error.dto';
-import { CropStagesView, CropStagesViewState } from '../../components/masters/crops/crop-stages.view';
+import { CropStagesView } from '../../components/masters/crops/crop-stages.view';
 import { LoadCropForEditOutputPort } from '../../usecase/crops/load-crop-for-edit.output-port';
 import { LoadCropForEditDataDto } from '../../usecase/crops/load-crop-for-edit.dtos';
 import { CreateCropStageOutputPort } from '../../usecase/crops/create-crop-stage.output-port';
