@@ -6,7 +6,7 @@ import { TaskScheduleResponse } from '../../models/plans/task-schedule';
 import { DeletionUndoResponse } from '../../domain/shared/deletion-undo-response';
 
 export interface TaskScheduleQueryParams {
-  scope?: string;
+  scope?: 'plan';
   field_cultivation_id?: number;
 }
 
