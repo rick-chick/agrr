@@ -2,6 +2,8 @@
 
 Cloud Agent がリポジトリを clone してスキルに従う。**ローカル Docker / ng は使えない**点に注意。
 
+**全体俯瞰**（役割分担・パイプライン図・ワークフロー分類）: [`docs/automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md`](../../../docs/automation/CURSOR-AUTOMATION-AND-GITHUB-WORKFLOWS.md)
+
 **正本**: 一覧・prefill・GitHub CLI 手順は **本ファイルのみ**を更新する。他スキルはここへリンクする。
 
 ## 一覧
