@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
+import type { CropStage } from './crop';
 import type { CropTaskScheduleBlueprint } from './crop-task-schedule-blueprint';
-import { countLinkedTaskScheduleBlueprints } from './stage-linked-blueprint-count';
+import { countLinkedTaskScheduleBlueprintsForStage } from './stage-linked-blueprint-count';
+
+function stage(id: number, order: number): CropStage {
+  return {
+    id,
+    name: `Stage ${order}`,
+    order,
+    crop_id: 1
+  };
+}
 
 function blueprint(stageOrder: number | null): CropTaskScheduleBlueprint {
   return {
@@ -24,17 +34,29 @@ function blueprint(stageOrder: number | null): CropTaskScheduleBlueprint {
   };
 }
 
-describe('countLinkedTaskScheduleBlueprints', () => {
-  it('counts blueprints linked to the stage order', () => {
+describe('countLinkedTaskScheduleBlueprintsForStage', () => {
+  it('counts blueprints linked to the stage resolved by id', () => {
+    const stages = [stage(10, 1), stage(20, 2)];
     const blueprints = [
-      blueprint(1),
-      blueprint(1),
-      blueprint(2),
-      blueprint(null)
+      { ...blueprint(1), id: 1 },
+      { ...blueprint(1), id: 2 },
+      { ...blueprint(2), id: 3 },
+      { ...blueprint(null), id: 4 }
     ];
 
-    expect(countLinkedTaskScheduleBlueprints(1, blueprints)).toBe(2);
-    expect(countLinkedTaskScheduleBlueprints(2, blueprints)).toBe(1);
-    expect(countLinkedTaskScheduleBlueprints(3, blueprints)).toBe(0);
+    expect(countLinkedTaskScheduleBlueprintsForStage(10, stages, blueprints)).toBe(2);
+    expect(countLinkedTaskScheduleBlueprintsForStage(20, stages, blueprints)).toBe(1);
+    expect(countLinkedTaskScheduleBlueprintsForStage(99, stages, blueprints)).toBe(0);
+  });
+
+  it('uses the current stage order after reorder so counts stay accurate', () => {
+    const stages = [stage(10, 2), stage(20, 1)];
+    const blueprints = [
+      { ...blueprint(2), id: 1 },
+      { ...blueprint(1), id: 2 }
+    ];
+
+    expect(countLinkedTaskScheduleBlueprintsForStage(10, stages, blueprints)).toBe(1);
+    expect(countLinkedTaskScheduleBlueprintsForStage(20, stages, blueprints)).toBe(1);
   });
 });
