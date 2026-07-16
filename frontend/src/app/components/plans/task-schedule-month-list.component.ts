@@ -10,12 +10,47 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
   standalone: true,
   imports: [TranslateModule, TaskScheduleItemDetailComponent],
   template: `
-    @if (!monthGroups.length) {
+    @if (!monthGroups.length && !unscheduledRows.length) {
       <p class="plan-task-schedule-month-list__empty">{{
         'plans.task_schedules.list_empty' | translate
       }}</p>
     } @else {
       <div>
+        @if (unscheduledRows.length) {
+          <section
+            class="plan-task-schedule-month-list__month plan-task-schedule-month-list__month--unscheduled"
+            [attr.aria-label]="'plans.task_schedules.unscheduled_title' | translate"
+          >
+            <h3 class="plan-task-schedule-month-list__month-title">{{
+              'plans.task_schedules.unscheduled_title' | translate
+            }}</h3>
+            <ul class="plan-task-schedule-month-list__list" role="list">
+              @for (row of unscheduledRows; track row.item.item_id) {
+                <li>
+                  <button
+                    type="button"
+                    class="plan-task-schedule-month-list__row"
+                    [class.plan-task-schedule-month-list__row--selected]="isSelected(row)"
+                    (click)="selectRow(row)"
+                  >
+                    <span class="plan-task-schedule-month-list__main">
+                      <span class="plan-task-schedule-month-list__name">{{ row.item.name }}</span>
+                      <span class="plan-task-schedule-month-list__sub">
+                        <span class="plan-task-schedule-month-list__meta">{{
+                          'plans.task_schedules.list_row_meta'
+                            | translate: { field: row.fieldName, crop: row.cropName }
+                        }}</span>
+                      </span>
+                    </span>
+                    <span [class]="statusModifierClass(row)">{{
+                      statusLabelKey(row) | translate
+                    }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
         @for (group of monthGroups; track group.monthKey) {
           <section
             class="plan-task-schedule-month-list__month"
@@ -65,9 +100,11 @@ import { TaskScheduleItemDetailComponent } from './task-schedule-item-detail.com
       >
         @if (selectedRow) {
           <header class="task-schedule-detail-dialog__hero">
-            <time class="task-schedule-detail-dialog__date">{{
-              formatScheduledDate(selectedRow.item.scheduled_date!)
-            }}</time>
+            @if (selectedRow.item.scheduled_date) {
+              <time class="task-schedule-detail-dialog__date">{{
+                formatScheduledDate(selectedRow.item.scheduled_date)
+              }}</time>
+            }
             <h3 id="task-schedule-detail-title" class="task-schedule-detail-dialog__title">
               {{
                 'plans.task_schedules.detail.dialog_title'
@@ -96,6 +133,8 @@ export class TaskScheduleMonthListComponent {
   @ViewChild('detailDialog') private detailDialogRef?: ElementRef<HTMLDialogElement>;
 
   @Input({ required: true }) monthGroups: PlanTaskScheduleMonthGroupView[] = [];
+
+  @Input() unscheduledRows: PlanTaskScheduleRowView[] = [];
 
   selectedRow: PlanTaskScheduleRowView | null = null;
 

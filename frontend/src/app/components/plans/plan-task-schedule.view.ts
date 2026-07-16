@@ -26,6 +26,7 @@ export type PlanTaskScheduleViewState = {
   fieldFilterId: number | null;
   fieldCultivationFilterId: number | null;
   monthGroups: PlanTaskScheduleMonthGroupView[];
+  unscheduledRows: PlanTaskScheduleRowView[];
   fieldFilterOptions: CrossFarmScheduleFilterOption[];
   cropIdsForBanner: number[];
   cropNamesForBanner: Record<number, string>;

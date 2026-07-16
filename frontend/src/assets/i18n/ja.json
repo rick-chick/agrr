@@ -2397,7 +2397,8 @@
         "not_applicable": "該当なし"
       },
       "empty_cta": "作付け計画を確認",
-      "sync_plan_link": "作付け計画を確認する"
+      "sync_plan_link": "作付け計画を確認する",
+      "unscheduled_title": "未確定の作業"
     },
     "work": {
       "page_title": "{{name}}の作業記録",

@@ -28,7 +28,7 @@ function field(
     name: overrides.name ?? 'Field A',
     crop_name: overrides.crop_name ?? 'Tomato',
     field_cultivation_id: overrides.field_cultivation_id,
-    schedules: overrides.schedules ?? { general: [], fertilizer: [] }
+    schedules: overrides.schedules ?? { general: [], fertilizer: [], unscheduled: [] }
   };
 }
 
@@ -44,7 +44,8 @@ describe('flattenPlanTaskSchedule', () => {
         field_cultivation_id: 10,
         schedules: {
           general: [task({ item_id: 1, name: 'Weeding', scheduled_date: '2026-06-10' })],
-          fertilizer: [task({ item_id: 2, name: 'Top dress', scheduled_date: '2026-06-12' })]
+          fertilizer: [task({ item_id: 2, name: 'Top dress', scheduled_date: '2026-06-12' })],
+          unscheduled: []
         }
       })
     ]);
@@ -65,11 +66,29 @@ describe('flattenPlanTaskSchedule', () => {
         field_cultivation_id: 10,
         schedules: {
           general: [task({ item_id: 1, name: 'Pending', scheduled_date: null })],
-          fertilizer: []
+          fertilizer: [],
+          unscheduled: []
         }
       })
     ]);
 
     expect(rows).toEqual([]);
+  });
+
+  it('includes unscheduled bucket tasks in flattened rows', () => {
+    const rows = flattenPlanTaskSchedule(plan, [
+      field({
+        field_cultivation_id: 10,
+        schedules: {
+          general: [],
+          fertilizer: [],
+          unscheduled: [task({ item_id: 3, name: 'Soil prep', scheduled_date: null })]
+        }
+      })
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.item.name).toBe('Soil prep');
+    expect(rows[0]?.planId).toBe(7);
   });
 });

@@ -1360,7 +1360,8 @@
         "not_applicable": "N/A"
       },
       "empty_cta": "Open cropping plan",
-      "sync_plan_link": "Review cultivation plan"
+      "sync_plan_link": "Review cultivation plan",
+      "unscheduled_title": "Unconfirmed tasks"
     },
     "work": {
       "page_title": "Work log — {{name}}",

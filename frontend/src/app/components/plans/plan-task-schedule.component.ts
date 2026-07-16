@@ -33,6 +33,7 @@ const initialControl: PlanTaskScheduleViewState = {
   fieldFilterId: null,
   fieldCultivationFilterId: null,
   monthGroups: [],
+  unscheduledRows: [],
   fieldFilterOptions: [],
   cropIdsForBanner: [],
   cropNamesForBanner: {},
@@ -153,7 +154,10 @@ const initialControl: PlanTaskScheduleViewState = {
                 />
               </label>
             </div>
-            <app-task-schedule-month-list [monthGroups]="scheduleMonthGroups" />
+            <app-task-schedule-month-list
+              [monthGroups]="scheduleMonthGroups"
+              [unscheduledRows]="scheduleUnscheduledRows"
+            />
             <footer class="plan-task-schedule__footer">
               <p class="plan-task-schedule__generated-at">{{ timelineGeneratedAtLabel }}</p>
               <p class="plan-task-schedule__summary">{{
@@ -282,6 +286,10 @@ export class PlanTaskScheduleComponent implements PlanTaskScheduleView, OnInit {
 
   get scheduleMonthGroups() {
     return this.control.monthGroups;
+  }
+
+  get scheduleUnscheduledRows() {
+    return this.control.unscheduledRows;
   }
 
   get fieldFilterOptions() {

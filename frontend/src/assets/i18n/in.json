@@ -1768,7 +1768,8 @@
         "not_applicable": "लागू नहीं"
       },
       "empty_cta": "खेती योजना खोलें",
-      "sync_plan_link": "खेती योजना की समीक्षा करें"
+      "sync_plan_link": "खेती योजना की समीक्षा करें",
+      "unscheduled_title": "अनिश्चित कार्य"
     },
     "work": {
       "page_title": "कार्य लॉग — {{name}}",
