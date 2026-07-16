@@ -225,6 +225,37 @@ describe('CropStagesPresenter', () => {
         text: 'crops.flash.temperature_requirement_updated'
       });
     });
+
+    it('routes max_temperature-only requirement updates to temperature presenter', () => {
+      lastControl = baseControlState({
+        name: 'Test Crop',
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: 'Stage 1',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10.0
+            }
+          }
+        ]
+      });
+
+      const dto: UpdateTemperatureRequirementOutputDto = {
+        requirement: {
+          id: 1,
+          crop_stage_id: 1,
+          max_temperature: 35.0
+        }
+      };
+
+      presenter.present(dto);
+
+      expect(lastControl!.formData.crop_stages[0].temperature_requirement).toEqual(dto.requirement);
+    });
   });
 
   describe('UpdateThermalRequirementOutputPort', () => {
