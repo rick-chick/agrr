@@ -64,7 +64,7 @@ impl CropGateway for CopyGw {
         if crop_id == 10 {
             let mut temp = TemperatureRequirementEntity::new(1, 1).unwrap();
             temp.base_temperature = Some(Decimal::from(10));
-            let thermal = ThermalRequirementEntity::new(1, 1, Decimal::from(100)).unwrap();
+            let thermal = ThermalRequirementEntity::new(1, 1, Some(Decimal::from(100))).unwrap();
             let mut stage = CropStageEntity::new(1, 10, "S1", 1).unwrap();
             stage.temperature_requirement = Some(temp);
             stage.thermal_requirement = Some(thermal);
@@ -89,7 +89,7 @@ impl CropGateway for CopyGw {
         _: i64,
         _: crate::crop::dtos::ThermalRequirementUpdateInput,
     ) -> Result<ThermalRequirementEntity, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(ThermalRequirementEntity::new(9, 2, Decimal::from(100)).unwrap())
+        Ok(ThermalRequirementEntity::new(9, 2, Some(Decimal::from(100))).unwrap())
     }
 
     fn list_index_for_filter(

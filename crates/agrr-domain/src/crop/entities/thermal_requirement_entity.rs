@@ -5,11 +5,11 @@ use rust_decimal::Decimal;
 pub struct ThermalRequirementEntity {
     pub id: i64,
     pub crop_stage_id: i64,
-    pub required_gdd: Decimal,
+    pub required_gdd: Option<Decimal>,
 }
 
 impl ThermalRequirementEntity {
-    pub fn new(id: i64, crop_stage_id: i64, required_gdd: Decimal) -> Result<Self, String> {
+    pub fn new(id: i64, crop_stage_id: i64, required_gdd: Option<Decimal>) -> Result<Self, String> {
         if crop_stage_id == 0 {
             return Err("Crop stage ID is required".into());
         }
