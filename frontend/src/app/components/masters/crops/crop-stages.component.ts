@@ -7,14 +7,11 @@ import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { CropStagesView, CropStagesViewState, CropStagesFormData } from './crop-stages.view';
 import { LoadCropForEditUseCase } from '../../../usecase/crops/load-crop-for-edit.usecase';
 import { CreateCropStageUseCase } from '../../../usecase/crops/create-crop-stage.usecase';
-import { UpdateCropStageUseCase } from '../../../usecase/crops/update-crop-stage.usecase';
 import { ReorderCropStagesUseCase } from '../../../usecase/crops/reorder-crop-stages.usecase';
 import { DeleteCropStageUseCase } from '../../../usecase/crops/delete-crop-stage.usecase';
 import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/load-crop-task-schedule-blueprints.usecase';
-import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/update-temperature-requirement.usecase';
-import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
-import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
-import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
+import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
+import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import {
   CropStagesPresenter,
   CROP_STAGES_PROVIDERS
@@ -482,13 +479,10 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   private readonly loadUseCase = inject(LoadCropForEditUseCase);
   private readonly loadBlueprintsUseCase = inject(LoadCropTaskScheduleBlueprintsUseCase);
   private readonly createCropStageUseCase = inject(CreateCropStageUseCase);
-  private readonly updateCropStageUseCase = inject(UpdateCropStageUseCase);
   private readonly reorderCropStagesUseCase = inject(ReorderCropStagesUseCase);
   private readonly deleteCropStageUseCase = inject(DeleteCropStageUseCase);
-  private readonly updateTemperatureRequirementUseCase = inject(UpdateTemperatureRequirementUseCase);
-  private readonly updateThermalRequirementUseCase = inject(UpdateThermalRequirementUseCase);
-  private readonly updateSunshineRequirementUseCase = inject(UpdateSunshineRequirementUseCase);
-  private readonly updateNutrientRequirementUseCase = inject(UpdateNutrientRequirementUseCase);
+  private readonly saveCropStagePanelUseCase = inject(SaveCropStagePanelUseCase);
+  private readonly saveCropStageAdvancedDetailsUseCase = inject(SaveCropStageAdvancedDetailsUseCase);
   private readonly presenter = inject(CropStagesPresenter);
   private readonly flashMessage = inject(FlashMessageService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -679,9 +673,8 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       return;
     }
 
-    if (this.stageEditDraft.name !== stage.name) {
-      this.updateCropStage(stage.id, { name: this.stageEditDraft.name });
-    }
+    const stagePatch =
+      this.stageEditDraft.name !== stage.name ? { name: this.stageEditDraft.name } : undefined;
 
     const temp = stage.temperature_requirement;
     const temperaturePatch: Record<string, number | null> = {};
@@ -697,14 +690,20 @@ export class CropStagesComponent implements CropStagesView, OnInit {
         temperaturePatch[field] = draftValue;
       }
     }
-    if (Object.keys(temperaturePatch).length > 0) {
-      this.updateTemperatureRequirement(stage.id, temperaturePatch);
-    }
 
     const currentRequiredGdd = stage.thermal_requirement?.required_gdd ?? null;
-    if (this.stageEditDraft.required_gdd !== currentRequiredGdd) {
-      this.updateThermalRequirement(stage.id, { required_gdd: this.stageEditDraft.required_gdd });
-    }
+    const thermalPatch =
+      this.stageEditDraft.required_gdd !== currentRequiredGdd
+        ? { required_gdd: this.stageEditDraft.required_gdd ?? undefined }
+        : undefined;
+
+    this.saveCropStagePanelUseCase.execute({
+      cropId: this.cropId,
+      stageId: stage.id,
+      stagePatch,
+      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined,
+      thermalPatch
+    });
   }
 
   openTemperatureDialog(): void {
@@ -726,7 +725,28 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (!stage || !this.temperatureDetailDraft) {
       return;
     }
-    this.updateTemperatureRequirement(stage.id, { ...this.temperatureDetailDraft });
+    const temp = stage.temperature_requirement;
+    const draft = this.temperatureDetailDraft;
+    const temperaturePatch: {
+      low_stress_threshold?: number;
+      high_stress_threshold?: number;
+      frost_threshold?: number;
+    } = {};
+    if (draft.low_stress_threshold !== (temp?.low_stress_threshold ?? null)) {
+      temperaturePatch.low_stress_threshold = draft.low_stress_threshold ?? undefined;
+    }
+    if (draft.high_stress_threshold !== (temp?.high_stress_threshold ?? null)) {
+      temperaturePatch.high_stress_threshold = draft.high_stress_threshold ?? undefined;
+    }
+    if (draft.frost_threshold !== (temp?.frost_threshold ?? null)) {
+      temperaturePatch.frost_threshold = draft.frost_threshold ?? undefined;
+    }
+
+    this.saveCropStagePanelUseCase.execute({
+      cropId: this.cropId,
+      stageId: stage.id,
+      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined
+    });
     this.temperatureDetailDraft = null;
     this.temperatureDialogRef?.nativeElement?.close();
   }
@@ -768,27 +788,55 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (!stage || !this.advancedDetailDraft) {
       return;
     }
-    const {
-      minimum_sunshine_hours,
-      target_sunshine_hours,
-      daily_uptake_n,
-      daily_uptake_p,
-      daily_uptake_k,
-      region,
-      sterility_risk_threshold
-    } = this.advancedDetailDraft;
+    const draft = this.advancedDetailDraft;
+    const sunshine = stage.sunshine_requirement;
+    const nutrient = stage.nutrient_requirement;
+    const temperature = stage.temperature_requirement;
 
-    this.updateSunshineRequirement(stage.id, {
-      minimum_sunshine_hours,
-      target_sunshine_hours
+    const sunshinePatch: {
+      minimum_sunshine_hours?: number;
+      target_sunshine_hours?: number;
+    } = {};
+    if (draft.minimum_sunshine_hours !== (sunshine?.minimum_sunshine_hours ?? null)) {
+      sunshinePatch.minimum_sunshine_hours = draft.minimum_sunshine_hours ?? undefined;
+    }
+    if (draft.target_sunshine_hours !== (sunshine?.target_sunshine_hours ?? null)) {
+      sunshinePatch.target_sunshine_hours = draft.target_sunshine_hours ?? undefined;
+    }
+
+    const nutrientPatch: {
+      daily_uptake_n?: number;
+      daily_uptake_p?: number;
+      daily_uptake_k?: number;
+      region?: string;
+    } = {};
+    if (draft.daily_uptake_n !== (nutrient?.daily_uptake_n ?? null)) {
+      nutrientPatch.daily_uptake_n = draft.daily_uptake_n ?? undefined;
+    }
+    if (draft.daily_uptake_p !== (nutrient?.daily_uptake_p ?? null)) {
+      nutrientPatch.daily_uptake_p = draft.daily_uptake_p ?? undefined;
+    }
+    if (draft.daily_uptake_k !== (nutrient?.daily_uptake_k ?? null)) {
+      nutrientPatch.daily_uptake_k = draft.daily_uptake_k ?? undefined;
+    }
+    if (draft.region !== (nutrient?.region ?? null)) {
+      nutrientPatch.region = draft.region ?? undefined;
+    }
+
+    const temperaturePatch: {
+      sterility_risk_threshold?: number;
+    } = {};
+    if (draft.sterility_risk_threshold !== (temperature?.sterility_risk_threshold ?? null)) {
+      temperaturePatch.sterility_risk_threshold = draft.sterility_risk_threshold ?? undefined;
+    }
+
+    this.saveCropStageAdvancedDetailsUseCase.execute({
+      cropId: this.cropId,
+      stageId: stage.id,
+      sunshinePatch: Object.keys(sunshinePatch).length > 0 ? sunshinePatch : undefined,
+      nutrientPatch: Object.keys(nutrientPatch).length > 0 ? nutrientPatch : undefined,
+      temperaturePatch: Object.keys(temperaturePatch).length > 0 ? temperaturePatch : undefined
     });
-    this.updateNutrientRequirement(stage.id, {
-      daily_uptake_n,
-      daily_uptake_p,
-      daily_uptake_k,
-      region
-    });
-    this.updateTemperatureRequirement(stage.id, { sterility_risk_threshold });
 
     this.advancedDetailDraft = null;
     this.advancedDialogRef?.nativeElement?.close();
@@ -804,14 +852,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (event.target === this.advancedDialogRef?.nativeElement) {
       this.cancelAdvancedDialog();
     }
-  }
-
-  updateCropStage(stageId: number, payload: { name?: string; order?: number }): void {
-    this.updateCropStageUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
   }
 
   deleteCropStage(stageId: number): void {
@@ -855,38 +895,6 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     if (event.target === this.deleteConfirmDialogRef?.nativeElement) {
       this.cancelDeleteConfirmDialog();
     }
-  }
-
-  updateTemperatureRequirement(stageId: number, payload: Record<string, unknown>): void {
-    this.updateTemperatureRequirementUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
-  }
-
-  updateThermalRequirement(stageId: number, payload: Record<string, unknown>): void {
-    this.updateThermalRequirementUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
-  }
-
-  updateSunshineRequirement(stageId: number, payload: Record<string, unknown>): void {
-    this.updateSunshineRequirementUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
-  }
-
-  updateNutrientRequirement(stageId: number, payload: Record<string, unknown>): void {
-    this.updateNutrientRequirementUseCase.execute({
-      cropId: this.cropId,
-      stageId,
-      payload
-    });
   }
 
   onStageDropped(event: CdkDragDrop<CropStage[]>): void {
