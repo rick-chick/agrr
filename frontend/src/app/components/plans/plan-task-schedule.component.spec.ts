@@ -918,5 +918,6 @@ describe('PlanTaskScheduleComponent', () => {
     expect(
       filteredFixture.nativeElement.querySelector('.plan-task-schedule__filter-nav')
     ).toBeNull();
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7, fieldCultivationId: 42 });
   });
 });
