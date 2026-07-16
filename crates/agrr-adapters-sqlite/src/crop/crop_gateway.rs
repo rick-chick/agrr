@@ -442,6 +442,12 @@ impl CropGateway for CropSqliteGateway {
         stage_orders: Vec<(i64, i64)>,
     ) -> Result<Vec<CropStageEntity>, Box<dyn std::error::Error + Send + Sync>> {
         self.pool.with_write_transaction_box(|conn| {
+            let mut old_orders = std::collections::HashMap::new();
+            for (stage_id, _) in &stage_orders {
+                let order = load_crop_stage_order(conn, crop_id, *stage_id)?;
+                old_orders.insert(*stage_id, order);
+            }
+
             for (stage_id, _) in &stage_orders {
                 let updated = conn.execute(
                     "UPDATE crop_stages SET \"order\" = ?1, updated_at = datetime('now') \
@@ -464,6 +470,8 @@ impl CropGateway for CropSqliteGateway {
                 }
             }
 
+            remap_blueprint_stage_orders_after_reorder(conn, crop_id, &stage_orders, &old_orders)?;
+
             load_crop_stages(conn, crop_id)
         })
     }
@@ -472,13 +480,34 @@ impl CropGateway for CropSqliteGateway {
         &self,
         crop_stage_id: i64,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        match self.pool.with_write_box(|conn| {
+        match self.pool.with_write_transaction_box(|conn| {
+            let (crop_id, stage_order): (i64, i64) = conn
+                .query_row(
+                    "SELECT crop_id, \"order\" FROM crop_stages WHERE id = ?1",
+                    params![crop_stage_id],
+                    |row| Ok((row.get(0)?, row.get(1)?)),
+                )
+                .map_err(|_| rusqlite::Error::QueryReturnedNoRows)?;
+
+            unassign_blueprints_for_stage_order(conn, crop_id, stage_order)?;
             delete_crop_stage_requirements(conn, crop_stage_id)?;
-            conn.execute("DELETE FROM crop_stages WHERE id = ?1", params![crop_stage_id])
+            let deleted = conn.execute(
+                "DELETE FROM crop_stages WHERE id = ?1",
+                params![crop_stage_id],
+            )?;
+            if deleted == 0 {
+                return Err(rusqlite::Error::QueryReturnedNoRows);
+            }
+            Ok(())
         }) {
-            Ok(0) => Err(Box::new(RecordNotFoundError) as Box<dyn std::error::Error + Send + Sync>),
-            Ok(_) => Ok(()),
-            Err(e) => Err(e),
+            Ok(()) => Ok(()),
+            Err(err) if err.downcast_ref::<rusqlite::Error>().is_some_and(|e| {
+                matches!(e, rusqlite::Error::QueryReturnedNoRows)
+            }) =>
+            {
+                Err(Box::new(RecordNotFoundError) as Box<dyn std::error::Error + Send + Sync>)
+            }
+            Err(err) => Err(err),
         }
     }
 
@@ -770,6 +799,64 @@ impl PrivatePlanCropListGateway for CropSqliteGateway {
                 .collect())
         })
     }
+}
+
+fn load_crop_stage_order(
+    conn: &rusqlite::Connection,
+    crop_id: i64,
+    stage_id: i64,
+) -> rusqlite::Result<i64> {
+    conn.query_row(
+        "SELECT \"order\" FROM crop_stages WHERE id = ?1 AND crop_id = ?2",
+        params![stage_id, crop_id],
+        |row| row.get(0),
+    )
+}
+
+fn remap_blueprint_stage_orders_after_reorder(
+    conn: &rusqlite::Connection,
+    crop_id: i64,
+    stage_orders: &[(i64, i64)],
+    old_orders: &std::collections::HashMap<i64, i64>,
+) -> rusqlite::Result<()> {
+    for (stage_id, new_order) in stage_orders {
+        let old_order = old_orders[stage_id];
+        if old_order == *new_order {
+            continue;
+        }
+        conn.execute(
+            "UPDATE crop_task_schedule_blueprints SET stage_order = ?1, updated_at = datetime('now') \
+             WHERE crop_id = ?2 AND stage_order = ?3",
+            params![-stage_id, crop_id, old_order],
+        )?;
+    }
+
+    for (stage_id, new_order) in stage_orders {
+        let old_order = old_orders[stage_id];
+        if old_order == *new_order {
+            continue;
+        }
+        conn.execute(
+            "UPDATE crop_task_schedule_blueprints SET stage_order = ?1, updated_at = datetime('now') \
+             WHERE crop_id = ?2 AND stage_order = ?3",
+            params![new_order, crop_id, -stage_id],
+        )?;
+    }
+
+    Ok(())
+}
+
+fn unassign_blueprints_for_stage_order(
+    conn: &rusqlite::Connection,
+    crop_id: i64,
+    stage_order: i64,
+) -> rusqlite::Result<()> {
+    conn.execute(
+        "UPDATE crop_task_schedule_blueprints SET stage_order = NULL, stage_name = NULL, updated_at = datetime('now') \
+         WHERE crop_id = ?1 AND stage_order = ?2",
+        params![crop_id, stage_order],
+    )?;
+    Ok(())
 }
 
 /// Rails `CropStage` `dependent: :destroy` on requirement associations.
