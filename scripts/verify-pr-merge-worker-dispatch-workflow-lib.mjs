@@ -24,6 +24,7 @@ const CONFLICT_DISPATCH_SNIPPETS = [
   'Draft PR without conflict/sync need',
   'dispatching ci_fix',
   'ACTION="ci_fix"',
+  'classify-required-ci-state.mjs',
 ];
 
 const RETRY_DISPATCH_SNIPPETS = [

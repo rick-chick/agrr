@@ -171,3 +171,17 @@ export function areRequiredChecksComplete(checks) {
     return match != null && !INCOMPLETE_CHECK_STATES.has(match.state);
   });
 }
+
+/**
+ * @param {Array<{ name: string; state: string }>} checks
+ * @returns {'incomplete' | 'failed' | 'green'}
+ */
+export function classifyRequiredCiState(checks) {
+  if (!areRequiredChecksComplete(checks)) {
+    return 'incomplete';
+  }
+  if (!areRequiredChecksGreen(checks)) {
+    return 'failed';
+  }
+  return 'green';
+}
