@@ -10,7 +10,7 @@ function cropFromStagesViewState(control: CropStagesViewState): Crop {
   return {
     id: 0,
     name: control.formData.name,
-    is_reference: false,
+    is_reference: control.formData.is_reference,
     groups: [],
     crop_stages: control.formData.crop_stages
   };

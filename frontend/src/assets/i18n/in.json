@@ -376,6 +376,8 @@
       "temperature_details_title": "तनाव सीमा",
       "advanced_details_title": "धूप और पोषक तत्व विवरण",
       "unsaved_confirm_message": "आपके पास बिना सहेजे परिवर्तन हैं। चरण बदलने पर वे हट जाएंगे। जारी रखें?",
+      "reference_stages_readonly": "संदर्भ फसलें केवल पढ़ने योग्य हैं। केवल व्यवस्थापक विकास चरण संपादित कर सकते हैं।",
+      "stage_name_required": "कृपया चरण का नाम दर्ज करें।",
       "table_order": "क्रम",
       "table_stage_name": "चरण का नाम",
       "table_base_temperature": "न्यूनतम सीमा तापमान",
