@@ -1976,8 +1976,8 @@
       "thermal_requirement_updated": "Thermal requirement was updated.",
       "sunshine_requirement_updated": "Sunshine requirement was updated.",
       "nutrient_requirement_updated": "Nutrient requirement was updated.",
-      "stage_panel_partial_save_failed": "Some panel fields could not be saved. The form was refreshed from the server.",
-      "stage_advanced_partial_save_failed": "Some advanced fields could not be saved. The form was refreshed from the server."
+      "stage_advanced_partial_save_failed": "Some advanced fields could not be saved. The form was refreshed from the server.",
+      "stage_panel_partial_save_failed": "Some panel fields could not be saved. The form was refreshed from the server."
     },
     "index": {
       "title": "Crops",
@@ -2051,6 +2051,10 @@
       "required_gdd_placeholder": "e.g., 800.0",
       "required_gdd_help": "Enter the Growing Degree Days required for this stage.",
       "save_stage": "Save",
+      "temperature_section": "Temperature conditions",
+      "thermal_section": "Accumulated temperature",
+      "details_section": "Advanced settings",
+      "optimal_range": "Optimal range",
       "edit_temperature_details": "Edit stress thresholds…",
       "edit_sunshine_nutrient": "Edit sunshine & nutrients…",
       "temperature_details_title": "Stress thresholds",

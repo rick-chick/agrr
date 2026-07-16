@@ -378,8 +378,8 @@
       "thermal_requirement_updated": "積算温度要件を更新しました。",
       "sunshine_requirement_updated": "日照要件を更新しました。",
       "nutrient_requirement_updated": "栄養素要件を更新しました。",
-      "stage_panel_partial_save_failed": "一部の項目を保存できませんでした。サーバー上の最新データに戻しました。",
-      "stage_advanced_partial_save_failed": "一部の詳細項目を保存できませんでした。サーバー上の最新データに戻しました。"
+      "stage_advanced_partial_save_failed": "一部の詳細項目を保存できませんでした。サーバー上の最新データに戻しました。",
+      "stage_panel_partial_save_failed": "一部の項目を保存できませんでした。サーバー上の最新データに戻しました。"
     },
     "index": {
       "title": "作物一覧",
@@ -453,6 +453,10 @@
       "required_gdd_placeholder": "例：800.0",
       "required_gdd_help": "このステージに必要な生育度日（Growing Degree Days）を入力してください。",
       "save_stage": "保存",
+      "temperature_section": "温度条件",
+      "thermal_section": "積算温度",
+      "details_section": "詳細設定",
+      "optimal_range": "最適範囲",
       "edit_temperature_details": "ストレス閾値を編集…",
       "edit_sunshine_nutrient": "日照・栄養素を編集…",
       "temperature_details_title": "ストレス閾値",
