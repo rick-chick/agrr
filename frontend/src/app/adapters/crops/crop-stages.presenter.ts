@@ -70,6 +70,7 @@ export class CropStagesPresenter implements
         pendingReorderCropStagesSnapshot: null,
         formData: {
           name: crop.name,
+          is_reference: crop.is_reference ?? false,
           crop_stages: crop.crop_stages ?? []
         }
       });

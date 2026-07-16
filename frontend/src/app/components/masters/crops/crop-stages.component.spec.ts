@@ -14,11 +14,13 @@ import { LoadCropTaskScheduleBlueprintsUseCase } from '../../../usecase/crops/lo
 import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stage-panel.usecase';
 import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import { FlashMessageService } from '../../../services/flash-message.service';
+import { AuthService } from '../../../services/auth.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 
 const initialFormData = {
   name: '',
+  is_reference: false,
   crop_stages: [] as CropStage[]
 };
 
@@ -125,7 +127,9 @@ const tableTranslations = {
       temperature_section: 'Temperature conditions',
       thermal_section: 'Accumulated temperature',
       details_section: 'Advanced settings',
-      optimal_range: 'Optimal range'
+      optimal_range: 'Optimal range',
+      reference_stages_readonly: 'Reference crops are read-only. Only administrators can edit growth stages.',
+      stage_name_required: 'Please enter a stage name.'
     }
   },
   common: {
@@ -153,13 +157,19 @@ describe('CropStagesComponent', () => {
   let mockSaveCropStagePanelUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockSaveCropStageAdvancedDetailsUseCase: { execute: ReturnType<typeof vi.fn> };
   let mockFlashMessage: { show: ReturnType<typeof vi.fn> };
+  let mockAuthService: { user: ReturnType<typeof vi.fn> };
   let translateService: TranslateService;
 
-  async function loadStages(stages: CropStage[], cropName = 'Tomato'): Promise<void> {
+  async function loadStages(
+    stages: CropStage[],
+    cropName = 'Tomato',
+    options: { is_reference?: boolean } = {}
+  ): Promise<void> {
     component.control = {
       ...loadedControlBase,
       formData: {
         name: cropName,
+        is_reference: options.is_reference ?? false,
         crop_stages: stages
       }
     };
@@ -191,6 +201,7 @@ describe('CropStagesComponent', () => {
     mockSaveCropStagePanelUseCase = { execute: vi.fn() };
     mockSaveCropStageAdvancedDetailsUseCase = { execute: vi.fn() };
     mockFlashMessage = { show: vi.fn() };
+    mockAuthService = { user: vi.fn(() => ({ admin: false })) };
 
     await TestBed.configureTestingModule({
       imports: [
@@ -209,7 +220,8 @@ describe('CropStagesComponent', () => {
         { provide: LoadCropTaskScheduleBlueprintsUseCase, useValue: mockLoadBlueprintsUseCase },
         { provide: SaveCropStagePanelUseCase, useValue: mockSaveCropStagePanelUseCase },
         { provide: SaveCropStageAdvancedDetailsUseCase, useValue: mockSaveCropStageAdvancedDetailsUseCase },
-        { provide: FlashMessageService, useValue: mockFlashMessage }
+        { provide: FlashMessageService, useValue: mockFlashMessage },
+        { provide: AuthService, useValue: mockAuthService }
       ]
     })
       .overrideComponent(CropStagesComponent, { set: { providers: [] } })
@@ -371,6 +383,26 @@ describe('CropStagesComponent', () => {
     expect(saveButton.disabled).toBe(false);
   });
 
+  it('sends null in panel save when cleared numeric fields were previously set', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.base_temperature = null;
+    component.stageEditDraft.required_gdd = null;
+
+    component.saveStagePanel();
+
+    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      temperaturePatch: {
+        base_temperature: null
+      },
+      thermalPatch: {
+        required_gdd: null
+      }
+    });
+  });
+
   it('saves panel fields through SaveCropStagePanelUseCase when save button is clicked', async () => {
     await loadStages([stageFixture]);
 
@@ -460,6 +492,7 @@ describe('CropStagesComponent', () => {
       ...loadedControlBase,
       formData: {
         name: 'Tomato',
+        is_reference: false,
         crop_stages: [serverStage]
       },
       pendingResyncPanelDraft: true,
@@ -503,6 +536,7 @@ describe('CropStagesComponent', () => {
       ...loadedControlBase,
       formData: {
         name: 'Tomato',
+        is_reference: false,
         crop_stages: [serverStage]
       },
       pendingResyncPanelDraft: true,
@@ -547,6 +581,7 @@ describe('CropStagesComponent', () => {
       ...loadedControlBase,
       formData: {
         name: 'Tomato',
+        is_reference: false,
         crop_stages: [updatedStage]
       }
     };
@@ -630,6 +665,39 @@ describe('CropStagesComponent', () => {
 
     expect(component.pendingDeleteStage?.id).toBe(1);
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends null in temperature dialog save when cleared stress thresholds were previously set', async () => {
+    await loadStages([
+      {
+        ...stageFixture,
+        temperature_requirement: {
+          ...stageFixture.temperature_requirement!,
+          low_stress_threshold: 10,
+          high_stress_threshold: 30,
+          frost_threshold: 0
+        }
+      } as CropStage
+    ]);
+
+    component.openTemperatureDialog();
+    component.temperatureDetailDraft = {
+      low_stress_threshold: null,
+      high_stress_threshold: null,
+      frost_threshold: null
+    };
+
+    component.saveTemperatureDialog();
+
+    expect(mockSaveCropStagePanelUseCase.execute).toHaveBeenCalledWith({
+      cropId: 1,
+      stageId: 1,
+      temperaturePatch: {
+        low_stress_threshold: null,
+        high_stress_threshold: null,
+        frost_threshold: null
+      }
+    });
   });
 
   it('opens stress threshold dialog and saves only stress fields on explicit save', async () => {
@@ -1257,5 +1325,49 @@ describe('CropStagesComponent', () => {
     const rows = fixture.nativeElement.querySelectorAll('.crop-stages-table__row');
     expect(rows[0]?.textContent).toContain('0–200');
     expect(rows[1]?.textContent).toContain('200–300');
+  });
+
+  it('disables mutation controls for reference crops when user is not admin', async () => {
+    await loadStages([stageFixture], 'Reference Tomato', { is_reference: true });
+
+    expect(fixture.nativeElement.querySelector('.crop-stages__readonly-notice')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name="panel_stage_name"]')?.hasAttribute('readonly')).toBe(
+      true
+    );
+
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer .btn-primary')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer .btn-danger')).toBeNull();
+
+    component.addCropStage();
+    expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('shows blueprint readiness checklist when required_gdd is 0', async () => {
+    await loadStages([
+      {
+        ...stageFixture,
+        thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 0 }
+      }
+    ]);
+
+    expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('required GDD not set');
+  });
+
+  it('disables save when stage name is empty and blocks saveStagePanel', async () => {
+    await loadStages([stageFixture]);
+
+    component.stageEditDraft.name = '   ';
+    fixture.detectChanges();
+
+    const saveButton = fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer .btn-primary');
+    expect(saveButton?.disabled).toBe(true);
+
+    component.saveStagePanel();
+    expect(mockSaveCropStagePanelUseCase.execute).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__name-error')).toBeTruthy();
   });
 });
