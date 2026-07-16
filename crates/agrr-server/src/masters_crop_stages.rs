@@ -2,6 +2,7 @@
 
 use crate::masters_json::crop_stage_to_json;
 use crate::masters_auth::MastersUserId;
+use crate::masters_crop_context::load_user_non_reference_crop;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{CropSqliteGateway, CropStageSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::crop::dtos::{
@@ -211,7 +212,7 @@ async fn create(
     Json(body): Json<StageRequest>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
+    load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let payload = stage_payload_from_attrs(&body.crop_stage)?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
@@ -250,7 +251,7 @@ async fn reorder(
     Json(body): Json<ReorderRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
+    load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let entries = reorder_entries_from_body(&body)?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
@@ -320,7 +321,7 @@ async fn update(
     Json(body): Json<StageRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
+    load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let payload = stage_update_payload_from_attrs(&body.crop_stage)?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
@@ -356,7 +357,7 @@ async fn destroy(
     Path((crop_id, id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
+    load_user_non_reference_crop(&state, user_id, crop_id).await?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
     struct P {
