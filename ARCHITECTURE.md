@@ -115,7 +115,7 @@ flowchart TB
 5. Let the interactor finish through the **output port** for both success and modeled failures-do not wrap `interactor.call` in `rescue` for those paths.
 
 
-AI-specific endpoints (`ai_create`, etc.) follow this checklist; they are not special cases for layering.
+AI-specific endpoints (`ai_create`, etc.) follow this checklist; they are not special cases for layering. **Product direction**: master-data **generation** moves to external skills; agrr daemon handles **calculation** only; built-in generation is deprecated per [ADR-001](docs/adr/ADR-001-external-skill-generation-agrr-daemon-calculation.md) ([#316](https://github.com/rick-chick/agrr/issues/316)).
 
 #### Canonical use-case responsibility split
 
