@@ -129,7 +129,15 @@ issue（ux-campaign:*）→ Issue Worker → PR → PR Merge Worker
 |------|--------|------|
 | 監査 | Cursor **Automation Audit** | [`cloud-automation-audit/SKILL.md`](../../.cursor/skills/cloud-automation-audit/SKILL.md) |
 
-### 5. Cleanup 外側ループ（手動・repository_dispatch）
+### 5. Pipeline Watchdog（毎時・運用監視）
+
+毎時 0 分 JST。issue / PR / dispatch workflow を機械収集し、P0/P1 異常を調査して **GitHub issue** 化（`automation-watchdog` ラベル）。週次 Audit とは補完関係。
+
+| 段階 | 実行者 | 参照 |
+|------|--------|------|
+| 監視・起票 | Cursor **Pipeline Watchdog** | [`automation-pipeline-watchdog/SKILL.md`](../../.cursor/skills/automation-pipeline-watchdog/SKILL.md) |
+
+### 6. Cleanup 外側ループ（手動・repository_dispatch）
 
 大規模クリーンアップの機械的外側ループ。shell が backlog 管理し、**1 item ずつ** webhook で Cloud Agent を起動する（AI は item 実行のみ）。
 
@@ -182,6 +190,7 @@ issue（ux-campaign:*）→ Issue Worker → PR → PR Merge Worker
 | **UX Campaign Loop** | Webhook（ux-campaign-review-dispatch） | `ux-campaign-loop` | ❌（issue 起票のみ） |
 | **UX Issue Audit** | Schedule（月曜 9:00 JST） | `ux-issue-pipeline` § Automation | ❌（条件付き issue） |
 | **Automation Audit** | Schedule（金曜 10:00 JST） | `cloud-automation-audit` | ✅ クリティカル修正時のみ |
+| **Pipeline Watchdog** | Schedule（毎時 0 分 JST） | `automation-pipeline-watchdog` | ❌（異常時 issue・P0 のみ最小 PR） |
 
 **GitHub Actions のみ**（Cursor Automation ではない）: PR Agent Prep、Retry dispatch、Frontend E2E capture。
 
