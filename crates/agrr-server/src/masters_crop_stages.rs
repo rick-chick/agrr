@@ -6,24 +6,25 @@ use crate::masters_crop_context::load_user_non_reference_crop;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{CropSqliteGateway, CropStageSqliteGateway, UserLookupSqliteGateway};
 use agrr_domain::crop::dtos::{
-    CropStageCreateInput, CropStageDeleteInput, CropStageDetailInput, CropStageListInput,
-    CropStageReorderEntry, CropStageReorderInput, CropStageUpdateInput,
+    AuthorizedCropStageInCropContext, CropLoadAuthorizedCropStageInput, CropStageCreateInput,
+    CropStageDeleteInput, CropStageListInput, CropStageReorderEntry, CropStageReorderInput,
+    CropStageUpdateInput,
 };
 use agrr_domain::crop::interactors::crop_detail_interactor::CropDetailInteractor;
+use agrr_domain::crop::interactors::crop_load_authorized_crop_stage_interactor::CropLoadAuthorizedCropStageInteractor;
 use agrr_domain::crop::interactors::crop_stage_create_interactor::CropStageCreateInteractor;
 use agrr_domain::crop::interactors::crop_stage_delete_interactor::CropStageDeleteInteractor;
-use agrr_domain::crop::interactors::crop_stage_detail_interactor::CropStageDetailInteractor;
 use agrr_domain::crop::interactors::crop_stage_list_interactor::CropStageListInteractor;
 use agrr_domain::crop::interactors::crop_stage_reorder_interactor::CropStageReorderInteractor;
 use agrr_domain::crop::interactors::crop_stage_update_interactor::CropStageUpdateInteractor;
 use agrr_domain::crop::ports::{
-    CropDetailOutputPort,     CropStageCreateOutputPort, CropStageDeleteOutputPort,
-    CropStageDetailOutputPort, CropStageListOutputPort, CropStageReorderOutputPort,
+    CropDetailOutputPort, CropLoadedAuthorizationFailurePort, CropStageCreateOutputPort,
+    CropStageDeleteOutputPort, CropStageListOutputPort, CropStageReorderOutputPort,
     CropStageUpdateOutputPort, DetailFailure,
 };
 use agrr_domain::crop::ports::{
-    CropStageCreateFailure, CropStageDeleteFailure, CropStageDetailFailure,
-    CropStageReorderFailure, CropStageUpdateFailure,
+    CropStageCreateFailure, CropStageDeleteFailure, CropStageReorderFailure,
+    CropStageUpdateFailure,
 };
 use axum::{
     extract::{Path, State},
@@ -75,6 +76,50 @@ pub(crate) async fn ensure_crop_visible(
     Ok(())
 }
 
+pub(crate) async fn ensure_authorized_crop_stage(
+    state: &AppState,
+    user_id: i64,
+    crop_id: i64,
+    stage_id: i64,
+    for_edit: bool,
+) -> Result<AuthorizedCropStageInCropContext, (StatusCode, Json<Value>)> {
+    struct FailurePort {
+        failed: bool,
+    }
+    impl CropLoadedAuthorizationFailurePort for FailurePort {
+        fn on_permission_denied(&mut self) {
+            self.failed = true;
+        }
+        fn on_not_found(&mut self) {
+            self.failed = true;
+        }
+    }
+
+    let pool = state.sqlite.clone();
+    let crop_gateway = CropSqliteGateway::new(pool.clone());
+    let stage_gateway = CropStageSqliteGateway::new(pool.clone());
+    let user_lookup = UserLookupSqliteGateway::new(pool);
+    let mut failure_port = FailurePort { failed: false };
+    let mut interactor = CropLoadAuthorizedCropStageInteractor::new(
+        &mut failure_port,
+        user_id,
+        &crop_gateway,
+        &stage_gateway,
+        &user_lookup,
+        for_edit,
+    );
+    let context = interactor
+        .call(CropLoadAuthorizedCropStageInput::new(
+            crop_id, stage_id, for_edit,
+        ))
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
+
+    match context {
+        Some(ctx) => Ok(ctx),
+        None => Err((StatusCode::NOT_FOUND, Json(json!({"error": "not found"})))),
+    }
+}
+
 async fn index(
     State(state): State<AppState>,
     auth: MastersUserId,
@@ -113,34 +158,8 @@ async fn show(
     Path((crop_id, id)): Path<(i64, i64)>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
-    let pool = state.sqlite.clone();
-    let stage_gw = CropStageSqliteGateway::new(pool);
-    struct P {
-        body: Option<Value>,
-        status: StatusCode,
-    }
-    impl CropStageDetailOutputPort for P {
-        fn on_success(&mut self, output: agrr_domain::crop::dtos::CropStageOutput) {
-            self.body = Some(crop_stage_to_json(&output.stage));
-            self.status = StatusCode::OK;
-        }
-        fn on_failure(&mut self, _: CropStageDetailFailure) {
-            self.status = StatusCode::NOT_FOUND;
-        }
-    }
-    let mut p = P {
-        body: None,
-        status: StatusCode::NOT_FOUND,
-    };
-    let mut interactor = CropStageDetailInteractor::new(&mut p, &stage_gw);
-    interactor
-        .call(CropStageDetailInput { crop_stage_id: id })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "internal"}))))?;
-    match p.body {
-        Some(v) => Ok(Json(v)),
-        None => Err((p.status, Json(json!({"error": "not found"})))),
-    }
+    let context = ensure_authorized_crop_stage(&state, user_id, crop_id, id, false).await?;
+    Ok(Json(crop_stage_to_json(&context.crop_stage_entity)))
 }
 
 #[derive(Deserialize)]
@@ -321,7 +340,7 @@ async fn update(
     Json(body): Json<StageRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, id, true).await?;
     let payload = stage_update_payload_from_attrs(&body.crop_stage)?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
@@ -357,7 +376,7 @@ async fn destroy(
     Path((crop_id, id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, id, true).await?;
     let pool = state.sqlite.clone();
     let gateway = CropSqliteGateway::new(pool);
     struct P {

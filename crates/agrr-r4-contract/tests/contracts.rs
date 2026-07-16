@@ -1205,6 +1205,116 @@ fn delete_masters_crop_stage_unassigns_linked_blueprints() {
     assert!(deleted_stage_blueprint["stage_name"].is_null());
 }
 
+#[test]
+fn get_masters_crop_stage_wrong_crop_returns_404() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let crop_a = seed_masters_crop_with_stages(user_id, 1);
+    let crop_b = seed_masters_crop_with_stages(user_id, 1);
+    let [stage_of_b] = crop_b.stage_ids.as_slice() else {
+        panic!("expected one crop stage");
+    };
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/{}",
+            crop_a.crop_id, stage_of_b
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(404, status, "{body}");
+}
+
+#[test]
+fn patch_masters_crop_stage_wrong_crop_returns_404_and_does_not_mutate_stage() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let crop_a = seed_masters_crop_with_stages(user_id, 1);
+    let crop_b = seed_masters_crop_with_stages(user_id, 1);
+    let [stage_of_b] = crop_b.stage_ids.as_slice() else {
+        panic!("expected one crop stage");
+    };
+
+    let (status, body) = status_and_body(client.patch(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/{}",
+            crop_a.crop_id, stage_of_b
+        ),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({ "crop_stage": { "name": "Hacked Stage Name" } })),
+    ));
+    assert_eq!(404, status, "{body}");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/{}",
+            crop_b.crop_id, stage_of_b
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(200, status, "{body}");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("stage JSON");
+    assert_eq!("Stage 1", json["name"].as_str().unwrap());
+}
+
+#[test]
+fn delete_masters_crop_stage_wrong_crop_returns_404() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let crop_a = seed_masters_crop_with_stages(user_id, 1);
+    let crop_b = seed_masters_crop_with_stages(user_id, 1);
+    let [stage_of_b] = crop_b.stage_ids.as_slice() else {
+        panic!("expected one crop stage");
+    };
+
+    let (status, body) = status_and_body(client.delete(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/{}",
+            crop_a.crop_id, stage_of_b
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(404, status, "{body}");
+}
+
+#[test]
+fn get_masters_crop_stage_temperature_requirement_wrong_crop_returns_404() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let crop_a = seed_masters_crop_with_stages(user_id, 1);
+    let crop_b = seed_masters_crop_with_stages(user_id, 1);
+    let [stage_of_b] = crop_b.stage_ids.as_slice() else {
+        panic!("expected one crop stage");
+    };
+
+    let path = std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    conn.execute(
+        "INSERT INTO temperature_requirements (crop_stage_id, base_temperature, optimal_min, optimal_max, max_temperature, created_at, updated_at)
+         VALUES (?1, 10.0, 18.0, 28.0, 35.0, datetime('now'), datetime('now'))",
+        rusqlite::params![stage_of_b],
+    )
+    .expect("insert temperature requirement");
+
+    let (status, body) = status_and_body(client.get(
+        &format!(
+            "/api/v1/masters/crops/{}/crop_stages/{}/temperature_requirement",
+            crop_a.crop_id, stage_of_b
+        ),
+        Some(&session_id),
+        &empty_headers(),
+    ));
+    assert_eq!(404, status, "{body}");
+}
+
 fn valid_setup_proposal_body() -> serde_json::Value {
     serde_json::json!({
         "stages": [{

@@ -1,7 +1,6 @@
 //! Nested crop stage requirements under masters crops.
 
-use crate::masters_crop_context::load_user_non_reference_crop;
-use crate::masters_crop_stages::ensure_crop_visible;
+use crate::masters_crop_stages::ensure_authorized_crop_stage;
 use crate::masters_auth::MastersUserId;
 use crate::state::AppState;
 use agrr_adapters_sqlite::{
@@ -133,7 +132,7 @@ async fn temperature_show(
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, false).await?;
     let pool = state.sqlite.clone();
     let req_gw = TemperatureRequirementSqliteGateway::new(pool);
     struct Port {
@@ -209,7 +208,7 @@ async fn temperature_write(
     create: bool,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, true).await?;
     let pool = state.sqlite.clone();
     let req_gw = TemperatureRequirementSqliteGateway::new(pool.clone());
     let crop_gw = CropSqliteGateway::new(pool);
@@ -268,7 +267,7 @@ async fn temperature_destroy(
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, true).await?;
     let pool = state.sqlite.clone();
     let crop_gw = CropSqliteGateway::new(pool);
     struct Port {
@@ -305,7 +304,7 @@ async fn thermal_show(
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, false).await?;
     let pool = state.sqlite.clone();
     let req_gw = ThermalRequirementSqliteGateway::new(pool);
     struct Port {
@@ -381,7 +380,7 @@ async fn thermal_write(
     create: bool,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, true).await?;
     let pool = state.sqlite.clone();
     let req_gw = ThermalRequirementSqliteGateway::new(pool.clone());
     let crop_gw = CropSqliteGateway::new(pool);
@@ -440,7 +439,7 @@ async fn thermal_destroy(
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, true).await?;
     let pool = state.sqlite.clone();
     let crop_gw = CropSqliteGateway::new(pool);
     struct Port {
@@ -477,7 +476,7 @@ async fn sunshine_show(
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, false).await?;
     let pool = state.sqlite.clone();
     let req_gw = SunshineRequirementSqliteGateway::new(pool);
     struct Port {
@@ -553,7 +552,7 @@ async fn sunshine_write(
     create: bool,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, true).await?;
     let pool = state.sqlite.clone();
     let req_gw = SunshineRequirementSqliteGateway::new(pool.clone());
     let crop_gw = CropSqliteGateway::new(pool);
@@ -612,7 +611,7 @@ async fn sunshine_destroy(
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, true).await?;
     let pool = state.sqlite.clone();
     let crop_gw = CropSqliteGateway::new(pool);
     struct Port {
@@ -649,7 +648,7 @@ async fn nutrient_show(
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    ensure_crop_visible(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, false).await?;
     let pool = state.sqlite.clone();
     let req_gw = NutrientRequirementSqliteGateway::new(pool);
     struct Port {
@@ -725,7 +724,7 @@ async fn nutrient_write(
     create: bool,
 ) -> Result<(StatusCode, Json<Value>), (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, true).await?;
     let pool = state.sqlite.clone();
     let req_gw = NutrientRequirementSqliteGateway::new(pool.clone());
     let crop_gw = CropSqliteGateway::new(pool);
@@ -784,7 +783,7 @@ async fn nutrient_destroy(
     Path((crop_id, stage_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, (StatusCode, Json<Value>)> {
     let user_id = auth.0;
-    load_user_non_reference_crop(&state, user_id, crop_id).await?;
+    ensure_authorized_crop_stage(&state, user_id, crop_id, stage_id, true).await?;
     let pool = state.sqlite.clone();
     let crop_gw = CropSqliteGateway::new(pool);
     struct Port {
