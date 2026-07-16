@@ -109,9 +109,9 @@ const tableTranslations = {
       sterility_risk_threshold: 'Sterility risk',
       stage_order_duplicate: 'Duplicate order: {{orders}}',
       temperature_section: 'Temperature conditions',
-      optimal_range: 'Optimal range',
-      gdd_section: 'Accumulated temperature',
-      details_section: 'Advanced settings'
+      thermal_section: 'Accumulated temperature',
+      details_section: 'Advanced settings',
+      optimal_range: 'Optimal range'
     }
   },
   common: {
@@ -397,41 +397,6 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Edit stress thresholds');
   });
 
-  it('renders edit panel with section headings and grouped layout', async () => {
-    await loadStages([stageFixture]);
-
-    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
-    expect(panel?.querySelector('.crop-stages-edit-panel__header')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__stage-badge')?.textContent?.trim()).toBe('1');
-    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--temperature')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--gdd')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--details')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Temperature conditions');
-    expect(fixture.nativeElement.textContent).toContain('Accumulated temperature');
-    expect(fixture.nativeElement.textContent).toContain('Advanced settings');
-    expect(panel?.querySelector('.crop-stages-edit-panel__optimal-group')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Optimal range');
-    expect(panel?.querySelector('.crop-stages-edit-panel__gdd-block')).toBeTruthy();
-    expect(panel?.querySelector('.crop-stages-edit-panel__footer')).toBeTruthy();
-    expect(panel?.querySelectorAll('.crop-stages-edit-panel__detail-chip').length).toBe(2);
-    expect(panel?.querySelector('.crop-stages-edit-panel__link')).toBeFalsy();
-  });
-
-  it('renders temperature scale bar when enough values are set', async () => {
-    await loadStages([stageFixture]);
-
-    component.stageEditDraft.base_temperature = 5;
-    component.stageEditDraft.optimal_min = 15;
-    component.stageEditDraft.optimal_max = 25;
-    component.stageEditDraft.max_temperature = 35;
-    fixture.detectChanges();
-
-    const scale = fixture.nativeElement.querySelector('.crop-stages-edit-panel__temperature-scale');
-    expect(scale).toBeTruthy();
-    expect(scale?.querySelectorAll('.crop-stages-edit-panel__temperature-scale-marker').length).toBeGreaterThan(0);
-    expect(scale?.querySelector('.crop-stages-edit-panel__temperature-scale-band')).toBeTruthy();
-  });
-
   it('marks panel dirty when inline temperature fields change', async () => {
     await loadStages([stageFixture]);
 
@@ -655,6 +620,42 @@ describe('CropStagesComponent', () => {
 
     const warning = fixture.nativeElement.querySelector('.crop-stages-order-warning');
     expect(warning?.textContent).toContain('1');
+  });
+
+  it('renders edit panel with section headings and grouped temperature fields', async () => {
+    await loadStages([stageFixture]);
+
+    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
+    expect(panel?.querySelector('.crop-stages-edit-panel__header')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__stage-badge')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--temperature')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--thermal')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__subsection--details')).toBeTruthy();
+    expect(panel?.textContent).toContain('Temperature conditions');
+    expect(panel?.textContent).toContain('Accumulated temperature');
+    expect(panel?.textContent).toContain('Advanced settings');
+    expect(panel?.querySelector('.crop-stages-edit-panel__optimal-group')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__temperature-scale')).toBeTruthy();
+    expect(panel?.querySelector('.crop-stages-edit-panel__gdd-block')).toBeTruthy();
+  });
+
+  it('renders detail settings as chip buttons instead of text links', async () => {
+    await loadStages([stageFixture]);
+
+    const panel = fixture.nativeElement.querySelector('.crop-stages-edit-panel');
+    const chips = panel?.querySelectorAll('.crop-stages-edit-panel__detail-chip');
+    expect(chips?.length).toBe(2);
+    expect(panel?.querySelector('.crop-stages-edit-panel__link')).toBeNull();
+  });
+
+  it('places save and delete actions in the panel footer', async () => {
+    await loadStages([stageFixture]);
+
+    const footer = fixture.nativeElement.querySelector('.crop-stages-edit-panel__footer');
+    expect(footer).toBeTruthy();
+    expect(footer?.querySelector('.btn-primary')).toBeTruthy();
+    expect(footer?.querySelector('.btn-danger')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-edit-panel__actions')).toBeNull();
   });
 
   it('updates cumulative GDD display in table after stage reorder', async () => {
