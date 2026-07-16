@@ -7,7 +7,10 @@ import {
   syncErrorRemediationRoute,
   syncErrorWizardLinkKey
 } from './task-schedule-sync-remediation.mapper';
-import { TASK_SCHEDULE_SYNC_ERROR_GENERIC } from '../../domain/plans/task-schedule-sync-error-keys';
+import {
+  TASK_SCHEDULE_SYNC_ERROR_GENERIC,
+  TASK_SCHEDULE_SYNC_PLAN_REVIEW_LINK_KEY
+} from '../../domain/plans/task-schedule-sync-error-keys';
 import {
   cropPlanWizardQueryParams,
   type CropPlanWizardQueryParams,
@@ -174,6 +177,20 @@ function uniqueCropIds(cropIds: number[]): number[] {
   return [...new Set(cropIds.filter((id) => id > 0))];
 }
 
+function syncStatePlanRemediationRoute(
+  syncState: TaskScheduleSyncState | string,
+  planId: number
+): { linkKey: string; routerLink: (string | number)[]; queryParams: null } | null {
+  if ((syncState !== 'never' && syncState !== 'stale') || planId <= 0) {
+    return null;
+  }
+  return {
+    linkKey: TASK_SCHEDULE_SYNC_PLAN_REVIEW_LINK_KEY,
+    routerLink: ['/plans', planId],
+    queryParams: null
+  };
+}
+
 function resolveTargetCropId(
   syncErrorCropId: number | null,
   cropIds: number[]
@@ -237,7 +254,8 @@ export function buildTaskScheduleSyncBannerViewModel(
         targetCropId,
         targetCropName,
         targetCropId != null
-      );
+      ) ??
+      syncStatePlanRemediationRoute(input.syncState, input.planId);
   const remediationLinkKey = remediation?.linkKey ?? null;
   const showRetry =
     input.syncState !== 'generating' &&
