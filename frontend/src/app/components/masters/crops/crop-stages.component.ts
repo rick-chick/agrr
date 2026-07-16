@@ -1053,7 +1053,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   formatCumulativeGdd(stage: CropStage): string {
     const range = stageCumulativeGddRange(this.control.formData.crop_stages, stage.order);
     if (range.gddRangeMissing) {
-      return this.translate.instant('crops.edit.value_missing');
+      return this.translate.instant('crops.edit.stage_cumulative_gdd_missing');
     }
     return this.translate.instant('crops.edit.stage_cumulative_gdd_range', {
       start: range.cumulativeGddStart,
