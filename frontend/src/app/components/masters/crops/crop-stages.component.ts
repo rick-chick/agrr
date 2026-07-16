@@ -39,6 +39,7 @@ import { MasterContextHeaderComponent } from '../master-context-header/master-co
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
 
 type PendingUnsavedAction =
+  | { kind: 'add-stage' }
   | { kind: 'switch-stage'; stageId: number }
   | { kind: 'delete-stage'; stageId: number };
 
@@ -599,6 +600,15 @@ export class CropStagesComponent implements CropStagesView, OnInit {
   }
 
   addCropStage(): void {
+    if (this.isPanelDirty()) {
+      this.pendingUnsavedAction = { kind: 'add-stage' };
+      this.unsavedConfirmDialogRef?.nativeElement?.showModal();
+      return;
+    }
+    this.executeAddCropStage();
+  }
+
+  private executeAddCropStage(): void {
     const nextOrder = Math.max(0, ...this.control.formData.crop_stages.map((s) => s.order)) + 1;
     const defaultStageName = this.translate.instant('crops.stage.default_name', { order: nextOrder });
     this.createCropStageUseCase.execute({
@@ -635,6 +645,10 @@ export class CropStagesComponent implements CropStagesView, OnInit {
     this.pendingUnsavedAction = null;
     this.unsavedConfirmDialogRef?.nativeElement?.close();
     if (!action) {
+      return;
+    }
+    if (action.kind === 'add-stage') {
+      this.executeAddCropStage();
       return;
     }
     if (action.kind === 'switch-stage') {
