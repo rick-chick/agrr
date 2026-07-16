@@ -135,6 +135,7 @@ export class CropStagesPresenter implements
       pendingErrorFlash: null,
       pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_updated')
     });
+    this.view.reloadTaskScheduleBlueprints();
   }
 
   presentDeleteCropStage(dto: DeleteCropStageOutputDto): void {
@@ -150,6 +151,7 @@ export class CropStagesPresenter implements
       pendingErrorFlash: null,
       pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_deleted')
     });
+    this.view.reloadTaskScheduleBlueprints();
   }
 
   onSuccess(dto: SaveCropStagePanelSuccessDto | SaveCropStageAdvancedDetailsSuccessDto): void {
