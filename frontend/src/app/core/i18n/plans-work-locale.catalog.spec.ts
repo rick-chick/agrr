@@ -24,6 +24,8 @@ const PLANS_WORK_KEYS = [
   'plans.work.section.upcoming',
   'plans.work.empty_today',
   'plans.work.empty_today_hint',
+  'plans.work.empty_plan_cta',
+  'plans.work.empty_task_schedule_cta',
   'plans.work.next_scheduled',
   'plans.work.add_record',
   'plans.work.recorded_today',
