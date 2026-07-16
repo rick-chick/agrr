@@ -26,8 +26,7 @@ pub fn assert_crop_task_template_api_removed(status: u16, body: &str) {
     assert!(json.get("error").is_some(), "{body}");
 }
 
-pub fn developer_session_id(client: &ContractClient) -> String {
-    let response = client.get("/auth/test/developer", None, &empty_headers());
+fn session_id_from_mock_login_response(response: reqwest::blocking::Response, route: &str) -> String {
     for value in response.headers().get_all("set-cookie") {
         if let Ok(raw) = value.to_str() {
             if let Some(rest) = raw.split("session_id=").nth(1) {
@@ -37,9 +36,20 @@ pub fn developer_session_id(client: &ContractClient) -> String {
         }
     }
     panic!(
-        "session_id cookie missing from /auth/test/developer (status {})",
+        "session_id cookie missing from {route} (status {})",
         response.status()
     );
+}
+
+pub fn developer_session_id(client: &ContractClient) -> String {
+    let response = client.get("/auth/test/developer", None, &empty_headers());
+    session_id_from_mock_login_response(response, "/auth/test/developer")
+}
+
+/// Non-admin mock user (`/auth/test/mock_login_as/farmer`).
+pub fn farmer_session_id(client: &ContractClient) -> String {
+    let response = client.get("/auth/test/mock_login_as/farmer", None, &empty_headers());
+    session_id_from_mock_login_response(response, "/auth/test/mock_login_as/farmer")
 }
 
 pub fn user_id_for_session(client: &ContractClient, session_id: &str) -> i64 {
@@ -66,6 +76,37 @@ pub struct MastersCropSeed {
 pub struct MastersCropStagesSeed {
     pub crop_id: i64,
     pub stage_ids: Vec<i64>,
+}
+
+pub struct ReferenceCropStageSeed {
+    pub crop_id: i64,
+    pub stage_id: i64,
+}
+
+/// Seeds a reference crop with one stage for masters edit-authorization contract tests.
+pub fn seed_reference_crop_with_stage() -> ReferenceCropStageSeed {
+    let path =
+        std::env::var("AGRR_SQLITE_PATH").expect("AGRR_SQLITE_PATH must be set for contract seed");
+    let conn = rusqlite::Connection::open(&path).expect("open contract sqlite");
+    let suffix = seed_suffix();
+    let crop_name = format!("Contract Reference Crop {suffix}");
+    conn.execute(
+        "INSERT INTO crops (user_id, name, variety, is_reference, created_at, updated_at)
+         VALUES (NULL, ?1, 'Ref', 1, datetime('now'), datetime('now'))",
+        params![crop_name],
+    )
+    .expect("insert reference crop");
+    let crop_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO crop_stages (crop_id, name, \"order\", created_at, updated_at)
+         VALUES (?1, 'Ref Stage', 1, datetime('now'), datetime('now'))",
+        params![crop_id],
+    )
+    .expect("insert reference crop stage");
+    ReferenceCropStageSeed {
+        crop_id,
+        stage_id: conn.last_insert_rowid(),
+    }
 }
 
 pub struct MastersCropStagesBlueprintSeed {
