@@ -15,6 +15,7 @@ import { SaveCropStagePanelUseCase } from '../../../usecase/crops/save-crop-stag
 import { SaveCropStageAdvancedDetailsUseCase } from '../../../usecase/crops/save-crop-stage-advanced-details.usecase';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 
 const initialFormData = {
   name: '',
@@ -27,7 +28,11 @@ const loadedControlBase = {
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingReorderCropStagesSnapshot: null,
-  taskScheduleBlueprints: []
+  taskScheduleBlueprints: [],
+  blueprintReadiness: defaultBlueprintReadiness(),
+  stageRequirementGaps: [],
+  showBlueprintReadinessChecklist: false,
+  showNextStepCta: false
 };
 
 const stageFixture: CropStage = {
@@ -62,7 +67,13 @@ const tableTranslations = {
       no_stages_description: 'Add growth stages for this crop.',
       from_plan_wizard_title: 'From plan wizard',
       from_plan_stages_wizard_lead: 'Configure stages',
-      return_to_plan: 'Return to plan'
+      return_to_plan: 'Return to plan',
+      blueprint_readiness: {
+        detail_title: 'Configuration status',
+        stages_page_gap_base_temperature: '{{stageName}}: base temperature not set',
+        stages_page_gap_required_gdd: '{{stageName}}: required GDD not set',
+        stages_next_step_action: 'Go to task schedule templates'
+      }
     },
     errors: {
       invalid_id: 'Invalid crop ID.'
@@ -750,11 +761,45 @@ describe('CropStagesComponent', () => {
     expect(fixture.nativeElement.querySelector('.crop-stages-table__add-button')).toBeTruthy();
   });
 
-  it('does not render blueprint readiness checklist or next-step CTA', async () => {
+  it('shows readiness checklist when stage requirements are incomplete', async () => {
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+    await loadStages([incompleteStage]);
+
+    expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Vegetative');
+    expect(fixture.nativeElement.textContent).toContain('base temperature not set');
+  });
+
+  it('shows next-step CTA when all stage requirements are complete', async () => {
     await loadStages([stageFixture]);
 
     expect(fixture.nativeElement.querySelector('.blueprint-readiness')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.crop-stages__next-step')).toBeNull();
+    const nextStep = fixture.nativeElement.querySelector('.crop-stages__next-step a') as HTMLAnchorElement;
+    expect(nextStep).toBeTruthy();
+    expect(nextStep.getAttribute('href')).toBe('/crops/1/task_schedule_blueprints');
+  });
+
+  it('lists missing requirements in fromPlan banner before returning to plan', async () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.mockImplementation((key: string) =>
+      key === 'fromPlan' ? '7' : null
+    );
+    component.fromPlanId = 7;
+    const incompleteStage: CropStage = {
+      id: 2,
+      name: 'Vegetative',
+      order: 2
+    } as CropStage;
+    await loadStages([incompleteStage]);
+
+    const gaps = fixture.nativeElement.querySelector('.crop-stages__plan-wizard-gaps');
+    expect(gaps).toBeTruthy();
+    expect(gaps?.textContent).toContain('Vegetative');
+    expect(gaps?.textContent).toContain('base temperature not set');
   });
 
   it('sorts stages by order for display', () => {
