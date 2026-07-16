@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { apiErrorI18nKey } from '../../core/api-error-i18n-key';
 import { CreateCropStageInputPort } from './create-crop-stage.input-port';
 import { CreateCropStageOutputPort, CREATE_CROP_STAGE_OUTPUT_PORT } from './create-crop-stage.output-port';
 import { CROP_STAGE_GATEWAY, CropStageGateway } from './crop-stage-gateway';
@@ -14,7 +15,7 @@ export class CreateCropStageUseCase implements CreateCropStageInputPort {
   execute(dto: CreateCropStageInputDto): void {
     this.cropStageGateway.createCropStage(dto.cropId, dto.payload).subscribe({
       next: (stage) => this.outputPort.present({ stage }),
-      error: (err) => this.outputPort.onError({ message: err.message })
+      error: (err: unknown) => this.outputPort.onError({ message: apiErrorI18nKey(err) })
     });
   }
 }

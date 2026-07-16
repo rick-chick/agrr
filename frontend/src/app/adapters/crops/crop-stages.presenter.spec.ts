@@ -215,13 +215,13 @@ describe('CropStagesPresenter', () => {
         pendingReorderCropStagesSnapshot: originalStages
       };
 
-      presenter.onError({ message: 'network error' });
+      presenter.onError({ message: 'common.api_error.network' });
 
       expect(lastControl!.formData.crop_stages).toEqual(originalStages);
       expect(lastControl!.pendingReorderCropStagesSnapshot).toBeNull();
       expect(lastControl!.pendingErrorFlash).toEqual({
         type: 'error',
-        text: 'network error'
+        text: 'common.api_error.network'
       });
     });
   });
@@ -314,6 +314,38 @@ describe('CropStagesPresenter', () => {
       expect(lastControl!.pendingErrorFlash).toEqual({
         type: 'error',
         text: 'crops.flash.stage_advanced_partial_save_failed'
+      });
+    });
+  });
+
+  describe('CreateCropStageOutputPort onError', () => {
+    it('queues pending error flash with i18n key on onError', () => {
+      lastControl = baseControlState({
+        name: 'Test Crop',
+        crop_stages: [{ id: 1, crop_id: 1, name: 'Stage 1', order: 1 }]
+      });
+
+      presenter.onError({ message: 'common.api_error.network' });
+
+      expect(lastControl!.pendingErrorFlash).toEqual({
+        type: 'error',
+        text: 'common.api_error.network'
+      });
+    });
+  });
+
+  describe('DeleteCropStageOutputPort onError', () => {
+    it('queues pending error flash with i18n key on onError', () => {
+      lastControl = baseControlState({
+        name: 'Test Crop',
+        crop_stages: [{ id: 1, crop_id: 1, name: 'Stage 1', order: 1 }]
+      });
+
+      presenter.onError({ message: 'common.api_error.generic' });
+
+      expect(lastControl!.pendingErrorFlash).toEqual({
+        type: 'error',
+        text: 'common.api_error.generic'
       });
     });
   });
