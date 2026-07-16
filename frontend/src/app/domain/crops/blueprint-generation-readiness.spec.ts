@@ -257,4 +257,41 @@ describe('blueprintGenerationReadiness', () => {
     );
     expect(result.ready).toBe(true);
   });
+
+  it('is not ready when only one of multiple stages has complete requirements', () => {
+    const result = blueprintGenerationReadiness(
+      {
+        ...baseCrop,
+        crop_stages: [
+          {
+            id: 1,
+            crop_id: 1,
+            name: 'Vegetative',
+            order: 1,
+            temperature_requirement: {
+              id: 1,
+              crop_stage_id: 1,
+              base_temperature: 10
+            },
+            thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 100 }
+          },
+          {
+            id: 2,
+            crop_id: 1,
+            name: 'Fruiting',
+            order: 2
+          }
+        ]
+      },
+      [blueprint]
+    );
+    expect(result.stageRequirementsReady).toBe(false);
+    expect(result.ready).toBe(false);
+  });
+
+  it('is not ready when crop has no stages', () => {
+    const result = blueprintGenerationReadiness(baseCrop, [blueprint]);
+    expect(result.stageRequirementsReady).toBe(false);
+    expect(result.ready).toBe(false);
+  });
 });
