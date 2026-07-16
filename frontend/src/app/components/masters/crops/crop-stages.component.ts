@@ -36,6 +36,7 @@ import type { CropStage } from '../../../domain/crops/crop';
 import { countLinkedTaskScheduleBlueprintsForStage } from '../../../domain/crops/stage-linked-blueprint-count';
 import { MasterContextHeaderComponent } from '../master-context-header/master-context-header.component';
 import { MasterContextCrumb } from '../master-context-header/master-context-crumb';
+import { MasterLoadErrorPanelComponent } from '../master-load-error-panel/master-load-error-panel.component';
 import { withCropStagesDisplayState } from '../../../adapters/crops/crop-stages-display-state';
 import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 
@@ -104,14 +105,20 @@ interface TemperatureScaleModel {
 @Component({
   selector: 'app-crop-stages',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent, DragDropModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, MasterContextHeaderComponent, MasterLoadErrorPanelComponent, DragDropModule],
   providers: [...CROP_STAGES_PROVIDERS],
   template: `
     <main class="page-main">
       @if (control.loading) {
         <p class="master-loading">{{ 'common.loading' | translate }}</p>
       } @else if (control.error) {
-        <p class="master-loading master-error">{{ control.error }}</p>
+        <app-master-context-header [crumbs]="contextCrumbs" />
+        <app-master-load-error-panel
+          [errorKey]="control.error"
+          [listLink]="['/crops']"
+          backLabelKey="crops.index.title"
+          (retry)="reload()"
+        />
       } @else {
         <app-master-context-header [crumbs]="contextCrumbs" />
         @if (fromPlanId) {
@@ -682,10 +689,19 @@ export class CropStagesComponent implements CropStagesView, OnInit {
       this.control = {
         ...initialControl,
         loading: false,
-        error: this.translate.instant('crops.errors.invalid_id')
+        error: 'crops.errors.invalid_id'
       };
       return;
     }
+    this.loadCrop();
+  }
+
+  reload(): void {
+    this.control = { ...initialControl };
+    this.loadCrop();
+  }
+
+  private loadCrop(): void {
     this.loadUseCase.execute({ cropId: this.cropId });
     this.loadBlueprintsUseCase.execute({ cropId: this.cropId });
   }

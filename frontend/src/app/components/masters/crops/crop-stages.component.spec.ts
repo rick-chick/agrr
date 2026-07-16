@@ -242,9 +242,52 @@ describe('CropStagesComponent', () => {
 
     fixture.detectChanges();
 
-    expect(component.control.error).toBe(translateService.instant('crops.errors.invalid_id'));
+    expect(component.control.error).toBe('crops.errors.invalid_id');
+    expect(fixture.nativeElement.querySelector('.master-load-error')).toBeTruthy();
     expect(mockLoadUseCase.execute).not.toHaveBeenCalled();
     expect(mockLoadBlueprintsUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('shows load error panel and hides edit UI when initial crop load fails', () => {
+    const presenter = fixture.debugElement.injector.get(CropStagesPresenter);
+    mockLoadUseCase.execute.mockImplementation(() => {
+      presenter.onError({ message: 'common.api_error.not_found' });
+    });
+    translateService.setTranslation(
+      'en',
+      {
+        ...tableTranslations,
+        crops: {
+          ...tableTranslations.crops,
+          index: { title: 'Crops' }
+        },
+        common: {
+          api_error: {
+            not_found: 'Resource not found'
+          }
+        },
+        masters: {
+          load_error: {
+            retry: 'Retry'
+          }
+        }
+      },
+      true
+    );
+    translateService.use('en');
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.master-load-error')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Resource not found');
+    expect(fixture.nativeElement.querySelector('.crop-stages-section')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.crop-stages-empty__cta')).toBeFalsy();
+    expect(
+      (fixture.nativeElement.querySelector('a.master-load-error__back') as HTMLAnchorElement)?.getAttribute(
+        'href'
+      )
+    ).toBe('/crops');
+    expect(mockCreateCropStageUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('should call createCropStageUseCase when addCropStage is called', () => {
