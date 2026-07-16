@@ -65,6 +65,7 @@ export class CropStagesPresenter implements
         error: null,
         pendingSuccessFlash: null,
         pendingErrorFlash: null,
+        pendingReorderCropStagesSnapshot: null,
         formData: {
           name: crop.name,
           crop_stages: crop.crop_stages ?? []
@@ -103,12 +104,20 @@ export class CropStagesPresenter implements
 
   onError(dto: ErrorDto): void {
     if (!this.view) throw new Error('Presenter: view not set');
+    const snapshot = this.view.control.pendingReorderCropStagesSnapshot;
     this.view.control = {
       ...this.view.control,
       loading: false,
       error: null,
       pendingSuccessFlash: null,
-      pendingErrorFlash: pendingErrorFlashFromError(dto)
+      pendingErrorFlash: pendingErrorFlashFromError(dto),
+      pendingReorderCropStagesSnapshot: null,
+      formData: snapshot
+        ? {
+            ...this.view.control.formData,
+            crop_stages: snapshot
+          }
+        : this.view.control.formData
     };
   }
 
@@ -136,6 +145,7 @@ export class CropStagesPresenter implements
         ...this.view.control.formData,
         crop_stages: updatedStages
       },
+      pendingReorderCropStagesSnapshot: null,
       pendingErrorFlash: null,
       pendingSuccessFlash: pendingSuccessFlashFromText('crops.flash.stage_updated')
     };

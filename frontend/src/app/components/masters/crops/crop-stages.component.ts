@@ -53,7 +53,8 @@ const initialControl: CropStagesViewState = {
   formData: initialFormData,
   taskScheduleBlueprints: [],
   pendingErrorFlash: null,
-  pendingSuccessFlash: null
+  pendingSuccessFlash: null,
+  pendingReorderCropStagesSnapshot: null
 };
 
 interface StageEditDraft {
@@ -888,6 +889,7 @@ export class CropStagesComponent implements CropStagesView, OnInit {
 
     this.control = {
       ...this.control,
+      pendingReorderCropStagesSnapshot: [...this.control.formData.crop_stages],
       formData: {
         ...this.control.formData,
         crop_stages: stages
