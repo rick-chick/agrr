@@ -11,7 +11,8 @@ use support::{
     seed_masters_crop_with_stages_and_blueprints,
     seed_task_schedule_regeneration_plan,
     seed_work_record_plan, set_plan_task_schedule_sync_failed,
-    set_plan_task_schedule_sync_failed_raw_error, status_and_body, user_id_for_session,
+    set_plan_task_schedule_sync_failed_raw_error, status_and_body,
+    upload_ready_work_record_photo, user_id_for_session,
 };
 
 #[test]
@@ -351,6 +352,65 @@ fn work_record_photo_upload_init_complete_and_list() {
         client.get(content_url, Some(&session_id), &empty_headers()),
     );
     assert_eq!(200, content_status);
+}
+
+#[test]
+fn work_record_photo_upload_init_rejects_when_at_limit() {
+    let client = ContractClient::from_env();
+    let session_id = developer_session_id(&client);
+    let user_id = user_id_for_session(&client, &session_id);
+    let seed = seed_work_record_plan(user_id);
+
+    let (create_status, create_body) = status_and_body(client.post(
+        &format!("/api/v1/plans/{}/work_records", seed.plan_id),
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "work_record": {
+                "task_schedule_item_id": seed.task_schedule_item_id,
+                "actual_date": "2026-06-12",
+                "notes": "photo limit contract"
+            }
+        })),
+    ));
+    assert_eq!(201, create_status, "{create_body}");
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_body).expect("create work_record JSON");
+    let record_id = create_json["work_record"]["id"]
+        .as_i64()
+        .expect("work_record id");
+
+    for _ in 0..3 {
+        upload_ready_work_record_photo(&client, &session_id, seed.plan_id, record_id);
+    }
+
+    let init_path = format!(
+        "/api/v1/plans/{}/work_records/{}/photos/upload_init",
+        seed.plan_id, record_id
+    );
+    let (init_status, init_body) = status_and_body(client.post(
+        &init_path,
+        Some(&session_id),
+        &empty_headers(),
+        Some(serde_json::json!({
+            "photo": { "content_type": "image/jpeg" }
+        })),
+    ));
+    assert_eq!(422, init_status, "{init_body}");
+    let init_json: serde_json::Value =
+        serde_json::from_str(&init_body).expect("upload_init rejection JSON");
+    let photos_errors = init_json["errors"]["photos"]
+        .as_array()
+        .expect("photos errors array");
+    assert!(
+        photos_errors
+            .iter()
+            .any(|msg| {
+                msg.as_str()
+                    == Some("plans.work_records.photos.errors.limit_exceeded")
+            }),
+        "{init_body}"
+    );
 }
 
 #[test]
