@@ -88,6 +88,23 @@ describe('stageRequirementsComplete', () => {
     expect(stageMissingBaseTemperature(incompleteStage)).toBe(true);
     expect(stageMissingRequiredGdd(incompleteStage)).toBe(true);
   });
+
+  it('treats required_gdd of 0 as missing', () => {
+    const stageWithZeroGdd = {
+      id: 1,
+      crop_id: 1,
+      name: 'Vegetative',
+      order: 1,
+      temperature_requirement: {
+        id: 1,
+        crop_stage_id: 1,
+        base_temperature: 10
+      },
+      thermal_requirement: { id: 1, crop_stage_id: 1, required_gdd: 0 }
+    };
+    expect(stageRequirementsComplete(stageWithZeroGdd)).toBe(false);
+    expect(stageMissingRequiredGdd(stageWithZeroGdd)).toBe(true);
+  });
 });
 
 describe('stageRequirementGaps', () => {
