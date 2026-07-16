@@ -377,7 +377,9 @@
       "temperature_requirement_updated": "温度要件を更新しました。",
       "thermal_requirement_updated": "積算温度要件を更新しました。",
       "sunshine_requirement_updated": "日照要件を更新しました。",
-      "nutrient_requirement_updated": "栄養素要件を更新しました。"
+      "nutrient_requirement_updated": "栄養素要件を更新しました。",
+      "stage_advanced_partial_save_failed": "一部の詳細項目を保存できませんでした。サーバー上の最新データに戻しました。",
+      "stage_panel_partial_save_failed": "一部の項目を保存できませんでした。サーバー上の最新データに戻しました。"
     },
     "index": {
       "title": "作物一覧",
@@ -457,7 +459,15 @@
       "table_base_temperature": "最低限界温度",
       "table_required_gdd": "必要積算温度",
       "table_cumulative_gdd": "累積積算温度",
-      "value_missing": "—"
+      "value_missing": "—",
+      "nutrient_requirement": "栄養素要件",
+      "required_marker": "必須",
+      "requirements_title": "要件",
+      "stage_cumulative_gdd_missing": "必要積算温度を入力すると表示されます",
+      "stage_order": "順序",
+      "sunshine_requirement": "日照要件",
+      "temperature_requirement": "温度要件",
+      "thermal_requirement": "積算温度要件"
     },
     "show": {
       "reference_crop": "参照作物",
@@ -608,7 +618,10 @@
         "errors": {
           "title": "{{count}}件のエラーがあります："
         }
-      }
+      },
+      "daily_uptake_k": "カリウム (K) 吸収量",
+      "daily_uptake_n": "窒素 (N) 吸収量",
+      "daily_uptake_p": "リン (P) 吸収量"
     },
     "pests": {
       "flash": {
@@ -1717,7 +1730,10 @@
         "required_gdd": "必要積算温度 (°C·day)",
         "minimum_sunshine_hours": "最低日照時間 (時間/日)",
         "target_sunshine_hours": "目標日照時間 (時間/日)",
-        "region": "地域"
+        "region": "地域",
+        "daily_uptake_k": "日間カリウム吸収量 (kg/ha/day)",
+        "daily_uptake_n": "日間窒素吸収量 (kg/ha/day)",
+        "daily_uptake_p": "日間リン吸収量 (kg/ha/day)"
       }
     },
     "messages": {

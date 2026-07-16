@@ -148,7 +148,10 @@
         "required_gdd": "Required Growing Degree Days (°C·day)",
         "minimum_sunshine_hours": "Minimum Sunshine Hours (hours/day)",
         "target_sunshine_hours": "Target Sunshine Hours (hours/day)",
-        "region": "Region"
+        "region": "Region",
+        "daily_uptake_k": "Daily Potassium Uptake (kg/ha/day)",
+        "daily_uptake_n": "Daily Nitrogen Uptake (kg/ha/day)",
+        "daily_uptake_p": "Daily Phosphorus Uptake (kg/ha/day)"
       }
     },
     "pest_ai": {
@@ -1977,7 +1980,9 @@
       "temperature_requirement_updated": "Temperature requirement was updated.",
       "thermal_requirement_updated": "Thermal requirement was updated.",
       "sunshine_requirement_updated": "Sunshine requirement was updated.",
-      "nutrient_requirement_updated": "Nutrient requirement was updated."
+      "nutrient_requirement_updated": "Nutrient requirement was updated.",
+      "stage_advanced_partial_save_failed": "Some advanced fields could not be saved. The form was refreshed from the server.",
+      "stage_panel_partial_save_failed": "Some panel fields could not be saved. The form was refreshed from the server."
     },
     "index": {
       "title": "Crops",
@@ -2057,7 +2062,15 @@
       "table_base_temperature": "Base temperature",
       "table_required_gdd": "Required GDD",
       "table_cumulative_gdd": "Cumulative GDD",
-      "value_missing": "—"
+      "value_missing": "—",
+      "nutrient_requirement": "Nutrient Requirements",
+      "required_marker": "Required",
+      "requirements_title": "Requirements",
+      "stage_cumulative_gdd_missing": "Enter required GDD to display the range",
+      "stage_order": "Order",
+      "sunshine_requirement": "Sunshine Requirements",
+      "temperature_requirement": "Temperature Requirements",
+      "thermal_requirement": "Thermal Requirements"
     },
     "show": {
       "reference_crop": "Reference Crop",
@@ -2207,7 +2220,10 @@
         "errors": {
           "title": "{{count}} errors occurred:"
         }
-      }
+      },
+      "daily_uptake_k": "Potassium (K) Uptake",
+      "daily_uptake_n": "Nitrogen (N) Uptake",
+      "daily_uptake_p": "Phosphorus (P) Uptake"
     },
     "pests": {
       "flash": {
