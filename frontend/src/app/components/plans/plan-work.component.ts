@@ -155,8 +155,20 @@ const initialControl: PlanWorkViewState = {
                             field: control.nextScheduled.fieldName
                           }
                   }}</p>
+                  <a
+                    class="plan-work__empty-cta-link plan-work__cta--constrained"
+                    [routerLink]="['/plans', planId, 'task_schedule']"
+                  >{{ 'plans.work.empty_task_schedule_cta' | translate }}</a>
                 } @else {
                   <p class="plan-work__empty-hint">{{ 'plans.work.empty_today_hint' | translate }}</p>
+                  <a
+                    class="plan-work__empty-cta-link plan-work__cta--constrained"
+                    [routerLink]="['/plans', planId]"
+                  >{{ 'plans.work.empty_plan_cta' | translate }}</a>
+                  <a
+                    class="plan-work__empty-cta-link plan-work__cta--constrained"
+                    [routerLink]="['/plans', planId, 'task_schedule']"
+                  >{{ 'plans.work.empty_task_schedule_cta' | translate }}</a>
                 }
                 <button
                   type="button"

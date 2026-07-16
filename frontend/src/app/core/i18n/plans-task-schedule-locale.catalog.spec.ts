@@ -24,6 +24,7 @@ const PLANS_TASK_SCHEDULE_KEYS = [
   'plans.work.retry',
   'plans.task_schedules.empty_hint',
   'plans.task_schedules.empty_ready_no_fields',
+  'plans.task_schedules.empty_cta',
   'plans.task_schedules.no_schedules',
   'plans.task_schedules.status.planned',
   'plans.task_schedules.status.skipped',
