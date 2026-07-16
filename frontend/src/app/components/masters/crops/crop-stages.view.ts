@@ -16,6 +16,7 @@ export type CropStagesViewState = {
   pendingErrorFlash: PendingErrorFlashRequest | null;
   pendingSuccessFlash: PendingSuccessFlashRequest | null;
   pendingReorderCropStagesSnapshot: CropStage[] | null;
+  pendingResyncPanelDraft: boolean;
 };
 
 export interface CropStagesView {
