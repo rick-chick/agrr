@@ -272,24 +272,6 @@ describe('CropStagesComponent', () => {
     expect(row.textContent).toContain('Enter required GDD to display the range');
   });
 
-  it('formatCumulativeGdd uses hint when required GDD is missing', async () => {
-    await loadStages([
-      {
-        id: 1,
-        name: 'Stage 1',
-        order: 1,
-        temperature_requirement: null,
-        thermal_requirement: null,
-        sunshine_requirement: null,
-        nutrient_requirement: null
-      } as CropStage
-    ]);
-
-    expect(component.formatCumulativeGdd(component.sortedStages[0])).toBe(
-      'Enter required GDD to display the range'
-    );
-  });
-
   it('shows cumulative GDD range in table when required_gdd is set', async () => {
     await loadStages([stageFixture]);
 
