@@ -11,7 +11,6 @@ import { UpdateThermalRequirementOutputDto } from '../../usecase/crops/update-th
 import { UpdateSunshineRequirementOutputDto } from '../../usecase/crops/update-sunshine-requirement.dtos';
 import { UpdateNutrientRequirementOutputDto } from '../../usecase/crops/update-nutrient-requirement.dtos';
 import { CropStage } from '../../domain/crops/crop';
-import { defaultBlueprintReadiness } from '../../domain/crops/blueprint-generation-readiness';
 
 describe('CropStagesPresenter', () => {
   let presenter: CropStagesPresenter;
@@ -30,7 +29,6 @@ describe('CropStagesPresenter', () => {
     error: null,
     pendingErrorFlash: null,
     pendingSuccessFlash: null,
-    blueprintReadiness: defaultBlueprintReadiness(),
     taskScheduleBlueprints: [],
     formData
   });
@@ -48,7 +46,6 @@ describe('CropStagesPresenter', () => {
           error: null,
           pendingErrorFlash: null,
           pendingSuccessFlash: null,
-          blueprintReadiness: defaultBlueprintReadiness(),
           taskScheduleBlueprints: [],
           formData: emptyFormData
         };
