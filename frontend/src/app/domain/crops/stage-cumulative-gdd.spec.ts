@@ -39,6 +39,14 @@ describe('stageCumulativeGddRange', () => {
     expect(range.cumulativeGddStart).toBeNull();
     expect(range.cumulativeGddEnd).toBeNull();
   });
+
+  it('marks range missing when duplicate stage orders exist', () => {
+    const stages = [stage(1, 200), { ...stage(1, 300), id: 2 }];
+    const range = stageCumulativeGddRange(stages, 1);
+    expect(range.gddRangeMissing).toBe(true);
+    expect(range.cumulativeGddStart).toBeNull();
+    expect(range.cumulativeGddEnd).toBeNull();
+  });
 });
 
 describe('buildStageCumulativeGddByOrder', () => {
@@ -53,6 +61,26 @@ describe('buildStageCumulativeGddByOrder', () => {
       cumulativeGddStart: 200,
       cumulativeGddEnd: 300,
       gddRangeMissing: false
+    });
+  });
+
+  it('marks all ranges missing when stage orders are duplicated', () => {
+    const stages = [
+      stage(1, 200, 'Stage A'),
+      { ...stage(1, 300, 'Stage B'), id: 2 },
+      stage(2, 100, 'Stage C')
+    ];
+
+    const map = buildStageCumulativeGddByOrder(stages);
+    expect(map.get(1)).toEqual({
+      cumulativeGddStart: null,
+      cumulativeGddEnd: null,
+      gddRangeMissing: true
+    });
+    expect(map.get(2)).toEqual({
+      cumulativeGddStart: null,
+      cumulativeGddEnd: null,
+      gddRangeMissing: true
     });
   });
 

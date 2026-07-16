@@ -1,4 +1,5 @@
 import type { CropStage } from './crop';
+import { findDuplicateStageOrders } from './crop-stage-order';
 
 export interface StageCumulativeGddRange {
   cumulativeGddStart: number | null;
@@ -36,6 +37,19 @@ export function buildStageCumulativeGddByOrder(
   stages: CropStage[]
 ): Map<number, StageCumulativeGddRange> {
   const map = new Map<number, StageCumulativeGddRange>();
+  const missingRange: StageCumulativeGddRange = {
+    cumulativeGddStart: null,
+    cumulativeGddEnd: null,
+    gddRangeMissing: true
+  };
+
+  if (findDuplicateStageOrders(stages).length > 0) {
+    for (const cropStage of stages) {
+      map.set(cropStage.order, missingRange);
+    }
+    return map;
+  }
+
   let cumulative = 0;
 
   for (const cropStage of sortedStages(stages)) {
