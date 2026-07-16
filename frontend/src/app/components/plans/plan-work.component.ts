@@ -2,7 +2,9 @@ import { ChangeDetectorRef, Component, DestroyRef, HostListener, OnInit, ViewChi
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Channel } from 'actioncable';
+import { combineLatest } from 'rxjs';
 import { formatIsoDateForDisplay } from '../../core/format-display-date';
 import { localTodayIso } from '../../core/local-today';
 import { PlanWorkPresenter } from '../../adapters/plans/plan-work.presenter';
@@ -341,10 +343,18 @@ export class PlanWorkComponent implements PlanWorkView, OnInit {
         clearTimeout(this.highlightClearTimer);
       }
     });
+    combineLatest([this.route.paramMap, this.route.queryParamMap])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.handleRouteChange());
+  }
+
+  private handleRouteChange(): void {
     if (!this.planId) {
       this.control = { ...initialControl, loading: false, error: 'plans.errors.invalid_id' };
       return;
     }
+    this.syncChannel?.unsubscribe();
+    this.syncChannel = null;
     this.subscribeSyncUseCase.execute({
       planId: this.planId,
       onSubscribed: (channel) => {

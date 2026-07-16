@@ -3,10 +3,38 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BehaviorSubject } from 'rxjs';
 import { PlanWorkRecordsComponent } from './plan-work-records.component';
 import { PlanWorkRecordsViewState } from './plan-work-records.view';
 import { LoadWorkRecordsUseCase } from '../../usecase/plans/load-work-records.usecase';
 import { PlanWorkRecordsPresenter } from '../../adapters/plans/plan-work-records.presenter';
+
+function createPlanRouteMock(planId: string) {
+  let currentPlanId = planId;
+  const paramMapSubject = new BehaviorSubject({
+    get: (key: string) => (key === 'id' ? currentPlanId : null)
+  });
+  const queryParamMapSubject = new BehaviorSubject({
+    get: () => null
+  });
+
+  return {
+    snapshot: {
+      get paramMap() {
+        return paramMapSubject.value;
+      },
+      queryParamMap: { get: () => null }
+    },
+    paramMap: paramMapSubject.asObservable(),
+    queryParamMap: queryParamMapSubject.asObservable(),
+    setPlanId(id: string) {
+      currentPlanId = id;
+      paramMapSubject.next({
+        get: (key: string) => (key === 'id' ? currentPlanId : null)
+      });
+    }
+  };
+}
 
 describe('PlanWorkRecordsComponent', () => {
   let component: PlanWorkRecordsComponent;
@@ -15,10 +43,13 @@ describe('PlanWorkRecordsComponent', () => {
   let mockPresenter: { setView: ReturnType<typeof vi.fn> };
   let cdr: { markForCheck: ReturnType<typeof vi.fn> };
 
+  let mockActivatedRoute: ReturnType<typeof createPlanRouteMock>;
+
   beforeEach(async () => {
     loadUseCase = { execute: vi.fn() };
     mockPresenter = { setView: vi.fn() };
     cdr = { markForCheck: vi.fn() };
+    mockActivatedRoute = createPlanRouteMock('7');
     HTMLDialogElement.prototype.showModal = vi.fn();
     HTMLDialogElement.prototype.close = vi.fn();
 
@@ -31,9 +62,7 @@ describe('PlanWorkRecordsComponent', () => {
           { provide: ChangeDetectorRef, useValue: cdr },
           {
             provide: ActivatedRoute,
-            useValue: {
-              snapshot: { paramMap: { get: vi.fn(() => '7') } }
-            }
+            useValue: mockActivatedRoute
           }
         ]
       }
@@ -248,6 +277,15 @@ describe('PlanWorkRecordsComponent', () => {
     component.ngOnInit();
     expect(mockPresenter.setView).toHaveBeenCalledWith(component);
     expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 7 });
+  });
+
+  it('reloads records when route plan id changes', () => {
+    fixture.detectChanges();
+    loadUseCase.execute.mockClear();
+
+    mockActivatedRoute.setPlanId('8');
+
+    expect(loadUseCase.execute).toHaveBeenCalledWith({ planId: 8 });
   });
 
   it('places photo thumbnails below record meta in a single column', () => {
