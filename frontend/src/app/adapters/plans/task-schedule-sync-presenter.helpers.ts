@@ -1,4 +1,3 @@
-import { TaskScheduleSyncMessageDto } from '../../usecase/plans/subscribe-task-schedule-sync.dtos';
 import {
   syncErrorDetailTranslateKey,
   syncErrorDetailTranslateParams
