@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
 import { CropStage } from '../../domain/crops/crop';
@@ -68,11 +69,12 @@ describe('ReorderCropStagesUseCase', () => {
     expect(presented).toEqual({ stages: reorderedStages });
   });
 
-  it('reports gateway errors via output port', () => {
+  it('reports gateway errors via output port with apiErrorI18nKey', () => {
+    const reorderError = new HttpErrorResponse({ status: 422, statusText: 'Unprocessable Entity' });
     const cropStageGateway: CropStageGateway = {
       createCropStage: () => of({} as never),
       updateCropStage: () => of({} as never),
-      reorderCropStages: () => throwError(() => new Error('reorder failed')),
+      reorderCropStages: () => throwError(() => reorderError),
       deleteCropStage: () => of(undefined),
       getTemperatureRequirement: () => of(null),
       createTemperatureRequirement: () => of({} as never),
@@ -105,6 +107,6 @@ describe('ReorderCropStagesUseCase', () => {
       entries: [{ id: 1, order: 1 }]
     });
 
-    expect(errorMessage).toBe('reorder failed');
+    expect(errorMessage).toBe('common.api_error.generic');
   });
 });
