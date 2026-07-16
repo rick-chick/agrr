@@ -54,8 +54,8 @@ const initialControl: PlanNewViewState = {
             <div class="form-group">
               <label for="farm-select" class="form-label">{{ 'plans.new.farm_label' | translate }}</label>
               @if (farmsWithoutFields.length > 0) {
-                <p class="plan-new-warning" role="status">
-                  @if (onlyFarmsWithoutFields) {
+                @if (onlyFarmsWithoutFields) {
+                  <p class="plan-new-warning" role="status">
                     {{ 'plans.new.no_fields_warning' | translate }}
                     @if (noFieldsRegisterLinkFarmId != null) {
                       <a
@@ -65,10 +65,20 @@ const initialControl: PlanNewViewState = {
                         {{ 'plans.new.register_fields_link' | translate }}
                       </a>
                     }
-                  } @else {
+                  </p>
+                } @else {
+                  <p class="plan-new-warning" role="status">
                     {{ 'plans.new.some_farms_no_fields_hint' | translate }}
+                  </p>
+                  @for (farm of farmsWithoutFields; track farm.id) {
+                    <p class="plan-new-warning plan-new-warning--farm" role="status">
+                      {{ farm.name }}
+                      <a class="plan-new-warning__link" [routerLink]="['/farms', farm.id]">
+                        {{ 'plans.new.register_fields_link' | translate }}
+                      </a>
+                    </p>
                   }
-                </p>
+                }
               }
               <select
                 id="farm-select"
