@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+  areRequiredChecksComplete,
   areRequiredChecksGreen,
+  classifyRequiredCiState,
   canMarkReady,
   isEligibleAgentPr,
   isNonFatalMarkReadyError,
@@ -177,5 +179,51 @@ test('areRequiredChecksGreen requires ruleset contexts', () => {
       { name: 'lint / frontend-lint', state: 'SUCCESS' },
     ]),
     false,
+  );
+});
+
+test('areRequiredChecksComplete is false while any required check is pending', () => {
+  assert.equal(
+    areRequiredChecksComplete([
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'PENDING' },
+      { name: 'lint / frontend-lint', state: 'SUCCESS' },
+    ]),
+    false,
+  );
+  assert.equal(
+    areRequiredChecksComplete([
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'FAILURE' },
+      { name: 'lint / frontend-lint', state: 'SUCCESS' },
+    ]),
+    true,
+  );
+});
+
+test('classifyRequiredCiState maps checks to incomplete, failed, or green', () => {
+  assert.equal(
+    classifyRequiredCiState([
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'IN_PROGRESS' },
+      { name: 'lint / frontend-lint', state: 'SUCCESS' },
+    ]),
+    'incomplete',
+  );
+  assert.equal(
+    classifyRequiredCiState([
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'FAILURE' },
+      { name: 'lint / frontend-lint', state: 'SUCCESS' },
+    ]),
+    'failed',
+  );
+  assert.equal(
+    classifyRequiredCiState([
+      { name: 'rails-test', state: 'SUCCESS' },
+      { name: 'frontend-test', state: 'SUCCESS' },
+      { name: 'lint / frontend-lint', state: 'SUCCESS' },
+    ]),
+    'green',
   );
 });
