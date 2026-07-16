@@ -2743,7 +2743,8 @@
       "sync_updated": "Task schedules have been updated.",
       "sync_wizard_cta_hint": "Open registration wizard",
       "timeline_generated_at": "Generated: {{datetime}}",
-      "timeline_generated_unknown": "Generated: unavailable"
+      "timeline_generated_unknown": "Generated: unavailable",
+      "empty_cta": "Open cropping plan"
     },
     "title": "Cultivation Plans",
     "undo": {
@@ -2811,7 +2812,9 @@
         "record_saved": "Work recorded",
         "record_saved_adhoc": "Work recorded. View it in work history."
       },
-      "unskip": "Unskip"
+      "unskip": "Unskip",
+      "empty_plan_cta": "Review cropping plan",
+      "empty_task_schedule_cta": "Open task schedule"
     },
     "work_records": {
       "badge": {

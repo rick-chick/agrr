@@ -2496,7 +2496,8 @@
       "sync_updated": "कार्य अनुसूची अपडेट हो गई है।",
       "sync_wizard_cta_hint": "पंजीकरण विज़ार्ड खोलें",
       "timeline_generated_at": "निर्माण समय: {{datetime}}",
-      "timeline_generated_unknown": "निर्माण समय: अनुपलब्ध"
+      "timeline_generated_unknown": "निर्माण समय: अनुपलब्ध",
+      "empty_cta": "खेती योजना खोलें"
     },
     "title": "खेती योजना",
     "undo": {
@@ -2564,7 +2565,9 @@
         "record_saved": "कार्य दर्ज हो गया",
         "record_saved_adhoc": "कार्य दर्ज हो गया। कार्य इतिहास में देखें।"
       },
-      "unskip": "छोड़ना रद्द करें"
+      "unskip": "छोड़ना रद्द करें",
+      "empty_plan_cta": "खेती योजना देखें",
+      "empty_task_schedule_cta": "कार्य अनुसूची खोलें"
     },
     "work_records": {
       "badge": {

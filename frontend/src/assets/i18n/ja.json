@@ -2771,7 +2771,8 @@
       "sync_updated": "作業予定を更新しました。",
       "sync_wizard_cta_hint": "登録ウィザードを開く",
       "timeline_generated_at": "生成日時: {{datetime}}",
-      "timeline_generated_unknown": "生成日時: 未取得"
+      "timeline_generated_unknown": "生成日時: 未取得",
+      "empty_cta": "作付け計画を確認"
     },
     "title": "個人計画",
     "undo": {
@@ -2839,7 +2840,9 @@
         "record_saved": "作業を記録しました",
         "record_saved_adhoc": "作業を記録しました。実績履歴で確認できます"
       },
-      "unskip": "スキップを解除"
+      "unskip": "スキップを解除",
+      "empty_plan_cta": "作付け計画を確認",
+      "empty_task_schedule_cta": "作業予定表を確認"
     },
     "work_records": {
       "badge": {
