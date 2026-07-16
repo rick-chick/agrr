@@ -381,7 +381,11 @@
       "table_base_temperature": "न्यूनतम सीमा तापमान",
       "table_required_gdd": "आवश्यक GDD",
       "table_cumulative_gdd": "संचयी GDD",
-      "value_missing": "—"
+      "value_missing": "—",
+      "temperature_section": "तापमान शर्तें",
+      "thermal_section": "संचित तापमान",
+      "details_section": "उन्नत सेटिंग",
+      "optimal_range": "इष्टतम सीमा"
     },
     "show": {
       "name": "नाम",
