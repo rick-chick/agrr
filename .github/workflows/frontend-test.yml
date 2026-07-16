@@ -87,6 +87,7 @@ jobs:
       - name: automation script unit tests
         working-directory: ${{ github.workspace }}
         run: |
+          node --test scripts/gh-repo-lib.test.mjs
           node --test scripts/pr-agent-prep-lib.test.mjs
           node --test scripts/issue-worker-dispatch-lib.test.mjs
           node --test scripts/pr-merge-worker-needs-sync.test.mjs
