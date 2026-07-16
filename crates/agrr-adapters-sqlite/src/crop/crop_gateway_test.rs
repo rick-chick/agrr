@@ -59,6 +59,13 @@ fn crop_test_pool() -> SqlitePool {
               id INTEGER PRIMARY KEY, crop_stage_id INTEGER NOT NULL,
               daily_uptake_n REAL, daily_uptake_p REAL, daily_uptake_k REAL,
               region TEXT, created_at TEXT, updated_at TEXT
+            );
+            CREATE TABLE crop_task_schedule_blueprints (
+              id INTEGER PRIMARY KEY, crop_id INTEGER NOT NULL,
+              agricultural_task_id INTEGER, stage_order INTEGER, stage_name TEXT,
+              gdd_trigger REAL, gdd_tolerance REAL, task_type TEXT NOT NULL,
+              source TEXT NOT NULL, priority INTEGER NOT NULL,
+              created_at TEXT, updated_at TEXT
             );",
         )
     })
@@ -351,5 +358,86 @@ fn update_crop_stage_order_conflict_returns_record_invalid() {
 
     assert!(err.downcast_ref::<agrr_domain::shared::exceptions::RecordInvalidError>().is_some());
     let _ = stage_b;
+}
+
+fn insert_blueprint(pool: &SqlitePool, crop_id: i64, stage_order: i64) -> i64 {
+    pool.with_write(|conn| {
+        conn.execute(
+            "INSERT INTO crop_task_schedule_blueprints (
+               crop_id, stage_order, stage_name, gdd_trigger, task_type, source, priority,
+               created_at, updated_at
+             ) VALUES (?1, ?2, ?3, 0.0, 'field_work', 'manual', 1, datetime('now'), datetime('now'))",
+            params![crop_id, stage_order, format!("Stage {stage_order}")],
+        )?;
+        Ok(conn.last_insert_rowid())
+    })
+    .unwrap()
+}
+
+#[test]
+fn reorder_crop_stages_remaps_linked_blueprint_stage_orders() {
+    let pool = crop_test_pool();
+    let (gw, crop_id) = seed_crop(&pool);
+    let stage_a = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "Stage A", "order": 1 }),
+        ))
+        .unwrap();
+    let stage_b = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "Stage B", "order": 2 }),
+        ))
+        .unwrap();
+    let blueprint_a = insert_blueprint(&pool, crop_id, 1);
+    let blueprint_b = insert_blueprint(&pool, crop_id, 2);
+
+    gw.reorder_crop_stages(crop_id, vec![(stage_a.id, 2), (stage_b.id, 1)])
+        .unwrap();
+
+    let orders: Vec<(i64, Option<i64>)> = pool
+        .with_read(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT id, stage_order FROM crop_task_schedule_blueprints WHERE crop_id = ?1 ORDER BY id",
+            )?;
+            let rows = stmt.query_map(params![crop_id], |row| Ok((row.get(0)?, row.get(1)?)))?;
+            rows.collect()
+        })
+        .unwrap();
+    assert_eq!(orders, vec![(blueprint_a, Some(2)), (blueprint_b, Some(1))]);
+}
+
+#[test]
+fn delete_crop_stage_unassigns_linked_blueprints() {
+    let pool = crop_test_pool();
+    let (gw, crop_id) = seed_crop(&pool);
+    let stage_a = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "Stage A", "order": 1 }),
+        ))
+        .unwrap();
+    let _stage_b = gw
+        .create_crop_stage(CropStageCreateInput::new(
+            crop_id,
+            json!({ "name": "Stage B", "order": 2 }),
+        ))
+        .unwrap();
+    let blueprint_a = insert_blueprint(&pool, crop_id, 1);
+
+    gw.delete_crop_stage(stage_a.id).unwrap();
+
+    let (stage_order, stage_name): (Option<i64>, Option<String>) = pool
+        .with_read(|conn| {
+            conn.query_row(
+                "SELECT stage_order, stage_name FROM crop_task_schedule_blueprints WHERE id = ?1",
+                params![blueprint_a],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+        })
+        .unwrap();
+    assert_eq!(stage_order, None);
+    assert_eq!(stage_name, None);
 }
 
