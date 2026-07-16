@@ -16,7 +16,6 @@ import { UpdateTemperatureRequirementUseCase } from '../../../usecase/crops/upda
 import { UpdateThermalRequirementUseCase } from '../../../usecase/crops/update-thermal-requirement.usecase';
 import { UpdateSunshineRequirementUseCase } from '../../../usecase/crops/update-sunshine-requirement.usecase';
 import { UpdateNutrientRequirementUseCase } from '../../../usecase/crops/update-nutrient-requirement.usecase';
-import { defaultBlueprintReadiness } from '../../../domain/crops/blueprint-generation-readiness';
 import { FlashMessageService } from '../../../services/flash-message.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
@@ -31,7 +30,6 @@ const loadedControlBase = {
   pendingErrorFlash: null,
   pendingSuccessFlash: null,
   pendingReorderCropStagesSnapshot: null,
-  blueprintReadiness: defaultBlueprintReadiness(),
   taskScheduleBlueprints: []
 };
 
