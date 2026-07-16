@@ -48,5 +48,8 @@ export function stageMissingRequiredGdd(stage: CropStage): boolean {
 
 function hasCompleteStageRequirements(crop: Crop | null | undefined): boolean {
   const stages = crop?.crop_stages ?? [];
-  return stages.some(stageRequirementsComplete);
+  if (stages.length === 0) {
+    return false;
+  }
+  return stages.every(stageRequirementsComplete);
 }
